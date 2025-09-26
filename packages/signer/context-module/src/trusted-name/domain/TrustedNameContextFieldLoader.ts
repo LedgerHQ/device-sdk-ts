@@ -1,5 +1,8 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { pkiTypes } from "@/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   ClearSignContext,
@@ -14,6 +17,7 @@ type TrustedNameFieldInput = {
   challenge: string;
   types: string[];
   sources: string[];
+  deviceModelId: DeviceModelId;
 };
 
 @injectable()
@@ -23,6 +27,8 @@ export class TrustedNameContextFieldLoader
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
     private _dataSource: TrustedNameDataSource.TrustedNameDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private _certificateLoader: PkiCertificateLoader,
   ) {}
 
   canHandle(
@@ -37,7 +43,9 @@ export class TrustedNameContextFieldLoader
       "address" in input &&
       "challenge" in input &&
       "types" in input &&
-      "sources" in input
+      "sources" in input &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined
     );
   }
 
@@ -49,15 +57,24 @@ export class TrustedNameContextFieldLoader
       types: input.types,
       sources: input.sources,
     });
-    return payload.caseOf({
-      Left: (error): ClearSignContext => ({
-        type: ClearSignContextType.ERROR,
-        error,
-      }),
-      Right: (value): ClearSignContext => ({
-        type: ClearSignContextType.TRUSTED_NAME,
-        payload: value,
-      }),
+    return await payload.caseOf({
+      Left: (error): Promise<ClearSignContext> =>
+        Promise.resolve({
+          type: ClearSignContextType.ERROR,
+          error,
+        }),
+      Right: async ({ data, keyId, keyUsage }): Promise<ClearSignContext> => {
+        const certificate = await this._certificateLoader.loadCertificate({
+          keyId,
+          keyUsage,
+          targetDevice: input.deviceModelId,
+        });
+        return {
+          type: ClearSignContextType.TRUSTED_NAME,
+          payload: data,
+          certificate,
+        };
+      },
     });
   }
 }

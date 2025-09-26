@@ -1,5 +1,8 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import {
@@ -12,14 +15,31 @@ describe("TrustedNameContextLoader", () => {
     getDomainNamePayload: vi.fn(),
     getTrustedNamePayload: vi.fn(),
   };
-  const loader = new TrustedNameContextLoader(mockTrustedNameDataSource);
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: vi.fn(),
+  };
+  const loader = new TrustedNameContextLoader(
+    mockTrustedNameDataSource,
+    mockCertificateLoader,
+  );
+
+  const mockCertificate: PkiCertificate = {
+    keyUsageNumber: 1,
+    payload: new Uint8Array([1, 2, 3, 4]),
+  };
 
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(
       mockTrustedNameDataSource,
       "getDomainNamePayload",
-    ).mockResolvedValue(Right("payload"));
+    ).mockResolvedValue(
+      Right({
+        data: "payload",
+        keyId: "testKeyId",
+        keyUsage: "testKeyUsage",
+      }),
+    );
   });
 
   describe("canHandle function", () => {
@@ -27,6 +47,7 @@ describe("TrustedNameContextLoader", () => {
       chainId: 1,
       domain: "hello.eth",
       challenge: "challenge",
+      deviceModelId: DeviceModelId.STAX,
     };
 
     it("should return true for valid input", () => {
@@ -57,6 +78,7 @@ describe("TrustedNameContextLoader", () => {
       [{ ...validInput, chainId: undefined }, "missing chainId"],
       [{ ...validInput, domain: undefined }, "missing domain"],
       [{ ...validInput, challenge: undefined }, "missing challenge"],
+      [{ ...validInput, deviceModelId: undefined }, "missing device model"],
     ])("should return false for %s", (input, _description) => {
       expect(loader.canHandle(input, [ClearSignContextType.TRUSTED_NAME])).toBe(
         false,
@@ -83,10 +105,12 @@ describe("TrustedNameContextLoader", () => {
         chainId: 1,
         domain: "maxlength-maxlength-maxlength-maxlength-maxlength-maxlength",
         challenge: "challenge",
+        deviceModelId: DeviceModelId.STAX,
       };
 
       const result = await loader.load(input);
 
+      expect(mockCertificateLoader.loadCertificate).not.toHaveBeenCalled();
       expect(result).toEqual([
         {
           type: ClearSignContextType.ERROR,
@@ -100,10 +124,12 @@ describe("TrustedNameContextLoader", () => {
         chainId: 1,
         domain: "hello👋",
         challenge: "challenge",
+        deviceModelId: DeviceModelId.STAX,
       };
 
       const result = await loader.load(input);
 
+      expect(mockCertificateLoader.loadCertificate).not.toHaveBeenCalled();
       expect(result).toEqual([
         {
           type: ClearSignContextType.ERROR,
@@ -113,18 +139,28 @@ describe("TrustedNameContextLoader", () => {
     });
 
     it("should return a payload", async () => {
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+        mockCertificate,
+      );
       const input: TrustedNameContextInput = {
         chainId: 1,
         domain: "hello.eth",
         challenge: "challenge",
+        deviceModelId: DeviceModelId.STAX,
       };
 
       const result = await loader.load(input);
 
+      expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: "testKeyId",
+        keyUsage: "testKeyUsage",
+        targetDevice: DeviceModelId.STAX,
+      });
       expect(result).toEqual([
         {
           type: ClearSignContextType.TRUSTED_NAME,
           payload: "payload",
+          certificate: mockCertificate,
         },
       ]);
     });
@@ -135,6 +171,7 @@ describe("TrustedNameContextLoader", () => {
         chainId: 1,
         domain: "hello.eth",
         challenge: "challenge",
+        deviceModelId: DeviceModelId.STAX,
       };
 
       // WHEN

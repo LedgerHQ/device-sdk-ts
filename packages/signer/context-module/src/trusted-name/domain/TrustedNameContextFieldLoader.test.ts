@@ -1,5 +1,8 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { TrustedNameContextFieldLoader } from "@/trusted-name/domain/TrustedNameContextFieldLoader";
@@ -9,8 +12,12 @@ describe("TrustedNameContextFieldLoader", () => {
     getTrustedNamePayload: vi.fn(),
     getDomainNamePayload: vi.fn(),
   };
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: vi.fn(),
+  };
   const trustedNameContextFieldLoader = new TrustedNameContextFieldLoader(
     mockTrustedNameDataSource,
+    mockCertificateLoader,
   );
 
   const mockTransactionField = {
@@ -19,9 +26,19 @@ describe("TrustedNameContextFieldLoader", () => {
     challenge: "test-challenge",
     types: ["contract", "token"],
     sources: ["ledger", "ens"],
+    deviceModelId: DeviceModelId.STAX,
   };
 
-  const mockTrustedNamePayload = "0x123456789abcdef0";
+  const mockTrustedNamePayload = {
+    data: "0x123456789abcdef0",
+    keyId: "testKeyId",
+    keyUsage: "testKeyUsage",
+  };
+
+  const mockCertificate: PkiCertificate = {
+    keyUsageNumber: 1,
+    payload: new Uint8Array([1, 2, 3, 4]),
+  };
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -36,6 +53,7 @@ describe("TrustedNameContextFieldLoader", () => {
         challenge: "test-challenge",
         types: ["contract", "token"],
         sources: ["ledger", "ens"],
+        deviceModelId: DeviceModelId.STAX,
       };
 
       // THEN
@@ -101,6 +119,16 @@ describe("TrustedNameContextFieldLoader", () => {
             types: ["contract"],
           },
         },
+        {
+          name: "object missing device model",
+          value: {
+            chainId: 1,
+            address: "0x1234567890abcdef",
+            challenge: "test-challenge",
+            types: ["contract", "token"],
+            sources: ["ledger", "ens"],
+          },
+        },
       ];
 
       test.each(invalidInputs)("$name", ({ value }) => {
@@ -146,6 +174,7 @@ describe("TrustedNameContextFieldLoader", () => {
         types: mockTransactionField.types,
         sources: mockTransactionField.sources,
       });
+      expect(mockCertificateLoader.loadCertificate).not.toHaveBeenCalled();
       expect(result).toEqual({
         type: ClearSignContextType.ERROR,
         error: error,
@@ -158,12 +187,20 @@ describe("TrustedNameContextFieldLoader", () => {
         mockTrustedNameDataSource,
         "getTrustedNamePayload",
       ).mockResolvedValue(Right(mockTrustedNamePayload));
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+        mockCertificate,
+      );
 
       // WHEN
       const result =
         await trustedNameContextFieldLoader.loadField(mockTransactionField);
 
       // THEN
+      expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: "testKeyId",
+        keyUsage: "testKeyUsage",
+        targetDevice: mockTransactionField.deviceModelId,
+      });
       expect(
         mockTrustedNameDataSource.getTrustedNamePayload,
       ).toHaveBeenCalledWith({
@@ -175,7 +212,8 @@ describe("TrustedNameContextFieldLoader", () => {
       });
       expect(result).toEqual({
         type: ClearSignContextType.TRUSTED_NAME,
-        payload: mockTrustedNamePayload,
+        payload: mockTrustedNamePayload.data,
+        certificate: mockCertificate,
       });
     });
 
@@ -191,6 +229,9 @@ describe("TrustedNameContextFieldLoader", () => {
         mockTrustedNameDataSource,
         "getTrustedNamePayload",
       ).mockResolvedValue(Right(mockTrustedNamePayload));
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+        undefined,
+      );
 
       // WHEN
       const result = await trustedNameContextFieldLoader.loadField(customField);
@@ -207,7 +248,7 @@ describe("TrustedNameContextFieldLoader", () => {
       });
       expect(result).toEqual({
         type: ClearSignContextType.TRUSTED_NAME,
-        payload: mockTrustedNamePayload,
+        payload: mockTrustedNamePayload.data,
       });
     });
 
@@ -222,6 +263,9 @@ describe("TrustedNameContextFieldLoader", () => {
         mockTrustedNameDataSource,
         "getTrustedNamePayload",
       ).mockResolvedValue(Right(mockTrustedNamePayload));
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+        undefined,
+      );
 
       // WHEN
       const result = await trustedNameContextFieldLoader.loadField(customField);
@@ -238,7 +282,7 @@ describe("TrustedNameContextFieldLoader", () => {
       });
       expect(result).toEqual({
         type: ClearSignContextType.TRUSTED_NAME,
-        payload: mockTrustedNamePayload,
+        payload: mockTrustedNamePayload.data,
       });
     });
 
@@ -263,11 +307,17 @@ describe("TrustedNameContextFieldLoader", () => {
 
     it("should handle empty trusted name payload", async () => {
       // GIVEN
-      const emptyPayload = "";
+      const emptyPayload = {
+        ...mockTrustedNamePayload,
+        data: "",
+      };
       vi.spyOn(
         mockTrustedNameDataSource,
         "getTrustedNamePayload",
       ).mockResolvedValue(Right(emptyPayload));
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+        undefined,
+      );
 
       // WHEN
       const result =
@@ -276,7 +326,7 @@ describe("TrustedNameContextFieldLoader", () => {
       // THEN
       expect(result).toEqual({
         type: ClearSignContextType.TRUSTED_NAME,
-        payload: emptyPayload,
+        payload: emptyPayload.data,
       });
     });
 
@@ -291,6 +341,9 @@ describe("TrustedNameContextFieldLoader", () => {
         mockTrustedNameDataSource,
         "getTrustedNamePayload",
       ).mockResolvedValue(Right(mockTrustedNamePayload));
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+        undefined,
+      );
 
       // WHEN
       const result =
@@ -308,7 +361,7 @@ describe("TrustedNameContextFieldLoader", () => {
       });
       expect(result).toEqual({
         type: ClearSignContextType.TRUSTED_NAME,
-        payload: mockTrustedNamePayload,
+        payload: mockTrustedNamePayload.data,
       });
     });
 
@@ -323,6 +376,9 @@ describe("TrustedNameContextFieldLoader", () => {
         mockTrustedNameDataSource,
         "getTrustedNamePayload",
       ).mockResolvedValue(Right(mockTrustedNamePayload));
+      vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+        undefined,
+      );
 
       // WHEN
       const result = await trustedNameContextFieldLoader.loadField(
@@ -341,7 +397,7 @@ describe("TrustedNameContextFieldLoader", () => {
       });
       expect(result).toEqual({
         type: ClearSignContextType.TRUSTED_NAME,
-        payload: mockTrustedNamePayload,
+        payload: mockTrustedNamePayload.data,
       });
     });
   });

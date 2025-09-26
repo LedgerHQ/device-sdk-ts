@@ -13,6 +13,7 @@ import {
 } from "@ledgerhq/context-module";
 import type {
   CommandResult,
+  DeviceModelId,
   InternalApi,
 } from "@ledgerhq/device-management-kit";
 import {
@@ -64,6 +65,7 @@ export type ProvideEIP712ContextTaskReturnType = Promise<
 >;
 
 export type ProvideEIP712ContextTaskArgs = {
+  deviceModelId: DeviceModelId;
   derivationPath: string;
   types: Record<StructName, Record<FieldName, FieldType>>;
   domain: Array<TypedDataValue>;
@@ -421,6 +423,7 @@ export class ProvideEIP712ContextTask {
             challenge: getChallengeResult.data.challenge,
             types: filter.types,
             sources: filter.sources,
+            deviceModelId: this.args.deviceModelId,
           },
           ClearSignContextType.TRUSTED_NAME,
         );

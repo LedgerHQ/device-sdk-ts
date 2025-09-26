@@ -216,6 +216,7 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.NANO_S,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -263,6 +264,7 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -314,6 +316,7 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -384,6 +387,7 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: expectedWeb3Check,
       types: TEST_TYPES,
@@ -530,6 +534,7 @@ describe("BuildEIP712ContextTask", () => {
       }),
     );
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
