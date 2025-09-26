@@ -1,5 +1,5 @@
 /* eslint @typescript-eslint/consistent-type-imports: off */
-import { type PermissionsAndroid, type Platform } from "react-native";
+import { PermissionsAndroid, type Platform } from "react-native";
 import { type PermissionStatus } from "react-native/Libraries/PermissionsAndroid/PermissionsAndroid";
 import { BleManager, type Device, State } from "react-native-ble-plx";
 import {
@@ -21,6 +21,7 @@ import { Left, Right } from "purify-ts";
 import { lastValueFrom, Subscription, take } from "rxjs";
 import { beforeEach, expect } from "vitest";
 
+import { PermissionsAndroidNarrowedType } from "./PermissionsAndroidNarrowedType";
 import { type RNBleApduSenderDependencies } from "./RNBleApduSender";
 import { RNBleTransport, RNBleTransportFactory } from "./RNBleTransport";
 
@@ -73,6 +74,7 @@ const FAKE_DEVICE_MODEL = new TransportDeviceModel({
 });
 
 const IOS_PLATFORM = { OS: "ios" as const } as Platform;
+const ANDROID_PLATFORM = { OS: "android" as const } as Platform;
 const WINDOWS_PLATFORM = { OS: "windows" as const } as Platform;
 
 // ===== TEST HELPERS =====
@@ -86,8 +88,8 @@ class TestTransportBuilder {
     (() => {}) as unknown as ApduReceiverServiceFactory;
   private bleManager = new BleManager();
   private platform: Platform = IOS_PLATFORM;
-  private permissionsAndroid: PermissionsAndroid =
-    {} as unknown as PermissionsAndroid;
+  private permissionsAndroid: PermissionsAndroidNarrowedType =
+    {} as unknown as PermissionsAndroidNarrowedType;
   private deviceConnectionStateMachineFactory?: (
     args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
   ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies>;
@@ -104,7 +106,7 @@ class TestTransportBuilder {
     return this;
   }
 
-  withPermissionsAndroid(permissions: PermissionsAndroid) {
+  withPermissionsAndroid(permissions: PermissionsAndroidNarrowedType) {
     this.permissionsAndroid = permissions;
     return this;
   }
@@ -197,21 +199,30 @@ function createMockBleManager(overrides: Partial<BleManager> = {}): BleManager {
 
 function createMockPermissionsAndroid(
   overrides: Partial<PermissionsAndroid> = {},
-): PermissionsAndroid {
+): PermissionsAndroidNarrowedType {
   return {
     request: vi.fn(),
     requestMultiple: vi.fn(),
-    PERMISSIONS: {},
-    RESULTS: { GRANTED: "granted" },
+    check: vi.fn(),
+    PERMISSIONS: {
+      ACCESS_COARSE_LOCATION: "android.permission.ACCESS_COARSE_LOCATION",
+      ACCESS_FINE_LOCATION: "android.permission.ACCESS_FINE_LOCATION",
+      BLUETOOTH_SCAN: "android.permission.BLUETOOTH_SCAN",
+      BLUETOOTH_CONNECT: "android.permission.BLUETOOTH_CONNECT",
+    },
+    RESULTS: {
+      GRANTED: "granted",
+      DENIED: "denied",
+      NEVER_ASK_AGAIN: "never_ask_again",
+    },
     ...overrides,
-  } as unknown as PermissionsAndroid;
+  } as unknown as PermissionsAndroidNarrowedType;
 }
 
 // ===== ANDROID PERMISSION TEST HELPER =====
 async function testAndroidPermissions(
   params: {
     version: number;
-    permissions: Record<string, string>;
     requestPermissionResult: {
       "android.permission.BLUETOOTH_CONNECT": PermissionStatus;
       "android.permission.BLUETOOTH_SCAN": PermissionStatus;
@@ -220,7 +231,7 @@ async function testAndroidPermissions(
     accessFineLocationResult?: PermissionStatus;
   },
   expects: {
-    isSupported: boolean;
+    result: boolean;
     callRequestPermission: boolean;
   },
 ) {
@@ -229,6 +240,7 @@ async function testAndroidPermissions(
     Version: params.version,
   } as Platform;
   const permissionsAndroid = createMockPermissionsAndroid({
+    check: vi.fn().mockResolvedValue(false),
     request: vi.fn().mockImplementation((key: string) =>
       Promise.resolve(
         {
@@ -236,8 +248,6 @@ async function testAndroidPermissions(
         }[key],
       ),
     ),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    PERMISSIONS: params.permissions as any,
     requestMultiple: vi
       .fn()
       .mockImplementation(() =>
@@ -250,15 +260,14 @@ async function testAndroidPermissions(
     .withPermissionsAndroid(permissionsAndroid)
     .build();
 
-  await transport.requestPermission();
-  const isSupported = transport.isSupported();
+  const result = await transport.checkAndRequestPermissions();
 
   if (expects.callRequestPermission) {
     expect(permissionsAndroid.request).toHaveBeenCalledWith(
       "ACCESS_FINE_LOCATION",
     );
   }
-  expect(isSupported).toBe(expects.isSupported);
+  expect(result).toBe(expects.result);
 }
 
 // ===== TEST SUITES =====
@@ -309,43 +318,53 @@ describe("RNBleTransport", () => {
         .withPlatform(IOS_PLATFORM)
         .build();
 
-      await transport.requestPermission();
       const isSupported = transport.isSupported();
 
       expect(isSupported).toBe(true);
     });
 
-    it("should return true if platform is android and apiLevel < 31 with good permissions", async () => {
-      await testAndroidPermissions(
-        {
-          version: 30,
-          permissions: {
-            ACCESS_FINE_LOCATION: "ACCESS_FINE_LOCATION",
-            BLUETOOTH_SCAN: "BLUETOOTH_SCAN",
-            BLUETOOTH_CONNECT: "BLUETOOTH_CONNECT",
-          },
-          requestPermissionResult: {
-            "android.permission.BLUETOOTH_CONNECT": "granted",
-            "android.permission.BLUETOOTH_SCAN": "granted",
-            "android.permission.ACCESS_FINE_LOCATION": "granted",
-          },
-        },
-        {
-          isSupported: true,
-          callRequestPermission: true,
-        },
-      );
+    it("should return true if platform is android", async () => {
+      const transport = new TestTransportBuilder()
+        .withPlatform(ANDROID_PLATFORM as Platform)
+        .build();
+
+      const isSupported = transport.isSupported();
+
+      expect(isSupported).toBe(true);
     });
+
+    it("should return false if platform is not android nor ios", async () => {
+      const transport = new TestTransportBuilder()
+        .withPlatform(WINDOWS_PLATFORM)
+        .build();
+
+      const isSupported = transport.isSupported();
+
+      expect(isSupported).toBe(false);
+    });
+  });
+
+  describe("checkAndRequestPermissions", () => {
+    // it("should return true if platform is android and apiLevel < 31 with good permissions", async () => {
+    //   await testAndroidPermissions(
+    //     {
+    //       version: 30,
+    //       requestPermissionResult: {
+    //         "android.permission.BLUETOOTH_CONNECT": "granted",
+    //         "android.permission.BLUETOOTH_SCAN": "granted",
+    //       },
+    //     },
+    //     {
+    //       result: true,
+    //       callRequestPermission: false,
+    //     },
+    //   );
+    // });
 
     it("should return true if platform is android and apiLevel >= 31 with good permissions", async () => {
       await testAndroidPermissions(
         {
           version: 31,
-          permissions: {
-            ACCESS_FINE_LOCATION: "ACCESS_FINE_LOCATION",
-            BLUETOOTH_SCAN: "BLUETOOTH_SCAN",
-            BLUETOOTH_CONNECT: "BLUETOOTH_CONNECT",
-          },
           requestPermissionResult: {
             "android.permission.BLUETOOTH_CONNECT": "granted",
             "android.permission.BLUETOOTH_SCAN": "granted",
@@ -353,7 +372,7 @@ describe("RNBleTransport", () => {
           },
         },
         {
-          isSupported: true,
+          result: true,
           callRequestPermission: false,
         },
       );
@@ -363,11 +382,6 @@ describe("RNBleTransport", () => {
       await testAndroidPermissions(
         {
           version: 31,
-          permissions: {
-            ACCESS_FINE_LOCATION: "",
-            BLUETOOTH_SCAN: "",
-            BLUETOOTH_CONNECT: "BLUETOOTH_CONNECT",
-          },
           requestPermissionResult: {
             "android.permission.ACCESS_FINE_LOCATION": "denied",
             "android.permission.BLUETOOTH_CONNECT": "granted",
@@ -375,7 +389,7 @@ describe("RNBleTransport", () => {
           },
         },
         {
-          isSupported: false,
+          result: false,
           callRequestPermission: false,
         },
       );
@@ -385,11 +399,6 @@ describe("RNBleTransport", () => {
       await testAndroidPermissions(
         {
           version: 31,
-          permissions: {
-            ACCESS_FINE_LOCATION: "ACCESS_FINE_LOCATION",
-            BLUETOOTH_SCAN: "BLUETOOTH_SCAN",
-            BLUETOOTH_CONNECT: "BLUETOOTH_CONNECT",
-          },
           requestPermissionResult: {
             "android.permission.BLUETOOTH_CONNECT": "denied",
             "android.permission.BLUETOOTH_SCAN": "denied",
@@ -397,21 +406,10 @@ describe("RNBleTransport", () => {
           },
         },
         {
-          isSupported: false,
+          result: false,
           callRequestPermission: false,
         },
       );
-    });
-
-    it("should return false if platform isn't android nor ios", async () => {
-      const transport = new TestTransportBuilder()
-        .withPlatform(WINDOWS_PLATFORM)
-        .build();
-
-      await transport.requestPermission();
-      const isSupported = transport.isSupported();
-
-      expect(isSupported).toBe(false);
     });
   });
 

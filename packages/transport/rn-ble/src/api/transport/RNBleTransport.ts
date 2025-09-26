@@ -1,4 +1,4 @@
-import { PermissionsAndroid, Platform } from "react-native";
+import { type Permission, PermissionsAndroid, Platform } from "react-native";
 import {
   BleError,
   BleManager,
@@ -38,6 +38,7 @@ import {
   retry,
   type Subscription,
   switchMap,
+  tap,
   throttleTime,
   throwError,
 } from "rxjs";
@@ -50,6 +51,7 @@ import {
 } from "@api/model/Const";
 import {
   BleNotSupported,
+  BlePermissionsNotGranted,
   DeviceConnectionNotFound,
   NoDeviceModelFoundError,
   PeerRemovedPairingError,
@@ -61,6 +63,8 @@ import {
   type RNBleInternalDevice,
 } from "@api/transport/RNBleApduSender";
 
+import { type PermissionsAndroidNarrowedType } from "./PermissionsAndroidNarrowedType";
+
 export const rnBleTransportIdentifier = "RN_BLE";
 
 type InternalScannedDevice = {
@@ -70,7 +74,6 @@ type InternalScannedDevice = {
 
 export class RNBleTransport implements Transport {
   private _logger: LoggerPublisherService;
-  private _isSupported: Maybe<boolean>;
   private _deviceConnectionsById: Map<
     DeviceId,
     DeviceConnectionStateMachine<RNBleApduSenderDependencies>
@@ -90,7 +93,8 @@ export class RNBleTransport implements Transport {
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
     private readonly _manager: BleManager,
     private readonly _platform: Platform = Platform,
-    private readonly _permissionsAndroid: PermissionsAndroid = PermissionsAndroid,
+    // NB: this type assertion is not great but this type is not properly defined in react-native, and this will actually be correct.
+    private readonly _permissionsAndroid: PermissionsAndroidNarrowedType = PermissionsAndroid as PermissionsAndroidNarrowedType,
     private readonly _deviceConnectionStateMachineFactory: (
       args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
     ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies> = (args) =>
@@ -102,10 +106,10 @@ export class RNBleTransport implements Transport {
       new RNBleApduSender(args, loggerFactory),
   ) {
     this._logger = _loggerServiceFactory("ReactNativeBleTransport");
-    this._isSupported = Maybe.zero();
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
     this._manager.onStateChange((state) => {
+      this._logger.debug("[manager.onStateChange]", { data: { state } });
       this._bleStateSubject.next(state);
     }, true);
   }
@@ -145,18 +149,25 @@ export class RNBleTransport implements Transport {
 
     this._startedScanningSubscriber = from(this._bleStateSubject)
       .pipe(
+        tap(() => {
+          if (!this.isSupported()) {
+            throw new BleNotSupported("BLE not supported");
+          }
+        }),
         filter((state) => state === "PoweredOn"),
-        switchMap(() => this.requestPermission()),
-        switchMap((isSupported) => {
-          if (!isSupported) {
-            return throwError(() => new BleNotSupported("BLE not supported"));
+        switchMap(async () => this.checkAndRequestPermissions()),
+        switchMap((hasPermissions) => {
+          if (!hasPermissions) {
+            return throwError(
+              () => new BlePermissionsNotGranted("Permissions not granted"),
+            );
           }
 
           const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
           this._maybeScanningSubject = Maybe.of(subject);
           const devicesById = new Map<string, InternalScannedDevice>();
 
-          this._logger.info("[RNBleTransport][startScanning] startDeviceScan");
+          this._logger.info("[startScanning] startDeviceScan");
           this._manager.startDeviceScan(
             this._deviceModelDataSource.getBluetoothServices(),
             { allowDuplicates: true },
@@ -172,6 +183,8 @@ export class RNBleTransport implements Transport {
               subject.next(Array.from(devicesById.values()));
             },
           );
+
+          this._logger.debug("[startScanning] after startDeviceScan");
 
           /**
            * In case there is no update from startDeviceScan, we still emit the
@@ -201,6 +214,7 @@ export class RNBleTransport implements Transport {
         },
         error: (error) => {
           this._logger.error("Error while scanning", { data: { error } });
+          this._scannedDevicesSubject.error(error);
         },
       });
   }
@@ -524,12 +538,7 @@ export class RNBleTransport implements Transport {
    * Throws an error if the `_isSupported` property has not been initialized.
    */
   isSupported(): boolean {
-    return this._isSupported.caseOf({
-      Just: (isSupported) => isSupported,
-      Nothing: () => {
-        throw new Error("Should initialize permission");
-      },
-    });
+    return ["android", "ios"].includes(this._platform.OS);
   }
 
   /**
@@ -549,54 +558,72 @@ export class RNBleTransport implements Transport {
    *
    * @return {Promise<boolean>} A promise that resolves to true if the required permissions are granted, otherwise false.
    */
-  async requestPermission(): Promise<boolean> {
+  async checkAndRequestPermissions(): Promise<boolean> {
+    this._logger.debug("[checkAndRequestPermissions] Called");
+
     if (this._platform.OS === "ios") {
-      this._isSupported = Maybe.of(true);
       return true;
     }
 
-    if (
-      this._platform.OS === "android" &&
-      this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"]
-    ) {
-      const apiLevel = parseInt(this._platform.Version.toString(), 10);
+    if (this._platform.OS === "android") {
+      const { PERMISSIONS, RESULTS, check, requestMultiple } =
+        this._permissionsAndroid;
 
-      if (apiLevel < 31) {
-        const granted = await this._permissionsAndroid.request(
-          this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
-        );
-        this._isSupported = Maybe.of(
-          granted === this._permissionsAndroid.RESULTS["GRANTED"],
-        );
-      }
-      if (
-        this._permissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"] &&
-        this._permissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"]
-      ) {
-        const result = await this._permissionsAndroid.requestMultiple([
-          this._permissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"],
-          this._permissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"],
-          this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
-        ]);
+      const apiLevel = this._platform.Version;
 
-        this._isSupported = Maybe.of(
-          result["android.permission.BLUETOOTH_CONNECT"] ===
-            this._permissionsAndroid.RESULTS["GRANTED"] &&
-            result["android.permission.BLUETOOTH_SCAN"] ===
-              this._permissionsAndroid.RESULTS["GRANTED"] &&
-            result["android.permission.ACCESS_FINE_LOCATION"] ===
-              this._permissionsAndroid.RESULTS["GRANTED"],
-        );
+      /**
+       * On Android 9 (SDK level 28) and before, the app needs to have the ACCESS_COARSE_LOCATION permission.
+       *
+       * On Android 10 (SDK level 29) and 11 (SDK level 30), it needs the ACCESS_FINE_LOCATION permission.
+       *
+       * See https://developer.android.com/guide/topics/connectivity/bluetooth/permissions#declare
+       */
+      const locationPermissions: Permission[] =
+        apiLevel <= 28
+          ? [PERMISSIONS.ACCESS_COARSE_LOCATION]
+          : apiLevel <= 30
+            ? [PERMISSIONS.ACCESS_FINE_LOCATION]
+            : [];
 
+      // On Android 11 and above, the app needs to have the BLUETOOTH_SCAN and BLUETOOTH_CONNECT permissions.
+      const bluetoothPermissions: Permission[] =
+        apiLevel < 31
+          ? []
+          : [PERMISSIONS.BLUETOOTH_SCAN, PERMISSIONS.BLUETOOTH_CONNECT];
+
+      const allPermissions: Permission[] = [
+        ...bluetoothPermissions,
+        ...locationPermissions,
+      ];
+
+      // First, check if the permissions are already granted
+      const allPermissionsCheckResults = await Promise.all(
+        allPermissions.map((permission) => check(permission)),
+      );
+
+      const allPermissionsGranted = allPermissionsCheckResults.every(
+        (granted) => granted,
+      );
+
+      if (allPermissionsGranted) {
         return true;
       }
+
+      // If the permissions are not granted, request them
+      const allPermissionsRequestResults =
+        await requestMultiple(allPermissions);
+
+      const allPermissionsGrantedAfterRequest = Object.values(
+        allPermissionsRequestResults,
+      ).every((requested) => requested === RESULTS.GRANTED);
+
+      if (allPermissionsGrantedAfterRequest) {
+        return true;
+      }
+
+      return false;
     }
 
-    this._logger.error("Permission have not been granted", {
-      data: { isSupported: this._isSupported.extract() },
-    });
-
-    this._isSupported = Maybe.of(false);
     return false;
   }
 
