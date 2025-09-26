@@ -50,6 +50,7 @@ describe("SignTypedDataDeviceAction", () => {
     types: {},
   };
   const TEST_BUILT_CONTEXT: ProvideEIP712ContextTaskArgs = {
+    deviceModelId: DeviceModelId.STAX,
     derivationPath: "44'/60'/0'/0/0",
     web3Check: null,
     types: {

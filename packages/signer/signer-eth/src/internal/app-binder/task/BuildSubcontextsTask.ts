@@ -230,6 +230,7 @@ export class BuildSubcontextsTask {
               challenge: getChallengeResult.data.challenge,
               types: reference.types,
               sources: reference.sources,
+              deviceModelId: this.args.deviceModelId,
             },
             ClearSignContextType.TRUSTED_NAME,
           );

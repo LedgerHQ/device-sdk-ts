@@ -1,5 +1,8 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { pkiTypes } from "@/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -12,6 +15,7 @@ export type TrustedNameContextInput = {
   chainId: number;
   domain: string;
   challenge: string;
+  deviceModelId: DeviceModelId;
 };
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
@@ -27,6 +31,8 @@ export class TrustedNameContextLoader
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
     dataSource: TrustedNameDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private certificateLoader: PkiCertificateLoader,
   ) {
     this._dataSource = dataSource;
   }
@@ -41,6 +47,8 @@ export class TrustedNameContextLoader
       "chainId" in input &&
       "domain" in input &&
       "challenge" in input &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
       typeof input.chainId === "number" &&
       typeof input.domain === "string" &&
       input.domain.length > 0 &&
@@ -51,7 +59,7 @@ export class TrustedNameContextLoader
   }
 
   async load(input: TrustedNameContextInput): Promise<ClearSignContext[]> {
-    const { chainId, domain, challenge } = input;
+    const { chainId, domain, challenge, deviceModelId } = input;
 
     if (!this.isDomainValid(domain)) {
       return [
@@ -67,19 +75,27 @@ export class TrustedNameContextLoader
       domain,
       challenge,
     });
-
-    return [
-      payload.caseOf({
-        Left: (error): ClearSignContext => ({
+    const response = await payload.caseOf({
+      Left: (error): Promise<ClearSignContext> =>
+        Promise.resolve({
           type: ClearSignContextType.ERROR,
           error: error,
         }),
-        Right: (value): ClearSignContext => ({
+      Right: async ({ data, keyId, keyUsage }): Promise<ClearSignContext> => {
+        const certificate = await this.certificateLoader.loadCertificate({
+          keyId,
+          keyUsage,
+          targetDevice: deviceModelId,
+        });
+        return {
           type: ClearSignContextType.TRUSTED_NAME,
-          payload: value,
-        }),
-      }),
-    ];
+          payload: data,
+          certificate,
+        };
+      },
+    });
+
+    return [response];
   }
 
   private isDomainValid(domain: string) {

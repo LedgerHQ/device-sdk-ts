@@ -132,6 +132,7 @@ export class BuildEIP712ContextTask {
       message,
       clearSignContext,
       calldatasContexts,
+      deviceModelId: deviceState.deviceModelId,
     };
     return provideTaskArgs;
   }

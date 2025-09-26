@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
+  DeviceModelId,
   hexaStringToBuffer,
   LoadCertificateCommand,
   UnknownDeviceExchangeError,
@@ -233,6 +234,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send context with no clear signing context", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -351,6 +353,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send context with clear signing", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -555,6 +558,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Both tokens unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -618,6 +622,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Provide calldata filters", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -837,6 +842,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("First token unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -890,6 +896,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Second token unavailable", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -951,6 +958,7 @@ describe("ProvideEIP712ContextTask", () => {
       proxy,
     };
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -988,6 +996,7 @@ describe("ProvideEIP712ContextTask", () => {
         payload: "0x010203",
       };
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check,
       types: TEST_TYPES,
@@ -1029,6 +1038,7 @@ describe("ProvideEIP712ContextTask", () => {
         payload: "0x010203",
       };
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check,
       types: TEST_TYPES,
@@ -1067,6 +1077,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when providing tokens", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -1099,6 +1110,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when sending struct definitions", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -1133,6 +1145,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Error when sending struct implementations", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
@@ -1180,6 +1193,7 @@ describe("ProvideEIP712ContextTask", () => {
   it("Send struct array", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: {},

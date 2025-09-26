@@ -12,6 +12,7 @@ import {
   GetDomainNameInfosParams,
   GetTrustedNameInfosParams,
   TrustedNameDataSource,
+  TrustedNamePayload,
 } from "@/trusted-name/data/TrustedNameDataSource";
 import PACKAGE from "@root/package.json";
 
@@ -27,7 +28,8 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
     chainId,
     domain,
     challenge,
-  }: GetDomainNameInfosParams): Promise<Either<Error, string>> {
+  }: GetDomainNameInfosParams): Promise<Either<Error, TrustedNamePayload>> {
+    let dto: TrustedNameDto | undefined;
     try {
       const type = "eoa"; // Externally owned account
       const source = "ens"; // Ethereum name service
@@ -39,14 +41,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
-
-      return response.data.signedDescriptor?.data
-        ? Right(response.data.signedDescriptor.data)
-        : Left(
-            new Error(
-              "[ContextModule] HttpTrustedNameDataSource: error getting domain payload",
-            ),
-          );
+      dto = response.data;
     } catch (_error) {
       return Left(
         new Error(
@@ -54,6 +49,28 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
         ),
       );
     }
+
+    if (!dto) {
+      return Left(
+        new Error(
+          `[ContextModule] HttpTrustedNameDataSource: No data received for domain ${domain} on chain ${chainId}`,
+        ),
+      );
+    }
+
+    if (!this.isTrustedNameDto(dto)) {
+      return Left(
+        new Error(
+          `[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for domain ${domain} on chain ${chainId}`,
+        ),
+      );
+    }
+
+    return Right({
+      data: dto.signedDescriptor.data,
+      keyId: dto.keyId,
+      keyUsage: dto.keyUsage,
+    });
   }
 
   public async getTrustedNamePayload({
@@ -62,7 +79,8 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
     challenge,
     sources,
     types,
-  }: GetTrustedNameInfosParams): Promise<Either<Error, string>> {
+  }: GetTrustedNameInfosParams): Promise<Either<Error, TrustedNamePayload>> {
+    let dto: TrustedNameDto | undefined;
     try {
       // TODO remove that filtering once https://ledgerhq.atlassian.net/browse/BACK-8075 is done
       // For now we have to filter or trusted names won't work with the generic parser, because transaction
@@ -78,29 +96,7 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
-      const trustedName = response.data;
-      if (!trustedName?.signedDescriptor?.data) {
-        return Left(
-          new Error(
-            `[ContextModule] HttpTrustedNameDataSource: no trusted name metadata for address ${address}`,
-          ),
-        );
-      }
-      const payload = trustedName.signedDescriptor.data;
-
-      if (
-        !trustedName.signedDescriptor.signatures ||
-        typeof trustedName.signedDescriptor.signatures[this.config.cal.mode] !==
-          "string"
-      ) {
-        // If we have no separated signature but a valid descriptor, it may mean the descriptor was
-        // signed on-the-fly for dynamic sources such as ens
-        return Right(payload);
-      }
-
-      const signature =
-        trustedName.signedDescriptor.signatures[this.config.cal.mode]!;
-      return Right(this.formatTrustedName(payload, signature));
+      dto = response.data;
     } catch (_error) {
       return Left(
         new Error(
@@ -108,6 +104,41 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
         ),
       );
     }
+
+    if (!dto) {
+      return Left(
+        new Error(
+          `[ContextModule] HttpTrustedNameDataSource: No data received for address ${address} on chain ${chainId}`,
+        ),
+      );
+    }
+
+    if (!this.isTrustedNameDto(dto)) {
+      return Left(
+        new Error(
+          `[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for address ${address} on chain ${chainId}`,
+        ),
+      );
+    }
+
+    if (
+      typeof dto.signedDescriptor.signatures[this.config.cal.mode] !== "string"
+    ) {
+      // If we have no separated signature but a valid descriptor, it may mean the descriptor was
+      // signed on-the-fly for dynamic sources such as ens
+      return Right({
+        data: dto.signedDescriptor.data,
+        keyId: dto.keyId,
+        keyUsage: dto.keyUsage,
+      });
+    }
+
+    const signature = dto.signedDescriptor.signatures[this.config.cal.mode]!;
+    return Right({
+      data: this.formatTrustedName(dto.signedDescriptor.data, signature),
+      keyId: dto.keyId,
+      keyUsage: dto.keyUsage,
+    });
   }
 
   private formatTrustedName(payload: string, signature: string): string {
@@ -119,5 +150,25 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
     const signatureTag = "15";
     const signatureLength = (signature.length / 2).toString(16);
     return `${payload}${signatureTag}${signatureLength}${signature}`;
+  }
+  /**
+   * Type guard to validate ProxyDelegateCallDto
+   */
+  private isTrustedNameDto(value: unknown): value is TrustedNameDto {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "signedDescriptor" in value &&
+      "keyId" in value &&
+      "keyUsage" in value &&
+      typeof value.keyId === "string" &&
+      typeof value.keyUsage === "string" &&
+      typeof value.signedDescriptor === "object" &&
+      value.signedDescriptor !== null &&
+      "data" in value.signedDescriptor &&
+      "signatures" in value.signedDescriptor &&
+      typeof value.signedDescriptor.data === "string" &&
+      typeof value.signedDescriptor.signatures === "object"
+    );
   }
 }

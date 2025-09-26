@@ -597,6 +597,7 @@ describe("BuildSubcontextsTask", () => {
               challenge: "test-challenge",
               types: ["type1", "type2"],
               sources: ["source1", "source2"],
+              deviceModelId: DeviceModelId.STAX,
             },
             ClearSignContextType.TRUSTED_NAME,
           );
