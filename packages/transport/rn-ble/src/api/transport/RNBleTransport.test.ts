@@ -1,6 +1,9 @@
 /* eslint @typescript-eslint/consistent-type-imports: off */
 import { PermissionsAndroid, type Platform } from "react-native";
-import { type PermissionStatus } from "react-native/Libraries/PermissionsAndroid/PermissionsAndroid";
+import {
+  Permission,
+  type PermissionStatus,
+} from "react-native/Libraries/PermissionsAndroid/PermissionsAndroid";
 import { BleManager, type Device, State } from "react-native-ble-plx";
 import {
   type ApduReceiverServiceFactory,
@@ -223,16 +226,14 @@ function createMockPermissionsAndroid(
 async function testAndroidPermissions(
   params: {
     version: number;
-    requestPermissionResult: {
-      "android.permission.BLUETOOTH_CONNECT": PermissionStatus;
-      "android.permission.BLUETOOTH_SCAN": PermissionStatus;
-      "android.permission.ACCESS_FINE_LOCATION": PermissionStatus;
-    };
-    accessFineLocationResult?: PermissionStatus;
+    mockCheckResults: Partial<Record<Permission, boolean>>;
+    mockRequestResults: Partial<Record<Permission, PermissionStatus>>;
   },
   expects: {
+    /** What's the end result of the checkAndRequestPermissions call*/
     result: boolean;
-    callRequestPermission: boolean;
+    /** Whether the requestMultiple method was called */
+    callsRequestMultiple: boolean;
   },
 ) {
   const platform = {
@@ -240,19 +241,14 @@ async function testAndroidPermissions(
     Version: params.version,
   } as Platform;
   const permissionsAndroid = createMockPermissionsAndroid({
-    check: vi.fn().mockResolvedValue(false),
-    request: vi.fn().mockImplementation((key: string) =>
-      Promise.resolve(
-        {
-          ACCESS_FINE_LOCATION: params.accessFineLocationResult,
-        }[key],
+    check: vi
+      .fn()
+      .mockImplementation(
+        (permission: Permission) => params.mockCheckResults[permission],
       ),
-    ),
     requestMultiple: vi
       .fn()
-      .mockImplementation(() =>
-        Promise.resolve(params.requestPermissionResult),
-      ),
+      .mockImplementation(() => Promise.resolve(params.mockRequestResults)),
   });
 
   const transport = new TestTransportBuilder()
@@ -262,11 +258,9 @@ async function testAndroidPermissions(
 
   const result = await transport.checkAndRequestPermissions();
 
-  if (expects.callRequestPermission) {
-    expect(permissionsAndroid.request).toHaveBeenCalledWith(
-      "ACCESS_FINE_LOCATION",
-    );
-  }
+  expect(permissionsAndroid.requestMultiple).toBeCalledTimes(
+    expects.callsRequestMultiple ? 1 : 0,
+  );
   expect(result).toBe(expects.result);
 }
 
@@ -313,7 +307,7 @@ describe("RNBleTransport", () => {
   });
 
   describe("isSupported", () => {
-    it("should return true if platform is ios", async () => {
+    it("should return true if platform is ios", () => {
       const transport = new TestTransportBuilder()
         .withPlatform(IOS_PLATFORM)
         .build();
@@ -323,7 +317,7 @@ describe("RNBleTransport", () => {
       expect(isSupported).toBe(true);
     });
 
-    it("should return true if platform is android", async () => {
+    it("should return true if platform is android", () => {
       const transport = new TestTransportBuilder()
         .withPlatform(ANDROID_PLATFORM as Platform)
         .build();
@@ -333,7 +327,7 @@ describe("RNBleTransport", () => {
       expect(isSupported).toBe(true);
     });
 
-    it("should return false if platform is not android nor ios", async () => {
+    it("should return false if platform is not android nor ios", () => {
       const transport = new TestTransportBuilder()
         .withPlatform(WINDOWS_PLATFORM)
         .build();
@@ -345,71 +339,172 @@ describe("RNBleTransport", () => {
   });
 
   describe("checkAndRequestPermissions", () => {
-    // it("should return true if platform is android and apiLevel < 31 with good permissions", async () => {
-    //   await testAndroidPermissions(
-    //     {
-    //       version: 30,
-    //       requestPermissionResult: {
-    //         "android.permission.BLUETOOTH_CONNECT": "granted",
-    //         "android.permission.BLUETOOTH_SCAN": "granted",
-    //       },
-    //     },
-    //     {
-    //       result: true,
-    //       callRequestPermission: false,
-    //     },
-    //   );
-    // });
-
-    it("should return true if platform is android and apiLevel >= 31 with good permissions", async () => {
-      await testAndroidPermissions(
-        {
-          version: 31,
-          requestPermissionResult: {
-            "android.permission.BLUETOOTH_CONNECT": "granted",
-            "android.permission.BLUETOOTH_SCAN": "granted",
-            "android.permission.ACCESS_FINE_LOCATION": "granted",
+    // use testAndroidPermissions to test the different cases
+    describe("Android <= 9 (API <=28)", () => {
+      it("should return true if permissions are already granted", async () => {
+        await testAndroidPermissions(
+          {
+            version: 28,
+            mockCheckResults: {
+              "android.permission.ACCESS_COARSE_LOCATION": true,
+            },
+            mockRequestResults: {},
           },
-        },
-        {
-          result: true,
-          callRequestPermission: false,
-        },
-      );
+          {
+            result: true,
+            callsRequestMultiple: false,
+          },
+        );
+      });
+
+      it("should return false if permissions are requested but not granted", async () => {
+        await testAndroidPermissions(
+          {
+            version: 28,
+            mockCheckResults: {
+              "android.permission.ACCESS_COARSE_LOCATION": false,
+            },
+            mockRequestResults: {
+              "android.permission.ACCESS_COARSE_LOCATION": "denied",
+            },
+          },
+          {
+            result: false,
+            callsRequestMultiple: true,
+          },
+        );
+      });
+
+      it("should return true if permissions are requested and granted", async () => {
+        await testAndroidPermissions(
+          {
+            version: 28,
+            mockCheckResults: {},
+            mockRequestResults: {
+              "android.permission.ACCESS_COARSE_LOCATION": "granted",
+            },
+          },
+          {
+            result: true,
+            callsRequestMultiple: true,
+          },
+        );
+      });
     });
 
-    it("should return false if platform is android with bad permissions", async () => {
-      await testAndroidPermissions(
-        {
-          version: 31,
-          requestPermissionResult: {
-            "android.permission.ACCESS_FINE_LOCATION": "denied",
-            "android.permission.BLUETOOTH_CONNECT": "granted",
-            "android.permission.BLUETOOTH_SCAN": "granted",
-          },
-        },
-        {
-          result: false,
-          callRequestPermission: false,
-        },
-      );
+    describe("Android 10, 11 (API 29, 30)", () => {
+      [29, 30].forEach((version) => {
+        it(`should return true if permissions are already granted for API ${version}`, async () => {
+          await testAndroidPermissions(
+            {
+              version: version,
+              mockCheckResults: {
+                "android.permission.ACCESS_FINE_LOCATION": true,
+              },
+              mockRequestResults: {},
+            },
+            {
+              result: true,
+              callsRequestMultiple: false,
+            },
+          );
+        });
+
+        it(`should return false if permissions are requested but not granted for API ${version}`, async () => {
+          await testAndroidPermissions(
+            {
+              version: version,
+              mockCheckResults: {
+                "android.permission.ACCESS_FINE_LOCATION": false,
+              },
+              mockRequestResults: {
+                "android.permission.ACCESS_FINE_LOCATION": "denied",
+              },
+            },
+            {
+              result: false,
+              callsRequestMultiple: true,
+            },
+          );
+        });
+
+        it(`should return true if permissions are requested and granted for API ${version}`, async () => {
+          await testAndroidPermissions(
+            {
+              version: version,
+              mockCheckResults: {},
+              mockRequestResults: {
+                "android.permission.ACCESS_FINE_LOCATION": "granted",
+              },
+            },
+            {
+              result: true,
+              callsRequestMultiple: true,
+            },
+          );
+        });
+      });
     });
 
-    it("should return false if platform is android and denied permissions", async () => {
-      await testAndroidPermissions(
-        {
-          version: 31,
-          requestPermissionResult: {
-            "android.permission.BLUETOOTH_CONNECT": "denied",
-            "android.permission.BLUETOOTH_SCAN": "denied",
-            "android.permission.ACCESS_FINE_LOCATION": "denied",
-          },
-        },
-        {
-          result: false,
-          callRequestPermission: false,
-        },
-      );
+    describe("Android >=12 (API =>31+)", () => {
+      [31, 32, 33].forEach((version) => {
+        it(`should return true if permissions are already granted for API ${version}`, async () => {
+          await testAndroidPermissions(
+            {
+              version: version,
+              mockCheckResults: {
+                "android.permission.BLUETOOTH_SCAN": true,
+                "android.permission.BLUETOOTH_CONNECT": true,
+              },
+              mockRequestResults: {},
+            },
+            {
+              result: true,
+              callsRequestMultiple: false,
+            },
+          );
+        });
+
+        it(`should return false if permissions are requested but not all granted for API ${version}`, async () => {
+          await testAndroidPermissions(
+            {
+              version: version,
+              mockCheckResults: {
+                "android.permission.BLUETOOTH_SCAN": true,
+                "android.permission.BLUETOOTH_CONNECT": false,
+              },
+              mockRequestResults: {
+                "android.permission.BLUETOOTH_SCAN": "granted",
+                "android.permission.BLUETOOTH_CONNECT": "denied",
+              },
+            },
+            {
+              result: false,
+              callsRequestMultiple: true,
+            },
+          );
+        });
+
+        it(`should return true if permissions are requested and all granted for API ${version}`, async () => {
+          await testAndroidPermissions(
+            {
+              version: version,
+              mockCheckResults: {
+                "android.permission.BLUETOOTH_SCAN": false,
+                "android.permission.BLUETOOTH_CONNECT": false,
+              },
+              mockRequestResults: {
+                "android.permission.BLUETOOTH_SCAN": "granted",
+                "android.permission.BLUETOOTH_CONNECT": "granted",
+              },
+            },
+            {
+              result: true,
+              callsRequestMultiple: true,
+            },
+          );
+        });
+      });
     });
   });
 
