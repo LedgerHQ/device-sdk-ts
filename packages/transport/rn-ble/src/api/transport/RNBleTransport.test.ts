@@ -1,9 +1,5 @@
 /* eslint @typescript-eslint/consistent-type-imports: off */
-import { PermissionsAndroid, type Platform } from "react-native";
-import {
-  Permission,
-  type PermissionStatus,
-} from "react-native/Libraries/PermissionsAndroid/PermissionsAndroid";
+import { type Platform } from "react-native";
 import { BleManager, type Device, State } from "react-native-ble-plx";
 import {
   type ApduReceiverServiceFactory,
@@ -24,9 +20,13 @@ import { Left, Right } from "purify-ts";
 import { lastValueFrom, Subscription, take } from "rxjs";
 import { beforeEach, expect } from "vitest";
 
-import { PermissionsAndroidNarrowedType } from "./PermissionsAndroidNarrowedType";
+import { BleNotSupported, BlePermissionsNotGranted } from "@api/model/Errors";
+import { DefaultPermissionsService } from "@api/permissions/DefaultPermissionsService";
+import { PermissionsService } from "@api/permissions/PermissionsService";
+
 import { type RNBleApduSenderDependencies } from "./RNBleApduSender";
-import { RNBleTransport, RNBleTransportFactory } from "./RNBleTransport";
+import { RNBleTransport } from "./RNBleTransport";
+import { RNBleTransportFactory } from "./RNBleTransportFactory";
 
 // ===== MOCKS =====
 const fakeLogger = {
@@ -91,8 +91,8 @@ class TestTransportBuilder {
     (() => {}) as unknown as ApduReceiverServiceFactory;
   private bleManager = new BleManager();
   private platform: Platform = IOS_PLATFORM;
-  private permissionsAndroid: PermissionsAndroidNarrowedType =
-    {} as unknown as PermissionsAndroidNarrowedType;
+  private permissionsService: PermissionsService =
+    new DefaultPermissionsService();
   private deviceConnectionStateMachineFactory?: (
     args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
   ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies>;
@@ -109,8 +109,8 @@ class TestTransportBuilder {
     return this;
   }
 
-  withPermissionsAndroid(permissions: PermissionsAndroidNarrowedType) {
-    this.permissionsAndroid = permissions;
+  withPermissionsService(permissions: PermissionsService) {
+    this.permissionsService = permissions;
     return this;
   }
 
@@ -142,7 +142,7 @@ class TestTransportBuilder {
       this.apduReceiverServiceFactory,
       this.bleManager,
       this.platform,
-      this.permissionsAndroid,
+      this.permissionsService,
       this.deviceConnectionStateMachineFactory,
       this.deviceApduSenderFactory,
     );
@@ -198,70 +198,6 @@ function createMockBleManager(overrides: Partial<BleManager> = {}): BleManager {
   } as unknown as BleManager;
 
   return mockBleManager;
-}
-
-function createMockPermissionsAndroid(
-  overrides: Partial<PermissionsAndroid> = {},
-): PermissionsAndroidNarrowedType {
-  return {
-    request: vi.fn(),
-    requestMultiple: vi.fn(),
-    check: vi.fn(),
-    PERMISSIONS: {
-      ACCESS_COARSE_LOCATION: "android.permission.ACCESS_COARSE_LOCATION",
-      ACCESS_FINE_LOCATION: "android.permission.ACCESS_FINE_LOCATION",
-      BLUETOOTH_SCAN: "android.permission.BLUETOOTH_SCAN",
-      BLUETOOTH_CONNECT: "android.permission.BLUETOOTH_CONNECT",
-    },
-    RESULTS: {
-      GRANTED: "granted",
-      DENIED: "denied",
-      NEVER_ASK_AGAIN: "never_ask_again",
-    },
-    ...overrides,
-  } as unknown as PermissionsAndroidNarrowedType;
-}
-
-// ===== ANDROID PERMISSION TEST HELPER =====
-async function testAndroidPermissions(
-  params: {
-    version: number;
-    mockCheckResults: Partial<Record<Permission, boolean>>;
-    mockRequestResults: Partial<Record<Permission, PermissionStatus>>;
-  },
-  expects: {
-    /** What's the end result of the checkAndRequestPermissions call*/
-    result: boolean;
-    /** Whether the requestMultiple method was called */
-    callsRequestMultiple: boolean;
-  },
-) {
-  const platform = {
-    OS: "android" as const,
-    Version: params.version,
-  } as Platform;
-  const permissionsAndroid = createMockPermissionsAndroid({
-    check: vi
-      .fn()
-      .mockImplementation(
-        (permission: Permission) => params.mockCheckResults[permission],
-      ),
-    requestMultiple: vi
-      .fn()
-      .mockImplementation(() => Promise.resolve(params.mockRequestResults)),
-  });
-
-  const transport = new TestTransportBuilder()
-    .withPlatform(platform as Platform)
-    .withPermissionsAndroid(permissionsAndroid)
-    .build();
-
-  const result = await transport.checkAndRequestPermissions();
-
-  expect(permissionsAndroid.requestMultiple).toBeCalledTimes(
-    expects.callsRequestMultiple ? 1 : 0,
-  );
-  expect(result).toBe(expects.result);
 }
 
 // ===== TEST SUITES =====
@@ -338,176 +274,6 @@ describe("RNBleTransport", () => {
     });
   });
 
-  describe("checkAndRequestPermissions", () => {
-    // use testAndroidPermissions to test the different cases
-    describe("Android <= 9 (API <=28)", () => {
-      it("should return true if permissions are already granted", async () => {
-        await testAndroidPermissions(
-          {
-            version: 28,
-            mockCheckResults: {
-              "android.permission.ACCESS_COARSE_LOCATION": true,
-            },
-            mockRequestResults: {},
-          },
-          {
-            result: true,
-            callsRequestMultiple: false,
-          },
-        );
-      });
-
-      it("should return false if permissions are requested but not granted", async () => {
-        await testAndroidPermissions(
-          {
-            version: 28,
-            mockCheckResults: {
-              "android.permission.ACCESS_COARSE_LOCATION": false,
-            },
-            mockRequestResults: {
-              "android.permission.ACCESS_COARSE_LOCATION": "denied",
-            },
-          },
-          {
-            result: false,
-            callsRequestMultiple: true,
-          },
-        );
-      });
-
-      it("should return true if permissions are requested and granted", async () => {
-        await testAndroidPermissions(
-          {
-            version: 28,
-            mockCheckResults: {},
-            mockRequestResults: {
-              "android.permission.ACCESS_COARSE_LOCATION": "granted",
-            },
-          },
-          {
-            result: true,
-            callsRequestMultiple: true,
-          },
-        );
-      });
-    });
-
-    describe("Android 10, 11 (API 29, 30)", () => {
-      [29, 30].forEach((version) => {
-        it(`should return true if permissions are already granted for API ${version}`, async () => {
-          await testAndroidPermissions(
-            {
-              version: version,
-              mockCheckResults: {
-                "android.permission.ACCESS_FINE_LOCATION": true,
-              },
-              mockRequestResults: {},
-            },
-            {
-              result: true,
-              callsRequestMultiple: false,
-            },
-          );
-        });
-
-        it(`should return false if permissions are requested but not granted for API ${version}`, async () => {
-          await testAndroidPermissions(
-            {
-              version: version,
-              mockCheckResults: {
-                "android.permission.ACCESS_FINE_LOCATION": false,
-              },
-              mockRequestResults: {
-                "android.permission.ACCESS_FINE_LOCATION": "denied",
-              },
-            },
-            {
-              result: false,
-              callsRequestMultiple: true,
-            },
-          );
-        });
-
-        it(`should return true if permissions are requested and granted for API ${version}`, async () => {
-          await testAndroidPermissions(
-            {
-              version: version,
-              mockCheckResults: {},
-              mockRequestResults: {
-                "android.permission.ACCESS_FINE_LOCATION": "granted",
-              },
-            },
-            {
-              result: true,
-              callsRequestMultiple: true,
-            },
-          );
-        });
-      });
-    });
-
-    describe("Android >=12 (API =>31+)", () => {
-      [31, 32, 33].forEach((version) => {
-        it(`should return true if permissions are already granted for API ${version}`, async () => {
-          await testAndroidPermissions(
-            {
-              version: version,
-              mockCheckResults: {
-                "android.permission.BLUETOOTH_SCAN": true,
-                "android.permission.BLUETOOTH_CONNECT": true,
-              },
-              mockRequestResults: {},
-            },
-            {
-              result: true,
-              callsRequestMultiple: false,
-            },
-          );
-        });
-
-        it(`should return false if permissions are requested but not all granted for API ${version}`, async () => {
-          await testAndroidPermissions(
-            {
-              version: version,
-              mockCheckResults: {
-                "android.permission.BLUETOOTH_SCAN": true,
-                "android.permission.BLUETOOTH_CONNECT": false,
-              },
-              mockRequestResults: {
-                "android.permission.BLUETOOTH_SCAN": "granted",
-                "android.permission.BLUETOOTH_CONNECT": "denied",
-              },
-            },
-            {
-              result: false,
-              callsRequestMultiple: true,
-            },
-          );
-        });
-
-        it(`should return true if permissions are requested and all granted for API ${version}`, async () => {
-          await testAndroidPermissions(
-            {
-              version: version,
-              mockCheckResults: {
-                "android.permission.BLUETOOTH_SCAN": false,
-                "android.permission.BLUETOOTH_CONNECT": false,
-              },
-              mockRequestResults: {
-                "android.permission.BLUETOOTH_SCAN": "granted",
-                "android.permission.BLUETOOTH_CONNECT": "granted",
-              },
-            },
-            {
-              result: true,
-              callsRequestMultiple: true,
-            },
-          );
-        });
-      });
-    });
-  });
-
   describe("startDiscovering", () => {
     it("should emit an empty array", () =>
       new Promise((done, reject) => {
@@ -562,6 +328,199 @@ describe("RNBleTransport", () => {
   });
 
   describe("listenToAvailableDevices", () => {
+    it("should emit an error if platform is not android nor ios", async () => {
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager())
+        .withPlatform(WINDOWS_PLATFORM)
+        .build();
+
+      return new Promise((done, reject) => {
+        transport.listenToAvailableDevices().subscribe({
+          next: () => {
+            reject(new Error("Should not emit any value"));
+          },
+          error: (e) => {
+            try {
+              expect(e).toBeInstanceOf(BleNotSupported);
+            } catch (innerError) {
+              reject(innerError);
+            }
+            done(undefined);
+          },
+          complete: () => {
+            reject(new Error("Should not complete"));
+          },
+        });
+      });
+    });
+
+    describe("permissions check", () => {
+      const checkPermissions = vi.fn();
+      const requestPermissions = vi.fn();
+
+      const mockedPermissionsService = {
+        checkRequiredPermissions: checkPermissions,
+        requestRequiredPermissions: requestPermissions,
+      };
+
+      const startDeviceScan = vi.fn();
+      const bleManager = createMockBleManager({
+        startDeviceScan: startDeviceScan,
+        stopDeviceScan: vi.fn(),
+        connectedDevices: vi.fn().mockResolvedValue([]),
+        onDeviceDisconnected: vi.fn(),
+        isDeviceConnected: vi.fn(),
+        onStateChange: (listener: (state: State) => void) => {
+          listener(State.PoweredOn);
+          return { remove: vi.fn() };
+        },
+      });
+
+      it("should call checkPermissions", async () => {
+        const transport = new TestTransportBuilder()
+          .withBleManager(bleManager)
+          .withPlatform(IOS_PLATFORM)
+          .withPermissionsService(mockedPermissionsService)
+          .build();
+
+        const observable = transport.listenToAvailableDevices();
+
+        return new Promise((done, reject) => {
+          observable.subscribe({
+            next: () => {
+              try {
+                expect(checkPermissions).toHaveBeenCalled();
+              } catch (e) {
+                reject(e);
+              }
+              done(undefined);
+            },
+            error: (e) => {
+              reject(e);
+            },
+          });
+        });
+      });
+
+      it("should call BleManager.startDeviceScan if checkPermissions resolves to true", async () => {
+        checkPermissions.mockResolvedValue(true);
+
+        const transport = new TestTransportBuilder()
+          .withBleManager(bleManager)
+          .withPlatform(IOS_PLATFORM)
+          .withPermissionsService(mockedPermissionsService)
+          .build();
+
+        const observable = transport.listenToAvailableDevices();
+
+        return new Promise((done, reject) => {
+          observable.subscribe({
+            next: () => {
+              try {
+                expect(startDeviceScan).toHaveBeenCalled();
+              } catch (e) {
+                reject(e);
+              }
+              done(undefined);
+            },
+            error: (e) => {
+              reject(e);
+            },
+          });
+        });
+      });
+
+      it("should call requestPermissions if checkPermissions resolves to false", async () => {
+        checkPermissions.mockResolvedValue(false);
+
+        const transport = new TestTransportBuilder()
+          .withBleManager(bleManager)
+          .withPlatform(IOS_PLATFORM)
+          .withPermissionsService(mockedPermissionsService)
+          .build();
+
+        const observable = transport.listenToAvailableDevices();
+
+        return new Promise((done, reject) => {
+          observable.subscribe({
+            next: () => {
+              try {
+                expect(requestPermissions).toHaveBeenCalled();
+              } catch (e) {
+                reject(e);
+              }
+              done(undefined);
+            },
+            complete: () => {
+              reject(new Error("Should not complete"));
+            },
+            error: (e) => {
+              reject(e);
+            },
+          });
+        });
+      });
+
+      it("should call BleManager.startDeviceScan if requestPermissions resolves to true", async () => {
+        checkPermissions.mockResolvedValue(false);
+        requestPermissions.mockResolvedValue(true);
+
+        const transport = new TestTransportBuilder()
+          .withBleManager(bleManager)
+          .withPlatform(IOS_PLATFORM)
+          .withPermissionsService(mockedPermissionsService)
+          .build();
+
+        const observable = transport.listenToAvailableDevices();
+
+        let nextCount = 0; // Because an empty array is initially emitted
+        return new Promise((done, reject) => {
+          observable.subscribe({
+            next: () => {
+              nextCount++;
+              if (nextCount > 1) {
+                try {
+                  expect(startDeviceScan).toHaveBeenCalled();
+                } catch (e) {
+                  reject(e);
+                }
+                done(undefined);
+              }
+            },
+          });
+        });
+      });
+
+      it("should emit an error if checkPermissions and requestPermissions resolve to false", async () => {
+        checkPermissions.mockResolvedValue(false);
+        requestPermissions.mockResolvedValue(false);
+
+        const transport = new TestTransportBuilder()
+          .withBleManager(bleManager)
+          .withPlatform(IOS_PLATFORM)
+          .withPermissionsService(mockedPermissionsService)
+          .build();
+
+        const observable = transport.listenToAvailableDevices();
+
+        return new Promise((done, reject) => {
+          observable.subscribe({
+            error: (e) => {
+              try {
+                expect(e).toBeInstanceOf(BlePermissionsNotGranted);
+              } catch (innerError) {
+                reject(innerError);
+              }
+              done(undefined);
+            },
+            complete: () => {
+              reject(new Error("Should not complete"));
+            },
+          });
+        });
+      });
+    });
+
     it("should return already connected devices and scanned devices", () =>
       new Promise((done, reject) => {
         let scanInterval: NodeJS.Timeout | null = null;
