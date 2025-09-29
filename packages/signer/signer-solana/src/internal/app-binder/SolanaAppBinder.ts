@@ -13,6 +13,7 @@ import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTy
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
 import { externalTypes } from "@internal/externalTypes";
@@ -53,7 +54,7 @@ export class SolanaAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Transaction;
-    skipOpenApp: boolean;
+    solanaTransactionOptionalConfig?: SolanaTransactionOptionalConfig;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -61,7 +62,7 @@ export class SolanaAppBinder {
         input: {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
-          skipOpenApp: args.skipOpenApp,
+          transactionOptions: args.solanaTransactionOptionalConfig,
           contextModule: this.contextModule,
         },
       }),

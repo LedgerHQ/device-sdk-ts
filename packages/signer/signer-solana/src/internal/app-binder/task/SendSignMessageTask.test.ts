@@ -6,9 +6,9 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import bs58 from "bs58";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
+import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import {
   MAX_MESSAGE_LENGTH,
   SendSignMessageTask,
@@ -16,7 +16,7 @@ import {
 
 const DERIVATION_PATH = "44'/501'/0'/0'";
 const PUBKEY = new Uint8Array(32).fill(0x00);
-const PUBKEY_BASE58 = bs58.encode(PUBKEY);
+const PUBKEY_BASE58 = DefaultBs58Encoder.encode(PUBKEY);
 const MESSAGE = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
 
 describe("SendSignMessageTask", () => {
