@@ -1,5 +1,13 @@
 # @ledgerhq/device-transport-kit-react-native-ble
 
+## 1.1.1
+
+### Patch Changes
+
+- [#1031](https://github.com/LedgerHQ/device-sdk-ts/pull/1031) [`527f648`](https://github.com/LedgerHQ/device-sdk-ts/commit/527f648476c162df99133e469b19f48966a84c72) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Fix reconnection & discovery issues
+
+- [#1045](https://github.com/LedgerHQ/device-sdk-ts/pull/1045) [`bcdee77`](https://github.com/LedgerHQ/device-sdk-ts/commit/bcdee77a8409894db0ce6d45b517f49950ea5320) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Fix BLE scanning issue on Android 16 by first checking permissions before requesting them
+
 ## 1.1.0
 
 ### Patch Changes
