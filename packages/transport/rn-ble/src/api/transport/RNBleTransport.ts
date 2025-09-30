@@ -1,7 +1,7 @@
-import { PermissionsAndroid, Platform } from "react-native";
+import { Platform } from "react-native";
 import {
   BleError,
-  BleManager,
+  type BleManager,
   type Device,
   State,
   type Subscription as BleSubscription,
@@ -23,7 +23,6 @@ import {
   TransportConnectedDevice,
   type TransportDeviceModel,
   type TransportDiscoveredDevice,
-  type TransportFactory,
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
@@ -38,6 +37,7 @@ import {
   retry,
   type Subscription,
   switchMap,
+  tap,
   throttleTime,
   throwError,
 } from "rxjs";
@@ -50,10 +50,12 @@ import {
 } from "@api/model/Const";
 import {
   BleNotSupported,
+  BlePermissionsNotGranted,
   DeviceConnectionNotFound,
   NoDeviceModelFoundError,
   PeerRemovedPairingError,
 } from "@api/model/Errors";
+import { type PermissionsService } from "@api/permissions/PermissionsService";
 import {
   RNBleApduSender,
   type RNBleApduSenderConstructorArgs,
@@ -70,7 +72,6 @@ type InternalScannedDevice = {
 
 export class RNBleTransport implements Transport {
   private _logger: LoggerPublisherService;
-  private _isSupported: Maybe<boolean>;
   private _deviceConnectionsById: Map<
     DeviceId,
     DeviceConnectionStateMachine<RNBleApduSenderDependencies>
@@ -89,8 +90,8 @@ export class RNBleTransport implements Transport {
     private readonly _apduSenderFactory: ApduSenderServiceFactory,
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
     private readonly _manager: BleManager,
-    private readonly _platform: Platform = Platform,
-    private readonly _permissionsAndroid: PermissionsAndroid = PermissionsAndroid,
+    private readonly _platform: Platform,
+    private readonly _permissionsService: PermissionsService,
     private readonly _deviceConnectionStateMachineFactory: (
       args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
     ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies> = (args) =>
@@ -102,10 +103,10 @@ export class RNBleTransport implements Transport {
       new RNBleApduSender(args, loggerFactory),
   ) {
     this._logger = _loggerServiceFactory("ReactNativeBleTransport");
-    this._isSupported = Maybe.zero();
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
     this._manager.onStateChange((state) => {
+      this._logger.debug("[manager.onStateChange]", { data: { state } });
       this._bleStateSubject.next(state);
     }, true);
   }
@@ -145,18 +146,25 @@ export class RNBleTransport implements Transport {
 
     this._startedScanningSubscriber = from(this._bleStateSubject)
       .pipe(
+        tap(() => {
+          if (!this.isSupported()) {
+            throw new BleNotSupported("BLE not supported");
+          }
+        }),
         filter((state) => state === "PoweredOn"),
-        switchMap(() => this.requestPermission()),
-        switchMap((isSupported) => {
-          if (!isSupported) {
-            return throwError(() => new BleNotSupported("BLE not supported"));
+        switchMap(async () => this.checkAndRequestPermissions()),
+        switchMap((hasPermissions) => {
+          if (!hasPermissions) {
+            return throwError(
+              () => new BlePermissionsNotGranted("Permissions not granted"),
+            );
           }
 
           const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
           this._maybeScanningSubject = Maybe.of(subject);
           const devicesById = new Map<string, InternalScannedDevice>();
 
-          this._logger.info("[RNBleTransport][startScanning] startDeviceScan");
+          this._logger.info("[startScanning] startDeviceScan");
           this._manager.startDeviceScan(
             this._deviceModelDataSource.getBluetoothServices(),
             { allowDuplicates: true },
@@ -172,6 +180,8 @@ export class RNBleTransport implements Transport {
               subject.next(Array.from(devicesById.values()));
             },
           );
+
+          this._logger.debug("[startScanning] after startDeviceScan");
 
           /**
            * In case there is no update from startDeviceScan, we still emit the
@@ -201,6 +211,7 @@ export class RNBleTransport implements Transport {
         },
         error: (error) => {
           this._logger.error("Error while scanning", { data: { error } });
+          this._scannedDevicesSubject.error(error);
         },
       });
   }
@@ -524,12 +535,7 @@ export class RNBleTransport implements Transport {
    * Throws an error if the `_isSupported` property has not been initialized.
    */
   isSupported(): boolean {
-    return this._isSupported.caseOf({
-      Just: (isSupported) => isSupported,
-      Nothing: () => {
-        throw new Error("Should initialize permission");
-      },
-    });
+    return ["android", "ios"].includes(this._platform.OS);
   }
 
   /**
@@ -542,62 +548,18 @@ export class RNBleTransport implements Transport {
   }
 
   /**
-   * Requests the necessary permissions based on the operating system.
-   * For iOS, it automatically sets the permissions as granted.
-   * For Android, it checks and requests location, Bluetooth scan, and Bluetooth connect permissions, depending on the API level.
-   * If permissions are granted, updates the internal support state and logs the result.
-   *
-   * @return {Promise<boolean>} A promise that resolves to true if the required permissions are granted, otherwise false.
+   * Checks if the necessary permissions are granted and requests them if not.
    */
-  async requestPermission(): Promise<boolean> {
-    if (this._platform.OS === "ios") {
-      this._isSupported = Maybe.of(true);
-      return true;
-    }
+  async checkAndRequestPermissions(): Promise<boolean> {
+    this._logger.debug("[checkAndRequestPermissions] Called");
 
-    if (
-      this._platform.OS === "android" &&
-      this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"]
-    ) {
-      const apiLevel = parseInt(this._platform.Version.toString(), 10);
+    const checkResult =
+      await this._permissionsService.checkRequiredPermissions();
+    if (checkResult) return true;
 
-      if (apiLevel < 31) {
-        const granted = await this._permissionsAndroid.request(
-          this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
-        );
-        this._isSupported = Maybe.of(
-          granted === this._permissionsAndroid.RESULTS["GRANTED"],
-        );
-      }
-      if (
-        this._permissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"] &&
-        this._permissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"]
-      ) {
-        const result = await this._permissionsAndroid.requestMultiple([
-          this._permissionsAndroid.PERMISSIONS["BLUETOOTH_SCAN"],
-          this._permissionsAndroid.PERMISSIONS["BLUETOOTH_CONNECT"],
-          this._permissionsAndroid.PERMISSIONS["ACCESS_FINE_LOCATION"],
-        ]);
-
-        this._isSupported = Maybe.of(
-          result["android.permission.BLUETOOTH_CONNECT"] ===
-            this._permissionsAndroid.RESULTS["GRANTED"] &&
-            result["android.permission.BLUETOOTH_SCAN"] ===
-              this._permissionsAndroid.RESULTS["GRANTED"] &&
-            result["android.permission.ACCESS_FINE_LOCATION"] ===
-              this._permissionsAndroid.RESULTS["GRANTED"],
-        );
-
-        return true;
-      }
-    }
-
-    this._logger.error("Permission have not been granted", {
-      data: { isSupported: this._isSupported.extract() },
-    });
-
-    this._isSupported = Maybe.of(false);
-    return false;
+    const requestResult =
+      await this._permissionsService.requestRequiredPermissions();
+    return requestResult;
   }
 
   /**
@@ -804,17 +766,3 @@ export class RNBleTransport implements Transport {
     }
   }
 }
-
-export const RNBleTransportFactory: TransportFactory = ({
-  deviceModelDataSource,
-  loggerServiceFactory,
-  apduSenderServiceFactory,
-  apduReceiverServiceFactory,
-}) =>
-  new RNBleTransport(
-    deviceModelDataSource,
-    loggerServiceFactory,
-    apduSenderServiceFactory,
-    apduReceiverServiceFactory,
-    new BleManager(),
-  );
