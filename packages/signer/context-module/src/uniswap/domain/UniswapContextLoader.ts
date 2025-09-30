@@ -1,10 +1,4 @@
-import {
-  bufferToHexaString,
-  ByteArrayBuilder,
-  HexaString,
-  hexaStringToBuffer,
-  isHexaString,
-} from "@ledgerhq/device-management-kit";
+import { HexaString, isHexaString } from "@ledgerhq/device-management-kit";
 import { Interface } from "ethers";
 import { inject, injectable } from "inversify";
 import { Maybe, Nothing } from "purify-ts";
@@ -17,31 +11,22 @@ import {
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
 import {
-  UNISWAP_PLUGIN_NAME,
-  UNISWAP_PLUGIN_SIGNATURE,
-} from "@/uniswap/constants/plugin";
-import {
   UNISWAP_COMMANDS,
   UNISWAP_EXECUTE_ABI,
   UNISWAP_EXECUTE_SELECTOR,
   UNISWAP_SWAP_COMMANDS,
-  UNISWAP_UNIVERSAL_ROUTER_ADDRESS,
   UniswapSupportedCommand,
 } from "@/uniswap/constants/uniswap";
 import { type CommandDecoderDataSource } from "@/uniswap/data/CommandDecoderDataSource";
 import { uniswapTypes } from "@/uniswap/di/uniswapTypes";
 
 export type UniswapContextInput = {
-  to: HexaString;
   data: HexaString;
   selector: HexaString;
   chainId: number;
 };
 
-const SUPPORTED_TYPES: ClearSignContextType[] = [
-  ClearSignContextType.EXTERNAL_PLUGIN,
-  ClearSignContextType.TOKEN,
-];
+const SUPPORTED_TYPES: ClearSignContextType[] = [ClearSignContextType.TOKEN];
 
 @injectable()
 export class UniswapContextLoader
@@ -61,7 +46,6 @@ export class UniswapContextLoader
     return (
       typeof input === "object" &&
       input !== null &&
-      "to" in input &&
       "data" in input &&
       "selector" in input &&
       "chainId" in input &&
@@ -70,43 +54,13 @@ export class UniswapContextLoader
       input.data !== "0x" &&
       isHexaString(input.selector) &&
       input.selector === UNISWAP_EXECUTE_SELECTOR &&
-      isHexaString(input.to) &&
-      input.to === UNISWAP_UNIVERSAL_ROUTER_ADDRESS &&
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 
   async load(input: UniswapContextInput): Promise<ClearSignContext[]> {
     const { data, chainId } = input;
-
-    const externalPluginContext = this._buildUniswapPluginCommandData();
-    const tokenContexts = await this._extractClearSignContexts(data, chainId);
-
-    if (tokenContexts.length > 0)
-      return [externalPluginContext, ...tokenContexts];
-
-    return [];
-  }
-
-  /**
-   * Constructs the external plugin context for Uniswap external plugin command.
-   *
-   * @private
-   * @returns {ClearSignContext} - The generated external plugin context.
-   */
-  private _buildUniswapPluginCommandData(): ClearSignContext {
-    const buffer = new ByteArrayBuilder()
-      .add8BitUIntToData(UNISWAP_PLUGIN_NAME.length)
-      .addAsciiStringToData(UNISWAP_PLUGIN_NAME)
-      .addBufferToData(hexaStringToBuffer(UNISWAP_UNIVERSAL_ROUTER_ADDRESS)!)
-      .addBufferToData(hexaStringToBuffer(UNISWAP_EXECUTE_SELECTOR)!)
-      .addBufferToData(hexaStringToBuffer(UNISWAP_PLUGIN_SIGNATURE)!)
-      .build();
-
-    return {
-      type: ClearSignContextType.EXTERNAL_PLUGIN,
-      payload: bufferToHexaString(buffer, false),
-    };
+    return await this._extractClearSignContexts(data, chainId);
   }
 
   /**
