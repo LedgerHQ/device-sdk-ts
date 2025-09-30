@@ -1,38 +1,41 @@
 {
-  "name": "@ledgerhq/ethereum-clear-signing-tester",
-  "version": "1.0.0",
-  "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
-  "main": "test-ethereum-transactions.ts",
-  "exports": {
-    ".": {
-      "types": "./lib/types/index.d.ts",
-      "import": "./lib/esm/index.js",
-      "require": "./lib/cjs/index.js"
+    "name": "@ledgerhq/ethereum-clear-signing-tester",
+    "version": "1.0.0",
+    "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
+    "main": "test-ethereum-transactions.ts",
+    "exports": {
+        ".": {
+            "types": "./lib/types/index.d.ts",
+            "import": "./lib/esm/index.js",
+            "require": "./lib/cjs/index.js"
+        }
+    },
+    "scripts": {
+        "cli": "tsx src/cli/EthereumTransactionTesterCli.ts",
+        "build": "tsc",
+        "test:raw:complete": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-complete.json",
+        "test:raw:safe": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-safe.json",
+        "test:typed-data:safe": "tsx src/cli/EthereumTransactionTesterCli.ts typed-data-file ./ressources/typed-data-safe.json"
+    },
+    "dependencies": {
+        "@ledgerhq/context-module": "workspace:*",
+        "@ledgerhq/device-management-kit": "workspace:*",
+        "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
+        "@ledgerhq/device-transport-kit-speculos": "workspace:*",
+        "axios": "^1.6.0",
+        "commander": "^14.0.1",
+        "ethers": "^6.8.0",
+        "inversify": "catalog:",
+        "rxjs": "^7.8.0"
+    },
+    "devDependencies": {
+        "@ledgerhq/tsconfig-dsdk": "workspace:*",
+        "@types/node": "^20.0.0",
+        "ts-node": "catalog:",
+        "tsx": "^4.0.0",
+        "typescript": "^5.0.0"
+    },
+    "engines": {
+        "node": ">=20"
     }
-  },
-  "scripts": {
-    "test:eth": "tsx index.ts",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "build": "tsc",
-    "dev": "tsx --watch index.ts"
-  },
-  "dependencies": {
-    "@ledgerhq/context-module": "workspace:*",
-    "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/device-transport-kit-speculos": "workspace:*",
-    "axios": "^1.6.0",
-    "ethers": "^6.8.0",
-    "rxjs": "^7.8.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "tsx": "^4.0.0",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "typescript": "^5.0.0"
-  },
-  "engines": {
-    "node": ">=20"
-  }
-} 
+}
