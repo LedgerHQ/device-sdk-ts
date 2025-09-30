@@ -46,12 +46,15 @@ export class LKRPCommand {
           );
         break;
 
-      case CommandTags.AddMember:
+      case CommandTags.AddMember: {
+        const permissions = new ArrayBuffer(4);
+        new DataView(permissions).setUint32(0, data.permissions);
         tlv
           .encodeInTLVFromAscii(GeneralTags.String, data.name)
           .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.publicKey)
-          .encodeInTLVFromUInt32(GeneralTags.Int, data.permissions);
+          .encodeInTLVFromBuffer(GeneralTags.Int, new Uint8Array(permissions));
         break;
+      }
 
       case CommandTags.PublishKey:
         tlv
@@ -90,12 +93,18 @@ export class LKRPCommand {
   static bytesFromUnsignedData(data: UnsignedCommandData): Uint8Array {
     const tlv = new ByteArrayBuilder();
     switch (data.type) {
-      case CommandTags.AddMember:
+      case CommandTags.AddMember: {
+        // NOTE: encode the permission bytes array with DataView because
+        // ByteArrayBuilder.encodeInTLVFromUInt32 doesn't seem to work with negative numbers
+        // ByteArrayBuilder.add32BitIntToData doesn't seem to work with number > 0x7fffffff
+        const permissions = new ArrayBuffer(4);
+        new DataView(permissions).setUint32(0, data.permissions);
         tlv
           .encodeInTLVFromAscii(GeneralTags.String, data.name)
           .encodeInTLVFromBuffer(GeneralTags.PublicKey, data.publicKey)
-          .encodeInTLVFromUInt32(GeneralTags.Int, data.permissions);
+          .encodeInTLVFromBuffer(GeneralTags.Int, new Uint8Array(permissions));
         break;
+      }
 
       case CommandTags.PublishKey:
         tlv

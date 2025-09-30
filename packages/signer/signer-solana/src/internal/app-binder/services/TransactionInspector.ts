@@ -1,13 +1,10 @@
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  decodeInitializeAccountInstruction,
-  decodeTransferCheckedInstruction,
-  decodeTransferInstruction,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-  TokenInstruction,
 } from "@solana/spl-token";
 import {
+  Connection,
   type PublicKey,
   Transaction,
   TransactionInstruction,
@@ -16,145 +13,132 @@ import {
 } from "@solana/web3.js";
 import { Buffer } from "buffer";
 
+import {
+  DECODERS,
+  type IxContext,
+} from "@internal/app-binder/services/utils/transactionDecoders";
+
 export enum SolanaTransactionTypes {
   STANDARD = "Standard",
   SPL = "SPL",
 }
 
-export interface TxInspectorResult {
-  transactionType: SolanaTransactionTypes;
-  data: {
-    tokenAddress?: string;
-    mintAddress?: string;
-    createATA?: {
-      address: string;
-      mintAddress: string;
-    };
-  };
-}
-
-type NormalizedCompiledIx = {
+export type NormalizedCompiledIx = {
   programIdIndex: number;
   accountKeyIndexes: number[];
   data: Uint8Array;
 };
 
-type NormalizedMessage = {
+export type NormalizedMessage = {
   compiledInstructions: NormalizedCompiledIx[];
   allKeys: PublicKey[];
 };
 
+export type TxInspectorResult = {
+  transactionType: SolanaTransactionTypes;
+  data: {
+    tokenAddress?: string;
+    createATA?: { address: string; mintAddress: string };
+  };
+};
+
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
-export class TransactionInspector {
-  /**
-   * @param rawTransactionBytes - the raw tx bytes (legacy or v0)
-   */
-  constructor(private readonly rawTransactionBytes: Uint8Array) {}
+const RPC_URL = "https://api.mainnet-beta.solana.com/";
 
-  public inspectTransactionType(): TxInspectorResult {
+const defaultConnection = (rpcUrl: string) =>
+  new Connection(rpcUrl, { commitment: "confirmed" });
+
+const isSPLProgramId = (pid: PublicKey | undefined) =>
+  !!pid &&
+  (pid.equals(ASSOCIATED_TOKEN_PROGRAM_ID) ||
+    pid.equals(TOKEN_PROGRAM_ID) ||
+    pid.equals(TOKEN_2022_PROGRAM_ID));
+
+export class TransactionInspector {
+  constructor(
+    private readonly rawTransactionBytes: Uint8Array,
+    private readonly tokenAddress?: string | undefined,
+    private readonly createATA?:
+      | {
+          address: string;
+          mintAddress: string;
+        }
+      | undefined,
+    private readonly injectedRPCURL?: string | undefined,
+  ) {}
+
+  public async inspectTransactionType(): Promise<TxInspectorResult> {
     try {
-      const message = this.normaliseMessage(this.rawTransactionBytes);
+      const message = await this.normaliseMessage(this.rawTransactionBytes);
+
+      // fast path when transaction resolution is provided
+      if (this.tokenAddress || this.createATA) {
+        const looksSPL = message.compiledInstructions.some((instruction) =>
+          isSPLProgramId(message.allKeys[instruction.programIdIndex]),
+        );
+        return {
+          transactionType: looksSPL
+            ? SolanaTransactionTypes.SPL
+            : SolanaTransactionTypes.STANDARD,
+          data: {
+            ...(this.tokenAddress ? { tokenAddress: this.tokenAddress } : {}),
+            ...(this.createATA ? { createATA: this.createATA } : {}),
+          },
+        };
+      }
+
+      // accumulate best data across all instructions
+      let sawSPL = false;
+      let best: TxInspectorResult["data"] = {};
 
       for (const ixMeta of message.compiledInstructions) {
         const programId = message.allKeys[ixMeta.programIdIndex];
-        if (!programId) continue;
+        if (!programId) continue; // unresolved index, skip
+        if (isSPLProgramId(programId)) sawSPL = true;
 
-        // Associated Token Account (ATA) Program: detect ATA creation
-        if (programId.equals(ASSOCIATED_TOKEN_PROGRAM_ID)) {
-          // expected accounts: [payer, ata, owner, mint, systemProgram, tokenProgram, rent?]
-          const accountPks = ixMeta.accountKeyIndexes
-            .map((i) => message.allKeys[i])
-            .filter(Boolean) as PublicKey[];
-          const ataPk = accountPks[1];
-          const mintPk = accountPks[3];
-          if (ataPk && mintPk) {
-            return {
-              transactionType: SolanaTransactionTypes.SPL,
-              data: {
-                createATA: {
-                  address: ataPk.toBase58(),
-                  mintAddress: mintPk.toBase58(),
-                },
-              },
-            };
-          }
-          continue;
-        }
+        const resolvedKeys = ixMeta.accountKeyIndexes
+          .map((i) => message.allKeys[i])
+          .filter((k): k is PublicKey => !!k);
 
-        // Token Program (classic or 2022)
-        const isTokenProgram =
-          programId.equals(TOKEN_PROGRAM_ID) ||
-          programId.equals(TOKEN_2022_PROGRAM_ID);
-        if (!isTokenProgram) continue;
-
-        // minimal TransactionInstruction for the decoders
         const instruction = new TransactionInstruction({
           programId,
-          keys: ixMeta.accountKeyIndexes.map((i) => {
-            if (!message.allKeys[i]) {
-              throw new Error(
-                `TransactionInspector: missing key at index ${i} in allKeys`,
-              );
-            }
-            return {
-              pubkey: message.allKeys[i],
-              isSigner: false,
-              isWritable: false,
-            };
-          }),
+          keys: resolvedKeys.map((pk) => ({
+            pubkey: pk,
+            isSigner: false,
+            isWritable: false,
+          })),
           data: Buffer.from(ixMeta.data),
         });
 
-        const instructionType = instruction.data[0];
+        const ctx: IxContext = { programId, ixMeta, message, instruction };
 
-        try {
-          switch (instructionType) {
-            case TokenInstruction.Transfer: {
-              const {
-                keys: { destination },
-              } = decodeTransferInstruction(instruction);
-              return {
-                transactionType: SolanaTransactionTypes.SPL,
-                data: { tokenAddress: destination.pubkey.toBase58() },
-              };
-            }
-            case TokenInstruction.TransferChecked: {
-              const {
-                keys: { destination, mint },
-              } = decodeTransferCheckedInstruction(instruction);
-              return {
-                transactionType: SolanaTransactionTypes.SPL,
-                data: {
-                  tokenAddress: destination.pubkey.toBase58(),
-                  mintAddress: mint.pubkey.toBase58(),
-                },
-              };
-            }
-            case TokenInstruction.InitializeAccount: {
-              // InitializeAccount != ATA creation, ATA is via the Associated Token Account Program above.
-              const {
-                keys: { account, mint },
-              } = decodeInitializeAccountInstruction(instruction);
-              return {
-                transactionType: SolanaTransactionTypes.SPL,
-                data: {
-                  createATA: {
-                    address: account.pubkey.toBase58(),
-                    mintAddress: mint.pubkey.toBase58(),
-                  },
-                },
-              };
-            }
-            default:
-              // not a token instruction we care about—keep scanning.
-              break;
+        for (const decoder of DECODERS) {
+          if (!decoder.when(ctx)) continue;
+          const data = decoder.decode(ctx);
+          if (!data) continue;
+
+          // prefer createATA (needed when destination ATA doesn’t exist yet)
+          if (data.createATA && !best.createATA) {
+            best = { ...best, createATA: data.createATA };
+          } else if (
+            data.tokenAddress &&
+            !best.tokenAddress &&
+            !best.createATA
+          ) {
+            best = { ...best, tokenAddress: data.tokenAddress };
           }
-        } catch {
-          // if a decoder throws (bad match), keep scanning other instructions.
-          continue;
         }
       }
+
+      if (best.createATA)
+        return { transactionType: SolanaTransactionTypes.SPL, data: best };
+
+      if (best.tokenAddress)
+        return { transactionType: SolanaTransactionTypes.SPL, data: best };
+
+      if (sawSPL)
+        return { transactionType: SolanaTransactionTypes.SPL, data: {} }; // we should never reach here, in case we do tx will fall back to blind sign
 
       return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
     } catch {
@@ -163,14 +147,17 @@ export class TransactionInspector {
   }
 
   /**
-   * normalise any tx (legacy or v0) into { compiledInstructions, allKeys }.
-   * if LUT accounts are provided, looked-up keys are included in allKeys.
+   * Normalise any tx (legacy or v0) into { compiledInstructions, allKeys }.
+   * For v0, auto-fetch looked-up addresses from ALT(s) via the connection.
    */
-  private normaliseMessage(rawBytes: Uint8Array): NormalizedMessage {
-    const vtx = this.tryDeserialiseVersioned(rawBytes);
-    if (vtx) {
-      const msg = vtx.message as VersionedMessage & {
-        getAccountKeys?: (opts?: {
+  private async normaliseMessage(
+    rawBytes: Uint8Array,
+  ): Promise<NormalizedMessage> {
+    const versionedTX = this.tryDeserialiseVersioned(rawBytes);
+
+    if (versionedTX) {
+      const msg = versionedTX.message as VersionedMessage & {
+        getAccountKeys?: (options?: {
           accountKeysFromLookups?: LoadedAddresses;
         }) => {
           staticAccountKeys: PublicKey[];
@@ -179,61 +166,78 @@ export class TransactionInspector {
         };
         compiledInstructions: Array<{
           programIdIndex: number;
-          accountKeyIndexes?: number[];
-          accounts?: number[];
+          accountKeyIndexes?: number[]; // legacy field name
+          accounts?: number[]; // v0 field name
           data: Uint8Array | string | number[];
         }>;
         staticAccountKeys: PublicKey[];
       };
 
-      // build the full key array in the exact index order used by compiledInstructions
-      let allKeys: PublicKey[];
-      if (typeof msg.getAccountKeys === "function") {
-        const mak = msg.getAccountKeys();
-        allKeys = mak.keySegments().flat();
-      } else {
-        // very old builds: fall back to concatenation (same order)
-        allKeys = [...msg.staticAccountKeys];
-      }
+      const lookedUp = await this.resolveLookedUpAddressesFromMessage(msg);
+
+      const allKeys: PublicKey[] = [
+        ...msg.staticAccountKeys,
+        ...(lookedUp?.writable ?? []),
+        ...(lookedUp?.readonly ?? []),
+      ];
 
       const compiledInstructions: NormalizedCompiledIx[] =
-        msg.compiledInstructions.map((ix) => ({
-          programIdIndex: ix.programIdIndex,
-          accountKeyIndexes: Array.from(ix.accountKeyIndexes ?? []),
-          data:
-            ix.data instanceof Uint8Array
-              ? ix.data
-              : Buffer.from(ix.data ?? []),
-        }));
+        msg.compiledInstructions.map((instruction) => {
+          const ixWithAccounts = instruction as typeof instruction & {
+            accounts?: number[];
+          };
+
+          const accountKeyIndexes = Array.from(
+            ixWithAccounts.accounts ?? instruction.accountKeyIndexes ?? [],
+          ) as number[];
+
+          let data: Uint8Array;
+          if (instruction.data instanceof Uint8Array) {
+            data = instruction.data;
+          } else if (typeof instruction.data === "string") {
+            data = Buffer.from(instruction.data, "base64"); // v0 encodes instruction data as base64
+          } else {
+            data = Uint8Array.from(instruction.data ?? []);
+          }
+
+          return {
+            programIdIndex: instruction.programIdIndex,
+            accountKeyIndexes,
+            data,
+          };
+        });
 
       return { compiledInstructions, allKeys };
     }
 
-    // legacy fallback
+    // legacy (no ALTs)
     const legacy = Transaction.from(rawBytes);
 
     const allKeyMap = new Map<string, PublicKey>();
-    const add = (pk?: PublicKey | null) => {
-      if (!pk) return;
-      const k = pk.toBase58();
-      if (!allKeyMap.has(k)) allKeyMap.set(k, pk);
+
+    const add = (pubkey?: PublicKey | null) => {
+      if (!pubkey) return;
+      const key = pubkey.toBase58();
+      if (!allKeyMap.has(key)) allKeyMap.set(key, pubkey);
     };
 
     add(legacy.feePayer ?? null);
-    for (const ix of legacy.instructions) {
-      add(ix.programId);
-      for (const k of ix.keys) add(k.pubkey);
+
+    for (const instruction of legacy.instructions) {
+      add(instruction.programId);
+      for (const key of instruction.keys) add(key.pubkey);
     }
+
     const allKeys = Array.from(allKeyMap.values());
     const indexByB58 = new Map(allKeys.map((pk, i) => [pk.toBase58(), i]));
 
     const compiledInstructions: NormalizedCompiledIx[] =
-      legacy.instructions.map((ix) => ({
-        programIdIndex: indexByB58.get(ix.programId.toBase58()) ?? -1,
-        accountKeyIndexes: ix.keys.map(
-          (k) => indexByB58.get(k.pubkey.toBase58()) ?? -1,
+      legacy.instructions.map((instruction) => ({
+        programIdIndex: indexByB58.get(instruction.programId.toBase58()) ?? -1,
+        accountKeyIndexes: instruction.keys.map(
+          (key) => indexByB58.get(key.pubkey.toBase58()) ?? -1,
         ),
-        data: ix.data,
+        data: instruction.data,
       }));
 
     return { compiledInstructions, allKeys };
@@ -247,11 +251,43 @@ export class TransactionInspector {
     } catch {
       try {
         const msg = VersionedMessage.deserialize(rawBytes);
-        // wrap in a dummy VersionedTransaction-like shape just for uniform handling
         return { message: msg } as VersionedTransaction;
       } catch {
         return null;
       }
     }
+  }
+
+  /**
+   * For v0, fetch looked-up addresses from ALT(s) via the connection
+   */
+  private async resolveLookedUpAddressesFromMessage(
+    msg: VersionedMessage,
+  ): Promise<LoadedAddresses | undefined> {
+    const lookups = msg.addressTableLookups ?? [];
+    if (!lookups.length) return;
+
+    const writable: PublicKey[] = [];
+    const readonly: PublicKey[] = [];
+
+    for (const lu of lookups) {
+      const res = await defaultConnection(
+        this.injectedRPCURL || RPC_URL,
+      ).getAddressLookupTable(lu.accountKey);
+      const table = res.value;
+      if (!table) continue;
+      const addrs = table.state.addresses;
+
+      for (const i of lu.writableIndexes ?? []) {
+        const pk = addrs[i];
+        if (pk) writable.push(pk);
+      }
+      for (const i of lu.readonlyIndexes ?? []) {
+        const pk = addrs[i];
+        if (pk) readonly.push(pk);
+      }
+    }
+
+    return { writable, readonly };
   }
 }

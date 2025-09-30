@@ -13,10 +13,10 @@ import {
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
   Curve,
+  LKRPUnknownError,
   NobleCryptoService,
-  Permissions,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
-import { catchError, from, map, of } from "rxjs";
+import { catchError, from, map, of, tap } from "rxjs";
 import styled from "styled-components";
 
 import { CommandForm } from "@/components//CommandsView/CommandForm";
@@ -26,6 +26,7 @@ import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
 import { base64FromBytes, bytesFromBase64, genIdentity } from "@/utils/crypto";
+import { parsePermissions } from "@/utils/lkrp-permissions";
 
 export const LedgerKeyringProtocolView: React.FC = () => {
   const dmk = useDmk();
@@ -58,25 +59,81 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Authenticate",
         description:
-          "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keypair of a previouly added member is required.",
-        executeDeviceAction: ({ privateKey, clientName, trustchainId }) => {
+          "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keypair of a previouly added member is required. (Valid permissions are: OWNER, CAN_ENCRYPT, CAN_DERIVE, CAN_ADD_BLOCK).",
+        executeDeviceAction: ({
+          privateKey,
+          clientName,
+          trustchainId,
+          permissions: permissionsExpr,
+        }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
+
           const cryptoService = new NobleCryptoService();
-          return app.authenticate({
-            keypair: cryptoService.importKeyPair(
-              hexaStringToBuffer(privateKey)!,
-              Curve.K256,
-            ),
-            clientName,
-            permissions: Permissions.OWNER,
-            trustchainId,
-            sessionId: sessionIdRef.current,
-          });
+          const keypair = cryptoService.importKeyPair(
+            hexaStringToBuffer(privateKey)!,
+            Curve.K256,
+          );
+
+          try {
+            const authentication = app.authenticate({
+              keypair,
+              clientName,
+              permissions: parsePermissions(permissionsExpr),
+              trustchainId,
+              sessionId: sessionIdRef.current,
+            });
+            return {
+              ...authentication,
+              observable: authentication.observable.pipe(
+                tap((res) => {
+                  switch (res.status) {
+                    case DeviceActionStatus.Error:
+                      console.error(res.error);
+                      break;
+
+                    case DeviceActionStatus.Completed: {
+                      const { output } = res;
+                      const pubkey = keypair.getPublicKeyToHex();
+                      const identity = {
+                        jwt: null,
+                        trustchain: {
+                          rootId: output.trustchainId,
+                          walletSyncEncryptionKey: bufferToHexaString(
+                            output.encryptionKey,
+                          ).slice(2),
+                          applicationPath: output.applicationPath,
+                        },
+                        memberCredentials: {
+                          pubkey,
+                          privatekey: privateKey.replace(/^0x/, ""),
+                        },
+                      };
+                      console.log({ [pubkey]: identity });
+                      break;
+                    }
+                  }
+                }),
+              ),
+            };
+          } catch (error) {
+            console.error(error);
+            return {
+              cancel: () => undefined,
+              observable: of({
+                status: DeviceActionStatus.Error,
+                error: new LKRPUnknownError(String(error)),
+              }),
+            };
+          }
         },
         InputValuesComponent: RowCommandForm as typeof CommandForm<AuthInput>,
-        initialValues: { ...genIdentity(), trustchainId: "" },
+        initialValues: {
+          ...genIdentity(),
+          trustchainId: "",
+          permissions: "OWNER & ~CAN_ADD_BLOCK",
+        },
         deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
       } satisfies DeviceActionProps<
         AuthenticateDAOutput,
@@ -196,6 +253,7 @@ type AuthInput = {
   privateKey: string;
   clientName: string;
   trustchainId: string;
+  permissions: string;
 };
 
 const RowCommandForm = styled(CommandForm)`

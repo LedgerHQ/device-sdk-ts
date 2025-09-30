@@ -1,7 +1,8 @@
 export type TransactionSubset = {
   chainId: number;
-  data: string; // only used by external plugin loader
+  data: string;
   selector: string;
   to?: string;
   value?: bigint;
+  from?: string;
 };

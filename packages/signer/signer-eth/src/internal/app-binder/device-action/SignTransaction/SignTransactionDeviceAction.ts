@@ -1,5 +1,4 @@
 import {
-  type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceModelId,
@@ -11,7 +10,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { type Either, Left, Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
@@ -23,7 +22,7 @@ import {
   type SignTransactionDAOutput,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type ClearSigningType } from "@api/model/ClearSigningType";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type Signature } from "@api/model/Signature";
 import { type TransactionType } from "@api/model/TransactionType";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
@@ -33,20 +32,20 @@ import {
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
 import {
-  BuildSubContextTask,
-  type BuildSubContextTaskArgs,
-} from "@internal/app-binder/task/BuildSubContextTask";
+  BuildFullContextsTask,
+  type BuildFullContextsTaskArgs,
+  type BuildFullContextsTaskResult,
+} from "@internal/app-binder/task/BuildFullContextsTask";
 import {
-  BuildTransactionContextTask,
-  type BuildTransactionContextTaskArgs,
-  type BuildTransactionTaskResult,
-} from "@internal/app-binder/task/BuildTransactionContextTask";
+  ParseTransactionTask,
+  type ParseTransactionTaskArgs,
+  type ParseTransactionTaskResult,
+} from "@internal/app-binder/task/ParseTransactionTask";
 import {
-  PreBuildContextTask,
-  type PreBuildContextTaskArgs,
-  type PreBuildContextTaskResult,
-} from "@internal/app-binder/task/PreBuildContextTask";
-import { ProvideTransactionContextTask } from "@internal/app-binder/task/ProvideTransactionContextTask";
+  ProvideContextsTask,
+  type ProvideContextsTaskArgs,
+  type ProvideContextsTaskResult,
+} from "@internal/app-binder/task/ProvideContextsTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
@@ -57,18 +56,15 @@ export type MachineDependencies = {
   readonly web3CheckOptIn: () => Promise<
     CommandResult<Web3CheckOptInCommandResponse, EthErrorCodes>
   >;
-  readonly preBuildContext: (arg0: {
-    input: PreBuildContextTaskArgs;
-  }) => Promise<PreBuildContextTaskResult>;
-  readonly buildContext: (arg0: {
-    input: BuildTransactionContextTaskArgs;
-  }) => Promise<BuildTransactionTaskResult>;
-  readonly buildSubContextAndProvide: (arg0: {
-    input: BuildSubContextTaskArgs & {
-      derivationPath: string;
-      transaction: Uint8Array;
-    };
-  }) => Promise<Either<CommandErrorResult<EthErrorCodes>, void>>;
+  readonly parseTransaction: (arg0: {
+    input: ParseTransactionTaskArgs;
+  }) => Promise<ParseTransactionTaskResult>;
+  readonly buildContexts: (arg0: {
+    input: BuildFullContextsTaskArgs;
+  }) => Promise<BuildFullContextsTaskResult>;
+  readonly provideContexts: (arg0: {
+    input: ProvideContextsTaskArgs;
+  }) => Promise<ProvideContextsTaskResult>;
   readonly signTransaction: (arg0: {
     input: {
       derivationPath: string;
@@ -107,10 +103,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const {
       getAppConfig,
       web3CheckOptIn,
-      preBuildContext,
-      buildContext,
+      parseTransaction,
+      buildContexts,
       signTransaction,
-      buildSubContextAndProvide,
+      provideContexts,
     } = this.extractDependencies(internalApi);
 
     return setup({
@@ -125,13 +121,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
-        preBuildContext: fromPromise(preBuildContext),
-        buildContext: fromPromise(buildContext),
+        parseTransaction: fromPromise(parseTransaction),
+        buildContexts: fromPromise(buildContexts),
+        provideContexts: fromPromise(provideContexts),
         signTransaction: fromPromise(signTransaction),
-        buildSubContextAndProvide: fromPromise(buildSubContextAndProvide),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
+        notRefusedByUser: ({ context }) =>
+          context._internalState.error !== null &&
+          (!("errorCode" in context._internalState.error) ||
+            context._internalState.error.errorCode !== "6985"),
         isWeb3ChecksSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
@@ -146,9 +146,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
         skipOpenApp: ({ context }) => !!context.input.options.skipOpenApp,
-        hasContextToProvide: ({ context }) =>
-          context._internalState.clearSignContexts !== null &&
-          context._internalState.clearSignContexts.length > 0,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -159,7 +156,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoB5ABzA2Y8etBk1bkqAYghUwHVBjoUA1nIp8BQ5KTykwAWRIALBWADaABgC6iUDwqxUEjLZAAPRABYAzAHYOAJwAHACMAb4ArBYWAEw+FkHeADQgAJ6IwRYcAGwRQUG52TF5EcUAvmUpaJi4BERsVCKMLA2cAMJGYMTKvPyCwvTN4uwASnAArgA2pJKWNkgg9o7Orh4IAcEcpRYhvonZAd4byWmIITtZESEhBTHeEVH33hVV6Nj4hCTOTWKtHB1dHoafo-FrOMawKYzMwheZ2BxOdirDKbba7faHY4pdIIUIcG6+bwWbKeXwxIKeTzkl4garvOpfdig4ZUDgAcTApA6eEmk34MGksnkihUchgXKMPL5GBgc1cS0RVGRCBCngC2Q4aqCewCEWyQUyJxx5x2HBiByCsV8AQsaoinhpdNqn1azL+HIlUv5YEkYBwOAoOA4PEmugAZoGALYccXc3neuULBUrBZrVXqzXBHV6g2Wo1nDaasIWXxkwkxW0xXyOt7O+rfQa-Zzszlx6UwCFQgHdWbWeUIlOgNMBTxBDiJby3MkmiK+bFnCzeEL4mLm4m5aLeB2VWm1j71pmNsHsFue+MysCd6bd5SzWH95ZI1MF0fj7yTorT6Kz+cILfLhJEgiDZslVXwLACGsan3RlGiPFlOAAIXGVBJggNoqD0NwZhkDA5AUJRVA4AAjFC0IwjAsNIRN4UfJVnwQOJPCyIJyWLHYqV1bJf3OGJl3yYlfFA0dsiOZ4dydGDXXgv5kNQ9DMLAbDfX9QNg1DUgIxwaNSPkiiqJoxYByfIdECYli2JtDiYi439PGAjhvArVdrT4skDm3V5oIZaTRGPVk5PIxTsKvCVAV7OEjLolwGPJfJMwrUkjkiNUeIsK4OEJLdLWiUI9ig+kXQbPyEI4QKFMopTSFCm870i5MTPcMz8jHNVEsJcJ7QCX88pySJSlKPw7jCAq61gmgZObAAFAMGAgMB9KqwU8OFQi5B4WbUHmxbsMMhr6NMv9RzHFK8kiLdBu405cQSTV32Ym5slAw4YlGqTiqGP4ZooOaFuCmY-QDIMQ3DKNg027b-r24yDqao74tO7UIguu4rpxbJokCA0rmJCDjk83dvKKw8Sq+iGwA5PCcEYHacKFAjRXBn6top-g-RpqG+yTGGYsO7KTvtM7kfs1HfyszLfDCbIySpdzxK8wqDzg0npvJyn2eIWmVKB9TQe0pnfvV6nNc5+qeeVfnMsFpGUe8NGF3snI8liViQlEolIIkvcfI+psT0kn32GW-CRSIxwiaVjBoei5VmL2M1SSCB4KyTykIh6wtDgKcJJbyAIRq9iPxrdZsA+JqRAbUkHNLB8PFfG6PFV5uG47HOI9mThJ7Xs39fCpJ3tRe4JzTewPlc+0vvfLjAas6HtG8HFuuo4YldiXOJQgpdProCGzMvz-VOOYuPR+nkv-anyPZ-CmEzZjhj7LVFfQMJEIN5uHvrvyTxHPJEtgIKKUXIFQdwYAoPNeACwy6R3PrDfazc1gAFp7YIGQSvaIGDMEYNnKfGBk0Ty9E0AMFWjV4GxxiGLPUCc9SlGCKBSsuDi74NZDeQhIJmEzwmNMB8TdlT6n8HxEIeoP5kichQ66JoYgrzytjDBk5qyF3rr5CeJ4PRtm9DwxeaYbhjkHtla0dtRJzh3knfEs53wbHztaHwjDlF+1ZGoyU54OxcLCt0TRjU0zgW8IECCrF872Q2PaNKq4ci7yeuSPINxqSKLGnY-ySEyIVSoh42Gaw+JHHxIcaIGxOIlnzCqb8mV9QZK3McJOtjfYJLKkk2m193Hc3vodc0r47i7xssBEIS40o+EcouZGRQ3ZOSepUkmKjWTfV+rTVJCDEBLicpqAoeYUqLm6tdVyv9JHaiOPnUZ497GcEmSzI2HNKrYRmRbCCUjSzmjfsjCshw0pu3HK5aWfdbSeBGbE96YyDkcGgeNC5DE-DMRXl080fdKShDWTiCkAR8QHDCLsG05JyjfLHhNEhrIAWtHqcoIFh0qSmNyPkEcHc9Riz4o5UCDx3ZbiXBEPZmLxmcGQOMYgTBYCQNorwh+Ql4VUgSD4J6uRPAhEpRqWhYRjoXCCEy2BnAACiqkcAEpbvyzUKdhVPXtOK66oExwY3VEI1Ffhd4gLKEAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOACzGAnAFYDNgGxXpF6ToA0IAJ67TOgEwcDHTsLCz9pQN9bAF8o9zRMXAIiNipaBiZWcipuXn4hETEpHXkkEGVVLIwNbQR9IzNLG3tHZzdPXV87aQ5I5ztfSON+zpi49Gx8QhJKtMYWFM4AeUUwDGZFRVmMhfEIKjAOVAw6CgBrA4oVtY3hUTAAWRIACyOwGRKlFTUqasQ9RxMVjMdgcdj0xnBvncXlqkTsHAsQxcnVMvmM4TsoxA8QmSWm7C280qHAAwk8wMRTstVutNvQ5pl2AAlOAAVwEpCkcg05W+VVKNR0gW6IOsoWMfgMdlMdmhHRBHActisFnMMqCmNi2PGiSmC0JjOyZIpVKutINCxZsHZnMkxR5X0qv1qwsVwRVOglcJlcoQEo4ns9pmkQL00mCFgMWJxuuSM3p22JAHEwKRaSSqAAzdC7faHY5nA4wNMbDMYbNQd4OirqAW6CVWDhWPR2fR2Yy+Fu+UwGX1C4zGHoGcPSDuGCx6HTRnWTOMEhNE9gcFMlxRliviMA4HAUHAcRQCUSZ3cAWw4xfTWfQVdKvKdddqDabLbbY-6Pb7IQ4I+sPdR1n+KMtRjWd8VSBdDU4FdL3LdArRtY1KS5D4ykdWtQBqAYO2-MFwyBHRTEjNoYT8Lpv3CKwrG7Zt0VMPRpwSUD9QghZl1TGCK3gjlENOIoULvdCtEQLD-HDMMHAlQjAj7VEdADENg1MYNhQMUwGNxPV43SRdsmg0srygLjSB4qRfH4tCfgfEScPE-CpOIxBVO6HQiLbVUQR8dTYzAmgWOJAB1MAACMDB42BllIHhcwwA4jhOc4OAAd2C0LyUpCKeBvT4a0sjDhKGfxmxDXwMT0SIDF7dpYUono9B7YxbAI4xHGMLymK0hlWMCkKwoyjBN23Xd90PUhjxwM9kp6tLTUijAstQnL+TyhA0X6Z9itK8rKphUwgW-MrfFCXpKJcejgJnPFmO0yCOG61KTXCxRZqM8RNFgAoDjwTMxBwAAKaQAEpxBAy6OsTJc7t6p6eCM+aBNyoSEAqgjFVIz0LE6CxWz0PtOz0Dg9HBMquh8LowTa0H52u1iAAU8BwWAwG8nY9hi-N4oORR6cZ5nKjhiylsRgxwQsJtCOlIIdFHaQWz7AwJ2-FyCMGEMMbOsZGMp8DqeJOmGaZ9r2AGnc9wPI9T33bmDa1ubuVvAXnWFywxax0mpfRWWqpVUWSqUgYw2F5xWvOzXNKpzriQAIVZVABAgMsxE0UhYGi2KCwSoKY7jhOwCT2B+cW50e09RUSshJwQ0nGSdEbKx-1bUI7IsCmw+1iOl2j2P46oRPk+NoazdGi3M67nO84Lvki8CQd+hljsK+bByEDq7oKocbtI3BOurBbuc2-B7IaZ3BgIDAMe+9ZtOOf3Y-UFP8-87t7LJ4fcwyqbbGezq-orFlKqCLIs4XwVFgjSFOr-XePkLS61vvfHuuc+5bhNsNc240b4UBPmfeB48n4LRfstN+hVP7CxlMAv+MIBxyRlAVSck5xSQKuu3bIINW79UvuzQsHBVChz3rbcyhcHx1xKhwVEwwQgV0nFYGSv8EQDCFD4GuehVQ7xDhpXh0ClwsN4f3U2I0xpnm4WonyE97zLSEd0URAxxHOEkX2aQAxFRgLKqqVWDYGFgx0pwLRPkjImRMYJGoQJnBNiFIdCSIJwgySGE2SwZVwgr1DO48OB8vEXVYb46afFqz4MRkE7oVhQlYyBBE7augDC+DkgUiUZgqnlLqkk-eniOCRwEEcCA3iFgADFBACCCiQXi7C4qcKCq0jA7S0m8O6QIXp-T-EIxqNKFs35VQSlVDKQmpg5aohESqAcnQQT1NUbzZJTSWltI6ZUKZMykJIIHno4eozxk8J8lcvplI5mCwWeYRsEkWzNXbJ2YwfY-D42kKieJHY2zNgab5HWHdHkXPYK8-pGSTTIWyaYxGk5IjPmsHXfQeEoT-1UqLfowpKIdlWUBDWRjGEpOaQiiZLyelvNOKipCdp+E5JqNiowzY8U+FskSkiw5TAmGlCEQioR-j6BiFqDAFBT7wFKIixpkEMUBMQAAWnIdqxsIQQiE3BGClx0QjmGzVaxHgahBC3DEBq+ZiBUQyXCE2YWSjJxgOFtC81NsNHZGpNcOkcKEbw0+Y5OuJg1ZDCUSqQFuNgHfmDN2AOYCnBTl9aw-1nAeKBvNH5ZkbIOQOvDQgA1AQxy2BbKdWwuNmwmDqo4cwjRykwuzWxVc650AludDXMBPRmoGAlP8cwTg5aRs6GGGu+g0RgJUTS45lrkzsX0rBQyRbjLTR7VZex-g0QuU6HXIdE5Sm1GDKLHQSsgkShDMLNtBbsiQ2mo9Wa27lrANdWYP2-QPKdikf-ORAQpZKLBUKds96Q2cCfQ9PqRk31Cxlvjaw7YKIQk9iRYB-hKUFJogU4BEGmGcD1jzC1gsw2Ox7EYYWql5aqS6MUuWdgjAhjrpQ7GSiCP0s7tnbByd4M1GDK6hwlEpRbyBcS-0-LURlTqiEMwnGmlHwwXfLBGBe7KufpigTVFGzlKVJ6cMX65YQnkljaVUo-DdgUzdVVZGHaCNHP4Fy2KP32OCDJBx1gzCIkIuiexzdM3qIfak55loN08X44gX+nYAzlOA-oKio4ZKExMFLFUQJ4mnWs6xM5YzbPIspJFhAXR0QBkOkKLGdUOybIA4YAIwDDCehVCCfDgWoHBYZecplXSWUovC1u+2AjlpgiYyIicl6St4SXvI7oX7RzWCDFhbLxJkCsmIEwWAGm8Fab+LYIwLk66tnCEOsFyXdPyKGO7QIGaF2kfbQAUUGjgIrhgbABl-EdiqtFfT-HxgOd0TsQMdjlVEIAA */
       id: "SignTransactionDeviceAction",
       initial: "InitialState",
       context: ({ input }) => {
@@ -172,11 +169,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           _internalState: {
             error: null,
             appConfig: null,
-            clearSignContexts: null,
-            clearSignContextsOptional: null,
             subset: null,
-            transactionType: null,
+            contexts: [],
             clearSigningType: null,
+            transactionType: null,
             signature: null,
           },
         };
@@ -278,7 +274,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ]),
             },
             {
-              target: "PreBuildContext",
+              target: "ParseTransaction",
               guard: "noInternalError",
             },
             {
@@ -331,34 +327,34 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           })),
           // Using after transition to force a snapshot of the state after the entry action
-          // This ensures the intermediateValue is captured before moving to BuildContext
+          // This ensures the intermediateValue is captured before moving to ParseTransaction
           after: {
             0: {
-              target: "PreBuildContext",
+              target: "ParseTransaction",
             },
           },
         },
-        PreBuildContext: {
+        ParseTransaction: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.PRE_BUILD_CONTEXT,
+              step: SignTransactionDAStep.PARSE_TRANSACTION,
             },
           }),
           invoke: {
-            id: "preBuildContext",
-            src: "preBuildContext",
+            id: "parseTransaction",
+            src: "parseTransaction",
             input: ({ context }) => ({
               mapper: context.input.mapper,
               transaction: context.input.transaction,
             }),
             onDone: {
-              target: "BuildContext",
+              target: "BuildContexts",
               actions: assign({
                 _internalState: ({ event, context }) => ({
                   ...context._internalState,
-                  transactionType: event.output.type,
                   subset: event.output.subset,
+                  transactionType: event.output.type,
                 }),
               }),
             },
@@ -368,33 +364,34 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        BuildContext: {
+        BuildContexts: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.BUILD_CONTEXT,
+              step: SignTransactionDAStep.BUILD_CONTEXTS,
             },
           }),
           invoke: {
-            id: "buildContext",
-            src: "buildContext",
+            id: "buildContexts",
+            src: "buildContexts",
             input: ({ context }) => ({
               contextModule: context.input.contextModule,
+              mapper: context.input.mapper,
+              parser: context.input.parser,
               options: context.input.options,
               appConfig: context._internalState.appConfig!,
               derivationPath: context.input.derivationPath,
-              transaction: context.input.transaction,
               subset: context._internalState.subset!,
+              transaction: context.input.transaction,
+              deviceModelId: internalApi.getDeviceModel().id,
             }),
             onDone: {
-              target: "HasContextToProvideCheck",
+              target: "ProvideContexts",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
-                    clearSignContexts: event.output.clearSignContexts!,
-                    clearSignContextsOptional:
-                      event.output.clearSignContextsOptional!,
+                    contexts: event.output.clearSignContexts,
                     clearSigningType: event.output.clearSigningType,
                   }),
                 }),
@@ -406,47 +403,32 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        HasContextToProvideCheck: {
-          always: [
-            {
-              target: "BuildSubContextAndProvide",
-              guard: "hasContextToProvide",
-            },
-            {
-              target: "SignTransaction",
-            },
-          ],
-        },
-        BuildSubContextAndProvide: {
+        ProvideContexts: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStep.BUILD_SUB_CONTEXT_AND_PROVIDE,
+              step: SignTransactionDAStep.PROVIDE_CONTEXTS,
             },
           }),
           exit: assign({
-            // remove the first context as it has been consumed
-            _internalState: ({ context }) => ({
-              ...context._internalState,
-              clearSignContexts:
-                context._internalState.clearSignContexts!.slice(1),
-            }),
+            // remove the first context of the first transaction details as it has been consumed
+            _internalState: ({ context }) => {
+              return {
+                ...context._internalState,
+                contexts: context._internalState.contexts.slice(1),
+              };
+            },
           }),
           invoke: {
-            id: "buildSubContextAndProvide",
-            src: "buildSubContextAndProvide",
+            id: "provideContexts",
+            src: "provideContexts",
             input: ({ context }) => ({
-              context: context._internalState.clearSignContexts![0]!,
-              contextOptional:
-                context._internalState.clearSignContextsOptional!,
-              transactionParser: context.input.parser,
-              transaction: context.input.transaction!,
-              contextModule: context.input.contextModule,
-              subset: context._internalState.subset!,
+              contexts: context._internalState.contexts,
               derivationPath: context.input.derivationPath,
+              serializedTransaction: context.input.transaction,
             }),
             onDone: {
-              target: "HasContextToProvideCheck",
+              target: "SignTransaction",
             },
             onError: {
               target: "Error",
@@ -491,12 +473,64 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
+              target: "SignTransactionResultCheck",
               actions: "assignErrorFromEvent",
             },
           },
         },
         SignTransactionResultCheck: {
+          always: [
+            { guard: "noInternalError", target: "Success" },
+            {
+              guard: "notRefusedByUser",
+              target: "BlindSignTransactionFallback",
+            },
+            { target: "Error" },
+          ],
+        },
+        BlindSignTransactionFallback: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.BLIND_SIGN_TRANSACTION_FALLBACK,
+            },
+          }),
+          invoke: {
+            id: "blindSignTransactionFallback",
+            src: "signTransaction",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              serializedTransaction: context.input.transaction,
+              chainId: context._internalState.subset!.chainId,
+              transactionType: context._internalState.transactionType!,
+              clearSigningType: ClearSigningType.BASIC,
+            }),
+            onDone: {
+              target: "BlindSignTransactionFallbackResultCheck",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        signature: event.output.data,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        BlindSignTransactionFallbackResultCheck: {
           always: [
             { guard: "noInternalError", target: "Success" },
             { target: "Error" },
@@ -524,36 +558,22 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       internalApi.sendCommand(new GetAppConfiguration());
     const web3CheckOptIn = async () =>
       internalApi.sendCommand(new Web3CheckOptInCommand());
-    const preBuildContext = async (arg0: { input: PreBuildContextTaskArgs }) =>
+    const parseTransaction = async (arg0: {
+      input: ParseTransactionTaskArgs;
+    }) =>
       Promise.resolve(
-        new PreBuildContextTask({
+        new ParseTransactionTask({
           mapper: arg0.input.mapper,
           transaction: arg0.input.transaction,
         }).run(),
       );
-    const buildContext = async (arg0: {
-      input: BuildTransactionContextTaskArgs;
-    }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
+    const buildContexts = async (arg0: { input: BuildFullContextsTaskArgs }) =>
+      new BuildFullContextsTask(internalApi, arg0.input).run();
 
-    const buildSubContextAndProvide = async (arg0: {
-      input: BuildSubContextTaskArgs & {
-        derivationPath: string;
-        transaction: Uint8Array;
-      };
+    const provideContexts = async (arg0: {
+      input: ProvideContextsTaskArgs;
     }) => {
-      const { subcontextCallbacks } = new BuildSubContextTask(internalApi, {
-        context: arg0.input.context,
-        contextOptional: arg0.input.contextOptional,
-        transactionParser: arg0.input.transactionParser,
-        subset: arg0.input.subset,
-        contextModule: arg0.input.contextModule,
-      }).run();
-      return new ProvideTransactionContextTask(internalApi, {
-        context: arg0.input.context,
-        subcontextsCallbacks: subcontextCallbacks,
-        serializedTransaction: arg0.input.transaction,
-        derivationPath: arg0.input.derivationPath,
-      }).run();
+      return new ProvideContextsTask(internalApi, arg0.input).run();
     };
 
     const signTransaction = async (arg0: {
@@ -572,9 +592,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     return {
       getAppConfig,
       web3CheckOptIn,
-      preBuildContext,
-      buildContext,
-      buildSubContextAndProvide,
+      parseTransaction,
+      buildContexts,
+      provideContexts,
       signTransaction,
     };
   }

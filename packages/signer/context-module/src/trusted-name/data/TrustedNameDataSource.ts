@@ -14,12 +14,18 @@ export type GetTrustedNameInfosParams = {
   sources: string[];
 };
 
+export type TrustedNamePayload = {
+  data: string;
+  keyId: string;
+  keyUsage: string;
+};
+
 export interface TrustedNameDataSource {
   getDomainNamePayload(
     params: GetDomainNameInfosParams,
-  ): Promise<Either<Error, string>>;
+  ): Promise<Either<Error, TrustedNamePayload>>;
 
   getTrustedNamePayload(
     params: GetTrustedNameInfosParams,
-  ): Promise<Either<Error, string>>;
+  ): Promise<Either<Error, TrustedNamePayload>>;
 }

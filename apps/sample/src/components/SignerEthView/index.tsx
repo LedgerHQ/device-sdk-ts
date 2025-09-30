@@ -115,21 +115,22 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
             throw new Error("Signer not initialized");
           }
 
-          // If it's a json transaction, try to parse it
+          let rawTx: string;
+
+          // Try to parse as JSON, otherwise treat as raw serialized transaction
           try {
             const jsonTx = JSON.parse(transaction);
-            // Remove "from" if present in the json transaction because it make no sense
-            // in an unsigned ethereum tx, and ethers will reject it
-            if (jsonTx.from) {
+            // Remove "from" if present, as it's not needed for unsigned txs
+            if ("from" in jsonTx) {
               delete jsonTx.from;
             }
-            transaction = ethers.Transaction.from(jsonTx).unsignedSerialized;
-          } catch (_: unknown) {
-            // Not a JSON
+            rawTx = ethers.Transaction.from(jsonTx).unsignedSerialized;
+          } catch {
+            // Not JSON, assume already a serialized transaction
+            rawTx = ethers.Transaction.from(transaction).unsignedSerialized;
           }
 
-          // Convert the serialized rawTx into a buffer
-          const tx = hexaStringToBuffer(transaction);
+          const tx = hexaStringToBuffer(rawTx);
           if (!tx) {
             throw new Error("Invalid transaction format");
           }

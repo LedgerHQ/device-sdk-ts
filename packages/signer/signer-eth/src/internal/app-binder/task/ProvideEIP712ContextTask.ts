@@ -1,5 +1,7 @@
 import {
   type ContextModule,
+  type TypedDataCalldataIndex,
+  TypedDataCalldataParamPresence,
   type TypedDataClearSignContextSuccess,
   type TypedDataFilter,
   type TypedDataTokenIndex,
@@ -11,22 +13,24 @@ import {
 } from "@ledgerhq/context-module";
 import type {
   CommandResult,
+  DeviceModelId,
   InternalApi,
 } from "@ledgerhq/device-management-kit";
 import {
   bufferToHexaString,
   CommandResultFactory,
-  InvalidStatusWordError,
   isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
+  CalldataParamPresence,
   Eip712FilterType,
   SendEIP712FilteringCommand,
 } from "@internal/app-binder/command/SendEIP712FilteringCommand";
@@ -36,6 +40,11 @@ import {
 } from "@internal/app-binder/command/SendEIP712StructDefinitionCommand";
 import { StructImplemType } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
+import { type ContextWithSubContexts } from "@internal/app-binder/task/BuildFullContextsTask";
+import {
+  ProvideContextsTask,
+  type ProvideContextsTaskArgs,
+} from "@internal/app-binder/task/ProvideContextsTask";
 import { SendEIP712StructImplemTask } from "@internal/app-binder/task/SendEIP712StructImplemTask";
 import { TypedDataValueField } from "@internal/typed-data/model/Types";
 import {
@@ -56,10 +65,13 @@ export type ProvideEIP712ContextTaskReturnType = Promise<
 >;
 
 export type ProvideEIP712ContextTaskArgs = {
+  deviceModelId: DeviceModelId;
+  derivationPath: string;
   types: Record<StructName, Record<FieldName, FieldType>>;
   domain: Array<TypedDataValue>;
   message: Array<TypedDataValue>;
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
+  calldatasContexts: Record<TypedDataCalldataIndex, ContextWithSubContexts[]>;
   web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
 };
 
@@ -70,13 +82,24 @@ type DeviceAssetIndexes = {
   nextIndex: number;
 };
 
+type CalldataFiltersMetadata = {
+  remainingFilters: number;
+  contexts?: ContextWithSubContexts[];
+};
+
 export class ProvideEIP712ContextTask {
   private chainId: Maybe<number> = Nothing;
+  private calldataMetadatas: Record<
+    TypedDataCalldataIndex,
+    CalldataFiltersMetadata
+  > = {};
 
   constructor(
     private api: InternalApi,
     private contextModule: ContextModule,
     private args: ProvideEIP712ContextTaskArgs,
+    private readonly provideContextFactory = (args: ProvideContextsTaskArgs) =>
+      new ProvideContextsTask(this.api, args),
   ) {
     for (const domainValue of this.args.domain) {
       if (
@@ -95,23 +118,15 @@ export class ProvideEIP712ContextTask {
   async run(): ProvideEIP712ContextTaskReturnType {
     // Send message simulation first
     if (this.args.web3Check) {
-      if (this.args.web3Check.certificate) {
-        await this.api.sendCommand(
-          new LoadCertificateCommand({
-            keyUsage: this.args.web3Check.certificate.keyUsageNumber,
-            certificate: this.args.web3Check.certificate.payload,
-          }),
-        );
-      }
-      await new SendPayloadInChunksTask(this.api, {
-        payload: this.args.web3Check.payload,
-        commandFactory: (args) =>
-          new ProvideWeb3CheckCommand({
-            payload: args.chunkedData,
-            isFirstChunk: args.isFirstChunk,
-          }),
-      }).run();
+      await this.provideContext(this.args.web3Check);
     }
+
+    // Send proxy descriptor first if required
+    await this.args.clearSignContext.ifJust(async (clearSignContext) => {
+      if (clearSignContext.proxy !== undefined) {
+        await this.provideContext(clearSignContext.proxy);
+      }
+    });
 
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =
       CommandResultFactory<AllSuccessTypes, EthErrorCodes>({ data: undefined });
@@ -224,6 +239,9 @@ export class ProvideEIP712ContextTask {
         return messageImplResult;
       }
 
+      // if a transaction was embedded in that value, provide the related clear sign context
+      await this.tryProvideTransactionContext();
+
       // if the value is an empty array, discard sub-filters since
       // there will be no according sub-values in the message
       if (
@@ -261,6 +279,62 @@ export class ProvideEIP712ContextTask {
     }
 
     return result;
+  }
+
+  async provideContext({
+    type,
+    payload,
+    certificate,
+  }: ClearSignContextSuccess) {
+    // if a certificate is provided, we load it before sending the command
+    if (certificate) {
+      await this.api.sendCommand(
+        new LoadCertificateCommand({
+          keyUsage: certificate.keyUsageNumber,
+          certificate: certificate.payload,
+        }),
+      );
+    }
+
+    switch (type) {
+      case ClearSignContextType.WEB3_CHECK:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideWeb3CheckCommand({
+              payload: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+        break;
+      case ClearSignContextType.PROXY_INFO:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideProxyInfoCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+        break;
+      case ClearSignContextType.TOKEN:
+      case ClearSignContextType.NFT:
+      case ClearSignContextType.TRUSTED_NAME:
+      case ClearSignContextType.PLUGIN:
+      case ClearSignContextType.EXTERNAL_PLUGIN:
+      case ClearSignContextType.ENUM:
+      case ClearSignContextType.TRANSACTION_INFO:
+      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.DYNAMIC_NETWORK:
+      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+        throw new Error(
+          `Context type ${type} not supported in EIP712 messages`,
+        );
+      default: {
+        const uncoveredType: never = type;
+        throw new Error(`Unhandled context type ${uncoveredType}`);
+      }
+    }
   }
 
   getImplementationTask(value: TypedDataValue): SendEIP712StructImplemTask {
@@ -342,14 +416,17 @@ export class ProvideEIP712ContextTask {
           return Just(getChallengeResult);
         }
 
-        const context = await this.contextModule.getContext({
-          type: ClearSignContextType.TRUSTED_NAME,
-          chainId: this.chainId.extract(),
-          address,
-          challenge: getChallengeResult.data.challenge,
-          types: filter.types,
-          sources: filter.sources,
-        });
+        const context = await this.contextModule.getFieldContext(
+          {
+            chainId: this.chainId.extract(),
+            address,
+            challenge: getChallengeResult.data.challenge,
+            types: filter.types,
+            sources: filter.sources,
+            deviceModelId: this.args.deviceModelId,
+          },
+          ClearSignContextType.TRUSTED_NAME,
+        );
         if (context.type === ClearSignContextType.TRUSTED_NAME) {
           if (context.certificate) {
             await this.api.sendCommand(
@@ -454,12 +531,166 @@ export class ProvideEIP712ContextTask {
             signature: filter.signature,
           }),
         );
-      default:
-        return CommandResultFactory<AllSuccessTypes, EthErrorCodes>({
-          error: new InvalidStatusWordError(
-            "ProvideEIP712ContextTask/provideFiltering - Unhandled filter type",
-          ),
-        });
+      case "calldata-value":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataValue,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-callee":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataCallee,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-spender":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataSpender,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-chain-id":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataChainId,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-selector":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataSelector,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      case "calldata-amount":
+        await this.provideCalldataInfos(filter.calldataIndex);
+        return await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataAmount,
+            discarded,
+            calldataIndex: filter.calldataIndex,
+            signature: filter.signature,
+          }),
+        );
+      default: {
+        const unhandledType: never = filter;
+        throw new Error(
+          `ProvideEIP712ContextTask/provideFiltering - Unhandled filter ${unhandledType}`,
+        );
+      }
+    }
+  }
+
+  private async provideCalldataInfos(
+    calldataIndex: number,
+  ): Promise<Maybe<CommandResult<AllSuccessTypes, EthErrorCodes>>> {
+    if (this.args.clearSignContext.isJust()) {
+      // ensure the calldata info was not already provided to the device
+      if (this.calldataMetadatas[calldataIndex] !== undefined) {
+        // If already provided, update the remaining filters count
+        this.calldataMetadatas[calldataIndex]!.remainingFilters--;
+        return Nothing;
+      }
+
+      // get the calldata infos
+      const calldataInfos =
+        this.args.clearSignContext.extract().calldatas[calldataIndex];
+      if (calldataInfos === undefined) {
+        return Nothing;
+      }
+
+      // Initialize the expected filters count
+      const filtersPresence = [
+        calldataInfos.filter.valueFlag,
+        calldataInfos.filter.calleeFlag ===
+          TypedDataCalldataParamPresence.Present,
+        calldataInfos.filter.chainIdFlag,
+        calldataInfos.filter.selectorFlag,
+        calldataInfos.filter.amountFlag,
+        calldataInfos.filter.spenderFlag ===
+          TypedDataCalldataParamPresence.Present,
+      ];
+      const filtersCount = filtersPresence.filter((f) => f).length;
+      this.calldataMetadatas[calldataIndex] = {
+        remainingFilters: filtersCount - 1, // Minus 1 since a filter is already being sent
+        contexts: this.args.calldatasContexts[calldataIndex],
+      };
+
+      // provide the transaction infos filter
+      return Maybe.of(
+        await this.api.sendCommand(
+          new SendEIP712FilteringCommand({
+            type: Eip712FilterType.CalldataInfo,
+            discarded: false,
+            calldataIndex: calldataIndex,
+            valueFlag: calldataInfos.filter.valueFlag,
+            calleeFlag: this.mapCalldataPresence(
+              calldataInfos.filter.calleeFlag,
+            ),
+            chainIdFlag: calldataInfos.filter.chainIdFlag,
+            selectorFlag: calldataInfos.filter.selectorFlag,
+            amountFlag: calldataInfos.filter.amountFlag,
+            spenderFlag: this.mapCalldataPresence(
+              calldataInfos.filter.spenderFlag,
+            ),
+            signature: calldataInfos.filter.signature,
+          }),
+        ),
+      );
+    }
+    return Nothing;
+  }
+
+  private async tryProvideTransactionContext() {
+    for (const calldataIndex in this.calldataMetadatas) {
+      const metadata = this.calldataMetadatas[calldataIndex]!;
+      if (metadata.remainingFilters === 0) {
+        // All the filters and implementations were sent for that TX,
+        // the related clear sign contexts should now be provided
+        if (metadata.contexts !== undefined) {
+          await this.provideContextFactory({
+            contexts: metadata.contexts,
+            derivationPath: this.args.derivationPath,
+          }).run();
+        }
+        delete this.calldataMetadatas[calldataIndex];
+      }
+    }
+  }
+
+  private mapCalldataPresence(
+    presence: TypedDataCalldataParamPresence,
+  ): CalldataParamPresence {
+    switch (presence) {
+      case TypedDataCalldataParamPresence.None:
+        return CalldataParamPresence.None;
+      case TypedDataCalldataParamPresence.Present:
+        return CalldataParamPresence.Present;
+      case TypedDataCalldataParamPresence.VerifyingContract:
+        return CalldataParamPresence.VerifyingContract;
+      default: {
+        const unhandledPresence: never = presence;
+        throw new Error(`Unhandled presence ${unhandledPresence}`);
+      }
     }
   }
 

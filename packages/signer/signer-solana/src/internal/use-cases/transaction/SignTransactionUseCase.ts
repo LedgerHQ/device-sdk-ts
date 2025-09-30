@@ -1,6 +1,7 @@
 import { inject, injectable } from "inversify";
 
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
@@ -14,14 +15,12 @@ export class SignTransactionUseCase {
   execute(
     derivationPath: string,
     transaction: Transaction,
-    options?: {
-      skipOpenApp?: boolean;
-    },
+    solanaTransactionOptionalConfig?: SolanaTransactionOptionalConfig,
   ): SignTransactionDAReturnType {
     return this.appBinder.signTransaction({
       derivationPath,
       transaction,
-      skipOpenApp: options?.skipOpenApp ?? false,
+      solanaTransactionOptionalConfig,
     });
   }
 }

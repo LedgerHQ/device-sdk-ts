@@ -1,34 +1,65 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { pkiTypes } from "@/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  TransactionContext,
-  TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
 import type { TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
+export type TrustedNameContextInput = {
+  chainId: number;
+  domain: string;
+  challenge: string;
+  deviceModelId: DeviceModelId;
+};
+
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.TRUSTED_NAME,
+];
+
 @injectable()
-export class TrustedNameContextLoader implements ContextLoader {
+export class TrustedNameContextLoader
+  implements ContextLoader<TrustedNameContextInput>
+{
   private _dataSource: TrustedNameDataSource;
 
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
     dataSource: TrustedNameDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private certificateLoader: PkiCertificateLoader,
   ) {
     this._dataSource = dataSource;
   }
 
-  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    const { chainId, domain, challenge } = ctx;
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is TrustedNameContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "chainId" in input &&
+      "domain" in input &&
+      "challenge" in input &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
+      typeof input.chainId === "number" &&
+      typeof input.domain === "string" &&
+      input.domain.length > 0 &&
+      typeof input.challenge === "string" &&
+      input.challenge.length > 0 &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+    );
+  }
 
-    if (!domain || !challenge) {
-      return [];
-    }
+  async load(input: TrustedNameContextInput): Promise<ClearSignContext[]> {
+    const { chainId, domain, challenge, deviceModelId } = input;
 
     if (!this.isDomainValid(domain)) {
       return [
@@ -44,44 +75,27 @@ export class TrustedNameContextLoader implements ContextLoader {
       domain,
       challenge,
     });
-
-    return [
-      payload.caseOf({
-        Left: (error): ClearSignContext => ({
+    const response = await payload.caseOf({
+      Left: (error): Promise<ClearSignContext> =>
+        Promise.resolve({
           type: ClearSignContextType.ERROR,
           error: error,
         }),
-        Right: (value): ClearSignContext => ({
+      Right: async ({ data, keyId, keyUsage }): Promise<ClearSignContext> => {
+        const certificate = await this.certificateLoader.loadCertificate({
+          keyId,
+          keyUsage,
+          targetDevice: deviceModelId,
+        });
+        return {
           type: ClearSignContextType.TRUSTED_NAME,
-          payload: value,
-        }),
-      }),
-    ];
-  }
+          payload: data,
+          certificate,
+        };
+      },
+    });
 
-  async loadField(
-    field: TransactionFieldContext,
-  ): Promise<ClearSignContext | null> {
-    if (field.type !== ClearSignContextType.TRUSTED_NAME) {
-      return null;
-    }
-    const payload = await this._dataSource.getTrustedNamePayload({
-      chainId: field.chainId,
-      address: field.address,
-      challenge: field.challenge,
-      types: field.types,
-      sources: field.sources,
-    });
-    return payload.caseOf({
-      Left: (error): ClearSignContext => ({
-        type: ClearSignContextType.ERROR,
-        error,
-      }),
-      Right: (value): ClearSignContext => ({
-        type: ClearSignContextType.TRUSTED_NAME,
-        payload: value,
-      }),
-    });
+    return [response];
   }
 
   private isDomainValid(domain: string) {

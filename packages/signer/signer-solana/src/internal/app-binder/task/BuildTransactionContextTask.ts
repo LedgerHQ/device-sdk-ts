@@ -7,7 +7,7 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
 export type SolanaBuildContextResult = {
@@ -23,7 +23,7 @@ export type SolanaBuildContextResult = {
 
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
-  readonly options: TransactionOptions;
+  readonly options: TransactionResolutionContext;
 };
 
 export class BuildTransactionContextTask {

@@ -1,5 +1,37 @@
 # @ledgerhq/context-module
 
+## 1.8.0
+
+### Minor Changes
+
+- [#1032](https://github.com/LedgerHQ/device-sdk-ts/pull/1032) [`bd6ab6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/bd6ab6e984de8fdcf92157257cae54d34028f317) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add safe proxy datasource
+
+- [#1011](https://github.com/LedgerHQ/device-sdk-ts/pull/1011) [`a995e7f`](https://github.com/LedgerHQ/device-sdk-ts/commit/a995e7fb79bc086593c8ecdb60b0e9792c6f3329) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add LoadField and ContextFieldLoader interface
+
+- [#1037](https://github.com/LedgerHQ/device-sdk-ts/pull/1037) [`38d944a`](https://github.com/LedgerHQ/device-sdk-ts/commit/38d944a222d1a0215b471b41434c0ad6323f5f5c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add token calldata datasource
+
+- [#1016](https://github.com/LedgerHQ/device-sdk-ts/pull/1016) [`3f276b7`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f276b7a29dad38f533768382c5363466e40f26c) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add support for calldata in eip712 messages
+
+- [#1032](https://github.com/LedgerHQ/device-sdk-ts/pull/1032) [`bd6ab6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/bd6ab6e984de8fdcf92157257cae54d34028f317) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Improve context module getField interface to be more generic
+
+### Patch Changes
+
+- [#1043](https://github.com/LedgerHQ/device-sdk-ts/pull/1043) [`8bead0b`](https://github.com/LedgerHQ/device-sdk-ts/commit/8bead0b3024cd0f6c3bb0f3cb0101eddae15aa38) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix proxy certificate for typed data
+
+- [#1038](https://github.com/LedgerHQ/device-sdk-ts/pull/1038) [`69c7624`](https://github.com/LedgerHQ/device-sdk-ts/commit/69c7624ae5dbe4d64813c212e41c2fcc1ee7a12e) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add expectedTypes filtering when loading contexts
+
+- [#1037](https://github.com/LedgerHQ/device-sdk-ts/pull/1037) [`38d944a`](https://github.com/LedgerHQ/device-sdk-ts/commit/38d944a222d1a0215b471b41434c0ad6323f5f5c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Rename transaction folder to calldata
+
+- [#1044](https://github.com/LedgerHQ/device-sdk-ts/pull/1044) [`fc1b077`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc1b07775331a57feb5d0be2057c9e91dacedf8b) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Retrieve certificate for trusted names
+
+- [#951](https://github.com/LedgerHQ/device-sdk-ts/pull/951) [`4489468`](https://github.com/LedgerHQ/device-sdk-ts/commit/448946814bbeaf4e150ef7d9e8148e506a6593fb) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ClearSignContextReferenceType to differenciate clear signing type with reference type
+
+- [#951](https://github.com/LedgerHQ/device-sdk-ts/pull/951) [`4489468`](https://github.com/LedgerHQ/device-sdk-ts/commit/448946814bbeaf4e150ef7d9e8148e506a6593fb) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add CALLDATA descriptor support
+
+- [#1027](https://github.com/LedgerHQ/device-sdk-ts/pull/1027) [`0c9bdc7`](https://github.com/LedgerHQ/device-sdk-ts/commit/0c9bdc73b34b3a9743b37d79f41b54cce5740578) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Use contexts from contract before resolved proxy
+
+- [#1042](https://github.com/LedgerHQ/device-sdk-ts/pull/1042) [`0d9c02a`](https://github.com/LedgerHQ/device-sdk-ts/commit/0d9c02adf384370e57b540e9bba61b57db91ef39) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Get the correct certificate for Safe proxies
+
 ## 1.7.0
 
 ### Minor Changes

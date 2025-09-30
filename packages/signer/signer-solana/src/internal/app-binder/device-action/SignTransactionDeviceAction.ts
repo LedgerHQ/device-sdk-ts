@@ -23,6 +23,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
+import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -30,8 +31,8 @@ import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChe
 import {
   SolanaTransactionTypes,
   TransactionInspector,
-  type TxInspectorResult,
 } from "@internal/app-binder/services/TransactionInspector";
+import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -55,6 +56,8 @@ export type MachineDependencies = {
   }) => Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>>;
   readonly inspectTransaction: (arg0: {
     serializedTransaction: Uint8Array;
+    resolutionContext?: TransactionResolutionContext;
+    rpcUrl?: string;
   }) => Promise<TxInspectorResult>;
   readonly signTransaction: (arg0: {
     input: {
@@ -108,10 +111,23 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Solana" },
         }).makeStateMachine(internalApi),
+
         getAppConfig: fromPromise(getAppConfig),
         inspectTransaction: fromPromise(
-          ({ input }: { input: SignTransactionDAInput }) =>
-            inspectTransaction({ serializedTransaction: input.transaction }),
+          ({
+            input,
+          }: {
+            input: {
+              serializedTransaction: Uint8Array;
+              resolutionContext?: TransactionResolutionContext;
+              rpcUrl?: string;
+            };
+          }) =>
+            inspectTransaction({
+              serializedTransaction: input.serializedTransaction,
+              resolutionContext: input.resolutionContext,
+              rpcUrl: input.rpcUrl,
+            }),
         ),
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
@@ -119,7 +135,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
-        skipOpenApp: ({ context }) => context.input.skipOpenApp,
+        skipOpenApp: ({ context }) =>
+          context.input.transactionOptions?.skipOpenApp || false,
         isSPLSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
@@ -131,6 +148,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         isAnSPLTransaction: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
           SolanaTransactionTypes.SPL,
+        shouldSkipInspection: ({ context }) =>
+          context._internalState.error === null &&
+          !!context.input.transactionOptions?.transactionResolutionContext,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -145,7 +165,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOPdL37pAFj1WArACYANCACeuh4Y46dxgGzSBnZ6AQZ6dgC+ES5omLgERGxUtAxMrORU3Lz8QiJiUjrySCDKqhkYGtoI+kam5pY29s5uujrSxhzSAJw+AcZWplZ+BlEx6Nj4hCTlKYwsSZwA8opgGMyKirNpC+IQVGAcqBh0FADWBxQraxvComAAsiQAFkdgMkVKKmpUlYjhOhw7F0bAYrAN9HZrC53NV2lZAV1AnYrGEul0wpFoiBYhMEtN2Ft5uUOABhJ5gYinZardabehzdLsABKcAArgJSFI5BpSt8KsUqjoDDoHJ0ug5jAY6jowbZoa0ZYDpHYfA59A47H4BqNseN4lMFoTGZkyRSqVdaUaFizYOzOZJCjyvuVftVhaLuhKpWYZY15QhjADpH4HAMQ0FzOEujqcfrEjN6dtiQBxMCkWkkqgAM3Qu32h2OZwOMHTG0zGBzUHeTrK6gFukDeg4fj04Slwbavis-pFAw4en6wSGfmRXWMMb1k3jBMTRPYHFTpcU5cr4jAOBwFBwHEUAlEWa3AFsOCWM9n0NXiryXfXqo3m627O2-J3+j20RwHIjhiHPAOrIEE5xFO+LJLOxqcIuZ4VugNp2qalJch8JTOnWoBVA4njwv0OiOFYaohNIwY9p4HR+GiGrGNYAEOEEQG4gaCapHOmRQWW55QHBHIIacBTIdeaFaIgmG2CYVi4aGBEBMRLQIKCQY6F0QIigY0iKdGWKxiBhrgQsWSwCsZBxqBGB5hgBxHCc5wFgZFKkMZCyXp8tY-LeEr4f2yKmGOwyGF0JHkRwYQGORxj+C2fgtvRDlMQyek8LZRnaeUa4bluO57qQB44MeRyJfZyXsE5KEufy6HCf0orhAMeg+cF-myfYXSfjYtgiphiLIn40WFWBzEQRwzBZmIOAJYZ9rcleqGueVcmYUYtFdC2spSphPYih0QxLX4gbCqCdiYmMwF4jp-V6UNI1jXZfE1nyroGPNn4GEttggsYa2yUK0iilYSkorRaqqQYIyaZOJ2xUm84XeuV1kFIDj8dNZVCXNtFPS9K3vc0MLSRwXQhFqkZKYpOg9eDM5ncSABCrKoAIEDlmImicns5kFlZBwAEa0-TjNgMzxUCTNKNhDYn5jqpA6guJB3rWjNiOARX74-YZOMRTcXUzzDNUEznLrpu267vuR4cNzdM6xgeuC0j922E2X6SuYkpgrhdj+hYzUONY-QK8Y4o7Wr059Zr84AAqbgwEBgHzzNmRZhbWYokeoNHsekDbpWuvhYWAp4in9Pj4r2OtWr9p4yIE-0YXjqDx3qyHkOZBHFBRzHuv8-raVG5l2XHsnrep+3Vud5nd23jnHSOJ7he1aG7uyf40h48Dr3CgdAGHbq9fBzQunEi3bfp1xpA8Uht03rNCvYQO3T+IMIbrRYJhLUC3syvtQcmVaB8p2nHfMxPmfB0iMs4T2qiYW+PkH7Y10ERUUkUHBam9GqZEIMjoMV3j-ecWlyZUHjuzIsHBVA7xMmPS+KNHCSiCsCMEAQfRjhIgObwL4vwahJqwr+p1Q6ZFwQ3UyBt0rGyyqbEhmCyGTWcuPWaVCjDPTBEMcwalGGfRFMvf2cIBwqk1L4LhEMWKcD4bvIB5JELkMElUYIyJvDBEijYF8wweyqQ6OYAIkJhT6DClvIx39944LBvwkxZobpTTATIiBuECb2J0I4z6SCEEFzsO9NErZAxRCxBgCg0d4DFB8dwpuyMhbIyqAAWj8P6Epdg8ZohqbUmpX49EawKVkNQghbhiAvhYxA+EArwnIm0b6SC1JmG8QErBfjMjUmuHSSmgkin3QOs2bo5hHDbXEjoHswZl5fkUphAZ-gkGNMbgY0kpjzQ0g2NgqgJ9OnC0FERZerZES7X2Z4dawZOiPjaMYTUoUjl71maxNM0FKy3OKboSEP0RQ+HCFY-GsDqioI4DVAI3skn-FGaQ-JJy2LLg4kEykYLXTew1J0B6L5HCr1qgYJh2yLAqnaL4XCwN-lXM4LDAqeDCm2zckMKpMSVK-RbCFZUJEnzIuGe-GqIRSZ13Ediga0NRqEHGkS28qkdotQOWGQMxgSKIhMH0A6oIgieAcKyiZnAaYW3Tmq2a0sqnkWRJqAYalgx6E2QazxIq1IDCBhawFnBD5D1taE6RIs-rNlWU+HwQRIrlNUe0Zs1cJTKk1GYbqcqYpNJOcG-+I9AFsm4mcu1KMwRKRMFjcILZgw-NLkYIYpgQqBkhHoUMAaeGGLGSZUtVRfr2G8PjKiwIwiYQRe1JsT4-rPVwuib6Hbml5PKAS04vbECjkeb9SlkklINRhCKD8Wpfb+13WqTNGDs3HIGsgVkxAmCwByVIihlixzwlahiFUQo926FUthX0iJ8K-Xmguk5ABRbua6EBAn6Mi1sH7Y3foQIYJsQR1n42VEKRw6SIhAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOAJzSAbNNOmATNZ0AWPRYA0IAJ67bLjgcfW-hYArNIGpsGOAL5R7miYuAREbFS0DEys5FTcvPxCImJSOvJIIMqqWRga2gj6RmaW1nYOzm6eujqdHNbWPsE6DXq2MXHo2PiEJJVpjCwpnADyimAYzIqKMxnz4hBUYByoGHQUANb7FMur68KiYACyJAAWh2AyJUoqalTViHrBthxbP5-I5HMZjH9gm0vLVpBCOBYnI5bBY9NI4RZjCMQPFxkkpuxNnNKhwAMKPMDEE5LFZrDb0WaZdgAJTgAFcBKQpHINOUvlVSjUdAZhX5HAY9JLbMEDAZMXp3DDOvoOKEXIZgsZ9JrorEcWNEpN5kSmdlyZTqZc6Sb5qzYByuZJirzPpUfrURUZgZKhjK5RDFYgtRxHDZTKCJZjEXosXrcYbktMGVsSQBxMCkOmkqgAM3QOz2ByOp32MEz62zGDzUDeLoq6kFui1plVpgMEIs9kldlsgdq0oBYU6xmkAwh0mCwWx8YmicJyeJ7A46fLikr1fEYBwOAoOA4igEohzu4Athwy1nc+ha6U+W7G7Vm632y4u3oe32dDYOGHzDLLMYEootOBqzgSqQLqanArpeVboHaDrmlS3LvGUroNqANS2D4eh+H8fSvl+eiOJ+tjBnYyKohY5hAtIuqjAkYHGpB8zLhmsHVghnJIScRSoXeGFaIg2GSnh-x-IRpjEX2-g6D+LigqioIyo4kQgYx+LMeki7ZDwsDLGQCbgRgBYYPshzHGcRb6ZSpBGfMN4fPW3wPmRqk-tR6KOE4Oids4pFDAiUmYjYI5gu26l4kaSbaVBOQ2YZTGVJu267vuh6kMeOBnocCV2Ul7COWhzkCphwnGO5pieXRPl+Qq7QII4Vghgp0jqqpOiRfZMWMqxzA5mIOB6QZjo8re6EuWVCAGCJ3SdtRAwxqOvYNZ0IohiEETBKYgHBHowpdQVEGxX1A1bsNtl8XW-LujNPhzSipiLSOOgrUqBgThw752GidHvpqBiHZpPUpku-WDRdZBSLY-ETaVQnTbNliPc9y19lYAKqbY4ZPa9XbDHGoHA-OJ0kgAQmyqACBAlZiJoXK7GZRaWfsABGlPU7TYD00VAmTQjEr9CYr3il+6JOJ+r0WKqQzmDNvk6P8sYMVFc7Hb15MczTVB01yW47nuB5HqeHDs1T2sYLrvNw7dfxyVqtii+Yo4kQ1QzSD+-w7VJIrGCEgOExp0UkxrS4AAo7gwEBgFz9OmeZxZWYokeoNHsekNbJXusibZfQMARO09b0dKiJjGCi6JkdtthOEDwfq6D2QRxQUcxzr3N66lhsZVlZ7Jy3qdt5bHeZzdD450Y+0VXRIo2K9fZ+wCdgRCKvkRPNddqzQLEks3rfp1xpA8Sh133lNrQe-K7ZURjiuS383Shk1fqK8Bgeq8ZNq7ynaft-Th-HydLDLO48XCXwhNfFwt9gifi8j+CcNhsbaklJ1d+3UQ6N04DOYmVB47MxLBwVQQct6jzPgjJWLYIT-DottbyOhSLBjBBERWmp5rGCnGgo629SZLmwfXEy+s0pG0yibIhH8HJjScmPKaFCTD4RoeGToksgQhgQTKCqkJHab0-jvXhRN+EAIpMhUhgkah7URICUIbVpA13FE9T8q8-DlxCJ2Jwjt2HaK0qHbIfCt6GItFdcaICZEuDktKdEaJbHhHoatFEwQnHSmIlJUMM1dR6gwBQaO8BSi+J0Tw-mfN4Y1AALTQkQMU+Jv4qm-gsKpTxIMdKcB4GoQQNwxCn1MYgZEpFMQcH0FjbCgECYq3QQ3RpHAaRXHpPk+GhTbpQkBMCZEnRtpDBCLAiwXoAhVR0BEtqeh6kYPGTxSZ1pdFUEPh0-mQpK7dEVhYaiGiXoGEltYMU1hPJi1WYcsZcUYIVivFAK5RTdChEcICEI5cwT7VUpqUiAwETEXbE0CE4JUEjK4V-Jc-y1yAv8VSYF7p7D3UiGicUyyXA7QCpPcxyItRDCcAczhODuHeKaYQEaozZk21ck1YwgIpK+QCOiJ6VVSILKUtjOe21NkBwxSyrF2RwbnQ5bZQlD4PqBWRoYNqwoXmxPDCGR2q8dq7WVvqYheS2UcApubdO6qpr+FCH0gItT7A2CsJEWBuca6aietQ7y-wfmsswRwPeg97VBOkQLCILYXBKzCJOF8ksujfW8nYKwU96IWvEQ0uK4bf7D3-uybiRiTgOoRqpUciLFb7T9GYSWDyy4oi1G1J6dTmX8MVVg-RW8K01FDELKwP0rHOFBKRD6X0bBNQeaEWeFhg3do4Lk20Jaj5lv7YgSIUkTBkQnB9FJe0HFhEBIrLU4IDCRBFou85WC2TECYLAbJUiyFmMQX0oYOEa751du9OECTMQyn+AEDh8qu23o4AAUS7puhA207AfpEgyn9fZDAtllH7awSaJTghiDEIAA */
       id: "SignTransactionDeviceAction",
       initial: "InitialState",
       context: ({ input }) => ({
@@ -242,9 +262,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "inspectTransaction",
             src: "inspectTransaction",
+
             input: ({ context }) => ({
-              ...context.input,
               serializedTransaction: context.input.transaction,
+              resolutionContext:
+                context.input.transactionOptions?.transactionResolutionContext,
+              rpcUrl: context.input.transactionOptions?.solanaRPCURL,
             }),
             onDone: {
               target: "AfterInspect",
@@ -430,10 +453,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
 
     const inspectTransaction = async (arg0: {
       serializedTransaction: Uint8Array;
+      resolutionContext?: TransactionResolutionContext;
+      rpcUrl?: string;
     }) =>
       Promise.resolve(
         new TransactionInspector(
           arg0.serializedTransaction,
+          arg0.resolutionContext?.tokenAddress,
+          arg0.resolutionContext?.createATA,
+          arg0.rpcUrl,
         ).inspectTransactionType(),
       );
 

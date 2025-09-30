@@ -29,7 +29,7 @@ const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 
 const contextModuleStub: ContextModule = {
   getSolanaContext: vi.fn(),
-  getContext: vi.fn(),
+  getFieldContext: vi.fn(),
   getContexts: vi.fn(),
   getTypedDataFilters: vi.fn(),
   getWeb3Checks: vi.fn(),
@@ -99,8 +99,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
-          skipOpenApp: true, // always skip open
-          options: {},
+          transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         } as SignTransactionDAInput,
       });
@@ -192,8 +191,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
-          skipOpenApp: true,
-          options: {},
+          transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         } as SignTransactionDAInput,
       });
@@ -273,8 +271,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
-          skipOpenApp: true,
-          options: {},
+          transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         } as SignTransactionDAInput,
       });

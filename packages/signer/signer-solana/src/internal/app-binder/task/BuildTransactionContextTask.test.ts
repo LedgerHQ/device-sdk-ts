@@ -19,7 +19,7 @@ import {
 
 const contextModuleMock: ContextModule = {
   getSolanaContext: vi.fn(),
-  getContext: vi.fn(),
+  getFieldContext: vi.fn(),
   getContexts: vi.fn(),
   getTypedDataFilters: vi.fn(),
   getWeb3Checks: vi.fn(),

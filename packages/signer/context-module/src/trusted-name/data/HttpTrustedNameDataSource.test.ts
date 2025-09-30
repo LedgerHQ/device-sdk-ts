@@ -94,7 +94,7 @@ describe("HttpTrustedNameDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpTrustedNameDataSource: error getting domain payload",
+            "[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for domain hello.eth on chain 137",
           ),
         ),
       );
@@ -102,7 +102,13 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return a payload", async () => {
       // GIVEN
-      const response = { data: { signedDescriptor: { data: "payload" } } };
+      const response = {
+        data: {
+          signedDescriptor: { data: "payload", signatures: {} },
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        },
+      };
       vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
@@ -113,7 +119,13 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(result).toEqual(Right("payload"));
+      expect(result).toEqual(
+        Right({
+          data: "payload",
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        }),
+      );
     });
   });
 
@@ -186,35 +198,13 @@ describe("HttpTrustedNameDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpTrustedNameDataSource: no trusted name metadata for address 0x1234",
+            "[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for address 0x1234 on chain 137",
           ),
         ),
       );
     });
 
-    it("should return a payload", async () => {
-      // GIVEN
-      const response = {
-        data: {
-          signedDescriptor: { data: "payload" },
-        },
-      };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
-
-      // WHEN
-      const result = await datasource.getTrustedNamePayload({
-        chainId: 137,
-        address: "0x1234",
-        challenge: "",
-        sources: ["ens"],
-        types: ["eoa"],
-      });
-
-      // THEN
-      expect(result).toEqual(Right("payload"));
-    });
-
-    it("should return a payload with a signature", async () => {
+    it("should return an error when no keys are returned", async () => {
       // GIVEN
       const response = {
         data: {
@@ -233,7 +223,73 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(result).toEqual(Right("payload153012345"));
+      expect(result).toEqual(
+        Left(
+          new Error(
+            "[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for address 0x1234 on chain 137",
+          ),
+        ),
+      );
+    });
+
+    it("should return a payload", async () => {
+      // GIVEN
+      const response = {
+        data: {
+          signedDescriptor: { data: "payload", signatures: {} },
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        },
+      };
+      vi.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
+        address: "0x1234",
+        challenge: "",
+        sources: ["ens"],
+        types: ["eoa"],
+      });
+
+      // THEN
+      expect(result).toEqual(
+        Right({
+          data: "payload",
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        }),
+      );
+    });
+
+    it("should return a payload with a signature", async () => {
+      // GIVEN
+      const response = {
+        data: {
+          signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        },
+      };
+      vi.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
+        address: "0x1234",
+        challenge: "",
+        sources: ["ens"],
+        types: ["eoa"],
+      });
+
+      // THEN
+      expect(result).toEqual(
+        Right({
+          data: "payload153012345",
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        }),
+      );
     });
   });
 });

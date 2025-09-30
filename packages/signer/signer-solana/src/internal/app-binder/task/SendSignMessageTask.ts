@@ -7,12 +7,17 @@ import {
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
-import bs58 from "bs58";
 
-import { type Signature } from "@api/index";
 import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
-import { SignOffChainMessageCommand } from "@internal/app-binder/command/SignOffChainMessageCommand";
+import {
+  SignOffChainMessageCommand,
+  type SignOffChainMessageCommandResponse,
+} from "@internal/app-binder/command/SignOffChainMessageCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import {
+  type Bs58Encoder,
+  DefaultBs58Encoder,
+} from "@internal/app-binder/services/bs58Encoder";
 
 export type SendSignMessageTaskArgs = {
   sendingData: Uint8Array;
@@ -20,7 +25,7 @@ export type SendSignMessageTaskArgs = {
 };
 
 export type SendSignMessageTaskRunFunctionReturn = Promise<
-  CommandResult<Signature, SolanaAppErrorCodes>
+  CommandResult<SignOffChainMessageCommandResponse, SolanaAppErrorCodes>
 >;
 
 export const MAX_MESSAGE_LENGTH = 0xffff;
@@ -29,6 +34,7 @@ export class SendSignMessageTask {
   constructor(
     private api: InternalApi,
     private args: SendSignMessageTaskArgs,
+    private readonly bs58Encoder: Bs58Encoder = DefaultBs58Encoder,
   ) {}
 
   async run(): SendSignMessageTaskRunFunctionReturn {
@@ -62,7 +68,7 @@ export class SendSignMessageTask {
       });
     }
 
-    const signerPubkey = bs58.decode(pubkeyResult.data);
+    const signerPubkey = this.bs58Encoder.decode(pubkeyResult.data);
     const fullMessage = this._buildFullMessage(sendingData, signerPubkey);
     const commandBuffer = this._buildApduCommand(fullMessage, pathIndexes);
 

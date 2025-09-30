@@ -87,3 +87,35 @@ const dmk = new DeviceManagementKitBuilder()
 
 // You can then make use of the Device Management Kit
 ```
+
+### Android Permissions
+
+The following table outlines the Bluetooth-related permissions needed for different Android API levels:
+
+| Permissions                                    | Android ≤ 9 (API 28) | Android 10, 11 (API 29, 30) | Android 12+ (API 31+)     |
+| ---------------------------------------------- | -------------------- | --------------------------- | ------------------------- |
+| `android.permission.BLUETOOTH`                 | ✅ Needed            | ✅ Needed                   | ❌ Not Needed             |
+| `android.permission.BLUETOOTH_ADMIN`           | ✅ Needed            | ✅ Needed                   | ❌ Not Needed             |
+| `android.permission.ACCESS_COARSE_LOCATION` \* | ✅ Needed            | ❌ Not Needed               | ❌ Not Needed             |
+| `android.permission.ACCESS_FINE_LOCATION` \*   | ❌ Not Needed        | ✅ Needed                   | ❓ Not necessarily needed |
+| `android.permission.BLUETOOTH_CONNECT` \*      | ❌ Not Needed        | ❌ Not Needed               | ✅ Needed                 |
+| `android.permission.BLUETOOTH_SCAN` \*         | ❌ Not Needed        | ❌ Not Needed               | ✅ Needed                 |
+
+\*Dangerous/Runtime permissions requiring explicit user consent
+
+**Note for Android 12+**: `ACCESS_FINE_LOCATION` is not necessarily needed if `BLUETOOTH_SCAN` is defined with `android:usesPermissionFlags="neverForLocation"` and you can strongly assert that your app never derives physical location from Bluetooth scan results.
+
+#### Resulting Android Manifest
+
+Add the following permissions to your `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="replace" android:maxSdkVersion="28"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="replace" android:maxSdkVersion="30"/>
+
+<!-- Bluetooth permissions: Android API >= 31 (Android 12)-->
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/>
+```

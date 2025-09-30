@@ -80,25 +80,29 @@ describe("GenerateSolanaTransaction", () => {
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
-    for (const ix of msg.instructions) {
+    for (const instruction of msg.instructions) {
       // program must be the SPL-Token program
-      const pid = msg.accountKeys[ix.programIdIndex]!;
+      const pid = msg.accountKeys[instruction.programIdIndex]!;
       expect(pid.equals(TOKEN_PROGRAM_ID)).toBe(true);
 
       // first account is source ATA, second is mint, third is dest ATA
       expect(
-        (msg.accountKeys[ix.accounts[0]!] as PublicKey).equals(sourceAta),
+        (msg.accountKeys[instruction.accounts[0]!] as PublicKey).equals(
+          sourceAta,
+        ),
       ).toBe(true);
-      expect((msg.accountKeys[ix.accounts[1]!] as PublicKey).equals(mint)).toBe(
-        true,
-      );
       expect(
-        (msg.accountKeys[ix.accounts[2]!] as PublicKey).equals(destAta),
+        (msg.accountKeys[instruction.accounts[1]!] as PublicKey).equals(mint),
+      ).toBe(true);
+      expect(
+        (msg.accountKeys[instruction.accounts[2]!] as PublicKey).equals(
+          destAta,
+        ),
       ).toBe(true);
 
       // feePayer must sign
       expect(
-        (msg.accountKeys[ix.accounts[3]!] as PublicKey).equals(
+        (msg.accountKeys[instruction.accounts[3]!] as PublicKey).equals(
           feePayer.publicKey,
         ),
       ).toBe(true);
@@ -124,18 +128,18 @@ describe("GenerateSolanaTransaction", () => {
     // then
     expect(msg.instructions).toHaveLength(ops);
 
-    for (const ix of msg.instructions) {
+    for (const instruction of msg.instructions) {
       // program must be SystemProgram
-      const pid = msg.accountKeys[ix.programIdIndex]!;
+      const pid = msg.accountKeys[instruction.programIdIndex]!;
       expect(pid.equals(SystemProgram.programId)).toBe(true);
 
       // accounts: [fromPubkey, toPubkey]
-      expect((msg.accountKeys[ix.accounts[0]!] as PublicKey).toBase58()).toBe(
-        feePayerKey,
-      );
-      expect((msg.accountKeys[ix.accounts[1]!] as PublicKey).toBase58()).toBe(
-        recipientKey,
-      );
+      expect(
+        (msg.accountKeys[instruction.accounts[0]!] as PublicKey).toBase58(),
+      ).toBe(feePayerKey);
+      expect(
+        (msg.accountKeys[instruction.accounts[1]!] as PublicKey).toBase58(),
+      ).toBe(recipientKey);
     }
   });
 });

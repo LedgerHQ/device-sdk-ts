@@ -3,7 +3,10 @@ import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type DynamicNetworkDataSource } from "@/dynamic-network/data/DynamicNetworkDataSource";
-import { DynamicNetworkContextLoader } from "@/dynamic-network/domain/DynamicNetworkContextLoader";
+import {
+  type DynamicNetworkContextInput,
+  DynamicNetworkContextLoader,
+} from "@/dynamic-network/domain/DynamicNetworkContextLoader";
 import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
@@ -13,31 +16,19 @@ import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import {
-  type TransactionContext,
-  type TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
 
 describe("DynamicNetworkContextLoader", () => {
   const mockNetworkDataSource: DynamicNetworkDataSource = {
     getDynamicNetworkConfiguration: vi.fn(),
   };
 
-  const mockConfig: ContextModuleConfig = {
+  const mockConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com",
       mode: "prod",
       branch: "main",
     },
-    web3checks: {
-      url: "https://web3checks.api.ledger.com",
-    },
-    metadataServiceDomain: {
-      url: "https://metadata.api.ledger.com",
-    },
-    defaultLoaders: true,
-    customLoaders: [],
-  };
+  } as ContextModuleConfig;
 
   const mockCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
@@ -76,15 +67,85 @@ describe("DynamicNetworkContextLoader", () => {
     );
   });
 
+  describe("canHandle function", () => {
+    const validInput: DynamicNetworkContextInput = {
+      chainId: 1,
+      deviceModelId: DeviceModelId.STAX,
+    };
+
+    it("should return true for valid input", () => {
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(true);
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        false,
+      );
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.DYNAMIC_NETWORK]),
+      ).toBe(false);
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [null, "null input"],
+      [undefined, "undefined input"],
+      [{}, "empty object"],
+      ["string", "string input"],
+      [123, "number input"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, chainId: undefined }, "missing chainId"],
+      [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, chainId: "1" }, "string chainId"],
+      [{ ...validInput, chainId: null }, "null chainId"],
+      [
+        { ...validInput, deviceModelId: DeviceModelId.NANO_S },
+        "NANO_S deviceModelId",
+      ],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+  });
+
   describe("load function", () => {
     it("should return empty array when network data source returns error", async () => {
       // GIVEN
-      const transaction: TransactionContext = {
+      const input: DynamicNetworkContextInput = {
         chainId: 1,
         deviceModelId: DeviceModelId.STAX,
-        to: "0x123",
-        data: "0x456",
-        selector: "0x789",
       };
       vi.spyOn(
         mockNetworkDataSource,
@@ -92,7 +153,7 @@ describe("DynamicNetworkContextLoader", () => {
       ).mockResolvedValue(Left(new Error("Network error")));
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([]);
@@ -103,12 +164,9 @@ describe("DynamicNetworkContextLoader", () => {
 
     it("should return empty array when descriptor for device model is not found", async () => {
       // GIVEN
-      const transaction: TransactionContext = {
+      const input: DynamicNetworkContextInput = {
         chainId: 1,
         deviceModelId: DeviceModelId.STAX,
-        to: "0x123",
-        data: "0x456",
-        selector: "0x789",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -135,7 +193,7 @@ describe("DynamicNetworkContextLoader", () => {
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([]);
@@ -143,12 +201,9 @@ describe("DynamicNetworkContextLoader", () => {
 
     it("should return empty array when signature for mode is not found", async () => {
       // GIVEN
-      const transaction: TransactionContext = {
+      const input: DynamicNetworkContextInput = {
         chainId: 1,
         deviceModelId: DeviceModelId.STAX,
-        to: "0x123",
-        data: "0x456",
-        selector: "0x789",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -176,7 +231,7 @@ describe("DynamicNetworkContextLoader", () => {
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([]);
@@ -184,12 +239,9 @@ describe("DynamicNetworkContextLoader", () => {
 
     it("should return context with network configuration when all data is available", async () => {
       // GIVEN
-      const transaction: TransactionContext = {
+      const input: DynamicNetworkContextInput = {
         chainId: 137,
         deviceModelId: DeviceModelId.STAX,
-        to: "0x123",
-        data: "0x456",
-        selector: "0x789",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "polygon",
@@ -217,7 +269,7 @@ describe("DynamicNetworkContextLoader", () => {
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toHaveLength(1);
@@ -237,12 +289,9 @@ describe("DynamicNetworkContextLoader", () => {
 
     it("should include icon context when icon is available", async () => {
       // GIVEN
-      const transaction: TransactionContext = {
+      const input: DynamicNetworkContextInput = {
         chainId: 1,
         deviceModelId: DeviceModelId.STAX,
-        to: "0x123",
-        data: "0x456",
-        selector: "0x789",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -270,7 +319,7 @@ describe("DynamicNetworkContextLoader", () => {
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toHaveLength(2);
@@ -287,12 +336,9 @@ describe("DynamicNetworkContextLoader", () => {
 
     it("should handle multiple device models correctly", async () => {
       // GIVEN
-      const transaction: TransactionContext = {
+      const input: DynamicNetworkContextInput = {
         chainId: 1,
         deviceModelId: DeviceModelId.FLEX,
-        to: "0x123",
-        data: "0x456",
-        selector: "0x789",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -329,7 +375,7 @@ describe("DynamicNetworkContextLoader", () => {
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toHaveLength(1);
@@ -347,12 +393,9 @@ describe("DynamicNetworkContextLoader", () => {
         { ...mockConfig, cal: { ...mockConfig.cal, mode: "test" } },
         mockCertificateLoader,
       );
-      const transaction: TransactionContext = {
+      const input: DynamicNetworkContextInput = {
         chainId: 1,
         deviceModelId: DeviceModelId.STAX,
-        to: "0x123",
-        data: "0x456",
-        selector: "0x789",
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
@@ -380,7 +423,7 @@ describe("DynamicNetworkContextLoader", () => {
       ).mockResolvedValue(Right(networkConfig));
 
       // WHEN
-      const result = await testModeLoader.load(transaction);
+      const result = await testModeLoader.load(input);
 
       // THEN
       expect(result).toHaveLength(1);
@@ -388,23 +431,6 @@ describe("DynamicNetworkContextLoader", () => {
       if (context && "payload" in context) {
         expect(context.payload).toContain("test-sig");
       }
-    });
-  });
-
-  describe("loadField function", () => {
-    it("should always return null", async () => {
-      // GIVEN
-      const field: TransactionFieldContext = {
-        type: ClearSignContextType.TOKEN,
-        chainId: 1,
-        address: "0x123",
-      };
-
-      // WHEN
-      const result = await loader.loadField(field);
-
-      // THEN
-      expect(result).toBeNull();
     });
   });
 });

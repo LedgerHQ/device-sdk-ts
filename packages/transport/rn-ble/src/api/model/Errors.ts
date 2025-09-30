@@ -35,6 +35,13 @@ export class BleNotSupported extends GeneralDmkError {
   }
 }
 
+export class BlePermissionsNotGranted extends GeneralDmkError {
+  override readonly _tag = "BlePermissionsNotGranted";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
 export class NoDeviceModelFoundError extends GeneralDmkError {
   override readonly _tag = "NoDeviceModelFoundError";
   constructor(readonly err?: unknown) {

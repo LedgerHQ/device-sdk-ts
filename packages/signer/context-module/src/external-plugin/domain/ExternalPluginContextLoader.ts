@@ -10,12 +10,25 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { TransactionContext } from "@/shared/model/TransactionContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
 
+export type ExternalPluginContextInput = {
+  to: HexaString;
+  data: HexaString;
+  selector: HexaString;
+  chainId: number;
+};
+
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.EXTERNAL_PLUGIN,
+  ClearSignContextType.TOKEN,
+];
+
 @injectable()
-export class ExternalPluginContextLoader implements ContextLoader {
+export class ExternalPluginContextLoader
+  implements ContextLoader<ExternalPluginContextInput>
+{
   private _externalPluginDataSource: ExternalPluginDataSource;
   private _tokenDataSource: TokenDataSource;
 
@@ -28,20 +41,30 @@ export class ExternalPluginContextLoader implements ContextLoader {
     this._tokenDataSource = tokenDataSource;
   }
 
-  async load(ctx: TransactionContext): Promise<ClearSignContext[]> {
-    const { to, data, selector, chainId } = ctx;
-    if (to === undefined || data === "0x") {
-      return [];
-    }
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is ExternalPluginContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "to" in input &&
+      "data" in input &&
+      "selector" in input &&
+      "chainId" in input &&
+      typeof input.chainId === "number" &&
+      isHexaString(input.to) &&
+      input.to !== "0x" &&
+      isHexaString(input.data) &&
+      input.data !== "0x" && // non empty data
+      isHexaString(input.selector) &&
+      input.selector !== "0x" &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+    );
+  }
 
-    if (!isHexaString(selector)) {
-      return [
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("Invalid selector"),
-        },
-      ];
-    }
+  async load(input: ExternalPluginContextInput): Promise<ClearSignContext[]> {
+    const { to, data, selector, chainId } = input;
 
     const eitherDappInfos = await this._externalPluginDataSource.getDappInfos({
       address: to,
@@ -91,7 +114,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
       // and return the payload or the error
       const promises = dappInfos.selectorDetails.erc20OfInterest.map(
         async (erc20Path) =>
-          this.getTokenPayload(ctx, erc20Path, extractedDecodedCallData),
+          this.getTokenPayload(input, erc20Path, extractedDecodedCallData),
       );
 
       const tokensPayload = await Promise.all(promises);
@@ -113,7 +136,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
   }
 
   private getTokenPayload(
-    ctx: TransactionContext,
+    input: ExternalPluginContextInput,
     erc20Path: string,
     decodedCallData: ethers.Result,
   ) {
@@ -123,7 +146,7 @@ export class ExternalPluginContextLoader implements ContextLoader {
       fromPromise(
         this._tokenDataSource.getTokenInfosPayload({
           address,
-          chainId: ctx.chainId,
+          chainId: input.chainId,
         }),
       ),
     );

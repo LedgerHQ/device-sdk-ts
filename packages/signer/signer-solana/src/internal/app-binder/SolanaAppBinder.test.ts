@@ -25,6 +25,7 @@ import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type SignMessageDAOutput,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -217,7 +218,7 @@ describe("SolanaAppBinder", () => {
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
           transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
-          skipOpenApp: false,
+          solanaTransactionOptionalConfig: { skipOpenApp: false },
         });
 
         // THEN
@@ -264,7 +265,7 @@ describe("SolanaAppBinder", () => {
       appBinder.signTransaction({
         derivationPath,
         transaction,
-        skipOpenApp,
+        solanaTransactionOptionalConfig: { skipOpenApp: false },
       });
 
       // THEN
@@ -274,7 +275,7 @@ describe("SolanaAppBinder", () => {
           input: {
             derivationPath,
             transaction,
-            skipOpenApp,
+            transactionOptions: { skipOpenApp },
             contextModule: contextModuleStub,
           },
         }),
@@ -286,7 +287,9 @@ describe("SolanaAppBinder", () => {
     it("should return the signed message", () =>
       new Promise<void>((resolve, reject) => {
         // GIVEN
-        const signedMessage = new Uint8Array([0x1c, 0x8a, 0x54, 0x05, 0x10]);
+        const signedMessage = {
+          signature: "signature",
+        };
         const signMessageArgs = {
           derivationPath: "44'/501'/0'/0'",
           message: "Hello world",
@@ -299,7 +302,7 @@ describe("SolanaAppBinder", () => {
               status: DeviceActionStatus.Completed,
               output: signedMessage,
             } as DeviceActionState<
-              Uint8Array,
+              SignMessageDAOutput,
               DmkError,
               DeviceActionIntermediateValue
             >,
@@ -316,7 +319,11 @@ describe("SolanaAppBinder", () => {
         const { observable } = appBinder.signMessage(signMessageArgs);
 
         // THEN
-        const states: DeviceActionState<Uint8Array, unknown, unknown>[] = [];
+        const states: DeviceActionState<
+          SignMessageDAOutput,
+          unknown,
+          unknown
+        >[] = [];
         observable.subscribe({
           next: (state) => {
             states.push(state);

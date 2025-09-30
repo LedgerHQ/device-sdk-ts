@@ -894,5 +894,16 @@ describe("TransactionParserService", () => {
       // THEN
       expect(value.isRight()).toStrictEqual(false);
     });
+
+    it("Empty array", () => {
+      // GIVEN
+      const path: DataPathElement[] = [];
+
+      // WHEN
+      const value = parser.extractValue(subset, path);
+
+      // THEN
+      expect(value.isRight()).toStrictEqual(false);
+    });
   });
 });
