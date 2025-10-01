@@ -1,5 +1,16 @@
 # @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol
 
+## 0.3.0
+
+### Minor Changes
+
+- [#1006](https://github.com/LedgerHQ/device-sdk-ts/pull/1006) [`5d91abe`](https://github.com/LedgerHQ/device-sdk-ts/commit/5d91abec2f11d283912f99ca7a9058409dc13b76) Thanks [@thesan](https://github.com/thesan)! - Add support for the restricted permissions from LKRPv2
+
+### Patch Changes
+
+- Updated dependencies [[`b0ea450`](https://github.com/LedgerHQ/device-sdk-ts/commit/b0ea45093703aa9f62b032092884f06f376fe325)]:
+  - @ledgerhq/device-management-kit@0.9.1
+
 ## 0.2.0
 
 ### Minor Changes
