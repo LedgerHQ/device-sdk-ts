@@ -1,5 +1,14 @@
 # @ledgerhq/device-transport-kit-speculos
 
+## 1.0.1
+
+### Patch Changes
+
+- [#995](https://github.com/LedgerHQ/device-sdk-ts/pull/995) [`22834d7`](https://github.com/LedgerHQ/device-sdk-ts/commit/22834d7bcad9e72549c639c786c36a71570e3116) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix a bug with device interactions
+
+- Updated dependencies [[`b0ea450`](https://github.com/LedgerHQ/device-sdk-ts/commit/b0ea45093703aa9f62b032092884f06f376fe325)]:
+  - @ledgerhq/device-management-kit@0.9.1
+
 ## 1.0.0
 
 ### Patch Changes

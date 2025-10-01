@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.9.1
+
+### Patch Changes
+
+- [#1040](https://github.com/LedgerHQ/device-sdk-ts/pull/1040) [`b0ea450`](https://github.com/LedgerHQ/device-sdk-ts/commit/b0ea45093703aa9f62b032092884f06f376fe325) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - GetDeviceStatus should not depend on the refresher
+
 ## 0.9.0
 
 ### Minor Changes

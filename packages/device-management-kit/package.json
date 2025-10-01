@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit",
-  "version": "0.9.0",
-  "private": true,
+  "version": "0.9.1",
+  "private": false,
   "license": "Apache-2.0",
   "exports": {
     ".": {

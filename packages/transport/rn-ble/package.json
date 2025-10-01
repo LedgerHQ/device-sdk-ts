@@ -2,7 +2,7 @@
   "name": "@ledgerhq/device-transport-kit-react-native-ble",
   "version": "1.1.1",
   "license": "Apache-2.0",
-  "private": false,
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -56,7 +56,7 @@
     "vitest-react-native": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^0.9.0",
+    "@ledgerhq/device-management-kit": "workspace:*",
     "react-native": ">0.74.1",
     "react-native-ble-plx": "3.4.0",
     "rxjs": "catalog:"
