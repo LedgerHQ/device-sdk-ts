@@ -1,5 +1,19 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1039](https://github.com/LedgerHQ/device-sdk-ts/pull/1039) [`792f0e4`](https://github.com/LedgerHQ/device-sdk-ts/commit/792f0e48f292b3f912acf483d79ed38b4cbe7019) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Polished transaction inspector and transaction options
+
+- [#1018](https://github.com/LedgerHQ/device-sdk-ts/pull/1018) [`3af58c6`](https://github.com/LedgerHQ/device-sdk-ts/commit/3af58c62cc82e37a41b6325bd7fca8aaa0a8ac5a) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Fix cert address on solana signTransaction
+
+- [#1039](https://github.com/LedgerHQ/device-sdk-ts/pull/1039) [`946b59f`](https://github.com/LedgerHQ/device-sdk-ts/commit/946b59fc1c98d597c45ef834cd0d0723c6b4ca60) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add OCM envelope support in sign message
+
+### Patch Changes
+
+- [#1011](https://github.com/LedgerHQ/device-sdk-ts/pull/1011) [`a995e7f`](https://github.com/LedgerHQ/device-sdk-ts/commit/a995e7fb79bc086593c8ecdb60b0e9792c6f3329) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Change context module mock in test file
+
 ## 1.2.0
 
 ### Minor Changes
