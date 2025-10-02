@@ -19,7 +19,6 @@ TEST_SIGNING_KEY = "b1ed47ef58f782e2bc4d5abe70ef66d9009c2957967017054470e0f3e10f
 # Global state
 app = Flask(__name__)
 cal_url = DEFAULT_CAL_URL
-dapps_custom_descriptors: Dict[Tuple[int, str], List[Dict[str, Any]]] = {}
 
 
 def remove_null_values(obj: Any) -> Any:
@@ -107,13 +106,11 @@ def group_descriptors_by_chain_and_address(
 
     return grouped
 
-@app.route("/api/add-erc7730-descriptor", methods=["POST"])
-def add_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
+@app.route("/api/process-erc7730-descriptor", methods=["POST"])
+def process_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
     """
-    Add and process an ERC7730 descriptor
+    Process an ERC7730 descriptor and return the processed data for client storage
     """
-    global dapps_custom_descriptors
-
     try:
         request_data = request.get_json()
         if not request_data:
@@ -131,79 +128,31 @@ def add_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
         # Group descriptors by chain and address
         grouped_descriptors = group_descriptors_by_chain_and_address(calldata_descriptors)
 
-        # Process each group
+        # Process each group and return them to client
+        processed_descriptors = {}
         for (chain_id, address), descriptors in grouped_descriptors.items():
             selectors = {
                 descriptor.selector: process_descriptor(descriptor)
                 for descriptor in descriptors
             }
 
-            addresses = [{
+            descriptor_data = [{
                 "descriptors_calldata": {address: selectors}
             }]
 
-            dapps_custom_descriptors[(chain_id, address)] = addresses
+            # Use "chainId:address" format as key for client storage
+            key = f"{chain_id}:{address}"
+            processed_descriptors[key] = descriptor_data
 
-        return {"message": "DAPP uploaded successfully", "url": cal_url}, 200
+        return {
+            "message": "ERC7730 descriptor processed successfully",
+            "descriptors": processed_descriptors
+        }, 200
 
     except ValidationError as e:
         return {"error": f"Invalid descriptor format: {str(e)}"}, 400
     except Exception as e:
         return {"error": f"Failed to process descriptor: {str(e)}"}, 500
-
-
-def get_custom_descriptor(
-    path: str,
-    args: Dict[str, str]
-) -> Optional[Tuple[Dict[str, Any], int]]:
-    """
-    Check if a request matches custom descriptors and return if found.
-    """
-    if path != "dapps" or args.get("output") != "descriptors_calldata":
-        return None
-
-    try:
-        chain_id = int(args["chain_id"])
-        address = args["contract_address"].lower()
-
-        if (chain_id, address) in dapps_custom_descriptors:
-            descriptor = dapps_custom_descriptors[(chain_id, address)]
-            return descriptor, 200
-
-    except (KeyError, ValueError, TypeError):
-        # Invalid or missing parameters
-        pass
-
-    return None
-
-
-@app.route("/api/crypto-assets-service/<path:subpath>", methods=["GET"])
-def crypto_assets_service_proxy(subpath: str) -> Tuple[Dict[str, Any], int]:
-    """
-    Proxy requests to the crypto assets service, with custom descriptor preprocessing.
-    """
-    # Try to serve from custom descriptors first
-    custom_result = get_custom_descriptor(subpath, dict(request.args))
-    if custom_result:
-        return jsonify(custom_result[0]), custom_result[1]
-
-    # Proxy to external service
-    url = f"{cal_url}/{subpath}"
-    headers = dict(request.headers)
-    headers.pop("Host", None)
-    headers.pop("Content-Length", None)
-
-    try:
-        response = requests.get(url, headers=headers, params=request.args)
-        response.raise_for_status()
-        return response.json(), response.status_code
-
-    except requests.exceptions.ConnectionError:
-        return {"error": "Failed to connect to crypto assets service"}, 502
-    except requests.exceptions.RequestException as e:
-        return {"error": f"Request failed: {str(e)}"}, 500
-    except Exception as e:
-        return {"error": f"Unexpected error: {str(e)}"}, 500
 
 if __name__ == "__main__":
     app.run(debug=True)
