@@ -110,7 +110,89 @@ export abstract class XStateDeviceAction<
     internalApi: InternalApi,
   ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
     const stateMachine = this.makeStateMachine(internalApi);
-    return this._subscribeToStateMachine(stateMachine);
+
+    const actor = createActor(stateMachine, {
+      input: this.input,
+      // optional inspector for debugging
+      // inspect: this.inspect ? createBrowserInspector().inspect : undefined,
+    });
+
+    /**
+     * Using a ReplaySubject is important because the first snapshots might be
+     * emitted before the observable is subscribed (if the machine goes through
+     * those states fully synchronously).
+     * This way, we ensure that the subscriber always receives the latest snapshot.
+     * */
+    const subject = new ReplaySubject<
+      DeviceActionState<Output, Error, IntermediateValue>
+    >();
+
+    const handleActorSnapshot = (
+      snapshot: SnapshotFrom<typeof stateMachine>,
+    ) => {
+      const { context, status, output, error } = snapshot;
+      switch (status) {
+        case "active":
+          subject.next({
+            status: DeviceActionStatus.Pending,
+            intermediateValue: context.intermediateValue,
+          });
+          break;
+        case "done":
+          output.caseOf({
+            Left: (err) => {
+              subject.next({
+                status: DeviceActionStatus.Error,
+                error: err,
+              });
+            },
+            Right: (result) => {
+              subject.next({
+                status: DeviceActionStatus.Completed,
+                output: result,
+              });
+            },
+          });
+          subject.complete();
+          break;
+        case "error":
+          // this is an error in the execution of the state machine, it should not happen
+          subject.error(error);
+          subject.complete();
+          break;
+        case "stopped":
+          subject.next({
+            status: DeviceActionStatus.Stopped,
+          });
+          subject.complete();
+          break;
+        default:
+          this._exhaustiveMatchingGuard(status);
+      }
+    };
+
+    const observable = new Observable<
+      DeviceActionState<Output, Error, IntermediateValue>
+    >((subscriber) => {
+      const subjectSubscription = subject.subscribe(subscriber);
+      return () => {
+        actorSubscription.unsubscribe();
+        subjectSubscription.unsubscribe();
+        actor.stop(); // stop the actor when the observable is unsubscribed
+      };
+    });
+
+    const actorSubscription = actor.subscribe(handleActorSnapshot);
+    actor.start();
+
+    return {
+      observable: observable.pipe(share()), // share to garantee that once there is no more observer, the actor is stopped
+      cancel: () => {
+        actor.stop();
+        actorSubscription.unsubscribe();
+        handleActorSnapshot(actor.getSnapshot());
+      },
+    };
   }
 
   protected _subscribeToStateMachine(
