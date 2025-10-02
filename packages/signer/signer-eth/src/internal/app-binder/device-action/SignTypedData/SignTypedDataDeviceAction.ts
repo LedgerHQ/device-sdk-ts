@@ -372,9 +372,27 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         },
         ProvideContext: {
           entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+            intermediateValue: ({ context }) => {
+              // In previous versions, user interaction start when providing the context
+              // during the data streaming.
+              // In 1.19.0, it starts when signing the data instead.
+              if (
+                new ApplicationChecker(
+                  internalApi.getDeviceSessionState(),
+                  context._internalState.appConfig!,
+                )
+                  .withMinVersionInclusive("1.19.0")
+                  .check()
+              ) {
+                return {
+                  requiredUserInteraction: UserInteractionRequired.None,
+                  step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+                };
+              }
+              return {
+                requiredUserInteraction: UserInteractionRequired.SignTypedData,
+                step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+              };
             },
           }),
           invoke: {
