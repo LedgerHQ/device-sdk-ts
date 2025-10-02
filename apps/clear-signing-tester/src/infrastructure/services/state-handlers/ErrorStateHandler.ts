@@ -30,6 +30,8 @@ export class ErrorStateHandler implements StateHandler {
         });
 
         if (await this.screenAnalyzer.canRefuseTransaction()) {
+            await this.deviceController.rejectTransaction();
+        } else {
             await this.deviceController.acknowledgeBlindSigning();
         }
 

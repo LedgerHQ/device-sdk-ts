@@ -89,7 +89,7 @@ export class SignTransactionStateHandler implements StateHandler {
     private async handleSmartSigning(): Promise<boolean> {
         await this.waitUntilTxPage();
 
-        this.logger.info("Handling smart signing");
+        this.logger.debug("Handling smart signing");
         return await this.navigateToLastScreen();
     }
 

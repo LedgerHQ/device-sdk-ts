@@ -7,15 +7,15 @@ import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 /**
- * Speculos NanoX Device Controller
+ * Speculos Nano Device Controller
  *
- * Low-level device controller for sending HTTP commands to Speculos simulator for NanoX devices.
- * Uses button-based interactions specific to NanoX devices without touchscreen.
+ * Low-level device controller for sending HTTP commands to Speculos simulator for Nano devices.
+ * Uses button-based interactions specific to Nano devices without touchscreen.
  * Provides pure device operations without business logic.
  * Application layer should orchestrate these operations based on business needs.
  */
 @injectable()
-export class SpeculosNanoXController implements DeviceController {
+export class SpeculosNanoController implements DeviceController {
     private readonly speculosUrl: string;
     private readonly logger: LoggerPublisherService;
 
@@ -25,7 +25,7 @@ export class SpeculosNanoXController implements DeviceController {
         loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
         this.speculosUrl = config.speculosUrl;
-        this.logger = loggerFactory("nanox-controller");
+        this.logger = loggerFactory("nano-controller");
     }
 
     /**
@@ -64,6 +64,7 @@ export class SpeculosNanoXController implements DeviceController {
     async acknowledgeBlindSigning(): Promise<void> {
         this.logger.debug("🔘 (buttons) : Acknowledging blind sign");
         await this.pressButton("right");
+        await this.pressButton("both");
     }
 
     /**

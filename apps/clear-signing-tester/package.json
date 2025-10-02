@@ -13,6 +13,7 @@
     "scripts": {
         "cli": "tsx src/cli/EthereumTransactionTesterCli.ts",
         "build": "tsc",
+        "test:raw:erc20": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-erc20.json",
         "test:raw:complete": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-complete.json",
         "test:raw:safe": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-safe.json",
         "test:typed-data:safe": "tsx src/cli/EthereumTransactionTesterCli.ts typed-data-file ./ressources/typed-data-safe.json"

@@ -4,7 +4,7 @@ import { SpeculosDeviceRepository } from "../../infrastructure/repositories/Spec
 import { FileTransactionRepository } from "../../infrastructure/repositories/FileTransactionRepository";
 import { FileTypedDataRepository } from "../../infrastructure/repositories/FileTypedDataRepository";
 import { SpeculosStaxController } from "../../infrastructure/adapters/SpeculosStaxController";
-import { SpeculosNanoXController } from "../../infrastructure/adapters/SpeculosNanoXController";
+import { SpeculosNanoController } from "../../infrastructure/adapters/SpeculosNanoController";
 import { SpeculosScreenReader } from "../../infrastructure/adapters/SpeculosScreenReader";
 import { NodeFileReader } from "../../infrastructure/adapters/NodeFileReader";
 import { TransactionFileRepository } from "../../domain/repositories/TransactionFileRepository";
@@ -69,8 +69,29 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
                 break;
             case "nanox":
                 bind(TYPES.DeviceController)
-                    .to(SpeculosNanoXController)
+                    .to(SpeculosNanoController)
                     .inSingletonScope();
                 break;
+            case "nanos":
+                bind(TYPES.DeviceController)
+                    .to(SpeculosNanoController)
+                    .inSingletonScope();
+                break;
+            case "nanos+":
+                bind(TYPES.DeviceController)
+                    .to(SpeculosNanoController)
+                    .inSingletonScope();
+                break;
+            case "flex":
+            case "apex":
+                throw new Error(
+                    `Device ${config.deviceConnection.device} is not supported yet`,
+                );
+            default:
+                const referenceType = config.deviceConnection.device;
+                const uncoveredReferenceType: never = referenceType;
+                throw new Error(
+                    `Uncovered reference type: ${uncoveredReferenceType}`,
+                );
         }
     });

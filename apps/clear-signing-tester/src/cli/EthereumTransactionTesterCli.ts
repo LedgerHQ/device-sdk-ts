@@ -146,13 +146,25 @@ export class EthereumTransactionTesterCli {
     /**
      * Validate device option
      */
-    private static validateDevice(value: string): "stax" | "nanox" {
-        if (value !== "stax" && value !== "nanox") {
+    private static validateDevice(
+        value: string,
+    ): (typeof supportedDevices)[number] {
+        const supportedDevices = [
+            "stax",
+            "nanox",
+            "nanos",
+            "nanos+",
+            "flex",
+            "apex",
+        ];
+        if (!supportedDevices.includes(value)) {
             throw new Error(
-                `Invalid device type '${value}'. Must be either 'stax' or 'nanox'.`,
+                `Invalid device type '${value}'. Must be either ${supportedDevices.join(
+                    ", ",
+                )}.`,
             );
         }
-        return value as "stax" | "nanox";
+        return value;
     }
 
     /**

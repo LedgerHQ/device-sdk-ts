@@ -132,6 +132,7 @@ export class ScreenAnalyzerService {
             "sign transaction",
             "hold to sign",
             "sign message",
+            "accept and send",
         ];
         const isLastPage = lastPageTexts.some((text) =>
             data.text.toLowerCase().includes(text.toLowerCase()),
@@ -150,7 +151,10 @@ export class ScreenAnalyzerService {
      */
     async canRefuseTransaction(): Promise<boolean> {
         const data = await this.readScreenContent();
-        const canRefuse = data.text.toLowerCase().includes("refu");
+        const refuseTexts = ["refuse", "decline", "reject"];
+        const canRefuse = refuseTexts.some((text) =>
+            data.text.toLowerCase().includes(text.toLowerCase()),
+        );
 
         canRefuse
             ? this.logger.debug("Transaction can be refused")
@@ -165,7 +169,11 @@ export class ScreenAnalyzerService {
      */
     async isHomePage(): Promise<boolean> {
         const data = await this.readScreenContent();
-        const homePageTexts = ["This app enables signing", "app is ready"];
+        const homePageTexts = [
+            "This app enables signing",
+            "app is ready",
+            "application is ready",
+        ];
         const isHomePage = homePageTexts.some((text) =>
             data.text.toLowerCase().includes(text.toLowerCase()),
         );
