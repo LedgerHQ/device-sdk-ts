@@ -16,6 +16,7 @@ import styled, { type DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
+import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { DmkConfigProvider } from "@/providers/DmkConfig";
@@ -55,22 +56,24 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
           <DeviceSessionsProvider>
             <LedgerKeyringProtocolProvider>
               <SignerEthProvider>
-                <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-                  <GlobalStyle />
-                  <head>
-                    <link rel="shortcut icon" href="../favicon.png" />
-                  </head>
-                  <body>
-                    <Root>
-                      <Sidebar />
-                      <PageContainer>
-                        <Header />
-                        {children}
-                      </PageContainer>
-                      <FloatingIcon />
-                    </Root>
-                  </body>
-                </StyleProvider>
+                <CalInterceptorProvider>
+                  <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+                    <GlobalStyle />
+                    <head>
+                      <link rel="shortcut icon" href="../favicon.png" />
+                    </head>
+                    <body>
+                      <Root>
+                        <Sidebar />
+                        <PageContainer>
+                          <Header />
+                          {children}
+                        </PageContainer>
+                        <FloatingIcon />
+                      </Root>
+                    </body>
+                  </StyleProvider>
+                </CalInterceptorProvider>
               </SignerEthProvider>
             </LedgerKeyringProtocolProvider>
           </DeviceSessionsProvider>
