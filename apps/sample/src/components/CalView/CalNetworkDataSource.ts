@@ -92,11 +92,7 @@ async function checkEip712Availability(
   if (response != null) {
     const descriptors: Descriptor[] = [];
     response.forEach((obj) => {
-      const contracts = Object.values(obj.descriptors_eip712!)
-        .map((element) => {
-          return Object.values(element);
-        })
-        .flat();
+      const contracts = Object.values(obj.descriptors_eip712![contractName as keyof typeof obj.descriptors_eip712]!);
 
       contracts.forEach((element) => {
         element.instructions.forEach((instruction) => {
