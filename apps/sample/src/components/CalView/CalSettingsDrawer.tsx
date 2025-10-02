@@ -47,7 +47,7 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
       test === "main" || test === "next" || test === "demo";
 
     console.log("Updating settings", values);
-    if (!url || typeof url !== "string" || !url.startsWith("http")) {
+    if (!url || typeof url !== "string") {
       console.error("Invalid CAL URL", url);
       return;
     }
