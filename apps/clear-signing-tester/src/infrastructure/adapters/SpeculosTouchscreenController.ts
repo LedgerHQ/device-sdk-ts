@@ -5,27 +5,32 @@ import { type DeviceConnectionConfig } from "../../domain/repositories/DeviceRep
 import { DeviceController } from "../../domain/adapters/DeviceController";
 import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { type DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
 
 /**
- * Speculos Stax Device Controller
+ * Speculos Touchscreen Device Controller
  *
- * Low-level device controller for sending HTTP commands to Speculos simulator for Stax devices.
- * Uses touch-based interactions specific to Stax devices with touchscreen.
+ * Generic low-level device controller for sending HTTP commands to Speculos simulator
+ * for touchscreen devices (Stax, Flex, Apex).
+ * Uses device-specific metadata for coordinates and timing.
  * Provides pure device operations without business logic.
  * Application layer should orchestrate these operations based on business needs.
  */
 @injectable()
-export class SpeculosStaxController implements DeviceController {
+export class SpeculosTouchscreenController implements DeviceController {
     private readonly speculosUrl: string;
     private readonly logger: LoggerPublisherService;
+    private readonly deviceMetadata: DeviceMetadata;
 
     constructor(
         @inject(TYPES.DeviceConnectionConfig) config: DeviceConnectionConfig,
+        @inject(TYPES.DeviceMetadata) deviceMetadata: DeviceMetadata,
         @inject(TYPES.LoggerPublisherServiceFactory)
         loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
         this.speculosUrl = config.speculosUrl;
-        this.logger = loggerFactory("stax-controller");
+        this.deviceMetadata = deviceMetadata;
+        this.logger = loggerFactory("touchscreen-controller");
     }
 
     /**
@@ -33,7 +38,8 @@ export class SpeculosStaxController implements DeviceController {
      */
     async signTransaction(): Promise<void> {
         this.logger.debug("☝️ (touch) : Performing transaction sign");
-        await this.longTouchDevice(350, 550);
+        const { x, y } = this.deviceMetadata.coordinates.signButton;
+        await this.longTouchDevice(x, y);
     }
 
     /**
@@ -41,11 +47,16 @@ export class SpeculosStaxController implements DeviceController {
      */
     async rejectTransaction(): Promise<void> {
         this.logger.debug("☝️ (touch) : Performing transaction rejection");
+
         // Touch Reject button
-        await this.touchDevice(80, 620);
+        const rejectCoords = this.deviceMetadata.coordinates.rejectButton;
+        await this.touchDevice(rejectCoords.x, rejectCoords.y);
         await this.delay(1000);
+
         // Confirm rejection
-        await this.touchDevice(200, 550);
+        const confirmCoords =
+            this.deviceMetadata.coordinates.confirmRejectButton;
+        await this.touchDevice(confirmCoords.x, confirmCoords.y);
     }
 
     /**
@@ -53,7 +64,8 @@ export class SpeculosStaxController implements DeviceController {
      */
     async rejectTransactionCheck(): Promise<void> {
         this.logger.debug("☝️ (touch) : Rejecting tx checks optin");
-        await this.touchDevice(200, 620);
+        const { x, y } = this.deviceMetadata.coordinates.acknowledgeButton;
+        await this.touchDevice(x, y);
     }
 
     /**
@@ -61,7 +73,8 @@ export class SpeculosStaxController implements DeviceController {
      */
     async acknowledgeBlindSigning(): Promise<void> {
         this.logger.debug("☝️ (touch) : Acknowledging blind sign");
-        await this.touchDevice(200, 620);
+        const { x, y } = this.deviceMetadata.coordinates.acknowledgeButton;
+        await this.touchDevice(x, y);
     }
 
     /**
@@ -69,7 +82,8 @@ export class SpeculosStaxController implements DeviceController {
      */
     async navigateNext(): Promise<void> {
         this.logger.debug("☝️ (touch) : Navigating to next screen");
-        await this.touchDevice(350, 600); // Right side of the screen
+        const { x, y } = this.deviceMetadata.coordinates.navigationNext;
+        await this.touchDevice(x, y);
     }
 
     /**
@@ -77,7 +91,8 @@ export class SpeculosStaxController implements DeviceController {
      */
     async navigatePrevious(): Promise<void> {
         this.logger.debug("☝️ (touch) : Navigating to previous screen");
-        await this.touchDevice(180, 600); // Left side of the screen
+        const { x, y } = this.deviceMetadata.coordinates.navigationPrevious;
+        await this.touchDevice(x, y);
     }
 
     /**

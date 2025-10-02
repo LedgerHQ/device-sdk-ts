@@ -3,7 +3,7 @@ import { ContainerModule } from "inversify";
 import { SpeculosDeviceRepository } from "../../infrastructure/repositories/SpeculosDeviceRepository";
 import { FileTransactionRepository } from "../../infrastructure/repositories/FileTransactionRepository";
 import { FileTypedDataRepository } from "../../infrastructure/repositories/FileTypedDataRepository";
-import { SpeculosStaxController } from "../../infrastructure/adapters/SpeculosStaxController";
+import { SpeculosTouchscreenController } from "../../infrastructure/adapters/SpeculosTouchscreenController";
 import { SpeculosNanoController } from "../../infrastructure/adapters/SpeculosNanoController";
 import { SpeculosScreenReader } from "../../infrastructure/adapters/SpeculosScreenReader";
 import { NodeFileReader } from "../../infrastructure/adapters/NodeFileReader";
@@ -21,6 +21,8 @@ import { ErrorStateHandler } from "@root/src/infrastructure/services/state-handl
 import { OptOutStateHandler } from "@root/src/infrastructure/services/state-handlers/OptOutStateHandler";
 import { SignTransactionStateHandler } from "@root/src/infrastructure/services/state-handlers/SignTransactionStateHandler";
 import { RetryService } from "@root/src/domain/services/RetryService";
+import { DeviceMetadataFactory } from "../../domain/metadata/DeviceMetadataFactory";
+import { DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
 import { RetryServiceImpl } from "@root/src/infrastructure/services/RetryServiceImpl";
 
 export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
@@ -60,33 +62,31 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
             .to(RetryServiceImpl)
             .inSingletonScope();
 
-        // Bind the appropriate device controller
+        // Bind the appropriate device controller and metadata
         switch (config.deviceConnection.device) {
             case "stax":
+            case "flex":
+            case "apex":
+                // Bind device metadata for touchscreen devices
+                bind<DeviceMetadata>(TYPES.DeviceMetadata).toConstantValue(
+                    DeviceMetadataFactory.createTouchscreenMetadata(
+                        config.deviceConnection.device,
+                    ),
+                );
+
+                // Bind touchscreen controller
                 bind(TYPES.DeviceController)
-                    .to(SpeculosStaxController)
+                    .to(SpeculosTouchscreenController)
                     .inSingletonScope();
                 break;
             case "nanox":
-                bind(TYPES.DeviceController)
-                    .to(SpeculosNanoController)
-                    .inSingletonScope();
-                break;
             case "nanos":
-                bind(TYPES.DeviceController)
-                    .to(SpeculosNanoController)
-                    .inSingletonScope();
-                break;
             case "nanos+":
+                // Button-based devices use the nano controller
                 bind(TYPES.DeviceController)
                     .to(SpeculosNanoController)
                     .inSingletonScope();
                 break;
-            case "flex":
-            case "apex":
-                throw new Error(
-                    `Device ${config.deviceConnection.device} is not supported yet`,
-                );
             default:
                 const referenceType = config.deviceConnection.device;
                 const uncoveredReferenceType: never = referenceType;

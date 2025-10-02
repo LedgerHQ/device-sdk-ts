@@ -41,4 +41,7 @@ export const TYPES = {
 
     // Logger
     LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
+
+    // Device Metadata
+    DeviceMetadata: Symbol.for("DeviceMetadata"),
 };
