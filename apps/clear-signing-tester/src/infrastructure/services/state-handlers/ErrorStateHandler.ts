@@ -29,6 +29,13 @@ export class ErrorStateHandler implements StateHandler {
             data: { ctx: JSON.stringify(ctx) },
         });
 
+        if (await this.screenAnalyzer.isHomePage()) {
+            return {
+                status: "blind_signed",
+                errorMessage: "Transaction requires blind signing",
+            };
+        }
+
         if (await this.screenAnalyzer.canRefuseTransaction()) {
             await this.deviceController.rejectTransaction();
         } else {
