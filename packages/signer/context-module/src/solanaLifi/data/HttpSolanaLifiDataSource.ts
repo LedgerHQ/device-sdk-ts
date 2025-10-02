@@ -31,7 +31,7 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
           params: {
             template_id: templateId,
             output: "id,chain_id,instructions,descriptors",
-            ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
+            ref: "commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
           },
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
