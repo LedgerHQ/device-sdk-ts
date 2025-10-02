@@ -7,7 +7,7 @@ import {
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "./ProvideTLVTransactionInstructionDescriptorCommand";
 
 const CLA = 0xe0;
-const INS = 0x22;
+const INS = 0x16;
 const P2 = 0x00;
 const P1_FIRST = 0x00;
 const P1_NEXT = 0x80;

@@ -7,7 +7,7 @@ import {
 import { ProvideTrustedDynamicDescriptorCommand } from "./ProvideTrustedDynamicDescriptorCommand";
 
 const CLA = 0xe0;
-const INS = 0x22;
+const INS = 0x16;
 const P1 = 0x00;
 const P2 = 0x00;
 

@@ -17,7 +17,7 @@ import {
 } from "./utils/SolanaApplicationErrors";
 
 const CLA = 0xe0;
-const INS = 0x22;
+const INS = 0x16;
 const P2 = 0x00;
 
 export type ProvideTLVTransactionInstructionDescriptorCommandArgs =
