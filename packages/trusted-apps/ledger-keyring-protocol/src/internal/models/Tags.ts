@@ -28,3 +28,8 @@ export enum TPTags {
   GROUPKEY = 0x05,
   NEW_MEMBER = 0x06 | TP_ENCRYPT,
 }
+
+export enum DERSigTags {
+  SIGNATURE = 0x30,
+  COMPONENT = 0x02,
+}

@@ -14,7 +14,6 @@ import {
   type AuthenticateDAOutput,
   AuthenticateDAStep,
 } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { type CryptoService } from "@api/crypto/CryptoService";
 import { type KeyPair } from "@api/crypto/KeyPair";
 import {
   LKRPDataSourceError,
@@ -181,7 +180,6 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
             id: "ExtractEncryptionKey",
             src: "extractEncryptionKey",
             input: ({ context }) => ({
-              cryptoService: context.input.cryptoService,
               keypair: context.input.keypair,
               stream: context._internalState.chain(({ trustchain }) =>
                 required(
@@ -264,17 +262,12 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
         input,
       }: {
         input: {
-          cryptoService: CryptoService;
           keypair: KeyPair;
           stream: Either<AuthenticateDAError, LKRPBlockStream>;
         };
       }) =>
         EitherAsync.liftEither(input.stream).chain((stream) =>
-          encryptionKeyExtraction.run(
-            input.cryptoService,
-            input.keypair,
-            stream,
-          ),
+          encryptionKeyExtraction.run(input.keypair, stream),
         ),
     };
   }

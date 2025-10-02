@@ -289,7 +289,7 @@ export class SignBlockTask {
           throw error;
         },
         Right: (decryptedCommands) =>
-          LKRPBlock.fromData({
+          LKRPBlock.fromData(this.cryptoService, {
             parent: bufferToHexaString(parent),
             issuer: decryptedIssuer,
             commands: decryptedCommands,

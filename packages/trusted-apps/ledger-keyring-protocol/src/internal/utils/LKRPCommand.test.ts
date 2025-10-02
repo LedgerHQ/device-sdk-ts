@@ -276,10 +276,10 @@ describe("LKRPCommand", () => {
         Right(
           [
             `PublishKey(0x12):`,
-            `  initializationVector: 010203`,
-            `  encryptedXpriv: 040506`,
-            `  recipient: 070809`,
-            `  ephemeralPublicKey: 0a0b0c`,
+            `  initializationVector(3): 010203`,
+            `  encryptedXpriv(3): 040506`,
+            `  recipient(3): 070809`,
+            `  ephemeralPublicKey(3): 0a0b0c`,
           ].join("\n"),
         ),
       );
@@ -292,7 +292,7 @@ describe("LKRPCommand", () => {
       );
       // THEN
       expect(command.toHuman()).toStrictEqual(
-        Left(new LKRPParsingError("Invalid end of TLV, expected length")),
+        Left("Error: Invalid end of TLV, expected length"),
       );
     });
   });

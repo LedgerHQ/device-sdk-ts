@@ -1,11 +1,13 @@
 import { inject, injectable } from "inversify";
 import { EitherAsync, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
+import { type CryptoService } from "@api/crypto/CryptoService";
 import {
   LKRPDataSourceError,
   LKRPDataSourceErrorStatus,
 } from "@api/model/Errors";
 import { JWT } from "@api/model/JWT";
+import { externalTypes } from "@internal/externalTypes";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { Trustchain } from "@internal/utils/Trustchain";
@@ -20,6 +22,9 @@ import {
 export class HttpLKRPDataSource implements LKRPDataSource {
   constructor(
     @inject(lkrpDatasourceTypes.BaseUrl) private readonly baseUrl: string,
+
+    @inject(externalTypes.CryptoService)
+    private readonly cryptoService: CryptoService,
   ) {}
 
   getChallenge() {
@@ -44,7 +49,7 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     return this.request<{ [path: string]: string }>(
       `/trustchain/${id}`,
       Just(jwt),
-    ).map((serialized) => new Trustchain(id, serialized));
+    ).map((serialized) => new Trustchain(this.cryptoService, id, serialized));
   }
 
   postDerivation(id: string, block: LKRPBlock, jwt: JWT) {

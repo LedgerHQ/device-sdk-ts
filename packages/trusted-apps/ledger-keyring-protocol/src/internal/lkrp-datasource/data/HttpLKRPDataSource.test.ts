@@ -1,5 +1,6 @@
 import { Just, Left, Nothing, Right } from "purify-ts";
 
+import { NobleCryptoService } from "@api/crypto/noble/NobleCryptoService";
 import { LKRPDataSourceError } from "@api/model/Errors";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
 import { Trustchain } from "@internal/utils/Trustchain";
@@ -46,6 +47,7 @@ const mockSignature = {
 describe("HttpLKRPDataSource", () => {
   const fetchSpy = vi.spyOn(global, "fetch");
   const baseUrl = "https://example.com";
+  const cryptoService = new NobleCryptoService();
 
   afterEach(() => {
     fetchSpy.mockClear();
@@ -65,7 +67,7 @@ describe("HttpLKRPDataSource", () => {
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.getChallenge();
       expect(fetchSpy).toHaveBeenCalledWith(`${baseUrl}/challenge`, {
         headers: {
@@ -83,7 +85,7 @@ describe("HttpLKRPDataSource", () => {
       fetchSpy.mockRejectedValueOnce(error);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.getChallenge();
 
       // THEN
@@ -107,7 +109,7 @@ describe("HttpLKRPDataSource", () => {
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.authenticate({
         challenge: mockChallengeJSON,
         signature: mockSignature,
@@ -141,7 +143,7 @@ describe("HttpLKRPDataSource", () => {
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.authenticate({
         challenge: mockChallengeJSON,
         signature: mockSignature,
@@ -163,7 +165,7 @@ describe("HttpLKRPDataSource", () => {
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.authenticate({
         challenge: mockChallengeJSON,
         signature: mockSignature,
@@ -194,7 +196,7 @@ describe("HttpLKRPDataSource", () => {
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.getTrustchainById(
         "TRUSTCHAIN_ID",
         mockJwt,
@@ -211,7 +213,9 @@ describe("HttpLKRPDataSource", () => {
         },
       );
       expect(result).toEqual(
-        Right(new Trustchain("TRUSTCHAIN_ID", mockTrustchainData)),
+        Right(
+          new Trustchain(cryptoService, "TRUSTCHAIN_ID", mockTrustchainData),
+        ),
       );
     });
 
@@ -225,7 +229,7 @@ describe("HttpLKRPDataSource", () => {
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.getTrustchainById(
         "TRUSTCHAIN_ID",
         mockJwt,
@@ -247,14 +251,14 @@ describe("HttpLKRPDataSource", () => {
     it("should post derivation successfully", async () => {
       // GIVEN
       const hex = "0102030405060708090a0b0c0d0e0f";
-      const mockBlock = LKRPBlock.fromHex(hex);
+      const mockBlock = LKRPBlock.fromHex(cryptoService, hex);
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         status: 204,
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.postDerivation(
         "TRUSTCHAIN_ID",
         mockBlock,
@@ -281,14 +285,14 @@ describe("HttpLKRPDataSource", () => {
     it("should put commands successfully", async () => {
       // GIVEN
       const hex = "0102030405060708090a0b0c0d0e0f";
-      const mockBlock = LKRPBlock.fromHex(hex);
+      const mockBlock = LKRPBlock.fromHex(cryptoService, hex);
       fetchSpy.mockResolvedValueOnce({
         ok: true,
         status: 204,
       } as Response);
 
       // WHEN
-      const dataSource = new HttpLKRPDataSource(baseUrl);
+      const dataSource = new HttpLKRPDataSource(baseUrl, cryptoService);
       const result = await dataSource.putCommands(
         "TRUSTCHAIN_ID",
         "m/0'/16'/0'",

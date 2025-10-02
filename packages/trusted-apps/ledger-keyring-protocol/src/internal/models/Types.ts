@@ -8,3 +8,8 @@ export type EncryptedPublishedKey = {
   initializationVector: Uint8Array;
   ephemeralPublicKey: Uint8Array;
 };
+
+export type ParsedTlvSegment<T> = { start: number; end: number; value: T };
+export type DataToParsedSegment<T extends Record<string, unknown>> = {
+  [K in keyof T]: ParsedTlvSegment<T[K]>;
+} & {};

@@ -1,3 +1,5 @@
+import { type DERSigTags } from "@internal/models/Tags";
+
 import { type Key } from "./Key";
 import { type KeyPair } from "./KeyPair";
 
@@ -13,6 +15,17 @@ export enum EncryptionAlgo {
 export enum HashAlgo {
   SHA256,
 }
+
+export type DecodedSignature = {
+  prefix: { tag: DERSigTags.SIGNATURE; len: number };
+  r: DERComponent;
+  s: DERComponent;
+};
+type DERComponent = {
+  tag: DERSigTags.COMPONENT;
+  len: number;
+  value: Uint8Array;
+};
 
 export interface CryptoService {
   // Generate a random buffer
@@ -35,4 +48,14 @@ export interface CryptoService {
 
   // Import a symmetric key
   importSymmetricKey(keyMaterial: Uint8Array, algo: EncryptionAlgo): Key;
+
+  // Verify a signature
+  verify(
+    message: Uint8Array,
+    signature: Uint8Array,
+    publicKey: Uint8Array,
+  ): boolean;
+
+  // Decode a DER encoded signature
+  decodeSignature(signature: Uint8Array): DecodedSignature;
 }

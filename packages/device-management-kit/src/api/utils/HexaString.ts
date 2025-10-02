@@ -41,3 +41,7 @@ export function bufferToHexaString(
     byte.toString(16).padStart(2, "0"),
   ).join("")}`;
 }
+
+export function numToHexaString(n: number): string {
+  return `0x${n.toString(16).padStart(2, "0")}`;
+}
