@@ -95,7 +95,7 @@ export class SpeculosServiceController implements ServiceController {
             removeOnStop: true,
         });
 
-        // wait for the container to start
+        // Wait for the container to fully initialize before proceeding
         await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 

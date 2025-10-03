@@ -29,7 +29,7 @@ export class FileTransactionRepository implements TransactionFileRepository {
     /**
      * Read and parse transactions from a JSON file
      * @param filePath - Path to the JSON file containing transactions
-     * @returns Transaction[] - Array of parsed Transaction objects
+     * @returns TransactionInput[] - Array of parsed TransactionInput objects
      * @throws Error if file doesn't exist, is not readable, or contains invalid data
      */
     readTransactionsFromFile(filePath: string): TransactionInput[] {
@@ -50,10 +50,10 @@ export class FileTransactionRepository implements TransactionFileRepository {
     }
 
     /**
-     * Map raw transaction data to Transaction domain model
+     * Map raw transaction data to TransactionInput domain model
      * @param rawTx - Raw transaction data from JSON
      * @param index - Index of the transaction in the array (for error reporting)
-     * @returns Transaction - Domain model transaction
+     * @returns TransactionInput - Domain model transaction
      * @throws Error if required fields are missing
      */
     private mapToTransaction(

@@ -29,7 +29,7 @@ export class FileTypedDataRepository implements TypedDataFileRepository {
     /**
      * Read and parse typed data from a JSON file
      * @param filePath - Path to the JSON file containing typed data
-     * @returns InternalTypedData[] - Array of parsed InternalTypedData objects
+     * @returns TypedDataInput[] - Array of parsed TypedDataInput objects
      * @throws Error if file doesn't exist, is not readable, or contains invalid data
      */
     readTypedDataFromFile(filePath: string): TypedDataInput[] {
@@ -50,10 +50,10 @@ export class FileTypedDataRepository implements TypedDataFileRepository {
     }
 
     /**
-     * Map raw typed data to InternalTypedData domain model
+     * Map raw typed data to TypedDataInput domain model
      * @param rawTypedData - Raw typed data from JSON
      * @param index - Index of the typed data in the array (for error reporting)
-     * @returns InternalTypedData - Domain model typed data
+     * @returns TypedDataInput - Domain model typed data
      * @throws Error if required fields are missing
      */
     private mapToInternalTypedData(

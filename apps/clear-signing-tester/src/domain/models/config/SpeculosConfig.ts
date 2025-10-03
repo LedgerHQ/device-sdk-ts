@@ -1,3 +1,6 @@
+/**
+ * Domain model representing the configuration for the Speculos service
+ */
 export interface SpeculosConfig {
     url: string;
     port: number;

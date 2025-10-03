@@ -53,11 +53,12 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
                             },
                         }),
                     ),
-                    // Use a debounce time to let the device stabilize like fallback to blind signing
+                    // Apply debounce to prevent processing rapid state changes during device transitions
+                    // This is especially important for fallback scenarios like blind signing detection
                     debounceTime(DEBOUNCE_TIME),
                     distinctUntilChanged((prev, curr) => {
-                        // Consider states the same if they have the same status and interaction type
-                        // regardless of step differences
+                        // Consider states identical if they have matching status and interaction type
+                        // This ignores step number differences to avoid duplicate processing
                         return (
                             prev?.status === curr?.status &&
                             prev?.intermediateValue?.requiredUserInteraction ===
@@ -94,7 +95,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
     }
 
     private async handleState(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Device state type is complex and varies
         state: any,
         input: TransactionInput | TypedDataInput,
     ) {

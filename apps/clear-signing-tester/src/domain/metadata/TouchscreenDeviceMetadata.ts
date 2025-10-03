@@ -20,7 +20,8 @@ export class StaxDeviceMetadata extends BaseDeviceMetadata {
  * Flex has similar touchscreen interface to Stax but may have different dimensions
  */
 export class FlexDeviceMetadata extends BaseDeviceMetadata {
-    // TODO: Update these coordinates
+    // TODO: Update these coordinates based on actual Flex device specifications
+    // Current coordinates are placeholders and need to be measured from actual device UI
     readonly coordinates = {
         signButton: { x: 0, y: 0 },
         rejectButton: { x: 0, y: 0 },
@@ -37,7 +38,9 @@ export class FlexDeviceMetadata extends BaseDeviceMetadata {
  */
 export class ApexDeviceMetadata extends BaseDeviceMetadata {
     readonly coordinates = {
-        // TODO: Update these coordinates
+        // TODO: Update these coordinates based on actual Apex device specifications
+        // Current coordinates are placeholders - need to be measured from actual device UI
+        // Apex may have different screen dimensions and button layouts compared to Stax/Flex
         signButton: { x: 0, y: 0 },
         rejectButton: { x: 0, y: 0 },
         confirmRejectButton: { x: 0, y: 0 },

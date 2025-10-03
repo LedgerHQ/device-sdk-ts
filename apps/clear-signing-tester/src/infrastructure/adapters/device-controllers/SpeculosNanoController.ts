@@ -33,7 +33,7 @@ export class SpeculosNanoController implements DeviceController {
      */
     async signTransaction(): Promise<void> {
         this.logger.debug("🔘 (buttons) : Performing transaction sign");
-        await this.pressButton("both"); // Hold both buttons for 3 seconds
+        await this.pressButton("both");
     }
 
     /**
@@ -41,11 +41,11 @@ export class SpeculosNanoController implements DeviceController {
      */
     async rejectTransaction(): Promise<void> {
         this.logger.debug("🔘 (buttons) : Performing transaction rejection");
-        // Navigate to the reject screen located at the end
-        for (let i = 0; i < 10; i++) {
+        // Navigate to the reject screen at the end of the transaction flow
+        for (let i = 0; i < 20; i++) {
             await this.pressButton("right");
         }
-        // Confirm rejection by pressing both buttons
+        // Confirm rejection by pressing both buttons simultaneously
         await this.pressButton("both");
     }
 
