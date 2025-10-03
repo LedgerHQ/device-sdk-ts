@@ -1,11 +1,11 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
 
-import { type DeviceConnectionConfig } from "../../domain/repositories/DeviceRepository";
 import { DeviceController } from "../../domain/adapters/DeviceController";
 import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { type DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
+import { type SpeculosConfig } from "@root/src/domain/models/SpeculosConfig";
 
 /**
  * Speculos Touchscreen Device Controller
@@ -23,12 +23,12 @@ export class SpeculosTouchscreenController implements DeviceController {
     private readonly deviceMetadata: DeviceMetadata;
 
     constructor(
-        @inject(TYPES.DeviceConnectionConfig) config: DeviceConnectionConfig,
+        @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
         @inject(TYPES.DeviceMetadata) deviceMetadata: DeviceMetadata,
         @inject(TYPES.LoggerPublisherServiceFactory)
         loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
-        this.speculosUrl = config.speculosUrl;
+        this.speculosUrl = `${config.url}:${config.port}`;
         this.deviceMetadata = deviceMetadata;
         this.logger = loggerFactory("touchscreen-controller");
     }

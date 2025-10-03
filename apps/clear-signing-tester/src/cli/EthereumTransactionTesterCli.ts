@@ -17,6 +17,7 @@ import { Controller } from "../domain/services/Controller";
 export interface CliConfig {
     derivationPath: string;
     speculosUrl: string;
+    speculosPort: number;
     verbose: boolean;
     quiet: boolean;
     device: "stax" | "nanox";
@@ -41,10 +42,13 @@ export class EthereumTransactionTesterCli {
                   : LogLevel.Info,
         );
 
+        const randomPort = Math.floor(Math.random() * 10000) + 10000;
+
         // Create DI container configuration
         const diConfig: ClearSigningTesterConfig = {
-            deviceConnection: {
-                speculosUrl: config.speculosUrl,
+            speculos: {
+                url: config.speculosUrl || `http://localhost`,
+                port: config.speculosPort || randomPort,
                 device: config.device,
             },
             signer: {
@@ -85,8 +89,13 @@ export class EthereumTransactionTesterCli {
             )
             .option(
                 "--speculos-url <url>",
-                "Speculos server URL (default: http://localhost:5000)",
-                "http://localhost:5000",
+                "Speculos server URL (default: http://localhost)",
+                "http://localhost",
+            )
+            .option(
+                "--speculos-port <port>",
+                "Speculos server port (random port if not provided)",
+                this.validatePort,
             )
             .option(
                 "--device <device>",
@@ -165,6 +174,17 @@ export class EthereumTransactionTesterCli {
     }
 
     /**
+     * Validate port option
+     */
+    private static validatePort(value: string): number {
+        const port = parseInt(value);
+        if (isNaN(port) || port < 1 || port > 65535) {
+            throw new Error("Invalid port number");
+        }
+        return port;
+    }
+
+    /**
      * Handle raw transaction command
      */
     private static async handleRawTransaction(
@@ -174,6 +194,7 @@ export class EthereumTransactionTesterCli {
         const config: CliConfig = {
             derivationPath: globalOpts.derivationPath,
             speculosUrl: globalOpts.speculosUrl,
+            speculosPort: globalOpts.speculosPort,
             verbose: globalOpts.verbose,
             quiet: globalOpts.quiet,
             device: globalOpts.device,
@@ -219,6 +240,7 @@ export class EthereumTransactionTesterCli {
         const config: CliConfig = {
             derivationPath: globalOpts.derivationPath,
             speculosUrl: globalOpts.speculosUrl,
+            speculosPort: globalOpts.speculosPort,
             verbose: globalOpts.verbose,
             quiet: globalOpts.quiet,
             device: globalOpts.device,
@@ -261,6 +283,7 @@ export class EthereumTransactionTesterCli {
         const config: CliConfig = {
             derivationPath: globalOpts.derivationPath,
             speculosUrl: globalOpts.speculosUrl,
+            speculosPort: globalOpts.speculosPort,
             verbose: globalOpts.verbose,
             quiet: globalOpts.quiet,
             device: globalOpts.device,
@@ -302,6 +325,7 @@ export class EthereumTransactionTesterCli {
         const config: CliConfig = {
             derivationPath: globalOpts.derivationPath,
             speculosUrl: globalOpts.speculosUrl,
+            speculosPort: globalOpts.speculosPort,
             verbose: globalOpts.verbose,
             quiet: globalOpts.quiet,
             device: globalOpts.device,

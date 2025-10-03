@@ -2,6 +2,7 @@ import axios from "axios";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "../di/types";
+import { type EtherscanConfig } from "../domain/models/config/EtherscanConfig";
 
 // Types for Etherscan API
 export type EtherscanTransaction = {
@@ -36,12 +37,6 @@ export interface EtherscanCodeResponse {
     status: string;
     message: string;
     result: string;
-}
-
-export interface EtherscanConfig {
-    apiKey: string;
-    baseUrl?: string;
-    timeout?: number;
 }
 
 @injectable()

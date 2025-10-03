@@ -3,11 +3,11 @@ import { TYPES } from "@root/src/di/types";
 import { type Downloader } from "@root/src/domain/adapters/Downloader";
 import { inject } from "inversify";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { type DeviceConnectionConfig } from "@root/src/domain/repositories/DeviceRepository";
 import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
+import { type SpeculosConfig } from "@root/src/domain/models/SpeculosConfig";
 
 const DEFAULT_MODEL_MAPPING: Record<
-    string,
+    SpeculosConfig["device"],
     { os: string; version: string; containerName?: string }
 > = {
     stax: {
@@ -43,7 +43,7 @@ const SPECULOS_API_PORT = 5000;
 
 export class SpeculosController implements Controller {
     private readonly logger: LoggerPublisherService;
-    private readonly model: DeviceConnectionConfig["device"];
+    private readonly model: SpeculosConfig["device"];
     private readonly os: string;
     private readonly version: string;
     private readonly containerName: string;
@@ -53,31 +53,24 @@ export class SpeculosController implements Controller {
         private readonly downloader: Downloader,
         @inject(TYPES.DockerContainer)
         private readonly dockerContainer: DockerContainer,
-        @inject(TYPES.DeviceConnectionConfig)
-        private readonly deviceConnectionConfig: DeviceConnectionConfig,
+        @inject(TYPES.SpeculosConfig)
+        private readonly config: SpeculosConfig,
         @inject(TYPES.LoggerPublisherServiceFactory)
         private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
+        const { device, os, version } = this.config;
         this.logger = this.loggerFactory("speculos-controller");
-        this.model = this.deviceConnectionConfig.device;
-        this.os =
-            this.deviceConnectionConfig.os ||
-            DEFAULT_MODEL_MAPPING[this.model]?.os ||
-            "";
-        this.version =
-            this.deviceConnectionConfig.version ||
-            DEFAULT_MODEL_MAPPING[this.model]?.version ||
-            "";
+        this.model = device;
+        this.os = os || DEFAULT_MODEL_MAPPING[device].os;
+        this.version = version || DEFAULT_MODEL_MAPPING[device].version;
         this.containerName =
-            DEFAULT_MODEL_MAPPING[this.model]?.containerName ||
-            `cs-tester-speculos-${this.model}`;
+            DEFAULT_MODEL_MAPPING[device]?.containerName ||
+            `cs-tester-speculos-${device}-${this.config.port}`;
     }
 
     async start(): Promise<void> {
         await this.downloadApp(this.model, this.os, this.version);
 
-        // const randomPort = Math.floor(Math.random() * 10000) + 10000;
-        const randomPort = 5000; // TODO: add back random port
         const appName = this.getAppName(this.model, this.os, this.version);
 
         this.logger.info(
@@ -94,7 +87,7 @@ export class SpeculosController implements Controller {
                 "-p", // Use prod signatures
             ],
             volumes: [`${TEMP_APP_PATH}:/speculos/apps`],
-            ports: [`${randomPort}:${SPECULOS_API_PORT}`],
+            ports: [`${this.config.port}:${SPECULOS_API_PORT}`],
             additionalArgs: ["--name", this.containerName],
             detached: true,
             removeOnStop: true,

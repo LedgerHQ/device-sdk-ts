@@ -28,6 +28,12 @@ import { NodeDockerContainer } from "@root/src/infrastructure/adapters/NodeDocke
 import { DockerContainer } from "@root/src/domain/adapters/DockerContainer";
 import { SpeculosController } from "@root/src/infrastructure/services/SpeculosController";
 import { GithubDownloader } from "@root/src/infrastructure/adapters/GithubDownloader";
+import {
+    ApexDeviceMetadata,
+    FlexDeviceMetadata,
+    StaxDeviceMetadata,
+} from "@root/src/domain/metadata/TouchscreenDeviceMetadata";
+import { DeviceController } from "@root/src/domain/adapters/DeviceController";
 
 export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     new ContainerModule(({ bind }) => {
@@ -74,19 +80,28 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
         bind(TYPES.Downloader).to(GithubDownloader).inSingletonScope();
 
         // Bind the appropriate device controller and metadata
-        switch (config.deviceConnection.device) {
+        switch (config.speculos.device) {
             case "stax":
-            case "flex":
-            case "apex":
-                // Bind device metadata for touchscreen devices
                 bind<DeviceMetadata>(TYPES.DeviceMetadata).toConstantValue(
-                    DeviceMetadataFactory.createTouchscreenMetadata(
-                        config.deviceConnection.device,
-                    ),
+                    new StaxDeviceMetadata(),
                 );
-
-                // Bind touchscreen controller
-                bind(TYPES.DeviceController)
+                bind<DeviceController>(TYPES.DeviceController)
+                    .to(SpeculosTouchscreenController)
+                    .inSingletonScope();
+                break;
+            case "flex":
+                bind<DeviceMetadata>(TYPES.DeviceMetadata).toConstantValue(
+                    new FlexDeviceMetadata(),
+                );
+                bind<DeviceController>(TYPES.DeviceController)
+                    .to(SpeculosTouchscreenController)
+                    .inSingletonScope();
+                break;
+            case "apex":
+                bind<DeviceMetadata>(TYPES.DeviceMetadata).toConstantValue(
+                    new ApexDeviceMetadata(),
+                );
+                bind<DeviceController>(TYPES.DeviceController)
                     .to(SpeculosTouchscreenController)
                     .inSingletonScope();
                 break;
@@ -94,12 +109,12 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
             case "nanos":
             case "nanos+":
                 // Button-based devices use the nano controller
-                bind(TYPES.DeviceController)
+                bind<DeviceController>(TYPES.DeviceController)
                     .to(SpeculosNanoController)
                     .inSingletonScope();
                 break;
             default:
-                const referenceType = config.deviceConnection.device;
+                const referenceType = config.speculos.device;
                 const uncoveredReferenceType: never = referenceType;
                 throw new Error(
                     `Uncovered reference type: ${uncoveredReferenceType}`,

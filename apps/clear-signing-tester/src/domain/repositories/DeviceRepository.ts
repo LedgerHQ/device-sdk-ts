@@ -12,15 +12,3 @@ export interface DeviceRepository {
         derivationPath: string,
     ): Promise<TestResult>;
 }
-
-export interface DeviceConnectionConfig {
-    speculosUrl: string;
-    device: "stax" | "nanox" | "nanos" | "nanos+" | "flex" | "apex";
-    os?: string;
-    version?: string;
-}
-
-export interface SignerConfig {
-    originToken: string;
-    gated: boolean;
-}

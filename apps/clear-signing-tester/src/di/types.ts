@@ -38,7 +38,7 @@ export const TYPES = {
     DockerContainer: Symbol.for("DockerContainer"),
 
     // Config
-    DeviceConnectionConfig: Symbol.for("DeviceConnectionConfig"),
+    SpeculosConfig: Symbol.for("SpeculosConfig"),
     SignerConfig: Symbol.for("SignerConfig"),
     EtherscanConfig: Symbol.for("EtherscanConfig"),
 

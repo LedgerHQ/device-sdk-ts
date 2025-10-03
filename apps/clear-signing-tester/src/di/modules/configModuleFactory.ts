@@ -1,23 +1,21 @@
 import { ContainerModule } from "inversify";
 
-import {
-    DeviceConnectionConfig,
-    SignerConfig,
-} from "../../domain/repositories/DeviceRepository";
-import { EtherscanConfig } from "../../services/EtherscanService";
 import { TYPES } from "../types";
+import { SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { SignerConfig } from "@root/src/domain/models/config/SignerConfig";
+import { EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
 
 export interface ClearSigningTesterConfig {
-    deviceConnection: DeviceConnectionConfig;
+    speculos: SpeculosConfig;
     signer: SignerConfig;
     etherscan: EtherscanConfig;
 }
 
 export const configModuleFactory = (config: ClearSigningTesterConfig) =>
     new ContainerModule(({ bind }) => {
-        bind<DeviceConnectionConfig>(
-            TYPES.DeviceConnectionConfig,
-        ).toConstantValue(config.deviceConnection);
+        bind<SpeculosConfig>(TYPES.SpeculosConfig).toConstantValue(
+            config.speculos,
+        );
         bind<SignerConfig>(TYPES.SignerConfig).toConstantValue(config.signer);
         bind<EtherscanConfig>(TYPES.EtherscanConfig).toConstantValue(
             config.etherscan,

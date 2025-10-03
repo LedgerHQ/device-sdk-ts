@@ -1,10 +1,10 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
 
-import { type DeviceConnectionConfig } from "../../domain/repositories/DeviceRepository";
 import { DeviceController } from "../../domain/adapters/DeviceController";
 import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { type SpeculosConfig } from "@root/src/domain/models/SpeculosConfig";
 
 /**
  * Speculos Nano Device Controller
@@ -20,11 +20,11 @@ export class SpeculosNanoController implements DeviceController {
     private readonly logger: LoggerPublisherService;
 
     constructor(
-        @inject(TYPES.DeviceConnectionConfig) config: DeviceConnectionConfig,
+        @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
         @inject(TYPES.LoggerPublisherServiceFactory)
         loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
-        this.speculosUrl = config.speculosUrl;
+        this.speculosUrl = `${config.url}:${config.port}`;
         this.logger = loggerFactory("nano-controller");
     }
 

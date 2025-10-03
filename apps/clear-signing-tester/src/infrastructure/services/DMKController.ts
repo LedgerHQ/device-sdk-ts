@@ -1,10 +1,7 @@
 import { TYPES } from "@root/src/di/types";
 import { SpeculosSigningService } from "./SpeculosSigningService";
 import { inject } from "inversify";
-import {
-    type SignerConfig,
-    type DeviceConnectionConfig,
-} from "@root/src/domain/repositories/DeviceRepository";
+import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import {
     DeviceManagementKit,
     DeviceManagementKitBuilder,
@@ -20,6 +17,7 @@ import {
     SignerEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
 import { Controller } from "@root/src/domain/services/Controller";
+import { type SpeculosConfig } from "@root/src/domain/models/SpeculosConfig";
 
 export class DMKController implements Controller {
     private logger: LoggerPublisherService;
@@ -31,8 +29,8 @@ export class DMKController implements Controller {
     constructor(
         @inject(TYPES.SpeculosSigningService)
         private readonly speculosSigningService: SpeculosSigningService,
-        @inject(TYPES.DeviceConnectionConfig)
-        private readonly deviceConfig: DeviceConnectionConfig,
+        @inject(TYPES.SpeculosConfig)
+        private readonly speculosConfig: SpeculosConfig,
         @inject(TYPES.SignerConfig)
         private readonly signerConfig: SignerConfig,
         @inject(TYPES.LoggerPublisherServiceFactory)
@@ -41,7 +39,9 @@ export class DMKController implements Controller {
         this.logger = loggerFactory("dmk-controller");
         this.dmk = new DeviceManagementKitBuilder()
             .addTransport(
-                speculosTransportFactory(this.deviceConfig.speculosUrl),
+                speculosTransportFactory(
+                    `${this.speculosConfig.url}:${this.speculosConfig.port}`,
+                ),
             )
             .build();
         this.contextModule = new ContextModuleBuilder({
