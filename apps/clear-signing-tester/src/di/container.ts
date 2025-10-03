@@ -29,6 +29,3 @@ export const makeContainer = ({
 
     return container;
 };
-
-export { type ClearSigningTesterConfig };
-export * from "./types";

@@ -8,11 +8,10 @@ import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
 import { type TestTransactionUseCase } from "@root/src/application/usecases/TestTransactionUseCase";
 import { type TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
-import {
-    type ClearSigningTesterConfig,
-    makeContainer,
-    TYPES,
-} from "@root/src/di/container";
+import { makeContainer } from "@root/src/di/container";
+import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
+import { TYPES } from "@root/src/di/types";
+import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
 export interface CliConfig {
@@ -21,7 +20,7 @@ export interface CliConfig {
     speculosPort: number;
     verbose: boolean;
     quiet: boolean;
-    device: "stax" | "nanox";
+    device: SpeculosConfig["device"];
 }
 
 /**
@@ -133,7 +132,7 @@ export class EthereumTransactionTesterCli {
             )
             .option(
                 "--device <device>",
-                "Device type (stax or nanox, default: stax)",
+                "Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)",
                 (value: string) => {
                     const supportedDevices = [
                         "stax",

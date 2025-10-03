@@ -1,6 +1,6 @@
 import { ContainerModule } from "inversify";
 
-import { type ClearSigningTesterConfig } from "@root/src/di/container";
+import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";

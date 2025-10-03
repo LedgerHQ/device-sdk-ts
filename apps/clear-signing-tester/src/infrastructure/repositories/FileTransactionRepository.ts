@@ -1,9 +1,9 @@
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TransactionFileRepository } from "@root/src/domain/repositories/TransactionFileRepository";
-import { type FileReader } from "@root/src/domain/adapters/FileReader";
 
 /**
  * Raw transaction data structure from JSON file

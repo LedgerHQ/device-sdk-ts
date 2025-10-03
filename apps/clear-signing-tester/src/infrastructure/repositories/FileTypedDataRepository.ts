@@ -2,9 +2,9 @@ import { type TypedData } from "@ledgerhq/device-signer-kit-ethereum";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type TypedDataFileRepository } from "@root/src/domain/repositories/TypedDataFileRepository";
-import { type FileReader } from "@root/src/domain/adapters/FileReader";
 
 /**
  * Raw typed data structure from JSON file
