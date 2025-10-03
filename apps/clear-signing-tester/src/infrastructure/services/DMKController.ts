@@ -17,7 +17,7 @@ import {
     SignerEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
 import { Controller } from "@root/src/domain/services/Controller";
-import { type SpeculosConfig } from "@root/src/domain/models/SpeculosConfig";
+import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 export class DMKController implements Controller {
     private logger: LoggerPublisherService;

@@ -30,7 +30,7 @@ export class NodeDockerContainer implements DockerContainer {
         const dockerArgs = this.buildDockerRunArgs(imageName, options);
 
         return new Promise((resolve, reject) => {
-            this.logger.info(
+            this.logger.debug(
                 `Spawning docker process with: docker ${dockerArgs.join(" ")}`,
             );
             const dockerProcess = spawn("docker", dockerArgs, {

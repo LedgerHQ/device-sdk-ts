@@ -4,7 +4,7 @@ import { type Downloader } from "@root/src/domain/adapters/Downloader";
 import { inject } from "inversify";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
-import { type SpeculosConfig } from "@root/src/domain/models/SpeculosConfig";
+import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 const DEFAULT_MODEL_MAPPING: Record<
     SpeculosConfig["device"],
@@ -74,7 +74,7 @@ export class SpeculosController implements Controller {
         const appName = this.getAppName(this.model, this.os, this.version);
 
         this.logger.info(
-            `Starting Docker container with name: ${this.containerName}`,
+            `Starting Docker container with name: ${this.containerName}, API url: ${this.config.url}:${this.config.port}`,
         );
 
         await this.dockerContainer.start(SPECULOS_DOCKER_IMAGE_LATEST, {

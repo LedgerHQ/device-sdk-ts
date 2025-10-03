@@ -4,7 +4,7 @@ import { inject, injectable } from "inversify";
 import { DeviceController } from "../../domain/adapters/DeviceController";
 import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { type SpeculosConfig } from "@root/src/domain/models/SpeculosConfig";
+import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 /**
  * Speculos Nano Device Controller

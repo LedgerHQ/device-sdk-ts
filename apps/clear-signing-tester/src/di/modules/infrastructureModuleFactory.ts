@@ -21,7 +21,6 @@ import { ErrorStateHandler } from "@root/src/infrastructure/services/state-handl
 import { OptOutStateHandler } from "@root/src/infrastructure/services/state-handlers/OptOutStateHandler";
 import { SignTransactionStateHandler } from "@root/src/infrastructure/services/state-handlers/SignTransactionStateHandler";
 import { RetryService } from "@root/src/domain/services/RetryService";
-import { DeviceMetadataFactory } from "../../domain/metadata/DeviceMetadataFactory";
 import { DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
 import { RetryServiceImpl } from "@root/src/infrastructure/services/RetryServiceImpl";
 import { NodeDockerContainer } from "@root/src/infrastructure/adapters/NodeDockerContainer";
