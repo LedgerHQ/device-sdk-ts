@@ -1,10 +1,11 @@
-import { inject, injectable } from "inversify";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import type { TypedDataFileRepository } from "@root/src/domain/repositories/TypedDataFileRepository";
+import { inject, injectable } from "inversify";
+
 import { TYPES } from "@root/src/di/types";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
-import { ResultDisplayService } from "@root/src/services/ResultDisplayService";
+import type { TypedDataFileRepository } from "@root/src/domain/repositories/TypedDataFileRepository";
 import { TestResult } from "@root/src/domain/types/TestStatus";
+import { ResultDisplayService } from "@root/src/services/ResultDisplayService";
 
 /**
  * Configuration for batch typed data testing

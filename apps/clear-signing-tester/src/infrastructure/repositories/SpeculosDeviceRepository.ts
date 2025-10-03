@@ -1,13 +1,13 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { TYPES } from "@root/src/di/types";
-import { type SigningService } from "@root/src/domain/services/SigningService";
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
-import { TestResult } from "@root/src/domain/types/TestStatus";
+import { type SigningService } from "@root/src/domain/services/SigningService";
+import { type TestResult } from "@root/src/domain/types/TestStatus";
 
 @injectable()
 export class SpeculosDeviceRepository implements DeviceRepository {

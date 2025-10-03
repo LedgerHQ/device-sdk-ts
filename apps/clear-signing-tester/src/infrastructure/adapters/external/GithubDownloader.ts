@@ -1,11 +1,13 @@
-import { Downloader } from "@root/src/domain/adapters/Downloader";
-import axios, { AxiosError } from "axios";
-import fs from "fs/promises";
-import fsSync from "fs";
-import * as path from "path";
-import { inject, injectable } from "inversify";
-import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import axios, { AxiosError } from "axios";
+import fsSync from "fs";
+import fs from "fs/promises";
+import { inject, injectable } from "inversify";
+import * as path from "path";
+import { Readable } from "stream";
+
+import { TYPES } from "@root/src/di/types";
+import { Downloader } from "@root/src/domain/adapters/Downloader";
 
 @injectable()
 export class GithubDownloader implements Downloader {
@@ -18,7 +20,7 @@ export class GithubDownloader implements Downloader {
         this.logger = this.loggerFactory("github-downloader");
     }
 
-    async isDownloaded(destination: string): Promise<boolean> {
+    isDownloaded(destination: string): boolean {
         return fsSync.existsSync(destination);
     }
 
@@ -26,7 +28,7 @@ export class GithubDownloader implements Downloader {
         this.logger.debug(`Downloading file from ${url} to ${destination}`);
 
         try {
-            const { data: blob } = await axios({
+            const { data: blob } = await axios<Readable>({
                 url,
                 method: "GET",
                 responseType: "stream",

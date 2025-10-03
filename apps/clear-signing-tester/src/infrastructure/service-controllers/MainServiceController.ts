@@ -1,6 +1,7 @@
-import { inject, injectable } from "inversify";
-import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { inject, injectable } from "inversify";
+
+import { TYPES } from "@root/src/di/types";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
 @injectable()

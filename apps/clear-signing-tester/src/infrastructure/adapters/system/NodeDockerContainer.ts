@@ -1,11 +1,12 @@
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { spawn } from "child_process";
+import { inject, injectable } from "inversify";
+
+import { TYPES } from "@root/src/di/types";
 import {
     DockerContainer,
     DockerRunOptions,
 } from "@root/src/domain/adapters/DockerContainer";
-import { inject, injectable } from "inversify";
-import { spawn } from "child_process";
-import { TYPES } from "@root/src/di/types";
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 @injectable()
 export class NodeDockerContainer implements DockerContainer {
@@ -40,7 +41,7 @@ export class NodeDockerContainer implements DockerContainer {
             let containerId = "";
             let errorOutput = "";
 
-            dockerProcess.stdout?.on("data", (data) => {
+            dockerProcess.stdout?.on("data", (data: Buffer) => {
                 const output = data.toString().trim();
                 if (output) {
                     containerId = output;
@@ -50,7 +51,7 @@ export class NodeDockerContainer implements DockerContainer {
                 }
             });
 
-            dockerProcess.stderr?.on("data", (data) => {
+            dockerProcess.stderr?.on("data", (data: Buffer) => {
                 errorOutput += data.toString();
             });
 
@@ -101,7 +102,7 @@ export class NodeDockerContainer implements DockerContainer {
 
             let errorOutput = "";
 
-            dockerProcess.stderr?.on("data", (data) => {
+            dockerProcess.stderr?.on("data", (data: Buffer) => {
                 errorOutput += data.toString();
             });
 
@@ -163,11 +164,12 @@ export class NodeDockerContainer implements DockerContainer {
             let output = "";
             let errorOutput = "";
 
-            dockerProcess.stdout?.on("data", (data) => {
+            // The 'data' parameter is of type Buffer
+            dockerProcess.stdout?.on("data", (data: Buffer) => {
                 output += data.toString();
             });
 
-            dockerProcess.stderr?.on("data", (data) => {
+            dockerProcess.stderr?.on("data", (data: Buffer) => {
                 errorOutput += data.toString();
             });
 

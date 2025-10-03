@@ -1,9 +1,10 @@
-import { inject, injectable } from "inversify";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import type { TransactionFileRepository } from "@root/src/domain/repositories/TransactionFileRepository";
-import { TestResult } from "@root/src/domain/types/TestStatus";
+import { inject, injectable } from "inversify";
+
 import { TYPES } from "@root/src/di/types";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
+import type { TransactionFileRepository } from "@root/src/domain/repositories/TransactionFileRepository";
+import { TestResult } from "@root/src/domain/types/TestStatus";
 import { ResultDisplayService } from "@root/src/services/ResultDisplayService";
 
 /**

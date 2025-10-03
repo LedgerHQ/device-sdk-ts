@@ -1,20 +1,22 @@
-import { TYPES } from "@root/src/di/types";
-import { inject, injectable } from "inversify";
 import {
     DeviceActionStatus,
     LoggerPublisherService,
     UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import { TestResult } from "@root/src/domain/types/TestStatus";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
-import { CompleteStateHandler } from "../state-handlers/CompleteStateHandler";
-import { OptOutStateHandler } from "../state-handlers/OptOutStateHandler";
-import { ErrorStateHandler } from "../state-handlers/ErrorStateHandler";
-import { SignTransactionStateHandler } from "../state-handlers/SignTransactionStateHandler";
-import { debounceTime, distinctUntilChanged, Observable, tap } from "rxjs";
-import { StateHandlerResult } from "../state-handlers/StateHandler";
-import { FlowOrchestrator } from "../../domain/services/FlowOrchestrator";
+import { inject, injectable } from "inversify";
+import { debounceTime, distinctUntilChanged, tap } from "rxjs";
+
+import { TYPES } from "@root/src/di/types";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
+import { type SigningServiceResult } from "@root/src/domain/services/SigningService";
+import { type TestResult } from "@root/src/domain/types/TestStatus";
+import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
+import { ErrorStateHandler } from "@root/src/infrastructure/state-handlers/ErrorStateHandler";
+import { OptOutStateHandler } from "@root/src/infrastructure/state-handlers/OptOutStateHandler";
+import { SignTransactionStateHandler } from "@root/src/infrastructure/state-handlers/SignTransactionStateHandler";
+import { type StateHandlerResult } from "@root/src/infrastructure/state-handlers/StateHandler";
 
 const DEBOUNCE_TIME = 1500;
 
@@ -38,7 +40,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
     }
 
     async orchestrateSigningFlow(
-        { observable }: { observable: Observable<unknown> },
+        { observable }: SigningServiceResult,
         input: TransactionInput | TypedDataInput,
     ): Promise<TestResult> {
         return await new Promise<TestResult>((resolve) => {
@@ -53,7 +55,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
                     ),
                     // Use a debounce time to let the device stabilize like fallback to blind signing
                     debounceTime(DEBOUNCE_TIME),
-                    distinctUntilChanged((prev: any, curr: any) => {
+                    distinctUntilChanged((prev, curr) => {
                         // Consider states the same if they have the same status and interaction type
                         // regardless of step differences
                         return (
@@ -64,7 +66,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
                     }),
                 )
                 .subscribe({
-                    next: async (state: any) => {
+                    next: async (state) => {
                         this.logger.debug("Handling state", {
                             data: { state: JSON.stringify(state) },
                         });
@@ -79,7 +81,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
                             });
                         }
                     },
-                    error: (error: any) => {
+                    error: (error: Error) => {
                         resolve({
                             input,
                             status: "error",
@@ -92,6 +94,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
     }
 
     private async handleState(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         state: any,
         input: TransactionInput | TypedDataInput,
     ) {
@@ -104,7 +107,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
                 return await this.errorStateHandler.handle({ input });
             case DeviceActionStatus.Completed:
                 return await this.completeStateHandler.handle({ input });
-            case DeviceActionStatus.Pending:
+            case DeviceActionStatus.Pending: {
                 const { requiredUserInteraction } = state.intermediateValue;
                 if (
                     requiredUserInteraction ===
@@ -125,6 +128,7 @@ export class FlowOrchestratorImpl implements FlowOrchestrator {
                 }
 
                 return ongoingResult;
+            }
             case DeviceActionStatus.NotStarted:
             case DeviceActionStatus.Stopped:
             default:

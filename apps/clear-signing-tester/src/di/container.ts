@@ -1,12 +1,12 @@
+import { type LoggerSubscriberService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 import { applicationModuleFactory } from "./modules/applicationModuleFactory";
 import {
+    type ClearSigningTesterConfig,
     configModuleFactory,
-    ClearSigningTesterConfig,
 } from "./modules/configModuleFactory";
 import { infrastructureModuleFactory } from "./modules/infrastructureModuleFactory";
-import { LoggerSubscriberService } from "@ledgerhq/device-management-kit";
 import { loggerModuleFactory } from "./modules/loggerModuleFactory";
 
 type MakeContainerArgs = {

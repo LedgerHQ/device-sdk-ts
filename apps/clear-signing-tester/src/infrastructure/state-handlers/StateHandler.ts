@@ -1,5 +1,5 @@
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 
 export type StateHandlerResult = {
     status:

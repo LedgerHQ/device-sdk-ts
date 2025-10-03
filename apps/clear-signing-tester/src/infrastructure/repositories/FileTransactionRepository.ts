@@ -1,8 +1,9 @@
 import { inject, injectable } from "inversify";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { TransactionFileRepository } from "@root/src/domain/repositories/TransactionFileRepository";
-import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
+
 import { TYPES } from "@root/src/di/types";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TransactionFileRepository } from "@root/src/domain/repositories/TransactionFileRepository";
+import { type FileReader } from "@root/src/domain/adapters/FileReader";
 
 /**
  * Raw transaction data structure from JSON file
@@ -21,19 +22,17 @@ interface RawTransactionData {
 @injectable()
 export class FileTransactionRepository implements TransactionFileRepository {
     constructor(
-        @inject(TYPES.NodeFileReader)
-        private readonly fileReader: NodeFileReader,
+        @inject(TYPES.FileReader)
+        private readonly fileReader: FileReader,
     ) {}
 
     /**
      * Read and parse transactions from a JSON file
      * @param filePath - Path to the JSON file containing transactions
-     * @returns Promise<Transaction[]> - Array of parsed Transaction objects
+     * @returns Transaction[] - Array of parsed Transaction objects
      * @throws Error if file doesn't exist, is not readable, or contains invalid data
      */
-    async readTransactionsFromFile(
-        filePath: string,
-    ): Promise<TransactionInput[]> {
+    readTransactionsFromFile(filePath: string): TransactionInput[] {
         const fileContent = this.fileReader.readFileSync(filePath);
 
         const rawTransactions =

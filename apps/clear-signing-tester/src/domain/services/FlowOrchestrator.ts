@@ -1,7 +1,8 @@
-import { Observable } from "rxjs";
-import { TestResult } from "../types/TestStatus";
-import { TransactionInput } from "../models/TransactionInput";
-import { TypedDataInput } from "../models/TypedDataInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type TestResult } from "@root/src/domain/types/TestStatus";
+
+import { type SigningServiceResult } from "./SigningService";
 
 /**
  * Flow orchestrator interface for managing signing flows
@@ -15,7 +16,7 @@ export interface FlowOrchestrator {
      * @returns Promise<TestResult> - Result of the signing flow
      */
     orchestrateSigningFlow(
-        { observable }: { observable: Observable<unknown> },
+        { observable }: SigningServiceResult,
         input: TransactionInput | TypedDataInput,
     ): Promise<TestResult>;
 }

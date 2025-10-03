@@ -1,10 +1,10 @@
+import {
+    type LoggerPublisherService as LoggerPublisherServiceBase,
+    type LoggerSubscriberService,
+} from "@ledgerhq/device-management-kit";
 import { ContainerModule, type Factory } from "inversify";
 
-import {
-    LoggerPublisherService as LoggerPublisherServiceBase,
-    LoggerSubscriberService,
-} from "@ledgerhq/device-management-kit";
-import { TYPES } from "../types";
+import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@root/src/services/LoggerPublisherService";
 
 type FactoryProps = {

@@ -1,6 +1,6 @@
-import { TypedDataInput } from "../models/TypedDataInput";
-import { TransactionInput } from "../models/TransactionInput";
-import { TestResult } from "../types/TestStatus";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type TestResult } from "@root/src/domain/types/TestStatus";
 
 export interface DeviceRepository {
     performSignTransaction(

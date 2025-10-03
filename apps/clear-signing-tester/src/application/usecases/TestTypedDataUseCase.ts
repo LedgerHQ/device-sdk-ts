@@ -1,10 +1,10 @@
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { TestResult } from "@root/src/domain/types/TestStatus";
-import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { TYPES } from "@root/src/di/types";
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
+import { TestResult } from "@root/src/domain/types/TestStatus";
 
 export interface TypedDataTestConfig {
     readonly derivationPath: string;

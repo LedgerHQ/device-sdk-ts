@@ -1,11 +1,13 @@
-import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
-import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+
+import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
-import { StateHandlerResult, type StateHandler } from "./StateHandler";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+
+import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
 @injectable()
 export class ErrorStateHandler implements StateHandler {

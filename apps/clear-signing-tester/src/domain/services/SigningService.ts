@@ -1,4 +1,16 @@
-import { SignerEth } from "@ledgerhq/device-signer-kit-ethereum";
+import {
+    type DeviceActionStatus,
+    type UserInteractionRequired,
+} from "@ledgerhq/device-management-kit";
+import { type SignerEth } from "@ledgerhq/device-signer-kit-ethereum";
+import { type Observable } from "rxjs";
+
+export type SigningServiceResult = {
+    observable: Observable<{
+        status: DeviceActionStatus;
+        intermediateValue: { requiredUserInteraction: UserInteractionRequired };
+    }>;
+};
 
 /**
  * Signing service interface for transaction and typed data signing
@@ -9,7 +21,7 @@ export interface SigningService {
      * Set the signer instance
      * @param signer - The signer instance to use
      */
-    setSigner(signer: SignerEth): Promise<void>;
+    setSigner(signer: SignerEth): void;
 
     /**
      * Sign a transaction
@@ -17,7 +29,10 @@ export interface SigningService {
      * @param transaction - The raw transaction to sign
      * @returns Device action for signing the transaction
      */
-    signTransaction(derivationPath: string, transaction: string): any;
+    signTransaction(
+        derivationPath: string,
+        transaction: string,
+    ): SigningServiceResult;
 
     /**
      * Sign typed data
@@ -25,5 +40,8 @@ export interface SigningService {
      * @param typedData - The typed data to sign
      * @returns Device action for signing the typed data
      */
-    signTypedData(derivationPath: string, typedData: string): any;
+    signTypedData(
+        derivationPath: string,
+        typedData: string,
+    ): SigningServiceResult;
 }

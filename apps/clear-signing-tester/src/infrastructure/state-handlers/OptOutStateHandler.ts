@@ -1,10 +1,12 @@
-import { StateHandler, StateHandlerResult } from "./StateHandler";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
+
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+
+import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
 @injectable()
 export class OptOutStateHandler implements StateHandler {

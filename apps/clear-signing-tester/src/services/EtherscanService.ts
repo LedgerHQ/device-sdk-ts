@@ -1,8 +1,8 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
 
-import { TYPES } from "../di/types";
-import { type EtherscanConfig } from "../domain/models/config/EtherscanConfig";
+import { TYPES } from "@root/src/di/types";
+import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
 
 // Types for Etherscan API
 export type EtherscanTransaction = {

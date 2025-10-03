@@ -1,11 +1,11 @@
 import { ContainerModule } from "inversify";
 
-import { TestTransactionUseCase } from "../../application/usecases/TestTransactionUseCase";
-import { TestBatchTransactionFromFileUseCase } from "../../application/usecases/TestBatchTransactionFromFileUseCase";
-import { TestTypedDataUseCase } from "../../application/usecases/TestTypedDataUseCase";
-import { TestBatchTypedDataFromFileUseCase } from "../../application/usecases/TestBatchTypedDataFromFileUseCase";
-import { ResultDisplayService } from "../../services/ResultDisplayService";
-import { TYPES } from "../types";
+import { TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
+import { TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
+import { TestTransactionUseCase } from "@root/src/application/usecases/TestTransactionUseCase";
+import { TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
+import { TYPES } from "@root/src/di/types";
+import { ResultDisplayService } from "@root/src/services/ResultDisplayService";
 
 export const applicationModuleFactory = () =>
     new ContainerModule(({ bind }) => {

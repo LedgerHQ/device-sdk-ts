@@ -1,9 +1,9 @@
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { TYPES } from "@root/src/di/types";
 import { TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
-import { TYPES } from "@root/src/di/types";
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { TestResult } from "@root/src/domain/types/TestStatus";
 
 export interface TransactionTestConfig {

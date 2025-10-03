@@ -1,5 +1,5 @@
-import { TransactionInput } from "../models/TransactionInput";
-import { TypedDataInput } from "../models/TypedDataInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 
 /**
  * Status of a signing test result

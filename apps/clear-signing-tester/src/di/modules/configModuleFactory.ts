@@ -1,9 +1,9 @@
 import { ContainerModule } from "inversify";
 
-import { TYPES } from "../types";
-import { SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
-import { SignerConfig } from "@root/src/domain/models/config/SignerConfig";
-import { EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
+import { TYPES } from "@root/src/di/types";
+import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
+import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
+import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 export interface ClearSigningTesterConfig {
     speculos: SpeculosConfig;

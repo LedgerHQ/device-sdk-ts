@@ -1,9 +1,10 @@
-import { inject, injectable } from "inversify";
-import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { SpeculosScreenReader } from "../adapters/speculos/SpeculosScreenReader";
-import { ScreenContent } from "../../domain/models/ScreenContent";
-import { ScreenAnalyzerService } from "../../domain/services/ScreenAnalyzer";
+import { inject, injectable } from "inversify";
+
+import { TYPES } from "@root/src/di/types";
+import { type ScreenContent } from "@root/src/domain/models/ScreenContent";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+import { type SpeculosScreenReader } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenReader";
 
 /**
  * Infrastructure implementation for analyzing screen content
@@ -80,9 +81,11 @@ export class ScreenAnalyzerImpl implements ScreenAnalyzerService {
             data.text.toLowerCase().includes(text.toLowerCase()),
         );
 
-        isLastPage
-            ? this.logger.debug("Current screen is last page")
-            : this.logger.debug("Current screen is not last page");
+        if (isLastPage) {
+            this.logger.debug("Current screen is last page");
+        } else {
+            this.logger.debug("Current screen is not last page");
+        }
 
         return isLastPage;
     }
@@ -98,9 +101,11 @@ export class ScreenAnalyzerImpl implements ScreenAnalyzerService {
             data.text.toLowerCase().includes(text.toLowerCase()),
         );
 
-        canRefuse
-            ? this.logger.debug("Transaction can be refused")
-            : this.logger.debug("Transaction cannot be refused");
+        if (canRefuse) {
+            this.logger.debug("Transaction can be refused");
+        } else {
+            this.logger.debug("Transaction cannot be refused");
+        }
 
         return canRefuse;
     }
@@ -120,9 +125,11 @@ export class ScreenAnalyzerImpl implements ScreenAnalyzerService {
             data.text.toLowerCase().includes(text.toLowerCase()),
         );
 
-        isHomePage
-            ? this.logger.debug("Current screen is home page")
-            : this.logger.debug("Current screen is not home page");
+        if (isHomePage) {
+            this.logger.debug("Current screen is home page");
+        } else {
+            this.logger.debug("Current screen is not home page");
+        }
 
         return isHomePage;
     }
@@ -170,7 +177,7 @@ export class ScreenAnalyzerImpl implements ScreenAnalyzerService {
      * Get all accumulated texts and clear the internal state
      * Business logic for managing screen text history
      */
-    private async getAndClearAccumulatedTexts(): Promise<string[]> {
+    private getAndClearAccumulatedTexts(): string[] {
         const texts = [...this.accumulatedTexts];
         this.clearAccumulatedTexts();
         this.logger.debug("Retrieved and cleared accumulated texts", {

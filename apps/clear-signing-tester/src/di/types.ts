@@ -25,7 +25,7 @@ export const TYPES = {
 
     // Adapters
     ScreenReader: Symbol.for("ScreenReader"),
-    NodeFileReader: Symbol.for("NodeFileReader"),
+    FileReader: Symbol.for("FileReader"),
     DockerContainer: Symbol.for("DockerContainer"),
     Downloader: Symbol.for("Downloader"),
 

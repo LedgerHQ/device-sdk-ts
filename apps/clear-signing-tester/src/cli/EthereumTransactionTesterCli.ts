@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
-import {
-    makeContainer,
-    ClearSigningTesterConfig,
-    TYPES,
-} from "../di/container";
 import { ConsoleLogger, LogLevel } from "@ledgerhq/device-management-kit";
-import { Container } from "inversify";
-import { TestBatchTransactionFromFileUseCase } from "../application/usecases/TestBatchTransactionFromFileUseCase";
-import { TestTransactionUseCase } from "../application/usecases/TestTransactionUseCase";
-import { TestTypedDataUseCase } from "../application/usecases/TestTypedDataUseCase";
-import { TestBatchTypedDataFromFileUseCase } from "../application/usecases/TestBatchTypedDataFromFileUseCase";
-import { ServiceController } from "../domain/services/ServiceController";
+import { Command } from "commander";
+import { type Container } from "inversify";
+
+import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
+import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
+import { type TestTransactionUseCase } from "@root/src/application/usecases/TestTransactionUseCase";
+import { type TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
+import {
+    type ClearSigningTesterConfig,
+    makeContainer,
+    TYPES,
+} from "@root/src/di/container";
+import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
 export interface CliConfig {
     derivationPath: string;

@@ -1,12 +1,14 @@
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
-import { StateHandler, StateHandlerResult } from "./StateHandler";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
+
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
-import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type RetryService } from "@root/src/domain/services/RetryService";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+
+import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
 const NAVIGATION_MAX_ATTEMPTS = 20;
 const NAVIGATION_DELAY = 200;
@@ -73,7 +75,7 @@ export class SignTransactionStateHandler implements StateHandler {
                 WAIT_FOR_TX_PAGE_ATTEMPTS,
                 WAIT_FOR_TX_PAGE_DELAY,
             );
-        } catch (error) {
+        } catch (_error) {
             this.logger.error(
                 "Failed to detect tx page after maximum attempts",
             );

@@ -18,7 +18,7 @@ export class LoggerPublisherService implements LoggerPublisherServiceBase {
     _log(
         level: LogLevel,
         message: string,
-        data?: { [key: string]: any },
+        data?: { [key: string]: unknown },
     ): void {
         this.subscribers.forEach((subscriber) => {
             const subscriberOptions = {
@@ -30,19 +30,19 @@ export class LoggerPublisherService implements LoggerPublisherServiceBase {
         });
     }
 
-    info(message: string, data?: { [key: string]: any }): void {
+    info(message: string, data?: { [key: string]: unknown }): void {
         this._log(LogLevel.Info, message, data);
     }
 
-    warn(message: string, data?: { [key: string]: any }): void {
+    warn(message: string, data?: { [key: string]: unknown }): void {
         this._log(LogLevel.Warning, message, data);
     }
 
-    debug(message: string, data?: { [key: string]: any }): void {
+    debug(message: string, data?: { [key: string]: unknown }): void {
         this._log(LogLevel.Debug, message, data);
     }
 
-    error(message: string, data?: { [key: string]: any }): void {
+    error(message: string, data?: { [key: string]: unknown }): void {
         this._log(LogLevel.Error, message, data);
     }
 }

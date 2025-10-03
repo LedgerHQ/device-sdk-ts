@@ -1,47 +1,47 @@
 import { ContainerModule } from "inversify";
 
-import { SpeculosDeviceRepository } from "../../infrastructure/repositories/SpeculosDeviceRepository";
-import { FileTransactionRepository } from "../../infrastructure/repositories/FileTransactionRepository";
-import { FileTypedDataRepository } from "../../infrastructure/repositories/FileTypedDataRepository";
-import { SpeculosTouchscreenController } from "../../infrastructure/adapters/device-controllers/SpeculosTouchscreenController";
-import { SpeculosNanoController } from "../../infrastructure/adapters/device-controllers/SpeculosNanoController";
-import { SpeculosScreenReader } from "../../infrastructure/adapters/speculos/SpeculosScreenReader";
-import { NodeFileReader } from "../../infrastructure/adapters/system/NodeFileReader";
-import { TransactionFileRepository } from "../../domain/repositories/TransactionFileRepository";
-import { TypedDataFileRepository } from "../../domain/repositories/TypedDataFileRepository";
-import { TYPES } from "../types";
-import { SigningServiceImpl } from "../../infrastructure/services/SigningServiceImpl";
-import { DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
-import { ScreenAnalyzerImpl } from "@root/src/infrastructure/services/ScreenAnalyzerImpl";
-import { ClearSigningTesterConfig } from "../container";
-import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
-import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
-import { FlowOrchestratorImpl } from "@root/src/infrastructure/services/FlowOrchestratorImpl";
-import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
-import { ErrorStateHandler } from "@root/src/infrastructure/state-handlers/ErrorStateHandler";
-import { OptOutStateHandler } from "@root/src/infrastructure/state-handlers/OptOutStateHandler";
-import { SignTransactionStateHandler } from "@root/src/infrastructure/state-handlers/SignTransactionStateHandler";
-import { RetryService } from "@root/src/domain/services/RetryService";
-import { DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
-import { RetryServiceImpl } from "@root/src/infrastructure/services/RetryServiceImpl";
-import { NodeDockerContainer } from "@root/src/infrastructure/adapters/system/NodeDockerContainer";
-import { DockerContainer } from "@root/src/domain/adapters/DockerContainer";
-import { SpeculosServiceController } from "@root/src/infrastructure/service-controllers/SpeculosServiceController";
-import { GithubDownloader } from "@root/src/infrastructure/adapters/external/GithubDownloader";
+import { type ClearSigningTesterConfig } from "@root/src/di/container";
+import { TYPES } from "@root/src/di/types";
+import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
+import { type Downloader } from "@root/src/domain/adapters/Downloader";
+import { type FileReader } from "@root/src/domain/adapters/FileReader";
+import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
+import { type DeviceMetadata } from "@root/src/domain/metadata/DeviceMetadata";
 import {
     ApexDeviceMetadata,
     FlexDeviceMetadata,
     StaxDeviceMetadata,
 } from "@root/src/domain/metadata/TouchscreenDeviceMetadata";
-import { DeviceController } from "@root/src/domain/adapters/DeviceController";
-import { Downloader } from "@root/src/domain/adapters/Downloader";
-import { FileReader } from "@root/src/domain/adapters/FileReader";
-import { ScreenReader } from "@root/src/domain/adapters/ScreenReader";
-import { ServiceController } from "@root/src/domain/services/ServiceController";
-import { StateHandler } from "@root/src/infrastructure/state-handlers/StateHandler";
-import { ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
-import { SigningService } from "@root/src/domain/services/SigningService";
-import { FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
+import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
+import { type TransactionFileRepository } from "@root/src/domain/repositories/TransactionFileRepository";
+import { type TypedDataFileRepository } from "@root/src/domain/repositories/TypedDataFileRepository";
+import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
+import { type RetryService } from "@root/src/domain/services/RetryService";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+import { type ServiceController } from "@root/src/domain/services/ServiceController";
+import { type SigningService } from "@root/src/domain/services/SigningService";
+import { SpeculosNanoController } from "@root/src/infrastructure/adapters/device-controllers/SpeculosNanoController";
+import { SpeculosTouchscreenController } from "@root/src/infrastructure/adapters/device-controllers/SpeculosTouchscreenController";
+import { GithubDownloader } from "@root/src/infrastructure/adapters/external/GithubDownloader";
+import { SpeculosScreenReader } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenReader";
+import { NodeDockerContainer } from "@root/src/infrastructure/adapters/system/NodeDockerContainer";
+import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
+import { FileTransactionRepository } from "@root/src/infrastructure/repositories/FileTransactionRepository";
+import { FileTypedDataRepository } from "@root/src/infrastructure/repositories/FileTypedDataRepository";
+import { SpeculosDeviceRepository } from "@root/src/infrastructure/repositories/SpeculosDeviceRepository";
+import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
+import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
+import { SpeculosServiceController } from "@root/src/infrastructure/service-controllers/SpeculosServiceController";
+import { FlowOrchestratorImpl } from "@root/src/infrastructure/services/FlowOrchestratorImpl";
+import { RetryServiceImpl } from "@root/src/infrastructure/services/RetryServiceImpl";
+import { ScreenAnalyzerImpl } from "@root/src/infrastructure/services/ScreenAnalyzerImpl";
+import { SigningServiceImpl } from "@root/src/infrastructure/services/SigningServiceImpl";
+import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
+import { ErrorStateHandler } from "@root/src/infrastructure/state-handlers/ErrorStateHandler";
+import { OptOutStateHandler } from "@root/src/infrastructure/state-handlers/OptOutStateHandler";
+import { SignTransactionStateHandler } from "@root/src/infrastructure/state-handlers/SignTransactionStateHandler";
+import { type StateHandler } from "@root/src/infrastructure/state-handlers/StateHandler";
 
 export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     new ContainerModule(({ bind }) => {
@@ -99,7 +99,7 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
         bind<ScreenReader>(TYPES.ScreenReader)
             .to(SpeculosScreenReader)
             .inSingletonScope();
-        bind<FileReader>(TYPES.NodeFileReader)
+        bind<FileReader>(TYPES.FileReader)
             .to(NodeFileReader)
             .inSingletonScope();
         bind<DockerContainer>(TYPES.DockerContainer)
@@ -110,7 +110,8 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
             .inSingletonScope();
 
         // Device Controllers and Metadata
-        switch (config.speculos.device) {
+        const device = config.speculos.device;
+        switch (device) {
             case "stax":
                 bind<DeviceMetadata>(TYPES.DeviceMetadata).toConstantValue(
                     new StaxDeviceMetadata(),
@@ -143,11 +144,11 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
                     .to(SpeculosNanoController)
                     .inSingletonScope();
                 break;
-            default:
-                const referenceType = config.speculos.device;
-                const uncoveredReferenceType: never = referenceType;
+            default: {
+                const uncoveredReferenceType: never = device;
                 throw new Error(
                     `Uncovered reference type: ${uncoveredReferenceType}`,
                 );
+            }
         }
     });

@@ -1,8 +1,15 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
-import { SignerEth } from "@ledgerhq/device-signer-kit-ethereum";
+import {
+    SignerEth,
+    type TypedData,
+} from "@ledgerhq/device-signer-kit-ethereum";
 import { ethers } from "ethers";
 import { injectable } from "inversify";
-import { SigningService } from "../../domain/services/SigningService";
+
+import {
+    type SigningService,
+    type SigningServiceResult,
+} from "@root/src/domain/services/SigningService";
 
 @injectable()
 export class SigningServiceImpl implements SigningService {
@@ -10,11 +17,14 @@ export class SigningServiceImpl implements SigningService {
 
     constructor() {}
 
-    async setSigner(signer: SignerEth): Promise<void> {
+    setSigner(signer: SignerEth): void {
         this.signer = signer;
     }
 
-    signTransaction(derivationPath: string, transaction: string) {
+    signTransaction(
+        derivationPath: string,
+        transaction: string,
+    ): SigningServiceResult {
         if (!this.signer) {
             throw new Error("Signer not initialized. Call initialize() first.");
         }
@@ -29,15 +39,18 @@ export class SigningServiceImpl implements SigningService {
 
         return this.signer.signTransaction(derivationPath, rawTx, {
             skipOpenApp: true,
-        });
+        }) as SigningServiceResult;
     }
 
-    signTypedData(derivationPath: string, typedData: string) {
+    signTypedData(
+        derivationPath: string,
+        typedData: string,
+    ): SigningServiceResult {
         if (!this.signer) {
             throw new Error("Signer not initialized. Call initialize() first.");
         }
 
-        const rawTypedData = JSON.parse(typedData);
+        const rawTypedData = JSON.parse(typedData) as TypedData;
 
         if (!rawTypedData) {
             throw new Error("Invalid typed data format");
@@ -45,6 +58,6 @@ export class SigningServiceImpl implements SigningService {
 
         return this.signer.signTypedData(derivationPath, rawTypedData, {
             skipOpenApp: true,
-        });
+        }) as SigningServiceResult;
     }
 }

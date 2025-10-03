@@ -1,12 +1,14 @@
-import { StateHandler, StateHandlerResult } from "./StateHandler";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
-import { inject, injectable } from "inversify";
-import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
-import { type RetryService } from "@root/src/domain/services/RetryService";
+import { inject, injectable } from "inversify";
+
+import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type RetryService } from "@root/src/domain/services/RetryService";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+
+import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
 const WAIT_FOR_SIGN_SCREEN_MAX_ATTEMPTS = 5;
 const WAIT_FOR_SIGN_SCREEN_DELAY = 1500;
@@ -71,7 +73,7 @@ export class CompleteStateHandler implements StateHandler {
                 WAIT_FOR_SIGN_SCREEN_MAX_ATTEMPTS,
                 WAIT_FOR_SIGN_SCREEN_DELAY,
             );
-        } catch (error) {
+        } catch (_error) {
             this.logger.error(
                 "Failed to detect home page after maximum attempts",
             );

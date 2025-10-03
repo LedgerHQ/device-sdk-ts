@@ -1,9 +1,9 @@
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { inject, injectable } from "inversify";
 
-import { DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { TYPES } from "@root/src/di/types";
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 /**
@@ -56,6 +56,7 @@ export class SpeculosNanoController implements DeviceController {
         this.logger.debug(
             "🔘 (buttons) : No action needed for tx checks optin",
         );
+        return Promise.resolve();
     }
 
     /**

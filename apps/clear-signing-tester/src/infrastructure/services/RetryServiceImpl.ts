@@ -1,7 +1,8 @@
-import { injectable, inject } from "inversify";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { inject, injectable } from "inversify";
+
 import { TYPES } from "@root/src/di/types";
-import { RetryService } from "@root/src/domain/services/RetryService";
+import { type RetryService } from "@root/src/domain/services/RetryService";
 
 @injectable()
 export class RetryServiceImpl implements RetryService {
@@ -80,7 +81,7 @@ export class RetryServiceImpl implements RetryService {
     ): Promise<void> {
         await this.retryUntil(
             checkCondition,
-            async (result) => result === true,
+            (result) => result === true,
             maxAttempts,
             delayMs,
         );

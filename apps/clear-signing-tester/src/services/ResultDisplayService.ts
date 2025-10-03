@@ -1,5 +1,9 @@
 import { injectable } from "inversify";
-import { TestResult, TestStatus } from "../domain/types/TestStatus";
+
+import {
+    type TestResult,
+    type TestStatus,
+} from "@root/src/domain/types/TestStatus";
 
 /**
  * Common batch result interface

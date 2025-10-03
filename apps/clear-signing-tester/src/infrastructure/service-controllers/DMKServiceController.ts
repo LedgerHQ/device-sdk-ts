@@ -1,22 +1,24 @@
-import { TYPES } from "@root/src/di/types";
-import { inject } from "inversify";
-import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
+import { ContextModule, ContextModuleBuilder } from "@ledgerhq/context-module";
 import {
     DeviceManagementKit,
     DeviceManagementKitBuilder,
+    DiscoveredDevice,
     LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
-import {
-    speculosIdentifier,
-    speculosTransportFactory,
-} from "@ledgerhq/device-transport-kit-speculos";
-import { ContextModule, ContextModuleBuilder } from "@ledgerhq/context-module";
 import {
     SignerEth,
     SignerEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
-import { ServiceController } from "@root/src/domain/services/ServiceController";
+import {
+    speculosIdentifier,
+    speculosTransportFactory,
+} from "@ledgerhq/device-transport-kit-speculos";
+import { inject } from "inversify";
+
+import { TYPES } from "@root/src/di/types";
+import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SigningService } from "@root/src/domain/services/SigningService";
 
 export class DMKServiceController implements ServiceController {
@@ -57,7 +59,7 @@ export class DMKServiceController implements ServiceController {
             this.dmk
                 .startDiscovering({ transport: speculosIdentifier })
                 .subscribe({
-                    next: (device: any) => {
+                    next: (device: DiscoveredDevice) => {
                         this.dmk
                             .connect({
                                 device: device,
@@ -83,7 +85,7 @@ export class DMKServiceController implements ServiceController {
                                 resolve();
                             });
                     },
-                    error: (error: any) => {
+                    error: (error: Error) => {
                         this.logger.error("Error connecting to device", {
                             data: { error },
                         });

@@ -1,10 +1,11 @@
-import { ServiceController } from "@root/src/domain/services/ServiceController";
-import { TYPES } from "@root/src/di/types";
-import { type Downloader } from "@root/src/domain/adapters/Downloader";
-import { inject } from "inversify";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { inject } from "inversify";
+
+import { TYPES } from "@root/src/di/types";
 import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
+import { type Downloader } from "@root/src/domain/adapters/Downloader";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
 const DEFAULT_MODEL_MAPPING: Record<
     SpeculosConfig["device"],
