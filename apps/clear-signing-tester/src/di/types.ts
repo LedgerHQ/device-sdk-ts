@@ -19,6 +19,7 @@ export const TYPES = {
     SignTransactionStateHandler: Symbol.for("SignTransactionStateHandler"),
 
     // Service Controllers
+    MainServiceController: Symbol.for("MainServiceController"),
     DMKServiceController: Symbol.for("DMKServiceController"),
     SpeculosServiceController: Symbol.for("SpeculosServiceController"),
 

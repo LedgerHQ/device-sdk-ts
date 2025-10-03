@@ -31,9 +31,13 @@ export interface CliConfig {
  * This is the composition root of the application.
  */
 export class EthereumTransactionTesterCli {
-    public container: Container;
+    private container: Container;
+    private controller: ServiceController;
+    private config: CliConfig;
 
     constructor(config: CliConfig) {
+        this.config = config;
+
         const logger = new ConsoleLogger(
             config.quiet
                 ? LogLevel.Error
@@ -65,6 +69,24 @@ export class EthereumTransactionTesterCli {
             config: diConfig,
             loggers: [logger],
         });
+
+        this.controller = this.container.get<ServiceController>(
+            TYPES.MainServiceController,
+        );
+    }
+
+    /**
+     * Initialize the CLI by setting up the controller
+     */
+    async initialize(): Promise<void> {
+        await this.controller.start();
+    }
+
+    /**
+     * Clean up resources
+     */
+    async cleanup(): Promise<void> {
+        await this.controller.stop();
     }
 
     /**
@@ -72,6 +94,8 @@ export class EthereumTransactionTesterCli {
      */
     static createProgram(): Command {
         const program = new Command();
+        let cli: EthereumTransactionTesterCli | null = null;
+        let exitCode = 0;
 
         program
             .name("ethereum-clear-signing-tester")
@@ -95,12 +119,35 @@ export class EthereumTransactionTesterCli {
             .option(
                 "--speculos-port <port>",
                 "Speculos server port (random port if not provided)",
-                this.validatePort,
+                (value: string) => {
+                    const port = parseInt(value);
+                    if (isNaN(port) || port < 1 || port > 65535) {
+                        throw new Error("Invalid port number");
+                    }
+                    return port;
+                },
             )
             .option(
                 "--device <device>",
                 "Device type (stax or nanox, default: stax)",
-                this.validateDevice,
+                (value: string) => {
+                    const supportedDevices = [
+                        "stax",
+                        "nanox",
+                        "nanos",
+                        "nanos+",
+                        "flex",
+                        "apex",
+                    ];
+                    if (!supportedDevices.includes(value)) {
+                        throw new Error(
+                            `Invalid device type '${value}'. Must be either ${supportedDevices.join(
+                                ", ",
+                            )}.`,
+                        );
+                    }
+                    return value;
+                },
                 "stax",
             )
             .option("--verbose, -v", "Enable verbose output", false)
@@ -110,107 +157,70 @@ export class EthereumTransactionTesterCli {
                 false,
             );
 
+        // Set up signal handlers that work with the CLI instance
+        const handleShutdown = async (signal: string) => {
+            console.error(`Received ${signal}, cleaning up...`);
+            await cli?.cleanup();
+            process.exit(0);
+        };
+
+        process.on("SIGINT", () => handleShutdown("SIGINT"));
+        process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+
+        program.hook("preAction", async (_, command) => {
+            const config = command.parent!.opts() as CliConfig;
+            cli = new EthereumTransactionTesterCli(config);
+            await cli.initialize();
+        });
+
+        program.hook("postAction", async () => {
+            await cli?.cleanup();
+            if (exitCode !== 0) {
+                process.exit(exitCode);
+            }
+        });
+
         // Raw transaction command
         program
             .command("raw-transaction <transaction>")
             .description("Test a single raw transaction")
-            .action(async (transaction, _, command) => {
-                const globalOpts = command.parent!.opts();
-                await this.handleRawTransaction(transaction, globalOpts);
+            .action(async (transaction) => {
+                exitCode = await cli!.handleRawTransaction(transaction);
             });
 
         // Raw file command
         program
             .command("raw-file <file>")
             .description("Test multiple raw transactions from a JSON file")
-            .action(async (file, _, command) => {
-                const globalOpts = command.parent!.opts();
-                await this.handleRawFile(file, globalOpts);
+            .action(async (file) => {
+                exitCode = await cli!.handleRawFile(file);
             });
 
         // Typed data command
         program
             .command("typed-data <data>")
             .description("Test a single typed data object (JSON string)")
-            .action(async (data, _, command) => {
-                const globalOpts = command.parent!.opts();
-                await this.handleTypedData(data, globalOpts);
+            .action(async (data) => {
+                exitCode = await cli!.handleTypedData(data);
             });
 
         // Typed data file command
         program
             .command("typed-data-file <file>")
             .description("Test multiple typed data objects from a JSON file")
-            .action(async (file, _, command) => {
-                const globalOpts = command.parent!.opts();
-                await this.handleTypedDataFile(file, globalOpts);
+            .action(async (file) => {
+                exitCode = await cli!.handleTypedDataFile(file);
             });
 
         return program;
     }
 
     /**
-     * Validate device option
-     */
-    private static validateDevice(
-        value: string,
-    ): (typeof supportedDevices)[number] {
-        const supportedDevices = [
-            "stax",
-            "nanox",
-            "nanos",
-            "nanos+",
-            "flex",
-            "apex",
-        ];
-        if (!supportedDevices.includes(value)) {
-            throw new Error(
-                `Invalid device type '${value}'. Must be either ${supportedDevices.join(
-                    ", ",
-                )}.`,
-            );
-        }
-        return value;
-    }
-
-    /**
-     * Validate port option
-     */
-    private static validatePort(value: string): number {
-        const port = parseInt(value);
-        if (isNaN(port) || port < 1 || port > 65535) {
-            throw new Error("Invalid port number");
-        }
-        return port;
-    }
-
-    /**
      * Handle raw transaction command
      */
-    private static async handleRawTransaction(
-        transaction: string,
-        globalOpts: any,
-    ): Promise<void> {
-        const config: CliConfig = {
-            derivationPath: globalOpts.derivationPath,
-            speculosUrl: globalOpts.speculosUrl,
-            speculosPort: globalOpts.speculosPort,
-            verbose: globalOpts.verbose,
-            quiet: globalOpts.quiet,
-            device: globalOpts.device,
-        };
-
-        const cli = new EthereumTransactionTesterCli(config);
-        const speculosController = cli.container.get<ServiceController>(
-            TYPES.SpeculosServiceController,
-        );
-        await speculosController.start();
-        const dmkController = cli.container.get<ServiceController>(
-            TYPES.DMKServiceController,
-        );
-        await dmkController.start();
+    async handleRawTransaction(transaction: string): Promise<number> {
         const testTransactionUseCase =
-            cli.container.get<TestTransactionUseCase>(
+            this.container.get<TestTransactionUseCase>(
                 TYPES.TestTransactionUseCase,
             );
 
@@ -219,142 +229,58 @@ export class EthereumTransactionTesterCli {
                 rawTx: transaction,
                 description: "Single transaction test",
             },
-            { derivationPath: config.derivationPath },
+            { derivationPath: this.config.derivationPath },
         );
 
-        const code = result.status === "clear_signed" ? 0 : 1;
-
-        await dmkController.stop();
-        await speculosController.stop();
-
-        process.exit(code);
+        return result.status === "clear_signed" ? 0 : 1;
     }
 
     /**
      * Handle raw file command
      */
-    private static async handleRawFile(
-        file: string,
-        globalOpts: any,
-    ): Promise<void> {
-        const config: CliConfig = {
-            derivationPath: globalOpts.derivationPath,
-            speculosUrl: globalOpts.speculosUrl,
-            speculosPort: globalOpts.speculosPort,
-            verbose: globalOpts.verbose,
-            quiet: globalOpts.quiet,
-            device: globalOpts.device,
-        };
-
-        const cli = new EthereumTransactionTesterCli(config);
-
-        const speculosController = cli.container.get<ServiceController>(
-            TYPES.SpeculosServiceController,
-        );
-        await speculosController.start();
-        const dmkController = cli.container.get<ServiceController>(
-            TYPES.DMKServiceController,
-        );
-        await dmkController.start();
+    async handleRawFile(file: string): Promise<number> {
         const batchTestUseCase =
-            cli.container.get<TestBatchTransactionFromFileUseCase>(
+            this.container.get<TestBatchTransactionFromFileUseCase>(
                 TYPES.TestBatchTransactionFromFileUseCase,
             );
 
         const result = await batchTestUseCase.execute(file, {
-            defaultDerivationPath: config.derivationPath,
+            defaultDerivationPath: this.config.derivationPath,
         });
 
-        const code = result.totalItems - result.clearSignedCount;
-
-        await dmkController.stop();
-        await speculosController.stop();
-
-        process.exit(code);
+        return result.totalItems - result.clearSignedCount;
     }
 
     /**
      * Handle typed data command
      */
-    private static async handleTypedData(
-        data: string,
-        globalOpts: any,
-    ): Promise<void> {
-        const config: CliConfig = {
-            derivationPath: globalOpts.derivationPath,
-            speculosUrl: globalOpts.speculosUrl,
-            speculosPort: globalOpts.speculosPort,
-            verbose: globalOpts.verbose,
-            quiet: globalOpts.quiet,
-            device: globalOpts.device,
-        };
-
-        const cli = new EthereumTransactionTesterCli(config);
-        const speculosController = cli.container.get<ServiceController>(
-            TYPES.SpeculosServiceController,
-        );
-        await speculosController.start();
-        const dmkController = cli.container.get<ServiceController>(
-            TYPES.DMKServiceController,
-        );
-        await dmkController.start();
-        const testTypedDataUseCase = cli.container.get<TestTypedDataUseCase>(
+    async handleTypedData(data: string): Promise<number> {
+        const testTypedDataUseCase = this.container.get<TestTypedDataUseCase>(
             TYPES.TestTypedDataUseCase,
         );
 
         const result = await testTypedDataUseCase.execute(
             { data, description: "single typed data" },
-            { derivationPath: config.derivationPath },
+            { derivationPath: this.config.derivationPath },
         );
 
-        const code = result.status === "clear_signed" ? 0 : 1;
-
-        await dmkController.stop();
-        await speculosController.stop();
-
-        process.exit(code);
+        return result.status === "clear_signed" ? 0 : 1;
     }
 
     /**
      * Handle typed data file command
      */
-    private static async handleTypedDataFile(
-        file: string,
-        globalOpts: any,
-    ): Promise<void> {
-        const config: CliConfig = {
-            derivationPath: globalOpts.derivationPath,
-            speculosUrl: globalOpts.speculosUrl,
-            speculosPort: globalOpts.speculosPort,
-            verbose: globalOpts.verbose,
-            quiet: globalOpts.quiet,
-            device: globalOpts.device,
-        };
-
-        const cli = new EthereumTransactionTesterCli(config);
-        const speculosController = cli.container.get<ServiceController>(
-            TYPES.SpeculosServiceController,
-        );
-        await speculosController.start();
-        const dmkController = cli.container.get<ServiceController>(
-            TYPES.DMKServiceController,
-        );
-        await dmkController.start();
+    async handleTypedDataFile(file: string): Promise<number> {
         const batchTestUseCase =
-            cli.container.get<TestBatchTypedDataFromFileUseCase>(
+            this.container.get<TestBatchTypedDataFromFileUseCase>(
                 TYPES.TestBatchTypedDataFromFileUseCase,
             );
 
         const result = await batchTestUseCase.execute(file, {
-            defaultDerivationPath: config.derivationPath,
+            defaultDerivationPath: this.config.derivationPath,
         });
 
-        const code = result.totalItems - result.clearSignedCount;
-
-        await dmkController.stop();
-        await speculosController.stop();
-
-        process.exit(code);
+        return result.totalItems - result.clearSignedCount;
     }
 }
 
@@ -362,17 +288,6 @@ export class EthereumTransactionTesterCli {
 async function main() {
     try {
         const program = EthereumTransactionTesterCli.createProgram();
-
-        // Handle graceful shutdown
-        process.on("SIGINT", async () => {
-            console.error("Received SIGINT, cleaning up...");
-            process.exit(0);
-        });
-
-        process.on("SIGTERM", async () => {
-            console.error("Received SIGTERM, cleaning up...");
-            process.exit(0);
-        });
 
         // Parse command line arguments
         await program.parseAsync(process.argv);

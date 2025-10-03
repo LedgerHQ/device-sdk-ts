@@ -74,8 +74,9 @@ export class SpeculosServiceController implements ServiceController {
         const appName = this.getAppName(this.model, this.os, this.version);
 
         this.logger.info(
-            `Starting Docker container with name: ${this.containerName}, API url: ${this.config.url}:${this.config.port}`,
+            `Starting Docker container with name: ${this.containerName}`,
         );
+        this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
 
         await this.dockerContainer.start(SPECULOS_DOCKER_IMAGE_LATEST, {
             command: [

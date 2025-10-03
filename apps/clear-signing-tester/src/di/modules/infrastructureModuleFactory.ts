@@ -14,6 +14,7 @@ import { SigningServiceImpl } from "../../infrastructure/services/SigningService
 import { DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { ScreenAnalyzerImpl } from "@root/src/infrastructure/services/ScreenAnalyzerImpl";
 import { ClearSigningTesterConfig } from "../container";
+import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
 import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
 import { FlowOrchestratorImpl } from "@root/src/infrastructure/services/FlowOrchestratorImpl";
 import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
@@ -84,6 +85,9 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
             .inSingletonScope();
 
         // Service Controllers
+        bind<ServiceController>(TYPES.MainServiceController)
+            .to(MainServiceController)
+            .inSingletonScope();
         bind<ServiceController>(TYPES.DMKServiceController)
             .to(DMKServiceController)
             .inSingletonScope();
