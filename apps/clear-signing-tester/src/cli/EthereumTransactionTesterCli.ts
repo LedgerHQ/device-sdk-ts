@@ -12,7 +12,7 @@ import { TestBatchTransactionFromFileUseCase } from "../application/usecases/Tes
 import { TestTransactionUseCase } from "../application/usecases/TestTransactionUseCase";
 import { TestTypedDataUseCase } from "../application/usecases/TestTypedDataUseCase";
 import { TestBatchTypedDataFromFileUseCase } from "../application/usecases/TestBatchTypedDataFromFileUseCase";
-import { Controller } from "../infrastructure/services/DMKController";
+import { Controller } from "../domain/services/Controller";
 
 export interface CliConfig {
     derivationPath: string;
@@ -46,9 +46,6 @@ export class EthereumTransactionTesterCli {
             deviceConnection: {
                 speculosUrl: config.speculosUrl,
                 device: config.device,
-                sessionRefresherOptions: {
-                    isRefresherDisabled: true,
-                },
             },
             signer: {
                 originToken: process.env["GATED_TOKEN"] || "test-origin-token",
@@ -183,8 +180,14 @@ export class EthereumTransactionTesterCli {
         };
 
         const cli = new EthereumTransactionTesterCli(config);
-        const controller = cli.container.get<Controller>(TYPES.Controller);
-        await controller.start();
+        const speculosController = cli.container.get<Controller>(
+            TYPES.SpeculosController,
+        );
+        await speculosController.start();
+        const dmkController = cli.container.get<Controller>(
+            TYPES.DMKController,
+        );
+        await dmkController.start();
         const testTransactionUseCase =
             cli.container.get<TestTransactionUseCase>(
                 TYPES.TestTransactionUseCase,
@@ -200,7 +203,8 @@ export class EthereumTransactionTesterCli {
 
         const code = result.status === "clear_signed" ? 0 : 1;
 
-        await controller.stop();
+        await dmkController.stop();
+        await speculosController.stop();
 
         process.exit(code);
     }
@@ -221,8 +225,15 @@ export class EthereumTransactionTesterCli {
         };
 
         const cli = new EthereumTransactionTesterCli(config);
-        const controller = cli.container.get<Controller>(TYPES.Controller);
-        await controller.start();
+
+        const speculosController = cli.container.get<Controller>(
+            TYPES.SpeculosController,
+        );
+        await speculosController.start();
+        const dmkController = cli.container.get<Controller>(
+            TYPES.DMKController,
+        );
+        await dmkController.start();
         const batchTestUseCase =
             cli.container.get<TestBatchTransactionFromFileUseCase>(
                 TYPES.TestBatchTransactionFromFileUseCase,
@@ -234,7 +245,8 @@ export class EthereumTransactionTesterCli {
 
         const code = result.totalItems - result.clearSignedCount;
 
-        await controller.stop();
+        await dmkController.stop();
+        await speculosController.stop();
 
         process.exit(code);
     }
@@ -255,8 +267,14 @@ export class EthereumTransactionTesterCli {
         };
 
         const cli = new EthereumTransactionTesterCli(config);
-        const controller = cli.container.get<Controller>(TYPES.Controller);
-        await controller.start();
+        const speculosController = cli.container.get<Controller>(
+            TYPES.SpeculosController,
+        );
+        await speculosController.start();
+        const dmkController = cli.container.get<Controller>(
+            TYPES.DMKController,
+        );
+        await dmkController.start();
         const testTypedDataUseCase = cli.container.get<TestTypedDataUseCase>(
             TYPES.TestTypedDataUseCase,
         );
@@ -268,7 +286,8 @@ export class EthereumTransactionTesterCli {
 
         const code = result.status === "clear_signed" ? 0 : 1;
 
-        await controller.stop();
+        await dmkController.stop();
+        await speculosController.stop();
 
         process.exit(code);
     }
@@ -289,8 +308,14 @@ export class EthereumTransactionTesterCli {
         };
 
         const cli = new EthereumTransactionTesterCli(config);
-        const controller = cli.container.get<Controller>(TYPES.Controller);
-        await controller.start();
+        const speculosController = cli.container.get<Controller>(
+            TYPES.SpeculosController,
+        );
+        await speculosController.start();
+        const dmkController = cli.container.get<Controller>(
+            TYPES.DMKController,
+        );
+        await dmkController.start();
         const batchTestUseCase =
             cli.container.get<TestBatchTypedDataFromFileUseCase>(
                 TYPES.TestBatchTypedDataFromFileUseCase,
@@ -302,7 +327,8 @@ export class EthereumTransactionTesterCli {
 
         const code = result.totalItems - result.clearSignedCount;
 
-        await controller.stop();
+        await dmkController.stop();
+        await speculosController.stop();
 
         process.exit(code);
     }

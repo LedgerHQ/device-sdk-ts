@@ -24,6 +24,10 @@ import { RetryService } from "@root/src/domain/services/RetryService";
 import { DeviceMetadataFactory } from "../../domain/metadata/DeviceMetadataFactory";
 import { DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
 import { RetryServiceImpl } from "@root/src/infrastructure/services/RetryServiceImpl";
+import { NodeDockerContainer } from "@root/src/infrastructure/adapters/NodeDockerContainer";
+import { DockerContainer } from "@root/src/domain/adapters/DockerContainer";
+import { SpeculosController } from "@root/src/infrastructure/services/SpeculosController";
+import { GithubDownloader } from "@root/src/infrastructure/adapters/GithubDownloader";
 
 export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     new ContainerModule(({ bind }) => {
@@ -44,7 +48,10 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
         bind(TYPES.SpeculosSigningService)
             .to(SpeculosSigningService)
             .inSingletonScope();
-        bind(TYPES.Controller).to(DMKController).inSingletonScope();
+        bind(TYPES.DMKController).to(DMKController).inSingletonScope();
+        bind(TYPES.SpeculosController)
+            .to(SpeculosController)
+            .inSingletonScope();
         bind(TYPES.SigningFlowOrchestrator)
             .to(SigningFlowOrchestrator)
             .inSingletonScope();
@@ -61,6 +68,10 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
         bind<RetryService>(TYPES.RetryService)
             .to(RetryServiceImpl)
             .inSingletonScope();
+        bind<DockerContainer>(TYPES.DockerContainer)
+            .to(NodeDockerContainer)
+            .inSingletonScope();
+        bind(TYPES.Downloader).to(GithubDownloader).inSingletonScope();
 
         // Bind the appropriate device controller and metadata
         switch (config.deviceConnection.device) {

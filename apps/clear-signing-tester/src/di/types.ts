@@ -9,7 +9,8 @@ export const TYPES = {
     EtherscanService: Symbol.for("EtherscanService"),
     ScreenAnalyzerService: Symbol.for("ScreenAnalyzerService"),
     ResultDisplayService: Symbol.for("ResultDisplayService"),
-    Controller: Symbol.for("Controller"),
+    DMKController: Symbol.for("DMKController"),
+    SpeculosController: Symbol.for("SpeculosController"),
     SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
     RetryService: Symbol.for("RetryService"),
 
@@ -33,6 +34,8 @@ export const TYPES = {
     DeviceController: Symbol.for("DeviceController"),
     SpeculosSigningService: Symbol.for("SpeculosSigningService"),
     NodeFileReader: Symbol.for("NodeFileReader"),
+    Downloader: Symbol.for("Downloader"),
+    DockerContainer: Symbol.for("DockerContainer"),
 
     // Config
     DeviceConnectionConfig: Symbol.for("DeviceConnectionConfig"),

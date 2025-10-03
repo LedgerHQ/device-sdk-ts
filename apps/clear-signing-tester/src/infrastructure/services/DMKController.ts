@@ -19,11 +19,7 @@ import {
     SignerEth,
     SignerEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
-
-export interface Controller {
-    start(): Promise<void>;
-    stop(): Promise<void>;
-}
+import { Controller } from "@root/src/domain/services/Controller";
 
 export class DMKController implements Controller {
     private logger: LoggerPublisherService;
@@ -65,8 +61,7 @@ export class DMKController implements Controller {
                         this.dmk
                             .connect({
                                 device: device,
-                                sessionRefresherOptions: this.deviceConfig
-                                    .sessionRefresherOptions || {
+                                sessionRefresherOptions: {
                                     isRefresherDisabled: true,
                                 },
                             })

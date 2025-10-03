@@ -16,9 +16,8 @@ export interface DeviceRepository {
 export interface DeviceConnectionConfig {
     speculosUrl: string;
     device: "stax" | "nanox" | "nanos" | "nanos+" | "flex" | "apex";
-    sessionRefresherOptions: {
-        isRefresherDisabled: boolean;
-    };
+    os?: string;
+    version?: string;
 }
 
 export interface SignerConfig {
