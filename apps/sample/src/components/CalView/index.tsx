@@ -8,6 +8,7 @@ import { StyledDrawer } from "@/components/StyledDrawer";
 import { AppProviderDrawer } from "./AppProviderDrawer";
 import { CalCheckDappDrawer } from "./CalCheckDappDrawer";
 import { CalSettingsDrawer } from "./CalSettingsDrawer";
+import { ERC7730TesterDrawer } from "./ERC7730TesterDrawer";
 import { MetadataServiceDrawer } from "./MetadataServiceDrawer";
 import { Web3ChecksDrawer } from "./Web3ChecksDrawer";
 
@@ -17,6 +18,7 @@ export const CalView = () => {
   const [isWeb3ChecksOpen, setIsWeb3ChecksOpen] = useState(false);
   const [isAppProviderOpen, setIsAppProviderOpen] = useState(false);
   const [isMetadataServiceOpen, setIsMetadataServiceOpen] = useState(false);
+  const [isERC7730TesterOpen, setIsERC7730TesterOpen] = useState(false);
 
   const closeDrawers = useCallback(() => {
     setIsCheckDappOpen(false);
@@ -24,6 +26,7 @@ export const CalView = () => {
     setIsWeb3ChecksOpen(false);
     setIsAppProviderOpen(false);
     setIsMetadataServiceOpen(false);
+    setIsERC7730TesterOpen(false);
   }, []);
 
   const entries = [
@@ -51,6 +54,11 @@ export const CalView = () => {
       title: "Metadata Service Settings",
       description: "Settings for the Metadata Service provider",
       onClick: () => setIsMetadataServiceOpen(true),
+    },
+    {
+      title: "ERC7730 Tester",
+      description: "Test ERC7730 descriptors with Speculos device emulator",
+      onClick: () => setIsERC7730TesterOpen(true),
     },
   ];
 
@@ -122,6 +130,15 @@ export const CalView = () => {
         description="Settings for the Metadata Service provider"
       >
         <MetadataServiceDrawer onClose={closeDrawers} />
+      </StyledDrawer>
+      <StyledDrawer
+        isOpen={isERC7730TesterOpen}
+        onClose={closeDrawers}
+        big
+        title="ERC7730 Tester"
+        description="Test ERC7730 descriptors with Speculos device emulator"
+      >
+        <ERC7730TesterDrawer onClose={closeDrawers} />
       </StyledDrawer>
     </PageWithHeader>
   );
