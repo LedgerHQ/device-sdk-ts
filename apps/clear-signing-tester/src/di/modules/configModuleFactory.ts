@@ -2,6 +2,7 @@ import { ContainerModule } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
+import { type GithubConfig } from "@root/src/domain/models/config/GithubConfig";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
@@ -9,6 +10,7 @@ export interface ClearSigningTesterConfig {
     speculos: SpeculosConfig;
     signer: SignerConfig;
     etherscan: EtherscanConfig;
+    github: GithubConfig;
 }
 
 export const configModuleFactory = (config: ClearSigningTesterConfig) =>
@@ -20,4 +22,5 @@ export const configModuleFactory = (config: ClearSigningTesterConfig) =>
         bind<EtherscanConfig>(TYPES.EtherscanConfig).toConstantValue(
             config.etherscan,
         );
+        bind<GithubConfig>(TYPES.GithubConfig).toConstantValue(config.github);
     });

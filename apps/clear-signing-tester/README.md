@@ -4,8 +4,8 @@ This TypeScript application tests Ethereum transactions and typed data using the
 
 ## Prerequisites
 
-1. **Speculos Simulator**: Make sure Speculos is running (or set `--speculos-url` and `--speculos-port` options)
-2. **Etherscan API Key**: Required for some features (set `ETHERSCAN_API_KEY` environment variable)
+1. **Docker**: Required for automatic Speculos startup (when using `GH_TOKEN`)
+2. **Speculos Simulator**: Required if running without GitHub token (manual setup)
 3. **Node.js**: Version 20 or higher
 4. **Supported Devices**: Stax (default), Nano X, Nano S, Nano S+, Flex, Apex
 
@@ -117,6 +117,46 @@ pnpm cli typed-data-file ressources/typed-data-example.json
 
 - `ETHERSCAN_API_KEY`: Etherscan API key (required for some features)
 - `GATED_TOKEN`: Origin token for gated features (optional, defaults to "test-origin-token")
+- `GH_TOKEN`: GitHub token for automatic Speculos container download and startup (optional)
+
+### GitHub Token Configuration
+
+The application supports two modes of operation based on GitHub token availability:
+
+#### **Automatic Mode (with `GH_TOKEN`)**
+
+If `GH_TOKEN` is provided:
+
+- ✅ Speculos will be started automatically in a Docker container
+- ✅ Ledger app binaries will be downloaded from GitHub automatically
+- ✅ Random port assignment is used if `--speculos-port` is not specified
+- ✅ Full automation - no manual setup required
+
+**Example:**
+
+```bash
+export GH_TOKEN="your_github_token_here"
+pnpm cli raw-transaction "0x02f870012b83059f6884ae9f364882520894dfaa75323fb721e5f29d43859390f62cc4b600b8874652436b698acb80c001a0bebdd83d9bc034e4824367e3f1cc0e8b8e4b24871eeba9ef8d36130d25c96129a04608841b2945b0ed090bc3c6fe56aef0077d6a5eb6b3416212fe727e7e2b68e1"
+```
+
+#### **Manual Mode (without `GH_TOKEN`)**
+
+If `GH_TOKEN` is **not** provided:
+
+- ⚠️ You must start Speculos manually before running tests
+- ⚠️ Both `--speculos-url` and `--speculos-port` should be specified to match your manual Speculos setup
+- ⚠️ You need to have the appropriate Ledger app binary available
+- ✅ The application will connect to your existing Speculos instance
+
+**Example:**
+
+```bash
+# 1. Start Speculos manually first
+speculos --display headless --api-port 5000 /path/to/ethereum_app.elf
+
+# 2. Run the clear signing tester with specific connection details
+pnpm cli --speculos-url http://localhost --speculos-port 5000 raw-transaction "0x02f870012b83059f6884ae9f364882520894dfaa75323fb721e5f29d43859390f62cc4b600b8874652436b698acb80c001a0bebdd83d9bc034e4824367e3f1cc0e8b8e4b24871eeba9ef8d36130d25c96129a04608841b2945b0ed090bc3c6fe56aef0077d6a5eb6b3416212fe727e7e2b68e1"
+```
 
 ## Output
 

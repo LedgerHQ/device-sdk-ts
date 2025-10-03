@@ -47,6 +47,7 @@ export const TYPES = {
     SpeculosConfig: Symbol.for("SpeculosConfig"),
     SignerConfig: Symbol.for("SignerConfig"),
     EtherscanConfig: Symbol.for("EtherscanConfig"),
+    GithubConfig: Symbol.for("GithubConfig"),
 
     // Logger
     LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),

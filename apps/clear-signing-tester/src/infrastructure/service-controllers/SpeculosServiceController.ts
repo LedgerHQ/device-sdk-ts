@@ -4,6 +4,7 @@ import { inject } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
 import { type Downloader } from "@root/src/domain/adapters/Downloader";
+import { type GithubConfig } from "@root/src/domain/models/config/GithubConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
@@ -48,6 +49,7 @@ export class SpeculosServiceController implements ServiceController {
     private readonly os: string;
     private readonly version: string;
     private readonly containerName: string;
+    private readonly shouldStartSpeculos: boolean;
 
     constructor(
         @inject(TYPES.Downloader)
@@ -56,6 +58,8 @@ export class SpeculosServiceController implements ServiceController {
         private readonly dockerContainer: DockerContainer,
         @inject(TYPES.SpeculosConfig)
         private readonly config: SpeculosConfig,
+        @inject(TYPES.GithubConfig)
+        private readonly githubConfig: GithubConfig,
         @inject(TYPES.LoggerPublisherServiceFactory)
         private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
@@ -67,9 +71,22 @@ export class SpeculosServiceController implements ServiceController {
         this.containerName =
             DEFAULT_MODEL_MAPPING[device]?.containerName ||
             `cs-tester-speculos-${device}-${this.config.port}`;
+
+        // Only start Speculos automatically if GitHub token is available
+        this.shouldStartSpeculos = !!this.githubConfig.token;
     }
 
     async start(): Promise<void> {
+        if (!this.shouldStartSpeculos) {
+            this.logger.info(
+                "GitHub token not provided. Speculos must be started manually.",
+            );
+            this.logger.info(
+                `Expected Speculos API URL: ${this.config.url}:${this.config.port}`,
+            );
+            return;
+        }
+
         await this.downloadApp(this.model, this.os, this.version);
 
         const appName = this.getAppName(this.model, this.os, this.version);
@@ -100,6 +117,13 @@ export class SpeculosServiceController implements ServiceController {
     }
 
     async stop(): Promise<void> {
+        if (!this.shouldStartSpeculos) {
+            this.logger.debug(
+                "Speculos was not started by this service, skipping stop.",
+            );
+            return;
+        }
+
         await this.dockerContainer.stop();
     }
 

@@ -63,6 +63,9 @@ export class EthereumTransactionTesterCli {
             etherscan: {
                 apiKey: process.env["ETHERSCAN_API_KEY"] || "default-key",
             },
+            github: {
+                token: process.env["GH_TOKEN"],
+            },
         };
 
         // Create DI container and resolve tester
