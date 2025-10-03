@@ -3,13 +3,14 @@ import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { SpeculosScreenReader } from "../adapters/SpeculosScreenReader";
 import { ScreenContent } from "../../domain/models/ScreenContent";
+import { ScreenAnalyzerService } from "../../domain/services/ScreenAnalyzer";
 
 /**
- * Infrastructure service for analyzing screen content
+ * Infrastructure implementation for analyzing screen content
  * Contains business logic for screen content processing, analysis, and state management
  */
 @injectable()
-export class ScreenAnalyzerService {
+export class ScreenAnalyzerImpl implements ScreenAnalyzerService {
     private readonly logger: LoggerPublisherService;
     private accumulatedTexts: string[] = [];
 
@@ -20,65 +21,6 @@ export class ScreenAnalyzerService {
         loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
         this.logger = loggerFactory("screen-analyzer");
-    }
-
-    /**
-     * Read screen content and apply business logic
-     * Processes raw screen events into meaningful content and manages accumulation
-     */
-    async readScreenContent(): Promise<ScreenContent> {
-        try {
-            const events = await this.screenReader.readRawScreenEvents();
-
-            // Business logic: Extract and process text from events
-            const screenText = events
-                .filter((event) => event.text && event.text.trim())
-                .map((event) => event.text.trim())
-                .join(" ");
-
-            // Business logic: Accumulate meaningful screen text
-            if (screenText.trim()) {
-                this.accumulatedTexts.push(screenText);
-            }
-
-            const content: ScreenContent = {
-                text: screenText,
-                timestamp: new Date(),
-                isEmpty: !screenText.trim(),
-            };
-
-            return content;
-        } catch (error) {
-            this.logger.error("Failed to read and process screen content", {
-                data: { error },
-            });
-
-            return {
-                text: "",
-                timestamp: new Date(),
-                isEmpty: true,
-            };
-        }
-    }
-
-    /**
-     * Get all accumulated texts and clear the internal state
-     * Business logic for managing screen text history
-     */
-    async getAndClearAccumulatedTexts(): Promise<string[]> {
-        const texts = [...this.accumulatedTexts];
-        this.clearAccumulatedTexts();
-        this.logger.debug("Retrieved and cleared accumulated texts", {
-            data: { count: texts.length },
-        });
-        return texts;
-    }
-
-    /**
-     * Clear accumulated screen texts (private business logic)
-     */
-    private clearAccumulatedTexts(): void {
-        this.accumulatedTexts = [];
     }
 
     /**
@@ -183,5 +125,64 @@ export class ScreenAnalyzerService {
             : this.logger.debug("Current screen is not home page");
 
         return isHomePage;
+    }
+
+    /**
+     * Read screen content and apply business logic
+     * Processes raw screen events into meaningful content and manages accumulation
+     */
+    private async readScreenContent(): Promise<ScreenContent> {
+        try {
+            const events = await this.screenReader.readRawScreenEvents();
+
+            // Business logic: Extract and process text from events
+            const screenText = events
+                .filter((event) => event.text && event.text.trim())
+                .map((event) => event.text.trim())
+                .join(" ");
+
+            // Business logic: Accumulate meaningful screen text
+            if (screenText.trim()) {
+                this.accumulatedTexts.push(screenText);
+            }
+
+            const content: ScreenContent = {
+                text: screenText,
+                timestamp: new Date(),
+                isEmpty: !screenText.trim(),
+            };
+
+            return content;
+        } catch (error) {
+            this.logger.error("Failed to read and process screen content", {
+                data: { error },
+            });
+
+            return {
+                text: "",
+                timestamp: new Date(),
+                isEmpty: true,
+            };
+        }
+    }
+
+    /**
+     * Get all accumulated texts and clear the internal state
+     * Business logic for managing screen text history
+     */
+    private async getAndClearAccumulatedTexts(): Promise<string[]> {
+        const texts = [...this.accumulatedTexts];
+        this.clearAccumulatedTexts();
+        this.logger.debug("Retrieved and cleared accumulated texts", {
+            data: { count: texts.length },
+        });
+        return texts;
+    }
+
+    /**
+     * Clear accumulated screen texts (private business logic)
+     */
+    private clearAccumulatedTexts(): void {
+        this.accumulatedTexts = [];
     }
 }

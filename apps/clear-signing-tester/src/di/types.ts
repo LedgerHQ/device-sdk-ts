@@ -1,7 +1,6 @@
 export const TYPES = {
     // Repositories
     DeviceRepository: Symbol.for("DeviceRepository"),
-    ScreenReader: Symbol.for("ScreenReader"),
     TransactionFileRepository: Symbol.for("TransactionFileRepository"),
     TypedDataFileRepository: Symbol.for("TypedDataFileRepository"),
 
@@ -9,8 +8,7 @@ export const TYPES = {
     EtherscanService: Symbol.for("EtherscanService"),
     ScreenAnalyzerService: Symbol.for("ScreenAnalyzerService"),
     ResultDisplayService: Symbol.for("ResultDisplayService"),
-    DMKController: Symbol.for("DMKController"),
-    SpeculosController: Symbol.for("SpeculosController"),
+    SigningService: Symbol.for("SigningService"),
     SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
     RetryService: Symbol.for("RetryService"),
 
@@ -19,6 +17,20 @@ export const TYPES = {
     ErrorStateHandler: Symbol.for("ErrorStateHandler"),
     OptOutStateHandler: Symbol.for("OptOutStateHandler"),
     SignTransactionStateHandler: Symbol.for("SignTransactionStateHandler"),
+
+    // Service Controllers
+    DMKServiceController: Symbol.for("DMKServiceController"),
+    SpeculosServiceController: Symbol.for("SpeculosServiceController"),
+
+    // Adapters
+    ScreenReader: Symbol.for("ScreenReader"),
+    NodeFileReader: Symbol.for("NodeFileReader"),
+    DockerContainer: Symbol.for("DockerContainer"),
+    Downloader: Symbol.for("Downloader"),
+
+    // Device Controllers and Metadata
+    DeviceController: Symbol.for("DeviceController"),
+    DeviceMetadata: Symbol.for("DeviceMetadata"),
 
     // Use Cases
     TestTransactionUseCase: Symbol.for("TestTransactionUseCase"),
@@ -30,13 +42,6 @@ export const TYPES = {
         "TestBatchTypedDataFromFileUseCase",
     ),
 
-    // Adapters
-    DeviceController: Symbol.for("DeviceController"),
-    SpeculosSigningService: Symbol.for("SpeculosSigningService"),
-    NodeFileReader: Symbol.for("NodeFileReader"),
-    Downloader: Symbol.for("Downloader"),
-    DockerContainer: Symbol.for("DockerContainer"),
-
     // Config
     SpeculosConfig: Symbol.for("SpeculosConfig"),
     SignerConfig: Symbol.for("SignerConfig"),
@@ -44,7 +49,4 @@ export const TYPES = {
 
     // Logger
     LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
-
-    // Device Metadata
-    DeviceMetadata: Symbol.for("DeviceMetadata"),
 };

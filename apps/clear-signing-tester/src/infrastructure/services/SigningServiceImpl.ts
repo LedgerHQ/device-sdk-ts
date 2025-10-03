@@ -2,9 +2,10 @@ import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { SignerEth } from "@ledgerhq/device-signer-kit-ethereum";
 import { ethers } from "ethers";
 import { injectable } from "inversify";
+import { SigningService } from "../../domain/services/SigningService";
 
 @injectable()
-export class SpeculosSigningService {
+export class SigningServiceImpl implements SigningService {
     private signer: SignerEth | null = null;
 
     constructor() {}

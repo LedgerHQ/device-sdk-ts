@@ -1,4 +1,4 @@
-import { Controller } from "@root/src/domain/services/Controller";
+import { ServiceController } from "@root/src/domain/services/ServiceController";
 import { TYPES } from "@root/src/di/types";
 import { type Downloader } from "@root/src/domain/adapters/Downloader";
 import { inject } from "inversify";
@@ -41,7 +41,7 @@ const SPECULOS_DOCKER_IMAGE_LATEST = "ghcr.io/ledgerhq/speculos:latest";
 const TEMP_APP_PATH = "/tmp/sc-tester/apps";
 const SPECULOS_API_PORT = 5000;
 
-export class SpeculosController implements Controller {
+export class SpeculosServiceController implements ServiceController {
     private readonly logger: LoggerPublisherService;
     private readonly model: SpeculosConfig["device"];
     private readonly os: string;
@@ -59,7 +59,7 @@ export class SpeculosController implements Controller {
         private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
         const { device, os, version } = this.config;
-        this.logger = this.loggerFactory("speculos-controller");
+        this.logger = this.loggerFactory("speculos-service-controller");
         this.model = device;
         this.os = os || DEFAULT_MODEL_MAPPING[device].os;
         this.version = version || DEFAULT_MODEL_MAPPING[device].version;

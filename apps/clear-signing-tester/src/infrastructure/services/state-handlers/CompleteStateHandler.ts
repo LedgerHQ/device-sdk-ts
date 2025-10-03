@@ -4,9 +4,9 @@ import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { ScreenAnalyzerService } from "../ScreenAnalyzerService";
-import type { RetryService } from "@root/src/domain/services/RetryService";
-import type { DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+import { type RetryService } from "@root/src/domain/services/RetryService";
+import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 
 const WAIT_FOR_SIGN_SCREEN_MAX_ATTEMPTS = 5;
 const WAIT_FOR_SIGN_SCREEN_DELAY = 1500;

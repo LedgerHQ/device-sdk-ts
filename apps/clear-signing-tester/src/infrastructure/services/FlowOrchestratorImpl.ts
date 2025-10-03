@@ -14,11 +14,12 @@ import { ErrorStateHandler } from "./state-handlers/ErrorStateHandler";
 import { SignTransactionStateHandler } from "./state-handlers/SignTransactionStateHandler";
 import { debounceTime, distinctUntilChanged, Observable, tap } from "rxjs";
 import { StateHandlerResult } from "./state-handlers/StateHandler";
+import { FlowOrchestrator } from "../../domain/services/FlowOrchestrator";
 
 const DEBOUNCE_TIME = 1500;
 
 @injectable()
-export class SigningFlowOrchestrator {
+export class FlowOrchestratorImpl implements FlowOrchestrator {
     private readonly logger: LoggerPublisherService;
 
     constructor(

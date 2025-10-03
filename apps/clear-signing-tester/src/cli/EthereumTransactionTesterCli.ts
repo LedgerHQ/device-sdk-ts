@@ -12,7 +12,7 @@ import { TestBatchTransactionFromFileUseCase } from "../application/usecases/Tes
 import { TestTransactionUseCase } from "../application/usecases/TestTransactionUseCase";
 import { TestTypedDataUseCase } from "../application/usecases/TestTypedDataUseCase";
 import { TestBatchTypedDataFromFileUseCase } from "../application/usecases/TestBatchTypedDataFromFileUseCase";
-import { Controller } from "../domain/services/Controller";
+import { ServiceController } from "../domain/services/ServiceController";
 
 export interface CliConfig {
     derivationPath: string;
@@ -201,12 +201,12 @@ export class EthereumTransactionTesterCli {
         };
 
         const cli = new EthereumTransactionTesterCli(config);
-        const speculosController = cli.container.get<Controller>(
-            TYPES.SpeculosController,
+        const speculosController = cli.container.get<ServiceController>(
+            TYPES.SpeculosServiceController,
         );
         await speculosController.start();
-        const dmkController = cli.container.get<Controller>(
-            TYPES.DMKController,
+        const dmkController = cli.container.get<ServiceController>(
+            TYPES.DMKServiceController,
         );
         await dmkController.start();
         const testTransactionUseCase =
@@ -248,12 +248,12 @@ export class EthereumTransactionTesterCli {
 
         const cli = new EthereumTransactionTesterCli(config);
 
-        const speculosController = cli.container.get<Controller>(
-            TYPES.SpeculosController,
+        const speculosController = cli.container.get<ServiceController>(
+            TYPES.SpeculosServiceController,
         );
         await speculosController.start();
-        const dmkController = cli.container.get<Controller>(
-            TYPES.DMKController,
+        const dmkController = cli.container.get<ServiceController>(
+            TYPES.DMKServiceController,
         );
         await dmkController.start();
         const batchTestUseCase =
@@ -290,12 +290,12 @@ export class EthereumTransactionTesterCli {
         };
 
         const cli = new EthereumTransactionTesterCli(config);
-        const speculosController = cli.container.get<Controller>(
-            TYPES.SpeculosController,
+        const speculosController = cli.container.get<ServiceController>(
+            TYPES.SpeculosServiceController,
         );
         await speculosController.start();
-        const dmkController = cli.container.get<Controller>(
-            TYPES.DMKController,
+        const dmkController = cli.container.get<ServiceController>(
+            TYPES.DMKServiceController,
         );
         await dmkController.start();
         const testTypedDataUseCase = cli.container.get<TestTypedDataUseCase>(
@@ -332,12 +332,12 @@ export class EthereumTransactionTesterCli {
         };
 
         const cli = new EthereumTransactionTesterCli(config);
-        const speculosController = cli.container.get<Controller>(
-            TYPES.SpeculosController,
+        const speculosController = cli.container.get<ServiceController>(
+            TYPES.SpeculosServiceController,
         );
         await speculosController.start();
-        const dmkController = cli.container.get<Controller>(
-            TYPES.DMKController,
+        const dmkController = cli.container.get<ServiceController>(
+            TYPES.DMKServiceController,
         );
         await dmkController.start();
         const batchTestUseCase =

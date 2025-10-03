@@ -1,5 +1,4 @@
 import { TYPES } from "@root/src/di/types";
-import { SpeculosSigningService } from "./SpeculosSigningService";
 import { inject } from "inversify";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import {
@@ -16,10 +15,11 @@ import {
     SignerEth,
     SignerEthBuilder,
 } from "@ledgerhq/device-signer-kit-ethereum";
-import { Controller } from "@root/src/domain/services/Controller";
+import { ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type SigningService } from "@root/src/domain/services/SigningService";
 
-export class DMKController implements Controller {
+export class DMKServiceController implements ServiceController {
     private logger: LoggerPublisherService;
     private dmk: DeviceManagementKit;
     private contextModule: ContextModule;
@@ -27,8 +27,8 @@ export class DMKController implements Controller {
     private signer: SignerEth | null = null;
 
     constructor(
-        @inject(TYPES.SpeculosSigningService)
-        private readonly speculosSigningService: SpeculosSigningService,
+        @inject(TYPES.SigningService)
+        private readonly signingService: SigningService,
         @inject(TYPES.SpeculosConfig)
         private readonly speculosConfig: SpeculosConfig,
         @inject(TYPES.SignerConfig)
@@ -36,7 +36,7 @@ export class DMKController implements Controller {
         @inject(TYPES.LoggerPublisherServiceFactory)
         loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
-        this.logger = loggerFactory("dmk-controller");
+        this.logger = loggerFactory("dmk-service-controller");
         this.dmk = new DeviceManagementKitBuilder()
             .addTransport(
                 speculosTransportFactory(
@@ -78,9 +78,7 @@ export class DMKController implements Controller {
                                     .withContextModule(this.contextModule)
                                     .build();
 
-                                this.speculosSigningService.setSigner(
-                                    this.signer,
-                                );
+                                this.signingService.setSigner(this.signer);
 
                                 resolve();
                             });

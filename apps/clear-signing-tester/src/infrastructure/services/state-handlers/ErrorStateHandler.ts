@@ -1,7 +1,7 @@
 import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
-import { ScreenAnalyzerService } from "../ScreenAnalyzerService";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { StateHandlerResult, type StateHandler } from "./StateHandler";
 import { TransactionInput } from "@root/src/domain/models/TransactionInput";

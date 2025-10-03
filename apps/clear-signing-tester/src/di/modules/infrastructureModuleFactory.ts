@@ -10,12 +10,12 @@ import { NodeFileReader } from "../../infrastructure/adapters/NodeFileReader";
 import { TransactionFileRepository } from "../../domain/repositories/TransactionFileRepository";
 import { TypedDataFileRepository } from "../../domain/repositories/TypedDataFileRepository";
 import { TYPES } from "../types";
-import { SpeculosSigningService } from "../../infrastructure/services/SpeculosSigningService";
+import { SigningServiceImpl } from "../../infrastructure/services/SigningServiceImpl";
 import { DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
-import { ScreenAnalyzerService } from "@root/src/infrastructure/services/ScreenAnalyzerService";
+import { ScreenAnalyzerImpl } from "@root/src/infrastructure/services/ScreenAnalyzerImpl";
 import { ClearSigningTesterConfig } from "../container";
-import { DMKController } from "@root/src/infrastructure/services/DMKController";
-import { SigningFlowOrchestrator } from "@root/src/infrastructure/services/SigningFlowOrchestrator";
+import { DMKServiceController } from "@root/src/infrastructure/services/DMKServiceController";
+import { FlowOrchestratorImpl } from "@root/src/infrastructure/services/FlowOrchestratorImpl";
 import { CompleteStateHandler } from "@root/src/infrastructure/services/state-handlers/CompleteStateHandler";
 import { ErrorStateHandler } from "@root/src/infrastructure/services/state-handlers/ErrorStateHandler";
 import { OptOutStateHandler } from "@root/src/infrastructure/services/state-handlers/OptOutStateHandler";
@@ -25,7 +25,7 @@ import { DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
 import { RetryServiceImpl } from "@root/src/infrastructure/services/RetryServiceImpl";
 import { NodeDockerContainer } from "@root/src/infrastructure/adapters/NodeDockerContainer";
 import { DockerContainer } from "@root/src/domain/adapters/DockerContainer";
-import { SpeculosController } from "@root/src/infrastructure/services/SpeculosController";
+import { SpeculosServiceController } from "@root/src/infrastructure/services/SpeculosServiceController";
 import { GithubDownloader } from "@root/src/infrastructure/adapters/GithubDownloader";
 import {
     ApexDeviceMetadata,
@@ -33,9 +33,18 @@ import {
     StaxDeviceMetadata,
 } from "@root/src/domain/metadata/TouchscreenDeviceMetadata";
 import { DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { Downloader } from "@root/src/domain/adapters/Downloader";
+import { FileReader } from "@root/src/domain/adapters/FileReader";
+import { ScreenReader } from "@root/src/domain/adapters/ScreenReader";
+import { ServiceController } from "@root/src/domain/services/ServiceController";
+import { StateHandler } from "@root/src/infrastructure/services/state-handlers/StateHandler";
+import { ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
+import { SigningService } from "@root/src/domain/services/SigningService";
+import { FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 
 export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     new ContainerModule(({ bind }) => {
+        // Repositories
         bind<DeviceRepository>(TYPES.DeviceRepository)
             .to(SpeculosDeviceRepository)
             .inSingletonScope();
@@ -45,40 +54,58 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
         bind<TypedDataFileRepository>(TYPES.TypedDataFileRepository)
             .to(FileTypedDataRepository)
             .inSingletonScope();
-        bind(TYPES.ScreenAnalyzerService)
-            .to(ScreenAnalyzerService)
+
+        // Services
+        bind<ScreenAnalyzerService>(TYPES.ScreenAnalyzerService)
+            .to(ScreenAnalyzerImpl)
             .inSingletonScope();
-        bind(TYPES.ScreenReader).to(SpeculosScreenReader).inSingletonScope();
-        bind(TYPES.NodeFileReader).to(NodeFileReader).inSingletonScope();
-        bind(TYPES.SpeculosSigningService)
-            .to(SpeculosSigningService)
+        bind<SigningService>(TYPES.SigningService)
+            .to(SigningServiceImpl)
             .inSingletonScope();
-        bind(TYPES.DMKController).to(DMKController).inSingletonScope();
-        bind(TYPES.SpeculosController)
-            .to(SpeculosController)
-            .inSingletonScope();
-        bind(TYPES.SigningFlowOrchestrator)
-            .to(SigningFlowOrchestrator)
-            .inSingletonScope();
-        bind(TYPES.CompleteStateHandler)
-            .to(CompleteStateHandler)
-            .inSingletonScope();
-        bind(TYPES.ErrorStateHandler).to(ErrorStateHandler).inSingletonScope();
-        bind(TYPES.OptOutStateHandler)
-            .to(OptOutStateHandler)
-            .inSingletonScope();
-        bind(TYPES.SignTransactionStateHandler)
-            .to(SignTransactionStateHandler)
+        bind<FlowOrchestrator>(TYPES.SigningFlowOrchestrator)
+            .to(FlowOrchestratorImpl)
             .inSingletonScope();
         bind<RetryService>(TYPES.RetryService)
             .to(RetryServiceImpl)
             .inSingletonScope();
+
+        // State Handlers
+        bind<StateHandler>(TYPES.CompleteStateHandler)
+            .to(CompleteStateHandler)
+            .inSingletonScope();
+        bind<StateHandler>(TYPES.ErrorStateHandler)
+            .to(ErrorStateHandler)
+            .inSingletonScope();
+        bind<StateHandler>(TYPES.OptOutStateHandler)
+            .to(OptOutStateHandler)
+            .inSingletonScope();
+        bind<StateHandler>(TYPES.SignTransactionStateHandler)
+            .to(SignTransactionStateHandler)
+            .inSingletonScope();
+
+        // Service Controllers
+        bind<ServiceController>(TYPES.DMKServiceController)
+            .to(DMKServiceController)
+            .inSingletonScope();
+        bind<ServiceController>(TYPES.SpeculosServiceController)
+            .to(SpeculosServiceController)
+            .inSingletonScope();
+
+        // Adapters
+        bind<ScreenReader>(TYPES.ScreenReader)
+            .to(SpeculosScreenReader)
+            .inSingletonScope();
+        bind<FileReader>(TYPES.NodeFileReader)
+            .to(NodeFileReader)
+            .inSingletonScope();
         bind<DockerContainer>(TYPES.DockerContainer)
             .to(NodeDockerContainer)
             .inSingletonScope();
-        bind(TYPES.Downloader).to(GithubDownloader).inSingletonScope();
+        bind<Downloader>(TYPES.Downloader)
+            .to(GithubDownloader)
+            .inSingletonScope();
 
-        // Bind the appropriate device controller and metadata
+        // Device Controllers and Metadata
         switch (config.speculos.device) {
             case "stax":
                 bind<DeviceMetadata>(TYPES.DeviceMetadata).toConstantValue(

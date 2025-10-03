@@ -5,7 +5,7 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
-import { ScreenAnalyzerService } from "../ScreenAnalyzerService";
+import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 
 const NAVIGATION_MAX_ATTEMPTS = 20;

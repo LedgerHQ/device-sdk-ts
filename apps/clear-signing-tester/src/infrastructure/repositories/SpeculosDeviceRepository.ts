@@ -1,12 +1,12 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { type DeviceRepository } from "../../domain/repositories/DeviceRepository";
-import { TransactionInput } from "../../domain/models/TransactionInput";
-import { TYPES } from "../../di/types";
-import { SpeculosSigningService } from "../services/SpeculosSigningService";
+import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
+import { TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { TYPES } from "@root/src/di/types";
+import { type SigningService } from "@root/src/domain/services/SigningService";
 import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
-import { SigningFlowOrchestrator } from "../services/SigningFlowOrchestrator";
+import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 import { TestResult } from "@root/src/domain/types/TestStatus";
 
 @injectable()
@@ -15,9 +15,9 @@ export class SpeculosDeviceRepository implements DeviceRepository {
 
     constructor(
         @inject(TYPES.SigningFlowOrchestrator)
-        private readonly orchestrator: SigningFlowOrchestrator,
-        @inject(TYPES.SpeculosSigningService)
-        private readonly signingService: SpeculosSigningService,
+        private readonly orchestrator: FlowOrchestrator,
+        @inject(TYPES.SigningService)
+        private readonly signingService: SigningService,
         @inject(TYPES.LoggerPublisherServiceFactory)
         loggerFactory: (tag: string) => LoggerPublisherService,
     ) {
