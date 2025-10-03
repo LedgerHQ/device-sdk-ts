@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { TypedDataFileRepository } from "@root/src/domain/repositories/TypedDataFileRepository";
-import { NodeFileReader } from "@root/src/infrastructure/adapters/NodeFileReader";
+import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
 import { TYPES } from "@root/src/di/types";
 import { TypedData } from "@ledgerhq/device-signer-kit-ethereum";
 

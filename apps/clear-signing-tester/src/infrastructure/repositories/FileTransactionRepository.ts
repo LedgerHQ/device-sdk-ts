@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { TransactionFileRepository } from "@root/src/domain/repositories/TransactionFileRepository";
-import { NodeFileReader } from "@root/src/infrastructure/adapters/NodeFileReader";
+import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
 import { TYPES } from "@root/src/di/types";
 
 /**

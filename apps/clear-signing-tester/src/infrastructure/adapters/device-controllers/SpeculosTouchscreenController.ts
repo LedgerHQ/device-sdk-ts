@@ -1,10 +1,10 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
 
-import { DeviceController } from "../../domain/adapters/DeviceController";
-import { TYPES } from "../../di/types";
+import { DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { type DeviceMetadata } from "../../domain/metadata/DeviceMetadata";
+import { type DeviceMetadata } from "@root/src/domain/metadata/DeviceMetadata";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 /**

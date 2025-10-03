@@ -1,8 +1,8 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
-import { ScreenEvent } from "../../domain/models/ScreenContent";
+import { ScreenEvent } from "@root/src/domain/models/ScreenContent";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
-import { TYPES } from "../../di/types";
+import { TYPES } from "@root/src/di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 /**

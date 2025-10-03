@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 import { TYPES } from "../../di/types";
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { SpeculosScreenReader } from "../adapters/SpeculosScreenReader";
+import { SpeculosScreenReader } from "../adapters/speculos/SpeculosScreenReader";
 import { ScreenContent } from "../../domain/models/ScreenContent";
 import { ScreenAnalyzerService } from "../../domain/services/ScreenAnalyzer";
 

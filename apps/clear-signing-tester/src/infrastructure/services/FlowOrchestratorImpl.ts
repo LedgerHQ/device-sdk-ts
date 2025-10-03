@@ -8,12 +8,12 @@ import {
 import { TestResult } from "@root/src/domain/types/TestStatus";
 import { TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
-import { CompleteStateHandler } from "./state-handlers/CompleteStateHandler";
-import { OptOutStateHandler } from "./state-handlers/OptOutStateHandler";
-import { ErrorStateHandler } from "./state-handlers/ErrorStateHandler";
-import { SignTransactionStateHandler } from "./state-handlers/SignTransactionStateHandler";
+import { CompleteStateHandler } from "../state-handlers/CompleteStateHandler";
+import { OptOutStateHandler } from "../state-handlers/OptOutStateHandler";
+import { ErrorStateHandler } from "../state-handlers/ErrorStateHandler";
+import { SignTransactionStateHandler } from "../state-handlers/SignTransactionStateHandler";
 import { debounceTime, distinctUntilChanged, Observable, tap } from "rxjs";
-import { StateHandlerResult } from "./state-handlers/StateHandler";
+import { StateHandlerResult } from "../state-handlers/StateHandler";
 import { FlowOrchestrator } from "../../domain/services/FlowOrchestrator";
 
 const DEBOUNCE_TIME = 1500;
