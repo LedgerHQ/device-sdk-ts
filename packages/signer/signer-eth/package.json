@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-signer-kit-ethereum",
   "version": "1.8.0",
-  "private": false,
+  "private": true,
   "license": "Apache-2.0",
   "exports": {
     ".": {
