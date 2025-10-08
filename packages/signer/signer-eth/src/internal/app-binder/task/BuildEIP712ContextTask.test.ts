@@ -3,7 +3,9 @@ import type {
   ClearSignContextType,
   TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
+import { TypedDataCalldataParamPresence } from "@ledgerhq/context-module";
 import {
+  CommandResultFactory,
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
@@ -11,7 +13,10 @@ import {
 import { Just, Left, Nothing, Right } from "purify-ts";
 
 import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
+import { ClearSigningType } from "@api/model/ClearSigningType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import {
   PrimitiveType,
   StructType,
@@ -24,15 +29,23 @@ import { BuildEIP712ContextTask } from "./BuildEIP712ContextTask";
 describe("BuildEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextMouleMock = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
+    getSolanaContext: vi.fn(),
   };
   const parserMock = {
     parse: vi.fn(),
   };
+  const mockTransactionParser: TransactionParserService = {
+    extractValue: vi.fn(),
+  } as unknown as TransactionParserService;
+  const mockTransactionMapper: TransactionMapperService = {
+    mapTransactionToSubset: vi.fn(),
+  };
   const getWeb3ChecksFactoryMock = vi.fn();
+  const buildFullContextFactoryMock = vi.fn();
 
   function createAppConfig(
     web3ChecksEnabled: boolean,
@@ -138,6 +151,8 @@ describe("BuildEIP712ContextTask", () => {
     },
     trustedNamesAddresses: {},
     tokens: {},
+    calldatas: {},
+    proxy: undefined,
     filters: {
       "details.amount": {
         displayName: "Amount allowance",
@@ -150,11 +165,22 @@ describe("BuildEIP712ContextTask", () => {
     },
   };
 
+  const TEST_CHALLENGE = "0x1234";
+
   beforeEach(() => {
     vi.resetAllMocks();
     getWeb3ChecksFactoryMock.mockReturnValue({
       run: async () => ({ web3Check: null }),
     });
+    buildFullContextFactoryMock.mockReturnValue({
+      run: async () => ({
+        clearSignContexts: [],
+        clearSigningType: ClearSigningType.BASIC,
+      }),
+    });
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { challenge: TEST_CHALLENGE } }),
+    );
   });
 
   it("Build context with clear signing context not supported by the device", async () => {
@@ -163,10 +189,13 @@ describe("BuildEIP712ContextTask", () => {
       apiMock,
       contextMouleMock,
       parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
       TEST_DATA,
       "44'/60'/0'/0/0",
       createAppConfig(false),
       getWeb3ChecksFactoryMock,
+      buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -187,11 +216,14 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.NANO_S,
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      calldatasContexts: {},
     });
   });
 
@@ -201,10 +233,13 @@ describe("BuildEIP712ContextTask", () => {
       apiMock,
       contextMouleMock,
       parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
       TEST_DATA,
       "44'/60'/0'/0/0",
       createAppConfig(false),
       getWeb3ChecksFactoryMock,
+      buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -229,11 +264,14 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
+      calldatasContexts: {},
     });
   });
 
@@ -245,10 +283,13 @@ describe("BuildEIP712ContextTask", () => {
       apiMock,
       contextMouleMock,
       parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
       TEST_DATA,
       "44'/60'/0'/0/0",
       createAppConfig(false),
       getWeb3ChecksFactoryMock,
+      buildFullContextFactoryMock,
     );
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
       run: async () => ({ web3Check: expectedWeb3Check }),
@@ -275,11 +316,14 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      calldatasContexts: {},
     });
     expect(parserMock.parse).toHaveBeenCalledWith(TEST_DATA);
     expect(contextMouleMock.getTypedDataFilters).toHaveBeenCalledWith({
@@ -287,6 +331,8 @@ describe("BuildEIP712ContextTask", () => {
       chainId: 137,
       version: "v2",
       schema: TEST_DATA["types"],
+      challenge: TEST_CHALLENGE,
+      deviceModelId: DeviceModelId.FLEX,
       fieldsValues: [
         {
           path: "details.amount",
@@ -308,10 +354,13 @@ describe("BuildEIP712ContextTask", () => {
       apiMock,
       contextMouleMock,
       parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
       TEST_DATA,
       "44'/60'/0'/0/0",
       createAppConfig(true),
       getWeb3ChecksFactoryMock,
+      buildFullContextFactoryMock,
     );
     getWeb3ChecksFactoryMock.mockReturnValueOnce({
       run: async () => ({ web3Check: expectedWeb3Check }),
@@ -338,11 +387,14 @@ describe("BuildEIP712ContextTask", () => {
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
+      derivationPath: "44'/60'/0'/0/0",
       web3Check: expectedWeb3Check,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
+      calldatasContexts: {},
     });
     expect(getWeb3ChecksFactoryMock).toHaveBeenCalledWith(apiMock, {
       contextModule: contextMouleMock,
@@ -357,10 +409,13 @@ describe("BuildEIP712ContextTask", () => {
       apiMock,
       contextMouleMock,
       parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
       TEST_DATA,
       "44'/60'/0'/0/0",
       createAppConfig(false),
       getWeb3ChecksFactoryMock,
+      buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
       Right({
@@ -388,6 +443,8 @@ describe("BuildEIP712ContextTask", () => {
       chainId: 137,
       version: "v1",
       schema: TEST_DATA["types"],
+      challenge: TEST_CHALLENGE,
+      deviceModelId: DeviceModelId.FLEX,
       fieldsValues: [
         {
           path: "details.amount",
@@ -401,16 +458,108 @@ describe("BuildEIP712ContextTask", () => {
     });
   });
 
+  it("Build context with clear signing context and calldatas", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextMouleMock,
+      parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
+      TEST_DATA,
+      "44'/60'/0'/0/0",
+      createAppConfig(false),
+      getWeb3ChecksFactoryMock,
+      buildFullContextFactoryMock,
+    );
+    const subset = {
+      chainId: 0x1234,
+      data: "0x6a76120200000000000000000000000023f8abfc2824c397ccb3da89ae772984107ddb99",
+      from: "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619",
+      selector: "0x778899aa",
+      to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+      value: 4200000000000000n,
+    };
+    const clearSignContext = {
+      ...TEST_CLEAR_SIGN_CONTEXT,
+      calldatas: {
+        0: {
+          filter: {
+            calldataIndex: 0,
+            displayName: "Transaction",
+            valueFlag: true,
+            calleeFlag: TypedDataCalldataParamPresence.Present,
+            chainIdFlag: false,
+            selectorFlag: false,
+            amountFlag: true,
+            spenderFlag: TypedDataCalldataParamPresence.Present,
+            signature:
+              "3045022100d8496ab69152efeef6a923a3ebd225334ad65dcb985814994243be7bc09bf27e02206314835816908dd6d51d3cbb0f9465d91d7ddc9104b34dd6c4247f65c551836e",
+          },
+          subset,
+        },
+      },
+    };
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    contextMouleMock.getTypedDataFilters.mockResolvedValueOnce(
+      clearSignContext,
+    );
+    buildFullContextFactoryMock.mockReturnValue({
+      run: async () => ({
+        clearSignContexts: [],
+        clearSigningType: ClearSigningType.EIP7730,
+      }),
+    });
+    // WHEN
+    const builtContext = await task.run();
+    // THEN
+    expect(buildFullContextFactoryMock).toHaveBeenCalledWith(
+      apiMock,
+      expect.objectContaining({
+        subset,
+      }),
+    );
+    expect(builtContext).toStrictEqual({
+      deviceModelId: DeviceModelId.FLEX,
+      derivationPath: "44'/60'/0'/0/0",
+      web3Check: null,
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just(clearSignContext),
+      calldatasContexts: {
+        0: [],
+      },
+    });
+  });
+
   it("Should throw an error if parsing fails", async () => {
     // GIVEN
     const task = new BuildEIP712ContextTask(
       apiMock,
       contextMouleMock,
       parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
       TEST_DATA,
       "44'/60'/0'/0/0",
       createAppConfig(false),
       getWeb3ChecksFactoryMock,
+      buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(Left(new Error("Parsing error")));
     // WHEN

@@ -4,4 +4,35 @@ title: Where can I find the devices USB identifiers?
 
 # Where can I find the devices USB identifiers?
 
-The Devices USB identifiers can be found in the [ledger-live repository](https://github.com/LedgerHQ/ledger-live/blob/develop/libs/ledgerjs/packages/devices/src/index.ts).
+USB identifiers are essential for applications that need to detect and communicate with Ledger hardware wallets. These identifiers consist of **Vendor ID (VID)** and **Product ID (PID)** pairs that uniquely identify different Ledger device models.
+
+## What are USB identifiers?
+
+USB identifiers are standardized codes used by the USB protocol to identify connected devices:
+
+- **Vendor ID (VID)**: Identifies the manufacturer (Ledger uses `0x2c97`)
+- **Product ID (PID)**: Identifies the specific device model within that vendor's product line
+
+## When do you need them?
+
+You'll need these identifiers when:
+
+- Building applications that detect Ledger devices automatically
+- Implementing device filtering in transport layers
+- Setting up USB permissions for desktop applications
+- Configuring device access rules in operating systems
+
+## Available identifiers
+
+The complete list of Devices USB identifiers can be found in the [ledger-live repository](https://github.com/LedgerHQ/ledger-live/blob/develop/libs/ledgerjs/packages/devices/src/index.ts).
+
+This file contains:
+
+- **Device descriptors** for all Ledger hardware wallet models (Nano S, Nano S Plus, Nano X, Flex, Stax, etc.)
+- **USB product IDs** for each device variant
+- **Device capabilities** and supported communication protocols
+- **Bootloader mode identifiers** for firmware update scenarios
+
+---
+
+**Note**: The repository linked above is part of the official Ledger Live monorepo and is the authoritative source maintained by the Ledger team.

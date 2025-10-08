@@ -21,12 +21,11 @@ import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/Si
 import { SendSignPersonalMessageTask } from "@internal/app-binder/task/SendSignPersonalMessageTask";
 import { externalTypes } from "@internal/externalTypes";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
-import { TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
-import { ETHEREUM_PLUGINS } from "./constant/plugins";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 
@@ -54,7 +53,6 @@ export class EthAppBinder {
         input: {
           command: new GetAddressCommand(args),
           appName: "Ethereum",
-          compatibleAppNames: ETHEREUM_PLUGINS,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
@@ -76,7 +74,6 @@ export class EthAppBinder {
           task: async (internalApi) =>
             new SendSignPersonalMessageTask(internalApi, args).run(),
           appName: "Ethereum",
-          compatibleAppNames: ETHEREUM_PLUGINS,
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
@@ -117,6 +114,8 @@ export class EthAppBinder {
           derivationPath: args.derivationPath,
           data: args.data,
           parser: args.parser,
+          transactionMapper: this.mapper,
+          transactionParser: this.parser,
           contextModule: this.contextModule,
           skipOpenApp: args.skipOpenApp,
         },
@@ -137,7 +136,6 @@ export class EthAppBinder {
           task: async (internalApi) =>
             new SendSignAuthorizationDelegationTask(internalApi, args).run(),
           appName: "Ethereum",
-          compatibleAppNames: ETHEREUM_PLUGINS,
           requiredUserInteraction:
             UserInteractionRequired.SignDelegationAuthorization,
           skipOpenApp: false,

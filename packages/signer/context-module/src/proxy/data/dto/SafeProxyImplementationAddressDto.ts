@@ -1,0 +1,9 @@
+export type SafeProxyImplementationAddressDto = {
+  proxyAddress: string;
+  implementationAddress: string;
+  standard: string;
+  signedDescriptor: string;
+  providedBy: string;
+  keyId: string;
+  keyUsage: string;
+};

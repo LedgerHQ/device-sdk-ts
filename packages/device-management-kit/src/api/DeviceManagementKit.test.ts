@@ -83,6 +83,77 @@ describe("DeviceManagementKit", () => {
     it("should have setProvider method", () => {
       expect(dmk.setProvider).toBeDefined();
     });
+
+    it("should have isEnvironmentSupported method", () => {
+      expect(dmk.isEnvironmentSupported).toBeDefined();
+    });
+
+    describe("isEnvironmentSupported", () => {
+      it("should return true when at least one transport is supported", () => {
+        // Mock the TransportService to return transports where at least one is supported
+        const mockTransport1 = {
+          isSupported: vi.fn().mockReturnValue(false),
+        };
+        const mockTransport2 = {
+          isSupported: vi.fn().mockReturnValue(true),
+        };
+        const mockTransportService = {
+          getAllTransports: vi
+            .fn()
+            .mockReturnValue([mockTransport1, mockTransport2]),
+        };
+
+        // Mock the container to return our mock TransportService
+        vi.spyOn(dmk.container, "get").mockReturnValue(mockTransportService);
+
+        const result = dmk.isEnvironmentSupported();
+
+        expect(result).toBe(true);
+        expect(mockTransportService.getAllTransports).toHaveBeenCalled();
+        expect(mockTransport1.isSupported).toHaveBeenCalled();
+        expect(mockTransport2.isSupported).toHaveBeenCalled();
+      });
+
+      it("should return false when no transports are supported", () => {
+        // Mock the TransportService to return transports where none are supported
+        const mockTransport1 = {
+          isSupported: vi.fn().mockReturnValue(false),
+        };
+        const mockTransport2 = {
+          isSupported: vi.fn().mockReturnValue(false),
+        };
+        const mockTransportService = {
+          getAllTransports: vi
+            .fn()
+            .mockReturnValue([mockTransport1, mockTransport2]),
+        };
+
+        // Mock the container to return our mock TransportService
+        vi.spyOn(dmk.container, "get").mockReturnValue(mockTransportService);
+
+        const result = dmk.isEnvironmentSupported();
+
+        expect(result).toBe(false);
+        expect(mockTransportService.getAllTransports).toHaveBeenCalled();
+        expect(mockTransport1.isSupported).toHaveBeenCalled();
+        expect(mockTransport2.isSupported).toHaveBeenCalled();
+      });
+
+      it("should return false when no transports are available", () => {
+        // Mock the TransportService to return an empty array
+        const mockTransportService = {
+          getAllTransports: vi.fn().mockReturnValue([]),
+        };
+
+        // Mock the container to return our mock TransportService
+        vi.spyOn(dmk.container, "get").mockReturnValue(mockTransportService);
+
+        const result = dmk.isEnvironmentSupported();
+
+        expect(result).toBe(false);
+        expect(mockTransportService.getAllTransports).toHaveBeenCalled();
+      });
+    });
   });
 
   describe("stubbed", () => {

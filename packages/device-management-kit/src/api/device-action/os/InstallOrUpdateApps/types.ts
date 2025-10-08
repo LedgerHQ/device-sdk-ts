@@ -1,7 +1,10 @@
 import type { CommandErrorResult } from "@api/command/model/CommandResult";
 import type { DeviceModelId } from "@api/device/DeviceModel";
 import type { DeviceActionState } from "@api/device-action/model/DeviceActionState";
-import type { OutOfMemoryDAError } from "@api/device-action/os/Errors";
+import type {
+  OutOfMemoryDAError,
+  UnsupportedFirmwareDAError,
+} from "@api/device-action/os/Errors";
 import type {
   GetDeviceMetadataDAError,
   GetDeviceMetadataDARequiredInteraction,
@@ -10,6 +13,7 @@ import type { GoToDashboardDARequiredInteraction } from "@api/device-action/os/G
 import type { GoToDashboardDAInput } from "@api/device-action/os/GoToDashboard/types";
 import type { InstallAppDAError } from "@api/secure-channel/device-action/InstallApp/types";
 import type { Application } from "@internal/manager-api/model/Application";
+import type { SecureChannelInstallDAErrors } from "@internal/secure-channel/model/Errors";
 
 /**
  * An application version used as application constraint should either be a valid semantic versioning formatted
@@ -76,6 +80,8 @@ export type InstallOrUpdateAppsDAError =
   | GetDeviceMetadataDAError
   | InstallAppDAError
   | OutOfMemoryDAError
+  | UnsupportedFirmwareDAError
+  | SecureChannelInstallDAErrors
   | CommandErrorResult["error"];
 
 export type InstallOrUpdateAppsDARequiredInteraction =

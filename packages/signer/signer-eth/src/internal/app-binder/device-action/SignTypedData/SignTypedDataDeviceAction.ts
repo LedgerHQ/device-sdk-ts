@@ -32,7 +32,6 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
-import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
@@ -41,6 +40,8 @@ import {
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 export type MachineDependencies = {
@@ -57,6 +58,8 @@ export type MachineDependencies = {
       data: TypedData;
       appConfig: GetConfigCommandResponse;
       derivationPath: string;
+      transactionMapper: TransactionMapperService;
+      transactionParser: TransactionParserService;
     };
   }) => Promise<ProvideEIP712ContextTaskArgs>;
   readonly provideContext: (arg0: {
@@ -190,7 +193,6 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             id: "openAppStateMachine",
             input: {
               appName: "Ethereum",
-              compatibleAppNames: ETHEREUM_PLUGINS,
             },
             src: "openAppStateMachine",
             onSnapshot: {
@@ -346,6 +348,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             input: ({ context }) => ({
               contextModule: context.input.contextModule,
               parser: context.input.parser,
+              transactionParser: context.input.transactionParser,
+              transactionMapper: context.input.transactionMapper,
               data: context.input.data,
               appConfig: context._internalState.appConfig!,
               derivationPath: context.input.derivationPath,
@@ -519,12 +523,16 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         data: TypedData;
         appConfig: GetConfigCommandResponse;
         derivationPath: string;
+        transactionMapper: TransactionMapperService;
+        transactionParser: TransactionParserService;
       };
     }) =>
       new BuildEIP712ContextTask(
         internalApi,
         arg0.input.contextModule,
         arg0.input.parser,
+        arg0.input.transactionParser,
+        arg0.input.transactionMapper,
         arg0.input.data,
         arg0.input.derivationPath,
         arg0.input.appConfig,

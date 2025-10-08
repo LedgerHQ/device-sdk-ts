@@ -1,19 +1,30 @@
-export * from "@api/app-binder/GetAddressDeviceActionTypes";
-export { type SignDelegationAuthorizationDAError } from "@api/app-binder/SignDelegationAuthorizationTypes";
-export { type SignDelegationAuthorizationDAInput } from "@api/app-binder/SignDelegationAuthorizationTypes";
-export { type SignDelegationAuthorizationDAOutput } from "@api/app-binder/SignDelegationAuthorizationTypes";
-export { type SignDelegationAuthorizationDAState } from "@api/app-binder/SignDelegationAuthorizationTypes";
-export { type SignDelegationAuthorizationDAIntermediateValue } from "@api/app-binder/SignDelegationAuthorizationTypes";
-export type {
-  SignPersonalMessageDAError,
-  SignPersonalMessageDAIntermediateValue,
-  SignPersonalMessageDAOutput,
+export {
+  type GetAddressDAError,
+  type GetAddressDAIntermediateValue,
+  type GetAddressDAOutput,
+  type GetAddressDAReturnType,
+} from "@api/app-binder/GetAddressDeviceActionTypes";
+export {
+  type SignDelegationAuthorizationDAError,
+  type SignDelegationAuthorizationDAInput,
+  type SignDelegationAuthorizationDAIntermediateValue,
+  type SignDelegationAuthorizationDAOutput,
+  type SignDelegationAuthorizationDAReturnType,
+  type SignDelegationAuthorizationDAState,
+} from "@api/app-binder/SignDelegationAuthorizationTypes";
+export {
+  type SignPersonalMessageDAError,
+  type SignPersonalMessageDAIntermediateValue,
+  type SignPersonalMessageDAOutput,
+  type SignPersonalMessageDAReturnType,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 export {
   type SignTransactionDAError,
   type SignTransactionDAInput,
   type SignTransactionDAIntermediateValue,
+  type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
+  type SignTransactionDAReturnType,
   type SignTransactionDAState,
   SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
@@ -21,7 +32,9 @@ export {
   type SignTypedDataDAError,
   type SignTypedDataDAInput,
   type SignTypedDataDAIntermediateValue,
+  type SignTypedDataDAInternalState,
   type SignTypedDataDAOutput,
+  type SignTypedDataDAReturnType,
   type SignTypedDataDAState,
   SignTypedDataDAStateStep,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";

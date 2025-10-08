@@ -24,6 +24,7 @@ export class DefaultPkiCertificateLoader implements PkiCertificateLoader {
     const certificate =
       await this._dataSource.fetchCertificate(certificateInfos);
 
+    // TODO add logs error with certificate.left()
     return certificate.orDefault(undefined);
   }
 }

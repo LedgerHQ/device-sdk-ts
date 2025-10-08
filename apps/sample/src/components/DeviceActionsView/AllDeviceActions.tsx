@@ -84,18 +84,11 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         title: "Open app",
         description:
           "Perform all the actions necessary to open an app on the device",
-        executeDeviceAction: (
-          { appName, unlockTimeout, compatibleAppNames },
-          inspect,
-        ) => {
-          const compatibleAppNamesArray: string[] = compatibleAppNames
-            .split(",")
-            .map((name) => name.trim());
+        executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
           const deviceAction = new OpenAppDeviceAction({
             input: {
               appName,
               unlockTimeout,
-              compatibleAppNames: compatibleAppNamesArray,
             },
             inspect,
           });
@@ -107,14 +100,11 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         initialValues: {
           appName: "",
           unlockTimeout: UNLOCK_TIMEOUT,
-          compatibleAppNames: "",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
         OpenAppDAOutput,
-        Omit<OpenAppDAInput, "compatibleAppNames"> & {
-          compatibleAppNames: string;
-        },
+        OpenAppDAInput,
         OpenAppDAError,
         OpenAppDAIntermediateValue
       >,
@@ -123,27 +113,17 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         description:
           "Perform all the actions necessary to open an app on the device and install its dependencies",
         executeDeviceAction: (
-          {
-            appName,
-            dependencies,
-            compatibleAppNames,
-            requireLatestFirmware,
-            unlockTimeout,
-          },
+          { appName, dependencies, requireLatestFirmware, unlockTimeout },
           inspect,
         ) => {
           const application = { name: appName };
           const dependenciesArray = dependencies
             .split(",")
             .map((app) => ({ name: app.trim() }));
-          const compatibleAppNamesArray = compatibleAppNames
-            .split(",")
-            .map((app) => app.trim());
           const deviceAction = new OpenAppWithDependenciesDeviceAction({
             input: {
               application,
               dependencies: dependenciesArray,
-              compatibleAppNames: compatibleAppNamesArray,
               requireLatestFirmware,
               unlockTimeout,
             },
@@ -157,7 +137,6 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         initialValues: {
           appName: "Ethereum",
           dependencies: "Uniswap,1inch",
-          compatibleAppNames: "",
           requireLatestFirmware: false,
           unlockTimeout: UNLOCK_TIMEOUT,
         },
@@ -167,7 +146,6 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         {
           appName: string;
           dependencies: string;
-          compatibleAppNames: string;
           requireLatestFirmware: boolean;
           unlockTimeout: number;
         },

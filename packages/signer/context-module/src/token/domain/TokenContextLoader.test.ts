@@ -1,12 +1,11 @@
 import { Left, Right } from "purify-ts";
 
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import {
-  type TransactionContext,
-  type TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
-import { TokenContextLoader } from "@/token/domain/TokenContextLoader";
+import {
+  type TokenContextInput,
+  TokenContextLoader,
+} from "@/token/domain/TokenContextLoader";
 
 describe("TokenContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
@@ -21,92 +20,77 @@ describe("TokenContextLoader", () => {
     );
   });
 
+  describe("canHandle function", () => {
+    const validInput: TokenContextInput = {
+      to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+      selector: "0x095ea7b3",
+      chainId: 1,
+    };
+
+    it("should return true for valid input", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        true,
+      );
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.NFT])).toBe(
+        false,
+      );
+    });
+
+    it.each([
+      [null, "null input"],
+      [undefined, "undefined input"],
+      [{}, "empty object"],
+      ["string", "string input"],
+      [123, "number input"],
+    ])("should return false for %s", (input, _description) => {
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, to: undefined }, "missing to"],
+      [{ ...validInput, selector: undefined }, "missing selector"],
+      [{ ...validInput, chainId: undefined }, "missing chainId"],
+    ])("should return false for %s", (input, _description) => {
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, to: "invalid-hex" }, "invalid to hex"],
+      [{ ...validInput, to: "0x" }, "empty to hex"],
+      [{ ...validInput, to: "not-hex-at-all" }, "non-hex to"],
+      [{ ...validInput, selector: "invalid-hex" }, "invalid selector hex"],
+      [{ ...validInput, selector: "0x" }, "empty selector hex"],
+      [{ ...validInput, selector: "not-hex-at-all" }, "non-hex selector"],
+    ])("should return false for %s", (input, _description) => {
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, chainId: "1" }, "string chainId"],
+      [{ ...validInput, chainId: null }, "null chainId"],
+      [{ ...validInput, chainId: undefined }, "undefined chainId"],
+    ])("should return false for %s", (input, _description) => {
+      expect(loader.canHandle(input, [ClearSignContextType.TOKEN])).toBe(false);
+    });
+  });
+
   describe("load function", () => {
-    it("should return an empty array if transaction dest is undefined", async () => {
-      // GIVEN
-      const transaction = { to: undefined, data: "0x01" } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
-    });
-
-    it("should return an empty array if transaction data is undefined", async () => {
-      // GIVEN
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: undefined,
-      } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
-    });
-
-    it("should return an empty array if transaction data is empty", async () => {
-      // GIVEN
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x",
-      } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
-    });
-
-    it("should return an empty array if the selector is not supported", async () => {
-      // GIVEN
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b20000000000000",
-      } as unknown as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
-    });
-
-    it("should return an error when transaction data is not a valid hex string", async () => {
-      // GIVEN
-      const transaction = {
-        to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "notahexstring",
-      } as unknown as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("Invalid selector"),
-        },
-      ]);
-    });
-
     it("should return an error when datasource returns an error", async () => {
       // GIVEN
-      const transaction = {
+      const input: TokenContextInput = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000",
         chainId: 1,
-      } as TransactionContext;
+        selector: "0x095ea7b3",
+      };
       vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
         Left(new Error("error")),
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -116,14 +100,14 @@ describe("TokenContextLoader", () => {
 
     it("should return a correct response", async () => {
       // GIVEN
-      const transaction = {
+      const input: TokenContextInput = {
         to: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-        data: "0x095ea7b30000000000",
         chainId: 1,
-      } as TransactionContext;
+        selector: "0x095ea7b3",
+      };
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -132,62 +116,6 @@ describe("TokenContextLoader", () => {
           payload: "payload-0xdAC17F958D2ee523a2206206994597C13D831ec7",
         },
       ]);
-    });
-  });
-
-  describe("loadField function", () => {
-    it("should return an error when field type if not supported", async () => {
-      const field: TransactionFieldContext = {
-        type: ClearSignContextType.NFT,
-        chainId: 7,
-        address: "0x1234",
-      };
-
-      const result = await loader.loadField(field);
-
-      expect(result).toEqual(null);
-    });
-
-    it("should return a payload", async () => {
-      // GIVEN
-      const field: TransactionFieldContext = {
-        type: ClearSignContextType.TOKEN,
-        chainId: 7,
-        address: "0x1234",
-      };
-
-      // WHEN
-      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
-        Right("payload"),
-      );
-      const result = await loader.loadField(field);
-
-      // THEN
-      expect(result).toEqual({
-        type: ClearSignContextType.TOKEN,
-        payload: "payload",
-      });
-    });
-
-    it("should return an error when unable to fetch the datasource", async () => {
-      // GIVEN
-      const field: TransactionFieldContext = {
-        type: ClearSignContextType.TOKEN,
-        chainId: 7,
-        address: "0x1234",
-      };
-
-      // WHEN
-      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
-        Left(new Error("error")),
-      );
-      const result = await loader.loadField(field);
-
-      // THEN
-      expect(result).toEqual({
-        type: ClearSignContextType.ERROR,
-        error: new Error("error"),
-      });
     });
   });
 });

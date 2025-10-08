@@ -17,7 +17,6 @@ export type SendCommandInAppDAInput<
   readonly appName: string;
   readonly skipOpenApp: boolean;
   readonly requiredUserInteraction: UserInteraction;
-  readonly compatibleAppNames?: string[];
 };
 
 export type SendCommandInAppDAError<CommandErrorCodes = void> =

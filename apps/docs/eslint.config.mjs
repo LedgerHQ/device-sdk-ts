@@ -14,6 +14,14 @@ export default [
     },
   },
   {
+    files: ["eslint.config.mjs"],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+  },
+  {
     files: [
       "next.config.mjs",
       "postcss.config.js",

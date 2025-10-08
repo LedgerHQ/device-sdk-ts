@@ -14,7 +14,7 @@ import { Subject } from "rxjs";
 
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 
-import { SendApduError } from "./Errors";
+import { HidTransportSendApduUnknownError } from "./Errors";
 import { type NativeModuleWrapper } from "./NativeModuleWrapper";
 import { RNHidTransport } from "./RNHidTransport";
 import { type InternalDeviceDisconnected } from "./types";
@@ -448,12 +448,14 @@ describe("RNHidTransport", () => {
         // when
         wrapperSendApdu.mockResolvedValueOnce(Right("apduResponse"));
         const apdu = new Uint8Array([1, 2, 3]);
-        const apduResult = await connectedDevice.sendApdu(apdu);
+        const apduResult = await connectedDevice.sendApdu(apdu, false, 0);
 
         // then
         expect(nativeModuleWrapper.sendApdu).toHaveBeenCalledWith(
           sessionId,
           apdu,
+          false,
+          0,
         );
         expect(apduResult).toEqual(Right("apduResponse"));
       });
@@ -509,7 +511,9 @@ describe("RNHidTransport", () => {
         const apduResult = await connectedDevice.sendApdu(new Uint8Array([]));
 
         // then
-        expect(apduResult).toEqual(Left(new SendApduError(apduError)));
+        expect(apduResult).toEqual(
+          Left(new HidTransportSendApduUnknownError(apduError)),
+        );
       });
     });
 

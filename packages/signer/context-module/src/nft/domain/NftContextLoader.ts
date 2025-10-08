@@ -8,10 +8,12 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  TransactionContext,
-  TransactionFieldContext,
-} from "@/shared/model/TransactionContext";
+
+export type NftContextInput = {
+  to: HexaString;
+  selector: HexaString;
+  chainId: number;
+};
 
 enum ERC721_SUPPORTED_SELECTOR {
   Approve = "0x095ea7b3",
@@ -32,42 +34,48 @@ const SUPPORTED_SELECTORS: HexaString[] = [
   ...Object.values(ERC1155_SUPPORTED_SELECTOR),
 ];
 
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.PLUGIN,
+  ClearSignContextType.NFT,
+];
+
 @injectable()
-export class NftContextLoader implements ContextLoader {
+export class NftContextLoader implements ContextLoader<NftContextInput> {
   private _dataSource: NftDataSource;
 
   constructor(@inject(nftTypes.NftDataSource) dataSource: NftDataSource) {
     this._dataSource = dataSource;
   }
 
-  async load(transaction: TransactionContext): Promise<ClearSignContext[]> {
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is NftContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "to" in input &&
+      "selector" in input &&
+      "chainId" in input &&
+      typeof input.chainId === "number" &&
+      isHexaString(input.to) &&
+      input.to !== "0x" &&
+      isHexaString(input.selector) &&
+      this.isSelectorSupported(input.selector) &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+    );
+  }
+
+  async load(input: NftContextInput): Promise<ClearSignContext[]> {
     const responses: ClearSignContext[] = [];
-
-    if (!transaction.to || !transaction.data || transaction.data === "0x") {
-      return [];
-    }
-
-    const selector = transaction.data.slice(0, 10);
-
-    if (!isHexaString(selector)) {
-      return [
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("Invalid selector"),
-        },
-      ];
-    }
-
-    if (!this.isSelectorSupported(selector)) {
-      return [];
-    }
+    const { to, selector, chainId } = input;
 
     // EXAMPLE:
     // https://nft.api.live.ledger.com/v1/ethereum/1/contracts/0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D/plugin-selector/0x095ea7b3
     const getPluginPayloadResponse = await this._dataSource.getSetPluginPayload(
       {
-        chainId: transaction.chainId,
-        address: transaction.to,
+        chainId,
+        address: to,
         selector,
       },
     );
@@ -91,8 +99,8 @@ export class NftContextLoader implements ContextLoader {
 
     const getNftInfosPayloadResponse =
       await this._dataSource.getNftInfosPayload({
-        chainId: transaction.chainId,
-        address: transaction.to,
+        chainId,
+        address: to,
       });
 
     const nftInfosPayload = getNftInfosPayloadResponse.caseOf({
@@ -113,28 +121,6 @@ export class NftContextLoader implements ContextLoader {
     responses.push(nftInfosPayload);
 
     return responses;
-  }
-
-  async loadField(
-    field: TransactionFieldContext,
-  ): Promise<ClearSignContext | null> {
-    if (field.type !== ClearSignContextType.NFT) {
-      return null;
-    }
-    const payload = await this._dataSource.getNftInfosPayload({
-      address: field.address,
-      chainId: field.chainId,
-    });
-    return payload.caseOf({
-      Left: (error): ClearSignContext => ({
-        type: ClearSignContextType.ERROR,
-        error,
-      }),
-      Right: (value): ClearSignContext => ({
-        type: ClearSignContextType.NFT,
-        payload: value,
-      }),
-    });
   }
 
   private isSelectorSupported(selector: HexaString) {

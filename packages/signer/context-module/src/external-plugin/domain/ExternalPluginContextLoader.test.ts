@@ -3,11 +3,13 @@ import { Left, Right } from "purify-ts";
 
 import ABI from "@/external-plugin/__tests__/abi.json";
 import { type ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
-import { ExternalPluginContextLoader } from "@/external-plugin/domain/ExternalPluginContextLoader";
+import {
+  type ExternalPluginContextInput,
+  ExternalPluginContextLoader,
+} from "@/external-plugin/domain/ExternalPluginContextLoader";
 import { type DappInfos } from "@/external-plugin/model/DappInfos";
 import { type SelectorDetails } from "@/external-plugin/model/SelectorDetails";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { type TransactionContext } from "@/shared/model/TransactionContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 
 const dappInfosBuilder = ({
@@ -30,17 +32,19 @@ const dappInfosBuilder = ({
   } as DappInfos;
 };
 
-const transactionBuilder = (
+const inputBuilder = (
   abi: object,
   functionName: string,
   params: unknown[],
-): TransactionContext => {
+): ExternalPluginContextInput => {
   const contract = new Interface(JSON.stringify(abi));
   const data = contract.encodeFunctionData(functionName, params);
   return {
     to: "0x0",
-    data,
-  } as TransactionContext;
+    data: data as `0x${string}`,
+    selector: data.slice(0, 10) as `0x${string}`,
+    chainId: 1,
+  };
 };
 
 describe("ExternalPluginContextLoader", () => {
@@ -62,43 +66,98 @@ describe("ExternalPluginContextLoader", () => {
     );
   });
 
-  describe("load function", async () => {
-    it("should return an empty array if no destination address is provided", async () => {
-      // GIVEN
-      const transaction = {} as TransactionContext;
+  describe("canHandle function", () => {
+    const validInput: ExternalPluginContextInput = {
+      to: "0x1234567890123456789012345678901234567890",
+      data: "0x095ea7b30000000000000000000000001234567890123456789012345678901234567890",
+      selector: "0x095ea7b3",
+      chainId: 1,
+    };
 
-      // WHEN
-      const promise = () => loader.load(transaction);
-
-      // THEN
-      await expect(promise()).resolves.toEqual([]);
+    it("should return true for valid input", () => {
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.EXTERNAL_PLUGIN,
+          ClearSignContextType.TOKEN,
+        ]),
+      ).toBe(true);
     });
 
-    it("should return an empty array if data is undefined", async () => {
-      // GIVEN
-      const transaction = { to: "0x0" } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
+    it("should return false for invalid expected type", () => {
+      expect(loader.canHandle(validInput, [ClearSignContextType.NFT])).toBe(
+        false,
+      );
+      expect(loader.canHandle(validInput, [ClearSignContextType.TOKEN])).toBe(
+        false,
+      );
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.EXTERNAL_PLUGIN]),
+      ).toBe(false);
     });
 
-    it("should return an empty array if no data provided", async () => {
-      // GIVEN
-      const transaction = { to: "0x0", data: "0x" } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([]);
+    it.each([
+      [null, "null input"],
+      [undefined, "undefined input"],
+      [{}, "empty object"],
+      ["string", "string input"],
+      [123, "number input"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.EXTERNAL_PLUGIN,
+          ClearSignContextType.TOKEN,
+        ]),
+      ).toBe(false);
     });
 
-    it("should return an empty array if no dapp info is povided", async () => {
+    it.each([
+      [{ ...validInput, to: undefined }, "missing to"],
+      [{ ...validInput, data: undefined }, "missing data"],
+      [{ ...validInput, selector: undefined }, "missing selector"],
+      [{ ...validInput, chainId: undefined }, "missing chainId"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.EXTERNAL_PLUGIN,
+          ClearSignContextType.TOKEN,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, to: "invalid-hex" }, "invalid to hex"],
+      [{ ...validInput, to: "0x" }, "empty to hex"],
+      [{ ...validInput, data: "invalid-hex" }, "invalid data hex"],
+      [{ ...validInput, data: "0x" }, "empty data (0x)"],
+      [{ ...validInput, selector: "invalid-hex" }, "invalid selector hex"],
+      [{ ...validInput, selector: "0x" }, "empty selector hex"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.EXTERNAL_PLUGIN,
+          ClearSignContextType.TOKEN,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, chainId: "1" }, "string chainId"],
+      [{ ...validInput, chainId: null }, "null chainId"],
+      [{ ...validInput, chainId: undefined }, "undefined chainId"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.EXTERNAL_PLUGIN,
+          ClearSignContextType.TOKEN,
+        ]),
+      ).toBe(false);
+    });
+  });
+
+  describe("load function", () => {
+    it("should return an empty array if no dapp info is provided", async () => {
       // GIVEN
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -106,7 +165,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([]);
@@ -121,7 +180,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "singleParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -129,7 +188,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -149,7 +208,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "singleParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -157,7 +216,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual(
@@ -183,7 +242,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "singleParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -194,7 +253,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -218,7 +277,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "multipleParams",
         },
       });
-      const transaction = transactionBuilder(ABI, "multipleParams", [
+      const input = inputBuilder(ABI, "multipleParams", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
         "0xdAC17F958D2ee523a2206206994597C13D831ec7",
       ]);
@@ -227,7 +286,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual(
@@ -262,7 +321,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "arrayParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "arrayParam", [
+      const input = inputBuilder(ABI, "arrayParam", [
         [
           "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -274,7 +333,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -312,7 +371,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "singleParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -323,7 +382,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -347,7 +406,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "singleParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -355,7 +414,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -381,7 +440,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "singleParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -389,7 +448,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -411,7 +470,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "arrayParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "arrayParam", [
+      const input = inputBuilder(ABI, "arrayParam", [
         [
           "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           "0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -423,7 +482,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -450,7 +509,7 @@ describe("ExternalPluginContextLoader", () => {
           method: "complexStructParam",
         },
       });
-      const transaction = transactionBuilder(ABI, "complexStructParam", [
+      const input = inputBuilder(ABI, "complexStructParam", [
         {
           address1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
           param1: {
@@ -477,7 +536,7 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
@@ -514,7 +573,7 @@ describe("ExternalPluginContextLoader", () => {
 
     it("should return an error when datasource return a Left", async () => {
       // GIVEN
-      const transaction = transactionBuilder(ABI, "singleParam", [
+      const input = inputBuilder(ABI, "singleParam", [
         "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
       ]);
       vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
@@ -522,32 +581,13 @@ describe("ExternalPluginContextLoader", () => {
       );
 
       // WHEN
-      const result = await loader.load(transaction);
+      const result = await loader.load(input);
 
       // THEN
       expect(result).toEqual([
         {
           type: ClearSignContextType.ERROR,
           error: new Error("error"),
-        },
-      ]);
-    });
-
-    it("should return an error when transaction data is not a valid hex string", async () => {
-      // GIVEN
-      const transaction = {
-        to: "0x0",
-        data: "notAHexString",
-      } as TransactionContext;
-
-      // WHEN
-      const result = await loader.load(transaction);
-
-      // THEN
-      expect(result).toEqual([
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("Invalid selector"),
         },
       ]);
     });

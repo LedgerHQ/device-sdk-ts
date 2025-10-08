@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CallTaskInAppDeviceAction,
   DeviceManagementKit,
@@ -7,16 +8,19 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
 @injectable()
@@ -24,6 +28,7 @@ export class SolanaAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @inject(externalTypes.ContextModule) private contextModule: ContextModule,
   ) {}
 
   getAddress(args: {
@@ -49,7 +54,7 @@ export class SolanaAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Transaction;
-    skipOpenApp: boolean;
+    solanaTransactionOptionalConfig?: SolanaTransactionOptionalConfig;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -57,7 +62,24 @@ export class SolanaAppBinder {
         input: {
           derivationPath: args.derivationPath,
           transaction: args.transaction,
+          transactionOptions: args.solanaTransactionOptionalConfig,
+          contextModule: this.contextModule,
+        },
+      }),
+    });
+  }
+
+  generateTransaction(args: {
+    derivationPath: string;
+    skipOpenApp: boolean;
+  }): GenerateTransactionDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new GenerateTransactionDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
           skipOpenApp: args.skipOpenApp,
+          contextModule: this.contextModule,
         },
       }),
     });

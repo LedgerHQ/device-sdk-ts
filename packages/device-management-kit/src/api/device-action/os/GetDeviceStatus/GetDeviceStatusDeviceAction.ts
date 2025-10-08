@@ -1,6 +1,15 @@
 import { Left, Right } from "purify-ts";
-import { Observable } from "rxjs";
-import { tap, timeout } from "rxjs/operators";
+import {
+  EMPTY,
+  from,
+  interval,
+  mergeMap,
+  type Observable,
+  of,
+  switchMap,
+  take,
+} from "rxjs";
+import { timeout } from "rxjs/operators";
 import { assign, fromObservable, fromPromise, setup } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
@@ -262,14 +271,28 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                       currentAppVersion: _.event.output.data.version,
                     };
                   }
-                  if (
-                    "errorCode" in _.event.output.error &&
-                    _.event.output.error.errorCode === "5515"
-                  ) {
-                    return {
-                      ..._.context._internalState,
-                      locked: true,
-                    };
+                  if ("errorCode" in _.event.output.error) {
+                    if (_.event.output.error.errorCode === "5515") {
+                      // Locked device error
+                      return {
+                        ..._.context._internalState,
+                        locked: true,
+                      };
+                    } else if (_.event.output.error.errorCode === "6e00") {
+                      // CLA not supported
+                      // GetAppAndVersion should always be supported by the firmware or any app.
+                      // But on old firmware versions, that APDU was not supported in the dashboard.
+                      // On those firmwares, it fails with CLA_NOT_SUPPORTED in BOLOS, and INS_NOT_SUPPORTED
+                      // in applications. Therefore if CLA is not supported, we can consider we're on the
+                      // dashboard on an old firmware. We should therefore return that information to
+                      // ensure the user can still update his firmware and is not blocked at this step.
+                      return {
+                        ..._.context._internalState,
+                        locked: false,
+                        currentApp: "BOLOS",
+                        currentAppVersion: "0.0.0",
+                      };
+                    }
                   }
                   return {
                     ..._.context._internalState,
@@ -331,23 +354,23 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
     }: {
       input: { unlockTimeout: number };
     }) =>
-      new Observable<void>((subscriber) => {
-        const inner = internalApi
-          .getDeviceSessionStateObservable()
-          .pipe(
-            tap((state) => {
-              if (state.deviceStatus === DeviceStatus.CONNECTED) {
-                subscriber.complete();
-                inner.unsubscribe();
-              }
-            }),
-          )
-          .subscribe();
-
-        return () => {
-          inner.unsubscribe();
-        };
-      }).pipe(timeout(input.unlockTimeout));
+      interval(1000).pipe(
+        switchMap(() =>
+          from(internalApi.sendCommand(new GetAppAndVersionCommand())),
+        ),
+        mergeMap((output) => {
+          const isLocked =
+            !isSuccessCommandResult(output) &&
+            "errorCode" in output.error &&
+            output.error.errorCode === "5515";
+          if (isLocked) {
+            return EMPTY; // Continue the polling
+          }
+          return of(undefined); // Complete the observable
+        }),
+        take(1),
+        timeout(input.unlockTimeout),
+      );
 
     return {
       getAppAndVersion,

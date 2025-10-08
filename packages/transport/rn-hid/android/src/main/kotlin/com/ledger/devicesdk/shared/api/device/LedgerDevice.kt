@@ -5,6 +5,21 @@ public sealed class LedgerDevice(
         public val usbInfo: UsbInfo,
         public val bleInformation: BleInformation? = null,
 ) {
+    public data object Apex :
+            LedgerDevice(
+                name = "Ledger Apex",
+                usbInfo = UsbInfo(LEDGER_USB_VENDOR_ID, "0x80", "0x0008"),
+                bleInformation =
+                    BleInformation(
+                        serviceUuid = "13d63400-2c97-6004-0000-4c6564676572",
+                        notifyCharacteristicUuid =
+                            "13d63400-2c97-6004-0001-4c6564676572",
+                        writeWithResponseCharacteristicUuid =
+                            "13d63400-2c97-6004-0002-4c6564676572",
+                        writeWithoutResponseCharacteristicUuid =
+                            "13d63400-2c97-6004-0003-4c6564676572",
+                    ),
+            )
     public data object Flex :
             LedgerDevice(
                     name = "Ledger Flex",
@@ -77,6 +92,7 @@ public sealed class LedgerDevice(
             add(NanoX)
             add(NanoSPlus)
             add(NanoS)
+            add(Apex)
         }
 
         public fun getAllDevices(): List<LedgerDevice> {

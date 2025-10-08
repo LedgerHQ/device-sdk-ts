@@ -15,9 +15,10 @@ import {
   UnknownDAError,
 } from "@api/device-action/os/Errors";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
+import { DeviceDisconnectedWhileSendingError } from "@api/transport/model/Errors";
 
 import { OpenAppDeviceAction } from "./OpenAppDeviceAction";
-import type { OpenAppDAState } from "./types";
+import type { OpenAppDAError, OpenAppDAState } from "./types";
 
 vi.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
 
@@ -153,64 +154,6 @@ describe("OpenAppDeviceAction", () => {
         );
       }));
 
-    it("should end in a success if a compatible app is already opened", () =>
-      new Promise<void>((resolve, reject) => {
-        getDeviceSessionStateMock.mockReturnValue({
-          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-          deviceStatus: DeviceStatus.CONNECTED,
-          currentApp: {
-            name: "Bitcoin Testnet",
-            version: "1.0.0",
-          },
-        });
-
-        setupGetDeviceStatusMock([
-          {
-            currentApp: "Bitcoin Testnet",
-            currentAppVersion: "1.0.0",
-          },
-        ]);
-        const openAppDeviceAction = new OpenAppDeviceAction({
-          input: {
-            appName: "Bitcoin",
-            unlockTimeout: undefined,
-            compatibleAppNames: ["Bitcoin Testnet"],
-          },
-        });
-        vi.spyOn(openAppDeviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-
-        const expectedStates: Array<OpenAppDAState> = [
-          {
-            status: DeviceActionStatus.Pending, // get onboarding status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending, // get app and version
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Completed,
-            output: undefined,
-          },
-        ];
-
-        testDeviceActionStates(
-          openAppDeviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
-        );
-      }));
-
     it("should end in a success if the dashboard is open and open app succeeds", () =>
       new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
@@ -273,6 +216,95 @@ describe("OpenAppDeviceAction", () => {
             currentApp: { name: "Bitcoin", version: "1.0.0" },
           });
         });
+      }));
+
+    it("should end in a success if disconnection occurs while open app succeeds", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue(
+          CommandResultFactory({
+            data: {
+              sessionStateType:
+                DeviceSessionStateType.ReadyWithoutSecureChannel,
+              deviceStatus: DeviceStatus.CONNECTED,
+              currentApp: { name: "BOLOS", version: "0.0.0" },
+            },
+          }),
+        );
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "0.0.0",
+            },
+          }),
+        );
+        setupGetDeviceStatusMock([
+          {
+            currentApp: "BOLOS",
+            currentAppVersion: "0.0.0",
+          },
+          {
+            currentApp: "Bitcoin",
+            currentAppVersion: "0.0.0",
+          },
+        ]);
+        openAppMock.mockRejectedValue(
+          new DeviceDisconnectedWhileSendingError(),
+        );
+
+        const openAppDeviceAction = new OpenAppDeviceAction({
+          input: { appName: "Bitcoin" },
+        });
+        vi.spyOn(openAppDeviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+
+        const expectedStates: Array<OpenAppDAState> = [
+          {
+            status: DeviceActionStatus.Pending, // get onboarded status
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending, // get device status
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending, // open app
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending, // get device status
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Completed,
+            output: undefined,
+          },
+        ];
+
+        testDeviceActionStates(
+          openAppDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
       }));
 
     it("should end in a success if another app is open, close app succeeds and open app succeeds", () =>
@@ -559,6 +591,95 @@ describe("OpenAppDeviceAction", () => {
           {
             status: DeviceActionStatus.Error,
             error: new InvalidStatusWordError("mocked error"),
+          },
+        ];
+
+        testDeviceActionStates(
+          openAppDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("should end in a success if disconnection occurs while open app failed", () =>
+      new Promise<void>((resolve, reject) => {
+        getDeviceSessionStateMock.mockReturnValue(
+          CommandResultFactory({
+            data: {
+              sessionStateType:
+                DeviceSessionStateType.ReadyWithoutSecureChannel,
+              deviceStatus: DeviceStatus.CONNECTED,
+              currentApp: { name: "BOLOS", version: "0.0.0" },
+            },
+          }),
+        );
+        getAppAndVersionMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "0.0.0",
+            },
+          }),
+        );
+        setupGetDeviceStatusMock([
+          {
+            currentApp: "BOLOS",
+            currentAppVersion: "0.0.0",
+          },
+          {
+            currentApp: "BOLOS",
+            currentAppVersion: "0.0.0",
+          },
+        ]);
+        openAppMock.mockRejectedValue(
+          new DeviceDisconnectedWhileSendingError(),
+        );
+
+        const openAppDeviceAction = new OpenAppDeviceAction({
+          input: { appName: "Bitcoin" },
+        });
+        vi.spyOn(openAppDeviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+
+        const expectedStates: Array<OpenAppDAState> = [
+          {
+            status: DeviceActionStatus.Pending, // get onboarded status
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending, // get device status
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending, // open app
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending, // get device status
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          },
+          {
+            status: DeviceActionStatus.Error,
+            error: new DeviceDisconnectedWhileSendingError() as OpenAppDAError,
           },
         ];
 

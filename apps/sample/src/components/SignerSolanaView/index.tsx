@@ -1,9 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo } from "react";
 import {
   base64StringToBuffer,
   isBase64String,
 } from "@ledgerhq/device-management-kit";
 import {
+  type GenerateTransactionDAError,
+  type GenerateTransactionDAIntermediateValue,
+  type GenerateTransactionDAOutput,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -17,6 +21,7 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
+  SolanaToolsBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -29,14 +34,22 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
   const dmk = useDmk();
-  const signer = new SignerSolanaBuilder({ dmk, sessionId }).build();
+  const signer = new SignerSolanaBuilder({
+    dmk,
+    sessionId,
+    originToken: "Solana",
+  }).build();
+  const solanaTools = new SolanaToolsBuilder({
+    dmk,
+    sessionId,
+    originToken: "Solana",
+  }).build();
 
   const deviceModelId = dmk.getConnectedDevice({
     sessionId,
   }).modelId;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
+  const deviceActions = useMemo<DeviceActionProps<any, any, any, any>[]>(
     () => [
       {
         title: "Get address",
@@ -72,21 +85,19 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         title: "Sign Transaction",
         description:
           "Perform all the actions necessary to sign a Solana transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+        executeDeviceAction: ({ derivationPath, transaction }) => {
           const serializedTransaction =
             base64StringToBuffer(transaction) ?? new Uint8Array();
-          return signer.signTransaction(derivationPath, serializedTransaction, {
-            skipOpenApp,
-          });
+          return signer.signTransaction(derivationPath, serializedTransaction);
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           transaction: "",
           skipOpenApp: false,
         },
-        deviceModelId,
         validateValues: ({ transaction }) =>
           isBase64String(transaction) && transaction.length > 0,
+        deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
         {
@@ -115,11 +126,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         deviceModelId,
       } satisfies DeviceActionProps<
         SignMessageDAOutput,
-        {
-          derivationPath: string;
-          message: string;
-          skipOpenApp: boolean;
-        },
+        { derivationPath: string; message: string; skipOpenApp: boolean },
         SignMessageDAError,
         SignMessageDAIntermediateValue
       >,
@@ -138,8 +145,29 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAppConfigurationDAError,
         GetAppConfigurationDAIntermediateValue
       >,
+      {
+        title: "Generate Transaction",
+        description:
+          "Perform all the actions necessary to generate a transaction to test the Solana signer",
+        executeDeviceAction: ({ derivationPath }) => {
+          return solanaTools.generateTransaction(derivationPath);
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GenerateTransactionDAOutput,
+        {
+          derivationPath: string;
+          skipOpenApp: boolean;
+        },
+        GenerateTransactionDAError,
+        GenerateTransactionDAIntermediateValue
+      >,
     ],
-    [deviceModelId, signer],
+    [deviceModelId, solanaTools, signer],
   );
 
   return (

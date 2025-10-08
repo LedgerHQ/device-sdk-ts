@@ -20,6 +20,8 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import {
   PrimitiveType,
   StructType,
@@ -48,6 +50,8 @@ describe("SignTypedDataDeviceAction", () => {
     types: {},
   };
   const TEST_BUILT_CONTEXT: ProvideEIP712ContextTaskArgs = {
+    deviceModelId: DeviceModelId.STAX,
+    derivationPath: "44'/60'/0'/0/0",
     web3Check: null,
     types: {
       PermitSingle: {
@@ -80,6 +84,8 @@ describe("SignTypedDataDeviceAction", () => {
       },
       trustedNamesAddresses: {},
       tokens: {},
+      calldatas: {},
+      proxy: undefined,
       filters: {
         "details.amount": {
           displayName: "Amount allowance",
@@ -91,16 +97,24 @@ describe("SignTypedDataDeviceAction", () => {
         },
       },
     }),
+    calldatasContexts: {},
   };
 
   const mockParser: TypedDataParserService = {
     parse: vi.fn(),
   };
+  const mockTransactionParser: TransactionParserService = {
+    extractValue: vi.fn(),
+  } as unknown as TransactionParserService;
+  const mockTransactionMapper: TransactionMapperService = {
+    mapTransactionToSubset: vi.fn(),
+  };
   const mockContextModule: ContextModule = {
-    getContext: vi.fn(),
+    getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getWeb3Checks: vi.fn(),
+    getSolanaContext: vi.fn(),
   };
   const apiMock = makeDeviceActionInternalApiMock();
   const getAppConfigMock = vi.fn();
@@ -169,6 +183,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -255,6 +271,8 @@ describe("SignTypedDataDeviceAction", () => {
                 input: {
                   contextModule: mockContextModule,
                   parser: mockParser,
+                  transactionParser: mockTransactionParser,
+                  transactionMapper: mockTransactionMapper,
                   data: TEST_MESSAGE,
                   appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
@@ -295,6 +313,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: true,
           },
         });
@@ -375,6 +395,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -472,6 +494,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -554,6 +578,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -645,6 +671,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -714,6 +742,8 @@ describe("SignTypedDataDeviceAction", () => {
                 input: {
                   contextModule: mockContextModule,
                   parser: mockParser,
+                  transactionParser: mockTransactionParser,
+                  transactionMapper: mockTransactionMapper,
                   data: TEST_MESSAGE,
                   appConfig: createAppConfig("1.16.0", true, true),
                   derivationPath: "44'/60'/0'/0/0",
@@ -736,6 +766,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -805,6 +837,8 @@ describe("SignTypedDataDeviceAction", () => {
                 input: {
                   contextModule: mockContextModule,
                   parser: mockParser,
+                  transactionParser: mockTransactionParser,
+                  transactionMapper: mockTransactionMapper,
                   data: TEST_MESSAGE,
                   appConfig: createAppConfig("1.16.0", false, true),
                   derivationPath: "44'/60'/0'/0/0",
@@ -827,6 +861,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -915,6 +951,8 @@ describe("SignTypedDataDeviceAction", () => {
                 input: {
                   contextModule: mockContextModule,
                   parser: mockParser,
+                  transactionParser: mockTransactionParser,
+                  transactionMapper: mockTransactionMapper,
                   data: TEST_MESSAGE,
                   appConfig: createAppConfig("1.16.0", true, false),
                   derivationPath: "44'/60'/0'/0/0",
@@ -937,6 +975,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -1025,6 +1065,8 @@ describe("SignTypedDataDeviceAction", () => {
                 input: {
                   contextModule: mockContextModule,
                   parser: mockParser,
+                  transactionParser: mockTransactionParser,
+                  transactionMapper: mockTransactionMapper,
                   data: TEST_MESSAGE,
                   appConfig: createAppConfig("1.16.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
@@ -1069,6 +1111,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -1090,6 +1134,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });
@@ -1160,6 +1206,8 @@ describe("SignTypedDataDeviceAction", () => {
             data: TEST_MESSAGE,
             contextModule: mockContextModule,
             parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
         });

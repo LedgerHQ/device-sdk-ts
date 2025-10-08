@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-transport-kit-react-native-hid",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "private": false,
   "react-native": "src/index.ts",
@@ -32,7 +32,7 @@
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
     "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
-    "lint": "eslint",
+    "lint": "eslint src/**/*.ts",
     "lint:fix": "pnpm lint --fix",
     "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
     "prettier": "prettier . --check",

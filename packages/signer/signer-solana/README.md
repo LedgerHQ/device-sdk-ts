@@ -93,49 +93,139 @@ type GetAddressCommandResponse = {
 
 ### Use Case 2: Sign Transaction
 
-This method enables users to securely sign transactions using clear signing on Ledger devices.
+Securely sign a Solana or SPL transaction using **clear signing** on Ledger devices.
 
-```typescript
+```ts
 const { observable, cancel } = signerSolana.signTransaction(
   derivationPath,
   transaction,
-  options,
+  transactionOptions,
 );
 ```
 
-#### **Parameters**
+---
 
-- `derivationPath`
+### Parameters
 
-  - **Required**
-  - **Type:** `string` (e.g., `"44'/501'/0'"`)
-  - The derivation path used in the transaction. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+**Required**
 
-- `transaction`
+- **derivationPath** `string`  
+  The derivation path used in the transaction.  
+  See [Ledger’s guide](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
-  - **Required**
-  - **Type:** `Uint8Array`
-  - The transaction object that needs to be signed.
+- **transaction** `Uint8Array`  
+  The serialized transaction to sign.
 
-- `options`
+**Optional**
 
-  - **Optional**
-  - **Type:** `TBD`
-  - No option defined yet, but will be used for clear signing in a near future.
+- **transactionOptions** `SolanaTransactionOptionalConfig`  
+  Provides additional context for transaction signing.
 
-    ```typescript
-    type TransactionOptions = {};
-    ```
+  - **transactionResolutionContext** `object`  
+    Lets you explicitly pass `tokenAddress` and ATA details, bypassing extraction from the transaction itself.
 
-#### **Returns**
+    - **tokenAddress** `string`  
+      SPL token address being transferred.
 
-- `observable` Emits DeviceActionState updates, including the following details:
+    - **createATA** `object`  
+      Information about creating an associated token account (ATA).
 
-```typescript
-type Signature = Uint8Array; // Signed transaction bytes
+      - **address** `string` – Address (owner) of the ATA.
+      - **mintAddress** `string` – Mint address of the ATA.
+
+  - **solanaRPCURL** `string`  
+    RPC endpoint to use if `transactionResolutionContext` is not provided  
+    and parsing requires network lookups.  
+    In browser environments, use a CORS-enabled RPC URL.  
+    Defaults to: `"https://api.mainnet-beta.solana.com/"`.
+
+---
+
+### Returns
+
+- `observable` That emits DeviceActionState updates, including the following details:
+
+```ts
+type SolanaSignature = {
+  signature: Uint8Array; // Signed transaction bytes
+};
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Internal Flow
+
+Under the hood, this method subscribes to an  
+`Observable<DeviceActionState<Uint8Array, SignTransactionDAError, IntermediateValue>>`.
+
+#### DeviceActionState
+
+Represents the lifecycle of a device action:
+
+```ts
+type DeviceActionState<Output, Error, IntermediateValue> =
+  | { status: DeviceActionStatus.NotStarted }
+  | { status: DeviceActionStatus.Pending; intermediateValue: IntermediateValue }
+  | { status: DeviceActionStatus.Stopped }
+  | { status: DeviceActionStatus.Completed; output: Output }
+  | { status: DeviceActionStatus.Error; error: Error };
+
+enum DeviceActionStatus {
+  NotStarted = "not-started",
+  Pending = "pending",
+  Stopped = "stopped",
+  Completed = "completed",
+  Error = "error",
+}
+```
+
+- **NotStarted** → Action hasn’t begun.
+- **Pending** → Waiting for user confirmation on the device.  
+  Includes an `intermediateValue` of type `IntermediateValue`.
+- **Stopped** → Action was cancelled before completion.
+- **Completed** → Provides the signed transaction bytes (`Uint8Array`).
+- **Error** → The device or signing operation failed (`SignTransactionDAError`).
+
+---
+
+### Example
+
+```ts
+const { observable } = dmkSigner.signTransaction(
+  "m/44'/501'/0'/0'",
+  serializedTx,
+  {
+    transactionResolutionContext: resolution,
+  },
+);
+
+const subscription = observable.subscribe({
+  next: (state) => {
+    switch (state.status) {
+      case DeviceActionStatus.Pending:
+        console.log("Waiting for user action...", state.intermediateValue);
+        break;
+      case DeviceActionStatus.Completed:
+        console.log("Signature:", state.output);
+        break;
+      case DeviceActionStatus.Error:
+        console.error("Error:", state.error);
+        break;
+    }
+  },
+  error: (err) => console.error("Observable error:", err),
+  complete: () => console.log("Signing flow ended"),
+});
+
+// Later if needed:
+// subscription.unsubscribe();
+```
+
+#### **Notes**
+
+- Clear signing only supports simple instructions like a single `transfer` or combos like `createAccound + fundAccount` or `createAccount + transfer`. If you are receiving `6808` error from device, most likely the instructions are not supported and blind signing is required.
 
 ---
 

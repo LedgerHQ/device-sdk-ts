@@ -1,33 +1,31 @@
 import { type Container } from "inversify";
+import { Left } from "purify-ts";
 
+import { calldataTypes } from "@/calldata/di/calldataTypes";
+import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
-import { transactionTypes } from "@/transaction/di/transactionTypes";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
-import { type ExternalPluginContextLoader } from "./external-plugin/domain/ExternalPluginContextLoader";
 import { nftTypes } from "./nft/di/nftTypes";
-import { type NftContextLoader } from "./nft/domain/NftContextLoader";
+import { proxyTypes } from "./proxy/di/proxyTypes";
+import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
   type ClearSignContext,
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
-import {
-  type TransactionContext,
-  type TransactionFieldContext,
-} from "./shared/model/TransactionContext";
+import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
+import { solanaContextTypes } from "./solana/di/solanaContextTypes";
+import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
+import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
 import { tokenTypes } from "./token/di/tokenTypes";
-import { type TokenContextLoader } from "./token/domain/TokenContextLoader";
-import { type TransactionContextLoader } from "./transaction/domain/TransactionContextLoader";
-import { type TrustedNameContextLoader } from "./trusted-name/domain/TrustedNameContextLoader";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { uniswapTypes } from "./uniswap/di/uniswapTypes";
-import { type UniswapContextLoader } from "./uniswap/domain/UniswapContextLoader";
 import { web3CheckTypes } from "./web3-check/di/web3CheckTypes";
 import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import {
@@ -39,35 +37,59 @@ import { makeContainer } from "./di";
 
 export class DefaultContextModule implements ContextModule {
   private _container: Container;
-  private _loaders: ContextLoader[];
+  private _loaders: ContextLoader<unknown>[];
   private _typedDataLoader: TypedDataContextLoader;
   private _web3CheckLoader: Web3CheckContextLoader;
+  private _solanaLoader: SolanaContextLoader;
+  private _fieldLoaders: ContextFieldLoader<unknown>[];
 
   constructor(args: ContextModuleConfig) {
     this._container = makeContainer({ config: args });
+
     this._loaders = args.defaultLoaders ? this._getDefaultLoaders() : [];
     this._loaders.push(...args.customLoaders);
+
+    this._fieldLoaders = args.defaultFieldLoaders
+      ? this._getDefaultFieldLoaders()
+      : [];
+    this._fieldLoaders.push(...args.customFieldLoaders);
+
     this._typedDataLoader =
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._web3CheckLoader =
       args.customWeb3CheckLoader ?? this._getWeb3CheckLoader();
+    this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
   }
 
-  private _getDefaultLoaders(): ContextLoader[] {
+  private _getDefaultFieldLoaders(): ContextFieldLoader[] {
     return [
-      this._container.get<ExternalPluginContextLoader>(
+      this._container.get<ContextFieldLoader>(nftTypes.NftContextFieldLoader),
+      this._container.get<ContextFieldLoader>(
+        tokenTypes.TokenContextFieldLoader,
+      ),
+      this._container.get<ContextFieldLoader>(
+        trustedNameTypes.TrustedNameContextFieldLoader,
+      ),
+      this._container.get<ContextFieldLoader>(
+        proxyTypes.ProxyContextFieldLoader,
+      ),
+    ];
+  }
+
+  private _getDefaultLoaders(): ContextLoader<unknown>[] {
+    return [
+      this._container.get<ContextLoader>(
         externalPluginTypes.ExternalPluginContextLoader,
       ),
-      this._container.get<TrustedNameContextLoader>(
+      this._container.get<ContextLoader>(
         trustedNameTypes.TrustedNameContextLoader,
       ),
-      this._container.get<NftContextLoader>(nftTypes.NftContextLoader),
-      this._container.get<TokenContextLoader>(tokenTypes.TokenContextLoader),
-      this._container.get<TransactionContextLoader>(
-        transactionTypes.TransactionContextLoader,
-      ),
-      this._container.get<UniswapContextLoader>(
-        uniswapTypes.UniswapContextLoader,
+      this._container.get<ContextLoader>(nftTypes.NftContextLoader),
+      this._container.get<ContextLoader>(tokenTypes.TokenContextLoader),
+      this._container.get<ContextLoader>(calldataTypes.CalldataContextLoader),
+      this._container.get<ContextLoader>(uniswapTypes.UniswapContextLoader),
+      this._container.get<ContextLoader>(
+        dynamicNetworkTypes.DynamicNetworkContextLoader,
       ),
     ];
   }
@@ -84,27 +106,65 @@ export class DefaultContextModule implements ContextModule {
     );
   }
 
+  private _getSolanaLoader(): SolanaContextLoader {
+    try {
+      return this._container.get<SolanaContextLoader>(
+        solanaContextTypes.SolanaContextLoader,
+      );
+    } catch {
+      return {
+        load: async (_ctx) =>
+          Left(
+            new Error(
+              "[ContextModule] - DefaultContextModule: no SolanaContextLoader bound",
+            ),
+          ),
+      };
+    }
+  }
+
   public async getContexts(
-    transaction: TransactionContext,
+    input: unknown,
+    expectedTypes?: ClearSignContextType[],
   ): Promise<ClearSignContext[]> {
-    const promises = this._loaders.map((fetcher) => fetcher.load(transaction));
+    const allContextTypes = Object.values(ClearSignContextType);
+    const loaders = this._loaders.filter((l) =>
+      l.canHandle(input, expectedTypes ?? allContextTypes),
+    );
+    const promises = loaders.map((fetcher) => fetcher.load(input));
     const responses = await Promise.all(promises);
     return responses.flat();
   }
 
-  public async getContext(
-    field: TransactionFieldContext,
+  public async getFieldContext<TInput>(
+    field: TInput,
+    expectedType: ClearSignContextType,
   ): Promise<ClearSignContext> {
-    const promises = this._loaders
-      .filter((fetcher) => fetcher.loadField)
-      .map((fetcher) => fetcher.loadField!(field));
-    const responses = await Promise.all(promises);
-    return (
-      responses.find((resp) => resp !== null) || {
-        type: ClearSignContextType.ERROR,
-        error: new Error(`Field type not supported: ${field.type}`),
-      }
+    const loaders = this._fieldLoaders.filter((l) =>
+      l.canHandle(field, expectedType),
     );
+    if (loaders.length === 0) {
+      return Promise.resolve({
+        type: ClearSignContextType.ERROR,
+        error: new Error(
+          `Loader not found for field: ${field} and expected type: ${expectedType}`,
+        ),
+      });
+    }
+
+    for (const loader of loaders) {
+      const context = await loader.loadField(field);
+      if (context.type !== ClearSignContextType.ERROR) {
+        return context;
+      }
+    }
+
+    return {
+      type: ClearSignContextType.ERROR,
+      error: new Error(
+        `Loader not found for field: ${field} and expected type: ${expectedType}`,
+      ),
+    };
   }
 
   public async getTypedDataFilters(
@@ -126,5 +186,11 @@ export class DefaultContextModule implements ContextModule {
       }),
       Left: () => null,
     });
+  }
+
+  public async getSolanaContext(
+    transactionContext: SolanaTransactionContext,
+  ): Promise<SolanaTransactionContextResult> {
+    return await this._solanaLoader.load(transactionContext);
   }
 }

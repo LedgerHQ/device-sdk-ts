@@ -17,7 +17,6 @@ import {
   type TransportFactory,
   type TransportIdentifier,
 } from "@ledgerhq/device-management-kit";
-import { AxiosError } from "axios";
 import { type Either, Left, Right } from "purify-ts";
 import { from, type Observable } from "rxjs";
 
@@ -198,13 +197,12 @@ export class SpeculosTransport implements Transport {
     deviceId: DeviceId,
   ): void {
     this.disconnectInterval = setInterval(async () => {
-      try {
-        await this._speculosDataSource.postAdpu("B0010000");
-      } catch (error) {
-        if (!(error instanceof AxiosError)) return;
+      const isServerAvailable =
+        await this._speculosDataSource.isServerAvailable();
 
+      if (!isServerAvailable) {
         this.logger.info(
-          `Network error, disconnecting speculos device ${deviceId}`,
+          `Speculos server unavailable, disconnecting device ${deviceId}`,
         );
         onDisconnect(deviceId);
 

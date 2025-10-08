@@ -1,5 +1,78 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.8.0
+
+### Minor Changes
+
+- [#1011](https://github.com/LedgerHQ/device-sdk-ts/pull/1011) [`a995e7f`](https://github.com/LedgerHQ/device-sdk-ts/commit/a995e7fb79bc086593c8ecdb60b0e9792c6f3329) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add support for nested proxy
+
+- [#951](https://github.com/LedgerHQ/device-sdk-ts/pull/951) [`4489468`](https://github.com/LedgerHQ/device-sdk-ts/commit/448946814bbeaf4e150ef7d9e8148e506a6593fb) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add nested transaction clear signing support
+
+- [#1016](https://github.com/LedgerHQ/device-sdk-ts/pull/1016) [`3f276b7`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f276b7a29dad38f533768382c5363466e40f26c) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add support for calldata in eip712 messages
+
+- [#1032](https://github.com/LedgerHQ/device-sdk-ts/pull/1032) [`bd6ab6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/bd6ab6e984de8fdcf92157257cae54d34028f317) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Improve context module getField interface to be more generic
+
+### Patch Changes
+
+- [#1044](https://github.com/LedgerHQ/device-sdk-ts/pull/1044) [`fc1b077`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc1b07775331a57feb5d0be2057c9e91dacedf8b) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Retrieve certificate for trusted names
+
+- [#1038](https://github.com/LedgerHQ/device-sdk-ts/pull/1038) [`69c7624`](https://github.com/LedgerHQ/device-sdk-ts/commit/69c7624ae5dbe4d64813c212e41c2fcc1ee7a12e) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Filter contexts for nested calls to improve performance
+
+- [#1029](https://github.com/LedgerHQ/device-sdk-ts/pull/1029) [`67ffec0`](https://github.com/LedgerHQ/device-sdk-ts/commit/67ffec04838859c3041071d3c45c7d7616b6f905) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Re-order APDUs for provided nested transactions
+
+- [#1037](https://github.com/LedgerHQ/device-sdk-ts/pull/1037) [`38d944a`](https://github.com/LedgerHQ/device-sdk-ts/commit/38d944a222d1a0215b471b41434c0ad6323f5f5c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Improve context base building process
+
+- [#1038](https://github.com/LedgerHQ/device-sdk-ts/pull/1038) [`69c7624`](https://github.com/LedgerHQ/device-sdk-ts/commit/69c7624ae5dbe4d64813c212e41c2fcc1ee7a12e) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix transaction data being incorrectly passed to nested context builder
+
+- [#1028](https://github.com/LedgerHQ/device-sdk-ts/pull/1028) [`d0e7cf5`](https://github.com/LedgerHQ/device-sdk-ts/commit/d0e7cf52c902add0b86917742b761c71d5844394) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fallback to blind signing if needed
+
+- Updated dependencies [[`8bead0b`](https://github.com/LedgerHQ/device-sdk-ts/commit/8bead0b3024cd0f6c3bb0f3cb0101eddae15aa38), [`69c7624`](https://github.com/LedgerHQ/device-sdk-ts/commit/69c7624ae5dbe4d64813c212e41c2fcc1ee7a12e), [`bd6ab6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/bd6ab6e984de8fdcf92157257cae54d34028f317), [`38d944a`](https://github.com/LedgerHQ/device-sdk-ts/commit/38d944a222d1a0215b471b41434c0ad6323f5f5c), [`a995e7f`](https://github.com/LedgerHQ/device-sdk-ts/commit/a995e7fb79bc086593c8ecdb60b0e9792c6f3329), [`fc1b077`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc1b07775331a57feb5d0be2057c9e91dacedf8b), [`4489468`](https://github.com/LedgerHQ/device-sdk-ts/commit/448946814bbeaf4e150ef7d9e8148e506a6593fb), [`4489468`](https://github.com/LedgerHQ/device-sdk-ts/commit/448946814bbeaf4e150ef7d9e8148e506a6593fb), [`38d944a`](https://github.com/LedgerHQ/device-sdk-ts/commit/38d944a222d1a0215b471b41434c0ad6323f5f5c), [`0c9bdc7`](https://github.com/LedgerHQ/device-sdk-ts/commit/0c9bdc73b34b3a9743b37d79f41b54cce5740578), [`0d9c02a`](https://github.com/LedgerHQ/device-sdk-ts/commit/0d9c02adf384370e57b540e9bba61b57db91ef39), [`3f276b7`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f276b7a29dad38f533768382c5363466e40f26c), [`bd6ab6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/bd6ab6e984de8fdcf92157257cae54d34028f317)]:
+  - @ledgerhq/context-module@1.8.0
+
+## 1.7.0
+
+### Patch Changes
+
+- [#1012](https://github.com/LedgerHQ/device-sdk-ts/pull/1012) [`5b82824`](https://github.com/LedgerHQ/device-sdk-ts/commit/5b82824c683f7f79e118b6dc4cf3ebb3e8341939) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix DA type export
+
+- [#908](https://github.com/LedgerHQ/device-sdk-ts/pull/908) [`a3ac864`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3ac864f9262cc4f1a02c4cf3bf63c8cdce06207) Thanks [@tom-tochito](https://github.com/tom-tochito)! - Add dynamic network support
+
+- [#963](https://github.com/LedgerHQ/device-sdk-ts/pull/963) [`2aba89b`](https://github.com/LedgerHQ/device-sdk-ts/commit/2aba89b0ef9d50159162922427f2ddb0d7081e15) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add proxy support
+
+- Updated dependencies [[`be15e40`](https://github.com/LedgerHQ/device-sdk-ts/commit/be15e405f18e57afaabe736bd74dce9a4fe710d2), [`a6a6e31`](https://github.com/LedgerHQ/device-sdk-ts/commit/a6a6e316705cd8754474991a8f0753064ba66bd9), [`4337fdd`](https://github.com/LedgerHQ/device-sdk-ts/commit/4337fdd960531554935daf8c5c4f84d8f4973f7d), [`b1d8e58`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1d8e58de5f513bad5eb8eb8f804fc2cbeeb4c17), [`a3ac864`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3ac864f9262cc4f1a02c4cf3bf63c8cdce06207), [`0cd8a18`](https://github.com/LedgerHQ/device-sdk-ts/commit/0cd8a18fa676a7d8e6ed950fd3a12c43f6532402), [`566b876`](https://github.com/LedgerHQ/device-sdk-ts/commit/566b876f769c72ee870c590408fa85892d86909f), [`2aba89b`](https://github.com/LedgerHQ/device-sdk-ts/commit/2aba89b0ef9d50159162922427f2ddb0d7081e15)]:
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@0.9.0
+  - @ledgerhq/signer-utils@2.0.0
+
+## 1.6.0
+
+### Minor Changes
+
+- [#935](https://github.com/LedgerHQ/device-sdk-ts/pull/935) [`bf19c32`](https://github.com/LedgerHQ/device-sdk-ts/commit/bf19c32604f47c05fc77f6846e5f6a529c54f220) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Remove hardcoded list of ethereum plugins
+
+- [#879](https://github.com/LedgerHQ/device-sdk-ts/pull/879) [`f4d73bf`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4d73bf3dd94327fa5d8469cd7a981a7595bc0ca) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add Solana SPL support
+
+- [#940](https://github.com/LedgerHQ/device-sdk-ts/pull/940) [`9b6f298`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b6f298c6bb9cfceb8dddca0cf7790a0eb5ce193) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Don't try to clearsign exchange flows
+
+### Patch Changes
+
+- [#910](https://github.com/LedgerHQ/device-sdk-ts/pull/910) [`ce53286`](https://github.com/LedgerHQ/device-sdk-ts/commit/ce53286d2583ffef2384668371af6b566b070a9f) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Small refactoring for the web3checks context handling
+
+- [#924](https://github.com/LedgerHQ/device-sdk-ts/pull/924) [`9d1e827`](https://github.com/LedgerHQ/device-sdk-ts/commit/9d1e827216ac7a504bdeca3d7c110623bb7654b1) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Refactor sign transaction device action
+
+- [#895](https://github.com/LedgerHQ/device-sdk-ts/pull/895) [`3a05031`](https://github.com/LedgerHQ/device-sdk-ts/commit/3a050312f54e9ffe9b4d7aa1ded7584e7d11a454) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ProvideProxyInfoCommand
+
+- [#943](https://github.com/LedgerHQ/device-sdk-ts/pull/943) [`5c1178c`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c1178cb1e191d1c98bea352879da01e11762612) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Use PreBuild step to parse the transaction
+
+- [#932](https://github.com/LedgerHQ/device-sdk-ts/pull/932) [`98eeab1`](https://github.com/LedgerHQ/device-sdk-ts/commit/98eeab1a3adf0e6f7ed190a340a9e4d431bcbd37) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Return an explicit error for pre EIP 155 transactions instead of "no signature error"
+
+- [#936](https://github.com/LedgerHQ/device-sdk-ts/pull/936) [`4243a79`](https://github.com/LedgerHQ/device-sdk-ts/commit/4243a79c94830b33a86e13f38e240199fdc86906) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Cleaup unused attribute for trasaction subset type
+
+- Updated dependencies [[`a3ba9e5`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3ba9e5b40a437669b32a00bc6150231c04381c3), [`62486e7`](https://github.com/LedgerHQ/device-sdk-ts/commit/62486e7c92998afd0831f19192c8a8dd1bb8d10e), [`23f08d8`](https://github.com/LedgerHQ/device-sdk-ts/commit/23f08d8e4947d34ce839238628590b0431b07b5e), [`090a3ab`](https://github.com/LedgerHQ/device-sdk-ts/commit/090a3ab350f3341b4222971a003738836e635e28), [`efac23f`](https://github.com/LedgerHQ/device-sdk-ts/commit/efac23fc8164d23d27713f30e40e575693d536d4), [`f4d73bf`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4d73bf3dd94327fa5d8469cd7a981a7595bc0ca), [`5c1178c`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c1178cb1e191d1c98bea352879da01e11762612), [`b164403`](https://github.com/LedgerHQ/device-sdk-ts/commit/b16440340617576b0fe4e0db9d8d345a7f37e5cd), [`2a047a8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2a047a8c2eb23a6c3833eeb42e35a43f902f9a8a), [`40bfafc`](https://github.com/LedgerHQ/device-sdk-ts/commit/40bfafcb467723c1364b149e336bc7450d8cf376), [`0df32be`](https://github.com/LedgerHQ/device-sdk-ts/commit/0df32bef22cbfab7bfde2ee5341225b19147543f), [`d090358`](https://github.com/LedgerHQ/device-sdk-ts/commit/d0903582af8a6f0a2df35dcef7b457f3f730a0f4), [`265e902`](https://github.com/LedgerHQ/device-sdk-ts/commit/265e902f22cb647a2dd5ea2e5b789480afd2bd17), [`f1c1949`](https://github.com/LedgerHQ/device-sdk-ts/commit/f1c1949d288cee1369a34978c6e13b1be99e8712), [`ccbf2ef`](https://github.com/LedgerHQ/device-sdk-ts/commit/ccbf2ef37d5d8831711f5e995d25d4697cf250ab)]:
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@0.8.0
+  - @ledgerhq/signer-utils@2.0.0
+
 ## 1.5.0
 
 ### Minor Changes

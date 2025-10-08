@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceActionIntermediateValue,
   type DeviceActionState,
@@ -11,6 +12,11 @@ import {
 import { from } from "rxjs";
 
 import {
+  type GenerateTransactionDAError,
+  type GenerateTransactionDAIntermediateValue,
+  type GenerateTransactionDAOutput,
+} from "@api/app-binder/GenerateTransactionDeviceActionTypes";
+import {
   type GetAppConfigurationDAError,
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
@@ -19,6 +25,7 @@ import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type SignMessageDAOutput,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -26,10 +33,14 @@ import {
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 describe("SolanaAppBinder", () => {
+  // stub ContextModule for tests
+  const contextModuleStub: ContextModule = {} as ContextModule;
+
   const mockedDmk: DeviceManagementKit = {
     sendCommand: vi.fn(),
     executeDeviceAction: vi.fn(),
@@ -43,6 +54,7 @@ describe("SolanaAppBinder", () => {
     const binder = new SolanaAppBinder(
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
+      contextModuleStub,
     );
     expect(binder).toBeDefined();
   });
@@ -68,7 +80,11 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/501'",
           checkOnDevice: false,
@@ -120,7 +136,11 @@ describe("SolanaAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         appBinder.getAddress(params);
 
         // THEN
@@ -146,7 +166,11 @@ describe("SolanaAppBinder", () => {
         };
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         appBinder.getAddress(params);
 
         // THEN
@@ -186,11 +210,15 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
           transaction: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
-          skipOpenApp: false,
+          solanaTransactionOptionalConfig: { skipOpenApp: false },
         });
 
         // THEN
@@ -229,19 +257,28 @@ describe("SolanaAppBinder", () => {
       const skipOpenApp = false;
 
       // WHEN
-      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
-      appBinder.signTransaction({ derivationPath, transaction, skipOpenApp });
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+      );
+      appBinder.signTransaction({
+        derivationPath,
+        transaction,
+        solanaTransactionOptionalConfig: { skipOpenApp: false },
+      });
 
       // THEN
       expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
         deviceAction: new SignTransactionDeviceAction({
           input: {
             derivationPath,
             transaction,
-            skipOpenApp,
+            transactionOptions: { skipOpenApp },
+            contextModule: contextModuleStub,
           },
         }),
-        sessionId: "sessionId",
       });
     });
   });
@@ -250,7 +287,9 @@ describe("SolanaAppBinder", () => {
     it("should return the signed message", () =>
       new Promise<void>((resolve, reject) => {
         // GIVEN
-        const signedMessage = new Uint8Array([0x1c, 0x8a, 0x54, 0x05, 0x10]);
+        const signedMessage = {
+          signature: "signature",
+        };
         const signMessageArgs = {
           derivationPath: "44'/501'/0'/0'",
           message: "Hello world",
@@ -263,7 +302,7 @@ describe("SolanaAppBinder", () => {
               status: DeviceActionStatus.Completed,
               output: signedMessage,
             } as DeviceActionState<
-              Uint8Array,
+              SignMessageDAOutput,
               DmkError,
               DeviceActionIntermediateValue
             >,
@@ -272,11 +311,19 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.signMessage(signMessageArgs);
 
         // THEN
-        const states: DeviceActionState<Uint8Array, unknown, unknown>[] = [];
+        const states: DeviceActionState<
+          SignMessageDAOutput,
+          unknown,
+          unknown
+        >[] = [];
         observable.subscribe({
           next: (state) => {
             states.push(state);
@@ -326,7 +373,11 @@ describe("SolanaAppBinder", () => {
         });
 
         // WHEN
-        const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
         const { observable } = appBinder.getAppConfiguration();
 
         // THEN
@@ -361,7 +412,11 @@ describe("SolanaAppBinder", () => {
 
     it("should call executeDeviceAction with the correct params", () => {
       // GIVEN
-      const appBinder = new SolanaAppBinder(mockedDmk, "sessionId");
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+      );
 
       // WHEN
       appBinder.getAppConfiguration();
@@ -371,10 +426,90 @@ describe("SolanaAppBinder", () => {
         sessionId: "sessionId",
         deviceAction: new SendCommandInAppDeviceAction({
           input: {
-            command: new GetAppConfigurationCommand(), // Correct command
+            command: new GetAppConfigurationCommand(),
             appName: "Solana",
             requiredUserInteraction: UserInteractionRequired.None,
             skipOpenApp: false,
+          },
+        }),
+      });
+    });
+  });
+
+  describe("generateTransaction", () => {
+    it("should return the serialized transaction", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const serializedTx = "BASE64_OR_HEX_TX";
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: serializedTx,
+            } as DeviceActionState<
+              GenerateTransactionDAOutput,
+              GenerateTransactionDAError,
+              GenerateTransactionDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
+        const { observable } = appBinder.generateTransaction({
+          derivationPath: "44'/501'/0'/0'",
+          skipOpenApp: false,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          GenerateTransactionDAOutput,
+          GenerateTransactionDAError,
+          GenerateTransactionDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: (err) => reject(err),
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output: serializedTx },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    it("should call executeDeviceAction with the correct params", () => {
+      // GIVEN
+      const derivationPath = "44'/501'/0'/0'";
+      const skipOpenApp = true;
+
+      // WHEN
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+      );
+      appBinder.generateTransaction({ derivationPath, skipOpenApp });
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
+        deviceAction: new GenerateTransactionDeviceAction({
+          input: {
+            derivationPath,
+            skipOpenApp,
+            contextModule: contextModuleStub,
           },
         }),
       });

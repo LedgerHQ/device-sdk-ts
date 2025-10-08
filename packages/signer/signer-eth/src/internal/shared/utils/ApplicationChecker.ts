@@ -6,7 +6,6 @@ import {
 import { gt, gte } from "semver";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
-import { ETHEREUM_PLUGINS } from "@internal/app-binder/constant/plugins";
 
 export class ApplicationChecker {
   private isCompatible: boolean = true;
@@ -24,18 +23,18 @@ export class ApplicationChecker {
       this.isCompatible = false;
       return;
     }
-    if (
-      deviceState.currentApp.name !== "Ethereum" &&
-      !ETHEREUM_PLUGINS.includes(deviceState.currentApp.name)
-    ) {
+    if (deviceState.currentApp.name === "Exchange") {
+      // Advanced clear signing is not supported in exchange flows, only basic loaders
+      // such as token should be provided.
       this.isCompatible = false;
       return;
-    }
-    if (deviceState.currentApp.name === "Ethereum") {
+    } else if (deviceState.currentApp.name === "Ethereum") {
       this.version = deviceState.currentApp.version;
     } else {
       // Fallback on appConfig version if a plugin is running.
       // It won't contain release candidate suffix but it should be enough for that edge case.
+      // We have the garantee that currentApp is a compatible ethereum plugin since AppConfig
+      // was successfully retrieved.
       this.version = appConfig.version;
     }
   }

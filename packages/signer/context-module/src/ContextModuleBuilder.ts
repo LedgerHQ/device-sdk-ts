@@ -2,9 +2,12 @@ import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleB
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
+  type ContextModuleDatasourceConfig,
+  type ContextModuleMetadataServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import { type ContextModule } from "./ContextModule";
@@ -12,6 +15,7 @@ import { DefaultContextModule } from "./DefaultContextModule";
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
+const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
 
 export const DEFAULT_CONFIG: ContextModuleConfig = {
   cal: {
@@ -22,9 +26,15 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   web3checks: {
     url: DEFAULT_WEB3_CHECKS_URL,
   },
+  metadataServiceDomain: {
+    url: DEFAULT_METADATA_SERVICE_DOMAIN,
+  },
   defaultLoaders: true,
   customLoaders: [],
+  defaultFieldLoaders: true,
+  customFieldLoaders: [],
   customTypedDataLoader: undefined,
+  customSolanaLoader: undefined,
 };
 
 export class ContextModuleBuilder {
@@ -81,13 +91,37 @@ export class ContextModuleBuilder {
   }
 
   /**
+   * Replace the default loader for Solana context
+   *
+   * @param loader loader to use for Solana context
+   * @returns this
+   */
+  addSolanaLoader(loader: SolanaContextLoader) {
+    this.config.customSolanaLoader = loader;
+    return this;
+  }
+
+  /**
    * Add a custom CAL configuration
    *
    * @param calConfig
    * @returns this
    */
-  addCalConfig(calConfig: ContextModuleCalConfig) {
-    this.config.cal = { ...DEFAULT_CONFIG.cal, ...calConfig };
+  setCalConfig(calConfig: ContextModuleCalConfig) {
+    this.config.cal = calConfig;
+    return this;
+  }
+
+  /**
+   * Add a custom metadata service configuration
+   *
+   * @param metadataServiceConfig
+   * @returns this
+   */
+  setMetadataServiceConfig(
+    metadataServiceConfig: ContextModuleMetadataServiceConfig,
+  ) {
+    this.config.metadataServiceDomain = metadataServiceConfig;
     return this;
   }
 
@@ -97,11 +131,19 @@ export class ContextModuleBuilder {
    * @param web3ChecksConfig
    * @returns this
    */
-  addWeb3ChecksConfig(web3ChecksConfig: ContextModuleWeb3ChecksConfig) {
-    this.config.web3checks = {
-      ...DEFAULT_CONFIG.web3checks,
-      ...web3ChecksConfig,
-    };
+  setWeb3ChecksConfig(web3ChecksConfig: ContextModuleWeb3ChecksConfig) {
+    this.config.web3checks = web3ChecksConfig;
+    return this;
+  }
+
+  /**
+   * Add datasource configuration
+   *
+   * @param datasourceConfig
+   * @returns this
+   */
+  setDatasourceConfig(datasourceConfig: ContextModuleDatasourceConfig) {
+    this.config.datasource = datasourceConfig;
     return this;
   }
 

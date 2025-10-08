@@ -28,12 +28,14 @@ export function CommandForm<Args extends Record<string, FieldType>>({
   valueSelector,
   labelSelector,
   disabled,
+  className,
 }: {
   initialValues: Args;
   onChange: (values: Args) => void;
   valueSelector?: ValueSelector<FieldType>;
   labelSelector?: Record<string, string>;
   disabled?: boolean;
+  className?: string;
 }) {
   const { formValues, setFormValue } = useForm(initialValues);
 
@@ -44,7 +46,13 @@ export function CommandForm<Args extends Record<string, FieldType>>({
   if (!formValues) return null;
 
   return (
-    <Flex flexDirection="column" flexWrap="wrap" rowGap={5} columnGap={5}>
+    <Flex
+      className={className}
+      flexDirection="column"
+      flexWrap="wrap"
+      rowGap={5}
+      columnGap={5}
+    >
       {Object.entries(formValues).map(([key, value]) => (
         <Flex
           flexDirection="column"

@@ -4,14 +4,16 @@ import {
   LogLevel,
   type LogParams,
   OpeningConnectionError,
+  SendApduEmptyResponseError,
   type SendApduResult,
+  SendApduTimeoutError,
   StaticDeviceModelDataSource,
   type TransportDeviceModel,
   type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { SendApduError } from "@api/transport/Errors";
+import { HidTransportSendApduUnknownError } from "@api/transport/Errors";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 import { type InternalConnectionResult } from "@api/transport/types";
 
@@ -330,7 +332,33 @@ describe("mapper", () => {
         error: "error message",
       };
       const expectedSendApduResult: SendApduResult = Left(
-        new SendApduError("error message"),
+        new HidTransportSendApduUnknownError("error message"),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
+    test("timeout error", () => {
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: false,
+        error: "SendApduTimeout",
+      };
+      const expectedSendApduResult: SendApduResult = Left(
+        new SendApduTimeoutError("Abort timeout"),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
+    test("empty response error", () => {
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: false,
+        error: "EmptyResponse",
+      };
+      const expectedSendApduResult: SendApduResult = Left(
+        new SendApduEmptyResponseError("Empty response"),
       );
       expect(
         mapNativeSendApduResultToSendApduResult(nativeSendApduResult),

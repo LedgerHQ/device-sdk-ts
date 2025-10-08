@@ -1,5 +1,73 @@
 # @ledgerhq/context-module
 
+## 1.8.0
+
+### Minor Changes
+
+- [#1032](https://github.com/LedgerHQ/device-sdk-ts/pull/1032) [`bd6ab6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/bd6ab6e984de8fdcf92157257cae54d34028f317) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add safe proxy datasource
+
+- [#1011](https://github.com/LedgerHQ/device-sdk-ts/pull/1011) [`a995e7f`](https://github.com/LedgerHQ/device-sdk-ts/commit/a995e7fb79bc086593c8ecdb60b0e9792c6f3329) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add LoadField and ContextFieldLoader interface
+
+- [#1037](https://github.com/LedgerHQ/device-sdk-ts/pull/1037) [`38d944a`](https://github.com/LedgerHQ/device-sdk-ts/commit/38d944a222d1a0215b471b41434c0ad6323f5f5c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add token calldata datasource
+
+- [#1016](https://github.com/LedgerHQ/device-sdk-ts/pull/1016) [`3f276b7`](https://github.com/LedgerHQ/device-sdk-ts/commit/3f276b7a29dad38f533768382c5363466e40f26c) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add support for calldata in eip712 messages
+
+- [#1032](https://github.com/LedgerHQ/device-sdk-ts/pull/1032) [`bd6ab6e`](https://github.com/LedgerHQ/device-sdk-ts/commit/bd6ab6e984de8fdcf92157257cae54d34028f317) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Improve context module getField interface to be more generic
+
+### Patch Changes
+
+- [#1043](https://github.com/LedgerHQ/device-sdk-ts/pull/1043) [`8bead0b`](https://github.com/LedgerHQ/device-sdk-ts/commit/8bead0b3024cd0f6c3bb0f3cb0101eddae15aa38) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix proxy certificate for typed data
+
+- [#1038](https://github.com/LedgerHQ/device-sdk-ts/pull/1038) [`69c7624`](https://github.com/LedgerHQ/device-sdk-ts/commit/69c7624ae5dbe4d64813c212e41c2fcc1ee7a12e) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add expectedTypes filtering when loading contexts
+
+- [#1037](https://github.com/LedgerHQ/device-sdk-ts/pull/1037) [`38d944a`](https://github.com/LedgerHQ/device-sdk-ts/commit/38d944a222d1a0215b471b41434c0ad6323f5f5c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Rename transaction folder to calldata
+
+- [#1044](https://github.com/LedgerHQ/device-sdk-ts/pull/1044) [`fc1b077`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc1b07775331a57feb5d0be2057c9e91dacedf8b) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Retrieve certificate for trusted names
+
+- [#951](https://github.com/LedgerHQ/device-sdk-ts/pull/951) [`4489468`](https://github.com/LedgerHQ/device-sdk-ts/commit/448946814bbeaf4e150ef7d9e8148e506a6593fb) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ClearSignContextReferenceType to differenciate clear signing type with reference type
+
+- [#951](https://github.com/LedgerHQ/device-sdk-ts/pull/951) [`4489468`](https://github.com/LedgerHQ/device-sdk-ts/commit/448946814bbeaf4e150ef7d9e8148e506a6593fb) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add CALLDATA descriptor support
+
+- [#1027](https://github.com/LedgerHQ/device-sdk-ts/pull/1027) [`0c9bdc7`](https://github.com/LedgerHQ/device-sdk-ts/commit/0c9bdc73b34b3a9743b37d79f41b54cce5740578) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Use contexts from contract before resolved proxy
+
+- [#1042](https://github.com/LedgerHQ/device-sdk-ts/pull/1042) [`0d9c02a`](https://github.com/LedgerHQ/device-sdk-ts/commit/0d9c02adf384370e57b540e9bba61b57db91ef39) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Get the correct certificate for Safe proxies
+
+## 1.7.0
+
+### Minor Changes
+
+- [#976](https://github.com/LedgerHQ/device-sdk-ts/pull/976) [`566b876`](https://github.com/LedgerHQ/device-sdk-ts/commit/566b876f769c72ee870c590408fa85892d86909f) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix cert address on solana signTransaction
+
+### Patch Changes
+
+- [#997](https://github.com/LedgerHQ/device-sdk-ts/pull/997) [`be15e40`](https://github.com/LedgerHQ/device-sdk-ts/commit/be15e405f18e57afaabe736bd74dce9a4fe710d2) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Fix clear signing issue with LNS
+
+- [#908](https://github.com/LedgerHQ/device-sdk-ts/pull/908) [`a3ac864`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3ac864f9262cc4f1a02c4cf3bf63c8cdce06207) Thanks [@tom-tochito](https://github.com/tom-tochito)! - Add dynamic network support
+
+- [#963](https://github.com/LedgerHQ/device-sdk-ts/pull/963) [`2aba89b`](https://github.com/LedgerHQ/device-sdk-ts/commit/2aba89b0ef9d50159162922427f2ddb0d7081e15) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add proxy support
+
+- Updated dependencies [[`a6a6e31`](https://github.com/LedgerHQ/device-sdk-ts/commit/a6a6e316705cd8754474991a8f0753064ba66bd9), [`4337fdd`](https://github.com/LedgerHQ/device-sdk-ts/commit/4337fdd960531554935daf8c5c4f84d8f4973f7d), [`b1d8e58`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1d8e58de5f513bad5eb8eb8f804fc2cbeeb4c17), [`0cd8a18`](https://github.com/LedgerHQ/device-sdk-ts/commit/0cd8a18fa676a7d8e6ed950fd3a12c43f6532402)]:
+  - @ledgerhq/device-management-kit@0.9.0
+
+## 1.6.0
+
+### Minor Changes
+
+- [#938](https://github.com/LedgerHQ/device-sdk-ts/pull/938) [`a3ba9e5`](https://github.com/LedgerHQ/device-sdk-ts/commit/a3ba9e5b40a437669b32a00bc6150231c04381c3) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Add Gating for clear signing
+
+- [#879](https://github.com/LedgerHQ/device-sdk-ts/pull/879) [`f4d73bf`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4d73bf3dd94327fa5d8469cd7a981a7595bc0ca) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add Solana SPL support
+
+- [#897](https://github.com/LedgerHQ/device-sdk-ts/pull/897) [`265e902`](https://github.com/LedgerHQ/device-sdk-ts/commit/265e902f22cb647a2dd5ea2e5b789480afd2bd17) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add proxy metadata datasource, updated builder api config method to improve clarity
+
+### Patch Changes
+
+- [#959](https://github.com/LedgerHQ/device-sdk-ts/pull/959) [`23f08d8`](https://github.com/LedgerHQ/device-sdk-ts/commit/23f08d8e4947d34ce839238628590b0431b07b5e) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Fix NFT url used and so fix clear signing for NFT transactions
+
+- [#943](https://github.com/LedgerHQ/device-sdk-ts/pull/943) [`5c1178c`](https://github.com/LedgerHQ/device-sdk-ts/commit/5c1178cb1e191d1c98bea352879da01e11762612) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Populate subset with values and selector
+
+- Updated dependencies [[`62486e7`](https://github.com/LedgerHQ/device-sdk-ts/commit/62486e7c92998afd0831f19192c8a8dd1bb8d10e), [`090a3ab`](https://github.com/LedgerHQ/device-sdk-ts/commit/090a3ab350f3341b4222971a003738836e635e28), [`efac23f`](https://github.com/LedgerHQ/device-sdk-ts/commit/efac23fc8164d23d27713f30e40e575693d536d4), [`b164403`](https://github.com/LedgerHQ/device-sdk-ts/commit/b16440340617576b0fe4e0db9d8d345a7f37e5cd), [`2a047a8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2a047a8c2eb23a6c3833eeb42e35a43f902f9a8a), [`40bfafc`](https://github.com/LedgerHQ/device-sdk-ts/commit/40bfafcb467723c1364b149e336bc7450d8cf376), [`0df32be`](https://github.com/LedgerHQ/device-sdk-ts/commit/0df32bef22cbfab7bfde2ee5341225b19147543f), [`d090358`](https://github.com/LedgerHQ/device-sdk-ts/commit/d0903582af8a6f0a2df35dcef7b457f3f730a0f4), [`f1c1949`](https://github.com/LedgerHQ/device-sdk-ts/commit/f1c1949d288cee1369a34978c6e13b1be99e8712), [`ccbf2ef`](https://github.com/LedgerHQ/device-sdk-ts/commit/ccbf2ef37d5d8831711f5e995d25d4697cf250ab)]:
+  - @ledgerhq/device-management-kit@0.8.0
+
 ## 1.4.0
 
 ### Minor Changes

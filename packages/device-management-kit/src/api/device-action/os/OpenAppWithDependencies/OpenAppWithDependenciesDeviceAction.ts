@@ -75,7 +75,6 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
       input: {
         unlockTimeout,
         appName: this.input.application.name,
-        compatibleAppNames: this.input.compatibleAppNames,
       },
     }).makeStateMachine(internalApi);
 
@@ -111,7 +110,6 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
           input: {
             application: _.input.application,
             dependencies: _.input.dependencies,
-            compatibleAppNames: _.input.compatibleAppNames,
             requireLatestFirmware: _.input.requireLatestFirmware,
             unlockTimeout: _.input.unlockTimeout,
           },
@@ -285,7 +283,6 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
             input: (_) => ({
               unlockTimeout: _.context.input.unlockTimeout,
               appName: _.context.input.application.name,
-              compatibleAppNames: this.input.compatibleAppNames,
             }),
             onSnapshot: {
               actions: assign({

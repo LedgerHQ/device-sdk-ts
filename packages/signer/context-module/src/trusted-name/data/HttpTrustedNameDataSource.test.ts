@@ -2,24 +2,31 @@ import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import { HttpTrustedNameDataSource } from "@/trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import PACKAGE from "@root/package.json";
 
 vi.mock("axios");
 
+const config = {
+  cal: {
+    url: "https://crypto-assets-service.api.ledger.com/v1",
+    mode: "prod",
+    branch: "main",
+  },
+  metadataServiceDomain: {
+    url: "https://nft.api.live.ledger.com",
+  },
+  originToken: "originToken",
+} as ContextModuleConfig;
 describe("HttpTrustedNameDataSource", () => {
   let datasource: TrustedNameDataSource;
 
   beforeAll(() => {
-    const config = {
-      cal: {
-        url: "https://crypto-assets-service.api.ledger.com/v1",
-        mode: "prod",
-        branch: "main",
-      },
-    } as ContextModuleConfig;
     datasource = new HttpTrustedNameDataSource(config);
     vi.clearAllMocks();
   });
@@ -42,7 +49,10 @@ describe("HttpTrustedNameDataSource", () => {
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
-          headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: version,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+          },
         }),
       );
     });
@@ -84,7 +94,7 @@ describe("HttpTrustedNameDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpTrustedNameDataSource: error getting domain payload",
+            "[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for domain hello.eth on chain 137",
           ),
         ),
       );
@@ -92,7 +102,13 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return a payload", async () => {
       // GIVEN
-      const response = { data: { signedDescriptor: { data: "payload" } } };
+      const response = {
+        data: {
+          signedDescriptor: { data: "payload", signatures: {} },
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        },
+      };
       vi.spyOn(axios, "request").mockResolvedValue(response);
 
       // WHEN
@@ -103,7 +119,13 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(result).toEqual(Right("payload"));
+      expect(result).toEqual(
+        Right({
+          data: "payload",
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        }),
+      );
     });
   });
 
@@ -127,7 +149,10 @@ describe("HttpTrustedNameDataSource", () => {
       expect(requestSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
-          headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: version,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+          },
         }),
       );
     });
@@ -173,35 +198,13 @@ describe("HttpTrustedNameDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpTrustedNameDataSource: no trusted name metadata for address 0x1234",
+            "[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for address 0x1234 on chain 137",
           ),
         ),
       );
     });
 
-    it("should return a payload", async () => {
-      // GIVEN
-      const response = {
-        data: {
-          signedDescriptor: { data: "payload" },
-        },
-      };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
-
-      // WHEN
-      const result = await datasource.getTrustedNamePayload({
-        chainId: 137,
-        address: "0x1234",
-        challenge: "",
-        sources: ["ens"],
-        types: ["eoa"],
-      });
-
-      // THEN
-      expect(result).toEqual(Right("payload"));
-    });
-
-    it("should return a payload with a signature", async () => {
+    it("should return an error when no keys are returned", async () => {
       // GIVEN
       const response = {
         data: {
@@ -220,7 +223,73 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(result).toEqual(Right("payload153012345"));
+      expect(result).toEqual(
+        Left(
+          new Error(
+            "[ContextModule] HttpTrustedNameDataSource: Invalid trusted name response format for address 0x1234 on chain 137",
+          ),
+        ),
+      );
+    });
+
+    it("should return a payload", async () => {
+      // GIVEN
+      const response = {
+        data: {
+          signedDescriptor: { data: "payload", signatures: {} },
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        },
+      };
+      vi.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
+        address: "0x1234",
+        challenge: "",
+        sources: ["ens"],
+        types: ["eoa"],
+      });
+
+      // THEN
+      expect(result).toEqual(
+        Right({
+          data: "payload",
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        }),
+      );
+    });
+
+    it("should return a payload with a signature", async () => {
+      // GIVEN
+      const response = {
+        data: {
+          signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        },
+      };
+      vi.spyOn(axios, "request").mockResolvedValue(response);
+
+      // WHEN
+      const result = await datasource.getTrustedNamePayload({
+        chainId: 137,
+        address: "0x1234",
+        challenge: "",
+        sources: ["ens"],
+        types: ["eoa"],
+      });
+
+      // THEN
+      expect(result).toEqual(
+        Right({
+          data: "payload153012345",
+          keyId: "testKeyId",
+          keyUsage: "testKeyUsage",
+        }),
+      );
     });
   });
 });

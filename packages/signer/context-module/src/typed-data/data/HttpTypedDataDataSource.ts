@@ -8,20 +8,29 @@ import type {
   ContextModuleCalMode,
   ContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
+import {
+  LEDGER_CLIENT_VERSION_HEADER,
+  LEDGER_ORIGIN_TOKEN_HEADER,
+} from "@/shared/constant/HttpHeaders";
 import type {
+  TypedDataCalldataIndex,
   TypedDataFilter,
+  TypedDataFilterCalldataInfo,
   TypedDataMessageInfo,
 } from "@/shared/model/TypedDataClearSignContext";
+import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataSchema } from "@/shared/model/TypedDataContext";
 import PACKAGE from "@root/package.json";
 
 import type {
   FiltersDto,
+  InstructionCalldataInfo,
+  InstructionCalldataParamPresence,
   InstructionContractInfo,
   InstructionField,
   InstructionFieldV1,
   InstructionFieldV2,
+  InstructionFieldV2Calldata,
   InstructionFieldV2WithCoinRef,
   InstructionFieldV2WithName,
 } from "./FiltersDto";
@@ -61,6 +70,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
         },
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
 
@@ -90,6 +100,10 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
 
       // Parse all the filters
       const filters: TypedDataFilter[] = [];
+      const calldatasInfos: Record<
+        TypedDataCalldataIndex,
+        TypedDataFilterCalldataInfo
+      > = {};
       for (const field of filtersJson.instructions) {
         if (this.isInstructionContractInfo(field, this.config.cal.mode)) {
           messageInfo = {
@@ -137,6 +151,34 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
             typesAndSourcesPayload:
               this.formatTrustedNameTypesAndSources(field),
           });
+        } else if (
+          this.isInstructionCalldataInfo(field, this.config.cal.mode)
+        ) {
+          calldatasInfos[field.calldata_index] = {
+            displayName: field.display_name,
+            calldataIndex: field.calldata_index,
+            valueFlag: field.value_filter_flag,
+            calleeFlag: this.convertCalldataPresenceFlag(
+              field.callee_filter_flag,
+            ),
+            amountFlag: field.amount_filter_flag,
+            spenderFlag: this.convertCalldataPresenceFlag(
+              field.spender_filter_flag,
+            ),
+            chainIdFlag: field.chain_id_filter_flag,
+            selectorFlag: field.selector_filter_flag,
+            signature: field.signatures[this.config.cal.mode],
+          };
+        } else if (
+          this.isInstructionFieldV2Calldata(field, this.config.cal.mode)
+        ) {
+          filters.push({
+            type: field.format,
+            displayName: field.display_name,
+            path: field.field_path,
+            signature: field.signatures[this.config.cal.mode],
+            calldataIndex: field.calldata_index,
+          });
         } else {
           return Left(
             new Error(
@@ -154,13 +196,30 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
         );
       }
 
-      return Right({ messageInfo, filters });
+      return Right({ messageInfo, filters, calldatasInfos });
     } catch (_error) {
       return Left(
         new Error(
           "[ContextModule] HttpTypedDataDataSource: Failed to fetch typed data informations",
         ),
       );
+    }
+  }
+
+  private convertCalldataPresenceFlag(
+    flag: InstructionCalldataParamPresence,
+  ): TypedDataCalldataParamPresence {
+    switch (flag) {
+      case "none":
+        return TypedDataCalldataParamPresence.None;
+      case "present":
+        return TypedDataCalldataParamPresence.Present;
+      case "verifying_contract":
+        return TypedDataCalldataParamPresence.VerifyingContract;
+      default: {
+        const uncoveredFlag: never = flag;
+        throw new Error(`Unhandled flag: ${uncoveredFlag}`);
+      }
     }
   }
 
@@ -274,6 +333,58 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       typeof data.signatures === "object" &&
       typeof data.signatures[mode] === "string" &&
       data.field_path === undefined
+    );
+  }
+
+  private isInstructionCalldataInfo(
+    data: InstructionField,
+    mode: ContextModuleCalMode,
+  ): data is InstructionCalldataInfo & {
+    signatures: { [_key in ContextModuleCalMode]: string };
+  } {
+    return (
+      typeof data === "object" &&
+      typeof data.type === "string" &&
+      data.type === "calldata" &&
+      typeof data.display_name === "string" &&
+      typeof data.calldata_index === "number" &&
+      typeof data.value_filter_flag === "boolean" &&
+      typeof data.chain_id_filter_flag === "boolean" &&
+      typeof data.selector_filter_flag === "boolean" &&
+      typeof data.amount_filter_flag === "boolean" &&
+      ["none", "present", "verifying_contract"].includes(
+        data.callee_filter_flag,
+      ) &&
+      ["none", "present", "verifying_contract"].includes(
+        data.spender_filter_flag,
+      ) &&
+      typeof data.signatures === "object" &&
+      typeof data.signatures[mode] === "string"
+    );
+  }
+
+  private isInstructionFieldV2Calldata(
+    data: InstructionField,
+    mode: ContextModuleCalMode,
+  ): data is InstructionFieldV2Calldata & {
+    signatures: { [_key in ContextModuleCalMode]: string };
+  } {
+    return (
+      typeof data === "object" &&
+      typeof data.display_name === "string" &&
+      typeof data.field_path === "string" &&
+      typeof data.signatures === "object" &&
+      typeof data.signatures[mode] === "string" &&
+      typeof data.format === "string" &&
+      [
+        "calldata-value",
+        "calldata-callee",
+        "calldata-chain-id",
+        "calldata-selector",
+        "calldata-amount",
+        "calldata-spender",
+      ].includes(data.format) &&
+      typeof data.calldata_index === "number"
     );
   }
 

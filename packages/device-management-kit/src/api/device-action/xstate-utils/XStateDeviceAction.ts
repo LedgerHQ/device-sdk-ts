@@ -110,7 +110,18 @@ export abstract class XStateDeviceAction<
     internalApi: InternalApi,
   ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
     const stateMachine = this.makeStateMachine(internalApi);
+    return this._subscribeToStateMachine(stateMachine);
+  }
 
+  protected _subscribeToStateMachine(
+    stateMachine: DeviceActionStateMachine<
+      Output,
+      Input,
+      Error,
+      IntermediateValue,
+      InternalState
+    >,
+  ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
     const actor = createActor(stateMachine, {
       input: this.input,
       // optional inspector for debugging

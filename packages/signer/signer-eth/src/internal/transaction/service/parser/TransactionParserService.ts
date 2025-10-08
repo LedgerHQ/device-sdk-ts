@@ -2,6 +2,7 @@ import type {
   DataPathElement,
   DataPathElementSlice,
   GenericPath,
+  TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
   ContainerPath,
@@ -9,12 +10,10 @@ import {
   DataPathLeafType,
 } from "@ledgerhq/context-module";
 import {
-  bufferToHexaString,
   ByteArrayBuilder,
   ByteArrayParser,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import { Transaction } from "ethers";
 import { injectable } from "inversify";
 import { Either, Left, Maybe, Right } from "purify-ts";
 
@@ -76,49 +75,46 @@ const CHUNK_SIZE = 32;
 @injectable()
 export class TransactionParserService {
   public extractValue(
-    serializedTransaction: Uint8Array,
+    subset: TransactionSubset,
     path: GenericPath,
   ): Either<Error, Uint8Array[]> {
-    return Either.encase(() =>
-      Transaction.from(bufferToHexaString(serializedTransaction)),
-    ).chain((transaction) => {
-      /**
-       * We can first check container paths, which are in the transaction envelop
-       */
-      if (path === ContainerPath.FROM) {
-        // 'from' is not part of the unsigned ethereum transaction, and can
-        // only by recovered from the transaction signature later on.
-        // Therefore we cannot extract it from a transaction before signing it.
-        // It is not an issue since that field will typically be displayed as an
-        // address on the device and therefore don't require additional descriptors.
-        return Left(
-          new Error("Cannot get 'FROM' field of an unsigned transaction"),
-        );
-      } else if (path === ContainerPath.TO) {
-        return Maybe.fromNullable(transaction.to)
-          .map((str) => hexaStringToBuffer(str))
-          .filter((bytes) => bytes !== null)
-          .map((bytes) => [bytes])
-          .toEither(new Error("Faild to extract TO field of transaction"));
-      } else if (path === ContainerPath.VALUE) {
-        return Maybe.fromNullable(transaction.value)
-          .map((num) => new ByteArrayBuilder().add256BitUIntToData(num).build())
-          .map((bytes) => [bytes])
-          .toEither(new Error("Faild to extract VALUE field of transaction"));
-      }
+    const { to, data, value } = subset;
+    /**
+     * We can first check container paths, which are in the transaction envelop
+     */
+    if (path === ContainerPath.FROM) {
+      // 'from' is not part of the unsigned ethereum transaction, and can
+      // only by recovered from the transaction signature later on.
+      // Therefore we cannot extract it from a transaction before signing it.
+      // It is not an issue since that field will typically be displayed as an
+      // address on the device and therefore don't require additional descriptors.
+      return Left(
+        new Error("Cannot get 'FROM' field of an unsigned transaction"),
+      );
+    } else if (path === ContainerPath.TO) {
+      return Maybe.fromNullable(to)
+        .map((str) => hexaStringToBuffer(str))
+        .filter((bytes) => bytes !== null)
+        .map((bytes) => [bytes])
+        .toEither(new Error("Failed to extract TO field of transaction"));
+    } else if (path === ContainerPath.VALUE) {
+      return Maybe.fromNullable(value)
+        .map((num) => new ByteArrayBuilder().add256BitUIntToData(num).build())
+        .map((bytes) => [bytes])
+        .toEither(new Error("Failed to extract VALUE field of transaction"));
+    }
 
-      /**
-       * If it was not a path in the container, it means it's a path in the calldata
-       */
-      return Maybe.fromNullable(transaction.data)
-        .toEither(new Error("Transaction calldata is empty"))
-        .chain((calldata) =>
-          Maybe.fromNullable(hexaStringToBuffer(calldata)).toEither(
-            new Error(`Invalid hex string calldata: ${calldata}`),
-          ),
-        )
-        .chain((calldata) => this.extractCalldataValue(calldata, path));
-    });
+    /**
+     * If it was not a path in the container, it means it's a path in the calldata
+     */
+    return Maybe.fromNullable(data)
+      .toEither(new Error("Transaction calldata is empty"))
+      .chain((calldata) =>
+        Maybe.fromNullable(hexaStringToBuffer(calldata)).toEither(
+          new Error(`Invalid hex string calldata: ${calldata}`),
+        ),
+      )
+      .chain((calldata) => this.extractCalldataValue(calldata, path));
   }
 
   private extractCalldataValue(

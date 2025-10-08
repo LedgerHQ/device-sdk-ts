@@ -1,7 +1,9 @@
 import { type Either } from "purify-ts";
 
 import {
+  type TypedDataCalldataIndex,
   type TypedDataFilter,
+  type TypedDataFilterCalldataInfo,
   type TypedDataMessageInfo,
 } from "@/shared/model/TypedDataClearSignContext";
 import { type TypedDataSchema } from "@/shared/model/TypedDataContext";
@@ -16,6 +18,7 @@ export type GetTypedDataFiltersParams = {
 export type GetTypedDataFiltersResult = {
   messageInfo: TypedDataMessageInfo;
   filters: TypedDataFilter[];
+  calldatasInfos: Record<TypedDataCalldataIndex, TypedDataFilterCalldataInfo>;
 };
 
 export interface TypedDataDataSource {

@@ -1,15 +1,126 @@
 # Migration from 0.6.1 to 0.6.2
 
-We made some breaking changes to the Device Management Kit in 0.6.2 which are detailed below.
+This guide walks you through migrating your Device Management Kit integration from version 0.6.1 to 0.6.2.
 
-## Api changes
+## Before you start
 
-- `listenToKnownDevices` has been replaced by `listenToAvailableDevices`.
-- `toggleDeviceSessionRefresher` has been replaced by `disableDeviceSessionRefresher`.
-
-## Impacts
-
-Must be used along with the following transports:
+Ensure you have the following minimum transport versions:
 
 - `@ledgerhq/device-transport-kit-web-hid`: `>= 1.1.0`
 - `@ledgerhq/device-transport-kit-web-ble`: `>= 1.1.0`
+
+## Step 1: Update device discovery method
+
+The `listenToKnownDevices` method has been replaced with `listenToAvailableDevices`, which now includes additional functionality like RSSI field support and transport scoping.
+
+### Before (v0.6.1)
+
+```typescript
+// This method no longer exists
+dmk.listenToKnownDevices().subscribe((devices) => {
+  console.log("Discovered devices:", devices);
+});
+```
+
+### After (v0.6.2)
+
+```typescript
+// Listen to all available devices from all transports
+dmk.listenToAvailableDevices({}).subscribe((devices) => {
+  console.log("Available devices:", devices);
+  // Each device now includes an rssi field for BLE devices
+});
+
+// Or scope to a specific transport
+dmk.listenToAvailableDevices({ transport: "web-hid" }).subscribe((devices) => {
+  console.log("Web HID devices:", devices);
+});
+```
+
+## Step 2: Update session refresher control
+
+The `toggleDeviceSessionRefresher` method has been replaced with `disableDeviceSessionRefresher`, which provides more granular control and returns a function to re-enable the refresher.
+
+### Before (v0.6.1)
+
+```typescript
+// This method no longer exists
+dmk.toggleDeviceSessionRefresher(sessionId, isDisabled);
+```
+
+### After (v0.6.2)
+
+```typescript
+// Disable the refresher and get a function to re-enable it
+const enableRefresher = dmk.disableDeviceSessionRefresher({
+  sessionId: "your-session-id",
+  blockerId: "your-unique-blocker-id", // Used to identify this specific disable request
+});
+
+// Later, re-enable the refresher when done
+enableRefresher();
+```
+
+### Example usage
+
+```typescript
+async function performLongRunningOperation(sessionId: string) {
+  // Disable refresher during the operation
+  const enableRefresher = dmk.disableDeviceSessionRefresher({
+    sessionId,
+    blockerId: "long-operation",
+  });
+
+  try {
+    // Perform your operation that requires the refresher to be disabled
+    await someDeviceOperation();
+  } finally {
+    // Always re-enable the refresher
+    enableRefresher();
+  }
+}
+```
+
+## Step 3: Update your package.json
+
+Update your transport dependencies to the minimum required versions:
+
+```json
+{
+  "dependencies": {
+    "@ledgerhq/device-management-kit": "^0.6.2",
+    "@ledgerhq/device-transport-kit-web-hid": "^1.1.0",
+    "@ledgerhq/device-transport-kit-web-ble": "^1.1.0"
+  }
+}
+```
+
+## What changed
+
+### Enhanced device discovery
+
+- **New method name**: `listenToAvailableDevices` replaces `listenToKnownDevices`
+- **Transport scoping**: You can now limit discovery to specific transports
+- **RSSI support**: BLE devices now include signal strength information
+- **Improved reliability**: Better handling of multiple transport scenarios
+
+### Improved refresher control
+
+- **New method name**: `disableDeviceSessionRefresher` replaces `toggleDeviceSessionRefresher`
+- **Blocker ID system**: Multiple components can disable the refresher independently
+- **Automatic cleanup**: The returned function ensures proper re-enabling
+- **Better error handling**: Clearer error messages when sessions are not found
+
+## Troubleshooting
+
+### "listenToKnownDevices is not a function"
+
+Replace all instances of `listenToKnownDevices` with `listenToAvailableDevices({})`.
+
+### "toggleDeviceSessionRefresher is not a function"
+
+Replace `toggleDeviceSessionRefresher` calls with `disableDeviceSessionRefresher` and handle the returned re-enable function.
+
+### Transport compatibility issues
+
+Ensure your transport packages are updated to the minimum required versions listed above.

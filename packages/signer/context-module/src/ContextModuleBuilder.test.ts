@@ -5,7 +5,10 @@ import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleB
 import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
+  type ContextModuleDatasourceConfig,
+  type ContextModuleMetadataServiceConfig,
 } from "./config/model/ContextModuleConfig";
+import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -21,6 +24,11 @@ describe("ContextModuleBuilder", () => {
   const defaultBuilderArgs: ContextModuleConstructorArgs = {
     originToken: "test",
   };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
   it("should return a default context module", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
@@ -31,7 +39,10 @@ describe("ContextModuleBuilder", () => {
 
   it("should return a custom context module", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
-    const customLoader = { load: vi.fn() };
+    const customLoader: ContextLoader = {
+      load: vi.fn(),
+      canHandle: vi.fn() as unknown as ContextLoader["canHandle"],
+    };
 
     const res = contextModuleBuilder
       .removeDefaultLoaders()
@@ -59,8 +70,8 @@ describe("ContextModuleBuilder", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
     const res = contextModuleBuilder
-      .addCalConfig(defaultCalConfig)
-      .addWeb3ChecksConfig(defaultWeb3ChecksConfig)
+      .setCalConfig(defaultCalConfig)
+      .setWeb3ChecksConfig(defaultWeb3ChecksConfig)
       .build();
     // @ts-expect-error _container is private
     const config = (res["_container"] as Container).get<ContextModuleConfig>(
@@ -106,5 +117,192 @@ describe("ContextModuleBuilder", () => {
     expect(() =>
       contextModuleBuilder.addWeb3CheckLoader({ load: vi.fn() }).build(),
     ).not.toThrow();
+  });
+
+  describe("setMetadataServiceConfig", () => {
+    it("should set the metadata service configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customMetadataConfig: ContextModuleMetadataServiceConfig = {
+        url: "https://custom-metadata-service.com/v3",
+      };
+
+      const res = contextModuleBuilder
+        .setMetadataServiceConfig(customMetadataConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.metadataServiceDomain).toEqual(customMetadataConfig);
+    });
+
+    it("should override the default metadata service configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customMetadataConfig: ContextModuleMetadataServiceConfig = {
+        url: "https://override-metadata-service.com/v1",
+      };
+
+      const res = contextModuleBuilder
+        .setMetadataServiceConfig(customMetadataConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(config.metadataServiceDomain.url).toBe(customMetadataConfig.url);
+      expect(config.metadataServiceDomain.url).not.toBe(
+        "https://nft.api.live.ledger.com/v2",
+      );
+    });
+  });
+
+  describe("setCalConfig", () => {
+    it("should set the CAL configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customCalConfig: ContextModuleCalConfig = {
+        url: "https://custom-cal-service.com/v2",
+        mode: "test",
+        branch: "next",
+      };
+
+      const res = contextModuleBuilder.setCalConfig(customCalConfig).build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.cal).toEqual(customCalConfig);
+    });
+
+    it("should override the default CAL configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customCalConfig: ContextModuleCalConfig = {
+        url: "https://override-cal-service.com/v1",
+        mode: "prod",
+        branch: "demo",
+      };
+
+      const res = contextModuleBuilder.setCalConfig(customCalConfig).build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(config.cal.url).toBe(customCalConfig.url);
+      expect(config.cal.mode).toBe(customCalConfig.mode);
+      expect(config.cal.branch).toBe(customCalConfig.branch);
+      expect(config.cal.url).not.toBe(
+        "https://crypto-assets-service.api.ledger.com/v1",
+      );
+    });
+  });
+
+  describe("setWeb3ChecksConfig", () => {
+    it("should set the web3 checks configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customWeb3ChecksConfig = {
+        url: "https://custom-web3checks-service.com/v4",
+      };
+
+      const res = contextModuleBuilder
+        .setWeb3ChecksConfig(customWeb3ChecksConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.web3checks).toEqual(customWeb3ChecksConfig);
+    });
+
+    it("should override the default web3 checks configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customWeb3ChecksConfig = {
+        url: "https://override-web3checks-service.com/v2",
+      };
+
+      const res = contextModuleBuilder
+        .setWeb3ChecksConfig(customWeb3ChecksConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(config.web3checks.url).toBe(customWeb3ChecksConfig.url);
+      expect(config.web3checks.url).not.toBe(
+        "https://web3checks-backend.api.ledger.com/v3",
+      );
+    });
+  });
+
+  describe("setDatasourceConfig", () => {
+    it("should set the datasource configuration with safe proxy", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {
+        proxy: "safe",
+      };
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.datasource).toEqual(customDatasourceConfig);
+      expect(config.datasource?.proxy).toBe("safe");
+    });
+
+    it("should set the datasource configuration with default proxy", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {
+        proxy: "default",
+      };
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.datasource).toEqual(customDatasourceConfig);
+      expect(config.datasource?.proxy).toBe("default");
+    });
+
+    it("should override the default datasource configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {
+        proxy: "safe",
+      };
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(config.datasource?.proxy).toBe("safe");
+      expect(config.datasource).not.toBeUndefined();
+    });
+
+    it("should set an empty datasource configuration", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDatasourceConfig: ContextModuleDatasourceConfig = {};
+
+      const res = contextModuleBuilder
+        .setDatasourceConfig(customDatasourceConfig)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.datasource).toEqual(customDatasourceConfig);
+      expect(config.datasource?.proxy).toBeUndefined();
+    });
   });
 });

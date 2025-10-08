@@ -1,7 +1,8 @@
 export type TransactionSubset = {
   chainId: number;
+  data: string;
+  selector: string;
   to?: string;
-  data?: string;
+  value?: bigint;
   from?: string;
-  rawTx?: string;
 };

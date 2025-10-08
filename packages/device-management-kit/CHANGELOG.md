@@ -1,5 +1,51 @@
 # @ledgerhq/device-management-kit
 
+## 0.9.1
+
+### Patch Changes
+
+- [#1040](https://github.com/LedgerHQ/device-sdk-ts/pull/1040) [`b0ea450`](https://github.com/LedgerHQ/device-sdk-ts/commit/b0ea45093703aa9f62b032092884f06f376fe325) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - GetDeviceStatus should not depend on the refresher
+
+## 0.9.0
+
+### Minor Changes
+
+- [#1014](https://github.com/LedgerHQ/device-sdk-ts/pull/1014) [`4337fdd`](https://github.com/LedgerHQ/device-sdk-ts/commit/4337fdd960531554935daf8c5c4f84d8f4973f7d) Thanks [@valpinkman](https://github.com/valpinkman)! - New api on DeviceManagementKit to check if the transports support the running environment
+
+### Patch Changes
+
+- [#966](https://github.com/LedgerHQ/device-sdk-ts/pull/966) [`a6a6e31`](https://github.com/LedgerHQ/device-sdk-ts/commit/a6a6e316705cd8754474991a8f0753064ba66bd9) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Use final BLE ids for Apex
+
+- [#979](https://github.com/LedgerHQ/device-sdk-ts/pull/979) [`b1d8e58`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1d8e58de5f513bad5eb8eb8f804fc2cbeeb4c17) Thanks [@thesan](https://github.com/thesan)! - Enable no device authentication
+
+- [#1017](https://github.com/LedgerHQ/device-sdk-ts/pull/1017) [`0cd8a18`](https://github.com/LedgerHQ/device-sdk-ts/commit/0cd8a18fa676a7d8e6ed950fd3a12c43f6532402) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Modify Apex id to match backend
+
+## 0.8.0
+
+### Minor Changes
+
+- [#949](https://github.com/LedgerHQ/device-sdk-ts/pull/949) [`090a3ab`](https://github.com/LedgerHQ/device-sdk-ts/commit/090a3ab350f3341b4222971a003738836e635e28) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix transport framer when payload size fits exactly a frame
+
+- [#937](https://github.com/LedgerHQ/device-sdk-ts/pull/937) [`efac23f`](https://github.com/LedgerHQ/device-sdk-ts/commit/efac23fc8164d23d27713f30e40e575693d536d4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix current app detection for old firmwares
+
+- [#907](https://github.com/LedgerHQ/device-sdk-ts/pull/907) [`2a047a8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2a047a8c2eb23a6c3833eeb42e35a43f902f9a8a) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Adapt DeviceConnectionStateMachine to IO revamp OS
+
+### Patch Changes
+
+- [#869](https://github.com/LedgerHQ/device-sdk-ts/pull/869) [`62486e7`](https://github.com/LedgerHQ/device-sdk-ts/commit/62486e7c92998afd0831f19192c8a8dd1bb8d10e) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Should throw an error when app minVersion is not found in catalog
+
+- [#883](https://github.com/LedgerHQ/device-sdk-ts/pull/883) [`b164403`](https://github.com/LedgerHQ/device-sdk-ts/commit/b16440340617576b0fe4e0db9d8d345a7f37e5cd) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Improve SecureChannel errors management and typing
+
+- [#855](https://github.com/LedgerHQ/device-sdk-ts/pull/855) [`40bfafc`](https://github.com/LedgerHQ/device-sdk-ts/commit/40bfafcb467723c1364b149e336bc7450d8cf376) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Add new error class SendApduEmptyResponseError
+
+- [#928](https://github.com/LedgerHQ/device-sdk-ts/pull/928) [`0df32be`](https://github.com/LedgerHQ/device-sdk-ts/commit/0df32bef22cbfab7bfde2ee5341225b19147543f) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Support Apex device (BLE identifiers of early OS)
+
+- [#882](https://github.com/LedgerHQ/device-sdk-ts/pull/882) [`d090358`](https://github.com/LedgerHQ/device-sdk-ts/commit/d0903582af8a6f0a2df35dcef7b457f3f730a0f4) Thanks [@jdabbech-ledger](https://github.com/jdabbech-ledger)! - Allow to send an apdu with expected disconnection
+
+- [#884](https://github.com/LedgerHQ/device-sdk-ts/pull/884) [`f1c1949`](https://github.com/LedgerHQ/device-sdk-ts/commit/f1c1949d288cee1369a34978c6e13b1be99e8712) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add unit tests for DeviceConnection state machine
+
+- [#890](https://github.com/LedgerHQ/device-sdk-ts/pull/890) [`ccbf2ef`](https://github.com/LedgerHQ/device-sdk-ts/commit/ccbf2ef37d5d8831711f5e995d25d4697cf250ab) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Handle transport disconnection during successful OpenApp
+
 ## 0.7.0
 
 ### Minor Changes

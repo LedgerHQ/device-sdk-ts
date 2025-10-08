@@ -87,6 +87,24 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
         },
       ],
     }),
+    [DeviceModelId.APEX]: new TransportDeviceModel({
+      id: DeviceModelId.APEX,
+      productName: "Ledger Apex",
+      usbProductId: 0x80,
+      bootloaderUsbProductId: 0x0008,
+      usbOnly: false,
+      memorySize: 1533 * 1024,
+      blockSize: 32,
+      masks: [0x33400000],
+      bluetoothSpec: [
+        {
+          serviceUuid: "13d63400-2c97-8004-0000-4c6564676572",
+          notifyUuid: "13d63400-2c97-8004-0001-4c6564676572",
+          writeUuid: "13d63400-2c97-8004-0002-4c6564676572",
+          writeCmdUuid: "13d63400-2c97-8004-0003-4c6564676572",
+        },
+      ],
+    }),
   };
 
   getAllDeviceModels(): TransportDeviceModel[] {

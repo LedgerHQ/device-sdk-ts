@@ -9,8 +9,10 @@ describe("StaticDeviceModelDataSource", () => {
       const dataSource = new StaticDeviceModelDataSource();
       const deviceModels = dataSource.getAllDeviceModels();
 
-      // Currently supporting 4 device models
-      expect(deviceModels.length).toEqual(5);
+      expect(deviceModels.length).toEqual(6);
+      expect(deviceModels).toContainEqual(
+        expect.objectContaining({ id: DeviceModelId.APEX }),
+      );
       expect(deviceModels).toContainEqual(
         expect.objectContaining({ id: DeviceModelId.NANO_S }),
       );
@@ -179,6 +181,13 @@ describe("StaticDeviceModelDataSource", () => {
           "13d63400-2c97-3004-0003-4c6564676572",
           "13d63400-2c97-3004-0001-4c6564676572",
         ),
+        "13d63400-2c97-8004-0000-4c6564676572": new BleDeviceInfos(
+          dataSource.getDeviceModel({ id: DeviceModelId.APEX }),
+          "13d63400-2c97-8004-0000-4c6564676572",
+          "13d63400-2c97-8004-0002-4c6564676572",
+          "13d63400-2c97-8004-0003-4c6564676572",
+          "13d63400-2c97-8004-0001-4c6564676572",
+        ),
       });
     });
   });
@@ -193,6 +202,7 @@ describe("StaticDeviceModelDataSource", () => {
         "13d63400-2c97-0004-0000-4c6564676572",
         "13d63400-2c97-6004-0000-4c6564676572",
         "13d63400-2c97-3004-0000-4c6564676572",
+        "13d63400-2c97-8004-0000-4c6564676572",
       ]);
     });
   });

@@ -13,13 +13,11 @@ import {
   type SecureChannelEvent,
   SecureChannelEventType,
 } from "@api/secure-channel/task/types";
-import {
-  isRefusedByUser,
-  willRequestPermission,
-} from "@api/secure-channel/utils";
+import { willRequestPermission } from "@api/secure-channel/utils";
 import { bufferToHexaString, hexaStringToBuffer } from "@api/utils/HexaString";
 import {
   SecureChannelError,
+  SecureChannelErrorType,
   type WebSocketConnectionError,
 } from "@internal/secure-channel/model/Errors";
 
@@ -49,10 +47,19 @@ export class ConnectToSecureChannelTask {
 
     const obs = new Observable<SecureChannelEvent>((subscriber) => {
       let unsubscribed: boolean = false;
-      let inBulkMode = false;
+      let ignoreNetworkEvents = false;
       let communicationFinished = false;
-      let deviceError: SecureChannelError | null = null;
-      let waitingForUserAction = false;
+
+      const notifyError = (error: SecureChannelError) => {
+        subscriber.next({
+          type: SecureChannelEventType.Error,
+          error,
+        });
+        subscriber.complete();
+
+        // Netowrks events can be ignored once the obervable has been completed
+        ignoreNetworkEvents = true;
+      };
 
       this._connection.onopen = () => {
         subscriber.next({
@@ -61,22 +68,22 @@ export class ConnectToSecureChannelTask {
       };
 
       this._connection.onerror = (error) => {
-        // When the bulk sending is in progress, network error is ignored
-        if (inBulkMode) {
+        if (ignoreNetworkEvents) {
           return;
         }
 
-        subscriber.error(
-          new SecureChannelError({
+        subscriber.next({
+          type: SecureChannelEventType.Error,
+          error: new SecureChannelError({
             url: this._connection.url,
             errorMessage: error.message,
           }),
-        );
+        });
+        subscriber.complete();
       };
 
       this._connection.onclose = () => {
-        // When the bulk sending is in progress, network event is ignored
-        if (inBulkMode) {
+        if (ignoreNetworkEvents) {
           return;
         }
 
@@ -84,17 +91,16 @@ export class ConnectToSecureChannelTask {
           subscriber.next({
             type: SecureChannelEventType.Closed,
           });
-          subscriber.complete();
         } else {
-          subscriber.error(
-            new SecureChannelError(
-              deviceError ?? {
-                url: this._connection.url,
-                errorMessage: "Connection closed unexpectedly",
-              },
-            ),
-          );
+          subscriber.next({
+            type: SecureChannelEventType.Error,
+            error: new SecureChannelError({
+              url: this._connection.url,
+              errorMessage: "Connection closed unexpectedly",
+            }),
+          });
         }
+        subscriber.complete();
       };
 
       this._connection.onmessage = async (event) => {
@@ -102,223 +108,212 @@ export class ConnectToSecureChannelTask {
         if (unsubscribed) {
           return;
         }
-        deviceError = null;
 
+        // Parse input message
+        let input: InMessageType;
         try {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          const input: InMessageType = JSON.parse(String(event.data));
+          const jsonData = JSON.parse(String(event.data));
+          if (this.isInMessageType(jsonData)) {
+            input = jsonData;
+          } else {
+            throw new Error("Data does not match InMessageType");
+          }
+        } catch (_) {
+          notifyError(
+            new SecureChannelError({
+              url: this._connection.url,
+              errorMessage: `Invalid message received: ${String(event.data)}`,
+            }),
+          );
+          return;
+        }
 
-          switch (input.query) {
-            case InMessageQueryEnum.EXCHANGE: {
-              const { nonce } = input;
+        // Execute message query
+        switch (input.query) {
+          case InMessageQueryEnum.EXCHANGE: {
+            const { nonce, data } = input;
 
-              if (Array.isArray(input.data)) {
-                subscriber.error(
-                  new SecureChannelError(
-                    `${InMessageQueryEnum.EXCHANGE} data type should not be Array`,
-                  ),
-                );
-                break;
-              }
+            // Exchange query should contain a single APDU
+            if (typeof data !== "string") {
+              notifyError(
+                new SecureChannelError(
+                  `${InMessageQueryEnum.EXCHANGE} data type should be an APDU`,
+                ),
+              );
+              return;
+            }
 
-              const apdu = hexaStringToBuffer(input.data);
+            // APDU should be a valid hex string
+            const apdu = hexaStringToBuffer(data);
+            if (apdu === null || apdu.length < 5) {
+              notifyError(
+                new SecureChannelError(`Received invalid APDU data: ${data}`),
+              );
+              return;
+            }
+            subscriber.next({
+              type: SecureChannelEventType.PreExchange,
+              payload: { nonce, apdu },
+            });
 
-              if (apdu === null || apdu.length < 5) {
-                subscriber.error(
-                  new SecureChannelError(
-                    `Received invalid APDU data: ${input.data}`,
-                  ),
-                );
-                break;
-              }
-
+            // Notify permission requested
+            let permissionRequested = false;
+            if (
+              willRequestPermission(apdu) &&
+              !this.isSecureConnectionAllowed()
+            ) {
+              permissionRequested = true;
               subscriber.next({
-                type: SecureChannelEventType.PreExchange,
-                payload: { nonce, apdu },
+                type: SecureChannelEventType.PermissionRequested,
               });
+            }
 
-              if (
-                willRequestPermission(apdu) &&
-                !this.isSecureConnectionAllowed()
-              ) {
-                waitingForUserAction = true;
-                subscriber.next({
-                  type: SecureChannelEventType.PermissionRequested,
-                });
+            // Send APDU to the device
+            const response = await this._api.sendApdu(apdu);
+            if (unsubscribed) {
+              return;
+            }
+
+            // Map device response
+            response.caseOf({
+              Left: (error) => {
+                notifyError(new SecureChannelError(error));
+              },
+              Right: (apduResponse: ApduResponse) => {
+                let outMessageResponse: OutMessageResponseEnum;
+                const deviceError = this.mapDeviceError(apduResponse);
+                if (deviceError === null) {
+                  outMessageResponse = OutMessageResponseEnum.SUCCESS;
+
+                  // Emit event for the exchange
+                  subscriber.next({
+                    type: SecureChannelEventType.Exchange,
+                    payload: {
+                      nonce,
+                      apdu,
+                      data: apduResponse.data,
+                      status: apduResponse.statusCode,
+                    },
+                  });
+
+                  // If manager consent was requested, notify the "granted" event
+                  if (permissionRequested) {
+                    subscriber.next({
+                      type: SecureChannelEventType.PermissionGranted,
+                    });
+                  }
+                } else {
+                  outMessageResponse = OutMessageResponseEnum.ERROR;
+                  notifyError(deviceError);
+                }
+
+                // Send the message back to the server
+                const message: OutMessageType = {
+                  nonce,
+                  response: outMessageResponse,
+                  data: bufferToHexaString(apduResponse.data, false),
+                };
+                this._connection.send(JSON.stringify(message));
+              },
+            });
+            break;
+          }
+          case InMessageQueryEnum.BULK: {
+            // Network not needed anymore during bulk APDUs sending
+            ignoreNetworkEvents = true;
+            this._connection.close();
+
+            // A valid array of APDUs is required in a bulk query
+            if (
+              !Array.isArray(input.data) ||
+              input.data.length === 0 ||
+              !input.data.every((data) => typeof data === "string")
+            ) {
+              notifyError(new SecureChannelError("Invalid bulk data received"));
+              return;
+            }
+
+            for (let i = 0, len = input.data.length; i < len; i++) {
+              // APDU should be a valid hex string
+              const apdu = hexaStringToBuffer(input.data[i]!);
+              if (apdu === null || apdu.length < 5) {
+                notifyError(
+                  new SecureChannelError(
+                    `Received invalid APDU bulk data: ${input.data[i]}`,
+                  ),
+                );
+                return;
               }
 
+              // Send APDU to the device
               const response = await this._api.sendApdu(apdu);
-
               if (unsubscribed) {
                 return;
               }
 
-              response.caseOf({
-                Left: (error) => {
-                  subscriber.error(new SecureChannelError(error));
-                },
-                Right: (apduResponse: ApduResponse) => {
-                  let outMessageResponse: OutMessageResponseEnum;
-                  /**
-                   * | Status Code | Description                        | Event Emitted                      |
-                   * |-------------|------------------------------------|------------------------------------|
-                   * | 0x9000      | Success                            | SecureChannelEventEnum.Exchange    |
-                   * | 0x5515      | Device is locked                   | Error                              |
-                   * | 0x5501      | User refused on the device         | Error                              |
-                   * | 0x6985      | Condition of use not satisfied     | Error                              |
-                   */
-                  // Success response
-                  if (CommandUtils.isSuccessResponse(apduResponse)) {
-                    outMessageResponse = OutMessageResponseEnum.SUCCESS;
-                    // Emit event for the exchange
-                    subscriber.next({
-                      type: SecureChannelEventType.Exchange,
-                      payload: {
-                        nonce,
-                        apdu,
-                        data: apduResponse.data,
-                        status: apduResponse.statusCode,
-                      },
-                    });
-                  } else {
-                    outMessageResponse = OutMessageResponseEnum.ERROR;
-
-                    deviceError = new SecureChannelError({
-                      url: this._connection.url,
-                      errorMessage: `Invalid status code: ${bufferToHexaString(
-                        apduResponse.statusCode,
-                      )}`,
-                    });
-
-                    // Device is locked
-                    if (CommandUtils.isLockedDeviceResponse(apduResponse)) {
-                      subscriber.error(
-                        new SecureChannelError({
-                          url: this._connection.url,
-                          errorMessage: `Device is locked`,
-                        }),
-                      );
-                      return;
-                    }
-
-                    // User refused the permission
-                    if (
-                      isRefusedByUser(apduResponse.statusCode) &&
-                      waitingForUserAction
-                    ) {
-                      subscriber.error(
-                        new SecureChannelError({
-                          url: this._connection.url,
-                          errorMessage: "User refused on the device",
-                        }),
-                      );
-                      return;
-                    }
-                  }
-
-                  if (waitingForUserAction) {
-                    subscriber.next({
-                      type: SecureChannelEventType.PermissionGranted,
-                    });
-                    waitingForUserAction = false;
-                  }
-
-                  // Send the message back to the server
-                  const message: OutMessageType = {
-                    nonce,
-                    response: outMessageResponse,
-                    data: bufferToHexaString(apduResponse.data).slice(2),
-                  };
-                  this._connection.send(JSON.stringify(message));
-                },
-              });
-              break;
-            }
-            case InMessageQueryEnum.BULK: {
-              inBulkMode = true;
-              this._connection.close();
-
-              if (!Array.isArray(input.data) || input.data.length === 0) {
-                subscriber.error(
-                  new SecureChannelError("Invalid bulk data received"),
-                );
-                break;
-              }
-
-              const apdus = input.data.reduce(
-                (acc: Array<Uint8Array>, cur: string) => {
-                  const apdu = hexaStringToBuffer(cur);
-                  return apdu === null ? acc : [...acc, apdu];
-                },
-                [],
-              );
-
-              for (let i = 0, len = apdus.length; i < len; i++) {
-                await this._api.sendApdu(apdus[i]!);
-                if (unsubscribed) {
-                  subscriber.error(
-                    new SecureChannelError(
-                      "Bulk sending cancelled by unsubscribing",
-                    ),
-                  );
-                  break;
+              // Map device response
+              if (response.isLeft()) {
+                notifyError(new SecureChannelError(response.extract()));
+                return;
+              } else if (response.isRight()) {
+                const deviceError = this.mapDeviceError(response.extract());
+                if (deviceError === null) {
+                  // Notify the progress
+                  subscriber.next({
+                    type: SecureChannelEventType.Progress,
+                    payload: {
+                      progress: +Number((i + 1) / len).toFixed(2),
+                      index: i,
+                      total: len,
+                    },
+                  });
+                } else {
+                  notifyError(deviceError);
+                  return;
                 }
-                subscriber.next({
-                  type: SecureChannelEventType.Progress,
-                  payload: {
-                    progress: +Number((i + 1) / len).toFixed(2),
-                    index: i,
-                    total: len,
-                  },
-                });
               }
-              communicationFinished = true;
-              subscriber.complete();
-              break;
             }
-            case InMessageQueryEnum.SUCCESS: {
-              // Ignore success message when in bulk mode
-              if (inBulkMode) {
-                break;
-              }
-              // Emit the result if there is any
-              const payload = input.result ?? input.data;
-              if (payload) {
-                subscriber.next({
-                  type: SecureChannelEventType.Result,
-                  payload: payload ?? "",
-                });
-              }
-              communicationFinished = true;
-              subscriber.complete();
-              break;
-            }
-            case InMessageQueryEnum.WARNING: {
-              // Ignore warning message when in bulk mode
-              if (inBulkMode) {
-                break;
-              }
-              subscriber.next({
-                type: SecureChannelEventType.Warning,
-                payload: { message: String(input.data) },
-              });
-              break;
-            }
-            case InMessageQueryEnum.ERROR: {
-              if (inBulkMode) {
-                break;
-              }
-              subscriber.error(
-                new SecureChannelError({
-                  url: this._connection.url,
-                  errorMessage: String(input.data),
-                }),
-              );
-            }
+            communicationFinished = true;
+            subscriber.complete();
+            break;
           }
-        } catch (error) {
-          deviceError = new SecureChannelError(error);
-          subscriber.error(deviceError);
+          case InMessageQueryEnum.SUCCESS: {
+            if (ignoreNetworkEvents) {
+              break;
+            }
+            // Emit the result if there is any
+            const payload = input.result ?? input.data;
+            if (payload) {
+              subscriber.next({
+                type: SecureChannelEventType.Result,
+                payload: payload ?? "",
+              });
+            }
+            communicationFinished = true;
+            subscriber.complete();
+            break;
+          }
+          case InMessageQueryEnum.WARNING: {
+            if (ignoreNetworkEvents) {
+              break;
+            }
+            subscriber.next({
+              type: SecureChannelEventType.Warning,
+              payload: { message: String(input.data) },
+            });
+            break;
+          }
+          case InMessageQueryEnum.ERROR: {
+            if (ignoreNetworkEvents) {
+              break;
+            }
+            notifyError(
+              new SecureChannelError({
+                url: this._connection.url,
+                errorMessage: String(input.data),
+              }),
+            );
+          }
         }
       };
 
@@ -346,5 +341,77 @@ export class ConnectToSecureChannelTask {
       "isSecureConnectionAllowed" in deviceSessionState &&
       deviceSessionState.isSecureConnectionAllowed
     );
+  }
+
+  isInMessageType(data: unknown): data is InMessageType {
+    if (typeof data !== "object" || !data) {
+      return false;
+    }
+
+    const message = data as InMessageType;
+    return (
+      typeof message.uuid === "string" &&
+      typeof message.session === "string" &&
+      typeof message.query === "string" &&
+      Object.values(InMessageQueryEnum).includes(message.query) &&
+      typeof message.nonce === "number"
+    );
+  }
+
+  mapDeviceError(apduResponse: ApduResponse): SecureChannelError | null {
+    if (CommandUtils.isSuccessResponse(apduResponse)) {
+      return null;
+    }
+
+    // Device is locked
+    if (CommandUtils.isLockedDeviceResponse(apduResponse)) {
+      return new SecureChannelError(
+        {
+          url: this._connection.url,
+          errorMessage: `Device is locked`,
+        },
+        SecureChannelErrorType.DeviceLocked,
+      );
+    }
+
+    // User refused the permission
+    if (CommandUtils.isRefusedByUser(apduResponse)) {
+      return new SecureChannelError(
+        {
+          url: this._connection.url,
+          errorMessage: "User refused on the device",
+        },
+        SecureChannelErrorType.RefusedByUser,
+      );
+    }
+
+    // App already installed
+    if (CommandUtils.isAppAlreadyInstalled(apduResponse)) {
+      return new SecureChannelError(
+        {
+          url: this._connection.url,
+          errorMessage: "App already installed",
+        },
+        SecureChannelErrorType.AppAlreadyInstalled,
+      );
+    }
+
+    // Out of memory
+    if (CommandUtils.isOutOfMemory(apduResponse)) {
+      return new SecureChannelError(
+        {
+          url: this._connection.url,
+          errorMessage: "Out of memory",
+        },
+        SecureChannelErrorType.OutOfMemory,
+      );
+    }
+
+    return new SecureChannelError({
+      url: this._connection.url,
+      errorMessage: `Invalid status code: ${bufferToHexaString(
+        apduResponse.statusCode,
+      )}`,
+    });
   }
 }

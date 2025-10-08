@@ -18,7 +18,7 @@ import { Observable } from "rxjs";
 import { getObservableOfArraysNewItems } from "@api/helpers/getObservableOfArraysNewItems";
 import { TRANSPORT_IDENTIFIER } from "@api/transport/rnHidTransportIdentifier";
 
-import { SendApduError } from "./Errors";
+import { HidTransportSendApduUnknownError } from "./Errors";
 import { type NativeModuleWrapper } from "./NativeModuleWrapper";
 
 export class RNHidTransport implements Transport {
@@ -125,10 +125,19 @@ export class RNHidTransport implements Transport {
             return new TransportConnectedDevice({
               id: sessionId,
               deviceModel,
-              sendApdu: async (apdu) => {
+              sendApdu: async (
+                apdu,
+                triggersDisconnection = false,
+                abortTimeout = -1,
+              ) => {
                 return this._nativeModuleWrapper
-                  .sendApdu(sessionId, apdu)
-                  .catch((e) => Left(new SendApduError(e)));
+                  .sendApdu(
+                    sessionId,
+                    apdu,
+                    triggersDisconnection,
+                    abortTimeout,
+                  )
+                  .catch((e) => Left(new HidTransportSendApduUnknownError(e)));
               },
               transport: this.getIdentifier(),
               type: "USB",

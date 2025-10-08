@@ -68,6 +68,15 @@ const animationDataMap: Record<DeviceModelId, Record<AnimationKey, unknown>> = {
     continueOnLedger: ContinueOnLedgerFlexDark,
     signTransaction: SignTransactionFlexDark,
   },
+  [DeviceModelId.APEX]: {
+    // TODO: add animations for APEX
+    pin: null,
+    pairing: null,
+    pairingSuccess: null,
+    frontView: null,
+    continueOnLedger: null,
+    signTransaction: null,
+  },
   [DeviceModelId.NANO_X]: {
     pin: PinNanoXDark,
     pairing: PairingNanoXDark,

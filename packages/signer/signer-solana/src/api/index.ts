@@ -1,4 +1,10 @@
 export type {
+  GenerateTransactionDAError,
+  GenerateTransactionDAIntermediateValue,
+  GenerateTransactionDAOutput,
+  GenerateTransactionDAReturnType,
+} from "@api/app-binder/GenerateTransactionDeviceActionTypes";
+export type {
   GetAddressDAError,
   GetAddressDAIntermediateValue,
   GetAddressDAOutput,
@@ -21,7 +27,9 @@ export type {
   SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type { Signature } from "@api/model/Signature";
+export type { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 export type { Transaction } from "@api/model/Transaction";
-export type { TransactionOptions } from "@api/model/TransactionOptions";
 export type { SignerSolana } from "@api/SignerSolana";
 export { SignerSolanaBuilder } from "@api/SignerSolanaBuilder";
+export type { SolanaTools } from "@api/SolanaTools";
+export { SolanaToolsBuilder } from "@api/SolanaToolsBuilder";

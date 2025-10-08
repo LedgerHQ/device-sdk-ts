@@ -13,7 +13,6 @@ export type OpenAppDAOutput = void;
 
 export type OpenAppDAInput = GetDeviceStatusDAInput & {
   readonly appName: string;
-  readonly compatibleAppNames?: string[];
 };
 
 export type OpenAppDAError =

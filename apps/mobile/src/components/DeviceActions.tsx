@@ -33,6 +33,11 @@ import {
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
   OpenAppDeviceAction,
+  type UninstallAppDAError,
+  type UninstallAppDAInput,
+  type UninstallAppDAIntermediateValue,
+  type UninstallAppDAOutput,
+  UninstallAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Flex, LegendInput } from "@ledgerhq/native-ui";
 
@@ -48,19 +53,9 @@ export const getDeviceActions = (
     title: "Open app",
     description:
       "Perform all the actions necessary to open an app on the device",
-    executeDeviceAction: (
-      { appName, unlockTimeout, compatibleAppNames },
-      inspect,
-    ) => {
-      const compatibleAppNamesArray: string[] = compatibleAppNames
-        .split(",")
-        .map(name => name.trim());
+    executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
       const deviceAction = new OpenAppDeviceAction({
-        input: {
-          appName,
-          unlockTimeout,
-          compatibleAppNames: compatibleAppNamesArray,
-        },
+        input: { appName, unlockTimeout },
         inspect,
       });
       return dmk.executeDeviceAction({
@@ -71,7 +66,6 @@ export const getDeviceActions = (
     initialValues: {
       appName: "",
       unlockTimeout: UNLOCK_TIMEOUT,
-      compatibleAppNames: "",
     },
     deviceModelId,
     FormComponent: ({ values, setValue }) => (
@@ -81,20 +75,11 @@ export const getDeviceActions = (
           value={values.appName}
           onChange={appName => setValue("appName", appName)}
         />
-        <LegendInput
-          legend="Compatible app names"
-          value={values.compatibleAppNames}
-          onChange={compatibleAppNames =>
-            setValue("compatibleAppNames", compatibleAppNames)
-          }
-        />
       </Flex>
     ),
   } satisfies DeviceActionProps<
     OpenAppDAOutput,
-    Omit<OpenAppDAInput, "compatibleAppNames"> & {
-      compatibleAppNames: string;
-    },
+    OpenAppDAInput,
     OpenAppDAError,
     OpenAppDAIntermediateValue
   >,
@@ -222,5 +207,37 @@ export const getDeviceActions = (
     InstallAppDAInput,
     InstallAppDAError,
     InstallAppDAIntermediateValue
+  >,
+  {
+    id: "uninstall_app",
+    title: "Uninstall App",
+    description:
+      "Perform all the actions necessary to uninstall an app on the device by name",
+    executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
+      const deviceAction = new UninstallAppDeviceAction({
+        input: { appName, unlockTimeout },
+        inspect,
+      });
+      return dmk.executeDeviceAction({
+        sessionId,
+        deviceAction,
+      });
+    },
+    initialValues: { appName: "", unlockTimeout: UNLOCK_TIMEOUT },
+    deviceModelId,
+    FormComponent: ({ values, setValue }) => (
+      <Flex>
+        <LegendInput
+          legend="App name"
+          value={values.appName}
+          onChange={appName => setValue("appName", appName)}
+        />
+      </Flex>
+    ),
+  } satisfies DeviceActionProps<
+    UninstallAppDAOutput,
+    UninstallAppDAInput,
+    UninstallAppDAError,
+    UninstallAppDAIntermediateValue
   >,
 ];

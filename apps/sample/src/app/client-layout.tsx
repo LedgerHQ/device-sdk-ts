@@ -11,6 +11,7 @@
 
 import React, { type PropsWithChildren } from "react";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
+import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { Header } from "@/components/Header";
@@ -18,8 +19,19 @@ import { Sidebar } from "@/components/Sidebar";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { DmkConfigProvider } from "@/providers/DmkConfig";
+import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
+
+const FloatingIcon = dynamic(
+  () =>
+    import("@/components/FloatingIcon").then((mod) => ({
+      default: mod.FloatingIcon,
+    })),
+  {
+    ssr: false,
+  },
+);
 
 const Root = styled(Flex)`
   flex-direction: row;
@@ -41,23 +53,26 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
       <DmkConfigProvider>
         <DmkProvider>
           <DeviceSessionsProvider>
-            <SignerEthProvider>
-              <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-                <GlobalStyle />
-                <head>
-                  <link rel="shortcut icon" href="../favicon.png" />
-                </head>
-                <body>
-                  <Root>
-                    <Sidebar />
-                    <PageContainer>
-                      <Header />
-                      {children}
-                    </PageContainer>
-                  </Root>
-                </body>
-              </StyleProvider>
-            </SignerEthProvider>
+            <LedgerKeyringProtocolProvider>
+              <SignerEthProvider>
+                <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+                  <GlobalStyle />
+                  <head>
+                    <link rel="shortcut icon" href="../favicon.png" />
+                  </head>
+                  <body>
+                    <Root>
+                      <Sidebar />
+                      <PageContainer>
+                        <Header />
+                        {children}
+                      </PageContainer>
+                      <FloatingIcon />
+                    </Root>
+                  </body>
+                </StyleProvider>
+              </SignerEthProvider>
+            </LedgerKeyringProtocolProvider>
           </DeviceSessionsProvider>
         </DmkProvider>
       </DmkConfigProvider>
