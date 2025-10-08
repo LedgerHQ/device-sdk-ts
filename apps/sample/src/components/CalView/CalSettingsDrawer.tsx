@@ -8,7 +8,7 @@ import {
   type ValueSelector,
 } from "@/components/CommandsView/CommandForm";
 import { type FieldType } from "@/hooks/useForm";
-import { useCalConfig } from "@/providers/SignerEthProvider";
+import { useCalConfig, useOriginToken } from "@/providers/SignerEthProvider";
 
 type CalSettingsDrawerProps = {
   onClose: () => void;
@@ -16,7 +16,11 @@ type CalSettingsDrawerProps = {
 
 export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
   const { calConfig, setCalConfig } = useCalConfig();
-  const [values, setValues] = useState<Record<string, FieldType>>(calConfig);
+  const { originToken, setOriginToken } = useOriginToken();
+  const [values, setValues] = useState<Record<string, FieldType>>({
+    ...calConfig,
+    originToken,
+  });
   const valueSelector: ValueSelector<FieldType> = {
     mode: [
       { label: "Production", value: "prod" },
@@ -32,10 +36,11 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
     url: "CAL URL",
     mode: "Mode",
     branch: "Branch reference",
+    originToken: "Origin Token",
   };
 
   const onSettingsUpdate = useCallback(() => {
-    const { url, mode, branch } = values;
+    const { url, mode, branch, originToken: token } = values;
     const isMode = (test: unknown): test is "prod" | "test" =>
       test === "prod" || test === "test";
     const isBranch = (test: unknown): test is "main" | "next" | "demo" =>
@@ -57,6 +62,11 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
       return;
     }
 
+    if (!token || typeof token !== "string") {
+      console.error("Invalid origin token", token);
+      return;
+    }
+
     const newSettings: ContextModuleCalConfig = {
       url,
       mode,
@@ -64,14 +74,15 @@ export function CalSettingsDrawer({ onClose }: CalSettingsDrawerProps) {
     };
 
     setCalConfig(newSettings);
+    setOriginToken(token);
     onClose();
-  }, [onClose, setCalConfig, values]);
+  }, [onClose, setCalConfig, setOriginToken, values]);
 
   return (
     <Block>
       <Flex flexDirection="column" rowGap={3}>
         <CommandForm
-          initialValues={calConfig}
+          initialValues={{ ...calConfig, originToken }}
           onChange={setValues}
           valueSelector={valueSelector}
           labelSelector={labelSelector}
