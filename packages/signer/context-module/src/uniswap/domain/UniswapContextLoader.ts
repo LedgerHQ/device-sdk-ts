@@ -71,7 +71,7 @@ export class UniswapContextLoader
       isHexaString(input.selector) &&
       input.selector === UNISWAP_EXECUTE_SELECTOR &&
       isHexaString(input.to) &&
-      input.to === UNISWAP_UNIVERSAL_ROUTER_ADDRESS &&
+      input.to.toLowerCase() === UNISWAP_UNIVERSAL_ROUTER_ADDRESS &&
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
