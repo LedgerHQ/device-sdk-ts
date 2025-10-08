@@ -1,5 +1,11 @@
 # @ledgerhq/context-module
 
+## 1.8.1
+
+### Patch Changes
+
+- [#1050](https://github.com/LedgerHQ/device-sdk-ts/pull/1050) [`95740df`](https://github.com/LedgerHQ/device-sdk-ts/commit/95740dfe0a475ce4540183594df630dfa3172e00) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fetch Uniswap plugin descriptor from the CAL
+
 ## 1.8.0
 
 ### Minor Changes
