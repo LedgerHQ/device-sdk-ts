@@ -98,9 +98,6 @@ export class RNBleApduSender
     maybeApduResponse
       .map((response) => {
         response.map((apduResponse) => {
-          this._logger.debug("Received APDU Response", {
-            data: { response: apduResponse },
-          });
           this._sendApduPromiseResolver.map((resolve) =>
             resolve(Right(apduResponse)),
           );
@@ -235,9 +232,6 @@ export class RNBleApduSender
     _triggersDisconnection?: boolean,
     abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
-    this._logger.debug("[sendApdu]", {
-      data: { apdu, abortTimeout },
-    });
     if (!this._isDeviceReady.value) {
       return Promise.resolve(
         Left(new DeviceNotInitializedError("Unknown MTU")),
