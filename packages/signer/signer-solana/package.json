@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-signer-kit-solana",
   "version": "1.3.0",
-  "private": true,
+  "private": false,
   "license": "Apache-2.0",
   "exports": {
     ".": {
