@@ -26,7 +26,7 @@ export class HttpTokenDataSource implements TokenDataSource {
         params: {
           contract_address: address,
           chain_id: chainId,
-          output: "descriptor,ticker",
+          output: "descriptor",
           ref: `branch:${this.config.cal.branch}`,
         },
         headers: {
@@ -37,7 +37,6 @@ export class HttpTokenDataSource implements TokenDataSource {
 
       if (
         !tokenInfos ||
-        !tokenInfos.ticker ||
         !tokenInfos.descriptor ||
         !tokenInfos.descriptor.data ||
         !tokenInfos.descriptor.signatures ||
@@ -51,8 +50,15 @@ export class HttpTokenDataSource implements TokenDataSource {
         );
       }
 
-      // 1 byte for the length of the ticker
-      const tickerLengthBuff = tokenInfos.ticker.length
+      // According to documentation: https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc#provide-erc-20-token-information
+      // Signed descriptor is composed of:
+      // ticker || address (20 bytes) || number of decimals (4 bytes) || chainId (4 bytes)
+      const tickerLengthBuff = (
+        tokenInfos.descriptor.data.length / 2 -
+        20 -
+        4 -
+        4
+      )
         .toString(16)
         .padStart(2, "0");
 
