@@ -12,17 +12,9 @@ import {
 } from "@/shared/model/ClearSignContext";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import { tokenTypes } from "@/token/di/tokenTypes";
-import { uniswapTypes } from "@/uniswap/di/uniswapTypes";
-import type { UniswapContextLoader } from "@/uniswap/domain/UniswapContextLoader";
 
 export type ExternalPluginContextInput = {
   to: HexaString;
-  data: HexaString;
-  selector: HexaString;
-  chainId: number;
-};
-
-export type ExternalPluginTokensInput = {
   data: HexaString;
   selector: HexaString;
   chainId: number;
@@ -37,22 +29,16 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 export class ExternalPluginContextLoader
   implements ContextLoader<ExternalPluginContextInput>
 {
-  private _customPluginLoaders: Record<
-    string,
-    ContextLoader<ExternalPluginTokensInput>
-  >;
+  private _externalPluginDataSource: ExternalPluginDataSource;
+  private _tokenDataSource: TokenDataSource;
 
   constructor(
     @inject(externalPluginTypes.ExternalPluginDataSource)
-    private _externalPluginDataSource: ExternalPluginDataSource,
-    @inject(tokenTypes.TokenDataSource)
-    private _tokenDataSource: TokenDataSource,
-    @inject(uniswapTypes.UniswapContextLoader)
-    private _uniswapLoader: UniswapContextLoader,
+    externalPluginDataSource: ExternalPluginDataSource,
+    @inject(tokenTypes.TokenDataSource) tokenDataSource: TokenDataSource,
   ) {
-    this._customPluginLoaders = {
-      Uniswap: this._uniswapLoader,
-    };
+    this._externalPluginDataSource = externalPluginDataSource;
+    this._tokenDataSource = tokenDataSource;
   }
 
   canHandle(
@@ -101,16 +87,6 @@ export class ExternalPluginContextLoader
           dappInfos.selectorDetails.signature,
         ),
       };
-
-      const customLoader =
-        this._customPluginLoaders[dappInfos.selectorDetails.plugin];
-      if (
-        customLoader !== undefined &&
-        customLoader.canHandle(input, [ClearSignContextType.TOKEN])
-      ) {
-        const tokens = await customLoader.load(input);
-        return [externalPluginContext, ...tokens];
-      }
 
       const decodedCallData = this.getDecodedCallData(
         dappInfos.abi,

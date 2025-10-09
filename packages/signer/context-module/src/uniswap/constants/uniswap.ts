@@ -4,6 +4,8 @@ export const UNISWAP_EXECUTE_ABI = [
   "function execute(bytes calldata commands, bytes[] calldata inputs, uint256 deadline) external payable",
 ];
 
+export const UNISWAP_UNIVERSAL_ROUTER_ADDRESS =
+  "0x3fc91a3afd70395cd496c647d5a6cc9d4b2b7fad";
 export const UNISWAP_EXECUTE_SELECTOR = "0x3593564c";
 
 export enum UniswapSupportedCommand {

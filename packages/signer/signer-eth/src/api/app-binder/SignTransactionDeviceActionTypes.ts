@@ -24,6 +24,7 @@ import { type TransactionParserService } from "@internal/transaction/service/par
 export enum SignTransactionDAStep {
   OPEN_APP = "signer.eth.steps.openApp",
   GET_APP_CONFIG = "signer.eth.steps.getAppConfig",
+  GET_ADDRESS = "signer.eth.steps.getAddress",
   WEB3_CHECKS_OPT_IN = "signer.eth.steps.web3ChecksOptIn",
   WEB3_CHECKS_OPT_IN_RESULT = "signer.eth.steps.web3ChecksOptInResult",
   PARSE_TRANSACTION = "signer.eth.steps.parseTransaction",

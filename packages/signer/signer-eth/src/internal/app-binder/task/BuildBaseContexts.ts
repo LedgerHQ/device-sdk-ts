@@ -16,10 +16,6 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import {
-  GetWeb3CheckTask,
-  type GetWeb3CheckTaskArgs,
-} from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
@@ -28,6 +24,11 @@ const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.ENUM,
   ClearSignContextType.PROXY_INFO,
 ];
+
+const FULL_CONTEXT_TYPES_FILTER_WITHOUT_TRANSACTION_CHECK: ClearSignContextType[] =
+  Object.values(ClearSignContextType).filter(
+    (type) => type !== ClearSignContextType.TRANSACTION_CHECK,
+  );
 
 export type BuildBaseContextsResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
@@ -39,7 +40,6 @@ export type BuildBaseContextsArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionOptions;
   readonly appConfig: GetConfigCommandResponse;
-  readonly derivationPath: string;
   readonly subset: TransactionSubset;
   readonly transaction?: Uint8Array;
 };
@@ -48,7 +48,6 @@ export type BuildBaseContextsArgs = {
  * Builds the base contexts for a transaction
  * @param api - The internal API
  * @param args - The arguments for the build
- * @param getWeb3ChecksFactory - The factory for the web3 checks
  *
  * returns the base contexts for a transaction, without subcontexts or nested call data contexts
  */
@@ -56,21 +55,11 @@ export class BuildBaseContexts {
   constructor(
     private readonly _api: InternalApi,
     private readonly _args: BuildBaseContextsArgs,
-    private readonly getWeb3ChecksFactory = (
-      api: InternalApi,
-      args: GetWeb3CheckTaskArgs,
-    ) => new GetWeb3CheckTask(api, args),
   ) {}
 
   async run(): Promise<BuildBaseContextsResult> {
-    const {
-      contextModule,
-      options,
-      appConfig,
-      derivationPath,
-      transaction,
-      subset,
-    } = this._args;
+    const { contextModule, options, appConfig, transaction, subset } =
+      this._args;
     const isNestedCallData = transaction === undefined;
     const deviceState = this._api.getDeviceSessionState();
 
@@ -85,6 +74,12 @@ export class BuildBaseContexts {
       }
     }
 
+    const contextsToFetch = isNestedCallData
+      ? NESTED_CALLDATA_CONTEXT_TYPES_FILTER
+      : appConfig.web3ChecksEnabled
+        ? undefined // undefined means all contexts
+        : FULL_CONTEXT_TYPES_FILTER_WITHOUT_TRANSACTION_CHECK;
+
     // Get the clear sign contexts
     const clearSignContexts: ClearSignContext[] =
       await contextModule.getContexts(
@@ -92,25 +87,11 @@ export class BuildBaseContexts {
           challenge: challenge,
           domain: options.domain,
           deviceModelId: deviceState.deviceModelId,
+          transaction: isNestedCallData ? undefined : transaction,
           ...subset,
         },
-        isNestedCallData ? NESTED_CALLDATA_CONTEXT_TYPES_FILTER : undefined,
+        contextsToFetch,
       );
-
-    // Run the web3checks if needed
-    if (transaction && appConfig.web3ChecksEnabled) {
-      const web3CheckContext = (
-        await this.getWeb3ChecksFactory(this._api, {
-          contextModule,
-          derivationPath,
-          subset,
-          transaction,
-        }).run()
-      ).web3Check;
-      if (web3CheckContext) {
-        clearSignContexts.unshift(web3CheckContext);
-      }
-    }
 
     // filter out the error contexts
     const contextsSuccess: ClearSignContextSuccess[] = clearSignContexts.filter(
@@ -166,7 +147,7 @@ export class BuildBaseContexts {
     type,
   }: ClearSignContextSuccess): boolean {
     switch (type) {
-      case ClearSignContextType.WEB3_CHECK:
+      case ClearSignContextType.TRANSACTION_CHECK:
       case ClearSignContextType.PLUGIN:
       case ClearSignContextType.EXTERNAL_PLUGIN:
       case ClearSignContextType.DYNAMIC_NETWORK:
@@ -194,9 +175,9 @@ export class BuildBaseContexts {
       case ClearSignContextType.TRANSACTION_INFO:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.PROXY_INFO:
-      case ClearSignContextType.WEB3_CHECK:
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.TRANSACTION_CHECK:
         return true;
       case ClearSignContextType.ENUM: // enum is needed but as optional
       case ClearSignContextType.TRUSTED_NAME:
@@ -241,7 +222,7 @@ export class BuildBaseContexts {
    */
   private _getContextPriority({ type }: ClearSignContextSuccess): number {
     switch (type) {
-      case ClearSignContextType.WEB3_CHECK:
+      case ClearSignContextType.TRANSACTION_CHECK:
         return 10;
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:

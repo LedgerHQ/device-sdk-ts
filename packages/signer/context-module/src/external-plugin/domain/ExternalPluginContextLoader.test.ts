@@ -11,7 +11,6 @@ import { type DappInfos } from "@/external-plugin/model/DappInfos";
 import { type SelectorDetails } from "@/external-plugin/model/SelectorDetails";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
-import { type UniswapContextLoader } from "@/uniswap/domain/UniswapContextLoader";
 
 const dappInfosBuilder = ({
   abi,
@@ -55,14 +54,9 @@ describe("ExternalPluginContextLoader", () => {
   const mockExternalPluginDataSource: ExternalPluginDataSource = {
     getDappInfos: vi.fn(),
   };
-  const mockUniswapLoader: UniswapContextLoader = {
-    canHandle: vi.fn(),
-    load: vi.fn(),
-  } as unknown as UniswapContextLoader;
   const loader = new ExternalPluginContextLoader(
     mockExternalPluginDataSource,
     mockTokenDataSource,
-    mockUniswapLoader,
   );
 
   beforeEach(() => {
@@ -184,7 +178,6 @@ describe("ExternalPluginContextLoader", () => {
         selectorDetails: {
           erc20OfInterest: [],
           method: "singleParam",
-          plugin: "TestPlugin",
         },
       });
       const input = inputBuilder(ABI, "singleParam", [
@@ -198,7 +191,6 @@ describe("ExternalPluginContextLoader", () => {
       const result = await loader.load(input);
 
       // THEN
-      expect(mockUniswapLoader.canHandle).not.toHaveBeenCalled();
       expect(result).toEqual([
         {
           type: ClearSignContextType.EXTERNAL_PLUGIN,
@@ -214,7 +206,6 @@ describe("ExternalPluginContextLoader", () => {
         selectorDetails: {
           erc20OfInterest: ["fromToken"],
           method: "singleParam",
-          plugin: "TestPlugin",
         },
       });
       const input = inputBuilder(ABI, "singleParam", [
@@ -228,7 +219,6 @@ describe("ExternalPluginContextLoader", () => {
       const result = await loader.load(input);
 
       // THEN
-      expect(mockUniswapLoader.canHandle).not.toHaveBeenCalled();
       expect(result).toEqual(
         expect.arrayContaining([
           {
@@ -266,7 +256,6 @@ describe("ExternalPluginContextLoader", () => {
       const result = await loader.load(input);
 
       // THEN
-      expect(mockUniswapLoader.canHandle).not.toHaveBeenCalled();
       expect(result).toEqual([
         {
           type: ClearSignContextType.ERROR,
@@ -578,88 +567,6 @@ describe("ExternalPluginContextLoader", () => {
         {
           type: ClearSignContextType.EXTERNAL_PLUGIN,
           payload: "1234567890",
-        },
-      ]);
-    });
-
-    it("should return a plugin with Uniswap not being able to load token", async () => {
-      // GIVEN
-      const dappInfos = dappInfosBuilder({
-        abi: ABI,
-        selectorDetails: {
-          erc20OfInterest: [],
-          method: "singleParam",
-          plugin: "Uniswap",
-        },
-      });
-      const input = inputBuilder(ABI, "singleParam", [
-        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-      ]);
-      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
-        Right(dappInfos),
-      );
-      vi.spyOn(mockUniswapLoader, "canHandle").mockReturnValueOnce(false);
-
-      // WHEN
-      const result = await loader.load(input);
-
-      // THEN
-      expect(mockUniswapLoader.canHandle).toHaveBeenCalled();
-      expect(mockUniswapLoader.load).not.toHaveBeenCalled();
-      expect(result).toEqual([
-        {
-          type: ClearSignContextType.EXTERNAL_PLUGIN,
-          payload: "1234567890",
-        },
-      ]);
-    });
-
-    it("should return a plugin with Uniswap extracted tokens", async () => {
-      // GIVEN
-      const dappInfos = dappInfosBuilder({
-        abi: ABI,
-        selectorDetails: {
-          erc20OfInterest: [],
-          method: "singleParam",
-          plugin: "Uniswap",
-        },
-      });
-      const input = inputBuilder(ABI, "singleParam", [
-        "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-      ]);
-      vi.spyOn(mockExternalPluginDataSource, "getDappInfos").mockResolvedValue(
-        Right(dappInfos),
-      );
-      vi.spyOn(mockUniswapLoader, "canHandle").mockReturnValueOnce(true);
-      vi.spyOn(mockUniswapLoader, "load").mockResolvedValue([
-        {
-          type: ClearSignContextType.TOKEN,
-          payload: "payload-0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE",
-        },
-        {
-          type: ClearSignContextType.TOKEN,
-          payload: "payload-0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
-        },
-      ]);
-
-      // WHEN
-      const result = await loader.load(input);
-
-      // THEN
-      expect(mockUniswapLoader.canHandle).toHaveBeenCalled();
-      expect(mockUniswapLoader.load).toHaveBeenCalled();
-      expect(result).toEqual([
-        {
-          type: ClearSignContextType.EXTERNAL_PLUGIN,
-          payload: "1234567890",
-        },
-        {
-          type: ClearSignContextType.TOKEN,
-          payload: "payload-0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE",
-        },
-        {
-          type: ClearSignContextType.TOKEN,
-          payload: "payload-0xB8c77482e45F1F44dE1745F52C74426C631bDD52",
         },
       ]);
     });

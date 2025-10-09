@@ -273,7 +273,7 @@ describe("ProvideContextsTask", () => {
       it.each([
         [ClearSignContextType.ENUM, ProvideEnumCommand],
         [ClearSignContextType.TRUSTED_NAME, ProvideTrustedNameCommand],
-        [ClearSignContextType.WEB3_CHECK, ProvideWeb3CheckCommand],
+        [ClearSignContextType.TRANSACTION_CHECK, ProvideWeb3CheckCommand],
         [
           ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,

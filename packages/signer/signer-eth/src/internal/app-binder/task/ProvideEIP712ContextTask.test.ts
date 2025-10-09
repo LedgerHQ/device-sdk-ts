@@ -8,14 +8,12 @@ import {
   CommandResultFactory,
   DeviceModelId,
   hexaStringToBuffer,
-  LoadCertificateCommand,
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
 import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import {
   CalldataParamPresence,
   Eip712FilterType,
@@ -51,7 +49,6 @@ describe("ProvideEIP712ContextTask", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
-    getWeb3Checks: vi.fn(),
     getSolanaContext: vi.fn(),
   };
 
@@ -236,7 +233,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -350,12 +346,45 @@ describe("ProvideEIP712ContextTask", () => {
     );
   });
 
+  it("Send context with transaction check", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Nothing,
+      calldatasContexts: {},
+      transactionChecks: {
+        type: ClearSignContextType.TRANSACTION_CHECK,
+        payload: "transactionCheck",
+        certificate: {
+          keyUsageNumber: 1,
+          payload: new Uint8Array([0x01, 0x02, 0x03]),
+        },
+      },
+    };
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    expect(apiMock.sendCommand.mock.calls).toHaveLength(25);
+  });
+
   it("Send context with clear signing", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -560,7 +589,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -624,7 +652,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -844,7 +871,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -898,7 +924,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -960,7 +985,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -988,98 +1012,11 @@ describe("ProvideEIP712ContextTask", () => {
     );
   });
 
-  it("Provide Web3Check", async () => {
-    // GIVEN
-    const web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> =
-      {
-        type: ClearSignContextType.WEB3_CHECK,
-        payload: "0x010203",
-      };
-    const args: ProvideEIP712ContextTaskArgs = {
-      deviceModelId: DeviceModelId.STAX,
-      derivationPath: "44'/60'/0'/0/0",
-      web3Check,
-      types: TEST_TYPES,
-      domain: TEST_DOMAIN_VALUES,
-      message: TEST_MESSAGE_VALUES,
-      clearSignContext: Nothing,
-      calldatasContexts: {},
-    };
-
-    // WHEN
-    apiMock.sendCommand.mockResolvedValue(
-      CommandResultFactory({ data: undefined }),
-    );
-    await new ProvideEIP712ContextTask(
-      apiMock,
-      contextModuleMock,
-      args,
-      provideContextFactoryMock,
-    ).run();
-
-    // THEN
-    expect(apiMock.sendCommand).toHaveBeenCalledWith(
-      new ProvideWeb3CheckCommand({
-        payload: hexaStringToBuffer("0x0003010203")!,
-        isFirstChunk: true,
-      }),
-    );
-  });
-
-  it("Provide Web3Check and certificate", async () => {
-    // GIVEN
-    const web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> =
-      {
-        type: ClearSignContextType.WEB3_CHECK,
-        certificate: {
-          keyUsageNumber: 3,
-          payload: new Uint8Array(3).fill(42),
-        },
-        payload: "0x010203",
-      };
-    const args: ProvideEIP712ContextTaskArgs = {
-      deviceModelId: DeviceModelId.STAX,
-      derivationPath: "44'/60'/0'/0/0",
-      web3Check,
-      types: TEST_TYPES,
-      domain: TEST_DOMAIN_VALUES,
-      message: TEST_MESSAGE_VALUES,
-      clearSignContext: Nothing,
-      calldatasContexts: {},
-    };
-
-    // WHEN
-    apiMock.sendCommand.mockResolvedValue(
-      CommandResultFactory({ data: undefined }),
-    );
-    await new ProvideEIP712ContextTask(
-      apiMock,
-      contextModuleMock,
-      args,
-      provideContextFactoryMock,
-    ).run();
-
-    // THEN
-    expect(apiMock.sendCommand).toHaveBeenCalledWith(
-      new LoadCertificateCommand({
-        keyUsage: 3,
-        certificate: web3Check.certificate!.payload,
-      }),
-    );
-    expect(apiMock.sendCommand).toHaveBeenCalledWith(
-      new ProvideWeb3CheckCommand({
-        payload: hexaStringToBuffer("0x0003010203")!,
-        isFirstChunk: true,
-      }),
-    );
-  });
-
   it("Error when providing tokens", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -1112,7 +1049,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -1147,7 +1083,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -1195,7 +1130,6 @@ describe("ProvideEIP712ContextTask", () => {
     const args: ProvideEIP712ContextTaskArgs = {
       deviceModelId: DeviceModelId.STAX,
       derivationPath: "44'/60'/0'/0/0",
-      web3Check: null,
       types: {},
       domain: [],
       message: [
