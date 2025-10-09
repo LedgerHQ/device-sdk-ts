@@ -72,7 +72,7 @@ export type ProvideEIP712ContextTaskArgs = {
   message: Array<TypedDataValue>;
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
   calldatasContexts: Record<TypedDataCalldataIndex, ContextWithSubContexts[]>;
-  web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
+  transactionChecks?: ClearSignContextSuccess;
 };
 
 const DEVICE_ASSETS_MAX = 5;
@@ -117,13 +117,13 @@ export class ProvideEIP712ContextTask {
   }
 
   async run(): ProvideEIP712ContextTaskReturnType {
-    // Send message simulation first
-    if (this.args.web3Check) {
-      await this.provideContext(this.args.web3Check);
+    // Provide the transaction checks first if any
+    if (this.args.transactionChecks) {
+      await this.provideContext(this.args.transactionChecks);
     }
 
     // Send proxy descriptor first if required
-    await this.args.clearSignContext.ifJust(async (clearSignContext) => {
+    this.args.clearSignContext.ifJust(async (clearSignContext) => {
       if (clearSignContext.proxy !== undefined) {
         await this.provideContext(clearSignContext.proxy);
       }
@@ -298,7 +298,7 @@ export class ProvideEIP712ContextTask {
     }
 
     switch (type) {
-      case ClearSignContextType.WEB3_CHECK:
+      case ClearSignContextType.TRANSACTION_CHECK:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>

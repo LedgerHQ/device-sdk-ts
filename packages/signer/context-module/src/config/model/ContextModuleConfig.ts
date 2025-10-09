@@ -2,7 +2,6 @@ import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
-import { type Web3CheckContextLoader } from "@/web3-check/domain/Web3CheckContextLoader";
 
 export type ContextModuleCalMode = "prod" | "test";
 export type ContextModuleCalBranch = "next" | "main" | "demo";
@@ -34,7 +33,6 @@ export type ContextModuleConfig = {
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
-  customWeb3CheckLoader?: Web3CheckContextLoader;
   customSolanaLoader?: SolanaContextLoader;
   originToken?: string;
   datasource?: ContextModuleDatasourceConfig;

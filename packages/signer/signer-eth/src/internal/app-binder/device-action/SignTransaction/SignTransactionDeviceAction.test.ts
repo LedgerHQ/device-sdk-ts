@@ -57,12 +57,10 @@ describe("SignTransactionDeviceAction", () => {
       SignTransactionDAIntermediateValue
     >
   >;
-  const contextModuleMock: ContextModule = {
+  const contextModuleMock = {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
-    getWeb3Checks: vi.fn(),
-    getSolanaContext: vi.fn(),
   };
   const mapperMock: TransactionMapperService = {
     mapTransactionToSubset: vi.fn(),
@@ -76,6 +74,7 @@ describe("SignTransactionDeviceAction", () => {
   const buildContextsMock = vi.fn();
   const provideContextsMock = vi.fn();
   const signTransactionMock = vi.fn();
+  const getAddressMock = vi.fn();
   function extractDependenciesMock() {
     return {
       getAppConfig: getAppConfigMock,
@@ -84,6 +83,7 @@ describe("SignTransactionDeviceAction", () => {
       buildContexts: buildContextsMock,
       provideContexts: provideContextsMock,
       signTransaction: signTransactionMock,
+      getAddress: getAddressMock,
     };
   }
   const apiMock = makeDeviceActionInternalApiMock();
@@ -104,6 +104,7 @@ describe("SignTransactionDeviceAction", () => {
     to: "0x",
     value: 0n,
   };
+  const defaultAddress = "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619";
 
   function createAppConfig(
     version: string,
@@ -173,6 +174,11 @@ describe("SignTransactionDeviceAction", () => {
         vi.resetAllMocks();
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: defaultAddress },
+          }),
+        );
 
         // Mock the dependencies to return some sample data
         parseTransactionMock.mockResolvedValueOnce({
@@ -199,7 +205,7 @@ describe("SignTransactionDeviceAction", () => {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: defaultOptions,
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -249,9 +255,16 @@ describe("SignTransactionDeviceAction", () => {
         );
       });
 
-      it("should build context", async () => {
+      it("should get address", async () => {
         const { steps } = await executeUntilStep(4, observable);
         expect(getStep(steps, 4).intermediateValue.step).toBe(
+          SignTransactionDAStep.GET_ADDRESS,
+        );
+      });
+
+      it("should build context", async () => {
+        const { steps } = await executeUntilStep(5, observable);
+        expect(getStep(steps, 5).intermediateValue.step).toBe(
           SignTransactionDAStep.BUILD_CONTEXTS,
         );
         expect(buildContextsMock).toHaveBeenCalledTimes(1);
@@ -263,7 +276,7 @@ describe("SignTransactionDeviceAction", () => {
               parser: parserMock,
               mapper: mapperMock,
               options: defaultOptions,
-              subset: defaultSubset,
+              subset: { ...defaultSubset, from: defaultAddress },
               transaction: defaultTransaction,
               appConfig: createAppConfig("1.15.0", false, false),
               derivationPath: "44'/60'/0'/0/0",
@@ -274,8 +287,8 @@ describe("SignTransactionDeviceAction", () => {
       });
 
       it("should provide context", async () => {
-        const { steps } = await executeUntilStep(5, observable);
-        expect(getStep(steps, 5).intermediateValue.step).toBe(
+        const { steps } = await executeUntilStep(6, observable);
+        expect(getStep(steps, 6).intermediateValue.step).toBe(
           SignTransactionDAStep.PROVIDE_CONTEXTS,
         );
         expect(provideContextsMock).toHaveBeenCalledTimes(1);
@@ -292,8 +305,8 @@ describe("SignTransactionDeviceAction", () => {
       });
 
       it("should sign transaction", async () => {
-        const { steps } = await executeUntilStep(6, observable);
-        expect(getStep(steps, 6).intermediateValue.step).toBe(
+        const { steps } = await executeUntilStep(7, observable);
+        expect(getStep(steps, 7).intermediateValue.step).toBe(
           SignTransactionDAStep.SIGN_TRANSACTION,
         );
         expect(signTransactionMock).toHaveBeenCalledTimes(1);
@@ -329,13 +342,18 @@ describe("SignTransactionDeviceAction", () => {
         vi.resetAllMocks();
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: defaultAddress },
+          }),
+        );
 
         const deviceAction = new SignTransactionDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: { ...defaultOptions, skipOpenApp: true },
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -387,7 +405,7 @@ describe("SignTransactionDeviceAction", () => {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: defaultOptions,
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -429,7 +447,7 @@ describe("SignTransactionDeviceAction", () => {
             derivationPath: "44'/60'/0'/0/0",
             transaction: defaultTransaction,
             options: defaultOptions,
-            contextModule: contextModuleMock,
+            contextModule: contextModuleMock as unknown as ContextModule,
             mapper: mapperMock,
             parser: parserMock,
           },
@@ -476,7 +494,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -509,7 +527,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -540,7 +558,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -568,7 +586,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -585,6 +603,11 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { address: defaultAddress },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -623,7 +646,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -654,7 +677,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -666,6 +689,11 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { address: defaultAddress },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -710,7 +738,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -722,6 +750,11 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { address: defaultAddress },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -789,7 +822,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -801,6 +834,11 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { address: defaultAddress },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -837,7 +875,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -849,6 +887,11 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { address: defaultAddress },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -883,7 +926,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -895,6 +938,11 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { address: defaultAddress },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],
@@ -937,7 +985,7 @@ describe("SignTransactionDeviceAction", () => {
           derivationPath: "44'/60'/0'/0/0",
           transaction: defaultTransaction,
           options: defaultOptions,
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           mapper: mapperMock,
           parser: parserMock,
         },
@@ -949,6 +997,11 @@ describe("SignTransactionDeviceAction", () => {
         subset: defaultSubset,
         type: TransactionType.EIP1559,
       });
+      getAddressMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          data: { address: defaultAddress },
+        }),
+      );
       buildContextsMock.mockResolvedValueOnce({
         clearSignContexts: [],
         clearSignContextsOptional: [],

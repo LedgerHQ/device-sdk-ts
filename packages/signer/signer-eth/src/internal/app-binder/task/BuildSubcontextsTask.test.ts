@@ -58,7 +58,7 @@ describe("BuildSubcontextsTask", () => {
   describe("when context type is a simple type", () => {
     const simpleTypes: ClearSignContextSuccess["type"][] = [
       ClearSignContextType.TRANSACTION_INFO,
-      ClearSignContextType.WEB3_CHECK,
+      ClearSignContextType.TRANSACTION_CHECK,
       ClearSignContextType.PLUGIN,
       ClearSignContextType.EXTERNAL_PLUGIN,
       ClearSignContextType.DYNAMIC_NETWORK,
