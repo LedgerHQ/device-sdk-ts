@@ -223,6 +223,9 @@ export class ConnectToSecureChannelTask {
             ignoreNetworkEvents = true;
             this._connection.close();
 
+            const startTime = Date.now();
+            console.log("[ConnectToSecureChannelTask] BULK started");
+
             // A valid array of APDUs is required in a bulk query
             if (
               !Array.isArray(input.data) ||
@@ -273,6 +276,13 @@ export class ConnectToSecureChannelTask {
                 }
               }
             }
+
+            const endTime = Date.now();
+            console.log(
+              "[ConnectToSecureChannelTask] BULK finished in",
+              endTime - startTime,
+              "ms",
+            );
             communicationFinished = true;
             subscriber.complete();
             break;
