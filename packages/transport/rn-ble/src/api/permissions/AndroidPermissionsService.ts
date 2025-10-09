@@ -27,17 +27,10 @@ export class AndroidPermissionsService implements PermissionsService {
   async checkRequiredPermissions(): Promise<boolean> {
     const allPermissions = this.getRequiredPermissions();
 
-    console.log("[checkRequiredPermissions] allPermissions", allPermissions);
-
     const allPermissionsCheckResults = await Promise.all(
       allPermissions.map((permission) =>
         this._permissionsAndroid.check(permission),
       ),
-    );
-
-    console.log(
-      "[checkRequiredPermissions] allPermissionsCheckResults",
-      allPermissionsCheckResults,
     );
 
     const allPermissionsGranted = allPermissionsCheckResults.every(
@@ -50,15 +43,8 @@ export class AndroidPermissionsService implements PermissionsService {
   async requestRequiredPermissions(): Promise<boolean> {
     const allPermissions = this.getRequiredPermissions();
 
-    console.log("[requestRequiredPermissions] allPermissions", allPermissions);
-
     const allPermissionsRequestResults =
       await this._permissionsAndroid.requestMultiple(allPermissions);
-
-    console.log(
-      "[requestRequiredPermissions] allPermissionsRequestResults",
-      allPermissionsRequestResults,
-    );
 
     const allPermissionsGrantedAfterRequest = Object.values(
       allPermissionsRequestResults,
