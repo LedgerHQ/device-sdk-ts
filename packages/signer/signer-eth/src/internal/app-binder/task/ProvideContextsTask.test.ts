@@ -589,6 +589,49 @@ describe("ProvideContextsTask", () => {
           expect.any(ProvideTokenInformationCommand),
         );
       });
+
+      it("should provide the transaction context even after a subcontext failure", async () => {
+        // GIVEN
+        const args: ProvideContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+                payload: "payload",
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.TOKEN,
+                    payload: "payload",
+                  }),
+              ],
+            },
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+        };
+        sendPayloadInChunksRunMock.mockResolvedValue(successResult);
+        api.sendCommand.mockResolvedValue(errorResult);
+
+        // WHEN
+        const task = new ProvideContextsTask(
+          api,
+          args,
+          sendPayloadInChunksTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledTimes(1);
+        expect(sendPayloadInChunksRunMock).toHaveBeenCalledWith(api, {
+          payload: "payload",
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          commandFactory: expect.any(Function),
+        });
+      });
     });
 
     describe("with subcontexts and certificate", () => {

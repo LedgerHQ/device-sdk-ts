@@ -94,10 +94,8 @@ export class ProvideContextsTask {
           continue;
         }
 
-        const res = await this.provideContext(subcontext);
-        if (!isSuccessCommandResult(res)) {
-          return Left(res);
-        }
+        // Don't fail immediately on subcontext errors because the main context may still be successful
+        await this.provideContext(subcontext);
       }
 
       if (context.type === ClearSignContextType.PROXY_INFO) {
