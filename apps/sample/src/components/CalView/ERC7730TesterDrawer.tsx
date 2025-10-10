@@ -3,22 +3,17 @@ import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import { useCalInterceptor } from "@/providers/CalInterceptorProvider";
-import { useCalConfig } from "@/providers/SignerEthProvider";
 
-type ERC7730TesterDrawerProps = {
-  onClose: () => void;
-};
-
-export function ERC7730TesterDrawer({ onClose }: ERC7730TesterDrawerProps) {
+export function ERC7730TesterDrawer() {
   const {
     isActive,
     startInterception,
     stopInterception,
     storeDescriptor,
+    storeCertificates,
     clearStoredDescriptors,
     getStoredDescriptorCount,
   } = useCalInterceptor();
-  const { calConfig, setCalConfig } = useCalConfig();
 
   const [erc7730Input, setERC7730Input] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -68,24 +63,52 @@ export function ERC7730TesterDrawer({ onClose }: ERC7730TesterDrawerProps) {
       setDescriptorCount(getStoredDescriptorCount());
       setError(null);
       setIsLoading(false);
-      onClose();
+      setERC7730Input("");
+
+      // Activate interceptor if not already active
+      if (!isActive) {
+        startInterception();
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       setError(`Failed to add ERC7730 descriptor: ${errorMessage}`);
       setIsLoading(false);
     }
-  }, [erc7730Input, onClose]);
+  }, [
+    erc7730Input,
+    storeDescriptor,
+    getStoredDescriptorCount,
+    isActive,
+    startInterception,
+  ]);
 
+  // Fetch and store certificates when interceptor becomes active
   useEffect(() => {
     if (isActive) {
-      // Tester cannot work with prod signatures
-      setCalConfig({
-        ...calConfig,
-        mode: "test",
-      });
+      const fetchCertificates = async () => {
+        try {
+          console.log("Fetching CAL certificates...");
+          const response = await fetch("/api/certificates");
+
+          if (!response.ok) {
+            console.error(
+              `Failed to fetch certificates: HTTP ${response.status}`,
+            );
+            return;
+          }
+
+          const certificates = await response.json();
+          storeCertificates(certificates);
+          console.log("Certificates fetched and stored successfully");
+        } catch (error) {
+          console.error("Failed to fetch certificates:", error);
+        }
+      };
+
+      fetchCertificates();
     }
-  }, [isActive]);
+  }, [isActive, storeCertificates]);
 
   const toggleInterceptor = useCallback(() => {
     if (isActive) {
@@ -113,11 +136,14 @@ export function ERC7730TesterDrawer({ onClose }: ERC7730TesterDrawerProps) {
           >
             {isActive ? "Interceptor Active" : "Interceptor Inactive"}
           </Button>
-          {descriptorCount > 0 && (
-            <Button variant="main" onClick={handleClearDescriptors}>
-              Clear {descriptorCount} Stored Descriptors
-            </Button>
-          )}
+          <Button
+            variant="main"
+            onClick={handleClearDescriptors}
+            disabled={descriptorCount === 0}
+          >
+            Clear {descriptorCount} Stored Descriptor
+            {descriptorCount !== 1 ? "s" : ""}
+          </Button>
         </Flex>
 
         <Divider />

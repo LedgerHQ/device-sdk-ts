@@ -138,7 +138,7 @@ export const CalView = () => {
         title="ERC7730 Tester"
         description="Test ERC7730 descriptors with Speculos device emulator"
       >
-        <ERC7730TesterDrawer onClose={closeDrawers} />
+        <ERC7730TesterDrawer />
       </StyledDrawer>
     </PageWithHeader>
   );
