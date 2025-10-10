@@ -3,6 +3,7 @@ import React, { createContext, useCallback, useContext, useState } from "react";
 import { useXhrInterceptor } from "@/hooks/useXhrInterceptor";
 
 const STORAGE_KEY = "erc7730_descriptors";
+const CERTIFICATES_STORAGE_KEY = "cal_certificates";
 
 type CalInterceptorContextType = {
   isActive: boolean;
@@ -13,6 +14,7 @@ type CalInterceptorContextType = {
     address: string,
     descriptorData: unknown,
   ) => void;
+  storeCertificates: (certificates: Record<string, unknown>) => void;
   clearStoredDescriptors: () => void;
   getStoredDescriptorCount: () => number;
 };
@@ -22,6 +24,7 @@ const initialState: CalInterceptorContextType = {
   startInterception: () => {},
   stopInterception: () => {},
   storeDescriptor: () => {},
+  storeCertificates: () => {},
   clearStoredDescriptors: () => {},
   getStoredDescriptorCount: () => 0,
 };
@@ -78,11 +81,39 @@ export const CalInterceptorProvider: React.FC<{
     [getStoredDescriptors],
   );
 
-  // Clear all the descriptors from the local storage
+  // Get certificates from the local storage
+  const getStoredCertificates = useCallback((): Record<string, unknown> => {
+    try {
+      const stored = localStorage.getItem(CERTIFICATES_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : {};
+    } catch (error) {
+      console.error("Failed to read stored certificates:", error);
+      return {};
+    }
+  }, []);
+
+  // Store certificates in the local storage
+  const storeCertificates = useCallback(
+    (certificates: Record<string, unknown>) => {
+      try {
+        localStorage.setItem(
+          CERTIFICATES_STORAGE_KEY,
+          JSON.stringify(certificates),
+        );
+        console.log(`Stored ${Object.keys(certificates).length} certificates`);
+      } catch (error) {
+        console.error("Failed to store certificates:", error);
+      }
+    },
+    [],
+  );
+
+  // Clear all the descriptors and certificates from the local storage
   const clearStoredDescriptors = useCallback(() => {
     try {
       localStorage.removeItem(STORAGE_KEY);
-      console.log("Cleared all stored descriptors");
+      localStorage.removeItem(CERTIFICATES_STORAGE_KEY);
+      console.log("Cleared all stored descriptors and certificates");
     } catch (error) {
       console.error("Failed to clear descriptors:", error);
     }
@@ -116,6 +147,7 @@ export const CalInterceptorProvider: React.FC<{
         if (chainId && address) {
           const descriptors = getStoredDescriptors();
           const key = `${chainId}:${address.toLowerCase()}`;
+          console.log(`Intercepted dapps request for ${key}`);
           return JSON.stringify(descriptors[key]) || null;
         }
       } catch (error) {
@@ -126,13 +158,60 @@ export const CalInterceptorProvider: React.FC<{
     [getStoredDescriptors],
   );
 
+  // Certificates interceptor
+  const certificatesUrlPredicate = useCallback((url: string) => {
+    try {
+      const parsedUrl = new URL(url, window.location.origin);
+      return (
+        parsedUrl.origin.includes("crypto-assets-service") &&
+        parsedUrl.pathname.includes("/certificates") &&
+        parsedUrl.searchParams.get("output") === "descriptor"
+      );
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const modifyCertificatesResponse = useCallback(
+    (url: string) => {
+      try {
+        const parsedUrl = new URL(url, window.location.origin);
+        const targetDevice = parsedUrl.searchParams.get("target_device");
+        const publicKeyUsage = parsedUrl.searchParams.get("public_key_usage");
+        const publicKeyId = parsedUrl.searchParams.get("public_key_id");
+
+        if (targetDevice && publicKeyUsage && publicKeyId) {
+          const certificates = getStoredCertificates();
+
+          // Build the certificate key: target_device:public_key_id:public_key_usage
+          const key = `${targetDevice}:${publicKeyId}:${publicKeyUsage}`;
+          const certificate = certificates[key];
+          if (certificate) {
+            console.log(`Intercepted certificate request for ${key}`);
+            return JSON.stringify(certificate);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to parse certificate URL params:", error);
+      }
+      return null;
+    },
+    [getStoredCertificates],
+  );
+
   useXhrInterceptor(calUrlPredicate, modifyCalResponse, isActive);
+  useXhrInterceptor(
+    certificatesUrlPredicate,
+    modifyCertificatesResponse,
+    isActive,
+  );
 
   const contextValue: CalInterceptorContextType = {
     isActive,
     startInterception,
     stopInterception,
     storeDescriptor,
+    storeCertificates,
     clearStoredDescriptors,
     getStoredDescriptorCount,
   };
