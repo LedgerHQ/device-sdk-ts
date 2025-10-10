@@ -103,6 +103,7 @@ describe("BuildSubcontextsTask", () => {
       const expectedContext = {
         chainId: 1,
         address: "0x1234567890123456789012345678901234567890",
+        deviceModelId: DeviceModelId.STAX,
       };
 
       // WHEN
@@ -423,6 +424,7 @@ describe("BuildSubcontextsTask", () => {
             {
               chainId: 1,
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
+              deviceModelId: DeviceModelId.STAX,
             },
             ClearSignContextType.TOKEN,
           );
@@ -459,6 +461,7 @@ describe("BuildSubcontextsTask", () => {
             {
               chainId: 1,
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
+              deviceModelId: DeviceModelId.STAX,
             },
             ClearSignContextType.TOKEN,
           );
@@ -506,6 +509,7 @@ describe("BuildSubcontextsTask", () => {
             {
               chainId: 1,
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
+              deviceModelId: DeviceModelId.STAX,
             },
             ClearSignContextType.NFT,
           );
@@ -542,6 +546,7 @@ describe("BuildSubcontextsTask", () => {
             {
               chainId: 1,
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
+              deviceModelId: DeviceModelId.STAX,
             },
             ClearSignContextType.NFT,
           );
@@ -703,6 +708,7 @@ describe("BuildSubcontextsTask", () => {
             {
               chainId: 1,
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
+              deviceModelId: DeviceModelId.STAX,
             },
             ClearSignContextType.TOKEN,
           );
@@ -711,6 +717,7 @@ describe("BuildSubcontextsTask", () => {
             {
               chainId: 1,
               address: "0x232425262728292a2b2c2d2e2f30313233343536",
+              deviceModelId: DeviceModelId.STAX,
             },
             ClearSignContextType.TOKEN,
           );
@@ -1061,6 +1068,7 @@ describe("BuildSubcontextsTask", () => {
         {
           chainId: 1,
           address: "0x010203",
+          deviceModelId: DeviceModelId.STAX,
         },
         ClearSignContextType.TOKEN,
       );
@@ -1103,6 +1111,7 @@ describe("BuildSubcontextsTask", () => {
         {
           chainId: 1,
           address: "0x",
+          deviceModelId: DeviceModelId.STAX,
         },
         ClearSignContextType.TOKEN,
       );
