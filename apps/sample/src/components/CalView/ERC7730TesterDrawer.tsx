@@ -3,6 +3,7 @@ import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import { useCalInterceptor } from "@/providers/CalInterceptorProvider";
+import { useCalConfig } from "@/providers/SignerEthProvider";
 
 export function ERC7730TesterDrawer() {
   const {
@@ -14,6 +15,7 @@ export function ERC7730TesterDrawer() {
     clearStoredDescriptors,
     getStoredDescriptorCount,
   } = useCalInterceptor();
+  const { calConfig, setCalConfig } = useCalConfig();
 
   const [erc7730Input, setERC7730Input] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -23,6 +25,16 @@ export function ERC7730TesterDrawer() {
   useEffect(() => {
     setDescriptorCount(getStoredDescriptorCount());
   }, [getStoredDescriptorCount]);
+
+  // Set CAL config to test mode when interceptor becomes active
+  useEffect(() => {
+    if (isActive && calConfig.mode !== "test") {
+      setCalConfig({
+        ...calConfig,
+        mode: "test",
+      });
+    }
+  }, [isActive, calConfig, setCalConfig]);
 
   const addERC7730 = useCallback(async () => {
     if (!erc7730Input.trim()) {
@@ -134,10 +146,10 @@ export function ERC7730TesterDrawer() {
         </Text>
         <Flex flexDirection="row" flexWrap="wrap" rowGap={2} columnGap={2}>
           <Button
-            variant={isActive ? "shade" : "main"}
+            variant={isActive ? "error" : "color"}
             onClick={toggleInterceptor}
           >
-            {isActive ? "Interceptor Active" : "Interceptor Inactive"}
+            {isActive ? "Disable CAL interceptor" : "Enable CAL interceptor"}
           </Button>
           <Button
             variant="main"
