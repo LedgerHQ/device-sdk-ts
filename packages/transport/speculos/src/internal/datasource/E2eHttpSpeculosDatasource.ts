@@ -1,9 +1,4 @@
-import { type AxiosInstance } from "axios";
-
-import {
-  makeKeepAliveAxiosForSSE,
-  makeNoKeepAliveAxios,
-} from "@internal/utils/axiosInstances";
+import axios, { type AxiosInstance } from "axios";
 
 import { type E2eSpeculosDatasource } from "./E2eSpeculosDatasource";
 
@@ -16,6 +11,35 @@ export type SpeculosDeviceButtonsKeys =
   | "left"
   | "right"
   | "both";
+
+export function makeNoKeepAliveAxios(
+  baseUrl: string,
+  timeoutMs: number,
+  clientHeader: string,
+): AxiosInstance {
+  return axios.create({
+    baseURL: baseUrl.replace(/\/+$/, ""),
+    timeout: timeoutMs,
+    headers: {
+      "X-Ledger-Client-Version": clientHeader,
+    },
+    transitional: { clarifyTimeoutError: true },
+  });
+}
+
+export function makeKeepAliveAxiosForSSE(
+  baseUrl: string,
+  clientHeader: string,
+): AxiosInstance {
+  return axios.create({
+    baseURL: baseUrl.replace(/\/+$/, ""),
+    timeout: 0,
+    headers: {
+      "X-Ledger-Client-Version": clientHeader,
+    },
+    transitional: { clarifyTimeoutError: true },
+  });
+}
 
 export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
   private readonly apduClient: AxiosInstance;
@@ -33,11 +57,10 @@ export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
       Math.min(timeoutMs, 2000),
       clientHeader,
     );
-
     this.sseClient = makeKeepAliveAxiosForSSE(baseUrl, clientHeader);
   }
 
-  async postAdpu(apdu: string): Promise<string> {
+  async postApdu(apdu: string): Promise<string> {
     const { data } = await this.apduClient.post<SpeculosApduDTO>(
       "/apdu",
       { data: apdu },
@@ -63,43 +86,110 @@ export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
     );
   }
 
+  /**
+   * opens an SSE event stream using the Fetch API (browser)
+   * - calls `onEvent` for each "data: ..." line
+   * - calls `onClose` when stream ends or errors
+   * - returns the underlying ReadableStream so callers can `cancel()` it if needed
+   */
   async openEventStream(
     onEvent: (json: Record<string, unknown>) => void,
     onClose?: () => void,
-  ): Promise<NodeJS.ReadableStream> {
-    const response = await this.sseClient.get("/events", {
-      params: { stream: "true" },
-      responseType: "stream",
-      timeout: 0,
-      headers: {
-        Accept: "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
-        "Accept-Encoding": "identity",
-      },
+  ): Promise<ReadableStream<Uint8Array>> {
+    const urlBase = this.sseClient.defaults.baseURL ?? this.baseUrl;
+    const url = `${urlBase!.replace(/\/+$/, "")}/events?stream=true`;
+
+    const controller = new AbortController();
+
+    // set only headers allowed by browsers, custom header preserved
+    const headers: HeadersInit = {
+      Accept: "text/event-stream",
+      "Cache-Control": "no-cache",
+      "X-Ledger-Client-Version":
+        (this.sseClient.defaults.headers?.common?.[
+          "X-Ledger-Client-Version"
+        ] as string) ?? "ldmk-transport-speculos",
+    };
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      signal: controller.signal,
     });
 
-    const stream = response.data as NodeJS.ReadableStream;
+    if (!response.ok) {
+      controller.abort();
+      throw new Error(`SSE request failed with status ${response.status}`);
+    }
 
-    stream.on("data", (chunk: Buffer) => {
-      const txt = chunk.toString("utf8");
-      txt.split("\n").forEach((line) => {
-        if (line.startsWith("data: ")) {
-          const payload = line.slice(6);
-          try {
-            onEvent(JSON.parse(payload));
-          } catch {
-            onEvent({ data: payload });
+    const stream = response.body;
+    if (!stream) {
+      controller.abort();
+      throw new Error("SSE response has no body stream.");
+    }
+
+    // start consuming the stream immediately line-by-line
+    const reader = stream.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let buffer = "";
+    let closed = false;
+
+    const finalize = () => {
+      if (!closed) {
+        closed = true;
+        try {
+          onClose?.();
+        } catch {
+          // swallow listener errors
+        }
+      }
+    };
+
+    (async () => {
+      try {
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // normalise line breaks and process complete lines
+          const lines = buffer.split(/\r?\n/);
+          // keep the last partial line in buffer
+          buffer = lines.pop() ?? "";
+
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const payload = line.slice(6);
+              try {
+                onEvent(JSON.parse(payload));
+              } catch {
+                onEvent({ data: payload });
+              }
+            }
           }
         }
-      });
-    });
+      } catch {
+        // network / reader error
+      } finally {
+        // flush any remaining buffered text as lines (rare edge)
+        if (buffer.length) {
+          for (const line of buffer.split(/\r?\n/)) {
+            if (line.startsWith("data: ")) {
+              const payload = line.slice(6);
+              try {
+                onEvent(JSON.parse(payload));
+              } catch {
+                onEvent({ data: payload });
+              }
+            }
+          }
+          buffer = "";
+        }
+        finalize();
+      }
+    })();
 
-    const end = () => onClose?.();
-    stream.on("close", end);
-    stream.on("end", end);
-    stream.on("error", end);
-
+    // when callers cancel the stream, reader will complete
     return stream;
   }
 

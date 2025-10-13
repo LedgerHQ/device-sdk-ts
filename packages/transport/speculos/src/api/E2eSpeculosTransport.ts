@@ -92,7 +92,7 @@ export class E2eSpeculosTransport implements Transport {
     this.logger.debug("connect");
 
     try {
-      const hexResponse = await this._speculosDataSource.postAdpu("B0010000");
+      const hexResponse = await this._speculosDataSource.postApdu("B0010000");
       this.logger.debug(`Hex Response: ${hexResponse}`);
       const apduResponse = this.createApduResponse(hexResponse);
       const parser = new ApduParser(apduResponse);
@@ -139,7 +139,7 @@ export class E2eSpeculosTransport implements Transport {
     try {
       const hex = bufferToHexaString(apdu).substring(2).toUpperCase();
       this.logger.debug(`[E2eSpeculosTransport] send APDU: ${hex}`);
-      const hexResponse = await this._speculosDataSource.postAdpu(hex);
+      const hexResponse = await this._speculosDataSource.postApdu(hex);
       const resp = this.createApduResponse(hexResponse);
       return Right(resp);
     } catch (error) {
