@@ -2,6 +2,9 @@ import axios, { type AxiosInstance } from "axios";
 
 import { type E2eSpeculosDatasource } from "./E2eSpeculosDatasource";
 
+// import 'cross-fetch/polyfill';
+// import 'abortcontroller-polyfill/dist/abortcontroller-polyfill-only';
+
 type SpeculosApduDTO = { data: string };
 
 export type SpeculosDeviceButtonsKeys =
@@ -33,7 +36,7 @@ export function makeKeepAliveAxiosForSSE(
 ): AxiosInstance {
   return axios.create({
     baseURL: baseUrl.replace(/\/+$/, ""),
-    timeout: 0,
+    timeout: 0, // no timeout for SSE
     headers: {
       "X-Ledger-Client-Version": clientHeader,
     },
@@ -87,21 +90,26 @@ export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
   }
 
   /**
-   * opens an SSE event stream using the Fetch API (browser)
-   * - calls `onEvent` for each "data: ..." line
-   * - calls `onClose` when stream ends or errors
+   * open an SSE event stream using fetch API
+   * - invokes `onEvent` for each line starting with "data: "
+   * - invokes `onClose` when the stream ends or errors
    * - returns the underlying ReadableStream so callers can `cancel()` it if needed
    */
   async openEventStream(
     onEvent: (json: Record<string, unknown>) => void,
     onClose?: () => void,
   ): Promise<ReadableStream<Uint8Array>> {
+    if (typeof fetch === "undefined") {
+      throw new Error(
+        "Global fetch is not available. In Node < 18, polyfill fetch (e.g., with 'cross-fetch').",
+      );
+    }
+
     const urlBase = this.sseClient.defaults.baseURL ?? this.baseUrl;
     const url = `${urlBase!.replace(/\/+$/, "")}/events?stream=true`;
 
     const controller = new AbortController();
 
-    // set only headers allowed by browsers, custom header preserved
     const headers: HeadersInit = {
       Accept: "text/event-stream",
       "Cache-Control": "no-cache",
@@ -128,7 +136,6 @@ export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
       throw new Error("SSE response has no body stream.");
     }
 
-    // start consuming the stream immediately line-by-line
     const reader = stream.getReader();
     const decoder = new TextDecoder("utf-8");
     let buffer = "";
@@ -154,8 +161,7 @@ export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
 
           // normalise line breaks and process complete lines
           const lines = buffer.split(/\r?\n/);
-          // keep the last partial line in buffer
-          buffer = lines.pop() ?? "";
+          buffer = lines.pop() ?? ""; // keep last partial line
 
           for (const line of lines) {
             if (line.startsWith("data: ")) {
@@ -166,12 +172,13 @@ export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
                 onEvent({ data: payload });
               }
             }
+            // other SSE fields ignored to mirror original behavior
           }
         }
       } catch {
-        // network / reader error
+        // network/reader error
       } finally {
-        // flush any remaining buffered text as lines (rare edge)
+        // flush any remaining buffered text as lines
         if (buffer.length) {
           for (const line of buffer.split(/\r?\n/)) {
             if (line.startsWith("data: ")) {
@@ -189,7 +196,7 @@ export class E2eHttpSpeculosDatasource implements E2eSpeculosDatasource {
       }
     })();
 
-    // when callers cancel the stream, reader will complete
+    // consumers can cancel with: (await openEventStream(...)).cancel()
     return stream;
   }
 
