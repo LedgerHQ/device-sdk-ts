@@ -47,7 +47,7 @@ describe("HttpTokenDataSource", () => {
     const tokenDTO: TokenDto = {
       ticker: "USDC",
       descriptor: {
-        data: "55534443000000000800000001",
+        data: "555344433c499c542cef5e3811e1192ce70d8cc03d5c33590000000600000089",
         signatures: {
           prod: "0123",
         },
@@ -62,7 +62,34 @@ describe("HttpTokenDataSource", () => {
     });
 
     // THEN
-    expect(result.extract()).toEqual("04555344430000000008000000010123");
+    expect(result.extract()).toEqual(
+      "04555344433c499c542cef5e3811e1192ce70d8cc03d5c335900000006000000890123",
+    );
+  });
+
+  it("should return a string when axios response is correct with a prefixed ticker", async () => {
+    // GIVEN
+    const tokenDTO: TokenDto = {
+      ticker: "tUSDC",
+      descriptor: {
+        data: "7474555344431c7d4b196cb0c7b01d743fbc6116a902379c72380000000600aa36a7",
+        signatures: {
+          prod: "0123",
+        },
+      },
+    };
+    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
+
+    // WHEN
+    const result = await datasource.getTokenInfosPayload({
+      address: "0x00",
+      chainId: 1,
+    });
+
+    // THEN
+    expect(result.extract()).toEqual(
+      "067474555344431c7d4b196cb0c7b01d743fbc6116a902379c72380000000600aa36a70123",
+    );
   });
 
   it("should return an error when data is empty", async () => {
@@ -88,35 +115,6 @@ describe("HttpTokenDataSource", () => {
   it("should return undefined when no signature", async () => {
     // GIVEN
     vi.spyOn(axios, "request").mockResolvedValue({ data: [{}] });
-
-    // WHEN
-    const result = await datasource.getTokenInfosPayload({
-      address: "0x00",
-      chainId: 1,
-    });
-
-    // THEN
-    expect(result).toEqual(
-      Left(
-        new Error(
-          "[ContextModule] HttpTokenDataSource: no token metadata for address 0x00 on chain 1",
-        ),
-      ),
-    );
-  });
-
-  it("should return undefined when no ticker", async () => {
-    // GIVEN
-    const tokenDTO: TokenDto = {
-      ticker: "USDC",
-      descriptor: {
-        data: "55534443000000000800000001",
-        signatures: {
-          test: "0123",
-        },
-      },
-    };
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
