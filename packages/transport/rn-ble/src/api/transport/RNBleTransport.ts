@@ -106,8 +106,18 @@ export class RNBleTransport implements Transport {
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
     this._manager.onStateChange((state) => {
-      this._logger.debug("[manager.onStateChange]", { data: { state } });
+      this._logger.debug(`[manager.onStateChange] called with state: ${state}`);
       this._bleStateSubject.next(state);
+      if (state === State.Unknown) {
+        // There seems to be a bug in the library where the state is not updated after going in an Unknown state...
+        this._logger.debug(
+          "[manager.onStateChange] forcing state update from Unknown",
+        );
+        this._manager.state().then((s) => {
+          this._logger.debug(`[manager.onStateChange] new state: ${s}`);
+          this._bleStateSubject.next(s);
+        });
+      }
     }, true);
   }
 
@@ -138,11 +148,14 @@ export class RNBleTransport implements Transport {
 
   private _startScanning() {
     if (this._startedScanningSubscriber != undefined) {
+      this._logger.info("[startScanning] !! startScanning already started");
       return;
     }
 
     //Reset the scanned devices list as new scan will start
     this._scannedDevicesSubject.next([]);
+
+    this._logger.info("[startScanning] startScanning");
 
     this._startedScanningSubscriber = from(this._bleStateSubject)
       .pipe(
@@ -151,8 +164,23 @@ export class RNBleTransport implements Transport {
             throw new BleNotSupported("BLE not supported");
           }
         }),
-        filter((state) => state === "PoweredOn"),
+        tap(() => {
+          this._logger.debug("[startScanning] after isSupported");
+        }),
+        filter((state) => {
+          const res = state === "PoweredOn";
+          this._logger.info("[startScanning] BLE state", { data: { state } });
+          return res;
+        }),
+        tap(() => {
+          this._logger.debug("[startScanning] after filter");
+        }),
         switchMap(async () => this.checkAndRequestPermissions()),
+        tap(() => {
+          this._logger.debug(
+            "[startScanning] after checkAndRequestPermissions",
+          );
+        }),
         switchMap((hasPermissions) => {
           if (!hasPermissions) {
             return throwError(
@@ -198,8 +226,7 @@ export class RNBleTransport implements Transport {
               this._logger.debug("[RNBleTransport][startScanning] finalize");
               subject.complete();
               clearInterval(interval);
-              this._maybeScanningSubject = Nothing;
-              this._manager.stopDeviceScan();
+              this._stopScanning();
             }),
           );
         }),
@@ -217,6 +244,7 @@ export class RNBleTransport implements Transport {
   }
 
   private async _stopScanning(): Promise<void> {
+    // TODO:not sure this is needed as unsubscribing from startedScanningSubscriber will call finalize
     this._maybeScanningSubject.map((subject) => {
       subject.complete();
       this._maybeScanningSubject = Nothing;
