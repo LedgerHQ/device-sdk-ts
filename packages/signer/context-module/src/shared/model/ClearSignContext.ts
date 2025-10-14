@@ -16,6 +16,8 @@ export enum ClearSignContextType {
   DYNAMIC_NETWORK = "dynamicNetwork",
   DYNAMIC_NETWORK_ICON = "dynamicNetworkIcon",
   ERROR = "error",
+  SAFE = "safe",
+  SIGNER = "signer",
 }
 
 export enum ClearSignContextReferenceType {
