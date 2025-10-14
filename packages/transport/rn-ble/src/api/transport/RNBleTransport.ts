@@ -188,21 +188,52 @@ export class RNBleTransport implements Transport {
           const devicesById = new Map<string, InternalScannedDevice>();
 
           this._logger.info("[startScanning] startDeviceScan");
-          this._manager.startDeviceScan(
-            this._deviceModelDataSource.getBluetoothServices(),
-            { allowDuplicates: true },
-            (error, rnDevice) => {
-              if (error || !rnDevice) {
-                subject.error(error || new Error("scan error"));
-                return;
-              }
-              devicesById.set(rnDevice.id, {
-                device: rnDevice,
-                timestamp: Date.now(),
-              });
-              subject.next(Array.from(devicesById.values()));
-            },
-          );
+          this._manager
+            .startDeviceScan(
+              this._deviceModelDataSource.getBluetoothServices(),
+              { allowDuplicates: true },
+              (error, rnDevice) => {
+                if (error) {
+                  this._logger.error(
+                    "[startScanning] Error in startDeviceScan callback",
+                    {
+                      data: { error, rnDevice },
+                    },
+                  );
+                  subject.error(error);
+                  return;
+                }
+                if (!rnDevice) {
+                  this._logger.warn(
+                    "[startScanning] Null Device in startDeviceScan callback",
+                    {
+                      data: { rnDevice },
+                    },
+                  );
+                  subject.error(
+                    new Error("Null device in startDeviceScan callback"),
+                  );
+                  return;
+                }
+                devicesById.set(rnDevice.id, {
+                  device: rnDevice,
+                  timestamp: Date.now(),
+                });
+                subject.next(Array.from(devicesById.values()));
+              },
+            )
+            .catch((e) => {
+              subject.error(e);
+              this._logger.error(
+                "[startScanning] Error while calling startDeviceScan",
+                {
+                  data: { error: e },
+                },
+              );
+              this._scannedDevicesSubject = new BehaviorSubject<
+                InternalScannedDevice[]
+              >([]);
+            });
 
           this._logger.debug("[startScanning] after startDeviceScan");
 
