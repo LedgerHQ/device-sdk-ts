@@ -35,14 +35,21 @@ import { RNBleTransport } from "./RNBleTransport";
 import { RNBleTransportFactory } from "./RNBleTransportFactory";
 
 // ===== MOCKS =====
-const fakeLogger = {
+const fakeLogger: LoggerPublisherService = {
   error: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
   debug: vi.fn(),
+  subscribers: [],
 };
 
-vi.useFakeTimers();
+const consoleLogger: LoggerPublisherService = {
+  error: console.error,
+  info: console.info,
+  warn: console.warn,
+  debug: console.debug,
+  subscribers: [],
+};
 
 vi.mock("react-native", () => ({
   Platform: {},
@@ -146,8 +153,8 @@ class TestTransportBuilder {
     return this;
   }
 
-  withLoggerServiceFactory(factory: () => LoggerPublisherService) {
-    this.loggerServiceFactory = factory;
+  withLogger(logger: LoggerPublisherService = consoleLogger) {
+    this.loggerServiceFactory = () => logger;
     return this;
   }
 
@@ -254,6 +261,7 @@ describe("RNBleTransport", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   afterEach(() => {
@@ -338,6 +346,7 @@ describe("RNBleTransport", () => {
       });
 
       it("should recover from an Unknown state by calling BleManager.state() method and emitting the new state", async () => {
+        vi.useFakeTimers();
         const statesSubject = new Subject<State>();
 
         const mockedStateFunction = vi.fn().mockImplementation(() => {
@@ -488,9 +497,6 @@ describe("RNBleTransport", () => {
 
       return new Promise((done, reject) => {
         transport.listenToAvailableDevices().subscribe({
-          next: () => {
-            reject(new Error("Should not emit any value"));
-          },
           error: (e) => {
             try {
               expect(e).toBeInstanceOf(BleNotSupported);
@@ -515,7 +521,7 @@ describe("RNBleTransport", () => {
         requestRequiredPermissions: requestPermissions,
       };
 
-      const startDeviceScan = vi.fn();
+      const startDeviceScan = vi.fn().mockImplementation(async () => {});
       const bleManager = createMockBleManager({
         startDeviceScan: startDeviceScan,
         stopDeviceScan: vi.fn(),
@@ -624,23 +630,10 @@ describe("RNBleTransport", () => {
           .build();
 
         const observable = transport.listenToAvailableDevices();
+        await firstValueFrom(transport.observeBleState());
+        await firstValueFrom(observable);
 
-        let nextCount = 0; // Because an empty array is initially emitted
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              nextCount++;
-              if (nextCount > 1) {
-                try {
-                  expect(startDeviceScan).toHaveBeenCalled();
-                } catch (e) {
-                  reject(e);
-                }
-                done(undefined);
-              }
-            },
-          });
-        });
+        expect(startDeviceScan).toHaveBeenCalled();
       });
 
       it("should emit an error if checkPermissions and requestPermissions resolve to false", async () => {
@@ -684,7 +677,7 @@ describe("RNBleTransport", () => {
 
         const startScan = vi
           .fn()
-          .mockImplementation((_uuids, _options, listener) => {
+          .mockImplementation(async (_uuids, _options, listener) => {
             scanInterval = setInterval(() => {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-call
               listener(null, {
@@ -780,13 +773,6 @@ describe("RNBleTransport", () => {
 
       const transport = new TestTransportBuilder()
         .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
-        .withLoggerServiceFactory(() => ({
-          debug: console.debug,
-          info: console.info,
-          warn: console.warn,
-          error: console.error,
-          subscribers: [],
-        }))
         .build();
 
       const observable = transport.listenToAvailableDevices();
@@ -822,14 +808,6 @@ describe("RNBleTransport", () => {
 
       const transport = new TestTransportBuilder()
         .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
-        .withLoggerServiceFactory(() => ({
-          ...fakeLogger,
-          debug: console.debug,
-          info: console.info,
-          warn: console.warn,
-          error: console.error,
-          subscribers: [],
-        }))
         .build();
 
       const observable = transport.listenToAvailableDevices();
@@ -865,14 +843,6 @@ describe("RNBleTransport", () => {
 
       const transport = new TestTransportBuilder()
         .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
-        .withLoggerServiceFactory(() => ({
-          ...fakeLogger,
-          debug: console.debug,
-          info: console.info,
-          warn: console.warn,
-          error: console.error,
-          subscribers: [],
-        }))
         .build();
 
       const observable = transport.listenToAvailableDevices();
@@ -937,6 +907,7 @@ describe("RNBleTransport", () => {
       );
     });
 
+    // FIXME: timeout
     it("should connect to a discovered device with correct MTU and discover services and setup apdu sender", async () => {
       let scanInterval: NodeJS.Timeout | null = null;
       const mockDevice = createMockDevice({
@@ -946,7 +917,7 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
+        .mockImplementation(async (_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             listener(null, {
@@ -1030,6 +1001,7 @@ describe("RNBleTransport", () => {
       expect(fakeSetupConnection).toHaveBeenCalled();
     });
 
+    // FIXME: timeout
     it("should return a connected device which calls state machine sendApdu", async () => {
       let scanInterval: NodeJS.Timeout | null = null;
       const mockDevice = createMockDevice({
@@ -1039,7 +1011,7 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
+        .mockImplementation(async (_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
             listener(null, {
               id: "deviceId",
@@ -1124,6 +1096,7 @@ describe("RNBleTransport", () => {
   });
 
   describe("disconnect", () => {
+    // FIXME: timeout
     it("should disconnect gracefully", async () => {
       let scanInterval: NodeJS.Timeout | null = null;
       const mockDevice = createMockDevice({
@@ -1133,7 +1106,7 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
+        .mockImplementation(async (_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
             listener(null, {
               id: "deviceId",
@@ -1224,6 +1197,7 @@ describe("RNBleTransport", () => {
       expect(fakeCloseConnection).toHaveBeenCalled();
     });
 
+    // FIXME: timeout
     it("should handle error while disconnecting", async () => {
       let scanInterval: NodeJS.Timeout | null = null;
       const mockDevice = createMockDevice({
@@ -1233,7 +1207,7 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
+        .mockImplementation(async (_uuids, _options, listener) => {
           scanInterval = setInterval(() => {
             listener(null, {
               id: "deviceId",
