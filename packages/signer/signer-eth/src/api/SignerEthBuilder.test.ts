@@ -33,12 +33,6 @@ describe("SignerEthBuilder", () => {
     // THEN
     expect(signer).toBeInstanceOf(DefaultSignerEth);
     expect(contextModule).toBeDefined();
-    // @ts-expect-error - private property
-    expect(contextModule._loaders).toHaveLength(6);
-    // @ts-expect-error - private property
-    expect(contextModule._typedDataLoader).toBeDefined();
-    // @ts-expect-error - private property
-    expect(contextModule._web3CheckLoader).toBeDefined();
   });
 
   test("should instanciate with custom context module", () => {

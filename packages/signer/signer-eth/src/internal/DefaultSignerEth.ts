@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
+import { type DisplaySafeAccountDAReturnType } from "@api/app-binder/DisplaySafeAccountDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
@@ -12,6 +13,7 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
+import { type SafeAccountOptions } from "@api/model/SafeAccountOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { type TypedDataOptions } from "@api/model/TypedDataOptions";
@@ -21,6 +23,8 @@ import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUse
 import { makeContainer } from "@internal/di";
 import { messageTypes } from "@internal/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/message/use-case/SignMessageUseCase";
+import { safeTypes } from "@internal/safe/di/safeTypes";
+import { type DisplaySafeAccountUseCase } from "@internal/safe/use-case/DisplaySafeAccountUseCase";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { type SignTransactionUseCase } from "@internal/transaction/use-case/SignTransactionUseCase";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
@@ -79,6 +83,15 @@ export class DefaultSignerEth implements SignerEth {
     return this._container
       .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
       .execute(derivationPath, options);
+  }
+
+  displaySafeAccount(
+    safeContractAddress: string,
+    options?: SafeAccountOptions,
+  ): DisplaySafeAccountDAReturnType {
+    return this._container
+      .get<DisplaySafeAccountUseCase>(safeTypes.DisplaySafeAccountUseCase)
+      .execute(safeContractAddress, options);
   }
 
   signDelegationAuthorization(

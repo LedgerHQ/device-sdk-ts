@@ -10,11 +10,13 @@ import {
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { DisplaySafeAccountDAReturnType } from "@api/app-binder/DisplaySafeAccountDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { SafeAccountOptions } from "@api/model/SafeAccountOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
@@ -26,6 +28,7 @@ import { TransactionParserService } from "@internal/transaction/service/parser/T
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
+import { DisplaySafeAccountDeviceAction } from "./device-action/DisplaySafeAccount/DisplaySafeAccount";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 
@@ -57,6 +60,22 @@ export class EthAppBinder {
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  displaySafeAccount(args: {
+    safeContractAddress: string;
+    options?: SafeAccountOptions;
+  }): DisplaySafeAccountDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new DisplaySafeAccountDeviceAction({
+        input: {
+          safeContractAddress: args.safeContractAddress,
+          contextModule: this.contextModule,
+          options: args.options ?? { chainId: 1 },
         },
       }),
     });

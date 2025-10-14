@@ -3,17 +3,12 @@ import {
   ClearSignContextType,
 } from "@ledgerhq/context-module";
 import {
-  ByteArrayBuilder,
-  type CommandErrorResult,
   type CommandResult,
   CommandResultFactory,
   type InternalApi,
   InvalidStatusWordError,
-  isSuccessCommandResult,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
-import { type Either, Left, Right } from "purify-ts";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
 import {
@@ -22,6 +17,10 @@ import {
 } from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import { ProvideNFTInformationCommand } from "@internal/app-binder/command/ProvideNFTInformationCommand";
 import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
+import {
+  ProvideSafeAccountCommand,
+  ProvideSafeAccountCommandType,
+} from "@internal/app-binder/command/ProvideSafeAccountCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTransactionFieldDescriptionCommand } from "@internal/app-binder/command/ProvideTransactionFieldDescriptionCommand";
 import { ProvideTransactionInformationCommand } from "@internal/app-binder/command/ProvideTransactionInformationCommand";
@@ -29,127 +28,38 @@ import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideT
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import { SetExternalPluginCommand } from "@internal/app-binder/command/SetExternalPluginCommand";
 import { SetPluginCommand } from "@internal/app-binder/command/SetPluginCommand";
-import { StoreTransactionCommand } from "@internal/app-binder/command/StoreTransactionCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
-import { type ContextWithSubContexts } from "./BuildFullContextsTask";
-import {
-  SendCommandInChunksTask,
-  type SendCommandInChunksTaskArgs,
-} from "./SendCommandInChunksTask";
 import {
   SendPayloadInChunksTask,
   type SendPayloadInChunksTaskArgs,
 } from "./SendPayloadInChunksTask";
 
-export type ProvideContextsTaskArgs = {
+export type ProvideContextTaskArgs = {
   /**
-   * The list of clear sign context with subcontexts callback to provide.
+   * The clear sign context to provide.
    */
-  contexts: ContextWithSubContexts[];
-  /**
-   * The derivation path to provide.
-   */
-  derivationPath: string;
-  /**
-   * The serialized transaction to provide.
-   * This parameter is optional in the case there is no transaction at all, for instance
-   * if there is only a standalone calldata embedded in a message.
-   */
-  serializedTransaction?: Uint8Array;
+  context: ClearSignContextSuccess;
 };
 
-export type ProvideContextsTaskResult = Either<
-  CommandErrorResult<EthErrorCodes>,
-  void
->;
+export type ProvideContextTaskResult = CommandResult<unknown, EthErrorCodes>;
 
 /**
- * This task is responsible for providing the transaction context to the device.
- * It will send the subcontexts callbacks in order and finish with the context.
+ * This task is responsible for providing a single context to the device.
  */
-export class ProvideContextsTask {
+export class ProvideContextTask {
   constructor(
     private _api: InternalApi,
-    private _args: ProvideContextsTaskArgs,
+    private _args: ProvideContextTaskArgs,
     private _sendPayloadInChunksTaskFactory = (
       api: InternalApi,
       args: SendPayloadInChunksTaskArgs<unknown>,
     ) => new SendPayloadInChunksTask(api, args),
-    private _sendCommandInChunksTaskFactory = (
-      api: InternalApi,
-      args: SendCommandInChunksTaskArgs<unknown>,
-    ) => new SendCommandInChunksTask(api, args),
   ) {}
 
-  async run(): Promise<ProvideContextsTaskResult> {
-    let transactionInfoProvided = false;
+  async run(): Promise<ProvideContextTaskResult> {
+    const { type, payload, certificate } = this._args.context;
 
-    for (const { context, subcontextCallbacks } of this._args.contexts) {
-      for (const callback of subcontextCallbacks) {
-        const subcontext = await callback();
-
-        if (subcontext.type === ClearSignContextType.ERROR) {
-          // silently ignore error subcontexts
-          continue;
-        }
-
-        // Don't fail immediately on subcontext errors because the main context may still be successful
-        await this.provideContext(subcontext);
-      }
-
-      if (context.type === ClearSignContextType.PROXY_INFO) {
-        // In this specific case, the context is not valid as the challenge is not valid on the first call
-        // the real data is provided in the subcontext callback
-        continue;
-      }
-
-      if (
-        !transactionInfoProvided &&
-        this._args.serializedTransaction !== undefined &&
-        context.type === ClearSignContextType.TRANSACTION_INFO
-      ) {
-        // Send the serialized transaction for the first TRANSACTION_INFO.
-        // All other TRANSACTION_INFO contexts will be ignored as it will be for nested calldata.
-        transactionInfoProvided = true;
-
-        const paths = DerivationPathUtils.splitPath(this._args.derivationPath);
-        const builder = new ByteArrayBuilder();
-        builder.add8BitUIntToData(paths.length);
-        paths.forEach((path) => {
-          builder.add32BitUIntToData(path);
-        });
-        builder.addBufferToData(this._args.serializedTransaction);
-        await this._sendCommandInChunksTaskFactory(this._api, {
-          data: builder.build(),
-          commandFactory: (args) =>
-            new StoreTransactionCommand({
-              serializedTransaction: args.chunkedData,
-              isFirstChunk: args.isFirstChunk,
-            }),
-        }).run();
-      }
-
-      const res = await this.provideContext(context);
-      if (!isSuccessCommandResult(res)) {
-        return Left(res);
-      }
-    }
-
-    return Right(void 0);
-  }
-
-  /**
-   * This method will send the context to the device.
-   *
-   * @param context The clear sign context to provide.
-   * @returns A promise that resolves when the command is sent.
-   */
-  async provideContext({
-    type,
-    payload,
-    certificate,
-  }: ClearSignContextSuccess): Promise<CommandResult<unknown, EthErrorCodes>> {
     // if a certificate is provided, we load it before sending the command
     if (certificate) {
       await this._api.sendCommand(
@@ -262,6 +172,26 @@ export class ProvideContextsTask {
           withPayloadLength: false,
         }).run();
       }
+      case ClearSignContextType.SAFE:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideSafeAccountCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              type: ProvideSafeAccountCommandType.SAFE_DESCRIPTOR,
+            }),
+        }).run();
+      case ClearSignContextType.SIGNER:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideSafeAccountCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              type: ProvideSafeAccountCommandType.SIGNER_DESCRIPTOR,
+            }),
+        }).run();
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

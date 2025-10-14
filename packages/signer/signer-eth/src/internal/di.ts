@@ -10,6 +10,7 @@ import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule
 import { eip7702ModuleFactory } from "@internal/eip7702/di/eip7702Module";
 import { externalTypes } from "@internal/externalTypes";
 import { messageModuleFactory } from "@internal/message/di/messageModule";
+import { safeModuleFactory } from "@internal/safe/di/safeModule";
 import { transactionModuleFactory } from "@internal/transaction/di/transactionModule";
 import { typedDataModuleFactory } from "@internal/typed-data/di/typedDataModule";
 
@@ -41,6 +42,7 @@ export const makeContainer = ({
     messageModuleFactory(),
     transactionModuleFactory(),
     typedDataModuleFactory(),
+    safeModuleFactory(),
   );
 
   return container;

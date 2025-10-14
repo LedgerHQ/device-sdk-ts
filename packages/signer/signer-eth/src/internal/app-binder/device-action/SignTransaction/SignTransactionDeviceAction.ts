@@ -42,10 +42,10 @@ import {
   type ParseTransactionTaskResult,
 } from "@internal/app-binder/task/ParseTransactionTask";
 import {
-  ProvideContextsTask,
-  type ProvideContextsTaskArgs,
-  type ProvideContextsTaskResult,
-} from "@internal/app-binder/task/ProvideContextsTask";
+  ProvideTransactionContextsTask,
+  type ProvideTransactionContextsTaskArgs,
+  type ProvideTransactionContextsTaskResult,
+} from "@internal/app-binder/task/ProvideTransactionContextsTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
@@ -63,8 +63,8 @@ export type MachineDependencies = {
     input: BuildFullContextsTaskArgs;
   }) => Promise<BuildFullContextsTaskResult>;
   readonly provideContexts: (arg0: {
-    input: ProvideContextsTaskArgs;
-  }) => Promise<ProvideContextsTaskResult>;
+    input: ProvideTransactionContextsTaskArgs;
+  }) => Promise<ProvideTransactionContextsTaskResult>;
   readonly signTransaction: (arg0: {
     input: {
       derivationPath: string;
@@ -571,9 +571,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       new BuildFullContextsTask(internalApi, arg0.input).run();
 
     const provideContexts = async (arg0: {
-      input: ProvideContextsTaskArgs;
+      input: ProvideTransactionContextsTaskArgs;
     }) => {
-      return new ProvideContextsTask(internalApi, arg0.input).run();
+      return new ProvideTransactionContextsTask(internalApi, arg0.input).run();
     };
 
     const signTransaction = async (arg0: {
