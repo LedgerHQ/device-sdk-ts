@@ -25,6 +25,12 @@ import { E2eHttpSpeculosDatasource } from "@root/src/internal/datasource/E2eHttp
 
 import { speculosIdentifier } from "./SpeculosTransport";
 
+/** Safely convert unknown to Error for DMK error wrappers */
+const toError = (e: unknown): Error =>
+  e instanceof Error
+    ? e
+    : new Error(typeof e === "string" ? e : JSON.stringify(e));
+
 export class E2eSpeculosTransport implements Transport {
   private logger: LoggerPublisherService;
   private readonly identifier: TransportIdentifier = speculosIdentifier;
@@ -91,6 +97,7 @@ export class E2eSpeculosTransport implements Transport {
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
 
+    // Try to read app name/version but don’t fail connection if it’s unavailable
     try {
       const hexResponse = await this._speculosDataSource.postApdu("B0010000");
       this.logger.debug(`Hex Response: ${hexResponse}`);
@@ -101,8 +108,9 @@ export class E2eSpeculosTransport implements Transport {
       const appVersion = parser.encodeToString(parser.extractFieldLVEncoded());
       this.logger.debug(`App Name: ${appName} and version ${appVersion}`);
 
+      // Update the advertised name
       this.speculosDevice.deviceModel.productName = `Speculos - ${appName} - ${appVersion}`;
-    } catch {
+    } catch (_e: unknown) {
       this.logger.debug("Unable to fetch app name and version from Speculos");
     }
 
@@ -118,8 +126,8 @@ export class E2eSpeculosTransport implements Transport {
 
       this.connectedDevice = connectedDevice;
       return Right(connectedDevice);
-    } catch (error) {
-      return Left(new OpeningConnectionError(error as Error));
+    } catch (e: unknown) {
+      return Left(new OpeningConnectionError(toError(e)));
     }
   }
 
@@ -142,13 +150,13 @@ export class E2eSpeculosTransport implements Transport {
       const hexResponse = await this._speculosDataSource.postApdu(hex);
       const resp = this.createApduResponse(hexResponse);
       return Right(resp);
-    } catch (error) {
+    } catch (e: unknown) {
       if (this.connectedDevice) {
         this.logger.debug("disconnecting due to APDU error");
         onDisconnect(deviceId);
         await this.disconnect({ connectedDevice: this.connectedDevice });
       }
-      return Left(new GeneralDmkError(error as Error));
+      return Left(new GeneralDmkError(toError(e)));
     }
   }
 
@@ -165,9 +173,9 @@ export class E2eSpeculosTransport implements Transport {
 
   private fromHexString(hexString: string): Uint8Array {
     if (!hexString) return new Uint8Array(0);
-    return new Uint8Array(
-      hexString.match(/.{1,2}/g)!.map((b) => parseInt(b, 16)),
-    );
+    const pairs = hexString.match(/[\da-f]{2}/gi);
+    if (!pairs) return new Uint8Array(0);
+    return Uint8Array.from(pairs.map((b) => parseInt(b, 16)));
   }
 }
 
