@@ -232,8 +232,14 @@ export class RNBleTransport implements Transport {
           this._scannedDevicesSubject.next(devices);
         },
         error: (error) => {
-          this._logger.error("Error while scanning", { data: { error } });
+          this._logger.error("[startScanning] Error while scanning", {
+            data: { error },
+          });
           this._scannedDevicesSubject.error(error);
+          // Reset the scanned devices subject as erroring it will make it unusable for next calls of startScanning
+          this._scannedDevicesSubject = new BehaviorSubject<
+            InternalScannedDevice[]
+          >([]);
         },
       });
   }
