@@ -106,17 +106,23 @@ export class RNBleTransport implements Transport {
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
     // FIXME: we should have a destroy method to unregister the onStateChange listener
+    let lastBleStateIsUnknown = false;
     this._manager.onStateChange((state) => {
       this._logger.debug(`[manager.onStateChange] called with state: ${state}`);
       this._bleStateSubject.next(state);
-      if (state === State.Unknown) {
+      lastBleStateIsUnknown = state === State.Unknown;
+      if (lastBleStateIsUnknown) {
         // There seems to be a bug in the library where the state is not updated after going in an Unknown state...
         this._logger.debug(
-          "[manager.onStateChange] forcing state update from Unknown",
+          `[manager.onStateChange] forcing state update from "Unknown"`,
         );
         this._manager.state().then((s) => {
-          this._logger.debug(`[manager.onStateChange] new state: ${s}`);
-          this._bleStateSubject.next(s);
+          if (lastBleStateIsUnknown) {
+            this._logger.debug(
+              `[manager.onStateChange] forcing state update to: "${s}"`,
+            );
+            this._bleStateSubject.next(s);
+          }
         });
       }
     }, true);
