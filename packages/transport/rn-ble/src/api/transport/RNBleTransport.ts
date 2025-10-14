@@ -241,9 +241,6 @@ export class RNBleTransport implements Transport {
                   data: { error: e },
                 },
               );
-              this._scannedDevicesSubject = new BehaviorSubject<
-                InternalScannedDevice[]
-              >([]);
             });
 
           this._logger.debug("[startScanning] after startDeviceScan");
@@ -288,6 +285,7 @@ export class RNBleTransport implements Transport {
     //Stop listening the observable from this._startScanning()
     this._startedScanningSubscriber?.unsubscribe();
     this._startedScanningSubscriber = undefined;
+    this._scannedDevicesSubject.complete();
     this._scannedDevicesSubject = new BehaviorSubject<InternalScannedDevice[]>(
       [],
     );
