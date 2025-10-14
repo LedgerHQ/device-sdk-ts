@@ -30,8 +30,8 @@ import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import {
   BehaviorSubject,
   defer,
-  filter,
   finalize,
+  first,
   from,
   type Observable,
   retry,
@@ -169,7 +169,7 @@ export class RNBleTransport implements Transport {
         tap(() => {
           this._logger.debug("[startScanning] after isSupported");
         }),
-        filter((state) => {
+        first((state) => {
           const res = state === "PoweredOn";
           this._logger.info("[startScanning] BLE state", { data: { state } });
           return res;
