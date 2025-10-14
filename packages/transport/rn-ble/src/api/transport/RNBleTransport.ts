@@ -247,7 +247,7 @@ export class RNBleTransport implements Transport {
             subject.next(Array.from(devicesById.values()));
           }, 1000);
 
-          return subject.asObservable().pipe(
+          return subject.pipe(
             finalize(() => {
               this._logger.debug("[RNBleTransport][startScanning] finalize");
               subject.complete();
