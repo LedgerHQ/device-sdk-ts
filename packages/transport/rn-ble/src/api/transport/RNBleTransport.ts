@@ -167,26 +167,25 @@ export class RNBleTransport implements Transport {
 
     this._startedScanningSubscriber = from(this.observeBleState())
       .pipe(
+        first((state) => {
+          const canStartScanning = state === State.PoweredOn;
+          this._logger.info(
+            `[startScanning] Prerequisite: BLE state=${state}, canStartScanning=${canStartScanning}`,
+          );
+          return canStartScanning;
+        }),
         tap(() => {
           if (!this.isSupported()) {
             throw new BleNotSupported("BLE not supported");
           }
         }),
         tap(() => {
-          this._logger.debug("[startScanning] after isSupported");
-        }),
-        first((state) => {
-          const res = state === "PoweredOn";
-          this._logger.info("[startScanning] BLE state", { data: { state } });
-          return res;
-        }),
-        tap(() => {
-          this._logger.debug("[startScanning] after filter");
+          this._logger.debug("[startScanning] Prerequisite: isSupported=true");
         }),
         switchMap(async () => this.checkAndRequestPermissions()),
-        tap(() => {
+        tap((hasPermissions) => {
           this._logger.debug(
-            "[startScanning] after checkAndRequestPermissions",
+            `[startScanning] Prerequisite: hasPermissions=${hasPermissions}`,
           );
         }),
         switchMap((hasPermissions) => {
@@ -261,7 +260,7 @@ export class RNBleTransport implements Transport {
 
           return subject.pipe(
             finalize(() => {
-              this._logger.debug("[RNBleTransport][startScanning] finalize");
+              this._logger.debug("[startScanning] finalize");
               subject.complete();
               clearInterval(interval);
               this._stopScanning();
