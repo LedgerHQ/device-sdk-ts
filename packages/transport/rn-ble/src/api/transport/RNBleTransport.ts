@@ -138,10 +138,6 @@ export class RNBleTransport implements Transport {
     await this._stopScanning();
   }
 
-  private _maybeScanningSubject: Maybe<
-    BehaviorSubject<InternalScannedDevice[]>
-  > = Nothing;
-
   private _scannedDevicesSubject: BehaviorSubject<InternalScannedDevice[]> =
     new BehaviorSubject<InternalScannedDevice[]>([]);
   private _startedScanningSubscriber: Subscription | undefined = undefined;
@@ -189,7 +185,6 @@ export class RNBleTransport implements Transport {
           }
 
           const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
-          this._maybeScanningSubject = Maybe.of(subject);
           const devicesById = new Map<string, InternalScannedDevice>();
 
           this._logger.info("[startScanning] startDeviceScan");
@@ -244,12 +239,7 @@ export class RNBleTransport implements Transport {
   }
 
   private async _stopScanning(): Promise<void> {
-    // TODO:not sure this is needed as unsubscribing from startedScanningSubscriber will call finalize
-    this._maybeScanningSubject.map((subject) => {
-      subject.complete();
-      this._maybeScanningSubject = Nothing;
-    });
-
+    this._logger.debug("[stopScanning] stopScanning");
     await this._manager.stopDeviceScan();
     //Stop listening the observable from this._startScanning()
     this._startedScanningSubscriber?.unsubscribe();
