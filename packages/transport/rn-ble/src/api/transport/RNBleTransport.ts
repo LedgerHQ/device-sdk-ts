@@ -26,7 +26,7 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { Either, EitherAsync, Left, Maybe, Nothing, Right } from "purify-ts";
+import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import {
   BehaviorSubject,
   defer,
@@ -105,6 +105,7 @@ export class RNBleTransport implements Transport {
     this._logger = _loggerServiceFactory("ReactNativeBleTransport");
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
+    // FIXME: we should have a destroy method to unregister the onStateChange listener
     this._manager.onStateChange((state) => {
       this._logger.debug(`[manager.onStateChange] called with state: ${state}`);
       this._bleStateSubject.next(state);
@@ -119,6 +120,11 @@ export class RNBleTransport implements Transport {
         });
       }
     }, true);
+  }
+
+  /** Exposed for testing purposes */
+  observeBleState(): Observable<State> {
+    return this._bleStateSubject.asObservable();
   }
 
   /**
@@ -153,7 +159,7 @@ export class RNBleTransport implements Transport {
 
     this._logger.info("[startScanning] startScanning");
 
-    this._startedScanningSubscriber = from(this._bleStateSubject)
+    this._startedScanningSubscriber = from(this.observeBleState())
       .pipe(
         tap(() => {
           if (!this.isSupported()) {
