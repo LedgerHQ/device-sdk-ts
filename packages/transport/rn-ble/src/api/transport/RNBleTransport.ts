@@ -39,7 +39,6 @@ import {
   switchMap,
   tap,
   throttleTime,
-  throwError,
 } from "rxjs";
 
 import {
@@ -51,6 +50,7 @@ import {
 import {
   BleNotSupported,
   BlePermissionsNotGranted,
+  BlePoweredOff,
   DeviceConnectionNotFound,
   NoDeviceModelFoundError,
   PeerRemovedPairingError,
@@ -154,6 +154,57 @@ export class RNBleTransport implements Transport {
     new BehaviorSubject<InternalScannedDevice[]>([]);
   private _startedScanningSubscriber: Subscription | undefined = undefined;
 
+  /**
+   * Returns an observable that emits a value when the prerequisites for scanning are met.
+   * The prerequisites are:
+   * - BLE should be supported. If not, it will throw an error.
+   * - Permissions should be granted. If not, it request them, if it fails, it will throw an error.
+   * - BLE state should be PoweredOn.
+   *   - If BLE state is undetermined (Unknown or Resetting), it will wait for the state to be updated.
+   *   - For other states, it will throw an error.
+   */
+  private _waitForScanningPrerequisites() {
+    return from([true]).pipe(
+      tap(() => {
+        if (!this.isSupported()) {
+          throw new BleNotSupported("BLE not supported");
+        }
+        this._logger.debug(
+          "[waitForScanningPrerequisites] Prerequisite: isSupported=true",
+        );
+      }),
+      switchMap(async () => this.checkAndRequestPermissions()),
+      tap((hasPermissions) => {
+        this._logger.debug(
+          `[_waitForScanningPrerequisites] Prerequisite: hasPermissions=${hasPermissions}`,
+        );
+        if (!hasPermissions) {
+          throw new BlePermissionsNotGranted("Permissions not granted");
+        }
+      }),
+      switchMap(() => this.observeBleState()),
+      first((state) => {
+        /**
+         * We wait for the BLE state to be PoweredOn, in case the current state is one of those:
+         *  - Unknown: temporary undetermined state which will quickly be updated
+         *  - Resetting: temporary undetermined state which will quickly be updated
+         */
+        const canStartScanning = state === State.PoweredOn;
+        this._logger.info(
+          `[waitForScanningPrerequisites] Prerequisite: BLE state=${state}, canStartScanning=${canStartScanning}`,
+        );
+        if (state === State.PoweredOff) {
+          throw new BlePoweredOff();
+        } else if (state === State.Unauthorized) {
+          throw new BlePermissionsNotGranted('Ble State is "Unauthorized"');
+        } else if (state === State.Unsupported) {
+          throw new BleNotSupported();
+        }
+        return canStartScanning;
+      }),
+    );
+  }
+
   private _startScanning() {
     if (this._startedScanningSubscriber != undefined) {
       this._logger.info("[startScanning] !! startScanning already started");
@@ -165,36 +216,9 @@ export class RNBleTransport implements Transport {
 
     this._logger.info("[startScanning] startScanning");
 
-    this._startedScanningSubscriber = from(this.observeBleState())
+    this._startedScanningSubscriber = from([true])
       .pipe(
-        first((state) => {
-          const canStartScanning = state === State.PoweredOn;
-          this._logger.info(
-            `[startScanning] Prerequisite: BLE state=${state}, canStartScanning=${canStartScanning}`,
-          );
-          return canStartScanning;
-        }),
-        tap(() => {
-          if (!this.isSupported()) {
-            throw new BleNotSupported("BLE not supported");
-          }
-        }),
-        tap(() => {
-          this._logger.debug("[startScanning] Prerequisite: isSupported=true");
-        }),
-        switchMap(async () => this.checkAndRequestPermissions()),
-        tap((hasPermissions) => {
-          this._logger.debug(
-            `[startScanning] Prerequisite: hasPermissions=${hasPermissions}`,
-          );
-        }),
-        switchMap((hasPermissions) => {
-          if (!hasPermissions) {
-            return throwError(
-              () => new BlePermissionsNotGranted("Permissions not granted"),
-            );
-          }
-
+        switchMap(() => {
           const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
           const devicesById = new Map<string, InternalScannedDevice>();
 
@@ -299,9 +323,9 @@ export class RNBleTransport implements Transport {
    * @return {Observable<TransportDiscoveredDevice[]>} An observable stream of discovered devices, containing device information as an array of TransportDiscoveredDevice objects.
    */
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    this._startScanning();
-
-    return this._scannedDevicesSubject.asObservable().pipe(
+    return this._waitForScanningPrerequisites().pipe(
+      tap(() => this._startScanning()),
+      switchMap(() => this._scannedDevicesSubject),
       switchMap(async (internalScannedDevices) => {
         const eitherScannedDevices = internalScannedDevices
           .filter(

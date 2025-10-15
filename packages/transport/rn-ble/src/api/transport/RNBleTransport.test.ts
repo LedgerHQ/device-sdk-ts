@@ -26,7 +26,11 @@ import {
 } from "rxjs";
 import { beforeEach, expect } from "vitest";
 
-import { BleNotSupported, BlePermissionsNotGranted } from "@api/model/Errors";
+import {
+  BleNotSupported,
+  BlePermissionsNotGranted,
+  BlePoweredOff,
+} from "@api/model/Errors";
 import { DefaultPermissionsService } from "@api/permissions/DefaultPermissionsService";
 import { PermissionsService } from "@api/permissions/PermissionsService";
 
@@ -510,6 +514,21 @@ describe("RNBleTransport", () => {
           },
         });
       });
+    });
+
+    it("should emit an error if BLE state is PoweredOff", async () => {
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager({}, State.PoweredOff))
+        .build();
+
+      const observable = transport.listenToAvailableDevices();
+
+      let caughtError: unknown;
+      await firstValueFrom(observable).catch((e) => {
+        caughtError = e;
+      });
+
+      expect(caughtError).toBeInstanceOf(BlePoweredOff);
     });
 
     describe("permissions check", () => {
