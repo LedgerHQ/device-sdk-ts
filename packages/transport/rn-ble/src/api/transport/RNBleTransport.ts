@@ -321,9 +321,17 @@ export class RNBleTransport implements Transport {
 
         const scannedDevices = Either.rights(eitherScannedDevices);
 
-        const rawConnectedDevices = await this._manager.connectedDevices(
-          this._deviceModelDataSource.getBluetoothServices(),
-        );
+        const rawConnectedDevices = await this._manager
+          .connectedDevices(this._deviceModelDataSource.getBluetoothServices())
+          .catch((e) => {
+            this._logger.error(
+              "[listenToAvailableDevices] Error calling manager.connectedDevices",
+              {
+                data: { error: e },
+              },
+            );
+            throw e;
+          });
 
         const eitherConnectedDevices = await Promise.all(
           rawConnectedDevices.map(async (device) => {
