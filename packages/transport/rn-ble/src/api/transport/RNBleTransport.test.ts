@@ -543,21 +543,11 @@ describe("RNBleTransport", () => {
 
         const observable = transport.listenToAvailableDevices();
 
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              try {
-                expect(checkPermissions).toHaveBeenCalled();
-              } catch (e) {
-                reject(e);
-              }
-              done(undefined);
-            },
-            error: (e) => {
-              reject(e);
-            },
-          });
+        await firstValueFrom(observable).catch((e) => {
+          expect(e).toBeInstanceOf(BlePermissionsNotGranted);
         });
+
+        expect(checkPermissions).toHaveBeenCalled();
       });
 
       it("should call BleManager.startDeviceScan if checkPermissions resolves to true", async () => {
@@ -571,21 +561,11 @@ describe("RNBleTransport", () => {
 
         const observable = transport.listenToAvailableDevices();
 
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              try {
-                expect(startDeviceScan).toHaveBeenCalled();
-              } catch (e) {
-                reject(e);
-              }
-              done(undefined);
-            },
-            error: (e) => {
-              reject(e);
-            },
-          });
+        await firstValueFrom(observable).catch((e) => {
+          expect(e).toBeInstanceOf(BlePermissionsNotGranted);
         });
+
+        expect(startDeviceScan).toHaveBeenCalled();
       });
 
       it("should call requestPermissions if checkPermissions resolves to false", async () => {
@@ -599,24 +579,9 @@ describe("RNBleTransport", () => {
 
         const observable = transport.listenToAvailableDevices();
 
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              try {
-                expect(requestPermissions).toHaveBeenCalled();
-              } catch (e) {
-                reject(e);
-              }
-              done(undefined);
-            },
-            complete: () => {
-              reject(new Error("Should not complete"));
-            },
-            error: (e) => {
-              reject(e);
-            },
-          });
-        });
+        await firstValueFrom(observable).catch(() => {});
+
+        expect(requestPermissions).toHaveBeenCalled();
       });
 
       it("should call BleManager.startDeviceScan if requestPermissions resolves to true", async () => {
