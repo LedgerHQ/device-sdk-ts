@@ -1,6 +1,7 @@
 import React from "react";
 import { CommandTesterScreen } from "_components/CommandTesterScreen.tsx";
 import { DeviceActionTesterScreen } from "_components/DeviceActionTesterScreen.tsx";
+import { ListenToAvailableDevicesScreen } from "_components/ListenToAvailableDevicesScreen";
 import { SendApduScreen } from "_components/SendApduScreen.tsx";
 import { CommandsScreens } from "_navigators/CommandNavigator.constants.ts";
 import { Icons } from "@ledgerhq/native-ui";
@@ -12,7 +13,7 @@ export const CommandNavigator = createBottomTabNavigator({
       screen: DeviceActionTesterScreen,
       options: {
         tabBarLabel: "Device actions",
-        tabBarIcon: ({ color }) => <Icons.Devices color={color} />,
+        tabBarIcon: ({ color }) => <Icons.Code color={color} />,
         headerTitle: "Test device action",
       },
     },
@@ -30,6 +31,14 @@ export const CommandNavigator = createBottomTabNavigator({
         tabBarLabel: "Send Apdu",
         tabBarIcon: ({ color }) => <Icons.MessageChat color={color} />,
         headerTitle: "Send Apdu",
+      },
+    },
+    [CommandsScreens.ListenToAvailableDevices]: {
+      screen: ListenToAvailableDevicesScreen,
+      options: {
+        tabBarLabel: "Listen to available devices",
+        tabBarIcon: ({ color }) => <Icons.Devices color={color} />,
+        headerTitle: "Listen to available devices",
       },
     },
   },
