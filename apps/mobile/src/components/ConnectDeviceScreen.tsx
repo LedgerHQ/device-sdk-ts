@@ -101,7 +101,7 @@ export const ConnectDeviceScreen: React.FC = () => {
       <Container>
         <Text m={6}>
           Error while scanning for devices:{"\n"}
-          {listenToAvailableDevicesError.toString()}
+          {JSON.stringify(listenToAvailableDevicesError, null, 2)}
         </Text>
         <Button type="color" onPress={startScanning}>
           Start scan
