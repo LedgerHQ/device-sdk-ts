@@ -9,6 +9,8 @@ import type { DeviceControllerOptions } from "@internal/core/types";
 import { type AxisMap, createAxes } from "@internal/utils/axisClamp";
 import { speculosDeviceControllerTypes } from "@root/src/internal/core/speculosDeviceControllerTypes";
 
+const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
+
 export function buildContainer<K extends string>(
   baseURL: string,
   opts: DeviceControllerOptions<K>,
@@ -16,7 +18,7 @@ export function buildContainer<K extends string>(
   const container = new Container({ defaultScope: "Singleton" });
 
   const http = axios.create({
-    baseURL: baseURL.replace(/\/+$/, ""),
+    baseURL: removeTrailingSlashes(baseURL),
     timeout: opts.timeoutMs ?? 1500,
     headers: {
       "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",

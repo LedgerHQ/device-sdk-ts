@@ -1,4 +1,4 @@
-export type ButtonKey = "Ll" | "Rr" | "LRlr" | "left" | "right" | "both";
+export type ButtonKey = "left" | "right" | "both";
 
 export type ScreenSpec = Readonly<{ width: number; height: number }>;
 

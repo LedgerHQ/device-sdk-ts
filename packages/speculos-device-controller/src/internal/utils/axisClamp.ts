@@ -22,10 +22,10 @@ export type AxisMap<K extends string = string> = Record<K, Axis>;
 export const createAxes = <K extends string>(
   screens: DeviceScreens<K>,
 ): AxisMap<K> => {
-  const out = {} as AxisMap<K>;
+  const mappedAxes = {} as AxisMap<K>;
   for (const key of Object.keys(screens) as K[]) {
-    const s = screens[key];
-    out[key] = createAxis(s.width, s.height);
+    const screen = screens[key];
+    mappedAxes[key] = createAxis(screen.width, screen.height);
   }
-  return out;
+  return mappedAxes;
 };

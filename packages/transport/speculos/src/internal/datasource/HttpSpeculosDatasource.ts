@@ -6,13 +6,15 @@ import { type SpeculosDatasource } from "./SpeculosDatasource";
 
 const TIMEOUT = 10000; // 10 second timeout for availability check
 
+const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
+
 export function makeNoKeepAliveAxios(
   baseUrl: string,
   timeoutMs: number,
   clientHeader: string,
 ): AxiosInstance {
   return axios.create({
-    baseURL: baseUrl.replace(/\/+$/, ""),
+    baseURL: removeTrailingSlashes(baseUrl),
     timeout: timeoutMs,
     headers: {
       "X-Ledger-Client-Version": clientHeader,
@@ -26,7 +28,7 @@ export function makeKeepAliveAxiosForSSE(
   clientHeader: string,
 ): AxiosInstance {
   return axios.create({
-    baseURL: baseUrl.replace(/\/+$/, ""),
+    baseURL: removeTrailingSlashes(baseUrl),
     timeout: 0, // no timeout for SSE
     headers: {
       "X-Ledger-Client-Version": clientHeader,
@@ -90,7 +92,7 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
     }
 
     const urlBase = this.sseClient.defaults.baseURL ?? this.baseUrl;
-    const url = `${urlBase!.replace(/\/+$/, "")}/events?stream=true`;
+    const url = `${removeTrailingSlashes(urlBase)}/events?stream=true`;
 
     const controller = new AbortController();
 
@@ -136,6 +138,17 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
       }
     };
 
+    const emitParsedEvent = (line: string) => {
+      if (line.startsWith("data: ")) {
+        const payload = line.slice(6);
+        try {
+          onEvent(JSON.parse(payload));
+        } catch {
+          onEvent({ data: payload });
+        }
+      }
+    };
+
     (async () => {
       try {
         while (true) {
@@ -148,14 +161,7 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
           buffer = lines.pop() ?? ""; // keep last partial line
 
           for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const payload = line.slice(6);
-              try {
-                onEvent(JSON.parse(payload));
-              } catch {
-                onEvent({ data: payload });
-              }
-            }
+            emitParsedEvent(line);
             // other SSE fields ignored to mirror original behavior
           }
         }
@@ -165,14 +171,7 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
         // flush any remaining buffered text as lines
         if (buffer.length) {
           for (const line of buffer.split(/\r?\n/)) {
-            if (line.startsWith("data: ")) {
-              const payload = line.slice(6);
-              try {
-                onEvent(JSON.parse(payload));
-              } catch {
-                onEvent({ data: payload });
-              }
-            }
+            emitParsedEvent(line);
           }
           buffer = "";
         }

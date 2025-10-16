@@ -27,7 +27,7 @@ await device.button.pressSequence(["left", "right", "both"], 150);
 // Touch: percentages (0..100)
 await device.touch.createTap("flex").tapQuick({ x: 20, y: 45 }); // 20% / 45% of the "flex" screen
 
-// Touch returns a factory function so you can easily instanciate devices dynamically
+// Touch returns a factory function so you can easily instantiate devices dynamically
 const currentDevice = device.touch.createTap(currentDevice);
 await currentDevice.tapLong({ x: 20, y: 45 });
 ```
@@ -79,7 +79,7 @@ deviceControllerFactory(
 ### DeviceAPI
 
 ```ts
-type ButtonKey = "Ll" | "Rr" | "LRlr" | "left" | "right" | "both";
+type ButtonKey = "left" | "right" | "both";
 type PercentPoint = { x: number; y: number }; // interpreted as 0..100, clamped
 
 type ButtonAPI = {

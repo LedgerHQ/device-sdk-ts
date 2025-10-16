@@ -12,20 +12,7 @@ export class AxiosButtonController implements IButtonController {
     private readonly client: AxiosInstance,
   ) {}
 
-  private toEndpointKey(but: ButtonKey): "left" | "right" | "both" {
-    const map: Record<ButtonKey, "left" | "right" | "both"> = {
-      Ll: "left",
-      Rr: "right",
-      LRlr: "both",
-      left: "left",
-      right: "right",
-      both: "both",
-    };
-    return map[but];
-  }
-
-  async press(but: ButtonKey): Promise<void> {
-    const input = this.toEndpointKey(but);
-    await this.client.post(`/button/${input}`, { action: "press-and-release" });
+  async press(key: ButtonKey): Promise<void> {
+    await this.client.post(`/button/${key}`, { action: "press-and-release" });
   }
 }
