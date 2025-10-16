@@ -1,4 +1,5 @@
 import hashlib
+import os
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ecdsa
@@ -67,6 +68,42 @@ def remove_null_values(obj: Any) -> Any:
         return obj
 
 
+def normalize_etherscan_urls(obj: Any) -> Any:
+    """
+    Recursively process JSON data to update Etherscan URLs:
+    1. Replace old API URLs with v2 API URLs
+    2. Append API key if ETHERSCAN_API_KEY environment variable is set
+    """
+    if isinstance(obj, dict):
+        return {
+            key: normalize_etherscan_urls(value)
+            for key, value in obj.items()
+        }
+    elif isinstance(obj, list):
+        return [
+            normalize_etherscan_urls(item)
+            for item in obj
+        ]
+    elif isinstance(obj, str):
+        # Step 1: Replace old API URL format with v2 format
+        if obj.startswith("https://api.etherscan.io/api?module=contract&action=getabi&address="):
+            obj = obj.replace(
+                "https://api.etherscan.io/api?module=contract&action=getabi&address=",
+                "https://api.etherscan.io/v2/api?chainid=1&module=contract&action=getabi&address=",
+                1
+            )
+
+        # Step 2: Append API key if URL starts with v2 API and ETHERSCAN_API_KEY is set
+        if obj.startswith("https://api.etherscan.io/v2/api"):
+            api_key = os.getenv("ETHERSCAN_API_KEY")
+            if api_key:
+                obj = f"{obj}&apikey={api_key}"
+
+        return obj
+    else:
+        return obj
+
+
 def sign_payload(payload: str, signing_key: str = TEST_SIGNING_KEY) -> Dict[str, Any]:
     """
     Sign a payload with CAL staging key.
@@ -98,7 +135,7 @@ def sign_enum_descriptors(enums: List[Dict[str, Any]]) -> Dict[str, Dict[str, An
     return signed_enums
 
 
-def process_descriptor(descriptor: Any) -> Dict[str, Any]:
+def format_and_sign_descriptor(descriptor: Any) -> Dict[str, Any]:
     """
     Process a single descriptor: convert to JSON, sign, and clean.
     """
@@ -150,7 +187,7 @@ def process_contract_descriptor(input_descriptor: InputERC7730Descriptor) -> Dic
     processed_descriptors = {}
     for (chain_id, address), descriptors in grouped_descriptors.items():
         selectors = {
-            descriptor.selector: process_descriptor(descriptor)
+            descriptor.selector: format_and_sign_descriptor(descriptor)
             for descriptor in descriptors
         }
 
@@ -165,7 +202,7 @@ def process_contract_descriptor(input_descriptor: InputERC7730Descriptor) -> Dic
     return processed_descriptors
 
 
-def process_eip712_instruction(descriptor: EIP712Instruction) -> Dict[str, Any]:
+def format_and_sign_eip712_instruction(descriptor: EIP712Instruction) -> Dict[str, Any]:
     """
     Process a single instruction: convert to JSON, sign, and clean.
     """
@@ -202,7 +239,7 @@ def convert_erc7730_to_eip712_descriptor(descriptor: InputEIP712DAppDescriptor) 
                 address: {
                     schema_hash: {
                         "instructions": [
-                            process_eip712_instruction(instruction)
+                            format_and_sign_eip712_instruction(instruction)
                             for instruction in instructions_list
                         ]
                     }
@@ -257,6 +294,9 @@ def process_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
         request_data = request.get_json()
         if not request_data:
             return {"error": "No JSON data provided"}, 400
+
+        # Normalize Etherscan URLs in the request data
+        request_data = normalize_etherscan_urls(request_data)
 
         # Validate input descriptor
         input_descriptor = InputERC7730Descriptor.model_validate(
