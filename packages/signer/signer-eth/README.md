@@ -17,6 +17,8 @@ This module provides the implementation of the Ledger Ethereum signer of the Dev
    - [Sign Transaction](#use-case-2-sign-transaction)
    - [Sign Message](#use-case-3-sign-message)
    - [Sign Typed Data](#use-case-4-sign-typed-data)
+   - [Sign Delegation Authorization](#use-case-5-sign-delegation-authorization-eip-7702)
+   - [Display Safe Account](#use-case-6-display-safe-account)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -54,7 +56,7 @@ const signerEth = new SignerEthBuilder({ sdk, sessionId })
 
 ## 🔹 Use Cases
 
-The `SignerEthBuilder.build()` method will return a `SignerEth` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerEthBuilder.build()` method will return a `SignerEth` instance that exposes 6 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
@@ -313,6 +315,48 @@ type Signature = {
 
 - `cancel` A function to cancel the action on the Ledger device.
 
+---
+
+### Use Case 6: Display Safe Account
+
+This method enables users to display and verify a Safe account address on their Ledger device. This is particularly useful for verifying Safe (formerly Gnosis Safe) multi-signature wallet addresses.
+
+```typescript
+const { observable, cancel } = signerEth.displaySafeAccount(
+  safeContractAddress,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `safeContractAddress`
+
+  - **Required**
+  - **Type:** `string`
+  - The address of the Safe contract to display and verify on the device.
+
+- `options`
+
+  - **Optional**
+  - **Type:** `SafeAccountOptions`
+
+    ```typescript
+    type SafeAccountOptions = {
+      chainId: number;
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `chainId`: The chain ID of the Ethereum network where the Safe contract is deployed (e.g., `1` for Ethereum mainnet, `137` for Polygon).
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Ethereum app on the device (`true`) or not (`false`). Defaults to `false`.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates. On successful completion, the output is `void` (no return value), indicating that the Safe account address was successfully verified on the device.
+
+- `cancel` A function to cancel the action on the Ledger device.
+
 ## 🔹 Observable Behavior
 
 Each method returns an [Observable](https://rxjs.dev/guide/observable) emitting updates structured as [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts). These updates reflect the operation’s progress and status:
@@ -390,6 +434,13 @@ switch (requiredUserInteraction) {
     console.log("User needs to sign the typed data displayed on the device.");
     break;
   }
+  case UserInteractionRequired.SignDelegationAuthorization: {
+    // User needs to sign the delegation authorization displayed on the device
+    console.log(
+      "User needs to sign the delegation authorization displayed on the device.",
+    );
+    break;
+  }
   case UserInteractionRequired.SignTransaction: {
     // User needs to sign the transaction displayed on the device
     console.log("User needs to sign the transaction displayed on the device.");
@@ -398,6 +449,13 @@ switch (requiredUserInteraction) {
   case UserInteractionRequired.VerifyAddress: {
     // User needs to verify the address displayed on the device
     console.log("User needs to verify the address displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.VerifySafeAccount: {
+    // User needs to verify the Safe account address displayed on the device
+    console.log(
+      "User needs to verify the Safe account address displayed on the device.",
+    );
     break;
   }
   case UserInteractionRequired.None: {
