@@ -2,4 +2,4 @@
 "@ledgerhq/device-management-kit": patch
 ---
 
-Add verify safe account user interaction
+Add verify safe address user interaction

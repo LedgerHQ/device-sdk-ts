@@ -10,13 +10,13 @@ import {
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { DisplaySafeAccountDAReturnType } from "@api/app-binder/DisplaySafeAccountDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
-import { SafeAccountOptions } from "@api/model/SafeAccountOptions";
+import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
+import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
@@ -28,8 +28,8 @@ import { TransactionParserService } from "@internal/transaction/service/parser/T
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
-import { DisplaySafeAccountDeviceAction } from "./device-action/DisplaySafeAccount/DisplaySafeAccount";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
+import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 
 @injectable()
@@ -65,13 +65,13 @@ export class EthAppBinder {
     });
   }
 
-  displaySafeAccount(args: {
+  verifySafeAddress(args: {
     safeContractAddress: string;
-    options?: SafeAccountOptions;
-  }): DisplaySafeAccountDAReturnType {
+    options?: SafeAddressOptions;
+  }): VerifySafeAddressDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new DisplaySafeAccountDeviceAction({
+      deviceAction: new VerifySafeAddressDeviceAction({
         input: {
           safeContractAddress: args.safeContractAddress,
           contextModule: this.contextModule,

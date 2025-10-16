@@ -13,11 +13,11 @@ import {
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
 import {
-  BuildSafeAccountContextTask,
-  type BuildSafeAccountContextTaskArgs,
-} from "./BuildSafeAccountContextTask";
+  BuildSafeAddressContextTask,
+  type BuildSafeAddressContextTaskArgs,
+} from "./BuildSafeAddressContextTask";
 
-describe("BuildSafeAccountContextTask", () => {
+describe("BuildSafeAddressContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock: ContextModule = {
     getContexts: vi.fn(),
@@ -56,9 +56,9 @@ describe("BuildSafeAccountContextTask", () => {
   });
 
   describe("run", () => {
-    it("should successfully build safe account contexts with valid SAFE and SIGNER contexts", async () => {
+    it("should successfully build safe address contexts with valid SAFE and SIGNER contexts", async () => {
       // GIVEN
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -70,7 +70,7 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([validSafeContext, validSignerContext]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
       const result = await task.run();
 
       // THEN
@@ -109,7 +109,7 @@ describe("BuildSafeAccountContextTask", () => {
             payload: new Uint8Array([4, 5, 6]),
           },
         };
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -121,7 +121,7 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([safeContextWithCert, signerContextWithCert]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
       const result = await task.run();
 
       // THEN
@@ -134,7 +134,7 @@ describe("BuildSafeAccountContextTask", () => {
   describe("error handling", () => {
     it("should throw error when GetChallengeCommand fails", async () => {
       // GIVEN
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -143,7 +143,7 @@ describe("BuildSafeAccountContextTask", () => {
       apiMock.sendCommand.mockResolvedValue(errorResult);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
       await expect(task.run()).rejects.toThrow("Failed to get challenge");
@@ -155,7 +155,7 @@ describe("BuildSafeAccountContextTask", () => {
         type: ClearSignContextType.ERROR,
         error: new Error("Context error"),
       };
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -167,7 +167,7 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([errorContext, validSignerContext]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
       await expect(task.run()).rejects.toThrow("Context error");
@@ -175,7 +175,7 @@ describe("BuildSafeAccountContextTask", () => {
 
     it("should throw error when only one context is returned", async () => {
       // GIVEN
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -187,15 +187,15 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([validSafeContext]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
-      await expect(task.run()).rejects.toThrow("Invalid safe account contexts");
+      await expect(task.run()).rejects.toThrow("Invalid safe address contexts");
     });
 
     it("should throw error when no contexts are returned", async () => {
       // GIVEN
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -205,10 +205,10 @@ describe("BuildSafeAccountContextTask", () => {
       contextModuleMock.getContexts = vi.fn().mockResolvedValue([]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
-      await expect(task.run()).rejects.toThrow("Invalid safe account contexts");
+      await expect(task.run()).rejects.toThrow("Invalid safe address contexts");
     });
 
     it("should throw error when more than two contexts are returned", async () => {
@@ -218,7 +218,7 @@ describe("BuildSafeAccountContextTask", () => {
           type: ClearSignContextType.TOKEN,
           payload: "extra_payload",
         };
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -234,15 +234,15 @@ describe("BuildSafeAccountContextTask", () => {
         ]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
-      await expect(task.run()).rejects.toThrow("Invalid safe account contexts");
+      await expect(task.run()).rejects.toThrow("Invalid safe address contexts");
     });
 
     it("should throw error when SAFE context is missing", async () => {
       // GIVEN
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -254,15 +254,15 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([validSignerContext, validSignerContext]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
-      await expect(task.run()).rejects.toThrow("Invalid safe account contexts");
+      await expect(task.run()).rejects.toThrow("Invalid safe address contexts");
     });
 
     it("should throw error when SIGNER context is missing", async () => {
       // GIVEN
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -274,10 +274,10 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([validSafeContext, validSafeContext]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
-      await expect(task.run()).rejects.toThrow("Invalid safe account contexts");
+      await expect(task.run()).rejects.toThrow("Invalid safe address contexts");
     });
 
     it("should throw error when contexts are of wrong types", async () => {
@@ -291,7 +291,7 @@ describe("BuildSafeAccountContextTask", () => {
         type: ClearSignContextType.NFT,
         payload: "nft_payload",
       };
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -303,10 +303,10 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([wrongContext1, wrongContext2]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
-      await expect(task.run()).rejects.toThrow("Invalid safe account contexts");
+      await expect(task.run()).rejects.toThrow("Invalid safe address contexts");
     });
 
     it("should throw error with multiple ERROR contexts", async () => {
@@ -319,7 +319,7 @@ describe("BuildSafeAccountContextTask", () => {
         type: ClearSignContextType.ERROR,
         error: new Error("Second error"),
       };
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -331,7 +331,7 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([errorContext1, errorContext2]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
 
       // THEN
       await expect(task.run()).rejects.toThrow("First error");
@@ -349,7 +349,7 @@ describe("BuildSafeAccountContextTask", () => {
       "should successfully build contexts for %s device",
       async (deviceModelId, _deviceName) => {
         // GIVEN
-        const args: BuildSafeAccountContextTaskArgs = {
+        const args: BuildSafeAddressContextTaskArgs = {
           contextModule: contextModuleMock,
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
@@ -361,7 +361,7 @@ describe("BuildSafeAccountContextTask", () => {
           .mockResolvedValue([validSafeContext, validSignerContext]);
 
         // WHEN
-        const task = new BuildSafeAccountContextTask(apiMock, args);
+        const task = new BuildSafeAddressContextTask(apiMock, args);
         const result = await task.run();
 
         // THEN
@@ -382,7 +382,7 @@ describe("BuildSafeAccountContextTask", () => {
     it("should pass the correct challenge to contextModule", async () => {
       // GIVEN
       const customChallenge = "0xabcdef12";
-      const args: BuildSafeAccountContextTaskArgs = {
+      const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
@@ -398,7 +398,7 @@ describe("BuildSafeAccountContextTask", () => {
         .mockResolvedValue([validSafeContext, validSignerContext]);
 
       // WHEN
-      const task = new BuildSafeAccountContextTask(apiMock, args);
+      const task = new BuildSafeAddressContextTask(apiMock, args);
       await task.run();
 
       // THEN

@@ -5,15 +5,15 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
-import { type DisplaySafeAccountDAReturnType } from "@api/app-binder/DisplaySafeAccountDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
-import { type SafeAccountOptions } from "@api/model/SafeAccountOptions";
+import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { type TypedDataOptions } from "@api/model/TypedDataOptions";
@@ -24,7 +24,7 @@ import { makeContainer } from "@internal/di";
 import { messageTypes } from "@internal/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/message/use-case/SignMessageUseCase";
 import { safeTypes } from "@internal/safe/di/safeTypes";
-import { type DisplaySafeAccountUseCase } from "@internal/safe/use-case/DisplaySafeAccountUseCase";
+import { type VerifySafeAddressUseCase } from "@internal/safe/use-case/VerifySafeAddressUseCase";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { type SignTransactionUseCase } from "@internal/transaction/use-case/SignTransactionUseCase";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
@@ -85,12 +85,12 @@ export class DefaultSignerEth implements SignerEth {
       .execute(derivationPath, options);
   }
 
-  displaySafeAccount(
+  verifySafeAddress(
     safeContractAddress: string,
-    options?: SafeAccountOptions,
-  ): DisplaySafeAccountDAReturnType {
+    options?: SafeAddressOptions,
+  ): VerifySafeAddressDAReturnType {
     return this._container
-      .get<DisplaySafeAccountUseCase>(safeTypes.DisplaySafeAccountUseCase)
+      .get<VerifySafeAddressUseCase>(safeTypes.VerifySafeAddressUseCase)
       .execute(safeContractAddress, options);
   }
 

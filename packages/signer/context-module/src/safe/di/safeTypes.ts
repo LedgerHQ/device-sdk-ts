@@ -1,4 +1,4 @@
 export const safeTypes = {
-  SafeAccountDataSource: Symbol.for("SafeAccountDataSource"),
-  SafeAccountLoader: Symbol.for("SafeAccountLoader"),
+  SafeAddressDataSource: Symbol.for("SafeAddressDataSource"),
+  SafeAddressLoader: Symbol.for("SafeAddressLoader"),
 };

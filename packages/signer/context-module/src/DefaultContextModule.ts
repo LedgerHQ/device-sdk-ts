@@ -90,7 +90,7 @@ export class DefaultContextModule implements ContextModule {
       this._container.get<ContextLoader>(
         dynamicNetworkTypes.DynamicNetworkContextLoader,
       ),
-      this._container.get<ContextLoader>(safeTypes.SafeAccountLoader),
+      this._container.get<ContextLoader>(safeTypes.SafeAddressLoader),
     ];
   }
 

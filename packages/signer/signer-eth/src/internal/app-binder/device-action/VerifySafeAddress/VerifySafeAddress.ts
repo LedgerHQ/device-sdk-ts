@@ -12,56 +12,56 @@ import { type Either, Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  type DisplaySafeAccountDAError,
-  type DisplaySafeAccountDAInput,
-  type DisplaySafeAccountDAIntermediateValue,
-  type DisplaySafeAccountDAInternalState,
-  type DisplaySafeAccountDAOutput,
-  DisplaySafeAccountDAStep,
-} from "@api/app-binder/DisplaySafeAccountDeviceActionTypes";
+  type VerifySafeAddressDAError,
+  type VerifySafeAddressDAInput,
+  type VerifySafeAddressDAIntermediateValue,
+  type VerifySafeAddressDAInternalState,
+  type VerifySafeAddressDAOutput,
+  VerifySafeAddressDAStep,
+} from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import {
-  BuildSafeAccountContextTask,
-  type BuildSafeAccountContextTaskArgs,
-  type BuildSafeAccountContextTaskResult,
-} from "@internal/app-binder/task/BuildSafeAccountContextTask";
+  BuildSafeAddressContextTask,
+  type BuildSafeAddressContextTaskArgs,
+  type BuildSafeAddressContextTaskResult,
+} from "@internal/app-binder/task/BuildSafeAddressContextTask";
 import { ProvideContextTask } from "@internal/app-binder/task/ProvideContextTask";
 
 export type MachineDependencies = {
-  readonly buildSafeAccountContexts: (arg0: {
-    input: BuildSafeAccountContextTaskArgs;
-  }) => Promise<BuildSafeAccountContextTaskResult>;
+  readonly buildSafeAddressContexts: (arg0: {
+    input: BuildSafeAddressContextTaskArgs;
+  }) => Promise<BuildSafeAddressContextTaskResult>;
   readonly provideContexts: (arg0: {
     input: {
       contexts: ClearSignContextSuccess[];
     };
-  }) => Promise<Either<DisplaySafeAccountDAError, void>>;
+  }) => Promise<Either<VerifySafeAddressDAError, void>>;
 };
 
-export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
-  DisplaySafeAccountDAOutput,
-  DisplaySafeAccountDAInput,
-  DisplaySafeAccountDAError,
-  DisplaySafeAccountDAIntermediateValue,
-  DisplaySafeAccountDAInternalState
+export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
+  VerifySafeAddressDAOutput,
+  VerifySafeAddressDAInput,
+  VerifySafeAddressDAError,
+  VerifySafeAddressDAIntermediateValue,
+  VerifySafeAddressDAInternalState
 > {
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
-    DisplaySafeAccountDAOutput,
-    DisplaySafeAccountDAInput,
-    DisplaySafeAccountDAError,
-    DisplaySafeAccountDAIntermediateValue,
-    DisplaySafeAccountDAInternalState
+    VerifySafeAddressDAOutput,
+    VerifySafeAddressDAInput,
+    VerifySafeAddressDAError,
+    VerifySafeAddressDAIntermediateValue,
+    VerifySafeAddressDAInternalState
   > {
     type types = StateMachineTypes<
-      DisplaySafeAccountDAOutput,
-      DisplaySafeAccountDAInput,
-      DisplaySafeAccountDAError,
-      DisplaySafeAccountDAIntermediateValue,
-      DisplaySafeAccountDAInternalState
+      VerifySafeAddressDAOutput,
+      VerifySafeAddressDAInput,
+      VerifySafeAddressDAError,
+      VerifySafeAddressDAIntermediateValue,
+      VerifySafeAddressDAInternalState
     >;
 
-    const { buildSafeAccountContexts, provideContexts } =
+    const { buildSafeAddressContexts, provideContexts } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -74,7 +74,7 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Ethereum" },
         }).makeStateMachine(internalApi),
-        buildSafeAccountContexts: fromPromise(buildSafeAccountContexts),
+        buildSafeAddressContexts: fromPromise(buildSafeAddressContexts),
         provideContexts: fromPromise(provideContexts),
       },
       guards: {
@@ -90,15 +90,15 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOACzGAnAFYDNgGxXpF6ToA0IAJ67TOgEwcDHTsLCz9pQN9bAF8o9zRMXAIiNipaBiZWcipuXn4hETEpHXkkEGVVLIwNbQR9IzNLG3tHZzdPXV87aQ5I5ztfSON+zpi49Gx8QhJKtMYWFM4AeUUwDGZFRVmMhfEIKjAOVAw6CgBrA4oVtY3hUTAAWRIACyOwGRKlFTUqasQ9RxMVjMdgcdj0xnBvncXlqkTsHAsQxcnVMvmM4TsoxA8QmSWm7C280qHAAwk8wMRTstVutNvQ5pl2AAlOAAVwEpCkcg05W+VVKNR0gW6IOsoWMfgMdlMdmhHRBHActisFnMMqCmNi2PGiSmC0JjOyZIpVKutINCxZsHZnMkxR5X0qv1qwsVwRVOglcJlcoQEo4ns9pmkQL00mCFgMWJxuuSM3p22JAHEwKRaSSqAAzdC7faHY5nA4wNMbDMYbNQd4OirqAW6CVWDhWPR2fR2Yy+Fu+UwGX1C4zGHoGcPSDuGCx6HTRnWTOMEhNE9gcFMlxRliviMA4HAUHAcRQCUSZ3cAWw4xfTWfQVdKvKdddqDabLbbY-6Pb7IQ4I+sPdR1n+KMtRjWd8VSBdDU4FdL3LdArRtY1KS5D4ykdWtQBqAYO2-MFwyBHRTEjNoYT8Lpv3CKwrG7Zt0VMPRpwSUD9QghZl1TGCK3gjlENOIoULvdCtEQLD-HDMMHAlQjAj7VEdADENg1MYNhQMUwGNxPV43SRdsmg0srygLjSB4qRfH4tCfgfEScPE-CpOIxBVO6HQiLbVUQR8dTYzAmgWOJAB1MAACMDB42BllIHhcwwA4jhOc4OAAd2C0LyUpCKeBvT4a0sjDhKGfxmxDXwMT0SIDF7dpYUono9B7YxbAI4xHGMLymK0hlWMCkKwoyjBN23Xd90PUhjxwM9kp6tLTUijAstQnL+TyhA0X6Z9itK8rKphUwgW-MrfFCXpKJcejgJnPFmO0yCOG61KTXCxRZqM8RNFgAoDjwTMxBwAAKaQAEpxBAy6OsTJc7t6p6eCM+aBNyoSEAqgjFVIz0LE6CxWz0PtOz0Dg9HBMquh8LowTa0H52u1iAAU8BwWAwG8nY9hi-N4oORR6cZ5nKjhiylsRgxwQsJtCOlIIdFHaQWz7AwJ2-FyCMGEMMbOsZGMp8DqeJOmGaZ9r2AGnc9wPI9T33bmDa1ubuVvAXnWFywxax0mpfRWWqpVUWSqUgYw2F5xWvOzXNKpzriQAIVZVABAgMsxE0UhYGi2KCwSoKY7jhOwCT2B+cW50e09RUSshJwQ0nGSdEbKx-1bUI7IsCmw+1iOl2j2P46oRPk+NoazdGi3M67nO84Lvki8CQd+hljsK+bByEDq7oKocbtI3BOurBbuc2-B7IaZ3BgIDAMe+9ZtOOf3Y-UFP8-87t7LJ4fcwyqbbGezq-orFlKqCLIs4XwVFgjSFOr-XePkLS61vvfHuuc+5bhNsNc240b4UBPmfeB48n4LRfstN+hVP7CxlMAv+MIBxyRlAVSck5xSQKuu3bIINW79UvuzQsHBVChz3rbcyhcHx1xKhwVEwwQgV0nFYGSv8EQDCFD4GuehVQ7xDhpXh0ClwsN4f3U2I0xpnm4WonyE97zLSEd0URAxxHOEkX2aQAxFRgLKqqVWDYGFgx0pwLRPkjImRMYJGoQJnBNiFIdCSIJwgySGE2SwZVwgr1DO48OB8vEXVYb46afFqz4MRkE7oVhQlYyBBE7augDC+DkgUiUZgqnlLqkk-eniOCRwEEcCA3iFgADFBACCCiQXi7C4qcKCq0jA7S0m8O6QIXp-T-EIxqNKFs35VQSlVDKQmpg5aohESqAcnQQT1NUbzZJTSWltI6ZUKZMykJIIHno4eozxk8J8lcvplI5mCwWeYRsEkWzNXbJ2YwfY-D42kKieJHY2zNgab5HWHdHkXPYK8-pGSTTIWyaYxGk5IjPmsHXfQeEoT-1UqLfowpKIdlWUBDWRjGEpOaQiiZLyelvNOKipCdp+E5JqNiowzY8U+FskSkiw5TAmGlCEQioR-j6BiFqDAFBT7wFKIixpkEMUBMQAAWnIdqxsIQQiE3BGClx0QjmGzVaxHgahBC3DEBq+ZiBUQyXCE2YWSjJxgOFtC81NsNHZGpNcOkcKEbw0+Y5OuJg1ZDCUSqQFuNgHfmDN2AOYCnBTl9aw-1nAeKBvNH5ZkbIOQOvDQgA1AQxy2BbKdWwuNmwmDqo4cwjRykwuzWxVc650AludDXMBPRmoGAlP8cwTg5aRs6GGGu+g0RgJUTS45lrkzsX0rBQyRbjLTR7VZex-g0QuU6HXIdE5Sm1GDKLHQSsgkShDMLNtBbsiQ2mo9Wa27lrANdWYP2-QPKdikf-ORAQpZKLBUKds96Q2cCfQ9PqRk31Cxlvjaw7YKIQk9iRYB-hKUFJogU4BEGmGcD1jzC1gsw2Ox7EYYWql5aqS6MUuWdgjAhjrpQ7GSiCP0s7tnbByd4M1GDK6hwlEpRbyBcS-0-LURlTqiEMwnGmlHwwXfLBGBe7KufpigTVFGzlKVJ6cMX65YQnkljaVUo-DdgUzdVVZGHaCNHP4Fy2KP32OCDJBx1gzCIkIuiexzdM3qIfak55loN08X44gX+nYAzlOA-oKio4ZKExMFLFUQJ4mnWs6xM5YzbPIspJFhAXR0QBkOkKLGdUOybIA4YAIwDDCehVCCfDgWoHBYZecplXSWUovC1u+2AjlpgiYyIicl6St4SXvI7oX7RzWCDFhbLxJkCsmIEwWAGm8Fab+LYIwLk66tnCEOsFyXdPyKGO7QIGaF2kfbQAUUGjgIrhgbABl-EdiqtFfT-HxgOd0TsQMdjlVEIAA */
-      id: "DisplaySafeAccountDeviceAction",
+      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOACzGAnAFYDNgGxXpF6ToA0IAJ67TOgEwcDHTsLCz9pQN9bAF8o9zRMXAIiNipaBiZWcipuXn4hETEpHXkkEGVVLIwNbQR9IzNLG3tHZzdPXV87aQ5I5ztfSON+zpi49Gx8QhJKtMYWFM4AeUUwDGZFRVmMhfEIKjAOVAw6CgBrA4oVtY3hUTAAWRIACyOwGRKlFTUqasQ9RxMVjMdgcdj0xnBvncXlqkTsHAsQxcnVMvmM4TsoxA8QmSWm7C280qHAAwk8wMRTstVutNvQ5pl2AAlOAAVwEpCkcg05W+VVKNR0gW6IOsoWMfgMdmhHRBHActisFnMMqCmNi2PGiSmC0JjOyZIpVKutINCxZsHZnMkxR5X0qv1qwsVwRVOglcJlcoQEo4ns9pmkQL00mCFgMWJxuuSM3p22JAHEwKRaSSqAAzdC7faHY5nA4wNMbDMYbNQd4OirqAW6CVWDhWPR2fR2Yy+Fu+UwGX1C4zGHoGcPSDuGCx6HTRnWTOMEhNE9gcFMlxRliviMA4HAUHAcRQCUSZ3cAWw4xfTWfQVdKvKdddqDabLbbY/6Pb7IQ4I+sPdR1n+KMtRjWd8VSBdDU4FdL3LdArRtY1KS5D4ykdWtQBqAYO2-MFwyBHRTEjNoYT8Lpv3CKwrG7Zt0VMPRpwSUD9QghZl1TGCK3gjlENOIoULvdCtEQLD-HDMMHAlQjAj7VEdADENg1MYNhQMUwGNxPV43SRdsmg0srygLjSB4qRfH4tCfgfEScPE-CpOIxBVO6HQiLbVUQR8dTYzAmgWOJAB1MAACMDB42BllIHhcwwA4jhOc4OAAd2C0LyUpCKeBvT4a0sjDhKGfxmxDXwMT0KIDF7dpYUono9B7YxbAI4xHGMLymK0hlWMCkKwoyjBN23Xd90PUhjxwM9kp6tLTUijAstQnL+TyhA0X6Z9itK8rKphUwgW-MrfFCXpKJcejgJnPFmO0yCOG61KTXCxRZqM8RNFgAoDjwTMxBwAAKaQAEpxBAy6OsTJc7t6p6eCM+aBNyoSEAqgjFVIz0LE6CxWz0PtOz0Dg9HBMquh8LowTa0H52u1iAAU8BwWAwG8nY9hi-N4oORR6cZ5nKjhiylsRgxwQsJtCOlIIdFHaQWz7AwJ2-FyCMGEMMbOsZGMp8DqeJOmGaZ9r2AGnc9wPI9T33bmDa1ubuVvAXnWFywxax0mpfRWWqpVUWSqUgYw2F5xWvOzXNKpzriQAIVZVABAgMsxE0UhYGi2KCwSoKY7jhOwCT2B+cW50e09RUSshJwQ0nGSdEbKx-1bUI7IsCmw+1iOl2j2P46oRPk+NoazdGi3M67nO84Lvki8CQd+hljsK+bByEDq7oKocbtI3BOurBbuc2-B7IaZ3BgIDAMe+9ZtOOf3Y-UFP8-87t7LJ4fcwyqbbGezq-orFlKqCLIs4XwVFgjSFOr-XePkLS61vvfHuuc+5bhNsNc240b4UBPmfeB48n4LRfstN+hVP7CxlMAv+MIBxyRlAVSck5xSQKuu3bIINW79UvuzQsHBVChz3rbcyhcHx1xKhwVEwwQgV0nFYGSv8EQDCFD4GuehVQ7xDhpXh0ClwsN4f3U2I0xpnm4WonyE97zLSEd0URAxxHOEkX2aQAxFRgLKqqVWDYGFgx0pwLRPkjImRMYJGoQJnBNiFIdCSIJwgySGE2SwZVwgr1DO48OB8vEXVYb46afFqz4MRkE7oVhQlYyBBE7augDC+DkgUiUZgqnlLqkk-eniOCRwEEcCA3iFgADFBACCCiQXi7C4qcKCq0jA7S0m8O6QIXp-T-EIxqNKFs35VQSlVDKQmpg5aohESqAcnQQT1NUbzZJTSWltI6ZUKZMykJIIHno4eozxk8J8lcvplI5mCwWeYRsEkWzNXbJ2YwfY-D42kKieJHY2zNgab5HWHdHkXPYK8-pGSTTIWyaYxGk5IjPmsHXfQeEoT-1UqLfowpKIdlWUBDWRjGEpOaQiiZLyelvNOKipCdp+E5JqNiowzY8U+FskSkiw5TAmGlCEQioR_j6BiFqDAFBT7wFKIixpkEMUBMQAAWnIdqxsIQQiE3BGClx0QjmGzVaxHgahBC3DEBq-ZiBUQyXCE2YWSjJxgOFtC81NsNHZGpNcOkcKEbw0-Y5OuJg1ZDCUSqQFuNgHfmDN2AOYCnBTl9aw_1nAeKBvNH5ZkbIOQOvDQgA1AQxy2BbKdWwuNmwmDqo4cwjRykwuzWxVc650AludDXMBPRmoGAlP8cwTg5aRs6GGGu-g0RgJUTS45lrkzsX0rBQyRbjLTR7VZex-g0QuU6HXIdE5Sm1GDKLHQSsgkShDMLNtBbsiQ2mo9Wa27lrANdWYP2_QPKdikf_ORAQpZKLBUKds96Q2cCfQ9PqRk31Cxlvjaw7YKIQk9iRYB_hKUFJogU4BEGmGcD1jzC1gsw2Ox7EYYWql5aqS6MUuWdgjAhjrpQ7GSiCP0s7tnbByd4M1GDK6hwlEpRbyBcS_0_LURlTqiEMwnGmlHwwXfLBGBe7KufpigTVFGzlKVJ6cMX65YQnkljaVUo_DdgUzdVVZGHaCNHP4Fy2KP32OCDJBx1gzCIkIuiexzdM3qIfak55loN08X44gX-nYAzlOA_oKio4ZKExMFLFUQJ4mnWs6xM5YzbPIspJFhAXR0QBkOkKLGdUOybIA4YAIwDDCehVCCfDgWoHBYZecplXSWUovC1u-2AjlpgiYyIicl6St4SXvI7oX7RzWCDFhbLxJkCsmIEwWAGm8Fab-EdiqtFfT_HxgOd0TsQMdjlVEIAA */
+      id: "VerifySafeAddressDeviceAction",
       initial: "InitialState",
       context: ({ input }) => {
         return {
           input,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: DisplaySafeAccountDAStep.OPEN_APP,
+            step: VerifySafeAddressDAStep.OPEN_APP,
           },
           _internalState: {
             error: null,
@@ -110,7 +110,7 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
         InitialState: {
           always: [
             {
-              target: "BuildSafeAccountContexts",
+              target: "BuildSafeAddressContexts",
               guard: "skipOpenApp",
             },
             "OpenAppDeviceAction",
@@ -127,14 +127,14 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
               actions: assign({
                 intermediateValue: (_) => ({
                   ..._.event.snapshot.context.intermediateValue,
-                  step: DisplaySafeAccountDAStep.OPEN_APP,
+                  step: VerifySafeAddressDAStep.OPEN_APP,
                 }),
               }),
             },
             onDone: {
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf<DisplaySafeAccountDAInternalState>(
+                  return _.event.output.caseOf<VerifySafeAddressDAInternalState>(
                     {
                       Right: () => _.context._internalState,
                       Left: (error) => ({
@@ -152,22 +152,22 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
         CheckOpenAppDeviceActionResult: {
           always: [
             {
-              target: "BuildSafeAccountContexts",
+              target: "BuildSafeAddressContexts",
               guard: "noInternalError",
             },
             "Error",
           ],
         },
-        BuildSafeAccountContexts: {
+        BuildSafeAddressContexts: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: DisplaySafeAccountDAStep.BUILD_CONTEXTS,
+              step: VerifySafeAddressDAStep.BUILD_CONTEXTS,
             },
           }),
           invoke: {
-            id: "buildSafeAccountContexts",
-            src: "buildSafeAccountContexts",
+            id: "buildSafeAddressContexts",
+            src: "buildSafeAddressContexts",
             input: ({ context }) => ({
               contextModule: context.input.contextModule,
               safeContractAddress: context.input.safeContractAddress,
@@ -195,7 +195,7 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: DisplaySafeAccountDAStep.VERIFY_SAFE_ACCOUNT,
+              step: VerifySafeAddressDAStep.VERIFY_SAFE_ADDRESS,
             },
           }),
           invoke: {
@@ -252,9 +252,9 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const buildSafeAccountContexts = async (arg0: {
-      input: BuildSafeAccountContextTaskArgs;
-    }) => new BuildSafeAccountContextTask(internalApi, arg0.input).run();
+    const buildSafeAddressContexts = async (arg0: {
+      input: BuildSafeAddressContextTaskArgs;
+    }) => new BuildSafeAddressContextTask(internalApi, arg0.input).run();
 
     const provideContexts = async (arg0: {
       input: {
@@ -275,7 +275,7 @@ export class DisplaySafeAccountDeviceAction extends XStateDeviceAction<
 
     return {
       provideContexts,
-      buildSafeAccountContexts,
+      buildSafeAddressContexts,
     };
   }
 }

@@ -17,16 +17,16 @@ import { Left, Right } from "purify-ts";
 import { lastValueFrom, Observable } from "rxjs";
 
 import {
-  DisplaySafeAccountDAError,
-  DisplaySafeAccountDAIntermediateValue,
-  type DisplaySafeAccountDAState,
-  DisplaySafeAccountDAStep,
-} from "@api/app-binder/DisplaySafeAccountDeviceActionTypes";
+  VerifySafeAddressDAError,
+  VerifySafeAddressDAIntermediateValue,
+  type VerifySafeAddressDAState,
+  VerifySafeAddressDAStep,
+} from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { executeUntilStep } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionUntilStep";
 
-import { DisplaySafeAccountDeviceAction } from "./DisplaySafeAccount";
+import { VerifySafeAddressDeviceAction } from "./VerifySafeAddress";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
@@ -39,23 +39,23 @@ vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   };
 });
 
-describe("DisplaySafeAccountDeviceAction", () => {
+describe("VerifySafeAddressDeviceAction", () => {
   let observable: Observable<
     DeviceActionState<
       void,
-      DisplaySafeAccountDAError,
-      DisplaySafeAccountDAIntermediateValue
+      VerifySafeAddressDAError,
+      VerifySafeAddressDAIntermediateValue
     >
   >;
   const contextModuleMock = {
     getContexts: vi.fn(),
   };
-  const buildSafeAccountContextsMock = vi.fn();
+  const buildSafeAddressContextsMock = vi.fn();
   const provideContextsMock = vi.fn();
 
   function extractDependenciesMock() {
     return {
-      buildSafeAccountContexts: buildSafeAccountContextsMock,
+      buildSafeAddressContexts: buildSafeAddressContextsMock,
       provideContexts: provideContextsMock,
     };
   }
@@ -88,7 +88,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
     });
   }
 
-  const getStep = (s: Array<DisplaySafeAccountDAState>, index: number) => {
+  const getStep = (s: Array<VerifySafeAddressDAState>, index: number) => {
     if (s[index]?.status !== DeviceActionStatus.Pending) {
       throw new Error(
         `Step ${index} is not pending: ${JSON.stringify(s[index])}`,
@@ -98,19 +98,19 @@ describe("DisplaySafeAccountDeviceAction", () => {
   };
 
   describe("Happy path", () => {
-    describe("should display safe account", () => {
+    describe("should verify safe address", () => {
       beforeEach(() => {
         vi.resetAllMocks();
         setupOpenAppDAMock();
         setupDeviceModel(DeviceModelId.FLEX);
 
         // Mock the dependencies to return some sample data
-        buildSafeAccountContextsMock.mockResolvedValueOnce({
+        buildSafeAddressContextsMock.mockResolvedValueOnce({
           clearSignContexts: [validSafeContext, validSignerContext],
         });
         provideContextsMock.mockResolvedValueOnce(Right(void 0));
 
-        const deviceAction = new DisplaySafeAccountDeviceAction({
+        const deviceAction = new VerifySafeAddressDeviceAction({
           input: {
             safeContractAddress: TEST_SAFE_ADDRESS,
             options: { chainId: TEST_CHAIN_ID },
@@ -127,7 +127,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
       it("should open the app", async () => {
         const { steps } = await executeUntilStep(0, observable);
         expect(getStep(steps, 0).intermediateValue.step).toBe(
-          DisplaySafeAccountDAStep.OPEN_APP,
+          VerifySafeAddressDAStep.OPEN_APP,
         );
       });
 
@@ -138,12 +138,12 @@ describe("DisplaySafeAccountDeviceAction", () => {
         ).toBe(UserInteractionRequired.ConfirmOpenApp);
       });
 
-      it("should build safe account contexts", async () => {
+      it("should build safe address contexts", async () => {
         const { steps } = await executeUntilStep(2, observable);
         expect(getStep(steps, 2).intermediateValue.step).toBe(
-          DisplaySafeAccountDAStep.BUILD_CONTEXTS,
+          VerifySafeAddressDAStep.BUILD_CONTEXTS,
         );
-        expect(buildSafeAccountContextsMock).toHaveBeenCalledWith(
+        expect(buildSafeAddressContextsMock).toHaveBeenCalledWith(
           expect.objectContaining({
             input: {
               contextModule: contextModuleMock as unknown as ContextModule,
@@ -155,10 +155,10 @@ describe("DisplaySafeAccountDeviceAction", () => {
         );
       });
 
-      it("should provide contexts (verify safe account)", async () => {
+      it("should provide contexts (verify safe address)", async () => {
         const { steps } = await executeUntilStep(3, observable);
         expect(getStep(steps, 3).intermediateValue.step).toBe(
-          DisplaySafeAccountDAStep.VERIFY_SAFE_ACCOUNT,
+          VerifySafeAddressDAStep.VERIFY_SAFE_ADDRESS,
         );
         expect(provideContextsMock).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -184,14 +184,14 @@ describe("DisplaySafeAccountDeviceAction", () => {
         setupOpenAppDAMock();
         setupDeviceModel(DeviceModelId.FLEX);
 
-        const deviceAction = new DisplaySafeAccountDeviceAction({
+        const deviceAction = new VerifySafeAddressDeviceAction({
           input: {
             safeContractAddress: TEST_SAFE_ADDRESS,
             options: { chainId: TEST_CHAIN_ID, skipOpenApp: true },
             contextModule: contextModuleMock as unknown as ContextModule,
           },
         });
-        buildSafeAccountContextsMock.mockResolvedValueOnce({
+        buildSafeAddressContextsMock.mockResolvedValueOnce({
           clearSignContexts: [validSafeContext, validSignerContext],
         });
         provideContextsMock.mockResolvedValueOnce(Right(void 0));
@@ -207,7 +207,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
         const { steps } = await executeUntilStep(0, observable);
 
         expect(getStep(steps, 0).intermediateValue.step).toBe(
-          DisplaySafeAccountDAStep.BUILD_CONTEXTS,
+          VerifySafeAddressDAStep.BUILD_CONTEXTS,
         );
       });
     });
@@ -220,19 +220,19 @@ describe("DisplaySafeAccountDeviceAction", () => {
         [DeviceModelId.FLEX, "Flex"],
         [DeviceModelId.STAX, "Stax"],
       ])(
-        "should display safe account on %s device",
+        "should verify safe address on %s device",
         async (deviceModelId, _deviceName) => {
           // GIVEN
           vi.resetAllMocks();
           setupOpenAppDAMock();
           setupDeviceModel(deviceModelId);
 
-          buildSafeAccountContextsMock.mockResolvedValueOnce({
+          buildSafeAddressContextsMock.mockResolvedValueOnce({
             clearSignContexts: [validSafeContext, validSignerContext],
           });
           provideContextsMock.mockResolvedValueOnce(Right(void 0));
 
-          const deviceAction = new DisplaySafeAccountDeviceAction({
+          const deviceAction = new VerifySafeAddressDeviceAction({
             input: {
               safeContractAddress: TEST_SAFE_ADDRESS,
               options: { chainId: TEST_CHAIN_ID, skipOpenApp: true },
@@ -253,7 +253,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
             status: DeviceActionStatus.Completed,
             output: void 0,
           });
-          expect(buildSafeAccountContextsMock).toHaveBeenCalledWith(
+          expect(buildSafeAddressContextsMock).toHaveBeenCalledWith(
             expect.objectContaining({
               input: expect.objectContaining({
                 deviceModelId,
@@ -288,12 +288,12 @@ describe("DisplaySafeAccountDeviceAction", () => {
           },
         };
 
-        buildSafeAccountContextsMock.mockResolvedValueOnce({
+        buildSafeAddressContextsMock.mockResolvedValueOnce({
           clearSignContexts: [safeContextWithCert, signerContextWithCert],
         });
         provideContextsMock.mockResolvedValueOnce(Right(void 0));
 
-        const deviceAction = new DisplaySafeAccountDeviceAction({
+        const deviceAction = new VerifySafeAddressDeviceAction({
           input: {
             safeContractAddress: TEST_SAFE_ADDRESS,
             options: { chainId: TEST_CHAIN_ID, skipOpenApp: true },
@@ -326,7 +326,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
       // GIVEN
       setupOpenAppDAMock(new Error("Open app failed"));
       setupDeviceModel(DeviceModelId.FLEX);
-      const deviceAction = new DisplaySafeAccountDeviceAction({
+      const deviceAction = new VerifySafeAddressDeviceAction({
         input: {
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
@@ -348,14 +348,14 @@ describe("DisplaySafeAccountDeviceAction", () => {
       });
     });
 
-    it("should return an error if buildSafeAccountContexts throws an error", async () => {
+    it("should return an error if buildSafeAddressContexts throws an error", async () => {
       // GIVEN
       setupOpenAppDAMock();
       setupDeviceModel(DeviceModelId.FLEX);
-      buildSafeAccountContextsMock.mockRejectedValueOnce(
+      buildSafeAddressContextsMock.mockRejectedValueOnce(
         new Error("Failed to build contexts"),
       );
-      const deviceAction = new DisplaySafeAccountDeviceAction({
+      const deviceAction = new VerifySafeAddressDeviceAction({
         input: {
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
@@ -381,14 +381,14 @@ describe("DisplaySafeAccountDeviceAction", () => {
       // GIVEN
       setupOpenAppDAMock();
       setupDeviceModel(DeviceModelId.FLEX);
-      buildSafeAccountContextsMock.mockResolvedValueOnce({
+      buildSafeAddressContextsMock.mockResolvedValueOnce({
         clearSignContexts: [validSafeContext, validSignerContext],
       });
       const provideError = new InvalidStatusWordError(
         "Failed to provide context",
       );
       provideContextsMock.mockResolvedValueOnce(Left(provideError));
-      const deviceAction = new DisplaySafeAccountDeviceAction({
+      const deviceAction = new VerifySafeAddressDeviceAction({
         input: {
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
@@ -414,13 +414,13 @@ describe("DisplaySafeAccountDeviceAction", () => {
       // GIVEN
       setupOpenAppDAMock();
       setupDeviceModel(DeviceModelId.FLEX);
-      buildSafeAccountContextsMock.mockResolvedValueOnce({
+      buildSafeAddressContextsMock.mockResolvedValueOnce({
         clearSignContexts: [validSafeContext, validSignerContext],
       });
       provideContextsMock.mockRejectedValueOnce(
         new Error("Provide contexts failed"),
       );
-      const deviceAction = new DisplaySafeAccountDeviceAction({
+      const deviceAction = new VerifySafeAddressDeviceAction({
         input: {
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
@@ -442,14 +442,14 @@ describe("DisplaySafeAccountDeviceAction", () => {
       });
     });
 
-    it("should return an error when buildSafeAccountContexts returns invalid data", async () => {
+    it("should return an error when buildSafeAddressContexts returns invalid data", async () => {
       // GIVEN
       setupOpenAppDAMock();
       setupDeviceModel(DeviceModelId.FLEX);
-      buildSafeAccountContextsMock.mockRejectedValueOnce(
-        new Error("Invalid safe account contexts"),
+      buildSafeAddressContextsMock.mockRejectedValueOnce(
+        new Error("Invalid safe address contexts"),
       );
-      const deviceAction = new DisplaySafeAccountDeviceAction({
+      const deviceAction = new VerifySafeAddressDeviceAction({
         input: {
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
@@ -467,7 +467,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
       // THEN
       expect(result).toEqual({
         status: DeviceActionStatus.Error,
-        error: new Error("Invalid safe account contexts"),
+        error: new Error("Invalid safe address contexts"),
       });
     });
 
@@ -475,7 +475,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
       // GIVEN
       setupOpenAppDAMock();
       setupDeviceModel(DeviceModelId.FLEX);
-      buildSafeAccountContextsMock.mockResolvedValueOnce({
+      buildSafeAddressContextsMock.mockResolvedValueOnce({
         clearSignContexts: [validSafeContext, validSignerContext],
       });
       const userRejectionError = new InvalidStatusWordError("User rejected");
@@ -483,7 +483,7 @@ describe("DisplaySafeAccountDeviceAction", () => {
         userRejectionError as InvalidStatusWordError & { errorCode: string }
       ).errorCode = "6985";
       provideContextsMock.mockResolvedValueOnce(Left(userRejectionError));
-      const deviceAction = new DisplaySafeAccountDeviceAction({
+      const deviceAction = new VerifySafeAddressDeviceAction({
         input: {
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },

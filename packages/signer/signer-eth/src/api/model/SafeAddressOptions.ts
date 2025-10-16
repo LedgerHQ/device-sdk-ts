@@ -1,4 +1,4 @@
-export type SafeAccountOptions = {
+export type SafeAddressOptions = {
   chainId: number;
   skipOpenApp?: boolean;
 };

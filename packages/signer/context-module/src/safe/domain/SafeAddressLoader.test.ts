@@ -8,22 +8,22 @@ import {
   type SafeAccountDataSource,
 } from "@/safe/data/SafeAccountDataSource";
 import {
-  type SafeAccountContextInput,
-  SafeAccountLoader,
-} from "@/safe/domain/SafeAccountLoader";
+  type SafeAddressContextInput,
+  SafeAddressLoader,
+} from "@/safe/domain/SafeAddressLoader";
 import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-describe("SafeAccountLoader", () => {
+describe("SafeAddressLoader", () => {
   const mockSafeAccountDataSource: SafeAccountDataSource = {
     getDescriptors: vi.fn(),
   };
   const mockPkiCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
   };
-  const loader = new SafeAccountLoader(
+  const loader = new SafeAddressLoader(
     mockSafeAccountDataSource,
     mockPkiCertificateLoader,
   );
@@ -54,7 +54,7 @@ describe("SafeAccountLoader", () => {
   });
 
   describe("canHandle function", () => {
-    const validInput: SafeAccountContextInput = {
+    const validInput: SafeAddressContextInput = {
       safeContractAddress: "0x1234567890123456789012345678901234567890",
       chainId: 1,
       deviceModelId: DeviceModelId.FLEX,
@@ -239,7 +239,7 @@ describe("SafeAccountLoader", () => {
   });
 
   describe("load function", () => {
-    const input: SafeAccountContextInput = {
+    const input: SafeAddressContextInput = {
       safeContractAddress: "0x1234567890123456789012345678901234567890",
       chainId: 1,
       deviceModelId: DeviceModelId.FLEX,

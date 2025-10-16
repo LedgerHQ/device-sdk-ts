@@ -317,12 +317,12 @@ type Signature = {
 
 ---
 
-### Use Case 6: Display Safe Account
+### Use Case 6: Verify Safe Address
 
 This method enables users to display and verify a Safe account address on their Ledger device. This is particularly useful for verifying Safe (formerly Gnosis Safe) multi-signature wallet addresses.
 
 ```typescript
-const { observable, cancel } = signerEth.displaySafeAccount(
+const { observable, cancel } = signerEth.verifySafeAddress(
   safeContractAddress,
   options,
 );
@@ -339,10 +339,10 @@ const { observable, cancel } = signerEth.displaySafeAccount(
 - `options`
 
   - **Optional**
-  - **Type:** `SafeAccountOptions`
+  - **Type:** `SafeAddressOptions`
 
     ```typescript
-    type SafeAccountOptions = {
+    type SafeAddressOptions = {
       chainId: number;
       skipOpenApp?: boolean;
     };
@@ -451,10 +451,10 @@ switch (requiredUserInteraction) {
     console.log("User needs to verify the address displayed on the device.");
     break;
   }
-  case UserInteractionRequired.VerifySafeAccount: {
-    // User needs to verify the Safe account address displayed on the device
+  case UserInteractionRequired.VerifySafeAddress: {
+    // User needs to verify the Safe address displayed on the device
     console.log(
-      "User needs to verify the Safe account address displayed on the device.",
+      "User needs to verify the Safe address displayed on the device.",
     );
     break;
   }

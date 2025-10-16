@@ -9,27 +9,27 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { type SafeAccountOptions } from "@api/model/SafeAccountOptions";
+import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
-export type BuildSafeAccountContextTaskArgs = {
+export type BuildSafeAddressContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly safeContractAddress: string;
-  readonly options: SafeAccountOptions;
+  readonly options: SafeAddressOptions;
   readonly deviceModelId: DeviceModelId;
 };
 
-export type BuildSafeAccountContextTaskResult = {
+export type BuildSafeAddressContextTaskResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
 };
 
-export class BuildSafeAccountContextTask {
+export class BuildSafeAddressContextTask {
   constructor(
     private readonly _api: InternalApi,
-    private readonly _args: BuildSafeAccountContextTaskArgs,
+    private readonly _args: BuildSafeAddressContextTaskArgs,
   ) {}
 
-  async run(): Promise<BuildSafeAccountContextTaskResult> {
+  async run(): Promise<BuildSafeAddressContextTaskResult> {
     const challengeResponse = await this._api.sendCommand(
       new GetChallengeCommand(),
     );
@@ -65,7 +65,7 @@ export class BuildSafeAccountContextTask {
         (context) => context.type === ClearSignContextType.SIGNER,
       ) === undefined
     ) {
-      throw new Error("Invalid safe account contexts");
+      throw new Error("Invalid safe address contexts");
     }
 
     return {

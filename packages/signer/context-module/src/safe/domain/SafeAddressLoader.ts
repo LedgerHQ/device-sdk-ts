@@ -18,7 +18,7 @@ import {
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-export type SafeAccountContextInput = {
+export type SafeAddressContextInput = {
   safeContractAddress: HexaString;
   chainId: number;
   deviceModelId: DeviceModelId;
@@ -31,11 +31,11 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class SafeAccountLoader
-  implements ContextLoader<SafeAccountContextInput>
+export class SafeAddressLoader
+  implements ContextLoader<SafeAddressContextInput>
 {
   constructor(
-    @inject(safeTypes.SafeAccountDataSource)
+    @inject(safeTypes.SafeAddressDataSource)
     private readonly _dataSource: SafeAccountDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
@@ -44,7 +44,7 @@ export class SafeAccountLoader
   canHandle(
     input: unknown,
     expectedTypes: ClearSignContextType[],
-  ): input is SafeAccountContextInput {
+  ): input is SafeAddressContextInput {
     return (
       expectedTypes.every((type) => SUPPORTED_TYPES.includes(type)) &&
       typeof input === "object" &&
@@ -67,7 +67,7 @@ export class SafeAccountLoader
     chainId,
     deviceModelId,
     challenge,
-  }: SafeAccountContextInput): Promise<ClearSignContext[]> {
+  }: SafeAddressContextInput): Promise<ClearSignContext[]> {
     const descriptors = await this._dataSource.getDescriptors({
       safeContractAddress,
       chainId,

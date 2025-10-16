@@ -1,3 +1,3 @@
 export const safeTypes = {
-  DisplaySafeAccountUseCase: Symbol.for("DisplaySafeAccountUseCase"),
+  VerifySafeAddressUseCase: Symbol.for("VerifySafeAddressUseCase"),
 };

@@ -2,4 +2,4 @@
 "@ledgerhq/context-module": minor
 ---
 
-Add Safe Account loader
+Add Safe Address loader

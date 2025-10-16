@@ -2,4 +2,4 @@
 "@ledgerhq/device-signer-kit-ethereum": minor
 ---
 
-Add displaySafeAccount API entrypoint
+Add verifySafeAddress API entrypoint

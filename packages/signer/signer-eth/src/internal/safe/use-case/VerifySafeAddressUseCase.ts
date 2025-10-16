@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 
-import { DisplaySafeAccountDAReturnType } from "@api/app-binder/DisplaySafeAccountDeviceActionTypes";
-import { SafeAccountOptions } from "@api/model/SafeAccountOptions";
+import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
+import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
 @injectable()
-export class DisplaySafeAccountUseCase {
+export class VerifySafeAddressUseCase {
   private _appBinder: EthAppBinder;
 
   constructor(@inject(appBinderTypes.AppBinding) appBinder: EthAppBinder) {
@@ -15,8 +15,8 @@ export class DisplaySafeAccountUseCase {
 
   execute(
     safeContractAddress: string,
-    options?: SafeAccountOptions,
-  ): DisplaySafeAccountDAReturnType {
-    return this._appBinder.displaySafeAccount({ safeContractAddress, options });
+    options?: SafeAddressOptions,
+  ): VerifySafeAddressDAReturnType {
+    return this._appBinder.verifySafeAddress({ safeContractAddress, options });
   }
 }
