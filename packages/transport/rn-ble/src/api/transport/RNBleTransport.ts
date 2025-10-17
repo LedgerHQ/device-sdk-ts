@@ -92,6 +92,7 @@ export class RNBleTransport implements Transport {
     private readonly _manager: BleManager,
     private readonly _platform: Platform,
     private readonly _permissionsService: PermissionsService,
+    private readonly _scanThrottleDelayMs: number = 1000,
     private readonly _deviceConnectionStateMachineFactory: (
       args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
     ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies> = (args) =>
@@ -288,7 +289,7 @@ export class RNBleTransport implements Transport {
             }),
           );
         }),
-        throttleTime(1000),
+        throttleTime(this._scanThrottleDelayMs),
       )
       .subscribe({
         next: (devices) => {

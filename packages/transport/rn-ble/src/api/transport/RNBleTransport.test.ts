@@ -17,13 +17,7 @@ import {
   type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import {
-  firstValueFrom,
-  lastValueFrom,
-  Subject,
-  Subscription,
-  take,
-} from "rxjs";
+import { firstValueFrom, Subject, Subscription } from "rxjs";
 import { beforeEach, expect } from "vitest";
 
 import {
@@ -121,6 +115,7 @@ class TestTransportBuilder {
   ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private deviceApduSenderFactory?: (args: any, loggerFactory: any) => any;
+  private scanThrottleDelayMs: number = 1000;
 
   withDeviceModelDataSource(dataSource: DeviceModelDataSource) {
     this.deviceModelDataSource = dataSource;
@@ -162,6 +157,11 @@ class TestTransportBuilder {
     return this;
   }
 
+  withScanThrottleDelayMs(delayMs: number) {
+    this.scanThrottleDelayMs = delayMs;
+    return this;
+  }
+
   build(): RNBleTransport {
     return new RNBleTransport(
       this.deviceModelDataSource,
@@ -171,6 +171,7 @@ class TestTransportBuilder {
       this.bleManager,
       this.platform,
       this.permissionsService,
+      this.scanThrottleDelayMs,
       this.deviceConnectionStateMachineFactory,
       this.deviceApduSenderFactory,
     );
@@ -706,6 +707,7 @@ describe("RNBleTransport", () => {
           .withDeviceModelDataSource(
             createFakeDataSource() as unknown as DeviceModelDataSource,
           )
+          .withScanThrottleDelayMs(1) // Use very fast throttle for tests
           .build();
 
         const availableDevicesEvents: TransportDiscoveredDevice[][] = [];
@@ -936,8 +938,6 @@ describe("RNBleTransport", () => {
     });
 
     it("should connect to a discovered device with correct MTU and discover services and setup apdu sender", async () => {
-      vi.useFakeTimers();
-
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -993,13 +993,11 @@ describe("RNBleTransport", () => {
           deviceConnectionStateMachineFactory,
         )
         .withDeviceApduSenderFactory(deviceApduSenderFactory)
+        .withScanThrottleDelayMs(1) // Use very fast throttle for tests
         .build();
 
       // Start listening to devices
       const observable = transport.listenToAvailableDevices();
-
-      // Advance timers to trigger the throttleTime and allow scan results to be emitted
-      vi.advanceTimersByTime(2000);
 
       const devices = await firstValueFrom(observable);
       const [device] = devices;
