@@ -7,10 +7,13 @@ import type {
   DeviceScreens,
   PercentPoint,
 } from "@internal/core/types";
-import { pressButtons, pressSequence } from "@internal/usecases/buttonUsecases";
-import { tapLong, tapQuick } from "@internal/usecases/touchUsecases";
 import { speculosDeviceControllerTypes } from "@root/src/internal/core/speculosDeviceControllerTypes";
 import { buildContainer } from "@root/src/internal/di";
+import {
+  pressButtons,
+  pressSequence,
+} from "@root/src/internal/use-cases/buttonUseCases";
+import { tapLong, tapQuick } from "@root/src/internal/use-cases/touchUseCases";
 
 export type ButtonAPI = IButtonController & {
   left(): Promise<void>;

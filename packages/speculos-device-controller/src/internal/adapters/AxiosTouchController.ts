@@ -15,6 +15,15 @@ export class AxiosTouchController implements ITouchController<string> {
     private readonly axes: AxisMap<string>,
   ) {}
 
+  private assertPercentPoint({ x, y }: PercentPoint): void {
+    const inRange = (v: number) => Number.isFinite(v) && v >= 0 && v <= 100;
+    if (!inRange(x) || !inRange(y)) {
+      throw new Error(
+        `[Touch] percent values must be within 0–100. Received x=${x}, y=${y}`,
+      );
+    }
+  }
+
   private toAbs(deviceKey: string, p: PercentPoint) {
     const axis = this.axes[deviceKey];
     if (!axis) {
@@ -23,6 +32,9 @@ export class AxiosTouchController implements ITouchController<string> {
         `[Touch] Unknown device key "${deviceKey}". Known keys: ${known.join(", ") || "<none>"}`,
       );
     }
+
+    this.assertPercentPoint(p);
+
     return axis.xy(p.x as Percent, p.y as Percent);
   }
 

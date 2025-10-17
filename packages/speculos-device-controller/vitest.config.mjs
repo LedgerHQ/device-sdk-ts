@@ -18,6 +18,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@internal": path.resolve(__dirname, "src/internal"),
+      "@root": path.resolve(__dirname, "."),
     },
   },
 });

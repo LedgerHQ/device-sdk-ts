@@ -12,6 +12,7 @@
       "@root/*": ["./*"],
       "@internal/*": ["./src/internal/*"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["vitest/globals"]
   }
 }
