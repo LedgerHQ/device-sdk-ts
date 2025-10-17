@@ -847,8 +847,53 @@ describe("RNBleTransport", () => {
       });
     });
 
-    it.skip("should recover from an error, allowing next calls of startScanning", () => {
-      // TODO: implement this test
+    it("should recover from a scanning error, allowing next calls of listenToAvailableDevices to succeed and emit the devices", async () => {
+      vi.useFakeTimers();
+      const scanError = new Error("A Scan Error");
+      const startScan = vi.fn().mockRejectedValueOnce(scanError);
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
+        .withLogger(consoleLogger)
+        .build();
+
+      const observable1 = transport.listenToAvailableDevices();
+
+      let caughtError: unknown;
+      await firstValueFrom(observable1).catch((e) => {
+        caughtError = e;
+      });
+
+      expect(caughtError).toBe(scanError);
+
+      startScan.mockImplementation(async (_uuids, _options, listener) => {
+        listener(null, {
+          id: "aScannedDeviceId",
+          localName: "aScannedDeviceName",
+          serviceUUIDs: ["ledgerId"],
+          rssi: 1,
+        });
+      });
+
+      const observable2 = transport.listenToAvailableDevices();
+
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable2).catch(() => {
+        throw new Error(
+          "Caught error in second observable, this should not happen if listenToAvailableDevices recovers from the scanning error",
+        );
+      });
+
+      expect(devices).toEqual([
+        {
+          id: "aScannedDeviceId",
+          name: "aScannedDeviceName",
+          deviceModel: FAKE_DEVICE_MODEL,
+          transport: "RN_BLE",
+          rssi: 1,
+        },
+      ]);
     });
   });
 
