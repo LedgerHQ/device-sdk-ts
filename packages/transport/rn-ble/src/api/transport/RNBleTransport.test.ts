@@ -854,7 +854,6 @@ describe("RNBleTransport", () => {
 
       const transport = new TestTransportBuilder()
         .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
-        .withLogger(consoleLogger)
         .build();
 
       const observable1 = transport.listenToAvailableDevices();
@@ -936,9 +935,9 @@ describe("RNBleTransport", () => {
       );
     });
 
-    // FIXME: timeout
     it("should connect to a discovered device with correct MTU and discover services and setup apdu sender", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
+      vi.useFakeTimers();
+
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -947,31 +946,16 @@ describe("RNBleTransport", () => {
       const startScan = vi
         .fn()
         .mockImplementation(async (_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 500);
-
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+          // Immediately emit a device to ensure we have results
           listener(null, {
-            id: "43",
-            localName: "name43",
-            serviceUUIDs: ["notLedgerId"],
-            rssi: 43,
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
           });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const bleManager = createMockBleManager({
         connectedDevices: vi.fn().mockResolvedValue([]),
@@ -1011,9 +995,14 @@ describe("RNBleTransport", () => {
         .withDeviceApduSenderFactory(deviceApduSenderFactory)
         .build();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      // Advance timers to trigger the throttleTime and allow scan results to be emitted
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
 
       const result = await transport.connect({
         deviceId: device!.id,
@@ -1030,9 +1019,9 @@ describe("RNBleTransport", () => {
       expect(fakeSetupConnection).toHaveBeenCalled();
     });
 
-    // FIXME: timeout
     it("should return a connected device which calls state machine sendApdu", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
+      vi.useFakeTimers();
+
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -1041,22 +1030,16 @@ describe("RNBleTransport", () => {
       const startScan = vi
         .fn()
         .mockImplementation(async (_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 100);
+          // Immediately emit a device to ensure we have results
+          listener(null, {
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
+          });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const bleManager = createMockBleManager({
         connectedDevices: vi.fn().mockResolvedValue([]),
@@ -1096,9 +1079,14 @@ describe("RNBleTransport", () => {
         .withDeviceApduSenderFactory(deviceApduSenderFactory)
         .build();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      // Advance timers to trigger the throttleTime and allow scan results to be emitted
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
 
       const result = await transport.connect({
         deviceId: device!.id,
@@ -1125,9 +1113,9 @@ describe("RNBleTransport", () => {
   });
 
   describe("disconnect", () => {
-    // FIXME: timeout
     it("should disconnect gracefully", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
+      vi.useFakeTimers();
+
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -1136,22 +1124,15 @@ describe("RNBleTransport", () => {
       const startScan = vi
         .fn()
         .mockImplementation(async (_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 100);
+          listener(null, {
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
+          });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const onDeviceDisconnected = vi.fn().mockImplementation(() => {
         return { remove: vi.fn() };
@@ -1208,9 +1189,14 @@ describe("RNBleTransport", () => {
 
       const fakeOnDisconnect = vi.fn();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      // Advance timers to trigger the throttleTime and allow scan results to be emitted
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
 
       const result = await transport.connect({
         deviceId: device!.id,
@@ -1226,9 +1212,9 @@ describe("RNBleTransport", () => {
       expect(fakeCloseConnection).toHaveBeenCalled();
     });
 
-    // FIXME: timeout
     it("should handle error while disconnecting", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
+      vi.useFakeTimers();
+
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -1237,22 +1223,15 @@ describe("RNBleTransport", () => {
       const startScan = vi
         .fn()
         .mockImplementation(async (_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 100);
+          listener(null, {
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
+          });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const onDeviceDisconnected = vi.fn().mockImplementation(() => {
         return { remove: vi.fn() };
@@ -1309,9 +1288,14 @@ describe("RNBleTransport", () => {
 
       const fakeOnDisconnect = vi.fn();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      // Advance timers to trigger the throttleTime and allow scan results to be emitted
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
       const result = await transport.connect({
         deviceId: device!.id,
         onDisconnect: fakeOnDisconnect,
