@@ -1,14 +1,12 @@
 import { DEFAULT_SCREENS } from "@internal/config/defaultScreens";
 import type { IButtonController } from "@internal/core/IButtonController";
-import type { ITouchController } from "@internal/core/ITouchController";
 import type {
   ButtonKey,
   DeviceControllerOptions,
   DeviceScreens,
-  PercentPoint,
+  PercentCoordinates,
 } from "@internal/core/types";
-import { speculosDeviceControllerTypes } from "@root/src/internal/core/speculosDeviceControllerTypes";
-import { buildContainer } from "@root/src/internal/di";
+import { createDefaultControllers } from "@root/src/internal/di";
 import {
   pressButtons,
   pressSequence,
@@ -24,8 +22,8 @@ export type ButtonAPI = IButtonController & {
 
 export type TouchAPI = {
   createTap: (deviceKey: string) => {
-    tapQuick: (point: PercentPoint) => Promise<void>;
-    tapLong: (point: PercentPoint) => Promise<void>;
+    tapQuick: (point: PercentCoordinates) => Promise<void>;
+    tapLong: (point: PercentCoordinates) => Promise<void>;
   };
 };
 
@@ -34,31 +32,22 @@ export type DeviceAPI = {
   touch: TouchAPI;
 };
 
-type BaseOpts = {
-  timeoutMs?: number;
-  clientHeader?: string;
-  screens?: DeviceScreens<string>;
-};
-
 export function deviceControllerFactory(
   baseURL: string,
-  opts: BaseOpts = {},
+  opts: {
+    timeoutMs?: number;
+    clientHeader?: string;
+    screens?: DeviceScreens<string>;
+  } = {},
 ): DeviceAPI {
-  const resolved: DeviceControllerOptions<string> = {
+  const resolved: DeviceControllerOptions = {
     screens: opts.screens ?? DEFAULT_SCREENS,
     timeoutMs: opts.timeoutMs,
     clientHeader: opts.clientHeader,
   };
 
-  const container = buildContainer<string>(baseURL, resolved);
-
-  const buttons = container.get<IButtonController>(
-    speculosDeviceControllerTypes.ButtonController,
-  );
+  const { buttons, touch } = createDefaultControllers(baseURL, resolved);
   const press = pressButtons(buttons);
-  const touch = container.get<ITouchController<string>>(
-    speculosDeviceControllerTypes.TouchController,
-  );
 
   return {
     button: {
@@ -77,4 +66,9 @@ export function deviceControllerFactory(
   };
 }
 
-export type { ButtonKey, DeviceControllerOptions, DeviceScreens, PercentPoint };
+export type {
+  ButtonKey,
+  DeviceControllerOptions,
+  DeviceScreens,
+  PercentCoordinates,
+};

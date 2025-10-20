@@ -1,21 +1,18 @@
 import type { AxiosInstance } from "axios";
-import { inject, injectable } from "inversify";
 
 import type { ITouchController } from "@internal/core/ITouchController";
-import type { Percent, PercentPoint } from "@internal/core/types";
+import { type PercentCoordinates, SpeculosActions } from "@internal/core/types";
 import type { AxisMap } from "@internal/utils/axisClamp";
-import { speculosDeviceControllerTypes } from "@root/src/internal/core/speculosDeviceControllerTypes";
 
-@injectable()
-export class AxiosTouchController implements ITouchController<string> {
+export class AxiosTouchController<K extends string>
+  implements ITouchController<K>
+{
   constructor(
-    @inject(speculosDeviceControllerTypes.HttpClient)
     private readonly client: AxiosInstance,
-    @inject(speculosDeviceControllerTypes.Axes)
-    private readonly axes: AxisMap<string>,
+    private readonly axes: AxisMap<K>,
   ) {}
 
-  private assertPercentPoint({ x, y }: PercentPoint): void {
+  private assertPercentPoint({ x, y }: PercentCoordinates): void {
     const inRange = (v: number) => Number.isFinite(v) && v >= 0 && v <= 100;
     if (!inRange(x) || !inRange(y)) {
       throw new Error(
@@ -24,40 +21,38 @@ export class AxiosTouchController implements ITouchController<string> {
     }
   }
 
-  private toAbs(deviceKey: string, p: PercentPoint) {
+  private toAbs(deviceKey: K, p: PercentCoordinates) {
     const axis = this.axes[deviceKey];
     if (!axis) {
-      const known = Object.keys(this.axes);
+      const known = Object.keys(this.axes as Record<string, unknown>);
       throw new Error(
-        `[Touch] Unknown device key "${deviceKey}". Known keys: ${known.join(", ") || "<none>"}`,
+        `[Touch] Unknown device key "${String(deviceKey)}". Known keys: ${known.join(", ") || "<none>"}`,
       );
     }
-
     this.assertPercentPoint(p);
-
-    return axis.xy(p.x as Percent, p.y as Percent);
+    return axis.xy(p.x, p.y);
   }
 
-  async tapAndRelease(deviceKey: string, point: PercentPoint): Promise<void> {
+  async tapAndRelease(deviceKey: K, point: PercentCoordinates): Promise<void> {
     const abs = this.toAbs(deviceKey, point);
     await this.client.post(`/finger`, {
-      action: "press-and-release",
+      action: SpeculosActions.PRESS_AND_RELEASE,
       ...abs,
     });
   }
 
-  async tap(deviceKey: string, point: PercentPoint): Promise<void> {
+  async tap(deviceKey: K, point: PercentCoordinates): Promise<void> {
     const abs = this.toAbs(deviceKey, point);
     await this.client.post(`/finger`, {
-      action: "press",
+      action: SpeculosActions.PRESS,
       ...abs,
     });
   }
 
-  async release(deviceKey: string, point: PercentPoint): Promise<void> {
+  async release(deviceKey: K, point: PercentCoordinates): Promise<void> {
     const abs = this.toAbs(deviceKey, point);
     await this.client.post(`/finger`, {
-      action: "release",
+      action: SpeculosActions.RELEASE,
       ...abs,
     });
   }

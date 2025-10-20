@@ -12,10 +12,16 @@ export type Range<
 > = Acc["length"] extends N ? Acc[number] : Range<N, [...Acc, Acc["length"]]>;
 export type Percent = Range<101>;
 
-export type PercentPoint = { x: Percent; y: Percent };
+export type PercentCoordinates = { x: Percent; y: Percent };
 
 export type DeviceControllerOptions<K extends string = string> = {
   timeoutMs?: number;
   clientHeader?: string;
   screens: DeviceScreens<K>;
 };
+
+export enum SpeculosActions {
+  PRESS = "press",
+  RELEASE = "release",
+  PRESS_AND_RELEASE = "press-and-release",
+}

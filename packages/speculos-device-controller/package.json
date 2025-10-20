@@ -37,10 +37,7 @@
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
     "@sentry/minimal": "catalog:",
-    "axios": "catalog:",
-    "inversify": "catalog:",
-    "purify-ts": "catalog:",
-    "reflect-metadata": "catalog:"
+    "axios": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
@@ -51,7 +48,6 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "rxjs": "catalog:"
+    "@ledgerhq/device-management-kit": "workspace:*"
   }
 }

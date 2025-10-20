@@ -80,7 +80,7 @@ deviceControllerFactory(
 
 ```ts
 type ButtonKey = "left" | "right" | "both";
-type PercentPoint = { x: number; y: number }; // interpreted as 0..100, clamped
+type PercentCoordinates = { x: number; y: number }; // interpreted as 0..100
 
 type ButtonAPI = {
   press(key: ButtonKey): Promise<void>;
@@ -92,8 +92,8 @@ type ButtonAPI = {
 
 type TouchAPI = {
   createTap: (deviceKey: string) => {
-    tapQuick: (point: PercentPoint) => Promise<void>;
-    tapLong: (point: PercentPoint) => Promise<void>;
+    tapQuick: (point: PercentCoordinates) => Promise<void>;
+    tapLong: (point: PercentCoordinates, delayMs?: number) => Promise<void>;
   };
 };
 

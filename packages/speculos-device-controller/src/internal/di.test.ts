@@ -1,95 +1,121 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import type { AxiosInstance } from "axios";
-import { describe, expect, it } from "vitest";
+import axios from "axios";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AxiosButtonController } from "@internal/adapters/AxiosButtonController";
 import { AxiosTouchController } from "@internal/adapters/AxiosTouchController";
-import type { IButtonController } from "@internal/core/IButtonController";
-import type { ITouchController } from "@internal/core/ITouchController";
-import type { DeviceControllerOptions } from "@internal/core/types";
-import { speculosDeviceControllerTypes as TYPES } from "@root/src/internal/core/speculosDeviceControllerTypes";
 
-import { buildContainer } from "./di";
+import { createDefaultControllers } from "./di";
 
-type K = "flex" | "stax";
-
-const SCREENS: DeviceControllerOptions<K>["screens"] = {
+const SCREENS = {
   flex: { width: 128, height: 64 },
   stax: { width: 400, height: 672 },
-};
+} as const;
 
-function headerValue(http: AxiosInstance, name: string) {
-  const headers: any = (http as any).defaults?.headers;
-  if (!headers) return undefined;
-  if (typeof headers.get === "function") return headers.get(name);
-  return (
-    headers[name] ??
-    headers.common?.[name] ??
-    headers[name.toLowerCase()] ??
-    headers.common?.[name.toLowerCase()]
-  );
-}
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
-describe("buildContainer", () => {
-  it("configures axios with normalized baseURL, custom timeout and header", () => {
-    const container = buildContainer<K>("http://example.com/api///", {
+describe("createDefaultControllers - axios configuration", () => {
+  it("configures axios with normalised baseURL, custom timeout and header", () => {
+    const createSpy = vi
+      .spyOn(axios, "create")
+      .mockImplementation((cfg: any) => {
+        return { post: vi.fn(), defaults: { ...cfg } } as any;
+      });
+
+    createDefaultControllers("http://example.com/api///", {
       screens: SCREENS,
       timeoutMs: 2345,
       clientHeader: "test-client",
     });
 
-    const http = container.get<AxiosInstance>(TYPES.HttpClient);
-
-    expect(http.defaults.baseURL).toBe("http://example.com/api");
-    expect(http.defaults.timeout).toBe(2345);
-    expect(headerValue(http, "X-Ledger-Client-Version")).toBe("test-client");
-    expect((http.defaults as any).transitional?.clarifyTimeoutError).toBe(true);
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    const cfg = createSpy.mock.calls[0]![0] as any;
+    expect(cfg.baseURL).toBe("http://example.com/api");
+    expect(cfg.timeout).toBe(2345);
+    expect(cfg.headers?.["X-Ledger-Client-Version"]).toBe("test-client");
+    expect(cfg.transitional?.clarifyTimeoutError).toBe(true);
   });
 
   it("applies default timeout and client header when not provided", () => {
-    const container = buildContainer<K>("http://localhost:1234////", {
-      screens: SCREENS,
-    });
+    const createSpy = vi
+      .spyOn(axios, "create")
+      .mockImplementation((cfg: any) => {
+        return { post: vi.fn(), defaults: { ...cfg } } as any;
+      });
 
-    const http = container.get<AxiosInstance>(TYPES.HttpClient);
+    createDefaultControllers("http://localhost:1234////", { screens: SCREENS });
 
-    expect(http.defaults.baseURL).toBe("http://localhost:1234");
-    expect(http.defaults.timeout).toBe(1500);
-    expect(headerValue(http, "X-Ledger-Client-Version")).toBe(
+    const cfg = createSpy.mock.calls[0]![0] as any;
+    expect(cfg.baseURL).toBe("http://localhost:1234");
+    expect(cfg.timeout).toBe(1500);
+    expect(cfg.headers?.["X-Ledger-Client-Version"]).toBe(
       "ldmk-transport-speculos",
     );
   });
+});
 
-  it("binds HttpClient and Axes as constant singletons", () => {
-    const container = buildContainer<K>("http://x", { screens: SCREENS });
+describe("createDefaultControllers - wiring", () => {
+  it("returns axios implementations wired by the factory", () => {
+    const http = { post: vi.fn() } as any;
+    vi.spyOn(axios, "create").mockReturnValue(http);
 
-    const http1 = container.get<AxiosInstance>(TYPES.HttpClient);
-    const http2 = container.get<AxiosInstance>(TYPES.HttpClient);
-    expect(http1).toBe(http2);
+    const { buttons, touch } = createDefaultControllers("http://x", {
+      screens: SCREENS,
+    });
 
-    const axes1 = container.get<any>(TYPES.Axes);
-    const axes2 = container.get<any>(TYPES.Axes);
-    expect(axes1).toBe(axes2);
-    expect(axes1).toBeDefined();
-    expect(typeof axes1).toBe("object");
+    expect(buttons).toBeInstanceOf(AxiosButtonController);
+    expect(touch).toBeInstanceOf(AxiosTouchController);
+    expect(typeof (buttons as any).press).toBe("function");
   });
 
-  it("binds ButtonController and TouchController to the Axios implementations as singletons", () => {
-    const container = buildContainer<K>("http://x", { screens: SCREENS });
+  it("creates fresh instances per invocation", () => {
+    vi.spyOn(axios, "create")
+      .mockReturnValueOnce({ post: vi.fn() } as any)
+      .mockReturnValueOnce({ post: vi.fn() } as any);
 
-    const btn1 = container.get<IButtonController>(TYPES.ButtonController);
-    const btn2 = container.get<IButtonController>(TYPES.ButtonController);
-    expect(btn1).toBeInstanceOf(AxiosButtonController);
-    expect(btn1).toBe(btn2);
+    const a = createDefaultControllers("http://x", { screens: SCREENS });
+    const b = createDefaultControllers("http://x", { screens: SCREENS });
 
-    const touch1 = container.get<ITouchController<K>>(TYPES.TouchController);
-    const touch2 = container.get<ITouchController<K>>(TYPES.TouchController);
-    expect(touch1).toBeInstanceOf(AxiosTouchController);
-    expect(touch1).toBe(touch2);
+    expect(a.buttons).not.toBe(b.buttons);
+    expect(a.touch).not.toBe(b.touch);
+  });
+
+  it("button.press posts the correct payload", async () => {
+    const post = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(axios, "create").mockReturnValue({ post } as any);
+
+    const { buttons } = createDefaultControllers("http://x", {
+      screens: SCREENS,
+    });
+
+    await buttons.press("left");
+    expect(post).toHaveBeenCalledWith("/button/left", {
+      action: "press-and-release",
+    });
+  });
+
+  it("touch.tapAndRelease maps percent to absolute coords", async () => {
+    const post = vi.fn().mockResolvedValue(undefined);
+    vi.spyOn(axios, "create").mockReturnValue({ post } as any);
+
+    const { touch } = createDefaultControllers("http://x", {
+      screens: SCREENS,
+    });
+
+    // 50% of 128x64 → (64, 32)
+    await touch.tapAndRelease("flex", { x: 50 as any, y: 50 as any });
+
+    expect(post).toHaveBeenCalledWith("/finger", {
+      action: "press-and-release",
+      x: 64,
+      y: 32,
+    });
   });
 });

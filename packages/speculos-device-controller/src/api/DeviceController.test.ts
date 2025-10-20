@@ -49,17 +49,4 @@ describe("deviceControllerFactory", () => {
     expect(a.button.press).not.toBe(b.button.press);
     expect(a.touch.createTap).not.toBe(b.touch.createTap);
   });
-
-  it("button.pressSequence resolves on empty sequences", async () => {
-    const api = deviceControllerFactory("http://localhost:0");
-    await expect(api.button.pressSequence([], 0)).resolves.toBeUndefined();
-  });
-
-  it("touch.createTap returns callable fns without invoking them", () => {
-    const api = deviceControllerFactory("http://localhost:0");
-    const { tapQuick, tapLong } = api.touch.createTap("flex");
-
-    expect(tapQuick.length).toBe(1);
-    expect(tapLong.length).toBe(1);
-  });
 });

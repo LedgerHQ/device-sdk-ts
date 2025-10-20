@@ -32,14 +32,13 @@ describe("touchUsecases", () => {
     expect(controller.release).not.toHaveBeenCalled();
   });
 
-  it("tapLong taps, waits 5000ms, then releases", async () => {
+  it("tapLong taps, waits default timeout, then releases", async () => {
     vi.useFakeTimers();
     const timeoutSpy = vi.spyOn(globalThis, "setTimeout");
 
     const longTap = tapLong(controller, deviceKey);
     const run = longTap(point);
 
-    // allow await controller.tap(...) to resolve and the timeout to be scheduled
     await Promise.resolve();
 
     expect(controller.tap).toHaveBeenCalledTimes(1);
@@ -50,6 +49,30 @@ describe("touchUsecases", () => {
 
     // let the 5s timer elapse
     await vi.advanceTimersByTimeAsync(5000);
+    await run;
+
+    expect(controller.release).toHaveBeenCalledTimes(1);
+    expect(controller.release).toHaveBeenCalledWith(deviceKey, point);
+  });
+
+  it("tapLong uses the provided delayMs value", async () => {
+    vi.useFakeTimers();
+    const timeoutSpy = vi.spyOn(globalThis, "setTimeout");
+
+    const customMs = 1234;
+    const longTap = tapLong(controller, deviceKey);
+    const run = longTap(point, customMs);
+
+    await Promise.resolve();
+
+    expect(controller.tap).toHaveBeenCalledTimes(1);
+    expect(controller.tap).toHaveBeenCalledWith(deviceKey, point);
+    expect(timeoutSpy).toHaveBeenCalledTimes(1);
+    expect(timeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), customMs);
+    expect(controller.release).not.toHaveBeenCalled();
+
+    // advance exactly customMs and ensure release happens then
+    await vi.advanceTimersByTimeAsync(customMs);
     await run;
 
     expect(controller.release).toHaveBeenCalledTimes(1);

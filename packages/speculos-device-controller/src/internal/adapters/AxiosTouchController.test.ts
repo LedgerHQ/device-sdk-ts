@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import type { AxiosInstance } from "axios";
 
-import type { PercentPoint } from "../core/types";
+import type { PercentCoordinates } from "../core/types";
 import { AxiosTouchController } from "./AxiosTouchController";
 
 describe("AxiosTouchController", () => {
@@ -28,7 +28,7 @@ describe("AxiosTouchController", () => {
     { xy: (x: number, y: number) => { x: number; y: number } }
   >;
 
-  let controller: AxiosTouchController;
+  let controller: AxiosTouchController<string>;
 
   beforeEach(() => {
     postMock = vi.fn().mockResolvedValue({ status: 200, data: {} });
@@ -41,7 +41,7 @@ describe("AxiosTouchController", () => {
     controller = new AxiosTouchController(axiosFake, axesFake as any);
   });
 
-  const point: PercentPoint = { x: 12, y: 45 };
+  const point: PercentCoordinates = { x: 12, y: 45 };
 
   it("tapAndRelease: converts percent to absolute via axes and POSTs expected body", async () => {
     await controller.tapAndRelease("devA", point);
@@ -95,7 +95,7 @@ describe("AxiosTouchController", () => {
 });
 
 describe("percent validation", () => {
-  let controller: AxiosTouchController;
+  let controller: AxiosTouchController<string>;
   let postMock: ReturnType<typeof vi.fn>;
   let axiosFake: AxiosInstance;
 
@@ -120,7 +120,7 @@ describe("percent validation", () => {
     expect(postMock).toHaveBeenCalledTimes(3);
   });
 
-  it("rejects values outside [0, 100]", async () => {
+  it("rejects values outside [0, 100], non-finite, negative and non-integer", async () => {
     const badPoints = [
       { x: 140, y: 50 },
       { x: -1, y: 50 },
