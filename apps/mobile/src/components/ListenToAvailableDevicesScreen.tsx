@@ -6,8 +6,6 @@ import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
 import { Button, Flex, Text } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
 
-import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
-
 const SafeView = styled.SafeAreaView`
   flex: 1;
 `;
