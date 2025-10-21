@@ -41,10 +41,6 @@ import {
 import { StructImplemType } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type ContextWithSubContexts } from "@internal/app-binder/task/BuildFullContextsTask";
-import {
-  ProvideContextsTask,
-  type ProvideContextsTaskArgs,
-} from "@internal/app-binder/task/ProvideContextsTask";
 import { SendEIP712StructImplemTask } from "@internal/app-binder/task/SendEIP712StructImplemTask";
 import { TypedDataValueField } from "@internal/typed-data/model/Types";
 import {
@@ -56,6 +52,10 @@ import {
   TypedDataValueRoot,
 } from "@internal/typed-data/model/Types";
 
+import {
+  ProvideTransactionContextsTask,
+  type ProvideTransactionContextsTaskArgs,
+} from "./ProvideTransactionContextsTask";
 import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 type AllSuccessTypes = void | { tokenIndex: number };
@@ -98,8 +98,9 @@ export class ProvideEIP712ContextTask {
     private api: InternalApi,
     private contextModule: ContextModule,
     private args: ProvideEIP712ContextTaskArgs,
-    private readonly provideContextFactory = (args: ProvideContextsTaskArgs) =>
-      new ProvideContextsTask(this.api, args),
+    private readonly provideContextFactory = (
+      args: ProvideTransactionContextsTaskArgs,
+    ) => new ProvideTransactionContextsTask(this.api, args),
   ) {
     for (const domainValue of this.args.domain) {
       if (
@@ -327,6 +328,8 @@ export class ProvideEIP712ContextTask {
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.SAFE:
+      case ClearSignContextType.SIGNER:
         throw new Error(
           `Context type ${type} not supported in EIP712 messages`,
         );

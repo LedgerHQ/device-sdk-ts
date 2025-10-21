@@ -14,4 +14,5 @@ export enum UserInteractionRequired {
   SignPersonalMessage = "sign-personal-message",
   SignDelegationAuthorization = "sign-delegation-authorization",
   Web3ChecksOptIn = "web3-checks-opt-in",
+  VerifySafeAddress = "verify-safe-address",
 }

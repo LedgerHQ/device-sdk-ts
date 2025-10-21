@@ -53,6 +53,8 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.TRUSTED_NAME:
       case ClearSignContextType.TOKEN:
       case ClearSignContextType.NFT:
+      case ClearSignContextType.SAFE:
+      case ClearSignContextType.SIGNER:
         return {
           subcontextCallbacks: [],
         };
