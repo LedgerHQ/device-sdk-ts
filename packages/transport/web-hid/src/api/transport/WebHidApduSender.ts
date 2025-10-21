@@ -66,10 +66,6 @@ export class WebHidApduSender
     _triggersDisconnection?: boolean,
     abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
-    this.logger.debug("[sendApdu]", {
-      data: { apdu, abortTimeout },
-    });
-
     let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const resultPromise = new Promise<Either<DmkError, ApduResponse>>(
@@ -116,9 +112,6 @@ export class WebHidApduSender
     maybeApduResponse
       .map((response) => {
         response.map((apduResponse) => {
-          this.logger.debug("Received APDU Response", {
-            data: { response: apduResponse },
-          });
           this.sendApduPromiseResolver.map((resolve) =>
             resolve(Right(apduResponse)),
           );
