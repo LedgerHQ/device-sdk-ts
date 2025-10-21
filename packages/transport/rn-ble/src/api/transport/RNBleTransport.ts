@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 import {
   BleError,
+  BleErrorCode,
   type BleManager,
   type Device,
   State,
@@ -504,6 +505,13 @@ export class RNBleTransport implements Transport {
              * This happens when the Ledger device reset its pairing, but the
              * iOS system still has that device paired.
              */
+            return throwE(new PeerRemovedPairingError(error));
+          }
+          if (
+            error instanceof BleError &&
+            error.errorCode === BleErrorCode.OperationCancelled &&
+            Platform.OS === "android"
+          ) {
             return throwE(new PeerRemovedPairingError(error));
           }
           return throwE(new OpeningConnectionError(error));
