@@ -1,5 +1,5 @@
 import type { ButtonKey } from "./types";
 
-export interface IButtonController {
+export interface ButtonController {
   press(key: ButtonKey): Promise<void>;
 }

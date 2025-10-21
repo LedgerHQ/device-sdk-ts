@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import type { ITouchController } from "@internal/core/ITouchController";
+import type { TouchController } from "@root/src/internal/core/TouchController";
 
 import { tapLong, tapQuick } from "./touchUseCases";
 
@@ -10,14 +10,14 @@ describe("touchUsecases", () => {
   const deviceKey = "devA";
   const point = { x: 50, y: 30 } as any;
 
-  let controller: ITouchController;
+  let controller: TouchController;
 
   beforeEach(() => {
     controller = {
       tap: vi.fn().mockResolvedValue(undefined),
       release: vi.fn().mockResolvedValue(undefined),
       tapAndRelease: vi.fn().mockResolvedValue(undefined),
-    } as unknown as ITouchController;
+    } as unknown as TouchController;
     vi.restoreAllMocks();
     vi.useRealTimers();
   });

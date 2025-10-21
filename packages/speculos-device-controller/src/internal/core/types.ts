@@ -15,9 +15,9 @@ export type Percent = Range<101>;
 export type PercentCoordinates = { x: Percent; y: Percent };
 
 export type DeviceControllerOptions<K extends string = string> = {
+  screens: DeviceScreens<K>;
   timeoutMs?: number;
   clientHeader?: string;
-  screens: DeviceScreens<K>;
 };
 
 export enum SpeculosActions {

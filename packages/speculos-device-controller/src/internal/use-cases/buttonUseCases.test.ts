@@ -4,12 +4,12 @@
 import { pressButtons, pressSequence } from "./buttonUseCases";
 
 type ButtonKey = "left" | "right" | "both";
-type IButtonController = { press: (k: ButtonKey) => Promise<void> };
+type ButtonController = { press: (k: ButtonKey) => Promise<void> };
 
 const tick = () => Promise.resolve();
 
 describe("buttonUsecases", () => {
-  let controller: IButtonController & { press: ReturnType<typeof vi.fn> };
+  let controller: ButtonController & { press: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     controller = {

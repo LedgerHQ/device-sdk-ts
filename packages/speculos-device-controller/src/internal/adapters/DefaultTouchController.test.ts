@@ -5,9 +5,9 @@
 import type { AxiosInstance } from "axios";
 
 import type { PercentCoordinates } from "../core/types";
-import { AxiosTouchController } from "./AxiosTouchController";
+import { DefaultTouchController } from "./DefaultTouchController";
 
-describe("AxiosTouchController", () => {
+describe("DefaultTouchController", () => {
   let postMock: ReturnType<typeof vi.fn>;
   let axiosFake: AxiosInstance;
 
@@ -28,7 +28,7 @@ describe("AxiosTouchController", () => {
     { xy: (x: number, y: number) => { x: number; y: number } }
   >;
 
-  let controller: AxiosTouchController<string>;
+  let controller: DefaultTouchController<string>;
 
   beforeEach(() => {
     postMock = vi.fn().mockResolvedValue({ status: 200, data: {} });
@@ -38,7 +38,7 @@ describe("AxiosTouchController", () => {
     axisB.xy.mockClear();
 
     axesFake = { devA: axisA, devB: axisB };
-    controller = new AxiosTouchController(axiosFake, axesFake as any);
+    controller = new DefaultTouchController(axiosFake, axesFake as any);
   });
 
   const point: PercentCoordinates = { x: 12, y: 45 };
@@ -95,7 +95,7 @@ describe("AxiosTouchController", () => {
 });
 
 describe("percent validation", () => {
-  let controller: AxiosTouchController<string>;
+  let controller: DefaultTouchController<string>;
   let postMock: ReturnType<typeof vi.fn>;
   let axiosFake: AxiosInstance;
 
@@ -108,7 +108,7 @@ describe("percent validation", () => {
     postMock = vi.fn().mockResolvedValue({ status: 200, data: {} });
     axiosFake = { post: postMock } as unknown as AxiosInstance;
     axis.xy.mockClear();
-    controller = new AxiosTouchController(axiosFake, axesFake as any);
+    controller = new DefaultTouchController(axiosFake, axesFake as any);
   });
 
   it("accepts boundary values 0 and 100", async () => {

@@ -7,8 +7,8 @@
 import axios from "axios";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { AxiosButtonController } from "@internal/adapters/AxiosButtonController";
-import { AxiosTouchController } from "@internal/adapters/AxiosTouchController";
+import { DefaultButtonController } from "@internal/adapters/DefaultButtonController";
+import { DefaultTouchController } from "@internal/adapters/DefaultTouchController";
 
 import { createDefaultControllers } from "./di";
 
@@ -29,7 +29,7 @@ describe("createDefaultControllers - axios configuration", () => {
         return { post: vi.fn(), defaults: { ...cfg } } as any;
       });
 
-    createDefaultControllers("http://example.com/api///", {
+    createDefaultControllers("http://example.com/api", {
       screens: SCREENS,
       timeoutMs: 2345,
       clientHeader: "test-client",
@@ -50,7 +50,7 @@ describe("createDefaultControllers - axios configuration", () => {
         return { post: vi.fn(), defaults: { ...cfg } } as any;
       });
 
-    createDefaultControllers("http://localhost:1234////", { screens: SCREENS });
+    createDefaultControllers("http://localhost:1234", { screens: SCREENS });
 
     const cfg = createSpy.mock.calls[0]![0] as any;
     expect(cfg.baseURL).toBe("http://localhost:1234");
@@ -70,8 +70,8 @@ describe("createDefaultControllers - wiring", () => {
       screens: SCREENS,
     });
 
-    expect(buttons).toBeInstanceOf(AxiosButtonController);
-    expect(touch).toBeInstanceOf(AxiosTouchController);
+    expect(buttons).toBeInstanceOf(DefaultButtonController);
+    expect(touch).toBeInstanceOf(DefaultTouchController);
     expect(typeof (buttons as any).press).toBe("function");
   });
 

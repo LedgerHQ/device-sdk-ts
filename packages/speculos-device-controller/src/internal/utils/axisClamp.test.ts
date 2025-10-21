@@ -4,40 +4,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { DeviceScreens, Percent } from "@internal/core/types";
 
-import {
-  type AxisMap,
-  createAxes,
-  createAxis,
-  createVH,
-  createVW,
-} from "./axisClamp";
+import { type AxisMap, clampValue, createAxes, createAxis } from "./axisClamp";
 
 const p = (n: number) => n as unknown as Percent;
 
 describe("axisClamp helpers", () => {
-  describe("createVW", () => {
+  describe("clampValue", () => {
     it("floors and clamps to [0, width]", () => {
-      const vw = createVW(200);
+      const clamp = clampValue(200);
 
-      expect(vw(p(0))).toBe(0);
-      expect(vw(p(50))).toBe(100); // 200 * 0.5 = 100
-      expect(vw(p(50.4))).toBe(100); // floor(200 * 0.504) = 100
-      expect(vw(p(50.5))).toBe(101); // floor(200 * 0.505) = 101
-      expect(vw(p(100))).toBe(200);
-      expect(vw(p(150))).toBe(200); // clamped
-      expect(vw(p(-10))).toBe(0); // clamped
-    });
-  });
-
-  describe("createVH", () => {
-    it("floors and clamps to [0, height]", () => {
-      const vh = createVH(123);
-
-      expect(vh(p(0))).toBe(0);
-      expect(vh(p(33.3))).toBe(Math.floor(123 * 0.333)); // flooring check
-      expect(vh(p(100))).toBe(123);
-      expect(vh(p(999))).toBe(123); // clamped
-      expect(vh(p(-5))).toBe(0); // clamped
+      expect(clamp(p(0))).toBe(0);
+      expect(clamp(p(50))).toBe(100); // 200 * 0.5 = 100
+      expect(clamp(p(50.4))).toBe(100); // floor(200 * 0.504) = 100
+      expect(clamp(p(50.5))).toBe(101); // floor(200 * 0.505) = 101
+      expect(clamp(p(100))).toBe(200);
+      expect(clamp(p(150))).toBe(200); // clamped
+      expect(clamp(p(-10))).toBe(0); // clamped
     });
   });
 

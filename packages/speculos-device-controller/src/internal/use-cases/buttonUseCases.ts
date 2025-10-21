@@ -1,10 +1,12 @@
-import type { IButtonController } from "@internal/core/IButtonController";
+import type { ButtonController } from "@internal/core/ButtonController";
 import type { ButtonKey } from "@internal/core/types";
 
+const DEFAULT_DELAY_MS = 200;
+
 export async function pressSequence(
-  buttons: IButtonController,
+  buttons: ButtonController,
   keys: ButtonKey[],
-  delayMs = 200,
+  delayMs = DEFAULT_DELAY_MS,
 ): Promise<void> {
   for (const k of keys) {
     await buttons.press(k);
@@ -14,7 +16,7 @@ export async function pressSequence(
   }
 }
 
-export function pressButtons(buttons: IButtonController): {
+export function pressButtons(buttons: ButtonController): {
   left: () => Promise<void>;
   right: () => Promise<void>;
   both: () => Promise<void>;

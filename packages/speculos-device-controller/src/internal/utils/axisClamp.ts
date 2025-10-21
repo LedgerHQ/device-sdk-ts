@@ -2,17 +2,15 @@ import type { DeviceScreens, Percent } from "@internal/core/types";
 
 const clamp = (pct: number) => Math.max(0, Math.min(100, pct)) / 100;
 
-export const createVW = (width: number) => (pct: Percent) =>
-  Math.floor(width * clamp(pct));
-export const createVH = (height: number) => (pct: Percent) =>
-  Math.floor(height * clamp(pct));
+export const clampValue = (value: number) => (pct: Percent) =>
+  Math.floor(value * clamp(pct));
 
 export const createAxis = (width: number, height: number) => ({
-  vw: createVW(width),
-  vh: createVH(height),
+  vw: clampValue(width),
+  vh: clampValue(height),
   xy: (xPct: Percent, yPct: Percent) => ({
-    x: Math.floor(width * clamp(xPct)),
-    y: Math.floor(height * clamp(yPct)),
+    x: clampValue(width)(xPct),
+    y: clampValue(height)(yPct),
   }),
 });
 

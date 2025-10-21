@@ -1,5 +1,5 @@
 import { DEFAULT_SCREENS } from "@internal/config/defaultScreens";
-import type { IButtonController } from "@internal/core/IButtonController";
+import type { ButtonController } from "@internal/core/ButtonController";
 import type {
   ButtonKey,
   DeviceControllerOptions,
@@ -13,33 +13,36 @@ import {
 } from "@root/src/internal/use-cases/buttonUseCases";
 import { tapLong, tapQuick } from "@root/src/internal/use-cases/touchUseCases";
 
-export type ButtonAPI = IButtonController & {
+export type ButtonFactory = () => ButtonController & {
   left(): Promise<void>;
   right(): Promise<void>;
   both(): Promise<void>;
   pressSequence(keys: ButtonKey[], delayMs?: number): Promise<void>;
 };
 
-export type TouchAPI = {
-  createTap: (deviceKey: string) => {
-    tapQuick: (point: PercentCoordinates) => Promise<void>;
-    tapLong: (point: PercentCoordinates) => Promise<void>;
-  };
+export type TapFactory = (deviceKey: string) => {
+  tapQuick: (point: PercentCoordinates) => Promise<void>;
+  tapLong: (point: PercentCoordinates) => Promise<void>;
 };
 
-export type DeviceAPI = {
-  button: ButtonAPI;
-  touch: TouchAPI;
-};
-
-export function deviceControllerFactory(
+export type DeviceControllerClientFactory = (
   baseURL: string,
-  opts: {
+  opts?: {
     timeoutMs?: number;
     clientHeader?: string;
     screens?: DeviceScreens<string>;
-  } = {},
-): DeviceAPI {
+  },
+) => DeviceControllerClient;
+
+export type DeviceControllerClient = {
+  buttonFactory: ButtonFactory;
+  tapFactory: TapFactory;
+};
+
+export const deviceControllerClientFactory: DeviceControllerClientFactory = (
+  baseURL,
+  opts = {},
+) => {
   const resolved: DeviceControllerOptions = {
     screens: opts.screens ?? DEFAULT_SCREENS,
     timeoutMs: opts.timeoutMs,
@@ -50,21 +53,19 @@ export function deviceControllerFactory(
   const press = pressButtons(buttons);
 
   return {
-    button: {
-      press: (k) => buttons.press(k),
+    buttonFactory: () => ({
+      press: (key) => buttons.press(key),
       left: () => press.left(),
       right: () => press.right(),
       both: () => press.both(),
       pressSequence: (keys, delayMs) => pressSequence(buttons, keys, delayMs),
-    },
-    touch: {
-      createTap: (key) => ({
-        tapQuick: tapQuick(touch, key),
-        tapLong: tapLong(touch, key),
-      }),
-    },
+    }),
+    tapFactory: (key) => ({
+      tapQuick: tapQuick(touch, key),
+      tapLong: tapLong(touch, key),
+    }),
   };
-}
+};
 
 export type {
   ButtonKey,

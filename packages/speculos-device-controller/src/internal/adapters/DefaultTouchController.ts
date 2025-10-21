@@ -1,11 +1,11 @@
 import type { AxiosInstance } from "axios";
 
-import type { ITouchController } from "@internal/core/ITouchController";
 import { type PercentCoordinates, SpeculosActions } from "@internal/core/types";
 import type { AxisMap } from "@internal/utils/axisClamp";
+import type { TouchController } from "@root/src/internal/core/TouchController";
 
-export class AxiosTouchController<K extends string>
-  implements ITouchController<K>
+export class DefaultTouchController<K extends string>
+  implements TouchController<K>
 {
   constructor(
     private readonly client: AxiosInstance,
