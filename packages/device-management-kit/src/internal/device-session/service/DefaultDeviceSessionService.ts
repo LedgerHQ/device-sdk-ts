@@ -38,7 +38,9 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
 
     this._sessions.push(deviceSession);
     this._sessionsSubject.next(deviceSession);
-    this._logger.info("DeviceSession added", { data: { deviceSession } });
+    this._logger.info("DeviceSession added", {
+      data: { sessionId: deviceSession.id },
+    });
     return this;
   }
 
