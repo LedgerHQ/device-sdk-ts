@@ -1,4 +1,4 @@
-import { InvalidStatusWordError } from "@api/command/Errors";
+import { InvalidFirmwareMetadataError } from "@api/command/Errors";
 import {
   type CommandResult,
   CommandResultFactory,
@@ -51,9 +51,7 @@ export class GetFirmwareMetadataTask {
       );
     if (result.isLeft()) {
       return CommandResultFactory({
-        error: new InvalidStatusWordError(
-          "Cannot fetch current firmware metadata",
-        ),
+        error: new InvalidFirmwareMetadataError(),
       });
     }
     const { deviceVersion, currentFirmware } = result.unsafeCoerce();

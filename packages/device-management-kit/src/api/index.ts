@@ -6,7 +6,10 @@ export { ApduParser } from "@api/apdu/utils/ApduParser";
 export * from "@api/apdu/utils/AppBuilderError";
 export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
-export { InvalidStatusWordError } from "@api/command/Errors";
+export {
+  InvalidFirmwareMetadataError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 export {
   CommandResultFactory,
   CommandResultStatus,

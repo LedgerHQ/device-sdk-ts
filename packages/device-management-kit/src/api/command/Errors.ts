@@ -44,3 +44,12 @@ export class InvalidResponseFormatError implements DmkError {
     this.originalError = new Error(message ?? "Invalid response format.");
   }
 }
+
+export class InvalidFirmwareMetadataError implements DmkError {
+  readonly _tag = "InvalidFirmwareMetadataError";
+  readonly originalError: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Invalid firmware metadata.");
+  }
+}
