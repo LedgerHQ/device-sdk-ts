@@ -32,6 +32,7 @@ export class SpeculosTransport implements Transport {
   private readonly _speculosDataSource: SpeculosDatasource;
   private connectedDevice: TransportConnectedDevice | null = null;
   private disconnectInterval: NodeJS.Timeout | null = null;
+  private readonly _isE2E: boolean;
   private readonly speculosDevice: TransportDiscoveredDevice = {
     id: "SpeculosID", //TODO make it dynamic at creation
     deviceModel: {
@@ -54,9 +55,14 @@ export class SpeculosTransport implements Transport {
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
     _config: DmkConfig,
     speculosUrl: string,
+    isE2E?: boolean,
   ) {
+    this._isE2E = isE2E ?? false;
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl); // See how to pass properly speculos config.
+    this._speculosDataSource = new HttpSpeculosDatasource(
+      speculosUrl,
+      this._isE2E,
+    ); // See how to pass properly speculos config.
   }
 
   isSupported(): boolean {
@@ -87,7 +93,7 @@ export class SpeculosTransport implements Transport {
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
 
-    const hexResponse = await this._speculosDataSource.postAdpu("B0010000");
+    const hexResponse = await this._speculosDataSource.postApdu("B0010000");
     this.logger.debug(`Hex Response: ${hexResponse}`);
     const apduResponse = this.createApduResponse(hexResponse);
     const parser = new ApduParser(apduResponse);
@@ -123,7 +129,9 @@ export class SpeculosTransport implements Transport {
       };
 
       this.connectedDevice = connectedDevice;
-      this.listenForDisconnect(params.onDisconnect, params.deviceId);
+      if (!this._isE2E) {
+        this.listenForDisconnect(params.onDisconnect, params.deviceId);
+      }
       return Right(connectedDevice);
     } catch (error) {
       return Left(new OpeningConnectionError(error as Error));
@@ -148,7 +156,7 @@ export class SpeculosTransport implements Transport {
       const hexApdu = bufferToHexaString(apdu).substring(2);
       this.logger.debug(`send APDU:  ${hexApdu}`);
       const hexResponse: string =
-        await this._speculosDataSource.postAdpu(hexApdu);
+        await this._speculosDataSource.postApdu(hexApdu);
       const apduResponse = this.createApduResponse(hexResponse);
       return Right(apduResponse);
     } catch (error) {
@@ -222,7 +230,8 @@ export class SpeculosTransport implements Transport {
 
 export const speculosTransportFactory: (
   speculosUrl?: string,
+  isE2E?: boolean,
 ) => TransportFactory =
-  (speculosUrl = "http://127.0.0.1:5000") =>
+  (speculosUrl = "http://127.0.0.1:5000", isE2E = false) =>
   ({ config, loggerServiceFactory }) =>
-    new SpeculosTransport(loggerServiceFactory, config, speculosUrl);
+    new SpeculosTransport(loggerServiceFactory, config, speculosUrl, isE2E);

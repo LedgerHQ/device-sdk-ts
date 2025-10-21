@@ -1,0 +1,27 @@
+export type ButtonKey = "left" | "right" | "both";
+
+export type ScreenSpec = Readonly<{ width: number; height: number }>;
+
+export type DeviceScreens<K extends string = string> = Readonly<
+  Record<K, ScreenSpec>
+>;
+
+export type Range<
+  N extends number,
+  Acc extends number[] = [],
+> = Acc["length"] extends N ? Acc[number] : Range<N, [...Acc, Acc["length"]]>;
+export type Percent = Range<101>;
+
+export type PercentCoordinates = { x: Percent; y: Percent };
+
+export type DeviceControllerOptions<K extends string = string> = {
+  screens: DeviceScreens<K>;
+  timeoutMs?: number;
+  clientHeader?: string;
+};
+
+export enum SpeculosActions {
+  PRESS = "press",
+  RELEASE = "release",
+  PRESS_AND_RELEASE = "press-and-release",
+}
