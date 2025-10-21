@@ -21,7 +21,7 @@ catalog:
   '@ledgerhq/react-ui': ^0.17.0
   '@playwright/test': ^1.49.0
   '@react-native-community/cli': 15.0.1
-  '@react-native-community/cli-platform-android': 15.0.1
+  '@react-native-community/cli-platform-android': 20.0.2
   '@react-native-community/cli-platform-ios': 15.0.1
   '@react-native/babel-preset': 0.81.0
   '@react-native/codegen': ^0.76.6
