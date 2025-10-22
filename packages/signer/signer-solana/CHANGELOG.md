@@ -1,5 +1,17 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.4.0
+
+### Minor Changes
+
+- [#1081](https://github.com/LedgerHQ/device-sdk-ts/pull/1081) [`b66d278`](https://github.com/LedgerHQ/device-sdk-ts/commit/b66d278a07505f5864b7f84b9440e9c3ee1f376d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add message chunking and format to offchain message
+
+### Patch Changes
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`c8bb7a3`](https://github.com/LedgerHQ/device-sdk-ts/commit/c8bb7a39202206bffcd82190fa9e3074e9663dde), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+  - @ledgerhq/context-module@1.9.0
+
 ## 1.3.0
 
 ### Minor Changes

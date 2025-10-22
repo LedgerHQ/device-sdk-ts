@@ -1,5 +1,14 @@
 # @ledgerhq/device-transport-kit-web-hid
 
+## 1.2.1
+
+### Patch Changes
+
+- [#1083](https://github.com/LedgerHQ/device-sdk-ts/pull/1083) [`8c1b367`](https://github.com/LedgerHQ/device-sdk-ts/commit/8c1b3676bb1ea782351b5e474bdc659c567321e6) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Remove duplicate logs
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+
 ## 1.2.0
 
 ### Minor Changes

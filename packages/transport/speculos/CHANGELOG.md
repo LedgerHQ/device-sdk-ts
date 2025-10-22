@@ -1,5 +1,18 @@
 # @ledgerhq/device-transport-kit-speculos
 
+## 1.1.0
+
+### Minor Changes
+
+- [#1080](https://github.com/LedgerHQ/device-sdk-ts/pull/1080) [`1d3369e`](https://github.com/LedgerHQ/device-sdk-ts/commit/1d3369e3433bd179ac751612a6e2d2322b88001a) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add openEventStream to speculos transport
+
+### Patch Changes
+
+- [#1087](https://github.com/LedgerHQ/device-sdk-ts/pull/1087) [`569509a`](https://github.com/LedgerHQ/device-sdk-ts/commit/569509af849eb6b541d19329fe07b819f5317525) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Remove apdu logs
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+
 ## 1.0.1
 
 ### Patch Changes
