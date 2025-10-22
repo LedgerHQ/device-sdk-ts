@@ -166,7 +166,7 @@ export class DeviceSession {
         eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
       });
 
-      this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu)}`);
+      this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
@@ -176,7 +176,7 @@ export class DeviceSession {
       result
         .ifRight((response: ApduResponse) => {
           this._logger.debug(
-            `[exchange] <= ${bufferToHexaString(response.data)}${bufferToHexaString(response.statusCode, false)}`,
+            `[exchange] <= ${bufferToHexaString(response.data, false)}${bufferToHexaString(response.statusCode, false)}`,
           );
           if (CommandUtils.isLockedDeviceResponse(response)) {
             this._sessionEventDispatcher.dispatch({
