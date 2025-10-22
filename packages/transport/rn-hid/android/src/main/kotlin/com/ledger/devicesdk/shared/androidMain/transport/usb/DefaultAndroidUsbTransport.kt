@@ -45,6 +45,8 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
+private val TAG = "DefaultAndroidUsbTransport"
+
 internal class DefaultAndroidUsbTransport(
     private val application: Application,
     private val usbManager: UsbManager,
@@ -67,11 +69,13 @@ internal class DefaultAndroidUsbTransport(
     private var discoveryJob: Job? = null
 
     override fun startScan(): Flow<List<DiscoveryDevice>> {
+        loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] called"))
         val scanStateFlow = MutableStateFlow<List<DiscoveryDevice>>(emptyList())
         discoveryJob?.cancel()
         discoveryJob =
             scope.launch {
                 while (isActive) {
+                    loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] isActive loop"))
                     val usbDevices = usbManager.deviceList.values.toList()
                     val devices =
                         usbDevices
@@ -82,6 +86,7 @@ internal class DefaultAndroidUsbTransport(
                             }.toUsbDevices()
 
                     scanStateFlow.value = devices.toScannedDevices()
+                    loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] devices={$devices}"))
 
                     delay(scanDelay)
                 }
@@ -90,6 +95,7 @@ internal class DefaultAndroidUsbTransport(
     }
 
     override fun stopScan() {
+        loggerService.log(buildSimpleDebugLogInfo(TAG, "[stopScan] called"))
         discoveryJob?.cancel()
         discoveryJob = null
     }

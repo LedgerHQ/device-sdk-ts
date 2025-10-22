@@ -22,6 +22,7 @@ import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
 import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,8 @@ import timber.log.Timber
 import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+
+private val TAG = "TransportHidModule"
 
 class TransportHidModule(
     private val reactContext: ReactApplicationContext,
@@ -137,8 +140,14 @@ class TransportHidModule(
 
     @ReactMethod
     fun startScan(promise: Promise) {
+        loggerService.log(
+            buildSimpleDebugLogInfo(TAG, "[startScan] called")
+        )
         discoveryCount += 1
         if (discoveryCount > 1) {
+            loggerService.log(
+                buildSimpleDebugLogInfo(TAG, "[startScan] already scanning")
+            )
             promise.resolve(null)
             return
         }
@@ -156,8 +165,14 @@ class TransportHidModule(
 
     @ReactMethod
     fun stopScan(promise: Promise) {
+        loggerService.log(
+            buildSimpleDebugLogInfo(TAG, "[stopScan] called")
+        )
         discoveryCount -= 1
         if (discoveryCount > 0) {
+            loggerService.log(
+                buildSimpleDebugLogInfo(TAG, "[stopScan] still scanning because there are active listeners")
+            )
             promise.resolve(null)
             return
         }
