@@ -19,36 +19,49 @@ export class ConsoleLogger implements LoggerSubscriberService {
     switch (level) {
       case LogLevel.Info: {
         if (this.maxLevel >= LogLevel.Info) {
-          console.info(tag, message, options.data);
+          this.logWithData(tag, console.info, message, options);
         }
         break;
       }
       case LogLevel.Warning: {
         if (this.maxLevel >= LogLevel.Warning) {
-          console.warn(tag, message, options.data);
+          this.logWithData(tag, console.warn, message, options);
         }
         break;
       }
       case LogLevel.Debug: {
         if (this.maxLevel >= LogLevel.Debug) {
-          console.debug(tag, message, options.data);
+          this.logWithData(tag, console.debug, message, options);
         }
         break;
       }
       case LogLevel.Error: {
         if (this.maxLevel >= LogLevel.Error) {
-          console.error(tag, message, options.data);
+          this.logWithData(tag, console.error, message, options);
         }
         break;
       }
       case LogLevel.Fatal: {
         if (this.maxLevel >= LogLevel.Fatal) {
-          console.error(tag, message, options.data);
+          this.logWithData(tag, console.error, message, options);
         }
         break;
       }
       default:
-        console.log(tag, message, options.data);
+        this.logWithData(tag, console.log, message, options);
+    }
+  }
+
+  private logWithData(
+    tag: string,
+    logFunction: (...args: unknown[]) => void,
+    message: string,
+    options: LogSubscriberOptions,
+  ): void {
+    if (options.data) {
+      logFunction(tag, message, options.data);
+    } else {
+      logFunction(tag, message);
     }
   }
 }
