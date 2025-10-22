@@ -17,7 +17,7 @@ This module provides the implementation of the Ledger Bitcoin signer of the Devi
    - [Sign Message](#use-case-2-sign-message)
    - [Sign Partially Signed Transaction (PSBT)](#use-case-3-sign-psbt)
    - [Sign Transaction](#use-case-4-sign-transaction)
-   - [Get Wallet address](#use-case-5-get-wallet-address)
+   - [Get signer address](#use-case-5-get-wallet-address)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -66,7 +66,7 @@ const { observable, cancel } = signerBitcoin.getExtendedPublicKey(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit wallet)
+  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit signer)
   - The derivation path used for the Bitcoin address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `options`
@@ -112,7 +112,7 @@ const { observable, cancel } = signerBitcoin.signMessage(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit wallet)
+  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit signer)
   - The derivation path used for the Bitcoin address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `message`
@@ -272,12 +272,12 @@ type TransactionHash = `0x${string}`;
 
 - `cancel` A function to cancel the action on the Ledger device.
 
-### Use Case 5: Get wallet address
+### Use Case 5: Get signer address
 
-This method allows users to get the wallet address linked to a Ledger device.
+This method allows users to get the signer address linked to a Ledger device.
 
 ```typescript
-const { observable, cancel } = signerBitcoin.getWalletAddress(
+const { observable, cancel } = signerBitcoin.getsignerAddress(
   derivationPath,
   addressIndex,
   options,
@@ -289,7 +289,7 @@ const { observable, cancel } = signerBitcoin.getWalletAddress(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit wallet)
+  - **Type:** `string` (e.g. `"84'/0'/0'"` for a Native SegWit signer)
   - The derivation path used for the Bitcoin address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `addressIndex`
