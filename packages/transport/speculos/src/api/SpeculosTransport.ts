@@ -154,7 +154,6 @@ export class SpeculosTransport implements Transport {
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
       const hexApdu = bufferToHexaString(apdu).substring(2);
-      this.logger.debug(`send APDU:  ${hexApdu}`);
       const hexResponse: string =
         await this._speculosDataSource.postApdu(hexApdu);
       const apduResponse = this.createApduResponse(hexResponse);
@@ -176,11 +175,6 @@ export class SpeculosTransport implements Transport {
   }
 
   private createApduResponse(hexApdu: string): ApduResponse {
-    this.logger.debug(
-      `Status code hex: ${hexApdu.substring(hexApdu.length - 4, hexApdu.length)}`,
-    );
-    this.logger.debug(`data hex: ${hexApdu.substring(0, hexApdu.length - 4)}`);
-
     const apduResponse = {
       statusCode: this.fromHexString(
         hexApdu.substring(hexApdu.length - 4, hexApdu.length),
