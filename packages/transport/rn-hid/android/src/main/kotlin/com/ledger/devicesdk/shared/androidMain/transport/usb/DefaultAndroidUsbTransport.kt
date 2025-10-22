@@ -76,18 +76,9 @@ internal class DefaultAndroidUsbTransport(
             scope.launch {
                 while (isActive) {
                     loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] isActive loop"))
-                    val usbDevices = usbManager.deviceList.values.toList()
-                    val devices =
-                        usbDevices
-                            .filter { device ->
-                                usbConnections.filter {
-                                    device == it.value.getApduSender().dependencies.usbDevice
-                                }.isEmpty()
-                            }.toUsbDevices()
-
-                    scanStateFlow.value = devices.toScannedDevices()
-                    loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] devices={$devices}"))
-
+                    val usbDevices = usbManager.deviceList.values.toList().toUsbDevices()
+                    scanStateFlow.value = usbDevices.toScannedDevices()
+                    loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] scannedDevices=${scanStateFlow.value}"))
                     delay(scanDelay)
                 }
             }

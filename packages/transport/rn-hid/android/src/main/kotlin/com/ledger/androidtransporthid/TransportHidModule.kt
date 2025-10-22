@@ -136,15 +136,15 @@ class TransportHidModule(
         transport?.stopScan()
     }
 
-    private var discoveryCount = 0
+    private var activeScanCount = 0
 
     @ReactMethod
     fun startScan(promise: Promise) {
         loggerService.log(
             buildSimpleDebugLogInfo(TAG, "[startScan] called")
         )
-        discoveryCount += 1
-        if (discoveryCount > 1) {
+        activeScanCount += 1
+        if (activeScanCount > 1) {
             loggerService.log(
                 buildSimpleDebugLogInfo(TAG, "[startScan] already scanning")
             )
@@ -166,21 +166,33 @@ class TransportHidModule(
     @ReactMethod
     fun stopScan(promise: Promise) {
         loggerService.log(
-            buildSimpleDebugLogInfo(TAG, "[stopScan] called")
+            buildSimpleDebugLogInfo(TAG, "[stopScan] called, activeScanCount=$activeScanCount")
         )
-        discoveryCount -= 1
-        if (discoveryCount > 0) {
-            loggerService.log(
-                buildSimpleDebugLogInfo(TAG, "[stopScan] still scanning because there are active listeners")
-            )
-            promise.resolve(null)
-            return
-        }
-        try {
-            transport!!.stopScan()
-            promise.resolve(null)
-        } catch (e: Exception) {
-            promise.reject(e);
+
+        when(activeScanCount) {
+            0 -> {
+                loggerService.log(buildSimpleDebugLogInfo(TAG, "[stopScan] no active scan"))
+                promise.resolve(null)
+            }
+            1 -> {
+                try {
+                    transport!!.stopScan()
+                    promise.resolve(null)
+                } catch (e: Exception) {
+                    promise.reject(e);
+                }
+                activeScanCount = 0
+            }
+            else -> {
+                loggerService.log(
+                    buildSimpleDebugLogInfo(
+                        TAG,
+                        "[stopScan] still scanning because there are active listeners"
+                    )
+                )
+                activeScanCount -= 1
+                promise.resolve(null)
+            }
         }
     }
 

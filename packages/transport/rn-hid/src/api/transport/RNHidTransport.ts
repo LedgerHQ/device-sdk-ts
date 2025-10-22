@@ -70,14 +70,12 @@ export class RNHidTransport implements Transport {
   }
 
   stopDiscovering(): void {
-    this._loggerService.debug("[stopDiscovering] called");
     this._nativeModuleWrapper.stopScan().catch((error) => {
       this._loggerService.error("stopDiscovering error", error);
     });
   }
 
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    this._loggerService.debug("[listenToAvailableDevices] called");
     /**
      * NB: here we need to define the unsubscribe logic as there is no
      * "stopListeningToKnownDevices" method.
@@ -89,10 +87,6 @@ export class RNHidTransport implements Transport {
         const subscription = this._nativeModuleWrapper
           .subscribeToDiscoveredDevicesEvents()
           .subscribe((devices) => {
-            this._loggerService.debug(
-              "[listenToAvailableDevices] devices discovered",
-              { data: { devices } },
-            );
             subscriber.next(devices);
           });
         this._nativeModuleWrapper.startScan().catch((error) => {
