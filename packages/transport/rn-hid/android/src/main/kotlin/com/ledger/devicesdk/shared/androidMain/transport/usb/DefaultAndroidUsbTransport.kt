@@ -291,6 +291,27 @@ internal class DefaultAndroidUsbTransport(
         return if (usbDevice == null || ledgerUsbDevice == null) {
             InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
         } else {
+
+            val existingConnection = usbConnections.firstNotNullOfOrNull {
+                if (it.value.getApduSender().dependencies.usbDevice == usbDevice) it.value
+                else if (it.key == generateSessionId(usbDevice)) it.value
+                else null
+            }
+
+            if (existingConnection != null) {
+                val connectedDevice =
+                    InternalConnectedDevice(
+                        existingConnection.sessionId,
+                        discoveryDevice.name,
+                        discoveryDevice.ledgerDevice,
+                        discoveryDevice.connectivityType,
+                        sendApduFn = { apdu: ByteArray, triggersDisconnection: Boolean, abortTimeoutDuration: Duration ->
+                            existingConnection.requestSendApdu(apdu, triggersDisconnection, abortTimeoutDuration)
+                        }
+                    )
+                return InternalConnectionResult.Connected(device = connectedDevice, sessionId = existingConnection.sessionId)
+            }
+
             val permissionResult = checkOrRequestPermission(usbDevice)
             if (permissionResult is PermissionResult.Denied) {
                 return permissionResult.connectionError
