@@ -22,11 +22,26 @@ import {
 } from "@internal/app-binder/task/GetWeb3CheckTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
-const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
+export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.TRANSACTION_INFO,
   ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
   ClearSignContextType.ENUM,
   ClearSignContextType.PROXY_INFO,
+];
+
+export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
+  ClearSignContextType.TRANSACTION_INFO,
+  ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+  ClearSignContextType.PROXY_INFO,
+  ClearSignContextType.WEB3_CHECK,
+  ClearSignContextType.DYNAMIC_NETWORK,
+  ClearSignContextType.DYNAMIC_NETWORK_ICON,
+  ClearSignContextType.ENUM,
+  ClearSignContextType.TRUSTED_NAME,
+  ClearSignContextType.TOKEN,
+  ClearSignContextType.NFT,
+  ClearSignContextType.PLUGIN,
+  ClearSignContextType.EXTERNAL_PLUGIN,
 ];
 
 export type BuildBaseContextsResult = {
@@ -94,7 +109,9 @@ export class BuildBaseContexts {
           deviceModelId: deviceState.deviceModelId,
           ...subset,
         },
-        isNestedCallData ? NESTED_CALLDATA_CONTEXT_TYPES_FILTER : undefined,
+        isNestedCallData
+          ? NESTED_CALLDATA_CONTEXT_TYPES_FILTER
+          : BASE_CONTEXT_TYPES_FILTER,
       );
 
     // Run the web3checks if needed
@@ -179,6 +196,8 @@ export class BuildBaseContexts {
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ENUM:
       case ClearSignContextType.PROXY_INFO:
+      case ClearSignContextType.SAFE:
+      case ClearSignContextType.SIGNER:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -204,6 +223,8 @@ export class BuildBaseContexts {
       case ClearSignContextType.NFT:
       case ClearSignContextType.PLUGIN:
       case ClearSignContextType.EXTERNAL_PLUGIN:
+      case ClearSignContextType.SAFE:
+      case ClearSignContextType.SIGNER:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -257,6 +278,11 @@ export class BuildBaseContexts {
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ENUM:
         return 70;
+
+      /* not used here */
+      case ClearSignContextType.SAFE:
+      case ClearSignContextType.SIGNER:
+        return 90;
 
       default: {
         const uncoveredType: never = type;

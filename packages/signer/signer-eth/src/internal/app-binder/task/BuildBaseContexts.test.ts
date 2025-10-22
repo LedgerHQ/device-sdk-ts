@@ -18,6 +18,7 @@ import { ClearSigningType } from "@api/model/ClearSigningType";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 
 import {
+  BASE_CONTEXT_TYPES_FILTER,
   BuildBaseContexts,
   type BuildBaseContextsArgs,
 } from "./BuildBaseContexts";
@@ -476,7 +477,7 @@ describe("BuildBaseContexts", () => {
         domain: "domain-name.eth",
         ...defaultArgs.subset,
       },
-      undefined,
+      BASE_CONTEXT_TYPES_FILTER,
     );
   });
 
@@ -507,7 +508,7 @@ describe("BuildBaseContexts", () => {
         domain: "domain-name.eth",
         ...defaultArgs.subset,
       },
-      undefined,
+      BASE_CONTEXT_TYPES_FILTER,
     );
   });
 
@@ -542,7 +543,7 @@ describe("BuildBaseContexts", () => {
         domain: "domain-name.eth",
         ...defaultArgs.subset,
       },
-      undefined,
+      BASE_CONTEXT_TYPES_FILTER,
     );
   });
 

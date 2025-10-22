@@ -11,6 +11,7 @@ import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
 import { nftTypes } from "./nft/di/nftTypes";
 import { proxyTypes } from "./proxy/di/proxyTypes";
+import { safeTypes } from "./safe/di/safeTypes";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
@@ -25,7 +26,6 @@ import { type SolanaTransactionContextResult } from "./solana/domain/solanaConte
 import { tokenTypes } from "./token/di/tokenTypes";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
-import { uniswapTypes } from "./uniswap/di/uniswapTypes";
 import { web3CheckTypes } from "./web3-check/di/web3CheckTypes";
 import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import {
@@ -87,10 +87,10 @@ export class DefaultContextModule implements ContextModule {
       this._container.get<ContextLoader>(nftTypes.NftContextLoader),
       this._container.get<ContextLoader>(tokenTypes.TokenContextLoader),
       this._container.get<ContextLoader>(calldataTypes.CalldataContextLoader),
-      this._container.get<ContextLoader>(uniswapTypes.UniswapContextLoader),
       this._container.get<ContextLoader>(
         dynamicNetworkTypes.DynamicNetworkContextLoader,
       ),
+      this._container.get<ContextLoader>(safeTypes.SafeAddressLoader),
     ];
   }
 

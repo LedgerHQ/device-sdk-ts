@@ -34,6 +34,8 @@ const DeviceList = styled(
 export const ConnectDeviceScreen: React.FC = () => {
   const dmk = useDmk();
   const [devices, setDevices] = React.useState<DiscoveredDevice[]>([]);
+  const [listenToAvailableDevicesError, setListenToAvailableDevicesError] =
+    React.useState<Error | null>(null);
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
   const {
     state: { selectedId: deviceSessionId },
@@ -48,25 +50,33 @@ export const ConnectDeviceScreen: React.FC = () => {
   }, [deviceSessionId]);
 
   useEffect(() => {
-    if (isScanningDevices && isFocused) {
-      const subscription = dmk.listenToAvailableDevices({}).subscribe({
-        next: dvcs => {
-          setDevices(dvcs);
-        },
-        error: err => {
-          console.log("[dmk.listenToAvailableDevices] error", err);
-        },
-      });
+    if (!isScanningDevices) return;
+    if (!isFocused) return;
 
-      return () => {
-        dmk.stopDiscovering();
-        subscription.unsubscribe();
-        setDevices([]);
-      };
-    }
+    const subscription = dmk.listenToAvailableDevices({}).subscribe({
+      next: dvcs => {
+        setDevices(dvcs);
+      },
+      error: err => {
+        console.error("[dmk.listenToAvailableDevices] error", err);
+        setIsScanningDevices(false);
+        setListenToAvailableDevicesError(err);
+      },
+      complete: () => {
+        console.log("[dmk.listenToAvailableDevices] complete");
+        setIsScanningDevices(false);
+      },
+    });
+
+    return () => {
+      dmk.stopDiscovering();
+      subscription.unsubscribe();
+      setDevices([]);
+    };
   }, [dmk, isScanningDevices, isFocused]);
 
   const startScanning = () => {
+    setListenToAvailableDevicesError(null);
     setIsScanningDevices(true);
   };
 
@@ -85,6 +95,20 @@ export const ConnectDeviceScreen: React.FC = () => {
       console.error(error);
     }
   };
+
+  if (listenToAvailableDevicesError) {
+    return (
+      <Container>
+        <Text m={6}>
+          Error while scanning for devices:{"\n"}
+          {JSON.stringify(listenToAvailableDevicesError, null, 2)}
+        </Text>
+        <Button type="color" onPress={startScanning}>
+          Start scan
+        </Button>
+      </Container>
+    );
+  }
 
   return (
     <Container>
