@@ -1,5 +1,20 @@
 # @ledgerhq/device-transport-kit-react-native-ble
 
+## 1.2.0
+
+### Minor Changes
+
+- [#1084](https://github.com/LedgerHQ/device-sdk-ts/pull/1084) [`6544756`](https://github.com/LedgerHQ/device-sdk-ts/commit/654475602681dff30c220a161c1ced86cb8920b0) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Mapping specific error for Android platform
+
+### Patch Changes
+
+- [#1073](https://github.com/LedgerHQ/device-sdk-ts/pull/1073) [`4591cd9`](https://github.com/LedgerHQ/device-sdk-ts/commit/4591cd9b54b86e12f5f2c50d2f0c1500dce7ecb0) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Remove unnecessary logs
+
+- [#1078](https://github.com/LedgerHQ/device-sdk-ts/pull/1078) [`58bdb84`](https://github.com/LedgerHQ/device-sdk-ts/commit/58bdb84e46408b50fd4d48e8a66b42549af29f5c) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Fix scanning issues
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+
 ## 1.1.1
 
 ### Patch Changes

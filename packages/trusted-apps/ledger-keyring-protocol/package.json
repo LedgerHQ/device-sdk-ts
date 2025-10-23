@@ -2,7 +2,7 @@
   "name": "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
   "version": "0.3.0",
   "license": "Apache-2.0",
-  "private": false,
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
