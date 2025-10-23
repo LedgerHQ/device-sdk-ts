@@ -17,6 +17,8 @@ import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.ACTION_U
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbAttachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbDetachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbPermissionReceiver
+import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
+import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
@@ -244,7 +246,9 @@ class TransportHidModule(
         try {
             val device = connectedDevices.firstOrNull() { it.id == sessionId }
             if (device == null) {
-                promise.reject(Exception("[TransportHidModule][sendApdu] Device not found"))
+                promise.resolve(
+                    SendApduResult.Failure(SendApduFailureReason.DeviceNotFound).toWritableMap()
+                )
                 return
             }
             coroutineScope.launch {
