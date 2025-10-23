@@ -38,9 +38,8 @@ Delete unused package/version lines below and replace version comment with the c
 
 ## 📋 Release Checklist
 
-- [ ] Create release branch locally
-- [ ] Create Pull Request using template `gh pr create --title "🔖 (release) [NO-ISSUE]: New release incoming" -T .github/pull_request_template_release.md`
-- [ ] Change base to `main` branch
+- [ ] Create new branch from `develop`: `release`
+- [ ] Create Pull Request targeting `main` using template `gh pr create -B main --title "🔖 (release) [NO-ISSUE]: New release incoming" -T .github/pull_request_release_template.md`
 - [ ] Run `pnpm ldmk-tool enter-release` and select packages to release
 - [ ] Run `pnpm bump` to consume changesets and generate `CHANGELOG.md` files:
   - [ ] Ensure `GITHUB_TOKEN` environment variable is set with SSO

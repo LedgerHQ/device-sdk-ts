@@ -1,5 +1,15 @@
 # @ledgerhq/device-management-kit
 
+## 0.9.2
+
+### Patch Changes
+
+- [#1083](https://github.com/LedgerHQ/device-sdk-ts/pull/1083) [`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Don't console log data if undefined
+
+- [#1083](https://github.com/LedgerHQ/device-sdk-ts/pull/1083) [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add logs in device session sendApdu command
+
+- [#1079](https://github.com/LedgerHQ/device-sdk-ts/pull/1079) [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add verify safe address user interaction
+
 ## 0.9.1
 
 ### Patch Changes

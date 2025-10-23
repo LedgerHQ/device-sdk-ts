@@ -1,5 +1,19 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.9.0
+
+### Minor Changes
+
+- [#1079](https://github.com/LedgerHQ/device-sdk-ts/pull/1079) [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add verifySafeAddress API entrypoint
+
+### Patch Changes
+
+- [#1074](https://github.com/LedgerHQ/device-sdk-ts/pull/1074) [`024ec7e`](https://github.com/LedgerHQ/device-sdk-ts/commit/024ec7eb37e13cbdb0bc767e50c7dda223f4a206) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Don't fail clear signing if a sub context cannot be provided
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`c8bb7a3`](https://github.com/LedgerHQ/device-sdk-ts/commit/c8bb7a39202206bffcd82190fa9e3074e9663dde), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+  - @ledgerhq/context-module@1.9.0
+
 ## 1.8.0
 
 ### Minor Changes

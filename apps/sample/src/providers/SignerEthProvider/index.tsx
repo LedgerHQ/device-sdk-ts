@@ -31,6 +31,8 @@ type SignerEthContextType = {
   setMetadataServiceConfig: (
     metadataService: ContextModuleMetadataServiceConfig,
   ) => void;
+  originToken: string;
+  setOriginToken: (token: string) => void;
 };
 
 const initialState: SignerEthContextType = {
@@ -46,9 +48,11 @@ const initialState: SignerEthContextType = {
   metadataServiceDomain: {
     url: "https://nft.api.live.ledger.com",
   },
+  originToken: process.env.NEXT_PUBLIC_GATING_TOKEN || "origin-token",
   setCalConfig: () => {},
   setWeb3ChecksConfig: () => {},
   setMetadataServiceConfig: () => {},
+  setOriginToken: () => {},
 };
 
 const SignerEthContext = createContext<SignerEthContextType>(initialState);
@@ -71,6 +75,9 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     useState<ContextModuleMetadataServiceConfig>(
       initialState.metadataServiceDomain,
     );
+  const [originToken, setOriginToken] = useState<string>(
+    initialState.originToken,
+  );
 
   useEffect(() => {
     if (!sessionId || !dmk) {
@@ -79,7 +86,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     }
 
     const contextModule = new ContextModuleBuilder({
-      originToken: "origin-token", // TODO: replace with your origin token
+      originToken,
     })
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
@@ -88,11 +95,19 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     const newSigner = new SignerEthBuilder({
       dmk,
       sessionId,
+      originToken,
     })
       .withContextModule(contextModule)
       .build();
     setSigner(newSigner);
-  }, [calConfig, dmk, sessionId, web3ChecksConfig, metadataServiceDomain]);
+  }, [
+    calConfig,
+    dmk,
+    sessionId,
+    web3ChecksConfig,
+    metadataServiceDomain,
+    originToken,
+  ]);
 
   return (
     <SignerEthContext.Provider
@@ -104,6 +119,8 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
         setWeb3ChecksConfig,
         metadataServiceDomain,
         setMetadataServiceConfig,
+        originToken,
+        setOriginToken,
       }}
     >
       {children}
@@ -130,4 +147,9 @@ export const useMetadataServiceConfig = () => {
   const { metadataServiceDomain, setMetadataServiceConfig } =
     useContext(SignerEthContext);
   return { metadataServiceDomain, setMetadataServiceConfig };
+};
+
+export const useOriginToken = () => {
+  const { originToken, setOriginToken } = useContext(SignerEthContext);
+  return { originToken, setOriginToken };
 };

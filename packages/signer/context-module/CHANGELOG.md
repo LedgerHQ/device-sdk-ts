@@ -1,5 +1,18 @@
 # @ledgerhq/context-module
 
+## 1.9.0
+
+### Minor Changes
+
+- [#1079](https://github.com/LedgerHQ/device-sdk-ts/pull/1079) [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add Safe Address loader
+
+### Patch Changes
+
+- [#1072](https://github.com/LedgerHQ/device-sdk-ts/pull/1072) [`c8bb7a3`](https://github.com/LedgerHQ/device-sdk-ts/commit/c8bb7a39202206bffcd82190fa9e3074e9663dde) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix token loader for prefixed loaders
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+
 ## 1.8.1
 
 ### Patch Changes

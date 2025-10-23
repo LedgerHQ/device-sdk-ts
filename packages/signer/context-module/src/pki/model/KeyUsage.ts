@@ -11,4 +11,5 @@ export enum KeyUsage {
   TxSimulationSigner = "tx_simu_signer",
   Calldata = "calldata",
   Network = "network",
+  LESMultisig = "les_multisig",
 }

@@ -39,6 +39,30 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
   const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
     () => [
       {
+        title: "Verify safe address",
+        description:
+          "Perform all the actions necessary to verify a safe address on the device",
+        executeDeviceAction: ({
+          safeContractAddress,
+          chainId,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.verifySafeAddress(safeContractAddress, {
+            chainId: Number(chainId),
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          safeContractAddress: "",
+          chainId: 1,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      },
+      {
         title: "Get address",
         description:
           "Perform all the actions necessary to get an ethereum address from the device",

@@ -10,8 +10,10 @@ import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/Si
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
+import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { type TypedDataOptions } from "@api/model/TypedDataOptions";
@@ -21,6 +23,8 @@ import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUse
 import { makeContainer } from "@internal/di";
 import { messageTypes } from "@internal/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/message/use-case/SignMessageUseCase";
+import { safeTypes } from "@internal/safe/di/safeTypes";
+import { type VerifySafeAddressUseCase } from "@internal/safe/use-case/VerifySafeAddressUseCase";
 import { transactionTypes } from "@internal/transaction/di/transactionTypes";
 import { type SignTransactionUseCase } from "@internal/transaction/use-case/SignTransactionUseCase";
 import { typedDataTypes } from "@internal/typed-data/di/typedDataTypes";
@@ -79,6 +83,15 @@ export class DefaultSignerEth implements SignerEth {
     return this._container
       .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
       .execute(derivationPath, options);
+  }
+
+  verifySafeAddress(
+    safeContractAddress: string,
+    options?: SafeAddressOptions,
+  ): VerifySafeAddressDAReturnType {
+    return this._container
+      .get<VerifySafeAddressUseCase>(safeTypes.VerifySafeAddressUseCase)
+      .execute(safeContractAddress, options);
   }
 
   signDelegationAuthorization(
