@@ -1,6 +1,9 @@
 import { EitherAsync } from "purify-ts";
 
-import { InvalidStatusWordError } from "@api/command/Errors";
+import {
+  InvalidGetFirmwareMetadataResponseError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
@@ -229,7 +232,7 @@ describe("GetFirmwareMetadataTask", () => {
     );
   });
 
-  it("should fail if device version cannot be fetched", async () => {
+  it("should fail if device version cannot be fetched with InvalidGetFirmwareMetadataResponseError", async () => {
     // GIVEN
     apiMock.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({ data: OS_VERSION }),
@@ -246,14 +249,12 @@ describe("GetFirmwareMetadataTask", () => {
     // THEN
     expect(result).toStrictEqual(
       CommandResultFactory({
-        error: new InvalidStatusWordError(
-          "Cannot fetch current firmware metadata",
-        ),
+        error: new InvalidGetFirmwareMetadataResponseError(),
       }),
     );
   });
 
-  it("should fail if firmware version cannot be fetched", async () => {
+  it("should fail if firmware version cannot be fetched with InvalidGetFirmwareMetadataResponseError", async () => {
     // GIVEN
     apiMock.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({ data: OS_VERSION }),
@@ -270,9 +271,7 @@ describe("GetFirmwareMetadataTask", () => {
     // THEN
     expect(result).toStrictEqual(
       CommandResultFactory({
-        error: new InvalidStatusWordError(
-          "Cannot fetch current firmware metadata",
-        ),
+        error: new InvalidGetFirmwareMetadataResponseError(),
       }),
     );
   });
