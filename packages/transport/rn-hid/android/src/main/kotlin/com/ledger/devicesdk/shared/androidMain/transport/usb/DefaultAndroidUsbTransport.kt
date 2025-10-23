@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private val TAG = "DefaultAndroidUsbTransport"
@@ -196,6 +197,7 @@ internal class DefaultAndroidUsbTransport(
                             request = UsbRequest(),
                             loggerService = loggerService
                         )
+                        delay(POST_CONNECTION_DELAY)
 
                         if (!usbConnectionsPendingReconnection.contains(deviceConnection)) {
                             /**
@@ -330,6 +332,7 @@ internal class DefaultAndroidUsbTransport(
                     request = UsbRequest(),
                     loggerService = loggerService,
                 )
+            delay(POST_CONNECTION_DELAY)
 
             val deviceConnection = DeviceConnection(
                 sessionId = sessionId,
@@ -371,6 +374,8 @@ internal class DefaultAndroidUsbTransport(
 
     private fun generateSessionId(usbDevice: UsbDevice): String = "usb_${usbDevice.deviceId}"
 }
+
+private val POST_CONNECTION_DELAY = 200.milliseconds
 
 private fun List<LedgerUsbDevice>.toScannedDevices(): List<DiscoveryDevice> =
     this.map {
