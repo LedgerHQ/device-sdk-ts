@@ -93,7 +93,7 @@ describe("HttpTypedDataCheckDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpTypedDataCheckDataSource: Failed to fetch typed data check informations",
+            "[ContextModule] HttpTypedDataCheckDataSource: Failed to fetch typed data check information",
           ),
         ),
       );

@@ -69,7 +69,7 @@ describe("HttpTransactionCheckDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpTransactionCheckDataSource: Failed to fetch web3 checks informations",
+            "[ContextModule] HttpTransactionCheckDataSource: Failed to fetch web3 checks information",
           ),
         ),
       );
