@@ -123,11 +123,12 @@ export class ProvideEIP712ContextTask {
     }
 
     // Send proxy descriptor first if required
-    this.args.clearSignContext.ifJust(async (clearSignContext) => {
-      if (clearSignContext.proxy !== undefined) {
-        await this.provideContext(clearSignContext.proxy);
-      }
-    });
+    const proxyContext:
+      | ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>
+      | undefined = this.args.clearSignContext.extract()?.proxy;
+    if (proxyContext !== undefined) {
+      await this.provideContext(proxyContext);
+    }
 
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =
       CommandResultFactory<AllSuccessTypes, EthErrorCodes>({ data: undefined });
