@@ -4,6 +4,8 @@ import { inject, injectable } from "inversify";
 
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/pki/model/KeyId";
+import { KeyUsage } from "@/pki/model/KeyUsage";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import {
@@ -93,6 +95,13 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
       {} as Record<TypedDataFilterPath, TypedDataFilter>,
     );
 
+    // Try to fetch the certificate if available
+    const certificate = await this._certificateLoader.loadCertificate({
+      keyId: KeyId.Erc20MetadataKey,
+      keyUsage: KeyUsage.CoinMeta,
+      targetDevice: typedData.deviceModelId,
+    });
+
     return {
       type: "success",
       messageInfo,
@@ -100,6 +109,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
       trustedNamesAddresses: this.extractTrustedNames(filters, typedData),
       tokens: await this.extractTokens(filters, typedData),
       calldatas: this.extractCalldatas(filters, calldatasInfos, typedData),
+      certificate,
       proxy,
     };
   }
