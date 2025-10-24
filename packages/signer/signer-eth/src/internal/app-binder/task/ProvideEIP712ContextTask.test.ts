@@ -8,6 +8,7 @@ import {
   CommandResultFactory,
   DeviceModelId,
   hexaStringToBuffer,
+  LoadCertificateCommand,
   UnknownDeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
@@ -1010,6 +1011,93 @@ describe("ProvideEIP712ContextTask", () => {
         isFirstChunk: true,
       }),
     );
+  });
+
+  it("Send certificate from clearSignContext", async () => {
+    // GIVEN
+    const certificatePayload = new Uint8Array([0x01, 0x02, 0x03, 0x04, 0x05]);
+    const keyUsage = 2;
+    const clearSignContext: TypedDataClearSignContextSuccess = {
+      ...TEST_CLEAR_SIGN_CONTEXT,
+      certificate: {
+        keyUsageNumber: keyUsage,
+        payload: certificatePayload,
+      },
+    };
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just(clearSignContext),
+      calldatasContexts: {},
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { tokenIndex: 4 } }),
+    );
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    // Verify LoadCertificateCommand was called with correct parameters
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new LoadCertificateCommand({
+        keyUsage: keyUsage,
+        certificate: certificatePayload,
+      }),
+    );
+
+    // Verify the certificate was loaded before struct definitions (should be first call)
+    const calls = apiMock.sendCommand.mock.calls;
+    const certificateCallIndex = calls.findIndex(
+      (call) => call[0] instanceof LoadCertificateCommand,
+    );
+    expect(certificateCallIndex).toBeGreaterThanOrEqual(0);
+
+    // Verify it was called before struct definitions
+    const firstStructDefCallIndex = calls.findIndex(
+      (call) => call[0] instanceof SendEIP712StructDefinitionCommand,
+    );
+    expect(certificateCallIndex).toBeLessThan(firstStructDefCallIndex);
+  });
+
+  it("Do not send certificate when not provided in clearSignContext", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT), // No certificate in this context
+      calldatasContexts: {},
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { tokenIndex: 4 } }),
+    );
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    // Verify LoadCertificateCommand was not called
+    const calls = apiMock.sendCommand.mock.calls;
+    const certificateCallIndex = calls.findIndex(
+      (call) => call[0] instanceof LoadCertificateCommand,
+    );
+    expect(certificateCallIndex).toBe(-1);
   });
 
   it("Error when providing tokens", async () => {

@@ -121,7 +121,10 @@ export function ERC7730TesterDrawer() {
   const handleClearDescriptors = useCallback(() => {
     clearStoredDescriptors();
     setDescriptorCount(0);
-  }, [clearStoredDescriptors]);
+    if (isActive) {
+      stopInterception();
+    }
+  }, [clearStoredDescriptors, isActive, stopInterception]);
 
   return (
     <Block>

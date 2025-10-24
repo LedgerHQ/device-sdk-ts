@@ -7,9 +7,25 @@ from ecdsa.util import sigencode_der
 from flask import Flask, jsonify, request
 from pydantic import ValidationError
 
+
+from eip712.convert.input_to_resolved import EIP712InputToResolvedConverter
+from eip712.convert.resolved_to_instructions import (
+    EIP712ResolvedToInstructionsConverter,
+)
+from eip712.model.input.descriptor import InputEIP712DAppDescriptor
+from eip712.model.instruction import EIP712Instruction
+from eip712.model.types import EIP712Version
+from eip712.serialize import serialize_instruction
 from erc7730.convert.calldata.convert_erc7730_input_to_calldata import (
     erc7730_descriptor_to_calldata_descriptors,
 )
+from erc7730.convert.ledger.eip712.convert_erc7730_to_eip712 import (
+    ERC7730toEIP712Converter,
+)
+from erc7730.convert.resolved.convert_erc7730_input_to_resolved import (
+    ERC7730InputToResolved,
+)
+from erc7730.common.output import ListOutputAdder
 from erc7730.model.input.descriptor import InputERC7730Descriptor
 
 # Constants
@@ -115,10 +131,127 @@ def group_descriptors_by_chain_and_address(
 
     return grouped
 
+
+def process_contract_descriptor(input_descriptor: InputERC7730Descriptor) -> Dict[str, Any]:
+    """
+    Process a contract-type ERC7730 descriptor.
+    """
+    # Convert to calldata descriptors
+    calldata_descriptors = erc7730_descriptor_to_calldata_descriptors(input_descriptor)
+
+    # Check if conversion returned empty list
+    if not calldata_descriptors:
+        raise ValueError("No calldata descriptors generated. Please check the descriptor format.")
+
+    # Group descriptors by chain and address
+    grouped_descriptors = group_descriptors_by_chain_and_address(calldata_descriptors)
+
+    # Process each group and return them to client
+    processed_descriptors = {}
+    for (chain_id, address), descriptors in grouped_descriptors.items():
+        selectors = {
+            descriptor.selector: process_descriptor(descriptor)
+            for descriptor in descriptors
+        }
+
+        descriptor_data = [{
+            "descriptors_calldata": {address: selectors}
+        }]
+
+        # Use "chainId:address" format as key for client storage
+        key = f"{chain_id}:{address}"
+        processed_descriptors[key] = descriptor_data
+
+    return processed_descriptors
+
+
+def process_eip712_instruction(descriptor: EIP712Instruction) -> Dict[str, Any]:
+    """
+    Process a single instruction: convert to JSON, sign, and clean.
+    """
+    json_descriptor = descriptor.model_dump(mode="json")
+    serialized = serialize_instruction(descriptor, EIP712Version.V2)
+    signature = sign_payload(serialized)
+    json_descriptor["descriptor"] = serialized
+    json_descriptor["signatures"] = signature["signatures"]
+    return remove_null_values(json_descriptor)
+
+
+def convert_erc7730_to_eip712_descriptor(descriptor: InputEIP712DAppDescriptor) -> Dict[str, Dict[str, Any]]:
+    """
+    Convert ERC7730 descriptors to EIP712 descriptors.
+    Returns a dict keyed by "chain_id:address" strings.
+    """
+    resolved_descriptor = EIP712InputToResolvedConverter().convert(descriptor)
+    instructions = EIP712ResolvedToInstructionsConverter().convert(resolved_descriptor)
+
+    # instructions structure: {address: {schema_hash: [instruction_list]}}
+    result = {}
+    for (address, instruction_dict) in instructions.items():
+        # For each schema_hash, extract chain_id from instructions
+        for (schema_hash, instructions_list) in instruction_dict.items():
+            if not instructions_list:
+                continue
+
+            # Extract chain_id from first instruction (all instructions with same schema_hash have same chain_id)
+            first_instruction = instructions_list[0]
+            chain_id = first_instruction.chain_id
+
+            key = f"{chain_id}:{address}"
+            result[key] = {
+                address: {
+                    schema_hash: {
+                        "instructions": [
+                            process_eip712_instruction(instruction)
+                            for instruction in instructions_list
+                        ]
+                    }
+                }
+            }
+
+    return result
+
+
+def process_eip712_descriptor(input_descriptor: InputERC7730Descriptor) -> Dict[str, Any]:
+    """
+    Process an EIP712-type ERC7730 descriptor.
+    Converts ERC7730 input to resolved format, then to EIP712 descriptors.
+    """
+    output = ListOutputAdder()
+
+    # Convert input descriptor to resolved format
+    resolved_descriptor = ERC7730InputToResolved().convert(input_descriptor, output)
+
+    if resolved_descriptor is None:
+        raise ValueError(f"Failed to resolve ERC7730 descriptor: {output}")
+
+    # Convert resolved descriptor to EIP712 format
+    eip712_descriptors = ERC7730toEIP712Converter().convert(resolved_descriptor, output)
+
+    if eip712_descriptors is None:
+        raise ValueError(f"Failed to convert ERC7730 descriptor to EIP712: {output}")
+
+    if not eip712_descriptors:
+        raise ValueError("No eip712 descriptors generated. Please check the descriptor format.")
+
+    # Process all EIP712 descriptors and organize by chain_id:address
+    processed_descriptors = {}
+
+    for descriptor_in in eip712_descriptors.values():
+        generated_by_chain_address = convert_erc7730_to_eip712_descriptor(descriptor_in)
+        for key, generated_data in generated_by_chain_address.items():
+            processed_descriptors[key] = [{
+                "descriptors_eip712": generated_data
+            }]
+
+    return processed_descriptors
+
+
 @app.route("/api/process-erc7730-descriptor", methods=["POST"])
 def process_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
     """
-    Process an ERC7730 descriptor and return the processed data for client storage
+    Process an ERC7730 descriptor and return the processed data for client storage.
+    Supports both contract and EIP712 descriptor types.
     """
     try:
         request_data = request.get_json()
@@ -131,31 +264,20 @@ def process_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
             strict=False
         )
 
-        # Convert to calldata descriptors
-        calldata_descriptors = erc7730_descriptor_to_calldata_descriptors(input_descriptor)
+        # Determine descriptor type from context
+        context = input_descriptor.context
+        if not context:
+            return {"error": "Missing context in descriptor"}, 400
 
-        # Check if conversion returned empty list
-        if not calldata_descriptors:
-            return {"error": "Failed to convert ERC7730 descriptor: no calldata descriptors generated. Please check the descriptor format."}, 400
-
-        # Group descriptors by chain and address
-        grouped_descriptors = group_descriptors_by_chain_and_address(calldata_descriptors)
-
-        # Process each group and return them to client
-        processed_descriptors = {}
-        for (chain_id, address), descriptors in grouped_descriptors.items():
-            selectors = {
-                descriptor.selector: process_descriptor(descriptor)
-                for descriptor in descriptors
-            }
-
-            descriptor_data = [{
-                "descriptors_calldata": {address: selectors}
-            }]
-
-            # Use "chainId:address" format as key for client storage
-            key = f"{chain_id}:{address}"
-            processed_descriptors[key] = descriptor_data
+        # Dispatch to appropriate processor based on type
+        if hasattr(context, 'contract') and context.contract is not None:
+            # Contract-type descriptor
+            processed_descriptors = process_contract_descriptor(input_descriptor)
+        elif hasattr(context, 'eip712') and context.eip712 is not None:
+            # EIP712-type descriptor
+            processed_descriptors = process_eip712_descriptor(input_descriptor)
+        else:
+            return {"error": "Unknown descriptor type: context must contain either 'contract' or 'eip712'"}, 400
 
         return {
             "message": "ERC7730 descriptor processed successfully",
@@ -164,6 +286,8 @@ def process_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
 
     except ValidationError as e:
         return {"error": f"Invalid descriptor format: {str(e)}"}, 400
+    except ValueError as e:
+        return {"error": str(e)}, 400
     except Exception as e:
         return {"error": f"Failed to process descriptor: {str(e)}"}, 500
 

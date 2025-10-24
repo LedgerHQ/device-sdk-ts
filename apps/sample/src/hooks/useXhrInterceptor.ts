@@ -1,16 +1,13 @@
 import { useEffect, useRef } from "react";
 
-type UrlPredicate = (url: string) => boolean;
 type GetJsonResponse = (url: string) => string | null;
 
 // Allows to intercept network calls and modify their response
 export function useXhrInterceptor(
-  urlPredicate: UrlPredicate,
   getJsonResponse: GetJsonResponse,
   enabled: boolean,
 ) {
   const getJsonResponseRef = useRef(getJsonResponse);
-  const urlPredicateRef = useRef(urlPredicate);
   const originalOpenRef = useRef<typeof XMLHttpRequest.prototype.open | null>(
     null,
   );
@@ -30,10 +27,6 @@ export function useXhrInterceptor(
   useEffect(() => {
     getJsonResponseRef.current = getJsonResponse;
   }, [getJsonResponse]);
-
-  useEffect(() => {
-    urlPredicateRef.current = urlPredicate;
-  }, [urlPredicate]);
 
   useEffect(() => {
     // When disabled, restore to original XHR instance
@@ -69,8 +62,8 @@ export function useXhrInterceptor(
       this: XMLHttpRequest & { _url?: string },
       body?: Document | XMLHttpRequestBodyInit | null,
     ) {
-      if (this._url && urlPredicateRef.current(this._url)) {
-        // Modify the response for intercepted request
+      if (this._url) {
+        // Try to get modified response (returns null if not intercepted)
         const response = getJsonResponseRef.current(this._url);
         if (response) {
           // Simulate async response

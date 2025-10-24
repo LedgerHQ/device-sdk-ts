@@ -70,10 +70,32 @@ export const CalInterceptorProvider: React.FC<{
         const descriptors = getStoredDescriptors();
         const key = `${chainId}:${address.toLowerCase()}`;
 
-        descriptors[key] = descriptorData;
+        // Expect descriptorData to be an array with one element
+        if (Array.isArray(descriptorData) && descriptorData.length > 0) {
+          const newDescriptor = descriptorData[0];
+          const existing = descriptors[key];
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(descriptors));
-        console.log(`Stored descriptor for ${chainId}:${address}`);
+          // If there's existing data, merge the descriptor objects
+          if (existing && Array.isArray(existing) && existing.length > 0) {
+            const existingDescriptor = existing[0];
+            // Merge the two descriptor objects (e.g., descriptors_calldata + descriptors_eip712)
+            descriptors[key] = [
+              {
+                ...existingDescriptor,
+                ...newDescriptor,
+              },
+            ];
+            console.log(`Merged descriptors for ${chainId}:${address}`);
+          } else {
+            // No existing data, store as-is
+            descriptors[key] = descriptorData;
+            console.log(`Stored new descriptors for ${chainId}:${address}`);
+          }
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(descriptors));
+        } else {
+          console.error("Empty descriptor data, nothing to store");
+        }
       } catch (error) {
         console.error("Failed to store descriptor:", error);
       }
@@ -125,86 +147,80 @@ export const CalInterceptorProvider: React.FC<{
   }, [getStoredDescriptors]);
 
   // Network calls interceptor
-  const calUrlPredicate = useCallback((url: string) => {
-    try {
-      const parsedUrl = new URL(url, window.location.origin);
-      return (
-        parsedUrl.origin.includes("crypto-assets-service") &&
-        parsedUrl.pathname.includes("/dapps") &&
-        parsedUrl.searchParams.get("output") === "descriptors_calldata"
-      );
-    } catch {
-      return false;
-    }
-  }, []);
-
   const modifyCalResponse = useCallback(
     (url: string) => {
       try {
         const parsedUrl = new URL(url, window.location.origin);
-        const chainId = parsedUrl.searchParams.get("chain_id");
-        const address = parsedUrl.searchParams.get("contract_address");
-        if (chainId && address) {
-          const descriptors = getStoredDescriptors();
-          const key = `${chainId}:${address.toLowerCase()}`;
-          console.log(`Intercepted dapps request for ${key}`);
-          return JSON.stringify(descriptors[key]) || null;
+
+        // Check if it's a CAL request
+        if (!parsedUrl.origin.includes("crypto-assets-service")) {
+          return null;
+        }
+
+        // Handle dapps requests (descriptors_calldata / descriptors_eip712)
+        if (parsedUrl.pathname.includes("/dapps")) {
+          const output = parsedUrl.searchParams.get("output");
+          if (
+            output === "descriptors_calldata" ||
+            output === "descriptors_eip712"
+          ) {
+            const chainId = parsedUrl.searchParams.get("chain_id");
+            // Get address from contract_address or contracts parameter
+            let address = parsedUrl.searchParams.get("contract_address");
+            if (!address) {
+              address = parsedUrl.searchParams.get("contracts");
+            }
+
+            if (chainId && address) {
+              const descriptors = getStoredDescriptors();
+              const key = `${chainId}:${address.toLowerCase()}`;
+              const storedData = descriptors[key];
+
+              if (
+                storedData &&
+                Array.isArray(storedData) &&
+                storedData.length > 0
+              ) {
+                const descriptorObj = storedData[0];
+                if (descriptorObj && output in descriptorObj) {
+                  console.log(
+                    `Intercepted dapps request for ${key} (${output})`,
+                  );
+                  return JSON.stringify([{ [output]: descriptorObj[output] }]);
+                }
+              }
+            }
+          }
+        }
+
+        // Handle certificates requests
+        if (
+          parsedUrl.pathname.includes("/certificates") &&
+          parsedUrl.searchParams.get("output") === "descriptor"
+        ) {
+          const targetDevice = parsedUrl.searchParams.get("target_device");
+          const publicKeyUsage = parsedUrl.searchParams.get("public_key_usage");
+          const publicKeyId = parsedUrl.searchParams.get("public_key_id");
+
+          if (targetDevice && publicKeyUsage && publicKeyId) {
+            const certificates = getStoredCertificates();
+            const key = `${targetDevice}:${publicKeyId}:${publicKeyUsage}`;
+            const certificate = certificates[key];
+            if (certificate) {
+              console.log(`Intercepted certificate request for ${key}`);
+              return JSON.stringify(certificate);
+            }
+          }
         }
       } catch (error) {
         console.error("Failed to parse URL params:", error);
       }
       return null;
     },
-    [getStoredDescriptors],
+    [getStoredDescriptors, getStoredCertificates],
   );
 
-  // Certificates interceptor
-  const certificatesUrlPredicate = useCallback((url: string) => {
-    try {
-      const parsedUrl = new URL(url, window.location.origin);
-      return (
-        parsedUrl.origin.includes("crypto-assets-service") &&
-        parsedUrl.pathname.includes("/certificates") &&
-        parsedUrl.searchParams.get("output") === "descriptor"
-      );
-    } catch {
-      return false;
-    }
-  }, []);
-
-  const modifyCertificatesResponse = useCallback(
-    (url: string) => {
-      try {
-        const parsedUrl = new URL(url, window.location.origin);
-        const targetDevice = parsedUrl.searchParams.get("target_device");
-        const publicKeyUsage = parsedUrl.searchParams.get("public_key_usage");
-        const publicKeyId = parsedUrl.searchParams.get("public_key_id");
-
-        if (targetDevice && publicKeyUsage && publicKeyId) {
-          const certificates = getStoredCertificates();
-
-          // Build the certificate key: target_device:public_key_id:public_key_usage
-          const key = `${targetDevice}:${publicKeyId}:${publicKeyUsage}`;
-          const certificate = certificates[key];
-          if (certificate) {
-            console.log(`Intercepted certificate request for ${key}`);
-            return JSON.stringify(certificate);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to parse certificate URL params:", error);
-      }
-      return null;
-    },
-    [getStoredCertificates],
-  );
-
-  useXhrInterceptor(calUrlPredicate, modifyCalResponse, isActive);
-  useXhrInterceptor(
-    certificatesUrlPredicate,
-    modifyCertificatesResponse,
-    isActive,
-  );
+  useXhrInterceptor(modifyCalResponse, isActive);
 
   const contextValue: CalInterceptorContextType = {
     isActive,
