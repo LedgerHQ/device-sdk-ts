@@ -9,7 +9,6 @@ import {
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
-import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -39,7 +38,6 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
 
 export class ContextModuleBuilder {
   private config: ContextModuleConfig = DEFAULT_CONFIG;
-  private needOriginToken: boolean = true;
   private originToken?: string;
 
   constructor({ originToken }: ContextModuleConstructorArgs = {}) {
@@ -75,18 +73,6 @@ export class ContextModuleBuilder {
    */
   addTypedDataLoader(loader: TypedDataContextLoader) {
     this.config.customTypedDataLoader = loader;
-    return this;
-  }
-
-  /**
-   * Replace the default loader for web3 checks
-   *
-   * @param loader loader to use for web3 checks
-   * @returns this
-   */
-  addWeb3CheckLoader(loader: Web3CheckContextLoader) {
-    this.needOriginToken = false;
-    this.config.customWeb3CheckLoader = loader;
     return this;
   }
 
@@ -153,10 +139,6 @@ export class ContextModuleBuilder {
    * @returns the context module
    */
   build(): ContextModule {
-    if (this.needOriginToken && !this.originToken) {
-      throw new Error("Origin token is required");
-    }
-
     const config = { ...this.config, originToken: this.originToken };
     return new DefaultContextModule(config);
   }

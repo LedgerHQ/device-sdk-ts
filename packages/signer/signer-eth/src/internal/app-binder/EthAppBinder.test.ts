@@ -49,12 +49,10 @@ describe("EthAppBinder", () => {
     sendCommand: vi.fn(),
     executeDeviceAction: vi.fn(),
   } as unknown as DeviceManagementKit;
-  const mockedContextModule: ContextModule = {
+  const mockedContextModule = {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
-    getWeb3Checks: vi.fn(),
-    getSolanaContext: vi.fn(),
   };
   const mockedMapper: TransactionMapperService = {
     mapTransactionToSubset: vi.fn(),
@@ -92,7 +90,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
@@ -152,7 +150,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
@@ -184,7 +182,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
@@ -241,7 +239,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
@@ -313,7 +311,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
@@ -382,7 +380,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
@@ -453,7 +451,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
@@ -531,7 +529,7 @@ describe("EthAppBinder", () => {
         // WHEN
         const appBinder = new EthAppBinder(
           mockedDmk,
-          mockedContextModule,
+          mockedContextModule as unknown as ContextModule,
           mockedMapper,
           mockedParser,
           "sessionId",
