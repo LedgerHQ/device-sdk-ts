@@ -1,4 +1,9 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  addERC7730Descriptor,
+  ERC7730Client,
+  fetchAndStoreCertificates,
+} from "@ledgerhq/cal-interceptor";
 import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
@@ -10,10 +15,9 @@ export function ERC7730TesterDrawer() {
     isActive,
     startInterception,
     stopInterception,
-    storeDescriptor,
-    storeCertificates,
     clearStoredDescriptors,
     getStoredDescriptorCount,
+    interceptor,
   } = useCalInterceptor();
   const { calConfig, setCalConfig } = useCalConfig();
 
@@ -21,6 +25,9 @@ export function ERC7730TesterDrawer() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [descriptorCount, setDescriptorCount] = useState<number>(0);
+
+  // Create ERC7730 client
+  const client = useMemo(() => new ERC7730Client(), []);
 
   useEffect(() => {
     setDescriptorCount(getStoredDescriptorCount());
@@ -37,7 +44,7 @@ export function ERC7730TesterDrawer() {
   }, [isActive, calConfig, setCalConfig]);
 
   const addERC7730 = useCallback(async () => {
-    if (!erc7730Input.trim()) {
+    if (!erc7730Input.trim() || !interceptor) {
       setError("Please enter ERC7730 descriptor");
       return;
     }
@@ -46,81 +53,43 @@ export function ERC7730TesterDrawer() {
     setError(null);
 
     try {
-      const response = await fetch("/api/process-erc7730-descriptor", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: erc7730Input.trim(),
+      // Use the helper function to process and store descriptor
+      await addERC7730Descriptor({
+        descriptor: erc7730Input.trim(),
+        interceptor,
+        client,
+        autoStart: true,
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        setError(`HTTP ${response.status}: ${errorText}`);
-        setIsLoading(false);
-        return;
-      }
-
-      // Get the processed descriptors from the server
-      const result = await response.json();
-      const { descriptors } = result;
-
-      // Store each descriptor in localStorage via provider
-      Object.entries(descriptors).forEach(([key, descriptorData]) => {
-        const [chainId, address] = key.split(":");
-        storeDescriptor(parseInt(chainId), address, descriptorData);
-      });
-
-      // Update descriptor count
+      // Update UI state
       setDescriptorCount(getStoredDescriptorCount());
       setError(null);
-      setIsLoading(false);
       setERC7730Input("");
-
-      // Activate interceptor if not already active
-      if (!isActive) {
-        startInterception();
-      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       setError(`Failed to add ERC7730 descriptor: ${errorMessage}`);
+    } finally {
       setIsLoading(false);
     }
-  }, [
-    erc7730Input,
-    storeDescriptor,
-    getStoredDescriptorCount,
-    isActive,
-    startInterception,
-  ]);
+  }, [erc7730Input, interceptor, client, getStoredDescriptorCount]);
 
   // Fetch and store certificates when interceptor becomes active
   useEffect(() => {
-    if (isActive) {
-      const fetchCertificates = async () => {
+    if (isActive && interceptor) {
+      const loadCertificates = async () => {
         try {
           console.log("Fetching CAL certificates...");
-          const response = await fetch("/api/certificates");
-
-          if (!response.ok) {
-            console.error(
-              `Failed to fetch certificates: HTTP ${response.status}`,
-            );
-            return;
-          }
-
-          const certificates = await response.json();
-          storeCertificates(certificates);
+          await fetchAndStoreCertificates(interceptor, client);
           console.log("Certificates fetched and stored successfully");
         } catch (error) {
           console.error("Failed to fetch certificates:", error);
         }
       };
 
-      fetchCertificates();
+      loadCertificates();
     }
-  }, [isActive, storeCertificates]);
+  }, [isActive, interceptor, client]);
 
   const toggleInterceptor = useCallback(() => {
     if (isActive) {
