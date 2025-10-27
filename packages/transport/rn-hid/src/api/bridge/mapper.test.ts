@@ -1,5 +1,6 @@
 import {
   ApduResponse,
+  DeviceDisconnectedBeforeSendingApdu,
   DeviceModelId,
   LogLevel,
   type LogParams,
@@ -359,6 +360,45 @@ describe("mapper", () => {
       };
       const expectedSendApduResult: SendApduResult = Left(
         new SendApduEmptyResponseError("Empty response"),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
+    test("device not found error", () => {
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: false,
+        error: "DeviceNotFound",
+      };
+      const expectedSendApduResult: SendApduResult = Left(
+        new DeviceDisconnectedBeforeSendingApdu(),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
+    test("no usb endpoint found error", () => {
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: false,
+        error: "NoUsbEndpointFound",
+      };
+      const expectedSendApduResult: SendApduResult = Left(
+        new DeviceDisconnectedBeforeSendingApdu(),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
+    test("unknown error", () => {
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: false,
+        error: "unknown error",
+      };
+      const expectedSendApduResult: SendApduResult = Left(
+        new HidTransportSendApduUnknownError("unknown error"),
       );
       expect(
         mapNativeSendApduResultToSendApduResult(nativeSendApduResult),

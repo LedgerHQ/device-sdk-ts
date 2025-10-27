@@ -43,7 +43,10 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+
+private val TAG = "DefaultAndroidUsbTransport"
 
 internal class DefaultAndroidUsbTransport(
     private val application: Application,
@@ -67,22 +70,16 @@ internal class DefaultAndroidUsbTransport(
     private var discoveryJob: Job? = null
 
     override fun startScan(): Flow<List<DiscoveryDevice>> {
+        loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] called"))
         val scanStateFlow = MutableStateFlow<List<DiscoveryDevice>>(emptyList())
         discoveryJob?.cancel()
         discoveryJob =
             scope.launch {
                 while (isActive) {
-                    val usbDevices = usbManager.deviceList.values.toList()
-                    val devices =
-                        usbDevices
-                            .filter { device ->
-                                usbConnections.filter {
-                                    device == it.value.getApduSender().dependencies.usbDevice
-                                }.isEmpty()
-                            }.toUsbDevices()
-
-                    scanStateFlow.value = devices.toScannedDevices()
-
+                    loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] isActive loop"))
+                    val usbDevices = usbManager.deviceList.values.toList().toUsbDevices()
+                    scanStateFlow.value = usbDevices.toScannedDevices()
+                    loggerService.log(buildSimpleDebugLogInfo(TAG, "[startScan] scannedDevices=${scanStateFlow.value}"))
                     delay(scanDelay)
                 }
             }
@@ -90,6 +87,7 @@ internal class DefaultAndroidUsbTransport(
     }
 
     override fun stopScan() {
+        loggerService.log(buildSimpleDebugLogInfo(TAG, "[stopScan] called"))
         discoveryJob?.cancel()
         discoveryJob = null
     }
@@ -199,6 +197,7 @@ internal class DefaultAndroidUsbTransport(
                             request = UsbRequest(),
                             loggerService = loggerService
                         )
+                        delay(POST_CONNECTION_DELAY)
 
                         if (!usbConnectionsPendingReconnection.contains(deviceConnection)) {
                             /**
@@ -294,6 +293,27 @@ internal class DefaultAndroidUsbTransport(
         return if (usbDevice == null || ledgerUsbDevice == null) {
             InternalConnectionResult.ConnectionError(error = InternalConnectionResult.Failure.DeviceNotFound)
         } else {
+
+            val existingConnection = usbConnections.firstNotNullOfOrNull {
+                if (it.value.getApduSender().dependencies.usbDevice == usbDevice) it.value
+                else if (it.key == generateSessionId(usbDevice)) it.value
+                else null
+            }
+
+            if (existingConnection != null) {
+                val connectedDevice =
+                    InternalConnectedDevice(
+                        existingConnection.sessionId,
+                        discoveryDevice.name,
+                        discoveryDevice.ledgerDevice,
+                        discoveryDevice.connectivityType,
+                        sendApduFn = { apdu: ByteArray, triggersDisconnection: Boolean, abortTimeoutDuration: Duration ->
+                            existingConnection.requestSendApdu(apdu, triggersDisconnection, abortTimeoutDuration)
+                        }
+                    )
+                return InternalConnectionResult.Connected(device = connectedDevice, sessionId = existingConnection.sessionId)
+            }
+
             val permissionResult = checkOrRequestPermission(usbDevice)
             if (permissionResult is PermissionResult.Denied) {
                 return permissionResult.connectionError
@@ -312,6 +332,7 @@ internal class DefaultAndroidUsbTransport(
                     request = UsbRequest(),
                     loggerService = loggerService,
                 )
+            delay(POST_CONNECTION_DELAY)
 
             val deviceConnection = DeviceConnection(
                 sessionId = sessionId,
@@ -353,6 +374,8 @@ internal class DefaultAndroidUsbTransport(
 
     private fun generateSessionId(usbDevice: UsbDevice): String = "usb_${usbDevice.deviceId}"
 }
+
+private val POST_CONNECTION_DELAY = 200.milliseconds
 
 private fun List<LedgerUsbDevice>.toScannedDevices(): List<DiscoveryDevice> =
     this.map {
