@@ -1,4 +1,4 @@
-import { DevToolsLog, LogData } from "./types";
+import type { DevToolsLog, LogData } from "./types";
 
 export function mapConnectorMessageToLogData(connectorMessage: {
   type: string;
@@ -8,7 +8,7 @@ export function mapConnectorMessageToLogData(connectorMessage: {
     return null;
   }
   const { timestamp, tag, verbosity, message, payloadJSON } = JSON.parse(
-    connectorMessage.payload
+    connectorMessage.payload,
   ) as DevToolsLog;
   return {
     timestamp,
@@ -16,6 +16,7 @@ export function mapConnectorMessageToLogData(connectorMessage: {
     verbosity,
     message,
     payloadJSON,
-    payload: JSON.parse(payloadJSON),
+    // TODO: fix this type
+    payload: JSON.parse(payloadJSON) as string | Record<string, unknown>,
   };
 }

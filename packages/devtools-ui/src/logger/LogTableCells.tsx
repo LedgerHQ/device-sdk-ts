@@ -1,17 +1,13 @@
-import { styled } from "styled-components";
 import React from "react";
 import { Inspector } from "react-inspector";
-import { LoggerOptions } from "./LoggerOptions";
-import { LogData } from "./types";
+import styled from "styled-components";
 
-type Props = {
-  log: LogData;
-} & Pick<LoggerOptions, "showTimestamp" | "showTag">;
+import { type LogData } from "./types";
 
 type Verbosity = LogData["verbosity"];
 
 const mapVerbosityToTextProps = (
-  verbosity: LogData["verbosity"]
+  verbosity: LogData["verbosity"],
 ): {
   color: string;
 } => {
@@ -36,15 +32,17 @@ const mapVerbosityToTextProps = (
   }
 };
 
-export const LogText = styled.p<{ verbosity: Verbosity }>(({ verbosity }) => {
-  return mapVerbosityToTextProps(verbosity);
-});
+export const LogText = styled.p<{ verbosity: Verbosity }>(
+  ({ verbosity }: { verbosity: Verbosity }) => {
+    return mapVerbosityToTextProps(verbosity);
+  },
+);
 
 export const TimestampCell: React.FC<LogData> = ({ timestamp, verbosity }) => {
   return (
     <div>
       <LogText style={{ fontSize: 10, paddingBottom: 2 }} verbosity={verbosity}>
-        {timestamp.split("T")[1].split("Z")[0]}
+        {timestamp?.split("T")[1]?.split("Z")[0] || ""}
       </LogText>
     </div>
   );

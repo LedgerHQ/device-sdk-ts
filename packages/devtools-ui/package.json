@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-management-kit-devtools-core",
+  "name": "@ledgerhq/device-management-kit-devtools-ui",
   "private": true,
   "version": "1.0.0",
   "license": "Apache-2.0",
@@ -22,9 +22,9 @@
   ],
   "scripts": {
     "prebuild": "rimraf lib",
-    "build": "pnpm ldmk-tool build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "build": "pnpm ldmk-tool build --entryPoints index.ts,src/*.tsx,src/*.ts,src/**/*.tsx,src/**/*.ts --tsconfig tsconfig.build.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm ldmk-tool watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints index.ts,src/*.tsx,src/*.ts,src/**/*.tsx,src/**/*.ts --tsconfig tsconfig.build.json",
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
@@ -35,16 +35,32 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": {},
+  "dependencies": {
+    "rxjs": "catalog:",
+    "@ledgerhq/react-ui": "catalog:",
+    "styled-components": "catalog:",
+    "antd": "5.20.0",
+    "react-inspector": "6.0.2",
+    "@tanstack/react-table": "8.20.5",
+    "@tanstack/react-virtual": "3.10.8"
+  },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:*",
     "@ledgerhq/ldmk-tool": "workspace:*",
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*"
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/styled-components": "catalog:",
+    "@types/styled-system": "^5.1.15",
+    "react": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:*",
+    "react": "catalog:"
   }
 }

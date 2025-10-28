@@ -1,8 +1,9 @@
-import { Divider, Flex } from "@ledgerhq/react-ui";
 import React, { useCallback, useMemo } from "react";
+import { Divider, Flex } from "@ledgerhq/react-ui";
+
 import { LoggerToolbar } from "./LoggerToolbar";
 import { ScrollableLogTable } from "./ScrollableLogTable";
-import { LogData } from "./types";
+import { type LogData } from "./types";
 import { useLogsDataAndOptions } from "./useLogsDataAndOptions";
 
 type Props = {

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Message } from "../shared/PluginEvents";
+
+import { type Message } from "./PluginEvents";
 
 interface DebugDevToolsMessageProps {
   sentMessages: Message[];

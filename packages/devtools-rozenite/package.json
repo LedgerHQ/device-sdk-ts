@@ -13,12 +13,7 @@
   "dependencies": {
     "@rozenite/plugin-bridge": "1.0.0-alpha.3",
     "rxjs": "catalog:",
-    "@ledgerhq/react-ui": "catalog:",
-    "styled-components": "6.1.13",
-    "antd": "5.20.0",
-    "react-inspector": "6.0.2",
-    "@tanstack/react-table": "8.20.5",
-    "@tanstack/react-virtual": "3.10.8"
+    "@ledgerhq/device-management-kit-devtools-ui": "workspace:*"
   },
   "devDependencies": {
     "vite": "^6.0.0",

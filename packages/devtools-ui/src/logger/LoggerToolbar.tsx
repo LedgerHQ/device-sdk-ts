@@ -1,7 +1,8 @@
 import React from "react";
-import styled from "styled-components";
 import { Flex, Icons, Tooltip } from "@ledgerhq/react-ui";
-import { LoggerOptions, LoggerOptionsView } from "./LoggerOptions";
+import styled from "styled-components";
+
+import { type LoggerOptions, LoggerOptionsView } from "./LoggerOptions";
 
 const ButtonContainer = styled.div`
   opacity: 0.65;

@@ -1,16 +1,16 @@
 // ScrollableLogTable.tsx
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Flex, Icons } from "@ledgerhq/react-ui";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  Row,
+  type Row,
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Flex, Icons } from "@ledgerhq/react-ui";
-import { useResizeObserver } from "./useResizeObserver";
+
 import {
   MessageCell,
   PayloadCell,
@@ -18,7 +18,8 @@ import {
   TimestampCell,
   VerbosityCel,
 } from "./LogTableCells";
-import { LogData } from "./types";
+import { type LogData } from "./types";
+import { useResizeObserver } from "./useResizeObserver";
 
 const ScrollDownButton = ({ onClick }: { onClick: () => void }) => (
   <Flex
@@ -63,10 +64,10 @@ const useScrollLogic = ({ data }: { data: unknown[] }) => {
     (_: HTMLDivElement, entry: ResizeObserverEntry) => {
       setScrollZoneHeight(entry.contentRect.height);
     },
-    []
+    [],
   );
   const scrollZoneRef = useResizeObserver<HTMLDivElement>(
-    updateScrollZoneHeight
+    updateScrollZoneHeight,
   );
 
   const onScroll = useCallback(() => {
@@ -181,7 +182,11 @@ export const ScrollableLogTable: React.FC<ScrollableLogTableProps> = ({
       colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
     }
     return colSizes;
-  }, [table.getState().columnSizingInfo, table.getState().columnSizing]);
+  }, [
+    table.getState().columnSizingInfo,
+    table.getFlatHeaders(),
+    table.getState().columnSizing,
+  ]);
 
   return (
     <Flex
@@ -242,7 +247,7 @@ export const ScrollableLogTable: React.FC<ScrollableLogTableProps> = ({
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                           {{
                             asc: " 🔼",
@@ -303,7 +308,7 @@ export const ScrollableLogTable: React.FC<ScrollableLogTableProps> = ({
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </td>
                       );

@@ -1,8 +1,9 @@
 import React from "react";
-import { LogData } from "./types";
-import { styled } from "styled-components";
-import { Typography } from "antd";
 import { Flex } from "@ledgerhq/react-ui";
+import { Typography } from "antd";
+import styled from "styled-components";
+
+import { type LogData } from "./types";
 
 export type LoggerOptions = {
   activeLevels: Record<LogData["verbosity"], boolean>;
@@ -76,7 +77,7 @@ export const LoggerOptionsView: React.FC<LoggerProps> = ({
                   Object.keys(options.activeLevels).map((level) => [
                     level,
                     e.target.checked,
-                  ])
+                  ]),
                 );
                 // setOptions({ ...options, activeLevels: newActiveLevels });
                 setOptions({

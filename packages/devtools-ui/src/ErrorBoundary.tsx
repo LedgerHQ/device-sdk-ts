@@ -18,7 +18,7 @@ export class ErrorBoundary extends React.Component<
     this.state = { hasError: false };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
+  override componentDidCatch(error: Error, _info: React.ErrorInfo) {
     this.setState({ hasError: true, error: error });
   }
 
@@ -26,7 +26,7 @@ export class ErrorBoundary extends React.Component<
     this.setState({ hasError: false });
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       console.log("rendering error boundary", this.state.error);
       // You can render any custom fallback UI

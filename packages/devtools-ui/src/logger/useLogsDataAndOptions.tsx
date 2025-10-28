@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
+
 import { defaultLoggerOptions, type LoggerOptions } from "./LoggerOptions";
-import { LogData } from "./types";
+import { type LogData } from "./types";
 
 const maxDisplayedLogs = Number.POSITIVE_INFINITY;
 

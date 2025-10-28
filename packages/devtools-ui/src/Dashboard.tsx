@@ -1,19 +1,20 @@
 // TODO: move this in independent package
 
 import React, { useEffect, useState } from "react";
-import { Connector } from "@ledgerhq/device-management-kit-devtools-core";
-import { Message } from "../shared/PluginEvents";
-import { DebugDevToolsMessage } from "./DebugDevToolsMessage";
-import { Logger } from "./logger/Logger";
-import { LogData } from "./logger/types";
-import { mapConnectorMessageToLogData } from "./logger/mapMessageToFlipperObjLog";
+import { type Connector } from "@ledgerhq/device-management-kit-devtools-core";
 import { Flex } from "@ledgerhq/react-ui/components/layout/index";
-import { ErrorBoundary } from "./ErrorBoundary";
 import { StyleProvider } from "@ledgerhq/react-ui/styles/index";
 
+import { Logger } from "./logger/Logger";
+import { mapConnectorMessageToLogData } from "./logger/mapConnectorMessageToLogData";
+import { type LogData } from "./logger/types";
+import { DebugDevToolsMessage } from "./DebugDevToolsMessage";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { type Message } from "./PluginEvents";
+
 enum DashboardView {
-  DebugDevToolsMessage = "debug-dev-tools-message",
-  Logger = "logger",
+  DebugDevToolsMessage,
+  Logger,
 }
 
 const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
@@ -37,7 +38,7 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   };
 
   const [currentView, setCurrentView] = useState<DashboardView>(
-    DashboardView.DebugDevToolsMessage
+    DashboardView.DebugDevToolsMessage,
   );
 
   const clearLogs = () => {
@@ -70,7 +71,7 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   );
 };
 
-export default function DashboardWithErrorBoundary({
+export function DashboardWithErrorBoundary({
   connector,
 }: {
   connector: Connector;
