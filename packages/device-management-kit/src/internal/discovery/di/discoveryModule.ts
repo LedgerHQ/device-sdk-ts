@@ -6,6 +6,7 @@ import { GetConnectedDeviceUseCase } from "@internal/discovery/use-case/GetConne
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
 import { ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
 import { ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
+import { ReconnectUseCase } from "@internal/discovery/use-case/ReconnectUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { StubUseCase } from "@root/src/di.stub";
@@ -20,6 +21,7 @@ export const discoveryModuleFactory = ({ stub = false }: FactoryProps) =>
   new ContainerModule(({ bind, rebindSync }) => {
     bind(discoveryTypes.ConnectUseCase).to(ConnectUseCase);
     bind(discoveryTypes.DisconnectUseCase).to(DisconnectUseCase);
+    bind(discoveryTypes.ReconnectUseCase).to(ReconnectUseCase);
     bind(discoveryTypes.StartDiscoveringUseCase).to(StartDiscoveringUseCase);
     bind(discoveryTypes.StopDiscoveringUseCase).to(StopDiscoveringUseCase);
     bind(discoveryTypes.GetConnectedDeviceUseCase).to(

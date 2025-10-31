@@ -3,6 +3,7 @@ import { EitherAsync } from "purify-ts";
 
 import { DeviceSessionId } from "@api/device-session/types";
 import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { TransportNotSupportedError } from "@api/transport/model/Errors";
 import { DeviceId } from "@api/types";
@@ -25,9 +26,9 @@ import { type TransportService } from "@internal/transport/service/TransportServ
  */
 export type ConnectUseCaseArgs = {
   /**
-   * UUID of the device got from device discovery `StartDiscoveringUseCase`
+   * Discovered device or connected device.
    */
-  device: DiscoveredDevice;
+  device: DiscoveredDevice | ConnectedDevice;
 
   /**
    * sessionRefresherOptions - optional
@@ -82,6 +83,10 @@ export class ConnectUseCase {
     sessionRefresherOptions,
   }: ConnectUseCaseArgs): Promise<DeviceSessionId> {
     const transport = this._transportService.getTransport(device.transport);
+    // In case of a connected device, we reconnect using the same session id.
+    // If not provided, a new device session id will be generated.
+    const deviceSessionId =
+      "sessionId" in device ? device.sessionId : undefined;
 
     return EitherAsync.liftEither(
       transport.toEither(
@@ -101,7 +106,7 @@ export class ConnectUseCase {
       })
       .map(async (connectedDevice) => {
         const deviceSession = new DeviceSession(
-          { connectedDevice },
+          { connectedDevice, id: deviceSessionId },
           this._loggerFactory,
           this._managerApi,
           this._secureChannel,
