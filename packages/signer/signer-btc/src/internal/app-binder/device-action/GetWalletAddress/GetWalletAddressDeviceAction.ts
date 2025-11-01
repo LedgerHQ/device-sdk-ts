@@ -25,7 +25,7 @@ import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAp
 import { GetWalletAddressTask } from "@internal/app-binder/task/GetWalletAddressTask";
 import { PrepareWalletPolicyTask } from "@internal/app-binder/task/PrepareWalletPolicyTask";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
-import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 

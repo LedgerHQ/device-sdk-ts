@@ -11,7 +11,7 @@ import type { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTree
 import { Psbt } from "@internal/psbt/model/Psbt";
 import { Value } from "@internal/psbt/model/Value";
 import { walletTypes } from "@internal/wallet/di/walletTypes";
-import { Wallet } from "@internal/wallet/model/Wallet";
+import { InternalWallet } from "@internal/wallet/model/Wallet";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import type { DataStoreService, PsbtCommitment } from "./DataStoreService";
@@ -36,7 +36,7 @@ export class DefaultDataStoreService implements DataStoreService {
     return tree.getRoot();
   }
 
-  merklizeWallet(store: DataStore, wallet: Wallet): void {
+  merklizeWallet(store: DataStore, wallet: InternalWallet): void {
     // As described in commands documentation, we must expose:
     // - serialized wallet preimage
     // - descriptor template preimage

@@ -22,7 +22,7 @@ import { type DataStore } from "@internal/data-store/model/DataStore";
 import { PsbtGlobal } from "@internal/psbt/model/Psbt";
 import type { ValueParser } from "@internal/psbt/service/value/ValueParser";
 import { extractVarint } from "@internal/utils/Varint";
-import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 export type SignPsbtTaskArgs = BuildPsbtTaskResult & {

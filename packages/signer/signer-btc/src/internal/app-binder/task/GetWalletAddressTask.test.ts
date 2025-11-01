@@ -5,7 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
-import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { type ContinueTask } from "./ContinueTask";

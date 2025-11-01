@@ -4,7 +4,7 @@ export type WalletArgs = {
   readonly name: string;
   readonly descriptorTemplate: string;
   readonly keys: string[];
-  readonly hmac: Uint8Array;
+  readonly hmac?: Uint8Array;
   readonly keysTree: MerkleTree;
   readonly descriptorBuffer: Uint8Array;
 };
@@ -13,7 +13,7 @@ export class Wallet {
   public readonly name: string;
   public readonly descriptorTemplate: string;
   public readonly keys: string[];
-  public readonly hmac: Uint8Array;
+  public readonly hmac?: Uint8Array;
   public readonly keysTree: MerkleTree;
   public readonly descriptorBuffer: Uint8Array;
 
@@ -33,3 +33,8 @@ export class Wallet {
     this.descriptorBuffer = descriptorBuffer;
   }
 }
+
+// used for default and registered wallets
+export type InternalWallet = Wallet & { hmac: Uint8Array };
+// used for wallets that are not registered yet
+export type InternalUnRegisteredWallet = Omit<Wallet, "hmac">;

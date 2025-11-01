@@ -10,7 +10,7 @@ import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAp
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
-import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { ContinueTask } from "./ContinueTask";
