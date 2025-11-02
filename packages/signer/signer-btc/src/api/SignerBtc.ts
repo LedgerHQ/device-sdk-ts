@@ -6,10 +6,12 @@ import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type Psbt } from "@api/model/Psbt";
 import { type PsbtOptions } from "@api/model/PsbtOptions";
-import { type Wallet } from "@api/model/Wallet";
+import { type Wallet, type WalletPolicy } from "@api/model/Wallet";
 
 import { type GetWalletAddressDAReturnType } from "./app-binder/GetWalletAddressDeviceActionTypes";
+import { type RegisterWalletPolicyDAReturnType } from "./app-binder/RegisterWalletPolicyTypes";
 import { type WalletAddressOptions } from "./model/WalletAddressOptions";
+import { type WalletPolicyOptions } from "./model/WalletPolicyOptions";
 
 export interface SignerBtc {
   getExtendedPublicKey: (
@@ -36,4 +38,8 @@ export interface SignerBtc {
     addressIndex: number,
     options?: WalletAddressOptions,
   ) => GetWalletAddressDAReturnType;
+  registerWalletPolicy: (
+    walletPolicy: WalletPolicy,
+    options?: WalletPolicyOptions,
+  ) => RegisterWalletPolicyDAReturnType;
 }

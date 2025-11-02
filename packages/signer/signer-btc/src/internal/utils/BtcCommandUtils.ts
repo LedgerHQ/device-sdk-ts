@@ -9,7 +9,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type WalletAddress } from "@api/model/Wallet";
+import { type WalletAddress, type WalletIdentity } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { SW_INTERRUPTED_EXECUTION } from "@internal/app-binder/command/utils/constants";
 
@@ -87,6 +87,30 @@ export class BtcCommandUtils {
     return CommandResultFactory({
       data: {
         address,
+      },
+    });
+  }
+
+  static getWalletIdentity(
+    response: CommandSuccessResult<ApduResponse>,
+  ): CommandResult<WalletIdentity, BtcErrorCodes> {
+    const parser = new ApduParser(response.data);
+
+    const walletId = parser.encodeToHexaString(
+      parser.extractFieldByLength(R_LENGTH),
+    );
+    const hmac = parser.extractFieldByLength(R_LENGTH);
+
+    if (!hmac) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Hmac is missing"),
+      });
+    }
+
+    return CommandResultFactory({
+      data: {
+        walletId,
+        hmac,
       },
     });
   }

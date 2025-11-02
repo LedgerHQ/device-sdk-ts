@@ -9,7 +9,7 @@ import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type Psbt } from "@api/model/Psbt";
 import { type PsbtOptions } from "@api/model/PsbtOptions";
-import { type Wallet } from "@api/model/Wallet";
+import { type Wallet, type WalletPolicy } from "@api/model/Wallet";
 import { type WalletAddressOptions } from "@api/model/WalletAddressOptions";
 import { type SignerBtc } from "@api/SignerBtc";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
@@ -18,6 +18,7 @@ import { type SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseC
 import { type SignTransactionUseCase } from "@internal/use-cases/sign-transaction/SignTransactionUseCase";
 
 import { type GetWalletAddressUseCase } from "./use-cases/get-wallet-address/GetWalletAddressUseCase";
+import { type RegisterWalletPolicyUseCase } from "./use-cases/register-wallet-policy/RegisterWalletPolicyUseCase";
 import { type SignMessageUseCase } from "./use-cases/sign-message/SignMessageUseCase";
 import { makeContainer } from "./di";
 
@@ -80,5 +81,14 @@ export class DefaultSignerBtc implements SignerBtc {
     return this._container
       .get<SignTransactionUseCase>(useCasesTypes.SignTransactionUseCase)
       .execute(wallet, psbt, options?.skipOpenApp ?? false);
+  }
+
+  registerWalletPolicy(
+    walletPolicy: WalletPolicy,
+    options?: WalletAddressOptions,
+  ) {
+    return this._container
+      .get<RegisterWalletPolicyUseCase>(useCasesTypes.RegisterWalletPolicyTask)
+      .execute(walletPolicy, options?.skipOpenApp ?? false);
   }
 }

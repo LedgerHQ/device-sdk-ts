@@ -12,7 +12,7 @@ import { type DataStore } from "@internal/data-store/model/DataStore";
 import type { PsbtCommitment } from "@internal/data-store/service/DataStoreService";
 import { type Psbt } from "@internal/psbt/model/Psbt";
 import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
-import { type Wallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 const SIGN_PSBT_YIELD_PARIAL_SIG_RESULT = Uint8Array.from([
@@ -69,7 +69,7 @@ describe("SignPsbtTask", () => {
       } as unknown as Psbt;
       const wallet = {
         hmac: Uint8Array.from([0x04]),
-      } as Wallet;
+      } as InternalWallet;
       const psbtCommitment = {
         globalCommitment: Uint8Array.from([0x03]),
         inputsRoot: Uint8Array.from([0x01]),
@@ -152,7 +152,7 @@ describe("SignPsbtTask", () => {
       } as unknown as Psbt;
       const wallet = {
         hmac: Uint8Array.from([0x04]),
-      } as Wallet;
+      } as InternalWallet;
       const psbtCommitment = {
         globalCommitment: Uint8Array.from([0x03]),
         inputsRoot: Uint8Array.from([0x01]),
@@ -244,7 +244,7 @@ describe("SignPsbtTask", () => {
       } as unknown as Psbt;
       const wallet = {
         hmac: Uint8Array.from([0x04]),
-      } as Wallet;
+      } as InternalWallet;
       const psbtCommitment = {
         globalCommitment: Uint8Array.from([0x03]),
         inputsRoot: Uint8Array.from([0x01]),
@@ -339,7 +339,7 @@ describe("SignPsbtTask", () => {
       const psbt = {
         getGlobalValue: vi.fn(() => Nothing),
       } as unknown as Psbt;
-      const wallet = {} as Wallet;
+      const wallet = {} as InternalWallet;
       const psbtCommitment = {} as PsbtCommitment;
       const dataStore = {} as DataStore;
       const walletSerializer = {

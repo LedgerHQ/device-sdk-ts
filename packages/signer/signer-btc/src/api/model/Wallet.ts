@@ -30,6 +30,11 @@ export class RegisteredWallet {
   ) {}
 }
 
+export type WalletIdentity = {
+  walletId: string;
+  hmac: Uint8Array;
+};
+
 /**
  * The Bitcon hardware app uses a descriptors-like thing to describe
  * how to construct output scripts from keys. A "Wallet Policy" consists
