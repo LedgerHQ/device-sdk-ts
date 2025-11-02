@@ -55,14 +55,19 @@ export class RegisterWalletPolicyTask {
         walletPolicy: serializedWallet,
       }),
     );
+
+    if (!isSuccessCommandResult(registerWalletResponse)) {
+      return registerWalletResponse;
+    }
+
     const response = await this._continueTaskFactory(this._api, dataStore).run(
       registerWalletResponse,
     );
 
-    if (isSuccessCommandResult(response)) {
-      return BtcCommandUtils.getWalletIdentity(response);
+    if (!isSuccessCommandResult(response)) {
+      return response;
     }
 
-    return response;
+    return BtcCommandUtils.getWalletIdentity(response);
   }
 }

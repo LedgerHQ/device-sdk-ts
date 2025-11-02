@@ -1,11 +1,16 @@
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
-import { DefaultDescriptorTemplate, DefaultWallet } from "@api/model/Wallet";
+import {
+  DefaultDescriptorTemplate,
+  DefaultWallet,
+  WalletPolicy,
+} from "@api/model/Wallet";
 import { DefaultSignerBtc } from "@internal/DefaultSignerBtc";
 import { GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
 import { SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseCase";
 import { SignTransactionUseCase } from "@internal/use-cases/sign-transaction/SignTransactionUseCase";
 
+import { RegisterWalletPolicyUseCase } from "./use-cases/register-wallet-policy/RegisterWalletPolicyUseCase";
 import { SignMessageUseCase } from "./use-cases/sign-message/SignMessageUseCase";
 
 describe("DefaultSignerBtc", () => {
@@ -69,5 +74,21 @@ describe("DefaultSignerBtc", () => {
       { skipOpenApp: false },
     );
     expect(SignTransactionUseCase.prototype.execute).toHaveBeenCalled();
+  });
+  it("should call registerWalletPolicy", () => {
+    vi.spyOn(RegisterWalletPolicyUseCase.prototype, "execute");
+    const sessionId = "session-id";
+    const dmk = {
+      executeDeviceAction: vi.fn(),
+    } as unknown as DeviceManagementKit;
+    const signer = new DefaultSignerBtc({ dmk, sessionId });
+    signer.registerWalletPolicy(
+      new WalletPolicy("test", "wsh(sortedmulti(2,@0/**,@1/**))", [
+        "key1",
+        "key2",
+      ]),
+      { skipOpenApp: false },
+    );
+    expect(RegisterWalletPolicyUseCase.prototype.execute).toHaveBeenCalled();
   });
 });

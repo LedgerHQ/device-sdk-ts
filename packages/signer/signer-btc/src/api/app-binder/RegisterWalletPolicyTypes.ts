@@ -1,5 +1,6 @@
 import {
   type CommandErrorResult,
+  type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
@@ -33,6 +34,12 @@ export type RegisterWalletPolicyDARequiredInteraction =
 export type RegisterWalletPolicyDAIntermediateValue = {
   requiredUserInteraction: RegisterWalletPolicyDARequiredInteraction;
 };
+
+export type RegisterWalletPolicyDAState = DeviceActionState<
+  RegisterWalletPolicyDAOutput,
+  RegisterWalletPolicyDAError,
+  RegisterWalletPolicyDAIntermediateValue
+>;
 
 export type RegisterWalletPolicyDAInternalState = {
   readonly error: RegisterWalletPolicyDAError | null;

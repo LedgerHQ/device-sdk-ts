@@ -41,7 +41,7 @@ export type ExtractMachineDependencies = (
   internalApi: InternalApi,
 ) => MachineDependencies;
 
-export class RegisterWalletPolicyAction extends XStateDeviceAction<
+export class RegisterWalletPolicyDeviceAction extends XStateDeviceAction<
   RegisterWalletPolicyDAOutput,
   RegisterWalletPolicyDAInput,
   RegisterWalletPolicyDAError,
@@ -96,7 +96,7 @@ export class RegisterWalletPolicyAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      id: "RegisterWalletPolicyAction",
+      id: "RegisterWalletPolicyDeviceAction",
       initial: "InitialState",
       context: ({ input }) => {
         return {
