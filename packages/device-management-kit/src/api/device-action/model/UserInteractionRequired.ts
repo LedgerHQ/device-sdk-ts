@@ -15,4 +15,5 @@ export enum UserInteractionRequired {
   SignDelegationAuthorization = "sign-delegation-authorization",
   Web3ChecksOptIn = "web3-checks-opt-in",
   VerifySafeAddress = "verify-safe-address",
+  RegisterWalletPolicy = "register-wallet-policy",
 }

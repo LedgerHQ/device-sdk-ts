@@ -473,6 +473,11 @@ switch (requiredUserInteraction) {
     console.log("The user needs to confirm on the device to open the app.");
     break;
   }
+  case UserInteractionRequired.RegisterWalletPolicy: {
+    // The user needs to register wallet policy
+    console.log("The user needs to register wallet policy.");
+    break;
+  }
   default:
     // Type guard to ensure all cases are handled
     const uncaughtUserInteraction: never = requiredUserInteraction;

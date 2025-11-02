@@ -164,6 +164,17 @@ export class RegisterWalletPolicyAction extends XStateDeviceAction<
           ],
         },
         RegisterWalletPolicy: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction:
+                UserInteractionRequired.RegisterWalletPolicy,
+            },
+          }),
+          exit: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+            },
+          }),
           invoke: {
             id: "registerWalletPolicy",
             src: "registerWalletPolicy",
