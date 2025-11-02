@@ -11,6 +11,7 @@ import { type Psbt } from "@api/model/Psbt";
 import { type PsbtOptions } from "@api/model/PsbtOptions";
 import { type Wallet, type WalletPolicy } from "@api/model/Wallet";
 import { type WalletAddressOptions } from "@api/model/WalletAddressOptions";
+import { type WalletPolicyOptions } from "@api/model/WalletPolicyOptions";
 import { type SignerBtc } from "@api/SignerBtc";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 import { type GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
@@ -85,7 +86,7 @@ export class DefaultSignerBtc implements SignerBtc {
 
   registerWalletPolicy(
     walletPolicy: WalletPolicy,
-    options?: WalletAddressOptions,
+    options?: WalletPolicyOptions,
   ) {
     return this._container
       .get<RegisterWalletPolicyUseCase>(useCasesTypes.RegisterWalletPolicyTask)

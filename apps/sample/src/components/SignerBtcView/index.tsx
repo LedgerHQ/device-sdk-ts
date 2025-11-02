@@ -19,6 +19,12 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-bitcoin";
+import {
+  type RegisterWalletPolicyDAError,
+  type RegisterWalletPolicyDAIntermediateValue,
+  type RegisterWalletPolicyDAOutput,
+} from "@ledgerhq/device-signer-kit-bitcoin/api/app-binder/RegisterWalletPolicyTypes.js";
+import { WalletPolicy } from "@ledgerhq/device-signer-kit-bitcoin/api/model/Wallet.js";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -28,6 +34,8 @@ import {
   SignPsbtDAInputValuesForm,
 } from "@/components/SignerBtcView/SignPsbtDAInputValusForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+
+import { RegisterWalletPolicyInputValuesForm } from "./RegisterWalletPolicyInputValuesForm";
 
 const DEFAULT_DERIVATION_PATH = "84'/0'/0'";
 
@@ -228,6 +236,43 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >,
+      {
+        title: "Register wallet policy",
+        description: "Register a wallet policy with the device",
+        executeDeviceAction: ({
+          name,
+          descriptorTemplate,
+          keys,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          return signer.registerWalletPolicy(
+            new WalletPolicy(name, descriptorTemplate, keys),
+            { skipOpenApp },
+          );
+        },
+        InputValuesComponent: RegisterWalletPolicyInputValuesForm,
+        initialValues: {
+          name: "wallet-name",
+          descriptorTemplate: "",
+          keys: [],
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        RegisterWalletPolicyDAOutput,
+        {
+          name: string;
+          descriptorTemplate: string;
+          keys: string[];
+          skipOpenApp: boolean;
+        },
+        RegisterWalletPolicyDAError,
+        RegisterWalletPolicyDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
