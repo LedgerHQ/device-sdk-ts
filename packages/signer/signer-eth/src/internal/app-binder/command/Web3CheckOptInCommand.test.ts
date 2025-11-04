@@ -3,6 +3,13 @@ import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 import { Web3CheckOptInCommand } from "@internal/app-binder/command/Web3CheckOptInCommand";
 
 describe("Web3CheckOptInCommand", () => {
+  describe("name", () => {
+    it("should be 'web3CheckOptIn'", () => {
+      const command = new Web3CheckOptInCommand();
+      expect(command.name).toBe("web3CheckOptIn");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // GIVEN

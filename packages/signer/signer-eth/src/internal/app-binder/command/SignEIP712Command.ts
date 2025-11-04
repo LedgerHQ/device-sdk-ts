@@ -49,6 +49,7 @@ export class SignEIP712Command
   implements
     Command<SignEIP712CommandResponse, SignEIP712CommandArgs, EthErrorCodes>
 {
+  readonly name = "signEIP712";
   private readonly errorHelper = new CommandErrorHelper<
     SignEIP712CommandResponse,
     EthErrorCodes

@@ -45,6 +45,7 @@ export class SignPersonalMessageCommand
       EthErrorCodes
     >
 {
+  readonly name = "signPersonalMessage";
   readonly args: SignPersonalMessageCommandArgs;
   private readonly errorHelper = new CommandErrorHelper<
     SignPersonalMessageCommandResponse,

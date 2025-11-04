@@ -107,6 +107,16 @@ describe("SendEIP712StructDefinitionCommand", () => {
     EthErrorCodes
   >;
 
+  describe("name", () => {
+    it("should be 'sendEIP712StructDefinition'", () => {
+      const cmd = new SendEIP712StructDefinitionCommand({
+        command: StructDefinitionCommand.Name,
+        name: "test",
+      });
+      expect(cmd.name).toBe("sendEIP712StructDefinition");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the apdu for 'EIP712Domain' name definition", () => {
       // GIVEN

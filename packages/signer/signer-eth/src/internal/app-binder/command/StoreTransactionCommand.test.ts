@@ -10,6 +10,16 @@ import {
 } from "./StoreTransactionCommand";
 
 describe("StoreTransactionCommand", () => {
+  describe("name", () => {
+    it("should be 'storeTransaction'", () => {
+      const command = new StoreTransactionCommand({
+        serializedTransaction: new Uint8Array(),
+        isFirstChunk: true,
+      });
+      expect(command.name).toBe("storeTransaction");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN

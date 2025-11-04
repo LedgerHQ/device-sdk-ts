@@ -11,6 +11,17 @@ import {
 } from "./ProvideNetworkConfigurationCommand";
 
 describe("ProvideNetworkConfigurationCommand", () => {
+  describe("name", () => {
+    it("should be 'provideNetworkConfiguration'", () => {
+      const command = new ProvideNetworkConfigurationCommand({
+        data: new Uint8Array(),
+        isFirstChunk: true,
+        configurationType: NetworkConfigurationType.CONFIGURATION,
+      });
+      expect(command.name).toBe("provideNetworkConfiguration");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN

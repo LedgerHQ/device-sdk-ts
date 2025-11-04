@@ -61,6 +61,12 @@ describe("SignEIP712Command", () => {
     });
   });
 
+  describe("name", () => {
+    it("should be 'signEIP712'", () => {
+      expect(command.name).toBe("signEIP712");
+    });
+  });
+
   describe("getApdu", () => {
     it("should provide the derivation path", () => {
       const apdu = command.getApdu();
