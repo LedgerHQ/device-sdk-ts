@@ -38,6 +38,12 @@ describe("ProvideTrustedNamePKICommand", () => {
     command = new ProvideTrustedNamePKICommand({ pkiBlob });
   });
 
+  describe("name", () => {
+    it("should be 'provideTrustedNamePKI'", () => {
+      expect(command.name).toBe("provideTrustedNamePKI");
+    });
+  });
+
   describe("getApdu", () => {
     it("should construct the correct APDU", () => {
       const apdu = command.getApdu();

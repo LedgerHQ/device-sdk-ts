@@ -31,6 +31,7 @@ export type GetChallengeCommandResponse = {
 export class GetChallengeCommand
   implements Command<GetChallengeCommandResponse, void, SolanaAppErrorCodes>
 {
+  readonly name = "getChallenge";
   private readonly errorHelper = new CommandErrorHelper<
     GetChallengeCommandResponse,
     SolanaAppErrorCodes

@@ -18,6 +18,13 @@ describe("SignTransactionCommand", () => {
     extend: false,
   };
 
+  describe("name", () => {
+    it("should be 'signTransaction'", () => {
+      const command = new SignTransactionCommand(defaultArgs);
+      expect(command.name).toBe("signTransaction");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the correct APDU when the data is empty", () => {
       // GIVEN
