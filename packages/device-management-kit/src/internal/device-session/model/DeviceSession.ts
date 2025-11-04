@@ -203,6 +203,7 @@ export class DeviceSession {
     command: Command<Response, Args, ErrorStatusCodes>,
     abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
+    this._logger.debug(`[sendCommand] ${command.name}`);
     const apdu = command.getApdu();
 
     const response = await this.sendApdu(apdu.getRawApdu(), {
@@ -213,10 +214,17 @@ export class DeviceSession {
 
     return response.caseOf({
       Left: (err) => {
+        this._logger.error("[sendCommand] error", { data: { err } });
         throw err;
       },
-      Right: (r) =>
-        command.parseResponse(r, this._connectedDevice.deviceModel.id),
+      Right: (r) => {
+        const result = command.parseResponse(
+          r,
+          this._connectedDevice.deviceModel.id,
+        );
+        this._logger.debug("[sendCommand] result", { data: { result } });
+        return result;
+      },
     });
   }
 
