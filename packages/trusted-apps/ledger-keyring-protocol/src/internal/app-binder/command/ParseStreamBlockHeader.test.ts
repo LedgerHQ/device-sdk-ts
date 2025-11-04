@@ -15,6 +15,14 @@ const HEADER_BYTES = Uint8Array.from([0xab, 0xad, 0xbe, 0xef]);
 const TLV_PAYLOAD = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 
 describe("ParseBlockHeaderCommand", () => {
+  describe("name", () => {
+    it("should be 'parseBlockHeader'", () => {
+      const args: ParseBlockHeaderCommandArgs = { header: HEADER_BYTES };
+      const cmd = new ParseBlockHeaderCommand(args);
+      expect(cmd.name).toBe("parseBlockHeader");
+    });
+  });
+
   describe("getApdu()", () => {
     it("should build the correct APDU for a given header", () => {
       // given

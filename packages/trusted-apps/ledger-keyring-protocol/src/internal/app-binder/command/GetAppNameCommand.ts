@@ -32,6 +32,7 @@ export class GetAppNameCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "getAppName";
   private readonly errorHelper = new CommandErrorHelper<
     GetAppNameCommandResponse,
     LedgerKeyringProtocolErrorCodes

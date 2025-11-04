@@ -44,6 +44,7 @@ export class GetSeedIdCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "getSeedId";
   private readonly errorHelper = new CommandErrorHelper<
     GetSeedIdCommandResponse,
     LedgerKeyringProtocolErrorCodes

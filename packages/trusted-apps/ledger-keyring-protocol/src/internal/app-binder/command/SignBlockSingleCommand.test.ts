@@ -16,6 +16,14 @@ const COMMAND_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 const TLV_PAYLOAD = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 
 describe("SignBlockSingleCommand", () => {
+  describe("name", () => {
+    it("should be 'signBlockSingle'", () => {
+      const args: SignBlockSingleCommandArgs = { command: COMMAND_BYTES };
+      const cmd = new SignBlockSingleCommand(args);
+      expect(cmd.name).toBe("signBlockSingle");
+    });
+  });
+
   describe("getApdu()", () => {
     it("should build the correct APDU for a given command", () => {
       // given

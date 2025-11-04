@@ -31,6 +31,7 @@ export class ParseBlockHeaderCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "parseBlockHeader";
   private readonly errorHelper = new CommandErrorHelper<
     ParseBlockHeaderCommandResponse,
     LedgerKeyringProtocolErrorCodes

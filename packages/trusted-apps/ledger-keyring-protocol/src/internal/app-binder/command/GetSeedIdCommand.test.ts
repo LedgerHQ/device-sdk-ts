@@ -9,6 +9,15 @@ import { GetSeedIdCommand } from "./GetSeedIdCommand";
 describe("GetSeedIdCommand", () => {
   const mockedChallenge = "01020304";
 
+  describe("name", () => {
+    it("should be 'getSeedId'", () => {
+      const command = new GetSeedIdCommand({
+        challengeTLV: mockedChallenge,
+      });
+      expect(command.name).toBe("getSeedId");
+    });
+  });
+
   it("should build the correct APDU", () => {
     // GIVEN
     const command = new GetSeedIdCommand({
