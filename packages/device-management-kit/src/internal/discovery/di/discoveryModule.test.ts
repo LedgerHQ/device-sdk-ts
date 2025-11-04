@@ -8,6 +8,7 @@ import { ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
 import { ListenToAvailableDevicesUseCase } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
+import { ReconnectUseCase } from "@internal/discovery/use-case/ReconnectUseCase";
 import { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
 import { loggerModuleFactory } from "@internal/logger-publisher/di/loggerModule";
@@ -82,5 +83,7 @@ describe("discoveryModuleFactory", () => {
     expect(listConnectedDevicesUseCase).toBeInstanceOf(
       ListConnectedDevicesUseCase,
     );
+    const reconnectUseCase = container.get(discoveryTypes.ReconnectUseCase);
+    expect(reconnectUseCase).toBeInstanceOf(ReconnectUseCase);
   });
 });

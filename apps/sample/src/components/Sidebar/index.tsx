@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
+import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
@@ -81,6 +82,18 @@ export const Sidebar: React.FC = () => {
     [dispatch, dmk],
   );
 
+  const onDeviceReconnect = useCallback(
+    async (sessionId: DeviceSessionId) => {
+      try {
+        const device = dmk.getConnectedDevice({ sessionId });
+        await dmk.reconnect({ device });
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [dmk],
+  );
+
   const router = useRouter();
   return (
     <Root mockServerEnabled={transport === mockserverIdentifier}>
@@ -111,6 +124,7 @@ export const Sidebar: React.FC = () => {
               dispatch({ type: "select_session", payload: { sessionId } })
             }
             onDisconnect={() => onDeviceDisconnect(sessionId)}
+            onReconnect={() => onDeviceReconnect(sessionId)}
           />
         ))}
       </div>

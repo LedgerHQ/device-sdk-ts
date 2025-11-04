@@ -53,6 +53,7 @@ type DeviceProps = {
   sessionId: DeviceSessionId;
   model: DeviceModelId;
   onDisconnect: () => Promise<void>;
+  onReconnect: () => Promise<void>;
   onSelect: () => void;
 };
 
@@ -74,6 +75,7 @@ export const Device: React.FC<DeviceProps> = ({
   type,
   model,
   onDisconnect,
+  onReconnect,
   onSelect,
   sessionId,
 }) => {
@@ -114,6 +116,12 @@ export const Device: React.FC<DeviceProps> = ({
           <ActionRow data-testid="CTA_disconnect-device" onClick={onDisconnect}>
             <Text variant="paragraph" color="neutral.c80">
               Disconnect
+            </Text>
+            <Icons.ChevronRight size="S" />
+          </ActionRow>
+          <ActionRow data-testid="CTA_reconnect-device" onClick={onReconnect}>
+            <Text variant="paragraph" color="neutral.c80">
+              Reconnect
             </Text>
             <Icons.ChevronRight size="S" />
           </ActionRow>

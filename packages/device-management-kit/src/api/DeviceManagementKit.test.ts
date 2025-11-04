@@ -56,6 +56,10 @@ describe("DeviceManagementKit", () => {
       expect(dmk.connect).toBeDefined();
     });
 
+    it("should have reconnect method", () => {
+      expect(dmk.reconnect).toBeDefined();
+    });
+
     it("should have sendApdu method", () => {
       expect(dmk.sendApdu).toBeDefined();
     });
