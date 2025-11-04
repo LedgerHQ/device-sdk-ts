@@ -27,7 +27,11 @@ let managerApiDataSource: ManagerApiDataSource;
 let secureChannel: SecureChannelService;
 let secureChannelDataSource: SecureChannelDataSource;
 const fakeSessionId = "fakeSessionId";
-let command: Command<{ status: string }>;
+let command: Command<{ status: string }, void, void> = {
+  name: "testCommand",
+  getApdu: vi.fn(),
+  parseResponse: vi.fn(),
+};
 
 describe("SendCommandUseCase", () => {
   beforeEach(() => {
@@ -40,6 +44,7 @@ describe("SendCommandUseCase", () => {
     );
     secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
     command = {
+      name: "testCommand",
       getApdu: vi.fn(),
       parseResponse: vi.fn(),
     };

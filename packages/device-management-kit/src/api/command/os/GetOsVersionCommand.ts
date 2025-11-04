@@ -117,6 +117,7 @@ export type GetOsVersionCommandResult = CommandResult<GetOsVersionResponse>;
  * Command to get information about the device firmware.
  */
 export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
+  readonly name = "getOsVersion";
   readonly args = undefined;
 
   getApdu(): Apdu {

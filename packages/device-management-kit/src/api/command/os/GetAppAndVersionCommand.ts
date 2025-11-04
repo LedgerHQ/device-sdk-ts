@@ -36,6 +36,7 @@ export type GetAppAndVersionCommandResult =
 export class GetAppAndVersionCommand
   implements Command<GetAppAndVersionResponse>
 {
+  readonly name = "getAppAndVersion";
   readonly args = undefined;
 
   getApdu(): Apdu {

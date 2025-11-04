@@ -66,6 +66,12 @@ describe("GetOsVersionCommand", () => {
     command = new GetOsVersionCommand();
   });
 
+  describe("name", () => {
+    it("should be 'getOsVersion'", () => {
+      expect(command.name).toBe("getOsVersion");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the GetOsVersion apdu", () => {
       const apdu = command.getApdu();

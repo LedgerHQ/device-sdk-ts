@@ -31,6 +31,12 @@ describe("GetAppAndVersionCommand", () => {
     command = new GetAppAndVersionCommand();
   });
 
+  describe("name", () => {
+    it("should be 'getAppAndVersion'", () => {
+      expect(command.name).toBe("getAppAndVersion");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the GetAppAndVersion APDU", () => {
       const apdu = command.getApdu();
