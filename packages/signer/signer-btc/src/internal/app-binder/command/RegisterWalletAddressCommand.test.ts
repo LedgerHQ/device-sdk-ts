@@ -42,6 +42,15 @@ const APDU_RESPONSE = Uint8Array.from([
 ]);
 
 describe("RegisterWalletAddressCommand", () => {
+  describe("name", () => {
+    it("should be 'registerWalletAddress'", () => {
+      const command = new RegisterWalletAddressCommand({
+        walletPolicy: WALLET_POLICY_DATA,
+      });
+      expect(command.name).toBe("registerWalletAddress");
+    });
+  });
+
   describe("getApdu", () => {
     it("should send the correct APDU", () => {
       // when

@@ -62,6 +62,14 @@ describe("SignPsbtCommand", () => {
     walletId: WALLET_ID,
     walletHmac: WALLET_HMAC,
   };
+
+  describe("name", () => {
+    it("should be 'signPsbt'", () => {
+      const command = new SignPsbtCommand(args);
+      expect(command.name).toBe("signPsbt");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return a correct apdu", () => {
       const command = new SignPsbtCommand(args);
