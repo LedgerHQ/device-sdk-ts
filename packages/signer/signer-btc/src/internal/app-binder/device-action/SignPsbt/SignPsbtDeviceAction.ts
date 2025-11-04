@@ -32,7 +32,7 @@ import { SignPsbtTask } from "@internal/app-binder/task/SignPsbtTask";
 import type { DataStoreService } from "@internal/data-store/service/DataStoreService";
 import type { PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
 import type { ValueParser } from "@internal/psbt/service/value/ValueParser";
-import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 

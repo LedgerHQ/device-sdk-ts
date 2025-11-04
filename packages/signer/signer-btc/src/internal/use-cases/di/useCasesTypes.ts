@@ -4,4 +4,5 @@ export const useCasesTypes = {
   SignPsbtUseCase: Symbol.for("SignPsbtUseCase"),
   SignTransactionUseCase: Symbol.for("SignTransactionUseCase"),
   GetWalletAddressUseCase: Symbol.for("GetWalletAddressUseCase"),
+  RegisterWalletPolicyTask: Symbol.for("RegisterWalletPolicyTask"),
 };

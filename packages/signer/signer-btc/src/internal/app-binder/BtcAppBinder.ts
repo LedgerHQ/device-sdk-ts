@@ -11,12 +11,13 @@ import {
   GetExtendedPublicKeyDAInput,
   GetExtendedPublicKeyDAReturnType,
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+import { RegisterWalletPolicyDAReturnType } from "@api/app-binder/RegisterWalletPolicyTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignPsbtDAReturnType } from "@api/app-binder/SignPsbtDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { GetWalletAddressDAReturnType } from "@api/index";
 import { Psbt } from "@api/model/Psbt";
-import { Wallet } from "@api/model/Wallet";
+import { Wallet, WalletPolicy } from "@api/model/Wallet";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
@@ -32,6 +33,7 @@ import type { WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { GetWalletAddressDeviceAction } from "./device-action/GetWalletAddress/GetWalletAddressDeviceAction";
+import { RegisterWalletPolicyDeviceAction } from "./device-action/RegisterWalletPolicy/RegisterWalletPolicyDeviceAction";
 
 @injectable()
 export class BtcAppBinder {
@@ -156,6 +158,24 @@ export class BtcAppBinder {
           psbtMapper: this._psbtMapper,
           valueParser: this._valueParser,
           skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  registerWalletPolicy(args: {
+    walletPolicy: WalletPolicy;
+    skipOpenApp: boolean;
+  }): RegisterWalletPolicyDAReturnType {
+    return this._dmk.executeDeviceAction({
+      sessionId: this._sessionId,
+      deviceAction: new RegisterWalletPolicyDeviceAction({
+        input: {
+          walletPolicy: args.walletPolicy,
+          skipOpenApp: args.skipOpenApp,
+          dataStoreService: this._dataStoreService,
+          walletBuilder: this._walletBuilder,
+          walletSerializer: this._walletSerializer,
         },
       }),
     });

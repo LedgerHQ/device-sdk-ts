@@ -14,7 +14,7 @@ import {
 } from "@internal/data-store/service/DataStoreService";
 import { type Psbt as InternalPsbt } from "@internal/psbt/model/Psbt";
 import type { PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
-import { type Wallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 
 export type BuildPsbtTaskResult = {
   psbtCommitment: PsbtCommitment;
@@ -25,7 +25,7 @@ export type BuildPsbtTaskResult = {
 export class BuildPsbtTask {
   constructor(
     private readonly _args: {
-      wallet: Wallet;
+      wallet: InternalWallet;
       psbt: Psbt;
     },
     private readonly _dataStoreService: DataStoreService,

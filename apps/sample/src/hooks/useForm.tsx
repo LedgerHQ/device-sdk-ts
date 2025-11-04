@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 
-export type FieldType = string | boolean | number;
+export type FieldType = string | boolean | number | string[];
 
-export function useForm<T extends Record<string, string | boolean | number>>(
-  initialValues: T,
-) {
+export function useForm<
+  T extends Record<string, string | boolean | number | string[]>,
+>(initialValues: T) {
   const [formValues, setFormValues] = useState<T>(initialValues);
 
   const setFormValue = useCallback((field: keyof T, value: FieldType) => {

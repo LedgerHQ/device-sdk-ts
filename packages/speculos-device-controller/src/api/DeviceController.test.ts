@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import type { DeviceScreens } from "@internal/core/types";
 
 import { deviceControllerClientFactory } from "./DeviceController";

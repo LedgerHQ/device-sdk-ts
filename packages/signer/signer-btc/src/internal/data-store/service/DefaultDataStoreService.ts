@@ -11,7 +11,7 @@ import type { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTree
 import { Psbt } from "@internal/psbt/model/Psbt";
 import { Value } from "@internal/psbt/model/Value";
 import { walletTypes } from "@internal/wallet/di/walletTypes";
-import { Wallet } from "@internal/wallet/model/Wallet";
+import { type Wallet } from "@internal/wallet/model/Wallet";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import type { DataStoreService, PsbtCommitment } from "./DataStoreService";

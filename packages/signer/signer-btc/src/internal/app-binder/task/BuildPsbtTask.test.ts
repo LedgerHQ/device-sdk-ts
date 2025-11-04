@@ -12,7 +12,7 @@ import {
   type PsbtCommitment,
 } from "@internal/data-store/service/DataStoreService";
 import { type Psbt as InternalPsbt } from "@internal/psbt/model/Psbt";
-import { type Wallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 
 describe("BuildPsbtTask", () => {
   it("should build psbt and fill datastore", async () => {
@@ -29,7 +29,7 @@ describe("BuildPsbtTask", () => {
     const dataStore = new DataStore();
     const task = new BuildPsbtTask(
       {
-        wallet: "Wallet" as unknown as Wallet,
+        wallet: "Wallet" as unknown as InternalWallet,
         psbt: "ApiPsbt" as unknown as Psbt,
       },
       dataStoreService,
@@ -71,7 +71,7 @@ describe("BuildPsbtTask", () => {
     };
     const task = new BuildPsbtTask(
       {
-        wallet: {} as unknown as Wallet,
+        wallet: {} as unknown as InternalWallet,
         psbt: {} as unknown as Psbt,
       },
       dataStoreService,
@@ -99,7 +99,7 @@ describe("BuildPsbtTask", () => {
     };
     const task = new BuildPsbtTask(
       {
-        wallet: {} as unknown as Wallet,
+        wallet: {} as unknown as InternalWallet,
         psbt: {} as unknown as Psbt,
       },
       dataStoreService,

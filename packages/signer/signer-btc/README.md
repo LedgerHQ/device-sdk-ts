@@ -6,6 +6,7 @@ This module provides the implementation of the Ledger Bitcoin signer of the Devi
 - Signing a message displayed on a Ledger device;
 - Signing a Bitcoin partially signed transaction (PSBT);
 - Signing a Bitcoin transaction;
+- Registering a wallet policy;
 
 ## 🔹 Index
 
@@ -18,6 +19,7 @@ This module provides the implementation of the Ledger Bitcoin signer of the Devi
    - [Sign Partially Signed Transaction (PSBT)](#use-case-3-sign-psbt)
    - [Sign Transaction](#use-case-4-sign-transaction)
    - [Get Wallet address](#use-case-5-get-wallet-address)
+   - [Register Wallet policy](#use-case-6-register-wallet-policy)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -324,6 +326,58 @@ type WalletAddress = {
 
 ---
 
+### Use Case 6: Register wallet policy
+
+This method allows users to register a wallet policy for multisig wallets.
+
+```typescript
+const { observable, cancel } = signerBitcoin.registerWalletPolicy(
+  walletPolicy,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `WalletPolicy`
+
+  - **Required**
+  - **Type: `WalletPolicy`**
+
+  ```typescript
+  type WalletPolicy = {
+    name: string;
+    descriptorTemplate: string;
+    keys: string[];
+  };
+  ```
+
+- `options`
+
+  - Optional
+  - Type: `WalletPolicyOptions`
+
+  ```typescript
+  type WalletPolicyOptions = {
+    skipOpenApp?: boolean;
+  };
+  ```
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type WalletIdentity = {
+  walletId: string;
+  hmac: Uint8Array;
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
 ## 🔹 Observable Behavior
 
 Each method returns an [Observable](https://rxjs.dev/guide/observable) emitting updates structured as [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts). These updates reflect the operation’s progress and status:
@@ -417,6 +471,11 @@ switch (requiredUserInteraction) {
   case UserInteractionRequired.ConfirmOpenApp: {
     // User needs to confirm on the device to open the app
     console.log("The user needs to confirm on the device to open the app.");
+    break;
+  }
+  case UserInteractionRequired.RegisterWalletPolicy: {
+    // The user needs to register wallet policy
+    console.log("The user needs to register wallet policy.");
     break;
   }
   default:

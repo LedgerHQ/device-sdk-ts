@@ -11,7 +11,7 @@ import {
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 import { GetMasterFingerprintCommand } from "@internal/app-binder/command/GetMasterFingerprintCommand";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
-import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
+import { type InternalWallet } from "@internal/wallet/model/Wallet";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 
 export type PrepareWalletPolicyTaskArgs = { wallet: ApiWallet };
