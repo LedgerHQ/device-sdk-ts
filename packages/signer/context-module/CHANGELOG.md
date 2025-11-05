@@ -1,5 +1,16 @@
 # @ledgerhq/context-module
 
+## 1.10.0
+
+### Minor Changes
+
+- [#1070](https://github.com/LedgerHQ/device-sdk-ts/pull/1070) [`2b17ba8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2b17ba859b26af3dea824d7a737095f85c4a503d) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Replace legacy web3check loader by generic transaction check loader
+
+### Patch Changes
+
+- Updated dependencies [[`5fdf5c9`](https://github.com/LedgerHQ/device-sdk-ts/commit/5fdf5c9fcb52c249fecf35bea8db2b451ac3e3fa), [`ebd44c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd44c2690ec578410f69b148179268eeb34db65)]:
+  - @ledgerhq/device-management-kit@0.10.0
+
 ## 1.9.0
 
 ### Minor Changes

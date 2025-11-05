@@ -1,5 +1,13 @@
 # @ledgerhq/device-management-kit
 
+## 0.10.0
+
+### Minor Changes
+
+- [#1094](https://github.com/LedgerHQ/device-sdk-ts/pull/1094) [`5fdf5c9`](https://github.com/LedgerHQ/device-sdk-ts/commit/5fdf5c9fcb52c249fecf35bea8db2b451ac3e3fa) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add InvalidGetFirmwareMetadataResponseError
+
+- [#1104](https://github.com/LedgerHQ/device-sdk-ts/pull/1104) [`ebd44c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd44c2690ec578410f69b148179268eeb34db65) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add reconnect use case
+
 ## 0.9.2
 
 ### Patch Changes
