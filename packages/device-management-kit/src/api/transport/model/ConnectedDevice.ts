@@ -1,7 +1,7 @@
 import { type DeviceId, type DeviceModelId } from "@api/device/DeviceModel";
 import { type ConnectionType } from "@api/discovery/ConnectionType";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
-import { type DeviceSessionId } from "@api/types";
+import { type DeviceSessionId, type TransportIdentifier } from "@api/types";
 
 type ConnectedDeviceConstructorArgs = {
   readonly sessionId: DeviceSessionId;
@@ -14,12 +14,14 @@ export class ConnectedDevice {
   public readonly modelId: DeviceModelId;
   public readonly name: string;
   public readonly type: ConnectionType;
+  public readonly transport: TransportIdentifier;
 
   constructor({
     transportConnectedDevice: {
       id,
       deviceModel: { id: deviceModelId, productName: deviceName },
       type,
+      transport,
     },
     sessionId,
   }: ConnectedDeviceConstructorArgs) {
@@ -28,5 +30,6 @@ export class ConnectedDevice {
     this.modelId = deviceModelId;
     this.name = deviceName;
     this.type = type;
+    this.transport = transport;
   }
 }

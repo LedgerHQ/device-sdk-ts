@@ -117,7 +117,7 @@ describe("ProvideContextTask", () => {
           ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,
         ],
-        [ClearSignContextType.WEB3_CHECK, ProvideWeb3CheckCommand],
+        [ClearSignContextType.TRANSACTION_CHECK, ProvideWeb3CheckCommand],
         [ClearSignContextType.PROXY_INFO, ProvideProxyInfoCommand],
       ] as const)(
         "should provide context by calling sendPayloadInChunksTask for a %s context",

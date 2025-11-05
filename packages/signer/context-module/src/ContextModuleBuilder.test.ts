@@ -83,40 +83,10 @@ describe("ContextModuleBuilder", () => {
     expect(config.web3checks).toEqual(defaultWeb3ChecksConfig);
   });
 
-  it("should return a custom context module with a custom custom web3checks loader", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
-    const customLoader = { load: vi.fn() };
-
-    const res = contextModuleBuilder
-      .removeDefaultLoaders()
-      .addWeb3CheckLoader(customLoader)
-      .build();
-
-    expect(res).toBeInstanceOf(DefaultContextModule);
-    // @ts-expect-error _web3CheckLoader is private
-    expect(res["_web3CheckLoader"]).toBe(customLoader);
-  });
-
-  it("should throw an error if origin token is not provided", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
-
-    expect(() => contextModuleBuilder.build()).toThrow(
-      "Origin token is required",
-    );
-  });
-
   it("should not throw an error if origin token is provided", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
     expect(() => contextModuleBuilder.build()).not.toThrow();
-  });
-
-  it("should not throw an error if origin token is not provided and addWeb3CheckLoader is called", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
-
-    expect(() =>
-      contextModuleBuilder.addWeb3CheckLoader({ load: vi.fn() }).build(),
-    ).not.toThrow();
   });
 
   describe("setMetadataServiceConfig", () => {

@@ -1,13 +1,16 @@
 import { Left, Maybe, Right } from "purify-ts";
 
-import { type DeviceModel } from "@api/device/DeviceModel";
+import { type DeviceModel, type DeviceModelId } from "@api/device/DeviceModel";
 import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import { type ConnectionType } from "@api/discovery/ConnectionType";
+import { type DmkConfig } from "@api/DmkConfig";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { TransportMock } from "@api/transport/model/__mocks__/TransportMock";
+import { type ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 import { type DiscoveredDevice } from "@api/transport/model/DiscoveredDevice";
 import { UnknownDeviceError } from "@api/transport/model/Errors";
+import { type Transport } from "@api/transport/model/Transport";
 import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
-import type { DmkConfig, Transport } from "@api/types";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
@@ -42,6 +45,7 @@ let managerApiDataSource: ManagerApiDataSource;
 let secureChannelDataSource: SecureChannelDataSource;
 let secureChannel: SecureChannelService;
 const fakeSessionId = "fakeSessionId";
+const fakeSessionIdConnectedDevice = "fakeSessionIdConnectedDevice";
 
 describe("ConnectUseCase", () => {
   const stubDiscoveredDevice: DiscoveredDevice = {
@@ -50,7 +54,15 @@ describe("ConnectUseCase", () => {
     transport: "USB",
     name: "TEST",
   };
-  const stubConnectedDevice = connectedDeviceStubBuilder({ id: "1" });
+  const stubTransportConnectedDevice = connectedDeviceStubBuilder({ id: "1" });
+  const stubConnectedDevice = {
+    id: "1",
+    sessionId: fakeSessionIdConnectedDevice,
+    modelId: "model-id" as unknown as DeviceModelId,
+    name: "device-name",
+    type: "MOCK" as unknown as ConnectionType,
+    transport: "USB",
+  } as unknown as ConnectedDevice;
   const tag = "logger-tag";
 
   beforeAll(() => {
@@ -101,7 +113,7 @@ describe("ConnectUseCase", () => {
 
   test("If connect is in success, return a deviceSession id", async () => {
     vi.spyOn(transport, "connect").mockResolvedValue(
-      Right(stubConnectedDevice),
+      Right(stubTransportConnectedDevice),
     );
     vi.spyOn(transportService, "getTransport").mockReturnValue(
       Maybe.of(transport),
@@ -125,6 +137,35 @@ describe("ConnectUseCase", () => {
       device: stubDiscoveredDevice,
     });
     expect(sessionId).toBe(fakeSessionId);
+    sessionService.removeDeviceSession(sessionId);
+  });
+
+  test("If connect is in success after a reconnect, return the same deviceSession id", async () => {
+    vi.spyOn(transport, "connect").mockResolvedValue(
+      Right(stubTransportConnectedDevice),
+    );
+    vi.spyOn(transportService, "getTransport").mockReturnValue(
+      Maybe.of(transport),
+    );
+    vi.spyOn(sessionService, "addDeviceSession").mockImplementation(
+      (deviceSession) => {
+        deviceSession.setDeviceSessionState({} as DeviceSessionState);
+        return sessionService;
+      },
+    );
+
+    const usecase = new ConnectUseCase(
+      transportService,
+      sessionService,
+      () => logger,
+      managerApi,
+      secureChannel,
+    );
+
+    const sessionId = await usecase.execute({
+      device: stubConnectedDevice,
+    });
+    expect(sessionId).toBe(fakeSessionIdConnectedDevice); // same session id as the connected device
     sessionService.removeDeviceSession(sessionId);
   });
 });

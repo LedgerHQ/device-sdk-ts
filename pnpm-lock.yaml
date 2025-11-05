@@ -519,6 +519,9 @@ importers:
       react-native-svg:
         specifier: 'catalog:'
         version: 15.11.1(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
       styled-components:
         specifier: 'catalog:'
         version: 5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)
@@ -1021,8 +1024,8 @@ importers:
         specifier: workspace:*
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: ^1.1.0
-        version: 1.1.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:*
+        version: link:../signer-utils
       '@solana/spl-token':
         specifier: 'catalog:'
         version: 0.4.13(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.2)(utf-8-validate@5.0.10)

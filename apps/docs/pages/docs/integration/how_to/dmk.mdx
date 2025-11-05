@@ -22,6 +22,34 @@ As we wanted to make the project modular.
 > [!NOTE]
 > At the moment we do not provide the possibility to distinguish two devices of the same model, via WebHID and to avoid connection to the same device twice.
 
+## Connection Management
+
+### Reconnect Device Session
+
+The `reconnect` method allows you to refresh a device connection by disconnecting and reconnecting to the device. This is useful when you need to refresh the connection state or reconfigure session refresher options.
+
+<u>**Parameters**</u>:
+
+- `device`: ConnectedDevice - The connected device to reconnect (obtained from `getConnectedDevice`).
+- `sessionRefresherOptions`: (optional) Configuration for session refreshing.
+  - `isRefresherDisabled`: boolean - Whether the refresher is disabled.
+  - `pollingInterval`: number - The refresh interval in milliseconds.
+
+```typescript
+// Get the connected device
+const connectedDevice = dmk.getConnectedDevice({ sessionId });
+
+// Reconnect the device session
+// newSessionId = sessionId
+const newSessionId = await dmk.reconnect({
+  device: connectedDevice,
+  sessionRefresherOptions: {
+    isRefresherDisabled: false,
+    pollingInterval: 3000,
+  },
+});
+```
+
 ## Communicate with a Ledger device
 
 The DMK is offering several ways to communicate with a Ledger device.

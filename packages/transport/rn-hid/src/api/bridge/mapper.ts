@@ -1,5 +1,6 @@
 import {
   ApduResponse,
+  DeviceDisconnectedBeforeSendingApdu,
   DeviceDisconnectedWhileSendingError,
   type DeviceModelDataSource,
   FramerUtils,
@@ -128,14 +129,22 @@ export function mapNativeSendApduResultToSendApduResult(
     );
     const statusCode = FramerUtils.getLastBytesFrom(responseBytes, 2);
     return Right(new ApduResponse({ data, statusCode }));
-  } else if (result.error === "SendApduTimeout") {
-    return Left(new SendApduTimeoutError("Abort timeout"));
-  } else if (result.error === "EmptyResponse") {
-    return Left(new SendApduEmptyResponseError("Empty response"));
-  } else if (result.error === "DeviceDisconnected") {
-    return Left(new DeviceDisconnectedWhileSendingError("Device disconnected"));
   } else {
-    return Left(new HidTransportSendApduUnknownError(result.error));
+    switch (result.error) {
+      case "SendApduTimeout":
+        return Left(new SendApduTimeoutError("Abort timeout"));
+      case "EmptyResponse":
+        return Left(new SendApduEmptyResponseError("Empty response"));
+      case "DeviceDisconnected":
+        return Left(
+          new DeviceDisconnectedWhileSendingError("Device disconnected"),
+        );
+      case "DeviceNotFound":
+      case "NoUsbEndpointFound":
+        return Left(new DeviceDisconnectedBeforeSendingApdu());
+      default:
+        return Left(new HidTransportSendApduUnknownError(result.error));
+    }
   }
 }
 

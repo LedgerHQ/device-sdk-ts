@@ -29,11 +29,7 @@ const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 
 const contextModuleStub: ContextModule = {
   getSolanaContext: vi.fn(),
-  getFieldContext: vi.fn(),
-  getContexts: vi.fn(),
-  getTypedDataFilters: vi.fn(),
-  getWeb3Checks: vi.fn(),
-};
+} as unknown as ContextModule;
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let getAppConfigMock: ReturnType<typeof vi.fn>;

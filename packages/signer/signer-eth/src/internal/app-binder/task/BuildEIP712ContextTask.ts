@@ -1,6 +1,6 @@
 import {
   type ClearSignContextSuccess,
-  type ClearSignContextType,
+  ClearSignContextType,
   type ContextModule,
   type TypedDataCalldataIndex,
   type TypedDataClearSignContextSuccess,
@@ -22,10 +22,6 @@ import {
   type BuildFullContextsTaskArgs,
   type ContextWithSubContexts,
 } from "@internal/app-binder/task/BuildFullContextsTask";
-import {
-  GetWeb3CheckTask,
-  type GetWeb3CheckTaskArgs,
-} from "@internal/app-binder/task/GetWeb3CheckTask";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
@@ -45,10 +41,7 @@ export class BuildEIP712ContextTask {
     private readonly data: TypedData,
     private readonly derivationPath: string,
     private readonly appConfig: GetConfigCommandResponse,
-    private readonly getWeb3ChecksFactory = (
-      api: InternalApi,
-      args: GetWeb3CheckTaskArgs,
-    ) => new GetWeb3CheckTask(api, args),
+    private readonly from: string,
     private readonly buildFullContextFactory = (
       api: InternalApi,
       args: BuildFullContextsTaskArgs,
@@ -56,19 +49,6 @@ export class BuildEIP712ContextTask {
   ) {}
 
   async run(): Promise<ProvideEIP712ContextTaskArgs> {
-    // Run the web3checks if needed
-    let web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null =
-      null;
-    if (this.appConfig.web3ChecksEnabled) {
-      web3Check = (
-        await this.getWeb3ChecksFactory(this.api, {
-          contextModule: this.contextModule,
-          derivationPath: this.derivationPath,
-          data: this.data,
-        }).run()
-      ).web3Check;
-    }
-
     // Clear signing context
     // Parse the message types and values
     const parsed = this.parser.parse(this.data);
@@ -77,8 +57,11 @@ export class BuildEIP712ContextTask {
     }
     const { types, domain, message } = parsed.unsafeCoerce();
 
-    // Get clear signing context, if any
     const deviceState = this.api.getDeviceSessionState();
+    const deviceModelId = deviceState.deviceModelId;
+    const transactionChecks = await this.getTransactionChecks(deviceModelId);
+
+    // Get clear signing context, if any
     let clearSignContext: Maybe<TypedDataClearSignContextSuccess> = Nothing;
     let calldatasContexts: Record<
       TypedDataCalldataIndex,
@@ -126,7 +109,7 @@ export class BuildEIP712ContextTask {
     // Return the args for provide context task
     const provideTaskArgs: ProvideEIP712ContextTaskArgs = {
       derivationPath: this.derivationPath,
-      web3Check,
+      transactionChecks,
       types,
       domain,
       message,
@@ -135,6 +118,29 @@ export class BuildEIP712ContextTask {
       deviceModelId: deviceState.deviceModelId,
     };
     return provideTaskArgs;
+  }
+
+  private async getTransactionChecks(
+    deviceModelId: DeviceModelId,
+  ): Promise<ClearSignContextSuccess | undefined> {
+    if (!this.appConfig.web3ChecksEnabled) {
+      return undefined;
+    }
+    const contexts = await this.contextModule.getContexts(
+      {
+        deviceModelId,
+        data: this.data,
+        from: this.from,
+      },
+      [ClearSignContextType.TRANSACTION_CHECK],
+    );
+    if (
+      contexts.length > 0 &&
+      contexts[0]?.type === ClearSignContextType.TRANSACTION_CHECK
+    ) {
+      return contexts[0] as ClearSignContextSuccess;
+    }
+    return undefined;
   }
 
   private getClearSignVersion(
