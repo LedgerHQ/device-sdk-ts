@@ -1,5 +1,14 @@
 # @ledgerhq/device-transport-kit-react-native-hid
 
+## 1.0.1
+
+### Patch Changes
+
+- [#1092](https://github.com/LedgerHQ/device-sdk-ts/pull/1092) [`563b05a`](https://github.com/LedgerHQ/device-sdk-ts/commit/563b05a3083f1733af01a8715fbfbda48c4b82a1) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Fix scanning & connection issues
+
+- Updated dependencies [[`5fdf5c9`](https://github.com/LedgerHQ/device-sdk-ts/commit/5fdf5c9fcb52c249fecf35bea8db2b451ac3e3fa), [`ebd44c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd44c2690ec578410f69b148179268eeb34db65)]:
+  - @ledgerhq/device-management-kit@0.10.0
+
 ## 1.0.0
 
 ### Patch Changes
