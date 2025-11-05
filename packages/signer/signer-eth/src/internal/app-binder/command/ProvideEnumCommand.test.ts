@@ -10,6 +10,16 @@ import {
 } from "./ProvideEnumCommand";
 
 describe("ProvideEnumCommand", () => {
+  describe("name", () => {
+    it("should be 'provideEnum'", () => {
+      const command = new ProvideEnumCommand({
+        data: new Uint8Array(),
+        isFirstChunk: true,
+      });
+      expect(command.name).toBe("provideEnum");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN

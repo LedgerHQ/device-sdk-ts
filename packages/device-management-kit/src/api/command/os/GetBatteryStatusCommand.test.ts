@@ -35,6 +35,15 @@ const FLAGS_RESPONSE_HEX = Uint8Array.from([
 const FAILED_RESPONSE_HEX = Uint8Array.from([0x67, 0x00]);
 
 describe("GetBatteryStatus", () => {
+  describe("name", () => {
+    it("should be 'getBatteryStatus'", () => {
+      const command = new GetBatteryStatusCommand({
+        statusType: BatteryStatusType.BATTERY_PERCENTAGE,
+      });
+      expect(command.name).toBe("getBatteryStatus");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the GetBatteryStatus APDU", () => {
       expect(

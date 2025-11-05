@@ -31,6 +31,7 @@ export type ProvideEnumCommandArgs = {
 export class ProvideEnumCommand
   implements Command<void, ProvideEnumCommandArgs, EthErrorCodes>
 {
+  readonly name = "provideEnum";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

@@ -46,6 +46,12 @@ describe("GetPubKeyCommand", () => {
     vi.importActual("@ledgerhq/device-management-kit");
   });
 
+  describe("name", () => {
+    it("should be 'getPubKey'", () => {
+      expect(command.name).toBe("getPubKey");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return APDU", () => {
       const apdu = command.getApdu();

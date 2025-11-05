@@ -11,6 +11,17 @@ import {
 } from "./ProvideSafeAccountCommand";
 
 describe("ProvideSafeAccountCommand", () => {
+  describe("name", () => {
+    it("should be 'provideSafeAccount'", () => {
+      const command = new ProvideSafeAccountCommand({
+        data: new Uint8Array(),
+        isFirstChunk: true,
+        type: ProvideSafeAccountCommandType.SAFE_DESCRIPTOR,
+      });
+      expect(command.name).toBe("provideSafeAccount");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk with SAFE_DESCRIPTOR type", () => {
       // GIVEN

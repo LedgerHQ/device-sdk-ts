@@ -45,6 +45,7 @@ export type ProvideSafeAccountCommandArgs = {
 export class ProvideSafeAccountCommand
   implements Command<void, ProvideSafeAccountCommandArgs, EthErrorCodes>
 {
+  readonly name = "provideSafeAccount";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

@@ -27,6 +27,7 @@ export type ProvideWeb3CheckCommandArgs = {
 export class ProvideWeb3CheckCommand
   implements Command<void, ProvideWeb3CheckCommandArgs, EthErrorCodes>
 {
+  readonly name = "provideWeb3Check";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

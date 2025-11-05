@@ -15,6 +15,17 @@ describe("SignOffChainMessageCommand", () => {
   const MESSAGE = new TextEncoder().encode("Solana SignOffChainMessage");
   const SIGNATURE_LENGTH = 64;
 
+  describe("name", () => {
+    it("should be 'signOffChainMessage'", () => {
+      const command = new SignOffChainMessageCommand({
+        chunkedData: MESSAGE,
+        extend: false,
+        more: false,
+      });
+      expect(command.name).toBe("signOffChainMessage");
+    });
+  });
+
   describe("getApdu()", () => {
     it("builds APDU for a single (final) chunk (p2=INIT)", () => {
       const cmd = new SignOffChainMessageCommand({

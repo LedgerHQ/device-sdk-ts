@@ -90,6 +90,15 @@ const DISCARDED_PATH_APDU = Uint8Array.from([
 ]);
 
 describe("SendEIP712FilteringCommand", () => {
+  describe("name", () => {
+    it("should be 'sendEIP712Filtering'", () => {
+      const command = new SendEIP712FilteringCommand({
+        type: Eip712FilterType.Activation,
+      });
+      expect(command.name).toBe("sendEIP712Filtering");
+    });
+  });
+
   describe("getApdu", () => {
     it("Activate APDU", () => {
       // GIVEN

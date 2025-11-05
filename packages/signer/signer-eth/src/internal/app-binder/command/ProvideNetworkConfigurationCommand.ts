@@ -41,6 +41,7 @@ export class ProvideNetworkConfigurationCommand
   implements
     Command<void, ProvideNetworkConfigurationCommandArgs, EthErrorCodes>
 {
+  readonly name = "provideNetworkConfiguration";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

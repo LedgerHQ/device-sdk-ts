@@ -25,6 +25,13 @@ const NFT_INFORMATION_APDU = Uint8Array.from([
 ]);
 
 describe("ProvideNFTInformationCommand", () => {
+  describe("name", () => {
+    it("should be 'provideNFTInformation'", () => {
+      const command = new ProvideNFTInformationCommand({ payload: "" });
+      expect(command.name).toBe("provideNFTInformation");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // GIVEN

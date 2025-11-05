@@ -30,6 +30,7 @@ export type ProvideProxyInfoCommandArgs = {
 export class ProvideProxyInfoCommand
   implements Command<void, ProvideProxyInfoCommandArgs, EthErrorCodes>
 {
+  readonly name = "provideProxyInfo";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

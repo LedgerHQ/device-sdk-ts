@@ -134,6 +134,12 @@ const LIST_APP_RESPONSE_CONTINUE_2_APPS_EXPECTED = [
 describe("ListAppCommand", () => {
   let command: ListAppsCommand;
 
+  describe("name", () => {
+    it("should be 'listApps'", () => {
+      expect(new ListAppsCommand().name).toBe("listApps");
+    });
+  });
+
   describe("first list app command", () => {
     beforeEach(() => {
       command = new ListAppsCommand();

@@ -33,6 +33,7 @@ export const PAYLOAD_LENGTH_BYTES = 2;
 export class ProvideTrustedNameCommand
   implements Command<void, ProvideTrustedNameCommandArgs, EthErrorCodes>
 {
+  readonly name = "provideTrustedName";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,
