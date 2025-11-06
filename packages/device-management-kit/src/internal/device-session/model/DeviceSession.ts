@@ -33,7 +33,6 @@ import { type TransportConnectedDevice } from "@api/transport/model/TransportCon
 import { bufferToHexaString } from "@api/utils/HexaString";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { IntentQueueService } from "@internal/device-session/service/IntentQueueService";
-import { MutexService } from "@internal/device-session/service/MutexService";
 import { RefresherService } from "@internal/device-session/service/RefresherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
@@ -77,7 +76,6 @@ export class DeviceSession {
   private _deviceSessionRefresher: DeviceSessionRefresher;
   private readonly _refresherService: RefresherService;
   private readonly _intentQueueService: IntentQueueService;
-  private _commandMutex = new MutexService();
   private _sessionEventDispatcher = new DeviceSessionEventDispatcher();
 
   constructor(
@@ -203,43 +201,37 @@ export class DeviceSession {
       triggersDisconnection: false,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
-    const release = await this._commandMutex.lock();
+    this._sessionEventDispatcher.dispatch({
+      eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
+    });
 
-    try {
-      this._sessionEventDispatcher.dispatch({
-        eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
-      });
+    this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
+    const result = await this._connectedDevice.sendApdu(
+      rawApdu,
+      options.triggersDisconnection,
+    );
 
-      this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
-      const result = await this._connectedDevice.sendApdu(
-        rawApdu,
-        options.triggersDisconnection,
-      );
-
-      result
-        .ifRight((response: ApduResponse) => {
-          this._logger.debug(
-            `[exchange] <= ${bufferToHexaString(response.data, false)}${bufferToHexaString(response.statusCode, false)}`,
-          );
-          if (CommandUtils.isLockedDeviceResponse(response)) {
-            this._sessionEventDispatcher.dispatch({
-              eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
-            });
-          } else {
-            this._sessionEventDispatcher.dispatch({
-              eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
-            });
-          }
-        })
-        .ifLeft(() => {
+    result
+      .ifRight((response: ApduResponse) => {
+        this._logger.debug(
+          `[exchange] <= ${bufferToHexaString(response.data, false)}${bufferToHexaString(response.statusCode, false)}`,
+        );
+        if (CommandUtils.isLockedDeviceResponse(response)) {
+          this._sessionEventDispatcher.dispatch({
+            eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
+          });
+        } else {
           this._sessionEventDispatcher.dispatch({
             eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
           });
+        }
+      })
+      .ifLeft(() => {
+        this._sessionEventDispatcher.dispatch({
+          eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
         });
-      return result;
-    } finally {
-      release();
-    }
+      });
+    return result;
   }
 
   public sendCommand<Response, Args, ErrorStatusCodes>(
