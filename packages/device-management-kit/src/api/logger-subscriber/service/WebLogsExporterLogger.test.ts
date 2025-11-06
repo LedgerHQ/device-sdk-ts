@@ -1,7 +1,7 @@
 import { deviceModelStubBuilder } from "@api/device-model/model/DeviceModel.stub";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
-import { DeviceSession } from "@internal/device-session/model/DeviceSession";
+import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
@@ -31,7 +31,7 @@ describe("getJSONStringifyReplacer", () => {
       transport: "USB",
     };
 
-    const value = new DeviceSession(
+    const value = deviceSessionStubBuilder(
       {
         connectedDevice,
         id: "mockedSessionId",
