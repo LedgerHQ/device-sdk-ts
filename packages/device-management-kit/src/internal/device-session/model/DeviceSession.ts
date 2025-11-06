@@ -1,5 +1,11 @@
 import { type Either } from "purify-ts";
-import { BehaviorSubject, type Observable } from "rxjs";
+import {
+  BehaviorSubject,
+  from,
+  lastValueFrom,
+  type Observable,
+  timeout,
+} from "rxjs";
 import { v4 as uuidv4 } from "uuid";
 
 import { type Command } from "@api/command/Command";
@@ -18,10 +24,15 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type DmkError } from "@api/Error";
-import { bufferToHexaString } from "@api/index";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import {
+  SendApduTimeoutError,
+  SendCommandTimeoutError,
+} from "@api/transport/model/Errors";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+import { bufferToHexaString } from "@api/utils/HexaString";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
+import { IntentQueueService } from "@internal/device-session/service/IntentQueueService";
 import { MutexService } from "@internal/device-session/service/MutexService";
 import { RefresherService } from "@internal/device-session/service/RefresherService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -65,6 +76,7 @@ export class DeviceSession {
   private _pinger: DevicePinger;
   private _deviceSessionRefresher: DeviceSessionRefresher;
   private readonly _refresherService: RefresherService;
+  private readonly _intentQueueService: IntentQueueService;
   private _commandMutex = new MutexService();
   private _sessionEventDispatcher = new DeviceSessionEventDispatcher();
 
@@ -74,10 +86,14 @@ export class DeviceSession {
     managerApiService: ManagerApiService,
     secureChannelService: SecureChannelService,
     deviceSessionRefresherOptions: DeviceSessionRefresherOptions | undefined,
+    intentQueueService: IntentQueueService = new IntentQueueService(
+      loggerModuleFactory,
+    ),
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
     this._logger = loggerModuleFactory("device-session");
+    this._intentQueueService = intentQueueService;
     this._managerApiService = managerApiService;
     this._secureChannelService = secureChannelService;
     this._refresherOptions = {
@@ -151,12 +167,40 @@ export class DeviceSession {
     this._deviceState.next(state);
   }
 
-  public async sendApdu(
+  public sendApdu(
     rawApdu: Uint8Array,
     options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
       abortTimeout: undefined,
+    },
+  ): Promise<Either<DmkError, ApduResponse>> {
+    const abortTimeout = options.abortTimeout;
+    const { observable, cancel } = this._intentQueueService.enqueue({
+      type: "send-apdu",
+      execute: () => from(this._internalSendApdu(rawApdu, options)),
+    });
+
+    const timeoutObservable = abortTimeout
+      ? observable.pipe(
+          timeout({
+            each: abortTimeout,
+            with: () => {
+              cancel();
+              throw new SendApduTimeoutError();
+            },
+          }),
+        )
+      : observable;
+
+    return lastValueFrom(timeoutObservable);
+  }
+
+  private async _internalSendApdu(
+    rawApdu: Uint8Array,
+    options: Omit<SendApduOptions, "abortTimeout"> = {
+      isPolling: false,
+      triggersDisconnection: false,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
     const release = await this._commandMutex.lock();
@@ -170,7 +214,6 @@ export class DeviceSession {
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
-        options.abortTimeout,
       );
 
       result
@@ -199,17 +242,39 @@ export class DeviceSession {
     }
   }
 
-  public async sendCommand<Response, Args, ErrorStatusCodes>(
+  public sendCommand<Response, Args, ErrorStatusCodes>(
     command: Command<Response, Args, ErrorStatusCodes>,
     abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     this._logger.debug(`[sendCommand] ${command.name}`);
+    const { observable, cancel } = this._intentQueueService.enqueue({
+      type: "send-command",
+      execute: () => from(this._internalSendCommand(command)),
+    });
+
+    const timeoutObservable = abortTimeout
+      ? observable.pipe(
+          timeout({
+            each: abortTimeout,
+            with: () => {
+              cancel();
+              throw new SendCommandTimeoutError();
+            },
+          }),
+        )
+      : observable;
+
+    return lastValueFrom(timeoutObservable);
+  }
+
+  private async _internalSendCommand<Response, Args, ErrorStatusCodes>(
+    command: Command<Response, Args, ErrorStatusCodes>,
+  ): Promise<CommandResult<Response, ErrorStatusCodes>> {
     const apdu = command.getApdu();
 
-    const response = await this.sendApdu(apdu.getRawApdu(), {
+    const response = await this._internalSendApdu(apdu.getRawApdu(), {
       isPolling: false,
       triggersDisconnection: command.triggersDisconnection ?? false,
-      abortTimeout,
     });
 
     return response.caseOf({
@@ -236,25 +301,35 @@ export class DeviceSession {
   >(
     deviceAction: DeviceAction<Output, Input, E, IntermediateValue>,
   ): ExecuteDeviceActionReturnType<Output, E, IntermediateValue> {
-    const { observable, cancel } = deviceAction._execute({
-      sendApdu: async (apdu: Uint8Array) => this.sendApdu(apdu),
-      sendCommand: async <Response, ErrorStatusCodes, Args>(
-        command: Command<Response, ErrorStatusCodes, Args>,
-        abortTimeout?: number,
-      ) => this.sendCommand(command, abortTimeout),
-      getDeviceModel: () => this._connectedDevice.deviceModel,
-      getDeviceSessionState: () => this._deviceState.getValue(),
-      getDeviceSessionStateObservable: () => this.state,
-      setDeviceSessionState: (state: DeviceSessionState) => {
-        this.setDeviceSessionState(state);
-        return this._deviceState.getValue();
+    const { observable: o, cancel: c } = this._intentQueueService.enqueue({
+      type: "device-action",
+      execute: () => {
+        const { observable } = deviceAction._execute({
+          sendApdu: async (apdu: Uint8Array) => this._internalSendApdu(apdu), // note: there is no timeout handled at this stage
+          sendCommand: async <Response, ErrorStatusCodes, Args>(
+            command: Command<Response, ErrorStatusCodes, Args>,
+          ) => this._internalSendCommand(command), // note: there is no timeout handled at this stage
+          getDeviceModel: () => this._connectedDevice.deviceModel,
+          getDeviceSessionState: () => this._deviceState.getValue(),
+          getDeviceSessionStateObservable: () => this.state,
+          setDeviceSessionState: (state: DeviceSessionState) => {
+            this.setDeviceSessionState(state);
+            return this._deviceState.getValue();
+          },
+          disableRefresher: (blockerId: string) =>
+            this._refresherService.disableRefresher(blockerId),
+          getManagerApiService: () => this._managerApiService,
+          getSecureChannelService: () => this._secureChannelService,
+        });
+        // The queue service will handle the subscription lifecycle
+        return observable;
       },
-      disableRefresher: (blockerId: string) =>
-        this._refresherService.disableRefresher(blockerId),
-      getManagerApiService: () => this._managerApiService,
-      getSecureChannelService: () => this._secureChannelService,
     });
-    return { observable, cancel };
+
+    return {
+      observable: o,
+      cancel: c,
+    };
   }
 
   public close(): void {
