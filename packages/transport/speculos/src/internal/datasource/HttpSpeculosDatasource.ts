@@ -4,32 +4,17 @@ import PACKAGE from "@root/package.json";
 
 import { type SpeculosDatasource } from "./SpeculosDatasource";
 
-const TIMEOUT = 10000; // 10 second timeout for availability check
+const TIMEOUT = 2000; // 2 second timeout for availability check
 
 const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
 
-export function makeNoKeepAliveAxios(
-  baseUrl: string,
-  timeoutMs: number,
-  clientHeader: string,
-): AxiosInstance {
-  return axios.create({
-    baseURL: removeTrailingSlashes(baseUrl),
-    timeout: timeoutMs,
-    headers: {
-      "X-Ledger-Client-Version": clientHeader,
-    },
-    transitional: { clarifyTimeoutError: true },
-  });
-}
-
-export function makeKeepAliveAxiosForSSE(
+export function axiosClientFactory(
   baseUrl: string,
   clientHeader: string,
 ): AxiosInstance {
   return axios.create({
     baseURL: removeTrailingSlashes(baseUrl),
-    timeout: 0, // no timeout for SSE
+    timeout: 0,
     headers: {
       "X-Ledger-Client-Version": clientHeader,
     },
@@ -38,32 +23,28 @@ export function makeKeepAliveAxiosForSSE(
 }
 
 export class HttpSpeculosDatasource implements SpeculosDatasource {
-  private readonly apduClient: AxiosInstance;
-  private readonly sseClient: AxiosInstance | null = null;
+  private readonly speculosAxiosClient: AxiosInstance;
 
   constructor(
     private readonly baseUrl: string,
-    private readonly _isE2E: boolean = false,
     clientHeader: string = `ldmk-transport-speculos/${PACKAGE.version}`,
   ) {
-    this.apduClient = makeNoKeepAliveAxios(baseUrl, TIMEOUT, clientHeader);
-    if (this._isE2E) {
-      this.sseClient = makeKeepAliveAxiosForSSE(baseUrl, clientHeader);
-    }
+    this.speculosAxiosClient = axiosClientFactory(baseUrl, clientHeader);
   }
 
   async postApdu(apdu: string): Promise<string> {
-    const { data } = await this.apduClient.post<SpeculosApduDTO>(
+    const { data } = await this.speculosAxiosClient.post<SpeculosApduDTO>(
       "/apdu",
-      { data: apdu },
-      { timeout: TIMEOUT },
+      {
+        data: apdu,
+      },
     );
     return data.data;
   }
 
   async isServerAvailable(): Promise<boolean> {
     try {
-      await this.apduClient.request<SpeculosEventsDTO>({
+      await this.speculosAxiosClient.request<SpeculosEventsDTO>({
         method: "GET",
         url: "/events",
         timeout: TIMEOUT,
@@ -87,11 +68,8 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
     if (typeof fetch === "undefined") {
       throw new Error("global fetch is not available in Node < 18");
     }
-    if (!this.sseClient) {
-      throw new Error("SSE not supported unless in E2E mode");
-    }
 
-    const urlBase = this.sseClient.defaults.baseURL ?? this.baseUrl;
+    const urlBase = this.speculosAxiosClient.defaults.baseURL ?? this.baseUrl;
     const url = `${removeTrailingSlashes(urlBase)}/events?stream=true`;
 
     const controller = new AbortController();
@@ -100,7 +78,7 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
       Accept: "text/event-stream",
       "Cache-Control": "no-cache",
       "X-Ledger-Client-Version":
-        (this.sseClient.defaults.headers?.common?.[
+        (this.speculosAxiosClient.defaults.headers?.common?.[
           "X-Ledger-Client-Version"
         ] as string) ?? "ldmk-transport-speculos",
     };
