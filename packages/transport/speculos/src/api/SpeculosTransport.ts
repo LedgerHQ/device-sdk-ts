@@ -59,10 +59,7 @@ export class SpeculosTransport implements Transport {
   ) {
     this._isE2E = isE2E ?? false;
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = new HttpSpeculosDatasource(
-      speculosUrl,
-      this._isE2E,
-    ); // See how to pass properly speculos config.
+    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl); // See how to pass properly speculos config.
   }
 
   isSupported(): boolean {
