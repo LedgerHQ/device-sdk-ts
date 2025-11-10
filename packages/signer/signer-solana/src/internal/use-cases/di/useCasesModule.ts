@@ -5,6 +5,7 @@ import { GetAppConfigurationUseCase } from "@internal/use-cases/app-configuratio
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 import { GenerateTransactionUseCase } from "@internal/use-cases/generateTransaction/GenerateTransactionUseCase";
 import { SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
+import { SwapTransactionSignerUseCase } from "@internal/use-cases/swap-transaction-signer/SwapTransactionSignerUseCase";
 import { SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
 
 export const useCasesModuleFactory = () =>
@@ -17,5 +18,8 @@ export const useCasesModuleFactory = () =>
     bind(useCasesTypes.SignMessageUseCase).to(SignMessageUseCase);
     bind(useCasesTypes.GenerateTransactionUseCase).to(
       GenerateTransactionUseCase,
+    );
+    bind(useCasesTypes.SwapTransactionSignerUseCase).to(
+      SwapTransactionSignerUseCase,
     );
   });
