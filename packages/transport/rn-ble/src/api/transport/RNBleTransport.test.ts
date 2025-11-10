@@ -1103,6 +1103,7 @@ describe("RNBleTransport", () => {
             transport: "RN_BLE",
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             sendApdu: expect.any(Function),
+            name: "name",
           }),
         ),
       );
