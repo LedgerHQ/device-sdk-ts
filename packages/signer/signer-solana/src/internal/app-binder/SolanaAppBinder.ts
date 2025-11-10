@@ -13,6 +13,7 @@ import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTy
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { SwapTransactionSignerDAReturnType } from "@api/app-binder/SwapTransactionSignerDeviceActionTypes";
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
@@ -22,6 +23,7 @@ import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
+import { SwapTransactionSignerDeviceAction } from "./device-action/SwapTransactionSignerDeviceAction";
 
 @injectable()
 export class SolanaAppBinder {
@@ -78,6 +80,24 @@ export class SolanaAppBinder {
       deviceAction: new GenerateTransactionDeviceAction({
         input: {
           derivationPath: args.derivationPath,
+          skipOpenApp: args.skipOpenApp,
+          contextModule: this.contextModule,
+        },
+      }),
+    });
+  }
+
+  SwapTransactionSigner(args: {
+    derivationPath: string;
+    serialisedTransaction: string;
+    skipOpenApp: boolean;
+  }): SwapTransactionSignerDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SwapTransactionSignerDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          serialisedTransaction: args.serialisedTransaction,
           skipOpenApp: args.skipOpenApp,
           contextModule: this.contextModule,
         },

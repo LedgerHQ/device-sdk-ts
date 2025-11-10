@@ -119,6 +119,7 @@ export { TransportConnectedDevice } from "@api/transport/model/TransportConnecte
 export { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 export * from "@api/types";
 export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
+export { bufferToBase64String } from "@api/utils/BufferToBase64String";
 export {
   bufferToHexaString,
   hexaStringToBuffer,

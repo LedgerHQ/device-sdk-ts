@@ -23,6 +23,11 @@ import {
   type SignTransactionDAOutput,
   SolanaToolsBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
+import {
+  type SwapTransactionSignerDAError,
+  type SwapTransactionSignerDAIntermediateValue,
+  type SwapTransactionSignerDAOutput,
+} from "@ledgerhq/device-signer-kit-solana/api/app-binder/SwapTransactionSignerDeviceActionTypes.js";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -82,7 +87,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAddressDAIntermediateValue
       >,
       {
-        title: "Sign Transaction",
+        title: "Sign transaction",
         description:
           "Perform all the actions necessary to sign a Solana transaction with the device",
         executeDeviceAction: ({ derivationPath, transaction }) => {
@@ -146,7 +151,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAppConfigurationDAIntermediateValue
       >,
       {
-        title: "Generate Transaction",
+        title: "Generate transaction",
         description:
           "Perform all the actions necessary to generate a transaction to test the Solana signer",
         executeDeviceAction: ({ derivationPath }) => {
@@ -165,6 +170,32 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         },
         GenerateTransactionDAError,
         GenerateTransactionDAIntermediateValue
+      >,
+      {
+        title: "Swap transaction signer",
+        description:
+          "Perform all the actions necessary to swap a transaction signer",
+        executeDeviceAction: ({ derivationPath, serialisedTransaction }) => {
+          return solanaTools.swapTransactionSigner(
+            derivationPath,
+            serialisedTransaction,
+          );
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          serialisedTransaction: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SwapTransactionSignerDAOutput,
+        {
+          derivationPath: string;
+          serialisedTransaction: string;
+          skipOpenApp: boolean;
+        },
+        SwapTransactionSignerDAError,
+        SwapTransactionSignerDAIntermediateValue
       >,
     ],
     [deviceModelId, solanaTools, signer],
