@@ -19,16 +19,17 @@ export class ConnectedDevice {
   constructor({
     transportConnectedDevice: {
       id,
-      deviceModel: { id: deviceModelId, productName: deviceName },
+      deviceModel: { id: deviceModelId, productName },
       type,
       transport,
+      name,
     },
     sessionId,
   }: ConnectedDeviceConstructorArgs) {
     this.id = id;
     this.sessionId = sessionId;
     this.modelId = deviceModelId;
-    this.name = deviceName;
+    this.name = name ?? productName;
     this.type = type;
     this.transport = transport;
   }
