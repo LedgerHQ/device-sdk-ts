@@ -10,6 +10,7 @@ export enum SessionEvents {
   DEVICE_STATE_UPDATE_BUSY = "DEVICE_STATE_UPDATE_BUSY",
   DEVICE_STATE_UPDATE_LOCKED = "DEVICE_STATE_UPDATE_LOCKED",
   DEVICE_STATE_UPDATE_CONNECTED = "DEVICE_STATE_UPDATE_CONNECTED",
+  DEVICE_STATE_UPDATE_UNKNOWN = "DEVICE_STATE_UPDATE_UNKNOWN",
 }
 
 interface SessionEventPayloads {
@@ -18,6 +19,7 @@ interface SessionEventPayloads {
   [SessionEvents.DEVICE_STATE_UPDATE_BUSY]: undefined;
   [SessionEvents.DEVICE_STATE_UPDATE_LOCKED]: undefined;
   [SessionEvents.DEVICE_STATE_UPDATE_CONNECTED]: undefined;
+  [SessionEvents.DEVICE_STATE_UPDATE_UNKNOWN]: undefined;
   [SessionEvents.COMMAND_SUCCEEDED]: CommandResult<GetAppAndVersionResponse>;
 }
 

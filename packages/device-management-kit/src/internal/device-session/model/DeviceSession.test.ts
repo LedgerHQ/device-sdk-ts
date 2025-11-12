@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Left, Right } from "purify-ts";
 import { of, Subject, throwError } from "rxjs";
-import { delay } from "rxjs/operators";
+import { delay, take } from "rxjs/operators";
 import { type Mocked } from "vitest";
 
 import { type Command } from "@api/command/Command";
@@ -33,6 +33,7 @@ describe("DeviceSession", () => {
   let mockManagerApi: Mocked<ManagerApiService>;
   let mockSecureChannel: Mocked<SecureChannelService>;
   let mockIntentQueueService: Mocked<IntentQueueService>;
+  let mockIntentQueueServiceFactory: () => IntentQueueService;
   let refresherOptions: DeviceSessionRefresherOptions;
   const mockConnectedDevice = connectedDeviceStubBuilder();
 
@@ -66,12 +67,15 @@ describe("DeviceSession", () => {
       }),
     } as unknown as Mocked<IntentQueueService>;
 
+    mockIntentQueueServiceFactory = () => mockIntentQueueService;
+
     refresherOptions = {
       isRefresherDisabled: true,
     };
   });
 
   afterEach(() => {
+    deviceSession?.close();
     vi.restoreAllMocks();
   });
 
@@ -84,7 +88,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
 
       // then
@@ -104,7 +108,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
 
       // then
@@ -113,57 +117,27 @@ describe("DeviceSession", () => {
   });
 
   describe("initialiseSession", () => {
-    it("should successfully initialize session", async () => {
+    it("should successfully initialize session", () => {
       // given
-      const mockObservable = of({
-        status: "success",
-        data: { name: "Dashboard", version: "1.0.0" },
-      }).pipe(delay(1));
-
-      mockIntentQueueService.enqueue.mockReturnValue({
-        observable: mockObservable,
-        cancel: vi.fn(),
-      });
-
       deviceSession = new DeviceSession(
         { connectedDevice: mockConnectedDevice },
         mockLoggerFactory,
         mockManagerApi,
         mockSecureChannel,
-        refresherOptions,
-        mockIntentQueueService,
+        { isRefresherDisabled: false, pollingInterval: 1000 },
+        mockIntentQueueServiceFactory,
+      );
+
+      const mockRefresherStartSpy = vi.spyOn(
+        deviceSession["_deviceSessionRefresher"],
+        "startRefresher",
       );
 
       // when
-      await deviceSession.initialiseSession();
+      deviceSession.initialiseSession();
 
       // then
-      expect(mockIntentQueueService.enqueue).toHaveBeenCalled();
-    });
-
-    it("should throw error if initialization fails", async () => {
-      // given
-      const error = new Error("Initialization failed");
-      const mockObservable = throwError(() => error);
-
-      mockIntentQueueService.enqueue.mockReturnValue({
-        observable: mockObservable,
-        cancel: vi.fn(),
-      });
-
-      deviceSession = new DeviceSession(
-        { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
-        mockManagerApi,
-        mockSecureChannel,
-        refresherOptions,
-        mockIntentQueueService,
-      );
-
-      // when/then
-      await expect(deviceSession.initialiseSession()).rejects.toThrow(
-        "Initialization failed",
-      );
+      expect(mockRefresherStartSpy).toHaveBeenCalled();
     });
   });
 
@@ -175,7 +149,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
     });
 
@@ -191,7 +165,7 @@ describe("DeviceSession", () => {
       const stateObservable = deviceSession.state;
 
       await new Promise<void>((resolve) => {
-        stateObservable.subscribe((state) => {
+        stateObservable.pipe(take(1)).subscribe((state) => {
           expect(state.sessionStateType).toBe(DeviceSessionStateType.Connected);
           expect(state.deviceStatus).toBe(DeviceStatus.CONNECTED);
           resolve();
@@ -208,7 +182,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
     });
 
@@ -234,7 +208,8 @@ describe("DeviceSession", () => {
 
       // when
       await new Promise<void>((resolve) => {
-        deviceSession.state.subscribe((state) => {
+        let subscriptionStarted = false;
+        const subscription = deviceSession.state.subscribe((state) => {
           if (
             state.sessionStateType ===
             DeviceSessionStateType.ReadyWithoutSecureChannel
@@ -245,7 +220,10 @@ describe("DeviceSession", () => {
               deviceStatus: DeviceStatus.LOCKED,
               deviceModelId: mockConnectedDevice.deviceModel.id,
             });
+            subscription.unsubscribe();
             resolve();
+          } else if (!subscriptionStarted) {
+            subscriptionStarted = true;
           }
         });
 
@@ -271,7 +249,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
     });
 
@@ -377,7 +355,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
     });
 
@@ -486,7 +464,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
     });
 
@@ -560,7 +538,6 @@ describe("DeviceSession", () => {
         getDeviceSessionState: expect.any(Function),
         getDeviceSessionStateObservable: expect.any(Function),
         setDeviceSessionState: expect.any(Function),
-        disableRefresher: expect.any(Function),
         getManagerApiService: expect.any(Function),
         getSecureChannelService: expect.any(Function),
       });
@@ -594,7 +571,7 @@ describe("DeviceSession", () => {
         mockManagerApi,
         mockSecureChannel,
         refresherOptions,
-        mockIntentQueueService,
+        mockIntentQueueServiceFactory,
       );
 
       let isComplete = false;
@@ -611,62 +588,6 @@ describe("DeviceSession", () => {
       const state = deviceSession.getDeviceSessionState();
       expect(state.deviceStatus).toBe(DeviceStatus.NOT_CONNECTED);
       expect(isComplete).toBe(true);
-    });
-  });
-
-  describe("disableRefresher", () => {
-    beforeEach(() => {
-      // Use proper mock for refresher tests
-      const mockCommandResult = {
-        status: "success",
-        data: { name: "Dashboard", version: "1.0.0" },
-      };
-
-      mockIntentQueueService.enqueue.mockReturnValue({
-        observable: of(mockCommandResult).pipe(delay(1)),
-        cancel: vi.fn(),
-      });
-
-      deviceSession = new DeviceSession(
-        { connectedDevice: mockConnectedDevice },
-        mockLoggerFactory,
-        mockManagerApi,
-        mockSecureChannel,
-        { isRefresherDisabled: false, pollingInterval: 1000 },
-        mockIntentQueueService,
-      );
-    });
-
-    afterEach(() => {
-      // Clean up refresher
-      if (deviceSession) {
-        deviceSession.close();
-      }
-    });
-
-    it("should return a function to re-enable refresher", () => {
-      // when
-      const enableRefresher = deviceSession.disableRefresher("test-blocker-id");
-
-      // then
-      expect(enableRefresher).toBeInstanceOf(Function);
-
-      // Should be able to call the enable function
-      enableRefresher();
-    });
-
-    it("should handle multiple refresher blockers", () => {
-      // when
-      const enable1 = deviceSession.disableRefresher("blocker-1");
-      const enable2 = deviceSession.disableRefresher("blocker-2");
-
-      // then
-      expect(enable1).toBeInstanceOf(Function);
-      expect(enable2).toBeInstanceOf(Function);
-
-      // Both should be callable
-      enable1();
-      enable2();
     });
   });
 });
