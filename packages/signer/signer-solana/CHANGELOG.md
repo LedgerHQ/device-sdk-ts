@@ -1,5 +1,18 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.4.1
+
+### Minor Changes
+
+- [#1107](https://github.com/LedgerHQ/device-sdk-ts/pull/1107) [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add name attribute to all command objects
+
+### Patch Changes
+
+- [#1070](https://github.com/LedgerHQ/device-sdk-ts/pull/1070) [`2b17ba8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2b17ba859b26af3dea824d7a737095f85c4a503d) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Improve tests to not depend on specific context module changes
+
+- Updated dependencies [[`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4), [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9)]:
+  - @ledgerhq/device-management-kit@0.11.0
+
 ## 1.4.0
 
 ### Minor Changes

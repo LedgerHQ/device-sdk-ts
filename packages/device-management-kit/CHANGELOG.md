@@ -1,5 +1,13 @@
 # @ledgerhq/device-management-kit
 
+## 0.11.0
+
+### Minor Changes
+
+- [#1116](https://github.com/LedgerHQ/device-sdk-ts/pull/1116) [`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Use BLE advertised name as connected device name
+
+- [#1107](https://github.com/LedgerHQ/device-sdk-ts/pull/1107) [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add name attribute to all command objects and add logs in send command
+
 ## 0.10.0
 
 ### Minor Changes

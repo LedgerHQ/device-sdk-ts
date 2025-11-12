@@ -1,5 +1,16 @@
 # @ledgerhq/device-transport-kit-web-ble
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1116](https://github.com/LedgerHQ/device-sdk-ts/pull/1116) [`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Use BLE advertised name as connected device name
+
+### Patch Changes
+
+- Updated dependencies [[`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4), [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9)]:
+  - @ledgerhq/device-management-kit@0.11.0
+
 ## 1.2.0
 
 ### Minor Changes
