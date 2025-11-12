@@ -84,15 +84,18 @@ export class DeviceSession {
     managerApiService: ManagerApiService,
     secureChannelService: SecureChannelService,
     deviceSessionRefresherOptions: DeviceSessionRefresherOptions | undefined,
-    intentQueueService: IntentQueueService = new IntentQueueService(
-      loggerModuleFactory,
-    ),
+    intentQueueServiceFactory: (
+      sessionEventDispatcher: DeviceSessionEventDispatcher,
+    ) => IntentQueueService = (sessionEventDispatcher) =>
+      new IntentQueueService(loggerModuleFactory, sessionEventDispatcher),
   ) {
     this._id = id;
     this._connectedDevice = connectedDevice;
     this._logger = loggerModuleFactory("device-session");
-    this._intentQueueService = intentQueueService;
     this._managerApiService = managerApiService;
+    this._intentQueueService = intentQueueServiceFactory(
+      this._sessionEventDispatcher,
+    );
     this._secureChannelService = secureChannelService;
     this._refresherOptions = {
       ...DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
@@ -132,16 +135,13 @@ export class DeviceSession {
 
   public async initialiseSession(): Promise<void> {
     try {
-      await this._pinger.ping();
+      if (this._refresherOptions.isRefresherDisabled) await this._pinger.ping();
+      else this._deviceSessionRefresher.startRefresher();
     } catch (error) {
       this._logger.error("Error while initialising session", {
         data: { error },
       });
       throw error;
-    } finally {
-      if (!this._refresherOptions.isRefresherDisabled) {
-        this._deviceSessionRefresher.startRefresher();
-      }
     }
   }
 
@@ -201,10 +201,6 @@ export class DeviceSession {
       triggersDisconnection: false,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
-    this._sessionEventDispatcher.dispatch({
-      eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
-    });
-
     this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
     const result = await this._connectedDevice.sendApdu(
       rawApdu,
@@ -228,7 +224,7 @@ export class DeviceSession {
       })
       .ifLeft(() => {
         this._sessionEventDispatcher.dispatch({
-          eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
+          eventName: SessionEvents.DEVICE_STATE_UPDATE_UNKNOWN,
         });
       });
     return result;
@@ -308,8 +304,6 @@ export class DeviceSession {
             this.setDeviceSessionState(state);
             return this._deviceState.getValue();
           },
-          disableRefresher: (blockerId: string) =>
-            this._refresherService.disableRefresher(blockerId),
           getManagerApiService: () => this._managerApiService,
           getSecureChannelService: () => this._secureChannelService,
         });
@@ -328,6 +322,7 @@ export class DeviceSession {
     this._updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
     this._deviceSessionRefresher.stopRefresher();
+    this._pinger.unsubscribe();
   }
 
   public disableRefresher(id: string): () => void {

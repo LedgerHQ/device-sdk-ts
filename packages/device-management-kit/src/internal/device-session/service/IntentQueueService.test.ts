@@ -2,18 +2,24 @@ import { of, Subject, throwError } from "rxjs";
 import { delay } from "rxjs/operators";
 
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { type DeviceSessionEventDispatcher } from "@internal/device-session/model/DeviceSessionEventDispatcher";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
 
 import { type Intent, IntentQueueService } from "./IntentQueueService";
 
 let service: IntentQueueService;
 let logger: LoggerPublisherService;
+let mockSessionEventDispatcher: DeviceSessionEventDispatcher;
 
 describe("IntentQueueService", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "intent-queue-service");
     const loggerFactory = () => logger;
-    service = new IntentQueueService(loggerFactory);
+    mockSessionEventDispatcher = {
+      listen: () => of(undefined).pipe(delay(1)),
+      dispatch: vi.fn(),
+    } as unknown as DeviceSessionEventDispatcher;
+    service = new IntentQueueService(loggerFactory, mockSessionEventDispatcher);
   });
 
   it("should enqueue an observable and emit each value", async () => {

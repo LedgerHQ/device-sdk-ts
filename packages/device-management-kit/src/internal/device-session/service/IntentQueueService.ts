@@ -1,5 +1,9 @@
 import { finalize, type Observable, Subject, type Subscription } from "rxjs";
 
+import {
+  type DeviceSessionEventDispatcher,
+  SessionEvents,
+} from "@internal/device-session/model/DeviceSessionEventDispatcher";
 import { type LoggerPublisherService } from "@root/src";
 
 export type IntentType = "device-action" | "send-apdu" | "send-command";
@@ -90,6 +94,7 @@ export class IntentQueueService {
     private readonly loggerModuleFactory: (
       tag: string,
     ) => LoggerPublisherService,
+    private readonly sessionEventDispatcher: DeviceSessionEventDispatcher,
   ) {
     this._logger = this.loggerModuleFactory("IntentQueueService");
   }
@@ -154,9 +159,20 @@ export class IntentQueueService {
    */
   private _processQueue(): void {
     // If already processing or queue is empty, do nothing
-    if (this._isProcessing || this._queue.length === 0) {
+    if (this._isProcessing) {
       return;
     }
+
+    if (this._queue.length === 0) {
+      this.sessionEventDispatcher.dispatch({
+        eventName: SessionEvents.NEW_STATE,
+      });
+      return;
+    }
+
+    this.sessionEventDispatcher.dispatch({
+      eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
+    });
 
     this._isProcessing = true;
 
