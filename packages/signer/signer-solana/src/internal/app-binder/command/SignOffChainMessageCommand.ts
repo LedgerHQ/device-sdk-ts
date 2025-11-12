@@ -30,6 +30,7 @@ export class SignOffChainMessageCommand
   implements
     Command<SignOffChainRawResponse, ChunkableCommandArgs, SolanaAppErrorCodes>
 {
+  readonly name = "signOffChainMessage";
   constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {

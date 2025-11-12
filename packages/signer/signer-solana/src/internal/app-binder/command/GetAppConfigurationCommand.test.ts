@@ -37,6 +37,12 @@ describe("GetAppConfigurationCommand", () => {
     vi.importActual("@ledgerhq/device-management-kit");
   });
 
+  describe("name", () => {
+    it("should be 'getAppConfiguration'", () => {
+      expect(command.name).toBe("getAppConfiguration");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the correct APDU", () => {
       const apdu = command.getApdu();

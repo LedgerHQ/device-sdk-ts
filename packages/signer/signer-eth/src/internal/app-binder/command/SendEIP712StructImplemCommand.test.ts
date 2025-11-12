@@ -24,6 +24,16 @@ const FIELD_OTHER_CHUNK_APDU = Uint8Array.from([
 ]);
 
 describe("SendEIP712StructImplemCommand", () => {
+  describe("name", () => {
+    it("should be 'sendEIP712StructImplem'", () => {
+      const command = new SendEIP712StructImplemCommand({
+        type: StructImplemType.ROOT,
+        value: "test",
+      });
+      expect(command.name).toBe("sendEIP712StructImplem");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the correct APDU for ROOT", () => {
       // GIVEN

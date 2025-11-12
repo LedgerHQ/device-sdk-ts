@@ -20,6 +20,13 @@ describe("ParseBlockSignatureCommand", () => {
     signature: DUMMY_SIGNATURE,
   });
 
+  describe("name", () => {
+    it("should be 'parseBlockSignature'", () => {
+      const cmd = new ParseBlockSignatureCommand(makeArgs());
+      expect(cmd.name).toBe("parseBlockSignature");
+    });
+  });
+
   describe("getApdu()", () => {
     it("builds correct APDU for signature chunk", () => {
       // given

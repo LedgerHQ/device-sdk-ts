@@ -15,6 +15,13 @@ import {
 const SIG_AND_KEY = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 
 describe("SignBlockSignatureCommand", () => {
+  describe("name", () => {
+    it("should be 'signBlockSignature'", () => {
+      const cmd = new SignBlockSignatureCommand();
+      expect(cmd.name).toBe("signBlockSignature");
+    });
+  });
+
   describe("getApdu()", () => {
     it("should build the correct APDU for finalize-signature", () => {
       const cmd = new SignBlockSignatureCommand();

@@ -6,6 +6,16 @@ import {
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 
 describe("ProvideWeb3CheckCommand", () => {
+  describe("name", () => {
+    it("should be 'provideWeb3Check'", () => {
+      const command = new ProvideWeb3CheckCommand({
+        payload: new Uint8Array(),
+        isFirstChunk: true,
+      });
+      expect(command.name).toBe("provideWeb3Check");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // GIVEN

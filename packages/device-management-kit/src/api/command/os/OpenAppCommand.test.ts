@@ -10,6 +10,13 @@ import {
 
 describe("OpenAppCommand", () => {
   const appName = "MyApp";
+
+  describe("name", () => {
+    it("should be 'openApp'", () => {
+      expect(new OpenAppCommand({ appName }).name).toBe("openApp");
+    });
+  });
+
   it("should return the correct APDU for opening an application", () => {
     const expectedApdu = Uint8Array.from([
       0xe0, 0xd8, 0x00, 0x00, 0x05, 0x4d, 0x79, 0x41, 0x70, 0x70,

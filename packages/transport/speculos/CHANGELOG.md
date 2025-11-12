@@ -1,5 +1,14 @@
 # @ledgerhq/device-transport-kit-speculos
 
+## 1.1.1
+
+### Patch Changes
+
+- [#1112](https://github.com/LedgerHQ/device-sdk-ts/pull/1112) [`287469c`](https://github.com/LedgerHQ/device-sdk-ts/commit/287469c6bc0029e5374c67adae75dacd35365fd7) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove timeout in speculos client
+
+- Updated dependencies [[`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4), [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9)]:
+  - @ledgerhq/device-management-kit@0.11.0
+
 ## 1.1.0
 
 ### Minor Changes

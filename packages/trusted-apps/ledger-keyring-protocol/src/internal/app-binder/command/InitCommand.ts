@@ -31,6 +31,7 @@ export class InitCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "init";
   constructor(private readonly args: InitCommandArgs) {}
 
   private readonly errorHelper = new CommandErrorHelper<

@@ -40,6 +40,7 @@ export type OpenAppCommandResult = CommandResult<void, OpenAppErrorCodes>;
 export class OpenAppCommand
   implements Command<void, OpenAppArgs, OpenAppErrorCodes>
 {
+  readonly name = "openApp";
   readonly args: OpenAppArgs;
 
   readonly triggersDisconnection = true;

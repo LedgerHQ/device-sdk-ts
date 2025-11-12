@@ -38,6 +38,13 @@ const PROVIDE_TOKEN_INFORMATION_APDU_USDC = Uint8Array.from([
 describe("ProvideTokenInformationCommand", () => {
   let command: ProvideTokenInformationCommand;
 
+  describe("name", () => {
+    it("should be 'provideTokenInformation'", () => {
+      command = new ProvideTokenInformationCommand({ payload: "" });
+      expect(command.name).toBe("provideTokenInformation");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the apdu for usdt payload", () => {
       // GIVEN

@@ -24,6 +24,13 @@ describe("ContinueCommand", (): void => {
     0xef, // Payload data
   ]);
 
+  describe("name", () => {
+    it("should be 'continue'", () => {
+      const command = new ContinueCommand(defaultArgs);
+      expect(command.name).toBe("continue");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return correct APDU for given payload", () => {
       // given

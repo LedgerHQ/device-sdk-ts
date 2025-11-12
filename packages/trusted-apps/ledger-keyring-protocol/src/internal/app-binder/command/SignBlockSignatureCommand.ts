@@ -32,6 +32,7 @@ export class SignBlockSignatureCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "signBlockSignature";
   private readonly errorHelper = new CommandErrorHelper<
     SignBlockSignatureCommandResponse,
     LedgerKeyringProtocolErrorCodes

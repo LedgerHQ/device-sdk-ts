@@ -29,6 +29,7 @@ export class ProvideTrustedNamePKICommand
   implements
     Command<void, ProvideTrustedNamePKICommandArgs, SolanaAppErrorCodes>
 {
+  readonly name = "provideTrustedNamePKI";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes

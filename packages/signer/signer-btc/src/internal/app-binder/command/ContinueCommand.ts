@@ -26,6 +26,7 @@ export class ContinueCommand
   implements
     Command<ContinueCommandResponse, ContinueCommandArgs, BtcErrorCodes>
 {
+  readonly name = "continue";
   constructor(
     private readonly _args: ContinueCommandArgs,
     private readonly _errorHelper = new CommandErrorHelper<

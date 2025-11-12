@@ -59,6 +59,8 @@ export class ListLanguagePackCommand
       ListLanguagePackErrorCodes
     >
 {
+  readonly name = "listLanguagePack";
+
   constructor(private args: ListLanguagePackCommandArgs) {}
 
   getApdu(): Apdu {
