@@ -1,8 +1,9 @@
 import { inject, injectable } from "inversify";
-import { Maybe } from "purify-ts";
+import { Either, Maybe } from "purify-ts";
 import { Observable, ReplaySubject } from "rxjs";
 
 import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { DeviceId } from "@api/types";
 import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
@@ -11,8 +12,8 @@ import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 @injectable()
 export class DefaultDeviceSessionService implements DeviceSessionService {
   private _sessions: DeviceSession[];
+  private readonly _sessionsSubject: ReplaySubject<DeviceSession>;
   private readonly _logger: LoggerPublisherService;
-  private _sessionsSubject: ReplaySubject<DeviceSession>;
 
   constructor(
     @inject(loggerTypes.LoggerPublisherServiceFactory)
@@ -27,7 +28,7 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
     return this._sessionsSubject.asObservable();
   }
 
-  addDeviceSession(deviceSession: DeviceSession) {
+  addDeviceSession(deviceSession: DeviceSession): DeviceSessionService {
     const found = this._sessions.find((s) => s.id === deviceSession.id);
     if (found) {
       this._logger.warn("DeviceSession already exists", {
@@ -35,14 +36,15 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
       });
       return this;
     }
-
     this._sessions.push(deviceSession);
     this._sessionsSubject.next(deviceSession);
-    this._logger.info("DeviceSession added", { data: { deviceSession } });
+    this._logger.info("DeviceSession added", {
+      data: { sessionId: deviceSession.id },
+    });
     return this;
   }
 
-  removeDeviceSession(sessionId: string) {
+  removeDeviceSession(sessionId: string): DeviceSessionService {
     const found = this._sessions.find((s) => s.id === sessionId);
     if (found) {
       found.close();
@@ -50,28 +52,28 @@ export class DefaultDeviceSessionService implements DeviceSessionService {
       this._logger.info("DeviceSession removed", { data: { sessionId } });
       return this;
     }
-
     this._logger.warn("DeviceSession not found", { data: { sessionId } });
     return this;
   }
 
-  getDeviceSessionById(sessionId: string) {
-    const deviceSession = Maybe.fromNullable(
+  getDeviceSessionById(
+    sessionId: string,
+  ): Either<DeviceSessionNotFound, DeviceSession> {
+    return Maybe.fromNullable(
       this._sessions.find((s) => s.id === sessionId),
-    );
-
-    return deviceSession.toEither(new DeviceSessionNotFound());
+    ).toEither(new DeviceSessionNotFound());
   }
 
-  getDeviceSessionByDeviceId(deviceId: string) {
-    const deviceSession = Maybe.fromNullable(
-      this._sessions.find((s) => s.connectedDevice.id === deviceId),
-    );
-
-    return deviceSession.toEither(new DeviceSessionNotFound());
+  getDeviceSessionsByDeviceId(
+    deviceId: DeviceId,
+  ): Either<DeviceSessionNotFound, DeviceSession[]> {
+    return Maybe.fromPredicate(
+      ({ length }) => length > 0,
+      this._sessions.filter((s) => s.connectedDevice.id === deviceId),
+    ).toEither(new DeviceSessionNotFound());
   }
 
-  getDeviceSessions() {
+  getDeviceSessions(): DeviceSession[] {
     return this._sessions;
   }
 }

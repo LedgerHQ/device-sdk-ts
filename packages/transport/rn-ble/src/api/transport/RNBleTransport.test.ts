@@ -17,10 +17,14 @@ import {
   type TransportDiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import { lastValueFrom, Subscription, take } from "rxjs";
+import { firstValueFrom, Subject, Subscription } from "rxjs";
 import { beforeEach, expect } from "vitest";
 
-import { BleNotSupported, BlePermissionsNotGranted } from "@api/model/Errors";
+import {
+  BleNotSupported,
+  BlePermissionsNotGranted,
+  BlePoweredOff,
+} from "@api/model/Errors";
 import { DefaultPermissionsService } from "@api/permissions/DefaultPermissionsService";
 import { PermissionsService } from "@api/permissions/PermissionsService";
 
@@ -29,11 +33,20 @@ import { RNBleTransport } from "./RNBleTransport";
 import { RNBleTransportFactory } from "./RNBleTransportFactory";
 
 // ===== MOCKS =====
-const fakeLogger = {
+const fakeLogger: LoggerPublisherService = {
   error: vi.fn(),
   info: vi.fn(),
   warn: vi.fn(),
   debug: vi.fn(),
+  subscribers: [],
+};
+
+const consoleLogger: LoggerPublisherService = {
+  error: console.error,
+  info: console.info,
+  warn: console.warn,
+  debug: console.debug,
+  subscribers: [],
 };
 
 vi.mock("react-native", () => ({
@@ -46,6 +59,10 @@ vi.mock("react-native-ble-plx", () => ({
   State: {
     PoweredOn: "PoweredOn",
     Unknown: "Unknown",
+    PoweredOff: "PoweredOff",
+    Resetting: "Resetting",
+    Unsupported: "Unsupported",
+    Unauthorized: "Unauthorized",
   },
   BleError: vi.fn(),
   BleManager: vi.fn().mockReturnValue({
@@ -98,6 +115,7 @@ class TestTransportBuilder {
   ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies>;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private deviceApduSenderFactory?: (args: any, loggerFactory: any) => any;
+  private scanThrottleDelayMs: number = 1000;
 
   withDeviceModelDataSource(dataSource: DeviceModelDataSource) {
     this.deviceModelDataSource = dataSource;
@@ -134,6 +152,16 @@ class TestTransportBuilder {
     return this;
   }
 
+  withLogger(logger: LoggerPublisherService = consoleLogger) {
+    this.loggerServiceFactory = () => logger;
+    return this;
+  }
+
+  withScanThrottleDelayMs(delayMs: number) {
+    this.scanThrottleDelayMs = delayMs;
+    return this;
+  }
+
   build(): RNBleTransport {
     return new RNBleTransport(
       this.deviceModelDataSource,
@@ -143,6 +171,7 @@ class TestTransportBuilder {
       this.bleManager,
       this.platform,
       this.permissionsService,
+      this.scanThrottleDelayMs,
       this.deviceConnectionStateMachineFactory,
       this.deviceApduSenderFactory,
     );
@@ -180,9 +209,19 @@ function createMockDevice(overrides: Partial<Device> = {}): Device {
   } as unknown as Device;
 }
 
-function createMockBleManager(overrides: Partial<BleManager> = {}): BleManager {
+function createMockBleManager(
+  overrides: Partial<BleManager> = {},
+  initialState: State = State.PoweredOn,
+): BleManager {
   const mockBleManager = {
-    onStateChange: vi.fn(),
+    onStateChange: vi
+      .fn()
+      .mockImplementation(
+        (listener: (state: State) => void, emitInitialState: boolean) => {
+          if (emitInitialState) listener(initialState);
+          return { remove: vi.fn() };
+        },
+      ),
     startDeviceScan: vi.fn(),
     stopDeviceScan: vi.fn(),
     connectToDevice: vi.fn(),
@@ -194,6 +233,7 @@ function createMockBleManager(overrides: Partial<BleManager> = {}): BleManager {
     discoverAllServicesAndCharacteristicsForDevice: vi.fn(),
     onDeviceDisconnected: vi.fn(),
     isDeviceConnected: vi.fn(),
+    state: vi.fn(),
     ...overrides,
   } as unknown as BleManager;
 
@@ -226,12 +266,138 @@ describe("RNBleTransport", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   afterEach(() => {
     if (subscription) {
       subscription.unsubscribe();
     }
+  });
+
+  describe("BLE state monitoring", () => {
+    test("the constructor should call BleManager.onStateChange with a parameter requesting the initial state", () => {
+      const mockedOnStateChange = vi.fn();
+
+      new TestTransportBuilder()
+        .withBleManager(
+          createMockBleManager({
+            onStateChange: mockedOnStateChange,
+          }),
+        )
+        .build();
+
+      expect(mockedOnStateChange).toHaveBeenCalledWith(
+        expect.any(Function),
+        true,
+      );
+    });
+
+    describe("observeBleState", () => {
+      it("should emit the initial BLE state", async () => {
+        const mockedOnStateChange = vi
+          .fn()
+          .mockImplementation(
+            (listener: (state: State) => void, emitInitialState: boolean) => {
+              if (emitInitialState) listener(State.PoweredOn);
+              return { remove: vi.fn() };
+            },
+          );
+        const transport = new TestTransportBuilder()
+          .withBleManager(
+            createMockBleManager({
+              onStateChange: mockedOnStateChange,
+            }),
+          )
+          .build();
+
+        const observable = transport.observeBleState();
+
+        const initialState = await firstValueFrom(observable);
+
+        expect(initialState).toBe(State.PoweredOn);
+      });
+
+      it("should emit the new BLE state values", async () => {
+        const statesSubject = new Subject<State>();
+
+        const transport = new TestTransportBuilder()
+          .withBleManager(
+            createMockBleManager({
+              onStateChange: (listener: (state: State) => void) => {
+                listener(State.PoweredOn);
+                statesSubject.subscribe((newState) => listener(newState));
+                return { remove: vi.fn() };
+              },
+            }),
+          )
+          .build();
+
+        const observable = transport.observeBleState();
+
+        // When a new state is emitted
+        statesSubject.next(State.PoweredOff);
+
+        // Then observeBleState should emit the new state
+        const newState = await firstValueFrom(observable);
+        expect(newState).toBe(State.PoweredOff);
+
+        // When a new state is emitted
+        statesSubject.next(State.Resetting);
+
+        // Then observeBleState should emit the new state
+        const newState2 = await firstValueFrom(observable);
+        expect(newState2).toBe(State.Resetting);
+      });
+
+      it("should recover from an Unknown state by calling BleManager.state() method and emitting the new state", async () => {
+        vi.useFakeTimers();
+        const statesSubject = new Subject<State>();
+
+        const mockedStateFunction = vi.fn().mockImplementation(() => {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              resolve(State.PoweredOn);
+            }, 10);
+          });
+        });
+
+        const transport = new TestTransportBuilder()
+          .withBleManager(
+            createMockBleManager({
+              state: mockedStateFunction,
+              onStateChange: (listener: (state: State) => void) => {
+                statesSubject.subscribe((newState) => listener(newState));
+                return { remove: vi.fn() };
+              },
+            }),
+          )
+          .build();
+
+        const observable = transport.observeBleState();
+        statesSubject.next(State.PoweredOff);
+
+        expect(mockedStateFunction).not.toHaveBeenCalled();
+
+        // Emit new state Unknown
+        statesSubject.next(State.Unknown);
+
+        // The value Unknown should be emitted
+        const newState = await firstValueFrom(observable);
+        expect(newState).toBe(State.Unknown);
+
+        // BleManager.state() should be called
+        expect(mockedStateFunction).toHaveBeenCalled();
+
+        vi.advanceTimersByTime(11);
+
+        await Promise.resolve();
+
+        // And the value returned by BleManager.state() should be emitted
+        const newState2 = await firstValueFrom(observable);
+        expect(newState2).toBe(State.PoweredOn);
+      });
+    });
   });
 
   describe("getIdentifier", () => {
@@ -336,9 +502,6 @@ describe("RNBleTransport", () => {
 
       return new Promise((done, reject) => {
         transport.listenToAvailableDevices().subscribe({
-          next: () => {
-            reject(new Error("Should not emit any value"));
-          },
           error: (e) => {
             try {
               expect(e).toBeInstanceOf(BleNotSupported);
@@ -354,6 +517,21 @@ describe("RNBleTransport", () => {
       });
     });
 
+    it("should emit an error if BLE state is PoweredOff", async () => {
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager({}, State.PoweredOff))
+        .build();
+
+      const observable = transport.listenToAvailableDevices();
+
+      let caughtError: unknown;
+      await firstValueFrom(observable).catch((e) => {
+        caughtError = e;
+      });
+
+      expect(caughtError).toBeInstanceOf(BlePoweredOff);
+    });
+
     describe("permissions check", () => {
       const checkPermissions = vi.fn();
       const requestPermissions = vi.fn();
@@ -363,7 +541,7 @@ describe("RNBleTransport", () => {
         requestRequiredPermissions: requestPermissions,
       };
 
-      const startDeviceScan = vi.fn();
+      const startDeviceScan = vi.fn().mockImplementation(async () => {});
       const bleManager = createMockBleManager({
         startDeviceScan: startDeviceScan,
         stopDeviceScan: vi.fn(),
@@ -385,21 +563,11 @@ describe("RNBleTransport", () => {
 
         const observable = transport.listenToAvailableDevices();
 
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              try {
-                expect(checkPermissions).toHaveBeenCalled();
-              } catch (e) {
-                reject(e);
-              }
-              done(undefined);
-            },
-            error: (e) => {
-              reject(e);
-            },
-          });
+        await firstValueFrom(observable).catch((e) => {
+          expect(e).toBeInstanceOf(BlePermissionsNotGranted);
         });
+
+        expect(checkPermissions).toHaveBeenCalled();
       });
 
       it("should call BleManager.startDeviceScan if checkPermissions resolves to true", async () => {
@@ -413,21 +581,11 @@ describe("RNBleTransport", () => {
 
         const observable = transport.listenToAvailableDevices();
 
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              try {
-                expect(startDeviceScan).toHaveBeenCalled();
-              } catch (e) {
-                reject(e);
-              }
-              done(undefined);
-            },
-            error: (e) => {
-              reject(e);
-            },
-          });
+        await firstValueFrom(observable).catch((e) => {
+          expect(e).toBeInstanceOf(BlePermissionsNotGranted);
         });
+
+        expect(startDeviceScan).toHaveBeenCalled();
       });
 
       it("should call requestPermissions if checkPermissions resolves to false", async () => {
@@ -441,24 +599,9 @@ describe("RNBleTransport", () => {
 
         const observable = transport.listenToAvailableDevices();
 
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              try {
-                expect(requestPermissions).toHaveBeenCalled();
-              } catch (e) {
-                reject(e);
-              }
-              done(undefined);
-            },
-            complete: () => {
-              reject(new Error("Should not complete"));
-            },
-            error: (e) => {
-              reject(e);
-            },
-          });
-        });
+        await firstValueFrom(observable).catch(() => {});
+
+        expect(requestPermissions).toHaveBeenCalled();
       });
 
       it("should call BleManager.startDeviceScan if requestPermissions resolves to true", async () => {
@@ -472,23 +615,10 @@ describe("RNBleTransport", () => {
           .build();
 
         const observable = transport.listenToAvailableDevices();
+        await firstValueFrom(transport.observeBleState());
+        await firstValueFrom(observable);
 
-        let nextCount = 0; // Because an empty array is initially emitted
-        return new Promise((done, reject) => {
-          observable.subscribe({
-            next: () => {
-              nextCount++;
-              if (nextCount > 1) {
-                try {
-                  expect(startDeviceScan).toHaveBeenCalled();
-                } catch (e) {
-                  reject(e);
-                }
-                done(undefined);
-              }
-            },
-          });
-        });
+        expect(startDeviceScan).toHaveBeenCalled();
       });
 
       it("should emit an error if checkPermissions and requestPermissions resolve to false", async () => {
@@ -532,7 +662,7 @@ describe("RNBleTransport", () => {
 
         const startScan = vi
           .fn()
-          .mockImplementation((_uuids, _options, listener) => {
+          .mockImplementation(async (_uuids, _options, listener) => {
             scanInterval = setInterval(() => {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-call
               listener(null, {
@@ -577,6 +707,7 @@ describe("RNBleTransport", () => {
           .withDeviceModelDataSource(
             createFakeDataSource() as unknown as DeviceModelDataSource,
           )
+          .withScanThrottleDelayMs(1) // Use very fast throttle for tests
           .build();
 
         const availableDevicesEvents: TransportDiscoveredDevice[][] = [];
@@ -621,6 +752,150 @@ describe("RNBleTransport", () => {
           },
         });
       }));
+
+    it("should propagate the error if startDeviceScan throws an error", () => {
+      const scanError = new Error("startDeviceScan error");
+      const startScan = vi.fn().mockRejectedValueOnce(scanError);
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
+        .build();
+
+      const observable = transport.listenToAvailableDevices();
+
+      return new Promise((done, reject) => {
+        observable.subscribe({
+          error: (observedError) => {
+            try {
+              expect(observedError).toBe(scanError);
+              done(undefined);
+            } catch (expectError) {
+              reject(expectError);
+            }
+          },
+          complete: () => reject(new Error("Should not complete")),
+        });
+      });
+    });
+
+    it("should propagate the error if startDeviceScan emits an error", () => {
+      const scanError = new Error("startDeviceScan error");
+      const startScan = vi
+        .fn()
+        .mockImplementation(
+          async (
+            _uuids,
+            _options,
+            listener: (error: Error | null, device: Device) => void,
+          ) => {
+            listener(scanError, {} as Device);
+          },
+        );
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
+        .build();
+
+      const observable = transport.listenToAvailableDevices();
+
+      return new Promise((done, reject) => {
+        observable.subscribe({
+          error: (observedError) => {
+            try {
+              expect(observedError).toBe(scanError);
+              done(undefined);
+            } catch (expectError) {
+              reject(expectError);
+            }
+            done(undefined);
+          },
+          complete: () => reject(new Error("Should not complete")),
+        });
+      });
+    });
+
+    it("should propagate an error if startDeviceScan emits a null device", () => {
+      const startScan = vi
+        .fn()
+        .mockImplementation(
+          async (
+            _uuids,
+            _options,
+            listener: (error: Error | null, device: Device | null) => void,
+          ) => {
+            listener(null, null);
+          },
+        );
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
+        .build();
+
+      const observable = transport.listenToAvailableDevices();
+
+      return new Promise((done, reject) => {
+        observable.subscribe({
+          error: (observedError) => {
+            try {
+              expect(observedError).toEqual(
+                new Error("Null device in startDeviceScan callback"),
+              );
+              done(undefined);
+            } catch (expectError) {
+              reject(expectError);
+            }
+          },
+        });
+      });
+    });
+
+    it("should recover from a scanning error, allowing next calls of listenToAvailableDevices to succeed and emit the devices", async () => {
+      vi.useFakeTimers();
+      const scanError = new Error("A Scan Error");
+      const startScan = vi.fn().mockRejectedValueOnce(scanError);
+
+      const transport = new TestTransportBuilder()
+        .withBleManager(createMockBleManager({ startDeviceScan: startScan }))
+        .build();
+
+      const observable1 = transport.listenToAvailableDevices();
+
+      let caughtError: unknown;
+      await firstValueFrom(observable1).catch((e) => {
+        caughtError = e;
+      });
+
+      expect(caughtError).toBe(scanError);
+
+      startScan.mockImplementation(async (_uuids, _options, listener) => {
+        listener(null, {
+          id: "aScannedDeviceId",
+          localName: "aScannedDeviceName",
+          serviceUUIDs: ["ledgerId"],
+          rssi: 1,
+        });
+      });
+
+      const observable2 = transport.listenToAvailableDevices();
+
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable2).catch(() => {
+        throw new Error(
+          "Caught error in second observable, this should not happen if listenToAvailableDevices recovers from the scanning error",
+        );
+      });
+
+      expect(devices).toEqual([
+        {
+          id: "aScannedDeviceId",
+          name: "aScannedDeviceName",
+          deviceModel: FAKE_DEVICE_MODEL,
+          transport: "RN_BLE",
+          rssi: 1,
+        },
+      ]);
+    });
   });
 
   describe("connect", () => {
@@ -663,7 +938,6 @@ describe("RNBleTransport", () => {
     });
 
     it("should connect to a discovered device with correct MTU and discover services and setup apdu sender", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -671,32 +945,17 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 500);
-
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+        .mockImplementation(async (_uuids, _options, listener) => {
+          // Immediately emit a device to ensure we have results
           listener(null, {
-            id: "43",
-            localName: "name43",
-            serviceUUIDs: ["notLedgerId"],
-            rssi: 43,
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
           });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const bleManager = createMockBleManager({
         connectedDevices: vi.fn().mockResolvedValue([]),
@@ -734,11 +993,14 @@ describe("RNBleTransport", () => {
           deviceConnectionStateMachineFactory,
         )
         .withDeviceApduSenderFactory(deviceApduSenderFactory)
+        .withScanThrottleDelayMs(1) // Use very fast throttle for tests
         .build();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
 
       const result = await transport.connect({
         deviceId: device!.id,
@@ -756,7 +1018,8 @@ describe("RNBleTransport", () => {
     });
 
     it("should return a connected device which calls state machine sendApdu", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
+      vi.useFakeTimers();
+
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -764,23 +1027,17 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 100);
+        .mockImplementation(async (_uuids, _options, listener) => {
+          // Immediately emit a device to ensure we have results
+          listener(null, {
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
+          });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const bleManager = createMockBleManager({
         connectedDevices: vi.fn().mockResolvedValue([]),
@@ -820,9 +1077,14 @@ describe("RNBleTransport", () => {
         .withDeviceApduSenderFactory(deviceApduSenderFactory)
         .build();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      // Advance timers to trigger the throttleTime and allow scan results to be emitted
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
 
       const result = await transport.connect({
         deviceId: device!.id,
@@ -841,6 +1103,7 @@ describe("RNBleTransport", () => {
             transport: "RN_BLE",
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             sendApdu: expect.any(Function),
+            name: "name",
           }),
         ),
       );
@@ -850,7 +1113,8 @@ describe("RNBleTransport", () => {
 
   describe("disconnect", () => {
     it("should disconnect gracefully", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
+      vi.useFakeTimers();
+
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -858,23 +1122,16 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 100);
+        .mockImplementation(async (_uuids, _options, listener) => {
+          listener(null, {
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
+          });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const onDeviceDisconnected = vi.fn().mockImplementation(() => {
         return { remove: vi.fn() };
@@ -931,9 +1188,14 @@ describe("RNBleTransport", () => {
 
       const fakeOnDisconnect = vi.fn();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      // Advance timers to trigger the throttleTime and allow scan results to be emitted
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
 
       const result = await transport.connect({
         deviceId: device!.id,
@@ -950,7 +1212,8 @@ describe("RNBleTransport", () => {
     });
 
     it("should handle error while disconnecting", async () => {
-      let scanInterval: NodeJS.Timeout | null = null;
+      vi.useFakeTimers();
+
       const mockDevice = createMockDevice({
         id: "deviceId",
         localName: "name",
@@ -958,23 +1221,16 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation((_uuids, _options, listener) => {
-          scanInterval = setInterval(() => {
-            listener(null, {
-              id: "deviceId",
-              localName: "name",
-              serviceUUIDs: ["ledgerId"],
-              rssi: 42,
-            });
-          }, 100);
+        .mockImplementation(async (_uuids, _options, listener) => {
+          listener(null, {
+            id: "deviceId",
+            localName: "name",
+            serviceUUIDs: ["ledgerId"],
+            rssi: 42,
+          });
         });
 
-      const stopScan = vi.fn().mockImplementation(() => {
-        if (scanInterval) {
-          clearInterval(scanInterval);
-          scanInterval = null;
-        }
-      });
+      const stopScan = vi.fn();
 
       const onDeviceDisconnected = vi.fn().mockImplementation(() => {
         return { remove: vi.fn() };
@@ -1031,9 +1287,14 @@ describe("RNBleTransport", () => {
 
       const fakeOnDisconnect = vi.fn();
 
-      const [device] = await lastValueFrom(
-        transport.listenToAvailableDevices().pipe(take(3)),
-      );
+      // Start listening to devices
+      const observable = transport.listenToAvailableDevices();
+
+      // Advance timers to trigger the throttleTime and allow scan results to be emitted
+      vi.advanceTimersByTime(2000);
+
+      const devices = await firstValueFrom(observable);
+      const [device] = devices;
       const result = await transport.connect({
         deviceId: device!.id,
         onDisconnect: fakeOnDisconnect,

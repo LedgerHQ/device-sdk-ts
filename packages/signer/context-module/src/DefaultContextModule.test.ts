@@ -1,6 +1,3 @@
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import { Left, Right } from "purify-ts";
-
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
@@ -172,58 +169,6 @@ describe("DefaultContextModule", () => {
     await contextModule.getTypedDataFilters({} as TypedDataContext);
 
     expect(typedDataLoader.load).toHaveBeenCalledTimes(1);
-  });
-
-  it("should return a web3 check context", async () => {
-    const loader = { load: vi.fn() }; // Web3CheckLoader doesn't use ContextLoader interface
-    vi.spyOn(loader, "load").mockResolvedValueOnce(
-      Right({ descriptor: "payload" }),
-    );
-    const contextModule = new DefaultContextModule({
-      ...defaultContextModuleConfig,
-      customLoaders: [],
-      customWeb3CheckLoader: loader,
-    });
-
-    const res = await contextModule.getWeb3Checks({
-      deviceModelId: DeviceModelId.FLEX,
-      from: "from",
-      rawTx: "rawTx",
-      chainId: 1,
-    });
-
-    expect(loader.load).toHaveBeenCalledTimes(1);
-    expect(res).toEqual({ type: "web3Check", payload: "payload" });
-  });
-
-  it("should return null if no web3 check context", async () => {
-    const loader = { load: vi.fn() }; // Web3CheckLoader doesn't use ContextLoader interface
-    vi.spyOn(loader, "load").mockResolvedValue(Left(new Error("error")));
-    const contextModule = new DefaultContextModule({
-      ...defaultContextModuleConfig,
-      customLoaders: [],
-      customWeb3CheckLoader: loader,
-    });
-
-    const res = await contextModule.getWeb3Checks({
-      deviceModelId: DeviceModelId.FLEX,
-      from: "from",
-      rawTx: "rawTx",
-      chainId: 1,
-    });
-
-    expect(loader.load).toHaveBeenCalledTimes(1);
-    expect(res).toBeNull();
-  });
-
-  it("should throw an error if origin token is not provided", () => {
-    expect(
-      () =>
-        new DefaultContextModule({
-          ...defaultContextModuleConfig,
-          originToken: undefined,
-        }),
-    ).toThrow("Origin token is required");
   });
 
   describe("getFieldContext", () => {

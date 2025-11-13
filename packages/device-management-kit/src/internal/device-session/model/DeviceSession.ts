@@ -18,6 +18,7 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { type DmkError } from "@api/Error";
+import { bufferToHexaString } from "@api/index";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
@@ -164,6 +165,8 @@ export class DeviceSession {
       this._sessionEventDispatcher.dispatch({
         eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
       });
+
+      this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
@@ -172,6 +175,9 @@ export class DeviceSession {
 
       result
         .ifRight((response: ApduResponse) => {
+          this._logger.debug(
+            `[exchange] <= ${bufferToHexaString(response.data, false)}${bufferToHexaString(response.statusCode, false)}`,
+          );
           if (CommandUtils.isLockedDeviceResponse(response)) {
             this._sessionEventDispatcher.dispatch({
               eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
@@ -197,6 +203,7 @@ export class DeviceSession {
     command: Command<Response, Args, ErrorStatusCodes>,
     abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
+    this._logger.debug(`[sendCommand] ${command.name}`);
     const apdu = command.getApdu();
 
     const response = await this.sendApdu(apdu.getRawApdu(), {
@@ -207,10 +214,17 @@ export class DeviceSession {
 
     return response.caseOf({
       Left: (err) => {
+        this._logger.error("[sendCommand] error", { data: { err } });
         throw err;
       },
-      Right: (r) =>
-        command.parseResponse(r, this._connectedDevice.deviceModel.id),
+      Right: (r) => {
+        const result = command.parseResponse(
+          r,
+          this._connectedDevice.deviceModel.id,
+        );
+        this._logger.debug("[sendCommand] result", { data: { result } });
+        return result;
+      },
     });
   }
 

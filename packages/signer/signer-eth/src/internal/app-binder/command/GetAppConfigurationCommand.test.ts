@@ -12,6 +12,12 @@ describe("GetConfigCommand", () => {
     command = new GetAppConfiguration();
   });
 
+  describe("name", () => {
+    it("should be 'getAppConfiguration'", () => {
+      expect(command.name).toBe("getAppConfiguration");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // WHEN

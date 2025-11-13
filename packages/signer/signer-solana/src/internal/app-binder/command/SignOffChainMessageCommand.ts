@@ -6,100 +6,60 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
-import { Maybe } from "purify-ts";
 
-import {
-  type Bs58Encoder,
-  DefaultBs58Encoder,
-} from "@internal/app-binder/services/bs58Encoder";
+import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
-import {
-  SOLANA_APP_ERRORS,
-  SolanaAppCommandErrorFactory,
-  type SolanaAppErrorCodes,
-} from "./utils/SolanaApplicationErrors";
+import { type SolanaAppErrorCodes } from "./utils/SolanaApplicationErrors";
+
+export const CLA = 0xe0;
+export const INS = 0x07;
+export const P1 = 0x01;
 
 const SIGNATURE_LENGTH = 64;
 
-export type SignOffChainMessageCommandResponse = {
-  signature: string;
+export const SOL_P2 = {
+  INIT: 0x00,
+  EXTEND: 0x01,
+  MORE: 0x02,
 };
-export type SignOffChainMessageCommandArgs = {
-  readonly message: Uint8Array;
-};
+
+export type SignOffChainRawResponse = Uint8Array;
 
 export class SignOffChainMessageCommand
   implements
-    Command<
-      SignOffChainMessageCommandResponse,
-      SignOffChainMessageCommandArgs,
-      SolanaAppErrorCodes
-    >
+    Command<SignOffChainRawResponse, ChunkableCommandArgs, SolanaAppErrorCodes>
 {
-  private readonly errorHelper = new CommandErrorHelper<
-    SignOffChainMessageCommandResponse,
-    SolanaAppErrorCodes
-  >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
-
-  args: SignOffChainMessageCommandArgs;
-
-  constructor(
-    args: SignOffChainMessageCommandArgs,
-    private readonly bs58Encoder: Bs58Encoder = DefaultBs58Encoder,
-  ) {
-    this.args = args;
-  }
+  readonly name = "signOffChainMessage";
+  constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
+    const p2 =
+      (this.args.extend ? SOL_P2.EXTEND : SOL_P2.INIT) |
+      (this.args.more ? SOL_P2.MORE : 0);
+
     return new ApduBuilder({
-      cla: 0xe0,
-      ins: 0x07,
-      p1: 0x01,
-      p2: 0x00,
+      cla: CLA,
+      ins: INS,
+      p1: P1,
+      p2,
     })
-      .addBufferToData(this.args.message)
+      .addBufferToData(this.args.chunkedData)
       .build();
   }
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<SignOffChainMessageCommandResponse, SolanaAppErrorCodes> {
-    return Maybe.fromNullable(
-      this.errorHelper.getError(response),
-    ).orDefaultLazy(() => {
-      const parser = new ApduParser(response);
+  ): CommandResult<SignOffChainRawResponse, SolanaAppErrorCodes> {
+    const parser = new ApduParser(response);
+    const sig = parser.extractFieldByLength(SIGNATURE_LENGTH);
 
-      // extract raw signature from device response
-      const signature = parser.extractFieldByLength(SIGNATURE_LENGTH);
-      if (!signature || signature.length !== SIGNATURE_LENGTH) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError("Signature extraction failed"),
-        });
-      }
+    // for intermediate chunks, the device returns 0 bytes of data with 0x9000.
+    // only the last chunk yields the 64-byte signature.
+    if (!sig || sig.length !== SIGNATURE_LENGTH) {
+      return CommandResultFactory({ data: new Uint8Array(0) });
+    }
 
-      // build the OCM envelope: [signatureCount=1][signature][signedMessage]
-      // signatureCount = 1 (single signer)
-      const signatureCount = Uint8Array.of(1);
-
-      // this.args.message is the off-chain message that was signed
-      const msg = this.args.message;
-
-      const envelope = new Uint8Array(
-        signatureCount.length + signature.length + msg.length,
-      );
-      envelope.set(signatureCount, 0);
-      envelope.set(signature, signatureCount.length);
-      envelope.set(msg, signatureCount.length + signature.length);
-
-      // base58-encode the envelope and return { signature: <b58> }
-      const encoded = this.bs58Encoder.encode(envelope);
-
-      return CommandResultFactory({
-        data: { signature: encoded },
-      });
-    });
+    return CommandResultFactory({ data: sig });
   }
 }

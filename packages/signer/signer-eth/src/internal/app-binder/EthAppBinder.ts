@@ -15,6 +15,8 @@ import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDel
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
+import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
+import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
 import { SignTypedDataDeviceAction } from "@internal/app-binder/device-action/SignTypedData/SignTypedDataDeviceAction";
@@ -27,6 +29,7 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
+import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 
 @injectable()
@@ -57,6 +60,22 @@ export class EthAppBinder {
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  verifySafeAddress(args: {
+    safeContractAddress: string;
+    options?: SafeAddressOptions;
+  }): VerifySafeAddressDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new VerifySafeAddressDeviceAction({
+        input: {
+          safeContractAddress: args.safeContractAddress,
+          contextModule: this.contextModule,
+          options: args.options ?? { chainId: 1 },
         },
       }),
     });

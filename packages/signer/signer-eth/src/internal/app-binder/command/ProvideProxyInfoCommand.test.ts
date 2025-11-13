@@ -10,6 +10,16 @@ import {
 } from "./ProvideProxyInfoCommand";
 
 describe("ProvideProxyInfoCommand", () => {
+  describe("name", () => {
+    it("should be 'provideProxyInfo'", () => {
+      const command = new ProvideProxyInfoCommand({
+        data: new Uint8Array(),
+        isFirstChunk: true,
+      });
+      expect(command.name).toBe("provideProxyInfo");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN

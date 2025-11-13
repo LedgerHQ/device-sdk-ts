@@ -22,6 +22,12 @@ describe("GetMasterFingerprintCommand", () => {
     command = new GetMasterFingerprintCommand();
   });
 
+  describe("name", () => {
+    it("should be 'getMasterFingerprint'", () => {
+      expect(command.name).toBe("getMasterFingerprint");
+    });
+  });
+
   describe("getApdu", () => {
     it("returns the correct APDU", () => {
       // WHEN

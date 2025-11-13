@@ -74,6 +74,13 @@ describe("SignPersonalMessageCommand", (): void => {
     isFirstChunk: true,
   };
 
+  describe("name", () => {
+    it("should be 'signPersonalMessage'", () => {
+      const command = new SignPersonalMessageCommand(defaultArgs);
+      expect(command.name).toBe("signPersonalMessage");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return correct apdu for an empty message", () => {
       // given

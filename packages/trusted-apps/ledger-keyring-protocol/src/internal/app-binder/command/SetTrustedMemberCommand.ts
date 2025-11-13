@@ -34,6 +34,7 @@ export class SetTrustedMemberCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "setTrustedMember";
   private readonly errorHelper = new CommandErrorHelper<
     SetTrustedMemberCommandResponse,
     LedgerKeyringProtocolErrorCodes

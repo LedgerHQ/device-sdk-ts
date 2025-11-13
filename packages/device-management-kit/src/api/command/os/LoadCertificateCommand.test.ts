@@ -10,6 +10,16 @@ import { GlobalCommandError } from "@api/command/utils/GlobalCommandError";
 import { hexaStringToBuffer } from "@api/utils/HexaString";
 
 describe("LoadCertificateCommand", () => {
+  describe("name", () => {
+    it("should be 'loadCertificate'", () => {
+      const command = new LoadCertificateCommand({
+        keyUsage: 0x01,
+        certificate: new Uint8Array(),
+      });
+      expect(command.name).toBe("loadCertificate");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the APDU with key equal to 1", () => {
       // GIVEN

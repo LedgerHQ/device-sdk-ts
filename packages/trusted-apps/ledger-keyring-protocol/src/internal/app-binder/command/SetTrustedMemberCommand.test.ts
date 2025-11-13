@@ -18,6 +18,13 @@ describe("SetTrustedMemberCommand", () => {
     memberTlv: PLACEHOLDER_BYTES,
   });
 
+  describe("name", () => {
+    it("should be 'setTrustedMember'", () => {
+      const cmd = new SetTrustedMemberCommand(makeArgs());
+      expect(cmd.name).toBe("setTrustedMember");
+    });
+  });
+
   describe("getApdu()", () => {
     it("builds correct APDU", () => {
       // given

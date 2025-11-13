@@ -86,6 +86,13 @@ describe("SignMessageCommand", (): void => {
     messageMerkleRoot: MSG_MERKLE_ROOT,
   };
 
+  describe("name", () => {
+    it("should be 'signMessage'", () => {
+      const command = new SignMessageCommand(defaultArgs);
+      expect(command.name).toBe("signMessage");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return correct APDU for given arguments", () => {
       // given

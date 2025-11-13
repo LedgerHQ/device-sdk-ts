@@ -8,12 +8,13 @@ import { externalPluginModuleFactory } from "@/external-plugin/di/externalPlugin
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
 import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { proxyModuleFactory } from "@/proxy/di/proxyModuleFactory";
+import { safeModuleFactory } from "@/safe/di/safeModuleFactory";
 import { solanaContextModuleFactory } from "@/solana/di/SolanaContextModuleFactory";
 import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
+import { transactionCheckModuleFactory } from "@/transaction-check/di/transactionCheckModuleFactory";
 import { trustedNameModuleFactory } from "@/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/uniswap/di/uniswapModuleFactory";
-import { web3CheckModuleFactory } from "@/web3-check/di/web3CheckModuleFactory";
 
 type MakeContainerArgs = {
   config: ContextModuleConfig;
@@ -28,13 +29,14 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     dynamicNetworkModuleFactory(),
     nftModuleFactory(),
     proxyModuleFactory(config),
+    safeModuleFactory(),
     tokenModuleFactory(),
     calldataModuleFactory(),
     trustedNameModuleFactory(),
     typedDataModuleFactory(),
     nanoPkiModuleFactory(),
     uniswapModuleFactory(),
-    web3CheckModuleFactory(),
+    transactionCheckModuleFactory(),
     solanaContextModuleFactory(),
   );
 

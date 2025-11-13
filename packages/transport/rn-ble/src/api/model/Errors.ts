@@ -28,6 +28,13 @@ export class InternalDeviceNotFound extends GeneralDmkError {
   }
 }
 
+export class BlePoweredOff extends GeneralDmkError {
+  override readonly _tag = "BlePoweredOff";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
 export class BleNotSupported extends GeneralDmkError {
   override readonly _tag = "BleNotSupported";
   constructor(readonly err?: unknown) {

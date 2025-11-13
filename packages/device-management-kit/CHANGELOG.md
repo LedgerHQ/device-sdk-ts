@@ -1,5 +1,31 @@
 # @ledgerhq/device-management-kit
 
+## 0.11.0
+
+### Minor Changes
+
+- [#1116](https://github.com/LedgerHQ/device-sdk-ts/pull/1116) [`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Use BLE advertised name as connected device name
+
+- [#1107](https://github.com/LedgerHQ/device-sdk-ts/pull/1107) [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add name attribute to all command objects and add logs in send command
+
+## 0.10.0
+
+### Minor Changes
+
+- [#1094](https://github.com/LedgerHQ/device-sdk-ts/pull/1094) [`5fdf5c9`](https://github.com/LedgerHQ/device-sdk-ts/commit/5fdf5c9fcb52c249fecf35bea8db2b451ac3e3fa) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add InvalidGetFirmwareMetadataResponseError
+
+- [#1104](https://github.com/LedgerHQ/device-sdk-ts/pull/1104) [`ebd44c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd44c2690ec578410f69b148179268eeb34db65) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add reconnect use case
+
+## 0.9.2
+
+### Patch Changes
+
+- [#1083](https://github.com/LedgerHQ/device-sdk-ts/pull/1083) [`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Don't console log data if undefined
+
+- [#1083](https://github.com/LedgerHQ/device-sdk-ts/pull/1083) [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add logs in device session sendApdu command
+
+- [#1079](https://github.com/LedgerHQ/device-sdk-ts/pull/1079) [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add verify safe address user interaction
+
 ## 0.9.1
 
 ### Patch Changes

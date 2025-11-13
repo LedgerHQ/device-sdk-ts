@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -11,8 +11,10 @@ import { RootScreens } from "_navigators/RootNavigator.constants.ts";
 import { useDeviceSessionsContext } from "_providers/deviceSessionsProvider.tsx";
 import { useDmk } from "_providers/dmkProvider.tsx";
 import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import { rnHidTransportIdentifier } from "@ledgerhq/device-transport-kit-react-native-hid";
 import { Button, Text } from "@ledgerhq/native-ui";
 import { useIsFocused, useNavigation } from "@react-navigation/native";
+import { first } from "rxjs/operators";
 import styled from "styled-components/native";
 
 import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
@@ -34,6 +36,8 @@ const DeviceList = styled(
 export const ConnectDeviceScreen: React.FC = () => {
   const dmk = useDmk();
   const [devices, setDevices] = React.useState<DiscoveredDevice[]>([]);
+  const [listenToAvailableDevicesError, setListenToAvailableDevicesError] =
+    React.useState<Error | null>(null);
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
   const {
     state: { selectedId: deviceSessionId },
@@ -48,25 +52,33 @@ export const ConnectDeviceScreen: React.FC = () => {
   }, [deviceSessionId]);
 
   useEffect(() => {
-    if (isScanningDevices && isFocused) {
-      const subscription = dmk.listenToAvailableDevices({}).subscribe({
-        next: dvcs => {
-          setDevices(dvcs);
-        },
-        error: err => {
-          console.log("[dmk.listenToAvailableDevices] error", err);
-        },
-      });
+    if (!isScanningDevices) return;
+    if (!isFocused) return;
 
-      return () => {
-        dmk.stopDiscovering();
-        subscription.unsubscribe();
-        setDevices([]);
-      };
-    }
+    const subscription = dmk.listenToAvailableDevices({}).subscribe({
+      next: dvcs => {
+        setDevices(dvcs);
+      },
+      error: err => {
+        console.error("[dmk.listenToAvailableDevices] error", err);
+        setIsScanningDevices(false);
+        setListenToAvailableDevicesError(err);
+      },
+      complete: () => {
+        console.log("[dmk.listenToAvailableDevices] complete");
+        setIsScanningDevices(false);
+      },
+    });
+
+    return () => {
+      dmk.stopDiscovering();
+      subscription.unsubscribe();
+      setDevices([]);
+    };
   }, [dmk, isScanningDevices, isFocused]);
 
   const startScanning = () => {
+    setListenToAvailableDevicesError(null);
     setIsScanningDevices(true);
   };
 
@@ -74,17 +86,59 @@ export const ConnectDeviceScreen: React.FC = () => {
     setIsScanningDevices(false);
   };
 
-  const onConnect = async (device: DiscoveredDevice) => {
-    setIsScanningDevices(false);
-    try {
-      await dmk.connect({ device });
-      navigate(RootScreens.Command, {
-        screen: CommandsScreens.DeviceActionTester,
-      });
-    } catch (error) {
-      console.error(error);
+  const onConnect = useCallback(
+    async (device: DiscoveredDevice) => {
+      setIsScanningDevices(false);
+      try {
+        await dmk.connect({ device });
+        navigate(RootScreens.Command, {
+          screen: CommandsScreens.DeviceActionTester,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    [dmk, navigate],
+  );
+
+  const [autoConnectingToFirstHidDevice, setAutoConnectingToFirstHidDevice] =
+    React.useState(false);
+
+  useEffect(() => {
+    if (autoConnectingToFirstHidDevice) {
+      let dead = false;
+      const subscription = dmk
+        .listenToAvailableDevices({ transport: rnHidTransportIdentifier })
+        .pipe(first(devices => devices.length > 0))
+        .subscribe({
+          next: devices => {
+            if (devices.length > 0 && !dead) {
+              onConnect(devices[0]);
+              setAutoConnectingToFirstHidDevice(false);
+              subscription.unsubscribe();
+            }
+          },
+        });
+      return () => {
+        dead = true;
+        subscription.unsubscribe();
+      };
     }
-  };
+  }, [onConnect, autoConnectingToFirstHidDevice, dmk]);
+
+  if (listenToAvailableDevicesError) {
+    return (
+      <Container>
+        <Text m={6}>
+          Error while scanning for devices:{"\n"}
+          {JSON.stringify(listenToAvailableDevicesError, null, 2)}
+        </Text>
+        <Button type="color" onPress={startScanning}>
+          Start scan
+        </Button>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -104,17 +158,34 @@ export const ConnectDeviceScreen: React.FC = () => {
                     alignItems: "center",
                     padding: 10,
                   }}>
-                  {!isScanningDevices ? (
-                    <Button
-                      type="color"
-                      onPress={startScanning}
-                      title="Start scan">
-                      Start scan
-                    </Button>
+                  {autoConnectingToFirstHidDevice ? (
+                    <>
+                      <Button
+                        type="color"
+                        onPress={() =>
+                          setAutoConnectingToFirstHidDevice(false)
+                        }>
+                        Cancel auto connect to first HID device
+                      </Button>
+                      <ActivityIndicator animating />
+                    </>
+                  ) : isScanningDevices ? (
+                    <>
+                      <Button type="color" onPress={stopScanning}>
+                        Stop scan
+                      </Button>
+                    </>
                   ) : (
-                    <Button type="color" onPress={stopScanning}>
-                      Stop scan
-                    </Button>
+                    <>
+                      <Button type="color" onPress={startScanning}>
+                        Start scan
+                      </Button>
+                      <Button
+                        type="color"
+                        onPress={() => setAutoConnectingToFirstHidDevice(true)}>
+                        Auto connect to first HID device
+                      </Button>
+                    </>
                   )}
                 </View>
               </>

@@ -29,6 +29,7 @@ export class ParseBlockSignatureCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "parseBlockSignature";
   private readonly errorHelper = new CommandErrorHelper<
     ParseBlockSignatureCommandResponse,
     LedgerKeyringProtocolErrorCodes

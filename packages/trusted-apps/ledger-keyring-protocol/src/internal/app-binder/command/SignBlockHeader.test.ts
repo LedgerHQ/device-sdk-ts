@@ -29,6 +29,17 @@ const ISSUER_TLV = Uint8Array.from([0x81, TLV_VALUE.length, ...TLV_VALUE]);
 const FULL_TLV_PAYLOAD = new Uint8Array([...IV_TLV, ...ISSUER_TLV]);
 
 describe("SignBlockHeaderCommand", () => {
+  describe("name", () => {
+    it("should be 'signBlockHeader'", () => {
+      const args: SignBlockHeaderCommandArgs = {
+        parent: PARENT_BYTES,
+        commandCount: COMMAND_COUNT,
+      };
+      const cmd = new SignBlockHeaderCommand(args);
+      expect(cmd.name).toBe("signBlockHeader");
+    });
+  });
+
   describe("getApdu()", () => {
     it("should build the correct APDU for a parent hash and a commands count", () => {
       // given

@@ -8,5 +8,5 @@ export default {
   integration: "Integration Walkthroughs",
   references: "References",
   explanation: "Explanation",
-  ledgerjs: "LedgerJS: Soon deprecated",
+  ledgerjs: "LedgerJS: No longer maintained",
 };

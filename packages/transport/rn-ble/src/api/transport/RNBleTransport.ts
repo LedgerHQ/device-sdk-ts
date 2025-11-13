@@ -1,6 +1,7 @@
 import { Platform } from "react-native";
 import {
   BleError,
+  BleErrorCode,
   type BleManager,
   type Device,
   State,
@@ -26,12 +27,12 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import { Either, EitherAsync, Left, Maybe, Nothing, Right } from "purify-ts";
+import { Either, EitherAsync, Left, Maybe, Right } from "purify-ts";
 import {
   BehaviorSubject,
   defer,
-  filter,
   finalize,
+  first,
   from,
   type Observable,
   retry,
@@ -39,7 +40,6 @@ import {
   switchMap,
   tap,
   throttleTime,
-  throwError,
 } from "rxjs";
 
 import {
@@ -51,6 +51,7 @@ import {
 import {
   BleNotSupported,
   BlePermissionsNotGranted,
+  BlePoweredOff,
   DeviceConnectionNotFound,
   NoDeviceModelFoundError,
   PeerRemovedPairingError,
@@ -92,6 +93,7 @@ export class RNBleTransport implements Transport {
     private readonly _manager: BleManager,
     private readonly _platform: Platform,
     private readonly _permissionsService: PermissionsService,
+    private readonly _scanThrottleDelayMs: number = 1000,
     private readonly _deviceConnectionStateMachineFactory: (
       args: DeviceConnectionStateMachineParams<RNBleApduSenderDependencies>,
     ) => DeviceConnectionStateMachine<RNBleApduSenderDependencies> = (args) =>
@@ -105,10 +107,32 @@ export class RNBleTransport implements Transport {
     this._logger = _loggerServiceFactory("ReactNativeBleTransport");
     this._deviceConnectionsById = new Map();
     this._reconnectionSubscription = Maybe.zero();
+    // FIXME: we should have a destroy method to unregister the onStateChange listener
+    let lastBleStateIsUnknown = false;
     this._manager.onStateChange((state) => {
-      this._logger.debug("[manager.onStateChange]", { data: { state } });
+      this._logger.debug(`[manager.onStateChange] called with state: ${state}`);
       this._bleStateSubject.next(state);
+      lastBleStateIsUnknown = state === State.Unknown;
+      if (lastBleStateIsUnknown) {
+        // There seems to be a bug in the library where the state is not updated after going in an Unknown state...
+        this._logger.debug(
+          `[manager.onStateChange] forcing state update from "Unknown"`,
+        );
+        this._manager.state().then((s) => {
+          if (lastBleStateIsUnknown) {
+            this._logger.debug(
+              `[manager.onStateChange] forcing state update to: "${s}"`,
+            );
+            this._bleStateSubject.next(s);
+          }
+        });
+      }
     }, true);
+  }
+
+  /** Exposed for testing purposes */
+  observeBleState(): Observable<State> {
+    return this._bleStateSubject.asObservable();
   }
 
   /**
@@ -128,58 +152,122 @@ export class RNBleTransport implements Transport {
     await this._stopScanning();
   }
 
-  private _maybeScanningSubject: Maybe<
-    BehaviorSubject<InternalScannedDevice[]>
-  > = Nothing;
-
   private _scannedDevicesSubject: BehaviorSubject<InternalScannedDevice[]> =
     new BehaviorSubject<InternalScannedDevice[]>([]);
   private _startedScanningSubscriber: Subscription | undefined = undefined;
 
+  /**
+   * Returns an observable that emits a value when the prerequisites for scanning are met.
+   * The prerequisites are:
+   * - BLE should be supported. If not, it will throw an error.
+   * - Permissions should be granted. If not, it request them, if it fails, it will throw an error.
+   * - BLE state should be PoweredOn.
+   *   - If BLE state is undetermined (Unknown or Resetting), it will wait for the state to be updated.
+   *   - For other states, it will throw an error.
+   */
+  private _waitForScanningPrerequisites() {
+    return from([true]).pipe(
+      tap(() => {
+        if (!this.isSupported()) {
+          throw new BleNotSupported("BLE not supported");
+        }
+        this._logger.debug(
+          "[waitForScanningPrerequisites] Prerequisite: isSupported=true",
+        );
+      }),
+      switchMap(async () => this.checkAndRequestPermissions()),
+      tap((hasPermissions) => {
+        this._logger.debug(
+          `[_waitForScanningPrerequisites] Prerequisite: hasPermissions=${hasPermissions}`,
+        );
+        if (!hasPermissions) {
+          throw new BlePermissionsNotGranted("Permissions not granted");
+        }
+      }),
+      switchMap(() => this.observeBleState()),
+      first((state) => {
+        /**
+         * We wait for the BLE state to be PoweredOn, in case the current state is one of those:
+         *  - Unknown: temporary undetermined state which will quickly be updated
+         *  - Resetting: temporary undetermined state which will quickly be updated
+         */
+        const canStartScanning = state === State.PoweredOn;
+        this._logger.info(
+          `[waitForScanningPrerequisites] Prerequisite: BLE state=${state}, canStartScanning=${canStartScanning}`,
+        );
+        if (state === State.PoweredOff) {
+          throw new BlePoweredOff();
+        } else if (state === State.Unauthorized) {
+          throw new BlePermissionsNotGranted('Ble State is "Unauthorized"');
+        } else if (state === State.Unsupported) {
+          throw new BleNotSupported();
+        }
+        return canStartScanning;
+      }),
+    );
+  }
+
   private _startScanning() {
     if (this._startedScanningSubscriber != undefined) {
+      this._logger.info("[startScanning] !! startScanning already started");
       return;
     }
 
     //Reset the scanned devices list as new scan will start
     this._scannedDevicesSubject.next([]);
 
-    this._startedScanningSubscriber = from(this._bleStateSubject)
-      .pipe(
-        tap(() => {
-          if (!this.isSupported()) {
-            throw new BleNotSupported("BLE not supported");
-          }
-        }),
-        filter((state) => state === "PoweredOn"),
-        switchMap(async () => this.checkAndRequestPermissions()),
-        switchMap((hasPermissions) => {
-          if (!hasPermissions) {
-            return throwError(
-              () => new BlePermissionsNotGranted("Permissions not granted"),
-            );
-          }
+    this._logger.info("[startScanning] startScanning");
 
+    this._startedScanningSubscriber = from([true])
+      .pipe(
+        switchMap(() => {
           const subject = new BehaviorSubject<InternalScannedDevice[]>([]);
-          this._maybeScanningSubject = Maybe.of(subject);
           const devicesById = new Map<string, InternalScannedDevice>();
 
           this._logger.info("[startScanning] startDeviceScan");
-          this._manager.startDeviceScan(
-            this._deviceModelDataSource.getBluetoothServices(),
-            { allowDuplicates: true },
-            (error, rnDevice) => {
-              if (error || !rnDevice) {
-                subject.error(error || new Error("scan error"));
-                return;
-              }
-              devicesById.set(rnDevice.id, {
-                device: rnDevice,
-                timestamp: Date.now(),
-              });
-              subject.next(Array.from(devicesById.values()));
-            },
-          );
+          this._manager
+            .startDeviceScan(
+              this._deviceModelDataSource.getBluetoothServices(),
+              { allowDuplicates: true },
+              (error, rnDevice) => {
+                if (error) {
+                  this._logger.error(
+                    "[startScanning] Error in startDeviceScan callback",
+                    {
+                      data: { error, rnDevice },
+                    },
+                  );
+                  subject.error(error);
+                  return;
+                }
+                if (!rnDevice) {
+                  this._logger.warn(
+                    "[startScanning] Null Device in startDeviceScan callback",
+                    {
+                      data: { rnDevice },
+                    },
+                  );
+                  subject.error(
+                    new Error("Null device in startDeviceScan callback"),
+                  );
+                  return;
+                }
+                devicesById.set(rnDevice.id, {
+                  device: rnDevice,
+                  timestamp: Date.now(),
+                });
+                subject.next(Array.from(devicesById.values()));
+              },
+            )
+            .catch((e) => {
+              subject.error(e);
+              this._logger.error(
+                "[startScanning] Error while calling startDeviceScan",
+                {
+                  data: { error: e },
+                },
+              );
+            });
 
           this._logger.debug("[startScanning] after startDeviceScan");
 
@@ -193,39 +281,40 @@ export class RNBleTransport implements Transport {
             subject.next(Array.from(devicesById.values()));
           }, 1000);
 
-          return subject.asObservable().pipe(
+          return subject.pipe(
             finalize(() => {
-              this._logger.debug("[RNBleTransport][startScanning] finalize");
+              this._logger.debug("[startScanning] finalize");
               subject.complete();
               clearInterval(interval);
-              this._maybeScanningSubject = Nothing;
-              this._manager.stopDeviceScan();
+              this._stopScanning();
             }),
           );
         }),
-        throttleTime(1000),
+        throttleTime(this._scanThrottleDelayMs),
       )
       .subscribe({
         next: (devices) => {
           this._scannedDevicesSubject.next(devices);
         },
         error: (error) => {
-          this._logger.error("Error while scanning", { data: { error } });
+          this._logger.error("[startScanning] Error while scanning", {
+            data: { error },
+          });
           this._scannedDevicesSubject.error(error);
         },
       });
   }
 
   private async _stopScanning(): Promise<void> {
-    this._maybeScanningSubject.map((subject) => {
-      subject.complete();
-      this._maybeScanningSubject = Nothing;
-    });
-
+    this._logger.debug("[stopScanning] stopScanning");
     await this._manager.stopDeviceScan();
     //Stop listening the observable from this._startScanning()
     this._startedScanningSubscriber?.unsubscribe();
     this._startedScanningSubscriber = undefined;
+    this._scannedDevicesSubject.complete();
+    this._scannedDevicesSubject = new BehaviorSubject<InternalScannedDevice[]>(
+      [],
+    );
 
     return;
   }
@@ -236,9 +325,9 @@ export class RNBleTransport implements Transport {
    * @return {Observable<TransportDiscoveredDevice[]>} An observable stream of discovered devices, containing device information as an array of TransportDiscoveredDevice objects.
    */
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    this._startScanning();
-
-    return this._scannedDevicesSubject.asObservable().pipe(
+    return this._waitForScanningPrerequisites().pipe(
+      tap(() => this._startScanning()),
+      switchMap(() => this._scannedDevicesSubject),
       switchMap(async (internalScannedDevices) => {
         const eitherScannedDevices = internalScannedDevices
           .filter(
@@ -258,9 +347,17 @@ export class RNBleTransport implements Transport {
 
         const scannedDevices = Either.rights(eitherScannedDevices);
 
-        const rawConnectedDevices = await this._manager.connectedDevices(
-          this._deviceModelDataSource.getBluetoothServices(),
-        );
+        const rawConnectedDevices = await this._manager
+          .connectedDevices(this._deviceModelDataSource.getBluetoothServices())
+          .catch((e) => {
+            this._logger.error(
+              "[listenToAvailableDevices] Error calling manager.connectedDevices",
+              {
+                data: { error: e },
+              },
+            );
+            throw e;
+          });
 
         const eitherConnectedDevices = await Promise.all(
           rawConnectedDevices.map(async (device) => {
@@ -361,8 +458,11 @@ export class RNBleTransport implements Transport {
       this._logger.debug("[connect] Existing device connection found", {
         data: { deviceId: params.deviceId },
       });
+      const dependencies = existing.getDependencies();
       const deviceModel =
-        existing.getDependencies().internalDevice.bleDeviceInfos.deviceModel;
+        dependencies.internalDevice.bleDeviceInfos.deviceModel;
+      const deviceName =
+        dependencies.device.localName || dependencies.device.name || undefined;
       return Right(
         new TransportConnectedDevice({
           id: params.deviceId,
@@ -370,6 +470,7 @@ export class RNBleTransport implements Transport {
           type: "BLE",
           sendApdu: (...a) => existing.sendApdu(...a),
           transport: this.identifier,
+          name: deviceName,
         }),
       );
     }
@@ -408,6 +509,13 @@ export class RNBleTransport implements Transport {
              * This happens when the Ledger device reset its pairing, but the
              * iOS system still has that device paired.
              */
+            return throwE(new PeerRemovedPairingError(error));
+          }
+          if (
+            error instanceof BleError &&
+            error.errorCode === BleErrorCode.OperationCancelled &&
+            Platform.OS === "android"
+          ) {
             return throwE(new PeerRemovedPairingError(error));
           }
           return throwE(new OpeningConnectionError(error));
@@ -497,6 +605,7 @@ export class RNBleTransport implements Transport {
           type: "BLE",
           sendApdu: (...args) => deviceConnectionStateMachine.sendApdu(...args),
           transport: this.identifier,
+          name: device.localName || device.name || undefined,
         });
       },
     ).run();

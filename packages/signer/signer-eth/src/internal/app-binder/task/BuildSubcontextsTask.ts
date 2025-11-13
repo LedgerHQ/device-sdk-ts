@@ -43,8 +43,8 @@ export class BuildSubcontextsTask {
     const type = context.type;
 
     switch (type) {
+      case ClearSignContextType.TRANSACTION_CHECK:
       case ClearSignContextType.TRANSACTION_INFO:
-      case ClearSignContextType.WEB3_CHECK:
       case ClearSignContextType.PLUGIN:
       case ClearSignContextType.EXTERNAL_PLUGIN:
       case ClearSignContextType.DYNAMIC_NETWORK:
@@ -53,6 +53,8 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.TRUSTED_NAME:
       case ClearSignContextType.TOKEN:
       case ClearSignContextType.NFT:
+      case ClearSignContextType.SAFE:
+      case ClearSignContextType.SIGNER:
         return {
           subcontextCallbacks: [],
         };

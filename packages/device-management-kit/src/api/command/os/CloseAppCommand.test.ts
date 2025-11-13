@@ -11,6 +11,12 @@ describe("CloseAppCommand", () => {
     closeAppCommand = new CloseAppCommand();
   });
 
+  describe("name", () => {
+    it("should be 'closeApp'", () => {
+      expect(closeAppCommand.name).toBe("closeApp");
+    });
+  });
+
   it("should return the correct APDU", () => {
     const apdu = closeAppCommand.getApdu();
     expect(apdu.getRawApdu()).toStrictEqual(CLOSE_APP_APDU);

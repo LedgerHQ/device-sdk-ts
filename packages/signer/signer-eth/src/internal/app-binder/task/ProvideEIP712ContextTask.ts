@@ -41,10 +41,6 @@ import {
 import { StructImplemType } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { type ContextWithSubContexts } from "@internal/app-binder/task/BuildFullContextsTask";
-import {
-  ProvideContextsTask,
-  type ProvideContextsTaskArgs,
-} from "@internal/app-binder/task/ProvideContextsTask";
 import { SendEIP712StructImplemTask } from "@internal/app-binder/task/SendEIP712StructImplemTask";
 import { TypedDataValueField } from "@internal/typed-data/model/Types";
 import {
@@ -56,6 +52,10 @@ import {
   TypedDataValueRoot,
 } from "@internal/typed-data/model/Types";
 
+import {
+  ProvideTransactionContextsTask,
+  type ProvideTransactionContextsTaskArgs,
+} from "./ProvideTransactionContextsTask";
 import { SendPayloadInChunksTask } from "./SendPayloadInChunksTask";
 
 type AllSuccessTypes = void | { tokenIndex: number };
@@ -72,7 +72,7 @@ export type ProvideEIP712ContextTaskArgs = {
   message: Array<TypedDataValue>;
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
   calldatasContexts: Record<TypedDataCalldataIndex, ContextWithSubContexts[]>;
-  web3Check: ClearSignContextSuccess<ClearSignContextType.WEB3_CHECK> | null;
+  transactionChecks?: ClearSignContextSuccess;
 };
 
 const DEVICE_ASSETS_MAX = 5;
@@ -98,8 +98,9 @@ export class ProvideEIP712ContextTask {
     private api: InternalApi,
     private contextModule: ContextModule,
     private args: ProvideEIP712ContextTaskArgs,
-    private readonly provideContextFactory = (args: ProvideContextsTaskArgs) =>
-      new ProvideContextsTask(this.api, args),
+    private readonly provideContextFactory = (
+      args: ProvideTransactionContextsTaskArgs,
+    ) => new ProvideTransactionContextsTask(this.api, args),
   ) {
     for (const domainValue of this.args.domain) {
       if (
@@ -116,17 +117,18 @@ export class ProvideEIP712ContextTask {
   }
 
   async run(): ProvideEIP712ContextTaskReturnType {
-    // Send message simulation first
-    if (this.args.web3Check) {
-      await this.provideContext(this.args.web3Check);
+    // Provide the transaction checks first if any
+    if (this.args.transactionChecks) {
+      await this.provideContext(this.args.transactionChecks);
     }
 
     // Send proxy descriptor first if required
-    await this.args.clearSignContext.ifJust(async (clearSignContext) => {
-      if (clearSignContext.proxy !== undefined) {
-        await this.provideContext(clearSignContext.proxy);
-      }
-    });
+    const proxyContext:
+      | ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>
+      | undefined = this.args.clearSignContext.extract()?.proxy;
+    if (proxyContext !== undefined) {
+      await this.provideContext(proxyContext);
+    }
 
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =
       CommandResultFactory<AllSuccessTypes, EthErrorCodes>({ data: undefined });
@@ -297,7 +299,7 @@ export class ProvideEIP712ContextTask {
     }
 
     switch (type) {
-      case ClearSignContextType.WEB3_CHECK:
+      case ClearSignContextType.TRANSACTION_CHECK:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
@@ -327,6 +329,8 @@ export class ProvideEIP712ContextTask {
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.SAFE:
+      case ClearSignContextType.SIGNER:
         throw new Error(
           `Context type ${type} not supported in EIP712 messages`,
         );

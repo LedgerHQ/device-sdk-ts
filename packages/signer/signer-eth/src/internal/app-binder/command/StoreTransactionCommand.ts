@@ -37,6 +37,7 @@ export type StoreTransactionCommandArgs = {
 export class StoreTransactionCommand
   implements Command<void, StoreTransactionCommandArgs, EthErrorCodes>
 {
+  readonly name = "storeTransaction";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

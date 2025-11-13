@@ -32,6 +32,12 @@ describe("ProvideTLVDescriptorCommand", () => {
     });
   });
 
+  describe("name", () => {
+    it("should be 'provideTLVDescriptor'", () => {
+      expect(command.name).toBe("provideTLVDescriptor");
+    });
+  });
+
   describe("getApdu", () => {
     it("should construct the correct APDU", () => {
       const apdu = command.getApdu();

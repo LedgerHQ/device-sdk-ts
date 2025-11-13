@@ -15,6 +15,7 @@ export type CloseAppCommandResult = CommandResult<void>;
  * The command to close a runnint application on the device.
  */
 export class CloseAppCommand implements Command<void> {
+  readonly name = "closeApp";
   readonly args = undefined;
 
   readonly triggersDisconnection = true;

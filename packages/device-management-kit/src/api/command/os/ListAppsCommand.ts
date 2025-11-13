@@ -49,6 +49,7 @@ export class ListAppsCommandError extends DeviceExchangeError<ListAppsErrorCodes
 export class ListAppsCommand
   implements Command<ListAppsResponse, ListAppsArgs, ListAppsErrorCodes>
 {
+  readonly name = "listApps";
   readonly args: ListAppsArgs;
 
   constructor(args = { isContinue: false }) {

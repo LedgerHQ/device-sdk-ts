@@ -1,5 +1,35 @@
 # @ledgerhq/context-module
 
+## 1.10.0
+
+### Minor Changes
+
+- [#1070](https://github.com/LedgerHQ/device-sdk-ts/pull/1070) [`2b17ba8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2b17ba859b26af3dea824d7a737095f85c4a503d) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Replace legacy web3check loader by generic transaction check loader
+
+### Patch Changes
+
+- Updated dependencies [[`5fdf5c9`](https://github.com/LedgerHQ/device-sdk-ts/commit/5fdf5c9fcb52c249fecf35bea8db2b451ac3e3fa), [`ebd44c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd44c2690ec578410f69b148179268eeb34db65)]:
+  - @ledgerhq/device-management-kit@0.10.0
+
+## 1.9.0
+
+### Minor Changes
+
+- [#1079](https://github.com/LedgerHQ/device-sdk-ts/pull/1079) [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add Safe Address loader
+
+### Patch Changes
+
+- [#1072](https://github.com/LedgerHQ/device-sdk-ts/pull/1072) [`c8bb7a3`](https://github.com/LedgerHQ/device-sdk-ts/commit/c8bb7a39202206bffcd82190fa9e3074e9663dde) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix token loader for prefixed loaders
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+
+## 1.8.1
+
+### Patch Changes
+
+- [#1050](https://github.com/LedgerHQ/device-sdk-ts/pull/1050) [`95740df`](https://github.com/LedgerHQ/device-sdk-ts/commit/95740dfe0a475ce4540183594df630dfa3172e00) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fetch Uniswap plugin descriptor from the CAL
+
 ## 1.8.0
 
 ### Minor Changes

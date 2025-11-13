@@ -86,6 +86,12 @@ describe("GetAddressCommand", () => {
     command = new GetAddressCommand(defaultArgs);
   });
 
+  describe("name", () => {
+    it("should be 'getAddress'", () => {
+      expect(command.name).toBe("getAddress");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the GetAddress apdu with default args", () => {
       const apdu = command.getApdu();

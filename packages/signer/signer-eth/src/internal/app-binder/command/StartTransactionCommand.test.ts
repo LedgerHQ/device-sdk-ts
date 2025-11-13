@@ -7,6 +7,13 @@ import { EthAppCommandError } from "./utils/ethAppErrors";
 import { StartTransactionCommand } from "./StartTransactionCommand";
 
 describe("StartTransactionCommand", () => {
+  describe("name", () => {
+    it("should be 'startTransaction'", () => {
+      const command = new StartTransactionCommand();
+      expect(command.name).toBe("startTransaction");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // WHEN

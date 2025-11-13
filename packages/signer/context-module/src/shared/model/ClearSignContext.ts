@@ -12,10 +12,12 @@ export enum ClearSignContextType {
   PROXY_INFO = "proxyInfo",
   ENUM = "enum",
   TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
-  WEB3_CHECK = "web3Check",
+  TRANSACTION_CHECK = "transactionCheck",
   DYNAMIC_NETWORK = "dynamicNetwork",
   DYNAMIC_NETWORK_ICON = "dynamicNetworkIcon",
   ERROR = "error",
+  SAFE = "safe",
+  SIGNER = "signer",
 }
 
 export enum ClearSignContextReferenceType {

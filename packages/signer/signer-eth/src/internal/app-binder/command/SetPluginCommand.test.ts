@@ -26,6 +26,13 @@ const SET_PLUGIN_COMMAND_APDU = Uint8Array.from([
 ]);
 
 describe("SetPluginCommand", () => {
+  describe("name", () => {
+    it("should be 'setPlugin'", () => {
+      const command = new SetPluginCommand({ payload: "" });
+      expect(command.name).toBe("setPlugin");
+    });
+  });
+
   describe("getApdu", () => {
     it("returns the correct APDU", () => {
       // GIVEN

@@ -47,15 +47,9 @@ export const HomeScreen = () => {
             size="medium"
             type="color"
             onPress={() => navigate(RootScreens.ConnectDevice)}>
-            Select a USB device
+            Connect to a device
           </CtaButton>
         )}
-        <CtaButton
-          size="medium"
-          type="color"
-          onPress={() => navigate(RootScreens.ConnectDevice)}>
-          Select a BLE device
-        </CtaButton>
       </Flex>
     </Flex>
   );

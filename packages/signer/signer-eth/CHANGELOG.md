@@ -1,5 +1,39 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.9.2
+
+### Patch Changes
+
+- [#1107](https://github.com/LedgerHQ/device-sdk-ts/pull/1107) [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add name attribute to all command objects
+
+- Updated dependencies [[`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4), [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9)]:
+  - @ledgerhq/device-management-kit@0.11.0
+  - @ledgerhq/context-module@1.10.0
+
+## 1.9.1
+
+### Patch Changes
+
+- [#1070](https://github.com/LedgerHQ/device-sdk-ts/pull/1070) [`2b17ba8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2b17ba859b26af3dea824d7a737095f85c4a503d) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Use generic transaction check loader
+
+- Updated dependencies [[`5fdf5c9`](https://github.com/LedgerHQ/device-sdk-ts/commit/5fdf5c9fcb52c249fecf35bea8db2b451ac3e3fa), [`2b17ba8`](https://github.com/LedgerHQ/device-sdk-ts/commit/2b17ba859b26af3dea824d7a737095f85c4a503d), [`ebd44c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd44c2690ec578410f69b148179268eeb34db65)]:
+  - @ledgerhq/device-management-kit@0.10.0
+  - @ledgerhq/context-module@1.10.0
+
+## 1.9.0
+
+### Minor Changes
+
+- [#1079](https://github.com/LedgerHQ/device-sdk-ts/pull/1079) [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add verifySafeAddress API entrypoint
+
+### Patch Changes
+
+- [#1074](https://github.com/LedgerHQ/device-sdk-ts/pull/1074) [`024ec7e`](https://github.com/LedgerHQ/device-sdk-ts/commit/024ec7eb37e13cbdb0bc767e50c7dda223f4a206) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Don't fail clear signing if a sub context cannot be provided
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`c8bb7a3`](https://github.com/LedgerHQ/device-sdk-ts/commit/c8bb7a39202206bffcd82190fa9e3074e9663dde), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+  - @ledgerhq/context-module@1.9.0
+
 ## 1.8.0
 
 ### Minor Changes
