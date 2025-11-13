@@ -2,6 +2,7 @@ import { Either, Left } from "purify-ts";
 import { Observable } from "rxjs";
 
 import { type DmkConfig } from "@api/DmkConfig";
+import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
@@ -24,23 +25,26 @@ vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 let sessionService: DefaultDeviceSessionService;
 let loggerService: DefaultLoggerPublisherService;
 let deviceSession: DeviceSession;
+let deviceSession1: DeviceSession;
+let deviceSession2: DeviceSession;
 let managerApiDataSource: ManagerApiDataSource;
 let managerApi: ManagerApiService;
 let secureChannelDataSource: SecureChannelDataSource;
 let secureChannel: SecureChannelService;
 
 describe("DefaultDeviceSessionService", () => {
+  // Initialize shared resources
+  loggerService = new DefaultLoggerPublisherService([], "deviceSession");
+  managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
+  managerApi = new DefaultManagerApiService(managerApiDataSource);
+  secureChannelDataSource = new DefaultSecureChannelDataSource({} as DmkConfig);
+  secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
+
   beforeEach(() => {
     vi.restoreAllMocks();
-    loggerService = new DefaultLoggerPublisherService([], "deviceSession");
+    // Create a new instance before each test
     sessionService = new DefaultDeviceSessionService(() => loggerService);
-    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
-    managerApi = new DefaultManagerApiService(managerApiDataSource);
-    secureChannelDataSource = new DefaultSecureChannelDataSource(
-      {} as DmkConfig,
-    );
-    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
-
+    // Create a device session stub with default properties
     deviceSession = deviceSessionStubBuilder(
       {},
       () => loggerService,
@@ -54,43 +58,96 @@ describe("DefaultDeviceSessionService", () => {
     deviceSession.close();
   });
 
-  it("should have an empty sessions list", () => {
+  it("should have an empty DeviceSession list", () => {
     expect(sessionService.getDeviceSessions()).toEqual([]);
   });
 
-  it("should add a deviceSession", () => {
-    sessionService.addDeviceSession(deviceSession);
-    expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
+  describe("DeviceSessionService addDeviceSession", () => {
+    it("should add a DeviceSession if it does not already exist", () => {
+      sessionService.addDeviceSession(deviceSession);
+      expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
+    });
+    it("should not add a DeviceSession if it already exists", () => {
+      sessionService.addDeviceSession(deviceSession);
+      sessionService.addDeviceSession(deviceSession);
+      expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
+    });
   });
 
-  it("should not add a deviceSession if it already exists", () => {
-    sessionService.addDeviceSession(deviceSession);
-    sessionService.addDeviceSession(deviceSession);
-    expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
+  describe("DeviceSessionService removeDeviceSession", () => {
+    it("should remove the DeviceSession of given ID", () => {
+      sessionService.addDeviceSession(deviceSession);
+      sessionService.removeDeviceSession(deviceSession.id);
+      expect(sessionService.getDeviceSessions()).toEqual([]);
+    });
+    it("should not remove the DeviceSession of given ID if it does not exist", () => {
+      sessionService.addDeviceSession(deviceSession);
+      sessionService.removeDeviceSession("non-existent-id");
+      expect(sessionService.getDeviceSessions()).toEqual([deviceSession]);
+    });
   });
 
-  it("should remove a deviceSession", () => {
-    sessionService.addDeviceSession(deviceSession);
-    sessionService.removeDeviceSession(deviceSession.id);
-    expect(sessionService.getDeviceSessions()).toEqual([]);
+  describe("DeviceSessionService getDeviceSessionById", () => {
+    it("should get the DeviceSession of given ID if it exists", () => {
+      sessionService.addDeviceSession(deviceSession);
+      expect(sessionService.getDeviceSessionById(deviceSession.id)).toEqual(
+        Either.of(deviceSession),
+      );
+    });
+    it("should not get the DeviceSession if it does not exist", () => {
+      sessionService.addDeviceSession(deviceSession);
+      expect(sessionService.getDeviceSessionById("non-existent-id")).toEqual(
+        Left(new DeviceSessionNotFound()),
+      );
+    });
   });
 
-  it("should not remove a deviceSession if it does not exist", () => {
-    sessionService.removeDeviceSession(deviceSession.id);
-    expect(sessionService.getDeviceSessions()).toEqual([]);
-  });
+  describe("DeviceSessionService getDeviceSessionsByDeviceId", () => {
+    it("should not get device sessions by deviceId if none exist", () => {
+      sessionService.addDeviceSession(deviceSession);
+      expect(
+        sessionService.getDeviceSessionsByDeviceId("non-existent-device-id"),
+      ).toEqual(Left(new DeviceSessionNotFound()));
+    });
+    it("should get a single device session by deviceId", () => {
+      sessionService.addDeviceSession(deviceSession);
+      expect(
+        sessionService.getDeviceSessionsByDeviceId(
+          deviceSession.connectedDevice.id,
+        ),
+      ).toEqual(Either.of([deviceSession]));
+    });
+    it("should get device sessions by deviceId", () => {
+      sessionService.addDeviceSession(deviceSession);
+      deviceSession1 = deviceSessionStubBuilder(
+        {
+          connectedDevice: connectedDeviceStubBuilder({ id: "device-1" }),
+          id: "session-1",
+        },
+        () => loggerService,
+        managerApi,
+        secureChannel,
+        DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
+      );
 
-  it("should get a deviceSession", () => {
-    sessionService.addDeviceSession(deviceSession);
-    expect(sessionService.getDeviceSessionById(deviceSession.id)).toEqual(
-      Either.of(deviceSession),
-    );
-  });
-
-  it("should not get a deviceSession if it does not exist", () => {
-    expect(sessionService.getDeviceSessionById(deviceSession.id)).toEqual(
-      Left(new DeviceSessionNotFound()),
-    );
+      deviceSession2 = deviceSessionStubBuilder(
+        {
+          connectedDevice: connectedDeviceStubBuilder({ id: "device-1" }),
+          id: "session-2",
+        },
+        () => loggerService,
+        managerApi,
+        secureChannel,
+        DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
+      );
+      sessionService.addDeviceSession(deviceSession1);
+      sessionService.addDeviceSession(deviceSession2);
+      expect(sessionService.getDeviceSessionsByDeviceId("device-1")).toEqual(
+        Either.of([deviceSession1, deviceSession2]),
+      );
+      deviceSession1.close();
+      deviceSession2.close();
+    });
   });
 
   it("should get all sessions", () => {
