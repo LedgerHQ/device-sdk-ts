@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.11.1
+
+### Patch Changes
+
+- [#1119](https://github.com/LedgerHQ/device-sdk-ts/pull/1119) [`0e4ae29`](https://github.com/LedgerHQ/device-sdk-ts/commit/0e4ae2941f93448d8d1439f9d26166ffa5633a54) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Clean up all device sessions of the same device when device disconnected
+
 ## 0.11.0
 
 ### Minor Changes

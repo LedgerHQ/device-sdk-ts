@@ -71,11 +71,16 @@ export class ConnectUseCase {
   }
 
   private handleDeviceDisconnect(deviceId: DeviceId) {
-    const deviceSessionOrError =
-      this._sessionService.getDeviceSessionByDeviceId(deviceId);
-    deviceSessionOrError.map((deviceSession) => {
-      this._sessionService.removeDeviceSession(deviceSession.id);
-    });
+    this._sessionService
+      .getDeviceSessionsByDeviceId(deviceId)
+      .ifRight((deviceSessions) => {
+        deviceSessions.forEach((deviceSession) => {
+          this._sessionService.removeDeviceSession(deviceSession.id);
+          this._logger.info("Session removed", {
+            data: { deviceId, sessionId: deviceSession.id },
+          });
+        });
+      });
   }
 
   async execute({
