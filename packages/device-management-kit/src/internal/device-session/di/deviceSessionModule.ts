@@ -11,6 +11,7 @@ import { DefaultApduSenderService } from "@internal/device-session/service/Defau
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
+import { UnsafeBypassIntentQueueUseCase } from "@internal/device-session/use-case/UnsafeBypassIntentQueueUseCase";
 import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { StubUseCase } from "@root/src/di.stub";
 
@@ -59,12 +60,18 @@ export const deviceSessionModuleFactory = (
     bind(deviceSessionTypes.DisableDeviceSessionRefresherUseCase).to(
       DisableDeviceSessionRefresherUseCase,
     );
+    bind(deviceSessionTypes.UnsafeBypassIntentQueueUseCase).to(
+      UnsafeBypassIntentQueueUseCase,
+    );
 
     if (stub) {
       rebindSync(deviceSessionTypes.GetDeviceSessionStateUseCase).to(
         StubUseCase,
       );
       rebindSync(deviceSessionTypes.DisableDeviceSessionRefresherUseCase).to(
+        StubUseCase,
+      );
+      rebindSync(deviceSessionTypes.UnsafeBypassIntentQueueUseCase).to(
         StubUseCase,
       );
     }
