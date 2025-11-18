@@ -186,14 +186,24 @@ export class DeviceSession {
     options: SendApduOptions,
   ): Promise<Either<DmkError, ApduResponse>> {
     const abortTimeout = options.abortTimeout;
+    const beforeQueuedTimestamp = Date.now();
     const { observable, cancel } = this._intentQueueService.enqueue({
       type: "send-apdu",
       execute: () =>
         from(
-          this._unsafeInternalSendApdu(rawApdu, {
-            isPolling: options.isPolling,
-            triggersDisconnection: options.triggersDisconnection,
-          }),
+          (async () => {
+            const elapsedTime = Date.now() - beforeQueuedTimestamp;
+            const result = await this._unsafeInternalSendApdu(rawApdu, {
+              isPolling: options.isPolling,
+              triggersDisconnection: options.triggersDisconnection,
+              // Subtract the elapsed time to account for the time spent in the queue
+              // to sync both observable and transport timeout
+              abortTimeout: abortTimeout
+                ? abortTimeout - elapsedTime
+                : undefined,
+            });
+            return result;
+          })(),
         ),
     });
 
@@ -214,7 +224,7 @@ export class DeviceSession {
 
   private async _unsafeInternalSendApdu(
     rawApdu: Uint8Array,
-    options: Omit<SendApduOptions, "abortTimeout"> = {
+    options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
     },
@@ -226,6 +236,7 @@ export class DeviceSession {
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
+        abortTimeout,
       );
 
       result
@@ -280,9 +291,22 @@ export class DeviceSession {
     command: Command<Response, Args, ErrorStatusCodes>,
     abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
+    const beforeQueuedTimestamp = Date.now();
     const { observable, cancel } = this._intentQueueService.enqueue({
       type: "send-command",
-      execute: () => from(this._unsafeInternalSendCommand(command)),
+      execute: () =>
+        from(
+          (async () => {
+            const elapsedTime = Date.now() - beforeQueuedTimestamp;
+            const result = await this._unsafeInternalSendCommand(
+              command,
+              // Subtract the elapsed time to account for the time spent in the queue
+              // to sync both observable and transport timeout
+              abortTimeout ? abortTimeout - elapsedTime : undefined,
+            );
+            return result;
+          })(),
+        ),
     });
 
     const timeoutObservable = abortTimeout
@@ -310,6 +334,7 @@ export class DeviceSession {
       const response = await this._unsafeInternalSendApdu(apdu.getRawApdu(), {
         isPolling: false,
         triggersDisconnection: command.triggersDisconnection ?? false,
+        abortTimeout,
       });
 
       return response.caseOf({
