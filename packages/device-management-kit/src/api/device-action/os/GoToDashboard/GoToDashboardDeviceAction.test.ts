@@ -15,7 +15,7 @@ import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { UnknownDeviceExchangeError } from "@root/src";
 
 import { GoToDashboardDeviceAction } from "./GoToDashboardDeviceAction";
-import { type GoToDashboardDAState } from "./types";
+import { type GoToDashboardDAState, goToDashboardDAStateStep } from "./types";
 
 vi.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
 
@@ -65,12 +65,15 @@ describe("GoToDashboardDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GetDeviceStatus events (mocked for tests)
+            status: DeviceActionStatus.Pending,
           },
+          // snapshot from GetDeviceStatus child machine
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -128,24 +131,29 @@ describe("GoToDashboardDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // snapshot from GetDeviceStatus child machine
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.CLOSE_APP,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.CONFIRM_DASHBOARD_OPEN,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -196,12 +204,15 @@ describe("GoToDashboardDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
+          // snapshot from GetDeviceStatus child machine
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -256,12 +267,15 @@ describe("GoToDashboardDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
+          // snapshot from GetDeviceStatus child machine
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -305,12 +319,15 @@ describe("GoToDashboardDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
+          // snapshot from GetDeviceStatus child machine
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -366,18 +383,22 @@ describe("GoToDashboardDeviceAction", () => {
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
+              },
+              status: DeviceActionStatus.Pending,
+            },
+            // snapshot from GetDeviceStatus child machine
+            {
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
               },
               status: DeviceActionStatus.Pending,
             },
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
-              },
-              status: DeviceActionStatus.Pending,
-            },
-            {
-              intermediateValue: {
-                requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.CLOSE_APP,
               },
               status: DeviceActionStatus.Pending,
             },
@@ -439,24 +460,29 @@ describe("GoToDashboardDeviceAction", () => {
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
+              },
+              status: DeviceActionStatus.Pending,
+            },
+            // snapshot from GetDeviceStatus child machine
+            {
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
               },
               status: DeviceActionStatus.Pending,
             },
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.CLOSE_APP,
               },
               status: DeviceActionStatus.Pending,
             },
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
-              },
-              status: DeviceActionStatus.Pending,
-            },
-            {
-              intermediateValue: {
-                requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.CONFIRM_DASHBOARD_OPEN,
               },
               status: DeviceActionStatus.Pending,
             },
@@ -517,24 +543,29 @@ describe("GoToDashboardDeviceAction", () => {
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
+              },
+              status: DeviceActionStatus.Pending,
+            },
+            // snapshot from GetDeviceStatus child machine
+            {
+              intermediateValue: {
+                requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
               },
               status: DeviceActionStatus.Pending,
             },
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.CLOSE_APP,
               },
               status: DeviceActionStatus.Pending,
             },
             {
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.None,
-              },
-              status: DeviceActionStatus.Pending,
-            },
-            {
-              intermediateValue: {
-                requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.CONFIRM_DASHBOARD_OPEN,
               },
               status: DeviceActionStatus.Pending,
             },

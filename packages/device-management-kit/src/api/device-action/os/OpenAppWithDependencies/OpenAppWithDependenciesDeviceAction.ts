@@ -21,6 +21,7 @@ import {
   type OpenAppWithDependenciesDAInput,
   type OpenAppWithDependenciesDAIntermediateValue,
   type OpenAppWithDependenciesDAOutput,
+  openAppWithDependenciesDAStateSteps,
 } from "./types";
 
 type OpenAppWithDependenciesMachineInternalState = {
@@ -115,6 +116,7 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             installPlan: null,
           },
           _internalState: {
@@ -133,12 +135,6 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
           ],
         },
         GetDeviceMetadata: {
-          exit: assign({
-            intermediateValue: (_) => ({
-              ..._.context.intermediateValue,
-              requiredUserInteraction: UserInteractionRequired.None,
-            }),
-          }),
           invoke: {
             id: "getMetadata",
             src: "getMetadata",
@@ -157,6 +153,7 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
                   deviceId:
                     _.event.snapshot.context.intermediateValue.deviceId ??
                     _.context.intermediateValue.deviceId,
+                  step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
                 }),
               }),
             },
@@ -211,10 +208,10 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
           ],
         },
         InstallDependencies: {
-          exit: assign({
+          entry: assign({
             intermediateValue: (_) => ({
               ..._.context.intermediateValue,
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppWithDependenciesDAStateSteps.INSTALL_OR_UPDATE_APPS,
             }),
           }),
           invoke: {
@@ -278,10 +275,11 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
           ],
         },
         OpenApp: {
-          exit: assign({
+          entry: assign({
             intermediateValue: (_) => ({
               ..._.context.intermediateValue,
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppWithDependenciesDAStateSteps.OPEN_APP,
             }),
           }),
           invoke: {

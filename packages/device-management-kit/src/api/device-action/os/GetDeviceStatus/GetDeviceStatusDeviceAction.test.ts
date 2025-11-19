@@ -19,7 +19,10 @@ import {
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 
 import { GetDeviceStatusDeviceAction } from "./GetDeviceStatusDeviceAction";
-import { type GetDeviceStatusDAState } from "./types";
+import {
+  type GetDeviceStatusDAState,
+  getDeviceStatusDAStateStep,
+} from "./types";
 
 describe("GetDeviceStatusDeviceAction", () => {
   const getAppAndVersionMock = vi.fn();
@@ -72,17 +75,25 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
+            status: DeviceActionStatus.Completed,
             output: {
               currentApp: "BOLOS",
               currentAppVersion: "1.0.0",
             },
-            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -90,10 +101,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -132,29 +140,39 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Completed,
             output: {
               currentApp: "BOLOS",
               currentAppVersion: "1.0.0",
             },
-            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -162,10 +180,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -204,20 +219,29 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
-            error: new DeviceLockedError("Device locked."),
             status: DeviceActionStatus.Error,
+            error: new DeviceLockedError("Device locked."),
           },
         ];
 
@@ -225,10 +249,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -255,17 +276,25 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
+            status: DeviceActionStatus.Completed,
             output: {
               currentApp: "BOLOS",
               currentAppVersion: "0.0.0",
             },
-            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -273,10 +302,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
   });
@@ -310,10 +336,18 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
+          },
+          {
             status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
           },
           {
             status: DeviceActionStatus.Completed,
@@ -330,7 +364,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           makeDeviceActionInternalApiMock(),
           {
             onDone: () => {
-              // Session should be updated with current app
               expect(setDeviceSessionState).toHaveBeenCalledWith({
                 sessionStateType:
                   DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -374,10 +407,18 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
+          },
+          {
             status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
           },
           {
             status: DeviceActionStatus.Completed,
@@ -394,7 +435,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           makeDeviceActionInternalApiMock(),
           {
             onDone: () => {
-              // Session should be set as ready if GetAppAndVersionCommand was successful
               expect(setDeviceSessionState).toHaveBeenCalledWith({
                 sessionStateType:
                   DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -486,22 +526,32 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
             status: DeviceActionStatus.Completed,
@@ -516,10 +566,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
   });
@@ -545,8 +592,15 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
-            error: new DeviceNotOnboardedError(),
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+          },
+          {
             status: DeviceActionStatus.Error,
+            error: new DeviceNotOnboardedError(),
           },
         ];
 
@@ -554,10 +608,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -612,20 +663,29 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
-            error: new DeviceLockedError("Device locked."),
             status: DeviceActionStatus.Error,
+            error: new DeviceLockedError("Device locked."),
           },
         ];
 
@@ -633,10 +693,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -702,14 +759,22 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
-            error,
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
             status: DeviceActionStatus.Error,
+            error,
           },
         ];
 
@@ -717,10 +782,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -754,14 +816,22 @@ describe("GetDeviceStatusDeviceAction", () => {
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
           {
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
-            status: DeviceActionStatus.Pending,
           },
           {
-            error: new UnknownDAError("error"),
+            status: DeviceActionStatus.Pending,
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          },
+          {
             status: DeviceActionStatus.Error,
+            error: new UnknownDAError("error"),
           },
         ];
 
@@ -769,14 +839,10 @@ describe("GetDeviceStatusDeviceAction", () => {
           getDeviceStateDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
   });
-
   it("should emit a stopped state if the action is cancelled", () =>
     new Promise<void>((resolve, reject) => {
       apiGetDeviceSessionStateMock.mockReturnValue({
@@ -803,9 +869,10 @@ describe("GetDeviceStatusDeviceAction", () => {
 
       const expectedStates: Array<GetDeviceStatusDAState> = [
         {
-          status: DeviceActionStatus.Pending, // get app and version
+          status: DeviceActionStatus.Pending,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
           },
         },
         {
@@ -817,11 +884,9 @@ describe("GetDeviceStatusDeviceAction", () => {
         getDeviceStateDeviceAction,
         expectedStates,
         makeDeviceActionInternalApiMock(),
-        {
-          onDone: resolve,
-          onError: reject,
-        },
+        { onDone: resolve, onError: reject },
       );
+
       cancel();
     }));
 });

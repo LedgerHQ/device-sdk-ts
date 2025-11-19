@@ -27,6 +27,7 @@ import {
   type ListAppsWithMetadataDAInput,
   type ListAppsWithMetadataDAIntermediateValue,
   type ListAppsWithMetadataDAOutput,
+  listAppsWithMetadataDAStateStep,
 } from "./types";
 
 type ListAppsWithMetadataMachineInternalState = {
@@ -148,6 +149,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: listAppsWithMetadataDAStateStep.LIST_APPS,
           },
         };
       },
@@ -173,9 +175,6 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
             onDone: {
               target: "ListAppsCheck",
               actions: assign({
-                intermediateValue: (_) => ({
-                  requiredUserInteraction: UserInteractionRequired.None,
-                }),
                 _internalState: (_) => {
                   return _.event.output.caseOf({
                     Right: (apps) => ({
@@ -216,6 +215,12 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
           ],
         },
         FetchMetadata: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.FETCH_METADATA,
+            },
+          }),
           invoke: {
             id: "getAppsByHash",
             src: "getAppsByHash",
@@ -255,6 +260,12 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
           ],
         },
         SaveSession: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.SAVE_SESSION,
+            },
+          }),
           invoke: {
             src: "updateDeviceSessionState",
             input: (_) => ({

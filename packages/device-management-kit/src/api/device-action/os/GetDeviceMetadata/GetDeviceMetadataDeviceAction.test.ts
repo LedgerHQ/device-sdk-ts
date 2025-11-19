@@ -29,7 +29,10 @@ import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
 import { GetDeviceMetadataDeviceAction } from "./GetDeviceMetadataDeviceAction";
-import { type GetDeviceMetadataDAState } from "./types";
+import {
+  type GetDeviceMetadataDAState,
+  getDeviceMetadataDAStateStep,
+} from "./types";
 
 vi.mock("@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction");
 vi.mock("@api/device-action/os/ListApps/ListAppsDeviceAction");
@@ -93,6 +96,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -156,19 +160,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -176,19 +184,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // ListApps
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
+          // ListApps (entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // ListApps (child snapshot)
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -196,6 +208,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_APPLICATIONS_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -254,16 +267,19 @@ describe("GetDeviceMetadataDeviceAction", () => {
         );
 
         const expectedStates: Array<GetDeviceMetadataDAState> = [
-          // GoToDashboard
+          // GoToDashboard (parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -271,19 +287,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // ListApps
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
+          // ListApps (entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // ListApps (child snapshot)
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -291,6 +311,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_APPLICATIONS_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -377,19 +398,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -397,44 +422,56 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // ListAppsSecureChannel
+          // ListAppsSecureChannel (entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
+          // ListAppsSecureChannel - Exchange
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
+          // ListAppsSecureChannel - still none
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
+          // ListAppsSecureChannel - PermissionRequested
           {
             intermediateValue: {
               requiredUserInteraction:
                 UserInteractionRequired.AllowSecureConnection,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
+          // ListAppsSecureChannel - PermissionGranted
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
+          // ListAppsSecureChannel - Result
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -442,6 +479,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_APPLICATIONS_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -491,6 +529,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -536,19 +575,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -587,19 +630,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard(parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -607,6 +654,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -652,19 +700,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -672,19 +724,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // ListApps
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
+          // ListApps (entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // ListApps (child snapshot)
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -737,19 +793,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -757,19 +817,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // ListApps
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-            status: DeviceActionStatus.Pending,
-          },
+          // ListApps (entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // ListApps (child snapshot)
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -777,6 +841,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_APPLICATIONS_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -834,19 +899,23 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (parent entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GoToDashboard (child snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -854,25 +923,31 @@ describe("GetDeviceMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // ListAppsSecureChannel
+          // ListAppsSecureChannel (entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
+          // ListAppsSecureChannel - Exchange
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },
+          // ListAppsSecureChannel - still none
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
             status: DeviceActionStatus.Pending,
           },

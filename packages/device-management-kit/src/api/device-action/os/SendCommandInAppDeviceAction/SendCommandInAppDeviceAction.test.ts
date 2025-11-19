@@ -15,6 +15,7 @@ import {
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
+import { openAppDAStateStep } from "@api/device-action/os/OpenAppDeviceAction/types";
 import { type Command } from "@api/types";
 import { UnknownDeviceExchangeError } from "@root/src";
 
@@ -23,6 +24,7 @@ import {
   type SendCommandInAppDAError,
   type SendCommandInAppDAIntermediateValue,
   type SendCommandInAppDAOutput,
+  sendCommandInAppDAStateStep,
 } from "./SendCommandInAppDeviceActionTypes";
 
 vi.mock(
@@ -52,6 +54,7 @@ const setupOpenAppDAMock = (error?: unknown) => {
             entry: assign({
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+                step: openAppDAStateStep.CONFIRM_OPEN_APP,
               },
             }),
             after: {
@@ -130,12 +133,14 @@ describe("SendCommandInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: sendCommandInAppDAStateStep.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: openAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
@@ -190,18 +195,21 @@ describe("SendCommandInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: sendCommandInAppDAStateStep.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: openAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: sendCommandInAppDAStateStep.SEND_COMMAND,
             },
           },
           {
@@ -249,18 +257,21 @@ describe("SendCommandInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: sendCommandInAppDAStateStep.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: openAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: sendCommandInAppDAStateStep.SEND_COMMAND,
             },
           },
           {
@@ -306,6 +317,7 @@ describe("SendCommandInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: sendCommandInAppDAStateStep.SEND_COMMAND,
             },
           },
           {
@@ -359,6 +371,8 @@ type MyCommandSendCommandDAState = DeviceActionState<
   SendCommandInAppDAOutput<MyCommandResponse>,
   SendCommandInAppDAError<UnknownDAError>,
   SendCommandInAppDAIntermediateValue<
-    UserInteractionRequired.None | UserInteractionRequired.VerifyAddress
+    | UserInteractionRequired.None
+    | UserInteractionRequired.VerifyAddress
+    | UserInteractionRequired.ConfirmOpenApp // allow snapshot from sub-machine
   >
 >;

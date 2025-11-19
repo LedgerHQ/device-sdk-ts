@@ -1,3 +1,4 @@
+// src/api/device-action/os/OpenAppWithDependencies/OpenAppWithDependenciesDeviceAction.test.ts
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import {
   setupGetDeviceMetadataMock,
@@ -12,11 +13,15 @@ import {
   UnsupportedFirmwareDAError,
 } from "@api/device-action/os/Errors";
 import type { GetDeviceMetadataDAOutput } from "@api/device-action/os/GetDeviceMetadata/types";
-import type { InstallOrUpdateAppsDAIntermediateValue } from "@api/device-action/os/InstallOrUpdateApps/types";
+import {
+  type InstallOrUpdateAppsDAIntermediateValue,
+  installOrUpdateAppsDAStateStep,
+} from "@api/device-action/os/InstallOrUpdateApps/types";
 import type { Application } from "@internal/manager-api/model/Application";
 
 import { OpenAppWithDependenciesDeviceAction } from "./OpenAppWithDependenciesDeviceAction";
 import type { OpenAppWithDependenciesDAState } from "./types";
+import { openAppWithDependenciesDAStateSteps } from "./types";
 
 vi.mock("@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction");
 vi.mock(
@@ -35,6 +40,7 @@ describe("OpenAppWithDependenciesDeviceAction", () => {
 
   const INSTALL_INTERMEDIATE_VALUE: InstallOrUpdateAppsDAIntermediateValue = {
     requiredUserInteraction: UserInteractionRequired.None,
+    step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
     installPlan: {
       installPlan: [{ versionName: "1inch" }] as unknown as Application[],
       alreadyInstalled: ["Ethereum", "Uniswap"],
@@ -74,42 +80,61 @@ describe("OpenAppWithDependenciesDeviceAction", () => {
         });
 
         const expectedStates: Array<OpenAppWithDependenciesDAState> = [
-          // GetDeviceMetadata
+          // GetDeviceMetadata (initial emission carries the step)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetDeviceMetadata snapshot (deviceId appears)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // InstallOrUpdateApps
+          // InstallOrUpdateApps entry
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.INSTALL_OR_UPDATE_APPS,
             },
             status: DeviceActionStatus.Pending,
           },
+          // InstallOrUpdateApps snapshot (plan populated)
           {
-            intermediateValue: INSTALL_INTERMEDIATE_VALUE,
+            intermediateValue: {
+              ...INSTALL_INTERMEDIATE_VALUE,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.INSTALL_OR_UPDATE_APPS,
+            },
             status: DeviceActionStatus.Pending,
           },
-          // OpenApp
+          // OpenApp entry (keeps installPlan until snapshot)
           {
-            intermediateValue: INSTALL_INTERMEDIATE_VALUE,
+            intermediateValue: {
+              ...INSTALL_INTERMEDIATE_VALUE,
+              deviceId: undefined,
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppWithDependenciesDAStateSteps.OPEN_APP,
+            },
             status: DeviceActionStatus.Pending,
           },
+          // OpenApp snapshot (confirm on device, installPlan cleared)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -143,18 +168,22 @@ describe("OpenAppWithDependenciesDeviceAction", () => {
         });
 
         const expectedStates: Array<OpenAppWithDependenciesDAState> = [
-          // GetDeviceMetadata
+          // GetDeviceMetadata initial
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetDeviceMetadata snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -188,18 +217,22 @@ describe("OpenAppWithDependenciesDeviceAction", () => {
         });
 
         const expectedStates: Array<OpenAppWithDependenciesDAState> = [
-          // GetDeviceMetadata
+          // GetDeviceMetadata initial
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetDeviceMetadata snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -220,12 +253,10 @@ describe("OpenAppWithDependenciesDeviceAction", () => {
 
     it("Install apps error", () =>
       new Promise<void>((resolve, reject) => {
-        const metadataWithUpdate = {
-          firmwareUpdateContext: {
-            availableUpdate: "mockUpdate",
-          },
+        const metadata = {
+          firmwareUpdateContext: {},
         } as unknown as GetDeviceMetadataDAOutput;
-        setupGetDeviceMetadataMock(metadataWithUpdate);
+        setupGetDeviceMetadataMock(metadata);
         setupInstallOrUpdateAppsMock(
           INSTALL_RESULT,
           INSTALL_INTERMEDIATE_VALUE,
@@ -240,31 +271,42 @@ describe("OpenAppWithDependenciesDeviceAction", () => {
         });
 
         const expectedStates: Array<OpenAppWithDependenciesDAState> = [
-          // GetDeviceMetadata
+          // GetDeviceMetadata initial
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetDeviceMetadata snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // InstallOrUpdateApps
+          // InstallOrUpdateApps entry
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.INSTALL_OR_UPDATE_APPS,
             },
             status: DeviceActionStatus.Pending,
           },
+          // InstallOrUpdateApps snapshot (plan populated)
           {
-            intermediateValue: INSTALL_INTERMEDIATE_VALUE,
+            intermediateValue: {
+              ...INSTALL_INTERMEDIATE_VALUE,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.INSTALL_OR_UPDATE_APPS,
+            },
             status: DeviceActionStatus.Pending,
           },
           // Error
@@ -297,42 +339,61 @@ describe("OpenAppWithDependenciesDeviceAction", () => {
         });
 
         const expectedStates: Array<OpenAppWithDependenciesDAState> = [
-          // GetDeviceMetadata
+          // GetDeviceMetadata initial
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
+          // GetDeviceMetadata snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.GET_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
-          // InstallOrUpdateApps
+          // InstallOrUpdateApps entry
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.INSTALL_OR_UPDATE_APPS,
             },
             status: DeviceActionStatus.Pending,
           },
+          // InstallOrUpdateApps snapshot (plan populated)
           {
-            intermediateValue: INSTALL_INTERMEDIATE_VALUE,
+            intermediateValue: {
+              ...INSTALL_INTERMEDIATE_VALUE,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.INSTALL_OR_UPDATE_APPS,
+            },
             status: DeviceActionStatus.Pending,
           },
-          // OpenApp
+          // OpenApp entry (keeps installPlan until snapshot)
           {
-            intermediateValue: INSTALL_INTERMEDIATE_VALUE,
+            intermediateValue: {
+              ...INSTALL_INTERMEDIATE_VALUE,
+              deviceId: undefined,
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppWithDependenciesDAStateSteps.OPEN_APP,
+            },
             status: DeviceActionStatus.Pending,
           },
+          // OpenApp snapshot (confirm on device, installPlan cleared)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
               installPlan: null,
+              deviceId: undefined,
+              step: openAppWithDependenciesDAStateSteps.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },

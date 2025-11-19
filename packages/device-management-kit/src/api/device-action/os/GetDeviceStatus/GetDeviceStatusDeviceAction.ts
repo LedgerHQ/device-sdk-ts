@@ -40,6 +40,7 @@ import {
   type GetDeviceStatusDAInput,
   type GetDeviceStatusDAIntermediateValue,
   type GetDeviceStatusDAOutput,
+  getDeviceStatusDAStateStep,
 } from "./types";
 
 type GetDeviceStatusMachineInternalState = {
@@ -131,6 +132,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           }),
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
           },
         }),
         assignErrorFromEvent: assign({
@@ -144,6 +146,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             ({
               ..._.context.intermediateValue,
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             }) satisfies types["context"]["intermediateValue"],
         }),
         assignUserActionUnlockNeeded: assign({
@@ -151,6 +154,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             ({
               ..._.context.intermediateValue,
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             }) satisfies types["context"]["intermediateValue"],
         }),
       },
@@ -167,6 +171,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
           },
           _internalState: {
             onboarded: false, // we don't know how to check yet
@@ -183,8 +188,14 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       },
       states: {
         DeviceReady: {
-          always: {
-            target: "OnboardingCheck",
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+          }),
+          after: {
+            0: { target: "OnboardingCheck" },
           },
         },
         OnboardingCheck: {
@@ -234,6 +245,12 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
         },
         AppAndVersionCheck: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.APP_AND_VERSION_CHECK,
+            },
+          }),
           // We check the current app and version using the getAppAndVersion command
           invoke: {
             src: "getAppAndVersion",

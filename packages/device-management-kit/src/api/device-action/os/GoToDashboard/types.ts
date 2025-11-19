@@ -7,6 +7,16 @@ import {
   type GetDeviceStatusDARequiredInteraction,
 } from "@api/device-action/os/GetDeviceStatus/types";
 
+export const goToDashboardDAStateStep = Object.freeze({
+  GET_DEVICE_STATUS: "os.goToDashboard.steps.getDeviceStatus",
+  DASHBOARD_CHECK: "os.goToDashboard.steps.dashboardCheck",
+  CLOSE_APP: "os.goToDashboard.steps.closeApp",
+  CONFIRM_DASHBOARD_OPEN: "os.goToDashboard.steps.confirmDashboardOpen",
+} as const);
+
+export type GoToDashboardDAStateStep =
+  (typeof goToDashboardDAStateStep)[keyof typeof goToDashboardDAStateStep];
+
 export type GoToDashboardDAOutput = void;
 export type GoToDashboardDAInput = GetDeviceStatusDAInput;
 
@@ -20,6 +30,7 @@ export type GoToDashboardDARequiredInteraction =
 
 export type GoToDashboardDAIntermediateValue = {
   readonly requiredUserInteraction: GoToDashboardDARequiredInteraction;
+  readonly step: GoToDashboardDAStateStep;
 };
 
 export type GoToDashboardDAState = DeviceActionState<

@@ -15,6 +15,17 @@ import type { InstallAppDAError } from "@api/secure-channel/device-action/Instal
 import type { Application } from "@internal/manager-api/model/Application";
 import type { SecureChannelInstallDAErrors } from "@internal/secure-channel/model/Errors";
 
+export const installOrUpdateAppsDAStateStep = Object.freeze({
+  UPDATE_DEVICE_METADATA: "os.installOrUpdateApps.steps.updateDeviceMetadata",
+  BUILD_INSTALL_PLAN: "os.installOrUpdateApps.steps.buildInstallPlan",
+  CHECK_IF_ENOUGH_MEMORY: "os.installOrUpdateApps.steps.checkIfEnoughMemory",
+  GO_TO_DASHBOARD: "os.installOrUpdateApps.steps.goToDashboard",
+  INSTALL_APPLICATION: "os.installOrUpdateApps.steps.installApplication",
+} as const);
+
+export type InstallOrUpdateAppsDAStateStep =
+  (typeof installOrUpdateAppsDAStateStep)[keyof typeof installOrUpdateAppsDAStateStep];
+
 /**
  * An application version used as application constraint should either be a valid semantic versioning formatted
  * string, or "latest" to ensure the app is always up-to-date.
@@ -92,6 +103,7 @@ export type InstallOrUpdateAppsDAIntermediateValue = {
   requiredUserInteraction: InstallOrUpdateAppsDARequiredInteraction;
   installPlan: InstallPlan | null;
   deviceId?: Uint8Array;
+  step: InstallOrUpdateAppsDAStateStep;
 };
 
 export type InstallOrUpdateAppsDAState = DeviceActionState<

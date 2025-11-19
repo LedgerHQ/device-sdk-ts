@@ -8,12 +8,14 @@ import { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMe
 import { type GetDeviceMetadataDAOutput } from "@api/device-action/os/GetDeviceMetadata/types";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
+import { goToDashboardDAStateStep } from "@api/device-action/os/GoToDashboard/types";
 import { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOrUpdateApps/InstallOrUpdateAppsDeviceAction";
 import {
   type InstallOrUpdateAppsDAIntermediateValue,
   type InstallOrUpdateAppsDAOutput,
 } from "@api/device-action/os/InstallOrUpdateApps/types";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
+import { listAppsDAStateStep } from "@api/device-action/os/ListApps/types";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { type DmkError } from "@api/Error";
 import { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
@@ -37,6 +39,7 @@ export const setupListAppsMock = (apps: App[], error = false) => {
             entry: assign({
               intermediateValue: () => ({
                 requiredUserInteraction: UserInteractionRequired.AllowListApps,
+                step: listAppsDAStateStep.LIST_APPS,
               }),
             }),
           },
@@ -165,6 +168,7 @@ export const setupGoToDashboardMock = (error: boolean = false) => {
             entry: assign({
               intermediateValue: () => ({
                 requiredUserInteraction: UserInteractionRequired.None,
+                step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
               }),
             }),
           },

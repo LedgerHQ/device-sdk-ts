@@ -1,3 +1,4 @@
+// src/api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction.test.ts
 import { Left, Right } from "purify-ts";
 
 import { DeviceStatus } from "@api/device/DeviceStatus";
@@ -15,12 +16,16 @@ import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDe
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
+import { listAppsDAStateStep } from "@api/device-action/os/ListApps/types";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { ListAppsWithMetadataDeviceAction } from "./ListAppsWithMetadataDeviceAction";
-import { type ListAppsWithMetadataDAState } from "./types";
+import {
+  type ListAppsWithMetadataDAState,
+  listAppsWithMetadataDAStateStep,
+} from "./types";
 
 vi.mock("@api/device-action/os/ListApps/ListAppsDeviceAction");
 
@@ -58,18 +63,23 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         } as unknown as ManagerApiService);
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot from this machine
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Snapshot coming from child ListAppsDeviceAction (mocked)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Success with no apps means we stop before fetching metadata
           {
             status: DeviceActionStatus.Completed,
             output: [],
@@ -100,30 +110,39 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         } as unknown as ManagerApiService);
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Child ListApps snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Fetch metadata snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.FETCH_METADATA,
             },
-            status: DeviceActionStatus.Pending, // FetchMetadata
+            status: DeviceActionStatus.Pending,
           },
+          // Save session snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.SAVE_SESSION,
             },
-            status: DeviceActionStatus.Pending, // SaveSession
+            status: DeviceActionStatus.Pending,
           },
+          // Done
           {
             status: DeviceActionStatus.Completed,
             output: [BTC_APP_METADATA],
@@ -156,30 +175,39 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         } as unknown as ManagerApiService);
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Child ListApps snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Fetch metadata
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.FETCH_METADATA,
             },
-            status: DeviceActionStatus.Pending, // FetchMetadata
+            status: DeviceActionStatus.Pending,
           },
+          // Save session
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.SAVE_SESSION,
             },
-            status: DeviceActionStatus.Pending, // SaveSession
+            status: DeviceActionStatus.Pending,
           },
+          // Done
           {
             status: DeviceActionStatus.Completed,
             output: [BTC_APP_METADATA, ETH_APP_METADATA],
@@ -214,30 +242,39 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         } as unknown as ManagerApiService);
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Child ListApps snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Fetch metadata
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.FETCH_METADATA,
             },
-            status: DeviceActionStatus.Pending, // FetchMetadata
+            status: DeviceActionStatus.Pending,
           },
+          // Save session
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.SAVE_SESSION,
             },
-            status: DeviceActionStatus.Pending, // SaveSession
+            status: DeviceActionStatus.Pending,
           },
+          // Done
           {
             status: DeviceActionStatus.Completed,
             output: [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA],
@@ -266,18 +303,23 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           });
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Child ListApps snapshot (asks for permission)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Error emitted by ListApps child
           {
             status: DeviceActionStatus.Error,
             error: new UnknownDAError("ListApps failed"),
@@ -310,24 +352,31 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         } as unknown as ManagerApiService);
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Child ListApps snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Enter FetchMetadata (we set step on entry)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.FETCH_METADATA,
             },
-            status: DeviceActionStatus.Pending, // FetchMetadata
+            status: DeviceActionStatus.Pending,
           },
+          // Error thrown by getAppsByHash
           {
             status: DeviceActionStatus.Error,
             error: new UnknownDAError("getAppsByHash failed"),
@@ -360,24 +409,31 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         } as unknown as ManagerApiService);
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Child ListApps snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Fetch metadata snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.FETCH_METADATA,
             },
-            status: DeviceActionStatus.Pending, // FetchMetadata
+            status: DeviceActionStatus.Pending,
           },
+          // Error from EitherAsync Left
           {
             status: DeviceActionStatus.Error,
             error,
@@ -424,30 +480,39 @@ describe("ListAppsWithMetadataDeviceAction", () => {
         });
 
         const expectedStates: Array<ListAppsWithMetadataDAState> = [
+          // Initial snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // Ready
+            status: DeviceActionStatus.Pending,
           },
+          // Child ListApps snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListAppsDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // Fetch metadata snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.FETCH_METADATA,
             },
-            status: DeviceActionStatus.Pending, // FetchMetadata
+            status: DeviceActionStatus.Pending,
           },
+          // Save session snapshot (fails next)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.SAVE_SESSION,
             },
-            status: DeviceActionStatus.Pending, // SaveSession
+            status: DeviceActionStatus.Pending,
           },
+          // Error from SaveSession
           {
             status: DeviceActionStatus.Error,
             error: new UnknownDAError("SaveSession failed"),

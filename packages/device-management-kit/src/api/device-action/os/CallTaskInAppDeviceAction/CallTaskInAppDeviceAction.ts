@@ -21,6 +21,7 @@ import {
   type CallTaskInAppDAIntermediateValue,
   type CallTaskInAppDAInternalState,
   type CallTaskInAppDAOutput,
+  callTaskInAppDAStateStep,
 } from "./CallTaskInAppDeviceActionTypes";
 
 /**
@@ -113,6 +114,7 @@ export class CallTaskInAppDeviceAction<
           input: input,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: callTaskInAppDAStateStep.OPEN_APP,
           },
           _internalState: {
             taskResponse: null,
@@ -174,11 +176,7 @@ export class CallTaskInAppDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: this.input.requiredUserInteraction,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: callTaskInAppDAStateStep.CALL_TASK,
             },
           }),
           invoke: {
@@ -200,6 +198,10 @@ export class CallTaskInAppDeviceAction<
                       ...context._internalState,
                       error: event.output.error,
                     };
+                  },
+                  intermediateValue: {
+                    requiredUserInteraction: UserInteractionRequired.None,
+                    step: callTaskInAppDAStateStep.CALL_TASK,
                   },
                 }),
               ],

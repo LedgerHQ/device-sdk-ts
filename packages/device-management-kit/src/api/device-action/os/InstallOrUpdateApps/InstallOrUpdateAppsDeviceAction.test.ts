@@ -17,7 +17,10 @@ import { SecureChannelEventType } from "@api/secure-channel/task/types";
 import type { Application } from "@internal/manager-api/model/Application";
 
 import { InstallOrUpdateAppsDeviceAction } from "./InstallOrUpdateAppsDeviceAction";
-import type { InstallOrUpdateAppsDAState } from "./types";
+import {
+  type InstallOrUpdateAppsDAState,
+  installOrUpdateAppsDAStateStep,
+} from "./types";
 
 vi.mock("@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction");
 vi.mock(
@@ -127,6 +130,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -134,6 +138,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -142,13 +147,15 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               installPlan: null,
+              step: installOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
             },
             status: DeviceActionStatus.Pending,
           },
-          // PredictOutOfMemory
+          // CHECK_IF_ENOUGH_MEMORY
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.CHECK_IF_ENOUGH_MEMORY,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -161,6 +168,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.GO_TO_DASHBOARD,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -172,6 +180,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.GO_TO_DASHBOARD,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -180,10 +189,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // InstallApp
+          // InstallApp (start)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -195,6 +205,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -208,6 +219,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction:
                 UserInteractionRequired.AllowSecureConnection,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -219,6 +231,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -230,6 +243,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -241,6 +255,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -252,6 +267,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -264,6 +280,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -275,6 +292,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 1,
@@ -286,6 +304,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 1,
@@ -297,6 +316,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 1,
@@ -305,10 +325,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // UpdateDeviceMetadata
+          // Final snapshot after all installs complete
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 1,
@@ -317,9 +338,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
+          // One more metadata refresh snapshot before success (actual behavior)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: {
                 ...installPlan,
                 currentIndex: 1,
@@ -382,10 +405,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
         );
 
         const expectedStates: Array<InstallOrUpdateAppsDAState> = [
-          // UpdateDeviceMetadata
+          // UpdateDeviceMetadata (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -393,6 +417,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -401,11 +426,12 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
           },
-          // Success
+          // Success (nothing to install)
           {
             output: {
               successfullyInstalled: [],
@@ -447,10 +473,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
         );
 
         const expectedStates: Array<InstallOrUpdateAppsDAState> = [
-          // UpdateDeviceMetadata
+          // UpdateDeviceMetadata (double snapshot even though it fails)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -458,11 +485,12 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
           },
-          // Success
+          // Error
           {
             error: new UnknownDAError("GetDeviceMetadata failed"),
             status: DeviceActionStatus.Error,
@@ -499,10 +527,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
         );
 
         const expectedStates: Array<InstallOrUpdateAppsDAState> = [
-          // UpdateDeviceMetadata
+          // UpdateDeviceMetadata (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -510,6 +539,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -518,11 +548,12 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
           },
-          // Success
+          // Error
           {
             error: new UnknownDAError("BuildInstallPlan failed"),
             status: DeviceActionStatus.Error,
@@ -574,10 +605,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
         );
 
         const expectedStates: Array<InstallOrUpdateAppsDAState> = [
-          // UpdateDeviceMetadata
+          // UpdateDeviceMetadata (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -585,6 +617,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -593,14 +626,16 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
           },
-          // PredictOutOfMemory
+          // CHECK_IF_ENOUGH_MEMORY
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.CHECK_IF_ENOUGH_MEMORY,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -609,7 +644,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // Success
+          // Error
           {
             error: new UnknownDAError("PredictOutOfMemory failed"),
             status: DeviceActionStatus.Error,
@@ -661,10 +696,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
         );
 
         const expectedStates: Array<InstallOrUpdateAppsDAState> = [
-          // UpdateDeviceMetadata
+          // UpdateDeviceMetadata (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -672,6 +708,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -680,14 +717,16 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
           },
-          // PredictOutOfMemory
+          // CHECK_IF_ENOUGH_MEMORY
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.CHECK_IF_ENOUGH_MEMORY,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -696,7 +735,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // Success
+          // Error
           {
             error: new OutOfMemoryDAError(
               "Not enough memory for those applications",
@@ -751,10 +790,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
         );
 
         const expectedStates: Array<InstallOrUpdateAppsDAState> = [
-          // UpdateDeviceMetadata
+          // UpdateDeviceMetadata (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -762,6 +802,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -770,14 +811,16 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
           },
-          // PredictOutOfMemory
+          // CHECK_IF_ENOUGH_MEMORY
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.CHECK_IF_ENOUGH_MEMORY,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -786,10 +829,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.GO_TO_DASHBOARD,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -801,6 +845,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.GO_TO_DASHBOARD,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -809,7 +854,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // Success
+          // Error
           {
             error: new UnknownDAError("GoToDashboard failed"),
             status: DeviceActionStatus.Error,
@@ -873,10 +918,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
         );
 
         const expectedStates: Array<InstallOrUpdateAppsDAState> = [
-          // UpdateDeviceMetadata
+          // UpdateDeviceMetadata (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -884,6 +930,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
@@ -892,14 +939,16 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
               installPlan: null,
             },
             status: DeviceActionStatus.Pending,
           },
-          // PredictOutOfMemory
+          // CHECK_IF_ENOUGH_MEMORY
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.CHECK_IF_ENOUGH_MEMORY,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -908,33 +957,11 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // GoToDashboard
+          // GoToDashboard (double snapshot)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              installPlan: {
-                ...installPlan,
-                currentIndex: 0,
-                currentProgress: 0,
-              },
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              installPlan: {
-                ...installPlan,
-                currentIndex: 0,
-                currentProgress: 0,
-              },
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // InstallApp
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.GO_TO_DASHBOARD,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -946,6 +973,20 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.GO_TO_DASHBOARD,
+              installPlan: {
+                ...installPlan,
+                currentIndex: 0,
+                currentProgress: 0,
+              },
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // InstallApp (double snapshot at start)
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -957,6 +998,7 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
               installPlan: {
                 ...installPlan,
                 currentIndex: 0,
@@ -965,7 +1007,20 @@ describe("InstallOrUpdateAppsDeviceAction", () => {
             },
             status: DeviceActionStatus.Pending,
           },
-          // Success
+          // Extra snapshot before error (progress/exchange)
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: installOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
+              installPlan: {
+                ...installPlan,
+                currentIndex: 0,
+                currentProgress: 0,
+              },
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // Error
           {
             error: new UnknownDAError("Secure channel error"),
             status: DeviceActionStatus.Error,

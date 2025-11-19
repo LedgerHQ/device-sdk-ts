@@ -26,11 +26,12 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { isDashboardName } from "@api/utils/AppName";
 
-import type {
-  GoToDashboardDAError,
-  GoToDashboardDAInput,
-  GoToDashboardDAIntermediateValue,
-  GoToDashboardDAOutput,
+import {
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAOutput,
+  goToDashboardDAStateStep,
 } from "./types";
 
 type GoToDashboardMachineInternalState = {
@@ -136,6 +137,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
           },
           _internalState: {
             currentApp:
@@ -148,7 +150,13 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
       },
       states: {
         DeviceReady: {
-          always: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
+            },
+          }),
+          after: {
             target: "GetDeviceStatus",
           },
         },
@@ -162,8 +170,10 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
             }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
+                }),
               }),
             },
             onDone: {
@@ -205,6 +215,12 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           ],
         },
         DashboardCheck: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.DASHBOARD_CHECK,
+            },
+          }),
           // We check if the dashboard is open
           always: [
             {
@@ -233,6 +249,12 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           ],
         },
         CloseApp: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.CLOSE_APP,
+            },
+          }),
           invoke: {
             src: "closeApp",
             onDone: {
@@ -268,6 +290,12 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           ],
         },
         GetAppAndVersion: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: goToDashboardDAStateStep.CONFIRM_DASHBOARD_OPEN,
+            },
+          }),
           invoke: {
             src: "getAppAndVersion",
             onDone: {

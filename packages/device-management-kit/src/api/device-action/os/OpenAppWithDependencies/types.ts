@@ -21,6 +21,16 @@ import type {
   OpenAppDARequiredInteraction,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 
+export const openAppWithDependenciesDAStateSteps = Object.freeze({
+  GET_DEVICE_METADATA: "os.openAppWithDependencies.steps.getDeviceMetadata",
+  INSTALL_OR_UPDATE_APPS:
+    "os.openAppWithDependencies.steps.installOrUpdateApps",
+  OPEN_APP: "os.openAppWithDependencies.steps.openApp",
+} as const);
+
+export type OpenAppWithDependenciesDAStateStep =
+  (typeof openAppWithDependenciesDAStateSteps)[keyof typeof openAppWithDependenciesDAStateSteps];
+
 export type OpenAppWithDependenciesDAOutput = {
   deviceMetadata: GetDeviceMetadataDAOutput;
   installResult: InstallOrUpdateAppsDAOutput;
@@ -48,6 +58,7 @@ export type OpenAppWithDependenciesDAIntermediateValue = {
   requiredUserInteraction: OpenAppWithDependenciesDARequiredInteraction;
   installPlan: InstallPlan | null;
   deviceId?: Uint8Array;
+  step: OpenAppWithDependenciesDAStateStep;
 };
 
 export type OpenAppWithDependenciesDAState = DeviceActionState<

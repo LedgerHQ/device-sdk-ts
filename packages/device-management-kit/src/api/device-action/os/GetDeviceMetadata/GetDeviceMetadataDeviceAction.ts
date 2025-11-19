@@ -6,6 +6,7 @@ import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
+import { getDeviceMetadataDAStateStep } from "@api/device-action/os/GetDeviceMetadata/types";
 import { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
 import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 import {
@@ -186,6 +187,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
           },
           _internalState: {
             error: null,
@@ -257,10 +259,11 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           ],
         },
         GoToDashboard: {
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
+            }),
           }),
           invoke: {
             id: "dashboard",
@@ -270,8 +273,10 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
             }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
+                }),
               }),
             },
             onDone: {
@@ -306,6 +311,12 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           ],
         },
         GetFirmwareMetadata: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_FIRMWARE_METADATA,
+            },
+          }),
           invoke: {
             src: "getFirmwareMetadata",
             onDone: {
@@ -365,9 +376,10 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           ],
         },
         ListAppsSecureChannel: {
-          exit: assign({
+          entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
           }),
           invoke: {
@@ -392,6 +404,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
                         ..._.context.intermediateValue,
                         requiredUserInteraction:
                           UserInteractionRequired.AllowSecureConnection,
+                        step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
                       };
                     }
                     case SecureChannelEventType.PermissionGranted: {
@@ -408,11 +421,13 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
                       return {
                         ..._.context.intermediateValue,
                         requiredUserInteraction: UserInteractionRequired.None,
+                        step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
                       };
                     }
                     default:
                       return {
                         ..._.context.intermediateValue,
+                        step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
                       };
                   }
                 },
@@ -461,9 +476,10 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           },
         },
         ListApps: {
-          exit: assign({
+          entry: assign({
             intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
             },
           }),
           invoke: {
@@ -474,8 +490,10 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
             }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: getDeviceMetadataDAStateStep.LIST_APPS,
+                }),
               }),
             },
             onDone: {
@@ -520,6 +538,12 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           ],
         },
         GetApplicationsMetadata: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GET_APPLICATIONS_METADATA,
+            },
+          }),
           invoke: {
             src: "getApplicationsMetadata",
             input: (_) => ({

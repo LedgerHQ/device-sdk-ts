@@ -7,6 +7,15 @@ import {
   type UnknownDAError,
 } from "@api/device-action/os/Errors";
 
+export const getDeviceStatusDAStateStep = Object.freeze({
+  ONBOARD_CHECK: "os.getDeviceStatus.steps.onboardCheck",
+  UNLOCK_DEVICE: "os.getDeviceStatus.steps.unlockDevice",
+  APP_AND_VERSION_CHECK: "os.getDeviceStatus.steps.appAndVersionCheck",
+} as const);
+
+export type GetDeviceStatusDAStateStep =
+  (typeof getDeviceStatusDAStateStep)[keyof typeof getDeviceStatusDAStateStep];
+
 export type GetDeviceStatusDAOutput = {
   readonly currentApp: string;
   readonly currentAppVersion: string;
@@ -27,6 +36,7 @@ export type GetDeviceStatusDARequiredInteraction =
 
 export type GetDeviceStatusDAIntermediateValue = {
   requiredUserInteraction: GetDeviceStatusDARequiredInteraction;
+  step: GetDeviceStatusDAStateStep;
 };
 
 export type GetDeviceStatusDAState = DeviceActionState<
