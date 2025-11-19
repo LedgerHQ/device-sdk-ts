@@ -41,6 +41,7 @@
     "sample": "pnpm --filter @ledgerhq/device-management-kit-sample",
     "mobile": "pnpm --filter @ledgerhq/device-management-kit-mobile-sample",
     "doc": "pnpm --filter @ledgerhq/ledger-dmk-docs",
+    "cs-tester": "pnpm --filter @ledgerhq/ethereum-clear-signing-tester",
     "bump": "changeset version",
     "prerelease": "pnpm recursive exec -- pnpm pack",
     "release": "changeset publish",
