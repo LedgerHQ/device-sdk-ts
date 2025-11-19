@@ -21,6 +21,12 @@ import type {
   OpenAppDARequiredInteraction,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 
+export enum OpenAppWithDependenciesDAStateStep {
+  GET_DEVICE_METADATA = "os.openAppWithDependencies.steps.getDeviceMetadata",
+  INSTALL_OR_UPDATE_APPS = "os.openAppWithDependencies.steps.installOrUpdateApps",
+  OPEN_APP = "os.openAppWithDependencies.steps.openApp",
+}
+
 export type OpenAppWithDependenciesDAOutput = {
   deviceMetadata: GetDeviceMetadataDAOutput;
   installResult: InstallOrUpdateAppsDAOutput;
@@ -47,6 +53,7 @@ export type OpenAppWithDependenciesDARequiredInteraction =
 export type OpenAppWithDependenciesDAIntermediateValue = {
   requiredUserInteraction: OpenAppWithDependenciesDARequiredInteraction;
   installPlan: InstallPlan | null;
+  step: OpenAppWithDependenciesDAStateStep;
 };
 
 export type OpenAppWithDependenciesDAState = DeviceActionState<

@@ -1,3 +1,4 @@
+// src/api/device-action/os/ListApps/ListAppsDeviceAction.test.ts
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { type ListAppsResponse } from "@api/command/os/ListAppsCommand";
 import {
@@ -17,9 +18,10 @@ import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDe
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
+import { GoToDashboardDAStateStep } from "@api/device-action/os/GoToDashboard/types";
 
 import { ListAppsDeviceAction } from "./ListAppsDeviceAction";
-import { type ListAppsDAState } from "./types";
+import { type ListAppsDAState, ListAppsDAStateStep } from "./types";
 
 vi.mock("@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction");
 
@@ -34,34 +36,39 @@ describe("ListAppsDeviceAction", () => {
     it("should run the device action with no apps installed", () =>
       new Promise<void>((resolve, reject) => {
         setupGoToDashboardMock();
-        const listAppsDeviceAction = new ListAppsDeviceAction({
-          input: {},
-        });
+        const listAppsDeviceAction = new ListAppsDeviceAction({ input: {} });
 
         sendCommandMock.mockResolvedValue(CommandResultFactory({ data: [] }));
 
         const expectedStates: Array<ListAppsDAState> = [
+          // GoToDashboard (snapshot from child) – child doesn't set a step
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
+          // GoToDashboardCheck
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
+          // ListApps (user must allow)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
+          // Success
           {
             output: [],
-            status: DeviceActionStatus.Completed, // Success
+            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -69,10 +76,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -91,24 +95,27 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
           {
             output: [BTC_APP],
-            status: DeviceActionStatus.Completed, // Success
+            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -116,10 +123,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -140,30 +144,36 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
+          // First page (needs allow)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
+          // Continue snapshot (context persists as AllowListApps + LIST_APPS)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ContinueListApps
+            status: DeviceActionStatus.Pending,
           },
           {
             output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP],
-            status: DeviceActionStatus.Completed, // Success
+            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -171,10 +181,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -195,30 +202,36 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
+          // First page
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
+          // Continue snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ContinueListApps
+            status: DeviceActionStatus.Pending,
           },
           {
             output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP, ETH_APP],
-            status: DeviceActionStatus.Completed, // Success
+            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -226,10 +239,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -253,36 +263,44 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
+          // First page
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
+          // 1st continue snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ContinueListApps
+            status: DeviceActionStatus.Pending,
           },
+          // 2nd continue snapshot
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ContinueListApps
+            status: DeviceActionStatus.Pending,
           },
           {
             output: [BTC_APP, CUSTOM_LOCK_SCREEN_APP, ETH_APP, SOLANA_APP],
-            status: DeviceActionStatus.Completed, // Success
+            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -290,10 +308,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -314,36 +329,45 @@ describe("ListAppsDeviceAction", () => {
           .mockResolvedValueOnce(
             CommandResultFactory({ data: [DOGECOIN_APP] }),
           );
+
         const expectedStates: Array<ListAppsDAState> = [
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
+          // First page
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
+          // 1st continue
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ContinueListApps
+            status: DeviceActionStatus.Pending,
           },
+          // 2nd continue
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ContinueListApps
+            status: DeviceActionStatus.Pending,
           },
           {
             output: [
@@ -353,7 +377,7 @@ describe("ListAppsDeviceAction", () => {
               SOLANA_APP,
               DOGECOIN_APP,
             ] as ListAppsResponse,
-            status: DeviceActionStatus.Completed, // Success
+            status: DeviceActionStatus.Completed,
           },
         ];
 
@@ -361,10 +385,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
   });
@@ -383,18 +404,20 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
           {
             error: new UnknownDAError("GoToDashboard failed"),
-            status: DeviceActionStatus.Error, // Error
+            status: DeviceActionStatus.Error,
           },
         ];
 
@@ -402,10 +425,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -422,18 +442,20 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
           {
             error: new UnknownDAError("GoToDashboard failed"),
-            status: DeviceActionStatus.Error, // Error
+            status: DeviceActionStatus.Error,
           },
         ];
 
@@ -441,10 +463,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -470,24 +489,28 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
+          // ListApps asked, then error returned
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
           {
             error: globalError,
-            status: DeviceActionStatus.Error, // Error
+            status: DeviceActionStatus.Error,
           },
         ];
 
@@ -495,10 +518,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
 
@@ -519,30 +539,36 @@ describe("ListAppsDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.GO_TO_DASHBOARD,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardDeviceAction
+            status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: GoToDashboardDAStateStep.GET_DEVICE_STATUS,
             },
-            status: DeviceActionStatus.Pending, // GoToDashboardCheck
+            status: DeviceActionStatus.Pending,
           },
+          // First page
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ListApps
+            status: DeviceActionStatus.Pending,
           },
+          // Continue snapshot (before failing)
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: ListAppsDAStateStep.LIST_APPS,
             },
-            status: DeviceActionStatus.Pending, // ContinueListApps
+            status: DeviceActionStatus.Pending,
           },
           {
             error: new UnknownDAError("mocked error"),
-            status: DeviceActionStatus.Error, // Success
+            status: DeviceActionStatus.Error,
           },
         ];
 
@@ -550,10 +576,7 @@ describe("ListAppsDeviceAction", () => {
           listAppsDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
+          { onDone: resolve, onError: reject },
         );
       }));
   });

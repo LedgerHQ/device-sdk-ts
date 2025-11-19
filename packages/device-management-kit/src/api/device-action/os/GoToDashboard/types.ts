@@ -7,6 +7,13 @@ import {
   type GetDeviceStatusDARequiredInteraction,
 } from "@api/device-action/os/GetDeviceStatus/types";
 
+export enum GoToDashboardDAStateStep {
+  GET_DEVICE_STATUS = "os.goToDashboard.steps.getDeviceStatus",
+  DASHBOARD_CHECK = "os.goToDashboard.steps.dashboardCheck",
+  CLOSE_APP = "os.goToDashboard.steps.closeApp",
+  CONFIRM_DASHBOARD_OPEN = "os.goToDashboard.steps.confirmDashboardOpen",
+}
+
 export type GoToDashboardDAOutput = void;
 export type GoToDashboardDAInput = GetDeviceStatusDAInput;
 
@@ -20,6 +27,7 @@ export type GoToDashboardDARequiredInteraction =
 
 export type GoToDashboardDAIntermediateValue = {
   readonly requiredUserInteraction: GoToDashboardDARequiredInteraction;
+  readonly step: GoToDashboardDAStateStep;
 };
 
 export type GoToDashboardDAState = DeviceActionState<

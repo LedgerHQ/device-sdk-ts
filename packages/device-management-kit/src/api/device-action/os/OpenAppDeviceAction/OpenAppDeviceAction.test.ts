@@ -1,3 +1,4 @@
+// src/api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction.test.ts
 import { lastValueFrom } from "rxjs";
 
 import { InvalidStatusWordError } from "@api/command/Errors";
@@ -19,6 +20,7 @@ import { DeviceDisconnectedWhileSendingError } from "@api/transport/model/Errors
 
 import { OpenAppDeviceAction } from "./OpenAppDeviceAction";
 import type { OpenAppDAError, OpenAppDAState } from "./types";
+import { OpenAppDAStateStep } from "./types";
 
 vi.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
 
@@ -73,15 +75,10 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarding status
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending, // get device status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -126,15 +123,10 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarding status
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending, // get app and version
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -162,6 +154,8 @@ describe("OpenAppDeviceAction", () => {
           currentApp: { name: "BOLOS", version: "0.0.0" },
         });
 
+        // After reading device status we already see Bitcoin open,
+        // so the machine finishes without sending openApp.
         setupGetDeviceStatusMock([
           {
             currentApp: "Bitcoin",
@@ -182,15 +176,10 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending, // get app and version
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -239,10 +228,12 @@ describe("OpenAppDeviceAction", () => {
           }),
         );
         setupGetDeviceStatusMock([
+          // First status: still on dashboard
           {
             currentApp: "BOLOS",
             currentAppVersion: "0.0.0",
           },
+          // Second status after disconnection: target app is open
           {
             currentApp: "Bitcoin",
             currentAppVersion: "0.0.0",
@@ -261,33 +252,24 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (user confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: OpenAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // re-check device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending,
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -337,39 +319,31 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending, // close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.CLOSE_APP,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (user confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: OpenAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // re-check device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending, // get app and version
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -457,12 +431,7 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending,
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -502,15 +471,10 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get app and version
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -571,21 +535,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // attempt to open app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: OpenAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
@@ -648,33 +608,24 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // try open app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: OpenAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // re-check device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending,
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -722,21 +673,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending, // close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.CLOSE_APP,
             },
           },
           {
@@ -787,27 +734,24 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending, // close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.CLOSE_APP,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (user confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: OpenAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
@@ -847,15 +791,10 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -906,21 +845,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get device onboarded
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending, // open app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: OpenAppDAStateStep.CONFIRM_OPEN_APP,
             },
           },
           {
@@ -971,21 +906,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending, // close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.CLOSE_APP,
             },
           },
           {
@@ -1028,15 +959,10 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get device onboarded
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-            },
-          },
-          {
             status: DeviceActionStatus.Pending, // get device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {

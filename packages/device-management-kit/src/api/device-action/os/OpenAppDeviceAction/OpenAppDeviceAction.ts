@@ -32,6 +32,7 @@ import {
   type OpenAppDAInput,
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
+  OpenAppDAStateStep,
 } from "./types";
 
 type OpenAppStateMachineInternalState = {
@@ -153,13 +154,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             ({
               ..._.context.intermediateValue,
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-            }) satisfies types["context"]["intermediateValue"],
-        }),
-        assignNoUserActionNeeded: assign({
-          intermediateValue: (_) =>
-            ({
-              ..._.context.intermediateValue,
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.CONFIRM_OPEN_APP,
             }) satisfies types["context"]["intermediateValue"],
         }),
         assignErrorFromEvent: assign({
@@ -186,6 +181,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
           input,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: OpenAppDAStateStep.ONBOARD_CHECK,
           },
           _internalState: {
             error: null,
@@ -204,7 +200,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             target: "OnboardingCheck",
           },
         },
-
         OnboardingCheck: {
           // check onboarding status provided by device session
           always: [
@@ -222,6 +217,12 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         },
 
         GetDeviceStatus: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.GET_DEVICE_STATUS,
+            },
+          }),
           // We run the GetDeviceStatus flow to get information about the device state
           invoke: {
             id: "deviceStatus",
@@ -229,12 +230,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             input: (_) => ({
               unlockTimeout: _.context.input.unlockTimeout,
             }),
-            onSnapshot: {
-              actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
-              }),
-            },
             onDone: {
               target: "CheckDeviceStatus",
               actions: assign({
@@ -304,8 +299,13 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             },
           ],
         },
-
         DashboardCheck: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.DASHBOARD_CHECK,
+            },
+          }),
           // Is the current application the dashboard
           always: [
             {
@@ -319,7 +319,6 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         OpenApplication: {
           // execute openApp command,
           entry: "assignUserActionNeededOpenApp",
-          exit: "assignNoUserActionNeeded",
           invoke: {
             src: "openApp",
             input: ({ context }) => ({ appName: context.input.appName }),
@@ -368,6 +367,12 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         },
 
         CloseApplication: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: OpenAppDAStateStep.CLOSE_APP,
+            },
+          }),
           invoke: {
             src: "closeApp",
             onDone: {

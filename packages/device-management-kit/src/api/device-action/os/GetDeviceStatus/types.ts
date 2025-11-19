@@ -7,6 +7,12 @@ import {
   type UnknownDAError,
 } from "@api/device-action/os/Errors";
 
+export enum GetDeviceStatusDAStateStep {
+  ONBOARD_CHECK = "os.getDeviceStatus.steps.onboardCheck",
+  UNLOCK_DEVICE = "os.getDeviceStatus.steps.unlockDevice",
+  APP_AND_VERSION_CHECK = "os.getDeviceStatus.steps.appAndVersionCheck",
+}
+
 export type GetDeviceStatusDAOutput = {
   readonly currentApp: string;
   readonly currentAppVersion: string;
@@ -27,6 +33,7 @@ export type GetDeviceStatusDARequiredInteraction =
 
 export type GetDeviceStatusDAIntermediateValue = {
   requiredUserInteraction: GetDeviceStatusDARequiredInteraction;
+  step: GetDeviceStatusDAStateStep;
 };
 
 export type GetDeviceStatusDAState = DeviceActionState<
