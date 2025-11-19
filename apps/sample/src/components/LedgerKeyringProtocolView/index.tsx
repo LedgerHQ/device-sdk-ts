@@ -16,6 +16,7 @@ import {
   LKRPUnknownError,
   NobleCryptoService,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
+import { Trustchain } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol/internal/utils/Trustchain.js";
 import { catchError, from, map, of, tap } from "rxjs";
 import styled from "styled-components";
 
@@ -234,6 +235,43 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       } satisfies DeviceActionProps<
         string,
         { encryptionKey: string; data: string },
+        DmkError,
+        never
+      >,
+
+      {
+        title: "Verify Trustchain",
+        description: "Read and Check the integrity of a trustchain.",
+        executeDeviceAction: ({ trustchain: trustchainStr }) => {
+          if (!app) {
+            throw new Error("Ledger Keyring Protocol app not initialized");
+          }
+          return fnToDAReturn(() =>
+            new Trustchain(
+              new NobleCryptoService(),
+              "TRUSTCHAIN_ID",
+              JSON.parse(trustchainStr.replace(/\s/g, "")),
+            )
+              .toHuman()
+              .then((res): string =>
+                res.caseOf({
+                  Left(l) {
+                    console.error(l);
+                    throw l;
+                  },
+                  Right(r) {
+                    console.log(r);
+                    return r;
+                  },
+                }),
+              ),
+          );
+        },
+        initialValues: { trustchain: "" },
+        deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
+      } satisfies DeviceActionProps<
+        unknown,
+        { trustchain: string },
         DmkError,
         never
       >,

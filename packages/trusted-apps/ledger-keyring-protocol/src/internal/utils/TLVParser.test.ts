@@ -2,6 +2,7 @@ import { Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/model/Errors";
 import { CommandTags, GeneralTags } from "@internal/models/Tags";
+import { type DataToParsedSegment } from "@internal/models/Types";
 
 import { LKRPCommand } from "./LKRPCommand";
 import { TLVParser } from "./TLVParser";
@@ -13,17 +14,16 @@ describe("TLVParser", () => {
         // GIVEN
         const parser = new TLVParser(
           new Uint8Array([
-            ...[GeneralTags.Int, 1, 0x02], // Command count: 2
             ...[CommandTags.AddMember, 3, ...[GeneralTags.Int, 1, 0x01]], // First command
             ...[CommandTags.Seed, 3, ...[GeneralTags.Int, 1, 0x02]], // Second command
           ]),
         );
         // WHEN
-        const commands = parser.parseCommands();
+        const commands = parser.parseCommands(2);
 
         // THEN
         expect(commands).toStrictEqual(
-          Right([
+          seg([
             new LKRPCommand(
               new Uint8Array([
                 CommandTags.AddMember,
@@ -46,36 +46,28 @@ describe("TLVParser", () => {
     describe("parseBlockData", () => {
       it("should parse a valid block data", () => {
         // GIVEN
-        const parser = new TLVParser(
-          Uint8Array.from(
-            [
-              [GeneralTags.Int, 1, 0x01], // Version
-              [GeneralTags.Hash, 3, 0x01, 0x02, 0x03], // Parent
-              [GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Issuer
-              [GeneralTags.Int, 1, 0x02], // Command count: 2
-              [CommandTags.AddMember, 3, ...[GeneralTags.Int, 1, 0x01]], // First command
-              [CommandTags.Seed, 3, ...[GeneralTags.Int, 1, 0x02]], // Second command
-              [GeneralTags.Signature, 3, 0x07, 0x08, 0x09], // Signature
-            ].flat(),
-          ),
+        const bytes = Uint8Array.from(
+          [
+            [GeneralTags.Int, 1, 0x01], // Version
+            [GeneralTags.Hash, 3, 0x01, 0x02, 0x03], // Parent
+            [GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Issuer
+            [GeneralTags.Int, 1, 0x02], // Command count: 2
+            [CommandTags.AddMember, 3, ...[GeneralTags.Int, 1, 0x01]], // First command
+            [CommandTags.Seed, 3, ...[GeneralTags.Int, 1, 0x02]], // Second command
+            [GeneralTags.Signature, 3, 0x07, 0x08, 0x09], // Signature
+          ].flat(),
         );
+        const parser = new TLVParser(bytes);
         // WHEN
         const blockData = parser.parseBlockData();
 
         // THEN
         expect(blockData).toStrictEqual(
-          Right({
+          segRecord({
+            version: 1,
             parent: "010203",
             issuer: new Uint8Array([0x04, 0x05, 0x06]),
-            header: Uint8Array.from(
-              [
-                [GeneralTags.Int, 1, 0x01], // Version
-                [GeneralTags.Hash, 3, 0x01, 0x02, 0x03], // Parent
-                [GeneralTags.PublicKey, 3, 0x04, 0x05, 0x06], // Issuer
-                [GeneralTags.Int, 1, 0x02], // Command count: 2
-              ].flat(),
-            ),
-
+            commandsCount: 2,
             commands: [
               new LKRPCommand(
                 new Uint8Array([
@@ -92,14 +84,8 @@ describe("TLVParser", () => {
                 ]),
               ),
             ],
-            signature: Uint8Array.from([
-              GeneralTags.Signature,
-              3,
-              0x07,
-              0x08,
-              0x09,
-            ]),
-          }),
+            signature: Uint8Array.from([0x07, 0x08, 0x09]),
+          }).map((data) => ({ bytes, data })),
         );
       });
 
@@ -127,7 +113,7 @@ describe("TLVParser", () => {
         const value = parser.parseCommandBytes();
         // THEN
         expect(value).toEqual(
-          Right(new Uint8Array([CommandTags.AddMember, 3, 0x01, 0x02, 0x03])),
+          seg(new Uint8Array([CommandTags.AddMember, 3, 0x01, 0x02, 0x03])),
         );
       });
 
@@ -165,7 +151,7 @@ describe("TLVParser", () => {
 
         // THEN
         expect(parsed).toStrictEqual(
-          Right({
+          segRecord({
             type: CommandTags.Seed,
             topic: new Uint8Array([0x01, 0x02, 0x03]),
             protocolVersion: 258, // 0x0102 in big-endian
@@ -221,7 +207,7 @@ describe("TLVParser", () => {
 
         // THEN
         expect(parsed).toStrictEqual(
-          Right({
+          segRecord({
             type: CommandTags.AddMember,
             name: "Alice",
             publicKey: new Uint8Array([0x01, 0x02, 0x03]),
@@ -277,7 +263,7 @@ describe("TLVParser", () => {
 
         // THEN
         expect(parsed).toStrictEqual(
-          Right({
+          segRecord({
             type: CommandTags.PublishKey,
             initializationVector: new Uint8Array([0x01, 0x02, 0x03]),
             encryptedXpriv: new Uint8Array([0x04, 0x05, 0x06]),
@@ -333,7 +319,7 @@ describe("TLVParser", () => {
 
         // THEN
         expect(parsed).toStrictEqual(
-          Right({
+          segRecord({
             type: CommandTags.Derive,
             path: "m/1",
             groupKey: new Uint8Array([0x04, 0x05, 0x06]),
@@ -391,12 +377,12 @@ describe("TLVParser", () => {
           new Uint8Array([GeneralTags.Int, 1, 0x01, GeneralTags.Bytes, 0]),
         );
         // WHEN
-        const value1 = parser.parse();
-        const value2 = parser.parse();
+        const value1 = parser.parse(Right);
+        const value2 = parser.parse(Right);
         // THEN
-        expect(value1).toEqual(Right({ tag: GeneralTags.Int, value: 1 }));
+        expect(value1).toEqual(seg({ tag: GeneralTags.Int, value: 1 }, 0, 3));
         expect(value2).toEqual(
-          Right({ tag: GeneralTags.Bytes, value: new Uint8Array([]) }),
+          seg({ tag: GeneralTags.Bytes, value: new Uint8Array([]) }, 3, 5),
         );
       });
 
@@ -406,9 +392,9 @@ describe("TLVParser", () => {
         const parser2 = new TLVParser(new Uint8Array([GeneralTags.Int]));
         const parser3 = new TLVParser(new Uint8Array([GeneralTags.Int, 2]));
         // WHEN
-        const value1 = parser1.parse();
-        const value2 = parser2.parse();
-        const value3 = parser3.parse();
+        const value1 = parser1.parse(Right);
+        const value2 = parser2.parse(Right);
+        const value3 = parser3.parse(Right);
         // THEN
         expect(value1).toEqual(
           Left(new LKRPParsingError("Unexpected end of TLV")),
@@ -429,7 +415,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseNull();
         // THEN
-        expect(value).toEqual(Right(null));
+        expect(value).toEqual(seg(null));
       });
 
       it("should fail if the tag is not null", () => {
@@ -472,9 +458,9 @@ describe("TLVParser", () => {
         const value2 = parser.parseInt();
         const value4 = parser.parseInt();
         // THEN
-        expect(value1).toEqual(Right(1));
-        expect(value2).toEqual(Right(256));
-        expect(value4).toEqual(Right(16777216));
+        expect(value1).toEqual(seg(1));
+        expect(value2).toEqual(seg(256));
+        expect(value4).toEqual(seg(16777216));
       });
 
       it("should fail if the tag is not an integer", () => {
@@ -511,7 +497,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseHash();
         // THEN
-        expect(value).toEqual(Right(new Uint8Array([0x01, 0x02, 0x03])));
+        expect(value).toEqual(seg(new Uint8Array([0x01, 0x02, 0x03])));
       });
 
       it("should fail if the tag is not a hash", () => {
@@ -535,7 +521,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseSignature();
         // THEN
-        expect(value).toEqual(Right(new Uint8Array([0x01, 0x02, 0x03])));
+        expect(value).toEqual(seg(new Uint8Array([0x01, 0x02, 0x03])));
       });
 
       it("should fail if the tag is not a signature", () => {
@@ -561,7 +547,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseString();
         // THEN
-        expect(value).toEqual(Right("Hello"));
+        expect(value).toEqual(seg("Hello"));
       });
 
       it("should fail if the tag is not a string", () => {
@@ -585,7 +571,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parseBytes();
         // THEN
-        expect(value).toEqual(Right(new Uint8Array([0x01, 0x02, 0x03])));
+        expect(value).toEqual(seg(new Uint8Array([0x01, 0x02, 0x03])));
       });
 
       it("should fail if the tag is not bytes", () => {
@@ -609,7 +595,7 @@ describe("TLVParser", () => {
         // WHEN
         const value = parser.parsePublicKey();
         // THEN
-        expect(value).toEqual(Right(new Uint8Array([0x01, 0x02, 0x03])));
+        expect(value).toEqual(seg(new Uint8Array([0x01, 0x02, 0x03])));
       });
 
       it("should fail if the tag is not a public key", () => {
@@ -627,3 +613,25 @@ describe("TLVParser", () => {
     });
   });
 });
+
+function seg<T>(
+  value: T,
+  start = expect.any(Number) as number,
+  end = expect.any(Number) as number,
+) {
+  return Right({ value, start, end });
+}
+function segRecord<T extends Record<string, unknown>>(obj: T) {
+  return Right(
+    Object.fromEntries(
+      Object.entries(obj).map(([key, value]) => [
+        key,
+        {
+          value,
+          start: expect.any(Number) as number,
+          end: expect.any(Number) as number,
+        },
+      ]),
+    ) as DataToParsedSegment<T>,
+  );
+}

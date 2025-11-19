@@ -1,17 +1,17 @@
 import { bufferToHexaString } from "@ledgerhq/device-management-kit";
-import { type Either, Left, Right } from "purify-ts";
+import { Either, Left, Right } from "purify-ts";
 
 import { LKRPParsingError } from "@api/model/Errors";
-import { type LKRPBlockParsedData } from "@internal/models/LKRPBlockTypes";
-import { type LKRPCommandData } from "@internal/models/LKRPCommandTypes";
+import { type LKRPParsedTlvBlock } from "@internal/models/LKRPBlockTypes";
+import { type LKRPParsedTlvCommand } from "@internal/models/LKRPCommandTypes";
 import { CommandTags, GeneralTags } from "@internal/models/Tags";
+import { type ParsedTlvSegment } from "@internal/models/Types";
 
 import { derivationPathAsString } from "./derivationPath";
 import { eitherSeqRecord } from "./eitherSeqRecord";
 import { LKRPCommand } from "./LKRPCommand";
 
-type ParserValue = Either<
-  LKRPParsingError,
+type SuccessParsingResult =
   | { tag: GeneralTags.Null; value: null }
   | { tag: GeneralTags.Int; value: number }
   | { tag: GeneralTags.Hash; value: Uint8Array }
@@ -23,12 +23,12 @@ type ParserValue = Either<
   | {
       tag: Exclude<number, GeneralTags | CommandTags>;
       value: null | number | Uint8Array;
-    }
->;
+    };
+
+type ParserValue = Either<LKRPParsingError, SuccessParsingResult>;
 
 type Parser = Generator<ParserValue, ParserValue, void>;
-
-const COMMAND_COUNT_LENGTH = 3;
+type ParsedSegment<T> = Either<LKRPParsingError, ParsedTlvSegment<T>>;
 
 export class TLVParser {
   private readonly bytes: Uint8Array;
@@ -47,75 +47,74 @@ export class TLVParser {
     };
   }
 
-  parse(): ParserValue {
-    return this.parser.next().value;
-  }
-
-  tlvEncoded(
-    fn: () => Either<LKRPParsingError, unknown>,
-  ): Either<LKRPParsingError, Uint8Array> {
+  parse<T>(
+    fn: (next: SuccessParsingResult) => Either<LKRPParsingError, T>,
+  ): ParsedSegment<T> {
     const start = this.offset;
-    return fn().map(() => this.bytes.slice(start, this.offset));
+    return this.parser
+      .next()
+      .value.chain(fn)
+      .map((value) => ({ start, end: this.offset, value }));
   }
 
-  parseNull(): Either<LKRPParsingError, null> {
-    return this.parse().chain((next) =>
+  parseNull(): ParsedSegment<null> {
+    return this.parse((next) =>
       next.tag !== GeneralTags.Null
         ? Left(new LKRPParsingError("Expected null"))
         : Right(next.value),
     );
   }
 
-  parseInt(): Either<LKRPParsingError, number> {
-    return this.parse().chain((next) =>
+  parseInt(): ParsedSegment<number> {
+    return this.parse((next) =>
       next.tag !== GeneralTags.Int
         ? Left(new LKRPParsingError("Expected a number"))
         : Right(next.value),
     );
   }
 
-  parseHash(): Either<LKRPParsingError, Uint8Array> {
-    return this.parse().chain((next) =>
+  parseHash(): ParsedSegment<Uint8Array> {
+    return this.parse((next) =>
       next.tag !== GeneralTags.Hash
         ? Left(new LKRPParsingError("Expected a hash"))
         : Right(next.value),
     );
   }
 
-  parseSignature(): Either<LKRPParsingError, Uint8Array> {
-    return this.parse().chain((next) =>
+  parseSignature(): ParsedSegment<Uint8Array> {
+    return this.parse((next) =>
       next.tag !== GeneralTags.Signature
         ? Left(new LKRPParsingError("Expected a signature"))
         : Right(next.value),
     );
   }
 
-  parseString(): Either<LKRPParsingError, string> {
-    return this.parse().chain((next) =>
+  parseString(): ParsedSegment<string> {
+    return this.parse((next) =>
       next.tag !== GeneralTags.String
         ? Left(new LKRPParsingError("Expected a string"))
         : Right(next.value),
     );
   }
 
-  parseBytes(): Either<LKRPParsingError, Uint8Array> {
-    return this.parse().chain((next) =>
+  parseBytes(): ParsedSegment<Uint8Array> {
+    return this.parse((next) =>
       next.tag !== GeneralTags.Bytes
         ? Left(new LKRPParsingError("Expected bytes"))
         : Right(next.value),
     );
   }
 
-  parsePublicKey(): Either<LKRPParsingError, Uint8Array> {
-    return this.parse().chain((next) =>
+  parsePublicKey(): ParsedSegment<Uint8Array> {
+    return this.parse((next) =>
       next.tag !== GeneralTags.PublicKey
         ? Left(new LKRPParsingError("Expected a public key"))
         : Right(next.value),
     );
   }
 
-  parseCommandBytes(): Either<LKRPParsingError, Uint8Array> {
-    return this.parse().chain(({ tag, value }) =>
+  parseCommandBytes(): ParsedSegment<Uint8Array> {
+    return this.parse(({ tag, value }) =>
       tag < 0x10 || tag > 0x3f || !(value instanceof Uint8Array)
         ? Left(
             new LKRPParsingError(
@@ -127,15 +126,20 @@ export class TLVParser {
   }
 
   // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Commands
-  parseCommandData(): Either<LKRPParsingError, LKRPCommandData> {
+  parseCommandData(): Either<LKRPParsingError, LKRPParsedTlvCommand> {
     const bytes = this.parseCommandBytes();
     const end = this.offset;
 
     return bytes
-      .chain<LKRPParsingError, LKRPCommandData>((value) => {
-        const type = value[0];
-        this.offset -= value.length - 2; // Adjust offset to the start of the command
-        switch (type) {
+      .chain<LKRPParsingError, LKRPParsedTlvCommand>(({ value, start }) => {
+        const typeValue = value[0];
+        if (typeof typeValue === "undefined") {
+          return Left(new LKRPParsingError("Undefined command type"));
+        }
+        const type = { start, end: start + 1, value: typeValue };
+        this.offset = start + 2; // Adjust offset to the start of the command
+
+        switch (type.value) {
           // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Seed-(0x10)
           case CommandTags.Seed:
             return eitherSeqRecord({
@@ -171,7 +175,11 @@ export class TLVParser {
           case CommandTags.Derive:
             return eitherSeqRecord({
               type,
-              path: () => this.parseBytes().map(derivationPathAsString),
+              path: () =>
+                this.parseBytes().map((data) => ({
+                  ...data,
+                  value: derivationPathAsString(data.value),
+                })),
               groupKey: () => this.parsePublicKey(),
               initializationVector: () => this.parseBytes(),
               encryptedXpriv: () => this.parseBytes(),
@@ -181,7 +189,7 @@ export class TLVParser {
           default:
             return Left(
               new LKRPParsingError(
-                `Unsupported command type: 0x${type?.toString(16).padStart(2, "0")}`,
+                `Unsupported command type: 0x${type.value.toString(16).padStart(2, "0")}`,
               ),
             );
         }
@@ -193,40 +201,36 @@ export class TLVParser {
       );
   }
 
-  parseCommands(): Either<LKRPParsingError, LKRPCommand[]> {
-    return this.parse()
-      .chain((next) =>
-        next.tag !== GeneralTags.Int
-          ? Left(new LKRPParsingError("Expected a command count"))
-          : Right(next.value),
-      )
-      .chain((count) => {
-        const commands: LKRPCommand[] = [];
-        for (let i = 0; i < count; i++) {
-          const command = this.parseCommandBytes();
-          if (command.isLeft()) return command;
-          command.ifRight((value) => commands.push(new LKRPCommand(value)));
-        }
-        return Right(commands);
-      });
+  parseCommands(count: number): ParsedSegment<LKRPCommand[]> {
+    return Either.sequence(
+      Array.from({ length: count }, () => this.parseCommandBytes()),
+    ).map((commands) => ({
+      start: commands.at(0)?.start ?? this.offset,
+      end: commands.at(-1)?.end ?? this.offset,
+      value: commands.map(({ value }) => new LKRPCommand(value)),
+    }));
   }
 
   // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Block
-  parseBlockData(): Either<LKRPParsingError, LKRPBlockParsedData> {
-    const startOffset = this.offset;
-    return this.parseInt().chain((_version) =>
-      eitherSeqRecord({
-        parent: () =>
-          this.parseHash().map((buf) => bufferToHexaString(buf, false)),
-        issuer: () => this.parsePublicKey(),
-        header: () =>
-          Right(
-            this.bytes.slice(startOffset, this.offset + COMMAND_COUNT_LENGTH),
-          ),
-        commands: () => this.parseCommands(),
-        signature: () => this.tlvEncoded(() => this.parseSignature()),
-      }),
-    );
+  parseBlockData(): Either<LKRPParsingError, LKRPParsedTlvBlock> {
+    return eitherSeqRecord({
+      version: () => this.parseInt(),
+      parent: () =>
+        this.parseHash().map((data) => ({
+          ...data,
+          value: bufferToHexaString(data.value, false),
+        })),
+      issuer: () => this.parsePublicKey(),
+      commandsCount: () => this.parseInt(),
+    })
+      .chain((header) =>
+        eitherSeqRecord({
+          ...header,
+          commands: () => this.parseCommands(header.commandsCount.value),
+          signature: () => this.parseSignature(),
+        }),
+      )
+      .map((data) => ({ bytes: this.bytes, data }));
   }
 
   private *parseTLV(bytes: Uint8Array): Parser {
