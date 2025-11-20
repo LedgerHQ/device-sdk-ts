@@ -120,7 +120,6 @@ export type FiltersDto = {
   descriptors_eip712: {
     [contractAddress: string]: {
       [schemaHash: string]: {
-        schema: Record<string, { name: string; type: string }[]>;
         instructions: InstructionField[];
       };
     };

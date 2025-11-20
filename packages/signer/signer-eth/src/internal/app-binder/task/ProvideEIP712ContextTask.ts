@@ -1,5 +1,6 @@
 import {
   type ContextModule,
+  type PkiCertificate,
   type TypedDataCalldataIndex,
   TypedDataCalldataParamPresence,
   type TypedDataClearSignContextSuccess,
@@ -128,6 +129,18 @@ export class ProvideEIP712ContextTask {
       | undefined = this.args.clearSignContext.extract()?.proxy;
     if (proxyContext !== undefined) {
       await this.provideContext(proxyContext);
+    }
+
+    // Send certificate if required
+    const certificate: PkiCertificate | undefined =
+      this.args.clearSignContext.extract()?.certificate;
+    if (certificate !== undefined) {
+      await this.api.sendCommand(
+        new LoadCertificateCommand({
+          keyUsage: certificate.keyUsageNumber,
+          certificate: certificate.payload,
+        }),
+      );
     }
 
     const result: CommandResult<AllSuccessTypes, EthErrorCodes> =

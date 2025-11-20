@@ -90,7 +90,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       }
 
       // Parse the message type, if available
-      if (!filtersJson.schema || !Array.isArray(filtersJson.instructions)) {
+      if (!Array.isArray(filtersJson.instructions)) {
         return Left(
           new Error(
             `[ContextModule] HttpTypedDataDataSource: no message info for address ${address} on chain ${chainId} for schema ${schemaHash}`,
