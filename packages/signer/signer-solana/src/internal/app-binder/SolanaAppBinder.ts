@@ -22,6 +22,7 @@ import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
+import { SwapTransactionSignerDeviceAction } from "./device-action/SwapTransactionSignerDeviceAction";
 
 @injectable()
 export class SolanaAppBinder {
@@ -78,6 +79,24 @@ export class SolanaAppBinder {
       deviceAction: new GenerateTransactionDeviceAction({
         input: {
           derivationPath: args.derivationPath,
+          skipOpenApp: args.skipOpenApp,
+          contextModule: this.contextModule,
+        },
+      }),
+    });
+  }
+
+  SwapTransactionSigner(args: {
+    derivationPath: string;
+    serialisedTransaction: string;
+    skipOpenApp: boolean;
+  }): GenerateTransactionDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SwapTransactionSignerDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          serialisedTransaction: args.serialisedTransaction,
           skipOpenApp: args.skipOpenApp,
           contextModule: this.contextModule,
         },
