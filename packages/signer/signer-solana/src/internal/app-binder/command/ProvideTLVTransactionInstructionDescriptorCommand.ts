@@ -48,6 +48,7 @@ export class ProvideTLVTransactionInstructionDescriptorCommand
   constructor(
     readonly args: ProvideTLVTransactionInstructionDescriptorCommandArgs,
   ) {}
+  readonly name = "ProvideTLVTransactionInstructionDescriptor";
 
   getApdu(): Apdu {
     if (this.args.kind === "empty") {
