@@ -22,6 +22,7 @@ import {
   type SendCommandInAppDAIntermediateValue,
   type SendCommandInAppDAInternalState,
   type SendCommandInAppDAOutput,
+  SendCommandInAppDAStateStep,
 } from "./SendCommandInAppDeviceActionTypes";
 
 /**
@@ -131,6 +132,7 @@ export class SendCommandInAppDeviceAction<
           input: input,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: SendCommandInAppDAStateStep.OPEN_APP,
           },
           _internalState: {
             commandResponse: null,
@@ -195,11 +197,13 @@ export class SendCommandInAppDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: this.input.requiredUserInteraction,
+              step: SendCommandInAppDAStateStep.SEND_COMMAND,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SendCommandInAppDAStateStep.SEND_COMMAND,
             },
           }),
           invoke: {

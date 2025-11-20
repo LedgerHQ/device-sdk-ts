@@ -3,10 +3,16 @@ import {
   type CommandResult,
 } from "@api/command/model/CommandResult";
 import { type InternalApi } from "@api/device-action/DeviceAction";
+import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
   type OpenAppDAError,
   type OpenAppDAIntermediateValue,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
+
+export enum CallTaskInAppDAStateStep {
+  OPEN_APP = "os.callTaskInApp.steps.openApp",
+  CALL_TASK = "os.callTaskInApp.steps.callTask",
+}
 
 export type CallTaskInAppDAOutput<TaskResponse> = TaskResponse;
 
@@ -27,8 +33,15 @@ export type CallTaskInAppDAError<TaskErrorCodes = void> =
   | OpenAppDAError
   | CommandErrorResult<TaskErrorCodes>["error"];
 
+export type CallTaskInAppDARequiredInteraction = UserInteractionRequired.None;
+
 export type CallTaskInAppDAIntermediateValue<UserInteraction> =
-  | { readonly requiredUserInteraction: UserInteraction }
+  | {
+      readonly requiredUserInteraction:
+        | UserInteraction
+        | CallTaskInAppDARequiredInteraction;
+      readonly step: CallTaskInAppDAStateStep;
+    }
   | OpenAppDAIntermediateValue;
 
 export type CallTaskInAppDAInternalState<TaskResponse, TaskErrorCodes> = {

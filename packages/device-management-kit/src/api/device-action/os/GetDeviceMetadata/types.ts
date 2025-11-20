@@ -23,6 +23,15 @@ import {
 import { type Application } from "@internal/manager-api/model/Application";
 import { type SecureChannelDAErrors } from "@internal/secure-channel/model/Errors";
 
+export enum GetDeviceMetadataDAStateStep {
+  GET_DEVICE_METADATA = "os.getDeviceMetadata.steps.getDeviceMetadata",
+  GO_TO_DASHBOARD = "os.getDeviceMetadata.steps.goToDashboard",
+  GET_FIRMWARE_METADATA = "os.getDeviceMetadata.steps.getFirmwareMetadata",
+  LIST_APPS_SECURE_CHANNEL = "os.getDeviceMetadata.steps.listAppsSecureChannel",
+  LIST_APPS = "os.getDeviceMetadata.steps.listApps",
+  GET_APPLICATIONS_METADATA = "os.getDeviceMetadata.steps.getApplicationsMetadata",
+}
+
 export type GetDeviceMetadataDAOutput = {
   readonly firmwareVersion: FirmwareVersion;
   readonly firmwareUpdateContext: FirmwareUpdateContext;
@@ -52,6 +61,7 @@ export type GetDeviceMetadataDARequiredInteraction =
 
 export type GetDeviceMetadataDAIntermediateValue = {
   requiredUserInteraction: GetDeviceMetadataDARequiredInteraction;
+  step: GetDeviceMetadataDAStateStep;
 };
 
 export type GetDeviceMetadataDAState = DeviceActionState<

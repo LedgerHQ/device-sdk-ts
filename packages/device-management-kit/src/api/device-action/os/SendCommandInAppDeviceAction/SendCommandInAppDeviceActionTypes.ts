@@ -1,9 +1,15 @@
 import { type CommandErrorResult } from "@api/command/model/CommandResult";
+import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
   type OpenAppDAError,
   type OpenAppDAIntermediateValue,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 import { type Command } from "@api/types";
+
+export enum SendCommandInAppDAStateStep {
+  OPEN_APP = "os.sendCommandInApp.steps.openApp",
+  SEND_COMMAND = "os.sendCommandInApp.steps.sendCommand",
+}
 
 export type SendCommandInAppDAOutput<CommandResponse> = CommandResponse;
 
@@ -23,8 +29,16 @@ export type SendCommandInAppDAError<CommandErrorCodes = void> =
   | OpenAppDAError
   | CommandErrorResult<CommandErrorCodes>["error"];
 
+export type SendCommandInAppDARequiredInteraction =
+  UserInteractionRequired.None;
+
 export type SendCommandInAppDAIntermediateValue<UserInteraction> =
-  | { readonly requiredUserInteraction: UserInteraction }
+  | {
+      readonly requiredUserInteraction:
+        | UserInteraction
+        | SendCommandInAppDARequiredInteraction;
+      readonly step: SendCommandInAppDAStateStep;
+    }
   | OpenAppDAIntermediateValue;
 
 export type SendCommandInAppDAInternalState<

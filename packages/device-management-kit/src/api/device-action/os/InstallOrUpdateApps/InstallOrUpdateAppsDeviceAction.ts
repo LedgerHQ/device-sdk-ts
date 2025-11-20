@@ -34,6 +34,7 @@ import {
   type InstallOrUpdateAppsDAInput,
   type InstallOrUpdateAppsDAIntermediateValue,
   type InstallOrUpdateAppsDAOutput,
+  InstallOrUpdateAppsDAStateStep,
 } from "./types";
 
 type InstallOrUpdateAppsMachineInternalState = {
@@ -170,6 +171,7 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             installPlan: null,
+            step: InstallOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
           },
           _internalState: {
             error: null,
@@ -187,12 +189,6 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
           ],
         },
         UpdateDeviceMetadata: {
-          exit: assign({
-            intermediateValue: (_) => ({
-              ..._.context.intermediateValue,
-              requiredUserInteraction: UserInteractionRequired.None,
-            }),
-          }),
           invoke: {
             id: "updateMetadata",
             src: "updateMetadata",
@@ -208,6 +204,7 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
                   requiredUserInteraction:
                     _.event.snapshot.context.intermediateValue
                       .requiredUserInteraction,
+                  step: InstallOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
                 }),
               }),
             },
@@ -227,6 +224,10 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
                       }),
                     },
                   ),
+                intermediateValue: (_) => ({
+                  ..._.context.intermediateValue,
+                  requiredUserInteraction: UserInteractionRequired.None,
+                }),
               }),
             },
             onError: {
@@ -251,6 +252,12 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
           ],
         },
         BuildInstallPlan: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: InstallOrUpdateAppsDAStateStep.BUILD_INSTALL_PLAN,
+            }),
+          }),
           invoke: {
             src: "buildInstallPlan",
             input: (_) => ({
@@ -310,6 +317,12 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
           ],
         },
         PredictOutOfMemory: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: InstallOrUpdateAppsDAStateStep.CHECK_IF_ENOUGH_MEMORY,
+            }),
+          }),
           invoke: {
             src: "predictOutOfMemory",
             input: (_) => ({
@@ -355,6 +368,12 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
           ],
         },
         GoToDashboard: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: InstallOrUpdateAppsDAStateStep.GO_TO_DASHBOARD,
+            }),
+          }),
           invoke: {
             id: "goToDashboard",
             src: "goToDashboard",
@@ -405,10 +424,10 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
           ],
         },
         InstallApp: {
-          exit: assign({
+          entry: assign({
             intermediateValue: (_) => ({
               ..._.context.intermediateValue,
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: InstallOrUpdateAppsDAStateStep.INSTALL_APPLICATION,
             }),
           }),
           invoke: {

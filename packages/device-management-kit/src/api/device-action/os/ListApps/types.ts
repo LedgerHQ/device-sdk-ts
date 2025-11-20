@@ -12,6 +12,11 @@ import {
   type GoToDashboardDAIntermediateValue,
 } from "@api/device-action/os/GoToDashboard/types";
 
+export enum ListAppsDAStateStep {
+  GO_TO_DASHBOARD = "os.listApps.steps.goToDashboard",
+  LIST_APPS = "os.listApps.steps.listApps",
+}
+
 export type ListAppsDAOutput = ListAppsResponse;
 export type ListAppsDAInput = GoToDashboardDAInput;
 
@@ -28,6 +33,7 @@ export type ListAppsDAIntermediateValue =
   | GoToDashboardDAIntermediateValue
   | {
       readonly requiredUserInteraction: ListAppsDARequiredInteraction;
+      readonly step: ListAppsDAStateStep;
     };
 
 export type ListAppsDAState = DeviceActionState<
