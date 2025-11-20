@@ -174,10 +174,10 @@ export class LKRPBlockStream {
 
   async getPublishedKey(
     cryptoService: CryptoService,
-    keypair: KeyPair,
+    keyPair: KeyPair,
   ): Promise<Maybe<PublishedKey>> {
     return MaybeAsync.liftMaybe(
-      this.getMemberBlock(keypair.getPublicKeyToHex()).chain(
+      this.getMemberBlock(keyPair.getPublicKeyToHex()).chain(
         (block): Maybe<EncryptedPublishedKey> => {
           for (const command of block.commands) {
             const key = command.getEncryptedPublishedKey();
@@ -190,7 +190,7 @@ export class LKRPBlockStream {
       ),
     ).map(async (published) => {
       const secret = (
-        await keypair.deriveSharedSecret(published.ephemeralPublicKey)
+        await keyPair.deriveSharedSecret(published.ephemeralPublicKey)
       ).slice(1);
       const key = cryptoService.importSymmetricKey(
         secret,

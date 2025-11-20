@@ -39,8 +39,8 @@ describe("DefaultKeyPairSerializer", () => {
     expect(keyPair.isJust()).toStrictEqual(false);
   });
 
-  it("Serialize and deserialize a keypair", () => {
-    // Deserialize a valid keypair
+  it("Serialize and deserialize a keyPair", () => {
+    // Deserialize a valid keyPair
     const parser = new ByteArrayParser(
       Uint8Array.from([
         7, 42, 0, 1, 2, 3, 4, 5, 5, 0xfe, 0x91, 0x45, 0xdc, 0x00, 42,

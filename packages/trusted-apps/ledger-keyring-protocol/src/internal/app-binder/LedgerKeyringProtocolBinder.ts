@@ -35,7 +35,7 @@ export class LedgerKeyringProtocolBinder {
   ) {}
 
   authenticateWithKeypair(args: {
-    keypair: KeyPair;
+    keyPair: KeyPair;
     trustchainId: string;
   }): AuthenticateDAReturnType {
     return new AuthenticateWithKeypairDeviceAction({
@@ -43,14 +43,14 @@ export class LedgerKeyringProtocolBinder {
         lkrpDataSource: this.lkrpDataSource,
         appId: this.applicationId,
         cryptoService: this.cryptoService,
-        keypair: args.keypair,
+        keyPair: args.keyPair,
         trustchainId: args.trustchainId,
       },
     }).execute();
   }
 
   authenticateWithDevice(args: {
-    keypair: KeyPair;
+    keyPair: KeyPair;
     clientName: string;
     permissions: Permissions;
     sessionId: DeviceSessionId;
@@ -64,7 +64,7 @@ export class LedgerKeyringProtocolBinder {
           cryptoService: this.cryptoService,
           clientName: args.clientName,
           permissions: args.permissions,
-          keypair: args.keypair,
+          keyPair: args.keyPair,
         },
       }),
     });
