@@ -1,52 +1,28 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { existsSync } from "fs";
-import { inject } from "inversify";
+import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
 import { type AppsConfig } from "@root/src/domain/models/config/AppsConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
-const DEFAULT_MODEL_MAPPING: Record<
-  SpeculosConfig["device"],
-  { os: string; version: string; containerName?: string }
+const DEFAULT_CONTAINER_NAMES: Partial<
+  Record<SpeculosConfig["device"], string>
 > = {
-  stax: {
-    os: "1.8.1",
-    version: "1.19.1",
-  },
-  nanox: {
-    os: "2.5.1",
-    version: "1.19.1",
-  },
-  nanos: {
-    os: "2.1.0",
-    version: "1.15.0",
-  },
-  "nanos+": {
-    os: "1.4.1",
-    version: "1.19.1",
-    containerName: "cs-tester-speculos-nanosplus",
-  },
-  flex: {
-    os: "1.4.1",
-    version: "1.19.1",
-  },
-  apex: {
-    os: "1.0.1",
-    version: "1.19.1",
-  },
+  "nanos+": "cs-tester-speculos-nanosplus",
 };
 
 const SPECULOS_DOCKER_IMAGE_LATEST = "ghcr.io/ledgerhq/speculos:latest";
 const SPECULOS_API_PORT = 5000;
 
+@injectable()
 export class SpeculosServiceController implements ServiceController {
   private readonly logger: LoggerPublisherService;
   private readonly model: SpeculosConfig["device"];
-  private readonly os: string;
-  private readonly version: string;
+  private os?: string;
+  private version?: string;
   private readonly containerName: string;
 
   constructor(
@@ -56,36 +32,40 @@ export class SpeculosServiceController implements ServiceController {
     private readonly config: SpeculosConfig,
     @inject(TYPES.AppsConfig)
     private readonly appsConfig: AppsConfig,
+    @inject(TYPES.AppVersionResolver)
+    private readonly appVersionResolver: AppVersionResolver,
     @inject(TYPES.LoggerPublisherServiceFactory)
     private readonly loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    const { device, os, version } = this.config;
     this.logger = this.loggerFactory("speculos-service-controller");
-    this.model = device;
-    this.os = os || DEFAULT_MODEL_MAPPING[device].os;
-    this.version = version || DEFAULT_MODEL_MAPPING[device].version;
+    this.model = this.config.device;
+    this.os = this.config.os;
+    this.version = this.config.version;
     this.containerName =
-      DEFAULT_MODEL_MAPPING[device]?.containerName ||
-      `cs-tester-speculos-${device}-${this.config.port}`;
+      DEFAULT_CONTAINER_NAMES[this.model] ||
+      `cs-tester-speculos-${this.model}-${this.config.port}`;
   }
 
   async start(): Promise<void> {
-    const appPath = this.getAppPath(this.model, this.os, this.version);
+    // Resolve the app version and OS using the resolver
+    const resolved = this.appVersionResolver.resolve(
+      this.model,
+      this.os,
+      this.version,
+    );
 
-    // Validate that the app file exists
-    if (!existsSync(appPath)) {
-      throw new Error(
-        `Ethereum app file not found at path: ${appPath}\n` +
-          `Please ensure the app file exists or use different version parameters.\n` +
-          `Current settings: device=${this.model}, os=${this.os}, version=${this.version}`,
-      );
-    }
+    // Update with resolved values
+    this.os = resolved.os;
+    this.version = resolved.version;
 
     this.logger.info(
       `Starting Docker container with name: ${this.containerName}`,
     );
     this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
-    this.logger.info(`Using app: ${appPath}`);
+    this.logger.info(`Using app: ${resolved.path}`);
+    this.logger.info(
+      `Resolved versions: device=${this.model}, os=${this.os}, app=${this.version}`,
+    );
 
     await this.dockerContainer.start(SPECULOS_DOCKER_IMAGE_LATEST, {
       command: [
@@ -109,9 +89,5 @@ export class SpeculosServiceController implements ServiceController {
 
   async stop(): Promise<void> {
     await this.dockerContainer.stop();
-  }
-
-  private getAppPath(model: string, os: string, version: string): string {
-    return `${this.appsConfig.path}/${model}/${os}/Ethereum/app_${version}.elf`;
   }
 }

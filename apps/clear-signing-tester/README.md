@@ -45,6 +45,8 @@ Options:
   --speculos-url <url>           Speculos server URL (default: http://localhost) (default: "http://localhost")
   --speculos-port <port>         Speculos server port (random port if not provided)
   --device <device>              Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax) (default: "stax")
+  --app-eth-version <version>    Ethereum app version (e.g., 1.19.1). If not specified, automatically resolves the latest available version for the device.
+  --os-version <version>         Device OS version (e.g., 1.8.1). If not specified, automatically resolves the latest available OS version for the device.
   --verbose, -v                  Enable verbose output (default: false)
   --quiet, -q                    Show only result tables (quiet mode) (default: false)
   -h, --help                     display help for command

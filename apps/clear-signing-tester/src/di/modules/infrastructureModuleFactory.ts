@@ -15,6 +15,7 @@ import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type TransactionContractRepository } from "@root/src/domain/repositories/TransactionContractRepository";
+import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
@@ -36,6 +37,7 @@ import { TypedDataFileRepository } from "@root/src/infrastructure/repositories/T
 import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
 import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
 import { SpeculosServiceController } from "@root/src/infrastructure/service-controllers/SpeculosServiceController";
+import { AppVersionResolverService } from "@root/src/infrastructure/services/AppVersionResolverService";
 import { DefaultFlowOrchestrator } from "@root/src/infrastructure/services/DefaultFlowOrchestrator";
 import { DefaultRetryService } from "@root/src/infrastructure/services/DefaultRetryService";
 import { DefaultScreenAnalyzer } from "@root/src/infrastructure/services/DefaultScreenAnalyzer";
@@ -74,6 +76,9 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
       .inSingletonScope();
     bind<RetryService>(TYPES.RetryService)
       .to(DefaultRetryService)
+      .inSingletonScope();
+    bind<AppVersionResolver>(TYPES.AppVersionResolver)
+      .to(AppVersionResolverService)
       .inSingletonScope();
 
     // State Handlers
