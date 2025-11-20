@@ -5,7 +5,7 @@ import {
 import { type Either, Left, Right } from "purify-ts";
 
 import { GetSeedIdCommand } from "@internal/app-binder/command/GetSeedIdCommand";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyRingProtocolErrors";
 import {
   type AuthenticationPayload,
   type Challenge,

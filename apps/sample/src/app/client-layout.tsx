@@ -19,7 +19,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
 import { DmkConfigProvider } from "@/providers/DmkConfig";
-import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
+import { LedgerKeyRingProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { GlobalStyle } from "@/styles/globalstyles";
 
@@ -53,7 +53,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
       <DmkConfigProvider>
         <DmkProvider>
           <DeviceSessionsProvider>
-            <LedgerKeyringProtocolProvider>
+            <LedgerKeyRingProtocolProvider>
               <SignerEthProvider>
                 <StyleProvider selectedPalette="dark" fontsPath="/fonts">
                   <GlobalStyle />
@@ -72,7 +72,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                   </body>
                 </StyleProvider>
               </SignerEthProvider>
-            </LedgerKeyringProtocolProvider>
+            </LedgerKeyRingProtocolProvider>
           </DeviceSessionsProvider>
         </DmkProvider>
       </DmkConfigProvider>

@@ -17,9 +17,9 @@ import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
 import {
   LEDGER_SYNC_ERRORS,
-  type LedgerKeyringProtocolErrorCodes,
-  LedgerKeyringProtocolErrorFactory,
-} from "./utils/ledgerKeyringProtocolErrors";
+  type LedgerKeyRingProtocolErrorCodes,
+  LedgerKeyRingProtocolErrorFactory,
+} from "./utils/ledgerKeyRingProtocolErrors";
 
 export type GetSeedIdCommandResponse = {
   readonly credential: {
@@ -41,14 +41,14 @@ export class GetSeedIdCommand
     Command<
       GetSeedIdCommandResponse,
       GetSeedIdCommandArgs,
-      LedgerKeyringProtocolErrorCodes
+      LedgerKeyRingProtocolErrorCodes
     >
 {
   readonly name = "getSeedId";
   private readonly errorHelper = new CommandErrorHelper<
     GetSeedIdCommandResponse,
-    LedgerKeyringProtocolErrorCodes
-  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+    LedgerKeyRingProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyRingProtocolErrorFactory);
 
   constructor(private readonly args: GetSeedIdCommandArgs) {}
   getApdu(): Apdu {
@@ -67,7 +67,7 @@ export class GetSeedIdCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<GetSeedIdCommandResponse, LedgerKeyringProtocolErrorCodes> {
+  ): CommandResult<GetSeedIdCommandResponse, LedgerKeyRingProtocolErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),
     ).orDefaultLazy(() => {

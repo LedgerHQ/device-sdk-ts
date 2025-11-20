@@ -8,28 +8,28 @@ import React, {
   useState,
 } from "react";
 import {
-  type LedgerKeyringProtocol,
-  LedgerKeyringProtocolBuilder,
+  type LedgerKeyRingProtocol,
+  LedgerKeyRingProtocolBuilder,
   LKRPEnv,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
-type LedgerKeyringProtocolContextType = {
-  app: LedgerKeyringProtocol | null;
+type LedgerKeyRingProtocolContextType = {
+  app: LedgerKeyRingProtocol | null;
 };
 
 const LEDGER_SYNC_APPID = 16;
 
-const initialState: LedgerKeyringProtocolContextType = {
+const initialState: LedgerKeyRingProtocolContextType = {
   app: null,
 };
 
-const LedgerKeyringProtocolContext =
-  createContext<LedgerKeyringProtocolContextType>(initialState);
+const LedgerKeyRingProtocolContext =
+  createContext<LedgerKeyRingProtocolContextType>(initialState);
 
-export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
+export const LedgerKeyRingProtocolProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const dmk = useDmk();
@@ -37,13 +37,13 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
     state: { selectedId: sessionId },
   } = useDeviceSessionsContext();
 
-  const [app, setApp] = useState<LedgerKeyringProtocol | null>(null);
+  const [app, setApp] = useState<LedgerKeyRingProtocol | null>(null);
   useEffect(() => {
     if (!dmk) {
       setApp(null);
       return;
     }
-    const newApp = new LedgerKeyringProtocolBuilder({
+    const newApp = new LedgerKeyRingProtocolBuilder({
       dmk,
       applicationId: LEDGER_SYNC_APPID,
       env: LKRPEnv.STAGING,
@@ -53,16 +53,16 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
   }, [dmk, sessionId]);
 
   return (
-    <LedgerKeyringProtocolContext.Provider
+    <LedgerKeyRingProtocolContext.Provider
       value={{
         app,
       }}
     >
       {children}
-    </LedgerKeyringProtocolContext.Provider>
+    </LedgerKeyRingProtocolContext.Provider>
   );
 };
 
-export const useLedgerKeyringProtocol = (): LedgerKeyringProtocol | null => {
-  return useContext(LedgerKeyringProtocolContext).app;
+export const useLedgerKeyRingProtocol = (): LedgerKeyRingProtocol | null => {
+  return useContext(LedgerKeyRingProtocolContext).app;
 };

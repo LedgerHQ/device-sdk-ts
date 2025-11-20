@@ -36,7 +36,7 @@ export class LedgerKeyringProtocolBinder {
 
   authenticateWithKeypair(args: {
     keyPair: KeyPair;
-    trustchainId: string;
+    LedgerKeyRingProtocolId: string;
   }): AuthenticateDAReturnType {
     return new AuthenticateWithKeypairDeviceAction({
       input: {
@@ -44,7 +44,7 @@ export class LedgerKeyringProtocolBinder {
         appId: this.applicationId,
         cryptoService: this.cryptoService,
         keyPair: args.keyPair,
-        trustchainId: args.trustchainId,
+        LedgerKeyRingProtocolId: args.LedgerKeyRingProtocolId,
       },
     }).execute();
   }

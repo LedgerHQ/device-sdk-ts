@@ -17,7 +17,7 @@ import {
   SetTrustedMemberCommand,
   type SetTrustedMemberCommandArgs,
 } from "@internal/app-binder/command/SetTrustedMemberCommand";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyRingProtocolErrors";
 import { type LKRPBlockParsedData } from "@internal/models/LKRPBlockTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
@@ -27,7 +27,7 @@ import { type LKRPCommand } from "@internal/utils/LKRPCommand";
 import { TrustedProperties } from "./utils/TrustedProperties";
 
 export type ParseStreamToDeviceTaskInput = {
-  seedBlock: LKRPBlock; // The seed block is mandatory for now because the trustchain creation / parse empty stream are not yet implemented
+  seedBlock: LKRPBlock; // The seed block is mandatory for now because the LedgerKeyRingProtocol creation / parse empty stream are not yet implemented
   applicationStream: LKRPBlockStream | null;
 };
 

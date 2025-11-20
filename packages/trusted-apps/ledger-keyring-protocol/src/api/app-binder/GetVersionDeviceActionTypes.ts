@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetVersionCommandResponse } from "@api/app-binder/GetVersionCommandTypes";
-import { type LedgerKeyringProtocolErrorCodes } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LedgerKeyRingProtocolErrorCodes } from "@internal/app-binder/command/utils/ledgerKeyRingProtocolErrors";
 
 type GetVersionDAUserInteractionRequired = UserInteractionRequired.None;
 
@@ -17,7 +17,7 @@ export type GetVersionDAOutput =
 
 export type GetVersionDAError =
   | OpenAppDAError
-  | CommandErrorResult<LedgerKeyringProtocolErrorCodes>["error"];
+  | CommandErrorResult<LedgerKeyRingProtocolErrorCodes>["error"];
 
 export type GetVersionDAIntermediateValue =
   SendCommandInAppDAIntermediateValue<GetVersionDAUserInteractionRequired>;

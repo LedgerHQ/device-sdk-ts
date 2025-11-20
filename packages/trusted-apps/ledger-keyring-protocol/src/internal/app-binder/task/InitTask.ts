@@ -7,7 +7,7 @@ import { type Either, Left, Right } from "purify-ts";
 import { type CryptoService, Curve } from "@api/crypto/CryptoService";
 import { type KeyPair } from "@api/crypto/KeyPair";
 import { InitCommand } from "@internal/app-binder/command/InitCommand";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyRingProtocolErrors";
 
 export class InitTask {
   constructor(

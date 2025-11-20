@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
 
-import { LedgerKeyringProtocolView } from "@/components/LedgerKeyringProtocolView";
+import { LedgerKeyRingProtocolView } from "@/components/LedgerKeyRingProtocolView";
 
-const LedgerKeyringProtocol: React.FC = () => {
-  return <LedgerKeyringProtocolView />;
+const LedgerKeyRingProtocol: React.FC = () => {
+  return <LedgerKeyRingProtocolView />;
 };
 
-export default LedgerKeyringProtocol;
+export default LedgerKeyRingProtocol;

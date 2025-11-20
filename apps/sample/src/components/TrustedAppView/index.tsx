@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { PageWithHeader } from "@/components//PageWithHeader";
 import { ClickableListItem } from "@/components/ClickableListItem";
-import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
+import { useLedgerKeyRingProtocol } from "@/providers/LedgerKeyringProvider";
 
 const SUPPORTED_TRUSTED_APPS = [
   {
@@ -17,7 +17,7 @@ const SUPPORTED_TRUSTED_APPS = [
 
 export const TrustedAppView = () => {
   const router = useRouter();
-  const app = useLedgerKeyringProtocol();
+  const app = useLedgerKeyRingProtocol();
 
   console.log(app);
 

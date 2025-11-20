@@ -12,13 +12,13 @@ const cryptoService = new NobleCryptoService();
 describe("SignChallengeWithKeypairTask", () => {
   it("should sign a challenge with a keyPair", async () => {
     // GIVEN
-    const { challenge, keyPair, trustchainId } = getParameters();
+    const { challenge, keyPair, LedgerKeyRingProtocolId } = getParameters();
 
     // WHEN
     const task = new SignChallengeWithKeypairTask(
       cryptoService,
       keyPair,
-      trustchainId,
+      LedgerKeyRingProtocolId,
     );
     const result = await task.run(challenge).run();
 
@@ -43,7 +43,7 @@ describe("SignChallengeWithKeypairTask", () => {
 
   it("should handle invalid challenge", async () => {
     // GIVEN
-    const { challenge, keyPair, trustchainId } = getParameters({
+    const { challenge, keyPair, LedgerKeyRingProtocolId } = getParameters({
       tlv: "invalid-tlv", // Invalid TLV
     });
 
@@ -51,7 +51,7 @@ describe("SignChallengeWithKeypairTask", () => {
     const task = new SignChallengeWithKeypairTask(
       cryptoService,
       keyPair,
-      trustchainId,
+      LedgerKeyRingProtocolId,
     );
     const result = await task.run(challenge).run();
 
@@ -64,7 +64,7 @@ describe("SignChallengeWithKeypairTask", () => {
 
 function getParameters({
   privateKey = "b21ef366414b1aaba29b9576b7c1a661d663cfd8b4f998257dddbf7dc60d315d",
-  trustchainId = "00b7588b1916c06765462ebf4506744fe25ed1db819652e2deba721389789cdc37",
+  LedgerKeyRingProtocolId = "00b7588b1916c06765462ebf4506744fe25ed1db819652e2deba721389789cdc37",
   tlv = "0101070201001210bb1ea0c98526e1ea2deb7c7537f2989514010115473045022038632e8fa245483f0ecdbaa4ca0d455a03e7510da269d2089fed0d5cfa69d3d6022100c2f938d60bf1c34e96a2d332822a86059d90ec26ea222189cd9731834a5c151216046878ab74202b7472757374636861696e2d6261636b656e642e6170692e6177732e7374672e6c64672d746563682e636f6d320121332103cb7628e7248ddf9c07da54b979f16bf081fb3d173aac0992ad2a44ef6a388ae2600401000000",
 } = {}) {
   return {
@@ -73,6 +73,6 @@ function getParameters({
       hexaStringToBuffer(privateKey)!,
       Curve.K256,
     ),
-    trustchainId,
+    LedgerKeyRingProtocolId,
   };
 }

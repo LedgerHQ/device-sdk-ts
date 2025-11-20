@@ -8,7 +8,7 @@ import {
   type Permissions,
 } from "@api/index";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { type Trustchain } from "@internal/utils/Trustchain";
+import { type LedgerKeyRingProtocol } from "@internal/utils/LedgerKeyRingProtocol";
 
 export type AuthenticateWithDeviceDAInput = {
   readonly lkrpDataSource: LKRPDataSource;
@@ -22,10 +22,10 @@ export type AuthenticateWithDeviceDAInput = {
 export type AuthenticateWithDeviceDAInternalState = Either<
   AuthenticateDAError,
   {
-    readonly trustchainId: string | null;
+    readonly LedgerKeyRingProtocolId: string | null;
     readonly jwt: JWT | null;
-    readonly trustchain: Trustchain | null;
+    readonly LedgerKeyRingProtocol: LedgerKeyRingProtocol | null;
     readonly encryptionKey: Uint8Array | null;
-    readonly wasAddedToTrustchain: boolean;
+    readonly wasAddedToLedgerKeyRingProtocol: boolean;
   }
 >;

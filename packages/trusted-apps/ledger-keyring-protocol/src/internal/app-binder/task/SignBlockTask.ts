@@ -10,7 +10,7 @@ import { type KeyPair } from "@api/crypto/KeyPair";
 import {
   LKRPDataSourceError,
   type LKRPMissingDataError,
-  LKRPOutdatedTrustchainError,
+  LKRPOutdatedLedgerKeyRingProtocolError,
   type LKRPParsingError,
   LKRPUnknownError,
   LKRPUnsupportedCommandError,
@@ -19,7 +19,7 @@ import { type JWT } from "@api/model/JWT";
 import { SignBlockHeaderCommand } from "@internal/app-binder/command/SignBlockHeader";
 import { SignBlockSignatureCommand } from "@internal/app-binder/command/SignBlockSignatureCommand";
 import { SignBlockSingleCommand } from "@internal/app-binder/command/SignBlockSingleCommand";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyRingProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import {
   type AddMemberUnsignedData,
@@ -67,12 +67,12 @@ type SignBlockError =
   | LKRPParsingError
   | LKRPMissingDataError
   | LKRPDataSourceError
-  | LKRPOutdatedTrustchainError
+  | LKRPOutdatedLedgerKeyRingProtocolError
   | LKRPUnknownError;
 
 export type SignBlockTaskInput = {
   lkrpDataSource: LKRPDataSource;
-  trustchainId: string;
+  LedgerKeyRingProtocolId: string;
   path: string;
   jwt: JWT;
   parent: Uint8Array;
@@ -88,7 +88,7 @@ export class SignBlockTask {
 
   run({
     lkrpDataSource,
-    trustchainId,
+    LedgerKeyRingProtocolId,
     path,
     jwt,
     parent,
@@ -107,14 +107,14 @@ export class SignBlockTask {
       .chain((block) => {
         switch (blockFlow.type) {
           case "derive":
-            return lkrpDataSource.postDerivation(trustchainId, block, jwt);
+            return lkrpDataSource.postDerivation(LedgerKeyRingProtocolId, block, jwt);
           case "addMember":
-            return lkrpDataSource.putCommands(trustchainId, path, block, jwt);
+            return lkrpDataSource.putCommands(LedgerKeyRingProtocolId, path, block, jwt);
         }
       })
       .mapLeft((error) =>
         error instanceof LKRPDataSourceError && error.status === "BAD_REQUEST"
-          ? new LKRPOutdatedTrustchainError()
+          ? new LKRPOutdatedLedgerKeyRingProtocolError()
           : error,
       );
   }

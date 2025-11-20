@@ -6,7 +6,7 @@ export type LKRPDataSourceErrorStatus =
   | "UNKNOWN";
 
 export class LKRPDataSourceError extends GeneralDmkError {
-  override _tag = "LedgerKeyringProtocolError";
+  override _tag = "LedgerKeyRingProtocolError";
   public readonly message: string;
   public readonly status: LKRPDataSourceErrorStatus;
 
@@ -23,24 +23,24 @@ export class LKRPDataSourceError extends GeneralDmkError {
 }
 
 export class LKRPUnauthorizedError extends GeneralDmkError {
-  override _tag = "LedgerKeyringProtocolError";
+  override _tag = "LedgerKeyRingProtocolError";
   constructor(
-    readonly trustchainId: string | null = null,
-    readonly message: string = `Current keyPair is not a member of the trustchain${trustchainId ? ` ${trustchainId}` : ""}.`,
+    readonly LedgerKeyRingProtocolId: string | null = null,
+    readonly message: string = `Current keyPair is not a member of the LedgerKeyRingProtocol${LedgerKeyRingProtocolId ? ` ${LedgerKeyRingProtocolId}` : ""}.`,
   ) {
     super(message);
   }
 }
 
-export class LKRPOutdatedTrustchainError extends GeneralDmkError {
-  override _tag = "LedgerKeyringProtocolError";
-  constructor(readonly message = "The trustchain is outdated.") {
+export class LKRPOutdatedLedgerKeyRingProtocolError extends GeneralDmkError {
+  override _tag = "LedgerKeyRingProtocolError";
+  constructor(readonly message = "The LedgerKeyRingProtocol is outdated.") {
     super(message);
   }
 }
 
-export class LKRPTrustchainNotReady extends GeneralDmkError {
-  override readonly _tag = "LedgerKeyringProtocolError";
+export class LKRPLedgerKeyRingProtocolNotReady extends GeneralDmkError {
+  override readonly _tag = "LedgerKeyRingProtocolError";
   constructor(
     readonly message = "Ledger Sync must be initialized from Ledger Live with this device.",
   ) {
@@ -49,21 +49,21 @@ export class LKRPTrustchainNotReady extends GeneralDmkError {
 }
 
 export class LKRPParsingError extends GeneralDmkError {
-  override readonly _tag = "LedgerKeyringProtocolError";
+  override readonly _tag = "LedgerKeyRingProtocolError";
   constructor(readonly err?: unknown) {
     super(err);
   }
 }
 
 export class LKRPMissingDataError extends GeneralDmkError {
-  override readonly _tag = "LedgerKeyringProtocolError";
+  override readonly _tag = "LedgerKeyRingProtocolError";
   constructor(readonly err?: unknown) {
     super(err);
   }
 }
 
 export class LKRPUnsupportedCommandError extends GeneralDmkError {
-  override readonly _tag = "LedgerKeyringProtocolError";
+  override readonly _tag = "LedgerKeyRingProtocolError";
   readonly message: string;
   constructor(readonly command: unknown) {
     const commandType =
@@ -82,7 +82,7 @@ export class LKRPUnsupportedCommandError extends GeneralDmkError {
 }
 
 export class LKRPUnknownError extends GeneralDmkError {
-  override readonly _tag = "LedgerKeyringProtocolError";
+  override readonly _tag = "LedgerKeyRingProtocolError";
   constructor(readonly message: string) {
     super(message);
   }

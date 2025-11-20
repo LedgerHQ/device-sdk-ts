@@ -9,20 +9,20 @@ import { type KeyPair } from "@api/crypto/KeyPair";
 import {
   type LKRPDataSourceError,
   type LKRPMissingDataError,
-  type LKRPOutdatedTrustchainError,
+  type LKRPOutdatedLedgerKeyRingProtocolError,
   type LKRPParsingError,
-  type LKRPTrustchainNotReady,
+  type LKRPLedgerKeyRingProtocolNotReady,
   type LKRPUnknownError,
 } from "@api/model/Errors";
 import { type JWT } from "@api/model/JWT";
 import { type Permissions } from "@api/model/Permissions";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyRingProtocolErrors";
 import { type LKRPDataSource } from "@internal/lkrp-datasource/data/LKRPDataSource";
-import { type Trustchain } from "@internal/utils/Trustchain";
+import { type LedgerKeyRingProtocol } from "@internal/utils/LedgerKeyRingProtocol";
 
-export type AddToTrustchainDAOutput = undefined;
+export type AddToLedgerKeyRingProtocolDAOutput = undefined;
 
-export type AddToTrustchainDAInput = Either<
+export type AddToLedgerKeyRingProtocolDAInput = Either<
   LKRPMissingDataError,
   {
     readonly lkrpDataSource: LKRPDataSource;
@@ -30,46 +30,46 @@ export type AddToTrustchainDAInput = Either<
     readonly keyPair: KeyPair;
     readonly jwt: JWT;
     readonly appId: number;
-    readonly trustchain: Trustchain;
+    readonly LedgerKeyRingProtocol: LedgerKeyRingProtocol;
     readonly clientName: string;
     readonly permissions: Permissions;
   }
 >;
 
-export type AddToTrustchainDAError =
+export type AddToLedgerKeyRingProtocolDAError =
   | LKRPDeviceCommandError
   | LKRPDataSourceError
   | LKRPParsingError
   | LKRPMissingDataError
-  | LKRPOutdatedTrustchainError
-  | LKRPTrustchainNotReady
+  | LKRPOutdatedLedgerKeyRingProtocolError
+  | LKRPLedgerKeyRingProtocolNotReady
   | OpenAppDAError
   | LKRPUnknownError;
 
-export type AddToTrustchainDAIntermediateValue =
+export type AddToLedgerKeyRingProtocolDAIntermediateValue =
   | {
       requiredUserInteraction: UserInteractionRequired.None;
       step?:
-        | AddToTrustchaineDAStep.Initialize
-        | AddToTrustchaineDAStep.ParseStream;
+        | AddToLedgerKeyRingProtocoleDAStep.Initialize
+        | AddToLedgerKeyRingProtocoleDAStep.ParseStream;
     }
   | {
-      requiredUserInteraction: AddToTrustchainDAState.AddMember;
-      step: AddToTrustchaineDAStep.AddMember;
+      requiredUserInteraction: AddToLedgerKeyRingProtocolDAState.AddMember;
+      step: AddToLedgerKeyRingProtocoleDAStep.AddMember;
     };
 
-export enum AddToTrustchainDAState {
+export enum AddToLedgerKeyRingProtocolDAState {
   AddMember = "lkrp-add-member",
 }
 
-export enum AddToTrustchaineDAStep {
+export enum AddToLedgerKeyRingProtocoleDAStep {
   Initialize = "lkrp-init-transaction",
   ParseStream = "lkrp-parse-stream",
   AddMember = "lkrp-add-member",
 }
 
-export type AddToTrustchainDAInternalState = Either<
-  AddToTrustchainDAError,
+export type AddToLedgerKeyRingProtocolDAInternalState = Either<
+  AddToLedgerKeyRingProtocolDAError,
   {
     readonly sessionKeypair: KeyPair | null;
   }

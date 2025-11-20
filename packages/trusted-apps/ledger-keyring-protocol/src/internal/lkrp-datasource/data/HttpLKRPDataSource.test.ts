@@ -2,13 +2,13 @@ import { Just, Left, Nothing, Right } from "purify-ts";
 
 import { LKRPDataSourceError } from "@api/model/Errors";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
-import { Trustchain } from "@internal/utils/Trustchain";
+import { LedgerKeyRingProtocol } from "@internal/utils/LedgerKeyRingProtocol";
 
 import { HttpLKRPDataSource } from "./HttpLKRPDataSource";
 
 const mockJwt = {
   access_token: "ACCESS TOKEN",
-  permissions: { TRUSTCHAIN_ID: { "m/": ["owner"] } },
+  permissions: { LedgerKeyRingProtocol_ID: { "m/": ["owner"] } },
 };
 
 const mockChallengeJSON = {
@@ -125,19 +125,19 @@ describe("HttpLKRPDataSource", () => {
         }),
       });
       expect(result).toEqual(
-        Right({ jwt: mockJwt, trustchainId: Just("TRUSTCHAIN_ID") }),
+        Right({ jwt: mockJwt, LedgerKeyRingProtocolId: Just("LedgerKeyRingProtocol_ID") }),
       );
     });
 
-    it("should return no trustchainId the returned JWT does not contain one", async () => {
+    it("should return no LedgerKeyRingProtocolId the returned JWT does not contain one", async () => {
       // GIVEN
-      const jwtWithoutTrustchainId = {
+      const jwtWithoutLedgerKeyRingProtocolId = {
         access_token: "ACCESS TOKEN",
         permissions: {},
       };
       fetchSpy.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(jwtWithoutTrustchainId),
+        json: () => Promise.resolve(jwtWithoutLedgerKeyRingProtocolId),
       } as Response);
 
       // WHEN
@@ -149,7 +149,7 @@ describe("HttpLKRPDataSource", () => {
 
       // THEN
       expect(result).toEqual(
-        Right({ jwt: jwtWithoutTrustchainId, trustchainId: Nothing }),
+        Right({ jwt: jwtWithoutLedgerKeyRingProtocolId, LedgerKeyRingProtocolId: Nothing }),
       );
     });
 
@@ -181,28 +181,28 @@ describe("HttpLKRPDataSource", () => {
     });
   });
 
-  describe("getTrustchainById", () => {
-    it("should fetch trustchain by ID successfully", async () => {
+  describe("getLedgerKeyRingProtocolById", () => {
+    it("should fetch LedgerKeyRingProtocol by ID successfully", async () => {
       // GIVEN
-      const mockTrustchainData = {
+      const mockLedgerKeyRingProtocolData = {
         "m/": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1e1d",
         "m/16'": "1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b",
       };
       fetchSpy.mockResolvedValueOnce({
         ok: true,
-        json: () => Promise.resolve(mockTrustchainData),
+        json: () => Promise.resolve(mockLedgerKeyRingProtocolData),
       } as Response);
 
       // WHEN
       const dataSource = new HttpLKRPDataSource(baseUrl);
-      const result = await dataSource.getTrustchainById(
-        "TRUSTCHAIN_ID",
+      const result = await dataSource.getLedgerKeyRingProtocolById(
+        "LedgerKeyRingProtocol_ID",
         mockJwt,
       );
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        `${baseUrl}/trustchain/TRUSTCHAIN_ID`,
+        `${baseUrl}/LedgerKeyRingProtocol/LedgerKeyRingProtocol_ID`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -211,7 +211,7 @@ describe("HttpLKRPDataSource", () => {
         },
       );
       expect(result).toEqual(
-        Right(new Trustchain("TRUSTCHAIN_ID", mockTrustchainData)),
+        Right(new LedgerKeyRingProtocol("LedgerKeyRingProtocol_ID", mockLedgerKeyRingProtocolData)),
       );
     });
 
@@ -226,8 +226,8 @@ describe("HttpLKRPDataSource", () => {
 
       // WHEN
       const dataSource = new HttpLKRPDataSource(baseUrl);
-      const result = await dataSource.getTrustchainById(
-        "TRUSTCHAIN_ID",
+      const result = await dataSource.getLedgerKeyRingProtocolById(
+        "LedgerKeyRingProtocol_ID",
         mockJwt,
       );
 
@@ -236,7 +236,7 @@ describe("HttpLKRPDataSource", () => {
         Left(
           new LKRPDataSourceError({
             status: "UNKNOWN",
-            message: `[500] Internal Server Error (from: ${baseUrl}/trustchain/TRUSTCHAIN_ID)`,
+            message: `[500] Internal Server Error (from: ${baseUrl}/LedgerKeyRingProtocol/LedgerKeyRingProtocol_ID)`,
           }),
         ),
       );
@@ -256,14 +256,14 @@ describe("HttpLKRPDataSource", () => {
       // WHEN
       const dataSource = new HttpLKRPDataSource(baseUrl);
       const result = await dataSource.postDerivation(
-        "TRUSTCHAIN_ID",
+        "LedgerKeyRingProtocol_ID",
         mockBlock,
         mockJwt,
       );
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        `${baseUrl}/trustchain/TRUSTCHAIN_ID/derivation`,
+        `${baseUrl}/LedgerKeyRingProtocol/LedgerKeyRingProtocol_ID/derivation`,
         {
           method: "POST",
           headers: {
@@ -290,7 +290,7 @@ describe("HttpLKRPDataSource", () => {
       // WHEN
       const dataSource = new HttpLKRPDataSource(baseUrl);
       const result = await dataSource.putCommands(
-        "TRUSTCHAIN_ID",
+        "LedgerKeyRingProtocol_ID",
         "m/0'/16'/0'",
         mockBlock,
         mockJwt,
@@ -298,7 +298,7 @@ describe("HttpLKRPDataSource", () => {
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        `${baseUrl}/trustchain/TRUSTCHAIN_ID/commands`,
+        `${baseUrl}/LedgerKeyRingProtocol/LedgerKeyRingProtocol_ID/commands`,
         {
           method: "PUT",
           headers: {

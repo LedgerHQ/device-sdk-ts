@@ -9,6 +9,6 @@ export * from "./model/Env";
 export * from "./model/Errors";
 export * from "./model/JWT";
 export * from "./model/Permissions";
-export * from "@api/LedgerKeyringProtocol";
-export * from "@api/LedgerKeyringProtocolBuilder";
+export * from "@api/LedgerKeyRingProtocol";
+export * from "@api/LedgerKeyRingProtocolBuilder";
 export * from "@internal/externalTypes";

@@ -24,11 +24,11 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
+import { useLedgerKeyRingProtocol } from "@/providers/LedgerKeyringProvider";
 import { base64FromBytes, bytesFromBase64, genIdentity } from "@/utils/crypto";
 import { parsePermissions } from "@/utils/lkrp-permissions";
 
-export const LedgerKeyringProtocolView: React.FC = () => {
+export const LedgerKeyRingProtocolView: React.FC = () => {
   const dmk = useDmk();
 
   // NOTE: Use a ref for the sessionId because the reference a given DeviceActionProp will not get updated
@@ -51,7 +51,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
   // NOTE: Use a ref here for the same reason as above.
   const encryptionKeyRef = useRef("");
 
-  const app = useLedgerKeyringProtocol();
+  const app = useLedgerKeyRingProtocol();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
@@ -59,11 +59,11 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Authenticate",
         description:
-          "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keyPair of a previouly added member is required. (Valid permissions are: OWNER, CAN_ENCRYPT, CAN_DERIVE, CAN_ADD_BLOCK).",
+          "Authenticate as an LKRP member. Without a LedgerKeyRingProtocolId, the device will be used. For the web authentication a valid LedgerKeyRingProtocolId and the keyPair of a previouly added member is required. (Valid permissions are: OWNER, CAN_ENCRYPT, CAN_DERIVE, CAN_ADD_BLOCK).",
         executeDeviceAction: ({
           privateKey,
           clientName,
-          trustchainId,
+          LedgerKeyRingProtocolId,
           permissions: permissionsExpr,
         }) => {
           if (!app) {
@@ -81,7 +81,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
               keyPair,
               clientName,
               permissions: parsePermissions(permissionsExpr),
-              trustchainId,
+              LedgerKeyRingProtocolId,
               sessionId: sessionIdRef.current,
             });
             return {
@@ -98,8 +98,8 @@ export const LedgerKeyringProtocolView: React.FC = () => {
                       const pubkey = keyPair.getPublicKeyToHex();
                       const identity = {
                         jwt: null,
-                        trustchain: {
-                          rootId: output.trustchainId,
+                        LedgerKeyRingProtocol: {
+                          rootId: output.LedgerKeyRingProtocolId,
                           walletSyncEncryptionKey: bufferToHexaString(
                             output.encryptionKey,
                           ).slice(2),
@@ -131,7 +131,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
         InputValuesComponent: RowCommandForm as typeof CommandForm<AuthInput>,
         initialValues: {
           ...genIdentity(),
-          trustchainId: "",
+          LedgerKeyRingProtocolId: "",
           permissions: "OWNER & ~CAN_ADD_BLOCK",
         },
         deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
@@ -145,7 +145,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Encrypt",
         description:
-          "Encrypt a UTF8 encoded message, using the extended private key from the trustchain.",
+          "Encrypt a UTF8 encoded message, using the extended private key from the LedgerKeyRingProtocol.",
         executeDeviceAction: ({ encryptionKey, data }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
@@ -177,7 +177,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Decrypt",
         description:
-          "Decrypt an encrypted UTF8 encoded message, using the extended private key from the trustchain.",
+          "Decrypt an encrypted UTF8 encoded message, using the extended private key from the LedgerKeyRingProtocol.",
         executeDeviceAction: ({ encryptionKey, data }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
@@ -209,7 +209,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Decrypt Base64",
         description:
-          "Decrypt arbitrary base64 encoded binary data, using the extended private key from the trustchain.",
+          "Decrypt arbitrary base64 encoded binary data, using the extended private key from the LedgerKeyRingProtocol.",
         executeDeviceAction: ({ encryptionKey, data }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
@@ -252,7 +252,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
 type AuthInput = {
   privateKey: string;
   clientName: string;
-  trustchainId: string;
+  LedgerKeyRingProtocolId: string;
   permissions: string;
 };
 

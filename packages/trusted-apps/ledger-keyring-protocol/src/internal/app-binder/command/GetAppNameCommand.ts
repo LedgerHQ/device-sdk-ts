@@ -14,9 +14,9 @@ import { Maybe } from "purify-ts";
 
 import {
   LEDGER_SYNC_ERRORS,
-  type LedgerKeyringProtocolErrorCodes,
-  LedgerKeyringProtocolErrorFactory,
-} from "./utils/ledgerKeyringProtocolErrors";
+  type LedgerKeyRingProtocolErrorCodes,
+  LedgerKeyRingProtocolErrorFactory,
+} from "./utils/ledgerKeyRingProtocolErrors";
 
 export type GetAppNameCommandResponse = {
   readonly name: string;
@@ -29,14 +29,14 @@ export class GetAppNameCommand
     Command<
       GetAppNameCommandResponse,
       GetAppNameCommandArgs,
-      LedgerKeyringProtocolErrorCodes
+      LedgerKeyRingProtocolErrorCodes
     >
 {
   readonly name = "getAppName";
   private readonly errorHelper = new CommandErrorHelper<
     GetAppNameCommandResponse,
-    LedgerKeyringProtocolErrorCodes
-  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+    LedgerKeyRingProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyRingProtocolErrorFactory);
 
   getApdu(): Apdu {
     const getAppNameArgs: ApduBuilderArgs = {
@@ -52,7 +52,7 @@ export class GetAppNameCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<GetAppNameCommandResponse, LedgerKeyringProtocolErrorCodes> {
+  ): CommandResult<GetAppNameCommandResponse, LedgerKeyRingProtocolErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),
     ).orDefaultLazy(() => {

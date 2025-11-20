@@ -13,9 +13,9 @@ import { Maybe } from "purify-ts";
 
 import {
   LEDGER_SYNC_ERRORS,
-  type LedgerKeyringProtocolErrorCodes,
-  LedgerKeyringProtocolErrorFactory,
-} from "./utils/ledgerKeyringProtocolErrors";
+  type LedgerKeyRingProtocolErrorCodes,
+  LedgerKeyRingProtocolErrorFactory,
+} from "./utils/ledgerKeyRingProtocolErrors";
 
 export type ParseBlockHeaderCommandResponse = Uint8Array;
 
@@ -28,14 +28,14 @@ export class ParseBlockHeaderCommand
     Command<
       ParseBlockHeaderCommandResponse,
       ParseBlockHeaderCommandArgs,
-      LedgerKeyringProtocolErrorCodes
+      LedgerKeyRingProtocolErrorCodes
     >
 {
   readonly name = "parseBlockHeader";
   private readonly errorHelper = new CommandErrorHelper<
     ParseBlockHeaderCommandResponse,
-    LedgerKeyringProtocolErrorCodes
-  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+    LedgerKeyRingProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyRingProtocolErrorFactory);
 
   constructor(private readonly args: ParseBlockHeaderCommandArgs) {}
 
@@ -53,7 +53,7 @@ export class ParseBlockHeaderCommand
     apduResponse: ApduResponse,
   ): CommandResult<
     ParseBlockHeaderCommandResponse,
-    LedgerKeyringProtocolErrorCodes
+    LedgerKeyRingProtocolErrorCodes
   > {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),

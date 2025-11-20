@@ -20,7 +20,7 @@ import { type CryptoService } from "@api/crypto/CryptoService";
 import { type KeyPair } from "@api/crypto/KeyPair";
 import {
   LKRPMissingDataError,
-  LKRPTrustchainNotReady,
+  LKRPLedgerKeyRingProtocolNotReady,
   LKRPUnknownError,
 } from "@api/model/Errors";
 import { type JWT } from "@api/model/JWT";
@@ -37,7 +37,7 @@ import {
   type AuthenticateWithDeviceDAInternalState,
 } from "./models/AuthenticateWithDeviceDeviceActionTypes";
 import { raiseAndAssign } from "./utils/raiseAndAssign";
-import { AddToTrustchainDeviceAction } from "./AddToTrustchainDeviceAction";
+import { AddToLedgerKeyRingProtocolDeviceAction } from "./AddToLedgerKeyRingProtocolDeviceAction";
 
 const APP_NAME = "Ledger Sync";
 
@@ -65,7 +65,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
       AuthenticateWithDeviceDAInternalState
     >;
 
-    const { deviceAuth, getTrustchain, extractEncryptionKey } =
+    const { deviceAuth, getLedgerKeyRingProtocol, extractEncryptionKey } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -82,9 +82,9 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
 
         deviceAuth: fromPromise(deviceAuth),
 
-        getTrustchain: fromPromise(getTrustchain),
+        getLedgerKeyRingProtocol: fromPromise(getLedgerKeyRingProtocol),
 
-        addToTrustchainStateMachine: new AddToTrustchainDeviceAction({
+        addToLedgerKeyRingProtocolStateMachine: new AddToLedgerKeyRingProtocolDeviceAction({
           input: Left(
             new LKRPMissingDataError("Missing input for GetEncryptionKey"),
           ),
@@ -105,13 +105,13 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
       },
 
       guards: {
-        isTrustchainMember: ({ context }) =>
+        isLedgerKeyRingProtocolMember: ({ context }) =>
           context._internalState
             .toMaybe()
             .map(
               (state) =>
-                state.wasAddedToTrustchain ||
-                state.trustchain
+                state.wasAddedToLedgerKeyRingProtocol ||
+                state.LedgerKeyRingProtocol
                   ?.getAppStream(context.input.appId)
                   .mapOrDefault(
                     (stream) =>
@@ -133,11 +133,11 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
           requiredUserInteraction: UserInteractionRequired.None,
         },
         _internalState: Right({
-          trustchainId: null,
+          LedgerKeyRingProtocolId: null,
           jwt: null,
-          trustchain: null,
+          LedgerKeyRingProtocol: null,
           encryptionKey: null,
-          wasAddedToTrustchain: false,
+          wasAddedToLedgerKeyRingProtocol: false,
         }),
       }),
 
@@ -173,7 +173,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
               requiredUserInteraction: AuthenticateDAState.Authenticate,
             },
           }),
-          on: { success: "GetTrustchain", error: "Error" },
+          on: { success: "GetLedgerKeyRingProtocol", error: "Error" },
           invoke: {
             id: "deviceAuth",
             src: "deviceAuth",
@@ -182,12 +182,12 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
             onDone: {
               actions: raiseAndAssign(({ event }) =>
                 event.output.chain((payload) =>
-                  payload.trustchainId.caseOf({
-                    Nothing: () => Left(new LKRPTrustchainNotReady()),
-                    Just: (trustchainId) =>
+                  payload.LedgerKeyRingProtocolId.caseOf({
+                    Nothing: () => Left(new LKRPLedgerKeyRingProtocolNotReady()),
+                    Just: (LedgerKeyRingProtocolId) =>
                       Right({
                         raise: "success",
-                        assign: { jwt: payload.jwt, trustchainId },
+                        assign: { jwt: payload.jwt, LedgerKeyRingProtocolId },
                       }),
                   }),
                 ),
@@ -196,36 +196,36 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
           },
         },
 
-        GetTrustchain: {
+        GetLedgerKeyRingProtocol: {
           entry: assign({
             intermediateValue: {
-              step: AuthenticateDAStep.GetTrustchain,
+              step: AuthenticateDAStep.GetLedgerKeyRingProtocol,
               requiredUserInteraction: UserInteractionRequired.None,
             },
           }),
           on: { success: "CheckIsMembers", error: "Error" },
           invoke: {
-            id: "getTrustchain",
-            src: "getTrustchain",
+            id: "getLedgerKeyRingProtocol",
+            src: "getLedgerKeyRingProtocol",
             input: ({ context }) =>
               context._internalState.chain((state) =>
                 eitherSeqRecord({
                   lkrpDataSource: context.input.lkrpDataSource,
-                  trustchainId: () =>
+                  LedgerKeyRingProtocolId: () =>
                     required(
-                      state.trustchainId,
-                      "Missing Trustchain ID for GetTrustchain",
+                      state.LedgerKeyRingProtocolId,
+                      "Missing LedgerKeyRingProtocol ID for GetLedgerKeyRingProtocol",
                     ),
                   jwt: () =>
-                    required(state.jwt, "Missing JWT for GetTrustchain"),
+                    required(state.jwt, "Missing JWT for GetLedgerKeyRingProtocol"),
                 }),
               ),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
-                event.output.map((trustchain) => ({
+                event.output.map((LedgerKeyRingProtocol) => ({
                   raise: "success",
-                  assign: { trustchain },
+                  assign: { LedgerKeyRingProtocol },
                 })),
               ),
             },
@@ -234,19 +234,19 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
 
         CheckIsMembers: {
           always: [
-            { target: "ExtractEncryptionKey", guard: "isTrustchainMember" },
-            { target: "AddToTrustchain" },
+            { target: "ExtractEncryptionKey", guard: "isLedgerKeyRingProtocolMember" },
+            { target: "AddToLedgerKeyRingProtocol" },
           ],
         },
 
-        AddToTrustchain: {
+        AddToLedgerKeyRingProtocol: {
           on: {
-            success: "GetTrustchain",
+            success: "GetLedgerKeyRingProtocol",
             error: "Error",
           },
           invoke: {
-            id: "AddToTrustchain",
-            src: "addToTrustchainStateMachine",
+            id: "AddToLedgerKeyRingProtocol",
+            src: "addToLedgerKeyRingProtocolStateMachine",
             onSnapshot: {
               actions: assign({
                 intermediateValue: ({ event }) =>
@@ -258,7 +258,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
                 .mapLeft(
                   () =>
                     new LKRPMissingDataError(
-                      "Missing data in the input for AddToTrustchain",
+                      "Missing data in the input for AddToLedgerKeyRingProtocol",
                     ),
                 )
                 .chain((state) =>
@@ -269,12 +269,12 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
                     clientName: context.input.clientName,
                     permissions: context.input.permissions,
                     jwt: () =>
-                      required(state.jwt, "Missing JWT for AddToTrustchain"),
+                      required(state.jwt, "Missing JWT for AddToLedgerKeyRingProtocol"),
                     appId: context.input.appId,
-                    trustchain: () =>
+                    LedgerKeyRingProtocol: () =>
                       required(
-                        state.trustchain,
-                        "Missing Trustchain for AddToTrustchain",
+                        state.LedgerKeyRingProtocol,
+                        "Missing LedgerKeyRingProtocol for AddToLedgerKeyRingProtocol",
                       ),
                   }),
                 ),
@@ -283,7 +283,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
               actions: raiseAndAssign(({ event }) =>
                 event.output.map(() => ({
                   raise: "success",
-                  assign: { wasAddedToTrustchain: true },
+                  assign: { wasAddedToLedgerKeyRingProtocol: true },
                 })),
               ),
             },
@@ -304,9 +304,9 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
             input: ({ context }) => ({
               cryptoService: context.input.cryptoService,
               keyPair: context.input.keyPair,
-              stream: context._internalState.chain(({ trustchain }) =>
+              stream: context._internalState.chain(({ LedgerKeyRingProtocol }) =>
                 required(
-                  trustchain?.getAppStream(context.input.appId).extract(),
+                  LedgerKeyRingProtocol?.getAppStream(context.input.appId).extract(),
                   "Missing application stream for ExtractEncryptionKey",
                 ),
               ),
@@ -331,15 +331,15 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
       output: ({ context }) =>
         context._internalState.chain((state) =>
           eitherSeqRecord({
-            trustchainId: () =>
+            LedgerKeyRingProtocolId: () =>
               required(
-                state.trustchainId,
-                "Missing Trustchain ID in the output",
+                state.LedgerKeyRingProtocolId,
+                "Missing LedgerKeyRingProtocol ID in the output",
               ),
             jwt: () => required(state.jwt, "Missing JWT in the output"),
             applicationPath: () =>
               required(
-                state.trustchain
+                state.LedgerKeyRingProtocol
                   ?.getAppStream(context.input.appId)
                   .chain((stream) => stream.getPath())
                   .extract(),
@@ -366,19 +366,19 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
           new SignChallengeWithDeviceTask(internalApi),
         ),
 
-      getTrustchain: (args: {
+      getLedgerKeyRingProtocol: (args: {
         input: Either<
           AuthenticateDAError,
           {
             lkrpDataSource: LKRPDataSource;
-            trustchainId: string;
+            LedgerKeyRingProtocolId: string;
             jwt: JWT;
           }
         >;
       }) =>
         EitherAsync.liftEither(args.input)
-          .chain(({ lkrpDataSource, trustchainId, jwt }) =>
-            lkrpDataSource.getTrustchainById(trustchainId, jwt),
+          .chain(({ lkrpDataSource, LedgerKeyRingProtocolId, jwt }) =>
+            lkrpDataSource.getLedgerKeyRingProtocolById(LedgerKeyRingProtocolId, jwt),
           )
           .run(),
 

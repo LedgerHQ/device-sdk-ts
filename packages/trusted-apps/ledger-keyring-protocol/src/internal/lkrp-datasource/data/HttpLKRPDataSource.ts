@@ -8,7 +8,7 @@ import {
 import { JWT } from "@api/model/JWT";
 import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasourceTypes";
 import { LKRPBlock } from "@internal/utils/LKRPBlock";
-import { Trustchain } from "@internal/utils/Trustchain";
+import { LedgerKeyRingProtocol } from "@internal/utils/LedgerKeyRingProtocol";
 
 import {
   AuthenticationPayload,
@@ -32,7 +32,7 @@ export class HttpLKRPDataSource implements LKRPDataSource {
       body: JSON.stringify(payload),
     }).map((jwt) => ({
       jwt,
-      trustchainId: Maybe.fromNullable(
+      LedgerKeyRingProtocolId: Maybe.fromNullable(
         Object.keys(jwt.permissions).find((id) =>
           Boolean(jwt.permissions[id]?.["m/"]),
         ),
@@ -40,22 +40,22 @@ export class HttpLKRPDataSource implements LKRPDataSource {
     }));
   }
 
-  getTrustchainById(id: string, jwt: JWT) {
+  getLedgerKeyRingProtocolById(id: string, jwt: JWT) {
     return this.request<{ [path: string]: string }>(
-      `/trustchain/${id}`,
+      `/LedgerKeyRingProtocol/${id}`,
       Just(jwt),
-    ).map((serialized) => new Trustchain(id, serialized));
+    ).map((serialized) => new LedgerKeyRingProtocol(id, serialized));
   }
 
   postDerivation(id: string, block: LKRPBlock, jwt: JWT) {
-    return this.request<void>(`/trustchain/${id}/derivation`, Just(jwt), {
+    return this.request<void>(`/LedgerKeyRingProtocol/${id}/derivation`, Just(jwt), {
       method: "POST",
       body: JSON.stringify(block.toString()),
     });
   }
 
   putCommands(id: string, path: string, block: LKRPBlock, jwt: JWT) {
-    return this.request<void>(`/trustchain/${id}/commands`, Just(jwt), {
+    return this.request<void>(`/LedgerKeyRingProtocol/${id}/commands`, Just(jwt), {
       method: "PUT",
       body: JSON.stringify({ path, blocks: [block.toString()] }),
     });

@@ -5,7 +5,7 @@ import {
   DeviceExchangeError,
 } from "@ledgerhq/device-management-kit";
 
-export type LedgerKeyringProtocolErrorCodes =
+export type LedgerKeyRingProtocolErrorCodes =
   | "6985"
   | "6a86"
   | "6a87"
@@ -20,9 +20,9 @@ export type LedgerKeyringProtocolErrorCodes =
   | "b00c";
 
 export type LKRPDeviceCommandError =
-  CommandErrorResult<LedgerKeyringProtocolErrorCodes>["error"];
+  CommandErrorResult<LedgerKeyRingProtocolErrorCodes>["error"];
 
-export const LEDGER_SYNC_ERRORS: CommandErrors<LedgerKeyringProtocolErrorCodes> =
+export const LEDGER_SYNC_ERRORS: CommandErrors<LedgerKeyRingProtocolErrorCodes> =
   {
     "6985": { message: "Rejected by user" },
     "6a86": { message: "Either P1 or P2 is incorrect" },
@@ -38,12 +38,12 @@ export const LEDGER_SYNC_ERRORS: CommandErrors<LedgerKeyringProtocolErrorCodes> 
     b00c: { message: "Attempt to perform an action on a closed stream" },
   };
 
-export class LedgerKeyringProcotolError extends DeviceExchangeError<LedgerKeyringProtocolErrorCodes> {
-  constructor(args: CommandErrorArgs<LedgerKeyringProtocolErrorCodes>) {
-    super({ tag: "LedgerKeyringProtocolError", ...args });
+export class LedgerKeyRingProtocolError extends DeviceExchangeError<LedgerKeyRingProtocolErrorCodes> {
+  constructor(args: CommandErrorArgs<LedgerKeyRingProtocolErrorCodes>) {
+    super({ tag: "LedgerKeyRingProtocolError", ...args });
   }
 }
 
-export const LedgerKeyringProtocolErrorFactory = (
-  args: CommandErrorArgs<LedgerKeyringProtocolErrorCodes>,
-) => new LedgerKeyringProcotolError(args);
+export const LedgerKeyRingProtocolErrorFactory = (
+  args: CommandErrorArgs<LedgerKeyRingProtocolErrorCodes>,
+) => new LedgerKeyRingProtocolError(args);

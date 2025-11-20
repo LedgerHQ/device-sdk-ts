@@ -2,7 +2,7 @@ import { Maybe } from "purify-ts";
 
 import { LKRPBlockStream } from "./LKRPBlockStream";
 
-export class Trustchain {
+export class LedgerKeyRingProtocol {
   constructor(
     private readonly id: string,
     private readonly serialized: {

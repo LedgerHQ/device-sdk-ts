@@ -1,7 +1,7 @@
 export type JWT = {
   access_token: string;
   permissions: {
-    [trustchainId: string]: {
+    [LedgerKeyRingProtocolId: string]: {
       [path: string]: string[];
     };
   };

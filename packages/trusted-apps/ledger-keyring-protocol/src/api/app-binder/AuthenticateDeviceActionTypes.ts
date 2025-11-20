@@ -9,17 +9,17 @@ import {
   type LKRPDataSourceError,
   type LKRPMissingDataError,
   type LKRPParsingError,
-  type LKRPTrustchainNotReady,
+  type LKRPLedgerKeyRingProtocolNotReady,
   type LKRPUnauthorizedError,
   type LKRPUnknownError,
 } from "@api/model/Errors";
 import { type JWT } from "@api/model/JWT";
-import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
+import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyRingProtocolErrors";
 
 import {
-  type AddToTrustchainDAError,
-  type AddToTrustchainDAIntermediateValue,
-} from "./AddToTrustchainDeviceActionTypes";
+  type AddToLedgerKeyRingProtocolDAError,
+  type AddToLedgerKeyRingProtocolDAIntermediateValue,
+} from "./AddToLedgerKeyRingProtocolDeviceActionTypes";
 
 export type AuthenticateDAReturnType = ExecuteDeviceActionReturnType<
   AuthenticateDAOutput,
@@ -29,19 +29,19 @@ export type AuthenticateDAReturnType = ExecuteDeviceActionReturnType<
 
 export type AuthenticateDAOutput = {
   readonly jwt: JWT;
-  readonly trustchainId: string;
+  readonly LedgerKeyRingProtocolId: string;
   readonly applicationPath: string;
   readonly encryptionKey: Uint8Array;
 };
 
 export type AuthenticateDAError =
   | LKRPUnauthorizedError
-  | AddToTrustchainDAError
+  | AddToLedgerKeyRingProtocolDAError
   | LKRPDeviceCommandError
   | LKRPDataSourceError
   | LKRPParsingError
   | LKRPMissingDataError
-  | LKRPTrustchainNotReady
+  | LKRPLedgerKeyRingProtocolNotReady
   | OpenAppDAError
   | LKRPUnknownError;
 
@@ -58,10 +58,10 @@ export type AuthenticateDAIntermediateValue =
       requiredUserInteraction: UserInteractionRequired.None;
       step?:
         | AuthenticateDAStep.Authenticate
-        | AuthenticateDAStep.GetTrustchain
+        | AuthenticateDAStep.GetLedgerKeyRingProtocol
         | AuthenticateDAStep.ExtractEncryptionKey;
     }
-  | AddToTrustchainDAIntermediateValue;
+  | AddToLedgerKeyRingProtocolDAIntermediateValue;
 
 export enum AuthenticateDAState {
   Authenticate = "lkrp-authenticate",
@@ -69,6 +69,6 @@ export enum AuthenticateDAState {
 export enum AuthenticateDAStep {
   OpenApp = "lkrp.steps.openApp",
   Authenticate = "lkrp.steps.authenticate",
-  GetTrustchain = "lkrp.steps.getTrustchain",
+  GetLedgerKeyRingProtocol = "lkrp.steps.getLedgerKeyRingProtocol",
   ExtractEncryptionKey = "lkrp.steps.extractEncryptionKey",
 }

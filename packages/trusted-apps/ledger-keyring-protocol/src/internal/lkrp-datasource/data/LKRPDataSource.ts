@@ -2,8 +2,8 @@ import { type EitherAsync, type Maybe } from "purify-ts";
 
 import { type LKRPDataSourceError } from "@api/model/Errors";
 import { type JWT } from "@api/model/JWT";
+import { type LedgerKeyRingProtocol } from "@internal/utils/LedgerKeyRingProtocol";
 import { type LKRPBlock } from "@internal/utils/LKRPBlock";
-import { type Trustchain } from "@internal/utils/Trustchain";
 
 export interface LKRPDataSource {
   getChallenge(): EitherAsync<LKRPDataSourceError, Challenge>;
@@ -12,10 +12,10 @@ export interface LKRPDataSource {
     payload: AuthenticationPayload,
   ): EitherAsync<LKRPDataSourceError, AuthenticationResponse>;
 
-  getTrustchainById(
+  getLedgerKeyRingProtocolById(
     id: string,
     jwt: JWT,
-  ): EitherAsync<LKRPDataSourceError, Trustchain>;
+  ): EitherAsync<LKRPDataSourceError, LedgerKeyRingProtocol>;
 
   postDerivation(
     id: string,
@@ -35,7 +35,7 @@ export type Challenge = { json: ChallengeJSON; tlv: string };
 
 export type AuthenticationResponse = {
   jwt: JWT;
-  trustchainId: Maybe<string>;
+  LedgerKeyRingProtocolId: Maybe<string>;
 };
 
 export type AuthenticationPayload = {

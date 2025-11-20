@@ -10,26 +10,26 @@ import { KeyPair } from "@api/crypto/KeyPair";
 import { LKRPMissingDataError } from "@api/model/Errors";
 import { Permissions } from "@api/model/Permissions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
-import { LedgerKeyringProtocolBinder } from "@internal/app-binder/LedgerKeyringProtocolBinder";
+import { LedgerKeyRingProtocolBinder } from "@internal/app-binder/LedgerKeyRingProtocolBinder";
 
 export type AuthenticateUsecaseInput = {
   keyPair: KeyPair;
   clientName: string;
   permissions: Permissions;
 } & (
-  | { trustchainId: string; sessionId?: DeviceSessionId }
-  | { trustchainId?: undefined; sessionId: DeviceSessionId }
+  | { LedgerKeyRingProtocolId: string; sessionId?: DeviceSessionId }
+  | { LedgerKeyRingProtocolId?: undefined; sessionId: DeviceSessionId }
 );
 
 @injectable()
 export class AuthenticateUseCase {
   constructor(
     @inject(appBinderTypes.AppBinding)
-    private appBinder: LedgerKeyringProtocolBinder,
+    private appBinder: LedgerKeyRingProtocolBinder,
   ) {}
 
   execute(input: AuthenticateUsecaseInput): AuthenticateDAReturnType {
-    if (input.trustchainId) {
+    if (input.LedgerKeyRingProtocolId) {
       return this.appBinder.authenticateWithKeypair(input);
     }
 
@@ -43,7 +43,7 @@ export class AuthenticateUseCase {
       observable: of({
         status: DeviceActionStatus.Error,
         error: new LKRPMissingDataError(
-          "Either a trustchainId or a device is required for authentication.",
+          "Either a LedgerKeyRingProtocolId or a device is required for authentication.",
         ),
       }),
       cancel: () => undefined,

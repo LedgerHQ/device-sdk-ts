@@ -16,9 +16,9 @@ import { type GetVersionCommandResponse } from "@api/app-binder/GetVersionComman
 
 import {
   LEDGER_SYNC_ERRORS,
-  type LedgerKeyringProtocolErrorCodes,
-  LedgerKeyringProtocolErrorFactory,
-} from "./utils/ledgerKeyringProtocolErrors";
+  type LedgerKeyRingProtocolErrorCodes,
+  LedgerKeyRingProtocolErrorFactory,
+} from "./utils/ledgerKeyRingProtocolErrors";
 
 export type GetVersionCommandArgs = undefined;
 
@@ -27,14 +27,14 @@ export class GetVersionCommand
     Command<
       GetVersionCommandResponse,
       GetVersionCommandArgs,
-      LedgerKeyringProtocolErrorCodes
+      LedgerKeyRingProtocolErrorCodes
     >
 {
   readonly name = "getVersion";
   private readonly errorHelper = new CommandErrorHelper<
     GetVersionCommandResponse,
-    LedgerKeyringProtocolErrorCodes
-  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+    LedgerKeyRingProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyRingProtocolErrorFactory);
 
   getApdu(): Apdu {
     const getVersionArgs: ApduBuilderArgs = {
@@ -50,7 +50,7 @@ export class GetVersionCommand
 
   parseResponse(
     apduResponse: ApduResponse,
-  ): CommandResult<GetVersionCommandResponse, LedgerKeyringProtocolErrorCodes> {
+  ): CommandResult<GetVersionCommandResponse, LedgerKeyRingProtocolErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),
     ).orDefaultLazy(() => {

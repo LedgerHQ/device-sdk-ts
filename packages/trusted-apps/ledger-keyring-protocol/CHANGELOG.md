@@ -34,13 +34,13 @@
 
 - [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`c1cfa5e`](https://github.com/LedgerHQ/device-sdk-ts/commit/c1cfa5e0e2c149921a15b1ec6de6fd7110389875) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement LKRP keyPair based authentication
 
-- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`6497862`](https://github.com/LedgerHQ/device-sdk-ts/commit/6497862e8afcb7e5232ff84d0d054de488595ed7) Thanks [@valpinkman](https://github.com/valpinkman)! - Parse Trustchain
+- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`6497862`](https://github.com/LedgerHQ/device-sdk-ts/commit/6497862e8afcb7e5232ff84d0d054de488595ed7) Thanks [@valpinkman](https://github.com/valpinkman)! - Parse LedgerKeyRingProtocol
 
 - [#985](https://github.com/LedgerHQ/device-sdk-ts/pull/985) [`20a8bf0`](https://github.com/LedgerHQ/device-sdk-ts/commit/20a8bf051e020bfbe7af3bcee5f4ad2786e4d44c) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Make crypto implementation injectable
 
 - [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`9eca831`](https://github.com/LedgerHQ/device-sdk-ts/commit/9eca831351a45109f0381ee2b0f4a47adadbc4c5) Thanks [@valpinkman](https://github.com/valpinkman)! - Parse TLV into LKRP block data
 
-- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`5ddc88a`](https://github.com/LedgerHQ/device-sdk-ts/commit/5ddc88aa084f3443b000a9f99a79143194678c05) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement adding a member to the trustchain
+- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`5ddc88a`](https://github.com/LedgerHQ/device-sdk-ts/commit/5ddc88aa084f3443b000a9f99a79143194678c05) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement adding a member to the LedgerKeyRingProtocol
 
 - [#979](https://github.com/LedgerHQ/device-sdk-ts/pull/979) [`b1d8e58`](https://github.com/LedgerHQ/device-sdk-ts/commit/b1d8e58de5f513bad5eb8eb8f804fc2cbeeb4c17) Thanks [@thesan](https://github.com/thesan)! - Enable no device authentication
 
@@ -48,9 +48,9 @@
 
 - [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`c2075a0`](https://github.com/LedgerHQ/device-sdk-ts/commit/c2075a0d7b4b27aad15a63323a541fc1675c019c) Thanks [@valpinkman](https://github.com/valpinkman)! - Wrap keyPairs in an interface
 
-- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`6324de2`](https://github.com/LedgerHQ/device-sdk-ts/commit/6324de2a2de503192ff853352e6fe5c749ddfcd2) Thanks [@valpinkman](https://github.com/valpinkman)! - Parse trustchain streams on the device
+- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`6324de2`](https://github.com/LedgerHQ/device-sdk-ts/commit/6324de2a2de503192ff853352e6fe5c749ddfcd2) Thanks [@valpinkman](https://github.com/valpinkman)! - Parse LedgerKeyRingProtocol streams on the device
 
-- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`a9b11c1`](https://github.com/LedgerHQ/device-sdk-ts/commit/a9b11c1ee650ab2b7823b622c7375d9e48f419b7) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement the LKRP trustchain network calls
+- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`a9b11c1`](https://github.com/LedgerHQ/device-sdk-ts/commit/a9b11c1ee650ab2b7823b622c7375d9e48f419b7) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement the LKRP LedgerKeyRingProtocol network calls
 
 ### Patch Changes
 

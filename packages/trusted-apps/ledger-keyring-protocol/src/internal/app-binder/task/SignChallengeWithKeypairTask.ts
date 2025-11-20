@@ -18,7 +18,7 @@ export class SignChallengeWithKeypairTask {
   constructor(
     private readonly cryptoService: CryptoService,
     private readonly keyPair: KeyPair,
-    private readonly trustchainId: string,
+    private readonly LedgerKeyRingProtocolId: string,
   ) {}
 
   run(
@@ -47,7 +47,7 @@ export class SignChallengeWithKeypairTask {
 
   // Spec https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4335960138/ARCH+LedgerLive+Auth+specifications
   private getAttestation() {
-    const bytes = new TextEncoder().encode(this.trustchainId);
+    const bytes = new TextEncoder().encode(this.LedgerKeyRingProtocolId);
     const attestation = Uint8Array.from([0x02, bytes.length, ...bytes]);
     return bufferToHexaString(attestation, false);
   }

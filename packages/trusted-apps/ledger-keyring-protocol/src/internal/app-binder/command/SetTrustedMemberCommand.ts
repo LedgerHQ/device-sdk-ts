@@ -15,9 +15,9 @@ import { TPTags } from "@internal/models/Tags";
 
 import {
   LEDGER_SYNC_ERRORS,
-  type LedgerKeyringProtocolErrorCodes,
-  LedgerKeyringProtocolErrorFactory,
-} from "./utils/ledgerKeyringProtocolErrors";
+  type LedgerKeyRingProtocolErrorCodes,
+  LedgerKeyRingProtocolErrorFactory,
+} from "./utils/ledgerKeyRingProtocolErrors";
 
 export type SetTrustedMemberCommandResponse = void;
 
@@ -31,14 +31,14 @@ export class SetTrustedMemberCommand
     Command<
       SetTrustedMemberCommandResponse,
       SetTrustedMemberCommandArgs,
-      LedgerKeyringProtocolErrorCodes
+      LedgerKeyRingProtocolErrorCodes
     >
 {
   readonly name = "setTrustedMember";
   private readonly errorHelper = new CommandErrorHelper<
     SetTrustedMemberCommandResponse,
-    LedgerKeyringProtocolErrorCodes
-  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+    LedgerKeyRingProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyRingProtocolErrorFactory);
 
   constructor(private readonly args: SetTrustedMemberCommandArgs) {}
 
@@ -62,7 +62,7 @@ export class SetTrustedMemberCommand
     apduResponse: ApduResponse,
   ): CommandResult<
     SetTrustedMemberCommandResponse,
-    LedgerKeyringProtocolErrorCodes
+    LedgerKeyRingProtocolErrorCodes
   > {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),

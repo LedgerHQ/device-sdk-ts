@@ -67,7 +67,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
       AuthenticateWithKeypairDAInternalState
     >;
 
-    const { keyPairAuth, getTrustchain, extractEncryptionKey } =
+    const { keyPairAuth, getLedgerKeyRingProtocol, extractEncryptionKey } =
       this.extractDependencies();
 
     return setup({
@@ -79,7 +79,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
 
       actors: {
         keyPairAuth: fromPromise(keyPairAuth),
-        getTrustchain: fromPromise(getTrustchain),
+        getLedgerKeyRingProtocol: fromPromise(getLedgerKeyRingProtocol),
         extractEncryptionKey: fromPromise(extractEncryptionKey),
       },
 
@@ -104,7 +104,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
         },
         _internalState: Right({
           jwt: null,
-          trustchain: null,
+          LedgerKeyRingProtocol: null,
           encryptionKey: null,
         }),
       }),
@@ -118,7 +118,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
               step: AuthenticateDAStep.Authenticate,
             },
           }),
-          on: { success: "GetTrustchain", error: "Error" },
+          on: { success: "GetLedgerKeyRingProtocol", error: "Error" },
           invoke: {
             id: "keyPairAuth",
             src: "keyPairAuth",
@@ -131,7 +131,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
                   .mapLeft((error) =>
                     error instanceof LKRPDataSourceError &&
                     error.status === "UNAUTHORIZED"
-                      ? new LKRPUnauthorizedError(context.input.trustchainId)
+                      ? new LKRPUnauthorizedError(context.input.LedgerKeyRingProtocolId)
                       : error,
                   ),
               ),
@@ -139,30 +139,30 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
           },
         },
 
-        GetTrustchain: {
+        GetLedgerKeyRingProtocol: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: AuthenticateDAStep.GetTrustchain,
+              step: AuthenticateDAStep.GetLedgerKeyRingProtocol,
             },
           }),
           on: { success: "ExtractEncryptionKey", error: "Error" },
           invoke: {
-            id: "getTrustchain",
-            src: "getTrustchain",
+            id: "getLedgerKeyRingProtocol",
+            src: "getLedgerKeyRingProtocol",
             input: ({ context }) => ({
               lkrpDataSource: context.input.lkrpDataSource,
-              trustchainId: context.input.trustchainId,
+              LedgerKeyRingProtocolId: context.input.LedgerKeyRingProtocolId,
               jwt: context._internalState.chain(({ jwt }) =>
-                required(jwt, "Missing JWT for GetTrustchain"),
+                required(jwt, "Missing JWT for GetLedgerKeyRingProtocol"),
               ),
             }),
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
               actions: raiseAndAssign(({ event }) =>
-                event.output.map((trustchain) => ({
+                event.output.map((LedgerKeyRingProtocol) => ({
                   raise: "success",
-                  assign: { trustchain },
+                  assign: { LedgerKeyRingProtocol },
                 })),
               ),
             },
@@ -183,9 +183,9 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
             input: ({ context }) => ({
               cryptoService: context.input.cryptoService,
               keyPair: context.input.keyPair,
-              stream: context._internalState.chain(({ trustchain }) =>
+              stream: context._internalState.chain(({ LedgerKeyRingProtocol }) =>
                 required(
-                  trustchain?.getAppStream(context.input.appId).extract(),
+                  LedgerKeyRingProtocol?.getAppStream(context.input.appId).extract(),
                   "Missing application stream for ExtractEncryptionKey",
                 ),
               ),
@@ -210,11 +210,11 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
       output: ({ context }) =>
         context._internalState.chain((state) =>
           eitherSeqRecord({
-            trustchainId: context.input.trustchainId,
+            LedgerKeyRingProtocolId: context.input.LedgerKeyRingProtocolId,
             jwt: () => required(state.jwt, "Missing JWT in the output"),
             applicationPath: () =>
               required(
-                state.trustchain
+                state.LedgerKeyRingProtocol
                   ?.getAppStream(context.input.appId)
                   .chain((stream) => stream.getPath())
                   .extract(),
@@ -241,22 +241,22 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
           new SignChallengeWithKeypairTask(
             input.cryptoService,
             input.keyPair,
-            input.trustchainId,
+            input.LedgerKeyRingProtocolId,
           ),
         ),
 
-      getTrustchain: ({
+      getLedgerKeyRingProtocol: ({
         input,
       }: {
         input: {
           lkrpDataSource: LKRPDataSource;
-          trustchainId: string;
+          LedgerKeyRingProtocolId: string;
           jwt: Either<AuthenticateDAError, JWT>;
         };
       }) =>
         EitherAsync.liftEither(input.jwt)
           .chain((jwt) =>
-            input.lkrpDataSource.getTrustchainById(input.trustchainId, jwt),
+            input.lkrpDataSource.getLedgerKeyRingProtocolById(input.LedgerKeyRingProtocolId, jwt),
           )
           .run(),
 

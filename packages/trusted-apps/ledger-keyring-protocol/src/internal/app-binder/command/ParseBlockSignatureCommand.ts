@@ -13,9 +13,9 @@ import { Maybe } from "purify-ts";
 
 import {
   LEDGER_SYNC_ERRORS,
-  type LedgerKeyringProtocolErrorCodes,
-  LedgerKeyringProtocolErrorFactory,
-} from "./utils/ledgerKeyringProtocolErrors";
+  type LedgerKeyRingProtocolErrorCodes,
+  LedgerKeyRingProtocolErrorFactory,
+} from "./utils/ledgerKeyRingProtocolErrors";
 
 export type ParseBlockSignatureCommandResponse = Uint8Array;
 
@@ -26,14 +26,14 @@ export class ParseBlockSignatureCommand
     Command<
       ParseBlockSignatureCommandResponse,
       ParseBlockSignatureCommandArgs,
-      LedgerKeyringProtocolErrorCodes
+      LedgerKeyRingProtocolErrorCodes
     >
 {
   readonly name = "parseBlockSignature";
   private readonly errorHelper = new CommandErrorHelper<
     ParseBlockSignatureCommandResponse,
-    LedgerKeyringProtocolErrorCodes
-  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+    LedgerKeyRingProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyRingProtocolErrorFactory);
 
   constructor(private readonly args: ParseBlockSignatureCommandArgs) {}
 
@@ -56,7 +56,7 @@ export class ParseBlockSignatureCommand
     apduResponse: ApduResponse,
   ): CommandResult<
     ParseBlockSignatureCommandResponse,
-    LedgerKeyringProtocolErrorCodes
+    LedgerKeyRingProtocolErrorCodes
   > {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),

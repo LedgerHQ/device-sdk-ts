@@ -15,9 +15,9 @@ import { GeneralTags } from "@internal/models/Tags";
 
 import {
   LEDGER_SYNC_ERRORS,
-  type LedgerKeyringProtocolErrorCodes,
-  LedgerKeyringProtocolErrorFactory,
-} from "./utils/ledgerKeyringProtocolErrors";
+  type LedgerKeyRingProtocolErrorCodes,
+  LedgerKeyRingProtocolErrorFactory,
+} from "./utils/ledgerKeyRingProtocolErrors";
 
 export interface SignBlockHeaderCommandArgs {
   parent: Uint8Array;
@@ -41,14 +41,14 @@ export class SignBlockHeaderCommand
     Command<
       SignBlockHeaderCommandResponse,
       SignBlockHeaderCommandArgs,
-      LedgerKeyringProtocolErrorCodes
+      LedgerKeyRingProtocolErrorCodes
     >
 {
   readonly name = "signBlockHeader";
   private readonly errorHelper = new CommandErrorHelper<
     SignBlockHeaderCommandResponse,
-    LedgerKeyringProtocolErrorCodes
-  >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
+    LedgerKeyRingProtocolErrorCodes
+  >(LEDGER_SYNC_ERRORS, LedgerKeyRingProtocolErrorFactory);
 
   constructor(private readonly args: SignBlockHeaderCommandArgs) {}
 
@@ -77,7 +77,7 @@ export class SignBlockHeaderCommand
     apduResponse: ApduResponse,
   ): CommandResult<
     SignBlockHeaderCommandResponse,
-    LedgerKeyringProtocolErrorCodes
+    LedgerKeyRingProtocolErrorCodes
   > {
     return Maybe.fromNullable(
       this.errorHelper.getError(apduResponse),
