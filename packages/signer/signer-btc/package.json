@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-bitcoin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "Apache-2.0",
   "main": "lib/cjs/index.js",
   "types": "lib/cjs/index.d.ts",

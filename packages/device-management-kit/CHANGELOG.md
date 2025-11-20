@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.11.2
+
+### Patch Changes
+
+- [`c4d6fac`](https://github.com/LedgerHQ/device-sdk-ts/commit/c4d6facf569017f80325b615ad00d5bf199de890) Thanks [@aussedatlo](https://github.com/aussedatlo)! - fake changeset
+
 ## 0.11.1
 
 ### Patch Changes

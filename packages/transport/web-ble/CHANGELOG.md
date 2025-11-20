@@ -1,5 +1,12 @@
 # @ledgerhq/device-transport-kit-web-ble
 
+## 1.3.1
+
+### Patch Changes
+
+- Updated dependencies [[`c4d6fac`](https://github.com/LedgerHQ/device-sdk-ts/commit/c4d6facf569017f80325b615ad00d5bf199de890)]:
+  - @ledgerhq/device-management-kit@0.11.2
+
 ## 1.3.0
 
 ### Minor Changes

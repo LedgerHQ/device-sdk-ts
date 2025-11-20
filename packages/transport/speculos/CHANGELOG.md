@@ -1,5 +1,12 @@
 # @ledgerhq/device-transport-kit-speculos
 
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`c4d6fac`](https://github.com/LedgerHQ/device-sdk-ts/commit/c4d6facf569017f80325b615ad00d5bf199de890)]:
+  - @ledgerhq/device-management-kit@0.11.2
+
 ## 1.1.1
 
 ### Patch Changes
