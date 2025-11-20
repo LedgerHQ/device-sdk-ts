@@ -42,20 +42,20 @@ export class HttpLKRPDataSource implements LKRPDataSource {
 
   getLedgerKeyRingProtocolById(id: string, jwt: JWT) {
     return this.request<{ [path: string]: string }>(
-      `/LedgerKeyRingProtocol/${id}`,
+      `/trustchain/${id}`,
       Just(jwt),
     ).map((serialized) => new LedgerKeyRingProtocol(id, serialized));
   }
 
   postDerivation(id: string, block: LKRPBlock, jwt: JWT) {
-    return this.request<void>(`/LedgerKeyRingProtocol/${id}/derivation`, Just(jwt), {
+    return this.request<void>(`/trustchain/${id}/derivation`, Just(jwt), {
       method: "POST",
       body: JSON.stringify(block.toString()),
     });
   }
 
   putCommands(id: string, path: string, block: LKRPBlock, jwt: JWT) {
-    return this.request<void>(`/LedgerKeyRingProtocol/${id}/commands`, Just(jwt), {
+    return this.request<void>(`/trustchain/${id}/commands`, Just(jwt), {
       method: "PUT",
       body: JSON.stringify({ path, blocks: [block.toString()] }),
     });

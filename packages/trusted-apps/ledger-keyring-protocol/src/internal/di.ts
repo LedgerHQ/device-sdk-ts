@@ -47,9 +47,9 @@ export const makeContainer = ({
 };
 
 const lkrpBaseUrlMap = new Map<LKRPEnv, string>([
-  [LKRPEnv.PROD, "https://LedgerKeyRingProtocol.api.live.ledger.com/v1"],
+  [LKRPEnv.PROD, "https://trustchain.api.live.ledger.com/v1"],
   [
     LKRPEnv.STAGING,
-    "https://LedgerKeyRingProtocol-backend.api.aws.stg.ldg-tech.com/v1",
+    "https://trustchain-backend.api.aws.stg.ldg-tech.com/v1",
   ],
 ]);
