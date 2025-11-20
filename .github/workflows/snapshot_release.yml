@@ -43,44 +43,36 @@ jobs:
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
-      # - name: Setup npm config for JFrog
-      #   env:
-      #     NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
-      #   run: |
-      #     cat << EOF | tee .npmrc
-      #     enable-pre-post-scripts=true
-      #     registry=https://${NPM_REGISTRY}/
-      #     //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
-      #     EOF
+      - name: Setup npm config for JFrog
+        env:
+          NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
+        run: |
+          cat << EOF | tee .npmrc
+          enable-pre-post-scripts=true
+          registry=https://${NPM_REGISTRY}/
+          //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
+          EOF
 
       - name: Create dist directory to store tarball
         run: mkdir -p dist
 
-      - name: create .npmrc
-        run: |
-          cat << EOF > "$HOME/.npmrc"
-            //registry.npmjs.org/:_authToken=${NPM_TOKEN}
-          EOF
-        env:
-          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
-
-      - name: Create and publish snapshot release version
+      - name: Publish
         id: changesets
-        run: |
-          pnpm bump --snapshot ${{ env.TAG }}
-          pnpm release --snapshot --no-git-tag --tag ${{ env.TAG }}
+        uses: ledgerhq/changeset-action-ledger@main
+        with:
+          publish: pnpm release
         env:
-          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Attest tarball
-        if: steps.changesets.conclusion == 'success'
-        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      - name: Attest for npmjs.com
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@actions/attest-for-npmsjs-com-0
         with:
           subject-path: ./dist
 
-       # The action currently doesn't support pushing the blob to the registry
+      # The action currently doesn't support pushing the blob to the registry
       - name: Sign tarball
-        if: steps.changesets.conclusion == 'success'
+        if: steps.changesets.outputs.published == 'true'
         uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
         with:
           path: ./dist
