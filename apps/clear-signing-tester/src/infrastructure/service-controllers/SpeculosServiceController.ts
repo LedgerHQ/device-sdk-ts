@@ -1,4 +1,5 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { existsSync } from "fs";
 import { inject } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -70,6 +71,15 @@ export class SpeculosServiceController implements ServiceController {
 
   async start(): Promise<void> {
     const appPath = this.getAppPath(this.model, this.os, this.version);
+
+    // Validate that the app file exists
+    if (!existsSync(appPath)) {
+      throw new Error(
+        `Ethereum app file not found at path: ${appPath}\n` +
+          `Please ensure the app file exists or use different version parameters.\n` +
+          `Current settings: device=${this.model}, os=${this.os}, version=${this.version}`,
+      );
+    }
 
     this.logger.info(
       `Starting Docker container with name: ${this.containerName}`,
