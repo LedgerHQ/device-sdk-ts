@@ -1,5 +1,12 @@
 # @ledgerhq/device-transport-kit-react-native-ble
 
+## 1.3.1
+
+### Patch Changes
+
+- Updated dependencies [[`a13cc47`](https://github.com/LedgerHQ/device-sdk-ts/commit/a13cc4777591253171e8e8299e6134df86eb3387)]:
+  - @ledgerhq/device-management-kit@0.11.2
+
 ## 1.3.0
 
 ### Minor Changes
