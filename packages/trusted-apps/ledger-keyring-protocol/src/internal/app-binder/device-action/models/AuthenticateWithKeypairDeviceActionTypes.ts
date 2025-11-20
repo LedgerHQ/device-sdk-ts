@@ -10,7 +10,7 @@ export type AuthenticateWithKeypairDAInput = {
   readonly lkrpDataSource: LKRPDataSource;
   readonly appId: number;
   readonly cryptoService: CryptoService;
-  readonly keypair: KeyPair;
+  readonly keyPair: KeyPair;
   readonly trustchainId: string;
 };
 

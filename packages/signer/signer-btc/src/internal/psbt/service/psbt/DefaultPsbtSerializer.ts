@@ -25,8 +25,8 @@ const PSBT_MAGIC_BYTES = Uint8Array.from([0x70, 0x73, 0x62, 0x74, 0xff]);
  * <magic> <global-map> <input-map>* <output-map>*
  * with:
  *   <magic>: 0x70 0x73 0x62 0x74 0xFF
- *   <map>: <keypair>* 0x00
- * For <keypair> serialization, it's done in KeyPair class.
+ *   <map>: <keyPair>* 0x00
+ * For <keyPair> serialization, it's done in KeyPair class.
  * For more informations:
  * https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#specification
  */

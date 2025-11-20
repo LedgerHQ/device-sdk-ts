@@ -14,7 +14,7 @@ export type AuthenticateWithDeviceDAInput = {
   readonly lkrpDataSource: LKRPDataSource;
   readonly appId: number;
   readonly cryptoService: CryptoService;
-  readonly keypair: KeyPair;
+  readonly keyPair: KeyPair;
   readonly clientName: string;
   readonly permissions: Permissions;
 };

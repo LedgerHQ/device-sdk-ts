@@ -17,7 +17,7 @@ import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 export class SignChallengeWithKeypairTask {
   constructor(
     private readonly cryptoService: CryptoService,
-    private readonly keypair: KeyPair,
+    private readonly keyPair: KeyPair,
     private readonly trustchainId: string,
   ) {}
 
@@ -28,11 +28,11 @@ export class SignChallengeWithKeypairTask {
     AuthenticationPayload
   > {
     const attestation = this.getAttestation();
-    const credential = this.getCredential(this.keypair.getPublicKeyToHex());
+    const credential = this.getCredential(this.keyPair.getPublicKeyToHex());
 
     return EitherAsync.liftEither(this.getUnsignedChallengeTLV(challenge.tlv))
       .map((buf) => this.cryptoService.hash(buf, HashAlgo.SHA256))
-      .map((hash) => this.keypair.sign(hash, SigFormat.DER))
+      .map((hash) => this.keyPair.sign(hash, SigFormat.DER))
       .map((str) => bufferToHexaString(str, false))
       .map((signature) => ({
         challenge: challenge.json,

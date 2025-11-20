@@ -23,7 +23,7 @@
 
 - [#964](https://github.com/LedgerHQ/device-sdk-ts/pull/964) [`004b15c`](https://github.com/LedgerHQ/device-sdk-ts/commit/004b15cf2eeab6a27fa6dac62b87136ab85f7edd) Thanks [@thesan](https://github.com/thesan)! - Report clearer errors and refactor the code a bit
 
-- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`c1cfa5e`](https://github.com/LedgerHQ/device-sdk-ts/commit/c1cfa5e0e2c149921a15b1ec6de6fd7110389875) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement LKRP keypair based authentication
+- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`c1cfa5e`](https://github.com/LedgerHQ/device-sdk-ts/commit/c1cfa5e0e2c149921a15b1ec6de6fd7110389875) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement LKRP keyPair based authentication
 
 - [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`6497862`](https://github.com/LedgerHQ/device-sdk-ts/commit/6497862e8afcb7e5232ff84d0d054de488595ed7) Thanks [@valpinkman](https://github.com/valpinkman)! - Parse Trustchain
 
@@ -37,7 +37,7 @@
 
 - [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`33185ea`](https://github.com/LedgerHQ/device-sdk-ts/commit/33185ea982b5d857a759572ef407ec526b01ccd2) Thanks [@valpinkman](https://github.com/valpinkman)! - Implement LKRP device authentication
 
-- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`c2075a0`](https://github.com/LedgerHQ/device-sdk-ts/commit/c2075a0d7b4b27aad15a63323a541fc1675c019c) Thanks [@valpinkman](https://github.com/valpinkman)! - Wrap keypairs in an interface
+- [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`c2075a0`](https://github.com/LedgerHQ/device-sdk-ts/commit/c2075a0d7b4b27aad15a63323a541fc1675c019c) Thanks [@valpinkman](https://github.com/valpinkman)! - Wrap keyPairs in an interface
 
 - [#845](https://github.com/LedgerHQ/device-sdk-ts/pull/845) [`6324de2`](https://github.com/LedgerHQ/device-sdk-ts/commit/6324de2a2de503192ff853352e6fe5c749ddfcd2) Thanks [@valpinkman](https://github.com/valpinkman)! - Parse trustchain streams on the device
 
