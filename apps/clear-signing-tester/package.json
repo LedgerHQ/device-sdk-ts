@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
   "main": "test-ethereum-transactions.ts",
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
