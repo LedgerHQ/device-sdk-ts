@@ -1,5 +1,5 @@
-name: "Setup Device Management Kit toolchain"
-description: "Composite job to setup the CI tools for the Device Management Kit"
+name: "Setup toolchain with pnpm cache"
+description: "Setup toolchain and restore pnpm dependencies cache"
 
 runs:
   using: "composite"
@@ -15,8 +15,8 @@ runs:
       run: |
         echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
-    - uses: actions/cache@v4
-      name: Setup pnpm cache
+    - name: Restore pnpm cache
+      uses: actions/cache@v4
       with:
         path: ${{ env.STORE_PATH }}
         key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}

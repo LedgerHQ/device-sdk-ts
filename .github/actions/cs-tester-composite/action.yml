@@ -1,0 +1,35 @@
+name: "Run Clear Signing Tester"
+description: "Execute Clear Signing Tester with specified device and test"
+author: "Ledger"
+
+inputs:
+  device:
+    description: "The device to test against (e.g., stax, flex, nanos, nanox, nanosp)"
+    required: true
+  test:
+    description: "The test to execute (e.g., test:raw:erc20, test:raw:complete, test:raw:multisig, test:typed-data:multisig)"
+    required: true
+  coin-apps-token:
+    description: "GitHub token with access to the coin-apps repository"
+    required: true
+  gating-token:
+    description: "Gating token for API access"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build libraries
+      shell: bash
+      run: pnpm build:libs
+
+    - name: Pull Speculos Docker image
+      shell: bash
+      run: docker pull ghcr.io/ledgerhq/speculos
+
+    - name: Run Clear Signing Tester
+      shell: bash
+      env:
+        GATING_TOKEN: ${{ inputs.gating-token }}
+        COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
+      run: pnpm cs-tester ${{ inputs.test }} --device ${{ inputs.device }} --verbose
