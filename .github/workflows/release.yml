@@ -52,9 +52,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Attest tarball
+      - name: Attest for npmjs.com
         if: steps.changesets.outputs.published == 'true'
-        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@actions/attest-for-npmsjs-com-0
         with:
           subject-path: ./dist
 
