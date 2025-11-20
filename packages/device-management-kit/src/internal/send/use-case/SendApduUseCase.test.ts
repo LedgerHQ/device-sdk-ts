@@ -1,75 +1,77 @@
-import { Left } from "purify-ts";
+import { Left, Right } from "purify-ts";
 
-import { type DmkConfig } from "@api/DmkConfig";
+import { ApduResponse } from "@api/device-session/ApduResponse";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
-import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
-import { deviceSessionStubBuilder } from "@internal/device-session/model/DeviceSession.stub";
+import { type DeviceSession } from "@internal/device-session/model/DeviceSession";
 import {
   DeviceSessionNotFound,
   ReceiverApduError,
 } from "@internal/device-session/model/Errors";
-import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
-import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
-import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
-import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
-import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
-import { type SecureChannelDataSource } from "@internal/secure-channel/data/SecureChannelDataSource";
-import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
-import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 import { SendApduUseCase } from "@internal/send/use-case/SendApduUseCase";
-
-vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
-let managerApiDataSource: ManagerApiDataSource;
-let managerApi: ManagerApiService;
-let secureChannelDataSource: SecureChannelDataSource;
-let secureChannel: SecureChannelService;
+let mockDeviceSession: DeviceSession;
 const fakeSessionId = "fakeSessionId";
 
 describe("SendApduUseCase", () => {
   beforeEach(() => {
     logger = new DefaultLoggerPublisherService([], "send-apdu-use-case");
-    sessionService = new DefaultDeviceSessionService(() => logger);
-    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
-    managerApi = new DefaultManagerApiService(managerApiDataSource);
-    secureChannelDataSource = new DefaultSecureChannelDataSource(
-      {} as DmkConfig,
-    );
-    secureChannel = new DefaultSecureChannelService(secureChannelDataSource);
+
+    // Mock DeviceSession with sendApdu method
+    mockDeviceSession = {
+      sendApdu: vi.fn(),
+    } as unknown as DeviceSession;
+
+    // Mock DeviceSessionService
+    sessionService = {
+      getDeviceSessionById: vi.fn(),
+    } as unknown as DeviceSessionService;
   });
 
   it("should send an APDU to a connected device", async () => {
     // given
-    const deviceSession = deviceSessionStubBuilder(
-      {},
-      () => logger,
-      managerApi,
-      secureChannel,
-      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
+    const apdu = new Uint8Array([0x00, 0x01, 0x02, 0x03]);
+    const expectedResponse = new ApduResponse({
+      statusCode: new Uint8Array([0x90, 0x00]),
+      data: new Uint8Array([]),
+    });
+
+    vi.mocked(sessionService.getDeviceSessionById).mockReturnValue(
+      Right(mockDeviceSession),
     );
-    sessionService.addDeviceSession(deviceSession);
+    vi.mocked(mockDeviceSession.sendApdu).mockResolvedValue(
+      Right(expectedResponse),
+    );
+
     const useCase = new SendApduUseCase(sessionService, () => logger);
 
     // when
     const response = await useCase.execute({
       sessionId: fakeSessionId,
-      apdu: new Uint8Array([0x00, 0x01, 0x02, 0x03]),
+      apdu,
     });
 
-    deviceSession.close();
     // then
-    expect(deviceSession.connectedDevice.sendApdu).toHaveBeenCalledTimes(1);
-    expect(response).toBeDefined();
+    expect(sessionService.getDeviceSessionById).toHaveBeenCalledWith(
+      fakeSessionId,
+    );
+    expect(mockDeviceSession.sendApdu).toHaveBeenCalledWith(apdu, {
+      abortTimeout: undefined,
+      triggersDisconnection: undefined,
+    });
+    expect(response).toBe(expectedResponse);
   });
 
   it("should throw an error if the deviceSession is not found", async () => {
     // given
+    const notFoundError = new DeviceSessionNotFound();
+    vi.mocked(sessionService.getDeviceSessionById).mockReturnValue(
+      Left(notFoundError),
+    );
+
     const useCase = new SendApduUseCase(sessionService, () => logger);
 
     // when
@@ -79,35 +81,40 @@ describe("SendApduUseCase", () => {
     });
 
     // then
-    await expect(response).rejects.toBeInstanceOf(DeviceSessionNotFound);
+    await expect(response).rejects.toBe(notFoundError);
+    expect(sessionService.getDeviceSessionById).toHaveBeenCalledWith(
+      fakeSessionId,
+    );
   });
 
   it("should throw an error if the apdu receiver failed", async () => {
     // given
-    const connectedDevice = connectedDeviceStubBuilder({
-      sendApdu: vi.fn(async () =>
-        Promise.resolve(Left(new ReceiverApduError())),
-      ),
-    });
-    const deviceSession = deviceSessionStubBuilder(
-      { connectedDevice },
-      () => logger,
-      managerApi,
-      secureChannel,
-      DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS,
+    const apdu = new Uint8Array([0x00, 0x01, 0x02, 0x03]);
+    const receiverError = new ReceiverApduError();
+
+    vi.mocked(sessionService.getDeviceSessionById).mockReturnValue(
+      Right(mockDeviceSession),
     );
-    sessionService.addDeviceSession(deviceSession);
+    vi.mocked(mockDeviceSession.sendApdu).mockResolvedValue(
+      Left(receiverError),
+    );
+
     const useCase = new SendApduUseCase(sessionService, () => logger);
 
     // when
     const response = useCase.execute({
       sessionId: fakeSessionId,
-      apdu: new Uint8Array([0x00, 0x01, 0x02, 0x03]),
+      apdu,
     });
 
-    deviceSession.close();
-
     // then
-    await expect(response).rejects.toBeInstanceOf(ReceiverApduError);
+    await expect(response).rejects.toBe(receiverError);
+    expect(sessionService.getDeviceSessionById).toHaveBeenCalledWith(
+      fakeSessionId,
+    );
+    expect(mockDeviceSession.sendApdu).toHaveBeenCalledWith(apdu, {
+      abortTimeout: undefined,
+      triggersDisconnection: undefined,
+    });
   });
 });
