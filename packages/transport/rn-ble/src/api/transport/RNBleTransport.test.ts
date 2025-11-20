@@ -487,7 +487,7 @@ describe("RNBleTransport", () => {
         )
         .build();
 
-      transport.stopDiscovering();
+      void transport.stopDiscovering();
 
       expect(stopDeviceScan).toHaveBeenCalled();
     });
@@ -662,7 +662,7 @@ describe("RNBleTransport", () => {
 
         const startScan = vi
           .fn()
-          .mockImplementation(async (_uuids, _options, listener) => {
+          .mockImplementation((_uuids, _options, listener) => {
             scanInterval = setInterval(() => {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-call
               listener(null, {
@@ -783,7 +783,7 @@ describe("RNBleTransport", () => {
       const startScan = vi
         .fn()
         .mockImplementation(
-          async (
+          (
             _uuids,
             _options,
             listener: (error: Error | null, device: Device) => void,
@@ -867,7 +867,7 @@ describe("RNBleTransport", () => {
 
       expect(caughtError).toBe(scanError);
 
-      startScan.mockImplementation(async (_uuids, _options, listener) => {
+      startScan.mockImplementation((_uuids, _options, listener) => {
         listener(null, {
           id: "aScannedDeviceId",
           localName: "aScannedDeviceName",
@@ -945,7 +945,7 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation(async (_uuids, _options, listener) => {
+        .mockImplementation((_uuids, _options, listener) => {
           // Immediately emit a device to ensure we have results
           listener(null, {
             id: "deviceId",
@@ -1092,7 +1092,7 @@ describe("RNBleTransport", () => {
       });
 
       const connectedDevice = result.extract() as TransportConnectedDevice;
-      connectedDevice.sendApdu(Uint8Array.from([0x43, 0x32]));
+      void connectedDevice.sendApdu(Uint8Array.from([0x43, 0x32]));
 
       expect(result).toEqual(
         Right(
@@ -1221,7 +1221,7 @@ describe("RNBleTransport", () => {
 
       const startScan = vi
         .fn()
-        .mockImplementation(async (_uuids, _options, listener) => {
+        .mockImplementation((_uuids, _options, listener) => {
           listener(null, {
             id: "deviceId",
             localName: "name",

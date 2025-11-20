@@ -29,7 +29,7 @@ export class FlipperPluginManager implements FlipperPlugin {
    * If the Flipper server is not running, this will fail silently.
    */
   attemptInitialization() {
-    flipperClient.start(this.getId(), {
+    void flipperClient.start(this.getId(), {
       onError: () => {},
       websocketFactory: (url) => {
         console.log("Creating Flipper WebSocket");

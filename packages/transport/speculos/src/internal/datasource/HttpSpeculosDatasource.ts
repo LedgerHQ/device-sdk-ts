@@ -127,7 +127,7 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
       }
     };
 
-    (async () => {
+    void (async () => {
       try {
         while (true) {
           const { value, done } = await reader.read();
