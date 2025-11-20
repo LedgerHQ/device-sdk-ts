@@ -37,7 +37,7 @@ describe("proxyModuleFactory", () => {
   describe("when config is undefined", () => {
     it("should bind HttpProxyDataSource as the default ProxyDataSource", () => {
       const module = proxyModuleFactory();
-      container.load(module);
+      void container.load(module);
 
       const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
@@ -45,7 +45,7 @@ describe("proxyModuleFactory", () => {
 
     it("should bind ProxyContextFieldLoader", () => {
       const module = proxyModuleFactory();
-      container.load(module);
+      void container.load(module);
 
       const proxyContextFieldLoader = container.get(
         proxyTypes.ProxyContextFieldLoader,
@@ -63,7 +63,7 @@ describe("proxyModuleFactory", () => {
       } as ContextModuleConfig;
 
       const module = proxyModuleFactory(config);
-      container.load(module);
+      void container.load(module);
 
       const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpSafeProxyDataSource);
@@ -77,7 +77,7 @@ describe("proxyModuleFactory", () => {
       } as ContextModuleConfig;
 
       const module = proxyModuleFactory(config);
-      container.load(module);
+      void container.load(module);
 
       const proxyContextFieldLoader = container.get(
         proxyTypes.ProxyContextFieldLoader,
@@ -95,7 +95,7 @@ describe("proxyModuleFactory", () => {
       } as ContextModuleConfig;
 
       const module = proxyModuleFactory(config);
-      container.load(module);
+      void container.load(module);
 
       const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
@@ -107,7 +107,7 @@ describe("proxyModuleFactory", () => {
       const config: ContextModuleConfig = {} as ContextModuleConfig;
 
       const module = proxyModuleFactory(config);
-      container.load(module);
+      void container.load(module);
 
       const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
@@ -123,7 +123,7 @@ describe("proxyModuleFactory", () => {
       } as ContextModuleConfig;
 
       const module = proxyModuleFactory(config);
-      container.load(module);
+      void container.load(module);
 
       const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);

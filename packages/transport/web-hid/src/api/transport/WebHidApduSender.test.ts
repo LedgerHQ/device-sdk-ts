@@ -82,7 +82,7 @@ describe("WebHidApduSender", () => {
   it("should handle setup connection error", async () => {
     const error = new Error("Failed to open device");
     mockDevice.open = vi.fn().mockRejectedValue(error);
-    expect(webHidApduSender.setupConnection()).rejects.toThrowError();
+    await expect(webHidApduSender.setupConnection()).rejects.toThrowError();
   });
 
   it("should close connection", () => {

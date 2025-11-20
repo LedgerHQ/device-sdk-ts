@@ -109,7 +109,7 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
 
   useEffect(() => {
     if (isOpen && currentSession) {
-      fetchMocks(currentSession);
+      void fetchMocks(currentSession);
     }
   }, [isOpen, currentSession, fetchMocks]);
 

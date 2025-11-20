@@ -277,6 +277,6 @@ export class RNBleApduSender
   }
 
   public closeConnection() {
-    this._dependencies.device.cancelConnection();
+    void this._dependencies.device.cancelConnection();
   }
 }

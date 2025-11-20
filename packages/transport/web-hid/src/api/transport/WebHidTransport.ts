@@ -197,7 +197,7 @@ export class WebHidTransport implements Transport {
    * Listen to known devices (devices to which the user has granted access)
    */
   public listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    this.updateTransportDiscoveredDevices();
+    void this.updateTransportDiscoveredDevices();
     return this._transportDiscoveredDevices.pipe(
       map((devices) => devices.map(({ hidDevice, ...device }) => device)),
     );
@@ -518,7 +518,7 @@ export class WebHidTransport implements Transport {
       data: { event },
     });
 
-    this.updateTransportDiscoveredDevices();
+    void this.updateTransportDiscoveredDevices();
 
     try {
       await event.device.close();
@@ -592,7 +592,7 @@ export class WebHidTransport implements Transport {
      * discovered device to keep the same DeviceId as the previous one in case
      * of a reconnection.
      */
-    this.updateTransportDiscoveredDevices();
+    void this.updateTransportDiscoveredDevices();
   }
 
   public destroy() {

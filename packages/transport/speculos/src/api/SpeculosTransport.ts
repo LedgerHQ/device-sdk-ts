@@ -159,7 +159,7 @@ export class SpeculosTransport implements Transport {
       if (this.connectedDevice) {
         this.logger.debug("disconnecting");
         onDisconnect(deviceId);
-        this.disconnect({
+        void this.disconnect({
           connectedDevice: this.connectedDevice,
         });
 

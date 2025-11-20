@@ -118,7 +118,7 @@ export class RNBleTransport implements Transport {
         this._logger.debug(
           `[manager.onStateChange] forcing state update from "Unknown"`,
         );
-        this._manager.state().then((s) => {
+        void this._manager.state().then((s) => {
           if (lastBleStateIsUnknown) {
             this._logger.debug(
               `[manager.onStateChange] forcing state update to: "${s}"`,
@@ -286,7 +286,7 @@ export class RNBleTransport implements Transport {
               this._logger.debug("[startScanning] finalize");
               subject.complete();
               clearInterval(interval);
-              this._stopScanning();
+              void this._stopScanning();
             }),
           );
         }),
@@ -589,7 +589,7 @@ export class RNBleTransport implements Transport {
           });
 
         await deviceApduSender.setupConnection().catch((e) => {
-          this._safeCancel(params.deviceId);
+          void this._safeCancel(params.deviceId);
           disconnectionSubscription.remove();
           throw e;
         });
@@ -843,7 +843,7 @@ export class RNBleTransport implements Transport {
       });
 
       await deviceConnectionStateMachine.setupConnection().catch((e) => {
-        this._safeCancel(device.id);
+        void this._safeCancel(device.id);
         throw e;
       });
 
