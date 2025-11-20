@@ -1167,8 +1167,8 @@ importers:
   packages/speculos-device-controller:
     dependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
-        version: link:../device-management-kit
+        specifier: ^0.11.1
+        version: 0.11.1(bufferutil@4.0.9)(rxjs@7.8.2)(utf-8-validate@5.0.10)
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7
@@ -3377,6 +3377,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@ledgerhq/device-management-kit@0.11.1':
+    resolution: {integrity: sha512-4vNNNu11myAhYiaIdxxHPtHLlwUMR22d2Mu/VliN4mPs7esE3/b2cXvB0BhOnD33FBL09a+zB0/Mg7eHuklfwg==}
+    peerDependencies:
+      rxjs: 7.8.2
 
   '@ledgerhq/icons-ui@0.8.1':
     resolution: {integrity: sha512-R1l7wWz1nblFx5GENn/sr0oXEBDYnwwOnkd+L829SFsWj9oOgH4g15E/LsXwDvJJ1H4SVY9uD+NJxoYsRWllNw==}
@@ -12495,6 +12500,25 @@ snapshots:
       styled-system: 5.1.5
     optionalDependencies:
       '@types/react': 18.3.12
+
+  '@ledgerhq/device-management-kit@0.11.1(bufferutil@4.0.9)(rxjs@7.8.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@sentry/minimal': 6.19.7
+      axios: 1.8.2
+      inversify: 7.5.1(reflect-metadata@0.2.2)
+      isomorphic-ws: 5.0.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      purify-ts: 2.1.0
+      reflect-metadata: 0.2.2
+      rxjs: 7.8.2
+      semver: 7.7.2
+      url: 0.11.4
+      uuid: 11.0.3
+      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      xstate: 5.19.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
 
   '@ledgerhq/icons-ui@0.8.1(@types/react@18.3.12)(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
