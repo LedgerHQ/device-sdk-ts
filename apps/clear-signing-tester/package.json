@@ -33,12 +33,14 @@
     "commander": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",
-    "rxjs": "catalog:"
+    "rxjs": "catalog:",
+    "semver": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/prettier-config-dsdk": "workspace:*",
     "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/semver": "catalog:",
     "concurrently": "catalog:",
     "ts-node": "catalog:",
     "tsx": "catalog:"
