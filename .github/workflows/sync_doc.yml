@@ -16,14 +16,14 @@ jobs:
   sync_doc:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.ref || github.event.ref }}
           path: ldmk
           sparse-checkout: |
             apps/docs/pages/docs
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           repository: ledgerhq/developer-portal
           path: portal
