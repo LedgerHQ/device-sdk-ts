@@ -16,18 +16,23 @@ import {
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
 
-const CLA = 0xb0;
-const INS = 0x06;
-const P1 = 0x04;
+const CLA = 0xe0;
+const INS = 0x22;
+const P1 = 0x00;
 const P2 = 0x00;
 
-export type ProvideTrustedNamePKICommandArgs = {
-  pkiBlob: Uint8Array;
+export type ProvideTrustedDynamicDescriptorCommandArgs = {
+  data: string;
+  signature: string;
 };
 
-export class ProvideTrustedNamePKICommand
+export class ProvideTrustedDynamicDescriptorCommand
   implements
-    Command<void, ProvideTrustedNamePKICommandArgs, SolanaAppErrorCodes>
+    Command<
+      void,
+      ProvideTrustedDynamicDescriptorCommandArgs,
+      SolanaAppErrorCodes
+    >
 {
   readonly name = "provideTrustedNamePKI";
   private readonly errorHelper = new CommandErrorHelper<
@@ -35,7 +40,7 @@ export class ProvideTrustedNamePKICommand
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(readonly args: ProvideTrustedNamePKICommandArgs) {}
+  constructor(readonly args: ProvideTrustedDynamicDescriptorCommandArgs) {}
 
   getApdu(): Apdu {
     const apduBuilderArgs: ApduBuilderArgs = {
@@ -45,7 +50,8 @@ export class ProvideTrustedNamePKICommand
       p2: P2,
     };
     return new ApduBuilder(apduBuilderArgs)
-      .addBufferToData(this.args.pkiBlob)
+      .encodeInLVFromHexa(this.args.data)
+      .encodeInLVFromHexa(this.args.signature)
       .build();
   }
 

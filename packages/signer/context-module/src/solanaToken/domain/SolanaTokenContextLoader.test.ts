@@ -15,7 +15,8 @@ import {
   type TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
 import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
-import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
+
+import { SolanaTokenContextLoader } from "./SolanaTokenContextLoader";
 
 describe("SolanaTokenContextLoader", () => {
   let mockDataSource: SolanaTokenDataSource;
@@ -25,6 +26,7 @@ describe("SolanaTokenContextLoader", () => {
 
   const tokenDataResponse: TokenDataResponse = {
     descriptor: {
+      // The loader just forwards this; exact shape isn't important for the test
       data: { symbol: "SOL", name: "Solana", decimals: 9 } as any,
       signatures: {
         prod: "prod-sig",
@@ -95,7 +97,7 @@ describe("SolanaTokenContextLoader", () => {
       expect(mockCertLoader.loadCertificate).not.toHaveBeenCalled();
     });
 
-    it("returns an error when datasource returns Left(error) and still fetched certificate beforehand", async () => {
+    it("returns an error when datasource returns Left(error) (certificate still retrieved)", async () => {
       const loader = makeLoader("prod");
       const error = new Error("datasource failed");
 
@@ -123,7 +125,7 @@ describe("SolanaTokenContextLoader", () => {
       });
     });
 
-    it("returns SOLANA_TOKEN with prod signature by default (falsy mode), and includes certificate", async () => {
+    it("returns SOLANA_TOKEN with prod signature by default (falsy mode) and includes certificate", async () => {
       const loader = makeLoader(""); // falsy -> default 'prod'
 
       vi.spyOn(mockDataSource, "getTokenInfosPayload").mockResolvedValue(

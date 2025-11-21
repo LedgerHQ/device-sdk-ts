@@ -10,6 +10,8 @@ import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { proxyModuleFactory } from "@/proxy/di/proxyModuleFactory";
 import { safeModuleFactory } from "@/safe/di/safeModuleFactory";
 import { solanaContextModuleFactory } from "@/solana/di/SolanaContextModuleFactory";
+import { solanaLifiModuleFactory } from "@/solanaLifi/di/lifiModuleFactory";
+import { solanaTokenModuleFactory } from "@/solanaToken/di/tokenModuleFactory";
 import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
 import { transactionCheckModuleFactory } from "@/transaction-check/di/transactionCheckModuleFactory";
 import { trustedNameModuleFactory } from "@/trusted-name/di/trustedNameModuleFactory";
@@ -38,6 +40,8 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     uniswapModuleFactory(),
     transactionCheckModuleFactory(),
     solanaContextModuleFactory(),
+    solanaTokenModuleFactory(),
+    solanaLifiModuleFactory(),
   );
 
   return container;

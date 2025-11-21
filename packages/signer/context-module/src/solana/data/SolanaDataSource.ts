@@ -3,10 +3,7 @@ import { type Either } from "purify-ts";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 
 export type HttpSolanaOwnerInfoDataSourceResult = {
-  descriptor: Uint8Array;
-  tokenAccount: string;
-  owner: string;
-  contract: string;
+  tlvDescriptor: Uint8Array;
 };
 
 export interface SolanaDataSource {

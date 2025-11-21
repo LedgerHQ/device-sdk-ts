@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   DeviceModelId,
@@ -55,30 +54,8 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
 
     expect(result.isRight()).toBe(true);
     expect(result.extract()).toEqual({
-      descriptor: hexaStringToBuffer(signedDescriptorHex),
-      tokenAccount: "token-account",
-      owner: "owner-address",
-      contract: "contract-address",
+      tlvDescriptor: hexaStringToBuffer(signedDescriptorHex),
     });
-  });
-
-  it("should compute address when tokenAddress is not provided", async () => {
-    const context: SolanaTransactionContext = {
-      deviceModelId: DeviceModelId.FLEX,
-      tokenAddress: undefined,
-      challenge: "random",
-      createATA: {
-        address: "some-address",
-        mintAddress: "some-mint",
-      },
-    };
-    vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
-
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
-    const result = await dataSource.getOwnerInfo(context);
-
-    expect(result.isRight()).toBe(true);
-    expect((result.extract() as any).tokenAccount).toBe("token-account");
   });
 
   it("should return an error if both tokenAddress and createATA are missing or invalid", async () => {
@@ -138,7 +115,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 descriptor received",
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 tlvDescriptor received",
         ),
       ),
     );
