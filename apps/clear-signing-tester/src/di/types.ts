@@ -12,6 +12,7 @@ export const TYPES = {
   SigningService: Symbol.for("SigningService"),
   SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
   RetryService: Symbol.for("RetryService"),
+  AppVersionResolver: Symbol.for("AppVersionResolver"),
 
   // State Handlers
   CompleteStateHandler: Symbol.for("CompleteStateHandler"),
