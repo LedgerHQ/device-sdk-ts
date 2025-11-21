@@ -37,13 +37,6 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: Configure npm for reproducible builds
-        run: |
-          npm config set save-exact true
-          npm config set save-prefix ""
-          npm config set sort-packages true
-          pnpm config set save-exact true
-
       - name: Build libraries
         run: pnpm build:libs
 
