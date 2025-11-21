@@ -43,19 +43,26 @@ jobs:
       - name: Create dist directory to store tarball
         run: mkdir -p dist
 
-      - name: Bump version and create snapshot packages
+      - name: Bump version and pack snapshot packages
         id: changesets
         run: |
-          # Bump version to snapshot
+          # Create dist directory
+          mkdir -p dist
+          
+          # Bump versions to snapshot (this resolves workspace: dependencies)
           pnpm bump --snapshot ${{ env.TAG }}
           
-          # Run prerelease to create tarballs
+          # Rebuild with new versions
+          pnpm build:libs
+          
+          # Pack all packages to create tarballs (postpack script copies to dist/)
           pnpm prerelease
           
-          # Check if any packages were created
+          # Verify tarballs were created
           if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
             echo "published=true" >> $GITHUB_OUTPUT
             echo "✅ Snapshot packages created successfully"
+            ls -lh dist/
           else
             echo "published=false" >> $GITHUB_OUTPUT
             echo "⚠️ No packages to publish"
@@ -116,13 +123,14 @@ jobs:
           //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
           EOF
 
-      - name: Publish snapshot packages to JFrog
+      - name: Publish snapshot packages to JFrog using pnpm
         run: |
           # Publish all downloaded tarballs to JFrog with snapshot tag
-          for package in dist/*.tgz; do
-            if [ -f "$package" ]; then
-              echo "📦 Publishing $(basename $package)..."
-              npm publish "$package" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }}
+          cd dist
+          for tarball in *.tgz; do
+            if [ -f "$tarball" ]; then
+              echo "📦 Publishing $tarball..."
+              pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks
             fi
           done
           echo "✅ All snapshot packages published successfully"
