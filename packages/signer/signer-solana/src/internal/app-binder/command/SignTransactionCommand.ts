@@ -13,6 +13,7 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
+import { UserInputType } from "@api/model/TransactionResolutionContext";
 
 import {
   SOLANA_APP_ERRORS,
@@ -30,6 +31,7 @@ export type SignTransactionCommandArgs = {
   readonly serializedTransaction: Uint8Array;
   readonly more: boolean;
   readonly extend: boolean;
+  readonly userInputType?: UserInputType;
 };
 
 export class SignTransactionCommand
@@ -53,10 +55,11 @@ export class SignTransactionCommand
   }
 
   getApdu(): Apdu {
-    const { more, extend, serializedTransaction } = this.args;
+    const { more, extend, serializedTransaction, userInputType } = this.args;
     let p2 = 0x00;
     if (more) p2 |= 0x02;
     if (extend) p2 |= 0x01;
+    if (userInputType === UserInputType.ata) p2 |= 0x08;
 
     const signTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,

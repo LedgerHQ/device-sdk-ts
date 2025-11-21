@@ -4,4 +4,10 @@ export type TransactionResolutionContext = {
     address: string;
     mintAddress: string;
   };
+  userInputType?: UserInputType;
 };
+
+export enum UserInputType {
+  sol,
+  ata,
+}
