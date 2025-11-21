@@ -27,7 +27,74 @@ permissions:
   attestations: write
 
 jobs:
-  snapshot:
+  public-runner:
+    name: Build and Attest Snapshot Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.REF }}
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+
+      - name: Configure npm for reproducible builds
+        run: |
+          npm config set save-exact true
+          npm config set save-prefix ""
+          npm config set sort-packages true
+          pnpm config set save-exact true
+
+      - name: Build libraries
+        run: pnpm build:libs
+
+      - name: Create dist directory to store tarball
+        run: mkdir -p dist
+
+      - name: Bump version and create snapshot packages
+        id: changesets
+        run: |
+          # Bump version to snapshot
+          pnpm bump --snapshot ${{ env.TAG }}
+          
+          # Run prerelease to create tarballs
+          pnpm prerelease
+          
+          # Check if any packages were created
+          if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
+            echo "published=true" >> $GITHUB_OUTPUT
+            echo "✅ Snapshot packages created successfully"
+          else
+            echo "published=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No packages to publish"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+
+      - name: Attest for npmjs.com
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
+        with:
+          subject-path: ./dist
+
+      # The action currently doesn't support pushing the blob to the registry
+      - name: Sign tarball
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+        with:
+          path: ./dist
+
+      - name: Upload packages to GitHub Artifacts
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-snapshot-packages
+          path: dist/*.tgz
+          retention-days: 7
+          if-no-files-found: error
+
+  runner-ledger:
+    name: Publish Snapshot to JFrog
+    needs: public-runner
     runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v5
@@ -36,8 +103,11 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
 
-      - name: Build libraries
-        run: pnpm build:libs
+      - name: Download packages from GitHub Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-snapshot-packages
+          path: dist
 
       - name: Login to internal JFrog registry
         id: jfrog-login
@@ -53,24 +123,13 @@ jobs:
           //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
           EOF
 
-      - name: Create dist directory to store tarball
-        run: mkdir -p dist
-
-      - name: Create and publish snapshot release version
-        id: changesets
+      - name: Publish snapshot packages to JFrog
         run: |
-          pnpm bump --snapshot ${{ env.TAG }}
-          pnpm release --snapshot --no-git-tag --tag ${{ env.TAG }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
-
-      - name: Attest for npmjs.com
-        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
-        with:
-          subject-path: ./dist
-
-      # The action currently doesn't support pushing the blob to the registry
-      - name: Sign tarball
-        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
-        with:
-          path: ./dist
+          # Publish all downloaded tarballs to JFrog with snapshot tag
+          for package in dist/*.tgz; do
+            if [ -f "$package" ]; then
+              echo "📦 Publishing $(basename $package)..."
+              npm publish "$package" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }}
+            fi
+          done
+          echo "✅ All snapshot packages published successfully"
