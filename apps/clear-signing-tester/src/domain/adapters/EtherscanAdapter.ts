@@ -19,4 +19,15 @@ export interface EtherscanAdapter {
     address: string,
     selector: string,
   ): Promise<TransactionData | undefined>;
+
+  /**
+   * Fetch random transaction without selector filtering
+   * @param chainId - The blockchain chain ID
+   * @param address - The contract address to filter transactions
+   * @returns Promise<TransactionData[]> - Transaction data if found, empty array if not found
+   */
+  fetchRandomTransactionWithoutFilter(
+    chainId: number,
+    address: string,
+  ): Promise<TransactionData[]>;
 }

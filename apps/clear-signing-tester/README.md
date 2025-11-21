@@ -151,6 +151,7 @@ pnpm cs-tester cli contract 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497
 Options:
 
 - `--chain-id <number>`: Chain id to use (default to 1)
+- `--skip-cal`: Skip CAL (Crypto Asset List) filtering and fetch random transactions directly from Etherscan instead of only CAL-registered transactions
 
 ### Plugin Support
 
@@ -175,6 +176,7 @@ pnpm cs-tester cli raw-transaction <tx> \
 ```
 
 **Important Notes:**
+
 - Both the plugin and Ethereum app must be available in your `COIN_APPS_PATH` directory
 - The directory structure should be: `COIN_APPS_PATH/<device>/<os-version>/<app-name>/app_<version>.elf`
 - If `--plugin-version` is not specified, the tester will automatically resolve the latest available plugin version

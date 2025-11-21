@@ -26,6 +26,7 @@ export type CliConfig = {
   osVersion?: SpeculosConfig["os"];
   plugin?: string;
   pluginVersion?: string;
+  skipCal?: boolean;
 };
 
 /**
@@ -245,8 +246,17 @@ export class EthereumTransactionTesterCli {
         (value: string) => parseInt(value),
         1,
       )
-      .action(async (address, { chainId }) => {
-        exitCode = await cli!.handleContract(address, chainId);
+      .option(
+        "--skip-cal",
+        "Skip CAL filtering and fetch random transactions directly from Etherscan",
+        false,
+      )
+      .action(async (address, options) => {
+        exitCode = await cli!.handleContract(
+          address,
+          options.chainId,
+          options.skipCal,
+        );
       });
 
     return program;
@@ -338,7 +348,11 @@ export class EthereumTransactionTesterCli {
   /**
    * Handle contract command
    */
-  async handleContract(address: string, chainId: number): Promise<number> {
+  async handleContract(
+    address: string,
+    chainId: number,
+    skipCal: boolean = false,
+  ): Promise<number> {
     const testContractUseCase = this.container.get<TestContractUseCase>(
       TYPES.TestContractUseCase,
     );
@@ -347,6 +361,7 @@ export class EthereumTransactionTesterCli {
       contractAddress: address,
       chainId,
       derivationPath: this.config.derivationPath,
+      skipCal,
     });
 
     console.log(`\n${result.title}`);

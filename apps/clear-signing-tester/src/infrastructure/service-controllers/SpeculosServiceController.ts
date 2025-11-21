@@ -92,9 +92,9 @@ export class SpeculosServiceController implements ServiceController {
       );
 
       command = [
-        pluginPath,
-        "-l",
         ethereumPath,
+        "-l",
+        pluginPath,
         "--display",
         "headless",
         "--api-port",
