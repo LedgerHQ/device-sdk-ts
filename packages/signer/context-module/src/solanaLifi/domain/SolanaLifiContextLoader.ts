@@ -50,12 +50,12 @@ export class SolanaLifiContextLoader implements SolanaLifiContext {
       }),
       Right: (value): SolanaLifiContextResult => ({
         type: SolanaContextTypes.SOLANA_LIFI,
-        payload: this.pluckTransactionnData(value),
+        payload: this.pluckTransactionData(value),
       }),
     });
   }
 
-  private pluckTransactionnData(
+  private pluckTransactionData(
     tokenData: GetTransactionDescriptorsResponse,
   ): SolanaTransactionDescriptorList {
     return {

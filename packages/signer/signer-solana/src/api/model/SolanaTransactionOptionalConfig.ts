@@ -3,7 +3,5 @@ import { type TransactionResolutionContext } from "./TransactionResolutionContex
 export type SolanaTransactionOptionalConfig = {
   transactionResolutionContext?: TransactionResolutionContext;
   solanaRPCURL?: string;
-  tokenInternalId?: string;
-  templateId?: string;
   skipOpenApp?: boolean;
 };

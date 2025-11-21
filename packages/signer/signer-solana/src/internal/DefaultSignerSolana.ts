@@ -68,6 +68,12 @@ export class DefaultSignerSolana implements SignerSolana {
    *       - **address** `string` – Address (owner) of the ATA.
    *       - **mintAddress** `string` – Mint address of the ATA.
    *
+   *     - **tokenInternalId** `string`
+   *       Ledger internal token ID
+   *
+   *     - **templateId** `string`
+   *       Used in Ledger Wallet Lifi integration
+   *
    *   - **solanaRPCURL** `string`
    *     RPC endpoint to use if `transactionResolutionContext` is not provided
    *     and parsing requires network lookups.

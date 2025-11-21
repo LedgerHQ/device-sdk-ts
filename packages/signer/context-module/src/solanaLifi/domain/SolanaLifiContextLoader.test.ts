@@ -122,10 +122,10 @@ describe("SolanaLifiContextLoader", () => {
     });
   });
 
-  describe("pluckTransactionnData (private)", () => {
+  describe("pluckTransactionData (private)", () => {
     it("simply returns the descriptors object from the response", () => {
       const loader = makeLoader();
-      const pluck = (loader as any).pluckTransactionnData.bind(loader);
+      const pluck = (loader as any).pluckTransactionData.bind(loader);
 
       const result = pluck(txDescriptorsResponse);
 

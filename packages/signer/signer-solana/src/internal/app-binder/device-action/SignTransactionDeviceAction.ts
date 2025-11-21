@@ -321,8 +321,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
                   tokenInternalId:
-                    context.input.transactionOptions?.tokenInternalId,
-                  templateId: context.input.transactionOptions?.templateId,
+                    context.input.transactionOptions
+                      ?.transactionResolutionContext?.tokenInternalId,
+                  templateId:
+                    context.input.transactionOptions
+                      ?.transactionResolutionContext?.templateId,
                 },
               };
             },
