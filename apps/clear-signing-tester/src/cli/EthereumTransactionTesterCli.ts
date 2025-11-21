@@ -24,6 +24,8 @@ export type CliConfig = {
   device: SpeculosConfig["device"];
   appEthVersion?: SpeculosConfig["version"];
   osVersion?: SpeculosConfig["os"];
+  plugin?: string;
+  pluginVersion?: string;
 };
 
 /**
@@ -59,6 +61,8 @@ export class EthereumTransactionTesterCli {
         device: config.device,
         os: config.osVersion,
         version: config.appEthVersion,
+        plugin: config.plugin,
+        pluginVersion: config.pluginVersion,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -160,11 +164,19 @@ export class EthereumTransactionTesterCli {
       )
       .option(
         "--app-eth-version <version>",
-        "Ethereum app version (e.g., 1.19.1). If not specified, uses default version for the device.",
+        "Ethereum app version (e.g., 1.19.1). If not specified, uses latest version for the device.",
       )
       .option(
         "--os-version <version>",
-        "Device OS version (e.g., 1.8.1). If not specified, uses default OS version for the device.",
+        "Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.",
+      )
+      .option(
+        "--plugin <plugin>",
+        "Plugin to use. If not specified, uses no plugin.",
+      )
+      .option(
+        "--plugin-version <version>",
+        "Plugin version to use. If not specified, uses latest version.",
       )
       .option("--verbose, -v", "Enable verbose output", false)
       .option("--quiet, -q", "Show only result tables (quiet mode)", false);

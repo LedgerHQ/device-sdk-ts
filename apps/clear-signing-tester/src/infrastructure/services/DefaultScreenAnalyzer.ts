@@ -117,7 +117,7 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   async isHomePage(): Promise<boolean> {
     const data = await this.readScreenContent();
     const homePageTexts = [
-      "This app enables signing",
+      "This app enables",
       "app is ready",
       "application is ready",
     ];
@@ -159,6 +159,9 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
         isEmpty: !screenText.trim(),
       };
 
+      this.logger.debug("Read screen content", {
+        data: { content },
+      });
       return content;
     } catch (error) {
       this.logger.error("Failed to read and process screen content", {

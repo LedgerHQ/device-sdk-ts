@@ -27,11 +27,12 @@ export class AppVersionResolverService implements AppVersionResolver {
 
   resolve(
     device: SpeculosConfig["device"],
+    appName: string,
     requestedOs?: string,
     requestedVersion?: string,
   ): ResolvedAppVersion {
     this.logger.debug(
-      `Resolving app version for device=${device}, os=${requestedOs || "auto"}, version=${requestedVersion || "auto"}`,
+      `Resolving app version for device=${device}, app=${appName}, os=${requestedOs || "auto"}, version=${requestedVersion || "auto"}`,
     );
 
     const devicePath = join(this.appsConfig.path, device);
@@ -56,20 +57,29 @@ export class AppVersionResolverService implements AppVersionResolver {
 
     if (requestedOs && requestedVersion) {
       // Both specified: validate they exist
-      const appPath = this.buildAppPath(device, requestedOs, requestedVersion);
+      const appPath = this.buildAppPath(
+        device,
+        appName,
+        requestedOs,
+        requestedVersion,
+      );
       if (!existsSync(appPath)) {
         throw new Error(
-          `No Ethereum app found for device=${device}, os=${requestedOs}, version=${requestedVersion}`,
+          `No ${appName} app found for device=${device}, os=${requestedOs}, version=${requestedVersion}`,
         );
       }
       resolvedOs = requestedOs;
       resolvedVersion = requestedVersion;
     } else if (requestedOs) {
       // Only OS specified: find latest app version for this OS
-      const versions = this.getAvailableAppVersions(devicePath, requestedOs);
+      const versions = this.getAvailableAppVersions(
+        devicePath,
+        appName,
+        requestedOs,
+      );
       if (versions.length === 0) {
         throw new Error(
-          `No Ethereum app versions found for device=${device}, os=${requestedOs}`,
+          `No ${appName} app versions found for device=${device}, os=${requestedOs}`,
         );
       }
       resolvedOs = requestedOs;
@@ -78,12 +88,13 @@ export class AppVersionResolverService implements AppVersionResolver {
       // Only version specified: find latest OS with this app version
       const compatibleOs = this.findOsWithAppVersion(
         device,
+        appName,
         availableOsVersions,
         requestedVersion,
       );
       if (!compatibleOs) {
         throw new Error(
-          `No OS version found with Ethereum app version ${requestedVersion} for device ${device}`,
+          `No OS version found with ${appName} app version ${requestedVersion} for device ${device}`,
         );
       }
       resolvedOs = compatibleOs;
@@ -92,19 +103,25 @@ export class AppVersionResolverService implements AppVersionResolver {
       // Neither specified: find latest OS and latest app version
       const result = this.findLatestOsAndAppVersion(
         devicePath,
+        appName,
         availableOsVersions,
       );
       if (!result) {
-        throw new Error(`No Ethereum app found for device ${device}`);
+        throw new Error(`No ${appName} app found for device ${device}`);
       }
       resolvedOs = result.os;
       resolvedVersion = result.version;
     }
 
-    const resolvedPath = this.buildAppPath(device, resolvedOs, resolvedVersion);
+    const resolvedPath = this.buildAppPath(
+      device,
+      appName,
+      resolvedOs,
+      resolvedVersion,
+    );
 
     this.logger.info(
-      `Resolved app: device=${device}, os=${resolvedOs}, version=${resolvedVersion}`,
+      `Resolved app: device=${device}, app=${appName}, os=${resolvedOs}, version=${resolvedVersion}`,
     );
     this.logger.debug(`App path: ${resolvedPath}`);
 
@@ -131,16 +148,17 @@ export class AppVersionResolverService implements AppVersionResolver {
 
   private getAvailableAppVersions(
     devicePath: string,
+    appName: string,
     osVersion: string,
   ): string[] {
-    const ethereumPath = join(devicePath, osVersion, "Ethereum");
+    const appPath = join(devicePath, osVersion, appName);
 
-    if (!existsSync(ethereumPath)) {
+    if (!existsSync(appPath)) {
       return [];
     }
 
     try {
-      const files = readdirSync(ethereumPath);
+      const files = readdirSync(appPath);
       const versions: string[] = [];
 
       for (const file of files) {
@@ -153,18 +171,16 @@ export class AppVersionResolverService implements AppVersionResolver {
 
       return versions;
     } catch (error) {
-      this.logger.error(
-        `Failed to read Ethereum app directory: ${ethereumPath}`,
-        {
-          data: { error },
-        },
-      );
+      this.logger.error(`Failed to read ${appName} app directory: ${appPath}`, {
+        data: { error },
+      });
       return [];
     }
   }
 
   private findOsWithAppVersion(
     device: string,
+    appName: string,
     osVersions: string[],
     appVersion: string,
   ): string | null {
@@ -172,7 +188,7 @@ export class AppVersionResolverService implements AppVersionResolver {
     const sortedOsVersions = this.sortVersionsDescending(osVersions);
 
     for (const osVersion of sortedOsVersions) {
-      const appPath = this.buildAppPath(device, osVersion, appVersion);
+      const appPath = this.buildAppPath(device, appName, osVersion, appVersion);
       if (existsSync(appPath)) {
         return osVersion;
       }
@@ -183,6 +199,7 @@ export class AppVersionResolverService implements AppVersionResolver {
 
   private findLatestOsAndAppVersion(
     devicePath: string,
+    appName: string,
     osVersions: string[],
   ): { os: string; version: string } | null {
     // Sort OS versions in descending order
@@ -190,7 +207,11 @@ export class AppVersionResolverService implements AppVersionResolver {
 
     // For each OS version (starting with the latest), find the latest app version
     for (const osVersion of sortedOsVersions) {
-      const appVersions = this.getAvailableAppVersions(devicePath, osVersion);
+      const appVersions = this.getAvailableAppVersions(
+        devicePath,
+        appName,
+        osVersion,
+      );
       if (appVersions.length > 0) {
         const latestAppVersion = this.getLatestVersion(appVersions);
         return {
@@ -213,6 +234,7 @@ export class AppVersionResolverService implements AppVersionResolver {
 
   private buildAppPath(
     device: string,
+    appName: string,
     osVersion: string,
     appVersion: string,
   ): string {
@@ -220,7 +242,7 @@ export class AppVersionResolverService implements AppVersionResolver {
       this.appsConfig.path,
       device,
       osVersion,
-      "Ethereum",
+      appName,
       `app_${appVersion}.elf`,
     );
   }
