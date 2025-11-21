@@ -20,6 +20,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
+  SignTransactionDAStateStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
@@ -171,6 +172,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         input,
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
+          step: SignTransactionDAStateStep.OPEN_APP,
         },
         _internalState: {
           error: null,
@@ -188,9 +190,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         OpenAppDeviceAction: {
-          exit: assign({
+          entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStateStep.OPEN_APP,
             }),
           }),
           invoke: {
@@ -199,8 +202,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             input: () => ({ appName: "Solana" }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: ({ event }) =>
-                  event.snapshot.context.intermediateValue,
+                intermediateValue: ({ event }) => ({
+                  ...event.snapshot.context.intermediateValue,
+                  step: SignTransactionDAStateStep.OPEN_APP,
+                }),
               }),
             },
             onDone: {
@@ -228,6 +233,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStateStep.GET_APP_CONFIG,
             }),
           }),
           invoke: {
@@ -258,6 +264,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         InspectTransaction: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStateStep.INSPECT_TRANSACTION,
+            }),
+          }),
           invoke: {
             id: "inspectTransaction",
             src: "inspectTransaction",
@@ -294,6 +306,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStateStep.BUILD_TRANSACTION_CONTEXT,
             }),
           }),
           invoke: {
@@ -339,6 +352,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStateStep.PROVIDE_TRANSACTION_CONTEXT,
             }),
           }),
           invoke: {
@@ -374,11 +388,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStateStep.SIGN_TRANSACTION,
             },
           }),
           invoke: {
@@ -415,6 +425,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                       ...context._internalState,
                       error: new UnknownDAError("No Signature available"),
                     };
+                  },
+                  intermediateValue: {
+                    requiredUserInteraction: UserInteractionRequired.None,
+                    step: SignTransactionDAStateStep.SIGN_TRANSACTION,
                   },
                 }),
               ],
