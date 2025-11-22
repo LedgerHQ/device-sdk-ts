@@ -1,0 +1,62 @@
+{
+  "name": "@ledgerhq/device-signer-kit-cosmos",
+  "version": "1.0.0",
+  "private": false,
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./*": {
+      "types": "./lib/types/*",
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*"
+    }
+  },
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@ledgerhq/signer-utils": "workspace:*",
+    "inversify": "catalog:",
+    "purify-ts": "catalog:",
+    "reflect-metadata": "catalog:",
+    "semver": "catalog:",
+    "xstate": "catalog:",
+    "cosmjs-types": "catalog:"
+  },
+  "devDependencies": {
+    "@ledgerhq/context-module": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@types/semver": "catalog:",
+    "rxjs": "catalog:",
+    "ts-node": "catalog:"
+  },
+  "peerDependencies": {
+    "@ledgerhq/context-module": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:*"
+  }
+}

@@ -171,6 +171,9 @@ catalogs:
     concurrently:
       specifier: ^9.1.0
       version: 9.1.0
+    cosmjs-types:
+      specifier: ^0.10.1
+      version: 0.10.1
     crypto-js:
       specifier: ^4.2.0
       version: 4.2.0
@@ -1029,6 +1032,61 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+
+  packages/signer/signer-cosmos:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:*
+        version: link:../signer-utils
+      cosmjs-types:
+        specifier: 'catalog:'
+        version: 0.10.1
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:*
+        version: link:../context-module
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:*
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:*
+        version: link:../../config/vitest
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.7.0
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-eth:
     dependencies:
@@ -5815,6 +5873,9 @@ packages:
     peerDependenciesMeta:
       typescript:
         optional: true
+
+  cosmjs-types@0.10.1:
+    resolution: {integrity: sha512-CENXb4O5GN+VyB68HYXFT2SOhv126Z59631rZC56m8uMWa6/cSlFeai8BwZGT1NMepw0Ecf+U8XSOnBzZUWh9Q==}
 
   create-require@1.1.1:
     resolution: {integrity: sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==}
@@ -15637,6 +15698,8 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.9.2
+
+  cosmjs-types@0.10.1: {}
 
   create-require@1.1.1: {}
 
