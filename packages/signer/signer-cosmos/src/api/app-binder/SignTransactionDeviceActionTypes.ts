@@ -38,6 +38,11 @@ export type SignTransactionDAState = DeviceActionState<
   SignTransactionDAIntermediateValue
 >;
 
+export type SignTransactionDAInternalState = {
+  readonly error: SignTransactionDAError | null;
+  readonly signature: Signature | null;
+};
+
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
   SignTransactionDAOutput,
   SignTransactionDAError,

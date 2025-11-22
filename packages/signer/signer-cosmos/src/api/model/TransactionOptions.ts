@@ -1,4 +1,5 @@
 export type TransactionOptions = {
-  chainId?: string;
-  skipOpenApp?: boolean;
+  readonly bech32Prefix?: string;
+  readonly chainId?: string;
+  readonly skipOpenApp?: boolean;
 };

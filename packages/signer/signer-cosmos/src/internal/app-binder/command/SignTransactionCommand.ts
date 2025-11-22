@@ -23,9 +23,11 @@ import {
 } from "@internal/app-binder/command/utils/CosmosAppErrors";
 
 export type SignPhase = "init" | "add" | "last";
+export type SignFormat = "json" | "textual";
 export type SignTransactionCommandResponse = Maybe<Signature>;
 export type SignTransactionCommandArgs = {
   readonly phase: SignPhase;
+  readonly format: SignFormat;
   readonly derivationPath?: string;
   readonly prefix?: string;
   readonly serializedTransactionChunk?: Uint8Array;
