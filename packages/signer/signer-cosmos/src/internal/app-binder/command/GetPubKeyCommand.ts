@@ -24,7 +24,6 @@ import {
 } from "./utils/CosmosAppErrors";
 
 const PUBKEY_LENGTH = 33;
-const ADDR_LENGTH = 65;
 
 export type GetPubKeyCommandResponse = PublicKey;
 
@@ -94,25 +93,29 @@ export class GetPubKeyCommand
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
-      // const MIN_LENGTH = PUBKEY_LENGTH + ADDR_LENGTH;
-
-      console.log(response);
       const parser = new ApduParser(response);
 
-      // if (!parser.testMinimalLength(MIN_LENGTH)) {
-      //   return CommandResultFactory({
-      //     error: new InvalidStatusWordError("Response is too short"),
-      //   });
-      // }
-
-      const pkBytes = parser.extractFieldByLength(PUBKEY_LENGTH);
-      if (!pkBytes) {
+      if (!parser.testMinimalLength(PUBKEY_LENGTH)) {
         return CommandResultFactory({
           error: new InvalidStatusWordError("Public key is missing"),
         });
       }
 
-      const addrBytes = parser.extractFieldByLength(ADDR_LENGTH);
+      const pkBytes = parser.extractFieldByLength(PUBKEY_LENGTH);
+      if (!pkBytes) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Unable to extract public key"),
+        });
+      }
+
+      const remaining = parser.getUnparsedRemainingLength();
+      if (remaining === 0) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Address is missing"),
+        });
+      }
+
+      const addrBytes = parser.extractFieldByLength(remaining);
       if (!addrBytes) {
         return CommandResultFactory({
           error: new InvalidStatusWordError("Unable to extract address"),

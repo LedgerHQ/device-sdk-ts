@@ -28,8 +28,8 @@ export type SignTransactionCommandResponse = Maybe<Signature>;
 export type SignTransactionCommandArgs = {
   readonly phase: SignPhase;
   readonly format: SignFormat;
-  readonly derivationPath?: string;
   readonly prefix?: string;
+  readonly derivationPath?: string;
   readonly serializedTransactionChunk?: Uint8Array;
 };
 
@@ -89,18 +89,27 @@ export class SignTransactionCommand
 
       if (path.length !== 5) {
         throw new Error(
-          `SignTransactionCommand: expected 5 path elements, got ${path.length}`,
+          `SignTransactionCommand: expected cosmos style number of path elements, got ${path.length}`,
         );
       }
 
-      path.forEach((element) => {
-        builder.add32BitUIntToData(element);
-      });
+      const view = new DataView(new ArrayBuffer(20));
+      for (let i = 0; i < 5; i++) {
+        const raw = path[i]! & 0x7fffffff;
+        const hardened = i < 3 ? (0x80000000 | raw) >>> 0 : raw >>> 0;
 
-      if (prefix && prefix.length > 0) {
-        builder.add8BitUIntToData(prefix.length);
-        builder.addAsciiStringToData(prefix);
+        view.setUint32(i * 4, hardened, true);
       }
+      builder.addBufferToData(new Uint8Array(view.buffer));
+
+      const defaultPrefix = prefix ?? "cosmos";
+      if (defaultPrefix.length === 0) {
+        throw new Error(
+          "SignTransactionCommand: prefix cannot be empty for 'init' phase",
+        );
+      }
+      builder.add8BitUIntToData(defaultPrefix.length);
+      builder.addAsciiStringToData(defaultPrefix);
     } else {
       if (
         !serializedTransactionChunk ||

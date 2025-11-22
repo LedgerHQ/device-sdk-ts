@@ -1,14 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo } from "react";
 import {
-  base64StringToBuffer,
-  isBase64String,
-} from "@ledgerhq/device-management-kit";
-import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
-  SignDoc,
   SignerCosmosBuilder,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
@@ -19,7 +14,9 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
-const DEFAULT_DERIVATION_PATH = "44'/118'/0'/0'";
+import { dummySignDoc } from "./signdoc";
+
+const DEFAULT_DERIVATION_PATH = "44'/118'/0'/0/0'";
 
 export const SignerCosmosView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -73,48 +70,18 @@ export const SignerCosmosView: React.FC<{ sessionId: string }> = ({
           "Perform all the actions necessary to sign a Solana transaction with the device",
         executeDeviceAction: ({ derivationPath, skipOpenApp, signDoc }) => {
           const serializedSignDoc =
-            base64StringToBuffer(signDoc) ?? new Uint8Array();
+            new TextEncoder().encode(signDoc) ?? new Uint8Array();
           return signer.signTransaction(derivationPath, serializedSignDoc, {
             skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
-          signDoc: new SignDoc({
-            chain_id: "boble-1",
-            account_number: "1",
-            sequence: "0",
-            fee: {
-              amount: [
-                {
-                  denom: "uusdc",
-                  amount: "2000", // 0.002 USDC as fee (example)
-                },
-              ],
-              gas: "80000",
-            },
-            memo: "dummy 0.1 uusdc transfer on boble",
-            msgs: [
-              {
-                type: "cosmos-sdk/MsgSend",
-                value: {
-                  from_address: "noble19r4qdewyjnzp50usalc8sq96c6h5c3pe6v309r",
-                  to_address: "noble19r4qdewyjnzp50usalc8sq96c6h5c3pe6v309r",
-                  amount: [
-                    {
-                      denom: "uusdc",
-                      amount: "100000", // 0.1 USDC in micro units
-                    },
-                  ],
-                },
-              },
-            ],
-          }).stringify(),
+          signDoc: dummySignDoc.stringify(),
 
           skipOpenApp: false,
         },
-        validateValues: ({ signDoc }) =>
-          isBase64String(signDoc) && signDoc.length > 0,
+        validateValues: ({ signDoc }) => signDoc.length > 0,
         deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
