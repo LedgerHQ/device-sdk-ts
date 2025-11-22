@@ -2,13 +2,14 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 // import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type SignDoc } from "@api/model/SignDoc";
 // import { type MessageOptions } from "@api/model/MessageOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 
 export interface SignerCosmos {
   signTransaction: (
     derivationPath: string,
-    transaction: Uint8Array,
+    signDoc: SignDoc,
     options?: TransactionOptions,
   ) => SignTransactionDAReturnType;
   // signMessage: (
@@ -18,6 +19,7 @@ export interface SignerCosmos {
   // ) => SignMessageDAReturnType;
   getAddress: (
     derivationPath: string,
+    prefix: string,
     options?: AddressOptions,
   ) => GetAddressDAReturnType;
 }
