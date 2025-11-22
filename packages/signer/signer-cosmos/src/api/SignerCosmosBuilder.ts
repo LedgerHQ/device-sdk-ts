@@ -7,7 +7,7 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
-import { DefaultCosmosSolana } from "@internal/DefaultCosmosSolana";
+import { DefaultSignerCosmos } from "@internal/DefaultSignerCosmos";
 
 type SignerCosmosBuilderConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -16,15 +16,15 @@ type SignerCosmosBuilderConstructorArgs = {
 };
 
 /**
- * Builder for the `SignerSolana` class.
+ * Builder for the `SignerCosmos` class.
  *
  * @example
  * ```
- * const signer = new SignerSolanaBuilder({ dmk, sessionId })
+ * const signer = new SignerCosmosBuilder({ dmk, sessionId })
  *  .build();
  * ```
  */
-export class SignerSolanaBuilder {
+export class SignerCosmosBuilder {
   private _dmk: DeviceManagementKit;
   private _sessionId: DeviceSessionId;
   private _customContextModule: ContextModule | undefined;
@@ -52,12 +52,12 @@ export class SignerSolanaBuilder {
   }
 
   /**
-   * Build the solana signer
+   * Build the cosmos signer
    *
-   * @returns the solana signer
+   * @returns the cosmos signer
    */
   public build() {
-    return new DefaultCosmosSolana({
+    return new DefaultSignerCosmos({
       dmk: this._dmk,
       sessionId: this._sessionId,
       contextModule:
