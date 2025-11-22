@@ -62,14 +62,28 @@ export class GetPubKeyCommand
 
     // HRP
     const hrp = this.args.prefix; // e.g. "cosmos"
-    builder.add8BitUIntToData(hrp.length); // HRP_LEN
-    builder.addAsciiStringToData(hrp); // HRP
+    if (!hrp || hrp.length === 0) {
+      throw new Error("SignTransactionCommand: prefix is required");
+    }
+
+    builder.add8BitUIntToData(hrp.length);
+    builder.addAsciiStringToData(hrp);
 
     const path = DerivationPathUtils.splitPath(this.args.derivationPath);
+    if (path.length !== 5) {
+      throw new Error(
+        `SignTransactionCommand: expected cosmos style number of path elements, got ${path.length}`,
+      );
+    }
 
-    path.forEach((element) => {
-      builder.add32BitUIntToData(element);
-    });
+    const view = new DataView(new ArrayBuffer(20));
+    for (let i = 0; i < 5; i++) {
+      const raw = path[i]! & 0x7fffffff;
+      const hardened = i < 3 ? (0x80000000 | raw) >>> 0 : raw >>> 0;
+
+      view.setUint32(i * 4, hardened, true);
+    }
+    builder.addBufferToData(new Uint8Array(view.buffer));
 
     return builder.build();
   }
@@ -80,14 +94,16 @@ export class GetPubKeyCommand
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
-      const MIN_LENGTH = PUBKEY_LENGTH + ADDR_LENGTH;
+      // const MIN_LENGTH = PUBKEY_LENGTH + ADDR_LENGTH;
+
+      console.log(response);
       const parser = new ApduParser(response);
 
-      if (!parser.testMinimalLength(MIN_LENGTH)) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError("Response is too short"),
-        });
-      }
+      // if (!parser.testMinimalLength(MIN_LENGTH)) {
+      //   return CommandResultFactory({
+      //     error: new InvalidStatusWordError("Response is too short"),
+      //   });
+      // }
 
       const pkBytes = parser.extractFieldByLength(PUBKEY_LENGTH);
       if (!pkBytes) {
