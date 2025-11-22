@@ -8,7 +8,6 @@ import { type Container } from "inversify";
 import {
   type AddressOptions,
   type GetAddressDAReturnType,
-  type SignDoc,
   type SignTransactionDAReturnType,
   type TransactionOptions,
 } from "@api/index";
@@ -37,12 +36,12 @@ export class DefaultSignerCosmos implements SignerCosmos {
   }
   signTransaction(
     derivationPath: string,
-    signDoc: SignDoc,
+    serializedSignDoc: Uint8Array,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(useCasesTypes.SignTransactionUseCase)
-      .execute(derivationPath, signDoc, options);
+      .execute(derivationPath, serializedSignDoc, options);
   }
   getAddress(
     derivationPath: string,

@@ -176,7 +176,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
               prefix: context.input.options?.bech32Prefix,
-              serializedTransaction: context.input.signDoc.serialize(),
+              serializedTransaction: context.input.serializedSignDoc,
             }),
             onDone: {
               target: "SignTransactionResultCheck",

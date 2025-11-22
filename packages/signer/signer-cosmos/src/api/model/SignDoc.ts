@@ -1,3 +1,5 @@
+import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
+
 interface StdFee {
   readonly amount: readonly StdCoin[];
   readonly gas: string;
@@ -8,12 +10,12 @@ interface StdCoin {
   readonly amount: string;
 }
 
-interface AminoMsg<Value = never> {
+interface AminoMsg<Value = unknown> {
   readonly type: string;
   readonly value: Value;
 }
 
-export interface StdSignDoc<Value = never> {
+export interface StdSignDoc<Value = unknown> {
   readonly chain_id: string;
   readonly account_number: string;
   readonly sequence: string;
@@ -24,11 +26,15 @@ export interface StdSignDoc<Value = never> {
 export class SignDoc {
   constructor(public readonly stdSignDoc: StdSignDoc) {}
 
-  serialize(): Uint8Array {
+  serialize(): Uint8Array | null {
     const canonicalJson = stringifyCanonical(
       this.stdSignDoc as unknown as JsonValue,
     );
-    return new TextEncoder().encode(canonicalJson);
+    return base64StringToBuffer(canonicalJson);
+  }
+
+  stringify(): string {
+    return stringifyCanonical(this.stdSignDoc as unknown as JsonValue);
   }
 }
 
@@ -39,7 +45,7 @@ interface JsonObject {
 }
 type JsonArray = JsonValue[];
 
-function stringifyCanonical(value: JsonValue): string {
+export function stringifyCanonical(value: JsonValue): string {
   if (value === null) return "null";
 
   if (Array.isArray(value)) {

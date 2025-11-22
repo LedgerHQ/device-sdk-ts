@@ -8,7 +8,6 @@ import { inject, injectable } from "inversify";
 
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { SignDoc } from "@api/model/SignDoc";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -45,7 +44,7 @@ export class CosmosAppBinder {
 
   signTransaction(args: {
     derivationPath: string;
-    signDoc: SignDoc;
+    serializedSignDoc: Uint8Array;
     options?: TransactionOptions;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -53,7 +52,7 @@ export class CosmosAppBinder {
       deviceAction: new SignTransactionDeviceAction({
         input: {
           derivationPath: args.derivationPath,
-          signDoc: args.signDoc,
+          serializedSignDoc: args.serializedSignDoc,
           options: args.options ?? {},
         },
       }),

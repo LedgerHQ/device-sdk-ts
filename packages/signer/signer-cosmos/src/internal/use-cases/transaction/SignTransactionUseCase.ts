@@ -1,7 +1,6 @@
 import { inject, injectable } from "inversify";
 
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { SignDoc } from "@api/model/SignDoc";
 import { TransactionOptions } from "@api/model/TransactionOptions";
 import { CosmosAppBinder } from "@internal/app-binder/CosmosAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
@@ -14,12 +13,12 @@ export class SignTransactionUseCase {
 
   execute(
     derivationPath: string,
-    signDoc: SignDoc,
+    serializedSignDoc: Uint8Array,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this.appBinder.signTransaction({
       derivationPath,
-      signDoc,
+      serializedSignDoc,
       options,
     });
   }

@@ -22,6 +22,7 @@
     "@ledgerhq/device-signer-kit-bitcoin": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
     "@ledgerhq/device-signer-kit-solana": "workspace:^",
+    "@ledgerhq/device-signer-kit-cosmos": "workspace:*",
     "@ledgerhq/device-transport-kit-mockserver": "workspace:^",
     "@ledgerhq/device-transport-kit-speculos": "workspace:^",
     "@ledgerhq/device-transport-kit-web-ble": "workspace:^",

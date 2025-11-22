@@ -14,3 +14,5 @@ export * from "@api/model/AddressOptions";
 export * from "@api/model/Signature";
 export * from "@api/model/SignDoc";
 export * from "@api/model/TransactionOptions";
+export * from "@api/SignerCosmos";
+export * from "@api/SignerCosmosBuilder";

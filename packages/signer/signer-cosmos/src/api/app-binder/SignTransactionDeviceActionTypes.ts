@@ -8,7 +8,6 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type SignDoc } from "@api/model/SignDoc";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type CosmosAppErrorCodes } from "@internal/app-binder/command/utils/CosmosAppErrors";
 
@@ -16,7 +15,7 @@ export type SignTransactionDAOutput = Signature;
 
 export type SignTransactionDAInput = {
   readonly derivationPath: string;
-  readonly signDoc: SignDoc;
+  readonly serializedSignDoc: Uint8Array;
   readonly options: TransactionOptions;
 };
 
