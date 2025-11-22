@@ -9,13 +9,15 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { type SignDoc } from "@api/model/SignDoc";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type CosmosAppErrorCodes } from "@internal/app-binder/command/utils/CosmosAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 
 export type SignTransactionDAInput = {
   readonly derivationPath: string;
-  readonly signdoc: SignDoc;
+  readonly signDoc: SignDoc;
+  readonly options: TransactionOptions;
 };
 
 export type SignTransactionDAError =
