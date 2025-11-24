@@ -79,6 +79,7 @@ export class TestContractUseCase {
           status: "error",
           timestamp: new Date().toISOString(),
           errorMessage: error instanceof Error ? error.message : String(error),
+          hash,
         };
         results.push(errorResult);
       }

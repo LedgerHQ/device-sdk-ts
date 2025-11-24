@@ -105,6 +105,7 @@ export class TestBatchContractFromFileUseCase {
               },
               status: this.parseStatusFromTable(row.Status),
               timestamp: new Date().toISOString(),
+              hash: row.Hash,
             };
             return testResult;
           });
