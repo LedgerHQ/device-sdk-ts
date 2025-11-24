@@ -311,14 +311,22 @@ export class GenuineCheckDeviceAction extends XStateDeviceAction<
               actions: assign({
                 intermediateValue: (_) => {
                   switch (_.event.snapshot.context?.type) {
+                    case SecureChannelEventType.DeviceId: {
+                      return {
+                        ..._.context.intermediateValue,
+                        deviceId: _.event.snapshot.context.payload.deviceId,
+                      };
+                    }
                     case SecureChannelEventType.PermissionRequested: {
                       return {
+                        ..._.context.intermediateValue,
                         requiredUserInteraction:
                           UserInteractionRequired.AllowSecureConnection,
                       };
                     }
                     case SecureChannelEventType.PermissionGranted: {
                       return {
+                        ..._.context.intermediateValue,
                         requiredUserInteraction: UserInteractionRequired.None,
                       };
                     }

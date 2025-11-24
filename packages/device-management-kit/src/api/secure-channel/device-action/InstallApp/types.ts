@@ -46,6 +46,7 @@ export type InstallAppDAIntermediateValue =
   ListInstalledAppsDAIntermediateValue & {
     requiredUserInteraction: InstallAppDARequiredInteraction;
     progress: number;
+    deviceId?: Uint8Array;
   };
 
 export type InstallAppDAState = DeviceActionState<
