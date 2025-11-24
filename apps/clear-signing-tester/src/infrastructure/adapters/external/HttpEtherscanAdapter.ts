@@ -63,16 +63,21 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
   async fetchRandomTransaction(
     chainId: number,
     address: string,
-    selector: string,
-  ): Promise<TransactionData | undefined> {
+    selectors?: string[],
+  ): Promise<TransactionData[]> {
+    const selectorsInfo = selectors
+      ? `selectors ${selectors.join(", ")}`
+      : "all selectors";
     this.logger.debug(
-      `Fetching random transactions for chain ${chainId}, address ${address}, selector ${selector}`,
+      `Fetching random transactions for chain ${chainId}, address ${address}, ${selectorsInfo}`,
     );
 
     const normalizedAddress = address.toLowerCase();
-    const normalizedSelector = selector.toLowerCase().startsWith("0x")
-      ? selector.toLowerCase()
-      : `0x${selector.toLowerCase()}`;
+    const normalizedSelectors = selectors?.map((selector) =>
+      selector.toLowerCase().startsWith("0x")
+        ? selector.toLowerCase()
+        : `0x${selector.toLowerCase()}`,
+    );
 
     try {
       const baseUrl = "https://api.etherscan.io/v2/api";
@@ -82,40 +87,76 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
         chainId,
       );
 
-      // Filter transactions by selector
-      const matchingTransactions = transactions.filter((tx) => {
-        const input = tx.input.toLowerCase();
-        return (
-          input.startsWith(normalizedSelector) &&
-          tx.isError === "0" &&
-          tx.to.toLowerCase() === normalizedAddress
-        );
-      });
-
-      this.logger.debug(
-        `Found ${matchingTransactions.length} matching transactions`,
+      // Filter only successful transactions to this address
+      const matchingTransactions = transactions.filter(
+        (tx) => tx.isError === "0" && tx.to.toLowerCase() === normalizedAddress,
       );
 
       if (matchingTransactions.length === 0) {
-        this.logger.warn(
-          `No matching transactions found for selector ${selector}`,
-        );
-        return undefined;
+        this.logger.warn(`No transactions found for address ${address}`);
+        return [];
       }
 
-      // Select one random transaction
-      const selectedTransaction = this.getRandomItem(matchingTransactions);
+      // Group transactions by selector
+      const transactionsBySelector = new Map<
+        string,
+        EtherscanTransactionDto[]
+      >();
 
-      const transactionData: TransactionData = {
-        to: selectedTransaction.to,
-        nonce: parseInt(selectedTransaction.nonce, 10),
-        data: selectedTransaction.input,
-        value: selectedTransaction.value,
-        selector: selectedTransaction.methodId,
-        hash: selectedTransaction.hash,
-      };
+      if (normalizedSelectors) {
+        // Filter by specific selectors
+        // Initialize the map with all selectors
+        for (const selector of normalizedSelectors) {
+          transactionsBySelector.set(selector, []);
+        }
 
-      return transactionData;
+        // Filter and group transactions by selector
+        for (const tx of matchingTransactions) {
+          const input = tx.input.toLowerCase();
+          for (const selector of normalizedSelectors) {
+            if (input.startsWith(selector)) {
+              transactionsBySelector.get(selector)!.push(tx);
+              break; // Each transaction only belongs to one selector
+            }
+          }
+        }
+      } else {
+        // Group by all unique selectors found
+        for (const tx of matchingTransactions) {
+          const selector = tx.methodId;
+          if (!transactionsBySelector.has(selector)) {
+            transactionsBySelector.set(selector, []);
+          }
+          transactionsBySelector.get(selector)!.push(tx);
+        }
+      }
+
+      // Select one random transaction per selector
+      const selectedTransactions: TransactionData[] = [];
+      for (const [selector, txs] of transactionsBySelector.entries()) {
+        if (txs.length === 0) {
+          this.logger.warn(
+            `No matching transactions found for selector ${selector}`,
+          );
+          continue;
+        }
+
+        const randomTx = this.getRandomItem(txs);
+        selectedTransactions.push({
+          to: randomTx.to,
+          nonce: parseInt(randomTx.nonce, 10),
+          data: randomTx.input,
+          value: randomTx.value,
+          selector: randomTx.methodId,
+          hash: randomTx.hash,
+        });
+      }
+
+      this.logger.debug(
+        `Found ${selectedTransactions.length} matching transactions${normalizedSelectors ? ` out of ${normalizedSelectors.length} selectors` : ` with ${transactionsBySelector.size} unique selectors`}`,
+      );
+
+      return selectedTransactions;
     } catch (error) {
       if (error instanceof AxiosError) {
         const errorMessage = `${error.status || "Unknown status"}: Failed to fetch transactions from Etherscan`;
@@ -195,84 +236,6 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
     }
 
     return response.data.result;
-  }
-
-  async fetchRandomTransactionWithoutFilter(
-    chainId: number,
-    address: string,
-  ): Promise<TransactionData[]> {
-    this.logger.debug(
-      `Fetching random transaction without filter for chain ${chainId}, address ${address}`,
-    );
-
-    const normalizedAddress = address.toLowerCase();
-
-    try {
-      const baseUrl = "https://api.etherscan.io/v2/api";
-      const transactions = await this.fetchTransactionsFromEtherscan(
-        baseUrl,
-        normalizedAddress,
-        chainId,
-      );
-
-      // Filter only successful transactions to this address
-      const matchingTransactions = transactions.filter(
-        (tx) => tx.isError === "0" && tx.to.toLowerCase() === normalizedAddress,
-      );
-
-      this.logger.debug(`Found ${matchingTransactions.length} transactions`);
-
-      if (matchingTransactions.length === 0) {
-        this.logger.warn(`No transactions found for address ${address}`);
-        return [];
-      }
-
-      // Group transactions by selector (methodId)
-      const transactionsBySelector = new Map<
-        string,
-        EtherscanTransactionDto[]
-      >();
-
-      for (const tx of matchingTransactions) {
-        const selector = tx.methodId;
-        if (!transactionsBySelector.has(selector)) {
-          transactionsBySelector.set(selector, []);
-        }
-        transactionsBySelector.get(selector)!.push(tx);
-      }
-
-      this.logger.debug(
-        `Found ${transactionsBySelector.size} unique selectors`,
-      );
-
-      // Select one random transaction per selector
-      const selectedTransactions: TransactionData[] = [];
-      for (const txs of transactionsBySelector.values()) {
-        const randomTx = this.getRandomItem(txs);
-        selectedTransactions.push({
-          to: randomTx.to,
-          nonce: parseInt(randomTx.nonce, 10),
-          data: randomTx.input,
-          value: randomTx.value,
-          selector: randomTx.methodId,
-          hash: randomTx.hash,
-        });
-      }
-
-      return selectedTransactions;
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        const errorMessage = `${error.status || "Unknown status"}: Failed to fetch transactions from Etherscan`;
-        this.logger.error(errorMessage, {
-          data: { error: error.message },
-        });
-        throw new Error(errorMessage);
-      }
-      this.logger.error("Unexpected error fetching transactions", {
-        data: { error },
-      });
-      throw error;
-    }
   }
 
   /**
