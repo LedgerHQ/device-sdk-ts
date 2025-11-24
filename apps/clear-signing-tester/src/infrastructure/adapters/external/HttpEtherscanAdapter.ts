@@ -7,6 +7,8 @@ import { type EtherscanAdapter } from "@root/src/domain/adapters/EtherscanAdapte
 import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
 import { type TransactionData } from "@root/src/domain/models/TransactionData";
 
+const ETHERSCAN_TRANSACTIONS_OFFSET = 500;
+
 /**
  * Etherscan API transaction response
  */
@@ -188,7 +190,7 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
       startblock: 0,
       endblock: 99999999,
       page: 1,
-      offset: 200, // Fetch up to 200 transactions
+      offset: ETHERSCAN_TRANSACTIONS_OFFSET,
       sort: "desc",
       apikey: this.etherscanConfig.apiKey,
     };
