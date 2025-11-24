@@ -1,5 +1,6 @@
 import { ContainerModule } from "inversify";
 
+import { TestBatchContractFromFileUseCase } from "@root/src/application/usecases/TestBatchContractFromFileUseCase";
 import { TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
 import { TestContractUseCase } from "@root/src/application/usecases/TestContractUseCase";
@@ -18,4 +19,7 @@ export const applicationModuleFactory = () =>
       TestBatchTypedDataFromFileUseCase,
     );
     bind(TYPES.TestContractUseCase).to(TestContractUseCase);
+    bind(TYPES.TestBatchContractFromFileUseCase).to(
+      TestBatchContractFromFileUseCase,
+    );
   });
