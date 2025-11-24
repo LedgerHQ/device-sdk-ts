@@ -39,6 +39,11 @@ export class TestContractUseCase {
       config.skipCal,
     );
 
+    if (txs.length === 0) {
+      console.warn("No transactions found");
+      throw new Error("No transactions found");
+    }
+
     const results: TestResult[] = [];
 
     // Test each transaction
