@@ -101,7 +101,7 @@ jobs:
         with:
           ref: ${{ env.REF }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - name: Download packages from GitHub Artifacts
         uses: actions/download-artifact@v4
