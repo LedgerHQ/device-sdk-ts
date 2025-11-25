@@ -38,7 +38,7 @@ jobs:
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - name: Canonicalize package.json files
-        uses: LedgerHQ/device-sdk-ts/.github/actions/canonicalize-package-json-composite@develop
+        uses: LedgerHQ/device-sdk-ts/.github/actions/canonicalize-package-json-composite@test/attest-npmjs
 
       - name: Build libraries
         run: pnpm build:libs
