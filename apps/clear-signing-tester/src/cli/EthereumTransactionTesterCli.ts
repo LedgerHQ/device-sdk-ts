@@ -24,6 +24,9 @@ export type CliConfig = {
   device: SpeculosConfig["device"];
   appEthVersion?: SpeculosConfig["version"];
   osVersion?: SpeculosConfig["os"];
+  plugin?: string;
+  pluginVersion?: string;
+  skipCal?: boolean;
 };
 
 /**
@@ -59,6 +62,8 @@ export class EthereumTransactionTesterCli {
         device: config.device,
         os: config.osVersion,
         version: config.appEthVersion,
+        plugin: config.plugin,
+        pluginVersion: config.pluginVersion,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -160,11 +165,19 @@ export class EthereumTransactionTesterCli {
       )
       .option(
         "--app-eth-version <version>",
-        "Ethereum app version (e.g., 1.19.1). If not specified, uses default version for the device.",
+        "Ethereum app version (e.g., 1.19.1). If not specified, uses latest version for the device.",
       )
       .option(
         "--os-version <version>",
-        "Device OS version (e.g., 1.8.1). If not specified, uses default OS version for the device.",
+        "Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.",
+      )
+      .option(
+        "--plugin <plugin>",
+        "Plugin to use. If not specified, uses no plugin.",
+      )
+      .option(
+        "--plugin-version <version>",
+        "Plugin version to use. If not specified, uses latest version.",
       )
       .option("--verbose, -v", "Enable verbose output", false)
       .option("--quiet, -q", "Show only result tables (quiet mode)", false);
@@ -233,8 +246,17 @@ export class EthereumTransactionTesterCli {
         (value: string) => parseInt(value),
         1,
       )
-      .action(async (address, { chainId }) => {
-        exitCode = await cli!.handleContract(address, chainId);
+      .option(
+        "--skip-cal",
+        "Skip CAL filtering and fetch random transactions directly from Etherscan",
+        false,
+      )
+      .action(async (address, options) => {
+        exitCode = await cli!.handleContract(
+          address,
+          options.chainId,
+          options.skipCal,
+        );
       });
 
     return program;
@@ -326,7 +348,11 @@ export class EthereumTransactionTesterCli {
   /**
    * Handle contract command
    */
-  async handleContract(address: string, chainId: number): Promise<number> {
+  async handleContract(
+    address: string,
+    chainId: number,
+    skipCal: boolean = false,
+  ): Promise<number> {
     const testContractUseCase = this.container.get<TestContractUseCase>(
       TYPES.TestContractUseCase,
     );
@@ -335,6 +361,7 @@ export class EthereumTransactionTesterCli {
       contractAddress: address,
       chainId,
       derivationPath: this.config.derivationPath,
+      skipCal,
     });
 
     console.log(`\n${result.title}`);

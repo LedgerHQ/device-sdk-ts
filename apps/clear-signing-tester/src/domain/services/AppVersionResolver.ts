@@ -7,7 +7,7 @@ export type ResolvedAppVersion = {
 };
 
 /**
- * Service responsible for resolving Ethereum app versions and OS versions
+ * Service responsible for resolving app versions and OS versions
  * based on the available apps in the filesystem.
  */
 export interface AppVersionResolver {
@@ -15,6 +15,7 @@ export interface AppVersionResolver {
    * Resolves the app version and OS version based on the provided parameters.
    *
    * @param device - The device type
+   * @param appName - The app name (e.g., "Ethereum", "Paraswap", etc.)
    * @param requestedOs - The requested OS version (optional)
    * @param requestedVersion - The requested app version (optional)
    * @returns The resolved OS version, app version, and full path to the app
@@ -28,6 +29,7 @@ export interface AppVersionResolver {
    */
   resolve(
     device: SpeculosConfig["device"],
+    appName: string,
     requestedOs?: string,
     requestedVersion?: string,
   ): ResolvedAppVersion;

@@ -7,4 +7,6 @@ export type SpeculosConfig = {
   device: "stax" | "nanox" | "nanos" | "nanos+" | "flex" | "apex";
   os?: string;
   version?: string;
+  plugin?: string;
+  pluginVersion?: string;
 };

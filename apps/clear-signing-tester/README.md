@@ -47,6 +47,8 @@ Options:
   --device <device>              Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax) (default: "stax")
   --app-eth-version <version>    Ethereum app version (e.g., 1.19.1). If not specified, automatically resolves the latest available version for the device.
   --os-version <version>         Device OS version (e.g., 1.8.1). If not specified, automatically resolves the latest available OS version for the device.
+  --plugin <plugin>              Plugin to use (e.g., Paraswap). If not specified, uses no plugin.
+  --plugin-version <version>     Plugin version to use. If not specified, automatically resolves the latest available version.
   --verbose, -v                  Enable verbose output (default: false)
   --quiet, -q                    Show only result tables (quiet mode) (default: false)
   -h, --help                     display help for command
@@ -149,6 +151,36 @@ pnpm cs-tester cli contract 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497
 Options:
 
 - `--chain-id <number>`: Chain id to use (default to 1)
+- `--skip-cal`: Skip CAL (Crypto Asset List) filtering and fetch random transactions directly from Etherscan instead of only CAL-registered transactions
+
+### Plugin Support
+
+The tester supports running Ethereum transactions with plugins (e.g., Paraswap, 1inch, etc.). When a plugin is specified, Speculos will run the plugin app with the Ethereum app loaded as a library using the `-l` flag.
+
+#### Using Plugins
+
+```bash
+# Test with a specific plugin and version
+pnpm cs-tester cli raw-transaction <tx> --plugin Paraswap --plugin-version 5.24.0
+
+# Test with a plugin (automatically resolves latest version)
+pnpm cs-tester cli raw-transaction <tx> --plugin Paraswap
+
+# Test with plugin and specific OS/Ethereum app versions
+pnpm cs-tester cli raw-transaction <tx> \
+  --plugin Paraswap \
+  --plugin-version 5.24.0 \
+  --app-eth-version 1.19.1 \
+  --os-version 1.8.1 \
+  --device stax
+```
+
+**Important Notes:**
+
+- Both the plugin and Ethereum app must be available in your `COIN_APPS_PATH` directory
+- The directory structure should be: `COIN_APPS_PATH/<device>/<os-version>/<app-name>/app_<version>.elf`
+- If `--plugin-version` is not specified, the tester will automatically resolve the latest available plugin version
+- The plugin and Ethereum app must be compatible with the same OS version
 
 ## Output
 

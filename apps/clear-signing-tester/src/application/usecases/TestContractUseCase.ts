@@ -14,6 +14,7 @@ export type TestContractConfig = {
   readonly chainId: number;
   readonly contractAddress: string;
   readonly derivationPath: string;
+  readonly skipCal?: boolean;
 };
 
 @injectable()
@@ -35,6 +36,7 @@ export class TestContractUseCase {
     const txs = await this.txRepository.getTransactions(
       config.contractAddress,
       config.chainId,
+      config.skipCal,
     );
 
     const results: TestResult[] = [];
