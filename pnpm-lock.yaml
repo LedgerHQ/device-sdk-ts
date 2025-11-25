@@ -449,6 +449,9 @@ importers:
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -459,6 +462,9 @@ importers:
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../packages/config/typescript
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.7.0
       concurrently:
         specifier: 'catalog:'
         version: 9.1.0
