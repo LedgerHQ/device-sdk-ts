@@ -37,6 +37,9 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
+      - name: Canonicalize package.json files
+        uses: LedgerHQ/device-sdk-ts/.github/actions/canonicalize-package-json-composite@develop
+
       - name: Build libraries
         run: pnpm build:libs
 
@@ -55,8 +58,9 @@ jobs:
           # Rebuild with new versions
           pnpm build:libs
           
-          # Pack all packages to create tarballs (postpack script copies to dist/)
-          pnpm prerelease
+          # Pack only public packages to create tarballs (postpack script copies to dist/)
+          # This filters out packages with private: true to avoid publishing errors
+          pnpm prerelease:public
           
           # Verify tarballs were created
           if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
@@ -125,7 +129,7 @@ jobs:
 
       - name: Publish snapshot packages to JFrog using pnpm
         run: |
-          # Publish all downloaded tarballs to JFrog with snapshot tag
+          # Publish only public packages (skip private ones)
           cd dist
           for tarball in *.tgz; do
             if [ -f "$tarball" ]; then
