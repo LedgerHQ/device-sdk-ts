@@ -17,7 +17,7 @@ jobs:
         with:
           ref: develop
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - name: Setup git and branch
         run: |
@@ -64,7 +64,7 @@ jobs:
           commit_message: "🔧 (repo): Update toolchain"
           repo: ${{ github.repository }}
           branch: ${{ env.BRANCH_NAME }}
-          file_pattern: '.'
+          file_pattern: "."
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
