@@ -44,7 +44,7 @@
     "cs-tester": "pnpm --filter @ledgerhq/ethereum-clear-signing-tester",
     "bump": "changeset version",
     "prerelease": "pnpm recursive exec -- pnpm pack",
-    "prerelease:public": "find packages -name package.json -exec sh -c 'jq -e \".private == false\" {} >/dev/null 2>&1 && echo \"--filter\" && echo \"./$(dirname {})\"' \\; | xargs pnpm pack",
+    "prerelease:public": "find packages -name package.json -exec sh -c 'jq -e \".private == false\" {} >/dev/null 2>&1 && echo \"--filter\" && echo \"./$(dirname {})\"' \\; | xargs pnpm pack --pack-destination dist",
     "release": "changeset publish",
     "changelog": "changeset add",
     "commit": "gitmoji -c",

@@ -58,8 +58,9 @@ jobs:
           # Rebuild with new versions
           pnpm build:libs
           
-          # Pack only public packages to create tarballs (postpack script copies to dist/)
+          # Pack only public packages to create tarballs directly in dist/
           # This filters out packages with private: true to avoid publishing errors
+          # --pack-destination ensures tarballs are created in dist/ directory
           pnpm prerelease:public
           
           # Verify tarballs were created
