@@ -40,7 +40,6 @@ jobs:
           # Check if there are changesets to process
           if [ -z "$(ls -A .changeset/*.md 2>/dev/null | grep -v README)" ]; then
             echo "has_changesets=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No changesets found to version"
             exit 0
           fi
           
@@ -57,11 +56,8 @@ jobs:
             
             # Push changes back to main
             git push
-            
-            echo "✅ Version changes committed and pushed"
           else
             echo "has_changesets=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No version changes to commit"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -80,11 +76,9 @@ jobs:
           # Verify tarballs were created
           if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
             echo "published=true" >> $GITHUB_OUTPUT
-            echo "✅ Release packages created successfully"
             ls -lh dist/
           else
             echo "published=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No packages to publish"
           fi
 
       - name: Attest for npmjs.com
@@ -145,6 +139,5 @@ jobs:
           cd dist
           shopt -s nullglob
           for tarball in *.tgz; do
-            echo "📦 Publishing $tarball..."
             pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --no-git-checks || echo "⚠️ Failed to publish $tarball"
           done

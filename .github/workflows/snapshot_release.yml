@@ -63,11 +63,9 @@ jobs:
           # Verify tarballs were created
           if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
             echo "published=true" >> $GITHUB_OUTPUT
-            echo "✅ Snapshot packages created successfully"
             ls -lh dist/
           else
             echo "published=false" >> $GITHUB_OUTPUT
-            echo "⚠️ No packages to publish"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
@@ -130,6 +128,5 @@ jobs:
           cd dist
           shopt -s nullglob
           for tarball in *.tgz; do
-            echo "📦 Publishing $tarball..."
-            pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks
+            pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks || echo "⚠️ Failed to publish $tarball"
           done
