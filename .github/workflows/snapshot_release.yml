@@ -125,53 +125,28 @@ jobs:
           //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
           EOF
 
-      # - name: Configure JFrog CLI
-      #   env:
-      #     JFROG_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
-      #   run: |
-      #     # Configure jf CLI with the OIDC token
-      #     jf config add jfrog-cli \
-      #       --url https://jfrog.ledgerlabs.net \
-      #       --access-token ${JFROG_TOKEN} \
-      #       --interactive=false || true
-      #     
-      #     # Verify jf CLI is configured
-      #     jf config show
-
-      # - name: Configure npm repository in JFrog CLI
-      #   run: |
-      #     # Configure npm repository for publishing
-      #     # This sets up the npm registry to use JFrog Artifactory
-      #     jf npmc --repo-resolve=ldk-npm-prod-public --repo-deploy=ldk-npm-prod-public
-
       - name: Publish snapshot packages to JFrog using pnpm
         run: |
           # Publish only public packages (skip private ones)
           cd dist
+          published_count=0
+          failed_count=0
           for tarball in *.tgz; do
             if [ -f "$tarball" ]; then
               echo "📦 Publishing $tarball..."
-              pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks
+              if pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks; then
+                echo "✅ Successfully published $tarball"
+                ((published_count++))
+              else
+                echo "⚠️  Failed to publish $tarball (error code $?), continuing with next package..."
+                ((failed_count++))
+              fi
             fi
           done
-          echo "✅ All snapshot packages published successfully"
-
-      # - name: Publish snapshot packages to JFrog using jf CLI
-      #   run: |
-      #     # Publish only public packages (skip private ones)
-      #     cd dist
-      #     for tarball in *.tgz; do
-      #       if [ -f "$tarball" ]; then
-      #         echo "📦 Publishing $tarball to JFrog..."
-      #         # Use jf npm publish to publish tarball to JFrog Artifactory
-      #         # The repository is configured via jf npmc, so we only need to pass npm args for the tag
-      #         jf npm publish "$tarball" \
-      #           --build-name="snapshot-release" \
-      #           --build-number="${{ github.run_number }}" \
-      #           --npm-args="--tag ${{ env.TAG }}" || {
-      #           echo "⚠️  Failed to publish $tarball, continuing with next package..."
-      #           continue
-      #         }
-      #       fi
-      #     done
-      #     echo "✅ All snapshot packages published successfully"
+          echo "📊 Published: $published_count, Failed: $failed_count"
+          if [ $published_count -gt 0 ]; then
+            echo "✅ Snapshot release completed with $published_count package(s) published"
+          else
+            echo "❌ No packages were published successfully"
+            exit 1
+          fi
