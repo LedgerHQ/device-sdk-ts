@@ -28,7 +28,7 @@ describe("HttpSolanaTokenDataSource", () => {
   } as ContextModuleConfig;
 
   const errorMessage = (id: string) =>
-    `[ContextModule] HttpTokenDataSource: no token metadata for id ${id}`;
+    `[ContextModule] HttpSolanaTokenDataSource: no token metadata for id ${id}`;
 
   beforeAll(() => {
     datasource = new HttpSolanaTokenDataSource(config);
@@ -113,7 +113,7 @@ describe("HttpSolanaTokenDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpTokenDataSource: Failed to fetch token informations",
+          "[ContextModule] HttpSolanaTokenDataSource: Failed to fetch token informations",
         ),
       ),
     );

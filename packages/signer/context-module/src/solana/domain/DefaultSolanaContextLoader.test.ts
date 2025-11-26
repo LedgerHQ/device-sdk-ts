@@ -9,12 +9,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
+import { SolanaContextTypes } from "@/shared/model/SolanaContextTypes";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
   type TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
-import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
 
 describe("SolanaTokenContextLoader", () => {
@@ -33,7 +33,7 @@ describe("SolanaTokenContextLoader", () => {
     },
   } as any;
 
-  const baseCtx: SolanaTransactionContext = {
+  const baseCtx = {
     tokenInternalId: "token-1",
     deviceModelId: DeviceModelId.FLEX,
   } as any;
@@ -60,41 +60,37 @@ describe("SolanaTokenContextLoader", () => {
       const loader = makeLoader("prod");
 
       expect(
-        loader.canHandle({
-          tokenInternalId: "abc123",
-        } as SolanaTransactionContext),
+        loader.canHandle(
+          {
+            tokenInternalId: "abc123",
+          } as SolanaTransactionContext,
+          SolanaContextTypes.SOLANA_TOKEN,
+        ),
       ).toBe(true);
     });
 
     it("returns false when tokenInternalId is missing or falsy", () => {
       const loader = makeLoader("prod");
 
-      expect(loader.canHandle({ tokenInternalId: "" } as any)).toBe(false);
-      expect(loader.canHandle({ tokenInternalId: undefined } as any)).toBe(
+      expect(
+        loader.canHandle(
+          { tokenInternalId: "" } as any,
+          SolanaContextTypes.SOLANA_TOKEN,
+        ),
+      ).toBe(false);
+      expect(
+        loader.canHandle(
+          { tokenInternalId: undefined } as any,
+          SolanaContextTypes.SOLANA_TOKEN,
+        ),
+      ).toBe(false);
+      expect(loader.canHandle({} as any, SolanaContextTypes.SOLANA_TOKEN)).toBe(
         false,
       );
-      expect(loader.canHandle({} as any)).toBe(false);
     });
   });
 
-  describe("load", () => {
-    it("returns an error when tokenInternalId is missing and does not call deps", async () => {
-      const loader = makeLoader("prod");
-
-      const result = await loader.load({
-        deviceModelId: DeviceModelId.FLEX,
-      } as any);
-
-      expect(result).toEqual({
-        type: SolanaContextTypes.ERROR,
-        error: new Error(
-          "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
-        ),
-      });
-      expect(mockDataSource.getTokenInfosPayload).not.toHaveBeenCalled();
-      expect(mockCertLoader.loadCertificate).not.toHaveBeenCalled();
-    });
-
+  describe("loadField", () => {
     it("returns an error when datasource returns Left(error) and still fetched certificate beforehand", async () => {
       const loader = makeLoader("prod");
       const error = new Error("datasource failed");
@@ -107,7 +103,7 @@ describe("SolanaTokenContextLoader", () => {
         payload: bytes,
       });
 
-      const result = await loader.load(baseCtx);
+      const result = await loader.loadField(baseCtx);
 
       expect(mockDataSource.getTokenInfosPayload).toHaveBeenCalledWith({
         tokenInternalId: "token-1",
@@ -134,7 +130,7 @@ describe("SolanaTokenContextLoader", () => {
         payload: bytes,
       });
 
-      const result = await loader.load({
+      const result = await loader.loadField({
         ...baseCtx,
         tokenInternalId: "token-2",
       });
@@ -162,7 +158,7 @@ describe("SolanaTokenContextLoader", () => {
         payload: bytes,
       });
 
-      const result = await loader.load({
+      const result = await loader.loadField({
         ...baseCtx,
         tokenInternalId: "token-3",
       });
@@ -187,7 +183,7 @@ describe("SolanaTokenContextLoader", () => {
       );
       vi.spyOn(mockCertLoader, "loadCertificate").mockResolvedValue(undefined);
 
-      const result = await loader.load(baseCtx);
+      const result = await loader.loadField(baseCtx);
 
       expect(result).toEqual({
         type: SolanaContextTypes.SOLANA_TOKEN,

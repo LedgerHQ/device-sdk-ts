@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { SolanaContextTypes } from "@ledgerhq/context-module/src/solanaToken/domain/SolanaTokenContext.js";
+import { SolanaContextTypes } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   LoadCertificateCommand,

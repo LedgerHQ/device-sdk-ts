@@ -20,7 +20,7 @@ const contextLoaderStubBuilder = (canHandle: boolean): ContextLoader => {
 
 const fieldLoaderStubBuilder = (): ContextFieldLoader => {
   return {
-    canHandle: vi.fn(),
+    canHandle: vi.fn() as unknown as ContextFieldLoader["canHandle"],
     loadField: vi.fn(),
   };
 };

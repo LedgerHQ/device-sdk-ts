@@ -5,17 +5,15 @@
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
+import {
+  SolanaContextTypes,
+  type SolanaTransactionDescriptorList,
+} from "@/shared/model/SolanaContextTypes";
 import {
   type GetTransactionDescriptorsResponse,
   type SolanaLifiDataSource,
 } from "@/solanaLifi/data/SolanaLifiDataSource";
-import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 
-import {
-  type SolanaLifiContextResult,
-  type SolanaTransactionDescriptorList,
-} from "./SolanaLifiContext";
 import { SolanaLifiContextLoader } from "./SolanaLifiContextLoader";
 
 describe("SolanaLifiContextLoader", () => {
@@ -49,35 +47,38 @@ describe("SolanaLifiContextLoader", () => {
       const loader = makeLoader();
 
       expect(
-        loader.canHandle({ templateId: "tpl-123" } as SolanaTransactionContext),
+        loader.canHandle(
+          {
+            templateId: "tpl-123",
+            deviceModelId: "nanoS" as any,
+          },
+          SolanaContextTypes.SOLANA_LIFI,
+        ),
       ).toBe(true);
     });
 
     it("returns false when templateId is missing or falsy", () => {
       const loader = makeLoader();
 
-      expect(loader.canHandle({ templateId: "" } as any)).toBe(false);
-      expect(loader.canHandle({ templateId: undefined } as any)).toBe(false);
-      expect(loader.canHandle({} as any)).toBe(false);
+      expect(
+        loader.canHandle(
+          { templateId: "" } as any,
+          SolanaContextTypes.SOLANA_LIFI,
+        ),
+      ).toBe(false);
+      expect(
+        loader.canHandle(
+          { templateId: undefined } as any,
+          SolanaContextTypes.SOLANA_LIFI,
+        ),
+      ).toBe(false);
+      expect(loader.canHandle({} as any, SolanaContextTypes.SOLANA_LIFI)).toBe(
+        false,
+      );
     });
   });
 
-  describe("load", () => {
-    it("returns an error when templateId is missing", async () => {
-      const loader = makeLoader();
-
-      const result = (await loader.load({} as any)) as SolanaLifiContextResult;
-
-      expect(result.type).toBe(SolanaContextTypes.ERROR);
-      expect((result as any).error).toBeInstanceOf(Error);
-      expect((result as any).error.message).toBe(
-        "[ContextModule] SolanaLifiContextLoader: templateId is missing",
-      );
-      expect(
-        mockDataSource.getTransactionDescriptorsPayload,
-      ).not.toHaveBeenCalled();
-    });
-
+  describe("loadField", () => {
     it("returns an error when datasource returns Left(error)", async () => {
       const loader = makeLoader();
       const error = new Error("boom");
@@ -85,9 +86,8 @@ describe("SolanaLifiContextLoader", () => {
         mockDataSource,
         "getTransactionDescriptorsPayload",
       ).mockResolvedValue(Left(error));
-
-      const input = { templateId: "tpl-err" } as SolanaTransactionContext;
-      const result = await loader.load(input);
+      const input = { templateId: "tpl-err", deviceModelId: "nanoS" as any };
+      const result = await loader.loadField(input);
 
       expect(
         mockDataSource.getTransactionDescriptorsPayload,
@@ -106,9 +106,8 @@ describe("SolanaLifiContextLoader", () => {
         mockDataSource,
         "getTransactionDescriptorsPayload",
       ).mockResolvedValue(Right(txDescriptorsResponse));
-
-      const input = { templateId: "tpl-ok" } as SolanaTransactionContext;
-      const result = await loader.load(input);
+      const input = { templateId: "tpl-ok", deviceModelId: "nanoS" as any };
+      const result = await loader.loadField(input);
 
       expect(
         mockDataSource.getTransactionDescriptorsPayload,

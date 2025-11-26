@@ -1,6 +1,6 @@
 import { type Either } from "purify-ts";
 
-import { type SolanaTransactionDescriptorList } from "@/solanaLifi/domain/SolanaLifiContext";
+import { type SolanaTransactionDescriptorList } from "@/shared/model/SolanaContextTypes";
 
 export type GetTransactionDescriptorsParams = {
   templateId: string;
