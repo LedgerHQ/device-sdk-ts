@@ -129,21 +129,11 @@ jobs:
         run: |
           # Publish only public packages (skip private ones)
           cd dist
-          published_count=0
-          failed_count=0
+          shopt -s nullglob
           for tarball in *.tgz; do
-            if [ -f "$tarball" ]; then
-              echo "📦 Publishing $tarball..."
-              if pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks; then
-                echo "✅ Successfully published $tarball"
-                ((published_count++))
-              else
-                echo "⚠️  Failed to publish $tarball (error code $?), continuing with next package..."
-                ((failed_count++))
-              fi
-            fi
+            echo "📦 Publishing $tarball..."
+            pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks || echo "⚠️ Failed to publish $tarball"
           done
-          echo "📊 Published: $published_count, Failed: $failed_count"
           if [ $published_count -gt 0 ]; then
             echo "✅ Snapshot release completed with $published_count package(s) published"
           else

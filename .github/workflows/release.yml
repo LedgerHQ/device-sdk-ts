@@ -16,16 +16,114 @@ permissions:
   attestations: write
 
 jobs:
-  publish:
+  public-runner:
+    name: Build and Attest Release Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+
+      - name: Canonicalize package.json files
+        uses: LedgerHQ/device-sdk-ts/.github/actions/canonicalize-package-json-composite@test/attest-npmjs
+
+      - name: Create dist directory to store tarball
+        run: mkdir -p dist
+
+      - name: Version packages
+        id: version
+        run: |
+          # Configure git for commits
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Check if there are changesets to process
+          if [ -z "$(ls -A .changeset/*.md 2>/dev/null | grep -v README)" ]; then
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No changesets found to version"
+            exit 0
+          fi
+          
+          # Version packages (this updates package.json files and CHANGELOGs)
+          pnpm bump
+          
+          # Check if there are version changes
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changesets=true" >> $GITHUB_OUTPUT
+            
+            # Commit version changes
+            git add .
+            git commit -m "chore: version packages"
+            
+            # Push changes back to main
+            git push
+            
+            echo "✅ Version changes committed and pushed"
+          else
+            echo "has_changesets=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No version changes to commit"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and pack packages
+        id: changesets
+        if: steps.version.outputs.has_changesets == 'true'
+        run: |
+          # Build libraries with new versions
+          pnpm build:libs
+          
+          # Pack only public packages to create tarballs directly in dist/
+          # This filters out packages with private: true to avoid publishing errors
+          pnpm prerelease:public
+          
+          # Verify tarballs were created
+          if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
+            echo "published=true" >> $GITHUB_OUTPUT
+            echo "✅ Release packages created successfully"
+            ls -lh dist/
+          else
+            echo "published=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No packages to publish"
+          fi
+
+      - name: Attest for npmjs.com
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
+        with:
+          subject-path: ./dist
+
+      # The action currently doesn't support pushing the blob to the registry
+      - name: Sign tarball
+        if: steps.changesets.outputs.published == 'true'
+        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+        with:
+          path: ./dist
+
+      - name: Upload packages to GitHub Artifacts
+        if: steps.changesets.outputs.published == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-release-packages
+          path: dist/*.tgz
+          retention-days: 1
+          if-no-files-found: error
+
+  runner-ledger:
+    name: Publish Release to JFrog
     environment: Production
+    needs: public-runner
     runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v5
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
-      - name: Build libraries
-        run: pnpm build:libs
+      - name: Download packages from GitHub Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-release-packages
+          path: dist
 
       - name: Login to internal JFrog registry
         id: jfrog-login
@@ -41,26 +139,12 @@ jobs:
           //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
           EOF
 
-      - name: Create dist directory to store tarball
-        run: mkdir -p dist
-
-      - name: Publish
-        id: changesets
-        uses: ledgerhq/changeset-action-ledger@main
-        with:
-          publish: pnpm release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Attest tarball
-        if: steps.changesets.outputs.published == 'true'
-        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
-        with:
-          subject-path: ./dist
-
-      # The action currently doesn't support pushing the blob to the registry
-      - name: Sign tarball
-        if: steps.changesets.outputs.published == 'true'
-        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
-        with:
-          path: ./dist
+      - name: Publish release packages to JFrog using pnpm
+        run: |
+          # Publish all downloaded tarballs to JFrog
+          cd dist
+          shopt -s nullglob
+          for tarball in *.tgz; do
+            echo "📦 Publishing $tarball..."
+            pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --no-git-checks || echo "⚠️ Failed to publish $tarball"
+          done
