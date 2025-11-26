@@ -39,6 +39,7 @@ export type UninstallAppDARequiredInteraction =
 
 export type UninstallAppDAIntermediateValue = {
   requiredUserInteraction: UninstallAppDARequiredInteraction;
+  deviceId?: Uint8Array;
 };
 
 export type UninstallAppDAState = DeviceActionState<

@@ -815,6 +815,9 @@ importers:
 
   packages/device-management-kit:
     dependencies:
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7

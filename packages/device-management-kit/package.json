@@ -32,6 +32,7 @@
     "module:create": "pnpm hygen core-module with-prompt"
   },
   "dependencies": {
+    "@noble/hashes": "^1.8.0",
     "@sentry/minimal": "catalog:",
     "axios": "catalog:",
     "inversify": "catalog:",

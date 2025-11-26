@@ -54,6 +54,7 @@ export enum SecureChannelEventType {
   PermissionGranted = "permission-granted",
   PreExchange = "pre-exchange",
   Exchange = "exchange",
+  DeviceId = "device-id",
   Progress = "progress",
   Warning = "warning",
   Error = "error",
@@ -71,6 +72,7 @@ export type SecureChannelEventPayload = {
     data: Uint8Array;
     status: Uint8Array;
   };
+  DeviceId: { deviceId: Uint8Array };
   Progress: { progress: number; index: number; total: number };
   Warning: { message: string };
   Result: unknown;
@@ -99,6 +101,10 @@ export type SecureChannelEvent =
   | {
       type: SecureChannelEventType.Exchange;
       payload: SecureChannelEventPayload["Exchange"];
+    }
+  | {
+      type: SecureChannelEventType.DeviceId;
+      payload: SecureChannelEventPayload["DeviceId"];
     }
   | {
       type: SecureChannelEventType.Progress;

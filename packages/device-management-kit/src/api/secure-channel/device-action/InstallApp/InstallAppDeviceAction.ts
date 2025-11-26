@@ -386,6 +386,15 @@ export class InstallAppDeviceAction extends XStateDeviceAction<
                 intermediateValue: (_) => {
                   if (
                     _.event.snapshot.context?.type ===
+                    SecureChannelEventType.DeviceId
+                  ) {
+                    return {
+                      ..._.context.intermediateValue,
+                      deviceId: _.event.snapshot.context.payload.deviceId,
+                    };
+                  }
+                  if (
+                    _.event.snapshot.context?.type ===
                     SecureChannelEventType.Progress
                   ) {
                     return {
