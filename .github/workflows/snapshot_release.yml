@@ -40,9 +40,6 @@ jobs:
       - name: Canonicalize package.json files
         uses: LedgerHQ/device-sdk-ts/.github/actions/canonicalize-package-json-composite@test/attest-npmjs
 
-      - name: Build libraries
-        run: pnpm build:libs
-
       - name: Create dist directory to store tarball
         run: mkdir -p dist
 
@@ -118,63 +115,63 @@ jobs:
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
-      # - name: Setup npm config for JFrog
-      #   env:
-      #     NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
-      #   run: |
-      #     cat << EOF | tee .npmrc
-      #     enable-pre-post-scripts=true
-      #     registry=https://${NPM_REGISTRY}/
-      #     //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
-      #     EOF
-
-      - name: Configure JFrog CLI
+      - name: Setup npm config for JFrog
         env:
-          JFROG_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
+          NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
         run: |
-          # Configure jf CLI with the OIDC token
-          jf config add jfrog-cli \
-            --url https://jfrog.ledgerlabs.net \
-            --access-token ${JFROG_TOKEN} \
-            --interactive=false || true
-          
-          # Verify jf CLI is configured
-          jf config show
+          cat << EOF | tee .npmrc
+          enable-pre-post-scripts=true
+          registry=https://${NPM_REGISTRY}/
+          //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
+          EOF
 
-      - name: Configure npm repository in JFrog CLI
-        run: |
-          # Configure npm repository for publishing
-          # This sets up the npm registry to use JFrog Artifactory
-          jf npmc --repo-resolve=ldk-npm-prod-public --repo-deploy=ldk-npm-prod-public
-
-      # - name: Publish snapshot packages to JFrog using pnpm
+      # - name: Configure JFrog CLI
+      #   env:
+      #     JFROG_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
       #   run: |
-      #     # Publish only public packages (skip private ones)
-      #     cd dist
-      #     for tarball in *.tgz; do
-      #       if [ -f "$tarball" ]; then
-      #         echo "📦 Publishing $tarball..."
-      #         pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks
-      #       fi
-      #     done
-      #     echo "✅ All snapshot packages published successfully"
+      #     # Configure jf CLI with the OIDC token
+      #     jf config add jfrog-cli \
+      #       --url https://jfrog.ledgerlabs.net \
+      #       --access-token ${JFROG_TOKEN} \
+      #       --interactive=false || true
+      #     
+      #     # Verify jf CLI is configured
+      #     jf config show
 
-      - name: Publish snapshot packages to JFrog using jf CLI
+      # - name: Configure npm repository in JFrog CLI
+      #   run: |
+      #     # Configure npm repository for publishing
+      #     # This sets up the npm registry to use JFrog Artifactory
+      #     jf npmc --repo-resolve=ldk-npm-prod-public --repo-deploy=ldk-npm-prod-public
+
+      - name: Publish snapshot packages to JFrog using pnpm
         run: |
           # Publish only public packages (skip private ones)
           cd dist
           for tarball in *.tgz; do
             if [ -f "$tarball" ]; then
-              echo "📦 Publishing $tarball to JFrog..."
-              # Use jf npm publish to publish tarball to JFrog Artifactory
-              # The repository is configured via jf npmc, so we only need to pass npm args for the tag
-              jf npm publish "$tarball" \
-                --build-name="snapshot-release" \
-                --build-number="${{ github.run_number }}" \
-                --npm-args="--tag ${{ env.TAG }}" || {
-                echo "⚠️  Failed to publish $tarball, continuing with next package..."
-                continue
-              }
+              echo "📦 Publishing $tarball..."
+              pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks
             fi
           done
           echo "✅ All snapshot packages published successfully"
+
+      # - name: Publish snapshot packages to JFrog using jf CLI
+      #   run: |
+      #     # Publish only public packages (skip private ones)
+      #     cd dist
+      #     for tarball in *.tgz; do
+      #       if [ -f "$tarball" ]; then
+      #         echo "📦 Publishing $tarball to JFrog..."
+      #         # Use jf npm publish to publish tarball to JFrog Artifactory
+      #         # The repository is configured via jf npmc, so we only need to pass npm args for the tag
+      #         jf npm publish "$tarball" \
+      #           --build-name="snapshot-release" \
+      #           --build-number="${{ github.run_number }}" \
+      #           --npm-args="--tag ${{ env.TAG }}" || {
+      #           echo "⚠️  Failed to publish $tarball, continuing with next package..."
+      #           continue
+      #         }
+      #       fi
+      #     done
+      #     echo "✅ All snapshot packages published successfully"
