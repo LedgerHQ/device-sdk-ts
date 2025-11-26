@@ -1,0 +1,23 @@
+name: "Canonicalize package.json files"
+description: "Canonicalize all package.json files according to RFC 8785 for deterministic JSON representation"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Canonicalize package.json files
+      shell: bash
+      run: |
+        # Find all package.json files (excluding node_modules, lib, dist, etc.)
+        find . -name "package.json" \
+          -not -path "*/node_modules/*" \
+          -not -path "*/lib/*" \
+          -not -path "*/dist/*" \
+          -not -path "*/.turbo/*" \
+          -not -path "*/coverage/*" \
+          | while read -r pkg_file; do
+          
+          echo "Processing: $pkg_file"
+          node ${{ github.workspace }}/utils/canonicalize.js "$pkg_file"
+        done
+
+        echo "✅ All package.json files have been canonicalized"
