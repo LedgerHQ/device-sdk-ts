@@ -27,6 +27,9 @@ describe("HttpSolanaTokenDataSource", () => {
     },
   } as ContextModuleConfig;
 
+  const errorMessage = (id: string) =>
+    `[ContextModule] HttpTokenDataSource: no token metadata for id ${id}`;
+
   beforeAll(() => {
     datasource = new HttpSolanaTokenDataSource(config);
   });
@@ -81,55 +84,22 @@ describe("HttpSolanaTokenDataSource", () => {
     expect(result).toEqual(Right(response0));
   });
 
-  it("should return an error when data is undefined", async () => {
-    // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+  describe.each`
+    caseName                    | apiResponse
+    ${"data is undefined"}      | ${{ data: undefined }}
+    ${"data array is empty"}    | ${{ data: [] }}
+    ${"first element is falsy"} | ${{ data: [undefined] }}
+  `("Error cases", ({ caseName, apiResponse }) => {
+    it(`should return an error when ${caseName}`, async () => {
+      // given
+      vi.spyOn(axios, "request").mockResolvedValue(apiResponse);
 
-    // when
-    const result = await datasource.getTokenInfosPayload({ tokenInternalId });
+      // when
+      const result = await datasource.getTokenInfosPayload({ tokenInternalId });
 
-    // then
-    expect(result).toEqual(
-      Left(
-        new Error(
-          `[ContextModule] HttpTokenDataSource: no token metadata for id ${tokenInternalId}`,
-        ),
-      ),
-    );
-  });
-
-  it("should return an error when data array is empty", async () => {
-    // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [] });
-
-    // when
-    const result = await datasource.getTokenInfosPayload({ tokenInternalId });
-
-    // then
-    expect(result).toEqual(
-      Left(
-        new Error(
-          `[ContextModule] HttpTokenDataSource: no token metadata for id ${tokenInternalId}`,
-        ),
-      ),
-    );
-  });
-
-  it("should return an error when first element is falsy", async () => {
-    // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [undefined] });
-
-    // when
-    const result = await datasource.getTokenInfosPayload({ tokenInternalId });
-
-    // then
-    expect(result).toEqual(
-      Left(
-        new Error(
-          `[ContextModule] HttpTokenDataSource: no token metadata for id ${tokenInternalId}`,
-        ),
-      ),
-    );
+      // then
+      expect(result).toEqual(Left(new Error(errorMessage(tokenInternalId))));
+    });
   });
 
   it("should return an error when axios throws", async () => {

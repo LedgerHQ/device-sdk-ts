@@ -4,18 +4,22 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { ProvideTLVTransactionInstructionDescriptorCommand } from "./ProvideTLVTransactionInstructionDescriptorCommand";
+import {
+  CLA,
+  INS,
+  P1_FIRST,
+  P1_NEXT,
+  P2,
+  ProvideTLVTransactionInstructionDescriptorCommand,
+  SWAP_SIGNATURE_TAG,
+  TRANSACTION_SIGNATURE_TAG,
+} from "./ProvideTLVTransactionInstructionDescriptorCommand";
 
-const CLA = 0xe0;
-const INS = 0x22;
-const P2 = 0x00;
-const P1_FIRST = 0x00;
-const P1_NEXT = 0x80;
 const DATA_HEX = "f0cacc1a";
 const DATA_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 const SIG_70_HEX = "01".repeat(70);
 const SIG_70_LEN = 70;
-const SIG_TAG = 0x15;
+
 const LC_DESCRIPTOR = DATA_BYTES.length + 1 + 1 + SIG_70_LEN; // 4 + 1 + 1 + 70 = 76 (0x4c)
 
 describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
@@ -24,6 +28,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
       const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
         kind: "empty",
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       const apdu = cmd.getApdu().getRawApdu();
@@ -31,22 +36,47 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
       expect(apdu).toStrictEqual(EXPECTED);
     });
 
-    it('builds the correct APDU for kind: "descriptor" on first message', () => {
+    it('builds the correct APDU for kind: "descriptor" on first message with transaction signature tag', () => {
       const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
         kind: "descriptor",
         dataHex: DATA_HEX,
         signatureHex: SIG_70_HEX,
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       const apdu = cmd.getApdu().getRawApdu();
 
       // header + Lc
       const header = [CLA, INS, P1_FIRST, P2, LC_DESCRIPTOR];
-      // payload = data | 0x15 | <len> | <signature>
+      // payload = data | TRANSACTION_SIGNATURE_TAG | <len> | <signature>
       const payload = [
         ...DATA_BYTES,
-        SIG_TAG,
+        TRANSACTION_SIGNATURE_TAG,
+        SIG_70_LEN,
+        ...Uint8Array.from(Buffer.from(SIG_70_HEX, "hex")),
+      ];
+
+      const EXPECTED = Uint8Array.from([...header, ...payload]);
+      expect(apdu).toStrictEqual(EXPECTED);
+    });
+
+    it('builds the correct APDU for kind: "descriptor" on first message with swap signature tag', () => {
+      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+        kind: "descriptor",
+        dataHex: DATA_HEX,
+        signatureHex: SIG_70_HEX,
+        isFirstMessage: true,
+        swapSignatureTag: true,
+      });
+
+      const apdu = cmd.getApdu().getRawApdu();
+
+      const header = [CLA, INS, P1_FIRST, P2, LC_DESCRIPTOR];
+      // payload = data | SWAP_SIGNATURE_TAG | <len> | <signature>
+      const payload = [
+        ...DATA_BYTES,
+        SWAP_SIGNATURE_TAG,
         SIG_70_LEN,
         ...Uint8Array.from(Buffer.from(SIG_70_HEX, "hex")),
       ];
@@ -61,6 +91,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
         dataHex: DATA_HEX,
         signatureHex: SIG_70_HEX,
         isFirstMessage: false,
+        swapSignatureTag: false,
       });
 
       const apdu = cmd.getApdu().getRawApdu();
@@ -74,6 +105,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
         dataHex: DATA_HEX,
         signatureHex: tooShort,
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       expect(() => cmd.getApdu()).toThrow(/Invalid signature length/i);
@@ -86,6 +118,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
         dataHex: DATA_HEX,
         signatureHex: tooLong,
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       expect(() => cmd.getApdu()).toThrow(/Invalid signature length/i);
@@ -99,6 +132,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
         dataHex: DATA_HEX,
         signatureHex: oddHex,
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       expect(() => cmd.getApdu()).toThrow(/Invalid signature length/i);
@@ -111,6 +145,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
         dataHex: BIG_DATA_HEX,
         signatureHex: SIG_70_HEX,
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       expect(() => cmd.getApdu()).toThrow(/payload too large/i);
@@ -122,6 +157,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
       const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
         kind: "empty",
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       const LNX_RESPONSE_GOOD = {
@@ -138,6 +174,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
       const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
         kind: "empty",
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       const LNX_RESPONSE_ERROR = {
@@ -153,6 +190,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
       const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
         kind: "empty",
         isFirstMessage: true,
+        swapSignatureTag: false,
       });
 
       const LNX_RESPONSE_EXTRA = {

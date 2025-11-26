@@ -13,7 +13,6 @@ import { type Maybe, Nothing } from "purify-ts";
 
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder//command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
-import { ProvideTrustedDynamicDescriptorCommand } from "@internal/app-binder/command/ProvideTrustedDynamicDescriptorCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
   DefaultSolanaMessageNormaliser,
@@ -22,7 +21,7 @@ import {
 
 import { type SolanaBuildContextResult } from "./BuildTransactionContextTask";
 
-export const MODE = "test";
+export const SWAP_MODE = "test";
 
 export class ProvideSolanaTransactionContextTask {
   constructor(
@@ -52,7 +51,7 @@ export class ProvideSolanaTransactionContextTask {
       }),
     );
 
-    // send signed TLV descriptor
+    // send signed descriptor
     await this.api.sendCommand(
       new ProvideTLVDescriptorCommand({ payload: tlvDescriptor }),
     );
@@ -62,7 +61,7 @@ export class ProvideSolanaTransactionContextTask {
 
     for (const loaderResult of loadersResults) {
       switch (loaderResult.type) {
-        // resolve token first as swap can depend on token metadata being loaded
+        // always resolve SOLANA_TOKEN first
         case SolanaContextTypes.SOLANA_TOKEN: {
           const tokenMetadataResult = loadersResults.find(
             (res) => res.type === SolanaContextTypes.SOLANA_TOKEN,
@@ -124,9 +123,13 @@ export class ProvideSolanaTransactionContextTask {
 
       // send token metadata signed descriptor
       await this.api.sendCommand(
-        new ProvideTrustedDynamicDescriptorCommand({
-          data: tokenMetadataPayload.solanaTokenDescriptor.data,
-          signature: tokenMetadataPayload.solanaTokenDescriptor.signature,
+        new ProvideTLVTransactionInstructionDescriptorCommand({
+          kind: "descriptor",
+          dataHex: tokenMetadataPayload.solanaTokenDescriptor.data,
+          signatureHex: tokenMetadataPayload.solanaTokenDescriptor.signature,
+          // token metadata is a single chunk, so this is always the first message
+          isFirstMessage: true,
+          swapSignatureTag: false,
         }),
       );
     }
@@ -151,7 +154,7 @@ export class ProvideSolanaTransactionContextTask {
           ? lifiDescriptors[programIdStr]
           : undefined;
 
-        const sigHex = descriptor && descriptor.signatures[MODE];
+        const sigHex = descriptor && descriptor.signatures[SWAP_MODE];
 
         if (descriptor && sigHex) {
           await this.api.sendCommand(
@@ -160,6 +163,7 @@ export class ProvideSolanaTransactionContextTask {
               dataHex: descriptor.data,
               signatureHex: sigHex,
               isFirstMessage: index === 0,
+              swapSignatureTag: true,
             }),
           );
         } else {
@@ -167,6 +171,7 @@ export class ProvideSolanaTransactionContextTask {
             new ProvideTLVTransactionInstructionDescriptorCommand({
               kind: "empty",
               isFirstMessage: index === 0,
+              swapSignatureTag: true,
             }),
           );
         }

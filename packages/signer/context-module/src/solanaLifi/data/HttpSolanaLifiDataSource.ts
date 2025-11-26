@@ -31,6 +31,8 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
           params: {
             template_id: templateId,
             output: "id,chain_id,instructions,descriptors",
+            // TODO LIFI
+            // REVERT WHEN CAL SUPPORTS IT
             ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
           },
           headers: {

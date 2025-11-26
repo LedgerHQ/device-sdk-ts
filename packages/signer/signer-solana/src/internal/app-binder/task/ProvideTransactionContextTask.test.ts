@@ -32,12 +32,11 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
-import { ProvideTrustedDynamicDescriptorCommand } from "@internal/app-binder/command/ProvideTrustedDynamicDescriptorCommand";
 import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
 
 import {
-  MODE,
   ProvideSolanaTransactionContextTask,
+  SWAP_MODE,
 } from "./ProvideTransactionContextTask";
 
 const DUMMY_BLOCKHASH = bs58.encode(new Uint8Array(32).fill(0xaa));
@@ -212,13 +211,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
   // basic context + token metadata
 
   describe("basic context + token", () => {
-    it("when token metadata present, sends token certificate then dynamic descriptor", async () => {
+    it("when token metadata present, sends token certificate then TLV transaction-instruction descriptor", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI certificate
         .mockResolvedValueOnce(success) // TLV descriptor
         .mockResolvedValueOnce(success) // token metadata certificate
-        .mockResolvedValueOnce(success); // dynamic descriptor
+        .mockResolvedValueOnce(success); // token descriptor via TLVTransactionInstructionDescriptor
 
       const loadersResults = [
         {
@@ -254,9 +253,14 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(third.args.keyUsage).toBe(tokenCert.keyUsageNumber);
 
       const fourth = api.sendCommand.mock.calls[3]![0]!;
-      expect(fourth).toBeInstanceOf(ProvideTrustedDynamicDescriptorCommand);
-      expect(fourth.args.data).toBe(tokenDescriptor.data);
-      expect(fourth.args.signature).toBe(tokenDescriptor.signature);
+      expect(fourth).toBeInstanceOf(
+        ProvideTLVTransactionInstructionDescriptorCommand,
+      );
+      expect(fourth.args.kind).toBe("descriptor");
+      expect(fourth.args.dataHex).toBe(tokenDescriptor.data);
+      expect(fourth.args.signatureHex).toBe(tokenDescriptor.signature);
+      expect(fourth.args.isFirstMessage).toBe(true);
+      expect(fourth.args.swapSignatureTag).toBe(false);
 
       expect(result).toStrictEqual(Nothing);
     });
@@ -365,7 +369,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         "[SignerSolana] ProvideSolanaTransactionContextTask: Failed to send tokenMetadataCertificate to device, latest firmware version required",
       );
 
-      // ensure the dynamic descriptor was NOT attempted
+      // ensure the TLVTransactionInstructionDescriptor was NOT attempted
       expect(api.sendCommand).toHaveBeenCalledTimes(3);
       const third = api.sendCommand.mock.calls[2]![0]!;
       expect(third).toBeInstanceOf(LoadCertificateCommand);
@@ -377,7 +381,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success); // token dyn desc
+        .mockResolvedValueOnce(success); // token TLVTransactionInstructionDescriptor
 
       const loadersResults = [
         {
@@ -415,9 +419,12 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(api.sendCommand.mock.calls[2]![0]!).toBeInstanceOf(
         LoadCertificateCommand,
       );
-      expect(api.sendCommand.mock.calls[3]![0]!).toBeInstanceOf(
-        ProvideTrustedDynamicDescriptorCommand,
+      const tokenCmd = api.sendCommand.mock.calls[3]![0]!;
+      expect(tokenCmd).toBeInstanceOf(
+        ProvideTLVTransactionInstructionDescriptorCommand,
       );
+      expect(tokenCmd.args.swapSignatureTag).toBe(false);
+      expect(tokenCmd.args.isFirstMessage).toBe(true);
     });
   });
 
@@ -429,7 +436,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValue(success); // swap APDUs
 
       const message = {
@@ -451,9 +458,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            A_PID: { data: SIG, signatures: { [MODE]: SIG } },
+            A_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
             // B missing -> empty
-            C_PID: { data: SIG, signatures: { [MODE]: SIG } },
+            C_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
           },
         },
       ];
@@ -487,12 +494,16 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(c0.args.kind).toBe("descriptor");
       expect(c0.args.dataHex).toBe(SIG);
       expect(c0.args.signatureHex).toBe(SIG);
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
       expect(c1).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c1.args.kind).toBe("empty");
+      expect(c1.args.isFirstMessage).toBe(false);
+      expect(c1.args.swapSignatureTag).toBe(true);
 
       const c2 = api.sendCommand.mock.calls[6]![0]!;
       expect(c2).toBeInstanceOf(
@@ -501,17 +512,19 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(c2.args.kind).toBe("descriptor");
       expect(c2.args.dataHex).toBe(SIG);
       expect(c2.args.signatureHex).toBe(SIG);
+      expect(c2.args.isFirstMessage).toBe(false);
+      expect(c2.args.swapSignatureTag).toBe(true);
 
       expect((normaliser as any).normaliseMessage).toHaveBeenCalledOnce();
     });
 
-    it("sends empty when descriptor exists but signatures[MODE] is missing", async () => {
+    it("sends empty when descriptor exists but signatures[SWAP_MODE] is missing", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValue(success);
 
       const message = {
@@ -532,7 +545,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
             ONLY_PID: {
               data: SIG,
               signatures: {
-                // no [MODE] key
+                // no [SWAP_MODE] key
               },
             },
           },
@@ -563,6 +576,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c0.args.kind).toBe("empty");
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
     });
 
     it("sends empty when programId is missing for an instruction", async () => {
@@ -571,7 +586,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValue(success);
 
       const message = {
@@ -613,6 +628,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c0.args.kind).toBe("empty");
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
     });
 
     it("propagates a rejection thrown by InternalApi.sendCommand on the second swap APDU (after base + token succeed)", async () => {
@@ -621,7 +638,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValueOnce(success) // 1st swap ok
         .mockRejectedValueOnce(new Error("err")); // 2nd swap fails
 
@@ -644,9 +661,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            A_PID: { data: SIG, signatures: { [MODE]: SIG } },
+            A_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
             // B missing -> empty
-            C_PID: { data: SIG, signatures: { [MODE]: SIG } },
+            C_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
           },
         },
       ];
@@ -673,21 +690,25 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c0.args.kind).toBe("descriptor");
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
       expect(c1).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c1.args.kind).toBe("empty");
+      expect(c1.args.isFirstMessage).toBe(false);
+      expect(c1.args.swapSignatureTag).toBe(true);
     });
 
-    it("uses signatures[MODE] specifically when present", async () => {
+    it("uses signatures[SWAP_MODE] specifically when present", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValue(success);
 
       const message = {
@@ -707,7 +728,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
           payload: {
             SIG_PID: {
               data: SIG,
-              signatures: { prod: "deadbeef", [MODE]: SIG },
+              signatures: { prod: "deadbeef", [SWAP_MODE]: SIG },
             },
           },
         },
@@ -739,6 +760,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(c0.args.kind).toBe("descriptor");
       expect(c0.args.dataHex).toBe(SIG);
       expect(c0.args.signatureHex).toBe(SIG);
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
     });
 
     it("parses a real *legacy* tx via DefaultSolanaMessageNormaliser and preserves APDU order (descriptor, empty, descriptor) after base + token", async () => {
@@ -747,7 +770,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValue(success);
 
       const payer = Keypair.generate();
@@ -797,9 +820,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [MODE]: SIG } },
+            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
             // Tokenkeg missing -> empty
-            [MEMO_PID]: { data: SIG, signatures: { [MODE]: SIG } },
+            [MEMO_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
           },
         },
       ];
@@ -825,10 +848,18 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
       expect(c0.args.kind).toBe("descriptor");
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
+
       const c1 = api.sendCommand.mock.calls[5]![0]!;
       expect(c1.args.kind).toBe("empty");
+      expect(c1.args.isFirstMessage).toBe(false);
+      expect(c1.args.swapSignatureTag).toBe(true);
+
       const c2 = api.sendCommand.mock.calls[6]![0]!;
       expect(c2.args.kind).toBe("descriptor");
+      expect(c2.args.isFirstMessage).toBe(false);
+      expect(c2.args.swapSignatureTag).toBe(true);
     });
 
     it("parses a real *v0* tx via DefaultSolanaMessageNormaliser (no ALTs) and preserves APDU order (descriptor, descriptor, empty) after base + token", async () => {
@@ -837,7 +868,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValue(success);
 
       const payer = Keypair.generate();
@@ -890,8 +921,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [MODE]: SIG } },
-            [ATA_PID]: { data: SIG, signatures: { [MODE]: SIG } },
+            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            [ATA_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
             // Memo intentionally missing -> empty
           },
         },
@@ -920,18 +951,24 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c0.args.kind).toBe("descriptor"); // System
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
       expect(c1).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c1.args.kind).toBe("descriptor"); // ATA
+      expect(c1.args.isFirstMessage).toBe(false);
+      expect(c1.args.swapSignatureTag).toBe(true);
 
       const c2 = api.sendCommand.mock.calls[6]![0]!;
       expect(c2).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c2.args.kind).toBe("empty"); // Memo missing
+      expect(c2.args.isFirstMessage).toBe(false);
+      expect(c2.args.swapSignatureTag).toBe(true);
     });
 
     it("parses a real *v0* tx via DefaultSolanaMessageNormaliser and preserves APDU order System, createATA, token transfer (descriptor, descriptor, empty) after base + token", async () => {
@@ -940,7 +977,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token dyn desc
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
         .mockResolvedValue(success); // swap APDUs
 
       const payer = Keypair.generate();
@@ -1002,8 +1039,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [MODE]: SIG } },
-            [ATA_PID]: { data: SIG, signatures: { [MODE]: SIG } },
+            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            [ATA_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
             // Token Program intentionally missing -> "empty"
           },
         },
@@ -1036,18 +1073,24 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c0.args.kind).toBe("descriptor"); // System
+      expect(c0.args.isFirstMessage).toBe(true);
+      expect(c0.args.swapSignatureTag).toBe(true);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
       expect(c1).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c1.args.kind).toBe("descriptor"); // ATA
+      expect(c1.args.isFirstMessage).toBe(false);
+      expect(c1.args.swapSignatureTag).toBe(true);
 
       const c2 = api.sendCommand.mock.calls[6]![0]!;
       expect(c2).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
       expect(c2.args.kind).toBe("empty"); // Token Program missing
+      expect(c2.args.isFirstMessage).toBe(false);
+      expect(c2.args.swapSignatureTag).toBe(true);
     });
   });
 });

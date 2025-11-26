@@ -9,6 +9,7 @@ import { solanaContextTypes } from "@/solana/di/solanaContextTypes";
 import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
 import { type SolanaLifiContextLoader } from "@/solanaLifi/domain/SolanaLifiContextLoader";
 import { solanaTokenTypes } from "@/solanaToken/di/solanaTokenTypes";
+import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
 import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
 
 import { type SolanaContextLoader } from "./SolanaContextLoader";
@@ -59,7 +60,13 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
 
     const loadersResults = settledLoaders
       .map((r) => (r.status === "fulfilled" ? r.value : undefined))
-      .filter((v) => v !== undefined);
+      .filter((v) => v !== undefined)
+      // always sort with SOLANA_TOKEN first
+      .sort((a, b) => {
+        const A = a.type === SolanaContextTypes.SOLANA_TOKEN ? 0 : 1;
+        const B = b.type === SolanaContextTypes.SOLANA_TOKEN ? 0 : 1;
+        return A - B;
+      });
 
     const tlvDescriptorEither =
       await this._dataSource.getOwnerInfo(solanaContext);

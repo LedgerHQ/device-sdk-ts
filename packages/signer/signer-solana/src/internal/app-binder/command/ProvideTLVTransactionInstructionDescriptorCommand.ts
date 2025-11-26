@@ -16,9 +16,13 @@ import {
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
 
-const CLA = 0xe0;
-const INS = 0x22;
-const P2 = 0x00;
+export const CLA = 0xe0;
+export const INS = 0x22;
+export const P1_FIRST = 0x00;
+export const P1_NEXT = 0x80;
+export const P2 = 0x00;
+export const TRANSACTION_SIGNATURE_TAG = 0x08;
+export const SWAP_SIGNATURE_TAG = 0x15;
 
 export type ProvideTLVTransactionInstructionDescriptorCommandArgs =
   | {
@@ -26,10 +30,12 @@ export type ProvideTLVTransactionInstructionDescriptorCommandArgs =
       dataHex: string;
       signatureHex: string;
       isFirstMessage: boolean;
+      swapSignatureTag: boolean;
     }
   | {
       kind: "empty"; // send empty payload to keep instruction index alignment
       isFirstMessage: boolean;
+      swapSignatureTag: boolean;
     };
 
 export class ProvideTLVTransactionInstructionDescriptorCommand
@@ -56,7 +62,7 @@ export class ProvideTLVTransactionInstructionDescriptorCommand
       return new ApduBuilder({
         cla: CLA,
         ins: INS,
-        p1: this.args.isFirstMessage ? 0x00 : 0x80,
+        p1: this.args.isFirstMessage ? P1_FIRST : P1_NEXT,
         p2: P2,
       }).build();
     }
@@ -66,7 +72,7 @@ export class ProvideTLVTransactionInstructionDescriptorCommand
     const apduBuilderArgs: ApduBuilderArgs = {
       cla: CLA,
       ins: INS,
-      p1: isFirstMessage ? 0x00 : 0x80,
+      p1: isFirstMessage ? P1_FIRST : P1_NEXT,
       p2: P2,
     };
 
@@ -87,10 +93,14 @@ export class ProvideTLVTransactionInstructionDescriptorCommand
       );
     }
 
-    // build payload: data | 0x15 | <len> | <signature>
+    // build payload: data | SIGNATURE_TAG | <len> | <signature>
     builder
       .addHexaStringToData(dataHex)
-      .add8BitUIntToData(0x15) // DER_SIGNATURE tag from spec
+      .add8BitUIntToData(
+        this.args.swapSignatureTag
+          ? SWAP_SIGNATURE_TAG
+          : TRANSACTION_SIGNATURE_TAG,
+      )
       .add8BitUIntToData(sigLen)
       .addHexaStringToData(signatureHex);
 

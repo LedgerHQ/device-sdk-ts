@@ -16,7 +16,7 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAInput,
   type SignTransactionDAIntermediateValue,
-  SignTransactionDAStateStep,
+  signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
@@ -109,7 +109,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.GET_APP_CONFIG,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -117,7 +117,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.INSPECT_TRANSACTION,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -125,7 +125,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.BUILD_TRANSACTION_CONTEXT,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -133,7 +133,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.PROVIDE_TRANSACTION_CONTEXT,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -141,7 +141,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: SignTransactionDAStateStep.SIGN_TRANSACTION,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -210,7 +210,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.GET_APP_CONFIG,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -218,7 +218,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.INSPECT_TRANSACTION,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -226,7 +226,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.BUILD_TRANSACTION_CONTEXT,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -234,7 +234,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.PROVIDE_TRANSACTION_CONTEXT,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -242,7 +242,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: SignTransactionDAStateStep.SIGN_TRANSACTION,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -295,7 +295,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.GET_APP_CONFIG,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -303,7 +303,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.INSPECT_TRANSACTION,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -311,7 +311,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: SignTransactionDAStateStep.BUILD_TRANSACTION_CONTEXT,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
           },
           status: DeviceActionStatus.Pending,
         },

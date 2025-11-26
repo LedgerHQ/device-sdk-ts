@@ -20,7 +20,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
-  SignTransactionDAStateStep,
+  signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
@@ -172,7 +172,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         input,
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
-          step: SignTransactionDAStateStep.OPEN_APP,
+          step: signTransactionDAStateSteps.OPEN_APP,
         },
         _internalState: {
           error: null,
@@ -193,7 +193,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStateStep.OPEN_APP,
+              step: signTransactionDAStateSteps.OPEN_APP,
             }),
           }),
           invoke: {
@@ -204,7 +204,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               actions: assign({
                 intermediateValue: ({ event }) => ({
                   ...event.snapshot.context.intermediateValue,
-                  step: SignTransactionDAStateStep.OPEN_APP,
+                  step: signTransactionDAStateSteps.OPEN_APP,
                 }),
               }),
             },
@@ -233,7 +233,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStateStep.GET_APP_CONFIG,
+              step: signTransactionDAStateSteps.GET_APP_CONFIG,
             }),
           }),
           invoke: {
@@ -267,7 +267,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStateStep.INSPECT_TRANSACTION,
+              step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
             }),
           }),
           invoke: {
@@ -306,7 +306,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStateStep.BUILD_TRANSACTION_CONTEXT,
+              step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
             }),
           }),
           invoke: {
@@ -355,7 +355,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTransactionDAStateStep.PROVIDE_TRANSACTION_CONTEXT,
+              step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
             }),
           }),
           invoke: {
@@ -391,7 +391,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
-              step: SignTransactionDAStateStep.SIGN_TRANSACTION,
+              step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             },
           }),
           invoke: {
@@ -431,7 +431,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   },
                   intermediateValue: {
                     requiredUserInteraction: UserInteractionRequired.None,
-                    step: SignTransactionDAStateStep.SIGN_TRANSACTION,
+                    step: signTransactionDAStateSteps.SIGN_TRANSACTION,
                   },
                 }),
               ],
@@ -486,7 +486,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           arg0.serializedTransaction,
           arg0.resolutionContext?.tokenAddress,
           arg0.resolutionContext?.createATA,
-          //arg0.rpcUrl,
         ),
       );
 

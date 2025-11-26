@@ -19,10 +19,7 @@ export type SolanaBuildContextResult = {
 
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
-  readonly options: TransactionResolutionContext & {
-    tokenInternalId?: string;
-    templateId?: string;
-  };
+  readonly options: TransactionResolutionContext;
 };
 
 export class BuildTransactionContextTask {

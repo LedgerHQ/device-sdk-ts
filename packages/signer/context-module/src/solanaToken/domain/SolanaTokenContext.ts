@@ -33,5 +33,5 @@ export type SolanaTokenContext = {
 export enum SolanaContextTypes {
   SOLANA_TOKEN = "solanaToken",
   SOLANA_LIFI = "solanaLifi",
-  ERROR = "error",
+  ERROR = "solana context error",
 }

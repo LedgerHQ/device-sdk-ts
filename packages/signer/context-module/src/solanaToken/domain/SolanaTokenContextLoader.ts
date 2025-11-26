@@ -11,8 +11,8 @@ import {
   type SolanaTokenDataSource,
   TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
+import { solanaTokenTypes } from "@/solanaToken/di/solanaTokenTypes";
 import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
-import { tokenTypes } from "@/token/di/tokenTypes";
 
 import {
   SolanaTokenContext,
@@ -23,7 +23,7 @@ import {
 @injectable()
 export class SolanaTokenContextLoader implements SolanaTokenContext {
   constructor(
-    @inject(tokenTypes.TokenDataSource)
+    @inject(solanaTokenTypes.SolanaTokenDataSource)
     private readonly dataSource: SolanaTokenDataSource,
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
     @inject(pkiTypes.PkiCertificateLoader)
