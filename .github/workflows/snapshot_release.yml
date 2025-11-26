@@ -31,7 +31,7 @@ jobs:
     name: Build and Attest Snapshot Packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.REF }}
 
@@ -82,7 +82,7 @@ jobs:
 
       - name: Upload packages to GitHub Artifacts
         if: steps.changesets.outputs.published == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: npm-snapshot-packages
           path: dist/*.tgz
@@ -94,14 +94,14 @@ jobs:
     needs: public-runner
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.REF }}
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - name: Download packages from GitHub Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: npm-snapshot-packages
           path: dist
