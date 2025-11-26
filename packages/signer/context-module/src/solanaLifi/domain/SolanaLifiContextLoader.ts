@@ -1,31 +1,45 @@
 import { inject, injectable } from "inversify";
 
+import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
+import {
+  SolanaContextTypes,
+  SolanaLifiContextResult,
+  SolanaTransactionDescriptorList,
+} from "@/shared/model/SolanaContextTypes";
 import { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   GetTransactionDescriptorsResponse,
   type SolanaLifiDataSource,
 } from "@/solanaLifi/data/SolanaLifiDataSource";
 import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
-import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
-
-import {
-  type SolanaLifiContext,
-  SolanaLifiContextResult,
-  SolanaTransactionDescriptorList,
-} from "./SolanaLifiContext";
 
 @injectable()
-export class SolanaLifiContextLoader implements SolanaLifiContext {
+export class SolanaLifiContextLoader
+  implements
+    ContextFieldLoader<
+      SolanaTransactionContext,
+      SolanaContextTypes,
+      SolanaLifiContextResult
+    >
+{
   constructor(
     @inject(lifiTypes.SolanaLifiDataSource)
     private readonly dataSource: SolanaLifiDataSource,
   ) {}
 
-  public canHandle(solanaTokenContextInput: SolanaTransactionContext): boolean {
-    return !!solanaTokenContextInput.templateId;
+  public canHandle(
+    field: unknown,
+    _expectedType: SolanaContextTypes,
+  ): field is SolanaTransactionContext {
+    return (
+      typeof field === "object" &&
+      field !== null &&
+      "templateId" in field &&
+      !!(field as SolanaTransactionContext).templateId
+    );
   }
 
-  public async load(
+  public async loadField(
     solanaTokenContextInput: SolanaTransactionContext,
   ): Promise<SolanaLifiContextResult> {
     const { templateId } = solanaTokenContextInput;

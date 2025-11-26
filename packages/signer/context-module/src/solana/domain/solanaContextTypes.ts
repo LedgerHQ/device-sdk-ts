@@ -2,8 +2,10 @@ import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import { type Either } from "purify-ts";
 
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
-import { type SolanaLifiContextResult } from "@/solanaLifi/domain/SolanaLifiContext";
-import { type SolanaTokenContextResult } from "@/solanaToken/domain/SolanaTokenContext";
+import {
+  type SolanaLifiContextResult,
+  type SolanaTokenContextResult,
+} from "@/shared/model/SolanaContextTypes";
 
 export type SolanaTransactionContext = {
   deviceModelId: DeviceModelId;

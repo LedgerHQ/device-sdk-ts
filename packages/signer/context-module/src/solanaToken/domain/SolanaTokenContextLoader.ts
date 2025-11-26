@@ -6,22 +6,28 @@ import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
+import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
+import {
+  SolanaContextTypes,
+  SolanaTokenContextResult,
+  SolanaTokenData,
+} from "@/shared/model/SolanaContextTypes";
 import { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
-  TokenDataResponse,
+  type TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
 import { solanaTokenTypes } from "@/solanaToken/di/solanaTokenTypes";
-import { SolanaContextTypes } from "@/solanaToken/domain/SolanaTokenContext";
-
-import {
-  SolanaTokenContext,
-  SolanaTokenContextResult,
-  SolanaTokenData,
-} from "./SolanaTokenContext";
 
 @injectable()
-export class SolanaTokenContextLoader implements SolanaTokenContext {
+export class SolanaTokenContextLoader
+  implements
+    ContextFieldLoader<
+      SolanaTransactionContext,
+      SolanaContextTypes,
+      SolanaTokenContextResult
+    >
+{
   constructor(
     @inject(solanaTokenTypes.SolanaTokenDataSource)
     private readonly dataSource: SolanaTokenDataSource,
@@ -30,11 +36,19 @@ export class SolanaTokenContextLoader implements SolanaTokenContext {
     private readonly _certificateLoader: PkiCertificateLoader,
   ) {}
 
-  public canHandle(solanaTokenContextInput: SolanaTransactionContext): boolean {
-    return !!solanaTokenContextInput.tokenInternalId;
+  public canHandle(
+    field: unknown,
+    _expectedType: SolanaContextTypes,
+  ): field is SolanaTransactionContext {
+    return (
+      typeof field === "object" &&
+      field !== null &&
+      "tokenInternalId" in field &&
+      !!(field as SolanaTransactionContext).tokenInternalId
+    );
   }
 
-  public async load(
+  public async loadField(
     solanaTokenContextInput: SolanaTransactionContext,
   ): Promise<SolanaTokenContextResult> {
     const { tokenInternalId, deviceModelId } = solanaTokenContextInput;

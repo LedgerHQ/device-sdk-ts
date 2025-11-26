@@ -1,8 +1,8 @@
-import { type SolanaLifiContextSuccessResult } from "@ledgerhq/context-module/src/solanaLifi/domain/SolanaLifiContext.js";
 import {
   SolanaContextTypes,
-  type SolanaTokenContextSuccessResult,
-} from "@ledgerhq/context-module/src/solanaToken/domain/SolanaTokenContext.js";
+  type SolanaLifiContextSuccess,
+  type SolanaTokenContextSuccess,
+} from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
   type InternalApi,
@@ -23,12 +23,15 @@ import { type SolanaBuildContextResult } from "./BuildTransactionContextTask";
 
 export const SWAP_MODE = "test";
 
+export type ProvideSolanaTransactionContextTaskContext =
+  SolanaBuildContextResult & {
+    transactionBytes: Uint8Array;
+  };
+
 export class ProvideSolanaTransactionContextTask {
   constructor(
     private readonly api: InternalApi,
-    private readonly context: SolanaBuildContextResult & {
-      transactionBytes: Uint8Array;
-    },
+    private readonly context: ProvideSolanaTransactionContextTaskContext,
     private readonly normaliser: SolanaMessageNormaliserConstructor = DefaultSolanaMessageNormaliser,
   ) {}
 
@@ -99,7 +102,7 @@ export class ProvideSolanaTransactionContextTask {
   }
 
   private async provideTokenMetadataContext(
-    tokenMetadataResult: SolanaTokenContextSuccessResult,
+    tokenMetadataResult: SolanaTokenContextSuccess,
   ): Promise<void> {
     const {
       payload: tokenMetadataPayload,
@@ -136,7 +139,7 @@ export class ProvideSolanaTransactionContextTask {
   }
 
   private async provideSwapContext(
-    lifiDescriptorListResult: SolanaLifiContextSuccessResult,
+    lifiDescriptorListResult: SolanaLifiContextSuccess,
     transactionBytes: Uint8Array,
   ): Promise<void> {
     const lifiDescriptors = lifiDescriptorListResult.payload;

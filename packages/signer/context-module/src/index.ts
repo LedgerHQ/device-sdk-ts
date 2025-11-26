@@ -32,6 +32,7 @@ export * from "./shared/domain/ContextFieldLoader";
 export * from "./shared/domain/ContextLoader";
 export * from "./shared/model/ClearSignContext";
 export * from "./shared/model/GenericPath";
+export * from "./shared/model/SolanaContextTypes";
 export * from "./shared/model/TransactionSubset";
 export * from "./shared/model/TypedDataClearSignContext";
 export * from "./shared/model/TypedDataContext";

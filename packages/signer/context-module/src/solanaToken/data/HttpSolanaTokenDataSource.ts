@@ -39,7 +39,7 @@ export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
       if (!data || data.length === 0 || !data[0]) {
         return Left(
           new Error(
-            `[ContextModule] HttpTokenDataSource: no token metadata for id ${tokenInternalId}`,
+            `[ContextModule] HttpSolanaTokenDataSource: no token metadata for id ${tokenInternalId}`,
           ),
         );
       }
@@ -48,7 +48,7 @@ export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
     } catch (_error) {
       return Left(
         new Error(
-          "[ContextModule] HttpTokenDataSource: Failed to fetch token informations",
+          "[ContextModule] HttpSolanaTokenDataSource: Failed to fetch token informations",
         ),
       );
     }
