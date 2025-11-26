@@ -127,16 +127,9 @@ jobs:
 
       - name: Publish snapshot packages to JFrog using pnpm
         run: |
-          # Publish only public packages (skip private ones)
           cd dist
           shopt -s nullglob
           for tarball in *.tgz; do
             echo "📦 Publishing $tarball..."
-            pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks || echo "⚠️ Failed to publish $tarball"
+            pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks
           done
-          if [ $published_count -gt 0 ]; then
-            echo "✅ Snapshot release completed with $published_count package(s) published"
-          else
-            echo "❌ No packages were published successfully"
-            exit 1
-          fi
