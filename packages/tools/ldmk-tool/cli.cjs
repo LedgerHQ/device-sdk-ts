@@ -6,6 +6,7 @@ const { enterRelease, exitRelease } = require("./release.cjs");
 const { help } = require("./help.cjs");
 const { build } = require("./build.cjs");
 const { watch } = require("./watch.cjs");
+const { pack } = require("./pack.cjs");
 
 if (process.platform === "win32") {
   usePowerShell();
@@ -67,10 +68,24 @@ const availableCommands = [
       { name: "platform", description: "the platform to watch for" },
     ],
   },
+  {
+    name: "pack",
+    description: "pack all public packages to dist directory",
+    flags: [
+      {
+        name: "packagesDir",
+        description: "the directory containing packages (default: packages)",
+      },
+      {
+        name: "distDir",
+        description: "the output directory for packed files (default: dist)",
+      },
+    ],
+  },
 ];
 
 const command = argv._[0];
-const { entryPoints, tsconfig, platform } = argv;
+const { entryPoints, tsconfig, platform, packagesDir, distDir } = argv;
 
 async function main() {
   switch (command) {
@@ -89,13 +104,11 @@ async function main() {
       if (!entryPoints) {
         console.error(chalk.red("Entry points are required"));
         process.exit(1);
-        break;
       }
 
       if (!tsconfig) {
         console.error(chalk.red("TSConfig file is required"));
         process.exit(1);
-        break;
       }
 
       console.log(chalk.green("🛠️ (packages): Building"));
@@ -114,13 +127,11 @@ async function main() {
       if (!entryPoints) {
         console.error(chalk.red("Entry points are required"));
         process.exit(1);
-        break;
       }
 
       if (!tsconfig) {
         console.error(chalk.red("TSConfig file is required"));
         process.exit(1);
-        break;
       }
 
       console.log(chalk.green("👀 (packages): Watching"));
@@ -128,6 +139,19 @@ async function main() {
         console.error(e);
         process.exitCode = e.exitCode;
       });
+      break;
+    case "pack":
+      console.log(chalk.green("📦 (packages): Packing"));
+      await pack(packagesDir, distDir)
+        .then(() => {
+          console.log(chalk.green("✅ Pack succeeded"));
+          process.exitCode = 0;
+        })
+        .catch((e) => {
+          console.error(chalk.red("❌ Pack failed"));
+          console.error(e);
+          process.exitCode = e.exitCode || 1;
+        });
       break;
     default:
       console.log(chalk.red(`Invalid command: "${command}"`));

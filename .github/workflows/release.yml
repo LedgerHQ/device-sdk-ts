@@ -24,17 +24,11 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
-      - name: Canonicalize package.json files
-        uses: LedgerHQ/device-sdk-ts/.github/actions/canonicalize-package-json-composite@develop
-
-      - name: Create dist directory to store tarball
-        run: mkdir -p dist
-
       - name: Build libraries
         run: pnpm build:libs
 
-      - name: Pack packages
-        run: pnpm prerelease:public
+      - name: Prepare dist directory
+        run: pnpm ldmk-tool pack
 
       - name: Attest for npmjs.com
         uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
