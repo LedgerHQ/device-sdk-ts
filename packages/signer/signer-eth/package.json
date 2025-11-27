@@ -3,10 +3,6 @@
   "version": "1.9.2",
   "private": false,
   "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
-  },
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
