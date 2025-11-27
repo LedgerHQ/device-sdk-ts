@@ -49,11 +49,11 @@ jobs:
           retention-days: 1
           if-no-files-found: error
 
-      - name: Create tags
-        run: echo "TODO Create tags"
-
+      # This action will publish to github and create tags on main branch
       - name: Publish to Github Release
-        run: echo "TODO Publish to Github Release"
+        uses: LedgerHQ/actions-security/actions/create-github-release@create-github-release
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   runner-ledger:
     name: Publish Release to JFrog
