@@ -7,6 +7,7 @@ const { help } = require("./help.cjs");
 const { build } = require("./build.cjs");
 const { watch } = require("./watch.cjs");
 const { bump } = require("./bump.cjs");
+const { createReleasePullRequest } = require("./create-release-pr.cjs");
 
 if (process.platform === "win32") {
   usePowerShell();
@@ -33,6 +34,11 @@ const availableCommands = [
   {
     name: "exit-release",
     description: "toggle private on packages.json to be released",
+    flags: [],
+  },
+  {
+    name: "create-release-pr",
+    description: "create a release pull request",
     flags: [],
   },
   {
@@ -95,17 +101,19 @@ async function main() {
       console.log(chalk.green("🔖 (packages): Bumping versions"));
       await bump();
       break;
+    case "create-release-pr":
+      console.log(chalk.green("🔖 (packages): Creating release pull request"));
+      await createReleasePullRequest();
+      break;
     case "build":
       if (!entryPoints) {
         console.error(chalk.red("Entry points are required"));
         process.exit(1);
-        break;
       }
 
       if (!tsconfig) {
         console.error(chalk.red("TSConfig file is required"));
         process.exit(1);
-        break;
       }
 
       console.log(chalk.green("🛠️ (packages): Building"));
@@ -124,13 +132,11 @@ async function main() {
       if (!entryPoints) {
         console.error(chalk.red("Entry points are required"));
         process.exit(1);
-        break;
       }
 
       if (!tsconfig) {
         console.error(chalk.red("TSConfig file is required"));
         process.exit(1);
-        break;
       }
 
       console.log(chalk.green("👀 (packages): Watching"));
