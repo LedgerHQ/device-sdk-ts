@@ -7,6 +7,7 @@ const { help } = require("./help.cjs");
 const { build } = require("./build.cjs");
 const { watch } = require("./watch.cjs");
 const { pack } = require("./pack.cjs");
+const { bump } = require("./bump.cjs");
 
 if (process.platform === "win32") {
   usePowerShell();
@@ -33,6 +34,11 @@ const availableCommands = [
   {
     name: "exit-release",
     description: "toggle private on packages.json to be released",
+    flags: [],
+  },
+  {
+    name: "bump",
+    description: "bump package versions using changesets",
     flags: [],
   },
   {
@@ -99,6 +105,10 @@ async function main() {
     case "exit-release":
       console.log(chalk.green("🔧 (packages): Exiting release mode"));
       await exitRelease();
+      break;
+    case "bump":
+      console.log(chalk.green("🔖 (packages): Bumping versions"));
+      await bump();
       break;
     case "build":
       if (!entryPoints) {
