@@ -43,45 +43,27 @@ jobs:
       - name: Create dist directory to store tarball
         run: mkdir -p dist
 
-      - name: Bump version and pack snapshot packages
-        id: changesets
-        run: |
-          # Bump versions to snapshot (this resolves workspace: dependencies)
-          pnpm bump --snapshot ${{ env.TAG }}
+      - name: Bump version
+        run: pnpm bump --snapshot ${{ env.TAG }}
 
-          # Rebuild with new versions
-          pnpm build:libs
+      - name: Build libraries
+        run: pnpm build:libs
 
-          # Pack only public packages to create tarballs directly in dist/
-          # This filters out packages with private: true to avoid publishing errors
-          # --pack-destination ensures tarballs are created in dist/ directory
-          pnpm prerelease:public
-
-          # Verify tarballs were created
-          if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
-            echo "published=true" >> $GITHUB_OUTPUT
-            ls -lh dist/
-          else
-            echo "published=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+      - name: Pack snapshot packages
+        run: pnpm prerelease:public
 
       - name: Attest for npmjs.com
-        if: steps.changesets.outputs.published == 'true'
         uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
         with:
           subject-path: ./dist
 
       # The action currently doesn't support pushing the blob to the registry
       - name: Sign tarball
-        if: steps.changesets.outputs.published == 'true'
         uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
         with:
           path: ./dist
 
       - name: Upload packages to GitHub Artifacts
-        if: steps.changesets.outputs.published == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: npm-snapshot-packages
