@@ -17,7 +17,7 @@ env:
   FORCE_COLOR: "1"
   REF: ${{ inputs.ref || 'develop' }}
   TAG: ${{ inputs.tag || 'develop' }}
-  NPM_REGISTRY: ${{ vars.NPM_REGISTRY }}
+  # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
 
 permissions:
   id-token: write
@@ -27,71 +27,7 @@ permissions:
   attestations: write
 
 jobs:
-  public-runner:
-    name: Build and Attest Snapshot Packages
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: ${{ env.REF }}
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
-
-      - name: Canonicalize package.json files
-        uses: LedgerHQ/device-sdk-ts/.github/actions/canonicalize-package-json-composite@develop
-
-      - name: Create dist directory to store tarball
-        run: mkdir -p dist
-
-      - name: Bump version and pack snapshot packages
-        id: changesets
-        run: |
-          # Bump versions to snapshot (this resolves workspace: dependencies)
-          pnpm bump --snapshot ${{ env.TAG }}
-
-          # Rebuild with new versions
-          pnpm build:libs
-
-          # Pack only public packages to create tarballs directly in dist/
-          # This filters out packages with private: true to avoid publishing errors
-          # --pack-destination ensures tarballs are created in dist/ directory
-          pnpm prerelease:public
-
-          # Verify tarballs were created
-          if [ -n "$(ls -A dist/*.tgz 2>/dev/null)" ]; then
-            echo "published=true" >> $GITHUB_OUTPUT
-            ls -lh dist/
-          else
-            echo "published=false" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
-
-      - name: Attest for npmjs.com
-        if: steps.changesets.outputs.published == 'true'
-        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
-        with:
-          subject-path: ./dist
-
-      # The action currently doesn't support pushing the blob to the registry
-      - name: Sign tarball
-        if: steps.changesets.outputs.published == 'true'
-        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
-        with:
-          path: ./dist
-
-      - name: Upload packages to GitHub Artifacts
-        if: steps.changesets.outputs.published == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-snapshot-packages
-          path: dist/*.tgz
-          retention-days: 7
-          if-no-files-found: error
-
-  runner-ledger:
-    name: Publish Snapshot to JFrog
-    needs: public-runner
+  snapshot:
     runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v5
@@ -100,30 +36,51 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
-      - name: Download packages from GitHub Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: npm-snapshot-packages
-          path: dist
+      - name: Build libraries
+        run: pnpm build:libs
 
       - name: Login to internal JFrog registry
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
-      - name: Setup npm config for JFrog
-        env:
-          NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
-        run: |
-          cat << EOF | tee .npmrc
-          enable-pre-post-scripts=true
-          registry=https://${NPM_REGISTRY}/
-          //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
-          EOF
+      # - name: Setup npm config for JFrog
+      #   env:
+      #     NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
+      #   run: |
+      #     cat << EOF | tee .npmrc
+      #     enable-pre-post-scripts=true
+      #     registry=https://${NPM_REGISTRY}/
+      #     //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
+      #     EOF
 
-      - name: Publish snapshot packages to JFrog using pnpm
+      - name: Create dist directory to store tarball
+        run: mkdir -p dist
+
+      - name: create .npmrc
         run: |
-          cd dist
-          shopt -s nullglob
-          for tarball in *.tgz; do
-            pnpm publish "$tarball" --registry https://${NPM_REGISTRY}/ --tag ${{ env.TAG }} --no-git-checks || echo "⚠️ Failed to publish $tarball"
-          done
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=${NPM_TOKEN}
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
+
+      - name: Create and publish snapshot release version
+        id: changesets
+        run: |
+          pnpm bump --snapshot ${{ env.TAG }}
+          pnpm release --snapshot --no-git-tag --tag ${{ env.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+
+      - name: Attest tarball
+        if: steps.changesets.conclusion == 'success'
+        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+        with:
+          subject-path: ./dist
+
+        # The action currently doesn't support pushing the blob to the registry
+      - name: Sign tarball
+        if: steps.changesets.conclusion == 'success'
+        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+        with:
+          path: ./dist
