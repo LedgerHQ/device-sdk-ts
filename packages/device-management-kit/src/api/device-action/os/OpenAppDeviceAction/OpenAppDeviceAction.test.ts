@@ -14,11 +14,16 @@ import {
   DeviceNotOnboardedError,
   UnknownDAError,
 } from "@api/device-action/os/Errors";
+import { getDeviceStatusDAStateStep } from "@api/device-action/os/GetDeviceStatus/types";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { DeviceDisconnectedWhileSendingError } from "@api/transport/model/Errors";
 
 import { OpenAppDeviceAction } from "./OpenAppDeviceAction";
-import type { OpenAppDAError, OpenAppDAState } from "./types";
+import {
+  type OpenAppDAError,
+  type OpenAppDAState,
+  openAppDAStateStep,
+} from "./types";
 
 vi.mock("@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction");
 
@@ -73,15 +78,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarding status
+            status: DeviceActionStatus.Pending, // get onboarding status / list apps / initial step
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // get device status / onboard check
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -126,15 +133,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarding status
+            status: DeviceActionStatus.Pending, // get onboarding status / list apps / initial step
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // get app and version / onboard check / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -182,15 +191,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // get app and version /list apps / initial step
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // get app and version / onboard check / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -261,33 +272,38 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get onboarded status
+            status: DeviceActionStatus.Pending, // get onboarded status / list apps / initial step
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // get device status / onboard check
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // device status after open
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending,
+            status: DeviceActionStatus.Pending, // final device status check
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -337,39 +353,45 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // get app and version / list apps / initial step
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // close app
+            status: DeviceActionStatus.Pending, // get device status / close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // get device status / close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
             status: DeviceActionStatus.Pending, // get app and version
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // get app and version (final)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -457,12 +479,14 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -502,15 +526,17 @@ describe("OpenAppDeviceAction", () => {
 
         const expectedStates: Array<OpenAppDAState> = [
           {
-            status: DeviceActionStatus.Pending, // get app and version
+            status: DeviceActionStatus.Pending, // get app and version / list apps / initial
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // device status / onboard check
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -574,18 +600,21 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get onboarded status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // device status / onboard check
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -651,30 +680,35 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get onboarded status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // onboard check
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // device status after failure
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending,
+            status: DeviceActionStatus.Pending, // final device status check
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -725,18 +759,21 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get onboarded status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // onboard / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
             status: DeviceActionStatus.Pending, // close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -790,24 +827,28 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get onboarded status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // onboard / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
             status: DeviceActionStatus.Pending, // close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -850,12 +891,14 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get onboarded status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // onboard / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -909,18 +952,21 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get device onboarded
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // onboard / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // open app
+            status: DeviceActionStatus.Pending, // open app (confirm)
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -974,18 +1020,21 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get onboarded status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // onboard / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
             status: DeviceActionStatus.Pending, // close app
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
@@ -1031,12 +1080,14 @@ describe("OpenAppDeviceAction", () => {
             status: DeviceActionStatus.Pending, // get device onboarded
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
-            status: DeviceActionStatus.Pending, // get device status
+            status: DeviceActionStatus.Pending, // onboard / device status
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
           },
           {
