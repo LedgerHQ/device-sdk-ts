@@ -1,6 +1,6 @@
 # @ledgerhq/device-signer-kit-ethereum
 
-## 2.0.0
+## 1.9.3
 
 ### Patch Changes
 
