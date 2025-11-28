@@ -13,7 +13,7 @@ import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { LedgerKeyringProtocolBinder } from "@internal/app-binder/LedgerKeyringProtocolBinder";
 
 export type AuthenticateUsecaseInput = {
-  keypair: KeyPair;
+  keyPair: KeyPair;
   clientName: string;
   permissions: Permissions;
 } & (

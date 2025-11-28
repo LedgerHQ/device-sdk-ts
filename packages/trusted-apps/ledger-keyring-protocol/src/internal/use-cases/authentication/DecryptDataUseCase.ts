@@ -45,7 +45,7 @@ export class DecryptDataUseCase {
         ),
     })
       .map(async ({ ephemeralPublicKey, iv, tag, encryptedData }) => {
-        // Derive the shared secret using ECDH with an ephemeral keypair
+        // Derive the shared secret using ECDH with an ephemeral keyPair
         const privateKey = this.cryptoService.importKeyPair(
           encryptionKey,
           Curve.K256,

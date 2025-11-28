@@ -10,14 +10,14 @@ import { SignChallengeWithKeypairTask } from "./SignChallengeWithKeypairTask";
 const cryptoService = new NobleCryptoService();
 
 describe("SignChallengeWithKeypairTask", () => {
-  it("should sign a challenge with a keypair", async () => {
+  it("should sign a challenge with a keyPair", async () => {
     // GIVEN
-    const { challenge, keypair, trustchainId } = getParameters();
+    const { challenge, keyPair, trustchainId } = getParameters();
 
     // WHEN
     const task = new SignChallengeWithKeypairTask(
       cryptoService,
-      keypair,
+      keyPair,
       trustchainId,
     );
     const result = await task.run(challenge).run();
@@ -30,7 +30,7 @@ describe("SignChallengeWithKeypairTask", () => {
         version: 0,
         curveId: 33,
         signAlgorithm: 1,
-        publicKey: keypair.getPublicKeyToHex(),
+        publicKey: keyPair.getPublicKeyToHex(),
       });
       expect(payload.signature.attestation).toBe(
         "0242303062373538386231393136633036373635343632656266343530363734346665323565643164623831393635326532646562613732313338393738396364633337",
@@ -43,14 +43,14 @@ describe("SignChallengeWithKeypairTask", () => {
 
   it("should handle invalid challenge", async () => {
     // GIVEN
-    const { challenge, keypair, trustchainId } = getParameters({
+    const { challenge, keyPair, trustchainId } = getParameters({
       tlv: "invalid-tlv", // Invalid TLV
     });
 
     // WHEN
     const task = new SignChallengeWithKeypairTask(
       cryptoService,
-      keypair,
+      keyPair,
       trustchainId,
     );
     const result = await task.run(challenge).run();
@@ -69,7 +69,7 @@ function getParameters({
 } = {}) {
   return {
     challenge: { tlv, json: {} as Challenge["json"] },
-    keypair: cryptoService.importKeyPair(
+    keyPair: cryptoService.importKeyPair(
       hexaStringToBuffer(privateKey)!,
       Curve.K256,
     ),

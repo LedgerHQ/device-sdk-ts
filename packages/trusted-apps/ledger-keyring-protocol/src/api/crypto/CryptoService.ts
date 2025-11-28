@@ -24,10 +24,10 @@ export interface CryptoService {
   // Compute a HMAC
   hmac(key: Uint8Array, message: Uint8Array, algo: HashAlgo): Uint8Array;
 
-  // Generate a new random keypair
+  // Generate a new random keyPair
   createKeyPair(curve: Curve): Promise<KeyPair>;
 
-  // Import a keypair
+  // Import a keyPair
   importKeyPair(privateKey: Uint8Array, curve: Curve): KeyPair;
 
   // Generate a new random symmetric key

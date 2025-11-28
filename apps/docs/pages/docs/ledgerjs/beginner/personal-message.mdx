@@ -1,11 +1,4 @@
----
-title: Sign a personal message
-description: In this section, we will guide you through the creation of a web application. This application will connect to your Nano and will display the “test“ message to be signed with an Ethereum account using the personal sign message functionality introduced by EIP-191.
----
-
 import { Callout } from "nextra/components";
-import Zoom from "react-medium-image-zoom";
-import "react-medium-image-zoom/dist/styles.css";
 import Image from "next/image";
 
 # Sign a personal message
@@ -22,7 +15,7 @@ This tutorial will let you sign a message with your private key in order to veri
 
 ## Tutorial Prerequisites
 
-- Ensure you have gone through the [prerequisites](../getting-started#prerequisites).
+- Ensure you have gone through the [prerequisites](../info#prerequisites).
 - Install or update your Ethereum Embedded App to the version 1.9.19 or later.
 
 ## Coding
@@ -309,6 +302,4 @@ ethers.verifyMessage(
 
 2. Run your code, it should now display the Ethereum address linked to the signed message (the run can take a bit of time):
 
-<Zoom>
-  <img alt="Runkit" src="/device-interaction/runkit-verification.png" />
-</Zoom>
+<img alt="Runkit" src="/device-interaction/runkit-verification.png" />

@@ -1,0 +1,52 @@
+{
+  "name": "@ledgerhq/ethereum-clear-signing-tester",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
+  "main": "test-ethereum-transactions.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    }
+  },
+  "scripts": {
+    "cli": "tsx src/cli/EthereumTransactionTesterCli.ts",
+    "build": "tsc",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "test:raw:erc20": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-erc20.json",
+    "test:raw:complete": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-complete.json",
+    "test:raw:multisig": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-multisig.json",
+    "test:typed-data:multisig": "tsx src/cli/EthereumTransactionTesterCli.ts typed-data-file ./ressources/typed-data-multisig.json",
+    "test:full": "scripts/test-full.mjs"
+  },
+  "dependencies": {
+    "@ledgerhq/context-module": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
+    "@ledgerhq/device-transport-kit-speculos": "workspace:*",
+    "@ledgerhq/speculos-device-controller": "workspace:*",
+    "axios": "catalog:",
+    "commander": "catalog:",
+    "ethers": "catalog:",
+    "inversify": "catalog:",
+    "rxjs": "catalog:",
+    "semver": "catalog:"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@types/semver": "catalog:",
+    "concurrently": "catalog:",
+    "ts-node": "catalog:",
+    "tsx": "catalog:"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-sdk-ui",
+  "name": "@ledgerhq/device-management-kit-ui",
   "version": "1.0.1",
   "license": "Apache-2.0",
   "private": true,

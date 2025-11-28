@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.11.2
+
+### Patch Changes
+
+- [#1146](https://github.com/LedgerHQ/device-sdk-ts/pull/1146) [`eb243bb`](https://github.com/LedgerHQ/device-sdk-ts/commit/eb243bb343ae5f6434c0c33147f9d11b79c8c3ea) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add device ID to secure channel intermediate values
+
 ## 0.11.1
 
 ### Patch Changes

@@ -154,6 +154,9 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
                   requiredUserInteraction:
                     _.event.snapshot.context.intermediateValue
                       .requiredUserInteraction,
+                  deviceId:
+                    _.event.snapshot.context.intermediateValue.deviceId ??
+                    _.context.intermediateValue.deviceId,
                 }),
               }),
             },
@@ -233,6 +236,9 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
                       .requiredUserInteraction,
                   installPlan:
                     _.event.snapshot.context.intermediateValue.installPlan,
+                  deviceId:
+                    _.event.snapshot.context.intermediateValue.deviceId ??
+                    _.context.intermediateValue.deviceId,
                 }),
               }),
             },

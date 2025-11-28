@@ -26,7 +26,7 @@ export class LKRPUnauthorizedError extends GeneralDmkError {
   override _tag = "LedgerKeyringProtocolError";
   constructor(
     readonly trustchainId: string | null = null,
-    readonly message: string = `Current keypair is not a member of the trustchain${trustchainId ? ` ${trustchainId}` : ""}.`,
+    readonly message: string = `Current keyPair is not a member of the trustchain${trustchainId ? ` ${trustchainId}` : ""}.`,
   ) {
     super(message);
   }

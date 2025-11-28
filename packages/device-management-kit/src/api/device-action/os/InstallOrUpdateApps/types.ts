@@ -91,6 +91,7 @@ export type InstallOrUpdateAppsDARequiredInteraction =
 export type InstallOrUpdateAppsDAIntermediateValue = {
   requiredUserInteraction: InstallOrUpdateAppsDARequiredInteraction;
   installPlan: InstallPlan | null;
+  deviceId?: Uint8Array;
 };
 
 export type InstallOrUpdateAppsDAState = DeviceActionState<

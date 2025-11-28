@@ -27,7 +27,7 @@ export type AddToTrustchainDAInput = Either<
   {
     readonly lkrpDataSource: LKRPDataSource;
     readonly cryptoService: CryptoService;
-    readonly keypair: KeyPair;
+    readonly keyPair: KeyPair;
     readonly jwt: JWT;
     readonly appId: number;
     readonly trustchain: Trustchain;

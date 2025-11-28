@@ -59,7 +59,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Authenticate",
         description:
-          "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keypair of a previouly added member is required. (Valid permissions are: OWNER, CAN_ENCRYPT, CAN_DERIVE, CAN_ADD_BLOCK).",
+          "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keyPair of a previouly added member is required. (Valid permissions are: OWNER, CAN_ENCRYPT, CAN_DERIVE, CAN_ADD_BLOCK).",
         executeDeviceAction: ({
           privateKey,
           clientName,
@@ -71,14 +71,14 @@ export const LedgerKeyringProtocolView: React.FC = () => {
           }
 
           const cryptoService = new NobleCryptoService();
-          const keypair = cryptoService.importKeyPair(
+          const keyPair = cryptoService.importKeyPair(
             hexaStringToBuffer(privateKey)!,
             Curve.K256,
           );
 
           try {
             const authentication = app.authenticate({
-              keypair,
+              keyPair,
               clientName,
               permissions: parsePermissions(permissionsExpr),
               trustchainId,
@@ -95,7 +95,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
 
                     case DeviceActionStatus.Completed: {
                       const { output } = res;
-                      const pubkey = keypair.getPublicKeyToHex();
+                      const pubkey = keyPair.getPublicKeyToHex();
                       const identity = {
                         jwt: null,
                         trustchain: {

@@ -7,7 +7,6 @@ import {
   DeviceSessionStateType,
   DeviceStatus,
   UnknownDAError,
-  UnknownDeviceExchangeError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
@@ -717,6 +716,110 @@ describe("SignTypedDataDeviceAction", () => {
           onDone: resolve,
         });
       }));
+
+    it("should not fallback to legacy signing if rejected by the user during signing", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule as unknown as ContextModule,
+            parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
+            skipOpenApp: false,
+          },
+        });
+
+        // Mock user rejection during SignTypedData step
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6985",
+              message: "User refused",
+            }),
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: EthAppCommandErrorFactory({
+              errorCode: "6985",
+              message: "User refused",
+            }),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
   });
 
   describe("error cases", () => {
@@ -847,7 +950,7 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
-    it("Error while signing", () =>
+    it("Error while signing should fallback to legacy signing", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
@@ -869,7 +972,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
         });
 
-        // Mock signing error
+        // Mock signing error that should fallback to legacy
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
@@ -879,9 +982,19 @@ describe("SignTypedDataDeviceAction", () => {
         );
         signTypedDataMock.mockResolvedValueOnce(
           CommandResultFactory({
-            error: new UnknownDeviceExchangeError(
-              "Error while signing the typed data",
-            ),
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data",
+            }),
+          }),
+        );
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
           }),
         );
 
@@ -936,9 +1049,137 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new UnknownDeviceExchangeError(
-              "Error while signing the typed data",
-            ),
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
+
+    it("Error if both signing and legacy signing fail", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule as unknown as ContextModule,
+            parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
+            skipOpenApp: false,
+          },
+        });
+
+        // Mock both signing methods to fail
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data",
+            }),
+          }),
+        );
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data with legacy",
+            }),
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data with legacy",
+            }),
             status: DeviceActionStatus.Error,
           },
         ];
