@@ -1,5 +1,16 @@
 # @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol
 
+## 0.4.0
+
+### Minor Changes
+
+- [#1135](https://github.com/LedgerHQ/device-sdk-ts/pull/1135) [`97d3d22`](https://github.com/LedgerHQ/device-sdk-ts/commit/97d3d222a5bb4fed20ce8a3c175ca2c01aac94bc) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - rename keypair to keyPair
+
+### Patch Changes
+
+- Updated dependencies [[`eb243bb`](https://github.com/LedgerHQ/device-sdk-ts/commit/eb243bb343ae5f6434c0c33147f9d11b79c8c3ea)]:
+  - @ledgerhq/device-management-kit@0.11.2
+
 ## 0.3.1
 
 ### Patch Changes

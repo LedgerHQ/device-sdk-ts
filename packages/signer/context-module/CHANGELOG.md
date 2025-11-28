@@ -1,5 +1,20 @@
 # @ledgerhq/context-module
 
+## 1.11.0
+
+### Minor Changes
+
+- [#1138](https://github.com/LedgerHQ/device-sdk-ts/pull/1138) [`c79bce9`](https://github.com/LedgerHQ/device-sdk-ts/commit/c79bce92fd0832bbe405e3ef5b452efb6a448a51) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add support to LiFi in Solana signer
+
+- [#1138](https://github.com/LedgerHQ/device-sdk-ts/pull/1138) [`29d4c1c`](https://github.com/LedgerHQ/device-sdk-ts/commit/29d4c1cafdfe3f365fe90d685bdd3a5bdf87db61) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix sign Transaction descriptors bug
+
+- [#1138](https://github.com/LedgerHQ/device-sdk-ts/pull/1138) [`c723a92`](https://github.com/LedgerHQ/device-sdk-ts/commit/c723a9254ab4f243047602702e762759bc8d03c4) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Refactor ClearSignContext type and added new SolanaContextType in ContextModule
+
+### Patch Changes
+
+- Updated dependencies [[`eb243bb`](https://github.com/LedgerHQ/device-sdk-ts/commit/eb243bb343ae5f6434c0c33147f9d11b79c8c3ea)]:
+  - @ledgerhq/device-management-kit@0.11.2
+
 ## 1.10.0
 
 ### Minor Changes

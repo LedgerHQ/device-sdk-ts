@@ -1,5 +1,15 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 2.0.0
+
+### Patch Changes
+
+- [#1154](https://github.com/LedgerHQ/device-sdk-ts/pull/1154) [`216cd8b`](https://github.com/LedgerHQ/device-sdk-ts/commit/216cd8b10caafa12688092940b87ac2b61266aba) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fallback to bling signing if failure occurs at SignTypedData step
+
+- Updated dependencies [[`c79bce9`](https://github.com/LedgerHQ/device-sdk-ts/commit/c79bce92fd0832bbe405e3ef5b452efb6a448a51), [`29d4c1c`](https://github.com/LedgerHQ/device-sdk-ts/commit/29d4c1cafdfe3f365fe90d685bdd3a5bdf87db61), [`eb243bb`](https://github.com/LedgerHQ/device-sdk-ts/commit/eb243bb343ae5f6434c0c33147f9d11b79c8c3ea), [`c723a92`](https://github.com/LedgerHQ/device-sdk-ts/commit/c723a9254ab4f243047602702e762759bc8d03c4)]:
+  - @ledgerhq/context-module@1.11.0
+  - @ledgerhq/device-management-kit@0.11.2
+
 ## 1.9.2
 
 ### Patch Changes
