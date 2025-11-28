@@ -9,9 +9,7 @@ A new release is being prepared with the latest updates, improvements, and fixes
 
 ## 📦 Release Information
 
-<!--
-Delete unused package/version lines below and replace version comment with the correct released version number.
--->
+<!-- Release information -->
 
 ### Packages
 
@@ -36,15 +34,17 @@ Delete unused package/version lines below and replace version comment with the c
 - **Device Transport Kit Web BLE**: <!-- version -->
 - **Device Transport Kit Web HID**: <!-- version -->
 
+<!-- End Release information -->
+
 ## 📋 Release Checklist
 
 - [ ] Create new branch from `develop`: `release`
-- [ ] Create Pull Request targeting `main` using template `gh pr create -B main --title "🔖 (release) [NO-ISSUE]: New release incoming" -T .github/pull_request_release_template.md`
+- [ ] Create Pull Request targeting `main` using `pnpm ldmk-tool create-release-pr` or manually using template `gh pr create -B main --title "🔖 (release) [NO-ISSUE]: New release incoming" -F .github/pull_request_release_template.md`
 - [ ] Run `pnpm ldmk-tool enter-release` and select packages to release
-- [ ] Run `pnpm bump` to consume changesets and generate `CHANGELOG.md` files:
+- [ ] Run `pnpm ldmk-tool bump` to consume changesets and generate `CHANGELOG.md` files:
   - [ ] Ensure `GITHUB_TOKEN` environment variable is set with SSO
-  - [ ] Manually verify all generated versions
-  - [ ] Check peer dependencies versions (changeset bug workaround)
+  - [ ] **Manually verify all generated versions**
+  - [ ] **Check peer dependencies versions (changeset bug workaround)**
 - [ ] Quality Assurance:
   - [ ] Test in Sample App
   - [ ] Review and update documentation
