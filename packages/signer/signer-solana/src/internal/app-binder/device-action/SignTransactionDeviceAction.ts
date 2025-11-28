@@ -20,6 +20,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
+  signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
@@ -40,7 +41,7 @@ import {
 } from "@internal/app-binder/task/BuildTransactionContextTask";
 import {
   ProvideSolanaTransactionContextTask,
-  type SolanaContextForDevice,
+  type ProvideSolanaTransactionContextTaskContext,
 } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
@@ -52,7 +53,7 @@ export type MachineDependencies = {
     input: BuildTransactionContextTaskArgs;
   }) => Promise<SolanaBuildContextResult>;
   readonly provideContext: (arg0: {
-    input: SolanaContextForDevice;
+    input: ProvideSolanaTransactionContextTaskContext;
   }) => Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>>;
   readonly inspectTransaction: (arg0: {
     serializedTransaction: Uint8Array;
@@ -172,6 +173,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         input,
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
+          step: signTransactionDAStateSteps.OPEN_APP,
         },
         _internalState: {
           error: null,
@@ -189,9 +191,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         OpenAppDeviceAction: {
-          exit: assign({
+          entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.OPEN_APP,
             }),
           }),
           invoke: {
@@ -200,8 +203,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             input: () => ({ appName: "Solana" }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: ({ event }) =>
-                  event.snapshot.context.intermediateValue,
+                intermediateValue: ({ event }) => ({
+                  ...event.snapshot.context.intermediateValue,
+                  step: signTransactionDAStateSteps.OPEN_APP,
+                }),
               }),
             },
             onDone: {
@@ -229,6 +234,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.GET_APP_CONFIG,
             }),
           }),
           invoke: {
@@ -259,6 +265,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         InspectTransaction: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+            }),
+          }),
           invoke: {
             id: "inspectTransaction",
             src: "inspectTransaction",
@@ -295,6 +307,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
             }),
           }),
           invoke: {
@@ -308,6 +321,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
+                  tokenInternalId:
+                    context.input.transactionOptions
+                      ?.transactionResolutionContext?.tokenInternalId,
+                  templateId:
+                    context.input.transactionOptions
+                      ?.transactionResolutionContext?.templateId,
                 },
               };
             },
@@ -318,11 +337,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     solanaTransactionContext: {
-                      descriptor: event.output.descriptor,
-                      certificate: event.output.calCertificate,
-                      tokenAccount: event.output.addressResult.tokenAccount,
-                      owner: event.output.addressResult.owner,
-                      contract: event.output.addressResult.contract,
+                      tlvDescriptor: event.output.tlvDescriptor,
+                      trustedNamePKICertificate:
+                        event.output.trustedNamePKICertificate,
+                      loadersResults: event.output.loadersResults,
                     },
                   }),
                 }),
@@ -338,6 +356,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
             }),
           }),
           invoke: {
@@ -349,7 +368,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   "Solana transaction context is not available",
                 );
               }
-              return context._internalState.solanaTransactionContext;
+              return {
+                ...context._internalState.solanaTransactionContext,
+                transactionBytes: context.input.transaction,
+              };
             },
             onDone: {
               target: "ProvideContextResultCheck",
@@ -370,11 +392,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            },
-          }),
-          exit: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             },
           }),
           invoke: {
@@ -412,6 +430,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                       error: new UnknownDAError("No Signature available"),
                     };
                   },
+                  intermediateValue: {
+                    requiredUserInteraction: UserInteractionRequired.None,
+                    step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+                  },
                 }),
               ],
             },
@@ -448,7 +470,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: BuildTransactionContextTaskArgs;
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
-    const provideContext = async (arg0: { input: SolanaContextForDevice }) =>
+    const provideContext = async (arg0: {
+      input: ProvideSolanaTransactionContextTaskContext;
+    }) =>
       new ProvideSolanaTransactionContextTask(internalApi, arg0.input).run();
 
     const inspectTransaction = async (arg0: {
@@ -457,12 +481,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       rpcUrl?: string;
     }) =>
       Promise.resolve(
-        new TransactionInspector(
+        new TransactionInspector(arg0.rpcUrl).inspectTransactionType(
           arg0.serializedTransaction,
           arg0.resolutionContext?.tokenAddress,
           arg0.resolutionContext?.createATA,
-          arg0.rpcUrl,
-        ).inspectTransactionType(),
+        ),
       );
 
     const signTransaction = async (arg0: {

@@ -4,4 +4,6 @@ export type TransactionResolutionContext = {
     address: string;
     mintAddress: string;
   };
+  tokenInternalId?: string;
+  templateId?: string;
 };

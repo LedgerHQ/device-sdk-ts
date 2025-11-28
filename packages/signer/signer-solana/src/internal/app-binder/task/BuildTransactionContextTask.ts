@@ -1,6 +1,7 @@
 import {
   type ContextModule,
   type PkiCertificate,
+  type SolanaContextLoaderResults,
 } from "@ledgerhq/context-module";
 import {
   type InternalApi,
@@ -11,14 +12,9 @@ import { type TransactionResolutionContext } from "@api/model/TransactionResolut
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
 export type SolanaBuildContextResult = {
-  challenge: string | undefined;
-  addressResult: {
-    tokenAccount: string;
-    owner: string;
-    contract: string;
-  };
-  calCertificate: PkiCertificate;
-  descriptor: Uint8Array;
+  trustedNamePKICertificate: PkiCertificate;
+  tlvDescriptor: Uint8Array;
+  loadersResults: SolanaContextLoaderResults;
 };
 
 export type BuildTransactionContextTaskArgs = {
@@ -49,6 +45,8 @@ export class BuildTransactionContextTask {
       tokenAddress: options.tokenAddress,
       challenge,
       createATA: options.createATA,
+      tokenInternalId: options.tokenInternalId,
+      templateId: options.templateId,
     });
 
     return contextResult.caseOf({
@@ -57,14 +55,9 @@ export class BuildTransactionContextTask {
       },
       Right: (ctx) => {
         return {
-          challenge,
-          descriptor: ctx.descriptor,
-          addressResult: {
-            tokenAccount: ctx.tokenAccount,
-            owner: ctx.owner,
-            contract: ctx.contract,
-          },
-          calCertificate: ctx.certificate,
+          tlvDescriptor: ctx.tlvDescriptor,
+          trustedNamePKICertificate: ctx.trustedNamePKICertificate,
+          loadersResults: ctx.loadersResults,
         };
       },
     });
