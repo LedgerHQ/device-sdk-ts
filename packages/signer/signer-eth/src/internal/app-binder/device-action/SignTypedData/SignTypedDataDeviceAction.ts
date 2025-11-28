@@ -499,6 +499,13 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
           },
         },
+        SignTypedDataResultCheck: {
+          always: [
+            { guard: "noInternalError", target: "Success" },
+            { guard: "notRefusedByUser", target: "SignTypedDataLegacy" },
+            { target: "Error" },
+          ],
+        },
         SignTypedDataLegacy: {
           entry: assign({
             intermediateValue: {
@@ -514,7 +521,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               data: context.input.data,
             }),
             onDone: {
-              target: "SignTypedDataResultCheck",
+              target: "SignTypedDataLegacyResultCheck",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -538,7 +545,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        SignTypedDataResultCheck: {
+        SignTypedDataLegacyResultCheck: {
           always: [
             { guard: "noInternalError", target: "Success" },
             { target: "Error" },
