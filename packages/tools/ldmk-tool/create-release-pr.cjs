@@ -85,7 +85,11 @@ const createReleasePullRequest = async () => {
     if (pkgJson.name === "@ledgerhq/device-management-kit") {
       dmkVersions += `- **${displayName}**: ${pkgJson.version}\n`;
       titleVersions += `${displayName} ${pkgJson.version}, `;
-    } else if (pkgJson.name.includes("@ledgerhq/device-signer-kit-")) {
+    } else if (
+      pkgJson.name.includes("@ledgerhq/device-signer-kit-") ||
+      pkgJson.name === "@ledgerhq/context-module" ||
+      pkgJson.name === "@ledgerhq/signer-utils"
+    ) {
       signerKitVersions += `- **${displayName}**: ${pkgJson.version}\n`;
       titleVersions += `${displayName} ${pkgJson.version}, `;
     } else if (pkgJson.name.includes("@ledgerhq/device-transport-kit-")) {
