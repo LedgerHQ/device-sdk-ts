@@ -15,12 +15,16 @@ import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDe
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
+import { listAppsDAStateStep } from "@api/device-action/os/ListApps/types";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 
 import { ListAppsWithMetadataDeviceAction } from "./ListAppsWithMetadataDeviceAction";
-import { type ListAppsWithMetadataDAState } from "./types";
+import {
+  type ListAppsWithMetadataDAState,
+  listAppsWithMetadataDAStateStep,
+} from "./types";
 
 vi.mock("@api/device-action/os/ListApps/ListAppsDeviceAction");
 
@@ -61,12 +65,14 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
@@ -103,24 +109,28 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // FetchMetadata
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // SaveSession
           },
@@ -159,24 +169,28 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // FetchMetadata
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // SaveSession
           },
@@ -217,24 +231,28 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // FetchMetadata
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // SaveSession
           },
@@ -269,12 +287,14 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
@@ -313,18 +333,21 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // FetchMetadata
           },
@@ -363,18 +386,21 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // FetchMetadata
           },
@@ -427,24 +453,28 @@ describe("ListAppsWithMetadataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // Ready
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // ListAppsDeviceAction
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // FetchMetadata
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: listAppsWithMetadataDAStateStep.LIST_APPS,
             },
             status: DeviceActionStatus.Pending, // SaveSession
           },
