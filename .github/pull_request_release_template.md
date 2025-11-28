@@ -39,12 +39,12 @@ A new release is being prepared with the latest updates, improvements, and fixes
 ## 📋 Release Checklist
 
 - [ ] Create new branch from `develop`: `release`
-- [ ] Create Pull Request targeting `main` using `pnpm ldmk-tool create-release-pr` or manually using template `gh pr create -B main --title "🔖 (release) [NO-ISSUE]: New release incoming" -F .github/pull_request_release_template.md`
 - [ ] Run `pnpm ldmk-tool enter-release` and select packages to release
 - [ ] Run `pnpm ldmk-tool bump` to consume changesets and generate `CHANGELOG.md` files:
   - [ ] Ensure `GITHUB_TOKEN` environment variable is set with SSO
   - [ ] **Manually verify all generated versions**
   - [ ] **Check peer dependencies versions (changeset bug workaround)**
+- [ ] Create Pull Request targeting `main` using `pnpm ldmk-tool create-release-pr` or manually using template `gh pr create -B main --title "🔖 (release) [NO-ISSUE]: New release incoming" -F .github/pull_request_release_template.md`
 - [ ] Quality Assurance:
   - [ ] Test in Sample App
   - [ ] Review and update documentation
