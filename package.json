@@ -42,8 +42,6 @@
     "mobile": "pnpm --filter @ledgerhq/device-management-kit-mobile-sample",
     "doc": "pnpm --filter @ledgerhq/ledger-dmk-docs",
     "cs-tester": "pnpm --filter @ledgerhq/ethereum-clear-signing-tester",
-    "prerelease": "pnpm recursive exec -- pnpm pack",
-    "release": "changeset publish",
     "changelog": "changeset add",
     "commit": "gitmoji -c",
     "commitcl": "pnpm changelog && git add .changeset && pnpm commit",
