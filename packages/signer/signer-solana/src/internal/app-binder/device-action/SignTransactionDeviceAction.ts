@@ -24,7 +24,10 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
-import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
+import {
+  type TransactionResolutionContext,
+  type UserInputType,
+} from "@api/model/TransactionResolutionContext";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -402,6 +405,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               return {
                 derivationPath: context.input.derivationPath,
                 serializedTransaction: context.input.transaction,
+                userInputType:
+                  context.input.transactionOptions?.transactionResolutionContext
+                    ?.userInputType,
               };
             },
             onDone: {
@@ -492,6 +498,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: {
         derivationPath: string;
         serializedTransaction: Uint8Array;
+        userInputType?: UserInputType;
       };
     }) =>
       new SignDataTask(internalApi, {
@@ -500,6 +507,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             serializedTransaction: args.chunkedData,
             more: args.more,
             extend: args.extend,
+            userInputType: arg0.input.userInputType,
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,

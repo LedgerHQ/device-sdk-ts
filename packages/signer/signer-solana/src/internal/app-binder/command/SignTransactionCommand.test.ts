@@ -6,6 +6,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
+import { UserInputType } from "@api/model/TransactionResolutionContext";
+
 import {
   SignTransactionCommand,
   type SignTransactionCommandArgs,
@@ -115,6 +117,46 @@ describe("SignTransactionCommand", () => {
       expect(apdu.ins).toBe(0x06);
       expect(apdu.p1).toBe(0x01);
       expect(apdu.p2).toBe(0x03);
+    });
+
+    it("should set the ATA userInputType flag in p2", () => {
+      // GIVEN
+      const command = new SignTransactionCommand({
+        ...defaultArgs,
+        userInputType: UserInputType.ata,
+      });
+
+      // WHEN
+      const apdu = command.getApdu();
+
+      // THEN
+      expect(apdu.data).toStrictEqual(new Uint8Array());
+      expect(apdu.cla).toBe(0xe0);
+      expect(apdu.ins).toBe(0x06);
+      expect(apdu.p1).toBe(0x01);
+      // 0x08 bit set for ATA, no more/extend
+      expect(apdu.p2).toBe(0x08);
+    });
+
+    it("should combine ATA userInputType flag with more and extend flags in p2", () => {
+      // GIVEN
+      const command = new SignTransactionCommand({
+        serializedTransaction: new Uint8Array([0x01, 0x02]),
+        more: true,
+        extend: true,
+        userInputType: UserInputType.ata,
+      });
+
+      // WHEN
+      const apdu = command.getApdu();
+
+      // THEN
+      expect(apdu.data).toStrictEqual(new Uint8Array([0x01, 0x02]));
+      expect(apdu.cla).toBe(0xe0);
+      expect(apdu.ins).toBe(0x06);
+      expect(apdu.p1).toBe(0x01);
+      // 0x08 (ATA) | 0x02 (more) | 0x01 (extend) = 0x0b
+      expect(apdu.p2).toBe(0x0b);
     });
   });
 
