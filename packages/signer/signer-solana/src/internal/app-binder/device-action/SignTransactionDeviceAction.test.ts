@@ -214,15 +214,15 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
+          loggerFactory: loggerFactoryStub,
           transactionOptions: {
             skipOpenApp: true,
             transactionResolutionContext: {
-              // Only care about userInputType for this test
               userInputType: UserInputType.ATA,
             } as any,
           },
           contextModule: contextModuleStub,
-        } as SignTransactionDAInput,
+        },
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 

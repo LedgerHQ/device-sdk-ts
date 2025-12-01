@@ -36,7 +36,7 @@ export const makeContainer = ({
       (tag: string) => LoggerPublisherService
     >(externalTypes.DmkLoggerFactory)
     .toConstantValue((tag: string) =>
-      dmk.getDMKLoggerFactory()(`SignerSolana-${tag}`),
+      dmk.getLoggerFactory()(`SignerSolana-${tag}`),
     );
 
   container.loadSync(appBinderModuleFactory(), useCasesModuleFactory());

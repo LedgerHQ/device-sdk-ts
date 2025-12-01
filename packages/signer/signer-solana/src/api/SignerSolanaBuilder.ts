@@ -65,7 +65,7 @@ export class SignerSolanaBuilder {
         new ContextModuleBuilder({
           originToken: this._originToken,
           loggerFactory: (tag: string) =>
-            this._dmk.getDMKLoggerFactory()(`SignerSolanaContextModule-${tag}`),
+            this._dmk.getLoggerFactory()(`SignerSolanaContextModule-${tag}`),
         }).build(),
     });
   }

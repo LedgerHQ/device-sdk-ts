@@ -344,7 +344,7 @@ export class DeviceManagementKit {
   /**
    * Returns the DMK logger factory with configured logger subscribers.
    */
-  getDMKLoggerFactory(): Factory<LoggerPublisherService> {
+  getLoggerFactory(): Factory<LoggerPublisherService> {
     return this.container.get(loggerTypes.LoggerPublisherServiceFactory);
   }
 }
