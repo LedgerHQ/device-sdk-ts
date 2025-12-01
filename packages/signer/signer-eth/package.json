@@ -35,7 +35,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "workspace:*",
+    "@ledgerhq/signer-utils": "workspace:^",
     "ethers": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
@@ -44,19 +44,19 @@
     "xstate": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/context-module": "workspace:*",
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@types/semver": "catalog:",
     "rxjs": "catalog:",
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/context-module": "workspace:*",
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

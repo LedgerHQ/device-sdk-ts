@@ -12,10 +12,10 @@
     "start": "react-native start"
   },
   "dependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/device-mockserver-client": "workspace:*",
-    "@ledgerhq/device-transport-kit-react-native-ble": "workspace:*",
-    "@ledgerhq/device-transport-kit-react-native-hid": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-mockserver-client": "workspace:^",
+    "@ledgerhq/device-transport-kit-react-native-ble": "workspace:^",
+    "@ledgerhq/device-transport-kit-react-native-hid": "workspace:^",
     "@ledgerhq/native-ui": "catalog:",
     "@react-navigation/bottom-tabs": "catalog:",
     "@react-navigation/material-top-tabs": "catalog:",
@@ -39,7 +39,7 @@
     "@babel/core": "catalog:",
     "@babel/preset-env": "catalog:",
     "@babel/runtime": "catalog:",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@react-native-community/cli": "catalog:",
     "@react-native-community/cli-platform-android": "catalog:",
     "@react-native-community/cli-platform-ios": "catalog:",
