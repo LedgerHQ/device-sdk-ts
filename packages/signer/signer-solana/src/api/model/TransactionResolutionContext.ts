@@ -6,4 +6,10 @@ export type TransactionResolutionContext = {
   };
   tokenInternalId?: string;
   templateId?: string;
+  userInputType?: UserInputType;
 };
+
+export enum UserInputType {
+  SOL = "sol",
+  ATA = "ata",
+}
