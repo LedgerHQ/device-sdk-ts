@@ -227,51 +227,36 @@ export class DeviceSession {
     options: SendApduOptions = {
       isPolling: false,
       triggersDisconnection: false,
+      abortTimeout: undefined,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
-    const abortTimeout = (options as SendApduOptions).abortTimeout;
+    this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
+    const result = await this._connectedDevice.sendApdu(
+      rawApdu,
+      options.triggersDisconnection,
+      options.abortTimeout,
+    );
 
-    const sendApduPromise = async () => {
-      this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
-      const result = await this._connectedDevice.sendApdu(
-        rawApdu,
-        options.triggersDisconnection,
-        abortTimeout,
-      );
-
-      result
-        .ifRight((response: ApduResponse) => {
-          this._logger.debug(
-            `[exchange] <= ${bufferToHexaString(response.data, false)}${bufferToHexaString(response.statusCode, false)}`,
-          );
-          if (CommandUtils.isLockedDeviceResponse(response)) {
-            this._sessionEventDispatcher.dispatch({
-              eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
-            });
-          } else {
-            this._sessionEventDispatcher.dispatch({
-              eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
-            });
-          }
-        })
-        .ifLeft(() => {
+    return result
+      .ifRight((response: ApduResponse) => {
+        this._logger.debug(
+          `[exchange] <= ${bufferToHexaString(response.data, false)}${bufferToHexaString(response.statusCode, false)}`,
+        );
+        if (CommandUtils.isLockedDeviceResponse(response)) {
           this._sessionEventDispatcher.dispatch({
-            eventName: SessionEvents.DEVICE_STATE_UPDATE_UNKNOWN,
+            eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
           });
+        } else {
+          this._sessionEventDispatcher.dispatch({
+            eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
+          });
+        }
+      })
+      .ifLeft(() => {
+        this._sessionEventDispatcher.dispatch({
+          eventName: SessionEvents.DEVICE_STATE_UPDATE_UNKNOWN,
         });
-      return result;
-    };
-
-    if (abortTimeout) {
-      return Promise.race([
-        sendApduPromise(),
-        new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new SendApduTimeoutError()), abortTimeout);
-        }),
-      ]);
-    }
-
-    return sendApduPromise();
+      });
   }
 
   public sendCommand<Response, Args, ErrorStatusCodes>(
@@ -328,41 +313,28 @@ export class DeviceSession {
     command: Command<Response, Args, ErrorStatusCodes>,
     abortTimeout?: number,
   ): Promise<CommandResult<Response, ErrorStatusCodes>> {
-    const sendCommandPromise = async () => {
-      const apdu = command.getApdu();
+    const apdu = command.getApdu();
 
-      const response = await this._unsafeInternalSendApdu(apdu.getRawApdu(), {
-        isPolling: false,
-        triggersDisconnection: command.triggersDisconnection ?? false,
-        abortTimeout,
-      });
+    const response = await this._unsafeInternalSendApdu(apdu.getRawApdu(), {
+      isPolling: false,
+      triggersDisconnection: command.triggersDisconnection ?? false,
+      abortTimeout,
+    });
 
-      return response.caseOf({
-        Left: (err) => {
-          this._logger.error("[sendCommand] error", { data: { err } });
-          throw err;
-        },
-        Right: (r) => {
-          const result = command.parseResponse(
-            r,
-            this._connectedDevice.deviceModel.id,
-          );
-          this._logger.debug("[sendCommand] result", { data: { result } });
-          return result;
-        },
-      });
-    };
-
-    if (abortTimeout) {
-      return Promise.race([
-        sendCommandPromise(),
-        new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new SendCommandTimeoutError()), abortTimeout);
-        }),
-      ]);
-    }
-
-    return sendCommandPromise();
+    return response.caseOf({
+      Left: (err) => {
+        this._logger.error("[sendCommand] error", { data: { err } });
+        throw err;
+      },
+      Right: (r) => {
+        const result = command.parseResponse(
+          r,
+          this._connectedDevice.deviceModel.id,
+        );
+        this._logger.debug("[sendCommand] result", { data: { result } });
+        return result;
+      },
+    });
   }
 
   public executeDeviceAction<
@@ -388,19 +360,25 @@ export class DeviceSession {
   >(
     deviceAction: DeviceAction<Output, Input, E, IntermediateValue>,
   ): ExecuteDeviceActionReturnType<Output, E, IntermediateValue> {
-    const { observable: o, cancel: c } = this._intentQueueService.enqueue({
-      type: "device-action",
-      execute: () => {
-        const { observable } =
-          this._unsafeInternalExecuteDeviceAction(deviceAction);
-        // The queue service will handle the subscription lifecycle
-        return observable;
-      },
-    });
+    let deviceActionCancel: (() => void) | undefined;
+
+    const { observable: o, cancel: queueCancel } =
+      this._intentQueueService.enqueue({
+        type: "device-action",
+        execute: () => {
+          const { observable, cancel } =
+            this._unsafeInternalExecuteDeviceAction(deviceAction);
+          deviceActionCancel = cancel;
+          return observable;
+        },
+      });
 
     return {
       observable: o,
-      cancel: c,
+      cancel: () => {
+        deviceActionCancel?.();
+        queueCancel();
+      },
     };
   }
 

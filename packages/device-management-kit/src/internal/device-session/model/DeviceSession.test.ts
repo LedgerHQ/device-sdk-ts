@@ -314,15 +314,17 @@ describe("DeviceSession", () => {
       // Advance timers to trigger timeout
       vi.advanceTimersByTime(1100);
 
+      let caughtError: Error | undefined;
       try {
         await sendPromise;
-      } catch {
-        // Expected to timeout
+      } catch (error) {
+        caughtError = error as Error;
       }
 
       vi.useRealTimers();
 
       // then
+      expect(caughtError).toBeDefined();
       expect(mockIntentQueueService.enqueue).toHaveBeenCalled();
     });
   });
@@ -491,7 +493,7 @@ describe("DeviceSession", () => {
         execute: expect.any(Function),
       });
       expect(observable).toBeDefined();
-      expect(cancel).toBe(mockCancel);
+      expect(cancel).toBeTypeOf("function");
 
       // Verify observable emits values
       const values: unknown[] = [];
@@ -508,6 +510,10 @@ describe("DeviceSession", () => {
           requiredUserInteraction: "SignTransaction",
         },
       ]);
+
+      // Verify cancel is called
+      cancel();
+      expect(mockCancel).toHaveBeenCalled();
     });
 
     it("should provide correct internal API to device action", () => {

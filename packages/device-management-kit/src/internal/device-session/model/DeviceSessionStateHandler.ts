@@ -95,7 +95,7 @@ export class DeviceSessionStateHandler {
         this._pendingDeviceStatus = DeviceStatus.CONNECTED;
         return;
       case SessionEvents.NEW_STATE: {
-        // On new state, if an intent is successfull,
+        // On new state, if an intent is successful,
         // we should have a DEVICE_STATE_UPDATE_LOCKED or DEVICE_STATE_UPDATE_CONNECTED as pending status event
         // If not, we should still have a BUSY status as fallback waiting for the transport to disconnect
         const newDeviceStatus = this._pendingDeviceStatus;
