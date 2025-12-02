@@ -536,25 +536,29 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const buildInstallPlan = async (arg0: {
+    const buildInstallPlan = (arg0: {
       input: {
         applications: ApplicationDependency[];
         allowMissingApplication: boolean;
       };
     }) =>
-      new BuildAppsInstallPlanTask(internalApi, {
-        applications: arg0.input.applications,
-        allowMissingApplication: arg0.input.allowMissingApplication,
-      }).run();
+      Promise.resolve(
+        new BuildAppsInstallPlanTask(internalApi, {
+          applications: arg0.input.applications,
+          allowMissingApplication: arg0.input.allowMissingApplication,
+        }).run(),
+      );
 
-    const predictOutOfMemory = async (arg0: {
+    const predictOutOfMemory = (arg0: {
       input: {
         installPlan: Application[];
       };
     }) =>
-      new PredictOutOfMemoryTask(internalApi, {
-        installPlan: arg0.input.installPlan,
-      }).run();
+      Promise.resolve(
+        new PredictOutOfMemoryTask(internalApi, {
+          installPlan: arg0.input.installPlan,
+        }).run(),
+      );
 
     const installApp = (arg0: {
       input: {

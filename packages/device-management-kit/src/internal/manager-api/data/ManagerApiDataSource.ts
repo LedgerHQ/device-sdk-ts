@@ -23,7 +23,7 @@ import {
  */
 export interface ManagerApiDataSource {
   /**
-   * Retrieves the list of applications for a given target ID, and firmware version.
+   * Retrieves the list of applications for a given target ID and firmware version.
    *
    * @param params - The parameters for getting the application list.
    * @returns EitherAsync containing an array of applications or an HttpFetchApiError.
