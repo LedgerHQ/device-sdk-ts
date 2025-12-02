@@ -25,11 +25,11 @@
     "test:full": "scripts/test-full.mjs"
   },
   "dependencies": {
-    "@ledgerhq/context-module": "workspace:*",
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
-    "@ledgerhq/device-transport-kit-speculos": "workspace:*",
-    "@ledgerhq/speculos-device-controller": "workspace:*",
+    "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
+    "@ledgerhq/device-transport-kit-speculos": "workspace:^",
+    "@ledgerhq/speculos-device-controller": "workspace:^",
     "axios": "catalog:",
     "commander": "catalog:",
     "ethers": "catalog:",
@@ -38,9 +38,9 @@
     "semver": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@types/semver": "catalog:",
     "concurrently": "catalog:",
     "ts-node": "catalog:",

@@ -96,7 +96,7 @@ async function resetPrivatePackagesDependencies(pkgs) {
       for (const dependency of Object.keys(dependencies)) {
         if (!dependency) continue;
         if (pkgs.some((p) => p.name === dependency)) {
-          json.dependencies[dependency] = "workspace:*";
+          json.dependencies[dependency] = "workspace:^";
           shouldUpdate = true;
         }
       }
@@ -106,7 +106,7 @@ async function resetPrivatePackagesDependencies(pkgs) {
       for (const dependency of Object.keys(peerDependencies)) {
         if (!dependency) continue;
         if (pkgs.some((p) => p.name === dependency)) {
-          json.peerDependencies[dependency] = "workspace:*";
+          json.peerDependencies[dependency] = "workspace:^";
           shouldUpdate = true;
         }
       }

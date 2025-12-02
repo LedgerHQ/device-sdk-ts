@@ -56,8 +56,8 @@
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",
     "@changesets/cli": "catalog:",
-    "@ledgerhq/ldmk-cli": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
+    "@ledgerhq/ldmk-cli": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
     "@types/node": "catalog:",
     "@vitest/coverage-istanbul": "catalog:",
     "concurrently": "catalog:",
