@@ -6,7 +6,7 @@ on:
 
 env:
   FORCE_COLOR: "1"
-  NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+  NPM_REGISTRY: ${{ vars.NPM_REGISTRY }}
 
 permissions:
   id-token: write
@@ -16,51 +16,68 @@ permissions:
   attestations: write
 
 jobs:
-  publish:
+  public-runner:
+    name: Build and Attest Release Packages
+    # npmjs requires attestation to be generated on a public runner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+
+      - name: Canonicalize package.json
+        run: pnpm ldmk-tool canonicalize
+
+      - name: Build libraries
+        run: pnpm build:libs
+
+      - name: Prepare dist directory
+        run: pnpm ldmk-tool pack
+
+      - name: Attest for npmjs.com
+        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
+        with:
+          subject-path: ./dist
+
+      # The action currently doesn't support pushing the blob to the registry
+      - name: Sign tarball
+        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+        with:
+          path: ./dist
+
+      - name: Upload packages to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-release-packages
+          path: dist/*.tgz
+          retention-days: 1
+          if-no-files-found: error
+
+      # This action will publish to github and create tags on main branch
+      - name: Publish to Github Release
+        uses: LedgerHQ/actions-security/actions/create-github-release@create-github-release
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  ledger-runner:
+    name: Publish Release to JFrog
     environment: Production
+    needs: public-runner
+    # JFrog is accessible only from a ledger private runner
     runs-on: ledgerhq-device-sdk
     steps:
       - uses: actions/checkout@v5
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
-      - name: Build libraries
-        run: pnpm build:libs
-
-      - name: Login to internal JFrog registry
-        id: jfrog-login
-        uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
-
-      - name: Setup npm config for JFrog
-        env:
-          NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
-        run: |
-          cat << EOF | tee .npmrc
-          enable-pre-post-scripts=true
-          registry=https://${NPM_REGISTRY}/
-          //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
-          EOF
-
-      - name: Create dist directory to store tarball
-        run: mkdir -p dist
-
-      - name: Publish
-        id: changesets
-        uses: ledgerhq/changeset-action-ledger@main
+      - name: Download packages from GitHub Artifacts
+        uses: actions/download-artifact@v4
         with:
-          publish: pnpm release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: npm-release-packages
+          path: dist
 
-      - name: Attest tarball
-        if: steps.changesets.outputs.published == 'true'
-        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      - name: Publish release packages to JFrog
+        uses: LedgerHQ/device-sdk-ts/.github/actions/publish-to-jfrog-composite@develop
         with:
-          subject-path: ./dist
-
-      # The action currently doesn't support pushing the blob to the registry
-      - name: Sign tarball
-        if: steps.changesets.outputs.published == 'true'
-        uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
-        with:
-          path: ./dist
+          npm-registry: ${{ env.NPM_REGISTRY }}
+          dist-path: dist
