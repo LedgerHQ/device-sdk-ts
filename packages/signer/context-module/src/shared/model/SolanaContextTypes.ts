@@ -71,5 +71,4 @@ export type SolanaLifiContextResult =
   | SolanaLifiContextSuccess
   | SolanaContextError;
 
-// TODO LIFI
-export type LoaderResult = SolanaTokenContextResult; //| SolanaLifiContextResult;
+export type LoaderResult = SolanaTokenContextResult | SolanaLifiContextResult;

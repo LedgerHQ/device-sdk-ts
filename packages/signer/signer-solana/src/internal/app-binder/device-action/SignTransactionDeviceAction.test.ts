@@ -203,7 +203,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             transactionResolutionContext: {
               // Only care about userInputType for this test
               userInputType: UserInputType.ata,
-            } as any,
+            },
           },
           contextModule: contextModuleStub,
         } as SignTransactionDAInput,
@@ -268,7 +268,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         onDone: () => {
           try {
             expect(signMock).toHaveBeenCalledTimes(1);
-            const callArg = signMock.mock.calls[0][0];
+            const callArg = signMock.mock.calls[0]![0] as {
+              input: { userInputType: UserInputType };
+            };
             expect(callArg.input.userInputType).toBe(UserInputType.ata);
             resolve();
           } catch (e) {
