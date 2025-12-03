@@ -25,20 +25,12 @@ function sortObjectKeys(obj) {
 }
 
 /**
- * Canonicalize a package.json file by sorting all keys recursively
+ * Canonicalize a package.json object by sorting all keys recursively
+ * @param {object} pkgJson - Already parsed package.json object
  */
-async function canonicalizePackageJson(content) {
-  try {
-    const pkgJson = JSON.parse(content);
-    const sorted = sortObjectKeys(pkgJson);
-    return JSON.stringify(sorted, null, 2) + "\n";
-  } catch (error) {
-    console.error(
-      chalk.red(`Error canonicalizing package.json:`),
-      error.message,
-    );
-    throw error;
-  }
+function canonicalizePackageJson(pkgJson) {
+  const sorted = sortObjectKeys(pkgJson);
+  return JSON.stringify(sorted, null, 2) + "\n";
 }
 
 /**
@@ -87,7 +79,7 @@ const canonicalize = async (packagesDir = "packages", checkOnly = false) => {
       const pkgJson = JSON.parse(content);
 
       // Canonicalize the content
-      const canonicalized = await canonicalizePackageJson(content);
+      const canonicalized = canonicalizePackageJson(pkgJson);
 
       if (content !== canonicalized) {
         if (checkOnly) {

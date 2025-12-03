@@ -98,7 +98,7 @@ async function bumpSnapshot(tag = "develop", bumpType = "patch") {
       changesetMdFiles.map(async (file) => {
         const filePath = path.join(CHANGESET_DIR, file);
         const stats = await fs.stat(filePath);
-        return { file, path: filePath, mtime: stats.mtime };
+        return { file, path: filePath, mtime: stats.mtimeMs };
       }),
     );
 

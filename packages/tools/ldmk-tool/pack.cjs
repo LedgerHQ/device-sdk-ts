@@ -62,7 +62,7 @@ const pack = async (packagesDir = "packages", distDir = "dist") => {
       console.log(chalk.cyan(`Packing ${pkgJson.name || pkgRelativePath}...`));
 
       // Canonicalize the package.json file
-      const canonicalized = await canonicalizePackageJson(content);
+      const canonicalized = canonicalizePackageJson(pkgJson);
       await fs.writeFile(pkgFile, canonicalized, "utf-8");
 
       // Pack the package to dist directory
