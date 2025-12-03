@@ -3,7 +3,7 @@
   "version": "0.1.3",
   "private": true,
   "scripts": {
-    "flask-dev": "FLASK_DEBUG=1 pip3 install -r requirements.txt && python3 -m flask --app api/index run -h 0.0.0.0 -p 5328",
+    "flask-dev": "FLASK_DEBUG=1 pip3 install -r ../../packages/tools/cal-interceptor/requirements.txt && python3 -m flask --app ../../packages/tools/cal-interceptor/api/index run -h 0.0.0.0 -p 5328",
     "next-dev": "next dev",
     "dev": "concurrently \"pnpm run next-dev\" \"pnpm run flask-dev\"",
     "dev:default-mock": "next dev",
@@ -17,6 +17,7 @@
     "test:playwright": "pnpm playwright test"
   },
   "dependencies": {
+    "@ledgerhq/cal-interceptor": "workspace:*",
     "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/device-management-kit-flipper-plugin-client": "workspace:^",
