@@ -4,6 +4,7 @@ import type { DeviceModelId } from "@api/device/DeviceModel";
 import type { InternalApi } from "@api/device-action/DeviceAction";
 import {
   UnknownDAError,
+  UnsupportedApplicationDAError,
   UnsupportedFirmwareDAError,
 } from "@api/device-action/os/Errors";
 import type {
@@ -32,7 +33,10 @@ export type BuildAppsInstallPlanTaskResult =
       missingApplications: string[];
     }
   | {
-      error: UnknownDAError | UnsupportedFirmwareDAError;
+      error:
+        | UnknownDAError
+        | UnsupportedApplicationDAError
+        | UnsupportedFirmwareDAError;
     };
 
 export class BuildAppsInstallPlanTask {
@@ -90,19 +94,47 @@ export class BuildAppsInstallPlanTask {
       } else if (this.args.allowMissingApplication) {
         missingApplications = [...missingApplications, app.name];
       } else {
-        // Fail immediately if missing application is not allowed
-        if (catalogApp !== undefined) {
-          // Is application is found in the catalog in an old version,
-          // it usually means the firmware is also outdated.
+        /**
+         * Fail immediately if missing application is not allowed.
+         *
+         * TODO: If the application is not in catalog, we should also check if the application will be available in the
+         * latest firmware catalog before throwing `UnsupportedApplicationDAError`. The actual implementation will always
+         * throw `UnsupportedFirmwareDAError` to force the user to update firmware first, even though the application may
+         * be still not available after the firmware update. For now, we keep `catalogApp !== undefined` check to prevent
+         * from forgetting this case.
+         *
+         * Decision matrix for application availability according to OS and catalog:
+         *
+         * ┌──────────────────────┬───────────────────────────────┬────────────────────────────────────┐
+         * │ Not valid constraint │ Found in catalog              │ Not found in catalog               │
+         * ├──────────────────────┼───────────────────────────────┼────────────────────────────────────┤
+         * │ OS up-to-date        │ UnsupportedApplicationDAError │ UnsupportedApplicationDAError      │
+         * │ OS out-of-date       │ UnsupportedFirmwareDAError    │ UnsupportedFirmwareDAError => TODO │
+         * └──────────────────────┴───────────────────────────────┴────────────────────────────────────┘
+         */
+        if (
+          deviceState.firmwareUpdateContext?.availableUpdate !== undefined &&
+          catalogApp !== undefined
+        ) {
           return {
             error: new UnsupportedFirmwareDAError(
-              `Application ${app.name} not found in the catalog`,
+              `Application ${app.name} needs latest firmware`,
+            ),
+          };
+        } else if (
+          deviceState.firmwareUpdateContext?.availableUpdate !== undefined
+        ) {
+          // TODO: Application not found in out-of-date firmware catalog, needs to check if the application will be available
+          // after firmware update
+          return {
+            error: new UnsupportedFirmwareDAError(
+              `Application ${app.name} needs latest firmware`,
             ),
           };
         } else {
           return {
-            error: new UnknownDAError(
-              `Application ${app.name} not found in the catalog`,
+            error: new UnsupportedApplicationDAError(
+              `Application ${app.name} not supported for this device`,
             ),
           };
         }
