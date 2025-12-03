@@ -3,6 +3,10 @@
   "version": "1.1.1",
   "license": "Apache-2.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -40,17 +44,17 @@
     "axios": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
     "rxjs": "catalog:",
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "rxjs": "catalog:"
   }
 }

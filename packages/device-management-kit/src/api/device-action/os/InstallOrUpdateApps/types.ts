@@ -3,6 +3,7 @@ import type { DeviceModelId } from "@api/device/DeviceModel";
 import type { DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import type {
   OutOfMemoryDAError,
+  UnsupportedApplicationDAError,
   UnsupportedFirmwareDAError,
 } from "@api/device-action/os/Errors";
 import type {
@@ -80,6 +81,7 @@ export type InstallOrUpdateAppsDAError =
   | GetDeviceMetadataDAError
   | InstallAppDAError
   | OutOfMemoryDAError
+  | UnsupportedApplicationDAError
   | UnsupportedFirmwareDAError
   | SecureChannelInstallDAErrors
   | CommandErrorResult["error"];

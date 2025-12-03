@@ -360,10 +360,10 @@ importers:
         specifier: 'catalog:'
         version: 2.29.6(@types/node@22.10.1)
       '@ledgerhq/ldmk-cli':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:packages/tools/ldmk-cli
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:packages/tools/ldmk-tool
       '@types/node':
         specifier: 'catalog:'
@@ -420,19 +420,19 @@ importers:
   apps/clear-signing-tester:
     dependencies:
       '@ledgerhq/context-module':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/signer/context-module
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/device-management-kit
       '@ledgerhq/device-signer-kit-ethereum':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/signer/signer-eth
       '@ledgerhq/device-transport-kit-speculos':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transport/speculos
       '@ledgerhq/speculos-device-controller':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/speculos-device-controller
       axios:
         specifier: 'catalog:'
@@ -454,13 +454,13 @@ importers:
         version: 7.7.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/eslint
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/typescript
       '@types/semver':
         specifier: 'catalog:'
@@ -503,13 +503,13 @@ importers:
         version: 3.4.16(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.9.2))
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/eslint
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/typescript
       '@types/node':
         specifier: 'catalog:'
@@ -527,16 +527,16 @@ importers:
   apps/mobile:
     dependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/device-management-kit
       '@ledgerhq/device-mockserver-client':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/mockserver-client
       '@ledgerhq/device-transport-kit-react-native-ble':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transport/rn-ble
       '@ledgerhq/device-transport-kit-react-native-hid':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transport/rn-hid
       '@ledgerhq/native-ui':
         specifier: 'catalog:'
@@ -603,7 +603,7 @@ importers:
         specifier: 'catalog:'
         version: 7.28.3
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/eslint
       '@react-native-community/cli':
         specifier: 'catalog:'
@@ -663,40 +663,40 @@ importers:
   apps/sample:
     dependencies:
       '@ledgerhq/context-module':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/signer/context-module
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/device-management-kit
       '@ledgerhq/device-management-kit-flipper-plugin-client':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/flipper-plugin-client
       '@ledgerhq/device-mockserver-client':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/mockserver-client
       '@ledgerhq/device-signer-kit-bitcoin':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/signer/signer-btc
       '@ledgerhq/device-signer-kit-ethereum':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/signer/signer-eth
       '@ledgerhq/device-signer-kit-solana':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/signer/signer-solana
       '@ledgerhq/device-transport-kit-mockserver':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transport/mockserver
       '@ledgerhq/device-transport-kit-speculos':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transport/speculos
       '@ledgerhq/device-transport-kit-web-ble':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transport/web-ble
       '@ledgerhq/device-transport-kit-web-hid':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/transport/web-hid
       '@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/trusted-apps/ledger-keyring-protocol
       '@ledgerhq/react-ui':
         specifier: 'catalog:'
@@ -736,13 +736,13 @@ importers:
         version: 5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1)
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/eslint
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../packages/config/typescript
       '@types/react':
         specifier: 'catalog:'
@@ -853,19 +853,19 @@ importers:
         version: 5.19.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/vitest
       '@statelyai/inspect':
         specifier: 'catalog:'
@@ -896,40 +896,40 @@ importers:
         version: 7.8.2
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/vitest
 
   packages/mockserver-client:
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/vitest
 
   packages/signer/context-module:
@@ -954,22 +954,22 @@ importers:
         version: 0.2.2
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       '@types/crypto-js':
         specifier: 'catalog:'
@@ -1000,25 +1000,25 @@ importers:
         version: 5.19.2
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/signer-utils':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../signer-utils
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       bitcoinjs-lib:
         specifier: 'catalog:'
@@ -1033,8 +1033,8 @@ importers:
   packages/signer/signer-eth:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.1.0
-        version: 1.1.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       ethers:
         specifier: 'catalog:'
         version: 6.14.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -1055,25 +1055,25 @@ importers:
         version: 5.19.2
     devDependencies:
       '@ledgerhq/context-module':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       '@types/semver':
         specifier: 'catalog:'
@@ -1088,11 +1088,11 @@ importers:
   packages/signer/signer-solana:
     dependencies:
       '@ledgerhq/context-module':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: ^1.1.0
-        version: 1.1.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       '@solana/spl-token':
         specifier: 'catalog:'
         version: 0.4.13(@solana/web3.js@1.98.2(bufferutil@4.0.9)(typescript@5.9.2)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.2)(utf-8-validate@5.0.10)
@@ -1122,22 +1122,22 @@ importers:
         version: 5.19.2
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       '@types/semver':
         specifier: 'catalog:'
@@ -1152,22 +1152,22 @@ importers:
   packages/signer/signer-utils:
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       ts-node:
         specifier: 'catalog:'
@@ -1176,8 +1176,8 @@ importers:
   packages/speculos-device-controller:
     dependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
-        version: link:../device-management-kit
+        specifier: ^0.11.2
+        version: 0.11.2(bufferutil@4.0.9)(rxjs@7.8.2)(utf-8-validate@5.0.10)
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7
@@ -1186,19 +1186,19 @@ importers:
         version: 1.8.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/vitest
       ts-node:
         specifier: 'catalog:'
@@ -1210,20 +1210,20 @@ importers:
         specifier: 'catalog:'
         version: 7.3.3(@types/node@24.3.0)
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../ldmk-tool
       semver:
         specifier: 'catalog:'
         version: 7.7.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
 
   packages/tools/ldmk-tool:
@@ -1236,10 +1236,10 @@ importers:
         version: 7.7.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       esbuild:
         specifier: 'catalog:'
@@ -1258,25 +1258,25 @@ importers:
         version: 2.1.0
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/device-mockserver-client':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../mockserver-client
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       rxjs:
         specifier: 'catalog:'
@@ -1301,22 +1301,22 @@ importers:
         version: 11.0.3
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       '@types/uuid':
         specifier: 'catalog:'
@@ -1353,22 +1353,22 @@ importers:
         version: 11.0.3
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       '@types/uuid':
         specifier: 'catalog:'
@@ -1393,22 +1393,22 @@ importers:
         version: 2.1.0
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       rxjs:
         specifier: 'catalog:'
@@ -1430,22 +1430,22 @@ importers:
         version: 11.0.3
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       '@types/uuid':
         specifier: 'catalog:'
@@ -1473,22 +1473,22 @@ importers:
         version: 11.0.3
     devDependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
       '@types/uuid':
         specifier: 'catalog:'
@@ -1506,11 +1506,11 @@ importers:
   packages/trusted-apps/ledger-keyring-protocol:
     dependencies:
       '@ledgerhq/device-management-kit':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../device-management-kit
       '@ledgerhq/signer-utils':
-        specifier: ^1.1.0
-        version: 1.1.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../../signer/signer-utils
       '@noble/ciphers':
         specifier: ^1.3.0
         version: 1.3.0
@@ -1537,19 +1537,19 @@ importers:
         version: 5.19.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../../config/vitest
 
   packages/ui:
@@ -1562,19 +1562,19 @@ importers:
         version: 0.2.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/eslint
       '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../tools/ldmk-tool
       '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/prettier
       '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/typescript
       '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../config/vitest
 
 packages:
@@ -3387,6 +3387,11 @@ packages:
       '@types/react':
         optional: true
 
+  '@ledgerhq/device-management-kit@0.11.2':
+    resolution: {integrity: sha512-h8s9XH1gp5xL6Tpsc/9p+k3aKqRA9bLYmTuQt5iacE2BGUEEHp8XmuYNAuO6iBl2I+XWRJnguiwfSeOx5R0Rog==}
+    peerDependencies:
+      rxjs: 7.8.2
+
   '@ledgerhq/icons-ui@0.8.1':
     resolution: {integrity: sha512-R1l7wWz1nblFx5GENn/sr0oXEBDYnwwOnkd+L829SFsWj9oOgH4g15E/LsXwDvJJ1H4SVY9uD+NJxoYsRWllNw==}
     peerDependencies:
@@ -3418,11 +3423,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/signer-utils@1.1.0':
-    resolution: {integrity: sha512-zp8kyNF0sNMUG2VkgOL7rDu8W6U1P8yvTA3wIDjjlqoIOPanvodfezeub69fOuHJ2QG/JmnS8YZCGIoSWpQYkA==}
-    peerDependencies:
-      '@ledgerhq/device-management-kit': 0.9.0
 
   '@ledgerhq/ui-shared@0.3.0':
     resolution: {integrity: sha512-QSu+yRnt/WbGCfHZ9oi6oZ3JnauS/xglG68Wg0k1xCqgO/VvqUiluHpQSZqXFaBA11sFbMyMWA3E3h5gwVyPwA==}
@@ -12510,6 +12510,26 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.12
 
+  '@ledgerhq/device-management-kit@0.11.2(bufferutil@4.0.9)(rxjs@7.8.2)(utf-8-validate@5.0.10)':
+    dependencies:
+      '@noble/hashes': 1.8.0
+      '@sentry/minimal': 6.19.7
+      axios: 1.8.2
+      inversify: 7.5.1(reflect-metadata@0.2.2)
+      isomorphic-ws: 5.0.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      purify-ts: 2.1.0
+      reflect-metadata: 0.2.2
+      rxjs: 7.8.2
+      semver: 7.7.2
+      url: 0.11.4
+      uuid: 11.0.3
+      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      xstate: 5.19.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
+
   '@ledgerhq/icons-ui@0.8.1(@types/react@18.3.12)(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
       react: 18.3.1
@@ -12561,10 +12581,6 @@ snapshots:
       - '@emotion/is-prop-valid'
       - react-native-svg
       - supports-color
-
-  '@ledgerhq/signer-utils@1.1.0(@ledgerhq/device-management-kit@packages+device-management-kit)':
-    dependencies:
-      '@ledgerhq/device-management-kit': link:packages/device-management-kit
 
   '@ledgerhq/ui-shared@0.3.0': {}
 

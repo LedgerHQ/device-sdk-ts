@@ -3,6 +3,10 @@
   "version": "1.0.1",
   "license": "Apache-2.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "react-native": "src/index.ts",
   "nativePackage": true,
   "exports": {
@@ -48,18 +52,18 @@
     "uuid": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@types/uuid": "catalog:",
     "react-native": "catalog:",
     "rxjs": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "react-native": ">0.74.1",
     "rxjs": "catalog:"
   }

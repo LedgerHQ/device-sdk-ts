@@ -617,12 +617,10 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const getDeviceMetadata = async () => {
+    const getDeviceMetadata = () => {
       const deviceState = internalApi.getDeviceSessionState();
-      if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
-        return null;
-      }
       if (
+        deviceState.sessionStateType === DeviceSessionStateType.Connected ||
         deviceState.firmwareVersion?.metadata === undefined ||
         deviceState.firmwareUpdateContext === undefined ||
         deviceState.customImage === undefined ||
@@ -631,9 +629,9 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
         deviceState.installedLanguages === undefined ||
         deviceState.catalog === undefined
       ) {
-        return null;
+        return Promise.resolve(null);
       }
-      return {
+      return Promise.resolve({
         firmwareVersion: deviceState.firmwareVersion,
         firmwareUpdateContext: deviceState.firmwareUpdateContext,
         customImage: deviceState.customImage,
@@ -641,7 +639,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
         applicationsUpdates: deviceState.appsUpdates,
         installedLanguages: deviceState.installedLanguages,
         catalog: deviceState.catalog,
-      };
+      });
     };
 
     const getFirmwareMetadata = async () =>

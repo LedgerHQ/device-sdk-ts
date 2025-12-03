@@ -7,7 +7,10 @@ const { help } = require("./help.cjs");
 const { build } = require("./build.cjs");
 const { watch } = require("./watch.cjs");
 const { bump } = require("./bump.cjs");
+const { bumpSnapshot } = require("./bump-snapshot.cjs");
 const { createReleasePullRequest } = require("./create-release-pr.cjs");
+const { pack } = require("./pack.cjs");
+const { canonicalize } = require("./canonicalize.cjs");
 
 if (process.platform === "win32") {
   usePowerShell();
@@ -47,6 +50,22 @@ const availableCommands = [
     flags: [],
   },
   {
+    name: "bump-snapshot",
+    description:
+      "create a changeset for all public packages and bump versions for snapshot release",
+    flags: [
+      {
+        name: "tag",
+        description:
+          "snapshot tag (e.g., develop, canary) - defaults to develop",
+      },
+      {
+        name: "type",
+        description: "bump type (patch, minor, major) - defaults to patch",
+      },
+    ],
+  },
+  {
     name: "help",
     description: "show available commands",
     flags: [],
@@ -79,10 +98,47 @@ const availableCommands = [
       { name: "platform", description: "the platform to watch for" },
     ],
   },
+  {
+    name: "pack",
+    description: "pack all public packages to dist directory",
+    flags: [
+      {
+        name: "packagesDir",
+        description: "the directory containing packages (default: packages)",
+      },
+      {
+        name: "distDir",
+        description: "the output directory for packed files (default: dist)",
+      },
+    ],
+  },
+  {
+    name: "canonicalize",
+    description: "canonicalize (sort keys) all package.json files",
+    flags: [
+      {
+        name: "packagesDir",
+        description: "the directory containing packages (default: packages)",
+      },
+      {
+        name: "check",
+        description: "check if files need canonicalization without modifying",
+      },
+    ],
+  },
 ];
 
 const command = argv._[0];
-const { entryPoints, tsconfig, platform } = argv;
+const {
+  entryPoints,
+  tsconfig,
+  platform,
+  packagesDir,
+  distDir,
+  check,
+  type,
+  tag,
+} = argv;
 
 async function main() {
   switch (command) {
@@ -100,6 +156,14 @@ async function main() {
     case "bump":
       console.log(chalk.green("🔖 (packages): Bumping versions"));
       await bump();
+      break;
+    case "bump-snapshot":
+      console.log(
+        chalk.green(
+          `🔖 (packages): Creating snapshot versions for all public packages with tag: ${tag}`,
+        ),
+      );
+      await bumpSnapshot(tag, type || "patch");
       break;
     case "create-release-pr":
       console.log(chalk.green("🔖 (packages): Creating release pull request"));
@@ -144,6 +208,36 @@ async function main() {
         console.error(e);
         process.exitCode = e.exitCode;
       });
+      break;
+    case "pack":
+      console.log(chalk.green("📦 (packages): Packing"));
+      await pack(packagesDir, distDir)
+        .then(() => {
+          console.log(chalk.green("✅ Pack succeeded"));
+          process.exitCode = 0;
+        })
+        .catch((e) => {
+          console.error(chalk.red("❌ Pack failed"));
+          console.error(e);
+          process.exitCode = e.exitCode || 1;
+        });
+      break;
+    case "canonicalize":
+      console.log(
+        chalk.green(
+          `🔧 (packages): ${check ? "Checking" : "Canonicalizing"} package.json files`,
+        ),
+      );
+      await canonicalize(packagesDir, check)
+        .then(() => {
+          console.log(chalk.green("✅ Canonicalize succeeded"));
+          process.exitCode = 0;
+        })
+        .catch((e) => {
+          console.error(chalk.red("❌ Canonicalize failed"));
+          console.error(e);
+          process.exitCode = e.exitCode || 1;
+        });
       break;
     default:
       console.log(chalk.red(`Invalid command: "${command}"`));

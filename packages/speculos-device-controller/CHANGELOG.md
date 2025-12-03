@@ -1,5 +1,11 @@
 # @ledgerhq/speculos-device-controller
 
+## 0.2.0
+
+### Minor Changes
+
+- [#1062](https://github.com/LedgerHQ/device-sdk-ts/pull/1062) [`14371d5`](https://github.com/LedgerHQ/device-sdk-ts/commit/14371d5d665c12215a364d9b3d301f64c645e32c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add sign, reject, navigateNext, navigatePrevious, mainButton, secondaryButton touch use cases
+
 ## 0.1.0
 
 ### Minor Changes

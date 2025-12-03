@@ -1,8 +1,12 @@
 {
   "name": "@ledgerhq/context-module",
   "version": "1.11.0",
-  "private": false,
+  "private": true,
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -35,12 +39,12 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@types/crypto-js": "catalog:",
     "ts-node": "catalog:"
   },
@@ -53,6 +57,6 @@
     "reflect-metadata": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*"
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

@@ -28,9 +28,9 @@
   },
   "devDependencies": {
     "autoprefixer": "catalog:",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "globals": "catalog:"
