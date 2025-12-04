@@ -38,6 +38,9 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
+      - name: Update workspace syntax to use fixed version
+        run: git ls-files | grep 'package\.json$' | xargs sed -i 's/workspace:\^/workspace:*/g'
+
       - name: Bump snapshot versions for all packages
         run: pnpm ldmk-tool bump-snapshot --tag ${{ env.TAG }}
         env:
