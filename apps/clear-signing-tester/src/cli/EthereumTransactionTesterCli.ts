@@ -27,6 +27,7 @@ export type CliConfig = {
   plugin?: string;
   pluginVersion?: string;
   skipCal?: boolean;
+  dockerImageTag?: string;
 };
 
 /**
@@ -59,6 +60,7 @@ export class EthereumTransactionTesterCli {
       speculos: {
         url: config.speculosUrl || `http://localhost`,
         port: config.speculosPort || randomPort,
+        dockerImageTag: config.dockerImageTag || "latest",
         device: config.device,
         os: config.osVersion,
         version: config.appEthVersion,
@@ -178,6 +180,11 @@ export class EthereumTransactionTesterCli {
       .option(
         "--plugin-version <version>",
         "Plugin version to use. If not specified, uses latest version.",
+      )
+      .option(
+        "--docker-image-tag <tag>",
+        "Docker image tag for Speculos (default: latest)",
+        "latest",
       )
       .option("--verbose, -v", "Enable verbose output", false)
       .option("--quiet, -q", "Show only result tables (quiet mode)", false);

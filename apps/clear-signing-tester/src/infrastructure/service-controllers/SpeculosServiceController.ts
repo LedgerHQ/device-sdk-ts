@@ -14,8 +14,8 @@ const DEFAULT_CONTAINER_NAMES: Partial<
   "nanos+": "cs-tester-speculos-nanosplus",
 };
 
-const SPECULOS_DOCKER_IMAGE_LATEST =
-  "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest";
+const SPECULOS_DOCKER_IMAGE_BASE =
+  "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools";
 const SPECULOS_API_PORT = 5000;
 
 @injectable()
@@ -102,7 +102,13 @@ export class SpeculosServiceController implements ServiceController {
       "-p", // Use prod signatures
     ];
 
-    await this.dockerContainer.start(SPECULOS_DOCKER_IMAGE_LATEST, {
+    const dockerImage = `${SPECULOS_DOCKER_IMAGE_BASE}:${this.config.dockerImageTag}`;
+
+    if ((await this.dockerContainer.getImageId(dockerImage)) === null) {
+      await this.dockerContainer.pull(dockerImage);
+    }
+
+    await this.dockerContainer.start(dockerImage, {
       command,
       volumes: [`${this.appsConfig.path}:/apps`],
       ports: [`${this.config.port}:${SPECULOS_API_PORT}`],
