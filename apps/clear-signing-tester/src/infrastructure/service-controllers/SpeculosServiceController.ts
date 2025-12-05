@@ -15,17 +15,13 @@ const DEFAULT_CONTAINER_NAMES: Partial<
 };
 
 const SPECULOS_DOCKER_IMAGE_LATEST =
-  "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools";
+  "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest";
 const SPECULOS_API_PORT = 5000;
 
 @injectable()
 export class SpeculosServiceController implements ServiceController {
   private readonly logger: LoggerPublisherService;
   private readonly model: SpeculosConfig["device"];
-  private os?: string;
-  private version?: string;
-  private readonly plugin?: string;
-  private pluginVersion?: string;
   private readonly containerName: string;
 
   constructor(
@@ -42,10 +38,6 @@ export class SpeculosServiceController implements ServiceController {
   ) {
     this.logger = this.loggerFactory("speculos-service-controller");
     this.model = this.config.device;
-    this.os = this.config.os;
-    this.version = this.config.version;
-    this.plugin = this.config.plugin;
-    this.pluginVersion = this.config.pluginVersion;
     this.containerName =
       DEFAULT_CONTAINER_NAMES[this.model] ||
       `cs-tester-speculos-${this.model}-${this.config.port}`;
@@ -56,78 +48,59 @@ export class SpeculosServiceController implements ServiceController {
     const resolvedEthereum = this.appVersionResolver.resolve(
       this.model,
       "Ethereum",
-      this.os,
-      this.version,
+      this.config.os,
+      this.config.version,
     );
 
-    // Update with resolved values
-    this.os = resolvedEthereum.os;
-    this.version = resolvedEthereum.version;
+    const ethereumPath = `/apps/${this.model}/${resolvedEthereum.os}/Ethereum/app_${resolvedEthereum.version}.elf`;
 
-    let command: string[];
+    // Optionally resolve plugin
+    const resolvedPlugin = this.config.plugin
+      ? this.appVersionResolver.resolve(
+          this.model,
+          this.config.plugin,
+          resolvedEthereum.os,
+          this.config.pluginVersion,
+        )
+      : null;
 
-    if (this.plugin) {
-      // Resolve the plugin app version
-      const resolvedPlugin = this.appVersionResolver.resolve(
-        this.model,
-        this.plugin,
-        this.os,
-        this.pluginVersion,
-      );
+    const pluginArgs = resolvedPlugin
+      ? [
+          "-l",
+          `/apps/${this.model}/${resolvedEthereum.os}/${this.config.plugin}/app_${resolvedPlugin.version}.elf`,
+        ]
+      : [];
 
-      // Update plugin version with resolved value
-      this.pluginVersion = resolvedPlugin.version;
-
-      // Build command with plugin and -l flag for Ethereum app
-      const pluginPath = `/apps/${this.model}/${this.os}/${this.plugin}/app_${this.pluginVersion}.elf`;
-      const ethereumPath = `/apps/${this.model}/${this.os}/Ethereum/app_${this.version}.elf`;
-
-      this.logger.info(
-        `Starting Docker container with name: ${this.containerName}`,
-      );
-      this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
-      this.logger.info(`Using plugin: ${resolvedPlugin.path}`);
-      this.logger.info(`Loading Ethereum app: ${resolvedEthereum.path}`);
-      this.logger.info(
-        `Resolved versions: device=${this.model}, os=${this.os}, plugin=${this.plugin}@${this.pluginVersion}, ethereum=${this.version}`,
-      );
-
-      command = [
-        "speculos",
-        ethereumPath,
-        "-l",
-        pluginPath,
-        "--display",
-        "headless",
-        "--api-port",
-        SPECULOS_API_PORT.toString(),
-        "--user",
-        `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
-        "-p", // Use prod signatures
-      ];
-    } else {
-      // No plugin, just run Ethereum app
-      this.logger.info(
-        `Starting Docker container with name: ${this.containerName}`,
-      );
-      this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
-      this.logger.info(`Using app: ${resolvedEthereum.path}`);
-      this.logger.info(
-        `Resolved versions: device=${this.model}, os=${this.os}, ethereum=${this.version}`,
-      );
-
-      command = [
-        "speculos",
-        `/apps/${this.model}/${this.os}/Ethereum/app_${this.version}.elf`,
-        "--display",
-        "headless",
-        "--api-port",
-        SPECULOS_API_PORT.toString(),
-        "--user",
-        `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
-        "-p", // Use prod signatures
-      ];
+    // Logging
+    this.logger.info(
+      `Starting Docker container with name: ${this.containerName}`,
+    );
+    this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
+    this.logger.debug(`Using app: ${resolvedEthereum.path}`);
+    if (resolvedPlugin) {
+      this.logger.debug(`Using plugin: ${resolvedPlugin.path}`);
     }
+    this.logger.info(`device=${this.model}`);
+    this.logger.info(`os=${resolvedEthereum.os}`);
+    this.logger.info(`ethereum=${resolvedEthereum.version}`);
+    if (resolvedPlugin) {
+      this.logger.info(
+        `plugin=${this.config.plugin}@${resolvedPlugin.version}`,
+      );
+    }
+
+    const command = [
+      "speculos",
+      ethereumPath,
+      ...pluginArgs,
+      "--display",
+      "headless",
+      "--api-port",
+      SPECULOS_API_PORT.toString(),
+      "--user",
+      `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
+      "-p", // Use prod signatures
+    ];
 
     await this.dockerContainer.start(SPECULOS_DOCKER_IMAGE_LATEST, {
       command,
