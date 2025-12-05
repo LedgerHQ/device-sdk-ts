@@ -62,7 +62,7 @@ export class GetPubKeyCommand
     // HRP
     const hrp = this.args.prefix; // e.g. "cosmos"
     if (!hrp || hrp.length === 0) {
-      throw new Error("SignTransactionCommand: prefix is required");
+      throw new Error("GetPubKeyCommand: bech32 prefix is required");
     }
 
     builder.add8BitUIntToData(hrp.length);
@@ -71,7 +71,7 @@ export class GetPubKeyCommand
     const path = DerivationPathUtils.splitPath(this.args.derivationPath);
     if (path.length !== 5) {
       throw new Error(
-        `SignTransactionCommand: expected cosmos style number of path elements, got ${path.length}`,
+        `GetPubKeyCommand: expected cosmos derivation path with 5 elements, got ${path.length}`,
       );
     }
 

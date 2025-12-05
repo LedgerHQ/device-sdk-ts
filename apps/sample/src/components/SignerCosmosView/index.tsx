@@ -37,13 +37,13 @@ export const SignerCosmosView: React.FC<{ sessionId: string }> = ({
       {
         title: "Get address",
         description:
-          "Perform all the actions necessary to get a Solana address from the device",
+          "Perform all the actions necessary to get the Bech32 address of the specified Cosmos chain from the device",
         executeDeviceAction: ({
           derivationPath,
           checkOnDevice,
           skipOpenApp,
         }) => {
-          return signer.getAddress(derivationPath, "noble", {
+          return signer.getAddress(derivationPath, "cosmos", {
             checkOnDevice,
             skipOpenApp,
           });
@@ -69,8 +69,7 @@ export const SignerCosmosView: React.FC<{ sessionId: string }> = ({
         description:
           "Perform all the actions necessary to sign a Solana transaction with the device",
         executeDeviceAction: ({ derivationPath, skipOpenApp, signDoc }) => {
-          const serializedSignDoc =
-            new TextEncoder().encode(signDoc) ?? new Uint8Array();
+          const serializedSignDoc = new TextEncoder().encode(signDoc);
           return signer.signTransaction(derivationPath, serializedSignDoc, {
             skipOpenApp,
           });
@@ -78,7 +77,6 @@ export const SignerCosmosView: React.FC<{ sessionId: string }> = ({
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           signDoc: dummySignDoc.stringify(),
-
           skipOpenApp: false,
         },
         validateValues: ({ signDoc }) => signDoc.length > 0,

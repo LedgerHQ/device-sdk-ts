@@ -64,7 +64,6 @@ catalog:
   buffer: ^6.0.3
   commander: ^14.0.1
   concurrently: ^9.1.0
-  cosmjs-types: ^0.10.1
   crypto-js: ^4.2.0
   danger: 13.0.4
   esbuild: 0.25.4

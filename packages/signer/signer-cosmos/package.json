@@ -40,8 +40,7 @@
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
     "semver": "catalog:",
-    "xstate": "catalog:",
-    "cosmjs-types": "catalog:"
+    "xstate": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/context-module": "workspace:*",

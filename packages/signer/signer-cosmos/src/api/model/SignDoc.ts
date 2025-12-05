@@ -1,66 +1,37 @@
-import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
+import { type JsonObject, type JsonValue, stringifyCanonical } from "./Json";
 
-interface StdFee {
-  readonly amount: readonly StdCoin[];
+export interface StdFee extends JsonObject {
+  readonly amount: StdCoin[];
   readonly gas: string;
 }
 
-interface StdCoin {
+export interface StdCoin extends JsonObject {
   readonly denom: string;
   readonly amount: string;
 }
 
-interface AminoMsg<Value = unknown> {
+export interface AminoMsg extends JsonObject {
   readonly type: string;
-  readonly value: Value;
+  readonly value: JsonValue;
 }
 
-export interface StdSignDoc<Value = unknown> {
+export interface StdSignDoc extends JsonObject {
   readonly chain_id: string;
   readonly account_number: string;
   readonly sequence: string;
   readonly fee: StdFee;
-  readonly msgs: readonly AminoMsg<Value>[];
+  readonly msgs: AminoMsg[];
   readonly memo: string;
 }
-export class SignDoc {
-  constructor(public readonly stdSignDoc: StdSignDoc) {}
 
-  serialize(): Uint8Array | null {
-    const canonicalJson = stringifyCanonical(
-      this.stdSignDoc as unknown as JsonValue,
-    );
-    return base64StringToBuffer(canonicalJson);
-  }
-
-  stringify(): string {
-    return stringifyCanonical(this.stdSignDoc as unknown as JsonValue);
-  }
+interface CanonicalSignDoc {
+  data: StdSignDoc;
+  stringify: () => string;
 }
 
-type JsonPrimitive = string | number | boolean | null;
-type JsonValue = JsonPrimitive | JsonObject | JsonArray;
-interface JsonObject {
-  [key: string]: JsonValue;
-}
-type JsonArray = JsonValue[];
-
-export function stringifyCanonical(value: JsonValue): string {
-  if (value === null) return "null";
-
-  if (Array.isArray(value)) {
-    const items = value.map((v) => stringifyCanonical(v));
-    return `[${items.join(",")}]`;
-  }
-
-  if (typeof value === "object") {
-    const obj = value as JsonObject;
-    const keys = Object.keys(obj).sort();
-    const parts = keys.map(
-      (k) => `${JSON.stringify(k)}:${stringifyCanonical(obj[k]!)}`,
-    );
-    return `{${parts.join(",")}}`;
-  }
-
-  return JSON.stringify(value);
+export function createSignDoc(doc: StdSignDoc): CanonicalSignDoc {
+  return {
+    data: doc,
+    stringify: () => stringifyCanonical(doc),
+  };
 }
