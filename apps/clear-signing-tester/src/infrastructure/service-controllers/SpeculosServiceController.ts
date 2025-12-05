@@ -14,7 +14,8 @@ const DEFAULT_CONTAINER_NAMES: Partial<
   "nanos+": "cs-tester-speculos-nanosplus",
 };
 
-const SPECULOS_DOCKER_IMAGE_LATEST = "ghcr.io/ledgerhq/speculos:latest";
+const SPECULOS_DOCKER_IMAGE_LATEST =
+  "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools";
 const SPECULOS_API_PORT = 5000;
 
 @injectable()
@@ -92,6 +93,7 @@ export class SpeculosServiceController implements ServiceController {
       );
 
       command = [
+        "speculos",
         ethereumPath,
         "-l",
         pluginPath,
@@ -99,6 +101,8 @@ export class SpeculosServiceController implements ServiceController {
         "headless",
         "--api-port",
         SPECULOS_API_PORT.toString(),
+        "--user",
+        `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
         "-p", // Use prod signatures
       ];
     } else {
@@ -113,11 +117,14 @@ export class SpeculosServiceController implements ServiceController {
       );
 
       command = [
+        "speculos",
         `/apps/${this.model}/${this.os}/Ethereum/app_${this.version}.elf`,
         "--display",
         "headless",
         "--api-port",
         SPECULOS_API_PORT.toString(),
+        "--user",
+        `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
         "-p", // Use prod signatures
       ];
     }

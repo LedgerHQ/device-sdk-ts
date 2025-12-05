@@ -9,7 +9,7 @@ This TypeScript CLI application tests Ethereum transactions and typed data using
 - **Docker**: Required to run Speculos
 - **Speculos Simulator**: Required to emulate a device signer application
 
-You can get it using the command `docker pull ghcr.io/ledgerhq/speculos:latest`
+You can get it using the command `docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest`
 
 - **Node.js**: Version 20 or higher
 - **Coin Apps**: Required to run apps
