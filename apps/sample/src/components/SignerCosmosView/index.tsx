@@ -67,7 +67,7 @@ export const SignerCosmosView: React.FC<{ sessionId: string }> = ({
       {
         title: "Sign Transaction",
         description:
-          "Perform all the actions necessary to sign a Solana transaction with the device",
+          "Perform all the actions necessary to sign a Cosmos transaction with the device",
         executeDeviceAction: ({ derivationPath, skipOpenApp, signDoc }) => {
           const serializedSignDoc = new TextEncoder().encode(signDoc);
           return signer.signTransaction(derivationPath, serializedSignDoc, {
