@@ -9,6 +9,7 @@ import { type EtherscanAdapter } from "@root/src/domain/adapters/EtherscanAdapte
 import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
+import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
 import { type ContractInput } from "@root/src/domain/models/ContractInput";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
@@ -28,6 +29,7 @@ import { EthersTransactionCrafter } from "@root/src/infrastructure/adapters/evm/
 import { HttpCalAdapter } from "@root/src/infrastructure/adapters/external/HttpCalAdapter";
 import { HttpEtherscanAdapter } from "@root/src/infrastructure/adapters/external/HttpEtherscanAdapter";
 import { SpeculosScreenReader } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenReader";
+import { SpeculosScreenshotSaver } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenshotSaver";
 import { NodeDockerContainer } from "@root/src/infrastructure/adapters/system/NodeDockerContainer";
 import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
 import { NodeJsonParser } from "@root/src/infrastructure/adapters/system/NodeJsonParser";
@@ -123,6 +125,9 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     // Adapters
     bind<ScreenReader>(TYPES.ScreenReader)
       .to(SpeculosScreenReader)
+      .inSingletonScope();
+    bind<ScreenshotSaver>(TYPES.ScreenshotSaver)
+      .to(SpeculosScreenshotSaver)
       .inSingletonScope();
     bind<FileReader>(TYPES.FileReader).to(NodeFileReader).inSingletonScope();
     bind<JsonParser>(TYPES.JsonParser).to(NodeJsonParser).inSingletonScope();

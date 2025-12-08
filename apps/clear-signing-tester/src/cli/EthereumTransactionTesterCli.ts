@@ -29,6 +29,7 @@ export type CliConfig = {
   osVersion?: SpeculosConfig["os"];
   plugin?: string;
   pluginVersion?: string;
+  screenshotFolderPath?: string;
 
   // config.signer
   skipCal?: boolean;
@@ -70,6 +71,7 @@ export class EthereumTransactionTesterCli {
         version: config.appEthVersion,
         plugin: config.plugin,
         pluginVersion: config.pluginVersion,
+        screenshotPath: config.screenshotFolderPath,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -200,6 +202,10 @@ export class EthereumTransactionTesterCli {
         "--docker-image-tag <tag>",
         "Docker image tag for Speculos (default: latest)",
         "latest",
+      )
+      .option(
+        "--screenshot-folder-path <path>",
+        "Save screenshots to a folder during transaction signing",
       )
       .option(
         "--log-level <level>",

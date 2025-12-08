@@ -51,6 +51,7 @@ Options:
   --os-version <version>         Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.
   --plugin <plugin>              Plugin to use (e.g., Paraswap). If not specified, uses no plugin.
   --plugin-version <version>     Plugin version to use. If not specified, uses latest version.
+  --screenshot-folder-path <path>  Save screenshots to a folder during transaction signing
 
   # @config.signer
   --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0")
@@ -190,6 +191,17 @@ pnpm cs-tester cli --log-level none --log-file ./debug.log --file-log-level debu
 - `warn` - Errors and warnings
 - `info` - Errors, warnings, and info (default)
 - `debug` - All messages including debug
+
+### Screenshots
+
+Save screenshots of each screen during transaction signing:
+
+```bash
+# Save screenshots to a folder
+pnpm cs-tester cli --screenshot-folder-path ./screenshots raw-file ./ressources/raw-erc20.json
+```
+
+Screenshots are saved as `screenshot_1.png`, `screenshot_2.png`, etc. in the specified folder.
 
 ### Plugin Support
 

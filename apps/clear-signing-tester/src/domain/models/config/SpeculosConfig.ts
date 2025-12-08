@@ -10,4 +10,5 @@ export type SpeculosConfig = {
   version?: string;
   plugin?: string;
   pluginVersion?: string;
+  screenshotPath?: string;
 };

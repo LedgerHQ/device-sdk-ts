@@ -3,6 +3,7 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 
@@ -17,6 +18,8 @@ export class OptOutStateHandler implements StateHandler {
     private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.DeviceController)
     private readonly deviceController: DeviceController,
+    @inject(TYPES.ScreenshotSaver)
+    private readonly screenshotSaver: ScreenshotSaver,
   ) {
     this.logger = this.loggerFactory("opt-out-state-handler");
   }
@@ -27,6 +30,8 @@ export class OptOutStateHandler implements StateHandler {
     this.logger.debug("Opt out state handler", {
       data: { ctx },
     });
+
+    await this.screenshotSaver.save();
 
     await this.deviceController.rejectTransactionCheck();
 
