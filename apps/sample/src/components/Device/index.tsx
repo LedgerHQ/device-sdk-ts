@@ -166,7 +166,7 @@ export const AvailableDevice: React.FC<AvailableDeviceProps> = ({
 }) => {
   const IconComponent = getIconComponent(model);
   return (
-    <Root flex={1} mb={0} m={0}>
+    <Root flex={1} mb={0} m={0} active={false}>
       <IconContainer>
         <IconComponent size="S" />
       </IconContainer>
