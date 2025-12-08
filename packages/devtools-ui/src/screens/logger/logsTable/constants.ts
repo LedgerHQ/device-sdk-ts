@@ -1,0 +1,23 @@
+export const TABLE_CONFIG = {
+  ROW_HEIGHT_ESTIMATE: 42,
+  OVERSCAN: 5,
+  MIN_COLUMN_SIZE: 50,
+  MAX_COLUMN_SIZE: 500,
+} as const;
+
+export const SCROLL_BUTTON_CONFIG = {
+  SIZE: 50,
+  BOTTOM_OFFSET: 25,
+  RIGHT_OFFSET: 25,
+  BORDER_RADIUS: 25,
+  PADDING_TOP: 4,
+} as const;
+
+export const SCROLL_THRESHOLD = 1;
+
+export const TABLE_STYLES = {
+  HEADER_FONT_SIZE: 12,
+  CELL_PADDING: "3px 0px",
+  RESIZER_WIDTH: "3px",
+  RESIZER_MARGIN: "2px",
+} as const;
