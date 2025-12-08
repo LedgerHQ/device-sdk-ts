@@ -13,10 +13,9 @@ import {
 } from "@api/index";
 import { type SignerCosmos } from "@api/SignerCosmos";
 import { makeContainer } from "@internal/di";
-
-import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
-import { useCasesTypes } from "./use-cases/di/useCasesTypes";
-import { type SignTransactionUseCase } from "./use-cases/transaction/SignTransactionUseCase";
+import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
+import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
+import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
 
 type DefaultSignerCosmosConstructorArgs = {
   dmk: DeviceManagementKit;

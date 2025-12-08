@@ -9,10 +9,9 @@ import { inject, injectable } from "inversify";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { TransactionOptions } from "@api/model/TransactionOptions";
+import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
+import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransactionDeviceAction";
 import { externalTypes } from "@internal/externalTypes";
-
-import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
-import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
 @injectable()
 export class CosmosAppBinder {
