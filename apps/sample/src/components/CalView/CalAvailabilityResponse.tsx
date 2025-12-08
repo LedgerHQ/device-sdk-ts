@@ -27,7 +27,7 @@ export function CalAvailabilityResponseComponent(
         <>
           {(type === "ethereum_app_plugins" || type === "eip712") && (
             <>
-              <Flex align="center" flexDirection="column">
+              <Flex flexDirection="column">
                 <Flex alignItems="center">
                   <Icons.CheckmarkCircle style={{ color: "green" }} />
                   <Text
@@ -64,7 +64,7 @@ export function CalAvailabilityResponseComponent(
                 </Box>
               </Flex>
               {type === "ethereum_app_plugins" && (
-                <Flex align="center">
+                <Flex>
                   <Text>
                     <ul>
                       {descriptors.map((descriptor: Descriptor) => {
@@ -77,7 +77,7 @@ export function CalAvailabilityResponseComponent(
                 </Flex>
               )}
               {type === "eip712" && (
-                <Flex align="center">
+                <Flex>
                   <Text>
                     <ul>
                       {descriptors.map((descriptor: Descriptor) => {
