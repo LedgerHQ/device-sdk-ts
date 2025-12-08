@@ -1,5 +1,6 @@
-import { type LoggerSubscriberService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
+
+import { type LoggerConfig } from "@root/src/domain/models/config/LoggerConfig";
 
 import { applicationModuleFactory } from "./modules/applicationModuleFactory";
 import {
@@ -11,12 +12,12 @@ import { loggerModuleFactory } from "./modules/loggerModuleFactory";
 
 type MakeContainerArgs = {
   config: ClearSigningTesterConfig;
-  loggers?: LoggerSubscriberService[];
+  logger: LoggerConfig;
 };
 
 export const makeContainer = ({
   config,
-  loggers = [],
+  logger,
 }: MakeContainerArgs): Container => {
   const container = new Container();
 
@@ -24,7 +25,7 @@ export const makeContainer = ({
     configModuleFactory(config),
     infrastructureModuleFactory(config),
     applicationModuleFactory(),
-    loggerModuleFactory({ subscribers: loggers }),
+    loggerModuleFactory({ config: logger }),
   );
 
   return container;

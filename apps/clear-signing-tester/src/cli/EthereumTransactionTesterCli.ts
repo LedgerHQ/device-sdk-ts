@@ -1,11 +1,5 @@
 #!/usr/bin/env node
 
-import {
-  ConsoleLogger,
-  FileLogger,
-  type LoggerSubscriberService,
-  LogLevel,
-} from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
@@ -18,23 +12,34 @@ import { type TestTypedDataUseCase } from "@root/src/application/usecases/TestTy
 import { makeContainer } from "@root/src/di/container";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
+import {
+  CLI_LOG_LEVELS,
+  type CliLogLevel,
+} from "@root/src/domain/models/config/LoggerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
 export type CliConfig = {
-  derivationPath: string;
+  // config.speculos
   speculosUrl: string;
   speculosPort: number;
-  verbose: boolean;
-  quiet: boolean;
+  dockerImageTag?: string;
   device: SpeculosConfig["device"];
   appEthVersion?: SpeculosConfig["version"];
   osVersion?: SpeculosConfig["os"];
   plugin?: string;
   pluginVersion?: string;
+
+  // config.signer
   skipCal?: boolean;
-  dockerImageTag?: string;
+
+  // config.logger
+  logLevel: CliLogLevel;
   logFile?: string;
+  fileLogLevel?: CliLogLevel;
+
+  // extras (not in config section but used by CLI)
+  derivationPath: string;
 };
 
 /**
@@ -48,25 +53,9 @@ export class EthereumTransactionTesterCli {
   private container: Container;
   private controller: ServiceController;
   private config: CliConfig;
-  private fileLogger: FileLogger | null = null;
 
   constructor(config: CliConfig) {
     this.config = config;
-
-    const logLevel = config.quiet
-      ? LogLevel.Error
-      : config.verbose
-        ? LogLevel.Debug
-        : LogLevel.Info;
-
-    const consoleLogger = new ConsoleLogger(logLevel);
-
-    const loggers: LoggerSubscriberService[] = [consoleLogger];
-
-    if (config.logFile) {
-      this.fileLogger = new FileLogger(config.logFile, logLevel);
-      loggers.push(this.fileLogger);
-    }
 
     const randomPort = Math.floor(Math.random() * 10000) + 10000;
 
@@ -97,7 +86,18 @@ export class EthereumTransactionTesterCli {
     // Create DI container and resolve tester
     this.container = makeContainer({
       config: diConfig,
-      loggers,
+      logger: {
+        cli: {
+          level: config.logLevel,
+        },
+        file: config.logFile
+          ? {
+              // default to cli log level if file log level is not specified,
+              level: config.fileLogLevel || config.logLevel,
+              filePath: config.logFile,
+            }
+          : undefined,
+      },
     });
 
     this.controller = this.container.get<ServiceController>(
@@ -117,7 +117,6 @@ export class EthereumTransactionTesterCli {
    */
   async cleanup(): Promise<void> {
     await this.controller.stop();
-    this.fileLogger?.close();
   }
 
   /**
@@ -202,9 +201,32 @@ export class EthereumTransactionTesterCli {
         "Docker image tag for Speculos (default: latest)",
         "latest",
       )
-      .option("--verbose, -v", "Enable verbose output", false)
-      .option("--quiet, -q", "Show only result tables (quiet mode)", false)
-      .option("--log-file <path>", "Log output to a file");
+      .option(
+        "--log-level <level>",
+        `Console log level: ${CLI_LOG_LEVELS.join(", ")} (default: info)`,
+        (value: string) => {
+          if (!CLI_LOG_LEVELS.includes(value as CliLogLevel)) {
+            throw new Error(
+              `Invalid log level '${value}'. Must be one of: ${CLI_LOG_LEVELS.join(", ")}`,
+            );
+          }
+          return value as CliLogLevel;
+        },
+        "info" as CliLogLevel,
+      )
+      .option("--log-file <path>", "Log output to a file")
+      .option(
+        "--file-log-level <level>",
+        `File log level: ${CLI_LOG_LEVELS.join(", ")} (requires --log-file)`,
+        (value: string) => {
+          if (!CLI_LOG_LEVELS.includes(value as CliLogLevel)) {
+            throw new Error(
+              `Invalid log level '${value}'. Must be one of: ${CLI_LOG_LEVELS.join(", ")}`,
+            );
+          }
+          return value as CliLogLevel;
+        },
+      );
 
     // Set up signal handlers that work with the CLI instance
     const handleShutdown = async (signal: string) => {
