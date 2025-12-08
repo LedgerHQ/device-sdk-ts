@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 
-import { ConsoleLogger, LogLevel } from "@ledgerhq/device-management-kit";
+import {
+  ConsoleLogger,
+  FileLogger,
+  type LoggerSubscriberService,
+  LogLevel,
+} from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
@@ -29,6 +34,7 @@ export type CliConfig = {
   pluginVersion?: string;
   skipCal?: boolean;
   dockerImageTag?: string;
+  logFile?: string;
 };
 
 /**
@@ -42,17 +48,25 @@ export class EthereumTransactionTesterCli {
   private container: Container;
   private controller: ServiceController;
   private config: CliConfig;
+  private fileLogger: FileLogger | null = null;
 
   constructor(config: CliConfig) {
     this.config = config;
 
-    const logger = new ConsoleLogger(
-      config.quiet
-        ? LogLevel.Error
-        : config.verbose
-          ? LogLevel.Debug
-          : LogLevel.Info,
-    );
+    const logLevel = config.quiet
+      ? LogLevel.Error
+      : config.verbose
+        ? LogLevel.Debug
+        : LogLevel.Info;
+
+    const consoleLogger = new ConsoleLogger(logLevel);
+
+    const loggers: LoggerSubscriberService[] = [consoleLogger];
+
+    if (config.logFile) {
+      this.fileLogger = new FileLogger(config.logFile, logLevel);
+      loggers.push(this.fileLogger);
+    }
 
     const randomPort = Math.floor(Math.random() * 10000) + 10000;
 
@@ -83,7 +97,7 @@ export class EthereumTransactionTesterCli {
     // Create DI container and resolve tester
     this.container = makeContainer({
       config: diConfig,
-      loggers: [logger],
+      loggers,
     });
 
     this.controller = this.container.get<ServiceController>(
@@ -103,6 +117,7 @@ export class EthereumTransactionTesterCli {
    */
   async cleanup(): Promise<void> {
     await this.controller.stop();
+    this.fileLogger?.close();
   }
 
   /**
@@ -188,7 +203,8 @@ export class EthereumTransactionTesterCli {
         "latest",
       )
       .option("--verbose, -v", "Enable verbose output", false)
-      .option("--quiet, -q", "Show only result tables (quiet mode)", false);
+      .option("--quiet, -q", "Show only result tables (quiet mode)", false)
+      .option("--log-file <path>", "Log output to a file");
 
     // Set up signal handlers that work with the CLI instance
     const handleShutdown = async (signal: string) => {
