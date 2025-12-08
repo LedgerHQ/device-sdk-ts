@@ -1,4 +1,4 @@
-import { type Container } from "inversify";
+import { type Container, type Factory } from "inversify";
 import { type Observable } from "rxjs";
 
 import { commandTypes } from "@api/command/di/commandTypes";
@@ -20,6 +20,7 @@ import {
   type DisconnectUseCaseArgs,
   type DiscoveredDevice,
   type GetConnectedDeviceUseCaseArgs,
+  type LoggerPublisherService,
   type SendApduUseCaseArgs,
   type StartDiscoveringUseCaseArgs,
 } from "@api/types";
@@ -44,6 +45,7 @@ import {
 } from "@internal/discovery/use-case/ReconnectUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { type SetProviderUseCase } from "@internal/manager-api/use-case/SetProviderUseCase";
@@ -68,6 +70,8 @@ import { type DmkError } from "./Error";
  */
 export class DeviceManagementKit {
   readonly container: Container;
+  private readonly loggers: Record<string, LoggerPublisherService> = {};
+
   /** @internal */
   constructor({
     stub,
@@ -337,5 +341,18 @@ export class DeviceManagementKit {
       .get<TransportService>(transportDiTypes.TransportService)
       .getAllTransports()
       .some((transport) => transport.isSupported());
+  }
+
+  /**
+   * Returns DMK logger factory function
+   *
+   * @param {string} tag - The tag to identify the logger instance.
+   */
+  getDMKLogger(tag: string): LoggerPublisherService {
+    const loggerFactory = this.container.get<Factory<LoggerPublisherService>>(
+      loggerTypes.LoggerPublisherServiceFactory,
+    );
+    this.loggers[tag] = loggerFactory(tag);
+    return this.loggers[tag];
   }
 }
