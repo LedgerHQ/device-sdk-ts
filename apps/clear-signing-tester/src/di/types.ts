@@ -3,6 +3,7 @@ export const TYPES = {
   DeviceRepository: Symbol.for("DeviceRepository"),
   TransactionFileRepository: Symbol.for("TransactionFileRepository"),
   TypedDataFileRepository: Symbol.for("TypedDataFileRepository"),
+  ContractFileRepository: Symbol.for("ContractFileRepository"),
   TransactionContractRepository: Symbol.for("TransactionContractRepository"),
 
   // Services
@@ -46,6 +47,9 @@ export const TYPES = {
     "TestBatchTypedDataFromFileUseCase",
   ),
   TestContractUseCase: Symbol.for("TestContractUseCase"),
+  TestBatchContractFromFileUseCase: Symbol.for(
+    "TestBatchContractFromFileUseCase",
+  ),
 
   // Config
   SpeculosConfig: Symbol.for("SpeculosConfig"),

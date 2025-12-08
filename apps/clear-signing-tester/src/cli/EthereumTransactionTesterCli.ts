@@ -4,6 +4,7 @@ import { ConsoleLogger, LogLevel } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
+import { type TestBatchContractFromFileUseCase } from "@root/src/application/usecases/TestBatchContractFromFileUseCase";
 import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
 import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/usecases/TestBatchTypedDataFromFileUseCase";
 import { type TestContractUseCase } from "@root/src/application/usecases/TestContractUseCase";
@@ -259,6 +260,19 @@ export class EthereumTransactionTesterCli {
         );
       });
 
+    // Contract file command
+    program
+      .command("contract-file <file>")
+      .description("Test multiple contracts from a JSON file")
+      .option(
+        "--skip-cal",
+        "Skip CAL filtering and fetch random transactions directly from Etherscan",
+        false,
+      )
+      .action(async (file, options) => {
+        exitCode = await cli!.handleContractFile(file, options.skipCal);
+      });
+
     return program;
   }
 
@@ -362,6 +376,32 @@ export class EthereumTransactionTesterCli {
       chainId,
       derivationPath: this.config.derivationPath,
       skipCal,
+    });
+
+    console.log(`\n${result.title}`);
+    console.table(result.resultsTable);
+    console.log(`\n${result.summaryTitle}`);
+    console.table(result.summaryTable);
+
+    return result.exitCode;
+  }
+
+  /**
+   * Handle contract file command
+   */
+  async handleContractFile(
+    file: string,
+    skipCal: boolean = false,
+  ): Promise<number> {
+    const batchTestUseCase =
+      this.container.get<TestBatchContractFromFileUseCase>(
+        TYPES.TestBatchContractFromFileUseCase,
+      );
+
+    const result = await batchTestUseCase.execute(file, {
+      defaultDerivationPath: this.config.derivationPath,
+      skipCal,
+      plugin: this.config.plugin,
     });
 
     console.log(`\n${result.title}`);

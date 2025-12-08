@@ -39,6 +39,11 @@ export class TestContractUseCase {
       config.skipCal,
     );
 
+    if (txs.length === 0) {
+      console.warn("No transactions found");
+      throw new Error("No transactions found");
+    }
+
     const results: TestResult[] = [];
 
     // Test each transaction
@@ -74,6 +79,7 @@ export class TestContractUseCase {
           status: "error",
           timestamp: new Date().toISOString(),
           errorMessage: error instanceof Error ? error.message : String(error),
+          hash,
         };
         results.push(errorResult);
       }
