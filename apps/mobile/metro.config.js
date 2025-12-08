@@ -1,3 +1,4 @@
+const { withRozenite } = require("@rozenite/metro");
 const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
 const {
   wrapWithReanimatedMetroConfig,
@@ -41,6 +42,9 @@ const config = {
   },
 };
 
-module.exports = wrapWithReanimatedMetroConfig(
-  mergeConfig(getDefaultConfig(__dirname), config),
+module.exports = withRozenite(
+  wrapWithReanimatedMetroConfig(
+    mergeConfig(getDefaultConfig(__dirname), config),
+  ),
+  { enabled: true },
 );

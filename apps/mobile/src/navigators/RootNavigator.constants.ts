@@ -4,10 +4,12 @@ export enum RootScreens {
   Home = "HOME_SCREEN",
   ConnectDevice = "CONNECT_DEVICE_SCREEN",
   Command = "COMMAND_NAVIGATOR",
+  DevToolsTest = "DEVTOOLS_TEST",
 }
 
 export type RootStackParamList = {
   [RootScreens.Home]: undefined;
+  [RootScreens.DevToolsTest]: undefined;
   [RootScreens.ConnectDevice]: undefined;
   [RootScreens.Command]: { screen: keyof CommandTabNavigatorParamList };
 };

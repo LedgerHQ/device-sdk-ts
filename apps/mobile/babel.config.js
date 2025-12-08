@@ -8,6 +8,7 @@ module.exports = {
           // This needs to be mirrored in tsconfig.json
           _providers: "./src/providers",
           _components: "./src/components",
+          _screens: "./src/screens",
           _hooks: "./src/hooks",
           _navigators: "./src/navigators",
           _reducers: "./src/reducers",
