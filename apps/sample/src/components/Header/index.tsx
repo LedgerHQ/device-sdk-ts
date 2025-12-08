@@ -115,7 +115,7 @@ export const Header = () => {
             </div>
             <UrlInput
               value={mockServerStateUrl}
-              onChange={(url: string) => setMockServerStateUrl(url)}
+              onChange={(url: unknown) => setMockServerStateUrl(url as string)}
               renderRight={() => (
                 <Flex alignItems="center" justifyContent="stretch">
                   <Button iconButton onClick={validateServerUrl}>

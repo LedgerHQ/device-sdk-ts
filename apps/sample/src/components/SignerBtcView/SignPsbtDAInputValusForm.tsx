@@ -163,7 +163,6 @@ export const GetWalletAddressInputValuesForm: React.FC<{
       </Flex>
 
       <Input
-        label="Derivation path"
         value={formValues.derivationPath}
         onChange={(val) => setFormValue("derivationPath", val)}
         disabled={disabled}
@@ -173,7 +172,6 @@ export const GetWalletAddressInputValuesForm: React.FC<{
         {"Address index"}
       </Text>
       <Input
-        label="Address index"
         value={String(formValues.addressIndex)}
         onChange={(val) => setFormValue("addressIndex", val)}
         disabled={disabled}
