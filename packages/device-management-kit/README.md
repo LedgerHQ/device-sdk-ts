@@ -369,3 +369,82 @@ observable.subscribe({
 ### Example in React
 
 Check [the sample app](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/apps/sample) for an advanced example showcasing all possible usages of the Device Management Kit in a React app.
+
+## Developer tools
+
+Some basic developer tools are available.
+For now they allow to view logs from the Device Management Kit. They will have more advanced features soon.
+
+### JavaScript app
+
+The devtools can be set up in any JavaScript runtime with WebSocket support. (e.g. web apps, React Native apps etc.)
+
+#### Set up
+
+Install those packages:
+
+- `@ledgerhq/device-management-kit-devtools-core`
+- `@ledgerhq/device-management-kit-devtools-websocket-common`
+- `@ledgerhq/device-management-kit-devtools-websocket-connector`
+
+```ts
+import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
+import { DevtoolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
+
+// Build the dev tools logger
+function buildDevToolsLogger() {
+  const devToolsWebSocketConnector =
+    DevtoolsWebSocketConnector.getInstance().connect({
+      url: DEFAULT_CLIENT_WS_URL,
+    });
+  return new DevToolsLogger(devToolsWebSocketConnector);
+}
+
+// Pass the logger to your DMK builder
+new DeviceManagementKitBuilder()
+  //...
+  .addLogger(buildDevToolsLogger())
+  .build();
+```
+
+#### Usage
+
+The devtools can be accessed as an Electron app.
+
+1. [Clone this repo and install dependencies](#Installation)
+2. Run `pnpm dev devtools`
+
+### React Native app (with Rozenite)
+
+If you have [Rozenite](https://www.rozenite.dev/) already set up in your React Native app, the DMK developer tools can be accessed directly in the React Native DevTools.
+
+#### Set up
+
+Install those packages:
+
+- `@ledgerhq/device-management-kit-devtools-core`
+- `@ledgerhq/device-management-kit-devtools-rozenite`
+
+```ts
+import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import { RozeniteConnector } from "@ledgerhq/device-management-kit-devtools-rozenite";
+
+// Build the dev tools logger
+function buildDevToolsLogger() {
+  const connector = RozeniteConnector.getInstance();
+  return new DevToolsLogger(connector);
+}
+
+// Pass the logger to your DMK builder
+new DeviceManagementKitBuilder()
+  //...
+  .addLogger(buildDevToolsLogger())
+  .build();
+```
+
+#### Usage
+
+1. Run your React Native app
+2. [Open the React Native DevTools](https://reactnative.dev/docs/react-native-devtools)
+3. Navigate to the DMK Devtools tab
