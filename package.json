@@ -37,7 +37,6 @@
     "transport-speculos": "pnpm --filter @ledgerhq/device-transport-kit-speculos",
     "apps": "pnpm --filter @ledgerhq/device-trusted-app-*",
     "app-keyring": "pnpm --filter @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
-    "flipper": "pnpm --filter @ledgerhq/device-management-kit-flipper-plugin-client",
     "sample": "pnpm --filter @ledgerhq/device-management-kit-sample",
     "mobile": "pnpm --filter @ledgerhq/device-management-kit-mobile-sample",
     "doc": "pnpm --filter @ledgerhq/ledger-dmk-docs",
