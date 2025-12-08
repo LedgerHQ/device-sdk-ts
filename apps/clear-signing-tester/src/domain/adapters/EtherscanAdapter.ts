@@ -8,26 +8,15 @@ import type { TransactionData } from "@root/src/domain/models/TransactionData";
  */
 export interface EtherscanAdapter {
   /**
-   * Fetch random transaction filtered by chain ID, address, and selector
+   * Fetch random transactions filtered by chain ID, address, and optionally selectors
    * @param chainId - The blockchain chain ID
    * @param address - The contract address to filter transactions
-   * @param selector - The function selector (4-byte signature) to filter
-   * @returns Promise<TransactionData | undefined> - Transaction data if found, undefined if not found
+   * @param selectors - Optional function selectors (4-byte signatures) to filter. If not provided, returns one transaction per unique selector found.
+   * @returns Promise<TransactionData[]> - Array of transaction data, one per selector if found
    */
   fetchRandomTransaction(
     chainId: number,
     address: string,
-    selector: string,
-  ): Promise<TransactionData | undefined>;
-
-  /**
-   * Fetch random transaction without selector filtering
-   * @param chainId - The blockchain chain ID
-   * @param address - The contract address to filter transactions
-   * @returns Promise<TransactionData[]> - Transaction data if found, empty array if not found
-   */
-  fetchRandomTransactionWithoutFilter(
-    chainId: number,
-    address: string,
+    selectors?: string[],
   ): Promise<TransactionData[]>;
 }

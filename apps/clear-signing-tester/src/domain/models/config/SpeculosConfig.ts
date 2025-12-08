@@ -5,6 +5,7 @@ export type SpeculosConfig = {
   url: string;
   port: number;
   device: "stax" | "nanox" | "nanos" | "nanos+" | "flex" | "apex";
+  dockerImageTag: string;
   os?: string;
   version?: string;
   plugin?: string;
