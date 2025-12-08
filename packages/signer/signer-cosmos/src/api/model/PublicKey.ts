@@ -1,4 +1,4 @@
-export type PublicKey<T = string> = {
-  readonly publicKey: T;
-  readonly address: T;
+export type PublicKey = {
+  readonly publicKey: Uint8Array;
+  readonly address: string;
 };

@@ -16,12 +16,11 @@ import {
 import { Maybe } from "purify-ts";
 
 import { type PublicKey } from "@api/model/PublicKey";
-
 import {
   COSMOS_APP_ERRORS,
   CosmosAppCommandErrorFactory,
   type CosmosAppErrorCodes,
-} from "./utils/CosmosAppErrors";
+} from "@internal/app-binder/command/utils/CosmosAppErrors";
 
 const PUBKEY_LENGTH = 33;
 
@@ -124,11 +123,10 @@ export class GetPubKeyCommand
 
       const trimmedAddrBytes = addrBytes.filter((b) => b !== 0x00);
       const bech32Address = parser.encodeToString(trimmedAddrBytes);
-      const publicKeyHex = parser.encodeToHexaString(pkBytes);
 
       return CommandResultFactory({
         data: {
-          publicKey: publicKeyHex,
+          publicKey: pkBytes,
           address: bech32Address,
         },
       });
