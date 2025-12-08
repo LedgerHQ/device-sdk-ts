@@ -13,6 +13,10 @@ type FactoryProps = {
 
 export const loggerModuleFactory = ({ subscribers }: FactoryProps) =>
   new ContainerModule(({ bind }) => {
+    bind<LoggerSubscriberService[]>(TYPES.LoggerSubscribers).toConstantValue(
+      subscribers,
+    );
+
     bind<Factory<LoggerPublisherServiceBase>>(
       TYPES.LoggerPublisherServiceFactory,
     ).toFactory((_context) => {

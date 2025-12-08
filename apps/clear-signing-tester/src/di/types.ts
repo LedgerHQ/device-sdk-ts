@@ -59,4 +59,5 @@ export const TYPES = {
 
   // Logger
   LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
+  LoggerSubscribers: Symbol.for("LoggerSubscribers"),
 };
