@@ -17,7 +17,7 @@ import { type CosmosAppErrorCodes } from "@internal/app-binder/command/utils/Cos
 
 type CosmosSignDataTaskArgs = {
   readonly derivationPath: string;
-  readonly prefix?: string;
+  readonly prefix: string;
   readonly serializedTransaction: Uint8Array; // canonical JSON bytes
 };
 
@@ -65,6 +65,7 @@ export class CosmosSignDataTask {
           phase,
           format: "json",
           serializedTransactionChunk: chunk,
+          prefix,
         }),
       );
 

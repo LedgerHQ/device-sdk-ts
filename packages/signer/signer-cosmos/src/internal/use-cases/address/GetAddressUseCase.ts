@@ -13,7 +13,7 @@ export class GetAddressUseCase {
 
   execute(
     derivationPath: string,
-    prefix: string,
+    prefix: string = "cosmos",
     options?: AddressOptions,
   ): GetAddressDAReturnType {
     return this.appBinder.getAddress({

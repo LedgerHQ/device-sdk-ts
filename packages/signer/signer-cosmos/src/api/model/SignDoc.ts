@@ -1,4 +1,8 @@
-import { type JsonObject, type JsonValue, stringifyCanonical } from "./Json";
+import {
+  type JsonObject,
+  type JsonValue,
+  stringifyCanonical,
+} from "@api/model/Json";
 
 export interface StdFee extends JsonObject {
   readonly amount: StdCoin[];
@@ -27,11 +31,13 @@ export interface StdSignDoc extends JsonObject {
 interface CanonicalSignDoc {
   data: StdSignDoc;
   stringify: () => string;
+  serialize: () => Uint8Array;
 }
 
 export function createSignDoc(doc: StdSignDoc): CanonicalSignDoc {
   return {
     data: doc,
     stringify: () => stringifyCanonical(doc),
+    serialize: () => new TextEncoder().encode(stringifyCanonical(doc)),
   };
 }

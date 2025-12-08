@@ -28,7 +28,7 @@ export type SignTransactionCommandResponse = Maybe<Signature>;
 export type SignTransactionCommandArgs = {
   readonly phase: SignPhase;
   readonly format: SignFormat;
-  readonly prefix?: string;
+  readonly prefix: string;
   readonly derivationPath?: string;
   readonly serializedTransactionChunk?: Uint8Array;
 };
@@ -102,14 +102,13 @@ export class SignTransactionCommand
       }
       builder.addBufferToData(new Uint8Array(view.buffer));
 
-      const defaultPrefix = prefix ?? "cosmos";
-      if (defaultPrefix.length === 0) {
+      if (prefix?.length === 0) {
         throw new Error(
           "SignTransactionCommand: prefix cannot be empty for 'init' phase",
         );
       }
-      builder.add8BitUIntToData(defaultPrefix.length);
-      builder.addAsciiStringToData(defaultPrefix);
+      builder.add8BitUIntToData(prefix.length);
+      builder.addAsciiStringToData(prefix);
     } else {
       if (
         !serializedTransactionChunk ||

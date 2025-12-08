@@ -28,7 +28,7 @@ export type MachineDependencies = {
     input: {
       derivationPath: string;
       // Bech32 HRP/prefix, e.g. "cosmos", "osmo", "noble"
-      prefix?: string;
+      prefix: string;
       // Canonical JSON bytes of the transaction
       serializedTransaction: Uint8Array;
     };
@@ -175,7 +175,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             src: "signTransaction",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              prefix: context.input.options?.bech32Prefix,
+              prefix: context.input.options?.bech32Prefix || "cosmos", // default to "cosmos" unless user specifies in tx options
               serializedTransaction: context.input.serializedSignDoc,
             }),
             onDone: {
@@ -236,7 +236,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const signTransaction = async (arg0: {
       input: {
         derivationPath: string;
-        prefix?: string;
+        prefix: string;
         serializedTransaction: Uint8Array;
       };
     }) =>

@@ -72,6 +72,7 @@ export const SignerCosmosView: React.FC<{ sessionId: string }> = ({
           const serializedSignDoc = new TextEncoder().encode(signDoc);
           return signer.signTransaction(derivationPath, serializedSignDoc, {
             skipOpenApp,
+            bech32Prefix: "cosmos",
           });
         },
         initialValues: {
