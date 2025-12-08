@@ -32,7 +32,7 @@ jobs:
     # npmjs requires attestation to be generated on a public runner
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.REF }}
 
@@ -67,7 +67,7 @@ jobs:
           path: ./dist
 
       - name: Upload packages to GitHub Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: npm-snapshot-packages
           path: dist/*.tgz
@@ -80,14 +80,14 @@ jobs:
     # JFrog is accessible only from a ledger private runner
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.REF }}
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - name: Download packages from GitHub Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: npm-snapshot-packages
           path: dist
