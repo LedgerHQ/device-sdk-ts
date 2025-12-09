@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 0.12.0
+
+### Minor Changes
+
+- [#1166](https://github.com/LedgerHQ/device-sdk-ts/pull/1166) [`596e027`](https://github.com/LedgerHQ/device-sdk-ts/commit/596e027578ece63db9c484fb12be31f38a56dfe1) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add new error type `UnsupportedApplicationDAError`
+
 ## 0.11.2
 
 ### Patch Changes
