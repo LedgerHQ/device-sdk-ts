@@ -182,8 +182,84 @@ export class NodeDockerContainer implements DockerContainer {
     });
   }
 
+  async pull(imageName: string): Promise<void> {
+    this.logger.info(`Pulling Docker image: ${imageName}`);
+    this.logger.info("This might take a while...");
+    return new Promise((resolve, reject) => {
+      const dockerProcess = spawn("docker", ["pull", imageName], {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      dockerProcess.stdout?.on("data", (data: Buffer) => {
+        const output = data.toString().trim();
+        this.logger.debug(`[stdout] ${output}`);
+      });
+
+      dockerProcess.stderr?.on("data", (data: Buffer) => {
+        const output = data.toString().trim();
+        this.logger.debug(`[error] ${output}`);
+      });
+
+      dockerProcess.on("close", (code) => {
+        if (code === 0) {
+          this.logger.info(`Docker image pulled: ${imageName}`);
+          resolve();
+        } else {
+          reject(new Error(`Failed to pull Docker image: ${imageName}`));
+        }
+      });
+
+      dockerProcess.on("error", (error) => {
+        this.logger.error(`Docker pull process error: ${error.message}`);
+        reject(
+          new Error(`Failed to spawn docker pull process: ${error.message}`),
+        );
+      });
+    });
+  }
+
   getContainerId(): string | null {
     return this.currentContainerName;
+  }
+
+  getImageId(image: string): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+      const dockerProcess = spawn(
+        "docker",
+        ["image", "ls", "--format", "{{.ID}}", image],
+        {
+          stdio: ["ignore", "pipe", "pipe"],
+        },
+      );
+
+      let output = "";
+      let errorOutput = "";
+
+      dockerProcess.stdout.on("data", (data: Buffer) => {
+        output += data.toString();
+      });
+
+      dockerProcess.stderr.on("data", (data: Buffer) => {
+        errorOutput += data.toString();
+      });
+
+      dockerProcess.on("close", (code) => {
+        if (code !== 0) {
+          return reject(
+            new Error(`Failed to list Docker image: ${errorOutput}`),
+          );
+        }
+
+        const id = output.trim();
+
+        // If no image found, output will be empty
+        resolve(id.length > 0 ? id : null);
+      });
+
+      dockerProcess.on("error", (error) => {
+        reject(new Error(`Docker image ls process error: ${error.message}`));
+      });
+    });
   }
 
   private buildDockerRunArgs(

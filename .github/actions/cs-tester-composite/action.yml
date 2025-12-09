@@ -25,7 +25,7 @@ runs:
 
     - name: Pull Speculos Docker image
       shell: bash
-      run: docker pull ghcr.io/ledgerhq/speculos
+      run: docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 
     - name: Run Clear Signing Tester
       shell: bash

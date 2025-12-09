@@ -20,10 +20,24 @@ export interface DockerContainer {
   isRunning(): Promise<boolean>;
 
   /**
+   * Pull a Docker image
+   * @param imageName - The Docker image name to pull
+   * @returns Promise resolving when image is pulled
+   */
+  pull(imageName: string): Promise<void>;
+
+  /**
    * Get the current container ID
    * @returns The container ID if running, null otherwise
    */
   getContainerId(): string | null;
+
+  /**
+   * Get the ID of a Docker image
+   * @param image - The Docker image name and tag
+   * @returns Promise resolving to the image ID if found, null otherwise
+   */
+  getImageId(image: string): Promise<string | null>;
 }
 
 export type DockerRunOptions = {

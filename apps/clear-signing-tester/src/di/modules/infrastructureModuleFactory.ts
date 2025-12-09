@@ -10,6 +10,7 @@ import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
+import { type ContractInput } from "@root/src/domain/models/ContractInput";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
@@ -30,6 +31,7 @@ import { SpeculosScreenReader } from "@root/src/infrastructure/adapters/speculos
 import { NodeDockerContainer } from "@root/src/infrastructure/adapters/system/NodeDockerContainer";
 import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
 import { NodeJsonParser } from "@root/src/infrastructure/adapters/system/NodeJsonParser";
+import { ContractFileRepository } from "@root/src/infrastructure/repositories/ContractFileRepository";
 import { DefaultTransactionContractRepository } from "@root/src/infrastructure/repositories/DefaultTransactionContractRepository";
 import { SpeculosDeviceRepository } from "@root/src/infrastructure/repositories/SpeculosDeviceRepository";
 import { TransactionFileRepository } from "@root/src/infrastructure/repositories/TransactionFileRepository";
@@ -59,6 +61,9 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
       .inSingletonScope();
     bind<DataFileRepository<TypedDataInput>>(TYPES.TypedDataFileRepository)
       .to(TypedDataFileRepository)
+      .inSingletonScope();
+    bind<DataFileRepository<ContractInput>>(TYPES.ContractFileRepository)
+      .to(ContractFileRepository)
       .inSingletonScope();
     bind<TransactionContractRepository>(TYPES.TransactionContractRepository)
       .to(DefaultTransactionContractRepository)

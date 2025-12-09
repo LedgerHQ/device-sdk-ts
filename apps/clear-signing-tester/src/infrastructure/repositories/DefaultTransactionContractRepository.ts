@@ -60,10 +60,7 @@ export class DefaultTransactionContractRepository
     address: string,
   ): Promise<TransactionData[]> {
     this.logger.info("Skipping CAL, fetching transactions from Etherscan");
-    return this.etherscanAdapter.fetchRandomTransactionWithoutFilter(
-      chainId,
-      address,
-    );
+    return this.etherscanAdapter.fetchRandomTransaction(chainId, address);
   }
 
   /**
@@ -74,21 +71,13 @@ export class DefaultTransactionContractRepository
     address: string,
   ): Promise<TransactionData[]> {
     const selectors = await this.calAdapter.fetchSelectors(chainId, address);
-    const transactions: TransactionData[] = [];
 
-    for (const selector of selectors) {
-      const tx = await this.etherscanAdapter.fetchRandomTransaction(
-        chainId,
-        address,
-        selector,
-      );
-
-      if (tx) {
-        transactions.push(tx);
-      }
-    }
-
-    return transactions;
+    // Fetch all transactions in a single API call
+    return this.etherscanAdapter.fetchRandomTransaction(
+      chainId,
+      address,
+      selectors,
+    );
   }
 
   /**
