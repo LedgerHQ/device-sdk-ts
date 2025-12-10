@@ -11,6 +11,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { type GetSolanaSignerLoggerPublisherService } from "@internal/di";
 
 import {
   BuildTransactionContextTask,
@@ -21,8 +22,19 @@ const contextModuleMock: ContextModule = {
   getSolanaContext: vi.fn(),
 } as unknown as ContextModule;
 
+const dmkLoggerFactoryMock: GetSolanaSignerLoggerPublisherService = vi.fn(
+  () =>
+    ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    }) as any,
+);
+
 const defaultArgs = {
   contextModule: contextModuleMock,
+  loggerFactory: dmkLoggerFactoryMock,
   options: {
     tokenAddress: "someAddress",
     createATA: undefined,
