@@ -17,6 +17,7 @@ const DEFAULT_CONTAINER_NAMES: Partial<
 const SPECULOS_DOCKER_IMAGE_BASE =
   "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools";
 const SPECULOS_API_PORT = 5000;
+const SPECULOS_VNC_PORT = 5900;
 
 @injectable()
 export class SpeculosServiceController implements ServiceController {
@@ -76,6 +77,9 @@ export class SpeculosServiceController implements ServiceController {
       `Starting Docker container with name: ${this.containerName}`,
     );
     this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
+    this.logger.info(
+      `VNC url: ${this.config.url.replace("http://", "vnc://")}:${this.config.vncPort}`,
+    );
     this.logger.debug(`Using app: ${resolvedEthereum.path}`);
     if (resolvedPlugin) {
       this.logger.debug(`Using plugin: ${resolvedPlugin.path}`);
@@ -97,6 +101,8 @@ export class SpeculosServiceController implements ServiceController {
       "headless",
       "--api-port",
       SPECULOS_API_PORT.toString(),
+      "--vnc-port",
+      SPECULOS_VNC_PORT.toString(),
       "--user",
       `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
       "-p", // Use prod signatures
@@ -111,7 +117,10 @@ export class SpeculosServiceController implements ServiceController {
     await this.dockerContainer.start(dockerImage, {
       command,
       volumes: [`${this.appsConfig.path}:/apps`],
-      ports: [`${this.config.port}:${SPECULOS_API_PORT}`],
+      ports: [
+        `${this.config.port}:${SPECULOS_API_PORT}`,
+        `${this.config.vncPort}:${SPECULOS_VNC_PORT}`,
+      ],
       detached: true,
       removeOnStop: true,
       name: this.containerName,

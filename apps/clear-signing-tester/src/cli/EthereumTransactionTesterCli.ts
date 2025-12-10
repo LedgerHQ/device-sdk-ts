@@ -23,6 +23,7 @@ export type CliConfig = {
   // config.speculos
   speculosUrl: string;
   speculosPort: number;
+  speculosVncPort?: number;
   dockerImageTag?: string;
   device: SpeculosConfig["device"];
   appEthVersion?: SpeculosConfig["version"];
@@ -62,12 +63,14 @@ export class EthereumTransactionTesterCli {
     this.config = config;
 
     const randomPort = Math.floor(Math.random() * 10000) + 10000;
+    const randomVncPort = Math.floor(Math.random() * 10000) + 20000;
 
     // Create DI container configuration
     const diConfig: ClearSigningTesterConfig = {
       speculos: {
         url: config.speculosUrl || `http://localhost`,
         port: config.speculosPort || randomPort,
+        vncPort: config.speculosVncPort || randomVncPort,
         dockerImageTag: config.dockerImageTag || "latest",
         device: config.device,
         os: config.osVersion,
@@ -155,6 +158,17 @@ export class EthereumTransactionTesterCli {
       .option(
         "--speculos-port <port>",
         "Speculos server port (random port if not provided)",
+        (value: string) => {
+          const port = parseInt(value);
+          if (isNaN(port) || port < 1 || port > 65535) {
+            throw new Error("Invalid port number");
+          }
+          return port;
+        },
+      )
+      .option(
+        "--speculos-vnc-port <port>",
+        "Speculos VNC port (random port if not provided)",
         (value: string) => {
           const port = parseInt(value);
           if (isNaN(port) || port < 1 || port > 65535) {
