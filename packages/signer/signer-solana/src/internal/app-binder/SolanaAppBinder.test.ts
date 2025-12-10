@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceActionIntermediateValue,
@@ -6,6 +7,7 @@ import {
   type DeviceManagementKit,
   type DeviceSessionId,
   type DmkError,
+  type LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -46,6 +48,10 @@ describe("SolanaAppBinder", () => {
     executeDeviceAction: vi.fn(),
   } as unknown as DeviceManagementKit;
 
+  const dmkLoggerFactoryMock: (tag: string) => LoggerPublisherService = vi.fn(
+    () => ({}) as any,
+  );
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -55,6 +61,7 @@ describe("SolanaAppBinder", () => {
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
       contextModuleStub,
+      dmkLoggerFactoryMock,
     );
     expect(binder).toBeDefined();
   });
@@ -84,6 +91,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          dmkLoggerFactoryMock,
         );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/501'",
@@ -140,6 +148,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          dmkLoggerFactoryMock,
         );
         appBinder.getAddress(params);
 
@@ -170,6 +179,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          dmkLoggerFactoryMock,
         );
         appBinder.getAddress(params);
 
@@ -214,6 +224,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          dmkLoggerFactoryMock,
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
@@ -261,6 +272,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
+        dmkLoggerFactoryMock,
       );
       appBinder.signTransaction({
         derivationPath,
@@ -277,6 +289,7 @@ describe("SolanaAppBinder", () => {
             transaction,
             transactionOptions: { skipOpenApp },
             contextModule: contextModuleStub,
+            loggerFactory: dmkLoggerFactoryMock,
           },
         }),
       });
@@ -315,6 +328,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          dmkLoggerFactoryMock,
         );
         const { observable } = appBinder.signMessage(signMessageArgs);
 
@@ -377,6 +391,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          dmkLoggerFactoryMock,
         );
         const { observable } = appBinder.getAppConfiguration();
 
@@ -416,6 +431,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
+        dmkLoggerFactoryMock,
       );
 
       // WHEN
@@ -461,6 +477,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          dmkLoggerFactoryMock,
         );
         const { observable } = appBinder.generateTransaction({
           derivationPath: "44'/501'/0'/0'",
@@ -499,6 +516,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
+        dmkLoggerFactoryMock,
       );
       appBinder.generateTransaction({ derivationPath, skipOpenApp });
 
