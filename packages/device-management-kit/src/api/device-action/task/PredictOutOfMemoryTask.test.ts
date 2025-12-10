@@ -169,7 +169,7 @@ describe("PredictOutOfMemoryTask", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       firmwareUpdateContext: {
-        currentFirmware: { bytes: 2 * 1024 } as FinalFirmware,
+        currentFirmware: { bytes: 397824 } as FinalFirmware,
       },
       customImage: {},
       installedApps: [
