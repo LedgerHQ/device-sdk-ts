@@ -245,8 +245,8 @@ export class EthereumTransactionTesterCli {
       process.exit(0);
     };
 
-    process.on("SIGINT", () => handleShutdown("SIGINT"));
-    process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+    process.once("SIGINT", () => handleShutdown("SIGINT"));
+    process.once("SIGTERM", () => handleShutdown("SIGTERM"));
 
     program.hook("preAction", async (_, command) => {
       const config = command.parent!.opts() as CliConfig;
