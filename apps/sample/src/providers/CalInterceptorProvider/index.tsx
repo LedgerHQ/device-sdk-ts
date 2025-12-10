@@ -8,6 +8,8 @@ import React, {
 } from "react";
 import { CalInterceptor } from "@ledgerhq/cal-interceptor";
 
+import { CalBrowserStorage } from "@/utils/CalBrowserStorage";
+
 type CalInterceptorContextType = {
   isActive: boolean;
   startInterception: () => void;
@@ -38,9 +40,9 @@ export const CalInterceptorProvider: React.FC<{
   const interceptorRef = useRef<CalInterceptor>();
   const [isActive, setIsActive] = useState(false);
 
-  // Initialize interceptor on mount
+  // Initialize interceptor on mount with browser localStorage
   useEffect(() => {
-    interceptorRef.current = new CalInterceptor();
+    interceptorRef.current = new CalInterceptor(new CalBrowserStorage());
     return () => {
       interceptorRef.current?.stop();
     };

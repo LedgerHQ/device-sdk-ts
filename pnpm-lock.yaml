@@ -1208,6 +1208,10 @@ importers:
         version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/tools/cal-interceptor:
+    dependencies:
+      axios:
+        specifier: 'catalog:'
+        version: 1.13.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*

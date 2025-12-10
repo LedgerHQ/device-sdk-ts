@@ -1,26 +1,26 @@
-import { LocalStorage } from "./storage/LocalStorage";
+import { MemoryStorage } from "./storage/MemoryStorage";
 import type { StorageInterface } from "./storage/StorageInterface";
-import { XhrInterceptor } from "./XhrInterceptor";
+import { AxiosInterceptor } from "./AxiosInterceptor";
 
 /**
  * CAL Interceptor - intercepts CAL (Crypto Assets List) API calls
  * and returns locally stored descriptors when available
  */
 export class CalInterceptor {
-  private readonly xhrInterceptor: XhrInterceptor;
+  private readonly interceptor: AxiosInterceptor;
   private readonly storage: StorageInterface;
 
   constructor(storage?: StorageInterface) {
-    // Default to localStorage for browser compatibility
-    this.storage = storage ?? new LocalStorage();
-    this.xhrInterceptor = new XhrInterceptor(this.modifyCalResponse.bind(this));
+    // Default to in-memory storage for environment-agnostic behavior
+    this.storage = storage ?? new MemoryStorage();
+    this.interceptor = new AxiosInterceptor(this.modifyCalResponse.bind(this));
   }
 
   /**
    * Start intercepting CAL requests
    */
   start(): void {
-    this.xhrInterceptor.start();
+    this.interceptor.start();
     console.log("CAL Interceptor started");
   }
 
@@ -28,7 +28,7 @@ export class CalInterceptor {
    * Stop intercepting CAL requests
    */
   stop(): void {
-    this.xhrInterceptor.stop();
+    this.interceptor.stop();
     console.log("CAL Interceptor stopped");
   }
 
@@ -36,7 +36,7 @@ export class CalInterceptor {
    * Check if interceptor is currently active
    */
   isActive(): boolean {
-    return this.xhrInterceptor.isIntercepting();
+    return this.interceptor.isIntercepting();
   }
 
   /**
@@ -130,12 +130,12 @@ export class CalInterceptor {
   }
 
   /**
-   * Modify CAL response - called by XHR interceptor
+   * Modify CAL response - called by interceptor
    * Returns modified response or null to pass through
    */
   private modifyCalResponse(url: string): string | null {
     try {
-      const parsedUrl = new URL(url, window.location.origin);
+      const parsedUrl = new URL(url);
 
       // Check if it's a CAL request
       if (!parsedUrl.origin.includes("crypto-assets-service")) {

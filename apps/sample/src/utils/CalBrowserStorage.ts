@@ -1,12 +1,12 @@
-import type { StorageInterface } from "./StorageInterface";
+import type { StorageInterface } from "@ledgerhq/cal-interceptor";
 
 const DEFAULT_DESCRIPTORS_KEY = "erc7730_descriptors";
 const DEFAULT_CERTIFICATES_KEY = "cal_certificates";
 
 /**
- * Browser localStorage implementation of StorageAdapter
+ * Browser localStorage implementation of StorageInterface for CAL interceptor
  */
-export class LocalStorage implements StorageInterface {
+export class CalBrowserStorage implements StorageInterface {
   constructor(
     private readonly descriptorsKey: string = DEFAULT_DESCRIPTORS_KEY,
     private readonly certificatesKey: string = DEFAULT_CERTIFICATES_KEY,

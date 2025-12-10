@@ -1,3 +1,4 @@
+export { AxiosInterceptor } from "./AxiosInterceptor";
 export { CalInterceptor } from "./CalInterceptor";
 export type {
   ERC7730ClientConfig,
@@ -10,9 +11,7 @@ export {
   fetchAndStoreCertificates,
   setupInterceptorWithCertificates,
 } from "./ERC7730Helper";
-export { XhrInterceptor } from "./XhrInterceptor";
 
 // Storage exports
-export { LocalStorage } from "./storage/LocalStorage";
 export { MemoryStorage } from "./storage/MemoryStorage";
 export type { StorageInterface } from "./storage/StorageInterface";
