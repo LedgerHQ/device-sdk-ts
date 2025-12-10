@@ -235,17 +235,22 @@ describe("StaticDeviceModelDataSource", () => {
       ],
     };
 
-    Object.entries(testData).forEach(([deviceModelId, testCases]) => {
-      testCases.forEach(({ firmwareVersion, expectedBlockSize }) => {
-        it(`should return the correct block size for ${deviceModelId} with firmware version ${firmwareVersion}`, () => {
-          const deviceModel = new StaticDeviceModelDataSource().getDeviceModel({
-            id: deviceModelId as DeviceModelId,
-          });
-          expect(deviceModel.getBlockSize({ firmwareVersion })).toBe(
-            expectedBlockSize,
-          );
-        });
-      });
-    });
+    describe.each(Object.entries(testData))(
+      "Device Model: %s",
+      (deviceModelId, scenarios) => {
+        it.each(scenarios)(
+          "should return $expectedBlockSize for firmware version $firmwareVersion",
+          ({ firmwareVersion, expectedBlockSize }) => {
+            const deviceModel =
+              new StaticDeviceModelDataSource().getDeviceModel({
+                id: deviceModelId as DeviceModelId,
+              });
+            expect(deviceModel.getBlockSize({ firmwareVersion })).toBe(
+              expectedBlockSize,
+            );
+          },
+        );
+      },
+    );
   });
 });
