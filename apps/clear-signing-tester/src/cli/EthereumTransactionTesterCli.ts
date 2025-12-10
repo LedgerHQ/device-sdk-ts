@@ -41,6 +41,9 @@ export type CliConfig = {
 
   // extras (not in config section but used by CLI)
   derivationPath: string;
+
+  // Start Speculos only (skip DMK initialization)
+  onlySpeculos?: boolean;
 };
 
 /**
@@ -83,6 +86,7 @@ export class EthereumTransactionTesterCli {
       apps: {
         path: process.env["COIN_APPS_PATH"] || "",
       },
+      onlySpeculos: config.onlySpeculos,
     };
 
     // Create DI container and resolve tester
@@ -246,6 +250,8 @@ export class EthereumTransactionTesterCli {
 
     program.hook("preAction", async (_, command) => {
       const config = command.parent!.opts() as CliConfig;
+      // Set onlySpeculos flag when running start-speculos command
+      config.onlySpeculos = command.name() === "start-speculos";
       cli = new EthereumTransactionTesterCli(config);
       await cli.initialize();
     });
@@ -322,6 +328,16 @@ export class EthereumTransactionTesterCli {
       )
       .action(async (file, options) => {
         exitCode = await cli!.handleContractFile(file, options.skipCal);
+      });
+
+    // Start Speculos command (no signing tests)
+    program
+      .command("start-speculos")
+      .description(
+        "Start Speculos emulator without running any signing tests. Press Ctrl+C to stop.",
+      )
+      .action(async () => {
+        await cli!.handleStartSpeculos();
       });
 
     return program;
@@ -461,6 +477,18 @@ export class EthereumTransactionTesterCli {
     console.table(result.summaryTable);
 
     return result.exitCode;
+  }
+
+  /**
+   * Handle start-speculos command
+   * Starts Speculos and keeps it running until interrupted
+   */
+  async handleStartSpeculos(): Promise<void> {
+    console.log("\nSpeculos is running.");
+    console.log("Press Ctrl+C to stop.\n");
+
+    // Wait indefinitely until interrupted
+    await new Promise<void>(() => {});
   }
 }
 

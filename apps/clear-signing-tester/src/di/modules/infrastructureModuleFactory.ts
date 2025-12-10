@@ -115,11 +115,18 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
 
     // Service Controllers Array (ordered for startup/shutdown)
     bind<ServiceController[]>(TYPES.ServiceControllers)
-      .toDynamicValue((context) => [
-        // Start order: Speculos -> DMK
-        context.get<ServiceController>(TYPES.SpeculosServiceController),
-        context.get<ServiceController>(TYPES.DMKServiceController),
-      ])
+      .toDynamicValue((context) => {
+        const controllers: ServiceController[] = [
+          context.get<ServiceController>(TYPES.SpeculosServiceController),
+        ];
+        // Only add DMK controller if not in onlySpeculos mode
+        if (!config.onlySpeculos) {
+          controllers.push(
+            context.get<ServiceController>(TYPES.DMKServiceController),
+          );
+        }
+        return controllers;
+      })
       .inSingletonScope();
 
     // Adapters
