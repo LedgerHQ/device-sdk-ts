@@ -2,6 +2,7 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
@@ -20,6 +21,8 @@ export class SpeculosDeviceRepository implements DeviceRepository {
     private readonly signingService: SigningService,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(TYPES.ScreenshotSaver)
+    private readonly screenshotSaver: ScreenshotSaver,
   ) {
     this.logger = loggerFactory("device-repository");
   }
@@ -31,6 +34,8 @@ export class SpeculosDeviceRepository implements DeviceRepository {
     this.logger.debug("Performing sign transaction", {
       data: { derivationPath, transaction },
     });
+
+    await this.screenshotSaver.save();
 
     const signTransactionDA = this.signingService.signTransaction(
       derivationPath,
@@ -50,6 +55,8 @@ export class SpeculosDeviceRepository implements DeviceRepository {
     this.logger.debug("Performing sign typed data", {
       data: { derivationPath, typedData },
     });
+
+    await this.screenshotSaver.save();
 
     const signTypedDataDA = this.signingService.signTypedData(
       derivationPath,

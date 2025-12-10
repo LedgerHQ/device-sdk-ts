@@ -41,17 +41,26 @@ Ethereum Transaction Tester CLI - Clean Architecture Edition
 
 Options:
   -V, --version                  output the version number
-  --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0") (default: "44'/60'/0'/0/0")
-  --speculos-url <url>           Speculos server URL (default: http://localhost) (default: "http://localhost")
+
+  # @config.speculos
+  --speculos-url <url>           Speculos server URL (default: http://localhost)
   --speculos-port <port>         Speculos server port (random port if not provided)
-  --device <device>              Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax) (default: "stax")
-  --app-eth-version <version>    Ethereum app version (e.g., 1.19.1). If not specified, automatically resolves the latest available version for the device.
-  --os-version <version>         Device OS version (e.g., 1.8.1). If not specified, automatically resolves the latest available OS version for the device.
-  --plugin <plugin>              Plugin to use (e.g., Paraswap). If not specified, uses no plugin.
-  --plugin-version <version>     Plugin version to use. If not specified, automatically resolves the latest available version.
   --docker-image-tag <tag>       Docker image tag for Speculos (default: latest)
-  --verbose, -v                  Enable verbose output (default: false)
-  --quiet, -q                    Show only result tables (quiet mode) (default: false)
+  --device <device>              Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)
+  --app-eth-version <version>    Ethereum app version (e.g., 1.19.1). If not specified, uses latest version for the device.
+  --os-version <version>         Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.
+  --plugin <plugin>              Plugin to use (e.g., Paraswap). If not specified, uses no plugin.
+  --plugin-version <version>     Plugin version to use. If not specified, uses latest version.
+  --screenshot-folder-path <path>  Save screenshots to a folder during transaction signing
+
+  # @config.signer
+  --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0")
+
+  # @config.logger
+  --log-level <level>            Console log level: none, error, warn, info, debug (default: info)
+  --log-file <path>              Log output to a file
+  --file-log-level <level>       File log level: none, error, warn, info, debug (requires --log-file)
+
   -h, --help                     display help for command
 
 Commands:
@@ -153,6 +162,46 @@ Options:
 
 - `--chain-id <number>`: Chain id to use (default to 1)
 - `--skip-cal`: Skip CAL (Crypto Asset List) filtering and fetch random transactions directly from Etherscan instead of only CAL-registered transactions
+
+### Logging
+
+The tester supports configurable logging levels for both console and file output:
+
+```bash
+# Default: console at info level
+pnpm cs-tester cli raw-file ./ressources/raw-erc20.json
+
+# Verbose console output (debug level)
+pnpm cs-tester cli --log-level debug raw-file ./ressources/raw-erc20.json
+
+# Quiet mode (errors only)
+pnpm cs-tester cli --log-level error raw-file ./ressources/raw-erc20.json
+
+# Log to file with debug level (console stays at info)
+pnpm cs-tester cli --log-file ./output.log --file-log-level debug raw-file ./ressources/raw-erc20.json
+
+# Silent console, verbose file
+pnpm cs-tester cli --log-level none --log-file ./debug.log --file-log-level debug raw-file ./ressources/raw-erc20.json
+```
+
+**Log Levels:**
+
+- `none` - No logging
+- `error` - Errors only
+- `warn` - Errors and warnings
+- `info` - Errors, warnings, and info (default)
+- `debug` - All messages including debug
+
+### Screenshots
+
+Save screenshots of each screen during transaction signing:
+
+```bash
+# Save screenshots to a folder
+pnpm cs-tester cli --screenshot-folder-path ./screenshots raw-file ./ressources/raw-erc20.json
+```
+
+Screenshots are saved as `screenshot_1.png`, `screenshot_2.png`, etc. in the specified folder.
 
 ### Plugin Support
 

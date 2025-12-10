@@ -4,6 +4,7 @@ import {
   DeviceManagementKitBuilder,
   DiscoveredDevice,
   LoggerPublisherService,
+  type LoggerSubscriberService,
 } from "@ledgerhq/device-management-kit";
 import {
   SignerEth,
@@ -40,15 +41,22 @@ export class DMKServiceController implements ServiceController {
     private readonly signerConfig: SignerConfig,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(TYPES.LoggerSubscribers)
+    loggerSubscribers: LoggerSubscriberService[],
   ) {
     this.logger = loggerFactory("dmk-service-controller");
-    this.dmk = new DeviceManagementKitBuilder()
-      .addTransport(
-        speculosTransportFactory(
-          `${this.speculosConfig.url}:${this.speculosConfig.port}`,
-        ),
-      )
-      .build();
+
+    const dmkBuilder = new DeviceManagementKitBuilder().addTransport(
+      speculosTransportFactory(
+        `${this.speculosConfig.url}:${this.speculosConfig.port}`,
+      ),
+    );
+
+    for (const subscriber of loggerSubscribers) {
+      dmkBuilder.addLogger(subscriber);
+    }
+
+    this.dmk = dmkBuilder.build();
     this.contextModule = new ContextModuleBuilder({
       originToken: this.signerConfig.originToken,
     })

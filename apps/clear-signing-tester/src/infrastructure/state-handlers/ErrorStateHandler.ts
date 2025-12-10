@@ -3,6 +3,7 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
@@ -20,6 +21,8 @@ export class ErrorStateHandler implements StateHandler {
     private readonly screenAnalyzer: ScreenAnalyzerService,
     @inject(TYPES.DeviceController)
     private readonly deviceController: DeviceController,
+    @inject(TYPES.ScreenshotSaver)
+    private readonly screenshotSaver: ScreenshotSaver,
   ) {
     this.logger = this.loggerFactory("error-state-handler");
   }
@@ -30,6 +33,8 @@ export class ErrorStateHandler implements StateHandler {
     this.logger.debug("Error state handler", {
       data: { ctx: JSON.stringify(ctx) },
     });
+
+    await this.screenshotSaver.save();
 
     if (await this.screenAnalyzer.isHomePage()) {
       return {

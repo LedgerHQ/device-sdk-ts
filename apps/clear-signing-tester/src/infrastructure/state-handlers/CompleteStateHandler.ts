@@ -3,6 +3,7 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type RetryService } from "@root/src/domain/services/RetryService";
@@ -26,6 +27,8 @@ export class CompleteStateHandler implements StateHandler {
     private readonly retryService: RetryService,
     @inject(TYPES.DeviceController)
     private readonly deviceController: DeviceController,
+    @inject(TYPES.ScreenshotSaver)
+    private readonly screenshotSaver: ScreenshotSaver,
   ) {
     this.logger = this.loggerFactory("complete-state-handler");
   }
@@ -36,6 +39,8 @@ export class CompleteStateHandler implements StateHandler {
     this.logger.debug("Complete state handler", {
       data: { ctx },
     });
+
+    await this.screenshotSaver.save();
 
     try {
       await this.waitUntilHomePage();
