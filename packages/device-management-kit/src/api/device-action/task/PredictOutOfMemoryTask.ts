@@ -1,5 +1,6 @@
 import type { InternalApi } from "@api/device-action/DeviceAction";
 import { UnknownDAError } from "@api/device-action/os/Errors";
+import { type TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import type { Application } from "@internal/manager-api/model/Application";
 
@@ -16,16 +17,13 @@ export type PredictOutOfMemoryTaskResult =
     };
 
 export class PredictOutOfMemoryTask {
-  private readonly blockSize: number;
-  private readonly memoryBlocks: number;
+  private readonly deviceModel: TransportDeviceModel;
 
   constructor(
     private readonly api: InternalApi,
     private readonly args: PredictOutOfMemoryTaskArgs,
   ) {
-    const deviceModel = api.getDeviceModel();
-    this.blockSize = deviceModel.blockSize;
-    this.memoryBlocks = Math.floor(deviceModel.memorySize / this.blockSize);
+    this.deviceModel = api.getDeviceModel();
   }
 
   run(): PredictOutOfMemoryTaskResult {
@@ -39,39 +37,44 @@ export class PredictOutOfMemoryTask {
     if (
       deviceState.firmwareUpdateContext === undefined ||
       deviceState.customImage === undefined ||
-      deviceState.installedLanguages === undefined
+      deviceState.installedLanguages === undefined ||
+      deviceState.firmwareVersion === undefined
     ) {
       return { error: new UnknownDAError("Device metadata not fetched") };
     }
 
+    const blockSize = this.deviceModel.getBlockSize({
+      firmwareVersion: deviceState.firmwareVersion.os,
+    });
+    const memoryBlocks = Math.floor(this.deviceModel.memorySize / blockSize);
+
+    function bytesToBlocks(size: number) {
+      return Math.ceil(size / blockSize);
+    }
+
     // Compute device memory layout
-    const firmwareBlocks = this.bytesToBlocks(
+    const firmwareBlocks = bytesToBlocks(
       deviceState.firmwareUpdateContext.currentFirmware.bytes || 0,
     );
-    const customImageBlocks = this.bytesToBlocks(
-      deviceState.customImage.size || 0,
-    );
+    const customImageBlocks = bytesToBlocks(deviceState.customImage.size || 0);
     const applicationsBlocks = deviceState.installedApps.reduce(
-      (size, app) => size + this.bytesToBlocks(app.bytes || 0),
+      (size, app) => size + bytesToBlocks(app.bytes || 0),
       0,
     );
     const languagesBlocks = deviceState.installedLanguages.reduce(
-      (size, lang) => size + this.bytesToBlocks(lang.size),
+      (size, lang) => size + bytesToBlocks(lang.size),
       0,
     );
     const usedBlocks =
       firmwareBlocks + customImageBlocks + applicationsBlocks + languagesBlocks;
-    const availableBlocks = this.memoryBlocks - usedBlocks;
+    const availableBlocks = memoryBlocks - usedBlocks;
 
     // Compute install plan memory consumption
     const installPlanBlocks = this.args.installPlan.reduce(
-      (size, app) => size + this.bytesToBlocks(app.bytes || 0),
+      (size, app) => size + bytesToBlocks(app.bytes || 0),
       0,
     );
-    return { outOfMemory: installPlanBlocks > availableBlocks };
-  }
 
-  private bytesToBlocks(size: number) {
-    return Math.ceil(size / this.blockSize);
+    return { outOfMemory: installPlanBlocks > availableBlocks };
   }
 }

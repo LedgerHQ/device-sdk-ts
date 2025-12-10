@@ -206,4 +206,46 @@ describe("StaticDeviceModelDataSource", () => {
       ]);
     });
   });
+
+  describe("getBlockSize", () => {
+    const testData: Record<
+      DeviceModelId,
+      Array<{ firmwareVersion: string; expectedBlockSize: number }>
+    > = {
+      [DeviceModelId.NANO_S]: [
+        { firmwareVersion: "1.0.0", expectedBlockSize: 4 * 1024 },
+        { firmwareVersion: "1.0.0-rc1", expectedBlockSize: 4 * 1024 },
+        { firmwareVersion: "2.0.0", expectedBlockSize: 2 * 1024 },
+        { firmwareVersion: "2.0.0-rc1", expectedBlockSize: 2 * 1024 },
+      ],
+      [DeviceModelId.NANO_SP]: [
+        { firmwareVersion: "1.0.0", expectedBlockSize: 32 },
+      ],
+      [DeviceModelId.NANO_X]: [
+        { firmwareVersion: "1.0.0", expectedBlockSize: 4 * 1024 },
+      ],
+      [DeviceModelId.STAX]: [
+        { firmwareVersion: "1.0.0", expectedBlockSize: 32 },
+      ],
+      [DeviceModelId.FLEX]: [
+        { firmwareVersion: "1.0.0", expectedBlockSize: 32 },
+      ],
+      [DeviceModelId.APEX]: [
+        { firmwareVersion: "1.0.0", expectedBlockSize: 32 },
+      ],
+    };
+
+    Object.entries(testData).forEach(([deviceModelId, testCases]) => {
+      testCases.forEach(({ firmwareVersion, expectedBlockSize }) => {
+        it(`should return the correct block size for ${deviceModelId} with firmware version ${firmwareVersion}`, () => {
+          const deviceModel = new StaticDeviceModelDataSource().getDeviceModel({
+            id: deviceModelId as DeviceModelId,
+          });
+          expect(deviceModel.getBlockSize({ firmwareVersion })).toBe(
+            expectedBlockSize,
+          );
+        });
+      });
+    });
+  });
 });
