@@ -2,6 +2,7 @@ import { ContainerModule } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type AppsConfig } from "@root/src/domain/models/config/AppsConfig";
+import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
 import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
@@ -9,6 +10,7 @@ import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConf
 export type ClearSigningTesterConfig = {
   speculos: SpeculosConfig;
   signer: SignerConfig;
+  cal: CalConfig;
   etherscan: EtherscanConfig;
   apps: AppsConfig;
   onlySpeculos?: boolean;
@@ -22,4 +24,5 @@ export const configModuleFactory = (config: ClearSigningTesterConfig) =>
       config.etherscan,
     );
     bind<AppsConfig>(TYPES.AppsConfig).toConstantValue(config.apps);
+    bind<CalConfig>(TYPES.CalConfig).toConstantValue(config.cal);
   });

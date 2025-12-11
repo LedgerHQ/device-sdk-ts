@@ -419,6 +419,9 @@ importers:
 
   apps/clear-signing-tester:
     dependencies:
+      '@ledgerhq/cal-interceptor':
+        specifier: workspace:^
+        version: link:../../packages/tools/cal-interceptor
       '@ledgerhq/context-module':
         specifier: workspace:^
         version: link:../../packages/signer/context-module

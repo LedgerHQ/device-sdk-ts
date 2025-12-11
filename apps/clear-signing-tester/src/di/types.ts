@@ -57,6 +57,7 @@ export const TYPES = {
   SignerConfig: Symbol.for("SignerConfig"),
   EtherscanConfig: Symbol.for("EtherscanConfig"),
   AppsConfig: Symbol.for("AppsConfig"),
+  CalConfig: Symbol.for("CalConfig"),
 
   // Logger
   LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
