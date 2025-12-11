@@ -7,6 +7,7 @@ import {
   type ContextModuleConfig,
   type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
+  type GetContextModuleLoggerPublisherService,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
@@ -273,6 +274,61 @@ describe("ContextModuleBuilder", () => {
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.datasource).toEqual(customDatasourceConfig);
       expect(config.datasource?.proxy).toBeUndefined();
+    });
+  });
+
+  describe("loggerFactory", () => {
+    it("should set the loggerFactory when provided in the constructor", () => {
+      const loggerFactory: GetContextModuleLoggerPublisherService = vi.fn();
+
+      const contextModuleBuilder = new ContextModuleBuilder({
+        ...defaultBuilderArgs,
+        loggerFactory,
+      });
+
+      const res = contextModuleBuilder.build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.loggerFactory).toBe(loggerFactory);
+    });
+
+    it("should set the loggerFactory via setLoggerFactory", () => {
+      const loggerFactory: GetContextModuleLoggerPublisherService = vi.fn();
+
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+
+      const res = contextModuleBuilder.setLoggerFactory(loggerFactory).build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.loggerFactory).toBe(loggerFactory);
+    });
+
+    it("should override constructor loggerFactory with setLoggerFactory", () => {
+      const constructorLoggerFactory: GetContextModuleLoggerPublisherService =
+        vi.fn();
+      const overrideLoggerFactory: GetContextModuleLoggerPublisherService =
+        vi.fn();
+
+      const contextModuleBuilder = new ContextModuleBuilder({
+        ...defaultBuilderArgs,
+        loggerFactory: constructorLoggerFactory,
+      });
+
+      const res = contextModuleBuilder
+        .setLoggerFactory(overrideLoggerFactory)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(config.loggerFactory).toBe(overrideLoggerFactory);
+      expect(config.loggerFactory).not.toBe(constructorLoggerFactory);
     });
   });
 });

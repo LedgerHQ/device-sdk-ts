@@ -1,8 +1,14 @@
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import { inject, injectable } from "inversify";
+import {
+  DeviceModelId,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+import { inject, injectable, optional } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import {
+  type ContextModuleConfig,
+  type GetContextModuleLoggerPublisherService,
+} from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
@@ -34,13 +40,22 @@ export class SolanaTokenContextLoader
       SolanaTokenContextResult
     >
 {
+  private logger?: LoggerPublisherService;
+
   constructor(
     @inject(solanaTokenTypes.SolanaTokenDataSource)
     private readonly dataSource: SolanaTokenDataSource,
     @inject(configTypes.Config) private readonly config: ContextModuleConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    @optional()
+    loggerFactory?: GetContextModuleLoggerPublisherService,
+  ) {
+    if (loggerFactory) {
+      this.logger = loggerFactory("SolanaTokenContextLoader");
+    }
+  }
 
   public canHandle(
     field: unknown,
@@ -67,6 +82,9 @@ export class SolanaTokenContextLoader
   public async loadField(
     solanaTokenContextInput: SolanaTokenFieldInput,
   ): Promise<SolanaTokenContextResult> {
+    this.logger?.debug("[loadField] Loading solana token context", {
+      data: { input: solanaTokenContextInput },
+    });
     const { tokenInternalId, deviceModelId } = solanaTokenContextInput;
 
     const payload = await this.dataSource.getTokenInfosPayload({
@@ -81,15 +99,30 @@ export class SolanaTokenContextLoader
       });
 
     return payload.caseOf({
-      Left: (error): SolanaTokenContextResult => ({
-        type: SolanaContextTypes.ERROR,
-        error,
-      }),
-      Right: (value): SolanaTokenContextResult => ({
-        type: SolanaContextTypes.SOLANA_TOKEN,
-        payload: this.pluckTokenData(value),
-        certificate,
-      }),
+      Left: (error): SolanaTokenContextResult => {
+        this.logger?.error("[loadField] Error loading solana token context", {
+          data: { error },
+        });
+
+        return {
+          type: SolanaContextTypes.ERROR,
+          error,
+        };
+      },
+      Right: (value): SolanaTokenContextResult => {
+        this.logger?.debug(
+          "[loadField] Successfully loaded solana token context",
+          {
+            data: { payload: this.pluckTokenData(value), certificate },
+          },
+        );
+
+        return {
+          type: SolanaContextTypes.SOLANA_TOKEN,
+          payload: this.pluckTokenData(value),
+          certificate,
+        };
+      },
     });
   }
 

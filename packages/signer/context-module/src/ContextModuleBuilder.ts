@@ -5,6 +5,7 @@ import {
   type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
   type ContextModuleWeb3ChecksConfig,
+  type GetContextModuleLoggerPublisherService,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
@@ -34,14 +35,22 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
+  loggerFactory: undefined,
 };
 
 export class ContextModuleBuilder {
   private config: ContextModuleConfig = DEFAULT_CONFIG;
   private originToken?: string;
 
-  constructor({ originToken }: ContextModuleConstructorArgs = {}) {
+  constructor({
+    originToken,
+    loggerFactory,
+  }: ContextModuleConstructorArgs = {}) {
     this.originToken = originToken;
+
+    if (loggerFactory) {
+      this.config.loggerFactory = loggerFactory;
+    }
   }
 
   /**
@@ -130,6 +139,17 @@ export class ContextModuleBuilder {
    */
   setDatasourceConfig(datasourceConfig: ContextModuleDatasourceConfig) {
     this.config.datasource = datasourceConfig;
+    return this;
+  }
+
+  /**
+   * Set a custom logger factory
+   *
+   * @param loggerFactory
+   * @returns this
+   */
+  setLoggerFactory(loggerFactory: GetContextModuleLoggerPublisherService) {
+    this.config.loggerFactory = loggerFactory;
     return this;
   }
 
