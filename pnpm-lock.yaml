@@ -662,6 +662,9 @@ importers:
 
   apps/sample:
     dependencies:
+      '@ledgerhq/cal-interceptor':
+        specifier: workspace:*
+        version: link:../../packages/tools/cal-interceptor
       '@ledgerhq/context-module':
         specifier: workspace:^
         version: link:../../packages/signer/context-module
@@ -1203,6 +1206,25 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+
+  packages/tools/cal-interceptor:
+    dependencies:
+      axios:
+        specifier: 'catalog:'
+        version: 1.13.2
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:*
+        version: link:../ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../config/typescript
 
   packages/tools/ldmk-cli:
     dependencies:
