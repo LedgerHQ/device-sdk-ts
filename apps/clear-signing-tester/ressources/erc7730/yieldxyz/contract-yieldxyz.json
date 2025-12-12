@@ -1,0 +1,11 @@
+{
+  "test": [
+    {
+      "name": "Yield.xyz: yieldxyz-usde-vault",
+      "owner": "Yield.xyz",
+      "address": {
+        "1": "0x2d152fb171353e70e45322d32bc748f8a61d9971"
+      }
+    }
+  ]
+}

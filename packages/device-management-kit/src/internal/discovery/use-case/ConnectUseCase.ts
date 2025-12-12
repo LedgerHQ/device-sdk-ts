@@ -104,10 +104,8 @@ export class ConnectUseCase {
           onDisconnect: (dId) => this.handleDeviceDisconnect(dId),
         });
       })
-      .ifLeft((error) => {
-        this._logger.error("Error connecting to device", {
-          data: { deviceId: device.id, error },
-        });
+      .ifLeft((_) => {
+        this._logger.error("Error connecting to device");
       })
       .map(async (connectedDevice) => {
         const deviceSession = new DeviceSession(

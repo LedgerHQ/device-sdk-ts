@@ -1,0 +1,23 @@
+[
+  {
+    "txHash": "0x5600b3a5c457dd193101d2bbd8f7244a3ee4173862648f8bd1fd82a0085d01c9",
+    "contractAddress": "0x6fd4383cb451173d5f9304f041c7bcbf27d561ff",
+    "selectorId": "0x07ed2379",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: swap"
+  },
+  {
+    "txHash": "0xee629ef463dc3de5f65a4760257941efb1af1f9f393bb1d6dbf7b513a82cf5a0",
+    "contractAddress": "0x6fd4383cb451173d5f9304f041c7bcbf27d561ff",
+    "selectorId": "0x5816d723",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: ethUnoswapTo"
+  },
+  {
+    "txHash": "0x713f8004ac7614d90970614f53aded4a93696073874c69f75e735dc47775632c",
+    "contractAddress": "0x6fd4383cb451173d5f9304f041c7bcbf27d561ff",
+    "selectorId": "0x83800a8e",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: unoswapTo"
+  }
+]

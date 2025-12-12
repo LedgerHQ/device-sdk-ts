@@ -45,8 +45,13 @@ export class ErrorStateHandler implements StateHandler {
 
     if (await this.screenAnalyzer.canRefuseTransaction()) {
       await this.deviceController.rejectTransaction();
-    } else {
+    } else if (await this.screenAnalyzer.canAcknowledgeBlindSigning()) {
       await this.deviceController.acknowledgeBlindSigning();
+    } else {
+      return {
+        status: "error",
+        errorMessage: "Failed to handle error state",
+      };
     }
 
     return {

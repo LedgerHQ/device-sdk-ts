@@ -1,0 +1,11 @@
+{
+  "test": [
+    {
+      "name": "Ethena: Staked USDe",
+      "owner": "Ethena",
+      "address": {
+        "1": "0x9d39a5de30e57443bff2a8307a4256c8797a3497"
+      }
+    }
+  ]
+}
