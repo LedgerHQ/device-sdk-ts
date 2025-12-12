@@ -1,0 +1,72 @@
+[
+  {
+    "txHash": "0x82db644826ac0653ab1e0f979c18e139f2c0c194b1c2757eca39e1cc41703b6d",
+    "contractAddress": "0x111111125421ca6dc452d289314280a0f8842a65",
+    "selectorId": "0x07ed2379",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: swap"
+  },
+  {
+    "txHash": "0x2a573c4a1f28e750c568a9203d87dd6bc038b94491a7ce3486a4175aff85b3e8",
+    "contractAddress": "0x111111125421ca6dc452d289314280a0f8842a65",
+    "selectorId": "0x83800a8e",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: unoswapTo"
+  },
+  {
+    "txHash": "0x3e771a99d061b32d919014ac7aac26868400e234c8f343b2fa4633cb0c852e69",
+    "contractAddress": "0x111111125421ca6dc452d289314280a0f8842a65",
+    "selectorId": "0xb68fb020",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: unoswap"
+  },
+  {
+    "txHash": "0x50b148b3945aee5feadc434b7f0c60399862aad16912c30cb1683e6476f6596c",
+    "contractAddress": "0x111111125421ca6dc452d289314280a0f8842a65",
+    "selectorId": "0x89af926a",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: unoswap2"
+  },
+  {
+    "txHash": "0x657a17815e2a68ea05c31b7224b3768ce07b9eca5793f8693a4853065d11a45e",
+    "contractAddress": "0x111111125421ca6dc452d289314280a0f8842a65",
+    "selectorId": "0x89e7c650",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: unoswap3"
+  },
+  {
+    "txHash": "0x2dfe3c254bda601ca8e20020fe7fdae53b3550041f063bcaf04d20dffa590257",
+    "contractAddress": "0x111111125421ca6dc452d289314280a0f8842a65",
+    "selectorId": "0xc3cf8043",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV6: ethUnoswap"
+  },
+  {
+    "txHash": "0x5835dfe0fe70c71cb3c5ecb5dd513fa81228c0e94d49eb3330420b1e141c5cb6",
+    "contractAddress": "0x11111112542d85b3ef69ae05771c2dccff4faa26",
+    "selectorId": "0x2e95b6c8",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV3: unoswap"
+  },
+  {
+    "txHash": "0xab92713a20476bb3e06430cc81068136265ac046a0a0cce86f39d7be73a2df13",
+    "contractAddress": "0x1111111254fb6c44bac0bed2854e76f90643097d",
+    "selectorId": "0x7c025200",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV4: swap"
+  },
+  {
+    "txHash": "0x5267103445bd131b29447990461b50d3c81af9cc7b4232368e2b6c5ceef8d7d4",
+    "contractAddress": "0x1111111254eeb25477b68fb85ed929f73a960582",
+    "selectorId": "0x12aa3caf",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV5: swap"
+  },
+  {
+    "txHash": "0x5f5a7761b48ab839870adea1d4ff218e24431545fc5bb4fe96ebb5623a77b876",
+    "contractAddress": "0x1111111254eeb25477b68fb85ed929f73a960582",
+    "selectorId": "0x0502b1c5",
+    "rawTx": "",
+    "description": "1inch: AggregationRouterV5: unoswapTo"
+  }
+]

@@ -18,11 +18,11 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "test:raw:erc20": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-erc20.json",
-    "test:raw:complete": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-complete.json",
-    "test:raw:multisig": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-multisig.json",
-    "test:typed-data:multisig": "tsx src/cli/EthereumTransactionTesterCli.ts typed-data-file ./ressources/typed-data-multisig.json",
-    "test:full": "scripts/test-full.mjs"
+    "test:raw:erc20": "pnpm cli raw-file ./ressources/core/raw-erc20.json",
+    "test:raw:complete": "pnpm cli raw-file ./ressources/core/raw-complete.json",
+    "test:raw:multisig": "pnpm cli raw-file ./ressources/core/raw-multisig.json",
+    "test:typed-data:multisig": "pnpm cli typed-data-file ./ressources/core/typed-data-multisig.json",
+    "test:erc7730": "f() { p=$1; shift; c=''; if [ -n \"$1\" ] && [ \"${1#-}\" = \"$1\" ]; then c=\".$1\"; shift; fi; pnpm cli raw-file \"ressources/erc7730/$p/raw-$p$c.json\" \"$@\"; }; f"
   },
   "dependencies": {
     "@ledgerhq/context-module": "workspace:^",
