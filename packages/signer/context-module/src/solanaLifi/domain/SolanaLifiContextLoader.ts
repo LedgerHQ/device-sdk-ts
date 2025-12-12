@@ -1,5 +1,8 @@
-import { inject, injectable } from "inversify";
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { inject, injectable, optional } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
+import { type GetContextModuleLoggerPublisherService } from "@/config/model/ContextModuleConfig";
 import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   SolanaContextTypes,
@@ -26,10 +29,19 @@ export class SolanaLifiContextLoader
       SolanaLifiContextResult
     >
 {
+  private logger?: LoggerPublisherService;
+
   constructor(
     @inject(lifiTypes.SolanaLifiDataSource)
     private readonly dataSource: SolanaLifiDataSource,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    @optional()
+    loggerFactory?: GetContextModuleLoggerPublisherService,
+  ) {
+    if (loggerFactory) {
+      this.logger = loggerFactory("SolanaLifiContextLoader");
+    }
+  }
 
   public canHandle(
     field: unknown,
@@ -48,6 +60,9 @@ export class SolanaLifiContextLoader
   public async loadField(
     solanaTokenContextInput: SolanaLifiFieldInput,
   ): Promise<SolanaLifiContextResult> {
+    this.logger?.debug("[loadField] Loading solana Lifi context", {
+      data: { input: solanaTokenContextInput },
+    });
     const { templateId } = solanaTokenContextInput;
 
     const payload = await this.dataSource.getTransactionDescriptorsPayload({
@@ -55,14 +70,29 @@ export class SolanaLifiContextLoader
     });
 
     return payload.caseOf({
-      Left: (error): SolanaLifiContextResult => ({
-        type: SolanaContextTypes.ERROR,
-        error,
-      }),
-      Right: (value): SolanaLifiContextResult => ({
-        type: SolanaContextTypes.SOLANA_LIFI,
-        payload: this.pluckTransactionData(value),
-      }),
+      Left: (error): SolanaLifiContextResult => {
+        this.logger?.error("[loadField] Error loading solana Lifi context", {
+          data: { error },
+        });
+
+        return {
+          type: SolanaContextTypes.ERROR,
+          error,
+        };
+      },
+      Right: (value): SolanaLifiContextResult => {
+        this.logger?.debug(
+          "[loadField] Successfully loaded solana Lifi context",
+          {
+            data: { payload: this.pluckTransactionData(value) },
+          },
+        );
+
+        return {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: this.pluckTransactionData(value),
+        };
+      },
     });
   }
 

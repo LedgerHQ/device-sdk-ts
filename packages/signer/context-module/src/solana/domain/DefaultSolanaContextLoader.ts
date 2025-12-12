@@ -1,6 +1,9 @@
-import { inject, injectable } from "inversify";
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { inject, injectable, optional } from "inversify";
 import { Left } from "purify-ts";
 
+import { configTypes } from "@/config/di/configTypes";
+import { type GetContextModuleLoggerPublisherService } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
@@ -23,6 +26,8 @@ import {
 
 @injectable()
 export class DefaultSolanaContextLoader implements SolanaContextLoader {
+  private logger?: LoggerPublisherService;
+
   constructor(
     @inject(solanaContextTypes.SolanaDataSource)
     private readonly _dataSource: SolanaDataSource,
@@ -30,13 +35,23 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
     private readonly _certificateLoader: PkiCertificateLoader,
     @inject(solanaTokenTypes.SolanaTokenContextLoader)
     private readonly _solanaTokenLoader: SolanaTokenContextLoader,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    @optional()
+    loggerFactory?: GetContextModuleLoggerPublisherService,
     // @inject(lifiTypes.SolanaLifiContextLoader)
     // private readonly _solanaLifiLoader: SolanaLifiContextLoader,
-  ) {}
+  ) {
+    if (loggerFactory) {
+      this.logger = loggerFactory("DefaultSolanaContextLoader");
+    }
+  }
 
   async load(
     solanaContext: SolanaTransactionContext,
   ): Promise<SolanaTransactionContextResult> {
+    this.logger?.debug("[load] Loading solana context", {
+      data: { input: solanaContext },
+    });
     const { deviceModelId } = solanaContext;
 
     const trustedNamePKICertificate =
