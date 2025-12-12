@@ -43,7 +43,6 @@ export class SpeculosTransport implements Transport {
       getBlockSize() {
         return 32;
       },
-      blockSize: 32,
       usbOnly: true,
       memorySize: 320 * 1024,
       masks: [0x31100000],

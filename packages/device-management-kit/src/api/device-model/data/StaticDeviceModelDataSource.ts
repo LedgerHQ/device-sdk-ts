@@ -1,4 +1,5 @@
 import { injectable } from "inversify";
+import semver from "semver";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
@@ -20,7 +21,10 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0001,
       usbOnly: true,
       memorySize: 320 * 1024,
-      blockSize: 4 * 1024,
+      getBlockSize: (p: { firmwareVersion: string }) =>
+        semver.lt(semver.coerce(p.firmwareVersion) ?? "", "2.0.0")
+          ? 4 * 1024
+          : 2 * 1024,
       masks: [0x31100000],
     }),
     [DeviceModelId.NANO_SP]: new TransportDeviceModel({
@@ -30,7 +34,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0005,
       usbOnly: true,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33100000],
     }),
     [DeviceModelId.NANO_X]: new TransportDeviceModel({
@@ -40,7 +44,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0004,
       usbOnly: false,
       memorySize: 2 * 1024 * 1024,
-      blockSize: 4 * 1024,
+      getBlockSize: () => 4 * 1024,
       masks: [0x33000000],
       bluetoothSpec: [
         {
@@ -58,7 +62,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0006,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33200000],
       bluetoothSpec: [
         {
@@ -76,7 +80,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0007,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33300000],
       bluetoothSpec: [
         {
@@ -94,7 +98,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0008,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33400000],
       bluetoothSpec: [
         {
