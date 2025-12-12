@@ -16,6 +16,7 @@ import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDevi
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
+import { type GetSolanaSignerLoggerPublisherService } from "@internal/di";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
@@ -29,6 +30,8 @@ export class SolanaAppBinder {
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
     @inject(externalTypes.ContextModule) private contextModule: ContextModule,
+    @inject(externalTypes.DmkLoggerFactory)
+    private dmkLoggerFactory: GetSolanaSignerLoggerPublisherService,
   ) {}
 
   getAddress(args: {
@@ -64,6 +67,7 @@ export class SolanaAppBinder {
           transaction: args.transaction,
           transactionOptions: args.solanaTransactionOptionalConfig,
           contextModule: this.contextModule,
+          loggerFactory: this.dmkLoggerFactory,
         },
       }),
     });

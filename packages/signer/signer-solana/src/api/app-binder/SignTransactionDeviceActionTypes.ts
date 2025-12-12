@@ -15,6 +15,7 @@ import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransacti
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
+import { type GetSolanaSignerLoggerPublisherService } from "@internal/di";
 
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
@@ -31,10 +32,11 @@ export type SignTransactionDAStateStep =
 export type SignTransactionDAOutput = Signature;
 
 export type SignTransactionDAInput = {
+  readonly loggerFactory: GetSolanaSignerLoggerPublisherService;
   readonly derivationPath: string;
   readonly transaction: Transaction;
-  readonly transactionOptions?: SolanaTransactionOptionalConfig;
   readonly contextModule: ContextModule;
+  readonly transactionOptions?: SolanaTransactionOptionalConfig;
 };
 
 export type SignTransactionDAError =
