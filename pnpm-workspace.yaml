@@ -27,7 +27,7 @@ catalog:
   "@react-native/codegen": ^0.76.6
   "@react-native/eslint-config": 0.76.6
   "@react-native/gradle-plugin": ^0.76.6
-  "@react-native/metro-config": 0.76.6
+  "@react-native/metro-config": 0.82.1
   "@react-native/typescript-config": 0.76.6
   "@react-navigation/bottom-tabs": ^7.2.0
   "@react-navigation/material-top-tabs": ^7.1.0
