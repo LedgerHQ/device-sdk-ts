@@ -11,9 +11,9 @@ import { inject, injectable } from "inversify";
 import { GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+import { ReplayTransactionDAReturnType } from "@api/app-binder/ReplayTransactionDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { SwapTransactionSignerDAReturnType } from "@api/app-binder/SwapTransactionSignerDeviceActionTypes";
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
@@ -22,8 +22,8 @@ import { externalTypes } from "@internal/externalTypes";
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
+import { ReplayTransactionDeviceAction } from "./device-action/ReplayTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
-import { SwapTransactionSignerDeviceAction } from "./device-action/SwapTransactionSignerDeviceAction";
 
 @injectable()
 export class SolanaAppBinder {
@@ -87,14 +87,14 @@ export class SolanaAppBinder {
     });
   }
 
-  SwapTransactionSigner(args: {
+  replayTransaction(args: {
     derivationPath: string;
     serialisedTransaction: string;
     skipOpenApp: boolean;
-  }): SwapTransactionSignerDAReturnType {
+  }): ReplayTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SwapTransactionSignerDeviceAction({
+      deviceAction: new ReplayTransactionDeviceAction({
         input: {
           derivationPath: args.derivationPath,
           serialisedTransaction: args.serialisedTransaction,

@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import bs58 from "bs58";
 
-import { SwapSigner } from "./SwapSigner";
+import { TransactionReplayService } from "./TransactionReplayService";
 
 const RECENT_BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
 
@@ -35,7 +35,7 @@ function locatePayerOffsetLegacyMessage(
   cursor += 3; // header: numRequiredSignatures, numReadonlySigned, numReadonlyUnsigned
 
   const { length: accountCount, size: accountCountSize } =
-    new SwapSigner().decodeShortVec(buffer, cursor);
+    new TransactionReplayService().decodeShortVec(buffer, cursor);
   cursor += accountCountSize;
 
   if (accountCount < 1) throw new Error("no accounts");
@@ -71,7 +71,7 @@ function locatePayerOffsetV0Message(
   cursor += 3; // header
 
   const { length: accountCount, size: accountCountSize } =
-    new SwapSigner().decodeShortVec(buffer, cursor);
+    new TransactionReplayService().decodeShortVec(buffer, cursor);
   cursor += accountCountSize;
 
   if (accountCount < 1) throw new Error("no accounts");
@@ -106,13 +106,13 @@ function expectAllZero(bytes: Uint8Array, start: number, end: number) {
   for (let i = start; i < end; i++) expect(bytes[i]).toBe(0);
 }
 
-// Helper to parse a message (legacy or v0) and return accounts + recent blockhash. Uses the same layout assumptions as SwapSigner.locatePayerInMessage
+// Helper to parse a message (legacy or v0) and return accounts + recent blockhash. Uses the same layout assumptions as TransactionReplayServiceInstance.locatePayerInMessage
 function parseMessageAccountsAndBlockhash(
   buffer: Uint8Array,
   messageOffset = 0,
   opts: { versioned: boolean },
 ) {
-  const swapSigner = new SwapSigner();
+  const TransactionReplayServiceInstance = new TransactionReplayService();
   let cursor = messageOffset;
 
   if (opts.versioned) {
@@ -135,7 +135,7 @@ function parseMessageAccountsAndBlockhash(
   cursor += 3;
 
   const { length: accountCount, size: accountCountSize } =
-    swapSigner.decodeShortVec(buffer, cursor);
+    TransactionReplayServiceInstance.decodeShortVec(buffer, cursor);
   cursor += accountCountSize;
 
   const accountKeysStart = cursor;
@@ -208,7 +208,7 @@ function buildLegacyMessageBase64(): string {
   return Buffer.from(transaction.serializeMessage()).toString("base64");
 }
 
-describe("SwapSigner", () => {
+describe("TransactionReplayServiceInstance", () => {
   const payer = Keypair.generate();
   const recipient = Keypair.generate();
   const newPayer = Keypair.generate();
@@ -230,7 +230,7 @@ describe("SwapSigner", () => {
     );
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionReplayService().getReplayableTransaction(
       msgB64,
       newPayer.publicKey.toBase58(),
     );
@@ -263,7 +263,7 @@ describe("SwapSigner", () => {
     );
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionReplayService().getReplayableTransaction(
       transactionB64,
       newPayer.publicKey.toBase58(),
     );
@@ -274,7 +274,7 @@ describe("SwapSigner", () => {
     // decode signatures section
     let cursor = 0;
     const { length: signatureCount, size: sigLen } =
-      new SwapSigner().decodeShortVec(outputBytes, cursor);
+      new TransactionReplayService().decodeShortVec(outputBytes, cursor);
     cursor += sigLen;
     expect(signatureCount).toBeGreaterThan(0);
 
@@ -309,7 +309,7 @@ describe("SwapSigner", () => {
     const msgB64 = Buffer.from(v0msg.serialize()).toString("base64");
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionReplayService().getReplayableTransaction(
       msgB64,
       newPayer.publicKey.toBase58(),
     );
@@ -343,7 +343,7 @@ describe("SwapSigner", () => {
     ).toString("base64");
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionReplayService().getReplayableTransaction(
       transactionB64,
       newPayer.publicKey.toBase58(),
     );
@@ -354,7 +354,7 @@ describe("SwapSigner", () => {
     // signatures section
     let cursor = 0;
     const { length: signatureCount, size: sigLen } =
-      new SwapSigner().decodeShortVec(outputBytes, cursor);
+      new TransactionReplayService().decodeShortVec(outputBytes, cursor);
     cursor += sigLen;
     expect(signatureCount).toBeGreaterThan(0);
 
@@ -393,7 +393,7 @@ describe("SwapSigner", () => {
       const msgB64 = bytesToBase64(originalMsgBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionReplayService().getReplayableTransaction(
         msgB64,
         newPayer.publicKey.toBase58(),
       );
@@ -449,7 +449,7 @@ describe("SwapSigner", () => {
       const msgB64 = bytesToBase64(originalBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionReplayService().getReplayableTransaction(
         msgB64,
         newPayer.publicKey.toBase58(),
       );
@@ -503,7 +503,7 @@ describe("SwapSigner", () => {
       const transactionB64 = bytesToBase64(originalBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionReplayService().getReplayableTransaction(
         transactionB64,
         newPayer.publicKey.toBase58(),
       );
@@ -517,7 +517,10 @@ describe("SwapSigner", () => {
       // signature section layout preserved
       const countBefore = 0;
       const { length: signatureCountBefore, size: signatureLengthBefore } =
-        new SwapSigner().decodeShortVec(originalBytes, countBefore);
+        new TransactionReplayService().decodeShortVec(
+          originalBytes,
+          countBefore,
+        );
       const signatureSectionStartBefore = countBefore + signatureLengthBefore;
       const signatureSectionEndBefore =
         signatureSectionStartBefore + signatureCountBefore * 64;
@@ -525,7 +528,7 @@ describe("SwapSigner", () => {
 
       const countAfter = 0;
       const { length: signatureCountAfter, size: signatureLengthAfter } =
-        new SwapSigner().decodeShortVec(outputBytes, countAfter);
+        new TransactionReplayService().decodeShortVec(outputBytes, countAfter);
       const signatureSectionStartAfter = countAfter + signatureLengthAfter;
       const signatureSectionEndAfter =
         signatureSectionStartAfter + signatureCountAfter * 64;
@@ -596,7 +599,7 @@ describe("SwapSigner", () => {
       const transactionB64 = bytesToBase64(originalBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionReplayService().getReplayableTransaction(
         transactionB64,
         newPayer.publicKey.toBase58(),
       );
@@ -608,7 +611,7 @@ describe("SwapSigner", () => {
 
       const cBefore = 0;
       const { length: signatureCountBefore, size: signatureLengthBefore } =
-        new SwapSigner().decodeShortVec(originalBytes, cBefore);
+        new TransactionReplayService().decodeShortVec(originalBytes, cBefore);
       const signatureSectionStartBefore = cBefore + signatureLengthBefore;
       const signatureSectionEndBefore =
         signatureSectionStartBefore + signatureCountBefore * 64;
@@ -616,7 +619,7 @@ describe("SwapSigner", () => {
 
       const countAfter = 0;
       const { length: signatureCountAfter, size: signatureLengthAfter } =
-        new SwapSigner().decodeShortVec(outputBytes, countAfter);
+        new TransactionReplayService().decodeShortVec(outputBytes, countAfter);
       const signatureSectionStartAfter = countAfter + signatureLengthAfter;
       const signatureSectionEndAfter =
         signatureSectionStartAfter + signatureCountAfter * 64;
@@ -668,7 +671,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(tooShort);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionReplayService().getReplayableTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -678,7 +684,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionReplayService().getReplayableTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -688,7 +697,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionReplayService().getReplayableTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -698,7 +710,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionReplayService().getReplayableTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -708,7 +723,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionReplayService().getReplayableTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -718,7 +736,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionReplayService().getReplayableTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
   });
@@ -728,9 +749,9 @@ describe("SwapSigner", () => {
       const msgB64 = buildLegacyMessageBase64();
       const badKey = "not a valid base58!!!";
 
-      expect(() => new SwapSigner().swap(msgB64, badKey)).toThrowError(
-        "Failed to decode public key from base58.",
-      );
+      expect(() =>
+        new TransactionReplayService().getReplayableTransaction(msgB64, badKey),
+      ).toThrowError("Failed to decode public key from base58.");
     });
 
     it("throws when base58 decodes to the wrong key length", () => {
@@ -740,7 +761,12 @@ describe("SwapSigner", () => {
       const tooShortKeyBytes = new Uint8Array(31);
       const tooShortKey = bs58.encode(tooShortKeyBytes);
 
-      expect(() => new SwapSigner().swap(msgB64, tooShortKey)).toThrowError(
+      expect(() =>
+        new TransactionReplayService().getReplayableTransaction(
+          msgB64,
+          tooShortKey,
+        ),
+      ).toThrowError(
         "Provided public key is not 32 bytes after base58 decode.",
       );
     });
@@ -750,7 +776,10 @@ describe("SwapSigner", () => {
       const validPayer = newPayer.publicKey.toBase58();
 
       expect(() =>
-        new SwapSigner().swap(definitelyNotB64, validPayer),
+        new TransactionReplayService().getReplayableTransaction(
+          definitelyNotB64,
+          validPayer,
+        ),
       ).toThrow();
     });
   });

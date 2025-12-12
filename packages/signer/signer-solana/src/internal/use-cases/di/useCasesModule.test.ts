@@ -43,9 +43,9 @@ describe("useCasesModuleFactory", () => {
       ).toBeTruthy();
     });
 
-    it("should bind swapTransactionSignerUseCase", () => {
+    it("should bind replayTransactionUseCase", () => {
       expect(
-        container.isBound(useCasesTypes.SwapTransactionSignerUseCase),
+        container.isBound(useCasesTypes.ReplayTransactionUseCase),
       ).toBeTruthy();
     });
   });

@@ -61,7 +61,7 @@ describe("DefaultSolanaTools", () => {
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
 
-  it("should call swapTransaction", () => {
+  it("should call replayTransaction", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
     } as unknown as DeviceManagementKit;
@@ -71,10 +71,7 @@ describe("DefaultSolanaTools", () => {
       sessionId,
       contextModule: contextModuleStub,
     });
-    solanaTools.swapTransactionSigner(
-      "derivationPath",
-      "serialisedTransaction",
-    );
+    solanaTools.replayTransaction("derivationPath", "serialisedTransaction");
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
 });

@@ -1,33 +1,33 @@
-import { type SwapTransactionSignerDAReturnType } from "@api/app-binder/SwapTransactionSignerDeviceActionTypes";
+import { type ReplayTransactionDAReturnType } from "@api/app-binder/ReplayTransactionDeviceActionTypes";
 import { type SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
 
-import { SwapTransactionSignerUseCase } from "./SwapTransactionSignerUseCase";
+import { ReplayTransactionUseCase } from "./ReplayTransactionUseCase";
 
-describe("SwapTransactionSignerUseCase", () => {
-  const swapTransactionSignerMock = vi.fn();
+describe("ReplayTransactionUseCase", () => {
+  const replayTransactionMock = vi.fn();
 
   const fakeReturn = {
     observable: {},
     cancel: vi.fn(),
-  } as unknown as SwapTransactionSignerDAReturnType;
+  } as unknown as ReplayTransactionDAReturnType;
 
   const appBinderMock = {
-    SwapTransactionSigner: swapTransactionSignerMock,
+    replayTransaction: replayTransactionMock,
   } as unknown as SolanaAppBinder;
 
-  let useCase: SwapTransactionSignerUseCase;
+  let useCase: ReplayTransactionUseCase;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    useCase = new SwapTransactionSignerUseCase(appBinderMock);
+    useCase = new ReplayTransactionUseCase(appBinderMock);
   });
 
-  it("calls appBinder.SwapTransactionSigner with skipOpenApp=false when no options provided", () => {
-    swapTransactionSignerMock.mockReturnValue(fakeReturn);
+  it("calls appBinder.replayTransaction with skipOpenApp=false when no options provided", () => {
+    replayTransactionMock.mockReturnValue(fakeReturn);
 
     const result = useCase.execute("44'/501'/0'/0'", "BASE64_TX");
 
-    expect(swapTransactionSignerMock).toHaveBeenCalledWith({
+    expect(replayTransactionMock).toHaveBeenCalledWith({
       derivationPath: "44'/501'/0'/0'",
       serialisedTransaction: "BASE64_TX",
       skipOpenApp: false,
@@ -36,13 +36,13 @@ describe("SwapTransactionSignerUseCase", () => {
   });
 
   it("passes skipOpenApp=true when option is set", () => {
-    swapTransactionSignerMock.mockReturnValue(fakeReturn);
+    replayTransactionMock.mockReturnValue(fakeReturn);
 
     const result = useCase.execute("44'/501'/0'/1'", "b64_tx_2", {
       skipOpenApp: true,
     });
 
-    expect(swapTransactionSignerMock).toHaveBeenCalledWith({
+    expect(replayTransactionMock).toHaveBeenCalledWith({
       derivationPath: "44'/501'/0'/1'",
       serialisedTransaction: "b64_tx_2",
       skipOpenApp: true,
@@ -51,13 +51,13 @@ describe("SwapTransactionSignerUseCase", () => {
   });
 
   it("passes skipOpenApp=false when option.skipOpenApp is false", () => {
-    swapTransactionSignerMock.mockReturnValue(fakeReturn);
+    replayTransactionMock.mockReturnValue(fakeReturn);
 
     const result = useCase.execute("m/44'/501'/0'", "another_b64", {
       skipOpenApp: false,
     });
 
-    expect(swapTransactionSignerMock).toHaveBeenCalledWith({
+    expect(replayTransactionMock).toHaveBeenCalledWith({
       derivationPath: "m/44'/501'/0'",
       serialisedTransaction: "another_b64",
       skipOpenApp: false,

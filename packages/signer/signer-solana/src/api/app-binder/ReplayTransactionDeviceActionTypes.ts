@@ -11,41 +11,41 @@ import {
 import { type PublicKey } from "@api/model/PublicKey";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-export type SwapTransactionSignerDAOutput = string;
+export type ReplayTransactionDAOutput = string;
 
-export type SwapTransactionSignerDAInput = {
+export type ReplayTransactionDAInput = {
   readonly derivationPath: string;
   readonly serialisedTransaction: string;
   readonly skipOpenApp: boolean;
   readonly contextModule: ContextModule;
 };
 
-export type SwapTransactionSignerDAError =
+export type ReplayTransactionDAError =
   | OpenAppDAError
   | SendCommandInAppDAError<SolanaAppErrorCodes>;
 
-type SwapTransactionSignerDARequiredInteraction =
+type ReplayTransactionDARequiredInteraction =
   | UserInteractionRequired
   | OpenAppDARequiredInteraction;
 
-export type SwapTransactionSignerDAIntermediateValue = {
-  requiredUserInteraction: SwapTransactionSignerDARequiredInteraction;
+export type ReplayTransactionDAIntermediateValue = {
+  requiredUserInteraction: ReplayTransactionDARequiredInteraction;
 };
 
-export type SwapTransactionSignerDAState = DeviceActionState<
-  SwapTransactionSignerDAOutput,
-  SwapTransactionSignerDAError,
-  SwapTransactionSignerDAIntermediateValue
+export type ReplayTransactionDAState = DeviceActionState<
+  ReplayTransactionDAOutput,
+  ReplayTransactionDAError,
+  ReplayTransactionDAIntermediateValue
 >;
 
-export type SwapTransactionSignerDAInternalState = {
-  readonly error: SwapTransactionSignerDAError | null;
+export type ReplayTransactionDAInternalState = {
+  readonly error: ReplayTransactionDAError | null;
   readonly publicKey: PublicKey | null;
   readonly serialisedTransaction: string | null;
 };
 
-export type SwapTransactionSignerDAReturnType = ExecuteDeviceActionReturnType<
-  SwapTransactionSignerDAOutput,
-  SwapTransactionSignerDAError,
-  SwapTransactionSignerDAIntermediateValue
+export type ReplayTransactionDAReturnType = ExecuteDeviceActionReturnType<
+  ReplayTransactionDAOutput,
+  ReplayTransactionDAError,
+  ReplayTransactionDAIntermediateValue
 >;

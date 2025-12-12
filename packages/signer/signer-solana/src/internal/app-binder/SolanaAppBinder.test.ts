@@ -34,8 +34,8 @@ import {
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
+import { ReplayTransactionDeviceAction } from "./device-action/ReplayTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
-import { SwapTransactionSignerDeviceAction } from "./device-action/SwapTransactionSignerDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 describe("SolanaAppBinder", () => {
@@ -517,7 +517,7 @@ describe("SolanaAppBinder", () => {
     });
   });
 
-  describe("swapTransactionSigner", () => {
+  describe("replayTransaction", () => {
     it("should return the swapped serialized transaction", () =>
       new Promise<void>((resolve, reject) => {
         // given
@@ -543,7 +543,7 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
         );
-        const { observable } = appBinder.SwapTransactionSigner({
+        const { observable } = appBinder.replayTransaction({
           derivationPath: "44'/501'/0'/0'",
           serialisedTransaction: "INPUT_BASE64",
           skipOpenApp: false,
@@ -586,7 +586,7 @@ describe("SolanaAppBinder", () => {
         "sessionId",
         contextModuleStub,
       );
-      appBinder.SwapTransactionSigner({
+      appBinder.replayTransaction({
         derivationPath,
         serialisedTransaction,
         skipOpenApp,
@@ -595,7 +595,7 @@ describe("SolanaAppBinder", () => {
       // then
       expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
         sessionId: "sessionId",
-        deviceAction: new SwapTransactionSignerDeviceAction({
+        deviceAction: new ReplayTransactionDeviceAction({
           input: {
             derivationPath,
             serialisedTransaction,
