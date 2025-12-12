@@ -32,7 +32,7 @@
     "@playwright/test": "catalog:",
     "@sentry/nextjs": "catalog:",
     "ethers": "catalog:",
-    "next": "catalog:",
+    "next": "15.5.8",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-lottie": "catalog:",
