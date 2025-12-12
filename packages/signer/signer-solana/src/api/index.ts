@@ -1,4 +1,10 @@
 export type {
+  CraftTransactionDAError,
+  CraftTransactionDAIntermediateValue,
+  CraftTransactionDAOutput,
+  CraftTransactionDAReturnType,
+} from "@api/app-binder/CraftTransactionDeviceActionTypes";
+export type {
   GenerateTransactionDAError,
   GenerateTransactionDAIntermediateValue,
   GenerateTransactionDAOutput,

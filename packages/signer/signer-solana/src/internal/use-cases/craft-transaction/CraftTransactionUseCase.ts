@@ -1,11 +1,11 @@
 import { inject, injectable } from "inversify";
 
-import { SwapTransactionSignerDAReturnType } from "@api/app-binder/SwapTransactionSignerDeviceActionTypes";
+import { CraftTransactionDAReturnType } from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
 
 @injectable()
-export class SwapTransactionSignerUseCase {
+export class CraftTransactionUseCase {
   constructor(
     @inject(appBinderTypes.AppBinder) private appBinder: SolanaAppBinder,
   ) {}
@@ -16,8 +16,8 @@ export class SwapTransactionSignerUseCase {
     options?: {
       skipOpenApp?: boolean;
     },
-  ): SwapTransactionSignerDAReturnType {
-    return this.appBinder.SwapTransactionSigner({
+  ): CraftTransactionDAReturnType {
+    return this.appBinder.craftTransaction({
       derivationPath,
       serialisedTransaction,
       skipOpenApp: options?.skipOpenApp ?? false,

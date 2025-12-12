@@ -32,8 +32,8 @@ import {
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { CraftTransactionDeviceAction } from "./device-action/CraftTransactionDeviceAction";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
-import { SwapTransactionSignerDeviceAction } from "./device-action/SwapTransactionSignerDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 const mockLoggerFactory = () => ({
@@ -542,17 +542,17 @@ describe("SolanaAppBinder", () => {
     });
   });
 
-  describe("swapTransactionSigner", () => {
-    it("should return the swapped serialized transaction", () =>
+  describe("craftTransaction", () => {
+    it("should return the crafted serialized transaction", () =>
       new Promise<void>((resolve, reject) => {
         // given
-        const swappedSerializedTx = "SWAPPED_BASE64";
+        const craftedSerializedTx = "CRAFTED_BASE64";
 
         vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
           observable: from([
             {
               status: DeviceActionStatus.Completed,
-              output: swappedSerializedTx,
+              output: craftedSerializedTx,
             } as DeviceActionState<
               unknown,
               DmkError,
@@ -567,8 +567,9 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          mockLoggerFactory,
         );
-        const { observable } = appBinder.SwapTransactionSigner({
+        const { observable } = appBinder.craftTransaction({
           derivationPath: "44'/501'/0'/0'",
           serialisedTransaction: "INPUT_BASE64",
           skipOpenApp: false,
@@ -588,7 +589,7 @@ describe("SolanaAppBinder", () => {
               expect(states).toEqual([
                 {
                   status: DeviceActionStatus.Completed,
-                  output: swappedSerializedTx,
+                  output: craftedSerializedTx,
                 },
               ]);
               resolve();
@@ -610,8 +611,9 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
+        mockLoggerFactory,
       );
-      appBinder.SwapTransactionSigner({
+      appBinder.craftTransaction({
         derivationPath,
         serialisedTransaction,
         skipOpenApp,
@@ -620,7 +622,7 @@ describe("SolanaAppBinder", () => {
       // then
       expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
         sessionId: "sessionId",
-        deviceAction: new SwapTransactionSignerDeviceAction({
+        deviceAction: new CraftTransactionDeviceAction({
           input: {
             derivationPath,
             serialisedTransaction,

@@ -9,7 +9,7 @@ import {
 } from "@solana/web3.js";
 import bs58 from "bs58";
 
-import { SwapSigner } from "./SwapSigner";
+import { TransactionCrafterService } from "./TransactionCrafterService";
 
 const RECENT_BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
 
@@ -35,7 +35,7 @@ function locatePayerOffsetLegacyMessage(
   cursor += 3; // header: numRequiredSignatures, numReadonlySigned, numReadonlyUnsigned
 
   const { length: accountCount, size: accountCountSize } =
-    new SwapSigner().decodeShortVec(buffer, cursor);
+    new TransactionCrafterService().decodeShortVec(buffer, cursor);
   cursor += accountCountSize;
 
   if (accountCount < 1) throw new Error("no accounts");
@@ -71,7 +71,7 @@ function locatePayerOffsetV0Message(
   cursor += 3; // header
 
   const { length: accountCount, size: accountCountSize } =
-    new SwapSigner().decodeShortVec(buffer, cursor);
+    new TransactionCrafterService().decodeShortVec(buffer, cursor);
   cursor += accountCountSize;
 
   if (accountCount < 1) throw new Error("no accounts");
@@ -106,13 +106,13 @@ function expectAllZero(bytes: Uint8Array, start: number, end: number) {
   for (let i = start; i < end; i++) expect(bytes[i]).toBe(0);
 }
 
-// Helper to parse a message (legacy or v0) and return accounts + recent blockhash. Uses the same layout assumptions as SwapSigner.locatePayerInMessage
+// Helper to parse a message (legacy or v0) and return accounts + recent blockhash. Uses the same layout assumptions as TransactionCrafterServiceInstance.locatePayerInMessage
 function parseMessageAccountsAndBlockhash(
   buffer: Uint8Array,
   messageOffset = 0,
   opts: { versioned: boolean },
 ) {
-  const swapSigner = new SwapSigner();
+  const TransactionCrafterServiceInstance = new TransactionCrafterService();
   let cursor = messageOffset;
 
   if (opts.versioned) {
@@ -135,7 +135,7 @@ function parseMessageAccountsAndBlockhash(
   cursor += 3;
 
   const { length: accountCount, size: accountCountSize } =
-    swapSigner.decodeShortVec(buffer, cursor);
+    TransactionCrafterServiceInstance.decodeShortVec(buffer, cursor);
   cursor += accountCountSize;
 
   const accountKeysStart = cursor;
@@ -208,12 +208,12 @@ function buildLegacyMessageBase64(): string {
   return Buffer.from(transaction.serializeMessage()).toString("base64");
 }
 
-describe("SwapSigner", () => {
+describe("TransactionCrafterServiceInstance", () => {
   const payer = Keypair.generate();
   const recipient = Keypair.generate();
   const newPayer = Keypair.generate();
 
-  it("swaps payer in a legacy message (keeps structure and instructions)", () => {
+  it("replaces payer in a legacy message (keeps structure and instructions)", () => {
     // given
     const instructions = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
@@ -230,7 +230,7 @@ describe("SwapSigner", () => {
     );
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionCrafterService().getCraftedTransaction(
       msgB64,
       newPayer.publicKey.toBase58(),
     );
@@ -245,7 +245,7 @@ describe("SwapSigner", () => {
     expect(pid.equals(SystemProgram.programId)).toBe(true);
   });
 
-  it("swaps payer and zeroes signatures in a legacy transaction", () => {
+  it("replaces payer and zeroes signatures in a legacy transaction", () => {
     // given
     const instructions = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
@@ -263,7 +263,7 @@ describe("SwapSigner", () => {
     );
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionCrafterService().getCraftedTransaction(
       transactionB64,
       newPayer.publicKey.toBase58(),
     );
@@ -274,7 +274,7 @@ describe("SwapSigner", () => {
     // decode signatures section
     let cursor = 0;
     const { length: signatureCount, size: sigLen } =
-      new SwapSigner().decodeShortVec(outputBytes, cursor);
+      new TransactionCrafterService().decodeShortVec(outputBytes, cursor);
     cursor += sigLen;
     expect(signatureCount).toBeGreaterThan(0);
 
@@ -292,7 +292,7 @@ describe("SwapSigner", () => {
     expect(new PublicKey(payerBytes).equals(newPayer.publicKey)).toBe(true);
   });
 
-  it("swaps payer in a v0 message", () => {
+  it("replaces payer in a v0 message", () => {
     // given
     const instructions = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
@@ -309,7 +309,7 @@ describe("SwapSigner", () => {
     const msgB64 = Buffer.from(v0msg.serialize()).toString("base64");
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionCrafterService().getCraftedTransaction(
       msgB64,
       newPayer.publicKey.toBase58(),
     );
@@ -321,7 +321,7 @@ describe("SwapSigner", () => {
     expect(new PublicKey(payerBytes).equals(newPayer.publicKey)).toBe(true);
   });
 
-  it("swaps payer and zeroes signatures in a v0 transaction", () => {
+  it("replaces payer and zeroes signatures in a v0 transaction", () => {
     // given
     const instructions = SystemProgram.transfer({
       fromPubkey: payer.publicKey,
@@ -343,7 +343,7 @@ describe("SwapSigner", () => {
     ).toString("base64");
 
     // when
-    const outputB64 = new SwapSigner().swap(
+    const outputB64 = new TransactionCrafterService().getCraftedTransaction(
       transactionB64,
       newPayer.publicKey.toBase58(),
     );
@@ -354,7 +354,7 @@ describe("SwapSigner", () => {
     // signatures section
     let cursor = 0;
     const { length: signatureCount, size: sigLen } =
-      new SwapSigner().decodeShortVec(outputBytes, cursor);
+      new TransactionCrafterService().decodeShortVec(outputBytes, cursor);
     cursor += sigLen;
     expect(signatureCount).toBeGreaterThan(0);
 
@@ -393,36 +393,36 @@ describe("SwapSigner", () => {
       const msgB64 = bytesToBase64(originalMsgBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
         msgB64,
         newPayer.publicKey.toBase58(),
       );
 
       // then
       const outputBytes = base64ToBytes(outputB64);
-      const swappedLayout = parseMessageAccountsAndBlockhash(outputBytes, 0, {
+      const craftedLayout = parseMessageAccountsAndBlockhash(outputBytes, 0, {
         versioned: false,
       });
 
       // account count preserved
-      expect(swappedLayout.accounts.length).toBe(
+      expect(craftedLayout.accounts.length).toBe(
         originalLayout.accounts.length,
       );
 
       // payer changed
       expect(
-        new PublicKey(swappedLayout.accounts[0]!).equals(newPayer.publicKey),
+        new PublicKey(craftedLayout.accounts[0]!).equals(newPayer.publicKey),
       ).toBe(true);
 
       // non-payer accounts unchanged
       for (let i = 1; i < originalLayout.accounts.length; i++) {
-        expect(bytesToHex(swappedLayout.accounts[i]!)).toBe(
+        expect(bytesToHex(craftedLayout.accounts[i]!)).toBe(
           bytesToHex(originalLayout.accounts[i]!),
         );
       }
 
       // blockhash unchanged
-      expect(bytesToHex(swappedLayout.recentBlockhash)).toBe(
+      expect(bytesToHex(craftedLayout.recentBlockhash)).toBe(
         bytesToHex(originalLayout.recentBlockhash),
       );
     });
@@ -449,43 +449,43 @@ describe("SwapSigner", () => {
       const msgB64 = bytesToBase64(originalBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
         msgB64,
         newPayer.publicKey.toBase58(),
       );
 
       // then
       const outputBytes = base64ToBytes(outputB64);
-      const swappedLayout = parseMessageAccountsAndBlockhashAuto(
+      const craftedLayout = parseMessageAccountsAndBlockhashAuto(
         outputBytes,
         0,
       );
 
-      expect(swappedLayout.accounts.length).toBe(
+      expect(craftedLayout.accounts.length).toBe(
         originalLayout.accounts.length,
       );
 
       // payer changed
       expect(
-        new PublicKey(swappedLayout.accounts[0]!).equals(newPayer.publicKey),
+        new PublicKey(craftedLayout.accounts[0]!).equals(newPayer.publicKey),
       ).toBe(true);
 
       // non-payer accounts unchanged
       for (let i = 1; i < originalLayout.accounts.length; i++) {
-        expect(bytesToHex(swappedLayout.accounts[i]!)).toBe(
+        expect(bytesToHex(craftedLayout.accounts[i]!)).toBe(
           bytesToHex(originalLayout.accounts[i]!),
         );
       }
 
       // blockhash unchanged
-      expect(bytesToHex(swappedLayout.recentBlockhash)).toBe(
+      expect(bytesToHex(craftedLayout.recentBlockhash)).toBe(
         bytesToHex(originalLayout.recentBlockhash),
       );
     });
   });
 
   describe("valid transactions preserve signature count and message layout", () => {
-    it("legacy transaction: payer swapped, signatures zeroed, length and sig count preserved", () => {
+    it("legacy transaction: payer replaced, signatures zeroed, length and sig count preserved", () => {
       // given
       const instructions = SystemProgram.transfer({
         fromPubkey: payer.publicKey,
@@ -503,7 +503,7 @@ describe("SwapSigner", () => {
       const transactionB64 = bytesToBase64(originalBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
         transactionB64,
         newPayer.publicKey.toBase58(),
       );
@@ -517,7 +517,10 @@ describe("SwapSigner", () => {
       // signature section layout preserved
       const countBefore = 0;
       const { length: signatureCountBefore, size: signatureLengthBefore } =
-        new SwapSigner().decodeShortVec(originalBytes, countBefore);
+        new TransactionCrafterService().decodeShortVec(
+          originalBytes,
+          countBefore,
+        );
       const signatureSectionStartBefore = countBefore + signatureLengthBefore;
       const signatureSectionEndBefore =
         signatureSectionStartBefore + signatureCountBefore * 64;
@@ -525,7 +528,7 @@ describe("SwapSigner", () => {
 
       const countAfter = 0;
       const { length: signatureCountAfter, size: signatureLengthAfter } =
-        new SwapSigner().decodeShortVec(outputBytes, countAfter);
+        new TransactionCrafterService().decodeShortVec(outputBytes, countAfter);
       const signatureSectionStartAfter = countAfter + signatureLengthAfter;
       const signatureSectionEndAfter =
         signatureSectionStartAfter + signatureCountAfter * 64;
@@ -547,35 +550,35 @@ describe("SwapSigner", () => {
         msgOffsetBefore,
         { versioned: false },
       );
-      const swappedLayout = parseMessageAccountsAndBlockhash(
+      const craftedLayout = parseMessageAccountsAndBlockhash(
         outputBytes,
         msgOffsetAfter,
         { versioned: false },
       );
 
-      expect(swappedLayout.accounts.length).toBe(
+      expect(craftedLayout.accounts.length).toBe(
         originalLayout.accounts.length,
       );
 
       // payer changed
       expect(
-        new PublicKey(swappedLayout.accounts[0]!).equals(newPayer.publicKey),
+        new PublicKey(craftedLayout.accounts[0]!).equals(newPayer.publicKey),
       ).toBe(true);
 
       // non-payer accounts unchanged
       for (let i = 1; i < originalLayout.accounts.length; i++) {
-        expect(bytesToHex(swappedLayout.accounts[i]!)).toBe(
+        expect(bytesToHex(craftedLayout.accounts[i]!)).toBe(
           bytesToHex(originalLayout.accounts[i]!),
         );
       }
 
       // blockhash unchanged
-      expect(bytesToHex(swappedLayout.recentBlockhash)).toBe(
+      expect(bytesToHex(craftedLayout.recentBlockhash)).toBe(
         bytesToHex(originalLayout.recentBlockhash),
       );
     });
 
-    it("v0 transaction: payer swapped, signatures zeroed, length and sig count preserved", () => {
+    it("v0 transaction: payer replaced, signatures zeroed, length and sig count preserved", () => {
       // given
       const instructions = SystemProgram.transfer({
         fromPubkey: payer.publicKey,
@@ -596,7 +599,7 @@ describe("SwapSigner", () => {
       const transactionB64 = bytesToBase64(originalBytes);
 
       // when
-      const outputB64 = new SwapSigner().swap(
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
         transactionB64,
         newPayer.publicKey.toBase58(),
       );
@@ -608,7 +611,7 @@ describe("SwapSigner", () => {
 
       const cBefore = 0;
       const { length: signatureCountBefore, size: signatureLengthBefore } =
-        new SwapSigner().decodeShortVec(originalBytes, cBefore);
+        new TransactionCrafterService().decodeShortVec(originalBytes, cBefore);
       const signatureSectionStartBefore = cBefore + signatureLengthBefore;
       const signatureSectionEndBefore =
         signatureSectionStartBefore + signatureCountBefore * 64;
@@ -616,7 +619,7 @@ describe("SwapSigner", () => {
 
       const countAfter = 0;
       const { length: signatureCountAfter, size: signatureLengthAfter } =
-        new SwapSigner().decodeShortVec(outputBytes, countAfter);
+        new TransactionCrafterService().decodeShortVec(outputBytes, countAfter);
       const signatureSectionStartAfter = countAfter + signatureLengthAfter;
       const signatureSectionEndAfter =
         signatureSectionStartAfter + signatureCountAfter * 64;
@@ -634,26 +637,26 @@ describe("SwapSigner", () => {
         originalBytes,
         msgOffsetBefore,
       );
-      const swappedLayout = parseMessageAccountsAndBlockhashAuto(
+      const craftedLayout = parseMessageAccountsAndBlockhashAuto(
         outputBytes,
         msgOffsetAfter,
       );
 
-      expect(swappedLayout.accounts.length).toBe(
+      expect(craftedLayout.accounts.length).toBe(
         originalLayout.accounts.length,
       );
 
       expect(
-        new PublicKey(swappedLayout.accounts[0]!).equals(newPayer.publicKey),
+        new PublicKey(craftedLayout.accounts[0]!).equals(newPayer.publicKey),
       ).toBe(true);
 
       for (let i = 1; i < originalLayout.accounts.length; i++) {
-        expect(bytesToHex(swappedLayout.accounts[i]!)).toBe(
+        expect(bytesToHex(craftedLayout.accounts[i]!)).toBe(
           bytesToHex(originalLayout.accounts[i]!),
         );
       }
 
-      expect(bytesToHex(swappedLayout.recentBlockhash)).toBe(
+      expect(bytesToHex(craftedLayout.recentBlockhash)).toBe(
         bytesToHex(originalLayout.recentBlockhash),
       );
     });
@@ -668,7 +671,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(tooShort);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionCrafterService().getCraftedTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -678,7 +684,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionCrafterService().getCraftedTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -688,7 +697,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionCrafterService().getCraftedTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -698,7 +710,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionCrafterService().getCraftedTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -708,7 +723,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionCrafterService().getCraftedTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
 
@@ -718,7 +736,10 @@ describe("SwapSigner", () => {
       const badB64 = bytesToBase64(bytes);
 
       expect(() =>
-        new SwapSigner().swap(badB64, newPayer.publicKey.toBase58()),
+        new TransactionCrafterService().getCraftedTransaction(
+          badB64,
+          newPayer.publicKey.toBase58(),
+        ),
       ).toThrowError(GENERIC_ERR);
     });
   });
@@ -728,9 +749,9 @@ describe("SwapSigner", () => {
       const msgB64 = buildLegacyMessageBase64();
       const badKey = "not a valid base58!!!";
 
-      expect(() => new SwapSigner().swap(msgB64, badKey)).toThrowError(
-        "Failed to decode public key from base58.",
-      );
+      expect(() =>
+        new TransactionCrafterService().getCraftedTransaction(msgB64, badKey),
+      ).toThrowError("Failed to decode public key from base58.");
     });
 
     it("throws when base58 decodes to the wrong key length", () => {
@@ -740,7 +761,12 @@ describe("SwapSigner", () => {
       const tooShortKeyBytes = new Uint8Array(31);
       const tooShortKey = bs58.encode(tooShortKeyBytes);
 
-      expect(() => new SwapSigner().swap(msgB64, tooShortKey)).toThrowError(
+      expect(() =>
+        new TransactionCrafterService().getCraftedTransaction(
+          msgB64,
+          tooShortKey,
+        ),
+      ).toThrowError(
         "Provided public key is not 32 bytes after base58 decode.",
       );
     });
@@ -750,7 +776,10 @@ describe("SwapSigner", () => {
       const validPayer = newPayer.publicKey.toBase58();
 
       expect(() =>
-        new SwapSigner().swap(definitelyNotB64, validPayer),
+        new TransactionCrafterService().getCraftedTransaction(
+          definitelyNotB64,
+          validPayer,
+        ),
       ).toThrow();
     });
   });

@@ -11,41 +11,41 @@ import {
 import { type PublicKey } from "@api/model/PublicKey";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
-export type SwapTransactionSignerDAOutput = string;
+export type CraftTransactionDAOutput = string;
 
-export type SwapTransactionSignerDAInput = {
+export type CraftTransactionDAInput = {
   readonly derivationPath: string;
   readonly serialisedTransaction: string;
   readonly skipOpenApp: boolean;
   readonly contextModule: ContextModule;
 };
 
-export type SwapTransactionSignerDAError =
+export type CraftTransactionDAError =
   | OpenAppDAError
   | SendCommandInAppDAError<SolanaAppErrorCodes>;
 
-type SwapTransactionSignerDARequiredInteraction =
+type CraftTransactionDARequiredInteraction =
   | UserInteractionRequired
   | OpenAppDARequiredInteraction;
 
-export type SwapTransactionSignerDAIntermediateValue = {
-  requiredUserInteraction: SwapTransactionSignerDARequiredInteraction;
+export type CraftTransactionDAIntermediateValue = {
+  requiredUserInteraction: CraftTransactionDARequiredInteraction;
 };
 
-export type SwapTransactionSignerDAState = DeviceActionState<
-  SwapTransactionSignerDAOutput,
-  SwapTransactionSignerDAError,
-  SwapTransactionSignerDAIntermediateValue
+export type CraftTransactionDAState = DeviceActionState<
+  CraftTransactionDAOutput,
+  CraftTransactionDAError,
+  CraftTransactionDAIntermediateValue
 >;
 
-export type SwapTransactionSignerDAInternalState = {
-  readonly error: SwapTransactionSignerDAError | null;
+export type CraftTransactionDAInternalState = {
+  readonly error: CraftTransactionDAError | null;
   readonly publicKey: PublicKey | null;
   readonly serialisedTransaction: string | null;
 };
 
-export type SwapTransactionSignerDAReturnType = ExecuteDeviceActionReturnType<
-  SwapTransactionSignerDAOutput,
-  SwapTransactionSignerDAError,
-  SwapTransactionSignerDAIntermediateValue
+export type CraftTransactionDAReturnType = ExecuteDeviceActionReturnType<
+  CraftTransactionDAOutput,
+  CraftTransactionDAError,
+  CraftTransactionDAIntermediateValue
 >;

@@ -21,9 +21,12 @@ const SIGNATURE_LENGTH = 64;
 const MAX_SIGNATURES = 64;
 const MAX_ACCOUNTS = 256;
 
-export class SwapSigner {
-  public swap(inputBase64: string, newPayerBase58: string): string {
-    const rawInput = base64StringToBuffer(inputBase64);
+export class TransactionCrafterService {
+  public getCraftedTransaction(
+    transactionBase64: string,
+    newPayerBase58: string,
+  ): string {
+    const rawInput = base64StringToBuffer(transactionBase64);
     if (rawInput === null) {
       throw new Error("Input is not a valid base64 string.");
     }
@@ -90,6 +93,10 @@ export class SwapSigner {
       }
 
       shift += 7;
+
+      if (shift >= 35) {
+        throw new Error("shortvec too long");
+      }
     }
 
     return { length: value, size };

@@ -12,14 +12,14 @@ import {
 import { beforeEach, describe, it, vi } from "vitest";
 
 import {
-  type SwapTransactionSignerDAError,
-  type SwapTransactionSignerDAInput,
-  type SwapTransactionSignerDAIntermediateValue,
-} from "@api/app-binder/SwapTransactionSignerDeviceActionTypes";
+  type CraftTransactionDAError,
+  type CraftTransactionDAInput,
+  type CraftTransactionDAIntermediateValue,
+} from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
-import { SwapTransactionSignerDeviceAction } from "./SwapTransactionSignerDeviceAction";
+import { CraftTransactionDeviceAction } from "./CraftTransactionDeviceAction";
 
 const defaultDerivation = "44'/501'/0'/0'";
 const exampleTxB64 = "EXAMPLE=";
@@ -30,16 +30,16 @@ const contextModuleStub: ContextModule = {
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let getPublicKeyMock: ReturnType<typeof vi.fn>;
-let swapTransactionSignerMock: ReturnType<typeof vi.fn>;
+let craftTransactionMock: ReturnType<typeof vi.fn>;
 
 function extractDeps() {
   return {
     getPublicKey: getPublicKeyMock,
-    swapTransactionSigner: swapTransactionSignerMock,
+    craftTransaction: craftTransactionMock,
   };
 }
 
-describe("SwapTransactionSignerDeviceAction (Solana)", () => {
+describe("CraftTransactionDeviceAction (Solana)", () => {
   beforeEach(() => {
     apiMock = makeDeviceActionInternalApiMock();
     // device present, app already open
@@ -53,25 +53,25 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
     });
 
     getPublicKeyMock = vi.fn();
-    swapTransactionSignerMock = vi.fn();
+    craftTransactionMock = vi.fn();
   });
 
-  it("happy path (skip open): getPublicKey -> swapTransactionSigner -> success", () =>
+  it("happy path (skip open): getPublicKey -> craftTransaction -> success", () =>
     new Promise<void>((resolve, reject) => {
       const newPayer = "4T7JpXjQH99Nct4m7P8a9Q9i9kq6Dh1x1tP7u1L6mQqs";
       getPublicKeyMock.mockResolvedValue(
         CommandResultFactory({ data: newPayer }),
       );
-      const swappedB64 = "ZmFrZVN3YXBwZWRUeA==";
-      swapTransactionSignerMock.mockResolvedValue(swappedB64);
+      const craftedB64 = "ZmFrZUNyYWZ0ZWRUeA==";
+      craftTransactionMock.mockResolvedValue(craftedB64);
 
-      const action = new SwapTransactionSignerDeviceAction({
+      const action = new CraftTransactionDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           serialisedTransaction: exampleTxB64,
           skipOpenApp: true,
           contextModule: contextModuleStub,
-        } as SwapTransactionSignerDAInput,
+        } as CraftTransactionDAInput,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -83,7 +83,7 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
           },
           status: DeviceActionStatus.Pending,
         },
-        // SwapTransactionSigner
+        // CraftTransaction
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -91,18 +91,18 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
           status: DeviceActionStatus.Pending,
         },
         // Success
-        { output: swappedB64, status: DeviceActionStatus.Completed },
+        { output: craftedB64, status: DeviceActionStatus.Completed },
       ] as DeviceActionState<
         string,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >[];
 
       testDeviceActionStates<
         string,
-        SwapTransactionSignerDAInput,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAInput,
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
@@ -113,15 +113,15 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
           error: new InvalidStatusWordError("pkErr"),
         }),
       );
-      swapTransactionSignerMock.mockResolvedValue("unused");
+      craftTransactionMock.mockResolvedValue("unused");
 
-      const action = new SwapTransactionSignerDeviceAction({
+      const action = new CraftTransactionDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           serialisedTransaction: exampleTxB64,
           skipOpenApp: true,
           contextModule: contextModuleStub,
-        } as SwapTransactionSignerDAInput,
+        } as CraftTransactionDAInput,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -140,33 +140,33 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
         },
       ] as DeviceActionState<
         string,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >[];
 
       testDeviceActionStates<
         string,
-        SwapTransactionSignerDAInput,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAInput,
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
-  it("swapTransactionSigner resolves falsy -> UnknownDAError -> Error", () =>
+  it("craftTransaction resolves falsy -> UnknownDAError -> Error", () =>
     new Promise<void>((resolve, reject) => {
       const newPayer = "3uWw3w8oHAp8Jti3XQGz2qA2kQqiYk5p9VbXoFq5ULbR";
       getPublicKeyMock.mockResolvedValue(
         CommandResultFactory({ data: newPayer }),
       );
-      swapTransactionSignerMock.mockResolvedValue("");
+      craftTransactionMock.mockResolvedValue("");
 
-      const action = new SwapTransactionSignerDeviceAction({
+      const action = new CraftTransactionDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           serialisedTransaction: exampleTxB64,
           skipOpenApp: true,
           contextModule: contextModuleStub,
-        } as SwapTransactionSignerDAInput,
+        } as CraftTransactionDAInput,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -178,7 +178,7 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
           },
           status: DeviceActionStatus.Pending,
         },
-        // SwapTransactionSigner (falsy result)
+        // CraftTransaction (falsy result)
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -192,33 +192,33 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
         },
       ] as DeviceActionState<
         string,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >[];
 
       testDeviceActionStates<
         string,
-        SwapTransactionSignerDAInput,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAInput,
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
-  it("swapTransactionSigner throws -> Error", () =>
+  it("craftTransaction throws -> Error", () =>
     new Promise<void>((resolve, reject) => {
       const newPayer = "9Xnq9Yk9j5Hk3de9G4m2f3mM9b2R1dJb1u7C6G3P4VY7";
       getPublicKeyMock.mockResolvedValue(
         CommandResultFactory({ data: newPayer }),
       );
-      swapTransactionSignerMock.mockRejectedValue(new Error("boom"));
+      craftTransactionMock.mockRejectedValue(new Error("boom"));
 
-      const action = new SwapTransactionSignerDeviceAction({
+      const action = new CraftTransactionDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           serialisedTransaction: exampleTxB64,
           skipOpenApp: true,
           contextModule: contextModuleStub,
-        } as SwapTransactionSignerDAInput,
+        } as CraftTransactionDAInput,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -230,7 +230,7 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
           },
           status: DeviceActionStatus.Pending,
         },
-        // SwapTransactionSigner (throws)
+        // CraftTransaction (throws)
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -244,15 +244,15 @@ describe("SwapTransactionSignerDeviceAction (Solana)", () => {
         },
       ] as DeviceActionState<
         string,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >[];
 
       testDeviceActionStates<
         string,
-        SwapTransactionSignerDAInput,
-        SwapTransactionSignerDAError,
-        SwapTransactionSignerDAIntermediateValue
+        CraftTransactionDAInput,
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 });

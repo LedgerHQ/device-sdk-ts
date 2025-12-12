@@ -144,8 +144,11 @@ export { TransportConnectedDevice } from "@api/transport/model/TransportConnecte
 export { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 export * from "@api/types";
 export { formatApduReceivedLog, formatApduSentLog } from "@api/utils/apduLogs";
-export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
-export { bufferToBase64String } from "@api/utils/BufferToBase64String";
+export {
+  base64StringToBuffer,
+  bufferToBase64String,
+  isBase64String,
+} from "@api/utils/Base64String";
 export {
   bufferToHexaString,
   hexaStringToBuffer,

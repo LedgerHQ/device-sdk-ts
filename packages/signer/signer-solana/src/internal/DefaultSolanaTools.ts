@@ -5,18 +5,18 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
+import { type CraftTransactionDAReturnType } from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { type GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
-import { type SwapTransactionSignerDAReturnType } from "@api/app-binder/SwapTransactionSignerDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOption";
 import { type SolanaTools } from "@api/SolanaTools";
 
 import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
 import { type GetAppConfigurationUseCase } from "./use-cases/app-configuration/GetAppConfigurationUseCase";
+import { type CraftTransactionUseCase } from "./use-cases/craft-transaction/CraftTransactionUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 import { type GenerateTransactionUseCase } from "./use-cases/generateTransaction/GenerateTransactionUseCase";
-import { type SwapTransactionSignerUseCase } from "./use-cases/swap-transaction-signer/SwapTransactionSignerUseCase";
 import { makeContainer } from "./di";
 
 export type DefaultSolanaToolsConstructorArgs = {
@@ -42,14 +42,12 @@ export class DefaultSolanaTools implements SolanaTools {
       .execute(derivationPath);
   }
 
-  swapTransactionSigner(
+  craftTransaction(
     derivationPath: string,
     serialisedTransaction: string,
-  ): SwapTransactionSignerDAReturnType {
+  ): CraftTransactionDAReturnType {
     return this._container
-      .get<SwapTransactionSignerUseCase>(
-        useCasesTypes.SwapTransactionSignerUseCase,
-      )
+      .get<CraftTransactionUseCase>(useCasesTypes.CraftTransactionUseCase)
       .execute(derivationPath, serialisedTransaction);
   }
 
