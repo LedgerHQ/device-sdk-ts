@@ -1,3 +1,4 @@
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
@@ -26,6 +27,8 @@ export class SolanaLifiContextLoader
       SolanaLifiContextResult
     >
 {
+  private logger?: LoggerPublisherService;
+
   constructor(
     @inject(lifiTypes.SolanaLifiDataSource)
     private readonly dataSource: SolanaLifiDataSource,
@@ -48,6 +51,9 @@ export class SolanaLifiContextLoader
   public async loadField(
     solanaTokenContextInput: SolanaLifiFieldInput,
   ): Promise<SolanaLifiContextResult> {
+    this.logger?.debug("[loadField] Loading solana Lifi context", {
+      data: { input: solanaTokenContextInput },
+    });
     const { templateId } = solanaTokenContextInput;
 
     const payload = await this.dataSource.getTransactionDescriptorsPayload({
@@ -55,22 +61,42 @@ export class SolanaLifiContextLoader
     });
 
     return payload.caseOf({
-      Left: (error): SolanaLifiContextResult => ({
-        type: SolanaContextTypes.ERROR,
-        error,
-      }),
-      Right: (value): SolanaLifiContextResult => ({
-        type: SolanaContextTypes.SOLANA_LIFI,
-        payload: this.pluckTransactionData(value),
-      }),
+      Left: (error): SolanaLifiContextResult => {
+        this.logger?.error("[loadField] Error loading solana Lifi context", {
+          data: { error },
+        });
+
+        return {
+          type: SolanaContextTypes.ERROR,
+          error,
+        };
+      },
+      Right: (value): SolanaLifiContextResult => {
+        this.logger?.debug(
+          "[loadField] Successfully loaded solana Lifi context",
+          {
+            data: { payload: this.pluckTransactionData(value) },
+          },
+        );
+
+        return {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: this.pluckTransactionData(value),
+        };
+      },
     });
   }
 
   private pluckTransactionData(
     tokenData: GetTransactionDescriptorsResponse,
   ): SolanaTransactionDescriptorList {
-    return {
-      ...tokenData.descriptors,
-    };
+    const output: SolanaTransactionDescriptorList = {};
+
+    for (const item of tokenData.descriptors ?? []) {
+      output[`${item.program_id}:${item.discriminator_hex ?? "0"}`] =
+        item.descriptor;
+    }
+
+    return output;
   }
 }

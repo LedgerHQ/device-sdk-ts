@@ -1,12 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   SolanaContextTypes,
+  type SolanaTransactionDescriptor,
   type SolanaTransactionDescriptorList,
 } from "@/shared/model/SolanaContextTypes";
 import {
@@ -19,19 +20,38 @@ import { SolanaLifiContextLoader } from "./SolanaLifiContextLoader";
 describe("SolanaLifiContextLoader", () => {
   let mockDataSource: SolanaLifiDataSource;
 
-  const descriptors: SolanaTransactionDescriptorList = {
-    // Shape not important for the loader: it's plucked verbatim
-    swap: { programId: "SomeProgram", accounts: [], data: "abc123" } as any,
-    bridge: {
-      programId: "AnotherProgram",
-      accounts: [],
-      data: "def456",
-    } as any,
+  const makeDescriptor = (data: string): SolanaTransactionDescriptor => ({
+    data,
+    descriptorType: "swap_template",
+    descriptorVersion: "v1",
+    signatures: { test: "deadbeef" },
+  });
+
+  const responseDescriptorsArray: GetTransactionDescriptorsResponse["descriptors"] =
+    [
+      {
+        program_id: "SomeProgram",
+        discriminator_hex: "1",
+        descriptor: makeDescriptor("abc123"),
+      },
+      {
+        program_id: "AnotherProgram",
+        // discriminator_hex intentionally omitted -> defaults to "0"
+        descriptor: makeDescriptor("def456"),
+      },
+    ];
+
+  const expectedPlucked: SolanaTransactionDescriptorList = {
+    "SomeProgram:1": makeDescriptor("abc123"),
+    "AnotherProgram:0": makeDescriptor("def456"),
   };
 
   const txDescriptorsResponse: GetTransactionDescriptorsResponse = {
-    descriptors,
-  } as any;
+    id: "tpl-1",
+    chain_id: 101,
+    instructions: [],
+    descriptors: responseDescriptorsArray,
+  };
 
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -82,10 +102,12 @@ describe("SolanaLifiContextLoader", () => {
     it("returns an error when datasource returns Left(error)", async () => {
       const loader = makeLoader();
       const error = new Error("boom");
+
       vi.spyOn(
         mockDataSource,
         "getTransactionDescriptorsPayload",
       ).mockResolvedValue(Left(error));
+
       const input = { templateId: "tpl-err", deviceModelId: "nanoS" as any };
       const result = await loader.loadField(input);
 
@@ -94,6 +116,7 @@ describe("SolanaLifiContextLoader", () => {
       ).toHaveBeenCalledWith({
         templateId: "tpl-err",
       });
+
       expect(result).toEqual({
         type: SolanaContextTypes.ERROR,
         error,
@@ -102,10 +125,12 @@ describe("SolanaLifiContextLoader", () => {
 
     it("returns SOLANA_LIFI with plucked descriptors when datasource returns Right(value)", async () => {
       const loader = makeLoader();
+
       vi.spyOn(
         mockDataSource,
         "getTransactionDescriptorsPayload",
       ).mockResolvedValue(Right(txDescriptorsResponse));
+
       const input = { templateId: "tpl-ok", deviceModelId: "nanoS" as any };
       const result = await loader.loadField(input);
 
@@ -114,21 +139,24 @@ describe("SolanaLifiContextLoader", () => {
       ).toHaveBeenCalledWith({
         templateId: "tpl-ok",
       });
+
       expect(result).toEqual({
         type: SolanaContextTypes.SOLANA_LIFI,
-        payload: descriptors,
+        payload: expectedPlucked,
       });
     });
   });
 
   describe("pluckTransactionData (private)", () => {
-    it("simply returns the descriptors object from the response", () => {
+    it("returns a map keyed by `${program_id}:${discriminator_hex ?? '0'}`", () => {
       const loader = makeLoader();
       const pluck = (loader as any).pluckTransactionData.bind(loader);
 
-      const result = pluck(txDescriptorsResponse);
+      const result: SolanaTransactionDescriptorList = pluck(
+        txDescriptorsResponse,
+      );
 
-      expect(result).toEqual(descriptors);
+      expect(result).toEqual(expectedPlucked);
     });
   });
 });
