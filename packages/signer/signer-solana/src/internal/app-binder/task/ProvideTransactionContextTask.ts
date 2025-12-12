@@ -1,7 +1,10 @@
 import {
   SolanaContextTypes,
   type SolanaLifiContextSuccess,
+  type SolanaLifiInstructionMeta,
   type SolanaTokenContextSuccess,
+  type SolanaTransactionDescriptor,
+  type SolanaTransactionDescriptorList,
 } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
@@ -163,10 +166,22 @@ export class ProvideSolanaTransactionContextTask {
     lifiDescriptorListResult: SolanaLifiContextSuccess,
     transactionBytes: Uint8Array,
   ): Promise<void> {
-    const lifiDescriptors = lifiDescriptorListResult.payload;
+    const { descriptors: lifiDescriptors, instructions: instructionsMeta } =
+      lifiDescriptorListResult.payload;
 
     if (lifiDescriptors) {
       const message = await this._normaliser.normaliseMessage(transactionBytes);
+
+      this._logger.debug(
+        "[provideSwapContext] Matching transaction instructions to descriptors",
+        {
+          data: {
+            compiledInstructionsCount: message.compiledInstructions.length,
+            descriptorKeys: Object.keys(lifiDescriptors),
+            instructionsMetaCount: instructionsMeta.length,
+          },
+        },
+      );
 
       for (const [
         index,
@@ -174,11 +189,26 @@ export class ProvideSolanaTransactionContextTask {
       ] of message.compiledInstructions.entries()) {
         const programId = message.allKeys[instruction.programIdIndex];
         const programIdStr = programId?.toBase58();
-        const descriptor = programIdStr
-          ? lifiDescriptors[programIdStr]
-          : undefined;
 
-        const sigHex = descriptor && descriptor.signatures[SWAP_MODE];
+        const descriptor = this.findMatchingDescriptor(
+          programIdStr,
+          instruction.data,
+          instructionsMeta,
+          lifiDescriptors,
+        );
+        const sigHex = descriptor?.signatures?.[SWAP_MODE];
+
+        this._logger.debug(
+          `[provideSwapContext] Instruction ${index}: ${descriptor ? "matched" : "no match"}`,
+          {
+            data: {
+              index,
+              programId: programIdStr,
+              hasDescriptor: !!descriptor,
+              hasSignature: !!sigHex,
+            },
+          },
+        );
 
         if (descriptor && sigHex) {
           await this.api.sendCommand(
@@ -201,5 +231,92 @@ export class ProvideSolanaTransactionContextTask {
         }
       }
     }
+  }
+
+  /**
+   * Find the matching descriptor for a compiled transaction instruction by:
+   * 1. Filtering instruction metadata by program_id
+   * 2. Comparing instruction data bytes against the discriminator_hex
+   * 3. Looking up the descriptor using the composite key (program_id:discriminator_hex)
+   */
+  private findMatchingDescriptor(
+    programIdStr: string | undefined,
+    instructionData: Uint8Array,
+    instructionsMeta: SolanaLifiInstructionMeta[],
+    descriptors: SolanaTransactionDescriptorList,
+  ): SolanaTransactionDescriptor | undefined {
+    if (!programIdStr) return undefined;
+
+    const candidates = instructionsMeta.filter(
+      (meta) => meta.program_id === programIdStr,
+    );
+
+    if (candidates.length === 0) {
+      this._logger.debug(
+        "[findMatchingDescriptor] No instruction metadata found for program",
+        { data: { programId: programIdStr } },
+      );
+      return undefined;
+    }
+
+    for (const candidate of candidates) {
+      const discriminatorHex = candidate.discriminator_hex ?? "0";
+
+      if (this.matchesDiscriminator(instructionData, discriminatorHex)) {
+        const key = `${programIdStr}:${discriminatorHex}`;
+        const descriptor = descriptors[key];
+
+        this._logger.debug("[findMatchingDescriptor] Discriminator matched", {
+          data: {
+            programId: programIdStr,
+            discriminatorHex,
+            key,
+            found: !!descriptor,
+          },
+        });
+
+        if (descriptor) return descriptor;
+      }
+    }
+
+    this._logger.debug(
+      "[findMatchingDescriptor] No matching discriminator found",
+      {
+        data: {
+          programId: programIdStr,
+          instructionDataLength: instructionData.length,
+          candidateDiscriminators: candidates.map(
+            (c) => c.discriminator_hex ?? "0",
+          ),
+        },
+      },
+    );
+
+    return undefined;
+  }
+
+  /**
+   * Check if instruction data starts with the expected discriminator bytes.
+   * A discriminator_hex of "0" means no discriminator (always matches).
+   */
+  private matchesDiscriminator(
+    instructionData: Uint8Array,
+    discriminatorHex: string,
+  ): boolean {
+    if (discriminatorHex === "0") return true;
+
+    // Pad odd-length hex strings (e.g. "1" -> "01")
+    const padded =
+      discriminatorHex.length % 2 !== 0
+        ? "0" + discriminatorHex
+        : discriminatorHex;
+    const discriminatorBytes = new Uint8Array(padded.length / 2);
+    for (let i = 0; i < padded.length; i += 2) {
+      discriminatorBytes[i / 2] = parseInt(padded.substring(i, i + 2), 16);
+    }
+
+    if (instructionData.length < discriminatorBytes.length) return false;
+
+    return discriminatorBytes.every((byte, i) => instructionData[i] === byte);
   }
 }

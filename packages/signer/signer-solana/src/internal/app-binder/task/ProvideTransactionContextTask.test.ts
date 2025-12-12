@@ -457,9 +457,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       const message = {
         compiledInstructions: [
-          { programIdIndex: 0 },
-          { programIdIndex: 1 },
-          { programIdIndex: 2 },
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+          { programIdIndex: 1, data: new Uint8Array([0x02]) },
+          { programIdIndex: 2, data: new Uint8Array([0x03]) },
         ],
         allKeys: [makeKey("A_PID"), makeKey("B_PID"), makeKey("C_PID")],
       };
@@ -474,9 +474,15 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            A_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // B missing -> empty
-            C_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            descriptors: {
+              "A_PID:1": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+              // B missing -> empty
+              "C_PID:3": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            },
+            instructions: [
+              { program_id: "A_PID", discriminator_hex: "1" },
+              { program_id: "C_PID", discriminator_hex: "3" },
+            ],
           },
         },
       ];
@@ -545,7 +551,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValue(success);
 
       const message = {
-        compiledInstructions: [{ programIdIndex: 0 }],
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
         allKeys: [makeKey("ONLY_PID")],
       };
       const normaliser = buildNormaliser(message);
@@ -559,12 +567,15 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            ONLY_PID: {
-              data: SIG,
-              signatures: {
-                // no [SWAP_MODE] key
+            descriptors: {
+              "ONLY_PID:0": {
+                data: SIG,
+                signatures: {
+                  // no [SWAP_MODE] key
+                },
               },
             },
+            instructions: [{ program_id: "ONLY_PID" }],
           },
         },
       ];
@@ -608,7 +619,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValue(success);
 
       const message = {
-        compiledInstructions: [{ programIdIndex: 5 }], // out-of-range
+        compiledInstructions: [{ programIdIndex: 5, data: new Uint8Array() }], // out-of-range
         allKeys: [makeKey("X")],
       };
       const normaliser = buildNormaliser(message);
@@ -619,7 +630,10 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
-        { type: SolanaContextTypes.SOLANA_LIFI, payload: {} },
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: { descriptors: {}, instructions: [] },
+        },
       ];
 
       const context = {
@@ -663,9 +677,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       const message = {
         compiledInstructions: [
-          { programIdIndex: 0 }, // descriptor
-          { programIdIndex: 1 }, // empty -> rejects
-          { programIdIndex: 2 }, // not reached
+          { programIdIndex: 0, data: new Uint8Array([0x01]) }, // descriptor
+          { programIdIndex: 1, data: new Uint8Array([0x02]) }, // empty -> rejects
+          { programIdIndex: 2, data: new Uint8Array([0x03]) }, // not reached
         ],
         allKeys: [makeKey("A_PID"), makeKey("B_PID"), makeKey("C_PID")],
       };
@@ -680,9 +694,15 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            A_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // B missing -> empty
-            C_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            descriptors: {
+              "A_PID:1": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+              // B missing -> empty
+              "C_PID:3": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            },
+            instructions: [
+              { program_id: "A_PID", discriminator_hex: "1" },
+              { program_id: "C_PID", discriminator_hex: "3" },
+            ],
           },
         },
       ];
@@ -732,7 +752,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValue(success);
 
       const message = {
-        compiledInstructions: [{ programIdIndex: 0 }],
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
         allKeys: [makeKey("SIG_PID")],
       };
       const normaliser = buildNormaliser(message);
@@ -746,10 +768,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            SIG_PID: {
-              data: SIG,
-              signatures: { prod: "deadbeef", [SWAP_MODE]: SIG },
+            descriptors: {
+              "SIG_PID:1": {
+                data: SIG,
+                signatures: { prod: "deadbeef", [SWAP_MODE]: SIG },
+              },
             },
+            instructions: [{ program_id: "SIG_PID", discriminator_hex: "1" }],
           },
         },
       ];
@@ -841,9 +866,21 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // Tokenkeg missing -> empty
-            [MEMO_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            descriptors: {
+              [`${SYSTEM_PID}:0`]: {
+                data: SIG,
+                signatures: { [SWAP_MODE]: SIG },
+              },
+              // Tokenkeg missing -> empty
+              [`${MEMO_PID}:0`]: {
+                data: SIG,
+                signatures: { [SWAP_MODE]: SIG },
+              },
+            },
+            instructions: [
+              { program_id: SYSTEM_PID },
+              { program_id: MEMO_PID },
+            ],
           },
         },
       ];
@@ -943,9 +980,18 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            [ATA_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // Memo intentionally missing -> empty
+            descriptors: {
+              [`${SYSTEM_PID}:0`]: {
+                data: SIG,
+                signatures: { [SWAP_MODE]: SIG },
+              },
+              [`${ATA_PID}:0`]: {
+                data: SIG,
+                signatures: { [SWAP_MODE]: SIG },
+              },
+              // Memo intentionally missing -> empty
+            },
+            instructions: [{ program_id: SYSTEM_PID }, { program_id: ATA_PID }],
           },
         },
       ];
@@ -1062,9 +1108,18 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            [ATA_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // Token Program intentionally missing -> "empty"
+            descriptors: {
+              [`${SYSTEM_PID}:0`]: {
+                data: SIG,
+                signatures: { [SWAP_MODE]: SIG },
+              },
+              [`${ATA_PID}:0`]: {
+                data: SIG,
+                signatures: { [SWAP_MODE]: SIG },
+              },
+              // Token Program intentionally missing -> "empty"
+            },
+            instructions: [{ program_id: SYSTEM_PID }, { program_id: ATA_PID }],
           },
         },
       ];
@@ -1115,6 +1170,179 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(c2.args.kind).toBe("empty"); // Token Program missing
       expect(c2.args.isFirstMessage).toBe(false);
       expect(c2.args.swapSignatureTag).toBe(true);
+    });
+  });
+
+  // real LiFi template payload (4c694669) with discriminator matching
+  describe("real LiFi CAL payload (template 4c694669)", () => {
+    // Helper to convert hex string to Uint8Array (with optional trailing data)
+    const hexToData = (hex: string, extraBytes = 16): Uint8Array => {
+      const padded = hex.length % 2 !== 0 ? "0" + hex : hex;
+      const bytes = new Uint8Array(padded.length / 2 + extraBytes);
+      for (let i = 0; i < padded.length; i += 2) {
+        bytes[i / 2] = parseInt(padded.substring(i, i + 2), 16);
+      }
+      // fill remainder with dummy instruction data
+      for (let i = padded.length / 2; i < bytes.length; i++) {
+        bytes[i] = 0xab;
+      }
+      return bytes;
+    };
+
+    it("matches 12 instructions by program_id + discriminator (including 8-byte, 1-byte, and no discriminator)", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success) // base PKI
+        .mockResolvedValueOnce(success) // TLV
+        .mockResolvedValue(success); // swap APDUs
+
+      // Simulate 12 compiled instructions matching the LiFi template
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: hexToData("01") }, // ATokenGP disc=1
+          { programIdIndex: 1, data: hexToData("02") }, // System disc=2
+          { programIdIndex: 2, data: hexToData("2aade37a97cb17e0") }, // JUP6 route (8 bytes)
+          { programIdIndex: 2, data: hexToData("819cd641339b2148") }, // JUP6 shared (8 bytes)
+          { programIdIndex: 3, data: hexToData("") }, // Memo (no disc)
+          { programIdIndex: 0, data: hexToData("01") }, // ATokenGP disc=1 again
+          { programIdIndex: 4, data: hexToData("") }, // 3i5JeuZ (no disc)
+          { programIdIndex: 5, data: hexToData("02") }, // ComputeBudget disc=2
+          { programIdIndex: 5, data: hexToData("03") }, // ComputeBudget disc=3
+          { programIdIndex: 6, data: hexToData("03") }, // TokenkegQ disc=3
+          { programIdIndex: 6, data: hexToData("11") }, // TokenkegQ disc=17
+          { programIdIndex: 7, data: hexToData("") }, // BrdgN2 (no disc)
+        ],
+        allKeys: [
+          makeKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"), // 0
+          makeKey("11111111111111111111111111111111"), // 1
+          makeKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"), // 2
+          makeKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"), // 3
+          makeKey("3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br"), // 4
+          makeKey("ComputeBudget111111111111111111111111111111"), // 5
+          makeKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"), // 6
+          makeKey("BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB"), // 7
+        ],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const mkDesc = (id: string) => ({
+        data: `data_${id}`,
+        signatures: { [SWAP_MODE]: `sig_${id}` },
+      });
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL:1":
+                mkDesc("atoken"),
+              "11111111111111111111111111111111:2": mkDesc("system"),
+              "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:2aade37a97cb17e0":
+                mkDesc("jup_route"),
+              "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:819cd641339b2148":
+                mkDesc("jup_shared"),
+              "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr:0": mkDesc("memo"),
+              "3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br:0":
+                mkDesc("3i5jeu"),
+              "ComputeBudget111111111111111111111111111111:2": mkDesc("cb2"),
+              "ComputeBudget111111111111111111111111111111:3": mkDesc("cb3"),
+              "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:3": mkDesc("tk3"),
+              "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:11": mkDesc("tk11"),
+              "BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB:0": mkDesc("brdg"),
+            },
+            instructions: [
+              {
+                program_id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+                discriminator_hex: "1",
+              },
+              {
+                program_id: "11111111111111111111111111111111",
+                discriminator_hex: "2",
+              },
+              {
+                program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+                discriminator_hex: "2aade37a97cb17e0",
+              },
+              {
+                program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+                discriminator_hex: "819cd641339b2148",
+              },
+              { program_id: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr" },
+              {
+                program_id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+                discriminator_hex: "1",
+              },
+              { program_id: "3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br" },
+              {
+                program_id: "ComputeBudget111111111111111111111111111111",
+                discriminator_hex: "2",
+              },
+              {
+                program_id: "ComputeBudget111111111111111111111111111111",
+                discriminator_hex: "3",
+              },
+              {
+                program_id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                discriminator_hex: "3",
+              },
+              {
+                program_id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                discriminator_hex: "11",
+              },
+              { program_id: "BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB" },
+            ],
+          },
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+      expect(result).toStrictEqual(Nothing);
+
+      // 2 base + 12 swap APDUs
+      expect(api.sendCommand).toHaveBeenCalledTimes(14);
+
+      // All 12 should be "descriptor" (none missing)
+      const swapCalls = api.sendCommand.mock.calls.slice(2);
+      expect(swapCalls).toHaveLength(12);
+
+      const expectedData = [
+        "data_atoken", // ATokenGP disc=1
+        "data_system", // System disc=2
+        "data_jup_route", // JUP6 route (8-byte disc)
+        "data_jup_shared", // JUP6 shared (8-byte disc)
+        "data_memo", // Memo (no disc)
+        "data_atoken", // ATokenGP disc=1 again
+        "data_3i5jeu", // 3i5JeuZ (no disc)
+        "data_cb2", // ComputeBudget disc=2
+        "data_cb3", // ComputeBudget disc=3
+        "data_tk3", // TokenkegQ disc=3
+        "data_tk11", // TokenkegQ disc=17
+        "data_brdg", // BrdgN2 (no disc)
+      ];
+
+      swapCalls.forEach(([cmd]: any, i: number) => {
+        expect(cmd).toBeInstanceOf(
+          ProvideTLVTransactionInstructionDescriptorCommand,
+        );
+        expect(cmd.args.kind).toBe("descriptor");
+        expect(cmd.args.dataHex).toBe(expectedData[i]);
+        expect(cmd.args.isFirstMessage).toBe(i === 0);
+        expect(cmd.args.swapSignatureTag).toBe(true);
+      });
     });
   });
 });

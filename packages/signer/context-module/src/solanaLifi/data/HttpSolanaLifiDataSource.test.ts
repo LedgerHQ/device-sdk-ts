@@ -16,6 +16,14 @@ import {
 
 vi.mock("axios");
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("HttpSolanaLifiDataSource", () => {
   let datasource: SolanaLifiDataSource;
   const templateId = "tpl-123";
@@ -28,7 +36,7 @@ describe("HttpSolanaLifiDataSource", () => {
   } as ContextModuleConfig;
 
   beforeAll(() => {
-    datasource = new HttpSolanaLifiDataSource(config);
+    datasource = new HttpSolanaLifiDataSource(config, mockLoggerFactory);
   });
 
   beforeEach(() => {
@@ -50,11 +58,8 @@ describe("HttpSolanaLifiDataSource", () => {
         method: "GET",
         url: `${config.cal.url}/swap_templates`,
         params: {
-          template_id: templateId,
+          id: templateId,
           output: "id,chain_id,instructions,descriptors",
-          // TODO LIFI
-          // REVERT WHEN CAL SUPPORTS IT
-          ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
         },
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,

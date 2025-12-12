@@ -12,8 +12,8 @@ import {
 } from "@/shared/model/SolanaContextTypes";
 import { type SolanaDataSource } from "@/solana/data/SolanaDataSource";
 import { solanaContextTypes } from "@/solana/di/solanaContextTypes";
-// import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
-// import { SolanaLifiContextLoader } from "@/solanaLifi/domain/SolanaLifiContextLoader";
+import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
+import { SolanaLifiContextLoader } from "@/solanaLifi/domain/SolanaLifiContextLoader";
 import { solanaTokenTypes } from "@/solanaToken/di/solanaTokenTypes";
 import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
 
@@ -36,8 +36,8 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
     private readonly _solanaTokenLoader: SolanaTokenContextLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
-    // @inject(lifiTypes.SolanaLifiContextLoader)
-    // private readonly _solanaLifiLoader: SolanaLifiContextLoader,
+    @inject(lifiTypes.SolanaLifiContextLoader)
+    private readonly _solanaLifiLoader: SolanaLifiContextLoader,
   ) {
     this.logger = loggerFactory("DefaultSolanaContextLoader");
   }
@@ -65,27 +65,25 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
       );
     }
 
-    const loaderEntries = [
-      {
-        loader: this._solanaTokenLoader,
-        expectedType: SolanaContextTypes.SOLANA_TOKEN,
-      },
-      // TODO LIFI
-      // Lifi loader currently disabled as WIP
-      // {
-      //   loader: this._solanaLifiLoader,
-      //   expectedType: SolanaContextTypes.SOLANA_LIFI,
-      // },
-    ];
+    const loaderPromises: Promise<LoaderResult>[] = [];
 
-    const loaderPromises: Promise<LoaderResult>[] = loaderEntries
-      .map(({ loader, expectedType }) => {
-        if (loader.canHandle(solanaContext, expectedType)) {
-          return loader.loadField(solanaContext);
-        }
-        return undefined;
-      })
-      .filter((p): p is Promise<LoaderResult> => p !== undefined);
+    if (
+      this._solanaTokenLoader.canHandle(
+        solanaContext,
+        SolanaContextTypes.SOLANA_TOKEN,
+      )
+    ) {
+      loaderPromises.push(this._solanaTokenLoader.loadField(solanaContext));
+    }
+
+    if (
+      this._solanaLifiLoader.canHandle(
+        solanaContext,
+        SolanaContextTypes.SOLANA_LIFI,
+      )
+    ) {
+      loaderPromises.push(this._solanaLifiLoader.loadField(solanaContext));
+    }
 
     const settledLoaders = await Promise.allSettled(loaderPromises);
 

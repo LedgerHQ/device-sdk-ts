@@ -153,7 +153,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           SolanaTransactionTypes.SPL,
         shouldSkipInspection: ({ context }) =>
           context._internalState.error === null &&
-          !!context.input.transactionOptions?.transactionResolutionContext,
+          !!context.input.transactionOptions?.transactionResolutionContext &&
+          !context.input.transactionOptions?.transactionResolutionContext
+            ?.templateId,
       },
       actions: {
         assignErrorFromEvent: assign({
