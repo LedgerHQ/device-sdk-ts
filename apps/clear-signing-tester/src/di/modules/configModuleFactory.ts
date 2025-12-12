@@ -11,6 +11,7 @@ export type ClearSigningTesterConfig = {
   signer: SignerConfig;
   etherscan: EtherscanConfig;
   apps: AppsConfig;
+  onlySpeculos?: boolean;
 };
 
 export const configModuleFactory = (config: ClearSigningTesterConfig) =>

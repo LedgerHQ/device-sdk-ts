@@ -89,7 +89,7 @@ const FAKE_DEVICE_MODEL = new TransportDeviceModel({
   bootloaderUsbProductId: 0x0007,
   usbOnly: false,
   memorySize: 1533 * 1024,
-  blockSize: 32,
+  getBlockSize: () => 32,
   masks: [0x33300000],
 });
 

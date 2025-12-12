@@ -29,6 +29,7 @@ export const TYPES = {
 
   // Adapters
   ScreenReader: Symbol.for("ScreenReader"),
+  ScreenshotSaver: Symbol.for("ScreenshotSaver"),
   FileReader: Symbol.for("FileReader"),
   JsonParser: Symbol.for("JsonParser"),
   DockerContainer: Symbol.for("DockerContainer"),
@@ -59,4 +60,5 @@ export const TYPES = {
 
   // Logger
   LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
+  LoggerSubscribers: Symbol.for("LoggerSubscribers"),
 };

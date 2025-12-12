@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-import { ConsoleLogger, LogLevel } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
@@ -13,22 +12,39 @@ import { type TestTypedDataUseCase } from "@root/src/application/usecases/TestTy
 import { makeContainer } from "@root/src/di/container";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
+import {
+  CLI_LOG_LEVELS,
+  type CliLogLevel,
+} from "@root/src/domain/models/config/LoggerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
 export type CliConfig = {
-  derivationPath: string;
+  // config.speculos
   speculosUrl: string;
   speculosPort: number;
-  verbose: boolean;
-  quiet: boolean;
+  speculosVncPort?: number;
+  dockerImageTag?: string;
   device: SpeculosConfig["device"];
   appEthVersion?: SpeculosConfig["version"];
   osVersion?: SpeculosConfig["os"];
   plugin?: string;
   pluginVersion?: string;
+  screenshotFolderPath?: string;
+
+  // config.signer
   skipCal?: boolean;
-  dockerImageTag?: string;
+
+  // config.logger
+  logLevel: CliLogLevel;
+  logFile?: string;
+  fileLogLevel?: CliLogLevel;
+
+  // extras (not in config section but used by CLI)
+  derivationPath: string;
+
+  // Start Speculos only (skip DMK initialization)
+  onlySpeculos?: boolean;
 };
 
 /**
@@ -46,27 +62,22 @@ export class EthereumTransactionTesterCli {
   constructor(config: CliConfig) {
     this.config = config;
 
-    const logger = new ConsoleLogger(
-      config.quiet
-        ? LogLevel.Error
-        : config.verbose
-          ? LogLevel.Debug
-          : LogLevel.Info,
-    );
-
     const randomPort = Math.floor(Math.random() * 10000) + 10000;
+    const randomVncPort = Math.floor(Math.random() * 10000) + 20000;
 
     // Create DI container configuration
     const diConfig: ClearSigningTesterConfig = {
       speculos: {
         url: config.speculosUrl || `http://localhost`,
         port: config.speculosPort || randomPort,
+        vncPort: config.speculosVncPort || randomVncPort,
         dockerImageTag: config.dockerImageTag || "latest",
         device: config.device,
         os: config.osVersion,
         version: config.appEthVersion,
         plugin: config.plugin,
         pluginVersion: config.pluginVersion,
+        screenshotPath: config.screenshotFolderPath,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -78,12 +89,24 @@ export class EthereumTransactionTesterCli {
       apps: {
         path: process.env["COIN_APPS_PATH"] || "",
       },
+      onlySpeculos: config.onlySpeculos,
     };
 
     // Create DI container and resolve tester
     this.container = makeContainer({
       config: diConfig,
-      loggers: [logger],
+      logger: {
+        cli: {
+          level: config.logLevel,
+        },
+        file: config.logFile
+          ? {
+              // default to cli log level if file log level is not specified,
+              level: config.fileLogLevel || config.logLevel,
+              filePath: config.logFile,
+            }
+          : undefined,
+      },
     });
 
     this.controller = this.container.get<ServiceController>(
@@ -144,6 +167,17 @@ export class EthereumTransactionTesterCli {
         },
       )
       .option(
+        "--speculos-vnc-port <port>",
+        "Speculos VNC port (random port if not provided)",
+        (value: string) => {
+          const port = parseInt(value);
+          if (isNaN(port) || port < 1 || port > 65535) {
+            throw new Error("Invalid port number");
+          }
+          return port;
+        },
+      )
+      .option(
         "--device <device>",
         "Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)",
         (value: string) => {
@@ -187,8 +221,36 @@ export class EthereumTransactionTesterCli {
         "Docker image tag for Speculos (default: latest)",
         "latest",
       )
-      .option("--verbose, -v", "Enable verbose output", false)
-      .option("--quiet, -q", "Show only result tables (quiet mode)", false);
+      .option(
+        "--screenshot-folder-path <path>",
+        "Save screenshots to a folder during transaction signing",
+      )
+      .option(
+        "--log-level <level>",
+        `Console log level: ${CLI_LOG_LEVELS.join(", ")} (default: info)`,
+        (value: string) => {
+          if (!CLI_LOG_LEVELS.includes(value as CliLogLevel)) {
+            throw new Error(
+              `Invalid log level '${value}'. Must be one of: ${CLI_LOG_LEVELS.join(", ")}`,
+            );
+          }
+          return value as CliLogLevel;
+        },
+        "info" as CliLogLevel,
+      )
+      .option("--log-file <path>", "Log output to a file")
+      .option(
+        "--file-log-level <level>",
+        `File log level: ${CLI_LOG_LEVELS.join(", ")} (requires --log-file)`,
+        (value: string) => {
+          if (!CLI_LOG_LEVELS.includes(value as CliLogLevel)) {
+            throw new Error(
+              `Invalid log level '${value}'. Must be one of: ${CLI_LOG_LEVELS.join(", ")}`,
+            );
+          }
+          return value as CliLogLevel;
+        },
+      );
 
     // Set up signal handlers that work with the CLI instance
     const handleShutdown = async (signal: string) => {
@@ -197,11 +259,13 @@ export class EthereumTransactionTesterCli {
       process.exit(0);
     };
 
-    process.on("SIGINT", () => handleShutdown("SIGINT"));
-    process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+    process.once("SIGINT", () => handleShutdown("SIGINT"));
+    process.once("SIGTERM", () => handleShutdown("SIGTERM"));
 
     program.hook("preAction", async (_, command) => {
       const config = command.parent!.opts() as CliConfig;
+      // Set onlySpeculos flag when running start-speculos command
+      config.onlySpeculos = command.name() === "start-speculos";
       cli = new EthereumTransactionTesterCli(config);
       await cli.initialize();
     });
@@ -278,6 +342,16 @@ export class EthereumTransactionTesterCli {
       )
       .action(async (file, options) => {
         exitCode = await cli!.handleContractFile(file, options.skipCal);
+      });
+
+    // Start Speculos command (no signing tests)
+    program
+      .command("start-speculos")
+      .description(
+        "Start Speculos emulator without running any signing tests. Press Ctrl+C to stop.",
+      )
+      .action(async () => {
+        await cli!.handleStartSpeculos();
       });
 
     return program;
@@ -417,6 +491,18 @@ export class EthereumTransactionTesterCli {
     console.table(result.summaryTable);
 
     return result.exitCode;
+  }
+
+  /**
+   * Handle start-speculos command
+   * Starts Speculos and keeps it running until interrupted
+   */
+  async handleStartSpeculos(): Promise<void> {
+    console.log("\nSpeculos is running.");
+    console.log("Press Ctrl+C to stop.\n");
+
+    // Wait indefinitely until interrupted
+    await new Promise<void>(() => {});
   }
 }
 
