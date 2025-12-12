@@ -95,8 +95,13 @@ export class SolanaLifiContextLoader
   private pluckTransactionData(
     tokenData: GetTransactionDescriptorsResponse,
   ): SolanaTransactionDescriptorList {
-    return {
-      ...tokenData.descriptors,
-    };
+    const output: SolanaTransactionDescriptorList = {};
+
+    for (const item of tokenData.descriptors ?? []) {
+      //output[`${item.program_id}:${item.discriminator_hex ?? "0"}`] =
+      output[item.program_id] = item.descriptor;
+    }
+
+    return output;
   }
 }

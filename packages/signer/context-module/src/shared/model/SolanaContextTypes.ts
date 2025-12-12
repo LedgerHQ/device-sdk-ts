@@ -16,6 +16,23 @@ export type SolanaTransactionDescriptor = {
   };
 };
 
+export type SolanaLifiDescriptorEntry = {
+  program_id: string;
+  discriminator_hex?: string;
+  descriptor: SolanaTransactionDescriptor;
+};
+
+export type GetTransactionDescriptorsResponse = {
+  id: string;
+  chain_id: number;
+  instructions: Array<{
+    program_id: string;
+    discriminator?: number;
+    discriminator_hex?: string;
+  }>;
+  descriptors: SolanaLifiDescriptorEntry[];
+};
+
 export type SolanaTransactionDescriptorList = Record<
   string,
   SolanaTransactionDescriptor

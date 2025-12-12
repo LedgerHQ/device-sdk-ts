@@ -177,8 +177,7 @@ export class ProvideSolanaTransactionContextTask {
         const descriptor = programIdStr
           ? lifiDescriptors[programIdStr]
           : undefined;
-
-        const sigHex = descriptor && descriptor.signatures[SWAP_MODE];
+        const sigHex = descriptor?.signatures?.[SWAP_MODE];
 
         if (descriptor && sigHex) {
           await this.api.sendCommand(
