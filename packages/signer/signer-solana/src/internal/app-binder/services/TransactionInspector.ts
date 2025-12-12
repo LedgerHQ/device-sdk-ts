@@ -12,6 +12,7 @@ import { TransactionParser } from "@internal/app-binder/services/utils/Transacti
 export enum SolanaTransactionTypes {
   STANDARD = "Standard",
   SPL = "SPL",
+  SWAP = "Swap",
 }
 
 export type NormalizedCompiledIx = {
@@ -112,7 +113,12 @@ export class TransactionInspector {
           mintAddress: string;
         }
       | undefined,
+    templateId?: string | undefined,
   ): Promise<TxInspectorResult> {
+    if (templateId) {
+      return { transactionType: SolanaTransactionTypes.SWAP, data: {} };
+    }
+
     try {
       const { message } = await this.parser.parse(rawTransactionBytes);
       return classify(message, tokenAddress, createATA);

@@ -6,7 +6,7 @@ export enum SolanaContextTypes {
   ERROR = "error",
 }
 
-export type SolanaTransactionDescriptor = {
+export type SolanaTransactionDescriptorRaw = {
   data: string;
   descriptorType: string;
   descriptorVersion: string;
@@ -16,10 +16,44 @@ export type SolanaTransactionDescriptor = {
   };
 };
 
+export type SolanaTransactionDescriptor = {
+  data: string;
+  descriptorType: string;
+  descriptorVersion: string;
+  signature: string;
+};
+
+export type SolanaLifiDescriptorEntry = {
+  program_id: string;
+  discriminator_hex?: string;
+  descriptor: SolanaTransactionDescriptorRaw;
+};
+
+export type GetTransactionDescriptorsResponse = {
+  id: string;
+  chain_id: number;
+  instructions: Array<{
+    program_id: string;
+    discriminator?: number;
+    discriminator_hex?: string;
+  }>;
+  descriptors: SolanaLifiDescriptorEntry[];
+};
+
 export type SolanaTransactionDescriptorList = Record<
   string,
   SolanaTransactionDescriptor
 >;
+
+export type SolanaLifiInstructionMeta = {
+  program_id: string;
+  discriminator_hex?: string;
+};
+
+export type SolanaLifiPayload = {
+  descriptors: SolanaTransactionDescriptorList;
+  instructions: SolanaLifiInstructionMeta[];
+};
 
 export type SolanaTokenData = {
   solanaTokenDescriptor: {
@@ -40,7 +74,8 @@ type SolanaContextSuccessPayloads = {
     certificate?: PkiCertificate;
   };
   [SolanaContextTypes.SOLANA_LIFI]: {
-    payload: SolanaTransactionDescriptorList;
+    payload: SolanaLifiPayload;
+    certificate?: PkiCertificate;
   };
 };
 
@@ -71,5 +106,4 @@ export type SolanaLifiContextResult =
   | SolanaLifiContextSuccess
   | SolanaContextError;
 
-// TODO LIFI
-export type LoaderResult = SolanaTokenContextResult; //| SolanaLifiContextResult;
+export type LoaderResult = SolanaTokenContextResult | SolanaLifiContextResult;

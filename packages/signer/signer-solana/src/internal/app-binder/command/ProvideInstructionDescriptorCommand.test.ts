@@ -3,26 +3,28 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { describe, expect, it } from "vitest";
 
-import { ProvideTLVTransactionInstructionDescriptorCommand } from "./ProvideTLVTransactionInstructionDescriptorCommand";
-
-const CLA = 0xe0;
-const INS = 0x22;
-const P1 = 0x00;
-const P2 = 0x00;
-const SIGNATURE_TAG = 0x08;
+import {
+  CLA,
+  INS,
+  P1,
+  P2,
+  ProvideInstructionDescriptorCommand,
+  SIGNATURE_TAG,
+} from "./ProvideInstructionDescriptorCommand";
 
 const DATA_HEX = "f0cacc1a";
 const DATA_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 const SIG_70_HEX = "01".repeat(70);
 const SIG_70_LEN = 70;
 
-const LC_DESCRIPTOR = DATA_BYTES.length + 1 + 1 + SIG_70_LEN; // 4 + 1 + 1 + 70 = 76 (0x4c)
+const LC_DESCRIPTOR = DATA_BYTES.length + 1 + 1 + SIG_70_LEN;
 
-describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
+describe("ProvideInstructionDescriptorCommand", () => {
   describe("getApdu", () => {
-    it("builds the correct APDU with data and signature", () => {
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+    it("builds the correct APDU with INS=0x16, P1=0x00, P2=0x00", () => {
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: DATA_HEX,
         signatureHex: SIG_70_HEX,
       });
@@ -41,9 +43,20 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
       expect(apdu).toStrictEqual(EXPECTED);
     });
 
+    it("always uses signature tag 0x15", () => {
+      const cmd = new ProvideInstructionDescriptorCommand({
+        dataHex: DATA_HEX,
+        signatureHex: SIG_70_HEX,
+      });
+
+      const apdu = cmd.getApdu().getRawApdu();
+      const sigTagOffset = 5 + DATA_BYTES.length;
+      expect(apdu[sigTagOffset]).toBe(SIGNATURE_TAG);
+    });
+
     it("throws if signature is too short (<70 bytes)", () => {
       const tooShort = "ab".repeat(68);
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: DATA_HEX,
         signatureHex: tooShort,
       });
@@ -53,7 +66,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
 
     it("throws if signature is too long (>72 bytes)", () => {
       const tooLong = "ab".repeat(73);
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: DATA_HEX,
         signatureHex: tooLong,
       });
@@ -63,7 +76,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
 
     it("throws if signature hex has odd length", () => {
       const oddHex = "a".repeat(141);
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: DATA_HEX,
         signatureHex: oddHex,
       });
@@ -73,7 +86,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
 
     it("throws if the total short-APDU payload would exceed 255 bytes", () => {
       const BIG_DATA_HEX = "f0".repeat(200);
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: BIG_DATA_HEX,
         signatureHex: SIG_70_HEX,
       });
@@ -84,7 +97,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
 
   describe("parseResponse", () => {
     it("returns success when status is 0x9000 and no data", () => {
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: DATA_HEX,
         signatureHex: SIG_70_HEX,
       });
@@ -98,7 +111,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
     });
 
     it("returns an app error when status code is not 0x9000", () => {
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: DATA_HEX,
         signatureHex: SIG_70_HEX,
       });
@@ -111,7 +124,7 @@ describe("ProvideTLVTransactionInstructionDescriptorCommand", () => {
     });
 
     it("returns InvalidStatusWordError if response contains unexpected data", () => {
-      const cmd = new ProvideTLVTransactionInstructionDescriptorCommand({
+      const cmd = new ProvideInstructionDescriptorCommand({
         dataHex: DATA_HEX,
         signatureHex: SIG_70_HEX,
       });

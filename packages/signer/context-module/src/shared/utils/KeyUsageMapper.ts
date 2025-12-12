@@ -14,6 +14,7 @@ export class KeyUsageMapper {
     [KeyUsage.TxSimulationSigner, 10],
     [KeyUsage.Calldata, 11],
     [KeyUsage.Network, 12],
+    [KeyUsage.SwapTemplate, 13],
     [KeyUsage.LESMultisig, 14],
     [KeyUsage.GatedSigning, 15],
   ]);
