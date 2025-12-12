@@ -150,7 +150,9 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({
+                //@ts-expect-error TO BE CHECKED WITH BUTTON
                 intermediateValue: ({ event }) => ({
+                  //@ts-expect-error TO BE CHECKED WITH BUTTON
                   step: AuthenticateDAStep.OpenApp,
                   ...event.snapshot.context.intermediateValue,
                 }),

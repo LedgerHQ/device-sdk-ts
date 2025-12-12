@@ -43,6 +43,7 @@ import {
   type GetDeviceMetadataDAInput,
   type GetDeviceMetadataDAIntermediateValue,
   type GetDeviceMetadataDAOutput,
+  getDeviceMetadataDAStateStep,
 } from "./types";
 
 type GetDeviceMetadataMachineInternalState = {
@@ -186,6 +187,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
           },
           _internalState: {
             error: null,
@@ -260,6 +262,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
           }),
           invoke: {
@@ -368,6 +371,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
           }),
           invoke: {
@@ -464,6 +468,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
             },
           }),
           invoke: {
