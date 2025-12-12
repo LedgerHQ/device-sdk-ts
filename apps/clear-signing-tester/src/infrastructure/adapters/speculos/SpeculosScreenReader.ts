@@ -50,10 +50,8 @@ export class SpeculosScreenReader implements ScreenReader {
 
       this.logger.debug(`Read ${screenEvents.length} raw screen events`);
       return screenEvents;
-    } catch (error) {
-      this.logger.error("Failed to read raw screen events from Speculos", {
-        data: { error },
-      });
+    } catch (_) {
+      this.logger.error("Failed to read raw screen events from Speculos");
       return [];
     }
   }
