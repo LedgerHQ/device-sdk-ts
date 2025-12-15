@@ -1,12 +1,7 @@
-import {
-  type ContextModuleCalConfig,
-  type ContextModuleMetadataServiceConfig,
-  type ContextModuleWeb3ChecksConfig,
-} from "@ledgerhq/context-module";
 import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import { initialState } from "./schema";
+import { type CalBranch, type CalMode, initialState } from "./schema";
 
 export const settingsSlice = createSlice({
   name: "settings",
@@ -16,15 +11,9 @@ export const settingsSlice = createSlice({
     // Transport settings
     setTransport: (
       state,
-      action: PayloadAction<{
-        transport: TransportIdentifier;
-        speculosUrl?: string;
-        speculosVncUrl?: string;
-      }>,
+      action: PayloadAction<{ transport: TransportIdentifier }>,
     ) => {
       state.transport = action.payload.transport;
-      state.speculosUrl = action.payload.speculosUrl;
-      state.speculosVncUrl = action.payload.speculosVncUrl;
     },
     setMockServerUrl: (
       state,
@@ -32,32 +21,58 @@ export const settingsSlice = createSlice({
     ) => {
       state.mockServerUrl = action.payload.mockServerUrl;
     },
+    setSpeculosUrl: (state, action: PayloadAction<{ speculosUrl: string }>) => {
+      state.speculosUrl = action.payload.speculosUrl;
+    },
+    setSpeculosVncUrl: (
+      state,
+      action: PayloadAction<{ speculosVncUrl: string }>,
+    ) => {
+      state.speculosVncUrl = action.payload.speculosVncUrl;
+    },
 
-    // Signer/context module settings
-    setCalConfig: (
-      state,
-      action: PayloadAction<{ calConfig: ContextModuleCalConfig }>,
-    ) => {
-      state.calConfig = action.payload.calConfig;
+    // DMK settings
+    setAppProvider: (state, action: PayloadAction<{ appProvider: number }>) => {
+      state.appProvider = action.payload.appProvider;
     },
-    setWeb3ChecksConfig: (
-      state,
-      action: PayloadAction<{
-        web3ChecksConfig: ContextModuleWeb3ChecksConfig;
-      }>,
-    ) => {
-      state.web3ChecksConfig = action.payload.web3ChecksConfig;
+
+    // CAL config - granular actions that update the object in place
+    setCalUrl: (state, action: PayloadAction<{ calUrl: string }>) => {
+      state.calConfig = { ...state.calConfig, url: action.payload.calUrl };
     },
-    setMetadataServiceDomain: (
-      state,
-      action: PayloadAction<{
-        metadataServiceDomain: ContextModuleMetadataServiceConfig;
-      }>,
-    ) => {
-      state.metadataServiceDomain = action.payload.metadataServiceDomain;
+    setCalMode: (state, action: PayloadAction<{ calMode: CalMode }>) => {
+      state.calConfig = { ...state.calConfig, mode: action.payload.calMode };
+    },
+    setCalBranch: (state, action: PayloadAction<{ calBranch: CalBranch }>) => {
+      state.calConfig = {
+        ...state.calConfig,
+        branch: action.payload.calBranch,
+      };
     },
     setOriginToken: (state, action: PayloadAction<{ originToken: string }>) => {
       state.originToken = action.payload.originToken;
+    },
+
+    // Web3Checks config - granular action
+    setWeb3ChecksUrl: (
+      state,
+      action: PayloadAction<{ web3ChecksUrl: string }>,
+    ) => {
+      state.web3ChecksConfig = {
+        ...state.web3ChecksConfig,
+        url: action.payload.web3ChecksUrl,
+      };
+    },
+
+    // Metadata service config - granular action
+    setMetadataServiceUrl: (
+      state,
+      action: PayloadAction<{ metadataServiceUrl: string }>,
+    ) => {
+      state.metadataServiceConfig = {
+        ...state.metadataServiceConfig,
+        url: action.payload.metadataServiceUrl,
+      };
     },
   },
 });
@@ -65,10 +80,15 @@ export const settingsSlice = createSlice({
 export const {
   setTransport,
   setMockServerUrl,
-  setCalConfig,
-  setWeb3ChecksConfig,
-  setMetadataServiceDomain,
+  setSpeculosUrl,
+  setSpeculosVncUrl,
+  setAppProvider,
+  setCalUrl,
+  setCalMode,
+  setCalBranch,
   setOriginToken,
+  setWeb3ChecksUrl,
+  setMetadataServiceUrl,
 } = settingsSlice.actions;
 
 export const settingsReducer = settingsSlice.reducer;

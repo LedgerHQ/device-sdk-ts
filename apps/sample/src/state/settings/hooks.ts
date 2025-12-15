@@ -1,64 +1,54 @@
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  type ContextModuleCalConfig,
-  type ContextModuleMetadataServiceConfig,
-  type ContextModuleWeb3ChecksConfig,
-} from "@ledgerhq/context-module";
 import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
 
+import { type CalBranch, type CalMode } from "./schema";
 import {
+  selectAppProvider,
+  selectCalBranch,
   selectCalConfig,
-  selectMetadataServiceDomain,
+  selectCalMode,
+  selectCalUrl,
+  selectMetadataServiceConfig,
+  selectMetadataServiceUrl,
   selectMockServerUrl,
   selectOriginToken,
   selectSpeculosUrl,
   selectSpeculosVncUrl,
   selectTransport,
   selectWeb3ChecksConfig,
+  selectWeb3ChecksUrl,
 } from "./selectors";
 import {
-  setCalConfig,
-  setMetadataServiceDomain,
+  setAppProvider,
+  setCalBranch,
+  setCalMode,
+  setCalUrl,
+  setMetadataServiceUrl,
   setMockServerUrl,
   setOriginToken,
+  setSpeculosUrl,
+  setSpeculosVncUrl,
   setTransport,
-  setWeb3ChecksConfig,
+  setWeb3ChecksUrl,
 } from "./slice";
 
-// Transport settings hooks
 export function useTransport() {
-  const transport = useSelector(selectTransport);
-  return transport;
-}
-
-export function useMockServerUrl() {
-  const mockServerUrl = useSelector(selectMockServerUrl);
-  return mockServerUrl;
-}
-
-export function useSpeculosUrl() {
-  const speculosUrl = useSelector(selectSpeculosUrl);
-  return speculosUrl;
-}
-
-export function useSpeculosVncUrl() {
-  const speculosVncUrl = useSelector(selectSpeculosVncUrl);
-  return speculosVncUrl;
+  return useSelector(selectTransport);
 }
 
 export function useSetTransport() {
   const dispatch = useDispatch();
   return useCallback(
-    (
-      transport: TransportIdentifier,
-      speculosUrl?: string,
-      speculosVncUrl?: string,
-    ) => {
-      dispatch(setTransport({ transport, speculosUrl, speculosVncUrl }));
+    (transport: TransportIdentifier) => {
+      dispatch(setTransport({ transport }));
     },
     [dispatch],
   );
+}
+
+export function useMockServerUrl() {
+  return useSelector(selectMockServerUrl);
 }
 
 export function useSetMockServerUrl() {
@@ -71,58 +61,141 @@ export function useSetMockServerUrl() {
   );
 }
 
-// Signer/context module settings hooks
+export function useSpeculosUrl() {
+  return useSelector(selectSpeculosUrl);
+}
+
+export function useSetSpeculosUrl() {
+  const dispatch = useDispatch();
+  return useCallback(
+    (speculosUrl: string) => {
+      dispatch(setSpeculosUrl({ speculosUrl }));
+    },
+    [dispatch],
+  );
+}
+
+export function useSpeculosVncUrl() {
+  return useSelector(selectSpeculosVncUrl);
+}
+
+export function useSetSpeculosVncUrl() {
+  const dispatch = useDispatch();
+  return useCallback(
+    (speculosVncUrl: string) => {
+      dispatch(setSpeculosVncUrl({ speculosVncUrl }));
+    },
+    [dispatch],
+  );
+}
+
+// DMK settings hooks
+export function useAppProvider() {
+  return useSelector(selectAppProvider);
+}
+
+export function useSetAppProvider() {
+  const dispatch = useDispatch();
+  return useCallback(
+    (appProvider: number) => {
+      dispatch(setAppProvider({ appProvider }));
+    },
+    [dispatch],
+  );
+}
+
 export function useCalConfig() {
-  const calConfig = useSelector(selectCalConfig);
-  const dispatch = useDispatch();
-  const setCalConfigFn = useCallback(
-    (newCalConfig: ContextModuleCalConfig) => {
-      dispatch(setCalConfig({ calConfig: newCalConfig }));
-    },
-    [dispatch],
-  );
-  return { calConfig, setCalConfig: setCalConfigFn };
+  return useSelector(selectCalConfig);
 }
 
-export function useWeb3ChecksConfig() {
-  const web3ChecksConfig = useSelector(selectWeb3ChecksConfig);
-  const dispatch = useDispatch();
-  const setWeb3ChecksConfigFn = useCallback(
-    (newWeb3ChecksConfig: ContextModuleWeb3ChecksConfig) => {
-      dispatch(setWeb3ChecksConfig({ web3ChecksConfig: newWeb3ChecksConfig }));
-    },
-    [dispatch],
-  );
-  return { web3ChecksConfig, setWeb3ChecksConfig: setWeb3ChecksConfigFn };
+export function useCalUrl() {
+  return useSelector(selectCalUrl);
 }
 
-export function useMetadataServiceConfig() {
-  const metadataServiceDomain = useSelector(selectMetadataServiceDomain);
+export function useSetCalUrl() {
   const dispatch = useDispatch();
-  const setMetadataServiceConfigFn = useCallback(
-    (newMetadataServiceDomain: ContextModuleMetadataServiceConfig) => {
-      dispatch(
-        setMetadataServiceDomain({
-          metadataServiceDomain: newMetadataServiceDomain,
-        }),
-      );
+  return useCallback(
+    (calUrl: string) => {
+      dispatch(setCalUrl({ calUrl }));
     },
     [dispatch],
   );
-  return {
-    metadataServiceDomain,
-    setMetadataServiceConfig: setMetadataServiceConfigFn,
-  };
+}
+
+export function useCalMode() {
+  return useSelector(selectCalMode);
+}
+
+export function useSetCalMode() {
+  const dispatch = useDispatch();
+  return useCallback(
+    (calMode: CalMode) => {
+      dispatch(setCalMode({ calMode }));
+    },
+    [dispatch],
+  );
+}
+
+export function useCalBranch() {
+  return useSelector(selectCalBranch);
+}
+
+export function useSetCalBranch() {
+  const dispatch = useDispatch();
+  return useCallback(
+    (calBranch: CalBranch) => {
+      dispatch(setCalBranch({ calBranch }));
+    },
+    [dispatch],
+  );
 }
 
 export function useOriginToken() {
-  const originToken = useSelector(selectOriginToken);
+  return useSelector(selectOriginToken);
+}
+
+export function useSetOriginToken() {
   const dispatch = useDispatch();
-  const setOriginTokenFn = useCallback(
-    (newOriginToken: string) => {
-      dispatch(setOriginToken({ originToken: newOriginToken }));
+  return useCallback(
+    (originToken: string) => {
+      dispatch(setOriginToken({ originToken }));
     },
     [dispatch],
   );
-  return { originToken, setOriginToken: setOriginTokenFn };
+}
+
+export function useWeb3ChecksConfig() {
+  return useSelector(selectWeb3ChecksConfig);
+}
+
+export function useWeb3ChecksUrl() {
+  return useSelector(selectWeb3ChecksUrl);
+}
+
+export function useSetWeb3ChecksUrl() {
+  const dispatch = useDispatch();
+  return useCallback(
+    (web3ChecksUrl: string) => {
+      dispatch(setWeb3ChecksUrl({ web3ChecksUrl }));
+    },
+    [dispatch],
+  );
+}
+
+export function useMetadataServiceConfig() {
+  return useSelector(selectMetadataServiceConfig);
+}
+
+export function useMetadataServiceUrl() {
+  return useSelector(selectMetadataServiceUrl);
+}
+
+export function useSetMetadataServiceUrl() {
+  const dispatch = useDispatch();
+  return useCallback(
+    (metadataServiceUrl: string) => {
+      dispatch(setMetadataServiceUrl({ metadataServiceUrl }));
+    },
+    [dispatch],
+  );
 }

@@ -39,10 +39,10 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   const sessionId = useSelectedSessionId();
 
   const [signer, setSigner] = useState<SignerEth | null>(null);
-  const { calConfig } = useCalConfig();
-  const { web3ChecksConfig } = useWeb3ChecksConfig();
-  const { metadataServiceDomain } = useMetadataServiceConfig();
-  const { originToken } = useOriginToken();
+  const calConfig = useCalConfig();
+  const web3ChecksConfig = useWeb3ChecksConfig();
+  const metadataServiceConfig = useMetadataServiceConfig();
+  const originToken = useOriginToken();
 
   useEffect(() => {
     if (!sessionId || !dmk) {
@@ -55,7 +55,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     })
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
-      .setMetadataServiceConfig(metadataServiceDomain)
+      .setMetadataServiceConfig(metadataServiceConfig)
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,
@@ -70,7 +70,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     dmk,
     sessionId,
     web3ChecksConfig,
-    metadataServiceDomain,
+    metadataServiceConfig,
     originToken,
   ]);
 

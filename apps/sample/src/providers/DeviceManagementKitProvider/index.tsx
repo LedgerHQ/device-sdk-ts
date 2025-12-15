@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
 import {
   ConsoleLogger,
@@ -20,6 +20,7 @@ import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
 import {
+  useAppProvider,
   useMockServerUrl,
   useSpeculosUrl,
   useTransport,
@@ -65,6 +66,7 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const transport = useTransport();
   const mockServerUrl = useMockServerUrl();
   const speculosUrl = useSpeculosUrl();
+  const appProvider = useAppProvider();
 
   const mockServerEnabled = transport === mockserverIdentifier;
   const speculosEnabled = transport === speculosIdentifier;
@@ -99,6 +101,16 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
       };
     });
   }
+
+  // Sync appProvider to DMK when it changes
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    state.dmk.setProvider(appProvider);
+  }, [appProvider, state.dmk]);
 
   useEffect(() => {
     return () => {
