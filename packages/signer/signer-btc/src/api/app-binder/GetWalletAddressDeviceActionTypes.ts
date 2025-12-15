@@ -17,6 +17,15 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 export type GetWalletAddressDAOutput = WalletAddress;
 
+export const getWalletAddressDAStateSteps = Object.freeze({
+  OPEN_APP: "signer.btc.steps.openApp",
+  PREPARE_WALLET_POLICY: "signer.btc.steps.prepareWalletPolicy",
+  GET_WALLET_ADDRESS: "signer.btc.steps.getWalletAddress",
+} as const);
+
+export type GetWalletAddressDAStateStep =
+  (typeof getWalletAddressDAStateSteps)[keyof typeof getWalletAddressDAStateSteps];
+
 export type GetWalletAddressDAInput = {
   readonly skipOpenApp: boolean;
   readonly checkOnDevice: boolean;
@@ -38,6 +47,7 @@ type GetWalletAddressDARequiredInteraction =
 
 export type GetWalletAddressDAIntermediateValue = {
   requiredUserInteraction: GetWalletAddressDARequiredInteraction;
+  step: GetWalletAddressDAStateStep;
 };
 
 export type GetWalletAddressDAState = DeviceActionState<
