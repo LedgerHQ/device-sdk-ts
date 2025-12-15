@@ -14,7 +14,6 @@ import { Flex, StyleProvider } from "@ledgerhq/react-ui";
 import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
-import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
@@ -46,6 +45,7 @@ const PageContainer = styled(Flex)`
   background-color: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.background.main};
   flex: 1;
+  padding-top: 50px;
 `;
 
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
@@ -57,22 +57,19 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <LedgerKeyringProtocolProvider>
               <SignerEthProvider>
                 <CalInterceptorProvider>
-                  <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-                    <GlobalStyle />
-                    <head>
-                      <link rel="shortcut icon" href="../favicon.png" />
-                    </head>
-                    <body>
-                      <Root>
-                        <Sidebar />
-                        <PageContainer>
-                          <Header />
-                          {children}
-                        </PageContainer>
-                        <FloatingIcon />
-                      </Root>
-                    </body>
-                  </StyleProvider>
+                <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+                  <GlobalStyle />
+                  <head>
+                    <link rel="shortcut icon" href="../favicon.png" />
+                  </head>
+                  <body>
+                    <Root>
+                      <Sidebar />
+                      <PageContainer>{children}</PageContainer>
+                      <FloatingIcon />
+                    </Root>
+                  </body>
+                </StyleProvider>
                 </CalInterceptorProvider>
               </SignerEthProvider>
             </LedgerKeyringProtocolProvider>

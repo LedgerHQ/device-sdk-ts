@@ -7,7 +7,6 @@ import {
   Box,
   Button,
   Divider,
-  DropdownGeneric,
   Flex,
   Icons,
   Input,
@@ -23,18 +22,6 @@ const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c90};
   justify-content: flex-end;
   align-items: center;
-`;
-
-const Actions = styled(Flex)`
-  justify-content: flex-end;
-  align-items: center;
-  flex: 1 0 0;
-`;
-
-const IconBox = styled(Flex).attrs({ p: 3 })`
-  cursor: pointer;
-  align-items: center;
-  opacity: 0.7;
 `;
 
 const UrlInput = styled(Input)`
@@ -117,72 +104,58 @@ export const Header = () => {
 
   return (
     <Root>
-      <Actions>
-        <IconBox>
-          <Icons.Question size={"M"} />
-        </IconBox>
-        <IconBox>
-          <Icons.Settings size={"M"} />
-        </IconBox>
-      </Actions>
-      <div data-testid="dropdown_mock-server-switch">
-        <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-          <Flex p={5} flexDirection="column" rowGap={5}>
-            <Text>Mock server:</Text>
-            <div data-testid="switch_mock-server">
-              <Switch
-                onChange={onToggleMockServer}
-                checked={mockServerEnabled}
-                name="switch-mock-server"
-                label="Enable Mock server"
-              />
-            </div>
-            <UrlInput
-              value={mockServerStateUrl}
-              onChange={(url: string) => setMockServerStateUrl(url)}
-              renderRight={() => (
-                <Flex alignItems="center" justifyContent="stretch">
-                  <Button iconButton onClick={validateServerUrl}>
-                    <Icons.CheckmarkCircleFill size="S" />
-                  </Button>
-                </Flex>
-              )}
+      <Flex p={5} flexDirection="column" rowGap={5}>
+        <Text>Mock server:</Text>
+        <div data-testid="switch_mock-server">
+          <Switch
+            onChange={onToggleMockServer}
+            checked={mockServerEnabled}
+            name="switch-mock-server"
+            label="Enable Mock server"
+          />
+        </div>
+        <UrlInput
+          value={mockServerStateUrl}
+          onChange={(url: string) => setMockServerStateUrl(url)}
+          renderRight={() => (
+            <Flex alignItems="center" justifyContent="stretch">
+              <Button onClick={validateServerUrl}>Apply</Button>
+            </Flex>
+          )}
+        />
+        <Divider />
+        <div data-testid="switch_speculos">
+          <Box py={4}>
+            <Switch
+              onChange={onToggleSpeculos}
+              checked={speculosEnabled}
+              name="switch-speculos"
+              label="Enable Speculos"
             />
-            <Divider />
-            <div data-testid="switch_speculos">
-              <Box py={4}>
-                <Switch
-                  onChange={onToggleSpeculos}
-                  checked={speculosEnabled}
-                  name="switch-speculos"
-                  label="Enable Speculos"
-                />
-              </Box>
-            </div>
-            <Text>Speculos url:</Text>
-            <Input
-              value={speculosStateUrl}
-              onChange={(url: string) => setSpeculosStateUrl(url)}
-            />
-            <Text style={{ marginTop: 8 }}>Speculos vnc url:</Text>
-            <Input
-              value={speculosStateVncUrl}
-              onChange={(url: string) => setSpeculosStateVncUrl(url)}
-            />
-            <Divider />
-            <Text>
-              Flipper ({flipperClientConnected ? "Connected" : "Disconnected"}):
-            </Text>
-            <Button
-              onClick={onClickConnectFlipperClient}
-              disabled={flipperClientConnected}
-              variant="shade"
-            >
-              Connect Flipper client
-            </Button>
-          </Flex>
-        </DropdownGeneric>
-      </div>
+          </Box>
+        </div>
+        <Text>Speculos url:</Text>
+        <Input
+          value={speculosStateUrl}
+          onChange={(url: string) => setSpeculosStateUrl(url)}
+        />
+        <Text style={{ marginTop: 8 }}>Speculos vnc url:</Text>
+        <Input
+          value={speculosStateVncUrl}
+          onChange={(url: string) => setSpeculosStateVncUrl(url)}
+        />
+        <Divider />
+        <Text>
+          Flipper ({flipperClientConnected ? "Connected" : "Disconnected"}):
+        </Text>
+        <Button
+          onClick={onClickConnectFlipperClient}
+          disabled={flipperClientConnected}
+          variant="shade"
+        >
+          Connect Flipper client
+        </Button>
+      </Flex>
     </Root>
   );
 };

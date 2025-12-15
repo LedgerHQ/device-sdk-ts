@@ -25,8 +25,13 @@ export const Menu: React.FC = () => {
   return (
     <>
       <MenuItem>
-        <Icons.PlusCircle />
-        <MenuTitle>App session</MenuTitle>
+        <Icons.WirelessCharging />
+        <MenuTitle
+          data-testid="CTA_route-to-/apdu"
+          onClick={() => router.push("/apdu")}
+        >
+          APDU
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
@@ -46,15 +51,7 @@ export const Menu: React.FC = () => {
           Device actions
         </MenuTitle>
       </MenuItem>
-      <MenuItem>
-        <Icons.WirelessCharging />
-        <MenuTitle
-          data-testid="CTA_route-to-/apdu"
-          onClick={() => router.push("/apdu")}
-        >
-          APDU
-        </MenuTitle>
-      </MenuItem>
+
       <MenuItem>
         <Icons.Signature />
         <MenuTitle
@@ -74,12 +71,23 @@ export const Menu: React.FC = () => {
         </MenuTitle>
       </MenuItem>
       <MenuItem>
-        <Icons.SettingsAlt2 />
-        <MenuTitle onClick={() => router.push("/cal")}>Crypto Assets</MenuTitle>
+        <Icons.ListEye />
+        <MenuTitle
+          data-testid="CTA_route-to-/clear-signing"
+          onClick={() => router.push("/clear-signing")}
+        >
+          Clear Signing (new)
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
-        <Icons.Download />
-        <MenuTitle>Install app</MenuTitle>
+        <Icons.Trash />
+        <MenuTitle onClick={() => router.push("/cal")}>
+          CAL (to remove)
+        </MenuTitle>
+      </MenuItem>
+      <MenuItem>
+        <Icons.SettingsAlt2 />
+        <MenuTitle onClick={() => router.push("/settings")}>Settings</MenuTitle>
       </MenuItem>
       {transport === mockserverIdentifier && (
         <MenuItem>
