@@ -3,7 +3,7 @@ import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
 import { type Subscription } from "rxjs";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useOrderedConnectedDevices } from "@/state/sessions/hooks";
 
 type AvailableDevice = DiscoveredDevice & { connected: boolean };
 
@@ -12,8 +12,7 @@ export function useAvailableDevices(): AvailableDevice[] {
   const [discoveredDevices, setDiscoveredDevices] = useState<
     DiscoveredDevice[]
   >([]);
-  const { state: deviceSessionsState } = useDeviceSessionsContext();
-
+  const orderedConnectedDevices = useOrderedConnectedDevices();
   const subscription = useRef<Subscription | null>(null);
   useEffect(() => {
     if (!subscription.current) {
@@ -36,11 +35,11 @@ export function useAvailableDevices(): AvailableDevice[] {
     () =>
       discoveredDevices.map((device) => ({
         ...device,
-        connected: Object.values(deviceSessionsState.deviceById).some(
-          (connectedDevice) => connectedDevice.id === device.id,
+        connected: orderedConnectedDevices.some(
+          (c) => c.connectedDevice.id === device.id,
         ),
       })),
-    [discoveredDevices, deviceSessionsState],
+    [discoveredDevices, orderedConnectedDevices],
   );
 
   return result;

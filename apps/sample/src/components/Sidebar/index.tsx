@@ -13,8 +13,12 @@ import {
   useDmk,
   useExportLogsCallback,
 } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useDmkConfigContext } from "@/providers/DmkConfig";
+import {
+  useOrderedConnectedDevices,
+  useSelectedSessionId,
+  useSelectSession,
+} from "@/state/sessions/hooks";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -52,10 +56,9 @@ export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const dmk = useDmk();
   const exportLogs = useExportLogsCallback();
-  const {
-    state: { deviceById, selectedId },
-    dispatch,
-  } = useDeviceSessionsContext();
+  const orderedConnectedDevices = useOrderedConnectedDevices();
+  const selectedSessionId = useSelectedSessionId();
+  const selectSession = useSelectSession();
   const {
     state: { transport },
   } = useDmkConfigContext();
@@ -74,12 +77,11 @@ export const Sidebar: React.FC = () => {
     async (sessionId: string) => {
       try {
         await dmk.disconnect({ sessionId });
-        dispatch({ type: "remove_session", payload: { sessionId } });
       } catch (e) {
         console.error(e);
       }
     },
-    [dispatch, dmk],
+    [dmk],
   );
 
   const onDeviceReconnect = useCallback(
@@ -110,26 +112,24 @@ export const Sidebar: React.FC = () => {
       </Link>
 
       <Subtitle variant={"tiny"}>
-        Device sessions ({Object.values(deviceById).length})
+        Device sessions ({orderedConnectedDevices.length})
       </Subtitle>
       <div data-testid="container_devices">
-        {Object.entries(deviceById).map(([sessionId, device]) => (
+        {orderedConnectedDevices.map(({ sessionId, connectedDevice }) => (
           <Device
             key={sessionId}
             sessionId={sessionId}
-            name={device.name}
-            model={device.modelId}
-            type={device.type}
-            onSelect={() =>
-              dispatch({ type: "select_session", payload: { sessionId } })
-            }
+            name={connectedDevice.name}
+            model={connectedDevice.modelId}
+            type={connectedDevice.type}
+            onSelect={() => selectSession(sessionId)}
             onDisconnect={() => onDeviceDisconnect(sessionId)}
             onReconnect={() => onDeviceReconnect(sessionId)}
           />
         ))}
       </div>
       <AvailableDevices />
-      <MenuContainer active={!!selectedId}>
+      <MenuContainer active={!!selectedSessionId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />
       </MenuContainer>

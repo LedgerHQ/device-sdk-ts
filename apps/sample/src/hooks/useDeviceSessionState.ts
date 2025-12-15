@@ -6,7 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useRemoveSession } from "@/state/sessions/hooks";
 
 import { useThrottle } from "./useThrottle";
 
@@ -14,7 +14,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const dmk = useDmk();
   const [deviceSessionState, setDeviceSessionState] =
     useState<DeviceSessionState>();
-  const { dispatch } = useDeviceSessionsContext();
+  const removeSession = useRemoveSession();
 
   useEffect(() => {
     if (sessionId) {
@@ -24,7 +24,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
         })
         .subscribe((state) => {
           if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
-            dispatch({ type: "remove_session", payload: { sessionId } });
+            removeSession(sessionId);
           } else {
             setDeviceSessionState(state);
           }
@@ -34,7 +34,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
         subscription.unsubscribe();
       };
     }
-  }, [sessionId, dmk, dispatch]);
+  }, [sessionId, dmk]);
 
   return useThrottle(deviceSessionState, 500);
 }

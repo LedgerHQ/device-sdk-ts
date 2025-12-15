@@ -15,7 +15,7 @@ import {
 import styled, { type DefaultTheme } from "styled-components";
 
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useSelectedSessionId } from "@/state/sessions/hooks";
 
 import { StatusText } from "./StatusText";
 
@@ -80,11 +80,9 @@ export const Device: React.FC<DeviceProps> = ({
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
-  const {
-    state: { selectedId },
-  } = useDeviceSessionsContext();
+  const selectedSessionId = useSelectedSessionId();
   const IconComponent = getIconComponent(model);
-  const isActive = selectedId === sessionId;
+  const isActive = selectedSessionId === sessionId;
   return (
     <Root active={isActive} onClick={isActive ? undefined : onSelect}>
       <IconContainer>

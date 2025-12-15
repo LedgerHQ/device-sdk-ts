@@ -19,7 +19,7 @@ import {
 } from "@ledgerhq/device-signer-kit-ethereum";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useSelectedSessionId } from "@/state/sessions/hooks";
 
 type SignerEthContextType = {
   signer: SignerEth | null;
@@ -61,9 +61,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const dmk = useDmk();
-  const {
-    state: { selectedId: sessionId },
-  } = useDeviceSessionsContext();
+  const sessionId = useSelectedSessionId();
 
   const [signer, setSigner] = useState<SignerEth | null>(null);
   const [calConfig, setCalConfig] = useState<ContextModuleCalConfig>(

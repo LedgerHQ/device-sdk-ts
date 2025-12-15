@@ -14,7 +14,7 @@ import {
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useSelectedSessionId } from "@/state/sessions/hooks";
 
 type LedgerKeyringProtocolContextType = {
   app: LedgerKeyringProtocol | null;
@@ -33,9 +33,7 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const dmk = useDmk();
-  const {
-    state: { selectedId: sessionId },
-  } = useDeviceSessionsContext();
+  const sessionId = useSelectedSessionId();
 
   const [app, setApp] = useState<LedgerKeyringProtocol | null>(null);
   useEffect(() => {

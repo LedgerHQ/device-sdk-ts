@@ -8,7 +8,6 @@ import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useDmkConfigContext } from "@/providers/DmkConfig";
 
 type ConnectDeviceActionsProps = {
@@ -23,7 +22,6 @@ export const ConnectDeviceActions = ({
   const {
     state: { transport },
   } = useDmkConfigContext();
-  const { dispatch: dispatchDeviceSession } = useDeviceSessionsContext();
   const dmk = useDmk();
 
   const onSelectDeviceClicked = useCallback(
@@ -37,13 +35,6 @@ export const ConnectDeviceActions = ({
               console.log(
                 `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
               );
-              dispatchDeviceSession({
-                type: "add_session",
-                payload: {
-                  sessionId,
-                  connectedDevice: dmk.getConnectedDevice({ sessionId }),
-                },
-              });
             })
             .catch((error) => {
               onError(error);
@@ -55,7 +46,7 @@ export const ConnectDeviceActions = ({
         },
       });
     },
-    [dispatchDeviceSession, onError, dmk],
+    [onError, dmk],
   );
 
   // This implementation gives the impression that working with the mock server

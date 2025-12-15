@@ -23,8 +23,8 @@ import { CommandForm } from "@/components//CommandsView/CommandForm";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
+import { useSelectedSessionId } from "@/state/sessions/hooks";
 import { base64FromBytes, bytesFromBase64, genIdentity } from "@/utils/crypto";
 import { parsePermissions } from "@/utils/lkrp-permissions";
 
@@ -36,9 +36,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
   const sessionIdRef = useRef<string>();
   const modelIdRef = useRef<DeviceModelId>();
   {
-    const {
-      state: { selectedId: sessionId },
-    } = useDeviceSessionsContext();
+    const sessionId = useSelectedSessionId();
     useEffect(() => {
       if (!sessionId) return;
 

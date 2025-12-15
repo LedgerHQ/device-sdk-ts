@@ -5,7 +5,7 @@ import styled, { type DefaultTheme } from "styled-components";
 
 import { useApduForm } from "@/hooks/useApduForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { useSelectedSessionId } from "@/state/sessions/hooks";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
@@ -70,9 +70,9 @@ export const ApduView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [apduResponse, setApduResponse] = useState<ApduResponse>();
   const dmk = useDmk();
-  const {
-    state: { selectedId: selectedSessionId },
-  } = useDeviceSessionsContext();
+
+  const selectedSessionId = useSelectedSessionId();
+
   const onSubmit = useCallback(
     async (values: typeof apduFormValues) => {
       setLoading(true);
