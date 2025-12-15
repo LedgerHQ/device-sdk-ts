@@ -11,12 +11,15 @@ import {
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import {
+  ApplicationChecker,
+  ApplicationCheckerSupportedAppNames,
+} from "@ledgerhq/signer-utils";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.TRUSTED_NAME,
@@ -219,7 +222,11 @@ export class BuildBaseContexts {
     deviceState: DeviceSessionState,
     appConfig: GetConfigCommandResponse,
   ): boolean {
-    return new ApplicationChecker(deviceState, appConfig)
+    return new ApplicationChecker(
+      deviceState,
+      appConfig,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionExclusive("1.14.0")
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();

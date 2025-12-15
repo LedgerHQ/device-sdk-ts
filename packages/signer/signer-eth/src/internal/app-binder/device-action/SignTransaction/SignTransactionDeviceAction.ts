@@ -10,6 +10,10 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
+import {
+  ApplicationChecker,
+  ApplicationCheckerSupportedAppNames,
+} from "@ledgerhq/signer-utils";
 import { Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
@@ -52,7 +56,6 @@ import {
   type ProvideTransactionContextsTaskResult,
 } from "@internal/app-binder/task/ProvideTransactionContextsTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export type MachineDependencies = {
   readonly getAddress: (arg0: {
@@ -146,6 +149,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            ApplicationCheckerSupportedAppNames.Ethereum,
           )
             .withMinVersionExclusive("1.15.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)

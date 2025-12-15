@@ -11,6 +11,10 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
+import {
+  ApplicationChecker,
+  ApplicationCheckerSupportedAppNames,
+} from "@ledgerhq/signer-utils";
 import { Left, type Maybe, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
@@ -31,7 +35,6 @@ import {
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChecker";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
@@ -144,6 +147,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            ApplicationCheckerSupportedAppNames.Solana,
           )
             .withMinVersionExclusive("1.4.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
