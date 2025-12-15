@@ -122,10 +122,10 @@ catalog:
   tailwindcss: 3.4.16
   ts-node: 10.9.2
   tsc-alias: ^1.8.10
+  tsx: 4.19.2
   turbo: ^2.3.3
   typescript: 5.9.2
   typescript-eslint: 8.41.0
-  tsx: 4.19.2
   url: ^0.11.4
   usb: ^2.16.0
   util: ^0.12.5

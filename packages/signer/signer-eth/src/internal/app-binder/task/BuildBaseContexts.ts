@@ -11,6 +11,10 @@ import {
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import {
+  ApplicationChecker,
+  ApplicationCheckerSupportedAppNames,
+} from "@ledgerhq/signer-utils";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { ClearSigningType } from "@api/model/ClearSigningType";
@@ -20,7 +24,6 @@ import {
   MIN_ETH_APP_VERSION_FOR_GATED_SIGNING,
   MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER,
 } from "@internal/shared/EthAppVersions";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.TRUSTED_NAME,
@@ -237,8 +240,17 @@ export class BuildBaseContexts {
     deviceState: DeviceSessionState,
     appConfig: GetConfigCommandResponse,
   ): boolean {
+<<<<<<< HEAD
     return new ApplicationChecker(deviceState, appConfig)
       .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER)
+=======
+    return new ApplicationChecker(
+      deviceState,
+      appConfig,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
+      .withMinVersionExclusive("1.14.0")
+>>>>>>> 141123f1 (🎨 (signer-utils): Moved ApplicationChecker into SignerUtils)
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
   }
