@@ -4,7 +4,7 @@ import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import { useTransport } from "@/state/settings/hooks";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;
@@ -18,9 +18,7 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
-  const {
-    state: { transport },
-  } = useDmkConfigContext();
+  const transport = useTransport();
 
   return (
     <>

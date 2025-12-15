@@ -5,7 +5,7 @@ import { Button, Divider, Flex } from "@ledgerhq/react-ui";
 import { Block } from "@/components/Block";
 import { CommandForm } from "@/components/CommandsView/CommandForm";
 import { type FieldType } from "@/hooks/useForm";
-import { useMetadataServiceConfig } from "@/providers/SignerEthProvider";
+import { useMetadataServiceConfig } from "@/state/settings/hooks";
 
 type MetadataServiceDrawerProps = {
   onClose: () => void;

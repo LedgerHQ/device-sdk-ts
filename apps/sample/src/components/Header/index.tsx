@@ -8,14 +8,18 @@ import {
   Button,
   Divider,
   Flex,
-  Icons,
   Input,
   Switch,
   Text,
 } from "@ledgerhq/react-ui";
 import styled, { type DefaultTheme } from "styled-components";
 
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import {
+  useMockServerUrl,
+  useSetMockServerUrl,
+  useSetTransport,
+  useTransport,
+} from "@/state/settings/hooks";
 import { DEFAULT_SPECULOS_URL, DEFAULT_SPECULOS_VNC_URL } from "@/utils/const";
 
 const Root = styled(Flex).attrs({ py: 3, px: 10, gridGap: 8 })`
@@ -29,21 +33,18 @@ const UrlInput = styled(Input)`
 `;
 
 export const Header = () => {
-  const {
-    dispatch,
-    state: { transport, mockServerUrl },
-  } = useDmkConfigContext();
+  const transport = useTransport();
+  const mockServerUrl = useMockServerUrl();
+  const setTransport = useSetTransport();
+  const setMockServerUrl = useSetMockServerUrl();
+
   const onToggleMockServer = useCallback(() => {
-    dispatch({
-      type: "set_transport",
-      payload: {
-        transport:
-          transport === mockserverIdentifier
-            ? webHidIdentifier
-            : mockserverIdentifier,
-      },
-    });
-  }, [dispatch, transport]);
+    setTransport(
+      transport === mockserverIdentifier
+        ? webHidIdentifier
+        : mockserverIdentifier,
+    );
+  }, [setTransport, transport]);
 
   const [mockServerStateUrl, setMockServerStateUrl] =
     useState<string>(mockServerUrl);
@@ -57,26 +58,16 @@ export const Header = () => {
   const speculosEnabled = transport === speculosIdentifier;
 
   const onToggleSpeculos = useCallback(() => {
-    dispatch({
-      type: "set_transport",
-      payload: {
-        transport:
-          transport === speculosIdentifier
-            ? webHidIdentifier
-            : speculosIdentifier,
-        speculosUrl: speculosStateUrl,
-        speculosVncUrl: speculosStateVncUrl,
-      },
-    });
-  }, [dispatch, transport, speculosStateUrl, speculosStateVncUrl]);
+    setTransport(
+      transport === speculosIdentifier ? webHidIdentifier : speculosIdentifier,
+      speculosStateUrl,
+      speculosStateVncUrl,
+    );
+  }, [setTransport, transport, speculosStateUrl, speculosStateVncUrl]);
 
   const validateServerUrl = useCallback(
-    () =>
-      dispatch({
-        type: "set_mock_server_url",
-        payload: { mockServerUrl: mockServerStateUrl },
-      }),
-    [dispatch, mockServerStateUrl],
+    () => setMockServerUrl(mockServerStateUrl),
+    [setMockServerUrl, mockServerStateUrl],
   );
 
   const onClickConnectFlipperClient = useCallback(() => {

@@ -13,12 +13,12 @@ import {
   useDmk,
   useExportLogsCallback,
 } from "@/providers/DeviceManagementKitProvider";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
 import {
   useOrderedConnectedDevices,
   useSelectedSessionId,
   useSelectSession,
 } from "@/state/sessions/hooks";
+import { useTransport } from "@/state/settings/hooks";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -59,9 +59,7 @@ export const Sidebar: React.FC = () => {
   const orderedConnectedDevices = useOrderedConnectedDevices();
   const selectedSessionId = useSelectedSessionId();
   const selectSession = useSelectSession();
-  const {
-    state: { transport },
-  } = useDmkConfigContext();
+  const transport = useTransport();
 
   useEffect(() => {
     dmk

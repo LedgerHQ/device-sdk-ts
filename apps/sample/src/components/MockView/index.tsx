@@ -7,7 +7,7 @@ import { ClickableListItem } from "@/components/ClickableListItem";
 import { MockDeviceDrawer } from "@/components/MockView/MockDeviceDrawer";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useMockClient } from "@/hooks/useMockClient";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import { useMockServerUrl } from "@/state/settings/hooks";
 
 const MockButton = styled(Button).attrs({
   variant: "main",
@@ -21,9 +21,7 @@ export const MockView: React.FC = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [drawerVisible, setDrawerVisibility] = useState<boolean>(false);
 
-  const {
-    state: { mockServerUrl },
-  } = useDmkConfigContext();
+  const mockServerUrl = useMockServerUrl();
 
   const client = useMockClient(mockServerUrl);
 

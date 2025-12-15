@@ -19,7 +19,11 @@ import { webBleTransportFactory } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import {
+  useMockServerUrl,
+  useSpeculosUrl,
+  useTransport,
+} from "@/state/settings/hooks";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
@@ -58,9 +62,9 @@ function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
 }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const {
-    state: { transport, mockServerUrl, speculosUrl },
-  } = useDmkConfigContext();
+  const transport = useTransport();
+  const mockServerUrl = useMockServerUrl();
+  const speculosUrl = useSpeculosUrl();
 
   const mockServerEnabled = transport === mockserverIdentifier;
   const speculosEnabled = transport === speculosIdentifier;

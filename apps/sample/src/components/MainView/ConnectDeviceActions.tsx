@@ -8,7 +8,7 @@ import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import { useTransport } from "@/state/settings/hooks";
 
 type ConnectDeviceActionsProps = {
   onError: (error: DmkError | null) => void;
@@ -19,9 +19,7 @@ const ConnectButton = styled(Button).attrs({ mx: 3 })``;
 export const ConnectDeviceActions = ({
   onError,
 }: ConnectDeviceActionsProps) => {
-  const {
-    state: { transport },
-  } = useDmkConfigContext();
+  const transport = useTransport();
   const dmk = useDmk();
 
   const onSelectDeviceClicked = useCallback(

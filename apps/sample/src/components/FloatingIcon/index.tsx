@@ -13,7 +13,7 @@ import { Icons } from "@ledgerhq/react-ui/index";
 import styled from "styled-components";
 
 import { VncViewer } from "@/components/VncViewer";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import { useSpeculosVncUrl, useTransport } from "@/state/settings/hooks";
 
 const CONSTANTS = {
   BUTTON_SIZE: 56,
@@ -93,8 +93,8 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
   onDragStart,
   onDragEnd,
 }) => {
-  const { state } = useDmkConfigContext();
-  const { transport, speculosVncUrl } = state;
+  const transport = useTransport();
+  const speculosVncUrl = useSpeculosVncUrl();
 
   const [position, setPosition] = useState<Position>(
     initialPosition || CONSTANTS.DEFAULT_POSITION,

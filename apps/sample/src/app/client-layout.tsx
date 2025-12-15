@@ -19,7 +19,6 @@ import { Sidebar } from "@/components/Sidebar";
 import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
-import { DmkConfigProvider } from "@/providers/DmkConfig";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { store } from "@/state/store";
@@ -64,13 +63,12 @@ const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
-      <StoreProvider store={store}>
-        <DmkConfigProvider>
+      <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+        <StoreProvider store={store}>
           <DmkProvider>
             <LedgerKeyringProtocolProvider>
               <SignerEthProvider>
                 <CalInterceptorProvider>
-                <StyleProvider selectedPalette="dark" fontsPath="/fonts">
                   <GlobalStyle />
                   <head>
                     <link rel="shortcut icon" href="../favicon.png" />
@@ -78,13 +76,12 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                   <body>
                     <RootApp>{children}</RootApp>
                   </body>
-                </StyleProvider>
                 </CalInterceptorProvider>
               </SignerEthProvider>
             </LedgerKeyringProtocolProvider>
           </DmkProvider>
-        </DmkConfigProvider>
-      </StoreProvider>
+        </StoreProvider>
+      </StyleProvider>
     </html>
   );
 };

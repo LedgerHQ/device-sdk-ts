@@ -5,7 +5,7 @@ import { Button, Divider, Flex } from "@ledgerhq/react-ui";
 import { Block } from "@/components/Block";
 import { CommandForm } from "@/components/CommandsView/CommandForm";
 import { type FieldType } from "@/hooks/useForm";
-import { useWeb3ChecksConfig } from "@/providers/SignerEthProvider";
+import { useWeb3ChecksConfig } from "@/state/settings/hooks";
 
 type Web3ChecksDrawerProps = {
   onClose: () => void;
