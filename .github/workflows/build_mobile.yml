@@ -46,7 +46,7 @@ jobs:
         working-directory: ./apps/mobile/android
 
       - name: Upload APK to github
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: dmk-sample.apk
           path: ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
