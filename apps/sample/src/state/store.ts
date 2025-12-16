@@ -1,6 +1,7 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
 import { sessionsReducer, sessionsSlice } from "./sessions/slice";
+import { settingsPersistenceMiddleware } from "./settings/persistenceMiddleware";
 import { settingsReducer, settingsSlice } from "./settings/slice";
 
 const reducer = combineReducers({
@@ -8,13 +9,15 @@ const reducer = combineReducers({
   [settingsSlice.reducerPath]: settingsReducer,
 });
 
+export type RootState = ReturnType<typeof reducer>;
+
 export const store = configureStore({
   reducer,
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(settingsPersistenceMiddleware),
   devTools: true,
 });
 
-export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
 export const storeInitialState: RootState = reducer(undefined, {

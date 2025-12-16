@@ -20,6 +20,7 @@ import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
+import { SettingsGate } from "@/providers/SettingsGate";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
@@ -64,21 +65,23 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
     <html lang="en">
       <StyleProvider selectedPalette="dark" fontsPath="/fonts">
         <StoreProvider store={store}>
-          <DmkProvider>
-            <LedgerKeyringProtocolProvider>
-              <SignerEthProvider>
-                <CalInterceptorProvider>
-                  <GlobalStyle />
-                  <head>
-                    <link rel="shortcut icon" href="../favicon.png" />
-                  </head>
-                  <body>
-                    <RootApp>{children}</RootApp>
-                  </body>
-                </CalInterceptorProvider>
-              </SignerEthProvider>
-            </LedgerKeyringProtocolProvider>
-          </DmkProvider>
+          <SettingsGate>
+            <DmkProvider>
+              <LedgerKeyringProtocolProvider>
+                <SignerEthProvider>
+                  <CalInterceptorProvider>
+                    <GlobalStyle />
+                    <head>
+                      <link rel="shortcut icon" href="../favicon.png" />
+                    </head>
+                    <body>
+                      <RootApp>{children}</RootApp>
+                    </body>
+                  </CalInterceptorProvider>
+                </SignerEthProvider>
+              </LedgerKeyringProtocolProvider>
+            </DmkProvider>
+          </SettingsGate>
         </StoreProvider>
       </StyleProvider>
     </html>

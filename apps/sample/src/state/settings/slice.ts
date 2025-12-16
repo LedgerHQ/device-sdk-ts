@@ -1,7 +1,12 @@
 import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
-import { type CalBranch, type CalMode, initialState } from "./schema";
+import {
+  type CalBranch,
+  type CalMode,
+  initialState,
+  type SettingsState,
+} from "./schema";
 
 export const settingsSlice = createSlice({
   name: "settings",
@@ -74,6 +79,11 @@ export const settingsSlice = createSlice({
         url: action.payload.metadataServiceUrl,
       };
     },
+
+    // Hydration action for loading persisted settings
+    hydrateSettings: (_state, action: PayloadAction<SettingsState>) => {
+      return action.payload;
+    },
   },
 });
 
@@ -89,6 +99,7 @@ export const {
   setOriginToken,
   setWeb3ChecksUrl,
   setMetadataServiceUrl,
+  hydrateSettings,
 } = settingsSlice.actions;
 
 export const settingsReducer = settingsSlice.reducer;
