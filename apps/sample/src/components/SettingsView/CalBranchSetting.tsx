@@ -6,6 +6,7 @@ import { type CalBranch } from "@/state/settings/schema";
 import { selectCalBranch } from "@/state/settings/selectors";
 import { setCalBranch } from "@/state/settings/slice";
 
+import { SelectInputLabel } from "../InputLabel";
 import { SettingBox } from "./SettingBox";
 
 type Option = { label: string; value: CalBranch };
@@ -32,8 +33,9 @@ export const CalBranchSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="Branch Reference">
+    <SettingBox>
       <SelectInput
+        renderLeft={() => <SelectInputLabel>Branch Reference</SelectInputLabel>}
         options={branchOptions}
         value={selectedOption}
         onChange={onValueChange}

@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Input } from "@ledgerhq/react-ui";
 
+import { InputLabel } from "@/components/InputLabel";
 import { selectOriginToken } from "@/state/settings/selectors";
 import { setOriginToken } from "@/state/settings/slice";
 
@@ -19,8 +20,9 @@ export const OriginTokenSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="Origin Token">
+    <SettingBox>
       <Input
+        renderLeft={<InputLabel>Origin Token</InputLabel>}
         value={originToken}
         onChange={onChange}
         placeholder="origin-token"

@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Input } from "@ledgerhq/react-ui";
 
+import { InputLabel } from "@/components/InputLabel";
 import { selectSpeculosUrl } from "@/state/settings/selectors";
 import { setSpeculosUrl } from "@/state/settings/slice";
 
@@ -19,8 +20,9 @@ export const SpeculosUrlSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="Speculos URL">
+    <SettingBox>
       <Input
+        renderLeft={<InputLabel>Speculos URL</InputLabel>}
         value={speculosUrl}
         onChange={onChange}
         placeholder="http://127.0.0.1:5000"

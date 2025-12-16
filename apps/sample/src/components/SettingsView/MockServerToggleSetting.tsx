@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
+import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Switch } from "@ledgerhq/react-ui";
 
@@ -9,29 +9,30 @@ import { setTransport } from "@/state/settings/slice";
 
 import { SettingBox } from "./SettingBox";
 
-export const SpeculosToggleSetting: React.FC = () => {
+export const MockServerToggleSetting: React.FC = () => {
   const transport = useSelector(selectTransport);
   const dispatch = useDispatch();
 
-  const speculosEnabled = transport === speculosIdentifier;
+  const mockServerEnabled = transport === mockserverIdentifier;
 
   const onToggle = useCallback(() => {
     dispatch(
       setTransport({
-        transport: speculosEnabled ? webHidIdentifier : speculosIdentifier,
+        transport: mockServerEnabled ? webHidIdentifier : mockserverIdentifier,
       }),
     );
-  }, [dispatch, speculosEnabled]);
+  }, [dispatch, mockServerEnabled]);
 
   return (
     <SettingBox>
       <Switch
         onChange={onToggle}
-        checked={speculosEnabled}
-        name="switch-speculos"
-        label="Enable Speculos"
-        data-testid="switch_speculos"
+        checked={mockServerEnabled}
+        name="switch-mock-server"
+        label="Enable Mock server"
+        data-testid="switch_mock-server"
       />
     </SettingBox>
   );
 };
+

@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Input } from "@ledgerhq/react-ui";
 
+import { InputLabel } from "@/components/InputLabel";
 import { selectMetadataServiceUrl } from "@/state/settings/selectors";
 import { setMetadataServiceUrl } from "@/state/settings/slice";
 
@@ -19,8 +20,9 @@ export const MetadataServiceUrlSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="Metadata Service URL">
+    <SettingBox>
       <Input
+        renderLeft={<InputLabel>Metadata Service URL</InputLabel>}
         value={metadataServiceUrl}
         onChange={onValueChange}
         placeholder="https://nft.api.live.ledger.com"

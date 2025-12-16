@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
-import { Input } from "@ledgerhq/react-ui";
 import { useDispatch, useSelector } from "react-redux";
+import { Input } from "@ledgerhq/react-ui";
 
+import { InputLabel } from "@/components/InputLabel";
 import { selectCalUrl } from "@/state/settings/selectors";
 import { setCalUrl } from "@/state/settings/slice";
 
@@ -19,8 +20,9 @@ export const CalUrlSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="CAL URL">
+    <SettingBox>
       <Input
+        renderLeft={<InputLabel>CAL URL</InputLabel>}
         value={calUrl}
         onChange={onValueChange}
         placeholder="https://crypto-assets-service.api.ledger.com/v1"

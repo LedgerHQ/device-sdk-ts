@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Input } from "@ledgerhq/react-ui";
 
+import { InputLabel } from "@/components/InputLabel";
 import { selectWeb3ChecksUrl } from "@/state/settings/selectors";
 import { setWeb3ChecksUrl } from "@/state/settings/slice";
 
@@ -19,8 +20,9 @@ export const Web3ChecksUrlSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="Web3Checks Provider URL">
+    <SettingBox>
       <Input
+        renderLeft={<InputLabel>Web3Checks Provider URL</InputLabel>}
         value={web3ChecksUrl}
         onChange={onValueChange}
         placeholder="https://web3checks-backend.api.ledger.com/v3"

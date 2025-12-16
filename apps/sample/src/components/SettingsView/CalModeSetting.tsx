@@ -1,11 +1,12 @@
 import React, { useCallback } from "react";
-import { SelectInput } from "@ledgerhq/react-ui";
 import { useDispatch, useSelector } from "react-redux";
+import { SelectInput } from "@ledgerhq/react-ui";
 
 import { type CalMode } from "@/state/settings/schema";
 import { selectCalMode } from "@/state/settings/selectors";
 import { setCalMode } from "@/state/settings/slice";
 
+import { InputLabel, SelectInputLabel } from "../InputLabel";
 import { SettingBox } from "./SettingBox";
 
 type Option = { label: string; value: string };
@@ -31,8 +32,9 @@ export const CalModeSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="CAL Mode">
+    <SettingBox>
       <SelectInput
+        renderLeft={() => <SelectInputLabel>CAL Mode</SelectInputLabel>}
         options={modeOptions}
         value={selectedOption}
         onChange={onValueChange}

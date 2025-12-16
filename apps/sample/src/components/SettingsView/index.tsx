@@ -4,12 +4,14 @@ import styled, { type DefaultTheme } from "styled-components";
 
 import { PageWithHeader } from "@/components/PageWithHeader";
 
+import { Block } from "../Block";
 import { AppProviderSetting } from "./AppProviderSetting";
 import { CalBranchSetting } from "./CalBranchSetting";
 import { CalModeSetting } from "./CalModeSetting";
 import { CalUrlSetting } from "./CalUrlSetting";
 import { MetadataServiceUrlSetting } from "./MetadataServiceUrlSetting";
-import { MockServerSetting } from "./MockServerSetting";
+import { MockServerToggleSetting } from "./MockServerToggleSetting";
+import { MockServerUrlSetting } from "./MockServerUrlSetting";
 import { OriginTokenSetting } from "./OriginTokenSetting";
 import { SectionTitle } from "./SectionTitle";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
@@ -17,20 +19,14 @@ import { SpeculosUrlSetting } from "./SpeculosUrlSetting";
 import { SpeculosVncUrlSetting } from "./SpeculosVncUrlSetting";
 import { Web3ChecksUrlSetting } from "./Web3ChecksUrlSetting";
 
-const SectionContainer = styled(Flex)`
-  flex-direction: column;
-  padding: 16px;
-  background-color: ${({ theme }: { theme: DefaultTheme }) =>
-    theme.colors.neutral.c20};
-  border-radius: 8px;
-`;
+const SectionContainer = Block;
 
 export const SettingsView: React.FC = () => {
   return (
     <PageWithHeader title="Settings">
-      <Flex flexDirection="column" flex={1} overflowY="auto" pb={8} rowGap={3}>
+      <Flex flexDirection="column" flex={1} overflowY="auto" pb={8} rowGap={6}>
         <SectionContainer>
-          <SectionTitle>Device Management Kit Settings</SectionTitle>
+          <SectionTitle>Device Management Kit</SectionTitle>
           <AppProviderSetting />
         </SectionContainer>
 
@@ -43,7 +39,8 @@ export const SettingsView: React.FC = () => {
 
         <SectionContainer>
           <SectionTitle>Mock server</SectionTitle>
-          <MockServerSetting />
+          <MockServerToggleSetting />
+          <MockServerUrlSetting />
         </SectionContainer>
 
         <SectionContainer>

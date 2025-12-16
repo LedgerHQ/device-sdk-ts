@@ -3,16 +3,10 @@ import { Text } from "@ledgerhq/react-ui";
 import styled, { type DefaultTheme } from "styled-components";
 
 const Title = styled(Text).attrs({
-  variant: "h2Inter",
+  variant: "h3Inter",
   fontWeight: "medium",
 })`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c100};
-  margin-bottom: 16px;
-  margin-top: 24px;
-
-  &:first-child {
-    margin-top: 0;
-  }
 `;
 
 type SectionTitleProps = {

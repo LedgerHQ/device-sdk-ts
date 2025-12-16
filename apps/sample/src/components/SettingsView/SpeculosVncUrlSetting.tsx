@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Input } from "@ledgerhq/react-ui";
 
+import { InputLabel } from "@/components/InputLabel";
 import { selectSpeculosVncUrl } from "@/state/settings/selectors";
 import { setSpeculosVncUrl } from "@/state/settings/slice";
 
@@ -19,8 +20,9 @@ export const SpeculosVncUrlSetting: React.FC = () => {
   );
 
   return (
-    <SettingBox title="Speculos VNC URL">
+    <SettingBox>
       <Input
+        renderLeft={<InputLabel>Speculos VNC URL</InputLabel>}
         value={speculosVncUrl}
         onChange={onChange}
         placeholder="ws://127.0.0.1:5900"
