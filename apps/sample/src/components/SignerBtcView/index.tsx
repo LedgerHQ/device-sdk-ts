@@ -22,12 +22,31 @@ import {
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
-import {
-  descriptorTemplateToDerivationPath,
-  GetWalletAddressInputValuesForm,
-  SignPsbtDAInputValuesForm,
-} from "@/components/SignerBtcView/SignPsbtDAInputValusForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+
+const descriptorTemplateToDerivationPath: Record<
+  DefaultDescriptorTemplate,
+  string
+> = {
+  [DefaultDescriptorTemplate.TAPROOT]: "86'/0'/0'",
+  [DefaultDescriptorTemplate.NATIVE_SEGWIT]: "84'/0'/0'",
+  [DefaultDescriptorTemplate.NESTED_SEGWIT]: "49'/0'/0'",
+  [DefaultDescriptorTemplate.LEGACY]: "44'/0'/0'",
+};
+
+const descriptorTemplateToLabel: Record<DefaultDescriptorTemplate, string> = {
+  [DefaultDescriptorTemplate.TAPROOT]: "Taproot",
+  [DefaultDescriptorTemplate.NATIVE_SEGWIT]: "Native Segwit",
+  [DefaultDescriptorTemplate.NESTED_SEGWIT]: "Nested Segwit",
+  [DefaultDescriptorTemplate.LEGACY]: "Legacy",
+};
+
+const descriptorTemplateOptions = Object.values(DefaultDescriptorTemplate).map(
+  (value) => ({
+    label: descriptorTemplateToLabel[value],
+    value,
+  }),
+);
 
 const DEFAULT_DERIVATION_PATH = "84'/0'/0'";
 
@@ -99,25 +118,43 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
             { checkOnDevice, change, skipOpenApp },
           );
         },
-        InputValuesComponent: GetWalletAddressInputValuesForm,
         initialValues: {
-          checkOnDevice: false,
-          change: false,
+          descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
           derivationPath: DEFAULT_DERIVATION_PATH,
           addressIndex: 0,
-          descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
+          change: false,
+          checkOnDevice: false,
           skipOpenApp: false,
+        },
+        valueSelector: {
+          descriptorTemplate: descriptorTemplateOptions,
+        },
+        labelSelector: {
+          descriptorTemplate: "Wallet address type",
+          derivationPath: "Derivation path",
+          addressIndex: "Address index",
+          change: "Change address",
+          checkOnDevice: "Check on device",
+          skipOpenApp: "Skip open app",
+        },
+        linkedFields: {
+          descriptorTemplate: (newValue) => ({
+            derivationPath:
+              descriptorTemplateToDerivationPath[
+                newValue as DefaultDescriptorTemplate
+              ],
+          }),
         },
         validateValues: ({ addressIndex }) => !isNaN(Number(addressIndex)),
         deviceModelId,
       } satisfies DeviceActionProps<
         GetWalletAddressDAOutput,
         {
-          checkOnDevice: boolean;
-          change: boolean;
-          addressIndex: number;
-          derivationPath: string;
           descriptorTemplate: DefaultDescriptorTemplate;
+          derivationPath: string;
+          addressIndex: number;
+          change: boolean;
+          checkOnDevice: boolean;
           skipOpenApp: boolean;
         },
         GetWalletAddressDAError,
@@ -169,20 +206,35 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
             { skipOpenApp },
           );
         },
-        InputValuesComponent: SignPsbtDAInputValuesForm,
         initialValues: {
           descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
-          psbt: "",
           path: DEFAULT_DERIVATION_PATH,
+          psbt: "",
           skipOpenApp: false,
+        },
+        valueSelector: {
+          descriptorTemplate: descriptorTemplateOptions,
+        },
+        labelSelector: {
+          descriptorTemplate: "Wallet address type",
+          path: "Derivation path",
+          psbt: "PSBT",
+          skipOpenApp: "Skip open app",
+        },
+        linkedFields: {
+          descriptorTemplate: (newValue) => ({
+            path: descriptorTemplateToDerivationPath[
+              newValue as DefaultDescriptorTemplate
+            ],
+          }),
         },
         deviceModelId,
       } satisfies DeviceActionProps<
         SignPsbtDAOutput,
         {
-          psbt: string;
-          path: string;
           descriptorTemplate: DefaultDescriptorTemplate;
+          path: string;
+          psbt: string;
           skipOpenApp: boolean;
         },
         SignPsbtDAError,
@@ -208,22 +260,35 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
             { skipOpenApp },
           );
         },
-        InputValuesComponent: SignPsbtDAInputValuesForm,
         initialValues: {
           descriptorTemplate: DefaultDescriptorTemplate.NATIVE_SEGWIT,
+          path: DEFAULT_DERIVATION_PATH,
           psbt: "",
-          path: descriptorTemplateToDerivationPath[
-            DefaultDescriptorTemplate.NATIVE_SEGWIT
-          ],
           skipOpenApp: false,
+        },
+        valueSelector: {
+          descriptorTemplate: descriptorTemplateOptions,
+        },
+        labelSelector: {
+          descriptorTemplate: "Wallet address type",
+          path: "Derivation path",
+          psbt: "PSBT",
+          skipOpenApp: "Skip open app",
+        },
+        linkedFields: {
+          descriptorTemplate: (newValue) => ({
+            path: descriptorTemplateToDerivationPath[
+              newValue as DefaultDescriptorTemplate
+            ],
+          }),
         },
         deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
         {
-          psbt: string;
-          path: string;
           descriptorTemplate: DefaultDescriptorTemplate;
+          path: string;
+          psbt: string;
           skipOpenApp: boolean;
         },
         SignTransactionDAError,

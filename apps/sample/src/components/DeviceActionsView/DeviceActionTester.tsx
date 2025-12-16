@@ -20,7 +20,7 @@ import styled from "styled-components";
 
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
-import { Form, type ValueSelector } from "@/components/Form";
+import { Form, type LinkedFields, type ValueSelector } from "@/components/Form";
 import { type FieldType } from "@/hooks/useForm";
 
 import {
@@ -50,6 +50,8 @@ export type DeviceActionProps<
   }>;
   validateValues?: (args: Input) => boolean;
   valueSelector?: ValueSelector<FieldType>;
+  labelSelector?: Partial<Record<string, string>>;
+  linkedFields?: LinkedFields<Input & Record<string, FieldType>>;
   deviceModelId: DeviceModelId;
 };
 
@@ -96,6 +98,8 @@ export function DeviceActionTester<
     initialValues,
     executeDeviceAction,
     valueSelector,
+    labelSelector,
+    linkedFields,
     validateValues,
     InputValuesComponent,
   } = props;
@@ -220,6 +224,8 @@ export function DeviceActionTester<
               initialValues={values}
               onChange={setValues}
               valueSelector={valueSelector}
+              labelSelector={labelSelector}
+              linkedFields={linkedFields}
               disabled={loading}
             />
           )}

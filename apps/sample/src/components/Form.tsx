@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Flex, Input, SelectInput, Switch } from "@ledgerhq/react-ui";
 
 import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
@@ -11,6 +11,13 @@ export type ValueSelector<T extends FieldType> = Record<
     value: T;
   }>
 >;
+
+export type LinkedFields<Args extends Record<string, FieldType>> = {
+  [K in keyof Args]?: (
+    newValue: FieldType,
+    currentValues: Args,
+  ) => Partial<Args>;
+};
 
 export function getValueSelectorFromEnum<
   T extends Record<string, string | number>,
@@ -74,7 +81,6 @@ const FormField: React.FC<FormFieldProps> = ({
   }
 
   if (typeof value === "string") {
-    console.log("defaultValue", { defaultValue });
     return (
       <Input
         id={fieldKey}
@@ -108,23 +114,41 @@ export function Form<Args extends Record<string, FieldType>>({
   onChange,
   valueSelector,
   labelSelector,
+  linkedFields,
   disabled,
   className,
 }: {
   initialValues: Args;
   onChange: (values: Args) => void;
   valueSelector?: ValueSelector<FieldType>;
-  labelSelector?: Record<string, string>;
+  labelSelector?: Partial<Record<string, string>>;
+  linkedFields?: LinkedFields<Args>;
   disabled?: boolean;
   className?: string;
 }) {
-  const { formValues, setFormValue } = useForm(initialValues);
+  const { formValues, setFormValue, setFormValues } = useForm(initialValues);
 
   const [actualInitialValues] = useState(initialValues);
 
   useEffect(() => {
     onChange(formValues);
   }, [formValues, onChange]);
+
+  const handleFieldChange = useCallback(
+    (key: string, value: FieldType) => {
+      const linkedHandler = linkedFields?.[key];
+      if (linkedHandler) {
+        const linkedUpdates = linkedHandler(
+          value as Args[typeof key],
+          formValues,
+        );
+        setFormValues((prev) => ({ ...prev, [key]: value, ...linkedUpdates }));
+      } else {
+        setFormValue(key, value);
+      }
+    },
+    [linkedFields, formValues, setFormValue, setFormValues],
+  );
 
   if (!formValues) return null;
 
@@ -145,7 +169,7 @@ export function Form<Args extends Record<string, FieldType>>({
           label={labelSelector?.[key] ?? key}
           options={valueSelector?.[key]}
           disabled={disabled}
-          onChange={setFormValue}
+          onChange={handleFieldChange}
         />
       ))}
     </Flex>
