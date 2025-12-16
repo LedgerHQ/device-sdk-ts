@@ -203,7 +203,7 @@ export function DeviceActionTester<
     "This is an example of what should be shown to the user while executing a device action.";
 
   return (
-    <Flex flexDirection="column" rowGap={3} overflow="hidden" flex={1}>
+    <Flex flexDirection="column" rowGap={3} overflow="scroll" flex={1}>
       <Block data-testid="form_device-action">
         <BoxHeader hint={hintInput}>Device Action input</BoxHeader>
         <Flex
@@ -239,7 +239,13 @@ export function DeviceActionTester<
           />
         </Flex>
       </Block>
-      <Flex flexDirection="row" columnGap={3} overflow="hidden" flex={1}>
+      <Flex
+        flexDirection="row"
+        columnGap={3}
+        overflow="hidden"
+        minHeight={250}
+        flex={1}
+      >
         <Block width={270} flexDirection="column" overflow="hidden">
           <BoxHeader hint={hintUIExample}>Device Action UI example</BoxHeader>
           <Flex

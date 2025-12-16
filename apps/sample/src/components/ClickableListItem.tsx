@@ -4,10 +4,9 @@ import { type BaseStyledProps } from "@ledgerhq/react-ui/components/styled";
 import styled from "styled-components";
 
 const ListItemWrapper = styled(Flex)`
-  opacity: 0.8;
-
   &:hover {
-    opacity: 1;
+    background-color: ${({ theme }: { theme: DefaultTheme }) =>
+      theme.colors.neutral.c30};
   }
 
   cursor: pointer;
@@ -26,7 +25,7 @@ export const ClickableListItem: React.FC<
       flexDirection="row"
       alignItems="center"
       p={6}
-      backgroundColor={"opacityDefault.c05"}
+      backgroundColor={"background.card"}
       borderRadius={2}
       onClick={onClick}
       data-testid={`CTA_command-${title}`}

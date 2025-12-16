@@ -46,7 +46,6 @@ const PageContainer = styled(Flex)`
   background-color: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.background.main};
   flex: 1;
-  padding-top: 50px;
 `;
 
 const RootApp: React.FC<PropsWithChildren> = ({ children }) => {

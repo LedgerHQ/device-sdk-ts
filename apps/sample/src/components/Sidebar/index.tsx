@@ -33,7 +33,7 @@ const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   }) =>
     mockServerEnabled
       ? theme.colors.constant.purple
-      : theme.colors.background.drawer};
+      : theme.colors.background.card};
 `;
 
 const Subtitle = styled(Text).attrs({ mb: 5 })``;
