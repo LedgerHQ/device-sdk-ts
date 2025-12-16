@@ -42,7 +42,7 @@ export const settingsSlice = createSlice({
       state.appProvider = action.payload.appProvider;
     },
 
-    // CAL config - granular actions that update the object in place
+    // CAL config
     setCalConfig: (
       state,
       action: PayloadAction<{ calConfig: ContextModuleCalConfig }>,
@@ -65,7 +65,7 @@ export const settingsSlice = createSlice({
       state.originToken = action.payload.originToken;
     },
 
-    // Web3Checks config - granular action
+    // Web3Checks config
     setWeb3ChecksUrl: (
       state,
       action: PayloadAction<{ web3ChecksUrl: string }>,
@@ -76,7 +76,7 @@ export const settingsSlice = createSlice({
       };
     },
 
-    // Metadata service config - granular action
+    // Metadata service config
     setMetadataServiceUrl: (
       state,
       action: PayloadAction<{ metadataServiceUrl: string }>,

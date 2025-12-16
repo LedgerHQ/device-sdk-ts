@@ -13,7 +13,7 @@ export const selectSpeculosVncUrl = (state: RootState) =>
 export const selectAppProvider = (state: RootState) =>
   state.settings.appProvider;
 
-// CAL config selectors - both the full object and granular
+// CAL config selectors
 export const selectCalConfig = (state: RootState) => state.settings.calConfig;
 export const selectCalUrl = (state: RootState) => state.settings.calConfig.url;
 export const selectCalMode = (state: RootState) =>
@@ -23,13 +23,13 @@ export const selectCalBranch = (state: RootState) =>
 export const selectOriginToken = (state: RootState) =>
   state.settings.originToken;
 
-// Web3Checks selectors - both the full object and granular
+// Web3Checks selectors
 export const selectWeb3ChecksConfig = (state: RootState) =>
   state.settings.web3ChecksConfig;
 export const selectWeb3ChecksUrl = (state: RootState) =>
   state.settings.web3ChecksConfig.url;
 
-// Metadata service selectors - both the full object and granular
+// Metadata service selectors
 export const selectMetadataServiceConfig = (state: RootState) =>
   state.settings.metadataServiceConfig;
 export const selectMetadataServiceUrl = (state: RootState) =>
