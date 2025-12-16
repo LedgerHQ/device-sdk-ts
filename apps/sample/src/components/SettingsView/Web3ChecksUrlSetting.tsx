@@ -1,19 +1,21 @@
 import React, { useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Input } from "@ledgerhq/react-ui";
 
-import { useSetWeb3ChecksUrl, useWeb3ChecksUrl } from "@/state/settings/hooks";
+import { selectWeb3ChecksUrl } from "@/state/settings/selectors";
+import { setWeb3ChecksUrl } from "@/state/settings/slice";
 
 import { SettingBox } from "./SettingBox";
 
 export const Web3ChecksUrlSetting: React.FC = () => {
-  const web3ChecksUrl = useWeb3ChecksUrl();
-  const setWeb3ChecksUrl = useSetWeb3ChecksUrl();
+  const web3ChecksUrl = useSelector(selectWeb3ChecksUrl);
+  const dispatch = useDispatch();
 
   const onValueChange = useCallback(
     (value: string) => {
-      setWeb3ChecksUrl(value);
+        dispatch(setWeb3ChecksUrl({ web3ChecksUrl: value }));
     },
-    [setWeb3ChecksUrl],
+    [dispatch],
   );
 
   return (

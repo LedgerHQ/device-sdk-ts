@@ -1,4 +1,5 @@
 import React, { useCallback } from "react";
+import { useSelector } from "react-redux";
 import { type DmkError } from "@ledgerhq/device-management-kit";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
@@ -8,7 +9,7 @@ import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useTransport } from "@/state/settings/hooks";
+import { selectTransport } from "@/state/settings/selectors";
 
 type ConnectDeviceActionsProps = {
   onError: (error: DmkError | null) => void;
@@ -19,7 +20,7 @@ const ConnectButton = styled(Button).attrs({ mx: 3 })``;
 export const ConnectDeviceActions = ({
   onError,
 }: ConnectDeviceActionsProps) => {
-  const transport = useTransport();
+  const transport = useSelector(selectTransport);
   const dmk = useDmk();
 
   const onSelectDeviceClicked = useCallback(

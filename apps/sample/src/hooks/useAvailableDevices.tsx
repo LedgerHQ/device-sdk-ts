@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
 import { type Subscription } from "rxjs";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useOrderedConnectedDevices } from "@/state/sessions/hooks";
+import { selectOrderedConnectedDevices } from "@/state/sessions/selectors";
 
 type AvailableDevice = DiscoveredDevice & { connected: boolean };
 
@@ -12,7 +13,7 @@ export function useAvailableDevices(): AvailableDevice[] {
   const [discoveredDevices, setDiscoveredDevices] = useState<
     DiscoveredDevice[]
   >([]);
-  const orderedConnectedDevices = useOrderedConnectedDevices();
+  const orderedConnectedDevices = useSelector(selectOrderedConnectedDevices);
   const subscription = useRef<Subscription | null>(null);
   useEffect(() => {
     if (!subscription.current) {

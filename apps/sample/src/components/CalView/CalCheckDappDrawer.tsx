@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   Button,
   Divider,
@@ -13,7 +14,7 @@ import {
   type ValueSelector,
 } from "@/components/CommandsView/CommandForm";
 import { type FieldType } from "@/hooks/useForm";
-import { useCalBranch, useCalUrl } from "@/state/settings/hooks";
+import { selectCalBranch, selectCalUrl } from "@/state/settings/selectors";
 
 import { CalAvailabilityResponseComponent } from "./CalAvailabilityResponse";
 import {
@@ -52,8 +53,8 @@ export function CalCheckDappDrawer<
   const [valuesInvalid, setValuesInvalid] = useState<boolean>(false);
   const [responses, setResponses] = useState<Response[]>([]);
   const [loading, setLoading] = useState(false);
-  const calUrl = useCalUrl();
-  const calBranch = useCalBranch();
+  const calUrl = useSelector(selectCalUrl);
+  const calBranch = useSelector(selectCalBranch);
   const handleClickExecute = useCallback(() => {
     setLoading(true);
     const id = ++nonce.current;
@@ -87,7 +88,7 @@ export function CalCheckDappDrawer<
     };
 
     fetchData();
-  }, [values]);
+  }, [values, calUrl, calBranch]);
 
   const handleClickClear = useCallback(() => {
     setResponses([]);

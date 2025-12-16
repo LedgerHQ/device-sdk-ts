@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { useSelector } from "react-redux";
 import { ContextModuleBuilder } from "@ledgerhq/context-module";
 import {
   type SignerEth,
@@ -14,13 +15,13 @@ import {
 } from "@ledgerhq/device-signer-kit-ethereum";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useSelectedSessionId } from "@/state/sessions/hooks";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
 import {
-  useCalConfig,
-  useMetadataServiceConfig,
-  useOriginToken,
-  useWeb3ChecksConfig,
-} from "@/state/settings/hooks";
+  selectCalConfig,
+  selectMetadataServiceConfig,
+  selectOriginToken,
+  selectWeb3ChecksConfig,
+} from "@/state/settings/selectors";
 
 type SignerEthContextType = {
   signer: SignerEth | null;
@@ -36,13 +37,13 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const dmk = useDmk();
-  const sessionId = useSelectedSessionId();
+  const sessionId = useSelector(selectSelectedSessionId);
 
   const [signer, setSigner] = useState<SignerEth | null>(null);
-  const calConfig = useCalConfig();
-  const web3ChecksConfig = useWeb3ChecksConfig();
-  const metadataServiceConfig = useMetadataServiceConfig();
-  const originToken = useOriginToken();
+  const calConfig = useSelector(selectCalConfig);
+  const web3ChecksConfig = useSelector(selectWeb3ChecksConfig);
+  const metadataServiceConfig = useSelector(selectMetadataServiceConfig);
+  const originToken = useSelector(selectOriginToken);
 
   useEffect(() => {
     if (!sessionId || !dmk) {

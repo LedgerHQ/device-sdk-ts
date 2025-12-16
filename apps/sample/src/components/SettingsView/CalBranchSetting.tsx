@@ -1,37 +1,34 @@
 import React, { useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { SelectInput } from "@ledgerhq/react-ui";
 
-import { useCalBranch, useSetCalBranch } from "@/state/settings/hooks";
 import { type CalBranch } from "@/state/settings/schema";
+import { selectCalBranch } from "@/state/settings/selectors";
+import { setCalBranch } from "@/state/settings/slice";
 
 import { SettingBox } from "./SettingBox";
 
-type Option = { label: string; value: string };
+type Option = { label: string; value: CalBranch };
 
 const branchOptions: Option[] = [
-  { label: "Main", value: "main" },
-  { label: "Next", value: "next" },
-  { label: "Demo", value: "demo" },
+  { label: "main", value: "main" },
+  { label: "next", value: "next" },
+  { label: "demo", value: "demo" },
 ];
 
 export const CalBranchSetting: React.FC = () => {
-  const calBranch = useCalBranch();
-  const setCalBranch = useSetCalBranch();
+  const calBranch = useSelector(selectCalBranch);
+  const dispatch = useDispatch();
 
   const selectedOption = branchOptions.find((opt) => opt.value === calBranch);
 
   const onValueChange = useCallback(
     (option: Option | null) => {
-      if (
-        option &&
-        (option.value === "main" ||
-          option.value === "next" ||
-          option.value === "demo")
-      ) {
-        setCalBranch(option.value as CalBranch);
+      if (option) {
+        dispatch(setCalBranch({ calBranch: option.value }));
       }
     },
-    [setCalBranch],
+    [dispatch],
   );
 
   return (

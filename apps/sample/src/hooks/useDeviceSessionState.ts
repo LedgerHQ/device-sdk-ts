@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import {
   type DeviceSessionId,
   type DeviceSessionState,
@@ -6,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useRemoveSession } from "@/state/sessions/hooks";
+import { removeSession } from "@/state/sessions/slice";
 
 import { useThrottle } from "./useThrottle";
 
@@ -14,7 +15,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const dmk = useDmk();
   const [deviceSessionState, setDeviceSessionState] =
     useState<DeviceSessionState>();
-  const removeSession = useRemoveSession();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (sessionId) {
@@ -24,7 +25,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
         })
         .subscribe((state) => {
           if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
-            removeSession(sessionId);
+            dispatch(removeSession({ sessionId }));
           } else {
             setDeviceSessionState(state);
           }
@@ -34,7 +35,7 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
         subscription.unsubscribe();
       };
     }
-  }, [sessionId, dmk]);
+  }, [sessionId, dmk, dispatch]);
 
   return useThrottle(deviceSessionState, 500);
 }

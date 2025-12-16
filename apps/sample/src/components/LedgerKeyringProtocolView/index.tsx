@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
+import { useSelector } from "react-redux";
 import {
   bufferToHexaString,
   type DeviceActionState,
@@ -24,7 +25,7 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
-import { useSelectedSessionId } from "@/state/sessions/hooks";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
 import { base64FromBytes, bytesFromBase64, genIdentity } from "@/utils/crypto";
 import { parsePermissions } from "@/utils/lkrp-permissions";
 
@@ -36,7 +37,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
   const sessionIdRef = useRef<string>();
   const modelIdRef = useRef<DeviceModelId>();
   {
-    const sessionId = useSelectedSessionId();
+    const sessionId = useSelector(selectSelectedSessionId);
     useEffect(() => {
       if (!sessionId) return;
 

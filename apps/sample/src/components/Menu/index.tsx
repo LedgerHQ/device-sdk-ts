@@ -1,10 +1,11 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 
-import { useTransport } from "@/state/settings/hooks";
+import { selectTransport } from "@/state/settings/selectors";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;
@@ -18,7 +19,7 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
-  const transport = useTransport();
+  const transport = useSelector(selectTransport);
 
   return (
     <>

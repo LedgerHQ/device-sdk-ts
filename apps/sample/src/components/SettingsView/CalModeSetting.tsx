@@ -1,8 +1,10 @@
 import React, { useCallback } from "react";
 import { SelectInput } from "@ledgerhq/react-ui";
+import { useDispatch, useSelector } from "react-redux";
 
-import { useCalMode, useSetCalMode } from "@/state/settings/hooks";
 import { type CalMode } from "@/state/settings/schema";
+import { selectCalMode } from "@/state/settings/selectors";
+import { setCalMode } from "@/state/settings/slice";
 
 import { SettingBox } from "./SettingBox";
 
@@ -14,18 +16,18 @@ const modeOptions: Option[] = [
 ];
 
 export const CalModeSetting: React.FC = () => {
-  const calMode = useCalMode();
-  const setCalMode = useSetCalMode();
+  const calMode = useSelector(selectCalMode);
+  const dispatch = useDispatch();
 
   const selectedOption = modeOptions.find((opt) => opt.value === calMode);
 
   const onValueChange = useCallback(
     (option: Option | null) => {
       if (option && (option.value === "prod" || option.value === "test")) {
-        setCalMode(option.value as CalMode);
+        dispatch(setCalMode({ calMode: option.value as CalMode }));
       }
     },
-    [setCalMode],
+    [dispatch],
   );
 
   return (

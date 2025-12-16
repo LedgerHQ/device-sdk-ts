@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
+import { useSelector } from "react-redux";
 import {
   ConsoleLogger,
   type DeviceManagementKit,
@@ -20,11 +21,11 @@ import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
 import {
-  useAppProvider,
-  useMockServerUrl,
-  useSpeculosUrl,
-  useTransport,
-} from "@/state/settings/hooks";
+  selectAppProvider,
+  selectMockServerUrl,
+  selectSpeculosUrl,
+  selectTransport,
+} from "@/state/settings/selectors";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
@@ -63,10 +64,10 @@ function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
 }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const transport = useTransport();
-  const mockServerUrl = useMockServerUrl();
-  const speculosUrl = useSpeculosUrl();
-  const appProvider = useAppProvider();
+  const transport = useSelector(selectTransport);
+  const mockServerUrl = useSelector(selectMockServerUrl);
+  const speculosUrl = useSelector(selectSpeculosUrl);
+  const appProvider = useSelector(selectAppProvider);
 
   const mockServerEnabled = transport === mockserverIdentifier;
   const speculosEnabled = transport === speculosIdentifier;

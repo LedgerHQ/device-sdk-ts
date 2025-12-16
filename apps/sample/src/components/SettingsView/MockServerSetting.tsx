@@ -1,34 +1,37 @@
 import React, { useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Flex, Input, Switch } from "@ledgerhq/react-ui";
 
 import {
-  useMockServerUrl,
-  useSetMockServerUrl,
-  useSetTransport,
-  useTransport,
-} from "@/state/settings/hooks";
+  selectMockServerUrl,
+  selectTransport,
+} from "@/state/settings/selectors";
+import { setMockServerUrl, setTransport } from "@/state/settings/slice";
 
 import { SettingBox } from "./SettingBox";
 
 export const MockServerSetting: React.FC = () => {
-  const transport = useTransport();
-  const mockServerUrl = useMockServerUrl();
-  const setTransport = useSetTransport();
-  const setMockServerUrl = useSetMockServerUrl();
+  const transport = useSelector(selectTransport);
+  const mockServerUrl = useSelector(selectMockServerUrl);
+  const dispatch = useDispatch();
 
   const mockServerEnabled = transport === mockserverIdentifier;
 
   const onToggle = useCallback(() => {
-    setTransport(mockServerEnabled ? webHidIdentifier : mockserverIdentifier);
-  }, [setTransport, mockServerEnabled]);
+    dispatch(
+      setTransport({
+        transport: mockServerEnabled ? webHidIdentifier : mockserverIdentifier,
+      }),
+    );
+  }, [dispatch, mockServerEnabled]);
 
   const onUrlChange = useCallback(
     (url: string) => {
-      setMockServerUrl(url);
+      dispatch(setMockServerUrl({ mockServerUrl: url }));
     },
-    [setMockServerUrl],
+    [dispatch],
   );
 
   return (

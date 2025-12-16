@@ -1,22 +1,24 @@
 import { useEffect } from "react";
+import { useDispatch } from "react-redux";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useAddSession, useRemoveAllSessions } from "@/state/sessions/hooks";
+import { addSession, removeAllSessions } from "@/state/sessions/slice";
 
 export function useUpdateDeviceSessions() {
   const dmk = useDmk();
-  const addSession = useAddSession();
-  const removeAllSessions = useRemoveAllSessions();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const subscription = dmk
       .listenToConnectedDevice()
       .subscribe((connectedDevice) => {
-        addSession(connectedDevice.sessionId, connectedDevice);
+        dispatch(
+          addSession({ sessionId: connectedDevice.sessionId, connectedDevice }),
+        );
       });
     return () => {
       subscription.unsubscribe();
-      removeAllSessions();
+      dispatch(removeAllSessions());
     };
-  }, [dmk, addSession, removeAllSessions]);
+  }, [dmk, dispatch]);
 }

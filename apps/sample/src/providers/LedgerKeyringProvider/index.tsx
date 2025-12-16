@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import { useSelector } from "react-redux";
 import {
   type LedgerKeyringProtocol,
   LedgerKeyringProtocolBuilder,
@@ -14,7 +15,7 @@ import {
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useSelectedSessionId } from "@/state/sessions/hooks";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
 type LedgerKeyringProtocolContextType = {
   app: LedgerKeyringProtocol | null;
@@ -33,7 +34,7 @@ export const LedgerKeyringProtocolProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const dmk = useDmk();
-  const sessionId = useSelectedSessionId();
+  const sessionId = useSelector(selectSelectedSessionId);
 
   const [app, setApp] = useState<LedgerKeyringProtocol | null>(null);
   useEffect(() => {

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import { type Session } from "@ledgerhq/device-mockserver-client";
 import { Button, Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
@@ -7,7 +8,7 @@ import { ClickableListItem } from "@/components/ClickableListItem";
 import { MockDeviceDrawer } from "@/components/MockView/MockDeviceDrawer";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useMockClient } from "@/hooks/useMockClient";
-import { useMockServerUrl } from "@/state/settings/hooks";
+import { selectMockServerUrl } from "@/state/settings/selectors";
 
 const MockButton = styled(Button).attrs({
   variant: "main",
@@ -21,7 +22,7 @@ export const MockView: React.FC = () => {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [drawerVisible, setDrawerVisibility] = useState<boolean>(false);
 
-  const mockServerUrl = useMockServerUrl();
+  const mockServerUrl = useSelector(selectMockServerUrl);
 
   const client = useMockClient(mockServerUrl);
 

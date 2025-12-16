@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
@@ -14,11 +15,11 @@ import {
   useExportLogsCallback,
 } from "@/providers/DeviceManagementKitProvider";
 import {
-  useOrderedConnectedDevices,
-  useSelectedSessionId,
-  useSelectSession,
-} from "@/state/sessions/hooks";
-import { useTransport } from "@/state/settings/hooks";
+  selectOrderedConnectedDevices,
+  selectSelectedSessionId,
+} from "@/state/sessions/selectors";
+import { setSelectedSession } from "@/state/sessions/slice";
+import { selectTransport } from "@/state/settings/selectors";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -56,10 +57,17 @@ export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const dmk = useDmk();
   const exportLogs = useExportLogsCallback();
-  const orderedConnectedDevices = useOrderedConnectedDevices();
-  const selectedSessionId = useSelectedSessionId();
-  const selectSession = useSelectSession();
-  const transport = useTransport();
+  const orderedConnectedDevices = useSelector(selectOrderedConnectedDevices);
+  const selectedSessionId = useSelector(selectSelectedSessionId);
+  const dispatch = useDispatch();
+  const transport = useSelector(selectTransport);
+
+  const selectSession = useCallback(
+    (sessionId: DeviceSessionId) => {
+      dispatch(setSelectedSession({ sessionId }));
+    },
+    [dispatch],
+  );
 
   useEffect(() => {
     dmk
@@ -120,9 +128,9 @@ export const Sidebar: React.FC = () => {
             name={connectedDevice.name}
             model={connectedDevice.modelId}
             type={connectedDevice.type}
-            onSelect={() => selectSession(sessionId)}
-            onDisconnect={() => onDeviceDisconnect(sessionId)}
-            onReconnect={() => onDeviceReconnect(sessionId)}
+            onSelect={selectSession}
+            onDisconnect={onDeviceDisconnect}
+            onReconnect={onDeviceReconnect}
           />
         ))}
       </div>
