@@ -1,14 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
   addERC7730Descriptor,
   ERC7730Client,
   fetchAndStoreCertificates,
 } from "@ledgerhq/cal-interceptor";
+import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
 import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import { useCalInterceptor } from "@/providers/CalInterceptorProvider";
-import { useCalConfig } from "@/providers/SignerEthProvider";
+import { selectCalConfig } from "@/state/settings/selectors";
+import { setCalConfig } from "@/state/settings/slice";
 
 export function ERC7730TesterDrawer() {
   const {
@@ -19,7 +22,15 @@ export function ERC7730TesterDrawer() {
     getStoredDescriptorCount,
     interceptor,
   } = useCalInterceptor();
-  const { calConfig, setCalConfig } = useCalConfig();
+  const calConfig = useSelector(selectCalConfig);
+  const dispatch = useDispatch();
+
+  const setCalConfigFn = useCallback(
+    (calConfig: ContextModuleCalConfig) => {
+      dispatch(setCalConfig({ calConfig }));
+    },
+    [dispatch],
+  );
 
   const [erc7730Input, setERC7730Input] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -36,12 +47,12 @@ export function ERC7730TesterDrawer() {
   // Set CAL config to test mode when interceptor becomes active
   useEffect(() => {
     if (isActive && calConfig.mode !== "test") {
-      setCalConfig({
+      setCalConfigFn({
         ...calConfig,
         mode: "test",
       });
     }
-  }, [isActive, calConfig, setCalConfig]);
+  }, [isActive, calConfig, setCalConfigFn]);
 
   const addERC7730 = useCallback(async () => {
     if (!erc7730Input.trim() || !interceptor) {

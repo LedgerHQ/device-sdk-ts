@@ -22,7 +22,7 @@ export const Web3ChecksUrlSetting: React.FC = () => {
 
   const onValueChange = useCallback(
     (value: string) => {
-        setWeb3ChecksUrlFn(value);
+      setWeb3ChecksUrlFn(value);
     },
     [setWeb3ChecksUrlFn],
   );

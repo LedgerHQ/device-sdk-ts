@@ -22,7 +22,7 @@ export const MetadataServiceUrlSetting: React.FC = () => {
 
   const onValueChange = useCallback(
     (value: string) => {
-        setMetadataServiceUrlFn(value);
+      setMetadataServiceUrlFn(value);
     },
     [setMetadataServiceUrlFn],
   );

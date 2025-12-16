@@ -1,3 +1,4 @@
+import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
 import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
@@ -42,6 +43,12 @@ export const settingsSlice = createSlice({
     },
 
     // CAL config - granular actions that update the object in place
+    setCalConfig: (
+      state,
+      action: PayloadAction<{ calConfig: ContextModuleCalConfig }>,
+    ) => {
+      state.calConfig = action.payload.calConfig;
+    },
     setCalUrl: (state, action: PayloadAction<{ calUrl: string }>) => {
       state.calConfig = { ...state.calConfig, url: action.payload.calUrl };
     },
@@ -93,6 +100,7 @@ export const {
   setSpeculosUrl,
   setSpeculosVncUrl,
   setAppProvider,
+  setCalConfig,
   setCalUrl,
   setCalMode,
   setCalBranch,
