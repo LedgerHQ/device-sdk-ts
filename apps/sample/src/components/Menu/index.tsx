@@ -45,9 +45,9 @@ export const Menu: React.FC = () => {
         <Icons.LedgerDevices />
         <MenuTitle
           data-testid="CTA_route-to-/device-actions"
-          onClick={() => router.push("device-actions")}
+          onClick={() => router.push("/device-actions")}
         >
-          Device actions
+          Device Actions
         </MenuTitle>
       </MenuItem>
 
@@ -72,10 +72,10 @@ export const Menu: React.FC = () => {
       <MenuItem>
         <Icons.ListEye />
         <MenuTitle
-          data-testid="CTA_route-to-/clear-signing"
-          onClick={() => router.push("/clear-signing")}
+          data-testid="CTA_route-to-/clear-signing-tools"
+          onClick={() => router.push("/clear-signing-tools")}
         >
-          Clear Signing
+          Clear Signing Tools
         </MenuTitle>
       </MenuItem>
       <MenuItem>
