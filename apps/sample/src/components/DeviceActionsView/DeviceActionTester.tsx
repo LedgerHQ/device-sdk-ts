@@ -20,10 +20,7 @@ import styled from "styled-components";
 
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
-import {
-  CommandForm,
-  type ValueSelector,
-} from "@/components/CommandsView/CommandForm";
+import { Form, type ValueSelector } from "@/components/Form";
 import { type FieldType } from "@/hooks/useForm";
 
 import {
@@ -219,7 +216,7 @@ export function DeviceActionTester<
               disabled={loading}
             />
           ) : (
-            <CommandForm
+            <Form
               initialValues={values}
               onChange={setValues}
               valueSelector={valueSelector}

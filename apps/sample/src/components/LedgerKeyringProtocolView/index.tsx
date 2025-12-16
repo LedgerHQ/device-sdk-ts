@@ -20,9 +20,9 @@ import {
 import { catchError, from, map, of, tap } from "rxjs";
 import styled from "styled-components";
 
-import { CommandForm } from "@/components//CommandsView/CommandForm";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { Form } from "@/components/Form";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
@@ -127,7 +127,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
             };
           }
         },
-        InputValuesComponent: RowCommandForm as typeof CommandForm<AuthInput>,
+        InputValuesComponent: RowCommandForm as typeof Form<AuthInput>,
         initialValues: {
           ...genIdentity(),
           trustchainId: "",
@@ -255,7 +255,7 @@ type AuthInput = {
   permissions: string;
 };
 
-const RowCommandForm = styled(CommandForm)`
+const RowCommandForm = styled(Form)`
   flex-direction: row;
 `;
 

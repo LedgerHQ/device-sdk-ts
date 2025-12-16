@@ -9,10 +9,7 @@ import {
 } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
-import {
-  CommandForm,
-  type ValueSelector,
-} from "@/components/CommandsView/CommandForm";
+import { Form, type ValueSelector } from "@/components/Form";
 import { type FieldType } from "@/hooks/useForm";
 import { selectCalBranch, selectCalUrl } from "@/state/settings/selectors";
 
