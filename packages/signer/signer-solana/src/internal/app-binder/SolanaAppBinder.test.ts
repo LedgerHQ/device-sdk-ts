@@ -34,6 +34,7 @@ import {
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
+import { ReplayTransactionDeviceAction } from "./device-action/ReplayTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
@@ -508,6 +509,96 @@ describe("SolanaAppBinder", () => {
         deviceAction: new GenerateTransactionDeviceAction({
           input: {
             derivationPath,
+            skipOpenApp,
+            contextModule: contextModuleStub,
+          },
+        }),
+      });
+    });
+  });
+
+  describe("replayTransaction", () => {
+    it("should return the swapped serialized transaction", () =>
+      new Promise<void>((resolve, reject) => {
+        // given
+        const swappedSerializedTx = "SWAPPED_BASE64";
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: swappedSerializedTx,
+            } as DeviceActionState<
+              unknown,
+              DmkError,
+              DeviceActionIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // when
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+        );
+        const { observable } = appBinder.replayTransaction({
+          derivationPath: "44'/501'/0'/0'",
+          serialisedTransaction: "INPUT_BASE64",
+          skipOpenApp: false,
+        });
+
+        // then
+        const states: DeviceActionState<
+          unknown,
+          DmkError,
+          DeviceActionIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: (err) => reject(err),
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: swappedSerializedTx,
+                },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    it("should call executeDeviceAction with the correct params", () => {
+      // given
+      const derivationPath = "44'/501'/0'/0'";
+      const serialisedTransaction = "INPUT_BASE64";
+      const skipOpenApp = true;
+
+      // when
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+      );
+      appBinder.replayTransaction({
+        derivationPath,
+        serialisedTransaction,
+        skipOpenApp,
+      });
+
+      // then
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
+        deviceAction: new ReplayTransactionDeviceAction({
+          input: {
+            derivationPath,
+            serialisedTransaction,
             skipOpenApp,
             contextModule: contextModuleStub,
           },

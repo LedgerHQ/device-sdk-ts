@@ -23,6 +23,11 @@ import {
   type SignTransactionDAOutput,
   SolanaToolsBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
+import {
+  type ReplayTransactionDAError,
+  type ReplayTransactionDAIntermediateValue,
+  type ReplayTransactionDAOutput,
+} from "@ledgerhq/device-signer-kit-solana/api/app-binder/ReplayTransactionDeviceActionTypes.js";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -82,7 +87,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAddressDAIntermediateValue
       >,
       {
-        title: "Sign Transaction",
+        title: "Sign transaction",
         description:
           "Perform all the actions necessary to sign a Solana transaction with the device",
         executeDeviceAction: ({ derivationPath, transaction }) => {
@@ -146,7 +151,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAppConfigurationDAIntermediateValue
       >,
       {
-        title: "Generate Transaction",
+        title: "Generate transaction",
         description:
           "Perform all the actions necessary to generate a transaction to test the Solana signer",
         executeDeviceAction: ({ derivationPath }) => {
@@ -154,17 +159,39 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
-          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
         GenerateTransactionDAOutput,
         {
           derivationPath: string;
-          skipOpenApp: boolean;
         },
         GenerateTransactionDAError,
         GenerateTransactionDAIntermediateValue
+      >,
+      {
+        title: "Replay a Solana transaction",
+        description:
+          "Perform all the actions necessary to replay a Solana transaction with your public key as the fee payer",
+        executeDeviceAction: ({ derivationPath, serialisedTransaction }) => {
+          return solanaTools.replayTransaction(
+            derivationPath,
+            serialisedTransaction,
+          );
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          serialisedTransaction: "",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        ReplayTransactionDAOutput,
+        {
+          derivationPath: string;
+          serialisedTransaction: string;
+        },
+        ReplayTransactionDAError,
+        ReplayTransactionDAIntermediateValue
       >,
     ],
     [deviceModelId, solanaTools, signer],
