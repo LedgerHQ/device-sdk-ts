@@ -13,6 +13,8 @@ import { useCalInterceptor } from "@/providers/CalInterceptorProvider";
 import { selectCalConfig } from "@/state/settings/selectors";
 import { setCalConfig } from "@/state/settings/slice";
 
+import { InputLabel } from "../InputLabel";
+
 export function ERC7730TesterDrawer() {
   const {
     isActive,
@@ -143,11 +145,9 @@ export function ERC7730TesterDrawer() {
 
         <Divider />
 
-        <Text variant="paragraph" fontWeight="medium">
-          ERC7730 Descriptor
-        </Text>
-        <Flex flexDirection="row" flexWrap="wrap" rowGap={2} columnGap={2}>
+        <Flex flexDirection="column" alignItems="stretch">
           <Input
+            renderLeft={<InputLabel>ERC7730 Descriptor</InputLabel>}
             placeholder="Paste your ERC7730 descriptor JSON here..."
             value={erc7730Input}
             onChange={setERC7730Input}
