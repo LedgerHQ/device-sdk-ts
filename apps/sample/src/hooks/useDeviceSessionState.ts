@@ -19,21 +19,24 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
 
   useEffect(() => {
     if (sessionId) {
-      const subscription = dmk
-        .getDeviceSessionState({
-          sessionId,
-        })
-        .subscribe((state) => {
-          if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
-            dispatch(removeSession({ sessionId }));
-          } else {
-            setDeviceSessionState(state);
-          }
-        });
-
-      return () => {
-        subscription.unsubscribe();
-      };
+      try {
+        const subscription = dmk
+          .getDeviceSessionState({
+            sessionId,
+          })
+          .subscribe((state) => {
+            if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
+              dispatch(removeSession({ sessionId }));
+            } else {
+              setDeviceSessionState(state);
+            }
+          });
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.warn("Error getting device session state:", error);
+      }
     }
   }, [sessionId, dmk, dispatch]);
 
