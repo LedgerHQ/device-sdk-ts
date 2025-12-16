@@ -8,7 +8,7 @@ import { StyledDrawer } from "@/components/StyledDrawer";
 import { CalCheckDappDrawer } from "./CalCheckDappDrawer";
 import { ERC7730TesterDrawer } from "./ERC7730TesterDrawer";
 
-export const CalView = () => {
+export const ClearSigningView = () => {
   const [isCheckDappOpen, setIsCheckDappOpen] = useState(false);
   const [isERC7730TesterOpen, setIsERC7730TesterOpen] = useState(false);
 
@@ -34,7 +34,7 @@ export const CalView = () => {
   const pageDescription = "Check descriptor availability on the CAL";
 
   return (
-    <PageWithHeader title="Crypto Assets">
+    <PageWithHeader title="Clear Signing">
       <Grid
         columns={1}
         style={{ rowGap: 6, columnGap: 6, overflowY: "scroll" }}

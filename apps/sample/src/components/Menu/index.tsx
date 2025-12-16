@@ -75,13 +75,7 @@ export const Menu: React.FC = () => {
           data-testid="CTA_route-to-/clear-signing"
           onClick={() => router.push("/clear-signing")}
         >
-          Clear Signing (new)
-        </MenuTitle>
-      </MenuItem>
-      <MenuItem>
-        <Icons.Trash />
-        <MenuTitle onClick={() => router.push("/cal")}>
-          CAL (to remove)
+          Clear Signing
         </MenuTitle>
       </MenuItem>
       <MenuItem>

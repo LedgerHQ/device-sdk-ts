@@ -7,6 +7,7 @@ export const InputLabel = styled(Text).attrs({
   flexShrink: 0,
   color: "neutral.c70",
   ml: 6,
+  paddingTop: "1px",
 })``;
 
 export const SelectInputLabel = styled(InputLabel).attrs({
