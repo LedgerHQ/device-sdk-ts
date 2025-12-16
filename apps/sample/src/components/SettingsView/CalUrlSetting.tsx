@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectCalUrl } from "@/state/settings/selectors";
 import { setCalUrl } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const CalUrlSetting: React.FC = () => {
@@ -22,9 +22,7 @@ export const CalUrlSetting: React.FC = () => {
 
   const onValueChange = useCallback(
     (value: string) => {
-      if (value.startsWith("http")) {
-        setCalUrlFn(value);
-      }
+      setCalUrlFn(value);
     },
     [setCalUrlFn],
   );
@@ -39,7 +37,10 @@ export const CalUrlSetting: React.FC = () => {
           placeholder="https://crypto-assets-service.api.ledger.com/v1"
         />
       </Flex>
-      <ResetSetting stateSelector={selectCalUrl} setStateAction={setCalUrlFn} />
+      <ResetSettingCTA
+        stateSelector={selectCalUrl}
+        setStateAction={setCalUrlFn}
+      />
     </SettingBox>
   );
 };

@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectSpeculosVncUrl } from "@/state/settings/selectors";
 import { setSpeculosVncUrl } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const SpeculosVncUrlSetting: React.FC = () => {
@@ -30,7 +30,7 @@ export const SpeculosVncUrlSetting: React.FC = () => {
           placeholder="ws://127.0.0.1:5900"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectSpeculosVncUrl}
         setStateAction={setSpeculosVncUrlFn}
       />

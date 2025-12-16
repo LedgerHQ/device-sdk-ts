@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectSpeculosUrl } from "@/state/settings/selectors";
 import { setSpeculosUrl } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const SpeculosUrlSetting: React.FC = () => {
@@ -30,7 +30,7 @@ export const SpeculosUrlSetting: React.FC = () => {
           placeholder="http://127.0.0.1:5000"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectSpeculosUrl}
         setStateAction={setSpeculosUrlFn}
       />

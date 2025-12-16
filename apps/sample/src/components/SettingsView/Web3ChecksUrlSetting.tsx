@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectWeb3ChecksUrl } from "@/state/settings/selectors";
 import { setWeb3ChecksUrl } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const Web3ChecksUrlSetting: React.FC = () => {
@@ -37,7 +37,7 @@ export const Web3ChecksUrlSetting: React.FC = () => {
           placeholder="https://web3checks-backend.api.ledger.com/v3"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectWeb3ChecksUrl}
         setStateAction={setWeb3ChecksUrlFn}
       />

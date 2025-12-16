@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectMockServerUrl } from "@/state/settings/selectors";
 import { setMockServerUrl } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const MockServerUrlSetting: React.FC = () => {
@@ -30,7 +30,7 @@ export const MockServerUrlSetting: React.FC = () => {
           placeholder="http://127.0.0.1:4000"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectMockServerUrl}
         setStateAction={setMockServerUrlFn}
       />

@@ -1,6 +1,6 @@
 import React from "react";
 import { useCallback, useMemo, useState } from "react";
-import { Flex, Grid, Text } from "@ledgerhq/react-ui";
+import { Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { PageWithHeader } from "@/components/PageWithHeader";

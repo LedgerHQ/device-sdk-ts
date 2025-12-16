@@ -23,7 +23,7 @@ export type SettingsState = {
   // DMK settings
   appProvider: number;
 
-  // Context module config objects (stored as objects to avoid re-renders)
+  // Context module config
   calConfig: ContextModuleCalConfig;
   web3ChecksConfig: ContextModuleWeb3ChecksConfig;
   metadataServiceConfig: ContextModuleMetadataServiceConfig;

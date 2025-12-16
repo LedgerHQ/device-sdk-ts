@@ -8,7 +8,7 @@ import { Flex, Switch } from "@ledgerhq/react-ui";
 import { selectTransport } from "@/state/settings/selectors";
 import { setTransport } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const SpeculosToggleSetting: React.FC = () => {
@@ -39,7 +39,7 @@ export const SpeculosToggleSetting: React.FC = () => {
           data-testid="switch_speculos"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectTransport}
         setStateAction={setTransportFn}
       />

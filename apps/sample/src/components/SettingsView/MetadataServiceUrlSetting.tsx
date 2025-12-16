@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectMetadataServiceUrl } from "@/state/settings/selectors";
 import { setMetadataServiceUrl } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const MetadataServiceUrlSetting: React.FC = () => {
@@ -37,7 +37,7 @@ export const MetadataServiceUrlSetting: React.FC = () => {
           placeholder="https://nft.api.live.ledger.com"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectMetadataServiceUrl}
         setStateAction={setMetadataServiceUrlFn}
       />

@@ -9,7 +9,11 @@ interface ResetSettingProps<T> {
   setStateAction: (newState: T) => void;
 }
 
-export const ResetSetting = <T,>({
+/**
+ * ResetSetting is a CTA to reset the state of a given selector to its initial value.
+ * If the state is similar to the initial state, the CTA is not displayed.
+ */
+export const ResetSettingCTA = <T,>({
   stateSelector,
   setStateAction,
 }: ResetSettingProps<T>) => {

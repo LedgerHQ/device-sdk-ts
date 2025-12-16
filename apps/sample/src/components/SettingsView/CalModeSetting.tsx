@@ -7,7 +7,7 @@ import { type CalMode } from "@/state/settings/schema";
 import { selectCalMode } from "@/state/settings/selectors";
 import { setCalMode } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 type Option = { label: string; value: string };
@@ -32,7 +32,7 @@ export const CalModeSetting: React.FC = () => {
 
   const onValueChange = useCallback(
     (option: Option | null) => {
-      if (option && (option.value === "prod" || option.value === "test")) {
+      if (option) {
         setCalModeFn(option.value as CalMode);
       }
     },
@@ -52,7 +52,7 @@ export const CalModeSetting: React.FC = () => {
           placeholder="Select mode"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectCalMode}
         setStateAction={setCalModeFn}
       />

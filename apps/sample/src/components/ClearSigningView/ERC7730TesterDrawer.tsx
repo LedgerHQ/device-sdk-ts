@@ -9,11 +9,10 @@ import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
 import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
+import { InputLabel } from "@/components/InputLabel";
 import { useCalInterceptor } from "@/providers/CalInterceptorProvider";
 import { selectCalConfig } from "@/state/settings/selectors";
 import { setCalConfig } from "@/state/settings/slice";
-
-import { InputLabel } from "../InputLabel";
 
 export function ERC7730TesterDrawer() {
   const {

@@ -7,7 +7,7 @@ import { type CalBranch } from "@/state/settings/schema";
 import { selectCalBranch } from "@/state/settings/selectors";
 import { setCalBranch } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 type Option = { label: string; value: CalBranch };
@@ -55,7 +55,7 @@ export const CalBranchSetting: React.FC = () => {
           placeholder="Select branch"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectCalBranch}
         setStateAction={setCalBranchFn}
       />

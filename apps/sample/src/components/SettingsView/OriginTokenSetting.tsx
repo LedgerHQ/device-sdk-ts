@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectOriginToken } from "@/state/settings/selectors";
 import { setOriginToken } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const OriginTokenSetting: React.FC = () => {
@@ -30,7 +30,7 @@ export const OriginTokenSetting: React.FC = () => {
           placeholder="origin-token"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectOriginToken}
         setStateAction={setOriginTokenFn}
       />

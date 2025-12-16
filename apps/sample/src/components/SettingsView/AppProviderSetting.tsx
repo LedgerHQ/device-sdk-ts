@@ -6,7 +6,7 @@ import { InputLabel } from "@/components/InputLabel";
 import { selectAppProvider } from "@/state/settings/selectors";
 import { setAppProvider } from "@/state/settings/slice";
 
-import { ResetSetting } from "./ResetSetting";
+import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const AppProviderSetting: React.FC = () => {
@@ -41,7 +41,7 @@ export const AppProviderSetting: React.FC = () => {
           placeholder="Provider ID"
         />
       </Flex>
-      <ResetSetting
+      <ResetSettingCTA
         stateSelector={selectAppProvider}
         setStateAction={setAppProviderFn}
       />
