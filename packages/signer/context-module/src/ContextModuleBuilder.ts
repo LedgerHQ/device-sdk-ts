@@ -1,3 +1,5 @@
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
   type ContextModuleCalConfig,
@@ -7,6 +9,7 @@ import {
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { NullLoggerFactory } from "./shared/utils/NullLoggerFactory";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type ContextModule } from "./ContextModule";
@@ -34,14 +37,22 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
+  loggerFactory: NullLoggerFactory,
 };
 
 export class ContextModuleBuilder {
   private config: ContextModuleConfig = DEFAULT_CONFIG;
   private originToken?: string;
 
-  constructor({ originToken }: ContextModuleConstructorArgs = {}) {
+  constructor({
+    originToken,
+    loggerFactory,
+  }: ContextModuleConstructorArgs = {}) {
     this.originToken = originToken;
+
+    if (loggerFactory) {
+      this.config.loggerFactory = loggerFactory;
+    }
   }
 
   /**
@@ -130,6 +141,17 @@ export class ContextModuleBuilder {
    */
   setDatasourceConfig(datasourceConfig: ContextModuleDatasourceConfig) {
     this.config.datasource = datasourceConfig;
+    return this;
+  }
+
+  /**
+   * Set a custom logger factory
+   *
+   * @param loggerFactory
+   * @returns this
+   */
+  setLoggerFactory(loggerFactory: (tag: string) => LoggerPublisherService) {
+    this.config.loggerFactory = loggerFactory;
     return this;
   }
 

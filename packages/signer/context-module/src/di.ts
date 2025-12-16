@@ -1,7 +1,9 @@
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 import { calldataModuleFactory } from "@/calldata/di/calldataModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
+import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { dynamicNetworkModuleFactory } from "@/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
@@ -24,6 +26,14 @@ type MakeContainerArgs = {
 
 export const makeContainer = ({ config }: MakeContainerArgs) => {
   const container = new Container();
+
+  if (config.loggerFactory) {
+    container
+      .bind<
+        (tag: string) => LoggerPublisherService
+      >(configTypes.ContextModuleLoggerFactory)
+      .toConstantValue(config.loggerFactory);
+  }
 
   container.loadSync(
     configModuleFactory(config),
