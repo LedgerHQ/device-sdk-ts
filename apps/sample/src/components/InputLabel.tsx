@@ -10,6 +10,6 @@ export const InputLabel = styled(Text).attrs({
 })``;
 
 export const SelectInputLabel = styled(InputLabel).attrs({
-  ml: 0,
+  ml: -2,
   mr: 6,
 })``;

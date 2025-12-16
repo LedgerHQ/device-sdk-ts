@@ -1,12 +1,14 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
-import { Switch } from "@ledgerhq/react-ui";
+import { Flex, Switch } from "@ledgerhq/react-ui";
 
 import { selectTransport } from "@/state/settings/selectors";
 import { setTransport } from "@/state/settings/slice";
 
+import { ResetSetting } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const MockServerToggleSetting: React.FC = () => {
@@ -15,24 +17,32 @@ export const MockServerToggleSetting: React.FC = () => {
 
   const mockServerEnabled = transport === mockserverIdentifier;
 
+  const setTransportFn = useCallback(
+    (value: TransportIdentifier) => {
+      dispatch(setTransport({ transport: value }));
+    },
+    [dispatch],
+  );
+
   const onToggle = useCallback(() => {
-    dispatch(
-      setTransport({
-        transport: mockServerEnabled ? webHidIdentifier : mockserverIdentifier,
-      }),
-    );
-  }, [dispatch, mockServerEnabled]);
+    setTransportFn(mockServerEnabled ? webHidIdentifier : mockserverIdentifier);
+  }, [setTransportFn, mockServerEnabled]);
 
   return (
     <SettingBox>
-      <Switch
-        onChange={onToggle}
-        checked={mockServerEnabled}
-        name="switch-mock-server"
-        label="Enable Mock server"
-        data-testid="switch_mock-server"
+      <Flex flex={1} flexDirection="column" alignItems="stretch">
+        <Switch
+          onChange={onToggle}
+          checked={mockServerEnabled}
+          name="switch-mock-server"
+          label="Enable Mock server"
+          data-testid="switch_mock-server"
+        />
+      </Flex>
+      <ResetSetting
+        stateSelector={selectTransport}
+        setStateAction={setTransportFn}
       />
     </SettingBox>
   );
 };
-

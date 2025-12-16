@@ -1,32 +1,45 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Input } from "@ledgerhq/react-ui";
+import { Flex, Input } from "@ledgerhq/react-ui";
 
 import { InputLabel } from "@/components/InputLabel";
 import { selectCalUrl } from "@/state/settings/selectors";
 import { setCalUrl } from "@/state/settings/slice";
 
+import { ResetSetting } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const CalUrlSetting: React.FC = () => {
   const calUrl = useSelector(selectCalUrl);
   const dispatch = useDispatch();
 
-  const onValueChange = useCallback(
+  const setCalUrlFn = useCallback(
     (value: string) => {
       dispatch(setCalUrl({ calUrl: value }));
     },
     [dispatch],
   );
 
+  const onValueChange = useCallback(
+    (value: string) => {
+      if (value.startsWith("http")) {
+        setCalUrlFn(value);
+      }
+    },
+    [setCalUrlFn],
+  );
+
   return (
     <SettingBox>
-      <Input
-        renderLeft={<InputLabel>CAL URL</InputLabel>}
-        value={calUrl}
-        onChange={onValueChange}
-        placeholder="https://crypto-assets-service.api.ledger.com/v1"
-      />
+      <Flex flex={1} flexDirection="column" alignItems="stretch">
+        <Input
+          renderLeft={<InputLabel>CAL URL</InputLabel>}
+          value={calUrl}
+          onChange={onValueChange}
+          placeholder="https://crypto-assets-service.api.ledger.com/v1"
+        />
+      </Flex>
+      <ResetSetting stateSelector={selectCalUrl} setStateAction={setCalUrlFn} />
     </SettingBox>
   );
 };

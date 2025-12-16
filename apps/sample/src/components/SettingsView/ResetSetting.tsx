@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
-import { Button } from "@ledgerhq/react-ui";
+import { Flex, IconsLegacy, Link } from "@ledgerhq/react-ui";
 
 import { type RootState, storeInitialState } from "@/state/store";
 
@@ -22,12 +22,20 @@ export const ResetSetting = <T,>({
     return JSON.stringify(state) !== JSON.stringify(initialState);
   }, [state, initialState]);
 
+  if (!isDifferent) {
+    return null;
+  }
+
   return (
-    <Button
-      disabled={!isDifferent}
-      onClick={() => setStateAction(initialState)}
-    >
-      Reset
-    </Button>
+    <Flex flexShrink={1} alignSelf="center" mr={3}>
+      <Link
+        size="small"
+        disabled={!isDifferent}
+        Icon={IconsLegacy.ReverseMedium}
+        onClick={() => setStateAction(initialState)}
+      >
+        Reset
+      </Link>
+    </Flex>
   );
 };

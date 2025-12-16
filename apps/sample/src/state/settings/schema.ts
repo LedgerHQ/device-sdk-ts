@@ -1,5 +1,7 @@
 import {
+  type ContextModuleCalBranch,
   type ContextModuleCalConfig,
+  type ContextModuleCalMode,
   type ContextModuleMetadataServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "@ledgerhq/context-module";
@@ -8,8 +10,8 @@ import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { DEFAULT_SPECULOS_URL, DEFAULT_SPECULOS_VNC_URL } from "@/utils/const";
 
-export type CalMode = "prod" | "test";
-export type CalBranch = "main" | "next" | "demo";
+export type CalMode = ContextModuleCalMode;
+export type CalBranch = ContextModuleCalBranch;
 
 export type SettingsState = {
   // Transport settings

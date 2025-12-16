@@ -1,10 +1,9 @@
 import React from "react";
 import { Flex } from "@ledgerhq/react-ui";
-import styled, { type DefaultTheme } from "styled-components";
 
+import { Block } from "@/components/Block";
 import { PageWithHeader } from "@/components/PageWithHeader";
 
-import { Block } from "../Block";
 import { AppProviderSetting } from "./AppProviderSetting";
 import { CalBranchSetting } from "./CalBranchSetting";
 import { CalModeSetting } from "./CalModeSetting";
