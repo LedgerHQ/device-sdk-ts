@@ -1,7 +1,7 @@
 import React from "react";
 import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import { type BaseStyledProps } from "@ledgerhq/react-ui/components/styled";
-import styled from "styled-components";
+import styled, { type DefaultTheme } from "styled-components";
 
 const ListItemWrapper = styled(Flex)`
   &:hover {
