@@ -19,11 +19,17 @@ import {
   type GetMasterFingerprintDAOutput,
 } from "@api/app-binder/GetMasterFingerprintDeviceActionTypes";
 import {
+  type RegisterWalletDAError,
+  type RegisterWalletDAIntermediateValue,
+  type RegisterWalletDAOutput,
+} from "@api/app-binder/RegisterWalletDeviceActionTypes";
+import {
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
 } from "@api/index";
 import { type Signature } from "@api/model/Signature";
+import { RegisteredWallet, WalletPolicy } from "@api/model/Wallet";
 import { BtcAppBinder } from "@internal/app-binder/BtcAppBinder";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
 import { GetMasterFingerprintCommand } from "@internal/app-binder/command/GetMasterFingerprintCommand";
@@ -409,5 +415,114 @@ describe("BtcAppBinder", () => {
           },
         });
       }));
+  });
+
+  describe("registerWallet", () => {
+    let subscription: Subscription;
+    afterEach(() => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    });
+
+    it("should return the registered wallet with hmac", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const walletPolicy = new WalletPolicy(
+          "My Multisig",
+          "wsh(sortedmulti(2,@0/**,@1/**))",
+          ["[f5acc2fd/48'/1'/0'/2']tpubXXX", "tpubYYY"],
+        );
+        const registeredWallet = new RegisteredWallet(
+          walletPolicy.name,
+          walletPolicy.descriptorTemplate,
+          walletPolicy.keys,
+          Uint8Array.from(new Array(32).fill(0x42)),
+        );
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: registeredWallet,
+            } as DeviceActionState<
+              RegisterWalletDAOutput,
+              RegisterWalletDAError,
+              RegisterWalletDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const appBinder = new BtcAppBinder(
+          mockedDmk,
+          "sessionId",
+          {} as WalletBuilder,
+          {} as WalletSerializer,
+          {} as DataStoreService,
+          {} as PsbtMapper,
+          {} as ValueParser,
+        );
+        const { observable } = appBinder.registerWallet({
+          wallet: walletPolicy,
+          skipOpenApp: false,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          RegisterWalletDAOutput,
+          RegisterWalletDAError,
+          RegisterWalletDAIntermediateValue
+        >[] = [];
+        subscription = observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
+            reject(err);
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: registeredWallet,
+                },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    it("should call executeDeviceAction", () => {
+      // GIVEN
+      const walletPolicy = new WalletPolicy(
+        "My Multisig",
+        "wsh(sortedmulti(2,@0/**,@1/**))",
+        ["[f5acc2fd/48'/1'/0'/2']tpubXXX", "tpubYYY"],
+      );
+
+      // WHEN
+      const appBinder = new BtcAppBinder(
+        mockedDmk,
+        "sessionId",
+        {} as WalletBuilder,
+        {} as WalletSerializer,
+        {} as DataStoreService,
+        {} as PsbtMapper,
+        {} as ValueParser,
+      );
+      appBinder.registerWallet({
+        wallet: walletPolicy,
+        skipOpenApp: false,
+      });
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalled();
+    });
   });
 });
