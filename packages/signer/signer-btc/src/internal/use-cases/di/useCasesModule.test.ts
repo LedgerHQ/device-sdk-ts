@@ -23,6 +23,12 @@ describe("useCasesModuleFactory", () => {
       ).toBeTruthy();
     });
 
+    it("should bind GetMasterFingerprintUseCase", () => {
+      expect(
+        container.isBound(useCasesTypes.GetMasterFingerprintUseCase),
+      ).toBeTruthy();
+    });
+
     it("should bind SignMessageUseCase", () => {
       expect(container.isBound(useCasesTypes.SignMessageUseCase)).toBeTruthy();
     });

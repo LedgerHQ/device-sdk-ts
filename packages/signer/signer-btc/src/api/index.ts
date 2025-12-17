@@ -1,6 +1,7 @@
 export { type SignerBtc } from "./SignerBtc";
 export { SignerBtcBuilder } from "./SignerBtcBuilder";
 export * from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+export * from "@api/app-binder/GetMasterFingerprintDeviceActionTypes";
 export * from "@api/app-binder/GetWalletAddressDeviceActionTypes";
 export * from "@api/app-binder/SignMessageDeviceActionTypes";
 export * from "@api/app-binder/SignPsbtDeviceActionTypes";
