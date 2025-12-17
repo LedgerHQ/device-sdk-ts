@@ -18,6 +18,7 @@ import {
 } from "@root/src/domain/models/config/LoggerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
+import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 
 export type CliConfig = {
   // config.speculos
@@ -34,6 +35,7 @@ export type CliConfig = {
 
   // config.signer
   skipCal?: boolean;
+  erc7730Files?: string[];
 
   // config.logger
   logLevel: CliLogLevel;
@@ -58,12 +60,17 @@ export class EthereumTransactionTesterCli {
   private container: Container;
   private controller: ServiceController;
   private config: CliConfig;
+  private interceptorService?: ERC7730InterceptorService;
 
   constructor(config: CliConfig) {
     this.config = config;
 
     const randomPort = Math.floor(Math.random() * 10000) + 10000;
     const randomVncPort = Math.floor(Math.random() * 10000) + 20000;
+
+    // Use test signatures when custom ERC7730 files are provided
+    const calMode =
+      config.erc7730Files && config.erc7730Files.length > 0 ? "test" : "prod";
 
     // Create DI container configuration
     const diConfig: ClearSigningTesterConfig = {
@@ -82,6 +89,11 @@ export class EthereumTransactionTesterCli {
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
         gated: true,
+      },
+      cal: {
+        url: "https://crypto-assets-service.api.ledger.com/v1",
+        mode: calMode,
+        branch: "main",
       },
       etherscan: {
         apiKey: process.env["ETHERSCAN_API_KEY"] || "default-key",
@@ -118,6 +130,16 @@ export class EthereumTransactionTesterCli {
    * Initialize the CLI by setting up the controller
    */
   async initialize(): Promise<void> {
+    // Set up ERC7730 interceptor if files are provided
+    if (this.config.erc7730Files && this.config.erc7730Files.length > 0) {
+      this.interceptorService = new ERC7730InterceptorService();
+      try {
+        await this.interceptorService.setupFromFiles(this.config.erc7730Files);
+      } catch (error) {
+        console.error("Failed to setup ERC7730 interceptor:", error);
+      }
+    }
+
     await this.controller.start();
   }
 
@@ -126,6 +148,12 @@ export class EthereumTransactionTesterCli {
    */
   async cleanup(): Promise<void> {
     await this.controller.stop();
+
+    // Stop interceptor if running
+    if (this.interceptorService) {
+      this.interceptorService.stop();
+      this.interceptorService = undefined;
+    }
   }
 
   /**
@@ -215,6 +243,10 @@ export class EthereumTransactionTesterCli {
       .option(
         "--plugin-version <version>",
         "Plugin version to use. If not specified, uses latest version.",
+      )
+      .option(
+        "--erc7730-files <files...>",
+        "One or more ERC7730 JSON files to inject for clear signing testing",
       )
       .option(
         "--docker-image-tag <tag>",

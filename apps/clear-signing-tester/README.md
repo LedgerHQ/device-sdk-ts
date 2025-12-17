@@ -55,6 +55,7 @@ Options:
 
   # @config.signer
   --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0")
+  --erc7730-files <files...>     One or more ERC7730 JSON files to inject for clear signing testing
 
   # @config.logger
   --log-level <level>            Console log level: none, error, warn, info, debug (default: info)
@@ -231,6 +232,26 @@ pnpm cs-tester cli raw-transaction <tx> \
 - The directory structure should be: `COIN_APPS_PATH/<device>/<os-version>/<app-name>/app_<version>.elf`
 - If `--plugin-version` is not specified, the tester will automatically resolve the latest available plugin version
 - The plugin and Ethereum app must be compatible with the same OS version
+
+### ERC7730 Clear Signing Support
+
+The tester supports injecting custom ERC7730 descriptors for testing clear signing with contracts that may not yet be in the production CAL (Crypto Assets List). This is useful for testing new contracts or dApps during development.
+
+#### Using ERC7730 Files
+
+```bash
+# Test with a single ERC7730 descriptor file
+pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./path/to/descriptor.json
+
+# Test with multiple ERC7730 descriptor files
+pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./descriptor1.json ./descriptor2.json
+
+# Test typed data with ERC7730 descriptors
+pnpm cs-tester cli typed-data-file ./test-data.json --erc7730-files ./descriptor.json
+
+# Test a contract with custom descriptors
+pnpm cs-tester cli contract 0x1234... --erc7730-files ./descriptor.json
+```
 
 ## Output
 

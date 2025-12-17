@@ -17,6 +17,7 @@ import {
 import { inject } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type RetryService } from "@root/src/domain/services/RetryService";
@@ -39,6 +40,8 @@ export class DMKServiceController implements ServiceController {
     private readonly speculosConfig: SpeculosConfig,
     @inject(TYPES.SignerConfig)
     private readonly signerConfig: SignerConfig,
+    @inject(TYPES.CalConfig)
+    private readonly calConfig: CalConfig,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.LoggerSubscribers)
@@ -61,6 +64,7 @@ export class DMKServiceController implements ServiceController {
       originToken: this.signerConfig.originToken,
     })
       .setDatasourceConfig({ proxy: "safe" })
+      .setCalConfig(this.calConfig)
       .build();
   }
 

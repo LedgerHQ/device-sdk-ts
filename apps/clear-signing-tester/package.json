@@ -25,6 +25,7 @@
     "test:full": "scripts/test-full.mjs"
   },
   "dependencies": {
+    "@ledgerhq/cal-interceptor": "workspace:^",
     "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
