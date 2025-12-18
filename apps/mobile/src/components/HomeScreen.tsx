@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Platform } from "react-native";
+import { Image } from "react-native";
 import {
   RootScreens,
   type RootStackParamList,
@@ -41,15 +41,19 @@ export const HomeScreen = () => {
         flex={1}
         flexDirection="column"
         justifyContent="center"
-        alignItems="space-between">
-        {Platform.OS === "android" && (
-          <CtaButton
-            size="medium"
-            type="color"
-            onPress={() => navigate(RootScreens.ConnectDevice)}>
-            Connect to a device
-          </CtaButton>
-        )}
+        alignItems="center">
+        <CtaButton
+          size="medium"
+          type="color"
+          onPress={() => navigate(RootScreens.ConnectDevice)}>
+          Connect to a device
+        </CtaButton>
+        <CtaButton
+          size="medium"
+          type="color"
+          onPress={() => navigate(RootScreens.DevToolsTest)}>
+          DevTools Test
+        </CtaButton>
       </Flex>
     </Flex>
   );

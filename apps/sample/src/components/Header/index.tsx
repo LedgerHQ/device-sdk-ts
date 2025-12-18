@@ -1,5 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { FlipperPluginManager } from "@ledgerhq/device-management-kit-flipper-plugin-client";
+import React, { useCallback, useState } from "react";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
 import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
@@ -92,29 +91,6 @@ export const Header = () => {
     [dispatch, mockServerStateUrl],
   );
 
-  const onClickConnectFlipperClient = useCallback(() => {
-    /**
-     * This is useful in case the Flipper server is started after the app and
-     * we want to connect to it without reloading the app, to keep the app state
-     * and the logs.
-     * */
-    FlipperPluginManager.getInstance().attemptInitialization();
-  }, []);
-
-  const [flipperClientConnected, setFlipperClientConnected] =
-    useState<boolean>(false);
-
-  useEffect(() => {
-    const subscription = FlipperPluginManager.getInstance()
-      .observeIsConnected()
-      .subscribe((connected: boolean) => {
-        setFlipperClientConnected(connected);
-      });
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
   return (
     <Root>
       <Actions>
@@ -139,7 +115,7 @@ export const Header = () => {
             </div>
             <UrlInput
               value={mockServerStateUrl}
-              onChange={(url: string) => setMockServerStateUrl(url)}
+              onChange={(url: unknown) => setMockServerStateUrl(url as string)}
               renderRight={() => (
                 <Flex alignItems="center" justifyContent="stretch">
                   <Button iconButton onClick={validateServerUrl}>
@@ -170,16 +146,6 @@ export const Header = () => {
               onChange={(url: string) => setSpeculosStateVncUrl(url)}
             />
             <Divider />
-            <Text>
-              Flipper ({flipperClientConnected ? "Connected" : "Disconnected"}):
-            </Text>
-            <Button
-              onClick={onClickConnectFlipperClient}
-              disabled={flipperClientConnected}
-              variant="shade"
-            >
-              Connect Flipper client
-            </Button>
           </Flex>
         </DropdownGeneric>
       </div>

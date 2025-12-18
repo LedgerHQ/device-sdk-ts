@@ -1,0 +1,68 @@
+{
+  "name": "@ledgerhq/device-management-kit-devtools-ui",
+  "private": true,
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./*": {
+      "types": "./lib/types/*",
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*"
+    }
+  },
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "pnpm ldmk-tool build --entryPoints index.ts,src/*.tsx,src/*.ts,src/**/*.tsx,src/**/*.ts --tsconfig tsconfig.build.json",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints index.ts,src/*.tsx,src/*.ts,src/**/*.tsx,src/**/*.ts --tsconfig tsconfig.build.json",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "rxjs": "catalog:",
+    "@ledgerhq/react-ui": "catalog:",
+    "styled-components": "catalog:",
+    "antd": "5.20.0",
+    "react-inspector": "9.0.0",
+    "@tanstack/react-table": "8.20.5",
+    "@tanstack/react-virtual": "3.10.8"
+  },
+  "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@types/styled-components": "catalog:",
+    "@types/styled-system": "^5.1.15",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  }
+}

@@ -28,6 +28,7 @@ Thumbs.db
 
 # build
 lib
+packages/devtools-rozenite/dist
 !apps/sample/src/lib/
 
 # turbo

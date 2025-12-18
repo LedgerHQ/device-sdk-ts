@@ -10,6 +10,7 @@ import { StatusBar, useColorScheme } from "react-native";
 import { RootNavigator } from "_navigators/RootNavigator";
 import { getNavigationTheme } from "_navigators/styles.ts";
 import { DeviceSessionsProvider } from "_providers/deviceSessionsProvider.tsx";
+import { DevToolsConnectorProvider } from "_providers/devToolsConnectorProvider";
 import { DmkProvider } from "_providers/dmkProvider";
 import { StyleProvider } from "@ledgerhq/native-ui";
 import styled, { useTheme } from "styled-components/native";
@@ -22,11 +23,13 @@ function StyledApp(): React.JSX.Element {
   const theme = useTheme();
   const navigationTheme = useMemo(() => getNavigationTheme(theme), [theme]);
   return (
-    <DmkProvider>
-      <DeviceSessionsProvider>
-        <RootNavigator theme={navigationTheme} />
-      </DeviceSessionsProvider>
-    </DmkProvider>
+    <DevToolsConnectorProvider>
+      <DmkProvider>
+        <DeviceSessionsProvider>
+          <RootNavigator theme={navigationTheme} />
+        </DeviceSessionsProvider>
+      </DmkProvider>
+    </DevToolsConnectorProvider>
   );
 }
 

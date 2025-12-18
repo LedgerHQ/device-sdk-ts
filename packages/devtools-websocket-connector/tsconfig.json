@@ -1,0 +1,13 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
+  "include": ["src", "index.ts", "vitest.*.mjs"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./lib/types",
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "types": ["node", "vitest/globals"]
+  }
+}
