@@ -1,5 +1,11 @@
 # @ledgerhq/speculos-device-controller
 
+## 0.2.1
+
+### Patch Changes
+
+- [#1200](https://github.com/LedgerHQ/device-sdk-ts/pull/1200) [`a808f2b`](https://github.com/LedgerHQ/device-sdk-ts/commit/a808f2b16ba046fcfe0f84c4af42e6aac50a91f2) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Patch release to use the latest DMK version
+
 ## 0.2.0
 
 ### Minor Changes
