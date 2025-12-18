@@ -110,6 +110,7 @@ export class BuildSubcontextsTask {
       const transactionFieldContext = {
         chainId: this.args.subset.chainId,
         address: reference.value,
+        deviceModelId: this.args.deviceModelId,
       };
 
       const expectedType =
@@ -150,6 +151,7 @@ export class BuildSubcontextsTask {
             {
               chainId: this.args.subset.chainId,
               address,
+              deviceModelId: this.args.deviceModelId,
             },
             expectedType,
           ),

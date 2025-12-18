@@ -22,7 +22,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: toshimaru/auto-author-assign@v2.1.1
+      - uses: toshimaru/auto-author-assign@v2.1.2
 
   detect-changes:
     name: Detect changed packages
@@ -118,7 +118,7 @@ jobs:
         id: unit-tests
         run: pnpm test:coverage
 
-      - uses: sonarsource/sonarqube-scan-action@v6
+      - uses: sonarsource/sonarqube-scan-action@v7
         if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
           SONAR_TOKEN: ${{ secrets.PUBLIC_GREEN_SONAR_TOKEN }}

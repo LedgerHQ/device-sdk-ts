@@ -1,12 +1,9 @@
 {
-  "name": "@ledgerhq/signer-utils",
-  "version": "1.1.1",
-  "private": true,
+  "name": "@ledgerhq/cal-interceptor",
+  "version": "0.0.1",
+  "description": "CAL (Crypto Assets List) interceptor for testing and development",
   "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
-  },
+  "private": false,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -20,7 +17,9 @@
     }
   },
   "files": [
-    "./lib"
+    "./lib",
+    "./api",
+    "./requirements.txt"
   ],
   "scripts": {
     "prebuild": "rimraf lib",
@@ -30,24 +29,18 @@
     "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
-    "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../dist/ \\; ",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "axios": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
-    "@ledgerhq/ldmk-tool": "workspace:^",
-    "@ledgerhq/eslint-config-dsdk": "workspace:^",
-    "@ledgerhq/prettier-config-dsdk": "workspace:^",
-    "@ledgerhq/tsconfig-dsdk": "workspace:^",
-    "@ledgerhq/vitest-config-dmk": "workspace:^",
-    "ts-node": "catalog:"
-  },
-  "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:*",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*"
   }
 }

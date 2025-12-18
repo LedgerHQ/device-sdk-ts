@@ -1,5 +1,7 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { TokenContextFieldLoader } from "@/token/domain/TokenContextFieldLoader";
@@ -8,14 +10,20 @@ describe("TokenContextFieldLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
     getTokenInfosPayload: vi.fn(),
   };
+  const loadCertificateMock = vi.fn();
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: loadCertificateMock,
+  };
   const tokenContextFieldLoader = new TokenContextFieldLoader(
     mockTokenDataSource,
+    mockCertificateLoader,
   );
 
   const mockTransactionField = {
     kind: "TOKEN",
     chainId: 1,
     address: "0x1234567890abcdef",
+    deviceModelId: DeviceModelId.STAX,
   };
 
   const mockTokenPayload = "0x123456789abcdef0";
@@ -31,6 +39,7 @@ describe("TokenContextFieldLoader", () => {
         kind: "TOKEN",
         chainId: 1,
         address: "0x1234567890abcdef",
+        deviceModelId: DeviceModelId.STAX,
       };
 
       // THEN
@@ -53,11 +62,23 @@ describe("TokenContextFieldLoader", () => {
         { name: "empty object", value: {} },
         {
           name: "object missing chainId",
-          value: { kind: "TOKEN", address: "0x123" },
+          value: {
+            kind: "TOKEN",
+            address: "0x123",
+            deviceModelId: DeviceModelId.STAX,
+          },
         },
         {
           name: "object missing address",
-          value: { kind: "TOKEN", chainId: 1 },
+          value: {
+            kind: "TOKEN",
+            chainId: 1,
+            deviceModelId: DeviceModelId.STAX,
+          },
+        },
+        {
+          name: "object missing deviceModelId",
+          value: { kind: "TOKEN", chainId: 1, address: "0x123" },
         },
       ];
 
@@ -106,6 +127,7 @@ describe("TokenContextFieldLoader", () => {
       vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
         Right(mockTokenPayload),
       );
+      loadCertificateMock.mockResolvedValue(undefined);
 
       // WHEN
       const result =
@@ -119,6 +141,35 @@ describe("TokenContextFieldLoader", () => {
       expect(result).toEqual({
         type: ClearSignContextType.TOKEN,
         payload: mockTokenPayload,
+      });
+    });
+
+    it("should return token context with certificate when successful", async () => {
+      // GIVEN
+      vi.spyOn(mockTokenDataSource, "getTokenInfosPayload").mockResolvedValue(
+        Right(mockTokenPayload),
+      );
+      loadCertificateMock.mockResolvedValueOnce({
+        keyUsageNumber: 1,
+        payload: new Uint8Array([1, 2, 3, 4]),
+      });
+
+      // WHEN
+      const result =
+        await tokenContextFieldLoader.loadField(mockTransactionField);
+
+      // THEN
+      expect(mockTokenDataSource.getTokenInfosPayload).toHaveBeenCalledWith({
+        address: mockTransactionField.address,
+        chainId: mockTransactionField.chainId,
+      });
+      expect(result).toEqual({
+        type: ClearSignContextType.TOKEN,
+        payload: mockTokenPayload,
+        certificate: {
+          keyUsageNumber: 1,
+          payload: new Uint8Array([1, 2, 3, 4]),
+        },
       });
     });
 
