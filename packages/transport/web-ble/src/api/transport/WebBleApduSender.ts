@@ -8,6 +8,9 @@ import {
   DeviceDisconnectedWhileSendingError,
   DeviceNotInitializedError,
   type DmkError,
+  logApduResponseReceived,
+  logApduSending,
+  logApduSent,
   type LoggerPublisherService,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
@@ -99,6 +102,7 @@ export class WebBleApduSender
       .map((segmenter) => segmenter.getFrames(apdu))
       .orDefault([]);
 
+    logApduSending(this._logger, apdu);
     for (const frame of frames) {
       try {
         await this._writeToGattCharacteristic(
@@ -117,6 +121,7 @@ export class WebBleApduSender
         break;
       }
     }
+    logApduSent(this._logger, apdu);
 
     if (abortTimeout) {
       timeoutHandle = setTimeout(() => {
@@ -356,7 +361,7 @@ export class WebBleApduSender
       .handleFrame(incomingFrame)
       .map((maybeResponse) =>
         maybeResponse.map((resp) => {
-          this._logger.debug("Received APDU", { data: { resp } });
+          logApduResponseReceived(this._logger, resp);
           this._pendingResponseResolver.map((resolve) => resolve(Right(resp)));
           this._pendingResponseResolver = Maybe.empty();
         }),

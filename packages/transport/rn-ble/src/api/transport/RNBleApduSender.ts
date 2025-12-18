@@ -15,6 +15,9 @@ import {
   type DeviceId,
   DeviceNotInitializedError,
   type DmkError,
+  logApduResponseReceived,
+  logApduSending,
+  logApduSent,
   type LoggerPublisherService,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
@@ -98,6 +101,7 @@ export class RNBleApduSender
     maybeApduResponse
       .map((response) => {
         response.map((apduResponse) => {
+          logApduResponseReceived(this._logger, apduResponse);
           this._sendApduPromiseResolver.map((resolve) =>
             resolve(Right(apduResponse)),
           );
@@ -258,7 +262,9 @@ export class RNBleApduSender
 
     for (const frame of frames) {
       try {
+        logApduSending(this._logger, frame.getRawData());
         await this.write(Base64.fromUint8Array(frame.getRawData()));
+        logApduSent(this._logger, frame.getRawData());
       } catch (error) {
         this._logger.info("Error sending frame", { data: { error } });
       }

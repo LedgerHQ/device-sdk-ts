@@ -21,6 +21,7 @@ import { type DmkError } from "@api/Error";
 import { bufferToHexaString } from "@api/index";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
+import { logApduToSend } from "@api/utils/logApduExchange";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { MutexService } from "@internal/device-session/service/MutexService";
 import { RefresherService } from "@internal/device-session/service/RefresherService";
@@ -166,7 +167,7 @@ export class DeviceSession {
         eventName: SessionEvents.DEVICE_STATE_UPDATE_BUSY,
       });
 
-      this._logger.debug(`[exchange] => ${bufferToHexaString(rawApdu, false)}`);
+      logApduToSend(this._logger, rawApdu);
       const result = await this._connectedDevice.sendApdu(
         rawApdu,
         options.triggersDisconnection,
@@ -175,9 +176,6 @@ export class DeviceSession {
 
       result
         .ifRight((response: ApduResponse) => {
-          this._logger.debug(
-            `[exchange] <= ${bufferToHexaString(response.data, false)}${bufferToHexaString(response.statusCode, false)}`,
-          );
           if (CommandUtils.isLockedDeviceResponse(response)) {
             this._sessionEventDispatcher.dispatch({
               eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,

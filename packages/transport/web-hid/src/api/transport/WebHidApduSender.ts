@@ -7,6 +7,9 @@ import {
   type DeviceApduSender,
   type DmkError,
   FramerUtils,
+  logApduResponseReceived,
+  logApduSending,
+  logApduSent,
   type LoggerPublisherService,
   OpeningConnectionError,
   SendApduTimeoutError,
@@ -79,6 +82,7 @@ export class WebHidApduSender
       },
     );
 
+    logApduSending(this.logger, apdu);
     for (const frame of this.apduSender.getFrames(apdu)) {
       try {
         await this.dependencies.device.sendReport(
@@ -90,6 +94,7 @@ export class WebHidApduSender
         return Promise.resolve(Left(new WebHidSendReportError(error)));
       }
     }
+    logApduSent(this.logger, apdu);
 
     if (abortTimeout) {
       timeout = setTimeout(() => {
@@ -112,6 +117,7 @@ export class WebHidApduSender
     maybeApduResponse
       .map((response) => {
         response.map((apduResponse) => {
+          logApduResponseReceived(this.logger, apduResponse);
           this.sendApduPromiseResolver.map((resolve) =>
             resolve(Right(apduResponse)),
           );

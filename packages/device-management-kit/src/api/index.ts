@@ -124,3 +124,10 @@ export {
   hexaStringToBuffer,
   isHexaString,
 } from "@api/utils/HexaString";
+export {
+  logApduReceived,
+  logApduResponseReceived,
+  logApduSending,
+  logApduSent,
+  logApduToSend,
+} from "@api/utils/logApduExchange";

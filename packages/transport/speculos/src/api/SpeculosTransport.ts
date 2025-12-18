@@ -9,6 +9,9 @@ import {
   type DmkConfig,
   type DmkError,
   GeneralDmkError,
+  logApduResponseReceived,
+  logApduSending,
+  logApduSent,
   type LoggerPublisherService,
   OpeningConnectionError,
   type Transport,
@@ -149,10 +152,13 @@ export class SpeculosTransport implements Transport {
     apdu: Uint8Array,
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
+      logApduSending(this.logger, apdu);
       const hexApdu = bufferToHexaString(apdu).substring(2);
       const hexResponse: string =
         await this._speculosDataSource.postApdu(hexApdu);
+      logApduSent(this.logger, apdu);
       const apduResponse = this.createApduResponse(hexResponse);
+      logApduResponseReceived(this.logger, apduResponse);
       return Right(apduResponse);
     } catch (error) {
       if (this.connectedDevice) {

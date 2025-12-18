@@ -17,7 +17,9 @@ import com.ledger.devicesdk.shared.androidMainInternal.transport.USB_MTU
 import com.ledger.devicesdk.shared.androidMainInternal.transport.deviceconnection.DeviceApduSender
 import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
 import com.ledger.devicesdk.shared.api.apdu.SendApduResult
+import com.ledger.devicesdk.shared.api.utils.toHexadecimalString
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleErrorLogInfo
 import com.ledger.devicesdk.shared.internal.transport.framer.FramerService
 import com.ledger.devicesdk.shared.internal.transport.framer.to2BytesArray
@@ -70,10 +72,21 @@ internal class AndroidUsbApduSender(
                     throw SendApduTimeoutException
                 }
 
+                loggerService.log(
+                    buildSimpleDebugLogInfo(
+                    "AndroidUsbApduSender",
+                    "[sending] -...> ${apdu.toHexadecimalString()}"
+                ))
+
                 transmitApdu(
                     usbConnection = usbConnection,
                     androidToUsbEndpoint = androidToUsbEndpoint,
                     rawApdu = apdu,
+                )
+
+                buildSimpleDebugLogInfo(
+                    "AndroidUsbApduSender",
+                    "[exchange] => ${apdu.toHexadecimalString()}"
                 )
 
                 val apduResponse =
@@ -81,6 +94,12 @@ internal class AndroidUsbApduSender(
                         usbConnection = usbConnection,
                         usbToAndroidEndpoint = usbToAndroidEndpoint,
                     )
+
+                buildSimpleDebugLogInfo(
+                    "AndroidUsbApduSender",
+                    "[exchange] <= ${apdu.toHexadecimalString()}"
+                )
+
                 timeoutJob.cancel()
 
                 if (apduResponse.isEmpty()) {
