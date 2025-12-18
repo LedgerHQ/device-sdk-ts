@@ -4,12 +4,14 @@ import {
   DeviceStatus,
 } from "@ledgerhq/device-management-kit";
 
-import type { GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
-
-import { ApplicationChecker } from "./ApplicationChecker";
+import {
+  type AppConfig,
+  ApplicationChecker,
+  ApplicationCheckerSupportedAppNames,
+} from "./ApplicationChecker";
 
 describe("ApplicationChecker", () => {
-  function createAppConfig(version: string): GetConfigCommandResponse {
+  function createAppConfig(version: string): AppConfig {
     return {
       blindSigningEnabled: false,
       web3ChecksEnabled: false,
@@ -19,7 +21,7 @@ describe("ApplicationChecker", () => {
   }
 
   it("should pass the check for exclusive version", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -29,16 +31,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.13.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionExclusive("1.12.0")
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(true);
   });
 
   it("should reject the check for exchange flows", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -48,16 +54,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.13.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionExclusive("1.12.0")
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(false);
   });
 
   it("should reject the check for exclusive version", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -67,16 +77,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.12.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionExclusive("1.12.0")
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(false);
   });
 
   it("should pass the check for inclusive version", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -86,16 +100,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.10.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionInclusive("1.12.0")
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(true);
   });
 
   it("should reject the check for inclusive version", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -105,16 +123,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.11.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionInclusive("1.12.0")
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(false);
   });
 
   it("should pass the check for excluded device", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -124,16 +146,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.11.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(true);
   });
 
   it("should reject the check for excluded device", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -143,16 +169,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.11.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .excludeDeviceModel(DeviceModelId.FLEX)
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(false);
   });
 
   it("should pass the check for chained condition", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -162,17 +192,21 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.11.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionInclusive("1.11.0")
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(true);
   });
 
   it("should reject the check for chained condition", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -182,17 +216,21 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.10.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionInclusive("1.11.0")
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(false);
   });
 
   it("should pass the check in plugins", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -202,16 +240,20 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.13.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionExclusive("1.12.0")
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(true);
   });
 
   it("should reject the check in unknexpected state", () => {
-    // GIVEN
+    // given
     const state = {
       sessionStateType: DeviceSessionStateType.Connected,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -221,11 +263,15 @@ describe("ApplicationChecker", () => {
       isSecureConnectionAllowed: false,
     };
     const config = createAppConfig("1.13.0");
-    // WHEN
-    const result = new ApplicationChecker(state, config)
+    // when
+    const result = new ApplicationChecker(
+      state,
+      config,
+      ApplicationCheckerSupportedAppNames.Ethereum,
+    )
       .withMinVersionExclusive("1.12.0")
       .check();
-    // THEN
+    // then
     expect(result).toStrictEqual(false);
   });
 });

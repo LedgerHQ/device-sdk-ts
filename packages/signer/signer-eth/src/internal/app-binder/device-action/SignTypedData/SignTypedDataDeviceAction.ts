@@ -11,6 +11,10 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
+import {
+  ApplicationChecker,
+  ApplicationCheckerSupportedAppNames,
+} from "@ledgerhq/signer-utils";
 import { Left, Nothing, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
@@ -44,7 +48,6 @@ import {
   type ProvideEIP712ContextTaskReturnType,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
@@ -152,6 +155,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            ApplicationCheckerSupportedAppNames.Ethereum,
           )
             .withMinVersionExclusive("1.15.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
