@@ -15,6 +15,10 @@ import {
   GetMasterFingerprintDAInput,
   GetMasterFingerprintDAReturnType,
 } from "@api/app-binder/GetMasterFingerprintDeviceActionTypes";
+import {
+  RegisterWalletDAInput,
+  RegisterWalletDAReturnType,
+} from "@api/app-binder/RegisterWalletDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignPsbtDAReturnType } from "@api/app-binder/SignPsbtDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
@@ -25,6 +29,7 @@ import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExt
 import { GetMasterFingerprintCommand } from "@internal/app-binder/command/GetMasterFingerprintCommand";
 import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
+import { RegisterWalletTask } from "@internal/app-binder/task/RegisterWalletTask";
 import { SendSignMessageTask } from "@internal/app-binder/task/SignMessageTask";
 import { dataStoreTypes } from "@internal/data-store/di/dataStoreTypes";
 import type { DataStoreService } from "@internal/data-store/service/DataStoreService";
@@ -176,6 +181,27 @@ export class BtcAppBinder {
           dataStoreService: this._dataStoreService,
           psbtMapper: this._psbtMapper,
           valueParser: this._valueParser,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  registerWallet(args: RegisterWalletDAInput): RegisterWalletDAReturnType {
+    return this._dmk.executeDeviceAction({
+      sessionId: this._sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new RegisterWalletTask(
+              internalApi,
+              { walletPolicy: args.wallet },
+              this._walletBuilder,
+              this._walletSerializer,
+              this._dataStoreService,
+            ).run(),
+          appName: "Bitcoin",
+          requiredUserInteraction: UserInteractionRequired.RegisterWallet,
           skipOpenApp: args.skipOpenApp,
         },
       }),

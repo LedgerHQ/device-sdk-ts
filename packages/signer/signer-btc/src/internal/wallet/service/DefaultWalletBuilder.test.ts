@@ -4,6 +4,7 @@ import {
   DefaultDescriptorTemplate,
   DefaultWallet,
   RegisteredWallet,
+  WalletPolicy,
 } from "@api/model/Wallet";
 import { Leaf } from "@internal/merkle-tree/model/Leaf";
 import { MerkleTree } from "@internal/merkle-tree/model/MerkleTree";
@@ -91,6 +92,52 @@ describe("DefaultWalletBuilder tests", () => {
     );
     expect(wallet.keys).toStrictEqual([
       "[5c9e228d/48'/1'/0'/0']tpubDEGquuorgFNb8bjh5kNZQMPtABJzoWwNm78FUmeoPkfRtoPF7JLrtoZeT3J3ybq1HmC3Rn1Q8wFQ8J5usanzups5rj7PJoQLNyvq8QbJruW",
+    ]);
+    expect(wallet.keysTree).toStrictEqual(keysTree);
+  });
+
+  it("Create wallet from wallet policy", () => {
+    // Given
+    const builder = new DefaultWalletBuilder(mockMerkleTree);
+    const walletPolicy = new WalletPolicy(
+      "My Multisig",
+      "wsh(sortedmulti(2,@0/**,@1/**))",
+      [
+        "[76223a6e/48'/1'/0'/2']tpubDE7NQymr4AFtewpAsWtnreyq9ghkzQBXpCZjWLFVRAvnbf7vya2eMTvT2fPapNqL8SuVvLQdbUbMfWLVDCZKnsEBqp6UK93QEzL8Ck23AwF",
+        "[f5acc2fd/48'/1'/0'/2']tpubDFAqEGNyad35aBCKUAXbQGDjdVhNueno5ZZVEn3sQbW5ci457gLR7HyTmHBg93oourBssgUxuWz1jX5uhc1qaqFo9VsybY1J5FuedLfm4dK",
+      ],
+    );
+    const keysTree = new MerkleTree(
+      new Leaf(new Uint8Array(), new Uint8Array(32).fill(7)),
+      [],
+    );
+
+    // When
+    mockCreateMerkleTree.mockReturnValueOnce(keysTree);
+    const wallet = builder.fromWalletPolicy(walletPolicy);
+
+    // Then
+    const encoder = new TextEncoder();
+    expect(mockCreateMerkleTree).toHaveBeenCalledWith([
+      encoder.encode(
+        "[76223a6e/48'/1'/0'/2']tpubDE7NQymr4AFtewpAsWtnreyq9ghkzQBXpCZjWLFVRAvnbf7vya2eMTvT2fPapNqL8SuVvLQdbUbMfWLVDCZKnsEBqp6UK93QEzL8Ck23AwF",
+      ),
+      encoder.encode(
+        "[f5acc2fd/48'/1'/0'/2']tpubDFAqEGNyad35aBCKUAXbQGDjdVhNueno5ZZVEn3sQbW5ci457gLR7HyTmHBg93oourBssgUxuWz1jX5uhc1qaqFo9VsybY1J5FuedLfm4dK",
+      ),
+    ]);
+    expect(wallet.name).toStrictEqual("My Multisig");
+    // For wallet registration, hmac should be zeros initially (will be filled by device)
+    expect(wallet.hmac).toStrictEqual(new Uint8Array(32).fill(0));
+    expect(wallet.descriptorTemplate).toStrictEqual(
+      "wsh(sortedmulti(2,@0/**,@1/**))",
+    );
+    expect(wallet.descriptorBuffer).toStrictEqual(
+      encoder.encode("wsh(sortedmulti(2,@0/**,@1/**))"),
+    );
+    expect(wallet.keys).toStrictEqual([
+      "[76223a6e/48'/1'/0'/2']tpubDE7NQymr4AFtewpAsWtnreyq9ghkzQBXpCZjWLFVRAvnbf7vya2eMTvT2fPapNqL8SuVvLQdbUbMfWLVDCZKnsEBqp6UK93QEzL8Ck23AwF",
+      "[f5acc2fd/48'/1'/0'/2']tpubDFAqEGNyad35aBCKUAXbQGDjdVhNueno5ZZVEn3sQbW5ci457gLR7HyTmHBg93oourBssgUxuWz1jX5uhc1qaqFo9VsybY1J5FuedLfm4dK",
     ]);
     expect(wallet.keysTree).toStrictEqual(keysTree);
   });

@@ -1,7 +1,11 @@
 import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { DefaultWallet, RegisteredWallet } from "@api/model/Wallet";
+import {
+  DefaultWallet,
+  RegisteredWallet,
+  WalletPolicy,
+} from "@api/model/Wallet";
 import { merkleTreeTypes } from "@internal/merkle-tree/di/merkleTreeTypes";
 import type { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTreeBuilder";
 import { Wallet } from "@internal/wallet/model/Wallet";
@@ -50,5 +54,23 @@ export class DefaultWalletBuilder implements WalletBuilder {
     return this.fromRegisteredWallet(
       new RegisteredWallet(name, wallet.template, [key], hmac),
     );
+  }
+
+  fromWalletPolicy(walletPolicy: WalletPolicy): Wallet {
+    const encoder = new TextEncoder();
+    const keyBuffers = walletPolicy.keys.map((key) => encoder.encode(key));
+    const keysTree = this.merkleTreeBuilder.build(keyBuffers);
+    const descriptorBuffer = encoder.encode(walletPolicy.descriptorTemplate);
+    // For wallet registration, we use an empty hmac initially.
+    // The real hmac will be returned by the device after registration.
+    const hmac = new Uint8Array(32).fill(0);
+    return new Wallet({
+      name: walletPolicy.name,
+      descriptorTemplate: walletPolicy.descriptorTemplate,
+      keys: walletPolicy.keys,
+      hmac,
+      keysTree,
+      descriptorBuffer,
+    });
   }
 }
