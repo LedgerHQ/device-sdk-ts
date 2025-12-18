@@ -1,6 +1,6 @@
 import React from "react";
 import { useCallback, useMemo, useState } from "react";
-import { Grid, Text } from "@ledgerhq/react-ui";
+import { Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { PageWithHeader } from "@/components/PageWithHeader";
@@ -64,7 +64,7 @@ export const DeviceActionsList: React.FC<Props> = ({
           <DeviceActionTester {...selectedDeviceAction} />
         </>
       ) : (
-        <Grid columns={1} style={{ rowGap: 6, overflowY: "scroll" }}>
+        <Flex flexDirection="column" overflow="scroll" pb={4} rowGap={4}>
           {deviceActions.map((deviceAction) => (
             <DeviceActionRow
               key={`${deviceAction.title}_${deviceAction.description}`}
@@ -72,7 +72,7 @@ export const DeviceActionsList: React.FC<Props> = ({
               {...deviceAction}
             />
           ))}
-        </Grid>
+        </Flex>
       )}
     </PageWithHeader>
   );

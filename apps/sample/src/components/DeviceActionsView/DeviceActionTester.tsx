@@ -20,10 +20,7 @@ import styled from "styled-components";
 
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
-import {
-  CommandForm,
-  type ValueSelector,
-} from "@/components/CommandsView/CommandForm";
+import { Form, type LinkedFields, type ValueSelector } from "@/components/Form";
 import { type FieldType } from "@/hooks/useForm";
 
 import {
@@ -53,6 +50,8 @@ export type DeviceActionProps<
   }>;
   validateValues?: (args: Input) => boolean;
   valueSelector?: ValueSelector<FieldType>;
+  labelSelector?: Partial<Record<string, string>>;
+  linkedFields?: LinkedFields<Input & Record<string, FieldType>>;
   deviceModelId: DeviceModelId;
 };
 
@@ -99,6 +98,8 @@ export function DeviceActionTester<
     initialValues,
     executeDeviceAction,
     valueSelector,
+    labelSelector,
+    linkedFields,
     validateValues,
     InputValuesComponent,
   } = props;
@@ -202,7 +203,7 @@ export function DeviceActionTester<
     "This is an example of what should be shown to the user while executing a device action.";
 
   return (
-    <Flex flexDirection="column" rowGap={3} overflow="hidden" flex={1}>
+    <Flex flexDirection="column" rowGap={3} overflow="scroll" flex={1}>
       <Block data-testid="form_device-action">
         <BoxHeader hint={hintInput}>Device Action input</BoxHeader>
         <Flex
@@ -219,10 +220,12 @@ export function DeviceActionTester<
               disabled={loading}
             />
           ) : (
-            <CommandForm
+            <Form
               initialValues={values}
               onChange={setValues}
               valueSelector={valueSelector}
+              labelSelector={labelSelector}
+              linkedFields={linkedFields}
               disabled={loading}
             />
           )}
@@ -236,7 +239,13 @@ export function DeviceActionTester<
           />
         </Flex>
       </Block>
-      <Flex flexDirection="row" columnGap={3} overflow="hidden" flex={1}>
+      <Flex
+        flexDirection="row"
+        columnGap={3}
+        overflow="hidden"
+        minHeight={250}
+        flex={1}
+      >
         <Block width={270} flexDirection="column" overflow="hidden">
           <BoxHeader hint={hintUIExample}>Device Action UI example</BoxHeader>
           <Flex

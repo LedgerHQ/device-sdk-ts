@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
@@ -13,8 +14,12 @@ import {
   useDmk,
   useExportLogsCallback,
 } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import {
+  selectOrderedConnectedDevices,
+  selectSelectedSessionId,
+} from "@/state/sessions/selectors";
+import { setSelectedSession } from "@/state/sessions/slice";
+import { selectTransport } from "@/state/settings/selectors";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   flex-direction: column;
@@ -28,7 +33,7 @@ const Root = styled(Flex).attrs({ py: 8, px: 6 })`
   }) =>
     mockServerEnabled
       ? theme.colors.constant.purple
-      : theme.colors.background.drawer};
+      : theme.colors.background.card};
 `;
 
 const Subtitle = styled(Text).attrs({ mb: 5 })``;
@@ -52,13 +57,17 @@ export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
   const dmk = useDmk();
   const exportLogs = useExportLogsCallback();
-  const {
-    state: { deviceById, selectedId },
-    dispatch,
-  } = useDeviceSessionsContext();
-  const {
-    state: { transport },
-  } = useDmkConfigContext();
+  const orderedConnectedDevices = useSelector(selectOrderedConnectedDevices);
+  const selectedSessionId = useSelector(selectSelectedSessionId);
+  const dispatch = useDispatch();
+  const transport = useSelector(selectTransport);
+
+  const selectSession = useCallback(
+    (sessionId: DeviceSessionId) => {
+      dispatch(setSelectedSession({ sessionId }));
+    },
+    [dispatch],
+  );
 
   useEffect(() => {
     dmk
@@ -74,12 +83,11 @@ export const Sidebar: React.FC = () => {
     async (sessionId: string) => {
       try {
         await dmk.disconnect({ sessionId });
-        dispatch({ type: "remove_session", payload: { sessionId } });
       } catch (e) {
         console.error(e);
       }
     },
-    [dispatch, dmk],
+    [dmk],
   );
 
   const onDeviceReconnect = useCallback(
@@ -110,26 +118,24 @@ export const Sidebar: React.FC = () => {
       </Link>
 
       <Subtitle variant={"tiny"}>
-        Device sessions ({Object.values(deviceById).length})
+        Device sessions ({orderedConnectedDevices.length})
       </Subtitle>
       <div data-testid="container_devices">
-        {Object.entries(deviceById).map(([sessionId, device]) => (
+        {orderedConnectedDevices.map(({ sessionId, connectedDevice }) => (
           <Device
             key={sessionId}
             sessionId={sessionId}
-            name={device.name}
-            model={device.modelId}
-            type={device.type}
-            onSelect={() =>
-              dispatch({ type: "select_session", payload: { sessionId } })
-            }
-            onDisconnect={() => onDeviceDisconnect(sessionId)}
-            onReconnect={() => onDeviceReconnect(sessionId)}
+            name={connectedDevice.name}
+            model={connectedDevice.modelId}
+            type={connectedDevice.type}
+            onSelect={selectSession}
+            onDisconnect={onDeviceDisconnect}
+            onReconnect={onDeviceReconnect}
           />
         ))}
       </div>
       <AvailableDevices />
-      <MenuContainer active={!!selectedId}>
+      <MenuContainer active={!!selectedSessionId}>
         <Subtitle variant={"tiny"}>Menu</Subtitle>
         <Menu />
       </MenuContainer>

@@ -1,11 +1,12 @@
 import React, { useCallback, useState } from "react";
+import { useSelector } from "react-redux";
 import { type ApduResponse } from "@ledgerhq/device-management-kit";
 import { Button, Divider, Flex, Grid, Input, Text } from "@ledgerhq/react-ui";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { useApduForm } from "@/hooks/useApduForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
 const Root = styled(Flex).attrs({ mx: 15, mt: 10, mb: 5 })`
   flex-direction: column;
@@ -70,9 +71,9 @@ export const ApduView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [apduResponse, setApduResponse] = useState<ApduResponse>();
   const dmk = useDmk();
-  const {
-    state: { selectedId: selectedSessionId },
-  } = useDeviceSessionsContext();
+
+  const selectedSessionId = useSelector(selectSelectedSessionId);
+
   const onSubmit = useCallback(
     async (values: typeof apduFormValues) => {
       setLoading(true);

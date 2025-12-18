@@ -1,8 +1,9 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { Button, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
 /**
  * Component that wraps the child component and passes it the selected sessionId.
@@ -11,9 +12,7 @@ import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 export const SessionIdWrapper: React.FC<{
   ChildComponent: React.FC<{ sessionId: string }>;
 }> = ({ ChildComponent }) => {
-  const {
-    state: { selectedId: sessionId },
-  } = useDeviceSessionsContext();
+  const sessionId = useSelector(selectSelectedSessionId);
 
   const router = useRouter();
 

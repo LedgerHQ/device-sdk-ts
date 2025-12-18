@@ -8,12 +8,16 @@
 "use client";
 
 import React, { useCallback, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
 import { Icons } from "@ledgerhq/react-ui/index";
 import styled from "styled-components";
 
 import { VncViewer } from "@/components/VncViewer";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import {
+  selectSpeculosVncUrl,
+  selectTransport,
+} from "@/state/settings/selectors";
 
 const CONSTANTS = {
   BUTTON_SIZE: 56,
@@ -93,8 +97,8 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
   onDragStart,
   onDragEnd,
 }) => {
-  const { state } = useDmkConfigContext();
-  const { transport, speculosVncUrl } = state;
+  const transport = useSelector(selectTransport);
+  const speculosVncUrl = useSelector(selectSpeculosVncUrl);
 
   const [position, setPosition] = useState<Position>(
     initialPosition || CONSTANTS.DEFAULT_POSITION,

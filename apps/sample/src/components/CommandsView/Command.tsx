@@ -7,10 +7,10 @@ import { Button, Flex, Icons, InfiniteLoader } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
+import { Form, type ValueSelector } from "@/components/Form";
 import { StyledDrawer } from "@/components/StyledDrawer";
 import { type FieldType } from "@/hooks/useForm";
 
-import { CommandForm, type ValueSelector } from "./CommandForm";
 import { CommandResponse, type CommandResponseProps } from "./CommandResponse";
 
 export type CommandProps<
@@ -119,7 +119,7 @@ export function Command<
         description={description}
       >
         <Block data-testid="form_device-command">
-          <CommandForm
+          <Form
             initialValues={values}
             onChange={setValues}
             valueSelector={valueSelector}

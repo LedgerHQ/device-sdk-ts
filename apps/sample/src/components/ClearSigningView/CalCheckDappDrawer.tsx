@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   Button,
   Divider,
@@ -8,12 +9,9 @@ import {
 } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
-import {
-  CommandForm,
-  type ValueSelector,
-} from "@/components/CommandsView/CommandForm";
+import { Form, type ValueSelector } from "@/components/Form";
 import { type FieldType } from "@/hooks/useForm";
-import { useCalConfig } from "@/providers/SignerEthProvider";
+import { selectCalBranch, selectCalUrl } from "@/state/settings/selectors";
 
 import { CalAvailabilityResponseComponent } from "./CalAvailabilityResponse";
 import {
@@ -52,7 +50,8 @@ export function CalCheckDappDrawer<
   const [valuesInvalid, setValuesInvalid] = useState<boolean>(false);
   const [responses, setResponses] = useState<Response[]>([]);
   const [loading, setLoading] = useState(false);
-  const { calConfig } = useCalConfig();
+  const calUrl = useSelector(selectCalUrl);
+  const calBranch = useSelector(selectCalBranch);
   const handleClickExecute = useCallback(() => {
     setLoading(true);
     const id = ++nonce.current;
@@ -63,8 +62,8 @@ export function CalCheckDappDrawer<
 
         const response = await checkContractAvailability(
           values.smartContractAddress.toString(),
-          calConfig.url,
-          calConfig.branch,
+          calUrl,
+          calBranch,
         );
 
         setResponses((prev) => [
@@ -86,7 +85,7 @@ export function CalCheckDappDrawer<
     };
 
     fetchData();
-  }, [values]);
+  }, [values, calUrl, calBranch]);
 
   const handleClickClear = useCallback(() => {
     setResponses([]);
@@ -115,7 +114,7 @@ export function CalCheckDappDrawer<
           rowGap={3}
           pointerEvents={loading ? "none" : "auto"}
         >
-          <CommandForm
+          <Form
             initialValues={values}
             onChange={setValues}
             valueSelector={valueSelector}

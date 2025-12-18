@@ -19,11 +19,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Grid } from "@ledgerhq/react-ui";
 
+import { getValueSelectorFromEnum } from "@/components/Form";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 import { Command, type CommandProps } from "./Command";
-import { getValueSelectorFromEnum } from "./CommandForm";
 
 export const CommandsView: React.FC<{ sessionId: string }> = ({
   sessionId: selectedSessionId,

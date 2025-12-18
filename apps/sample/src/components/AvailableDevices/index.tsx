@@ -6,7 +6,6 @@ import styled from "styled-components";
 import { AvailableDevice } from "@/components/Device";
 import { useAvailableDevices } from "@/hooks/useAvailableDevices";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Title = styled(Text)<{ disabled: boolean }>`
   :hover {
@@ -67,18 +66,9 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
 ) => {
   const { deviceModel, connected } = device;
   const dmk = useDmk();
-  const { dispatch } = useDeviceSessionsContext();
-  const connectToDevice = useCallback(() => {
-    dmk.connect({ device }).then((sessionId) => {
-      dispatch({
-        type: "add_session",
-        payload: {
-          sessionId,
-          connectedDevice: dmk.getConnectedDevice({ sessionId }),
-        },
-      });
-    });
-  }, [dmk, device, dispatch]);
+  const connectToDevice = useCallback(async () => {
+    await dmk.connect({ device });
+  }, [dmk, device]);
 
   return (
     <Flex flexDirection="row" alignItems="center">
