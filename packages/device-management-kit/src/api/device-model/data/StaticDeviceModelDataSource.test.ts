@@ -188,8 +188,51 @@ describe("StaticDeviceModelDataSource", () => {
           "13d63400-2c97-8004-0003-4c6564676572",
           "13d63400-2c97-8004-0001-4c6564676572",
         ),
+        "13d63400-2c97-9004-0000-4c6564676572": new BleDeviceInfos(
+          dataSource.getDeviceModel({ id: DeviceModelId.APEX }),
+          "13d63400-2c97-9004-0000-4c6564676572",
+          "13d63400-2c97-9004-0002-4c6564676572",
+          "13d63400-2c97-9004-0003-4c6564676572",
+          "13d63400-2c97-9004-0001-4c6564676572",
+        ),
       });
     });
+    const expectedMatches = [
+      {
+        serviceUuid: "13d63400-2c97-0004-0000-4c6564676572",
+        deviceModel: DeviceModelId.NANO_X,
+      },
+      {
+        serviceUuid: "13d63400-2c97-6004-0000-4c6564676572",
+        deviceModel: DeviceModelId.STAX,
+      },
+      {
+        serviceUuid: "13d63400-2c97-3004-0000-4c6564676572",
+        deviceModel: DeviceModelId.FLEX,
+      },
+      {
+        serviceUuid: "13d63400-2c97-8004-0000-4c6564676572",
+        deviceModel: DeviceModelId.APEX,
+      },
+      {
+        serviceUuid: "13d63400-2c97-9004-0000-4c6564676572",
+        deviceModel: DeviceModelId.APEX,
+      },
+    ];
+
+    it.each(expectedMatches)(
+      "should properly map the service UUID $serviceUuid to the device model $deviceModel",
+      ({ serviceUuid, deviceModel }) => {
+        // given
+        const dataSource = new StaticDeviceModelDataSource();
+        // when
+        const bleServiceInfos = dataSource.getBluetoothServicesInfos();
+        // then
+        expect(bleServiceInfos[serviceUuid]?.deviceModel.id).toEqual(
+          deviceModel,
+        );
+      },
+    );
   });
   describe("getBluetoothServices", () => {
     it("should return the bluetooth services", () => {
@@ -203,6 +246,7 @@ describe("StaticDeviceModelDataSource", () => {
         "13d63400-2c97-6004-0000-4c6564676572",
         "13d63400-2c97-3004-0000-4c6564676572",
         "13d63400-2c97-8004-0000-4c6564676572",
+        "13d63400-2c97-9004-0000-4c6564676572",
       ]);
     });
   });
