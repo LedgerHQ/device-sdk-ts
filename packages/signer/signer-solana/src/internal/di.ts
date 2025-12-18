@@ -2,6 +2,7 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
@@ -14,6 +15,7 @@ export type MakeContainerProps = {
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
 };
+
 export const makeContainer = ({
   dmk,
   sessionId,
@@ -28,6 +30,14 @@ export const makeContainer = ({
   container
     .bind<ContextModule>(externalTypes.ContextModule)
     .toConstantValue(contextModule);
+
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(externalTypes.DmkLoggerFactory)
+    .toConstantValue((tag: string) =>
+      dmk.getDMKLoggerFactory()(`SignerSolana-${tag}`),
+    );
 
   container.loadSync(appBinderModuleFactory(), useCasesModuleFactory());
 

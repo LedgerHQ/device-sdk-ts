@@ -6,6 +6,7 @@ import {
 import {
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
@@ -20,15 +21,20 @@ export type SolanaBuildContextResult = {
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionResolutionContext;
+  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class BuildTransactionContextTask {
+  private readonly _logger: LoggerPublisherService;
   constructor(
     private readonly api: InternalApi,
     private readonly args: BuildTransactionContextTaskArgs,
-  ) {}
+  ) {
+    this._logger = args.loggerFactory("BuildTransactionContextTask");
+  }
 
   async run(): Promise<SolanaBuildContextResult> {
+    this._logger.debug("[run] Starting BuildTransactionContextTask");
     const { contextModule, options } = this.args;
     const deviceState = this.api.getDeviceSessionState();
 
@@ -39,21 +45,43 @@ export class BuildTransactionContextTask {
       challenge = challengeRes.data.challenge;
     }
 
-    // get Solana context
-    const contextResult = await contextModule.getSolanaContext({
+    const contextModuleGetSolanaContextArgs = {
       deviceModelId: deviceState.deviceModelId,
       tokenAddress: options.tokenAddress,
       challenge,
       createATA: options.createATA,
       tokenInternalId: options.tokenInternalId,
       templateId: options.templateId,
+    };
+    // get Solana context
+    this._logger.debug("[run] Calling contextModule.getSolanaContext", {
+      data: {
+        args: contextModuleGetSolanaContextArgs,
+      },
     });
+    const contextResult = await contextModule.getSolanaContext(
+      contextModuleGetSolanaContextArgs,
+    );
 
     return contextResult.caseOf({
       Left: (err) => {
+        this._logger.error("[run] Solana context result", {
+          data: {
+            error: {
+              message: err.message,
+              name: err.name,
+              stack: err.stack,
+            },
+          },
+        });
         throw err;
       },
       Right: (ctx) => {
+        this._logger.debug("[run] Solana context result", {
+          data: {
+            result: ctx,
+          },
+        });
         return {
           tlvDescriptor: ctx.tlvDescriptor,
           trustedNamePKICertificate: ctx.trustedNamePKICertificate,

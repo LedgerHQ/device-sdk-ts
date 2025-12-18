@@ -3,6 +3,7 @@ import {
   CallTaskInAppDeviceAction,
   DeviceManagementKit,
   type DeviceSessionId,
+  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -29,6 +30,8 @@ export class SolanaAppBinder {
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
     @inject(externalTypes.ContextModule) private contextModule: ContextModule,
+    @inject(externalTypes.DmkLoggerFactory)
+    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAddress(args: {
@@ -64,6 +67,7 @@ export class SolanaAppBinder {
           transaction: args.transaction,
           transactionOptions: args.solanaTransactionOptionalConfig,
           contextModule: this.contextModule,
+          loggerFactory: this.dmkLoggerFactory,
         },
       }),
     });

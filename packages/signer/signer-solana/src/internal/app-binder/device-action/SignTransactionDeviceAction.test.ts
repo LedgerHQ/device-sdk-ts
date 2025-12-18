@@ -7,6 +7,7 @@ import {
   DeviceSessionStateType,
   DeviceStatus,
   InvalidStatusWordError,
+  type LoggerPublisherService,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
@@ -31,6 +32,19 @@ const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 const contextModuleStub: ContextModule = {
   getSolanaContext: vi.fn(),
 } as unknown as ContextModule;
+
+const makeLoggerService = (): LoggerPublisherService =>
+  ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    subscribers: new Map(),
+  }) as unknown as LoggerPublisherService;
+
+const loggerFactoryStub: SignTransactionDAInput["loggerFactory"] = vi.fn(() =>
+  makeLoggerService(),
+);
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let getAppConfigMock: ReturnType<typeof vi.fn>;
@@ -94,14 +108,15 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         CommandResultFactory({ data: Just(signature) }),
       );
 
-      const action = new SignTransactionDeviceAction({
-        input: {
-          derivationPath: defaultDerivation,
-          transaction: exampleTx,
-          transactionOptions: { skipOpenApp: true },
-          contextModule: contextModuleStub,
-        } as SignTransactionDAInput,
-      });
+      const input: SignTransactionDAInput = {
+        derivationPath: defaultDerivation,
+        transaction: exampleTx,
+        transactionOptions: { skipOpenApp: true },
+        contextModule: contextModuleStub,
+        loggerFactory: loggerFactoryStub,
+      };
+
+      const action = new SignTransactionDeviceAction({ input });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
       const expected = [
@@ -195,14 +210,15 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       const sig = new Uint8Array([0xfe]);
       signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
 
-      const action = new SignTransactionDeviceAction({
-        input: {
-          derivationPath: defaultDerivation,
-          transaction: exampleTx,
-          transactionOptions: { skipOpenApp: true },
-          contextModule: contextModuleStub,
-        } as SignTransactionDAInput,
-      });
+      const input: SignTransactionDAInput = {
+        derivationPath: defaultDerivation,
+        transaction: exampleTx,
+        transactionOptions: { skipOpenApp: true },
+        contextModule: contextModuleStub,
+        loggerFactory: loggerFactoryStub,
+      };
+
+      const action = new SignTransactionDeviceAction({ input });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
       const expected = [
@@ -280,14 +296,15 @@ describe("SignTransactionDeviceAction (Solana)", () => {
 
       buildContextMock.mockRejectedValue(new InvalidStatusWordError("bldErr"));
 
-      const action = new SignTransactionDeviceAction({
-        input: {
-          derivationPath: defaultDerivation,
-          transaction: exampleTx,
-          transactionOptions: { skipOpenApp: true },
-          contextModule: contextModuleStub,
-        } as SignTransactionDAInput,
-      });
+      const input: SignTransactionDAInput = {
+        derivationPath: defaultDerivation,
+        transaction: exampleTx,
+        transactionOptions: { skipOpenApp: true },
+        contextModule: contextModuleStub,
+        loggerFactory: loggerFactoryStub,
+      };
+
+      const action = new SignTransactionDeviceAction({ input });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
       const expected = [
