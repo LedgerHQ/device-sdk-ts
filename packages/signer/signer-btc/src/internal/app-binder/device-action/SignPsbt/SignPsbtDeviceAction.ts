@@ -18,6 +18,7 @@ import {
   type SignPsbtDAIntermediateValue,
   type SignPsbtDAInternalState,
   type SignPsbtDAOutput,
+  signPsbtDAStateSteps,
 } from "@api/app-binder/SignPsbtDeviceActionTypes";
 import { type Psbt as ApiPsbt } from "@api/model/Psbt";
 import { type PsbtSignature } from "@api/model/Signature";
@@ -126,21 +127,20 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AFMAnWA9hgIYA2AsnLMTACJgBuqAxmAILMAuqRAdAPIAHMBjaDB9Jqw7ciAYghEwvVBgYEA1soLDR45J2Kcw5YswAWqsAG0ADAF1EoQQVipZGJyAAeiACwAzADsvACcABwAjKGRtuG2AGyRSX4ANCAAnoiRAEwArLy2uX6RQUGRpeHhfgC+NelomDj4RGSUsNR0jCzsXDwYvADC5mDMGkIiYhLd0n1EAEpwAK6knHJ2jkggLm4eXr4IoRG8eTlFOaWhQX45QaHpWQiRN4UBfu8JeaE3obY5OXUGuhsHhCCQKFQaGBJD0ZP0hiMxhM9NMpL0PItYCs1tZIptnK53P19ogjuETmdcpdrrd7pl-M8wnkgvkgvFbH48n4EkFASBGiCWuD2p1oTN0fCBc0wW1ITAFEoVGpNMo3E1Qa0IR0oRsvDsiUQSU88tVeOEktEEuE8m8cjcHqScicgokTXk8rZygFQgD6vzgdLNSKoTDZh5eFKNcK5WA5HhcARcLxBKQjAAzRMAW14asFMq1ot1W31ey2B0iJr8ZotoStNpu9vpCDtoTNHr8PoizyKvL9kaFsu1XTRcL4-fzwZgmOxw1GGnWDj1hNLoAOFwCBWC5u5RySEQdT1sra+OSt1wCAQuzICfPHQZjoYlY4DUcHounq1nY3WeKXu2JZaIOum5sgkO61tE4QHhWBS2HkCT-G8R5wc8N58hgBAQHAXh3tGQ5iiOcyeMWy4AauiAALQJAeVGFLY9EMYxDG9kC6oDgWIbiqOAzIlMj7cX+BrEeRCCNo8sS2CcRz-B6zIsnBaGsXm974fxREInOvHiGpGLLKsgkrj4iBnrwFwVgkCHfEeCQBNB3K8IEpxBO6ySep8in+mxE4Plx6m4W+UIGWRRlPJEVRmncOTmhyLI2QeUS8GFQRvPBXZRLWt4vuxk4EbCflZd5+EfpwX4aEFhqAU84RRYUpyXmBATJBeQTQZEARhKEG5Ne69GUplXkqaKOmSkszCsB05XCSFOSXgUyVshUdoJLYF7QYkvAXkUER3H45q1qE-XKXhQ2+eGACiuAJrgk1GjN+S8PNUTFMtq1Nrckl-O6wTct6KF5HUdRAA */
       id: "SignPsbtDeviceAction",
       initial: "InitialState",
-      context: ({ input }) => {
-        return {
-          input,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          _internalState: {
-            error: null,
-            wallet: null,
-            buildPsbtResult: null,
-            signatures: null,
-            signedPsbt: null,
-          },
-        };
-      },
+      context: ({ input }) => ({
+        input,
+        intermediateValue: {
+          requiredUserInteraction: UserInteractionRequired.None,
+          step: signPsbtDAStateSteps.OPEN_APP,
+        },
+        _internalState: {
+          error: null,
+          wallet: null,
+          buildPsbtResult: null,
+          signatures: null,
+          signedPsbt: null,
+        },
+      }),
       states: {
         InitialState: {
           always: [
@@ -152,10 +152,11 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           ],
         },
         OpenAppDeviceAction: {
-          exit: assign({
-            intermediateValue: {
+          entry: assign({
+            intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-            },
+              step: signPsbtDAStateSteps.OPEN_APP,
+            }),
           }),
           invoke: {
             id: "openAppStateMachine",
@@ -163,8 +164,10 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
+                intermediateValue: ({ event }) => ({
+                  ...event.snapshot.context.intermediateValue,
+                  step: signPsbtDAStateSteps.OPEN_APP,
+                }),
               }),
             },
             onDone: {
@@ -193,6 +196,12 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           ],
         },
         PrepareWalletPolicy: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
+            }),
+          }),
           invoke: {
             id: "prepareWalletPolicy",
             src: "prepareWalletPolicy",
@@ -202,22 +211,20 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "PrepareWalletPolicyResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        wallet: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      wallet: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",
@@ -232,6 +239,12 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           ],
         },
         BuildPsbt: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.BUILD_PSBT,
+            }),
+          }),
           invoke: {
             id: "buildPsbt",
             src: "buildPsbt",
@@ -243,22 +256,20 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "BuildPsbtResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        buildPsbtResult: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      buildPsbtResult: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",
@@ -276,11 +287,13 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signPsbtDAStateSteps.SIGN_PSBT,
             },
           }),
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.SIGN_PSBT,
             },
           }),
           invoke: {
@@ -294,22 +307,20 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "SignPsbtResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        signatures: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      signatures: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",

@@ -8,7 +8,10 @@ import {
 import { UnknownDAError } from "@ledgerhq/device-management-kit";
 import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 
-import { type SignPsbtDAState } from "@api/app-binder/SignPsbtDeviceActionTypes";
+import {
+  type SignPsbtDAState,
+  signPsbtDAStateSteps,
+} from "@api/app-binder/SignPsbtDeviceActionTypes";
 import { type RegisteredWallet } from "@api/model/Wallet";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
@@ -97,30 +100,35 @@ describe("SignPsbtDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.BUILD_PSBT,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signPsbtDAStateSteps.SIGN_PSBT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -228,18 +236,21 @@ describe("SignPsbtDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.BUILD_PSBT,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signPsbtDAStateSteps.SIGN_PSBT,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -280,12 +291,14 @@ describe("SignPsbtDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
@@ -350,18 +363,21 @@ describe("SignPsbtDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
             },
           },
           {
@@ -418,24 +434,28 @@ describe("SignPsbtDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.BUILD_PSBT,
             },
           },
           {
@@ -497,30 +517,35 @@ describe("SignPsbtDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.BUILD_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signPsbtDAStateSteps.SIGN_PSBT,
             },
           },
           {
@@ -576,30 +601,35 @@ describe("SignPsbtDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.BUILD_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signPsbtDAStateSteps.SIGN_PSBT,
             },
           },
           {
@@ -661,30 +691,35 @@ describe("SignPsbtDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: signPsbtDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.PREPARE_WALLET_POLICY,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signPsbtDAStateSteps.BUILD_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signPsbtDAStateSteps.SIGN_PSBT,
             },
           },
           {
