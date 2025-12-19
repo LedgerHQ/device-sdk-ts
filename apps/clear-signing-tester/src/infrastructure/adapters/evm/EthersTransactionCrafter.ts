@@ -52,7 +52,15 @@ export class EthersTransactionCrafter implements TransactionCrafter {
         gasPrice: ethers.parseUnits("20", "gwei"), // Default gas price
       };
 
-      return ethers.Transaction.from(transaction).unsignedSerialized;
+      const rawTransaction =
+        ethers.Transaction.from(transaction).unsignedSerialized;
+      this.logger.debug("Transaction data", {
+        data: {
+          rawTransaction: rawTransaction,
+          hash: transactionData.hash,
+        },
+      });
+      return rawTransaction;
     } catch (error) {
       throw new Error(
         `Failed to craft raw transaction: ${error instanceof Error ? error.message : String(error)}`,

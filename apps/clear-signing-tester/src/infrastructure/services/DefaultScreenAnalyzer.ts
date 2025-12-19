@@ -111,6 +111,28 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   }
 
   /**
+   * Check if the current screen allows blind signing acknowledgement
+   * Business logic for detecting acknowledgement options
+   */
+  async canAcknowledgeBlindSigning(): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const acknowledgeTexts = ["reject"];
+    const canAcknowledge = acknowledgeTexts.some((text) =>
+      data.text.toLowerCase().includes(text.toLowerCase()),
+    );
+
+    if (canAcknowledge) {
+      this.logger.debug("Current screen allows blind signing acknowledgement");
+    } else {
+      this.logger.debug(
+        "Current screen does not allow blind signing acknowledgement",
+      );
+    }
+
+    return canAcknowledge;
+  }
+
+  /**
    * Check if current screen is the home page
    * Business logic for detecting home screens
    */

@@ -1,0 +1,46 @@
+{
+  "test": [
+    {
+      "name": "Flare Network: DistributionToDelegators-Flare",
+      "owner": "Flare Network",
+      "address": {
+        "14": "0x9c7a4c83842b29bb4a082b0e689cb9474bd938d0"
+      }
+    },
+    {
+      "name": "Flare Network: PollingFoundation-Flare",
+      "owner": "Flare Network",
+      "address": {
+        "14": "0xc8294a2335c6c45de827121090ce4ba9977907d2"
+      }
+    },
+    {
+      "name": "Flare Network: RewardManager-Flare",
+      "owner": "Flare Network",
+      "address": {
+        "14": "0xc8f55c5aa2c752ee285bd872855c749f4ee6239b"
+      }
+    },
+    {
+      "name": "Flare Network: PollingFoundation-Songbird",
+      "owner": "Flare Network",
+      "address": {
+        "19": "0x79df47237292dbd1477502cff3f61cd535b0face"
+      }
+    },
+    {
+      "name": "Flare Network: ValidatorRewardManager-Flare",
+      "owner": "Flare Network",
+      "address": {
+        "14": "0xc0cf3aaf93bd978c5bc662564aa73e331f2ec0b5"
+      }
+    },
+    {
+      "name": "Flare Network: RewardManager-Songbird",
+      "owner": "Flare Network",
+      "address": {
+        "19": "0xe26ad68b17224951b5740f33926cc438764eb9a7"
+      }
+    }
+  ]
+}

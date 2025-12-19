@@ -22,6 +22,12 @@ export interface ScreenAnalyzerService {
   canRefuseTransaction(): Promise<boolean>;
 
   /**
+   * Check if the current screen allows blind signing acknowledgement
+   * @returns Promise<boolean> - True if can acknowledge blind signing
+   */
+  canAcknowledgeBlindSigning(): Promise<boolean>;
+
+  /**
    * Analyze all accumulated screen texts for expected texts
    * @param expectedTexts - Array of texts to look for
    * @returns Promise<{ containsAll: boolean; found: string[]; missing: string[] }> - Result of the analysis

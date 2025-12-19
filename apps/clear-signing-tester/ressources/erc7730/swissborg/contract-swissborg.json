@@ -1,0 +1,25 @@
+{
+  "test": [
+    {
+      "name": "SwissBorg Migrator: CHSB to BORG Migrator",
+      "owner": "SwissBorg Migrator",
+      "address": {
+        "1": "0xaa854688caab725fe17b7d21b46fda5af365985a"
+      }
+    },
+    {
+      "name": "SwissBorg Bridge: BORG Bridge (Outbound)",
+      "owner": "SwissBorg Bridge",
+      "address": {
+        "1": "0x66a28b080918184851774a89ab94850a41f6a1e5"
+      }
+    },
+    {
+      "name": "SwissBorg Bridge: BORG Bridge (Inbound)",
+      "owner": "SwissBorg Bridge",
+      "address": {
+        "1": "0x45e581d6841f0a99fc34f70871ef56b353813ddb"
+      }
+    }
+  ]
+}
