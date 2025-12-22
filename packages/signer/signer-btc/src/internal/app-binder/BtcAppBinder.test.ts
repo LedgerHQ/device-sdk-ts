@@ -14,6 +14,11 @@ import {
   type GetExtendedPublicKeyDAOutput,
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
 import {
+  type GetMasterFingerprintDAError,
+  type GetMasterFingerprintDAIntermediateValue,
+  type GetMasterFingerprintDAOutput,
+} from "@api/app-binder/GetMasterFingerprintDeviceActionTypes";
+import {
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
@@ -21,6 +26,7 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { BtcAppBinder } from "@internal/app-binder/BtcAppBinder";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
+import { GetMasterFingerprintCommand } from "@internal/app-binder/command/GetMasterFingerprintCommand";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { type PsbtMapper } from "@internal/psbt/service/psbt/PsbtMapper";
 import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
@@ -195,6 +201,141 @@ describe("BtcAppBinder", () => {
             },
           }),
         });
+      });
+    });
+  });
+
+  describe("getMasterFingerprint", () => {
+    let subscription: Subscription;
+    afterEach(() => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    });
+
+    it("should return the master fingerprint", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const masterFingerprint = Uint8Array.from([0x82, 0x8d, 0xc2, 0xf3]);
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: { masterFingerprint },
+            } as DeviceActionState<
+              GetMasterFingerprintDAOutput,
+              GetMasterFingerprintDAError,
+              GetMasterFingerprintDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const appBinder = new BtcAppBinder(
+          mockedDmk,
+          "sessionId",
+          {} as WalletBuilder,
+          {} as WalletSerializer,
+          {} as DataStoreService,
+          {} as PsbtMapper,
+          {} as ValueParser,
+        );
+        const { observable } = appBinder.getMasterFingerprint({
+          skipOpenApp: false,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          GetMasterFingerprintDAOutput,
+          GetMasterFingerprintDAError,
+          GetMasterFingerprintDAIntermediateValue
+        >[] = [];
+        subscription = observable.subscribe({
+          next: (state) => {
+            states.push(state);
+          },
+          error: (err) => {
+            reject(err);
+          },
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: { masterFingerprint },
+                },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    it("should call executeDeviceAction with the correct params", () => {
+      // GIVEN
+      const params = {
+        skipOpenApp: false,
+      };
+
+      // WHEN
+      const appBinder = new BtcAppBinder(
+        mockedDmk,
+        "sessionId",
+        {} as WalletBuilder,
+        {} as WalletSerializer,
+        {} as DataStoreService,
+        {} as PsbtMapper,
+        {} as ValueParser,
+      );
+      appBinder.getMasterFingerprint(params);
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
+        deviceAction: new SendCommandInAppDeviceAction({
+          input: {
+            command: new GetMasterFingerprintCommand(),
+            appName: "Bitcoin",
+            requiredUserInteraction: UserInteractionRequired.None,
+            skipOpenApp: false,
+          },
+        }),
+      });
+    });
+
+    it("should pass skipOpenApp option correctly", () => {
+      // GIVEN
+      const params = {
+        skipOpenApp: true,
+      };
+
+      // WHEN
+      const appBinder = new BtcAppBinder(
+        mockedDmk,
+        "sessionId",
+        {} as WalletBuilder,
+        {} as WalletSerializer,
+        {} as DataStoreService,
+        {} as PsbtMapper,
+        {} as ValueParser,
+      );
+      appBinder.getMasterFingerprint(params);
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
+        sessionId: "sessionId",
+        deviceAction: new SendCommandInAppDeviceAction({
+          input: {
+            command: new GetMasterFingerprintCommand(),
+            appName: "Bitcoin",
+            requiredUserInteraction: UserInteractionRequired.None,
+            skipOpenApp: true,
+          },
+        }),
       });
     });
   });

@@ -3,6 +3,7 @@ import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 import { DefaultDescriptorTemplate, DefaultWallet } from "@api/model/Wallet";
 import { DefaultSignerBtc } from "@internal/DefaultSignerBtc";
 import { GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
+import { GetMasterFingerprintUseCase } from "@internal/use-cases/get-master-fingerprint/GetMasterFingerprintUseCase";
 import { SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseCase";
 import { SignTransactionUseCase } from "@internal/use-cases/sign-transaction/SignTransactionUseCase";
 
@@ -28,6 +29,17 @@ describe("DefaultSignerBtc", () => {
       checkOnDevice: true,
     });
     expect(GetExtendedPublicKeyUseCase.prototype.execute).toHaveBeenCalled();
+  });
+
+  it("should call getMasterFingerprintUseCase", () => {
+    vi.spyOn(GetMasterFingerprintUseCase.prototype, "execute");
+    const sessionId = "session-id";
+    const dmk = {
+      executeDeviceAction: vi.fn(),
+    } as unknown as DeviceManagementKit;
+    const signer = new DefaultSignerBtc({ dmk, sessionId });
+    signer.getMasterFingerprint({ skipOpenApp: false });
+    expect(GetMasterFingerprintUseCase.prototype.execute).toHaveBeenCalled();
   });
 
   it("should call signMessageUseCase", () => {
