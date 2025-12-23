@@ -59,7 +59,7 @@ jobs:
           git add pnpm-lock.yaml
 
       - name: Commit and sign
-        uses: planetscale/ghcommit-action@v0.2.19
+        uses: planetscale/ghcommit-action@v0.2.20
         with:
           commit_message: "🔧 (repo): Update toolchain"
           repo: ${{ github.repository }}
