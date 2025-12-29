@@ -22,7 +22,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: toshimaru/auto-author-assign@v2.1.2
+      - uses: toshimaru/auto-author-assign@v3.0.0
 
   detect-changes:
     name: Detect changed packages
