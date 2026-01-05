@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useCallback } from "react";
+import { useSelector } from "react-redux";
 import {
   type ConnectionType,
   DeviceModelId,
@@ -15,7 +16,7 @@ import {
 import styled, { type DefaultTheme } from "styled-components";
 
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
 import { StatusText } from "./StatusText";
 
@@ -52,9 +53,9 @@ type DeviceProps = {
   type: ConnectionType;
   sessionId: DeviceSessionId;
   model: DeviceModelId;
-  onDisconnect: () => Promise<void>;
-  onReconnect: () => Promise<void>;
-  onSelect: () => void;
+  onDisconnect: (sessionId: DeviceSessionId) => void;
+  onReconnect: (sessionId: DeviceSessionId) => void;
+  onSelect: (sessionId: DeviceSessionId) => void;
 };
 
 function getIconComponent(model: DeviceModelId) {
@@ -80,13 +81,24 @@ export const Device: React.FC<DeviceProps> = ({
   sessionId,
 }) => {
   const sessionState = useDeviceSessionState(sessionId);
-  const {
-    state: { selectedId },
-  } = useDeviceSessionsContext();
+  const selectedSessionId = useSelector(selectSelectedSessionId);
   const IconComponent = getIconComponent(model);
-  const isActive = selectedId === sessionId;
+  const isActive = selectedSessionId === sessionId;
+
+  const handleSelect = useCallback(() => {
+    onSelect(sessionId);
+  }, [onSelect, sessionId]);
+
+  const handleDisconnect = useCallback(() => {
+    onDisconnect(sessionId);
+  }, [onDisconnect, sessionId]);
+
+  const handleReconnect = useCallback(() => {
+    onReconnect(sessionId);
+  }, [onReconnect, sessionId]);
+
   return (
-    <Root active={isActive} onClick={isActive ? undefined : onSelect}>
+    <Root active={isActive} onClick={isActive ? undefined : handleSelect}>
       <IconContainer>
         <IconComponent size="S" />
       </IconContainer>
@@ -113,13 +125,19 @@ export const Device: React.FC<DeviceProps> = ({
       </Box>
       <div data-testid="dropdown_device-option">
         <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-          <ActionRow data-testid="CTA_disconnect-device" onClick={onDisconnect}>
+          <ActionRow
+            data-testid="CTA_disconnect-device"
+            onClick={handleDisconnect}
+          >
             <Text variant="paragraph" color="neutral.c80">
               Disconnect
             </Text>
             <Icons.ChevronRight size="S" />
           </ActionRow>
-          <ActionRow data-testid="CTA_reconnect-device" onClick={onReconnect}>
+          <ActionRow
+            data-testid="CTA_reconnect-device"
+            onClick={handleReconnect}
+          >
             <Text variant="paragraph" color="neutral.c80">
               Reconnect
             </Text>
