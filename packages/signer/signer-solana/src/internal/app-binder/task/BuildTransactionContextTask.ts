@@ -43,6 +43,8 @@ export class BuildTransactionContextTask {
     const challengeRes = await this.api.sendCommand(new GetChallengeCommand());
     if (isSuccessCommandResult(challengeRes)) {
       challenge = challengeRes.data.challenge;
+    } else {
+      throw new Error("Failed to get challenge from device");
     }
 
     const contextModuleGetSolanaContextArgs = {
@@ -82,11 +84,7 @@ export class BuildTransactionContextTask {
             result: ctx,
           },
         });
-        return {
-          tlvDescriptor: ctx.tlvDescriptor,
-          trustedNamePKICertificate: ctx.trustedNamePKICertificate,
-          loadersResults: ctx.loadersResults,
-        };
+        return ctx;
       },
     });
   }
