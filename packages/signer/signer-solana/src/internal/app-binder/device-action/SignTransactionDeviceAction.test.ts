@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
@@ -18,6 +19,7 @@ import {
   type SignTransactionDAIntermediateValue,
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { UserInputType } from "@api/model/TransactionResolutionContext";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import { type SolanaBuildContextResult } from "@internal/app-binder/task/BuildTransactionContextTask";
@@ -161,6 +163,123 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
+  it("forwards userInputType to signTransaction dependency", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      inspectTransactionMock.mockResolvedValue({
+        transactionType: SolanaTransactionTypes.SPL,
+      });
+
+      const ctx: SolanaBuildContextResult = {
+        tlvDescriptor: new Uint8Array([1]),
+        trustedNamePKICertificate: {
+          keyUsageNumber: 0,
+          payload: new Uint8Array([0x01]),
+        },
+        loadersResults: [],
+      };
+      buildContextMock.mockResolvedValue(ctx);
+      provideContextMock.mockResolvedValue(Nothing);
+
+      const signature = new Uint8Array([0xaa, 0xbb]);
+      signMock.mockResolvedValue(
+        CommandResultFactory({ data: Just(signature) }),
+      );
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: {
+            skipOpenApp: true,
+            transactionResolutionContext: {
+              // Only care about userInputType for this test
+              userInputType: UserInputType.ATA,
+            } as any,
+          },
+          contextModule: contextModuleStub,
+        } as SignTransactionDAInput,
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        // getAppConfig
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // inspectTransaction
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // buildContext
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // provideContext
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // signTransaction
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // success
+        { output: signature, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates<
+        Uint8Array,
+        SignTransactionDAInput,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >(action, expected, apiMock, {
+        onDone: () => {
+          try {
+            expect(signMock).toHaveBeenCalledTimes(1);
+            const callArg = signMock.mock.calls[0]?.[0];
+            expect(callArg?.input.userInputType).toBe(UserInputType.ATA);
+            resolve();
+          } catch (e) {
+            reject(e);
+          }
+        },
+        onError: reject,
+      });
+    }));
+
   it("failure in provideContext still signs", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue({
@@ -185,7 +304,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         },
         challenge: undefined,
         addressResult: { tokenAccount: "", owner: "", contract: "" },
-        loadersResults: [], // <-- include it
+        loadersResults: [],
       });
       provideContextMock.mockResolvedValue(
         Just(
