@@ -95,7 +95,7 @@ catalog:
   react-medium-image-zoom: 5.1.8
   react-native: 0.76.6
   react-native-ble-plx: 3.4.0
-  react-native-gesture-handler: ^2.22.0
+  react-native-gesture-handler: ^2.29.1
   react-native-get-random-values: ^1.11.0
   react-native-pager-view: ^6.7.0
   react-native-reanimated: 3.16.1
