@@ -1,11 +1,9 @@
 import {
   ApduBuilder,
-  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
@@ -22,12 +20,7 @@ export type RegisterWalletAddressCommandArgs = {
   walletPolicy: Uint8Array;
 };
 
-type RegisterWalletAddressCommandResponse = {
-  walletId: Uint8Array;
-  walletHmac: Uint8Array;
-};
-
-const RESPONSE_BUFFER_LENGTH = 32;
+type RegisterWalletAddressCommandResponse = ApduResponse;
 
 export class RegisterWalletAddressCommand
   implements
@@ -59,29 +52,14 @@ export class RegisterWalletAddressCommand
     });
     const { walletPolicy } = this._args;
 
-    return builder.addBufferToData(walletPolicy).build();
+    return builder.encodeInLVFromBuffer(walletPolicy).build();
   }
+
   parseResponse(
     response: ApduResponse,
   ): CommandResult<RegisterWalletAddressCommandResponse, BtcErrorCodes> {
-    return Maybe.fromNullable(
-      this._errorHelper.getError(response),
-    ).orDefaultLazy(() => {
-      const parser = new ApduParser(response);
-
-      const walletId = parser.extractFieldByLength(RESPONSE_BUFFER_LENGTH);
-      const walletHmac = parser.extractFieldByLength(RESPONSE_BUFFER_LENGTH);
-      if (!walletId || !walletHmac) {
-        return CommandResultFactory({
-          error: new InvalidStatusWordError("Data mismatch"),
-        });
-      }
-      return CommandResultFactory({
-        data: {
-          walletId,
-          walletHmac,
-        },
-      });
-    });
+    return Maybe.fromNullable(this._errorHelper.getError(response)).orDefault(
+      CommandResultFactory({ data: response }),
+    );
   }
 }

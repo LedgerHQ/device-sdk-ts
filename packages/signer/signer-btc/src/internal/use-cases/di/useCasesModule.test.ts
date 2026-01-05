@@ -29,6 +29,12 @@ describe("useCasesModuleFactory", () => {
       ).toBeTruthy();
     });
 
+    it("should bind RegisterWalletUseCase", () => {
+      expect(
+        container.isBound(useCasesTypes.RegisterWalletUseCase),
+      ).toBeTruthy();
+    });
+
     it("should bind SignMessageUseCase", () => {
       expect(container.isBound(useCasesTypes.SignMessageUseCase)).toBeTruthy();
     });

@@ -1,5 +1,9 @@
 import React, { useMemo } from "react";
 import {
+  hexaStringToBuffer,
+  isHexaString,
+} from "@ledgerhq/device-management-kit";
+import {
   DefaultDescriptorTemplate,
   DefaultWallet,
   type GetExtendedDAIntermediateValue,
@@ -11,6 +15,10 @@ import {
   type GetWalletAddressDAError,
   type GetWalletAddressDAIntermediateValue,
   type GetWalletAddressDAOutput,
+  RegisteredWallet,
+  type RegisterWalletDAError,
+  type RegisterWalletDAIntermediateValue,
+  type RegisterWalletDAOutput,
   SignerBtcBuilder,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
@@ -21,6 +29,7 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
+  WalletPolicy,
 } from "@ledgerhq/device-signer-kit-bitcoin";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -121,6 +130,45 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         GetMasterFingerprintDAIntermediateValue
       >,
       {
+        title: "Register wallet",
+        description:
+          "Register a custom wallet policy on the device (e.g., multisig). Returns an HMAC for future use.",
+        executeDeviceAction: ({
+          name,
+          descriptorTemplate,
+          keys,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          const walletPolicy = new WalletPolicy(
+            name,
+            descriptorTemplate,
+            keys.split(",").filter((k: string) => k.trim() !== ""),
+          );
+          return signer.registerWallet(walletPolicy, { skipOpenApp });
+        },
+        initialValues: {
+          name: "My Multisig",
+          descriptorTemplate: "wsh(sortedmulti(2,@0/**,@1/**))",
+          keys: "[76223a6e/48'/1'/0'/2']tpubDE7NQymr4AFtewpAsWtnreyq9ghkzQBXpCZjWLFVRAvnbf7vya2eMTvT2fPapNqL8SuVvLQdbUbMfWLVDCZKnsEBqp6UK93QEzL8Ck23AwF,[f5acc2fd/48'/1'/0'/2']tpubDFAqEGNyad35aBCKUAXbQGDjdVhNueno5ZZVEn3sQbW5ci457gLR7HyTmHBg93oourBssgUxuWz1jX5uhc1qaqFo9VsybY1J5FuedLfm4dK",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        RegisterWalletDAOutput,
+        {
+          name: string;
+          descriptorTemplate: string;
+          keys: string;
+          skipOpenApp?: boolean;
+        },
+        RegisterWalletDAError,
+        RegisterWalletDAIntermediateValue
+      >,
+      {
         title: "Get wallet address",
         description:
           "Perform all the actions necessary to get the device's Bitcoin wallet address",
@@ -179,6 +227,69 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
           addressIndex: number;
           change: boolean;
           checkOnDevice: boolean;
+          skipOpenApp: boolean;
+        },
+        GetWalletAddressDAError,
+        GetWalletAddressDAIntermediateValue
+      >,
+      {
+        title: "Get wallet address (Registered Wallet)",
+        description:
+          "Get an address from a registered wallet policy (e.g., multisig). Requires the HMAC from wallet registration.",
+        executeDeviceAction: ({
+          name,
+          descriptorTemplate,
+          keys,
+          hmac,
+          checkOnDevice,
+          change,
+          addressIndex,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          const registeredWallet = new RegisteredWallet(
+            name,
+            descriptorTemplate,
+            keys.split(",").map((k: string) => k.trim()),
+            hexaStringToBuffer(hmac)!,
+          );
+
+          return signer.getWalletAddress(
+            registeredWallet,
+            Number(addressIndex),
+            {
+              checkOnDevice,
+              change,
+              skipOpenApp,
+            },
+          );
+        },
+        initialValues: {
+          name: "My Multisig",
+          descriptorTemplate: "wsh(sortedmulti(2,@0/**,@1/**))",
+          keys: "[76223a6e/48'/1'/0'/2']tpubDE7NQymr4AFtewpAsWtnreyq9ghkzQBXpCZjWLFVRAvnbf7vya2eMTvT2fPapNqL8SuVvLQdbUbMfWLVDCZKnsEBqp6UK93QEzL8Ck23AwF,[f5acc2fd/48'/1'/0'/2']tpubDFAqEGNyad35aBCKUAXbQGDjdVhNueno5ZZVEn3sQbW5ci457gLR7HyTmHBg93oourBssgUxuWz1jX5uhc1qaqFo9VsybY1J5FuedLfm4dK",
+          hmac: "",
+          checkOnDevice: false,
+          change: false,
+          addressIndex: 0,
+          skipOpenApp: false,
+        },
+        validateValues: ({ addressIndex, hmac }) =>
+          !isNaN(Number(addressIndex)) && isHexaString(hmac),
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetWalletAddressDAOutput,
+        {
+          name: string;
+          descriptorTemplate: string;
+          keys: string;
+          hmac: string;
+          checkOnDevice: boolean;
+          change: boolean;
+          addressIndex: number;
           skipOpenApp: boolean;
         },
         GetWalletAddressDAError,
