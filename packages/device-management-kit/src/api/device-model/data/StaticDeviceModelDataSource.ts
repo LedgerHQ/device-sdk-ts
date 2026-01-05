@@ -93,7 +93,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
     }),
     [DeviceModelId.APEX]: new TransportDeviceModel({
       id: DeviceModelId.APEX,
-      productName: "Ledger Apex",
+      productName: "Ledger Nano Gen5",
       usbProductId: 0x80,
       bootloaderUsbProductId: 0x0008,
       usbOnly: false,
@@ -106,6 +106,12 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
           notifyUuid: "13d63400-2c97-8004-0001-4c6564676572",
           writeUuid: "13d63400-2c97-8004-0002-4c6564676572",
           writeCmdUuid: "13d63400-2c97-8004-0003-4c6564676572",
+        },
+        {
+          serviceUuid: "13d63400-2c97-9004-0000-4c6564676572",
+          notifyUuid: "13d63400-2c97-9004-0001-4c6564676572",
+          writeUuid: "13d63400-2c97-9004-0002-4c6564676572",
+          writeCmdUuid: "13d63400-2c97-9004-0003-4c6564676572",
         },
       ],
     }),
@@ -132,6 +138,9 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
     });
   }
 
+  /**
+   * @returns A record of service UUIDs to BleDeviceInfos
+   */
   getBluetoothServicesInfos(): Record<string, BleDeviceInfos> {
     return Object.values(StaticDeviceModelDataSource.deviceModelByIds).reduce<
       Record<string, BleDeviceInfos>

@@ -57,6 +57,35 @@ Technical identifiers for Ledger devices when implementing custom USB and Blueto
 | BLE Characteristic UUID | Write         | `13d63400-2c97-3004-0002-4c6564676572` |
 | BLE Characteristic UUID | Write Command | `13d63400-2c97-3004-0003-4c6564676572` |
 
+---
+
+### Ledger Nano Gen5
+
+| Identifier Type | Mode/Service | Value    |
+| --------------- | ------------ | -------- |
+| USB Product ID  | Normal       | `0x80`   |
+| USB Product ID  | Bootloader   | `0x0008` |
+
+**Bluetooth**: Nano Gen5 devices may use one of two BLE identifier sets. The DMK automatically detects which set is used by the device.
+
+**BLE Identifier Set 1:**
+
+| Identifier Type         | Service       | Value                                  |
+| ----------------------- | ------------- | -------------------------------------- |
+| BLE Service UUID        | Main          | `13d63400-2c97-8004-0000-4c6564676572` |
+| BLE Characteristic UUID | Notify        | `13d63400-2c97-8004-0001-4c6564676572` |
+| BLE Characteristic UUID | Write         | `13d63400-2c97-8004-0002-4c6564676572` |
+| BLE Characteristic UUID | Write Command | `13d63400-2c97-8004-0003-4c6564676572` |
+
+**BLE Identifier Set 2 (this happens rarely, only in Bootloader Mode, and only in early versions of the OS):**
+
+| Identifier Type         | Service       | Value                                  |
+| ----------------------- | ------------- | -------------------------------------- |
+| BLE Service UUID        | Main          | `13d63400-2c97-9004-0000-4c6564676572` |
+| BLE Characteristic UUID | Notify        | `13d63400-2c97-9004-0001-4c6564676572` |
+| BLE Characteristic UUID | Write         | `13d63400-2c97-9004-0002-4c6564676572` |
+| BLE Characteristic UUID | Write Command | `13d63400-2c97-9004-0003-4c6564676572` |
+
 ## Usage Notes
 
 - **Normal Mode**: Standard device operation
@@ -73,3 +102,4 @@ Technical identifiers for Ledger devices when implementing custom USB and Blueto
 | Nano X      | ✅  | ✅        |
 | Stax        | ✅  | ✅        |
 | Flex        | ✅  | ✅        |
+| Apex        | ✅  | ✅        |
