@@ -5,6 +5,9 @@ import {
   type GetExtendedDAIntermediateValue,
   type GetExtendedPublicKeyDAError,
   type GetExtendedPublicKeyDAOutput,
+  type GetMasterFingerprintDAError,
+  type GetMasterFingerprintDAIntermediateValue,
+  type GetMasterFingerprintDAOutput,
   type GetWalletAddressDAError,
   type GetWalletAddressDAIntermediateValue,
   type GetWalletAddressDAOutput,
@@ -95,6 +98,27 @@ export const SignerBtcView: React.FC<{ sessionId: string }> = ({
         },
         GetExtendedPublicKeyDAError,
         GetExtendedDAIntermediateValue
+      >,
+      {
+        title: "Get master fingerprint",
+        description:
+          "Get the master fingerprint of the wallet (4-byte identifier derived from the master public key)",
+        executeDeviceAction: ({ skipOpenApp }) => {
+          return signer.getMasterFingerprint({
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetMasterFingerprintDAOutput,
+        {
+          skipOpenApp?: boolean;
+        },
+        GetMasterFingerprintDAError,
+        GetMasterFingerprintDAIntermediateValue
       >,
       {
         title: "Get wallet address",

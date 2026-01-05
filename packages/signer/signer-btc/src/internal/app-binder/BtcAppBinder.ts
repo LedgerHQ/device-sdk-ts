@@ -11,6 +11,10 @@ import {
   GetExtendedPublicKeyDAInput,
   GetExtendedPublicKeyDAReturnType,
 } from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+import {
+  GetMasterFingerprintDAInput,
+  GetMasterFingerprintDAReturnType,
+} from "@api/app-binder/GetMasterFingerprintDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignPsbtDAReturnType } from "@api/app-binder/SignPsbtDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
@@ -18,6 +22,7 @@ import { GetWalletAddressDAReturnType } from "@api/index";
 import { Psbt } from "@api/model/Psbt";
 import { Wallet } from "@api/model/Wallet";
 import { GetExtendedPublicKeyCommand } from "@internal/app-binder/command/GetExtendedPublicKeyCommand";
+import { GetMasterFingerprintCommand } from "@internal/app-binder/command/GetMasterFingerprintCommand";
 import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
 import { SignTransactionDeviceAction } from "@internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SignMessageTask";
@@ -64,6 +69,22 @@ export class BtcAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  getMasterFingerprint(
+    args: GetMasterFingerprintDAInput,
+  ): GetMasterFingerprintDAReturnType {
+    return this._dmk.executeDeviceAction({
+      sessionId: this._sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetMasterFingerprintCommand(),
+          appName: "Bitcoin",
+          requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
       }),

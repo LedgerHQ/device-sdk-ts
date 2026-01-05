@@ -6,6 +6,7 @@ import { type Container } from "inversify";
 
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type MasterFingerprintOptions } from "@api/model/MasterFingerprintOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type Psbt } from "@api/model/Psbt";
 import { type PsbtOptions } from "@api/model/PsbtOptions";
@@ -14,6 +15,7 @@ import { type WalletAddressOptions } from "@api/model/WalletAddressOptions";
 import { type SignerBtc } from "@api/SignerBtc";
 import { useCasesTypes } from "@internal/use-cases/di/useCasesTypes";
 import { type GetExtendedPublicKeyUseCase } from "@internal/use-cases/get-extended-public-key/GetExtendedPublicKeyUseCase";
+import { type GetMasterFingerprintUseCase } from "@internal/use-cases/get-master-fingerprint/GetMasterFingerprintUseCase";
 import { type SignPsbtUseCase } from "@internal/use-cases/sign-psbt/SignPsbtUseCase";
 import { type SignTransactionUseCase } from "@internal/use-cases/sign-transaction/SignTransactionUseCase";
 
@@ -62,6 +64,16 @@ export class DefaultSignerBtc implements SignerBtc {
       )
       .execute(derivationPath, {
         checkOnDevice: options?.checkOnDevice ?? false,
+        skipOpenApp: options?.skipOpenApp ?? false,
+      });
+  }
+
+  getMasterFingerprint(options?: MasterFingerprintOptions) {
+    return this._container
+      .get<GetMasterFingerprintUseCase>(
+        useCasesTypes.GetMasterFingerprintUseCase,
+      )
+      .execute({
         skipOpenApp: options?.skipOpenApp ?? false,
       });
   }
