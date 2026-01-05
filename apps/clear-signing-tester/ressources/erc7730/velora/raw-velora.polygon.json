@@ -1,0 +1,37 @@
+[
+  {
+    "txHash": "0x5295eddcb23505d9364a93d40a72e751bf1157ec9983fe3ec8bf1c8584aabf52",
+    "contractAddress": "0xdef171fe48cf0115b1d80b88dc8eab59176fee57",
+    "selectorId": "0x2298207a",
+    "rawTx": "",
+    "description": "Velora: AugustusSwapperV5: simpleBuy"
+  },
+  {
+    "txHash": "0x79cd462c49e1401e40f534c3e4d4a930b69e891a5576f4b1248f09b7824c2b55",
+    "contractAddress": "0xdef171fe48cf0115b1d80b88dc8eab59176fee57",
+    "selectorId": "0xa6886da9",
+    "rawTx": "",
+    "description": "Velora: AugustusSwapperV5: directUniV3Swap"
+  },
+  {
+    "txHash": "0x23fab89049102789f4c35dc94cb7699979b29b03994560ae05a9d8c1154b553d",
+    "contractAddress": "0xdef171fe48cf0115b1d80b88dc8eab59176fee57",
+    "selectorId": "0x46c67b6d",
+    "rawTx": "",
+    "description": "Velora: AugustusSwapperV5: megaSwap"
+  },
+  {
+    "txHash": "0x862e22c8f321eaa6a13f82f4c1707f4ca0df3cef792da9306d927561d11ede56",
+    "contractAddress": "0xdef171fe48cf0115b1d80b88dc8eab59176fee57",
+    "selectorId": "0xa94e78ef",
+    "rawTx": "",
+    "description": "Velora: AugustusSwapperV5: multiSwap"
+  },
+  {
+    "txHash": "0xe438c7091df6332043356dc3fb72ef5a4e92f63174a6824209d58b227b212978",
+    "contractAddress": "0xdef171fe48cf0115b1d80b88dc8eab59176fee57",
+    "selectorId": "0x54e3f31b",
+    "rawTx": "",
+    "description": "Velora: AugustusSwapperV5: simpleSwap"
+  }
+]
