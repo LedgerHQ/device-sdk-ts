@@ -11,6 +11,10 @@ import {
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import {
+  ApplicationChecker,
+  ApplicationCheckerSupportedAppNames,
+} from "@ledgerhq/signer-utils";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
@@ -23,7 +27,6 @@ import {
   type ContextWithSubContexts,
 } from "@internal/app-binder/task/BuildFullContextsTask";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { TypedDataValueField } from "@internal/typed-data/model/Types";
@@ -147,7 +150,11 @@ export class BuildEIP712ContextTask {
     deviceState: DeviceSessionState,
   ): Maybe<"v1" | "v2"> {
     if (
-      !new ApplicationChecker(deviceState, this.appConfig)
+      !new ApplicationChecker(
+        deviceState,
+        this.appConfig,
+        ApplicationCheckerSupportedAppNames.Ethereum,
+      )
         .withMinVersionInclusive("1.10.0")
         .excludeDeviceModel(DeviceModelId.NANO_S)
         .check()
@@ -166,6 +173,7 @@ export class BuildEIP712ContextTask {
     const shouldUseV2Filters = new ApplicationChecker(
       deviceState,
       this.appConfig,
+      ApplicationCheckerSupportedAppNames.Ethereum,
     )
       .withMinVersionInclusive("1.12.0")
       .check();

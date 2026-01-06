@@ -1168,6 +1168,10 @@ importers:
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-utils:
+    dependencies:
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
@@ -1187,6 +1191,9 @@ importers:
       '@ledgerhq/vitest-config-dmk':
         specifier: workspace:^
         version: link:../../config/vitest
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.7.0
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
