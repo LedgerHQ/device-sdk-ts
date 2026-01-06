@@ -322,48 +322,48 @@ export class Signer${pascalCase}Builder {
 `);
 
     // Generate app-binder types
+    writeFile(`${baseDir}/src/api/app-binder/GetAddressCommandTypes.ts`, `export type GetAddressCommandResponse = {
+  readonly publicKey: Uint8Array;
+  readonly chainCode?: Uint8Array;
+};
+
+export type GetAddressCommandArgs = {
+  readonly derivationPath: string;
+  readonly checkOnDevice?: boolean;
+};
+`);
+
     writeFile(`${baseDir}/src/api/app-binder/GetAddressDeviceActionTypes.ts`, `import {
   type CommandErrorResult,
-  type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
+  type SendCommandInAppDAIntermediateValue,
+  type SendCommandInAppDAOutput,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type PublicKey } from "@api/model/PublicKey";
-import { type AddressOptions } from "@api/model/AddressOptions";
+import { type GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
 import { type ${pascalCase}ErrorCodes } from "@internal/app-binder/command/utils/${kebabCase}ApplicationErrors";
 
-export enum GetAddressDAStep {
-  OPEN_APP = "signer.${kebabCase}.steps.openApp",
-  GET_ADDRESS = "signer.${kebabCase}.steps.getAddress",
-}
+type GetAddressDAUserInteractionRequired =
+  | UserInteractionRequired.None
+  | UserInteractionRequired.VerifyAddress;
 
-export type GetAddressDAOutput = PublicKey;
-
-export type GetAddressDAInput = {
-  readonly derivationPath: string;
-  readonly options: AddressOptions;
-};
+export type GetAddressDAOutput =
+  SendCommandInAppDAOutput<GetAddressCommandResponse>;
 
 export type GetAddressDAError =
   | OpenAppDAError
   | CommandErrorResult<${pascalCase}ErrorCodes>["error"];
 
-export type GetAddressDAIntermediateValue = {
-  step: GetAddressDAStep;
-  requiredUserInteraction: UserInteractionRequired;
-};
+export type GetAddressDAIntermediateValue =
+  SendCommandInAppDAIntermediateValue<GetAddressDAUserInteractionRequired>;
 
-export type GetAddressDAState = DeviceActionState<
+export type GetAddressDAReturnType = ExecuteDeviceActionReturnType<
   GetAddressDAOutput,
-  GetAddressDAInput,
   GetAddressDAError,
   GetAddressDAIntermediateValue
 >;
-
-export type GetAddressDAReturnType =
-  ExecuteDeviceActionReturnType<GetAddressDAState>;
 `);
 
     writeFile(`${baseDir}/src/api/app-binder/SignTransactionDeviceActionTypes.ts`, `import {
@@ -404,13 +404,15 @@ export type SignTransactionDAIntermediateValue = {
 
 export type SignTransactionDAState = DeviceActionState<
   SignTransactionDAOutput,
-  SignTransactionDAInput,
   SignTransactionDAError,
   SignTransactionDAIntermediateValue
 >;
 
-export type SignTransactionDAReturnType =
-  ExecuteDeviceActionReturnType<SignTransactionDAState>;
+export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
+  SignTransactionDAOutput,
+  SignTransactionDAError,
+  SignTransactionDAIntermediateValue
+>;
 `);
 
     // Generate internal files
@@ -526,6 +528,8 @@ export const appBindingModuleFactory = () =>
     writeFile(`${baseDir}/src/internal/app-binder/${pascalCase}AppBinder.ts`, `import {
   type DeviceManagementKit,
   type DeviceSessionId,
+  SendCommandInAppDeviceAction,
+  UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
@@ -535,13 +539,12 @@ import { externalTypes } from "@internal/externalTypes";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
-import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
 
 @injectable()
 export class ${pascalCase}AppBinder {
   constructor(
-    @inject(externalTypes.Dmk) private readonly dmk: DeviceManagementKit,
-    @inject(externalTypes.SessionId) private readonly sessionId: DeviceSessionId,
+    @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
+    @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
   ) {}
 
   getAddress(args: {
@@ -552,11 +555,14 @@ export class ${pascalCase}AppBinder {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
-        command: new GetAddressCommand({
-          derivationPath: args.derivationPath,
-          checkOnDevice: args.checkOnDevice,
-        }),
-        skipOpenApp: args.skipOpenApp,
+        input: {
+          command: new GetAddressCommand(args),
+          appName: "${pascalCase}",
+          requiredUserInteraction: args.checkOnDevice
+            ? UserInteractionRequired.VerifyAddress
+            : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
       }),
     });
   }
@@ -589,35 +595,61 @@ export class ${pascalCase}AppBinder {
 }
 `);
 
-    writeFile(`${baseDir}/src/internal/app-binder/command/GetAddressCommand.ts`, `import { Command } from "@ledgerhq/device-management-kit";
+    writeFile(`${baseDir}/src/internal/app-binder/command/GetAddressCommand.ts`, `import {
+  type Apdu,
+  type ApduResponse,
+  type Command,
+  type CommandResult,
+} from "@ledgerhq/device-management-kit";
+
+import {
+  type GetAddressCommandArgs,
+  type GetAddressCommandResponse,
+} from "@api/app-binder/GetAddressCommandTypes";
+
 import { type ${pascalCase}ErrorCodes } from "./utils/${kebabCase}ApplicationErrors";
 
-export type GetAddressCommandArgs = {
-  derivationPath: string;
-  checkOnDevice: boolean;
-};
+export class GetAddressCommand
+  implements
+    Command<GetAddressCommandResponse, GetAddressCommandArgs, ${pascalCase}ErrorCodes>
+{
+  readonly name = "GetAddress";
 
-export type GetAddressCommandResponse = {
-  publicKey: Uint8Array;
-  chainCode?: Uint8Array;
-};
+  private readonly args: GetAddressCommandArgs;
 
-export class GetAddressCommand extends Command<
-  GetAddressCommandResponse,
-  ${pascalCase}ErrorCodes
-> {
   constructor(args: GetAddressCommandArgs) {
-    super();
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // this.apdu = constructGetAddressAPDU(args);
+    this.args = args;
   }
 
-  // TODO: Implement response parsing
-  // parseResponse(response: Uint8Array): GetAddressCommandResponse { ... }
+  getApdu(): Apdu {
+    // TODO: Implement APDU construction based on your blockchain's protocol
+    // Example structure:
+    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
+    // Add derivation path and other data to builder
+    // return builder.build();
+    throw new Error("GetAddressCommand.getApdu() not implemented");
+  }
+
+  parseResponse(
+    _apduResponse: ApduResponse,
+  ): CommandResult<GetAddressCommandResponse, ${pascalCase}ErrorCodes> {
+    // TODO: Implement response parsing based on your blockchain's protocol
+    // Example structure:
+    // const parser = new ApduParser(apduResponse);
+    // Extract publicKey and chainCode from response
+    // return CommandResultFactory({ data: { publicKey, chainCode } });
+    throw new Error("GetAddressCommand.parseResponse() not implemented");
+  }
 }
 `);
 
-    writeFile(`${baseDir}/src/internal/app-binder/command/SignTransactionCommand.ts`, `import { Command } from "@ledgerhq/device-management-kit";
+    writeFile(`${baseDir}/src/internal/app-binder/command/SignTransactionCommand.ts`, `import {
+  type Apdu,
+  type ApduResponse,
+  type Command,
+  type CommandResult,
+} from "@ledgerhq/device-management-kit";
+
 import { type ${pascalCase}ErrorCodes } from "./utils/${kebabCase}ApplicationErrors";
 
 export type SignTransactionCommandArgs = {
@@ -633,18 +665,41 @@ export type SignTransactionCommandResponse = {
   };
 };
 
-export class SignTransactionCommand extends Command<
-  SignTransactionCommandResponse,
-  ${pascalCase}ErrorCodes
-> {
+export class SignTransactionCommand
+  implements
+    Command<
+      SignTransactionCommandResponse,
+      SignTransactionCommandArgs,
+      ${pascalCase}ErrorCodes
+    >
+{
+  readonly name = "SignTransaction";
+
+  private readonly args: SignTransactionCommandArgs;
+
   constructor(args: SignTransactionCommandArgs) {
-    super();
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // this.apdu = constructSignTransactionAPDU(args);
+    this.args = args;
   }
 
-  // TODO: Implement response parsing
-  // parseResponse(response: Uint8Array): SignTransactionCommandResponse { ... }
+  getApdu(): Apdu {
+    // TODO: Implement APDU construction based on your blockchain's protocol
+    // Example structure:
+    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x04, p1: 0x00, p2: 0x00 });
+    // Add derivation path and transaction data to builder
+    // return builder.build();
+    throw new Error("SignTransactionCommand.getApdu() not implemented");
+  }
+
+  parseResponse(
+    _apduResponse: ApduResponse,
+  ): CommandResult<SignTransactionCommandResponse, ${pascalCase}ErrorCodes> {
+    // TODO: Implement response parsing based on your blockchain's protocol
+    // Example structure:
+    // const parser = new ApduParser(apduResponse);
+    // Extract r, s, v from response
+    // return CommandResultFactory({ data: { signature: { r, s, v } } });
+    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+  }
 }
 `);
 
@@ -755,15 +810,18 @@ export class SignTransactionUseCase {
   type DeviceActionStateMachine,
 } from "@ledgerhq/device-management-kit";
 
+import { type GetAddressCommandArgs } from "@api/app-binder/GetAddressCommandTypes";
 import {
   type SignTransactionDAError,
   type SignTransactionDAInput,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
-  SignTransactionDAStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
-import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
+import {
+  SignTransactionCommand,
+  type SignTransactionCommandArgs,
+} from "@internal/app-binder/command/SignTransactionCommand";
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAOutput,
@@ -787,17 +845,20 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     // 2. Getting the address
     // 3. Signing the transaction
     // 4. Handling user interactions
-    // 
+    //
     // See the guide for detailed XState implementation examples
-    throw new Error("SignTransactionDeviceAction.makeStateMachine not implemented");
+    throw new Error(
+      "SignTransactionDeviceAction.makeStateMachine not implemented",
+    );
   }
 
   extractDependencies(internalApi: InternalApi) {
-    const getAddress = async (args: { input: import("@internal/app-binder/command/GetAddressCommand").GetAddressCommandArgs }) =>
+    const getAddress = async (args: { input: GetAddressCommandArgs }) =>
       internalApi.sendCommand(new GetAddressCommand(args.input));
-    
-    const signTransaction = async (args: { input: import("@internal/app-binder/command/SignTransactionCommand").SignTransactionCommandArgs }) =>
-      internalApi.sendCommand(new SignTransactionCommand(args.input));
+
+    const signTransaction = async (args: {
+      input: SignTransactionCommandArgs;
+    }) => internalApi.sendCommand(new SignTransactionCommand(args.input));
 
     return {
       getAddress,
