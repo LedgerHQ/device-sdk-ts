@@ -466,6 +466,272 @@ export class ${config.taskClassName} {
 }
 
 // ============================================================================
+// Sample App Helper Functions
+// ============================================================================
+
+/**
+ * Generates the signer provider for the sample app
+ */
+function generateSignerProvider(pascalCase, kebabCase) {
+  return `"use client";
+
+import React, {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useSelector } from "react-redux";
+import {
+  type Signer${pascalCase},
+  Signer${pascalCase}Builder,
+} from "@ledgerhq/device-signer-kit-${kebabCase}";
+
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
+
+type Signer${pascalCase}ContextType = {
+  signer: Signer${pascalCase} | null;
+};
+
+const initialState: Signer${pascalCase}ContextType = {
+  signer: null,
+};
+
+const Signer${pascalCase}Context = createContext<Signer${pascalCase}ContextType>(initialState);
+
+export const Signer${pascalCase}Provider: React.FC<PropsWithChildren> = ({
+  children,
+}) => {
+  const dmk = useDmk();
+  const sessionId = useSelector(selectSelectedSessionId);
+
+  const [signer, setSigner] = useState<Signer${pascalCase} | null>(null);
+
+  useEffect(() => {
+    if (!sessionId || !dmk) {
+      setSigner(null);
+      return;
+    }
+
+    const newSigner = new Signer${pascalCase}Builder({
+      dmk,
+      sessionId,
+    }).build();
+    setSigner(newSigner);
+  }, [dmk, sessionId]);
+
+  return (
+    <Signer${pascalCase}Context.Provider
+      value={{
+        signer,
+      }}
+    >
+      {children}
+    </Signer${pascalCase}Context.Provider>
+  );
+};
+
+export const useSigner${pascalCase} = (): Signer${pascalCase} | null => {
+  return useContext(Signer${pascalCase}Context).signer;
+};
+`;
+}
+
+// Sample app device action configurations
+const SAMPLE_APP_DEVICE_ACTIONS = {
+  getAppConfig: {
+    typeImports: ["GetAppConfigDAError", "GetAppConfigDAIntermediateValue", "GetAppConfigDAOutput"],
+    action: `{
+        title: "Get App Config",
+        description: "Get the app configuration from the device",
+        executeDeviceAction: () => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.getAppConfig();
+        },
+        initialValues: {},
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetAppConfigDAOutput,
+        Record<string, never>,
+        GetAppConfigDAError,
+        GetAppConfigDAIntermediateValue
+      >`,
+  },
+  getAddress: {
+    typeImports: ["GetAddressDAError", "GetAddressDAIntermediateValue", "GetAddressDAOutput"],
+    action: `{
+        title: "Get Address",
+        description: "Get an address from the device",
+        executeDeviceAction: ({ derivationPath, checkOnDevice, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.getAddress(derivationPath, {
+            checkOnDevice,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/0'/0'/0/0",
+          checkOnDevice: false,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetAddressDAOutput,
+        {
+          derivationPath: string;
+          checkOnDevice?: boolean;
+          skipOpenApp?: boolean;
+        },
+        GetAddressDAError,
+        GetAddressDAIntermediateValue
+      >`,
+  },
+  signTransaction: {
+    typeImports: ["SignTransactionDAError", "SignTransactionDAIntermediateValue", "SignTransactionDAOutput"],
+    action: `{
+        title: "Sign Transaction",
+        description: "Sign a transaction with the device",
+        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          // Convert hex string to Uint8Array
+          const txBytes = transaction.startsWith("0x")
+            ? new Uint8Array(
+                transaction
+                  .slice(2)
+                  .match(/.{1,2}/g)
+                  ?.map((byte) => parseInt(byte, 16)) ?? []
+              )
+            : new Uint8Array(
+                transaction
+                  .match(/.{1,2}/g)
+                  ?.map((byte) => parseInt(byte, 16)) ?? []
+              );
+          return signer.signTransaction(derivationPath, txBytes, {
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/0'/0'/0/0",
+          transaction: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignTransactionDAOutput,
+        {
+          derivationPath: string;
+          transaction: string;
+          skipOpenApp?: boolean;
+        },
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >`,
+  },
+  signMessage: {
+    typeImports: ["SignMessageDAError", "SignMessageDAIntermediateValue", "SignMessageDAOutput"],
+    action: `{
+        title: "Sign Message",
+        description: "Sign a message with the device",
+        executeDeviceAction: ({ derivationPath, message }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.signMessage(derivationPath, message);
+        },
+        initialValues: {
+          derivationPath: "44'/0'/0'/0/0",
+          message: "Hello World",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignMessageDAOutput,
+        {
+          derivationPath: string;
+          message: string;
+        },
+        SignMessageDAError,
+        SignMessageDAIntermediateValue
+      >`,
+  },
+};
+
+/**
+ * Generates the signer view component for the sample app
+ */
+function generateSignerView(pascalCase, kebabCase, selectedApis) {
+  // Collect type imports and device actions from selected APIs
+  const typeImports = [];
+  const deviceActions = [];
+  
+  for (const apiName of selectedApis) {
+    const config = SAMPLE_APP_DEVICE_ACTIONS[apiName];
+    if (config) {
+      typeImports.push(...config.typeImports.map(t => `type ${t}`));
+      deviceActions.push(config.action);
+    }
+  }
+  
+  return `import React, { useMemo } from "react";
+import {
+  ${typeImports.join(",\n  ")},
+} from "@ledgerhq/device-signer-kit-${kebabCase}";
+import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
+import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { useSigner${pascalCase} } from "@/providers/Signer${pascalCase}Provider";
+
+export const Signer${pascalCase}View: React.FC<{ sessionId: string }> = ({
+  sessionId,
+}) => {
+  const dmk = useDmk();
+  const signer = useSigner${pascalCase}();
+
+  const deviceModelId = dmk.getConnectedDevice({
+    sessionId,
+  }).modelId;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
+    () => [
+      ${deviceActions.join(",\n      ")},
+    ],
+    [deviceModelId, signer],
+  );
+
+  return (
+    <DeviceActionsList title="Signer ${pascalCase}" deviceActions={deviceActions} />
+  );
+};
+`;
+}
+
+/**
+ * Generates the signer page for the sample app
+ */
+function generateSignerPage(pascalCase) {
+  return `"use client";
+import React from "react";
+
+import { SessionIdWrapper } from "@/components/SessionIdWrapper";
+import { Signer${pascalCase}View } from "@/components/Signer${pascalCase}View";
+
+const Signer: React.FC = () => {
+  return <SessionIdWrapper ChildComponent={Signer${pascalCase}View} />;
+};
+
+export default Signer;
+`;
+}
+
+// ============================================================================
 // Main Generator Function
 // ============================================================================
 
@@ -1265,14 +1531,178 @@ All notable changes to this project will be documented in this file.
 - Initial signer implementation for ${cryptoName}
 `);
 
+    // Generate sample app files
+    console.log(chalk.gray("\n📱 Generating sample app files..."));
+    
+    const sampleAppDir = "apps/sample/src";
+    
+    // Create directories for sample app
+    const sampleDirs = [
+      `${sampleAppDir}/providers/Signer${pascalCase}Provider`,
+      `${sampleAppDir}/components/Signer${pascalCase}View`,
+      `${sampleAppDir}/app/signers/${kebabCase}`,
+    ];
+    sampleDirs.forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    });
+    
+    // Generate provider
+    writeFile(
+      `${sampleAppDir}/providers/Signer${pascalCase}Provider/index.tsx`,
+      generateSignerProvider(pascalCase, kebabCase)
+    );
+    
+    // Generate view component
+    writeFile(
+      `${sampleAppDir}/components/Signer${pascalCase}View/index.tsx`,
+      generateSignerView(pascalCase, kebabCase, selectedApis)
+    );
+    
+    // Generate page
+    writeFile(
+      `${sampleAppDir}/app/signers/${kebabCase}/page.tsx`,
+      generateSignerPage(pascalCase)
+    );
+    
+    // Update client-layout.tsx to add the new signer provider
+    const clientLayoutPath = `${sampleAppDir}/app/client-layout.tsx`;
+    if (fs.existsSync(clientLayoutPath)) {
+      let clientLayoutContent = fs.readFileSync(clientLayoutPath, "utf-8");
+      
+      const providerImport = `import { Signer${pascalCase}Provider } from "@/providers/Signer${pascalCase}Provider";`;
+      const providerName = `Signer${pascalCase}Provider`;
+      
+      // Check if already imported
+      if (clientLayoutContent.includes(providerImport) || clientLayoutContent.includes(`<${providerName}>`)) {
+        console.log(chalk.yellow(`⚠️  ${providerName} already exists in ${clientLayoutPath}`));
+      } else {
+        // Add import after the last SignerProvider import or after other provider imports
+        const importRegex = /(import \{ Signer\w+Provider \} from "@\/providers\/Signer\w+Provider";)/g;
+        let lastImportMatch;
+        let match;
+        while ((match = importRegex.exec(clientLayoutContent)) !== null) {
+          lastImportMatch = match;
+        }
+        
+        if (lastImportMatch) {
+          // Insert after the last signer provider import
+          const insertPosition = lastImportMatch.index + lastImportMatch[0].length;
+          clientLayoutContent = 
+            clientLayoutContent.slice(0, insertPosition) + 
+            "\n" + providerImport +
+            clientLayoutContent.slice(insertPosition);
+        } else {
+          // Fallback: add after the store import
+          clientLayoutContent = clientLayoutContent.replace(
+            /(import \{ store \} from "@\/state\/store";)/,
+            `$1\n${providerImport}`
+          );
+        }
+        
+        // Add provider wrapper - find the innermost provider (before CalInterceptorProvider or GlobalStyle)
+        // Look for pattern like <SignerEthProvider> and wrap inside it
+        const providerWrapperRegex = /(<SignerEthProvider>)/;
+        if (clientLayoutContent.match(providerWrapperRegex)) {
+          clientLayoutContent = clientLayoutContent.replace(
+            providerWrapperRegex,
+            `$1\n                  <${providerName}>`
+          );
+          // Find the closing tag and add our closing tag before it
+          clientLayoutContent = clientLayoutContent.replace(
+            /(<\/SignerEthProvider>)/,
+            `</${providerName}>\n                $1`
+          );
+        } else {
+          // Fallback: wrap around CalInterceptorProvider
+          clientLayoutContent = clientLayoutContent.replace(
+            /(<CalInterceptorProvider>)/,
+            `<${providerName}>\n                    $1`
+          );
+          clientLayoutContent = clientLayoutContent.replace(
+            /(<\/CalInterceptorProvider>)/,
+            `$1\n                  </${providerName}>`
+          );
+        }
+        
+        fs.writeFileSync(clientLayoutPath, clientLayoutContent);
+        console.log(chalk.green(`✅ Updated ${clientLayoutPath}`));
+      }
+    }
+
+    // Update sample app package.json to add the new signer dependency
+    const samplePackageJsonPath = "apps/sample/package.json";
+    if (fs.existsSync(samplePackageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(samplePackageJsonPath, "utf-8"));
+      const depName = `@ledgerhq/device-signer-kit-${kebabCase}`;
+      
+      if (packageJson.dependencies && !packageJson.dependencies[depName]) {
+        packageJson.dependencies[depName] = "workspace:^";
+        
+        // Sort dependencies alphabetically
+        packageJson.dependencies = Object.keys(packageJson.dependencies)
+          .sort()
+          .reduce((obj, key) => {
+            obj[key] = packageJson.dependencies[key];
+            return obj;
+          }, {});
+        
+        fs.writeFileSync(samplePackageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
+        console.log(chalk.green(`✅ Added ${depName} to ${samplePackageJsonPath}`));
+      } else if (packageJson.dependencies && packageJson.dependencies[depName]) {
+        console.log(chalk.yellow(`⚠️  ${depName} already exists in ${samplePackageJsonPath}`));
+      }
+    }
+
+    // Update SignerView/index.tsx to add the new signer
+    const signerViewPath = `${sampleAppDir}/components/SignerView/index.tsx`;
+    if (fs.existsSync(signerViewPath)) {
+      let signerViewContent = fs.readFileSync(signerViewPath, "utf-8");
+      
+      // Check if this signer already exists
+      if (signerViewContent.includes(`title: "${pascalCase}"`)) {
+        console.log(chalk.yellow(`⚠️  ${pascalCase} already exists in ${signerViewPath}`));
+      } else {
+        // Find the SUPPORTED_SIGNERS array and add the new entry
+        // Use uppercase ticker symbol if it's a known crypto, otherwise use BTC as placeholder
+        const ticker = kebabCase.toUpperCase();
+        const iconName = ["ETH", "BTC", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC", "LINK", "UNI"].includes(ticker) 
+          ? ticker 
+          : "BTC"; // Use BTC as fallback placeholder
+        
+        const newSignerEntry = `  {
+    title: "${pascalCase}",
+    description: "Access ${pascalCase} signer functionality",
+    icon: <CryptoIcons.${iconName} size={80} />, // TODO: Update icon if needed
+  },`;
+        
+        // Find the closing of SUPPORTED_SIGNERS array and insert before it
+        // Look for the pattern: },\n]; at the end of the array
+        const arrayEndRegex = /(const SUPPORTED_SIGNERS = \[[\s\S]*?},)\n\];/;
+        const match = signerViewContent.match(arrayEndRegex);
+        
+        if (match) {
+          signerViewContent = signerViewContent.replace(
+            arrayEndRegex,
+            `$1\n${newSignerEntry}\n];`
+          );
+          fs.writeFileSync(signerViewPath, signerViewContent);
+          console.log(chalk.green(`✅ Updated ${signerViewPath}`));
+        } else {
+          console.log(chalk.yellow(`⚠️  Could not update ${signerViewPath} - please add the signer manually`));
+        }
+      }
+    }
+
     console.log(chalk.green("\n🎉 Signer package generated successfully!"));
     console.log(chalk.gray("\nNext steps:"));
-    console.log(chalk.gray("1. Navigate to the generated package:"));
-    console.log(chalk.cyan(`   cd packages/signer/signer-${kebabCase}`));
-    console.log(chalk.gray("2. Install dependencies:"));
+    console.log(chalk.gray("1. Install dependencies from the root:"));
     console.log(chalk.cyan("   pnpm install"));
-    console.log(chalk.gray("3. Build the package:"));
-    console.log(chalk.cyan("   pnpm build"));
+    console.log(chalk.gray("2. Build the package:"));
+    console.log(chalk.cyan(`   pnpm --filter @ledgerhq/device-signer-kit-${kebabCase} build`));
+    console.log(chalk.gray("3. Run the sample app to test:"));
+    console.log(chalk.cyan("   pnpm sample dev"));
     console.log(chalk.gray(`4. Start developing your ${cryptoName} signer implementation!`));
     console.log(chalk.yellow("\n⚠️  Remember to implement:"));
     console.log(chalk.yellow("   - APDU construction in commands (getApdu methods)"));
@@ -1281,6 +1711,11 @@ All notable changes to this project will be documented in this file.
     if (includeSignTransaction) {
       console.log(chalk.yellow("   - SignTransactionTask implementation"));
     }
+    console.log(chalk.gray("\nGenerated files:"));
+    console.log(chalk.gray("  Signer package: ") + chalk.cyan(`packages/signer/signer-${kebabCase}/`));
+    console.log(chalk.gray("  Sample app provider: ") + chalk.cyan(`apps/sample/src/providers/Signer${pascalCase}Provider/`));
+    console.log(chalk.gray("  Sample app view: ") + chalk.cyan(`apps/sample/src/components/Signer${pascalCase}View/`));
+    console.log(chalk.gray("  Sample app page: ") + chalk.cyan(`apps/sample/src/app/signers/${kebabCase}/`));
     console.log(chalk.gray("\nGenerated APIs: ") + chalk.cyan(selectedApis.join(", ")));
 
   } catch (error) {
