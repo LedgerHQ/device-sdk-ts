@@ -329,16 +329,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTransaction",
             },
           },
         },
         AfterInspect: {
           always: [
             { target: "BuildContext", guard: "isAnSPLTransaction" },
-            { target: "SignTransaction", guard: "noInternalError" },
-            { target: "Error" },
+            { target: "SignTransaction" },
           ],
         },
         BuildContext: {
@@ -390,8 +388,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTransaction",
             },
           },
         },
@@ -418,19 +415,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               };
             },
             onDone: {
-              target: "ProvideContextResultCheck",
+              target: "SignTransaction",
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTransaction",
             },
           },
-        },
-        ProvideContextResultCheck: {
-          always: [
-            { target: "SignTransaction", guard: "noInternalError" },
-            { target: "Error" },
-          ],
         },
         SignTransaction: {
           entry: assign({
