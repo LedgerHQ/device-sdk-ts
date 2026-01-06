@@ -70,6 +70,7 @@ async function generateSigner() {
       `${baseDir}/src/internal/app-binder/device-action`,
       `${baseDir}/src/internal/app-binder/device-action/GetAddress`,
       `${baseDir}/src/internal/app-binder/device-action/SignTransaction`,
+      `${baseDir}/src/internal/app-binder/task`,
       `${baseDir}/src/internal/use-cases`,
       `${baseDir}/src/internal/use-cases/address`,
       `${baseDir}/src/internal/use-cases/address/di`,
@@ -322,17 +323,6 @@ export class Signer${pascalCase}Builder {
 `);
 
     // Generate app-binder types
-    writeFile(`${baseDir}/src/api/app-binder/GetAddressCommandTypes.ts`, `export type GetAddressCommandResponse = {
-  readonly publicKey: Uint8Array;
-  readonly chainCode?: Uint8Array;
-};
-
-export type GetAddressCommandArgs = {
-  readonly derivationPath: string;
-  readonly checkOnDevice?: boolean;
-};
-`);
-
     writeFile(`${baseDir}/src/api/app-binder/GetAddressDeviceActionTypes.ts`, `import {
   type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
@@ -342,7 +332,7 @@ export type GetAddressCommandArgs = {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
+import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
 import { type ${pascalCase}ErrorCodes } from "@internal/app-binder/command/utils/${kebabCase}ApplicationErrors";
 
 type GetAddressDAUserInteractionRequired =
@@ -368,45 +358,28 @@ export type GetAddressDAReturnType = ExecuteDeviceActionReturnType<
 
     writeFile(`${baseDir}/src/api/app-binder/SignTransactionDeviceActionTypes.ts`, `import {
   type CommandErrorResult,
-  type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
+  type OpenAppDARequiredInteraction,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type ${pascalCase}ErrorCodes } from "@internal/app-binder/command/utils/${kebabCase}ApplicationErrors";
 
-export enum SignTransactionDAStep {
-  OPEN_APP = "signer.${kebabCase}.steps.openApp",
-  GET_ADDRESS = "signer.${kebabCase}.steps.getAddress",
-  SIGN_TRANSACTION = "signer.${kebabCase}.steps.signTransaction",
-}
-
 export type SignTransactionDAOutput = Signature;
-
-export type SignTransactionDAInput = {
-  readonly derivationPath: string;
-  readonly transaction: Uint8Array;
-  readonly options: TransactionOptions;
-};
 
 export type SignTransactionDAError =
   | OpenAppDAError
   | CommandErrorResult<${pascalCase}ErrorCodes>["error"];
 
-export type SignTransactionDAIntermediateValue = {
-  address?: string;
-  step: SignTransactionDAStep;
-  requiredUserInteraction: UserInteractionRequired;
-};
+type SignTransactionDARequiredInteraction =
+  | OpenAppDARequiredInteraction
+  | UserInteractionRequired.SignTransaction;
 
-export type SignTransactionDAState = DeviceActionState<
-  SignTransactionDAOutput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue
->;
+export type SignTransactionDAIntermediateValue = {
+  requiredUserInteraction: SignTransactionDARequiredInteraction;
+};
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
   SignTransactionDAOutput,
@@ -526,6 +499,7 @@ export const appBindingModuleFactory = () =>
 `);
 
     writeFile(`${baseDir}/src/internal/app-binder/${pascalCase}AppBinder.ts`, `import {
+  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
@@ -538,7 +512,7 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
-import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
+import { SignTransactionTask } from "./task/SignTransactionTask";
 
 @injectable()
 export class ${pascalCase}AppBinder {
@@ -570,15 +544,17 @@ export class ${pascalCase}AppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
-    options?: import("@api/model/TransactionOptions").TransactionOptions;
+    skipOpenApp?: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SignTransactionDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          derivationPath: args.derivationPath,
-          transaction: args.transaction,
-          options: args.options ?? {},
+          task: async (internalApi) =>
+            new SignTransactionTask(internalApi, args).run(),
+          appName: "${pascalCase}",
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp ?? false,
         },
       }),
     });
@@ -602,12 +578,17 @@ export class ${pascalCase}AppBinder {
   type CommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import {
-  type GetAddressCommandArgs,
-  type GetAddressCommandResponse,
-} from "@api/app-binder/GetAddressCommandTypes";
-
 import { type ${pascalCase}ErrorCodes } from "./utils/${kebabCase}ApplicationErrors";
+
+export type GetAddressCommandResponse = {
+  readonly publicKey: Uint8Array;
+  readonly chainCode?: Uint8Array;
+};
+
+export type GetAddressCommandArgs = {
+  readonly derivationPath: string;
+  readonly checkOnDevice?: boolean;
+};
 
 export class GetAddressCommand
   implements
@@ -791,7 +772,7 @@ export class SignTransactionUseCase {
     return this._appBinder.signTransaction({
       derivationPath,
       transaction,
-      options,
+      skipOpenApp: options?.skipOpenApp,
     });
   }
 }
@@ -804,66 +785,55 @@ export class SignTransactionUseCase {
 `);
 
     // Generate SignTransactionDeviceAction placeholder
-    writeFile(`${baseDir}/src/internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction.ts`, `import {
+    writeFile(`${baseDir}/src/internal/app-binder/device-action/SignTransaction/SignTransactionDeviceAction.ts`, `// TODO: Implement SignTransactionDeviceAction if needed
+// This is a placeholder - you may not need a custom device action for SignTransaction
+// if CallTaskInAppDeviceAction with SignTransactionTask is sufficient
+`);
+
+    // Generate SignTransactionTask
+    writeFile(`${baseDir}/src/internal/app-binder/task/SignTransactionTask.ts`, `import {
+  type CommandResult,
+  CommandResultFactory,
   type InternalApi,
-  XStateDeviceAction,
-  type DeviceActionStateMachine,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { type GetAddressCommandArgs } from "@api/app-binder/GetAddressCommandTypes";
-import {
-  type SignTransactionDAError,
-  type SignTransactionDAInput,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAOutput,
-} from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
-import {
-  SignTransactionCommand,
-  type SignTransactionCommandArgs,
-} from "@internal/app-binder/command/SignTransactionCommand";
+import { type Signature } from "@api/model/Signature";
+import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
+import { type ${pascalCase}ErrorCodes } from "@internal/app-binder/command/utils/${kebabCase}ApplicationErrors";
 
-export class SignTransactionDeviceAction extends XStateDeviceAction<
-  SignTransactionDAOutput,
-  SignTransactionDAInput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  Record<string, unknown>
-> {
-  makeStateMachine(
-    internalApi: InternalApi,
-  ): DeviceActionStateMachine<
-    SignTransactionDAOutput,
-    SignTransactionDAInput,
-    SignTransactionDAError,
-    SignTransactionDAIntermediateValue,
-    Record<string, unknown>
-  > {
-    // TODO: Implement XState machine for transaction signing flow
-    // This typically includes:
-    // 1. Opening the app
-    // 2. Getting the address
-    // 3. Signing the transaction
-    // 4. Handling user interactions
-    //
-    // See the guide for detailed XState implementation examples
-    throw new Error(
-      "SignTransactionDeviceAction.makeStateMachine not implemented",
+type SignTransactionTaskArgs = {
+  derivationPath: string;
+  transaction: Uint8Array;
+};
+
+export class SignTransactionTask {
+  constructor(
+    private api: InternalApi,
+    private args: SignTransactionTaskArgs,
+  ) {}
+
+  async run(): Promise<CommandResult<Signature, ${pascalCase}ErrorCodes>> {
+    // TODO: Adapt this implementation to your blockchain's signing protocol
+    // For transactions larger than a single APDU, you may need to:
+    // 1. Split the transaction into chunks
+    // 2. Send each chunk with appropriate first/continue flags
+    // 3. Collect the final signature from the last response
+
+    const result = await this.api.sendCommand(
+      new SignTransactionCommand({
+        derivationPath: this.args.derivationPath,
+        transaction: this.args.transaction,
+      }),
     );
-  }
 
-  extractDependencies(internalApi: InternalApi) {
-    const getAddress = async (args: { input: GetAddressCommandArgs }) =>
-      internalApi.sendCommand(new GetAddressCommand(args.input));
+    if (!isSuccessCommandResult(result)) {
+      return result;
+    }
 
-    const signTransaction = async (args: {
-      input: SignTransactionCommandArgs;
-    }) => internalApi.sendCommand(new SignTransactionCommand(args.input));
-
-    return {
-      getAddress,
-      signTransaction,
-    };
+    return CommandResultFactory({
+      data: result.data.signature,
+    });
   }
 }
 `);
