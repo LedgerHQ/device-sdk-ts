@@ -21,6 +21,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Solana signer functionality",
     icon: <CryptoIcons.SOL size={80} />,
   },
+  {
+    title: "Cosmos",
+    description: "Access Cosmos signer functionality",
+    icon: <CryptoIcons.ATOM size={80} />,
+  },
 ];
 
 export const SignerView = () => {
