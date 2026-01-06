@@ -6,6 +6,7 @@ import {
   CommandResultStatus,
   DeviceModelId,
   type InternalApi,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,8 +22,19 @@ const contextModuleMock: ContextModule = {
   getSolanaContext: vi.fn(),
 } as unknown as ContextModule;
 
+const dmkLoggerFactoryMock: (tag: string) => LoggerPublisherService = vi.fn(
+  () =>
+    ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    }) as any,
+);
+
 const defaultArgs = {
   contextModule: contextModuleMock,
+  loggerFactory: dmkLoggerFactoryMock,
   options: {
     tokenAddress: "someAddress",
     createATA: undefined,

@@ -3,6 +3,7 @@ import { type SolanaTransactionContextResultSuccess } from "@ledgerhq/context-mo
 import {
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,
+  type LoggerPublisherService,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
   type SendCommandInAppDAError,
@@ -31,10 +32,11 @@ export type SignTransactionDAStateStep =
 export type SignTransactionDAOutput = Signature;
 
 export type SignTransactionDAInput = {
+  readonly loggerFactory: (tag: string) => LoggerPublisherService;
   readonly derivationPath: string;
   readonly transaction: Transaction;
-  readonly transactionOptions?: SolanaTransactionOptionalConfig;
   readonly contextModule: ContextModule;
+  readonly transactionOptions?: SolanaTransactionOptionalConfig;
 };
 
 export type SignTransactionDAError =
