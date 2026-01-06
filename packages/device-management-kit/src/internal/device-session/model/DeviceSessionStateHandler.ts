@@ -29,6 +29,10 @@ type NewDeviceStatus = {
 export class DeviceSessionStateHandler {
   private _subscription: Subscription;
   private readonly _logger: LoggerPublisherService;
+  // BUSY is used as the default status when an intent fails, since it is not yet clear
+  // whether the device is disconnected or simply unresponsive. The actual disconnection
+  // status will be determined and notified asynchronously by the transport layer.
+  private _pendingDeviceStatus: DeviceStatus = DeviceStatus.BUSY;
 
   constructor(
     loggerModuleFactory: (tag: string) => LoggerPublisherService,
@@ -75,7 +79,8 @@ export class DeviceSessionStateHandler {
   }
 
   private mapEventAction = (event: NewEvent) => {
-    switch (event.eventName) {
+    const { eventName } = event;
+    switch (eventName) {
       case SessionEvents.COMMAND_SUCCEEDED:
         return this._updateDeviceState(event.eventData);
       case SessionEvents.DEVICE_STATE_UPDATE_BUSY:
@@ -84,17 +89,34 @@ export class DeviceSessionStateHandler {
           deviceStatus: DeviceStatus.BUSY,
         });
       case SessionEvents.DEVICE_STATE_UPDATE_LOCKED:
-        return this.setDeviceSessionState({
-          ...this._deviceState.getValue(),
-          deviceStatus: DeviceStatus.LOCKED,
-        });
+        this._pendingDeviceStatus = DeviceStatus.LOCKED;
+        return;
       case SessionEvents.DEVICE_STATE_UPDATE_CONNECTED:
+        this._pendingDeviceStatus = DeviceStatus.CONNECTED;
+        return;
+      case SessionEvents.NEW_STATE: {
+        // On new state, if an intent is successful,
+        // we should have a DEVICE_STATE_UPDATE_LOCKED or DEVICE_STATE_UPDATE_CONNECTED as pending status event
+        // If not, we should still have a BUSY status as fallback waiting for the transport to disconnect
+        const newDeviceStatus = this._pendingDeviceStatus;
+        this._pendingDeviceStatus = DeviceStatus.BUSY;
         return this.setDeviceSessionState({
           ...this._deviceState.getValue(),
-          deviceStatus: DeviceStatus.CONNECTED,
+          deviceStatus: newDeviceStatus,
         });
-      default:
-        return null;
+      }
+      case SessionEvents.DEVICE_STATE_UPDATE_UNKNOWN:
+        return this.setDeviceSessionState({
+          ...this._deviceState.getValue(),
+          deviceStatus: DeviceStatus.BUSY,
+        });
+      case SessionEvents.REFRESH_NEEDED:
+        // This case is handled by the DeviceSessionRefresher
+        return;
+      default: {
+        const uncoveredType: never = eventName;
+        throw new Error(`Unhandled context type ${uncoveredType}`);
+      }
     }
   };
 
