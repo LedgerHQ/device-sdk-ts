@@ -1530,6 +1530,389 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Initial signer implementation for ${cryptoName}
 `);
+    console.log(chalk.gray("\n📚 Generating documentation and sample app files..."));
+
+    // Generate documentation page dynamically based on selected methods
+    const docsDir = `apps/docs/pages/docs/references/signers`;
+    const docFileName = `${kebabCase}.mdx`;
+    
+    // Build the list of capabilities dynamically
+    const capabilities = [];
+    if (includeGetAddress) capabilities.push(`- Retrieving the ${cryptoName} address using a given derivation path`);
+    if (includeSignTransaction) capabilities.push(`- Signing a ${cryptoName} transaction`);
+    if (includeSignMessage) capabilities.push(`- Signing a message displayed on a Ledger device`);
+    if (includeGetAppConfig) capabilities.push(`- Retrieving the app configuration`);
+    
+    // Build the index links dynamically
+    const indexLinks = [
+      "1. [How it works](#-how-it-works)",
+      "2. [Installation](#-installation)",
+      "3. [Initialisation](#-initialisation)",
+      "4. [Use Cases](#-use-cases)"
+    ];
+    
+    let useCaseNumber = 1;
+    const useCaseLinks = [];
+    if (includeGetAppConfig) {
+      useCaseLinks.push(`   - [Get App Configuration](#use-case-${useCaseNumber}-get-app-configuration)`);
+      useCaseNumber++;
+    }
+    if (includeGetAddress) {
+      useCaseLinks.push(`   - [Get Address](#use-case-${useCaseNumber}-get-address)`);
+      useCaseNumber++;
+    }
+    if (includeSignTransaction) {
+      useCaseLinks.push(`   - [Sign Transaction](#use-case-${useCaseNumber}-sign-transaction)`);
+      useCaseNumber++;
+    }
+    if (includeSignMessage) {
+      useCaseLinks.push(`   - [Sign Message](#use-case-${useCaseNumber}-sign-message)`);
+      useCaseNumber++;
+    }
+    
+    indexLinks.push(...useCaseLinks);
+    indexLinks.push("5. [Observable Behavior](#-observable-behavior)", "6. [Example](#-example)");
+    
+    // Build use case sections dynamically
+    let useCaseSections = [];
+    useCaseNumber = 1;
+    
+    if (includeGetAppConfig) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Get App Configuration
+
+This method allows users to retrieve the app configuration from the Ledger device.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.getAppConfig();
+\`\`\`
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type GetAppConfigCommandResponse = {
+  // TODO: Define the app configuration response type
+  // Example:
+  // version: string;
+  // flags: number;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    if (includeGetAddress) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Get Address
+
+This method allows users to retrieve the ${cryptoName} address based on a given \`derivationPath\`.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.getAddress(derivationPath, options);
+\`\`\`
+
+#### **Parameters**
+
+- \`derivationPath\`
+
+  - **Required**
+  - **Type:** \`string\` (e.g., \`"m/44'/0'/0'/0/0"\`)
+  - The derivation path used for the ${cryptoName} address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- \`options\`
+
+  - Optional
+  - Type: \`AddressOptions\`
+
+    \`\`\`typescript
+    type AddressOptions = {
+      checkOnDevice?: boolean;
+      skipOpenApp?: boolean;
+    };
+    \`\`\`
+
+  - \`checkOnDevice\`: An optional boolean indicating whether user confirmation on the device is required (\`true\`) or not (\`false\`).
+  - \`skipOpenApp\`: An optional boolean indicating whether to skip opening the ${cryptoName} app automatically (\`true\`) or not (\`false\`).
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type GetAddressCommandResponse = {
+  publicKey: Uint8Array;
+  chainCode?: Uint8Array;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    if (includeSignTransaction) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Sign Transaction
+
+This method allows users to sign a ${cryptoName} transaction.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.signTransaction(
+  derivationPath,
+  transaction,
+  options,
+);
+\`\`\`
+
+#### **Parameters**
+
+- \`derivationPath\`
+
+  - **Required**
+  - **Type:** \`string\` (e.g., \`"m/44'/0'/0'/0/0"\`)
+  - The derivation path used for the ${cryptoName} transaction. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- \`transaction\`
+
+  - **Required**
+  - **Type:** \`Uint8Array\`
+  - The serialized transaction to be signed.
+
+- \`options\`
+
+  - Optional
+  - Type: \`TransactionOptions\`
+
+    \`\`\`typescript
+    type TransactionOptions = {
+      skipOpenApp?: boolean;
+    };
+    \`\`\`
+
+  - \`skipOpenApp\`: An optional boolean indicating whether to skip opening the ${cryptoName} app automatically (\`true\`) or not (\`false\`).
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type Signature = {
+  r: string;
+  s: string;
+  v?: number;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    if (includeSignMessage) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Sign Message
+
+This method allows users to sign a text string that is displayed on Ledger devices.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.signMessage(
+  derivationPath,
+  message,
+);
+\`\`\`
+
+#### **Parameters**
+
+- \`derivationPath\`
+
+  - **Required**
+  - **Type:** \`string\` (e.g., \`"m/44'/0'/0'/0/0"\`)
+  - The derivation path used for the ${cryptoName} message. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- \`message\`
+
+  - **Required**
+  - **Type:** \`string | Uint8Array\`
+  - The message to be signed, which will be displayed on the Ledger device.
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type Signature = {
+  r: string;
+  s: string;
+  v?: number;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    // Count total methods for the description
+    const methodCount = selectedApis.length;
+    const methodPlural = methodCount === 1 ? "method" : "methods";
+    
+    const docContent = `# ${pascalCase} Signer Kit
+
+This module provides the implementation of the Ledger ${cryptoName} signer of the Device Management Kit. It enables interaction with the ${cryptoName} application on a Ledger device including:
+
+${capabilities.join("\n")}
+
+## 🔹 Index
+
+${indexLinks.join("\n")}
+
+## 🔹 How it works
+
+The Ledger ${pascalCase} Signer utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device Management Kit to establish communication with the Ledger device and execute various operations. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the \`Command\` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within \`DeviceAction\` objects to handle different real-world scenarios. Finally, the Signer exposes dedicated and independent use cases that can be directly utilized by end users.
+
+## 🔹 Installation
+
+> **Note:** This module is not standalone; it depends on the [@ledgerhq/device-management-kit](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/device-management-kit) package, so you need to install it first.
+
+To install the \`device-signer-kit-${kebabCase}\` package, run the following command:
+
+\`\`\`sh
+npm install @ledgerhq/device-signer-kit-${kebabCase}
+\`\`\`
+
+## 🔹 Initialisation
+
+To initialise a ${pascalCase} signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the \`Signer${pascalCase}Builder\`:
+
+\`\`\`typescript
+const signer${pascalCase} = new Signer${pascalCase}Builder({ dmk, sessionId }).build();
+\`\`\`
+
+## 🔹 Use Cases
+
+The \`Signer${pascalCase}Builder.build()\` method will return a \`Signer${pascalCase}\` instance that exposes ${methodCount} dedicated ${methodPlural}, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called \`cancel\`.
+
+---
+
+${useCaseSections.join("\n\n")}
+
+## 🔹 Observable Behavior
+
+Each method returns an [Observable](https://rxjs.dev/guide/observable) emitting updates structured as [\`DeviceActionState\`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts). These updates reflect the operation's progress and status:
+
+- **NotStarted**: The operation hasn't started.
+- **Pending**: The operation is in progress and may require user interaction.
+- **Stopped**: The operation was canceled or stopped.
+- **Completed**: The operation completed successfully, with results available.
+- **Error**: An error occurred.
+
+**Example Observable Subscription:**
+
+\`\`\`typescript
+observable.subscribe({
+  next: (state: DeviceActionState) => {
+    switch (state.status) {
+      case DeviceActionStatus.NotStarted: {
+        console.log("The action is not started yet.");
+        break;
+      }
+      case DeviceActionStatus.Pending: {
+        const {
+          intermediateValue: { requiredUserInteraction },
+        } = state;
+        // Access the intermediate value here, explained below
+        console.log(
+          "The action is pending and the intermediate value is: ",
+          intermediateValue,
+        );
+        break;
+      }
+      case DeviceActionStatus.Stopped: {
+        console.log("The action has been stopped.");
+        break;
+      }
+      case DeviceActionStatus.Completed: {
+        const { output } = state;
+        // Access the output of the completed action here
+        console.log("The action has been completed: ", output);
+        break;
+      }
+      case DeviceActionStatus.Error: {
+        const { error } = state;
+        // Access the error here if occurred
+        console.log("An error occurred during the action: ", error);
+        break;
+      }
+    }
+  },
+});
+\`\`\`
+
+**Intermediate Values in Pending Status:**
+
+When the status is DeviceActionStatus.Pending, the state will include an \`intermediateValue\` object that provides useful information for interaction:
+
+\`\`\`typescript
+const { requiredUserInteraction } = intermediateValue;
+
+switch (requiredUserInteraction) {
+  case UserInteractionRequired.VerifyAddress: {
+    // User needs to verify the address displayed on the device
+    console.log("User needs to verify the address displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.SignTransaction: {
+    // User needs to sign the transaction displayed on the device
+    console.log("User needs to sign the transaction displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.SignPersonalMessage: {
+    // User needs to sign the message displayed on the device
+    console.log("User needs to sign the message displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.None: {
+    // No user action required
+    console.log("No user action needed.");
+    break;
+  }
+  case UserInteractionRequired.UnlockDevice: {
+    // User needs to unlock the device
+    console.log("The user needs to unlock the device.");
+    break;
+  }
+  case UserInteractionRequired.ConfirmOpenApp: {
+    // User needs to confirm on the device to open the app
+    console.log("The user needs to confirm on the device to open the app.");
+    break;
+  }
+  default:
+    // Type guard to ensure all cases are handled
+    const uncaughtUserInteraction: never = requiredUserInteraction;
+    console.error("Unhandled user interaction case:", uncaughtUserInteraction);
+}
+\`\`\`
+
+## 🔹 Example
+
+We encourage you to explore the ${pascalCase} Signer by trying it out in our online [sample application](https://app.devicesdk.ledger-test.com/). Experience how it works and see its capabilities in action. Of course, you will need a Ledger device connected.
+`;
+
+    writeFile(`${docsDir}/${docFileName}`, docContent);
+
+    // Update _meta.js in docs
+    const metaFilePath = `${docsDir}/_meta.js`;
+    let metaContent = fs.readFileSync(metaFilePath, 'utf8');
+    // Add new entry before the closing brace
+    metaContent = metaContent.replace(
+      /(\s+)(};)/,
+      `$1  ${kebabCase}: "Signer ${pascalCase}",\n$1$2`
+    );
+    writeFile(metaFilePath, metaContent);
 
     // Generate sample app files
     console.log(chalk.gray("\n📱 Generating sample app files..."));
@@ -1655,6 +2038,62 @@ All notable changes to this project will be documented in this file.
       }
     }
 
+    // Update root package.json to add the signer alias
+    const rootPackageJsonPath = "package.json";
+    if (fs.existsSync(rootPackageJsonPath)) {
+      const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, "utf-8"));
+      const aliasName = `signer-${kebabCase}`;
+      const packageName = `@ledgerhq/device-signer-kit-${kebabCase}`;
+      const aliasValue = `pnpm --filter ${packageName}`;
+      
+      if (!rootPackageJson.scripts) {
+        rootPackageJson.scripts = {};
+      }
+      
+      if (!rootPackageJson.scripts[aliasName]) {
+        // Insert the alias in alphabetical order after other signer aliases
+        const scripts = rootPackageJson.scripts;
+        const scriptKeys = Object.keys(scripts);
+        
+        // Find the position to insert (after the last signer-* alias, before signer-utils)
+        let insertIndex = scriptKeys.length;
+        for (let i = 0; i < scriptKeys.length; i++) {
+          if (scriptKeys[i].startsWith("signer-") && scriptKeys[i] > aliasName) {
+            insertIndex = i;
+            break;
+          }
+        }
+        
+        // If we didn't find a position, check if we should insert before signer-utils
+        if (insertIndex === scriptKeys.length) {
+          const signerUtilsIndex = scriptKeys.indexOf("signer-utils");
+          if (signerUtilsIndex !== -1 && aliasName < "signer-utils") {
+            insertIndex = signerUtilsIndex;
+          }
+        }
+        
+        // Create new scripts object with the alias inserted
+        const newScripts = {};
+        let inserted = false;
+        for (let i = 0; i < scriptKeys.length; i++) {
+          if (i === insertIndex && !inserted) {
+            newScripts[aliasName] = aliasValue;
+            inserted = true;
+          }
+          newScripts[scriptKeys[i]] = scripts[scriptKeys[i]];
+        }
+        if (!inserted) {
+          newScripts[aliasName] = aliasValue;
+        }
+        
+        rootPackageJson.scripts = newScripts;
+        fs.writeFileSync(rootPackageJsonPath, JSON.stringify(rootPackageJson, null, 2) + "\n");
+        console.log(chalk.green(`✅ Added alias "${aliasName}" to ${rootPackageJsonPath}`));
+      } else {
+        console.log(chalk.yellow(`⚠️  Alias "${aliasName}" already exists in ${rootPackageJsonPath}`));
+      }
+    }
+
     // Update SignerView/index.tsx to add the new signer
     const signerViewPath = `${sampleAppDir}/components/SignerView/index.tsx`;
     if (fs.existsSync(signerViewPath)) {
@@ -1696,6 +2135,11 @@ All notable changes to this project will be documented in this file.
     }
 
     console.log(chalk.green("\n🎉 Signer package generated successfully!"));
+    console.log(chalk.gray("\nGenerated files:"));
+    console.log(chalk.cyan(`   ✓ Signer package: packages/signer/signer-${kebabCase}`));
+    console.log(chalk.cyan(`   ✓ Documentation: apps/docs/pages/docs/references/signers/${kebabCase}.mdx`));
+    console.log(chalk.cyan(`   ✓ Sample component: apps/sample/src/components/Signer${pascalCase}View/index.tsx`));
+    console.log(chalk.cyan(`   ✓ Sample page: apps/sample/src/app/signers/${kebabCase}/page.tsx`));
     console.log(chalk.gray("\nNext steps:"));
     console.log(chalk.gray("1. Install dependencies from the root:"));
     console.log(chalk.cyan("   pnpm install"));
