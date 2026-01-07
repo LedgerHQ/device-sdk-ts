@@ -1,5 +1,26 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.6.0
+
+### Minor Changes
+
+- [#1179](https://github.com/LedgerHQ/device-sdk-ts/pull/1179) [`0f098cf`](https://github.com/LedgerHQ/device-sdk-ts/commit/0f098cf60e95c91cb1a7b0bd5c13563548bea7a6) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add logger in context module and solana loaders
+
+- [#1179](https://github.com/LedgerHQ/device-sdk-ts/pull/1179) [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Export logger factory from dmk and use it in solana signer
+
+- [#1162](https://github.com/LedgerHQ/device-sdk-ts/pull/1162) [`d175ceb`](https://github.com/LedgerHQ/device-sdk-ts/commit/d175ceb6635bbbab1ed6822a5f4d54735e39cc88) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add transaction flow revamp
+
+- [#1210](https://github.com/LedgerHQ/device-sdk-ts/pull/1210) [`4e97b9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/4e97b9e8225e7083f6d39001eae6948197e7c768) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Transition to SignTransaction if any errors in SignTransactionDeviceAction
+
+### Patch Changes
+
+- [#1215](https://github.com/LedgerHQ/device-sdk-ts/pull/1215) [`9b368ef`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b368efe7dbc3aa08d0a1fc90a3c9cfb413acd94) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fallback to NullLoggerFactory if dmk.getLoggerFactory is undefined
+
+- [#1216](https://github.com/LedgerHQ/device-sdk-ts/pull/1216) [`7bf9a04`](https://github.com/LedgerHQ/device-sdk-ts/commit/7bf9a042c4ea37fdf0cc2af6c5c832ad62a7b1b1) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Rename NullLoggerFactory to NullLoggerPublisherService
+
+- Updated dependencies [[`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8), [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0), [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88)]:
+  - @ledgerhq/device-management-kit@1.0.0
+
 ## 1.5.1
 
 ### Patch Changes

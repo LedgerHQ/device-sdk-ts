@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "CAL (Crypto Assets List) interceptor for testing and development",
   "license": "Apache-2.0",
-  "private": false,
+  "private": true,
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
