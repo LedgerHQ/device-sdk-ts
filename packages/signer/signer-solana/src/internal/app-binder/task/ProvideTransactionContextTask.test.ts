@@ -8,7 +8,6 @@ import { SolanaContextTypes } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   LoadCertificateCommand,
-  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -34,6 +33,7 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
+import { NullLoggerFactory } from "@internal/app-binder/services/utils/NullLoggerFactory";
 
 import {
   ProvideSolanaTransactionContextTask,
@@ -109,16 +109,6 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
   const SIG = "f0cacc1a";
 
-  const dmkLoggerFactoryMock: (tag: string) => LoggerPublisherService = vi.fn(
-    () =>
-      ({
-        debug: vi.fn(),
-        info: vi.fn(),
-        warn: vi.fn(),
-        error: vi.fn(),
-      }) as any,
-  );
-
   beforeEach(() => {
     vi.resetAllMocks();
     api = {
@@ -139,7 +129,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults: [],
         transactionBytes: new Uint8Array([0xf0]), // unused in this path
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -174,7 +164,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults: [],
         transactionBytes: new Uint8Array([0xca]),
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -201,7 +191,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]),
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -248,7 +238,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]), // unused in this path
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -299,7 +289,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xf0]),
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -334,7 +324,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xca]),
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -374,7 +364,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xcc]),
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -416,7 +406,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]),
         normaliser: { normaliseMessage: vi.fn() } as any,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -490,7 +480,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: new Uint8Array([0xf0]),
         normaliser: normaliser as any,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -578,7 +568,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: new Uint8Array([0xca]),
         normaliser: normaliser as any,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -631,7 +621,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: new Uint8Array([0xcc]),
         normaliser: normaliser as any,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -696,7 +686,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]),
         normaliser: normaliser as any,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -763,7 +753,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: new Uint8Array([0xf0]),
         normaliser: normaliser as any,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -857,7 +847,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: raw,
         normaliser: DefaultSolanaMessageNormaliser,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -958,7 +948,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: raw,
         normaliser: DefaultSolanaMessageNormaliser,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -1078,7 +1068,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         loadersResults,
         transactionBytes: raw,
         normaliser: DefaultSolanaMessageNormaliser,
-        loggerFactory: dmkLoggerFactoryMock,
+        loggerFactory: NullLoggerFactory,
       };
 
       // when
