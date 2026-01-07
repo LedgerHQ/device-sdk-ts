@@ -1,11 +1,13 @@
 import type { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
-import { NullLoggerFactory } from "./NullLoggerFactory";
+import { NullLoggerPublisherService } from "./NullLoggerPublisherService";
 
-describe("NullLoggerFactory", () => {
+describe("NullLoggerPublisherService", () => {
   it("returns a LoggerPublisherService-like obj", () => {
-    const logger = NullLoggerFactory("any-tag") as LoggerPublisherService;
+    const logger = NullLoggerPublisherService(
+      "any-tag",
+    ) as LoggerPublisherService;
 
     expect(logger).toBeDefined();
     expect(typeof logger.debug).toBe("function");
@@ -17,7 +19,7 @@ describe("NullLoggerFactory", () => {
   });
 
   it("methods are no-ops (do not throw)", () => {
-    const logger = NullLoggerFactory("test");
+    const logger = NullLoggerPublisherService("test");
 
     expect(() => logger.debug("hello")).not.toThrow();
     expect(() => logger.info("hello")).not.toThrow();
@@ -28,8 +30,8 @@ describe("NullLoggerFactory", () => {
   });
 
   it("returns a new object per call (current implementation)", () => {
-    const logger1 = NullLoggerFactory("x");
-    const logger2 = NullLoggerFactory("x");
+    const logger1 = NullLoggerPublisherService("x");
+    const logger2 = NullLoggerPublisherService("x");
 
     expect(logger1).not.toBe(logger2);
   });

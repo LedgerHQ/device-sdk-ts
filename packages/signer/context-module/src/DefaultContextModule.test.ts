@@ -6,7 +6,7 @@ import {
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
-import { NullLoggerFactory } from "./shared/utils/NullLoggerFactory";
+import { NullLoggerPublisherService } from "./shared/utils/NullLoggerPublisherService";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -46,7 +46,7 @@ describe("DefaultContextModule", () => {
       url: "https://metadata.com",
     },
     originToken: "originToken",
-    loggerFactory: NullLoggerFactory,
+    loggerFactory: NullLoggerPublisherService,
   };
 
   beforeEach(() => {
