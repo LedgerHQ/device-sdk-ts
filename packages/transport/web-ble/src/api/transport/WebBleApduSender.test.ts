@@ -83,7 +83,12 @@ beforeEach(() => {
 
   apduReceiverFactory = vi.fn().mockReturnValue({
     handleFrame: vi.fn((_frame: Uint8Array) =>
-      Right(Maybe.of({ data: new Uint8Array([0x90, 0x00]) } as ApduResponse)),
+      Right(
+        Maybe.of({
+          data: new Uint8Array([0x90, 0x00]),
+          statusCode: new Uint8Array([0x90, 0x00]),
+        } as ApduResponse),
+      ),
     ),
   });
 

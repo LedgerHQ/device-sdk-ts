@@ -65,9 +65,12 @@ describe("WebHidTransport", () => {
   const mockEventDeviceDisconnected = vi.fn();
 
   const mockDeviceApduSender = {
-    sendApdu: vi
-      .fn()
-      .mockResolvedValue(Right({ data: new Uint8Array() } as ApduResponse)),
+    sendApdu: vi.fn().mockResolvedValue(
+      Right({
+        data: new Uint8Array(),
+        statusCode: new Uint8Array([0x90, 0x00]),
+      } as ApduResponse),
+    ),
     getDependencies: vi.fn().mockReturnValue({ device: stubDevice }),
     setDependencies: vi.fn(),
     closeConnection: vi.fn(),
@@ -78,9 +81,12 @@ describe("WebHidTransport", () => {
     getDependencies: vi.fn().mockReturnValue({ device: stubDevice }),
     setDependencies: vi.fn(),
     getDeviceId: vi.fn(),
-    sendApdu: vi
-      .fn()
-      .mockResolvedValue(Right({ data: new Uint8Array() } as ApduResponse)),
+    sendApdu: vi.fn().mockResolvedValue(
+      Right({
+        data: new Uint8Array(),
+        statusCode: new Uint8Array([0x90, 0x00]),
+      } as ApduResponse),
+    ),
     setupConnection: vi.fn(),
     eventDeviceConnected: mockEventDeviceConnected,
     eventDeviceDisconnected: mockEventDeviceDisconnected,

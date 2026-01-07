@@ -7,6 +7,8 @@ import {
   type DisconnectHandler,
   type DmkConfig,
   type DmkError,
+  formatApduReceivedLog,
+  formatApduSentLog,
   type LoggerPublisherService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
@@ -151,7 +153,8 @@ export class MockTransport implements Transport {
         sessionId,
         apdu,
       );
-      return Right({
+      this.logger.debug(formatApduSentLog(apdu));
+      const apduResponse = {
         statusCode: this.mockClient.fromHexString(
           response.response.substring(
             response.response.length - 4,
@@ -161,7 +164,9 @@ export class MockTransport implements Transport {
         data: this.mockClient.fromHexString(
           response.response.substring(0, response.response.length - 4),
         ),
-      } as ApduResponse);
+      } as ApduResponse;
+      this.logger.debug(formatApduReceivedLog(apduResponse));
+      return Right(apduResponse);
     } catch (error) {
       onDisconnect(deviceId);
       return Left(new NoAccessibleDeviceError(error as Error));
