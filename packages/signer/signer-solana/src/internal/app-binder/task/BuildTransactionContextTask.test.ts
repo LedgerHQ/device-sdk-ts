@@ -11,7 +11,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { NullLoggerFactory } from "@internal/app-binder/services/utils/NullLoggerFactory";
+import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 
 import {
   BuildTransactionContextTask,
@@ -24,7 +24,7 @@ const contextModuleMock: ContextModule = {
 
 const defaultArgs = {
   contextModule: contextModuleMock,
-  loggerFactory: NullLoggerFactory,
+  loggerFactory: NullLoggerPublisherService,
   options: {
     tokenAddress: "someAddress",
     createATA: undefined,

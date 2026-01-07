@@ -10,7 +10,7 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { SolanaContextTypes } from "@/shared/model/SolanaContextTypes";
-import { NullLoggerFactory } from "@/shared/utils/NullLoggerFactory";
+import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
@@ -57,7 +57,7 @@ describe("SolanaTokenContextLoader", () => {
       mockDataSource,
       config,
       mockCertLoader,
-      NullLoggerFactory,
+      NullLoggerPublisherService,
     );
   };
 

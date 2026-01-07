@@ -9,7 +9,7 @@ import {
   SolanaContextTypes,
   type SolanaTransactionDescriptorList,
 } from "@/shared/model/SolanaContextTypes";
-import { NullLoggerFactory } from "@/shared/utils/NullLoggerFactory";
+import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import {
   type GetTransactionDescriptorsResponse,
   type SolanaLifiDataSource,
@@ -42,7 +42,7 @@ describe("SolanaLifiContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new SolanaLifiContextLoader(mockDataSource, NullLoggerFactory);
+    new SolanaLifiContextLoader(mockDataSource, NullLoggerPublisherService);
 
   describe("canHandle", () => {
     it("returns true when templateId is provided", () => {

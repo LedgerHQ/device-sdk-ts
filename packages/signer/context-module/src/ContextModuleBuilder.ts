@@ -9,7 +9,7 @@ import {
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
-import { NullLoggerFactory } from "./shared/utils/NullLoggerFactory";
+import { NullLoggerPublisherService } from "./shared/utils/NullLoggerPublisherService";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type ContextModule } from "./ContextModule";
@@ -37,7 +37,7 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
-  loggerFactory: NullLoggerFactory,
+  loggerFactory: NullLoggerPublisherService,
 };
 
 export class ContextModuleBuilder {
