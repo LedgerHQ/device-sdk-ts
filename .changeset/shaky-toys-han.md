@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-signer-kit-solana": patch
+"@ledgerhq/context-module": patch
 ---
 
 Rename NullLoggerFactory to NullLoggerPublisherService
