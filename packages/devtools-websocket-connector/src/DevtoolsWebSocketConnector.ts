@@ -54,7 +54,12 @@ export class DevtoolsWebSocketConnector implements Connector {
     if (this.destroyed) {
       throw new Error("Connector is destroyed");
     }
-    if (this.ws && this.wsUrl === params.url) {
+    if (
+      this.ws &&
+      this.wsUrl === params.url &&
+      (this.ws.readyState === WebSocket.OPEN ||
+        this.ws.readyState === WebSocket.CONNECTING)
+    ) {
       const mapReadyStateToText = (readyState: number) => {
         switch (readyState) {
           case WebSocket.OPEN:
@@ -112,6 +117,10 @@ export class DevtoolsWebSocketConnector implements Connector {
       console.log("[DevtoolsWebSocketConnector] WebSocket closed");
       this.ws = null;
       this.wsUrl = null;
+      if (this.messagesToSendSubscription) {
+        this.messagesToSendSubscription.unsubscribe();
+        this.messagesToSendSubscription = null;
+      }
     };
 
     this.ws.onerror = (event) => {
@@ -134,7 +143,7 @@ export class DevtoolsWebSocketConnector implements Connector {
         if (websocketMessageType === WEBSOCKET_MESSAGE_TYPES.MESSAGE) {
           try {
             const parsedMessage = JSON.parse(
-              websocketMessagePayload as string,
+              websocketMessagePayload,
             ) as { type?: unknown; payload?: unknown };
             const type = parsedMessage.type;
             const payload = parsedMessage.payload;
