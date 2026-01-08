@@ -1,5 +1,11 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.6.2
+
+### Patch Changes
+
+- [#1217](https://github.com/LedgerHQ/device-sdk-ts/pull/1217) [`7a2cf74`](https://github.com/LedgerHQ/device-sdk-ts/commit/7a2cf7492089fe4fd84bb670b7a0269b8861d262) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patched getLoggerFactory invocation in solanaSigner
+
 ## 1.6.1
 
 ### Patch Changes
