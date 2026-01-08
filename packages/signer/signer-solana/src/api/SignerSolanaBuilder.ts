@@ -67,9 +67,9 @@ export class SignerSolanaBuilder {
           originToken: this._originToken,
           // @ts-ignore-next-line loggerFactory was added in newer versions of ContextModuleConstructorArgs, kept for backward compatibility
           loggerFactory: (tag: string) => {
-            const factory = this._dmk.getLoggerFactory;
+            const factory = this._dmk.getLoggerFactory?.();
             return factory
-              ? factory()(`SignerSolanaContextModule-${tag}`)
+              ? factory(`SignerSolanaContextModule-${tag}`)
               : NullLoggerPublisherService(`SignerSolanaContextModule-${tag}`);
           },
         }).build(),
