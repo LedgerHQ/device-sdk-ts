@@ -22,6 +22,7 @@ import {
   type ListAppsDAInput,
   type ListAppsDAIntermediateValue,
   type ListAppsDAOutput,
+  listAppsDAStateStep,
 } from "./types";
 
 type ListAppsMachineInternalState = {
@@ -99,6 +100,7 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
           intermediateValue: (_) =>
             ({
               requiredUserInteraction: UserInteractionRequired.AllowListApps,
+              step: listAppsDAStateStep.LIST_APPS,
             }) satisfies types["context"]["intermediateValue"],
         }),
         assignErrorFromEvent: assign({
@@ -119,6 +121,7 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: listAppsDAStateStep.GO_TO_DASHBOARD,
           },
           _internalState: {
             error: null,
