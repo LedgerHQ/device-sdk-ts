@@ -37,9 +37,9 @@ export const makeContainer = ({
       (tag: string) => LoggerPublisherService
     >(externalTypes.DmkLoggerFactory)
     .toConstantValue((tag: string) => {
-      const factory = dmk.getLoggerFactory;
+      const factory = dmk.getLoggerFactory?.();
       return factory
-        ? factory()(`SignerSolana-${tag}`)
+        ? factory(`SignerSolana-${tag}`)
         : NullLoggerPublisherService(`SignerSolana-${tag}`);
     });
 
