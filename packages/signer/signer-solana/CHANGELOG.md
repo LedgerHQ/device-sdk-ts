@@ -1,5 +1,11 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.6.1
+
+### Patch Changes
+
+- [#1217](https://github.com/LedgerHQ/device-sdk-ts/pull/1217) [`e5d77c8`](https://github.com/LedgerHQ/device-sdk-ts/commit/e5d77c8ba444d94a53a4134741ea9a956e7da837) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add backward compatible args for context module builder in solana signer
+
 ## 1.6.0
 
 ### Minor Changes
