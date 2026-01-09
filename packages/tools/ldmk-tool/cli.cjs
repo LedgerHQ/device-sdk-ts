@@ -11,6 +11,7 @@ const { bumpSnapshot } = require("./bump-snapshot.cjs");
 const { createReleasePullRequest } = require("./create-release-pr.cjs");
 const { pack } = require("./pack.cjs");
 const { canonicalize } = require("./canonicalize.cjs");
+const { generateSigner } = require("./generate-signer.cjs");
 
 if (process.platform === "win32") {
   usePowerShell();
@@ -64,6 +65,11 @@ const availableCommands = [
         description: "bump type (patch, minor, major) - defaults to patch",
       },
     ],
+  },
+  {
+    name: "generate-signer",
+    description: "generate a new signer package skeleton for a cryptocurrency",
+    flags: [],
   },
   {
     name: "help",
@@ -144,6 +150,10 @@ async function main() {
   switch (command) {
     case "help":
       help(availableCommands);
+      break;
+    case "generate-signer":
+      console.log(chalk.green("🚀 Generating new signer package"));
+      await generateSigner();
       break;
     case "enter-release":
       console.log(chalk.green("🔧 (packages): Entering release mode"));

@@ -5,6 +5,7 @@ import {
   DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -24,7 +25,10 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { type Signature } from "@api/model/Signature";
-import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
+import {
+  type TransactionResolutionContext,
+  type UserInputType,
+} from "@api/model/TransactionResolutionContext";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -41,7 +45,7 @@ import {
 } from "@internal/app-binder/task/BuildTransactionContextTask";
 import {
   ProvideSolanaTransactionContextTask,
-  type ProvideSolanaTransactionContextTaskContext,
+  type ProvideSolanaTransactionContextTaskArgs,
 } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
@@ -53,7 +57,7 @@ export type MachineDependencies = {
     input: BuildTransactionContextTaskArgs;
   }) => Promise<SolanaBuildContextResult>;
   readonly provideContext: (arg0: {
-    input: ProvideSolanaTransactionContextTaskContext;
+    input: ProvideSolanaTransactionContextTaskArgs;
   }) => Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>>;
   readonly inspectTransaction: (arg0: {
     serializedTransaction: Uint8Array;
@@ -102,6 +106,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       inspectTransaction,
     } = this.extractDependencies(internalApi);
 
+    let loggerSingleton: LoggerPublisherService | undefined;
+
+    const getLoggerInstance = (context: types["context"]) => {
+      if (!loggerSingleton) {
+        const { loggerFactory } = context.input;
+        loggerSingleton = loggerFactory("SignTransactionDeviceAction");
+      }
+
+      return loggerSingleton;
+    };
+
     return setup({
       types: {
         input: {} as types["input"],
@@ -112,7 +127,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Solana" },
         }).makeStateMachine(internalApi),
-
         getAppConfig: fromPromise(getAppConfig),
         inspectTransaction: fromPromise(
           ({
@@ -164,9 +178,26 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             ),
           }),
         }),
+        logInput: ({ context }, params: { step: string }) => {
+          getLoggerInstance(context).debug(
+            `[makeStateMachine] step ${params.step}`,
+            {
+              data: { input: context.input },
+            },
+          );
+        },
+
+        logInternalState: ({ context }, params: { step: string }) => {
+          getLoggerInstance(context).debug(
+            `[makeStateMachine] step ${params.step}`,
+            {
+              data: { internalState: context._internalState },
+            },
+          );
+        },
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOAJzSAbNNOmATNZ0AWPRYA0IAJ67bLjgcfW-hYArNIGpsGOAL5R7miYuAREbFS0DEys5FTcvPxCImJSOvJIIMqqWRga2gj6RmaW1nYOzm6eujqdHNbWPsE6DXq2MXHo2PiEJJVpjCwpnADyimAYzIqKMxnz4hBUYByoGHQUANb7FMur68KiYACyJAAWh2AyJUoqalTViHrBthxbP5-I5HMZjH9gm0vLVpBCOBYnI5bBY9NI4RZjCMQPFxkkpuxNnNKhwAMKPMDEE5LFZrDb0WaZdgAJTgAFcBKQpHINOUvlVSjUdAZhX5HAY9JLbMEDAZMXp3DDOvoOKEXIZgsZ9JrorEcWNEpN5kSmdlyZTqZc6Sb5qzYByuZJirzPpUfrURUZgZKhjK5RDFYgtRxHDZTKCJZjEXosXrcYbktMGVsSQBxMCkOmkqgAM3QOz2ByOp32MEz62zGDzUDeLoq6kFui1plVpgMEIs9kldlsgdq0oBYU6xmkAwh0mCwWx8YmicJyeJ7A46fLikr1fEYBwOAoOA4igEohzu4Athwy1nc+ha6U+W7G7Vm632y4u3oe32dDYOGHzDLLMYEootOBqzgSqQLqanArpeVboHaDrmlS3LvGUroNqANS2D4eh+H8fSvl+eiOJ+tjBnYyKohY5hAtIuqjAkYHGpB8zLhmsHVghnJIScRSoXeGFaIg2GSnh-x-IRpjEX2-g6D+LigqioIyo4kQgYx+LMeki7ZDwsDLGQCbgRgBYYPshzHGcRb6ZSpBGfMN4fPW3wPmRqk-tR6KOE4Oids4pFDAiUmYjYI5gu26l4kaSbaVBOQ2YZTGVJu267vuh6kMeOBnocCV2Ul7COWhzkCphwnGO5pieXRPl+Qq7QII4Vghgp0jqqpOiRfZMWMqxzA5mIOB6QZjo8re6EuWVCAGCJ3SdtRAwxqOvYNZ0IohiEETBKYgHBHowpdQVEGxX1A1bsNtl8XW-LujNPhzSipiLSOOgrUqBgThw752GidHvpqBiHZpPUpku-WDRdZBSLY-ETaVQnTbNliPc9y19lYAKqbY4ZPa9XbDHGoHA-OJ0kgAQmyqACBAlZiJoXK7GZRaWfsABGlPU7TYD00VAmTQjEr9CYr3il+6JOJ+r0WKqQzmDNvk6P8sYMVFc7Hb15MczTVB01yW47nuB5HqeHDs1T2sYLrvNw7dfxyVqtii+Yo4kQ1QzSD+-w7VJIrGCEgOExp0UkxrS4AAo7gwEBgFz9OmeZxZWYokeoNHsekNbJXusibZfQMARO09b0dKiJjGCi6JkdtthOEDwfq6D2QRxQUcxzr3N66lhsZVlZ7Jy3qdt5bHeZzdD450Y+0VXRIo2K9fZ+wCdgRCKvkRPNddqzQLEks3rfp1xpA8Sh133lNrQe-K7ZURjiuS383Shk1fqK8Bgeq8ZNq7ynaft-Th-HydLDLO48XCXwhNfFwt9gifi8j+CcNhsbaklJ1d+3UQ6N04DOYmVB47MxLBwVQQct6jzPgjJWLYIT-DottbyOhSLBjBBERWmp5rGCnGgo629SZLmwfXEy+s0pG0yibIhH8HJjScmPKaFCTD4RoeGToksgQhgQTKCqkJHab0-jvXhRN+EAIpMhUhgkah7URICUIbVpA13FE9T8q8-DlxCJ2Jwjt2HaK0qHbIfCt6GItFdcaICZEuDktKdEaJbHhHoatFEwQnHSmIlJUMM1dR6gwBQaO8BSi+J0Tw-mfN4Y1AALTQkQMU+Jv4qm-gsKpTxIMdKcB4GoQQNwxCn1MYgZEpFMQcH0FjbCgECYq3QQ3RpHAaRXHpPk+GhTbpQkBMCZEnRtpDBCLAiwXoAhVR0BEtqeh6kYPGTxSZ1pdFUEPh0-mQpK7dEVhYaiGiXoGEltYMU1hPJi1WYcsZcUYIVivFAK5RTdChEcICEI5cwT7VUpqUiAwETEXbE0CE4JUEjK4V-Jc-y1yAv8VSYF7p7D3UiGicUyyXA7QCpPcxyItRDCcAczhODuHeKaYQEaozZk21ck1YwgIpK+QCOiJ6VVSILKUtjOe21NkBwxSyrF2RwbnQ5bZQlD4PqBWRoYNqwoXmxPDCGR2q8dq7WVvqYheS2UcApubdO6qpr+FCH0gItT7A2CsJEWBuca6aietQ7y-wfmsswRwPeg97VBOkQLCILYXBKzCJOF8ksujfW8nYKwU96IWvEQ0uK4bf7D3-uybiRiTgOoRqpUciLFb7T9GYSWDyy4oi1G1J6dTmX8MVVg-RW8K01FDELKwP0rHOFBKRD6X0bBNQeaEWeFhg3do4Lk20Jaj5lv7YgSIUkTBkQnB9FJe0HFhEBIrLU4IDCRBFou85WC2TECYLAbJUiyFmMQX0oYOEa751du9OECTMQyn+AEDh8qu23o4AAUS7puhA207AfpEgyn9fZDAtllH7awSaJTghiDEIAA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EAJgCMADg4BWAGw7jAGhABPRHr3SA7Bx0BONwGYALNOPfvUz1jHQBfUOs0TFwCIjYqWgYmVnIqbl5+IRExKT15JBBlVVSMDW0EfSMzC2s7BDdvHQ5pby9ff0DgsIiQKOx8QhISxMYWeM4AeUUwDGZFRRHk8fEIKjAOVAw6CgBrdYpp2fnhUTAAWRIAC02wGXylFTUqMsQnN1MON2lzK1tEN0MJicOicTlMoM8LXe4Ui6H6sSG7EWYxKHAAwpcwMQdlMZnMFvRRil2AAlOAAVwEpCkcg0RSepQK5T0nmMRmkwR+tX+3iMgVM0mc+j0OgM3Vh0QGcWGhKWqIxWJxh3xyOJVDJsEp1MkeTpjxKLwQLLZzU5NT+CAMeg4rTcBneLN8bx8MN6cJig3GqvGHAA4mBSPi0VQAGboFZrDZbXbrGCB+bBjBhqB3PXFdRM+wGUzeVymaq-OqOMWfe0BHyeNxOPSmV19D3SpGylHsP0BoOh8NgHA4Cg4DiKASiEN9gC2HDjHaT6FTBXpBszRuzuZ0+a5Fr0Hk+HjL2YsLNMtZ69aliISzbVnH98cUieTGq1CuxNPuhX1GdA5R0nh0TRapgMJxC3sBwmgMMVwU8QC3l5Yw63dU8vQvH1ryne8KSpJ8dlyV95w-LRdB-P9AkA4CEB8a0qxzYwnE8H5jW8eDJQRJCkhbNIeFgaYyAbM8MAjDB1k2bY9ijLisVIXjxlnB502eRdRS+Dgc2+c0i2kBoODBUUDA0ytqyPCV4U9GU2MvdJxJ4xCSnEbte37QdhzHMTuMk6z2Bkt85MZT9dHtaRlN8dc6kCALvDBbwzA0jTwqApjjMbc8zJ9ZgQzEHBONcl80wZQ0fyCLSKyA7kjRZa1+UFYFQLFeKpNMokUrS7tMoknCcoXXzyNXa1aO8Txio3SFjC0jwfD8AIghCWr3KShrUVS9KWrIKQdFw995M6-KeqKsiBSaSLIUMYwvgaUFppY+q5VbAAhclUAECBEzETRqVWQSoxE9YACM7oep6wBezy8I2gjyKcbMbQMPqBqLBxPA4HxzD0RpaKhQy3WYkym2S1Fbvux6qGe6k7L7Ach1IEccHHH78f+wHaTndafNB-qId5aGyOBAK3GMQ7aM3KD9HOrHZqutIAAVewYCAwDp17I2EmMByl1AZbloGmcNPrRQRr5gpA8EOHA1daOghoDDg48EIu7G5tbSWKGl2XCYB4me1JxyKecxQVbVl36bW7ytZ-IxK1Usi90+dwaLtAWxT0YXEpoZDUQdp25YfTDMWfDWg8XcKeYR47+rIhwgOaVoxo6SbxQxhK+O9VPfedjAicz0gsLaxm886gvhtZLwYfsQVcz15HvzjoWrcxpPG9bE8baoAShOjUTVBnvjc9yxdeZ0XN-AAoejVXIxVx0vSqxrROG5T+frZF-iSYc8nKfHdf6+khnZO3zrd-3kij6gXhkFZGjhwpWhzNfVids0gLwfu3TuW8OqgxjsNNwlRAGeAcAjMUTgOQjwAryKBl12KcDgUnBB2dsI6kDj-FBbw0EYNLqufuuDpCsnATWRiroMAUBlvAAo5Cb443wsDZm5QAC0pgSpSOaIKeRCiFFOGIbbMWnAeBqEECcMQ7V8LlEaCVRwhs3heErCCSErR0ZCOgWojguIjgEhESDMRWtBSfHDiVMsrhRpmNRpYlRotSHoiofYlUt91QYVILokGzJ-zKVIiVBoAV3CmPQX46E08P4kPMqhBMnYoDRPEfYfwRhB6lyhMpH8wIALHQtpbIydVVFBNybefJlDFSFMNDoIUrhDCALAVpGsgpi6XysffWe4T1GEFco05xmsFLGBFJ8Q+5SnC5lMPlap3xBYGACcnJxnAFrNWmRJTpi4sE1kKhzQxIo3CDIFH4Lwoy9lzzSHjP6-sondzoeUHwUMjYinKV4XpDyRkGU8C8yZHA06qxbkTM5m0PC5muRuBwPUfFpIsRkhpM19kwM4DCv2rdXbtOxAi0GB0Pg7RuYeI2EEtkbLFLszJsy8W2Oscglx+c7QfFFICwxe8jAshNqubZTLIUHI4By0kkSsLkvKMYXeJhDGQnhvoY6e9FU82cGMjeNignIHJMQJgsABHf2QeUAUtKoYlxVdIUOEEPC0QuW4CV+KOAAFF3Y4HlYgK1HwbWAL3vDMwkVumRV0ofcI4QgA */
       id: "SignTransactionDeviceAction",
       initial: "InitialState",
       context: ({ input }) => ({
@@ -185,6 +216,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       }),
       states: {
         InitialState: {
+          entry: [{ type: "logInput", params: { step: "InitialState" } }],
           always: [
             { target: "GetAppConfig", guard: "skipOpenApp" },
             { target: "OpenAppDeviceAction" },
@@ -283,24 +315,28 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "AfterInspect",
-              actions: assign({
-                _internalState: ({ context, event }) => ({
-                  ...context._internalState,
-                  inspectorResult: event.output,
+              actions: [
+                assign({
+                  _internalState: ({ context, event }) => ({
+                    ...context._internalState,
+                    inspectorResult: event.output,
+                  }),
                 }),
-              }),
+                {
+                  type: "logInternalState",
+                  params: { step: "OnDoneInspectTransaction" },
+                },
+              ],
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTransaction",
             },
           },
         },
         AfterInspect: {
           always: [
             { target: "BuildContext", guard: "isAnSPLTransaction" },
-            { target: "SignTransaction", guard: "noInternalError" },
-            { target: "Error" },
+            { target: "SignTransaction" },
           ],
         },
         BuildContext: {
@@ -318,6 +354,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 context._internalState.inspectorResult?.data;
               return {
                 contextModule: context.input.contextModule,
+                loggerFactory: context.input.loggerFactory,
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
@@ -344,11 +381,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     },
                   }),
                 }),
+                {
+                  type: "logInternalState",
+                  params: { step: "OnDoneBuildContext" },
+                },
               ],
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTransaction",
             },
           },
         },
@@ -371,22 +411,16 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               return {
                 ...context._internalState.solanaTransactionContext,
                 transactionBytes: context.input.transaction,
+                loggerFactory: context.input.loggerFactory,
               };
             },
             onDone: {
-              target: "ProvideContextResultCheck",
+              target: "SignTransaction",
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "SignTransaction",
             },
           },
-        },
-        ProvideContextResultCheck: {
-          always: [
-            { target: "SignTransaction", guard: "noInternalError" },
-            { target: "Error" },
-          ],
         },
         SignTransaction: {
           entry: assign({
@@ -402,6 +436,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               return {
                 derivationPath: context.input.derivationPath,
                 serializedTransaction: context.input.transaction,
+                userInputType:
+                  context.input.transactionOptions?.transactionResolutionContext
+                    ?.userInputType,
               };
             },
             onDone: {
@@ -435,6 +472,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     step: signTransactionDAStateSteps.SIGN_TRANSACTION,
                   },
                 }),
+                {
+                  type: "logInternalState",
+                  params: { step: "OnDoneSignTransaction" },
+                },
               ],
             },
             onError: {
@@ -471,7 +512,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
 
     const provideContext = async (arg0: {
-      input: ProvideSolanaTransactionContextTaskContext;
+      input: ProvideSolanaTransactionContextTaskArgs;
     }) =>
       new ProvideSolanaTransactionContextTask(internalApi, arg0.input).run();
 
@@ -492,6 +533,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       input: {
         derivationPath: string;
         serializedTransaction: Uint8Array;
+        userInputType?: UserInputType;
       };
     }) =>
       new SignDataTask(internalApi, {
@@ -500,6 +542,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             serializedTransaction: args.chunkedData,
             more: args.more,
             extend: args.extend,
+            userInputType: arg0.input.userInputType,
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,

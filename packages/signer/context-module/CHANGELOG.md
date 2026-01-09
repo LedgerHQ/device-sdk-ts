@@ -1,5 +1,18 @@
 # @ledgerhq/context-module
 
+## 1.12.0
+
+### Minor Changes
+
+- [#1179](https://github.com/LedgerHQ/device-sdk-ts/pull/1179) [`0f098cf`](https://github.com/LedgerHQ/device-sdk-ts/commit/0f098cf60e95c91cb1a7b0bd5c13563548bea7a6) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add logger in context module and solana loaders
+
+### Patch Changes
+
+- [#1216](https://github.com/LedgerHQ/device-sdk-ts/pull/1216) [`7bf9a04`](https://github.com/LedgerHQ/device-sdk-ts/commit/7bf9a042c4ea37fdf0cc2af6c5c832ad62a7b1b1) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Rename NullLoggerFactory to NullLoggerPublisherService
+
+- Updated dependencies [[`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8), [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0), [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88)]:
+  - @ledgerhq/device-management-kit@1.0.0
+
 ## 1.11.1
 
 ### Patch Changes

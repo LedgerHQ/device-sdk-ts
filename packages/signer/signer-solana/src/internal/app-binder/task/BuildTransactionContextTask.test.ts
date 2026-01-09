@@ -11,6 +11,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 
 import {
   BuildTransactionContextTask,
@@ -23,6 +24,7 @@ const contextModuleMock: ContextModule = {
 
 const defaultArgs = {
   contextModule: contextModuleMock,
+  loggerFactory: NullLoggerPublisherService,
   options: {
     tokenAddress: "someAddress",
     createATA: undefined,
@@ -85,7 +87,7 @@ describe("BuildTransactionContextTask", () => {
     });
   });
 
-  it("returns context when challenge command fails (challenge undefined)", async () => {
+  it("throws if challenge command fails", async () => {
     (apiMock.sendCommand as any).mockResolvedValue({
       status: CommandResultStatus.Error,
       data: {},
@@ -95,22 +97,10 @@ describe("BuildTransactionContextTask", () => {
     );
 
     const task = new BuildTransactionContextTask(apiMock, defaultArgs);
-    const result = await task.run();
 
-    // getSolanaContext called without challenge
-    expect(contextModuleMock.getSolanaContext).toHaveBeenCalledWith({
-      deviceModelId: DeviceModelId.NANO_X,
-      tokenAddress: "someAddress",
-      challenge: undefined,
-      createATA: undefined,
-    });
-
-    expect(result).toEqual<SolanaBuildContextResult>({
-      tlvDescriptor: solanaContextRightPayload.tlvDescriptor,
-      trustedNamePKICertificate:
-        solanaContextRightPayload.trustedNamePKICertificate,
-      loadersResults: [],
-    });
+    await expect(task.run()).rejects.toThrow(
+      "Failed to get challenge from device",
+    );
   });
 
   it("throws if getSolanaContext returns Left", async () => {

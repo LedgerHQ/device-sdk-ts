@@ -403,4 +403,4 @@ def get_certificates() -> Tuple[Dict[str, Any], int]:
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)

@@ -4,6 +4,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DockerContainer } from "@root/src/domain/adapters/DockerContainer";
 import { type AppsConfig } from "@root/src/domain/models/config/AppsConfig";
+import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
@@ -32,6 +33,8 @@ export class SpeculosServiceController implements ServiceController {
     private readonly config: SpeculosConfig,
     @inject(TYPES.AppsConfig)
     private readonly appsConfig: AppsConfig,
+    @inject(TYPES.CalConfig)
+    private readonly calConfig: CalConfig,
     @inject(TYPES.AppVersionResolver)
     private readonly appVersionResolver: AppVersionResolver,
     @inject(TYPES.LoggerPublisherServiceFactory)
@@ -93,6 +96,7 @@ export class SpeculosServiceController implements ServiceController {
       );
     }
 
+    // Build command arguments
     const command = [
       "speculos",
       ethereumPath,
@@ -105,8 +109,12 @@ export class SpeculosServiceController implements ServiceController {
       SPECULOS_VNC_PORT.toString(),
       "--user",
       `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
-      "-p", // Use prod signatures
     ];
+
+    // Add "-p" flag for prod signatures only when CAL mode is "prod"
+    if (this.calConfig.mode === "prod") {
+      command.push("-p");
+    }
 
     const dockerImage = `${SPECULOS_DOCKER_IMAGE_BASE}:${this.config.dockerImageTag}`;
 

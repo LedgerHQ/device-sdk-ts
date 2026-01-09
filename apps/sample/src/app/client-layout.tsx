@@ -10,18 +10,19 @@
 "use client";
 
 import React, { type PropsWithChildren } from "react";
+import { Provider as StoreProvider } from "react-redux";
 import { Flex, StyleProvider } from "@ledgerhq/react-ui";
 import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
-import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
+import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
-import { DeviceSessionsProvider } from "@/providers/DeviceSessionsProvider";
-import { DmkConfigProvider } from "@/providers/DmkConfig";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
+import { SettingsGate } from "@/providers/SettingsGate";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
+import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
 
 const FloatingIcon = dynamic(
@@ -48,37 +49,41 @@ const PageContainer = styled(Flex)`
   flex: 1;
 `;
 
+const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
+  useUpdateDeviceSessions();
+  return (
+    <Root>
+      <Sidebar />
+      <PageContainer>{children}</PageContainer>
+      <FloatingIcon />
+    </Root>
+  );
+};
+
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <html lang="en">
-      <DmkConfigProvider>
-        <DmkProvider>
-          <DeviceSessionsProvider>
-            <LedgerKeyringProtocolProvider>
-              <SignerEthProvider>
-                <CalInterceptorProvider>
-                  <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+      <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+        <StoreProvider store={store}>
+          <SettingsGate>
+            <DmkProvider>
+              <LedgerKeyringProtocolProvider>
+                <SignerEthProvider>
+                  <CalInterceptorProvider>
                     <GlobalStyle />
                     <head>
                       <link rel="shortcut icon" href="../favicon.png" />
                     </head>
                     <body>
-                      <Root>
-                        <Sidebar />
-                        <PageContainer>
-                          <Header />
-                          {children}
-                        </PageContainer>
-                        <FloatingIcon />
-                      </Root>
+                      <RootApp>{children}</RootApp>
                     </body>
-                  </StyleProvider>
-                </CalInterceptorProvider>
-              </SignerEthProvider>
-            </LedgerKeyringProtocolProvider>
-          </DeviceSessionsProvider>
-        </DmkProvider>
-      </DmkConfigProvider>
+                  </CalInterceptorProvider>
+                </SignerEthProvider>
+              </LedgerKeyringProtocolProvider>
+            </DmkProvider>
+          </SettingsGate>
+        </StoreProvider>
+      </StyleProvider>
     </html>
   );
 };

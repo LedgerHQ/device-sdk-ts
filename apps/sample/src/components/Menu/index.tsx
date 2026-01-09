@@ -1,10 +1,11 @@
 import React from "react";
+import { useSelector } from "react-redux";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import { selectTransport } from "@/state/settings/selectors";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;
@@ -18,15 +19,18 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
-  const {
-    state: { transport },
-  } = useDmkConfigContext();
+  const transport = useSelector(selectTransport);
 
   return (
     <>
       <MenuItem>
-        <Icons.PlusCircle />
-        <MenuTitle>App session</MenuTitle>
+        <Icons.WirelessCharging />
+        <MenuTitle
+          data-testid="CTA_route-to-/apdu"
+          onClick={() => router.push("/apdu")}
+        >
+          APDU
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
         <Icons.LedgerDevices />
@@ -41,20 +45,12 @@ export const Menu: React.FC = () => {
         <Icons.LedgerDevices />
         <MenuTitle
           data-testid="CTA_route-to-/device-actions"
-          onClick={() => router.push("device-actions")}
+          onClick={() => router.push("/device-actions")}
         >
-          Device actions
+          Device Actions
         </MenuTitle>
       </MenuItem>
-      <MenuItem>
-        <Icons.WirelessCharging />
-        <MenuTitle
-          data-testid="CTA_route-to-/apdu"
-          onClick={() => router.push("/apdu")}
-        >
-          APDU
-        </MenuTitle>
-      </MenuItem>
+
       <MenuItem>
         <Icons.Signature />
         <MenuTitle
@@ -74,12 +70,17 @@ export const Menu: React.FC = () => {
         </MenuTitle>
       </MenuItem>
       <MenuItem>
-        <Icons.SettingsAlt2 />
-        <MenuTitle onClick={() => router.push("/cal")}>Crypto Assets</MenuTitle>
+        <Icons.ListEye />
+        <MenuTitle
+          data-testid="CTA_route-to-/clear-signing-tools"
+          onClick={() => router.push("/clear-signing-tools")}
+        >
+          Clear Signing Tools
+        </MenuTitle>
       </MenuItem>
       <MenuItem>
-        <Icons.Download />
-        <MenuTitle>Install app</MenuTitle>
+        <Icons.SettingsAlt2 />
+        <MenuTitle onClick={() => router.push("/settings")}>Settings</MenuTitle>
       </MenuItem>
       {transport === mockserverIdentifier && (
         <MenuItem>

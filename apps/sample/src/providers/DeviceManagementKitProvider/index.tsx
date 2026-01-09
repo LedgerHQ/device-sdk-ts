@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
+import { useSelector } from "react-redux";
 import {
   ConsoleLogger,
   type DeviceManagementKit,
@@ -19,7 +20,12 @@ import { webBleTransportFactory } from "@ledgerhq/device-transport-kit-web-ble";
 import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
 
 import { useHasChanged } from "@/hooks/useHasChanged";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import {
+  selectAppProvider,
+  selectMockServerUrl,
+  selectSpeculosUrl,
+  selectTransport,
+} from "@/state/settings/selectors";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
@@ -58,9 +64,10 @@ function buildMockDmk(url: string, logsExporter: WebLogsExporterLogger) {
 }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const {
-    state: { transport, mockServerUrl, speculosUrl },
-  } = useDmkConfigContext();
+  const transport = useSelector(selectTransport);
+  const mockServerUrl = useSelector(selectMockServerUrl);
+  const speculosUrl = useSelector(selectSpeculosUrl);
+  const appProvider = useSelector(selectAppProvider);
 
   const mockServerEnabled = transport === mockserverIdentifier;
   const speculosEnabled = transport === speculosIdentifier;
@@ -95,6 +102,16 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
       };
     });
   }
+
+  // Sync appProvider to DMK when it changes
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    state.dmk.setProvider(appProvider);
+  }, [appProvider, state.dmk]);
 
   useEffect(() => {
     return () => {

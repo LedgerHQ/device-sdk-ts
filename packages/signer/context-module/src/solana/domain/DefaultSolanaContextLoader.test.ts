@@ -10,6 +10,7 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { SolanaContextTypes } from "@/shared/model/SolanaContextTypes";
+import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
@@ -52,7 +53,12 @@ describe("SolanaTokenContextLoader", () => {
 
   const makeLoader = (mode?: string) => {
     const config = { cal: { mode } } as unknown as ContextModuleConfig;
-    return new SolanaTokenContextLoader(mockDataSource, config, mockCertLoader);
+    return new SolanaTokenContextLoader(
+      mockDataSource,
+      config,
+      mockCertLoader,
+      NullLoggerPublisherService,
+    );
   };
 
   describe("canHandle", () => {

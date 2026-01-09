@@ -1,5 +1,17 @@
 # @ledgerhq/device-management-kit
 
+## 1.0.0
+
+### Minor Changes
+
+- [#1179](https://github.com/LedgerHQ/device-sdk-ts/pull/1179) [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Export logger factory from dmk and use it in solana signer
+
+### Patch Changes
+
+- [#1212](https://github.com/LedgerHQ/device-sdk-ts/pull/1212) [`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Add second set of Bluetooth identifiers for Nano Gen5
+
+- [#1214](https://github.com/LedgerHQ/device-sdk-ts/pull/1214) [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Move APDU exchange logging to transport layer for more accurate timing
+
 ## 0.13.0
 
 ### Minor Changes

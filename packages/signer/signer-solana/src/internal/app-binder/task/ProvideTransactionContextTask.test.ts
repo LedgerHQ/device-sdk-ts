@@ -33,6 +33,7 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
+import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 
 import {
   ProvideSolanaTransactionContextTask,
@@ -123,16 +124,17 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValueOnce(success) // LoadCertificateCommand (trusted name PKI)
         .mockResolvedValueOnce(success); // ProvideTLVDescriptorCommand
 
-      const context = {
+      const args = {
         trustedNamePKICertificate: baseCert,
         tlvDescriptor,
         loadersResults: [],
         transactionBytes: new Uint8Array([0xf0]), // unused in this path
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
-        context as any,
+        args as any,
       );
 
       // when
@@ -162,6 +164,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults: [],
         transactionBytes: new Uint8Array([0xca]),
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -188,6 +191,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]),
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -234,6 +238,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]), // unused in this path
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -284,6 +289,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xf0]),
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -318,6 +324,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xca]),
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -357,6 +364,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xcc]),
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
@@ -397,12 +405,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]),
+        normaliser: { normaliseMessage: vi.fn() } as any,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
         context as any,
-        { normaliseMessage: vi.fn() } as any,
       );
 
       const result = await task.run();
@@ -470,12 +479,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
         context as any,
-        normaliser as any,
       );
 
       // when
@@ -557,12 +567,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xca]),
+        normaliser: normaliser as any,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
         context as any,
-        normaliser as any,
       );
 
       const result = await task.run();
@@ -609,12 +620,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xcc]),
+        normaliser: normaliser as any,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
         context as any,
-        normaliser as any,
       );
 
       const result = await task.run();
@@ -673,12 +685,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0x1a]),
+        normaliser: normaliser as any,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
         context as any,
-        normaliser as any,
       );
 
       await expect(task.run()).rejects.toThrow("err");
@@ -739,12 +752,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
         context as any,
-        normaliser as any,
       );
 
       const result = await task.run();
@@ -832,12 +846,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
+        normaliser: DefaultSolanaMessageNormaliser,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as unknown as any,
         context as any,
-        DefaultSolanaMessageNormaliser as any,
       );
 
       const result = await task.run();
@@ -932,12 +947,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
+        normaliser: DefaultSolanaMessageNormaliser,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       const task = new ProvideSolanaTransactionContextTask(
         api as any,
         context as any,
-        DefaultSolanaMessageNormaliser as any,
       );
 
       const res = await task.run();
@@ -1051,13 +1067,14 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
+        normaliser: DefaultSolanaMessageNormaliser,
+        loggerFactory: NullLoggerPublisherService,
       };
 
       // when
       const task = new ProvideSolanaTransactionContextTask(
         api as any,
         context as any,
-        DefaultSolanaMessageNormaliser as any,
       );
 
       const res = await task.run();
