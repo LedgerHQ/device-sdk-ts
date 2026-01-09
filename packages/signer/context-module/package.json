@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/context-module",
-  "version": "1.11.1",
+  "version": "1.12.0",
   "private": false,
   "license": "Apache-2.0",
   "repository": {

@@ -1,5 +1,18 @@
 # @ledgerhq/device-signer-kit-bitcoin
 
+## 1.1.0
+
+### Minor Changes
+
+- [#1199](https://github.com/LedgerHQ/device-sdk-ts/pull/1199) [`86c8ee6`](https://github.com/LedgerHQ/device-sdk-ts/commit/86c8ee6ca59d1fcf3dd7df66df816cd41e9e8722) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add support for wallet registration
+
+- [#1197](https://github.com/LedgerHQ/device-sdk-ts/pull/1197) [`65d0cf6`](https://github.com/LedgerHQ/device-sdk-ts/commit/65d0cf6104bd32d4559073c0da32fee0b7d1d117) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add getMasterFingerprint API
+
+### Patch Changes
+
+- Updated dependencies [[`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8), [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0), [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88)]:
+  - @ledgerhq/device-management-kit@1.0.0
+
 ## 1.0.2
 
 ### Patch Changes
