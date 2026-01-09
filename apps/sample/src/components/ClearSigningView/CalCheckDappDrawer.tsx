@@ -108,12 +108,7 @@ export function CalCheckDappDrawer<
   return (
     <>
       <Block>
-        <Flex
-          flexDirection="column"
-          opacity={loading ? 0.5 : 1}
-          rowGap={3}
-          pointerEvents={loading ? "none" : "auto"}
-        >
+        <Flex flexDirection="column" opacity={loading ? 0.5 : 1} rowGap={3}>
           <Form
             initialValues={values}
             onChange={setValues}

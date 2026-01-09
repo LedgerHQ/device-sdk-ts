@@ -10,6 +10,8 @@ import {
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
 } from "@ledgerhq/device-management-kit";
+import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import { RozeniteConnector } from "@ledgerhq/device-management-kit-devtools-rozenite";
 import { RNBleTransportFactory } from "@ledgerhq/device-transport-kit-react-native-ble";
 import { RNHidTransportFactory } from "@ledgerhq/device-transport-kit-react-native-hid";
 
@@ -20,6 +22,7 @@ function buildDefaultDmk() {
     .addTransport(RNBleTransportFactory)
     .addTransport(RNHidTransportFactory)
     .addLogger(new ConsoleLogger())
+    .addLogger(new DevToolsLogger(RozeniteConnector.getInstance()))
     .build();
 }
 

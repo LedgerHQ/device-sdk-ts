@@ -206,12 +206,7 @@ export function DeviceActionTester<
     <Flex flexDirection="column" rowGap={3} overflow="scroll" flex={1}>
       <Block data-testid="form_device-action">
         <BoxHeader hint={hintInput}>Device Action input</BoxHeader>
-        <Flex
-          flexDirection="column"
-          opacity={loading ? 0.5 : 1}
-          rowGap={3}
-          pointerEvents={loading ? "none" : "auto"}
-        >
+        <Flex flexDirection="column" opacity={loading ? 0.5 : 1} rowGap={3}>
           {InputValuesComponent ? (
             <InputValuesComponent
               initialValues={values}

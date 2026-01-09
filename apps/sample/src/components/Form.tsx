@@ -55,7 +55,7 @@ const FormField: React.FC<FormFieldProps> = ({
         <SelectInput
           renderLeft={() => <SelectInputLabel>{label}</SelectInputLabel>}
           isDisabled={disabled}
-          placeholder={defaultValue}
+          placeholder={String(defaultValue)}
           value={options.find((val) => val.value === value)}
           isMulti={false}
           onChange={(newVal) => newVal && onChange(fieldKey, newVal.value)}
@@ -86,7 +86,7 @@ const FormField: React.FC<FormFieldProps> = ({
         id={fieldKey}
         renderLeft={() => <InputLabel>{label}</InputLabel>}
         value={value}
-        placeholder={defaultValue}
+        placeholder={String(defaultValue)}
         onChange={(newVal) => onChange(fieldKey, newVal)}
         disabled={disabled}
         data-testid={`input-text_${fieldKey}`}
@@ -99,7 +99,7 @@ const FormField: React.FC<FormFieldProps> = ({
       id={fieldKey}
       renderLeft={() => <InputLabel>{label}</InputLabel>}
       value={value}
-      placeholder={defaultValue}
+      placeholder={String(defaultValue)}
       onChange={(newVal) =>
         onChange(fieldKey, parseInt(newVal.toString(), 10) ?? 0)
       }
