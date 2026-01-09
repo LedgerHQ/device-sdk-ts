@@ -142,9 +142,10 @@ export class DevtoolsWebSocketConnector implements Connector {
           parseSocketMessage(event.data as string);
         if (websocketMessageType === WEBSOCKET_MESSAGE_TYPES.MESSAGE) {
           try {
-            const parsedMessage = JSON.parse(
-              websocketMessagePayload,
-            ) as { type?: unknown; payload?: unknown };
+            const parsedMessage = JSON.parse(websocketMessagePayload) as {
+              type?: unknown;
+              payload?: unknown;
+            };
             const type = parsedMessage.type;
             const payload = parsedMessage.payload;
             if (typeof type !== "string" || typeof payload !== "string") {
