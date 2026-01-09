@@ -1,5 +1,11 @@
 import React, { useCallback, useState } from "react";
-import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import {
+  type ConnectionType,
+  type DiscoveredDevice,
+  type TransportIdentifier,
+} from "@ledgerhq/device-management-kit";
+import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
+import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
@@ -61,10 +67,21 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
   );
 };
 
+const mapTransportToType = (transport: TransportIdentifier): ConnectionType => {
+  switch (transport) {
+    case webBleIdentifier:
+      return "BLE";
+    case webHidIdentifier:
+      return "USB";
+    default:
+      return "MOCK";
+  }
+};
+
 const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   device,
 ) => {
-  const { deviceModel, connected } = device;
+  const { deviceModel, connected, name } = device;
   const dmk = useDmk();
   const connectToDevice = useCallback(async () => {
     await dmk.connect({ device });
@@ -73,9 +90,9 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   return (
     <Flex flexDirection="row" alignItems="center">
       <AvailableDevice
-        name={deviceModel.name}
+        name={name ?? deviceModel.name}
         model={deviceModel.model}
-        type={"USB"}
+        type={mapTransportToType(device.transport)}
         connected={connected}
         onConnect={connectToDevice}
       />
