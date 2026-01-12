@@ -54,6 +54,7 @@ jobs:
     needs: [build-libraries]
     runs-on: ledgerhq-device-sdk
     strategy:
+      fail-fast: false
       matrix:
         device:
           - stax
