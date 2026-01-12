@@ -117,18 +117,18 @@ jobs:
           GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
           COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
         run: |
-          mkdir -p logs/screenshots
+          mkdir -p /tmp/logs/screenshots
           pnpm cs-tester test:erc7730 ${{ matrix.include_provider.provider }} ${{ matrix.include_provider.chain }} \
             --device ${{ matrix.device }} \
             --log-level error \
-            --log-file "logs/erc7730-${{ matrix.include_provider.provider }}-${{ matrix.include_provider.chain }}.log" \
+            --log-file "/tmp/logs/erc7730-${{ matrix.include_provider.provider }}-${{ matrix.include_provider.chain }}.log" \
             --file-log-level debug \
-            --screenshot-folder-path "logs/screenshots"
+            --screenshot-folder-path "/tmp/logs/screenshots"
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: erc7730-logs-${{ matrix.device }}-${{ matrix.include_provider.provider }}${{ matrix.include_provider.chain && format('-{0}', matrix.include_provider.chain) || '' }}
-          path: logs/
+          path: /tmp/logs/
           retention-days: 7
