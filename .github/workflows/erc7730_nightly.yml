@@ -54,7 +54,6 @@ jobs:
     needs: [build-libraries]
     runs-on: ledgerhq-device-sdk
     strategy:
-      fail-fast: false
       matrix:
         device:
           - stax
@@ -86,9 +85,6 @@ jobs:
             chain: ""
           - provider: "yieldxyz"
             chain: ""
-        exclude:
-          - include_provider:
-              provider: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.provider != '' && github.event.inputs.provider || 'NONE' }}
     steps:
       - uses: actions/checkout@v6
 
