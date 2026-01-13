@@ -9,6 +9,9 @@ import { TYPES } from "@root/src/di/types";
 import { DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
+const DEFAULT_DELAY_MS = 5000;
+const FLEX_DELAY_MS = 10000;
+
 /**
  * Speculos Touchscreen Device Controller
  *
@@ -20,6 +23,7 @@ import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConf
 export class SpeculosTouchscreenController implements DeviceController {
   private readonly logger: LoggerPublisherService;
   private readonly tap: ReturnType<DeviceControllerClient["tapFactory"]>;
+  private readonly delayMs: number;
 
   constructor(
     @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
@@ -33,6 +37,8 @@ export class SpeculosTouchscreenController implements DeviceController {
     const client = deviceControllerClientFactory(speculosUrl);
     this.tap = client.tapFactory(config.device);
 
+    this.delayMs = config.device === "flex" ? FLEX_DELAY_MS : DEFAULT_DELAY_MS;
+
     this.logger.info(`Initialized touchscreen controller for ${config.device}`);
   }
 
@@ -41,7 +47,7 @@ export class SpeculosTouchscreenController implements DeviceController {
    */
   async signTransaction(): Promise<void> {
     this.logger.debug("☝️ (touch) : Performing transaction sign");
-    await this.tap.sign();
+    await this.tap.sign(this.delayMs);
   }
 
   /**

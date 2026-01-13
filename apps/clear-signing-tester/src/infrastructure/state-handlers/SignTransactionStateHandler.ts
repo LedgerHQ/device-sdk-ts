@@ -12,7 +12,7 @@ import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnal
 import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
 const NAVIGATION_MAX_ATTEMPTS = 20;
-const NAVIGATION_DELAY = 200;
+const NAVIGATION_DELAY = 1500;
 const WAIT_FOR_TX_PAGE_ATTEMPTS = 8;
 const WAIT_FOR_TX_PAGE_DELAY = 1500;
 
