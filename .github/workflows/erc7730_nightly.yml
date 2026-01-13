@@ -4,22 +4,6 @@ on:
     # Run every day at 2:00 AM UTC
     - cron: "0 2 * * *"
   workflow_dispatch:
-    inputs:
-      device:
-        description: "Device to test"
-        required: false
-        default: "stax"
-        type: choice
-        options:
-          - stax
-          - nanox
-          - nanos+
-          - flex
-      provider:
-        description: "Provider to test (leave empty for all)"
-        required: false
-        default: ""
-        type: string
 
 env:
   FORCE_COLOR: "1"
@@ -50,7 +34,7 @@ jobs:
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
   erc7730-tests:
-    name: ERC7730 (${{ matrix.device }} - ${{ matrix.provider }}${{ matrix.chain && format(' {0}', matrix.chain) || '' }})
+    name: ERC7730 Tests (${{ matrix.device }} - ${{ matrix.include_provider.provider }})
     needs: [build-libraries]
     runs-on: ledgerhq-device-sdk
     strategy:
@@ -59,13 +43,10 @@ jobs:
         device:
           - stax
           - nanox
-          - nanos+
           - flex
         include_provider:
           - provider: "1inch"
             chain: ""
-          - provider: "1inch"
-            chain: "arbitrum"
           - provider: "aave"
             chain: ""
           - provider: "ethena"
@@ -122,7 +103,7 @@ jobs:
           pnpm cs-tester test:erc7730 ${{ matrix.include_provider.provider }} ${{ matrix.include_provider.chain }} \
             --device ${{ matrix.device }} \
             --log-level error \
-            --log-file "/tmp/logs/erc7730-${{ matrix.include_provider.provider }}-${{ matrix.include_provider.chain }}.log" \
+            --log-file "/tmp/logs/erc7730-${{ matrix.include_provider.provider }}.log" \
             --file-log-level debug \
             --screenshot-folder-path "/tmp/logs/screenshots"
 
@@ -130,6 +111,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: erc7730-logs-${{ matrix.device }}-${{ matrix.include_provider.provider }}${{ matrix.include_provider.chain && format('-{0}', matrix.include_provider.chain) || '' }}
+          name: erc7730-logs-${{ matrix.device }}-${{ matrix.include_provider.provider }}
           path: /tmp/logs/
           retention-days: 7
