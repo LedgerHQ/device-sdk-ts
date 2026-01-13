@@ -18,8 +18,8 @@ export const tapQuick =
 
 export const sign =
   <K extends string>(touch: TouchController<K>, deviceKey: K) =>
-  async () =>
-    await tapLong(touch, deviceKey)({ x: 85, y: 80 });
+  async (delayMs: number = TAP_LONG_TIME_MS) =>
+    await tapLong(touch, deviceKey)({ x: 85, y: 80 }, delayMs);
 
 export const reject =
   <K extends string>(touch: TouchController<K>, deviceKey: K) =>

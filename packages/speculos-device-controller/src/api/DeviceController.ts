@@ -31,8 +31,8 @@ export type ButtonFactory = () => ButtonController & {
 
 export type TapFactory = (deviceKey: string) => {
   tapQuick: (point: PercentCoordinates) => Promise<void>;
-  tapLong: (point: PercentCoordinates) => Promise<void>;
-  sign: () => Promise<void>;
+  tapLong: (point: PercentCoordinates, delayMs?: number) => Promise<void>;
+  sign: (delayMs?: number) => Promise<void>;
   reject: () => Promise<void>;
   navigateNext: () => Promise<void>;
   navigatePrevious: () => Promise<void>;
