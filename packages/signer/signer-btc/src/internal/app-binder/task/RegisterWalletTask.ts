@@ -3,6 +3,7 @@ import {
   CommandResultFactory,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { RegisteredWallet, type WalletPolicy } from "@api/model/Wallet";
@@ -18,6 +19,7 @@ import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 export type RegisterWalletTaskArgs = {
   walletPolicy: WalletPolicy;
+  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type RegisterWalletTaskResult = CommandResult<
@@ -26,6 +28,8 @@ export type RegisterWalletTaskResult = CommandResult<
 >;
 
 export class RegisterWalletTask {
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     private readonly _api: InternalApi,
     private readonly _args: RegisterWalletTaskArgs,
@@ -36,10 +40,20 @@ export class RegisterWalletTask {
       api: InternalApi,
       dataStore: DataStore,
     ) => new ContinueTask(api, dataStore),
-  ) {}
+  ) {
+    this._logger = _args.loggerFactory("RegisterWalletTask");
+  }
 
   async run(): Promise<RegisterWalletTaskResult> {
     const { walletPolicy } = this._args;
+
+    this._logger.debug("[run] Starting RegisterWalletTask", {
+      data: {
+        walletName: walletPolicy.name,
+        descriptorTemplate: walletPolicy.descriptorTemplate,
+        keysCount: walletPolicy.keys?.length ?? 0,
+      },
+    });
 
     const wallet: InternalWallet =
       this._walletBuilder.fromWalletPolicy(walletPolicy);
@@ -49,6 +63,12 @@ export class RegisterWalletTask {
 
     const serializedWallet = this._walletSerializer.serialize(wallet);
 
+    this._logger.debug("[run] Sending RegisterWalletAddressCommand", {
+      data: {
+        walletName: walletPolicy.name,
+        serializedWalletLength: serializedWallet?.length ?? 0,
+      },
+    });
     const registerCommandResult = await this._api.sendCommand(
       new RegisterWalletAddressCommand({
         walletPolicy: serializedWallet,
@@ -62,6 +82,9 @@ export class RegisterWalletTask {
       const registrationResult = BtcCommandUtils.getWalletRegistration(result);
 
       if (!isSuccessCommandResult(registrationResult)) {
+        this._logger.error("[run] Wallet registration parsing failed", {
+          data: { error: registrationResult.error },
+        });
         return CommandResultFactory({
           error: registrationResult.error,
         });
@@ -69,6 +92,14 @@ export class RegisterWalletTask {
 
       const { walletHmac } = registrationResult.data;
 
+      this._logger.debug("[run] RegisterWalletTask completed successfully", {
+        data: {
+          walletName: walletPolicy.name,
+          walletHmac: Array.from(walletHmac)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join(""),
+        },
+      });
       return CommandResultFactory({
         data: new RegisteredWallet(
           walletPolicy.name,
@@ -79,6 +110,9 @@ export class RegisterWalletTask {
       });
     }
 
+    this._logger.error("[run] RegisterWalletTask failed", {
+      data: { error: result.error },
+    });
     return result;
   }
 }
