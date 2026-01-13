@@ -6,10 +6,6 @@ import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type ScreenContent } from "@root/src/domain/models/ScreenContent";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 
-/**
- * Infrastructure implementation for analyzing screen content
- * Contains business logic for screen content processing, analysis, and state management
- */
 @injectable()
 export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
   private readonly logger: LoggerPublisherService;
@@ -24,9 +20,6 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     this.logger = loggerFactory("screen-analyzer");
   }
 
-  /**
-   * Analyze all accumulated screen texts for expected texts
-   */
   async analyzeAccumulatedTexts(
     expectedTexts: string[],
   ): Promise<{ containsAll: boolean; found: string[]; missing: string[] }> {
@@ -65,10 +58,6 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     return { containsAll, found, missing };
   }
 
-  /**
-   * Check if current screen is the last page
-   * Business logic for detecting signing screens
-   */
   async isLastPage(): Promise<boolean> {
     const data = await this.readScreenContent();
     const lastPageTexts = [
@@ -90,10 +79,6 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     return isLastPage;
   }
 
-  /**
-   * Check if the transaction can be refused
-   * Business logic for detecting refusal options
-   */
   async canRefuseTransaction(): Promise<boolean> {
     const data = await this.readScreenContent();
     const refuseTexts = ["refuse", "decline", "reject"];
@@ -110,14 +95,28 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     return canRefuse;
   }
 
-  /**
-   * Check if current screen is the home page
-   * Business logic for detecting home screens
-   */
+  async canAcknowledgeBlindSigning(): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const acknowledgeTexts = ["reject"];
+    const canAcknowledge = acknowledgeTexts.some((text) =>
+      data.text.toLowerCase().includes(text.toLowerCase()),
+    );
+
+    if (canAcknowledge) {
+      this.logger.debug("Current screen allows blind signing acknowledgement");
+    } else {
+      this.logger.debug(
+        "Current screen does not allow blind signing acknowledgement",
+      );
+    }
+
+    return canAcknowledge;
+  }
+
   async isHomePage(): Promise<boolean> {
     const data = await this.readScreenContent();
     const homePageTexts = [
-      "This app enables signing",
+      "This app enables",
       "app is ready",
       "application is ready",
     ];
@@ -159,6 +158,9 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
         isEmpty: !screenText.trim(),
       };
 
+      this.logger.debug("Read screen content", {
+        data: { content },
+      });
       return content;
     } catch (error) {
       this.logger.error("Failed to read and process screen content", {

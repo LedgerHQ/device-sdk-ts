@@ -2,10 +2,12 @@
 
 This module provides the implementation of the Ledger Bitcoin signer of the Device Management Kit. It enables interaction with the Bitcoin application on a Ledger device including:
 
-- Retrieving the Bitcoin public key using a given address index;
+- Retrieving the Bitcoin extended public key and master fingerprint;
 - Signing a message displayed on a Ledger device;
 - Signing a Bitcoin partially signed transaction (PSBT);
 - Signing a Bitcoin transaction;
+- Retrieving wallet addresses;
+- Registering custom wallet policies (e.g., multisig wallets);
 
 ## 🔹 Index
 
@@ -14,10 +16,12 @@ This module provides the implementation of the Ledger Bitcoin signer of the Devi
 3. [Initialisation](#-initialisation)
 4. [Use Cases](#-use-cases)
    - [Get Extended Public Key](#use-case-1-get-extended-public-key)
-   - [Sign Message](#use-case-2-sign-message)
-   - [Sign Partially Signed Transaction (PSBT)](#use-case-3-sign-psbt)
-   - [Sign Transaction](#use-case-4-sign-transaction)
-   - [Get signer address](#use-case-5-get-wallet-address)
+   - [Get Master Fingerprint](#use-case-2-get-master-fingerprint)
+   - [Sign Message](#use-case-3-sign-message)
+   - [Sign Partially Signed Transaction (PSBT)](#use-case-4-sign-psbt)
+   - [Sign Transaction](#use-case-5-sign-transaction)
+   - [Get Wallet address](#use-case-6-get-wallet-address)
+   - [Register Wallet](#use-case-7-register-wallet)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -46,7 +50,7 @@ const signerBitcoin = new SignerBtcBuilder({ sdk, sessionId }).build();
 
 ## 🔹 Use Cases
 
-The `SignerBtcBuilder.build()` method will return a `SignerBitcoin` instance that exposes 5 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerBtcBuilder.build()` method will return a `SignerBitcoin` instance that exposes 7 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
@@ -96,7 +100,44 @@ type GetAddressCommandResponse = {
 
 ---
 
-### Use Case 2: Sign message
+### Use Case 2: Get master fingerprint
+
+This method allows users to retrieve the master fingerprint of the wallet. The master fingerprint is a 4-byte identifier derived from the master public key, commonly used in BIP32 derivation paths and PSBTs.
+
+```typescript
+const { observable, cancel } = signerBitcoin.getMasterFingerprint(options);
+```
+
+#### **Parameters**
+
+- `options`
+
+  - Optional
+  - Type: `MasterFingerprintOptions`
+
+    ```typescript
+    type MasterFingerprintOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Bitcoin app automatically (`true`) or not (`false`).
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type GetMasterFingerprintCommandResponse = {
+  masterFingerprint: Uint8Array; // 4-byte master fingerprint
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 3: Sign message
 
 This method allows users to sign a text string that is displayed on Ledger devices.
 
@@ -137,7 +178,7 @@ type Signature = {
 
 ---
 
-### Use Case 3: Sign PSBT
+### Use Case 4: Sign PSBT
 
 This method allows users to sign a partially signed transaction.
 
@@ -217,7 +258,7 @@ type PsbtSignature = PartialSignature | MusigPartialSignature | MusigPubNonce;
 
 ---
 
-### Use Case 4: Sign transaction
+### Use Case 5: Sign transaction
 
 This method allows users to sign a Bitcoin transaction.
 
@@ -272,7 +313,7 @@ type TransactionHash = `0x${string}`;
 
 - `cancel` A function to cancel the action on the Ledger device.
 
-### Use Case 5: Get signer address
+### Use Case 6: Get wallet address
 
 This method allows users to get the signer address linked to a Ledger device.
 
@@ -321,6 +362,104 @@ type WalletAddress = {
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 7: Register wallet
+
+This method allows users to register a custom wallet policy on the Ledger device. Wallet policies describe complex wallet setups like multisig wallets. Once registered, the device returns an HMAC that must be stored and provided for future operations (signing, address generation) with this wallet.
+
+```typescript
+const { observable, cancel } = signerBitcoin.registerWallet(
+  walletPolicy,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `walletPolicy`
+
+  - **Required**
+  - **Type:** `WalletPolicy`
+
+  ```typescript
+  class WalletPolicy {
+    constructor(
+      public name: string, // Human-readable wallet name (displayed on device)
+      public descriptorTemplate: string, // Descriptor template (e.g., "wsh(sortedmulti(2,@0/**,@1/**))")
+      public keys: string[], // Array of key origin info + xpubs
+    ) {}
+  }
+  ```
+
+  - `name`: A human-readable name for the wallet (max 64 characters), displayed on the device during registration.
+  - `descriptorTemplate`: A Bitcoin descriptor template using placeholders like `@0`, `@1` for keys. See [wallet policies documentation](https://github.com/LedgerHQ/app-bitcoin-new/blob/master/doc/wallet.md).
+  - `keys`: Array of extended public keys with key origin info in the format `[fingerprint/derivation/path]xpub...`.
+
+- `options`
+
+  - Optional
+  - Type: `RegisterWalletOptions`
+
+    ```typescript
+    type RegisterWalletOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Bitcoin app automatically.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+class RegisteredWallet {
+  constructor(
+    public name: string,
+    public descriptorTemplate: string,
+    public keys: string[],
+    public hmac: Uint8Array, // 32-byte HMAC to store for future operations
+  ) {}
+}
+```
+
+The returned `RegisteredWallet` includes the HMAC which must be stored securely. This HMAC is required for any subsequent operations with this wallet (signing transactions, generating addresses).
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+#### **Example**
+
+```typescript
+import {
+  WalletPolicy,
+  RegisteredWallet,
+} from "@ledgerhq/device-signer-kit-bitcoin";
+
+// Define a 2-of-2 multisig wallet policy
+const walletPolicy = new WalletPolicy(
+  "My Multisig",
+  "wsh(sortedmulti(2,@0/**,@1/**))",
+  [
+    "[76223a6e/48'/1'/0'/2']tpubDE7NQymr4AFtewpAsWtnreyq9ghkzQBXpCZjWLFVRAvnbf7vya2eMTvT2fPapNqL8SuVvLQdbUbMfWLVDCZKnsEBqp6UK93QEzL8Ck23AwF",
+    "[f5acc2fd/48'/1'/0'/2']tpubDFAqEGNyad35aBCKUAXbQGDjdVhNueno5ZZVEn3sQbW5ci457gLR7HyTmHBg93oourBssgUxuWz1jX5uhc1qaqFo9VsybY1J5FuedLfm4dK",
+  ],
+);
+
+// Register the wallet
+const { observable } = signerBitcoin.registerWallet(walletPolicy);
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const registeredWallet: RegisteredWallet = state.output;
+      // Store the HMAC securely for future use
+      console.log("Wallet registered! HMAC:", registeredWallet.hmac);
+    }
+  },
+});
+```
 
 ---
 
@@ -417,6 +556,13 @@ switch (requiredUserInteraction) {
   case UserInteractionRequired.ConfirmOpenApp: {
     // User needs to confirm on the device to open the app
     console.log("The user needs to confirm on the device to open the app.");
+    break;
+  }
+  case UserInteractionRequired.RegisterWallet: {
+    // User needs to review and approve the wallet policy on the device
+    console.log(
+      "The user needs to review and approve the wallet policy on the device.",
+    );
     break;
   }
   default:

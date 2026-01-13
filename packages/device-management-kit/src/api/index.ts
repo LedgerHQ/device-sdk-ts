@@ -118,6 +118,7 @@ export * from "@api/transport/model/Errors";
 export { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 export { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 export * from "@api/types";
+export { formatApduReceivedLog, formatApduSentLog } from "@api/utils/apduLogs";
 export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
 export {
   bufferToHexaString,

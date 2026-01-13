@@ -1,7 +1,11 @@
 {
   "name": "@ledgerhq/device-signer-kit-bitcoin",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "main": "lib/cjs/index.js",
   "types": "lib/cjs/index.d.ts",
   "private": false,
@@ -45,19 +49,19 @@
     "xstate": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/signer-utils": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/signer-utils": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
     "bitcoinjs-lib": "catalog:",
     "rxjs": "catalog:",
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "bitcoinjs-lib": "^6.1.6"
   }
 }

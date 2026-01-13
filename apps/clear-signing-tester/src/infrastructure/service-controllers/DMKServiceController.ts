@@ -4,6 +4,7 @@ import {
   DeviceManagementKitBuilder,
   DiscoveredDevice,
   LoggerPublisherService,
+  type LoggerSubscriberService,
 } from "@ledgerhq/device-management-kit";
 import {
   SignerEth,
@@ -16,6 +17,7 @@ import {
 import { inject } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type RetryService } from "@root/src/domain/services/RetryService";
@@ -38,21 +40,31 @@ export class DMKServiceController implements ServiceController {
     private readonly speculosConfig: SpeculosConfig,
     @inject(TYPES.SignerConfig)
     private readonly signerConfig: SignerConfig,
+    @inject(TYPES.CalConfig)
+    private readonly calConfig: CalConfig,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(TYPES.LoggerSubscribers)
+    loggerSubscribers: LoggerSubscriberService[],
   ) {
     this.logger = loggerFactory("dmk-service-controller");
-    this.dmk = new DeviceManagementKitBuilder()
-      .addTransport(
-        speculosTransportFactory(
-          `${this.speculosConfig.url}:${this.speculosConfig.port}`,
-        ),
-      )
-      .build();
+
+    const dmkBuilder = new DeviceManagementKitBuilder().addTransport(
+      speculosTransportFactory(
+        `${this.speculosConfig.url}:${this.speculosConfig.port}`,
+      ),
+    );
+
+    for (const subscriber of loggerSubscribers) {
+      dmkBuilder.addLogger(subscriber);
+    }
+
+    this.dmk = dmkBuilder.build();
     this.contextModule = new ContextModuleBuilder({
       originToken: this.signerConfig.originToken,
     })
       .setDatasourceConfig({ proxy: "safe" })
+      .setCalConfig(this.calConfig)
       .build();
   }
 

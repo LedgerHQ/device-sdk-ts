@@ -10,7 +10,8 @@
       "_navigators/*": ["./src/navigators/*"],
       "_reducers/*": ["./src/reducers/*"],
       "_services/*": ["./src/services/*"],
-      "_common/*": ["./src/common/*"]
+      "_common/*": ["./src/common/*"],
+      "_screens/*": ["./src/screens/*"]
     },
     "experimentalDecorators": true,
     "resolveJsonModule": true,

@@ -1,5 +1,35 @@
 # @ledgerhq/device-management-kit
 
+## 1.0.0
+
+### Minor Changes
+
+- [#1179](https://github.com/LedgerHQ/device-sdk-ts/pull/1179) [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Export logger factory from dmk and use it in solana signer
+
+### Patch Changes
+
+- [#1212](https://github.com/LedgerHQ/device-sdk-ts/pull/1212) [`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Add second set of Bluetooth identifiers for Nano Gen5
+
+- [#1214](https://github.com/LedgerHQ/device-sdk-ts/pull/1214) [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Move APDU exchange logging to transport layer for more accurate timing
+
+## 0.13.0
+
+### Minor Changes
+
+- [#1178](https://github.com/LedgerHQ/device-sdk-ts/pull/1178) [`b550c02`](https://github.com/LedgerHQ/device-sdk-ts/commit/b550c02bff4ec5cf99d76ee362697bccedc88120) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Breaking change: Replace TransportDeviceModel.blockSize by dynamic getBlockSize (where the result depends on the firmware version). This allows us to correctly handle available memory prediction for the Ledger Nano S.
+
+## 0.12.0
+
+### Minor Changes
+
+- [#1166](https://github.com/LedgerHQ/device-sdk-ts/pull/1166) [`596e027`](https://github.com/LedgerHQ/device-sdk-ts/commit/596e027578ece63db9c484fb12be31f38a56dfe1) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add new error type `UnsupportedApplicationDAError`
+
+## 0.11.2
+
+### Patch Changes
+
+- [#1146](https://github.com/LedgerHQ/device-sdk-ts/pull/1146) [`eb243bb`](https://github.com/LedgerHQ/device-sdk-ts/commit/eb243bb343ae5f6434c0c33147f9d11b79c8c3ea) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add device ID to secure channel intermediate values
+
 ## 0.11.1
 
 ### Patch Changes

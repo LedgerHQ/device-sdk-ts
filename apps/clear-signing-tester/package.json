@@ -1,6 +1,7 @@
 {
   "name": "@ledgerhq/ethereum-clear-signing-tester",
   "version": "1.0.0",
+  "private": true,
   "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
   "main": "test-ethereum-transactions.ts",
   "exports": {
@@ -17,28 +18,31 @@
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
-    "test:raw:erc20": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-erc20.json",
-    "test:raw:complete": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-complete.json",
-    "test:raw:multisig": "tsx src/cli/EthereumTransactionTesterCli.ts raw-file ./ressources/raw-multisig.json",
-    "test:typed-data:multisig": "tsx src/cli/EthereumTransactionTesterCli.ts typed-data-file ./ressources/typed-data-multisig.json",
-    "test:full": "scripts/test-full.mjs"
+    "test:raw:erc20": "pnpm cli raw-file ./ressources/core/raw-erc20.json",
+    "test:raw:complete": "pnpm cli raw-file ./ressources/core/raw-complete.json",
+    "test:raw:multisig": "pnpm cli raw-file ./ressources/core/raw-multisig.json",
+    "test:typed-data:multisig": "pnpm cli typed-data-file ./ressources/core/typed-data-multisig.json",
+    "test:erc7730": "./scripts/test-erc7730.sh"
   },
   "dependencies": {
-    "@ledgerhq/context-module": "workspace:*",
-    "@ledgerhq/device-management-kit": "workspace:*",
-    "@ledgerhq/device-signer-kit-ethereum": "workspace:*",
-    "@ledgerhq/device-transport-kit-speculos": "workspace:*",
-    "@ledgerhq/speculos-device-controller": "workspace:*",
+    "@ledgerhq/cal-interceptor": "workspace:^",
+    "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
+    "@ledgerhq/device-transport-kit-speculos": "workspace:^",
+    "@ledgerhq/speculos-device-controller": "workspace:^",
     "axios": "catalog:",
     "commander": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",
-    "rxjs": "catalog:"
+    "rxjs": "catalog:",
+    "semver": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@types/semver": "catalog:",
     "concurrently": "catalog:",
     "ts-node": "catalog:",
     "tsx": "catalog:"

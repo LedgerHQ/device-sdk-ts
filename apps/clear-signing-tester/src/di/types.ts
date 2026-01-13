@@ -3,6 +3,7 @@ export const TYPES = {
   DeviceRepository: Symbol.for("DeviceRepository"),
   TransactionFileRepository: Symbol.for("TransactionFileRepository"),
   TypedDataFileRepository: Symbol.for("TypedDataFileRepository"),
+  ContractFileRepository: Symbol.for("ContractFileRepository"),
   TransactionContractRepository: Symbol.for("TransactionContractRepository"),
 
   // Services
@@ -12,6 +13,7 @@ export const TYPES = {
   SigningService: Symbol.for("SigningService"),
   SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
   RetryService: Symbol.for("RetryService"),
+  AppVersionResolver: Symbol.for("AppVersionResolver"),
 
   // State Handlers
   CompleteStateHandler: Symbol.for("CompleteStateHandler"),
@@ -27,6 +29,7 @@ export const TYPES = {
 
   // Adapters
   ScreenReader: Symbol.for("ScreenReader"),
+  ScreenshotSaver: Symbol.for("ScreenshotSaver"),
   FileReader: Symbol.for("FileReader"),
   JsonParser: Symbol.for("JsonParser"),
   DockerContainer: Symbol.for("DockerContainer"),
@@ -45,13 +48,18 @@ export const TYPES = {
     "TestBatchTypedDataFromFileUseCase",
   ),
   TestContractUseCase: Symbol.for("TestContractUseCase"),
+  TestBatchContractFromFileUseCase: Symbol.for(
+    "TestBatchContractFromFileUseCase",
+  ),
 
   // Config
   SpeculosConfig: Symbol.for("SpeculosConfig"),
   SignerConfig: Symbol.for("SignerConfig"),
   EtherscanConfig: Symbol.for("EtherscanConfig"),
   AppsConfig: Symbol.for("AppsConfig"),
+  CalConfig: Symbol.for("CalConfig"),
 
   // Logger
   LoggerPublisherServiceFactory: Symbol.for("LoggerPublisherServiceFactory"),
+  LoggerSubscribers: Symbol.for("LoggerSubscribers"),
 };

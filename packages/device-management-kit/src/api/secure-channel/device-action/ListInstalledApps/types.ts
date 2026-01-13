@@ -41,6 +41,7 @@ export type ListInstalledAppsDARequiredInteraction =
 
 export type ListInstalledAppsDAIntermediateValue = {
   requiredUserInteraction: ListInstalledAppsDARequiredInteraction;
+  deviceId?: Uint8Array;
 };
 
 export type ListInstalledAppsDAState = DeviceActionState<

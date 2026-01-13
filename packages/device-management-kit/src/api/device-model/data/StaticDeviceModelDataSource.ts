@@ -1,4 +1,5 @@
 import { injectable } from "inversify";
+import semver from "semver";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSource";
@@ -20,7 +21,10 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0001,
       usbOnly: true,
       memorySize: 320 * 1024,
-      blockSize: 4 * 1024,
+      getBlockSize: (p: { firmwareVersion: string }) =>
+        semver.lt(semver.coerce(p.firmwareVersion) ?? "", "2.0.0")
+          ? 4 * 1024
+          : 2 * 1024,
       masks: [0x31100000],
     }),
     [DeviceModelId.NANO_SP]: new TransportDeviceModel({
@@ -30,7 +34,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0005,
       usbOnly: true,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33100000],
     }),
     [DeviceModelId.NANO_X]: new TransportDeviceModel({
@@ -40,7 +44,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0004,
       usbOnly: false,
       memorySize: 2 * 1024 * 1024,
-      blockSize: 4 * 1024,
+      getBlockSize: () => 4 * 1024,
       masks: [0x33000000],
       bluetoothSpec: [
         {
@@ -58,7 +62,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0006,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33200000],
       bluetoothSpec: [
         {
@@ -76,7 +80,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0007,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33300000],
       bluetoothSpec: [
         {
@@ -89,12 +93,12 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
     }),
     [DeviceModelId.APEX]: new TransportDeviceModel({
       id: DeviceModelId.APEX,
-      productName: "Ledger Apex",
+      productName: "Ledger Nano Gen5",
       usbProductId: 0x80,
       bootloaderUsbProductId: 0x0008,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      blockSize: 32,
+      getBlockSize: () => 32,
       masks: [0x33400000],
       bluetoothSpec: [
         {
@@ -102,6 +106,12 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
           notifyUuid: "13d63400-2c97-8004-0001-4c6564676572",
           writeUuid: "13d63400-2c97-8004-0002-4c6564676572",
           writeCmdUuid: "13d63400-2c97-8004-0003-4c6564676572",
+        },
+        {
+          serviceUuid: "13d63400-2c97-9004-0000-4c6564676572",
+          notifyUuid: "13d63400-2c97-9004-0001-4c6564676572",
+          writeUuid: "13d63400-2c97-9004-0002-4c6564676572",
+          writeCmdUuid: "13d63400-2c97-9004-0003-4c6564676572",
         },
       ],
     }),
@@ -128,6 +138,9 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
     });
   }
 
+  /**
+   * @returns A record of service UUIDs to BleDeviceInfos
+   */
   getBluetoothServicesInfos(): Record<string, BleDeviceInfos> {
     return Object.values(StaticDeviceModelDataSource.deviceModelByIds).reduce<
       Record<string, BleDeviceInfos>

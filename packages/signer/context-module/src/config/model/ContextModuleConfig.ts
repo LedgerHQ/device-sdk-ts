@@ -1,3 +1,5 @@
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
@@ -32,6 +34,7 @@ export type ContextModuleConfig = {
   defaultFieldLoaders: boolean;
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
+  loggerFactory: (tag: string) => LoggerPublisherService;
   customTypedDataLoader?: TypedDataContextLoader;
   customSolanaLoader?: SolanaContextLoader;
   originToken?: string;

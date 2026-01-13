@@ -12,8 +12,8 @@ jobs:
     name: Generate SBOM
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/generate-sbom-composite@develop

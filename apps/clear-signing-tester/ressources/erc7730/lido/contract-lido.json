@@ -1,0 +1,25 @@
+{
+  "test": [
+    {
+      "name": "Lido DAO: WithdrawalQueueERC721",
+      "owner": "Lido DAO",
+      "address": {
+        "1": "0x889edc2edab5f40e902b864ad4d7ade8e412f9b1"
+      }
+    },
+    {
+      "name": "Lido DAO: stETH",
+      "owner": "Lido DAO",
+      "address": {
+        "1": "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
+      }
+    },
+    {
+      "name": "Lido DAO: wstETH",
+      "owner": "Lido DAO",
+      "address": {
+        "1": "0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0"
+      }
+    }
+  ]
+}

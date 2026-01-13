@@ -54,7 +54,7 @@ class TransportHidModule(
     private val loggerService: LoggerService =
         LoggerService { info ->
             Timber.tag("LDMKTransportHIDModule " + info.tag).d(info.message)
-            // sendEvent(reactContext, BridgeEvents.TransportLog(info))
+            sendEvent(reactContext, BridgeEvents.TransportLog(info))
         }
 
     private val transport: AndroidUsbTransport? by lazy {

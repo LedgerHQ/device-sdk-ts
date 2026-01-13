@@ -9,7 +9,7 @@ This TypeScript CLI application tests Ethereum transactions and typed data using
 - **Docker**: Required to run Speculos
 - **Speculos Simulator**: Required to emulate a device signer application
 
-You can get it using the command `docker pull ghcr.io/ledgerhq/speculos:latest`
+You can get it using the command `docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest`
 
 - **Node.js**: Version 20 or higher
 - **Coin Apps**: Required to run apps
@@ -41,12 +41,27 @@ Ethereum Transaction Tester CLI - Clean Architecture Edition
 
 Options:
   -V, --version                  output the version number
-  --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0") (default: "44'/60'/0'/0/0")
-  --speculos-url <url>           Speculos server URL (default: http://localhost) (default: "http://localhost")
+
+  # @config.speculos
+  --speculos-url <url>           Speculos server URL (default: http://localhost)
   --speculos-port <port>         Speculos server port (random port if not provided)
-  --device <device>              Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax) (default: "stax")
-  --verbose, -v                  Enable verbose output (default: false)
-  --quiet, -q                    Show only result tables (quiet mode) (default: false)
+  --docker-image-tag <tag>       Docker image tag for Speculos (default: latest)
+  --device <device>              Device type (stax, nanox, nanos, nanos+, flex, apex, default: stax)
+  --app-eth-version <version>    Ethereum app version (e.g., 1.19.1). If not specified, uses latest version for the device.
+  --os-version <version>         Device OS version (e.g., 1.8.1). If not specified, uses latest OS version for the device.
+  --plugin <plugin>              Plugin to use (e.g., Paraswap). If not specified, uses no plugin.
+  --plugin-version <version>     Plugin version to use. If not specified, uses latest version.
+  --screenshot-folder-path <path>  Save screenshots to a folder during transaction signing
+
+  # @config.signer
+  --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0")
+  --erc7730-files <files...>     One or more ERC7730 JSON files to inject for clear signing testing
+
+  # @config.logger
+  --log-level <level>            Console log level: none, error, warn, info, debug (default: info)
+  --log-file <path>              Log output to a file
+  --file-log-level <level>       File log level: none, error, warn, info, debug (requires --log-file)
+
   -h, --help                     display help for command
 
 Commands:
@@ -147,6 +162,96 @@ pnpm cs-tester cli contract 0x9D39A5DE30e57443BfF2A8307A4256c8797A3497
 Options:
 
 - `--chain-id <number>`: Chain id to use (default to 1)
+- `--skip-cal`: Skip CAL (Crypto Asset List) filtering and fetch random transactions directly from Etherscan instead of only CAL-registered transactions
+
+### Logging
+
+The tester supports configurable logging levels for both console and file output:
+
+```bash
+# Default: console at info level
+pnpm cs-tester cli raw-file ./ressources/raw-erc20.json
+
+# Verbose console output (debug level)
+pnpm cs-tester cli --log-level debug raw-file ./ressources/raw-erc20.json
+
+# Quiet mode (errors only)
+pnpm cs-tester cli --log-level error raw-file ./ressources/raw-erc20.json
+
+# Log to file with debug level (console stays at info)
+pnpm cs-tester cli --log-file ./output.log --file-log-level debug raw-file ./ressources/raw-erc20.json
+
+# Silent console, verbose file
+pnpm cs-tester cli --log-level none --log-file ./debug.log --file-log-level debug raw-file ./ressources/raw-erc20.json
+```
+
+**Log Levels:**
+
+- `none` - No logging
+- `error` - Errors only
+- `warn` - Errors and warnings
+- `info` - Errors, warnings, and info (default)
+- `debug` - All messages including debug
+
+### Screenshots
+
+Save screenshots of each screen during transaction signing:
+
+```bash
+# Save screenshots to a folder
+pnpm cs-tester cli --screenshot-folder-path ./screenshots raw-file ./ressources/raw-erc20.json
+```
+
+Screenshots are saved as `screenshot_1.png`, `screenshot_2.png`, etc. in the specified folder.
+
+### Plugin Support
+
+The tester supports running Ethereum transactions with plugins (e.g., Paraswap, 1inch, etc.). When a plugin is specified, Speculos will run the plugin app with the Ethereum app loaded as a library using the `-l` flag.
+
+#### Using Plugins
+
+```bash
+# Test with a specific plugin and version
+pnpm cs-tester cli raw-transaction <tx> --plugin Paraswap --plugin-version 5.24.0
+
+# Test with a plugin (automatically resolves latest version)
+pnpm cs-tester cli raw-transaction <tx> --plugin Paraswap
+
+# Test with plugin and specific OS/Ethereum app versions
+pnpm cs-tester cli raw-transaction <tx> \
+  --plugin Paraswap \
+  --plugin-version 5.24.0 \
+  --app-eth-version 1.19.1 \
+  --os-version 1.8.1 \
+  --device stax
+```
+
+**Important Notes:**
+
+- Both the plugin and Ethereum app must be available in your `COIN_APPS_PATH` directory
+- The directory structure should be: `COIN_APPS_PATH/<device>/<os-version>/<app-name>/app_<version>.elf`
+- If `--plugin-version` is not specified, the tester will automatically resolve the latest available plugin version
+- The plugin and Ethereum app must be compatible with the same OS version
+
+### ERC7730 Clear Signing Support
+
+The tester supports injecting custom ERC7730 descriptors for testing clear signing with contracts that may not yet be in the production CAL (Crypto Assets List). This is useful for testing new contracts or dApps during development.
+
+#### Using ERC7730 Files
+
+```bash
+# Test with a single ERC7730 descriptor file
+pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./path/to/descriptor.json
+
+# Test with multiple ERC7730 descriptor files
+pnpm cs-tester cli raw-transaction <tx> --erc7730-files ./descriptor1.json ./descriptor2.json
+
+# Test typed data with ERC7730 descriptors
+pnpm cs-tester cli typed-data-file ./test-data.json --erc7730-files ./descriptor.json
+
+# Test a contract with custom descriptors
+pnpm cs-tester cli contract 0x1234... --erc7730-files ./descriptor.json
+```
 
 ## Output
 

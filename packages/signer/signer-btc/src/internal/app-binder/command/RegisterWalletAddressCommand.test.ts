@@ -1,7 +1,6 @@
 import {
   ApduResponse,
   CommandResultFactory,
-  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -31,7 +30,7 @@ const WALLET_POLICY_DATA = Uint8Array.from(
     .concat(...KEYS_HASH_DATA),
 );
 const EXPECTED_RAW_APDU = Uint8Array.from(
-  [0xe1, 0x02, 0x00, 0x01, 0x51].concat(...WALLET_POLICY_DATA),
+  [0xe1, 0x02, 0x00, 0x01, 0x52, 0x51].concat(...WALLET_POLICY_DATA),
 );
 const APDU_RESPONSE = Uint8Array.from([
   0x1d, 0x15, 0x0e, 0xd4, 0x25, 0xa8, 0x71, 0xa5, 0xca, 0x7e, 0x2c, 0x55, 0xdb,
@@ -62,8 +61,9 @@ describe("RegisterWalletAddressCommand", () => {
       expect(command.getApdu().getRawApdu()).toEqual(EXPECTED_RAW_APDU);
     });
   });
+
   describe("parseResponse", () => {
-    it("should parse the response correctly", () => {
+    it("should return the ApduResponse directly on success", () => {
       // given
       const command = new RegisterWalletAddressCommand({
         walletPolicy: WALLET_POLICY_DATA,
@@ -76,10 +76,7 @@ describe("RegisterWalletAddressCommand", () => {
       // then
       expect(command.parseResponse(response)).toEqual(
         CommandResultFactory({
-          data: {
-            walletId: APDU_RESPONSE.slice(0, 32),
-            walletHmac: APDU_RESPONSE.slice(32),
-          },
+          data: response,
         }),
       );
     });
@@ -99,28 +96,6 @@ describe("RegisterWalletAddressCommand", () => {
 
       // then
       expect(isSuccessCommandResult(result)).toBe(false);
-    });
-    it("should return an error if the response is too short", () => {
-      // given
-      const command = new RegisterWalletAddressCommand({
-        walletPolicy: WALLET_POLICY_DATA,
-      });
-      const response = new ApduResponse({
-        data: APDU_RESPONSE.slice(0, 2),
-        statusCode: new Uint8Array([0x90, 0x00]),
-      });
-
-      // when
-      const result = command.parseResponse(response);
-
-      // then
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toEqual(
-          new InvalidStatusWordError("Data mismatch"),
-        );
-      } else {
-        assert.fail("Expected an error, but the result was successful");
-      }
     });
   });
 });

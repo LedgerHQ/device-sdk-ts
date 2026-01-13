@@ -1,0 +1,11 @@
+{
+  "test": [
+    {
+      "name": "Starknet: L1StarkGateSTRKbridge",
+      "owner": "Starknet",
+      "address": {
+        "1": "0xce5485cfb26914c5dce00b9baf0580364dafc7a4"
+      }
+    }
+  ]
+}

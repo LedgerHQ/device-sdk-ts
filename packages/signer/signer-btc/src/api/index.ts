@@ -1,10 +1,17 @@
 export { type SignerBtc } from "./SignerBtc";
 export { SignerBtcBuilder } from "./SignerBtcBuilder";
 export * from "@api/app-binder/GetExtendedPublicKeyDeviceActionTypes";
+export * from "@api/app-binder/GetMasterFingerprintDeviceActionTypes";
 export * from "@api/app-binder/GetWalletAddressDeviceActionTypes";
+export * from "@api/app-binder/RegisterWalletDeviceActionTypes";
 export * from "@api/app-binder/SignMessageDeviceActionTypes";
 export * from "@api/app-binder/SignPsbtDeviceActionTypes";
 export * from "@api/app-binder/SignTransactionDeviceActionTypes";
-export { DefaultDescriptorTemplate, DefaultWallet } from "@api/model/Wallet";
+export {
+  DefaultDescriptorTemplate,
+  DefaultWallet,
+  RegisteredWallet,
+  WalletPolicy,
+} from "@api/model/Wallet";
 export * from "@api/SignerBtc";
 export * from "@api/SignerBtcBuilder";

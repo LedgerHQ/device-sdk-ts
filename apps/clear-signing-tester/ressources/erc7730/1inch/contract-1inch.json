@@ -1,0 +1,63 @@
+{
+  "test": [
+    {
+      "name": "1inch: AggregationRouterV6",
+      "owner": "1inch",
+      "address": {
+        "324": "0x6fd4383cb451173d5f9304f041c7bcbf27d561ff"
+      }
+    },
+    {
+      "name": "1inch: AggregationRouterV6",
+      "owner": "1inch",
+      "address": {
+        "1": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "10": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "56": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "100": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "137": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "250": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "8217": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "8453": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "42161": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "43114": "0x111111125421ca6dc452d289314280a0f8842a65",
+        "1313161554": "0x111111125421ca6dc452d289314280a0f8842a65"
+      }
+    },
+    {
+      "name": "1inch: AggregationRouterV3",
+      "owner": "1inch",
+      "address": {
+        "1": "0x11111112542d85b3ef69ae05771c2dccff4faa26",
+        "56": "0x11111112542d85b3ef69ae05771c2dccff4faa26",
+        "137": "0x11111112542d85b3ef69ae05771c2dccff4faa26"
+      }
+    },
+    {
+      "name": "1inch: AggregationRouterV4",
+      "owner": "1inch",
+      "address": {
+        "1": "0x1111111254fb6c44bac0bed2854e76f90643097d"
+      }
+    },
+    {
+      "name": "1inch: AggregationRouterV4",
+      "owner": "1inch",
+      "address": {
+        "56": "0x1111111254fb6c44bac0bed2854e76f90643097d",
+        "137": "0x1111111254fb6c44bac0bed2854e76f90643097d"
+      }
+    },
+    {
+      "name": "1inch: AggregationRouterV5",
+      "owner": "1inch",
+      "address": {
+        "1": "0x1111111254eeb25477b68fb85ed929f73a960582",
+        "10": "0x1111111254eeb25477b68fb85ed929f73a960582",
+        "56": "0x1111111254eeb25477b68fb85ed929f73a960582",
+        "137": "0x1111111254eeb25477b68fb85ed929f73a960582",
+        "42161": "0x1111111254eeb25477b68fb85ed929f73a960582"
+      }
+    }
+  ]
+}

@@ -61,7 +61,7 @@ internal class DeviceConnectionStateMachine(
             }
         }
         this.state = newState
-        loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", "-> New state: $newState"))
+        // loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", "-> New state: $newState"))
     }
 
     private fun handleEvent(event: Event) {
@@ -69,7 +69,7 @@ internal class DeviceConnectionStateMachine(
             -> Event received: $event
                In state: $state
         """.trimIndent()
-        loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", logMessage))
+        // loggerService.log(buildSimpleDebugLogInfo("DeviceConnectionStateMachine", logMessage))
         when (val currentState = state) {
             is State.Connected -> {
                 when (event) {

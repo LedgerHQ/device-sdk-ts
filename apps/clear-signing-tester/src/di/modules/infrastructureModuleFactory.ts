@@ -9,12 +9,15 @@ import { type EtherscanAdapter } from "@root/src/domain/adapters/EtherscanAdapte
 import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
+import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
+import { type ContractInput } from "@root/src/domain/models/ContractInput";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type TransactionContractRepository } from "@root/src/domain/repositories/TransactionContractRepository";
+import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
@@ -26,9 +29,11 @@ import { EthersTransactionCrafter } from "@root/src/infrastructure/adapters/evm/
 import { HttpCalAdapter } from "@root/src/infrastructure/adapters/external/HttpCalAdapter";
 import { HttpEtherscanAdapter } from "@root/src/infrastructure/adapters/external/HttpEtherscanAdapter";
 import { SpeculosScreenReader } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenReader";
+import { SpeculosScreenshotSaver } from "@root/src/infrastructure/adapters/speculos/SpeculosScreenshotSaver";
 import { NodeDockerContainer } from "@root/src/infrastructure/adapters/system/NodeDockerContainer";
 import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
 import { NodeJsonParser } from "@root/src/infrastructure/adapters/system/NodeJsonParser";
+import { ContractFileRepository } from "@root/src/infrastructure/repositories/ContractFileRepository";
 import { DefaultTransactionContractRepository } from "@root/src/infrastructure/repositories/DefaultTransactionContractRepository";
 import { SpeculosDeviceRepository } from "@root/src/infrastructure/repositories/SpeculosDeviceRepository";
 import { TransactionFileRepository } from "@root/src/infrastructure/repositories/TransactionFileRepository";
@@ -36,6 +41,7 @@ import { TypedDataFileRepository } from "@root/src/infrastructure/repositories/T
 import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
 import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
 import { SpeculosServiceController } from "@root/src/infrastructure/service-controllers/SpeculosServiceController";
+import { AppVersionResolverService } from "@root/src/infrastructure/services/AppVersionResolverService";
 import { DefaultFlowOrchestrator } from "@root/src/infrastructure/services/DefaultFlowOrchestrator";
 import { DefaultRetryService } from "@root/src/infrastructure/services/DefaultRetryService";
 import { DefaultScreenAnalyzer } from "@root/src/infrastructure/services/DefaultScreenAnalyzer";
@@ -58,6 +64,9 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     bind<DataFileRepository<TypedDataInput>>(TYPES.TypedDataFileRepository)
       .to(TypedDataFileRepository)
       .inSingletonScope();
+    bind<DataFileRepository<ContractInput>>(TYPES.ContractFileRepository)
+      .to(ContractFileRepository)
+      .inSingletonScope();
     bind<TransactionContractRepository>(TYPES.TransactionContractRepository)
       .to(DefaultTransactionContractRepository)
       .inSingletonScope();
@@ -74,6 +83,9 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
       .inSingletonScope();
     bind<RetryService>(TYPES.RetryService)
       .to(DefaultRetryService)
+      .inSingletonScope();
+    bind<AppVersionResolver>(TYPES.AppVersionResolver)
+      .to(AppVersionResolverService)
       .inSingletonScope();
 
     // State Handlers
@@ -103,16 +115,26 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
 
     // Service Controllers Array (ordered for startup/shutdown)
     bind<ServiceController[]>(TYPES.ServiceControllers)
-      .toDynamicValue((context) => [
-        // Start order: Speculos -> DMK
-        context.get<ServiceController>(TYPES.SpeculosServiceController),
-        context.get<ServiceController>(TYPES.DMKServiceController),
-      ])
+      .toDynamicValue((context) => {
+        const controllers: ServiceController[] = [
+          context.get<ServiceController>(TYPES.SpeculosServiceController),
+        ];
+        // Only add DMK controller if not in onlySpeculos mode
+        if (!config.onlySpeculos) {
+          controllers.push(
+            context.get<ServiceController>(TYPES.DMKServiceController),
+          );
+        }
+        return controllers;
+      })
       .inSingletonScope();
 
     // Adapters
     bind<ScreenReader>(TYPES.ScreenReader)
       .to(SpeculosScreenReader)
+      .inSingletonScope();
+    bind<ScreenshotSaver>(TYPES.ScreenshotSaver)
+      .to(SpeculosScreenshotSaver)
       .inSingletonScope();
     bind<FileReader>(TYPES.FileReader).to(NodeFileReader).inSingletonScope();
     bind<JsonParser>(TYPES.JsonParser).to(NodeJsonParser).inSingletonScope();

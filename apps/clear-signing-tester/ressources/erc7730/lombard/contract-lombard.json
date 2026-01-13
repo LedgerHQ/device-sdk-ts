@@ -1,0 +1,18 @@
+{
+  "test": [
+    {
+      "name": "Lombard: LBTC",
+      "owner": "Lombard",
+      "address": {
+        "1": "0x8236a87084f8b84306f72007f36f2618a5634494"
+      }
+    },
+    {
+      "name": "Lombard: LBTC",
+      "owner": "Lombard",
+      "address": {
+        "17000": "0xed7bfd5c1790576105af4649817f6d35a75cd818"
+      }
+    }
+  ]
+}

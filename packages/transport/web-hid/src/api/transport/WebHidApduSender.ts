@@ -6,6 +6,8 @@ import {
   type ApduSenderServiceFactory,
   type DeviceApduSender,
   type DmkError,
+  formatApduReceivedLog,
+  formatApduSentLog,
   FramerUtils,
   type LoggerPublisherService,
   OpeningConnectionError,
@@ -90,6 +92,7 @@ export class WebHidApduSender
         return Promise.resolve(Left(new WebHidSendReportError(error)));
       }
     }
+    this.logger.debug(formatApduSentLog(apdu));
 
     if (abortTimeout) {
       timeout = setTimeout(() => {
@@ -112,6 +115,7 @@ export class WebHidApduSender
     maybeApduResponse
       .map((response) => {
         response.map((apduResponse) => {
+          this.logger.debug(formatApduReceivedLog(apduResponse));
           this.sendApduPromiseResolver.map((resolve) =>
             resolve(Right(apduResponse)),
           );

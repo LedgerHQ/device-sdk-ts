@@ -14,6 +14,7 @@ export type TestContractConfig = {
   readonly chainId: number;
   readonly contractAddress: string;
   readonly derivationPath: string;
+  readonly skipCal?: boolean;
 };
 
 @injectable()
@@ -35,7 +36,13 @@ export class TestContractUseCase {
     const txs = await this.txRepository.getTransactions(
       config.contractAddress,
       config.chainId,
+      config.skipCal,
     );
+
+    if (txs.length === 0) {
+      console.warn("No transactions found");
+      throw new Error("No transactions found");
+    }
 
     const results: TestResult[] = [];
 
@@ -72,6 +79,7 @@ export class TestContractUseCase {
           status: "error",
           timestamp: new Date().toISOString(),
           errorMessage: error instanceof Error ? error.message : String(error),
+          hash,
         };
         results.push(errorResult);
       }

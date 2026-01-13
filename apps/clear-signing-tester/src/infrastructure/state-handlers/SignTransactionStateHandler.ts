@@ -3,6 +3,7 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
+import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type RetryService } from "@root/src/domain/services/RetryService";
@@ -28,6 +29,8 @@ export class SignTransactionStateHandler implements StateHandler {
     private readonly screenAnalyzer: ScreenAnalyzerService,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
+    @inject(TYPES.ScreenshotSaver)
+    private readonly screenshotSaver: ScreenshotSaver,
   ) {
     this.logger = this.loggerFactory("sign-transaction-state-handler");
   }
@@ -101,7 +104,10 @@ export class SignTransactionStateHandler implements StateHandler {
 
     try {
       await this.retryService.retryUntil(
-        async () => await this.deviceController.navigateNext(),
+        async () => {
+          await this.screenshotSaver.save();
+          return await this.deviceController.navigateNext();
+        },
         async () => await this.screenAnalyzer.isLastPage(),
         NAVIGATION_MAX_ATTEMPTS,
         NAVIGATION_DELAY,

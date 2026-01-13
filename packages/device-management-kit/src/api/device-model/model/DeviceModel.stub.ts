@@ -11,7 +11,7 @@ export function deviceModelStubBuilder(
     bootloaderUsbProductId: 0x0004,
     usbOnly: false,
     memorySize: 2 * 1024 * 1024,
-    blockSize: 32,
+    getBlockSize: () => 4 * 1024,
     masks: [0x33000000],
     bluetoothSpec: [
       {
@@ -21,7 +21,6 @@ export function deviceModelStubBuilder(
         writeCmdUuid: "13d63400-2c97-0004-0003-4c6564676572",
       },
     ],
-    getBlockSize: () => 4 * 1024,
     ...props,
   };
 }

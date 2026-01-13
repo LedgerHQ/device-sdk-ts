@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import {
   type DeviceSessionId,
   type DeviceSessionState,
@@ -6,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
+import { removeSession } from "@/state/sessions/slice";
 
 import { useThrottle } from "./useThrottle";
 
@@ -14,25 +15,28 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const dmk = useDmk();
   const [deviceSessionState, setDeviceSessionState] =
     useState<DeviceSessionState>();
-  const { dispatch } = useDeviceSessionsContext();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (sessionId) {
-      const subscription = dmk
-        .getDeviceSessionState({
-          sessionId,
-        })
-        .subscribe((state) => {
-          if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
-            dispatch({ type: "remove_session", payload: { sessionId } });
-          } else {
-            setDeviceSessionState(state);
-          }
-        });
-
-      return () => {
-        subscription.unsubscribe();
-      };
+      try {
+        const subscription = dmk
+          .getDeviceSessionState({
+            sessionId,
+          })
+          .subscribe((state) => {
+            if (state.deviceStatus === DeviceStatus.NOT_CONNECTED) {
+              dispatch(removeSession({ sessionId }));
+            } else {
+              setDeviceSessionState(state);
+            }
+          });
+        return () => {
+          subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.warn("Error getting device session state:", error);
+      }
     }
   }, [sessionId, dmk, dispatch]);
 
