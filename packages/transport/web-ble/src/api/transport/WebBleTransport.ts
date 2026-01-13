@@ -99,6 +99,7 @@ export class WebBleTransport implements Transport {
           id: bluetoothDevice.id,
           deviceModel: ledgerServiceInfo.deviceModel,
           transport: webBleIdentifier,
+          name: bluetoothDevice.name || undefined,
         };
 
         this._deviceRegistryById.set(bluetoothDevice.id, {
@@ -234,6 +235,7 @@ export class WebBleTransport implements Transport {
           transport: webBleIdentifier,
           sendApdu: (...apduArgs) =>
             connectionStateMachine.sendApdu(...apduArgs),
+          name: bluetoothDevice.name || undefined,
         }),
       );
     } catch (e) {
@@ -581,6 +583,7 @@ export class WebBleTransport implements Transport {
           id: deviceId,
           deviceModel: registryEntry.ledgerServiceInfo.deviceModel,
           transport: webBleIdentifier,
+          name: registryEntry.device.name || undefined,
         });
       }
     }

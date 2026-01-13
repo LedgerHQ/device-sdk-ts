@@ -10,6 +10,16 @@ import {
 } from "./ProvideTransactionInformationCommand";
 
 describe("ProvideTransactionInformationCommand", () => {
+  describe("name", () => {
+    it("should be 'provideTransactionInformation'", () => {
+      const command = new ProvideTransactionInformationCommand({
+        data: new Uint8Array(),
+        isFirstChunk: true,
+      });
+      expect(command.name).toBe("provideTransactionInformation");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU for the first chunk", () => {
       // GIVEN

@@ -17,11 +17,14 @@ import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.ACTION_U
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbAttachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbDetachedReceiverController
 import com.ledger.devicesdk.shared.androidMain.transport.usb.controller.UsbPermissionReceiver
+import com.ledger.devicesdk.shared.api.apdu.SendApduFailureReason
+import com.ledger.devicesdk.shared.api.apdu.SendApduResult
 import com.ledger.devicesdk.shared.api.discovery.DiscoveryDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectedDevice
 import com.ledger.devicesdk.shared.internal.connection.InternalConnectionResult
 import com.ledger.devicesdk.shared.internal.event.SdkEventDispatcher
 import com.ledger.devicesdk.shared.internal.service.logger.LoggerService
+import com.ledger.devicesdk.shared.internal.service.logger.buildSimpleDebugLogInfo
 import com.ledger.devicesdk.shared.internal.transport.TransportEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +36,8 @@ import timber.log.Timber
 import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+
+private val TAG = "TransportHidModule"
 
 class TransportHidModule(
     private val reactContext: ReactApplicationContext,
@@ -49,7 +54,7 @@ class TransportHidModule(
     private val loggerService: LoggerService =
         LoggerService { info ->
             Timber.tag("LDMKTransportHIDModule " + info.tag).d(info.message)
-            // sendEvent(reactContext, BridgeEvents.TransportLog(info))
+            sendEvent(reactContext, BridgeEvents.TransportLog(info))
         }
 
     private val transport: AndroidUsbTransport? by lazy {
@@ -133,12 +138,18 @@ class TransportHidModule(
         transport?.stopScan()
     }
 
-    private var discoveryCount = 0
+    private var activeScanCount = 0
 
     @ReactMethod
     fun startScan(promise: Promise) {
-        discoveryCount += 1
-        if (discoveryCount > 1) {
+        loggerService.log(
+            buildSimpleDebugLogInfo(TAG, "[startScan] called")
+        )
+        activeScanCount += 1
+        if (activeScanCount > 1) {
+            loggerService.log(
+                buildSimpleDebugLogInfo(TAG, "[startScan] already scanning")
+            )
             promise.resolve(null)
             return
         }
@@ -156,16 +167,34 @@ class TransportHidModule(
 
     @ReactMethod
     fun stopScan(promise: Promise) {
-        discoveryCount -= 1
-        if (discoveryCount > 0) {
-            promise.resolve(null)
-            return
-        }
-        try {
-            transport!!.stopScan()
-            promise.resolve(null)
-        } catch (e: Exception) {
-            promise.reject(e);
+        loggerService.log(
+            buildSimpleDebugLogInfo(TAG, "[stopScan] called, activeScanCount=$activeScanCount")
+        )
+
+        when(activeScanCount) {
+            0 -> {
+                loggerService.log(buildSimpleDebugLogInfo(TAG, "[stopScan] no active scan"))
+                promise.resolve(null)
+            }
+            1 -> {
+                try {
+                    transport!!.stopScan()
+                    promise.resolve(null)
+                } catch (e: Exception) {
+                    promise.reject(e);
+                }
+                activeScanCount = 0
+            }
+            else -> {
+                loggerService.log(
+                    buildSimpleDebugLogInfo(
+                        TAG,
+                        "[stopScan] still scanning because there are active listeners"
+                    )
+                )
+                activeScanCount -= 1
+                promise.resolve(null)
+            }
         }
     }
 
@@ -217,7 +246,9 @@ class TransportHidModule(
         try {
             val device = connectedDevices.firstOrNull() { it.id == sessionId }
             if (device == null) {
-                promise.reject(Exception("[TransportHidModule][sendApdu] Device not found"))
+                promise.resolve(
+                    SendApduResult.Failure(SendApduFailureReason.DeviceNotFound).toWritableMap()
+                )
                 return
             }
             coroutineScope.launch {

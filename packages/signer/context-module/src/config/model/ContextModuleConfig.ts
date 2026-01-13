@@ -1,8 +1,9 @@
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
-import { type Web3CheckContextLoader } from "@/web3-check/domain/Web3CheckContextLoader";
 
 export type ContextModuleCalMode = "prod" | "test";
 export type ContextModuleCalBranch = "next" | "main" | "demo";
@@ -33,8 +34,8 @@ export type ContextModuleConfig = {
   defaultFieldLoaders: boolean;
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
+  loggerFactory: (tag: string) => LoggerPublisherService;
   customTypedDataLoader?: TypedDataContextLoader;
-  customWeb3CheckLoader?: Web3CheckContextLoader;
   customSolanaLoader?: SolanaContextLoader;
   originToken?: string;
   datasource?: ContextModuleDatasourceConfig;

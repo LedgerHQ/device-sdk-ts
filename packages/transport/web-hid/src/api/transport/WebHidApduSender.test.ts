@@ -110,7 +110,10 @@ describe("WebHidApduSender", () => {
       { getRawData: () => new Uint8Array([0x00, 0x01]) },
       { getRawData: () => new Uint8Array([0x02, 0x03]) },
     ];
-    const apduResponse = { data: new Uint8Array([0x90, 0x00]) } as ApduResponse;
+    const apduResponse = {
+      data: new Uint8Array([0x01, 0x02]),
+      statusCode: new Uint8Array([0x90, 0x00]),
+    } as ApduResponse;
 
     mockApduSender.getFrames.mockReturnValue(frames);
     mockDevice.sendReport.mockResolvedValue({});

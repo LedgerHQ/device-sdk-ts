@@ -1,3 +1,5 @@
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
   type ContextModuleCalConfig,
@@ -7,9 +9,9 @@ import {
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { NullLoggerPublisherService } from "./shared/utils/NullLoggerPublisherService";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
-import { type Web3CheckContextLoader } from "./web3-check/domain/Web3CheckContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -35,15 +37,22 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
+  loggerFactory: NullLoggerPublisherService,
 };
 
 export class ContextModuleBuilder {
   private config: ContextModuleConfig = DEFAULT_CONFIG;
-  private needOriginToken: boolean = true;
   private originToken?: string;
 
-  constructor({ originToken }: ContextModuleConstructorArgs = {}) {
+  constructor({
+    originToken,
+    loggerFactory,
+  }: ContextModuleConstructorArgs = {}) {
     this.originToken = originToken;
+
+    if (loggerFactory) {
+      this.config.loggerFactory = loggerFactory;
+    }
   }
 
   /**
@@ -75,18 +84,6 @@ export class ContextModuleBuilder {
    */
   addTypedDataLoader(loader: TypedDataContextLoader) {
     this.config.customTypedDataLoader = loader;
-    return this;
-  }
-
-  /**
-   * Replace the default loader for web3 checks
-   *
-   * @param loader loader to use for web3 checks
-   * @returns this
-   */
-  addWeb3CheckLoader(loader: Web3CheckContextLoader) {
-    this.needOriginToken = false;
-    this.config.customWeb3CheckLoader = loader;
     return this;
   }
 
@@ -148,15 +145,22 @@ export class ContextModuleBuilder {
   }
 
   /**
+   * Set a custom logger factory
+   *
+   * @param loggerFactory
+   * @returns this
+   */
+  setLoggerFactory(loggerFactory: (tag: string) => LoggerPublisherService) {
+    this.config.loggerFactory = loggerFactory;
+    return this;
+  }
+
+  /**
    * Build the context module
    *
    * @returns the context module
    */
   build(): ContextModule {
-    if (this.needOriginToken && !this.originToken) {
-      throw new Error("Origin token is required");
-    }
-
     const config = { ...this.config, originToken: this.originToken };
     return new DefaultContextModule(config);
   }

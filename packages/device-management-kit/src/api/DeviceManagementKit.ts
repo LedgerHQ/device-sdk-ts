@@ -1,4 +1,4 @@
-import { type Container } from "inversify";
+import { type Container, type Factory } from "inversify";
 import { type Observable } from "rxjs";
 
 import { commandTypes } from "@api/command/di/commandTypes";
@@ -20,6 +20,7 @@ import {
   type DisconnectUseCaseArgs,
   type DiscoveredDevice,
   type GetConnectedDeviceUseCaseArgs,
+  type LoggerPublisherService,
   type SendApduUseCaseArgs,
   type StartDiscoveringUseCaseArgs,
 } from "@api/types";
@@ -38,8 +39,13 @@ import {
   type ListenToAvailableDevicesUseCaseArgs,
 } from "@internal/discovery/use-case/ListenToAvailableDevicesUseCase";
 import { type ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
+import {
+  type ReconnectUseCase,
+  type ReconnectUseCaseArgs,
+} from "@internal/discovery/use-case/ReconnectUseCase";
 import type { StartDiscoveringUseCase } from "@internal/discovery/use-case/StartDiscoveringUseCase";
 import type { StopDiscoveringUseCase } from "@internal/discovery/use-case/StopDiscoveringUseCase";
+import { loggerTypes } from "@internal/logger-publisher/di/loggerTypes";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { managerApiTypes } from "@internal/manager-api/di/managerApiTypes";
 import { type SetProviderUseCase } from "@internal/manager-api/use-case/SetProviderUseCase";
@@ -129,6 +135,22 @@ export class DeviceManagementKit {
       .get<ListenToAvailableDevicesUseCase>(
         discoveryTypes.ListenToAvailableDevicesUseCase,
       )
+      .execute(args);
+  }
+
+  /**
+   * Reconnects a device session by disconnecting and reconnecting to the device.
+   *
+   * @param args - The arguments for reconnecting the device session.
+   *   - `device`: The connected device.
+   *   - `sessionRefresherOptions` (optional): Configuration for session refreshing.
+   *     - `isRefresherDisabled`: Whether the refresher is disabled.
+   *     - `pollingInterval`: The refresh interval in milliseconds
+   * @returns The session ID to use for further communication with the device.
+   */
+  async reconnect(args: ReconnectUseCaseArgs): Promise<DeviceSessionId> {
+    return this.container
+      .get<ReconnectUseCase>(discoveryTypes.ReconnectUseCase)
       .execute(args);
   }
 
@@ -317,5 +339,12 @@ export class DeviceManagementKit {
       .get<TransportService>(transportDiTypes.TransportService)
       .getAllTransports()
       .some((transport) => transport.isSupported());
+  }
+
+  /**
+   * Returns the DMK logger factory with configured logger subscribers.
+   */
+  getLoggerFactory(): Factory<LoggerPublisherService> {
+    return this.container.get(loggerTypes.LoggerPublisherServiceFactory);
   }
 }

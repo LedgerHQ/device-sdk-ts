@@ -1,0 +1,71 @@
+name: "Publish packages to JFrog"
+description: "Login to JFrog, setup npm config, and publish packages from dist directory"
+
+# This action is used to publish packages to JFrog using pnpm.
+# It is used in the snapshot_release.yml and release.yml workflows.
+# It will iterate over all .tgz packages in the dist directory and publish them to JFrog.
+#
+# We can't use the pnpm changeset publish command directly as the packages have already been packed in the public runner.
+
+inputs:
+  npm-registry:
+    description: "NPM registry URL (without https://)"
+    required: true
+  dist-path:
+    description: "Path to directory containing .tgz packages"
+    required: false
+    default: "dist"
+  npm-tag:
+    description: "NPM tag to publish with (e.g., 'latest', 'develop')"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Login to internal JFrog registry
+      id: jfrog-login
+      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+
+    - name: Setup npm config for JFrog
+      shell: bash
+      env:
+        NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
+        NPM_REGISTRY: ${{ inputs.npm-registry }}
+      run: |
+        cat << EOF | tee .npmrc
+        enable-pre-post-scripts=true
+        registry=https://${NPM_REGISTRY}/
+        //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
+        EOF
+
+    - name: Publish packages to JFrog using pnpm
+      shell: bash
+      env:
+        NPM_REGISTRY: ${{ inputs.npm-registry }}
+        DIST_PATH: ${{ inputs.dist-path }}
+        NPM_TAG: ${{ inputs.npm-tag }}
+      run: |
+        cd "$DIST_PATH"
+        shopt -s nullglob
+        published=0
+
+        # Build publish command with optional tag
+        publish_cmd="pnpm publish \"\$tarball\" --registry https://\${NPM_REGISTRY}/ --no-git-checks"
+        if [ -n "$NPM_TAG" ]; then
+          publish_cmd="$publish_cmd --tag $NPM_TAG"
+        fi
+
+        for tarball in *.tgz; do
+          if eval "$publish_cmd"; then
+            published=$((published + 1))
+          else
+            echo "⚠️ Failed to publish $tarball"
+          fi
+        done
+
+        if [ $published -eq 0 ]; then
+          echo "❌ No packages were successfully published"
+          exit 1
+        fi
+        echo "✅ Successfully published $published package(s)"

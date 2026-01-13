@@ -14,6 +14,10 @@ import {
 import { Left, Nothing, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
+import {
+  type GetAddressCommandArgs,
+  type GetAddressCommandResponse,
+} from "@api/app-binder/GetAddressCommandTypes";
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import {
   type SignTypedDataDAError,
@@ -25,6 +29,7 @@ import {
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
+import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfiguration } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignEIP712Command } from "@internal/app-binder/command/SignEIP712Command";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
@@ -45,6 +50,9 @@ import { type TransactionParserService } from "@internal/transaction/service/par
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 export type MachineDependencies = {
+  readonly getAddress: (arg0: {
+    input: GetAddressCommandArgs;
+  }) => Promise<CommandResult<GetAddressCommandResponse, EthErrorCodes>>;
   readonly getAppConfig: () => Promise<
     CommandResult<GetConfigCommandResponse, EthErrorCodes>
   >;
@@ -60,6 +68,7 @@ export type MachineDependencies = {
       derivationPath: string;
       transactionMapper: TransactionMapperService;
       transactionParser: TransactionParserService;
+      from: string;
     };
   }) => Promise<ProvideEIP712ContextTaskArgs>;
   readonly provideContext: (arg0: {
@@ -106,6 +115,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
     >;
 
     const {
+      getAddress,
       getAppConfig,
       web3CheckOptIn,
       buildContext,
@@ -124,6 +134,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: "Ethereum" },
         }).makeStateMachine(internalApi),
+        getAddress: fromPromise(getAddress),
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
         buildContext: fromPromise(buildContext),
@@ -173,6 +184,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           _internalState: {
             error: null,
             appConfig: null,
+            from: null,
             typedDataContext: null,
             signature: null,
           },
@@ -275,7 +287,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               ]),
             },
             {
-              target: "BuildContext",
+              target: "GetAddress",
               guard: "noInternalError",
             },
             {
@@ -331,7 +343,44 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           // This ensures the intermediateValue is captured before moving to BuildContext
           after: {
             0: {
+              target: "GetAddress",
+            },
+          },
+        },
+        GetAddress: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+          }),
+          invoke: {
+            id: "getAddress",
+            src: "getAddress",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+            }),
+            onDone: {
               target: "BuildContext",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        from: event.output.data.address,
+                      };
+                    }
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
             },
           },
         },
@@ -353,6 +402,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               data: context.input.data,
               appConfig: context._internalState.appConfig!,
               derivationPath: context.input.derivationPath,
+              from: context._internalState.from!,
             }),
             onDone: {
               target: "ProvideContext",
@@ -449,6 +499,13 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
           },
         },
+        SignTypedDataResultCheck: {
+          always: [
+            { guard: "noInternalError", target: "Success" },
+            { guard: "notRefusedByUser", target: "SignTypedDataLegacy" },
+            { target: "Error" },
+          ],
+        },
         SignTypedDataLegacy: {
           entry: assign({
             intermediateValue: {
@@ -464,7 +521,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               data: context.input.data,
             }),
             onDone: {
-              target: "SignTypedDataResultCheck",
+              target: "SignTypedDataLegacyResultCheck",
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
@@ -488,7 +545,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        SignTypedDataResultCheck: {
+        SignTypedDataLegacyResultCheck: {
           always: [
             { guard: "noInternalError", target: "Success" },
             { target: "Error" },
@@ -512,6 +569,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    const getAddress = async (arg0: { input: GetAddressCommandArgs }) =>
+      internalApi.sendCommand(new GetAddressCommand(arg0.input));
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfiguration());
     const web3CheckOptIn = async () =>
@@ -525,6 +584,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         derivationPath: string;
         transactionMapper: TransactionMapperService;
         transactionParser: TransactionParserService;
+        from: string;
       };
     }) =>
       new BuildEIP712ContextTask(
@@ -536,6 +596,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         arg0.input.data,
         arg0.input.derivationPath,
         arg0.input.appConfig,
+        arg0.input.from,
       ).run();
 
     const provideContext = async (arg0: {
@@ -575,6 +636,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       ).run();
 
     return {
+      getAddress,
       getAppConfig,
       web3CheckOptIn,
       buildContext,

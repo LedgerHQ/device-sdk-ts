@@ -13,6 +13,7 @@ export type ConnectedDeviceConstructorArgs = {
   type: ConnectionType;
   transport: TransportIdentifier;
   sendApdu: SendApduFnType;
+  name?: string;
 };
 
 export class TransportConnectedDevice {
@@ -21,6 +22,7 @@ export class TransportConnectedDevice {
   public readonly sendApdu: SendApduFnType;
   public readonly type: ConnectionType;
   public readonly transport: TransportIdentifier;
+  public readonly name?: string;
 
   constructor({
     id,
@@ -28,11 +30,13 @@ export class TransportConnectedDevice {
     type,
     transport,
     sendApdu,
+    name,
   }: ConnectedDeviceConstructorArgs) {
     this.id = id;
     this.deviceModel = deviceModel;
     this.sendApdu = sendApdu;
     this.type = type;
     this.transport = transport;
+    this.name = name;
   }
 }

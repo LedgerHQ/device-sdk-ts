@@ -31,6 +31,7 @@ export class SignBlockSingleCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "signBlockSingle";
   private readonly errorHelper = new CommandErrorHelper<
     SignBlockSingleCommandResponse,
     LedgerKeyringProtocolErrorCodes

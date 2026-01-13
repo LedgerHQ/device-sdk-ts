@@ -28,6 +28,7 @@ export type ProvideTLVDescriptorCommandArgs = {
 export class ProvideTLVDescriptorCommand
   implements Command<void, ProvideTLVDescriptorCommandArgs, SolanaAppErrorCodes>
 {
+  readonly name = "provideTLVDescriptor";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes

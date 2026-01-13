@@ -29,6 +29,12 @@ describe("GetWalletAddressCommand", () => {
     vi.importActual("@ledgerhq/device-management-kit");
   });
 
+  describe("name", () => {
+    it("should be 'getWalletAddress'", () => {
+      expect(command.name).toBe("getWalletAddress");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return correct APDU for default arguments", () => {
       const apdu = command.getApdu();

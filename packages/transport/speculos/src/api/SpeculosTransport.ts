@@ -8,6 +8,8 @@ import {
   type DisconnectHandler,
   type DmkConfig,
   type DmkError,
+  formatApduReceivedLog,
+  formatApduSentLog,
   GeneralDmkError,
   type LoggerPublisherService,
   OpeningConnectionError,
@@ -43,7 +45,6 @@ export class SpeculosTransport implements Transport {
       getBlockSize() {
         return 32;
       },
-      blockSize: 32,
       usbOnly: true,
       memorySize: 320 * 1024,
       masks: [0x31100000],
@@ -59,10 +60,7 @@ export class SpeculosTransport implements Transport {
   ) {
     this._isE2E = isE2E ?? false;
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = new HttpSpeculosDatasource(
-      speculosUrl,
-      this._isE2E,
-    ); // See how to pass properly speculos config.
+    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl); // See how to pass properly speculos config.
   }
 
   isSupported(): boolean {
@@ -156,7 +154,9 @@ export class SpeculosTransport implements Transport {
       const hexApdu = bufferToHexaString(apdu).substring(2);
       const hexResponse: string =
         await this._speculosDataSource.postApdu(hexApdu);
+      this.logger.debug(formatApduSentLog(apdu));
       const apduResponse = this.createApduResponse(hexResponse);
+      this.logger.debug(formatApduReceivedLog(apduResponse));
       return Right(apduResponse);
     } catch (error) {
       if (this.connectedDevice) {

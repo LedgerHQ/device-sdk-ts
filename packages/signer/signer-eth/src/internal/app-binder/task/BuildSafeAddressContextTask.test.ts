@@ -19,12 +19,8 @@ import {
 
 describe("BuildSafeAddressContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
-  const contextModuleMock: ContextModule = {
+  const contextModuleMock = {
     getContexts: vi.fn(),
-    getFieldContext: vi.fn(),
-    getTypedDataFilters: vi.fn(),
-    getWeb3Checks: vi.fn(),
-    getSolanaContext: vi.fn(),
   };
 
   const TEST_CHALLENGE = "0x12345678";
@@ -59,7 +55,7 @@ describe("BuildSafeAddressContextTask", () => {
     it("should successfully build safe address contexts with valid SAFE and SIGNER contexts", async () => {
       // GIVEN
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -110,7 +106,7 @@ describe("BuildSafeAddressContextTask", () => {
           },
         };
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -135,7 +131,7 @@ describe("BuildSafeAddressContextTask", () => {
     it("should throw error when GetChallengeCommand fails", async () => {
       // GIVEN
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -156,7 +152,7 @@ describe("BuildSafeAddressContextTask", () => {
         error: new Error("Context error"),
       };
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -176,7 +172,7 @@ describe("BuildSafeAddressContextTask", () => {
     it("should throw error when only one context is returned", async () => {
       // GIVEN
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -196,7 +192,7 @@ describe("BuildSafeAddressContextTask", () => {
     it("should throw error when no contexts are returned", async () => {
       // GIVEN
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -219,7 +215,7 @@ describe("BuildSafeAddressContextTask", () => {
           payload: "extra_payload",
         };
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -243,7 +239,7 @@ describe("BuildSafeAddressContextTask", () => {
     it("should throw error when SAFE context is missing", async () => {
       // GIVEN
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -263,7 +259,7 @@ describe("BuildSafeAddressContextTask", () => {
     it("should throw error when SIGNER context is missing", async () => {
       // GIVEN
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -292,7 +288,7 @@ describe("BuildSafeAddressContextTask", () => {
         payload: "nft_payload",
       };
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -320,7 +316,7 @@ describe("BuildSafeAddressContextTask", () => {
         error: new Error("Second error"),
       };
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
@@ -350,7 +346,7 @@ describe("BuildSafeAddressContextTask", () => {
       async (deviceModelId, _deviceName) => {
         // GIVEN
         const args: BuildSafeAddressContextTaskArgs = {
-          contextModule: contextModuleMock,
+          contextModule: contextModuleMock as unknown as ContextModule,
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
           deviceModelId,
@@ -383,7 +379,7 @@ describe("BuildSafeAddressContextTask", () => {
       // GIVEN
       const customChallenge = "0xabcdef12";
       const args: BuildSafeAddressContextTaskArgs = {
-        contextModule: contextModuleMock,
+        contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,

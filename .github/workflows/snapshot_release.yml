@@ -17,7 +17,7 @@ env:
   FORCE_COLOR: "1"
   REF: ${{ inputs.ref || 'develop' }}
   TAG: ${{ inputs.tag || 'develop' }}
-  # NPM_REGISTRY: jfrog.ledgerlabs.net/artifactory/api/npm/ldk-npm-prod-public
+  NPM_REGISTRY: ${{ vars.NPM_REGISTRY }}
 
 permissions:
   id-token: write
@@ -27,60 +27,74 @@ permissions:
   attestations: write
 
 jobs:
-  snapshot:
-    runs-on: ledgerhq-device-sdk
+  public-runner:
+    name: Build and Attest Snapshot Packages
+    # npmjs requires attestation to be generated on a public runner
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.REF }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+
+      - name: Update workspace syntax to use fixed version
+        run: git ls-files | grep 'package\.json$' | xargs sed -i 's/workspace:\^/workspace:*/g'
+
+      - name: Bump snapshot versions for all packages
+        run: pnpm ldmk-tool bump-snapshot --tag ${{ env.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Canonicalize package.json
+        run: pnpm ldmk-tool canonicalize
 
       - name: Build libraries
         run: pnpm build:libs
 
-      - name: Login to internal JFrog registry
-        id: jfrog-login
-        uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+      - name: Prepare dist directory
+        run: pnpm ldmk-tool pack
 
-      # - name: Setup npm config for JFrog
-      #   env:
-      #     NPM_REGISTRY_TOKEN: ${{ steps.jfrog-login.outputs.oidc-token }}
-      #   run: |
-      #     cat << EOF | tee .npmrc
-      #     enable-pre-post-scripts=true
-      #     registry=https://${NPM_REGISTRY}/
-      #     //${NPM_REGISTRY}/:_authToken=${NPM_REGISTRY_TOKEN}
-      #     EOF
-
-      - name: Create dist directory to store tarball
-        run: mkdir -p dist
-
-      - name: create .npmrc
-        run: |
-          cat << EOF > "$HOME/.npmrc"
-            //registry.npmjs.org/:_authToken=${NPM_TOKEN}
-          EOF
-        env:
-          NPM_TOKEN: ${{ secrets.NPMJS_TOKEN }}
-
-      - name: Create and publish snapshot release version
-        id: changesets
-        run: |
-          pnpm bump --snapshot ${{ env.TAG }}
-          pnpm release --snapshot --no-git-tag --tag ${{ env.TAG }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
-
-      - name: Attest tarball
-        if: steps.changesets.conclusion == 'success'
-        uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      - name: Attest for npmjs.com
+        uses: LedgerHQ/actions-security/actions/attest-for-npmsjs-com@attest-npm-dir-support
         with:
           subject-path: ./dist
 
-       # The action currently doesn't support pushing the blob to the registry
+      # The action currently doesn't support pushing the blob to the registry
       - name: Sign tarball
-        if: steps.changesets.conclusion == 'success'
         uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
         with:
           path: ./dist
+
+      - name: Upload packages to GitHub Artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: npm-snapshot-packages
+          path: dist/*.tgz
+          retention-days: 7
+          if-no-files-found: error
+
+  ledger-runner:
+    name: Publish Snapshot to JFrog
+    needs: public-runner
+    # JFrog is accessible only from a ledger private runner
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.REF }}
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+
+      - name: Download packages from GitHub Artifacts
+        uses: actions/download-artifact@v7
+        with:
+          name: npm-snapshot-packages
+          path: dist
+
+      - name: Publish snapshot packages to JFrog
+        uses: LedgerHQ/device-sdk-ts/.github/actions/publish-to-jfrog-composite@develop
+        with:
+          npm-registry: ${{ env.NPM_REGISTRY }}
+          dist-path: dist
+          npm-tag: ${{ env.TAG }}

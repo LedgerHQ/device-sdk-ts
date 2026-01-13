@@ -13,6 +13,16 @@ const FIRST_CHUNK_APDU = Uint8Array.from([
 ]);
 
 describe("ProvideTrustedNameCommand", () => {
+  describe("name", () => {
+    it("should be 'provideTrustedName'", () => {
+      const command = new ProvideTrustedNameCommand({
+        data: new Uint8Array(),
+        isFirstChunk: true,
+      });
+      expect(command.name).toBe("provideTrustedName");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the raw APDU", () => {
       // GIVEN

@@ -32,6 +32,7 @@ export class ProvideTransactionFieldDescriptionCommand
   implements
     Command<void, ProvideTransactionFieldDescriptionCommandArgs, EthErrorCodes>
 {
+  readonly name = "provideTransactionFieldDescription";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

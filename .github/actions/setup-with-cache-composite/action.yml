@@ -1,0 +1,28 @@
+name: "Setup toolchain with pnpm cache"
+description: "Setup toolchain and restore pnpm dependencies cache"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: moonrepo/setup-toolchain@v0
+
+    - name: Install toolchain
+      shell: bash
+      run: proto use
+
+    - name: Get pnpm store directory
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+    - name: Restore pnpm cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install

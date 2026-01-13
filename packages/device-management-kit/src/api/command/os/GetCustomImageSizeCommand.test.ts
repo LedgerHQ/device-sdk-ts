@@ -13,6 +13,12 @@ describe("GetCustomImageSizeCommand", () => {
     command = new GetCustomImageSizeCommand();
   });
 
+  describe("name", () => {
+    it("should be 'getCustomImageSize'", () => {
+      expect(command.name).toBe("getCustomImageSize");
+    });
+  });
+
   it("should return the correct APDU", () => {
     const apdu = command.getApdu();
     expect(apdu.getRawApdu()).toStrictEqual(IMAGE_SIZE_APDU);

@@ -30,6 +30,7 @@ export class GetVersionCommand
       LedgerKeyringProtocolErrorCodes
     >
 {
+  readonly name = "getVersion";
   private readonly errorHelper = new CommandErrorHelper<
     GetVersionCommandResponse,
     LedgerKeyringProtocolErrorCodes

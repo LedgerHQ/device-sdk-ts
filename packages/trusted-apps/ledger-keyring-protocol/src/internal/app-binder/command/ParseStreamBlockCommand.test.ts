@@ -20,6 +20,13 @@ describe("ParseSingleCommand", () => {
     outputTrustedParam,
   });
 
+  describe("name", () => {
+    it("should be 'parseSingle'", () => {
+      const cmd = new ParseSingleCommand(makeArgs());
+      expect(cmd.name).toBe("parseSingle");
+    });
+  });
+
   describe("getApdu()", () => {
     it("builds correct APDU without trustedParam", () => {
       // given

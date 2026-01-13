@@ -6,7 +6,10 @@ export { ApduParser } from "@api/apdu/utils/ApduParser";
 export * from "@api/apdu/utils/AppBuilderError";
 export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
-export { InvalidStatusWordError } from "@api/command/Errors";
+export {
+  InvalidGetFirmwareMetadataResponseError,
+  InvalidStatusWordError,
+} from "@api/command/Errors";
 export {
   CommandResultFactory,
   CommandResultStatus,
@@ -115,6 +118,7 @@ export * from "@api/transport/model/Errors";
 export { TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 export { connectedDeviceStubBuilder } from "@api/transport/model/TransportConnectedDevice.stub";
 export * from "@api/types";
+export { formatApduReceivedLog, formatApduSentLog } from "@api/utils/apduLogs";
 export { base64StringToBuffer, isBase64String } from "@api/utils/Base64String";
 export {
   bufferToHexaString,

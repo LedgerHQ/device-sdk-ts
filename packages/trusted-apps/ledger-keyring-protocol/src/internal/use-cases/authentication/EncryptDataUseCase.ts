@@ -21,7 +21,7 @@ export class EncryptDataUseCase {
     encryptionKey: Uint8Array,
     data: Uint8Array,
   ): Promise<Uint8Array> {
-    // Derive the shared secret using ECDH with an ephemeral keypair
+    // Derive the shared secret using ECDH with an ephemeral keyPair
     const privateKey = this.cryptoService.importKeyPair(
       encryptionKey,
       Curve.K256,

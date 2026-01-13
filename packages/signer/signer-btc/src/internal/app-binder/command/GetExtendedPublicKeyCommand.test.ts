@@ -50,6 +50,13 @@ describe("GetExtendedPublicKeyCommand", () => {
 
   beforeEach(() => {});
 
+  describe("name", () => {
+    it("should be 'getExtendedPublicKey'", () => {
+      command = new GetExtendedPublicKeyCommand(defaultArgs);
+      expect(command.name).toBe("getExtendedPublicKey");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the correct APDU", () => {
       // GIVEN

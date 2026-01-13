@@ -40,6 +40,13 @@ const SET_EXTERNAL_PLUGIN_APDU = [
 ];
 
 describe("Set External plugin", () => {
+  describe("name", () => {
+    it("should be 'setExternalPlugin'", () => {
+      const command = new SetExternalPluginCommand({ payload: "" });
+      expect(command.name).toBe("setExternalPlugin");
+    });
+  });
+
   describe("getApdu", () => {
     it("should retrieve correct apdu", () => {
       // given

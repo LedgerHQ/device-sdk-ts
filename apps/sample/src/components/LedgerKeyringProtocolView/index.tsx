@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
+import { useSelector } from "react-redux";
 import {
   bufferToHexaString,
   type DeviceActionState,
@@ -19,12 +20,12 @@ import {
 import { catchError, from, map, of, tap } from "rxjs";
 import styled from "styled-components";
 
-import { CommandForm } from "@/components//CommandsView/CommandForm";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { Form } from "@/components/Form";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 import { useLedgerKeyringProtocol } from "@/providers/LedgerKeyringProvider";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
 import { base64FromBytes, bytesFromBase64, genIdentity } from "@/utils/crypto";
 import { parsePermissions } from "@/utils/lkrp-permissions";
 
@@ -36,9 +37,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
   const sessionIdRef = useRef<string>();
   const modelIdRef = useRef<DeviceModelId>();
   {
-    const {
-      state: { selectedId: sessionId },
-    } = useDeviceSessionsContext();
+    const sessionId = useSelector(selectSelectedSessionId);
     useEffect(() => {
       if (!sessionId) return;
 
@@ -59,7 +58,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Authenticate",
         description:
-          "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keypair of a previouly added member is required. (Valid permissions are: OWNER, CAN_ENCRYPT, CAN_DERIVE, CAN_ADD_BLOCK).",
+          "Authenticate as an LKRP member. Without a trustchainId, the device will be used. For the web authentication a valid trustchainId and the keyPair of a previouly added member is required. (Valid permissions are: OWNER, CAN_ENCRYPT, CAN_DERIVE, CAN_ADD_BLOCK).",
         executeDeviceAction: ({
           privateKey,
           clientName,
@@ -71,14 +70,14 @@ export const LedgerKeyringProtocolView: React.FC = () => {
           }
 
           const cryptoService = new NobleCryptoService();
-          const keypair = cryptoService.importKeyPair(
+          const keyPair = cryptoService.importKeyPair(
             hexaStringToBuffer(privateKey)!,
             Curve.K256,
           );
 
           try {
             const authentication = app.authenticate({
-              keypair,
+              keyPair,
               clientName,
               permissions: parsePermissions(permissionsExpr),
               trustchainId,
@@ -95,7 +94,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
 
                     case DeviceActionStatus.Completed: {
                       const { output } = res;
-                      const pubkey = keypair.getPublicKeyToHex();
+                      const pubkey = keyPair.getPublicKeyToHex();
                       const identity = {
                         jwt: null,
                         trustchain: {
@@ -128,7 +127,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
             };
           }
         },
-        InputValuesComponent: RowCommandForm as typeof CommandForm<AuthInput>,
+        InputValuesComponent: RowCommandForm as typeof Form<AuthInput>,
         initialValues: {
           ...genIdentity(),
           trustchainId: "",
@@ -256,7 +255,7 @@ type AuthInput = {
   permissions: string;
 };
 
-const RowCommandForm = styled(CommandForm)`
+const RowCommandForm = styled(Form)`
   flex-direction: row;
 `;
 

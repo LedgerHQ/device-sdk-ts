@@ -28,6 +28,16 @@ const SUCCESS_RESPONSE = new Uint8Array([
 ]);
 
 describe("SignEIP7702AuthorizationCommand", () => {
+  describe("name", () => {
+    it("should be 'signEIP7702Authorization'", () => {
+      const command = new SignEIP7702AuthorizationCommand({
+        data: new Uint8Array(),
+        isFirstChunk: true,
+      });
+      expect(command.name).toBe("signEIP7702Authorization");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the first chunk raw APDU", () => {
       // GIVEN

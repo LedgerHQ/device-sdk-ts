@@ -51,6 +51,7 @@ export class SignEIP7702AuthorizationCommand
       EthErrorCodes
     >
 {
+  readonly name = "signEIP7702Authorization";
   readonly args: SignEIP7702AuthorizationCommandArgs;
   private readonly errorHelper = new CommandErrorHelper<
     SignEIP7702AuthorizationCommandResponse,

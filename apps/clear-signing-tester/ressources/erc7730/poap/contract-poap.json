@@ -1,0 +1,11 @@
+{
+  "test": [
+    {
+      "name": "POAP: PoapBridge",
+      "owner": "POAP",
+      "address": {
+        "1": "0x0bb4d3e88243f4a057db77341e6916b0e449b158"
+      }
+    }
+  ]
+}

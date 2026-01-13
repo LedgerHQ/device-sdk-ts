@@ -1,4 +1,8 @@
-import { type DefaultWallet, type RegisteredWallet } from "@api/model/Wallet";
+import {
+  type DefaultWallet,
+  type RegisteredWallet,
+  type WalletPolicy,
+} from "@api/model/Wallet";
 import { type Wallet } from "@internal/wallet/model/Wallet";
 
 export interface WalletBuilder {
@@ -9,4 +13,6 @@ export interface WalletBuilder {
   ): Wallet;
 
   fromRegisteredWallet(registeredWallet: RegisteredWallet): Wallet;
+
+  fromWalletPolicy(walletPolicy: WalletPolicy): Wallet;
 }

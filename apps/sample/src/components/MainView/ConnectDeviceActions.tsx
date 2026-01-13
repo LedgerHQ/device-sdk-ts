@@ -1,4 +1,5 @@
 import React, { useCallback } from "react";
+import { useSelector } from "react-redux";
 import { type DmkError } from "@ledgerhq/device-management-kit";
 import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
@@ -8,8 +9,7 @@ import { Button, Flex } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
-import { useDmkConfigContext } from "@/providers/DmkConfig";
+import { selectTransport } from "@/state/settings/selectors";
 
 type ConnectDeviceActionsProps = {
   onError: (error: DmkError | null) => void;
@@ -20,10 +20,7 @@ const ConnectButton = styled(Button).attrs({ mx: 3 })``;
 export const ConnectDeviceActions = ({
   onError,
 }: ConnectDeviceActionsProps) => {
-  const {
-    state: { transport },
-  } = useDmkConfigContext();
-  const { dispatch: dispatchDeviceSession } = useDeviceSessionsContext();
+  const transport = useSelector(selectTransport);
   const dmk = useDmk();
 
   const onSelectDeviceClicked = useCallback(
@@ -37,13 +34,6 @@ export const ConnectDeviceActions = ({
               console.log(
                 `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
               );
-              dispatchDeviceSession({
-                type: "add_session",
-                payload: {
-                  sessionId,
-                  connectedDevice: dmk.getConnectedDevice({ sessionId }),
-                },
-              });
             })
             .catch((error) => {
               onError(error);
@@ -55,7 +45,7 @@ export const ConnectDeviceActions = ({
         },
       });
     },
-    [dispatchDeviceSession, onError, dmk],
+    [onError, dmk],
   );
 
   // This implementation gives the impression that working with the mock server

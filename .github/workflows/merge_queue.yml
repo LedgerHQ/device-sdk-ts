@@ -10,19 +10,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  checks:
-    name: Run health check and unit tests
-    runs-on: "ledgerhq-device-sdk" # Use the custom runner for the merge queue #
+  build-libraries:
+    name: Build libraries
+    runs-on: "ledgerhq-device-sdk"
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+  health-check:
+    name: Run health check
+    needs: [build-libraries]
+    runs-on: "ledgerhq-device-sdk"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
       - name: Health check
         id: health-check
         run: pnpm health-check
 
+  tests:
+    name: Run unit tests
+    needs: [build-libraries]
+    runs-on: "ledgerhq-device-sdk"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
       - name: Tests
         id: unit-tests
-        if: ${{ steps.health-check.conclusion == 'success' }}
         run: pnpm test

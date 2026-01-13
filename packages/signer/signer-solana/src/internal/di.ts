@@ -2,10 +2,12 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 import { appBinderModuleFactory } from "./app-binder/di/appBinderModule";
+import { NullLoggerPublisherService } from "./app-binder/services/utils/NullLoggerPublisherService";
 import { useCasesModuleFactory } from "./use-cases/di/useCasesModule";
 import { externalTypes } from "./externalTypes";
 
@@ -14,6 +16,7 @@ export type MakeContainerProps = {
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
 };
+
 export const makeContainer = ({
   dmk,
   sessionId,
@@ -28,6 +31,17 @@ export const makeContainer = ({
   container
     .bind<ContextModule>(externalTypes.ContextModule)
     .toConstantValue(contextModule);
+
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(externalTypes.DmkLoggerFactory)
+    .toConstantValue((tag: string) => {
+      const factory = dmk.getLoggerFactory?.();
+      return factory
+        ? factory(`SignerSolana-${tag}`)
+        : NullLoggerPublisherService(`SignerSolana-${tag}`);
+    });
 
   container.loadSync(appBinderModuleFactory(), useCasesModuleFactory());
 

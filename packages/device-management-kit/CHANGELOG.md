@@ -1,5 +1,67 @@
 # @ledgerhq/device-management-kit
 
+## 1.0.0
+
+### Minor Changes
+
+- [#1179](https://github.com/LedgerHQ/device-sdk-ts/pull/1179) [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Export logger factory from dmk and use it in solana signer
+
+### Patch Changes
+
+- [#1212](https://github.com/LedgerHQ/device-sdk-ts/pull/1212) [`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Add second set of Bluetooth identifiers for Nano Gen5
+
+- [#1214](https://github.com/LedgerHQ/device-sdk-ts/pull/1214) [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Move APDU exchange logging to transport layer for more accurate timing
+
+## 0.13.0
+
+### Minor Changes
+
+- [#1178](https://github.com/LedgerHQ/device-sdk-ts/pull/1178) [`b550c02`](https://github.com/LedgerHQ/device-sdk-ts/commit/b550c02bff4ec5cf99d76ee362697bccedc88120) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Breaking change: Replace TransportDeviceModel.blockSize by dynamic getBlockSize (where the result depends on the firmware version). This allows us to correctly handle available memory prediction for the Ledger Nano S.
+
+## 0.12.0
+
+### Minor Changes
+
+- [#1166](https://github.com/LedgerHQ/device-sdk-ts/pull/1166) [`596e027`](https://github.com/LedgerHQ/device-sdk-ts/commit/596e027578ece63db9c484fb12be31f38a56dfe1) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Add new error type `UnsupportedApplicationDAError`
+
+## 0.11.2
+
+### Patch Changes
+
+- [#1146](https://github.com/LedgerHQ/device-sdk-ts/pull/1146) [`eb243bb`](https://github.com/LedgerHQ/device-sdk-ts/commit/eb243bb343ae5f6434c0c33147f9d11b79c8c3ea) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Add device ID to secure channel intermediate values
+
+## 0.11.1
+
+### Patch Changes
+
+- [#1119](https://github.com/LedgerHQ/device-sdk-ts/pull/1119) [`0e4ae29`](https://github.com/LedgerHQ/device-sdk-ts/commit/0e4ae2941f93448d8d1439f9d26166ffa5633a54) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Clean up all device sessions of the same device when device disconnected
+
+## 0.11.0
+
+### Minor Changes
+
+- [#1116](https://github.com/LedgerHQ/device-sdk-ts/pull/1116) [`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Use BLE advertised name as connected device name
+
+- [#1107](https://github.com/LedgerHQ/device-sdk-ts/pull/1107) [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add name attribute to all command objects and add logs in send command
+
+## 0.10.0
+
+### Minor Changes
+
+- [#1094](https://github.com/LedgerHQ/device-sdk-ts/pull/1094) [`5fdf5c9`](https://github.com/LedgerHQ/device-sdk-ts/commit/5fdf5c9fcb52c249fecf35bea8db2b451ac3e3fa) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add InvalidGetFirmwareMetadataResponseError
+
+- [#1104](https://github.com/LedgerHQ/device-sdk-ts/pull/1104) [`ebd44c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/ebd44c2690ec578410f69b148179268eeb34db65) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add reconnect use case
+
+## 0.9.2
+
+### Patch Changes
+
+- [#1083](https://github.com/LedgerHQ/device-sdk-ts/pull/1083) [`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Don't console log data if undefined
+
+- [#1083](https://github.com/LedgerHQ/device-sdk-ts/pull/1083) [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add logs in device session sendApdu command
+
+- [#1079](https://github.com/LedgerHQ/device-sdk-ts/pull/1079) [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add verify safe address user interaction
+
 ## 0.9.1
 
 ### Patch Changes

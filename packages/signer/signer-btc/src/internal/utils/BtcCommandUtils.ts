@@ -15,6 +15,13 @@ import { SW_INTERRUPTED_EXECUTION } from "@internal/app-binder/command/utils/con
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;
+const WALLET_ID_LENGTH = 32;
+const WALLET_HMAC_LENGTH = 32;
+
+export type WalletRegistrationResult = {
+  walletId: Uint8Array;
+  walletHmac: Uint8Array;
+};
 
 export class BtcCommandUtils {
   static isContinueResponse(response: ApduResponse) {
@@ -87,6 +94,33 @@ export class BtcCommandUtils {
     return CommandResultFactory({
       data: {
         address,
+      },
+    });
+  }
+
+  static getWalletRegistration(
+    response: CommandSuccessResult<ApduResponse>,
+  ): CommandResult<WalletRegistrationResult, BtcErrorCodes> {
+    const parser = new ApduParser(response.data);
+
+    const walletId = parser.extractFieldByLength(WALLET_ID_LENGTH);
+    if (!walletId) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Wallet ID is missing"),
+      });
+    }
+
+    const walletHmac = parser.extractFieldByLength(WALLET_HMAC_LENGTH);
+    if (!walletHmac) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Wallet HMAC is missing"),
+      });
+    }
+
+    return CommandResultFactory({
+      data: {
+        walletId,
+        walletHmac,
       },
     });
   }

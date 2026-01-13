@@ -52,6 +52,7 @@ export type GetDeviceMetadataDARequiredInteraction =
 
 export type GetDeviceMetadataDAIntermediateValue = {
   requiredUserInteraction: GetDeviceMetadataDARequiredInteraction;
+  deviceId?: Uint8Array;
 };
 
 export type GetDeviceMetadataDAState = DeviceActionState<

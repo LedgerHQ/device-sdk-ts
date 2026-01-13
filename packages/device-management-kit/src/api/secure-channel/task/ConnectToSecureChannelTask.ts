@@ -13,8 +13,14 @@ import {
   type SecureChannelEvent,
   SecureChannelEventType,
 } from "@api/secure-channel/task/types";
-import { willRequestPermission } from "@api/secure-channel/utils";
+import {
+  extractPublicKey,
+  isGetCertificateApdu,
+  willRequestPermission,
+} from "@api/secure-channel/utils";
 import { bufferToHexaString, hexaStringToBuffer } from "@api/utils/HexaString";
+import { type CryptoService } from "@internal/crypto/CryptoService";
+import { NobleCryptoService } from "@internal/crypto/NobleCryptoService";
 import {
   SecureChannelError,
   SecureChannelErrorType,
@@ -23,10 +29,13 @@ import {
 
 export type ConnectToSecureChannelTaskArgs = {
   connection: Either<WebSocketConnectionError, WebSocket>;
+  cryptoService?: CryptoService;
 };
 
 export class ConnectToSecureChannelTask {
   private readonly _connection: WebSocket;
+  private readonly _cryptoService: CryptoService;
+  private _deviceIdCaptured: boolean = false;
   constructor(
     private readonly _api: InternalApi,
     private readonly _args: ConnectToSecureChannelTaskArgs,
@@ -38,6 +47,7 @@ export class ConnectToSecureChannelTask {
         `Invalid WebSocket connection: ${String(this._args.connection.extract())}`,
       );
     }
+    this._cryptoService = this._args.cryptoService ?? new NobleCryptoService();
   }
 
   run(): Observable<SecureChannelEvent> {
@@ -184,6 +194,20 @@ export class ConnectToSecureChannelTask {
                 const deviceError = this.mapDeviceError(apduResponse);
                 if (deviceError === null) {
                   outMessageResponse = OutMessageResponseEnum.SUCCESS;
+
+                  // Check if this is the first GetCertificate call
+                  if (!this._deviceIdCaptured && isGetCertificateApdu(apdu)) {
+                    this._deviceIdCaptured = true;
+                    const publicKey = extractPublicKey(apduResponse);
+                    if (publicKey) {
+                      // Compute SHA3-256 hash of the public key to get the device ID
+                      const deviceId = this._cryptoService.sha3_256(publicKey);
+                      subscriber.next({
+                        type: SecureChannelEventType.DeviceId,
+                        payload: { deviceId },
+                      });
+                    }
+                  }
 
                   // Emit event for the exchange
                   subscriber.next({

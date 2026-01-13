@@ -22,18 +22,18 @@ jobs:
     name: Build android app
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ github.event.inputs.ref }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - name: Set Up JDK
         uses: actions/setup-java@v5
         with:
-          distribution: 'zulu' # See 'Supported distributions' for available options
-          java-version: '20'
-          cache: 'gradle'
+          distribution: "zulu" # See 'Supported distributions' for available options
+          java-version: "20"
+          cache: "gradle"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
@@ -46,7 +46,7 @@ jobs:
         working-directory: ./apps/mobile/android
 
       - name: Upload APK to github
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: dmk-sample.apk
           path: ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
@@ -58,4 +58,3 @@ jobs:
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIAL_FILE_CONTENT }}
           groups: dxp
           file: ./apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-

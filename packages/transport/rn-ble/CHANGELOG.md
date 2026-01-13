@@ -1,5 +1,53 @@
 # @ledgerhq/device-transport-kit-react-native-ble
 
+## 1.3.2
+
+### Patch Changes
+
+- [#1212](https://github.com/LedgerHQ/device-sdk-ts/pull/1212) [`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Add second set of Bluetooth identifiers for Nano Gen5
+
+- [#1214](https://github.com/LedgerHQ/device-sdk-ts/pull/1214) [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Move APDU exchange logging to transport layer for more accurate timing
+
+- Updated dependencies [[`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8), [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0), [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88)]:
+  - @ledgerhq/device-management-kit@1.0.0
+
+## 1.3.1
+
+### Patch Changes
+
+- [#1181](https://github.com/LedgerHQ/device-sdk-ts/pull/1181) [`044b764`](https://github.com/LedgerHQ/device-sdk-ts/commit/044b764dba7d0b7e6948a8f2de0c7c5ca7373f72) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Bump patch versions to use ^ instead of \* to avoid duplication in LW and prepare a release
+
+- [#1178](https://github.com/LedgerHQ/device-sdk-ts/pull/1178) [`b550c02`](https://github.com/LedgerHQ/device-sdk-ts/commit/b550c02bff4ec5cf99d76ee362697bccedc88120) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Breaking change: Replace TransportDeviceModel.blockSize by dynamic getBlockSize (where the result depends on the firmware version). This allows us to correctly handle available memory prediction for the Ledger Nano S.
+
+- Updated dependencies [[`b550c02`](https://github.com/LedgerHQ/device-sdk-ts/commit/b550c02bff4ec5cf99d76ee362697bccedc88120)]:
+  - @ledgerhq/device-management-kit@0.13.0
+
+## 1.3.0
+
+### Minor Changes
+
+- [#1116](https://github.com/LedgerHQ/device-sdk-ts/pull/1116) [`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Use BLE advertised name as connected device name
+
+### Patch Changes
+
+- Updated dependencies [[`81c0d0c`](https://github.com/LedgerHQ/device-sdk-ts/commit/81c0d0c5efaad26571534f8a04621d51e49e99e4), [`38485bd`](https://github.com/LedgerHQ/device-sdk-ts/commit/38485bd789a0c8f9c4cecdef7fa19e963ad442f9)]:
+  - @ledgerhq/device-management-kit@0.11.0
+
+## 1.2.0
+
+### Minor Changes
+
+- [#1084](https://github.com/LedgerHQ/device-sdk-ts/pull/1084) [`6544756`](https://github.com/LedgerHQ/device-sdk-ts/commit/654475602681dff30c220a161c1ced86cb8920b0) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Mapping specific error for Android platform
+
+### Patch Changes
+
+- [#1073](https://github.com/LedgerHQ/device-sdk-ts/pull/1073) [`4591cd9`](https://github.com/LedgerHQ/device-sdk-ts/commit/4591cd9b54b86e12f5f2c50d2f0c1500dce7ecb0) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Remove unnecessary logs
+
+- [#1078](https://github.com/LedgerHQ/device-sdk-ts/pull/1078) [`58bdb84`](https://github.com/LedgerHQ/device-sdk-ts/commit/58bdb84e46408b50fd4d48e8a66b42549af29f5c) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Fix scanning issues
+
+- Updated dependencies [[`9aea690`](https://github.com/LedgerHQ/device-sdk-ts/commit/9aea690da8dc1b51fd2827d40bbdbfb4541545bd), [`4feb921`](https://github.com/LedgerHQ/device-sdk-ts/commit/4feb9217d67f6981b3a8e58ab51526d0a961a5b1), [`1fe7a10`](https://github.com/LedgerHQ/device-sdk-ts/commit/1fe7a10f2ea93793ad9125c657ec888c04226335)]:
+  - @ledgerhq/device-management-kit@0.9.2
+
 ## 1.1.1
 
 ### Patch Changes

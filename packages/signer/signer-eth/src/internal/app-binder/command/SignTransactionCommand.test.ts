@@ -37,6 +37,13 @@ describe("SignTransactionCommand", () => {
     isFirstChunk: true,
   };
 
+  describe("name", () => {
+    it("should be 'signTransaction'", () => {
+      const command = new SignTransactionCommand(defaultArgs);
+      expect(command.name).toBe("signTransaction");
+    });
+  });
+
   describe("getApdu", () => {
     describe("Legacy", () => {
       it("should return the correct APDU when the data is empty", () => {

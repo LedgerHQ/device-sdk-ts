@@ -39,6 +39,12 @@ describe("GetChallengeCommand", () => {
     command = new GetChallengeCommand();
   });
 
+  describe("name", () => {
+    it("should be 'getChallenge'", () => {
+      expect(command.name).toBe("getChallenge");
+    });
+  });
+
   describe("getApdu", () => {
     it("should return the challenge apdu", () => {
       const apdu = command.getApdu();

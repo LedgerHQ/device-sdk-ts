@@ -8,6 +8,11 @@ on:
 env:
   FORCE_COLOR: "1"
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name != 'develop' && github.ref || github.run_id }}
   cancel-in-progress: true
@@ -16,16 +21,49 @@ jobs:
   auto-assign:
     name: Auto assign
     runs-on: ubuntu-22.04
+    permissions:
+      pull-requests: write
     steps:
-      - uses: toshimaru/auto-author-assign@v2.1.1
+      - uses: toshimaru/auto-author-assign@v3.0.1
+
+  detect-changes:
+    name: Detect changed packages
+    runs-on: ubuntu-22.04
+    outputs:
+      context-module: ${{ steps.filter.outputs.context-module }}
+      signer-eth: ${{ steps.filter.outputs.signer-eth }}
+      cs-tester: ${{ steps.filter.outputs.cs-tester }}
+      should-run-cs-tester: ${{ steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.cs-tester == 'true' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            context-module:
+              - 'packages/signer/context-module/**'
+            signer-eth:
+              - 'packages/signer/signer-eth/**'
+            cs-tester:
+              - 'apps/clear-signing-tester/**'
+
+  setup:
+    name: Setup toolchain and dependencies
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
   danger:
     name: Run Danger check
+    needs: [setup]
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
       - name: Danger
         env:
@@ -35,26 +73,97 @@ jobs:
           DANGER_GITHUB_API_BASE_URL: "https://api.github.com"
         run: pnpm danger:ci
 
-  checks:
-    name: Run health check and unit tests
-    needs: [danger]
+  build-libraries:
+    name: Build libraries
+    needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-toolchain-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+  build-apps:
+    name: Build apps
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Build apps
+        run: pnpm build
+
+  health-check:
+    name: Run health check
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
       - name: Health check
         id: health-check
         run: pnpm health-check
 
+  tests:
+    name: Run unit tests
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
       - name: Tests
         id: unit-tests
-        if: ${{ steps.health-check.conclusion == 'success' }}
         run: pnpm test:coverage
 
-      - uses: sonarsource/sonarqube-scan-action@v5
+      - uses: sonarsource/sonarqube-scan-action@v7
         if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
           SONAR_TOKEN: ${{ secrets.PUBLIC_GREEN_SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ vars.PUBLIC_SONAR_HOST_URL }}
+
+  cs-tester:
+    name: Run Clear Signing Tester (${{ matrix.device }} - ${{ matrix.test }})
+    needs: [build-libraries, detect-changes]
+    if: needs.detect-changes.outputs.should-run-cs-tester == 'true'
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox]
+        test: [test:raw:complete, test:raw:multisig, test:typed-data:multisig]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Generate token
+        id: generate-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.GH_BOT_APP_ID }}
+          private_key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+      - name: Retrieving coin apps
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          repository: LedgerHQ/coin-apps
+          token: ${{ steps.generate-token.outputs.token }}
+          path: coin-apps
+          sparse-checkout: |
+            ${{ matrix.device }}/*/Ethereum/*.elf
+          sparse-checkout-cone-mode: false
+
+      - name: Pull Speculos Docker image
+        run: docker pull ghcr.io/ledgerhq/speculos
+
+      - name: Run Clear Signing Tester
+        id: cs-tester
+        env:
+          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
+        run: pnpm cs-tester ${{ matrix.test }} --device ${{ matrix.device }}

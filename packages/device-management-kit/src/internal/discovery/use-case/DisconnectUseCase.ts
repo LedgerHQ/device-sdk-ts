@@ -43,6 +43,13 @@ export class DisconnectUseCase {
   }
 
   async execute({ sessionId }: DisconnectUseCaseArgs): Promise<void> {
+    this._logger.debug("Disconnecting from device", {
+      data: {
+        test: this._sessionService
+          .getDeviceSessions()
+          .map((session) => session.id),
+      },
+    });
     return EitherAsync(async ({ liftEither }) => {
       const session = await liftEither(
         this._sessionService.getDeviceSessionById(sessionId).ifLeft((error) => {

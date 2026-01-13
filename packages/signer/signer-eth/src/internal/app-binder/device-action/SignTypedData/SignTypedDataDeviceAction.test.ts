@@ -6,9 +6,7 @@ import {
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
-  InvalidStatusWordError,
   UnknownDAError,
-  UnknownDeviceExchangeError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
@@ -52,7 +50,6 @@ describe("SignTypedDataDeviceAction", () => {
   const TEST_BUILT_CONTEXT: ProvideEIP712ContextTaskArgs = {
     deviceModelId: DeviceModelId.STAX,
     derivationPath: "44'/60'/0'/0/0",
-    web3Check: null,
     types: {
       PermitSingle: {
         details: new StructType("PermitDetails"),
@@ -99,6 +96,7 @@ describe("SignTypedDataDeviceAction", () => {
     }),
     calldatasContexts: {},
   };
+  const FROM = "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619";
 
   const mockParser: TypedDataParserService = {
     parse: vi.fn(),
@@ -109,12 +107,10 @@ describe("SignTypedDataDeviceAction", () => {
   const mockTransactionMapper: TransactionMapperService = {
     mapTransactionToSubset: vi.fn(),
   };
-  const mockContextModule: ContextModule = {
+  const mockContextModule = {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
-    getWeb3Checks: vi.fn(),
-    getSolanaContext: vi.fn(),
   };
   const apiMock = makeDeviceActionInternalApiMock();
   const getAppConfigMock = vi.fn();
@@ -123,8 +119,10 @@ describe("SignTypedDataDeviceAction", () => {
   const provideContextMock = vi.fn();
   const signTypedDataMock = vi.fn();
   const signTypedDataLegacyMock = vi.fn();
+  const getAddressMock = vi.fn();
   function extractDependenciesMock() {
     return {
+      getAddress: getAddressMock,
       getAppConfig: getAppConfigMock,
       web3CheckOptIn: web3CheckOptInMock,
       buildContext: buildContextMock,
@@ -176,12 +174,17 @@ describe("SignTypedDataDeviceAction", () => {
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -234,6 +237,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -276,6 +286,7 @@ describe("SignTypedDataDeviceAction", () => {
                   data: TEST_MESSAGE,
                   appConfig: createAppConfig("1.15.0", false, false),
                   derivationPath: "44'/60'/0'/0/0",
+                  from: FROM,
                 },
               }),
             );
@@ -306,12 +317,17 @@ describe("SignTypedDataDeviceAction", () => {
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -344,6 +360,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -388,12 +411,17 @@ describe("SignTypedDataDeviceAction", () => {
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -449,6 +477,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -487,12 +522,17 @@ describe("SignTypedDataDeviceAction", () => {
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -540,6 +580,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -571,12 +618,17 @@ describe("SignTypedDataDeviceAction", () => {
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -632,6 +684,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -657,19 +716,22 @@ describe("SignTypedDataDeviceAction", () => {
           onDone: resolve,
         });
       }));
-  });
 
-  describe("Web3Checks", () => {
-    it("should call external dependencies with web3Checks enabled and supported", () =>
+    it("should not fallback to legacy signing if rejected by the user during signing", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
-        setupAppConfig("1.16.0", true, true);
+        setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -677,19 +739,23 @@ describe("SignTypedDataDeviceAction", () => {
           },
         });
 
-        // Mock the dependencies to return some sample data
+        // Mock user rejection during SignTypedData step
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
-        buildContextMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("buildContext error"),
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
         );
-        signTypedDataLegacyMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("signTypedDataLegacy error"),
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6985",
+              message: "User refused",
+            }),
+          }),
         );
 
-        // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetAppConfiguration -> BuildContext
         const expectedStates: Array<SignTypedDataDAState> = [
           {
             intermediateValue: {
@@ -715,95 +781,7 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            error: new InvalidStatusWordError("signTypedDataLegacy error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onError: reject,
-          onDone: () => {
-            // Verify mocks calls parameters
-            expect(getAppConfigMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  contextModule: mockContextModule,
-                  parser: mockParser,
-                  transactionParser: mockTransactionParser,
-                  transactionMapper: mockTransactionMapper,
-                  data: TEST_MESSAGE,
-                  appConfig: createAppConfig("1.16.0", true, true),
-                  derivationPath: "44'/60'/0'/0/0",
-                },
-              }),
-            );
-            resolve();
-          },
-        });
-      }));
-
-    it("should call external dependencies with web3Checks supported but disabled", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-        setupAppConfig("1.16.0", false, true);
-
-        const deviceAction = new SignTypedDataDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            data: TEST_MESSAGE,
-            contextModule: mockContextModule,
-            parser: mockParser,
-            transactionParser: mockTransactionParser,
-            transactionMapper: mockTransactionMapper,
-            skipOpenApp: false,
-          },
-        });
-
-        // Mock the dependencies to return some sample data
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-        buildContextMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("buildContext error"),
-        );
-        signTypedDataLegacyMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("signTypedDataLegacy error"),
-        );
-
-        // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetAppConfiguration -> BuildContext
-        const expectedStates: Array<SignTypedDataDAState> = [
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -817,264 +795,29 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            error: new InvalidStatusWordError("signTypedDataLegacy error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onError: reject,
-          onDone: () => {
-            // Verify mocks calls parameters
-            expect(getAppConfigMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  contextModule: mockContextModule,
-                  parser: mockParser,
-                  transactionParser: mockTransactionParser,
-                  transactionMapper: mockTransactionMapper,
-                  data: TEST_MESSAGE,
-                  appConfig: createAppConfig("1.16.0", false, true),
-                  derivationPath: "44'/60'/0'/0/0",
-                },
-              }),
-            );
-            resolve();
-          },
-        });
-      }));
-
-    it("should call external dependencies with web3Checks opt-in, then enabled", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-        setupAppConfig("1.16.0", false, false);
-
-        const deviceAction = new SignTypedDataDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            data: TEST_MESSAGE,
-            contextModule: mockContextModule,
-            parser: mockParser,
-            transactionParser: mockTransactionParser,
-            transactionMapper: mockTransactionMapper,
-            skipOpenApp: false,
-          },
-        });
-
-        // Mock the dependencies to return some sample data
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-        web3CheckOptInMock.mockResolvedValueOnce(
-          CommandResultFactory({ data: { enabled: true } }),
-        );
-        buildContextMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("buildContext error"),
-        );
-        signTypedDataLegacyMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("signTypedDataLegacy error"),
-        );
-
-        // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
-        const expectedStates: Array<SignTypedDataDAState> = [
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
-              result: true,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
             },
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new InvalidStatusWordError("signTypedDataLegacy error"),
+            error: EthAppCommandErrorFactory({
+              errorCode: "6985",
+              message: "User refused",
+            }),
             status: DeviceActionStatus.Error,
           },
         ];
 
         testDeviceActionStates(deviceAction, expectedStates, apiMock, {
           onError: reject,
-          onDone: () => {
-            // Verify mocks calls parameters
-            expect(getAppConfigMock).toHaveBeenCalled();
-            expect(web3CheckOptInMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  contextModule: mockContextModule,
-                  parser: mockParser,
-                  transactionParser: mockTransactionParser,
-                  transactionMapper: mockTransactionMapper,
-                  data: TEST_MESSAGE,
-                  appConfig: createAppConfig("1.16.0", true, false),
-                  derivationPath: "44'/60'/0'/0/0",
-                },
-              }),
-            );
-            resolve();
-          },
-        });
-      }));
-
-    it("should call external dependencies with web3Checks opt-in, then disabled", () =>
-      new Promise<void>((resolve, reject) => {
-        setupOpenAppDAMock();
-        setupAppConfig("1.16.0", false, false);
-
-        const deviceAction = new SignTypedDataDeviceAction({
-          input: {
-            derivationPath: "44'/60'/0'/0/0",
-            data: TEST_MESSAGE,
-            contextModule: mockContextModule,
-            parser: mockParser,
-            transactionParser: mockTransactionParser,
-            transactionMapper: mockTransactionMapper,
-            skipOpenApp: false,
-          },
-        });
-
-        // Mock the dependencies to return some sample data
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
-        web3CheckOptInMock.mockResolvedValueOnce(
-          CommandResultFactory({ data: { enabled: false } }),
-        );
-        buildContextMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("buildContext error"),
-        );
-        signTypedDataLegacyMock.mockRejectedValueOnce(
-          new InvalidStatusWordError("signTypedDataLegacy error"),
-        );
-
-        // Expected intermediate values for the following state sequence:
-        //   Initial -> OpenApp -> GetAppConfiguration -> Web3ChecksOptIn -> BuildContext
-        const expectedStates: Array<SignTypedDataDAState> = [
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
-              step: SignTypedDataDAStateStep.OPEN_APP,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT,
-              result: false,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTypedData,
-              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          {
-            error: new InvalidStatusWordError("signTypedDataLegacy error"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onError: reject,
-          onDone: () => {
-            // Verify mocks calls parameters
-            expect(getAppConfigMock).toHaveBeenCalled();
-            expect(web3CheckOptInMock).toHaveBeenCalled();
-            expect(buildContextMock).toHaveBeenCalledWith(
-              expect.objectContaining({
-                input: {
-                  contextModule: mockContextModule,
-                  parser: mockParser,
-                  transactionParser: mockTransactionParser,
-                  transactionMapper: mockTransactionMapper,
-                  data: TEST_MESSAGE,
-                  appConfig: createAppConfig("1.16.0", false, false),
-                  derivationPath: "44'/60'/0'/0/0",
-                },
-              }),
-            );
-            resolve();
-          },
+          onDone: resolve,
         });
       }));
   });
@@ -1109,7 +852,7 @@ describe("SignTypedDataDeviceAction", () => {
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -1127,12 +870,17 @@ describe("SignTypedDataDeviceAction", () => {
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -1172,6 +920,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -1195,16 +950,21 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
 
-    it("Error while signing", () =>
+    it("Error while signing should fallback to legacy signing", () =>
       new Promise<void>((resolve, reject) => {
         setupOpenAppDAMock();
         setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
 
         const deviceAction = new SignTypedDataDeviceAction({
           input: {
             derivationPath: "44'/60'/0'/0/0",
             data: TEST_MESSAGE,
-            contextModule: mockContextModule,
+            contextModule: mockContextModule as unknown as ContextModule,
             parser: mockParser,
             transactionParser: mockTransactionParser,
             transactionMapper: mockTransactionMapper,
@@ -1212,7 +972,7 @@ describe("SignTypedDataDeviceAction", () => {
           },
         });
 
-        // Mock signing error
+        // Mock signing error that should fallback to legacy
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
@@ -1222,9 +982,19 @@ describe("SignTypedDataDeviceAction", () => {
         );
         signTypedDataMock.mockResolvedValueOnce(
           CommandResultFactory({
-            error: new UnknownDeviceExchangeError(
-              "Error while signing the typed data",
-            ),
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data",
+            }),
+          }),
+        );
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
           }),
         );
 
@@ -1253,6 +1023,13 @@ describe("SignTypedDataDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
               step: SignTypedDataDAStateStep.BUILD_CONTEXT,
             },
             status: DeviceActionStatus.Pending,
@@ -1272,9 +1049,137 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
-            error: new UnknownDeviceExchangeError(
-              "Error while signing the typed data",
-            ),
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            output: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+            status: DeviceActionStatus.Completed,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onError: reject,
+          onDone: resolve,
+        });
+      }));
+
+    it("Error if both signing and legacy signing fail", () =>
+      new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: TEST_MESSAGE,
+            contextModule: mockContextModule as unknown as ContextModule,
+            parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
+            skipOpenApp: false,
+          },
+        });
+
+        // Mock both signing methods to fail
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data",
+            }),
+          }),
+        );
+        signTypedDataLegacyMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data with legacy",
+            }),
+          }),
+        );
+
+        const expectedStates: Array<SignTypedDataDAState> = [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: SignTypedDataDAStateStep.OPEN_APP,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_APP_CONFIG,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.GET_ADDRESS,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.BUILD_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.PROVIDE_CONTEXT,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTypedData,
+              step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            error: EthAppCommandErrorFactory({
+              errorCode: "6a80",
+              message: "Error while signing the typed data with legacy",
+            }),
             status: DeviceActionStatus.Error,
           },
         ];

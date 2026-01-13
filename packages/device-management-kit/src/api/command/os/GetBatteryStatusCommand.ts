@@ -82,6 +82,7 @@ export type GetBatteryStatusArgs = {
 export class GetBatteryStatusCommand
   implements Command<GetBatteryStatusResponse, GetBatteryStatusArgs>
 {
+  readonly name = "getBatteryStatus";
   readonly args: GetBatteryStatusArgs;
 
   constructor(args: GetBatteryStatusArgs) {

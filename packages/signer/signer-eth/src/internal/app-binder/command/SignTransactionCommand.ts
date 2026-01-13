@@ -48,6 +48,7 @@ export class SignTransactionCommand
       EthErrorCodes
     >
 {
+  readonly name = "signTransaction";
   private readonly errorHelper = new CommandErrorHelper<
     SignTransactionCommandResponse,
     EthErrorCodes

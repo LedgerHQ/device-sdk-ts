@@ -16,6 +16,12 @@ describe("ListLanguagePackCommand", () => {
     command = new ListLanguagePackCommand({ firstChunk: true });
   });
 
+  describe("name", () => {
+    it("should be 'listLanguagePack'", () => {
+      expect(command.name).toBe("listLanguagePack");
+    });
+  });
+
   it("should return the correct APDU", () => {
     const apdu = command.getApdu();
     expect(apdu.getRawApdu()).toStrictEqual(LIST_LANGUAGE_PACK_APDU);

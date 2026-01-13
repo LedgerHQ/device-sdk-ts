@@ -67,7 +67,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
       AuthenticateWithKeypairDAInternalState
     >;
 
-    const { keypairAuth, getTrustchain, extractEncryptionKey } =
+    const { keyPairAuth, getTrustchain, extractEncryptionKey } =
       this.extractDependencies();
 
     return setup({
@@ -78,7 +78,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
       },
 
       actors: {
-        keypairAuth: fromPromise(keypairAuth),
+        keyPairAuth: fromPromise(keyPairAuth),
         getTrustchain: fromPromise(getTrustchain),
         extractEncryptionKey: fromPromise(extractEncryptionKey),
       },
@@ -120,8 +120,8 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
           }),
           on: { success: "GetTrustchain", error: "Error" },
           invoke: {
-            id: "keypairAuth",
-            src: "keypairAuth",
+            id: "keyPairAuth",
+            src: "keyPairAuth",
             input: ({ context }) => context.input,
             onError: { actions: "assignErrorFromEvent" },
             onDone: {
@@ -182,7 +182,7 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
             src: "extractEncryptionKey",
             input: ({ context }) => ({
               cryptoService: context.input.cryptoService,
-              keypair: context.input.keypair,
+              keyPair: context.input.keyPair,
               stream: context._internalState.chain(({ trustchain }) =>
                 required(
                   trustchain?.getAppStream(context.input.appId).extract(),
@@ -235,12 +235,12 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
     const encryptionKeyExtraction = new ExtractEncryptionKeyTask();
 
     return {
-      keypairAuth: ({ input }: { input: AuthenticateWithKeypairDAInput }) =>
+      keyPairAuth: ({ input }: { input: AuthenticateWithKeypairDAInput }) =>
         authentication.run(
           input.lkrpDataSource,
           new SignChallengeWithKeypairTask(
             input.cryptoService,
-            input.keypair,
+            input.keyPair,
             input.trustchainId,
           ),
         ),
@@ -265,14 +265,14 @@ export class AuthenticateWithKeypairDeviceAction extends XStateDeviceAction<
       }: {
         input: {
           cryptoService: CryptoService;
-          keypair: KeyPair;
+          keyPair: KeyPair;
           stream: Either<AuthenticateDAError, LKRPBlockStream>;
         };
       }) =>
         EitherAsync.liftEither(input.stream).chain((stream) =>
           encryptionKeyExtraction.run(
             input.cryptoService,
-            input.keypair,
+            input.keyPair,
             stream,
           ),
         ),

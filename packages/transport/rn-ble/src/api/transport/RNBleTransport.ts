@@ -458,8 +458,11 @@ export class RNBleTransport implements Transport {
       this._logger.debug("[connect] Existing device connection found", {
         data: { deviceId: params.deviceId },
       });
+      const dependencies = existing.getDependencies();
       const deviceModel =
-        existing.getDependencies().internalDevice.bleDeviceInfos.deviceModel;
+        dependencies.internalDevice.bleDeviceInfos.deviceModel;
+      const deviceName =
+        dependencies.device.localName || dependencies.device.name || undefined;
       return Right(
         new TransportConnectedDevice({
           id: params.deviceId,
@@ -467,6 +470,7 @@ export class RNBleTransport implements Transport {
           type: "BLE",
           sendApdu: (...a) => existing.sendApdu(...a),
           transport: this.identifier,
+          name: deviceName,
         }),
       );
     }
@@ -601,6 +605,7 @@ export class RNBleTransport implements Transport {
           type: "BLE",
           sendApdu: (...args) => deviceConnectionStateMachine.sendApdu(...args),
           transport: this.identifier,
+          name: device.localName || device.name || undefined,
         });
       },
     ).run();

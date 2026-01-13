@@ -27,6 +27,7 @@ export type SetPluginCommandArgs = {
 export class SetPluginCommand
   implements Command<void, SetPluginCommandArgs, EthErrorCodes>
 {
+  readonly name = "setPlugin";
   private readonly errorHelper = new CommandErrorHelper<void, EthErrorCodes>(
     ETH_APP_ERRORS,
     EthAppCommandErrorFactory,

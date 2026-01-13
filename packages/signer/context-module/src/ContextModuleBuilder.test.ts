@@ -1,3 +1,4 @@
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
 import { configTypes } from "./config/di/configTypes";
@@ -83,40 +84,10 @@ describe("ContextModuleBuilder", () => {
     expect(config.web3checks).toEqual(defaultWeb3ChecksConfig);
   });
 
-  it("should return a custom context module with a custom custom web3checks loader", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
-    const customLoader = { load: vi.fn() };
-
-    const res = contextModuleBuilder
-      .removeDefaultLoaders()
-      .addWeb3CheckLoader(customLoader)
-      .build();
-
-    expect(res).toBeInstanceOf(DefaultContextModule);
-    // @ts-expect-error _web3CheckLoader is private
-    expect(res["_web3CheckLoader"]).toBe(customLoader);
-  });
-
-  it("should throw an error if origin token is not provided", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
-
-    expect(() => contextModuleBuilder.build()).toThrow(
-      "Origin token is required",
-    );
-  });
-
   it("should not throw an error if origin token is provided", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
     expect(() => contextModuleBuilder.build()).not.toThrow();
-  });
-
-  it("should not throw an error if origin token is not provided and addWeb3CheckLoader is called", () => {
-    const contextModuleBuilder = new ContextModuleBuilder();
-
-    expect(() =>
-      contextModuleBuilder.addWeb3CheckLoader({ load: vi.fn() }).build(),
-    ).not.toThrow();
   });
 
   describe("setMetadataServiceConfig", () => {
@@ -303,6 +274,61 @@ describe("ContextModuleBuilder", () => {
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.datasource).toEqual(customDatasourceConfig);
       expect(config.datasource?.proxy).toBeUndefined();
+    });
+  });
+
+  describe("loggerFactory", () => {
+    it("should set the loggerFactory when provided in the constructor", () => {
+      const loggerFactory: (tag: string) => LoggerPublisherService = vi.fn();
+
+      const contextModuleBuilder = new ContextModuleBuilder({
+        ...defaultBuilderArgs,
+        loggerFactory,
+      });
+
+      const res = contextModuleBuilder.build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.loggerFactory).toBe(loggerFactory);
+    });
+
+    it("should set the loggerFactory via setLoggerFactory", () => {
+      const loggerFactory: (tag: string) => LoggerPublisherService = vi.fn();
+
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+
+      const res = contextModuleBuilder.setLoggerFactory(loggerFactory).build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.loggerFactory).toBe(loggerFactory);
+    });
+
+    it("should override constructor loggerFactory with setLoggerFactory", () => {
+      const constructorLoggerFactory: (tag: string) => LoggerPublisherService =
+        vi.fn();
+      const overrideLoggerFactory: (tag: string) => LoggerPublisherService =
+        vi.fn();
+
+      const contextModuleBuilder = new ContextModuleBuilder({
+        ...defaultBuilderArgs,
+        loggerFactory: constructorLoggerFactory,
+      });
+
+      const res = contextModuleBuilder
+        .setLoggerFactory(overrideLoggerFactory)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(config.loggerFactory).toBe(overrideLoggerFactory);
+      expect(config.loggerFactory).not.toBe(constructorLoggerFactory);
     });
   });
 });

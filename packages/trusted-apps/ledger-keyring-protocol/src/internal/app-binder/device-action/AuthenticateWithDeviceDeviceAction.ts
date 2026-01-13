@@ -116,7 +116,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
                   .mapOrDefault(
                     (stream) =>
                       stream.hasMember(
-                        context.input.keypair.getPublicKeyToHex(),
+                        context.input.keyPair.getPublicKeyToHex(),
                       ),
                     false,
                   ),
@@ -265,7 +265,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
                   eitherSeqRecord({
                     lkrpDataSource: context.input.lkrpDataSource,
                     cryptoService: context.input.cryptoService,
-                    keypair: context.input.keypair,
+                    keyPair: context.input.keyPair,
                     clientName: context.input.clientName,
                     permissions: context.input.permissions,
                     jwt: () =>
@@ -303,7 +303,7 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
             src: "extractEncryptionKey",
             input: ({ context }) => ({
               cryptoService: context.input.cryptoService,
-              keypair: context.input.keypair,
+              keyPair: context.input.keyPair,
               stream: context._internalState.chain(({ trustchain }) =>
                 required(
                   trustchain?.getAppStream(context.input.appId).extract(),
@@ -387,14 +387,14 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
       }: {
         input: {
           cryptoService: CryptoService;
-          keypair: KeyPair;
+          keyPair: KeyPair;
           stream: Either<AuthenticateDAError, LKRPBlockStream>;
         };
       }) =>
         EitherAsync.liftEither(input.stream).chain((stream) =>
           encryptionKeyExtraction.run(
             input.cryptoService,
-            input.keypair,
+            input.keyPair,
             stream,
           ),
         ),

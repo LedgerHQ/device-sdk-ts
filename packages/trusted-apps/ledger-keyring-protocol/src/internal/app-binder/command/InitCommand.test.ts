@@ -14,6 +14,13 @@ const PLACEHOLDER_BYTES = Uint8Array.from([0xf0, 0xca, 0xcc, 0x1a]);
 const makeArgs = (): InitCommandArgs => ({ publicKey: DUMMY_PUBKEY_HEX });
 
 describe("InitCommand", () => {
+  describe("name", () => {
+    it("should be 'init'", () => {
+      const cmd = new InitCommand(makeArgs());
+      expect(cmd.name).toBe("init");
+    });
+  });
+
   describe("getApdu()", () => {
     it("builds correct APDU", () => {
       // given

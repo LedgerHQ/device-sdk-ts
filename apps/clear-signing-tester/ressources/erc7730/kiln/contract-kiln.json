@@ -1,0 +1,11 @@
+{
+  "test": [
+    {
+      "name": "Kiln: Vault-USDC-AAVE-Arbitrum",
+      "owner": "Kiln",
+      "address": {
+        "42161": "0xff131917e1d6751e4d1b17612751db521b1403c5"
+      }
+    }
+  ]
+}
