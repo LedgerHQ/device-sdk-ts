@@ -47,6 +47,9 @@ export class SignTransactionStateHandler implements StateHandler {
 
       if (navigated) {
         await this.deviceController.signTransaction();
+
+        await this.screenshotSaver.save();
+
         return {
           status: "ongoing",
         };
@@ -117,6 +120,8 @@ export class SignTransactionStateHandler implements StateHandler {
         data: { error },
       });
       throw error;
+    } finally {
+      await this.screenshotSaver.save();
     }
 
     return true;
