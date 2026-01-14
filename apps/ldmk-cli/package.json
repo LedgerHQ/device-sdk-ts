@@ -1,0 +1,36 @@
+{
+  "name": "@ledgerhq/ldmk-cli",
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A collection of scripts and utilities for Ledger Device Management Kit monorepo",
+  "scripts": {
+    "dev": "pnpm --filter @ledgerhq/device-management-kit-devtools dev > /dev/null 2>&1 & DEVTOOLS_PID=$! && sleep 5 && tsx index.ts; kill $DEVTOOLS_PID 2>/dev/null"  
+  },
+  "files": [
+    "*.ts",
+    "!.prettierrc.cjs"
+  ],
+  "dependencies": {
+    "@inquirer/prompts": "catalog:",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-websocket-common": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-websocket-connector": "workspace:^",
+    "@ledgerhq/device-transport-kit-node-hid": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "minimist": "catalog:",
+    "rxjs": "catalog:",
+    "semver": "catalog:",
+    "tsx": "catalog:",
+    "zx": "catalog:"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@types/minimist": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}
