@@ -1,4 +1,5 @@
-import { Text } from "@ledgerhq/react-ui";
+import React from "react";
+import { Flex, Icons, Text, Tooltip } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 export const InputLabel = styled(Text).attrs({
@@ -13,3 +14,25 @@ export const SelectInputLabel = styled(InputLabel).attrs({
   ml: -2,
   mr: 6,
 })``;
+
+/**
+ * InputLabel with tooltip for use with Input's renderLeft prop
+ */
+export const InputLabelWithTooltip: React.FC<{
+  children: string;
+  hint: string;
+}> = ({ children, hint }) => {
+  return (
+    <Tooltip content={<Text color="neutral.c00">{hint}</Text>} placement="top">
+      <Flex
+        flexDirection="row"
+        alignItems="center"
+        columnGap={1}
+        flexShrink={0}
+      >
+        <InputLabel>{children}</InputLabel>
+        <Icons.Information size="XS" color="neutral.c70" />
+      </Flex>
+    </Tooltip>
+  );
+};
