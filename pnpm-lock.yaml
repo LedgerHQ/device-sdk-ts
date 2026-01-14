@@ -114,6 +114,9 @@ catalogs:
     '@types/crypto-js':
       specifier: ^4.2.0
       version: 4.2.2
+    '@types/minimist':
+      specifier: ^1.2.5
+      version: 1.2.5
     '@types/node':
       specifier: 22.10.1
       version: 22.10.1
@@ -243,6 +246,9 @@ catalogs:
     jsdom:
       specifier: ^26.0.0
       version: 26.0.0
+    minimist:
+      specifier: ^1.2.8
+      version: 1.2.8
     next:
       specifier: 14.2.26
       version: 14.2.26
@@ -354,6 +360,9 @@ catalogs:
     url:
       specifier: ^0.11.4
       version: 0.11.4
+    usb:
+      specifier: ^2.16.0
+      version: 2.16.0
     util:
       specifier: ^0.12.5
       version: 0.12.5
@@ -391,7 +400,7 @@ importers:
         version: 2.29.6(@types/node@22.10.1)
       '@ledgerhq/ldmk-cli':
         specifier: workspace:^
-        version: link:packages/tools/ldmk-cli
+        version: link:apps/ldmk-cli
       '@ledgerhq/ldmk-tool':
         specifier: workspace:^
         version: link:packages/tools/ldmk-tool
@@ -641,6 +650,55 @@ importers:
       globals:
         specifier: 'catalog:'
         version: 16.0.0
+
+  apps/ldmk-cli:
+    dependencies:
+      '@inquirer/prompts':
+        specifier: 'catalog:'
+        version: 7.3.3(@types/node@22.10.1)
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../packages/device-management-kit
+      '@ledgerhq/device-transport-kit-node-hid':
+        specifier: workspace:^
+        version: link:../../packages/transport/node-hid
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../packages/tools/ldmk-tool
+      minimist:
+        specifier: 'catalog:'
+        version: 1.2.8
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.19.2
+      zx:
+        specifier: 'catalog:'
+        version: 8.5.3
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../packages/config/eslint
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../packages/config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../packages/config/typescript
+      '@types/minimist':
+        specifier: 'catalog:'
+        version: 1.2.5
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.10.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
 
   apps/mobile:
     dependencies:
@@ -1554,28 +1612,6 @@ importers:
         specifier: workspace:*
         version: link:../../config/typescript
 
-  packages/tools/ldmk-cli:
-    dependencies:
-      '@inquirer/prompts':
-        specifier: 'catalog:'
-        version: 7.3.3(@types/node@24.3.0)
-      '@ledgerhq/device-management-kit':
-        specifier: workspace:^
-        version: link:../../device-management-kit
-      '@ledgerhq/ldmk-tool':
-        specifier: workspace:^
-        version: link:../ldmk-tool
-      semver:
-        specifier: 'catalog:'
-        version: 7.7.2
-    devDependencies:
-      '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:^
-        version: link:../../config/eslint
-      '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:^
-        version: link:../../config/prettier
-
   packages/tools/ldmk-tool:
     dependencies:
       '@inquirer/prompts':
@@ -1646,6 +1682,9 @@ importers:
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
+      usb:
+        specifier: 'catalog:'
+        version: 2.16.0
       uuid:
         specifier: 'catalog:'
         version: 11.0.3
@@ -5781,6 +5820,9 @@ packages:
   '@types/mdx@2.0.13':
     resolution: {integrity: sha512-+OWZQfAYyio6YkJb3HLxDrvnx6SWWDbC0zVPfBRzUk0/nqoDyf6dNxQi3eArPe8rJ473nobTMQ/8Zk+LxJ+Yuw==}
 
+  '@types/minimist@1.2.5':
+    resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
+
   '@types/ms@0.7.34':
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
 
@@ -5891,6 +5933,9 @@ packages:
 
   '@types/w3c-web-hid@1.0.6':
     resolution: {integrity: sha512-IWyssXmRDo6K7s31dxf+U+x/XUWuVsl9qUIYbJmpUHPcTv/COfBCKw/F0smI45+gPV34brjyP30BFcIsHgYWLA==}
+
+  '@types/w3c-web-usb@1.0.13':
+    resolution: {integrity: sha512-N2nSl3Xsx8mRHZBvMSdNGtzMyeleTvtlEw+ujujgXalPqOjIA6UtrqcB6OzyUjkTbDm3J7P1RNK1lgoO7jxtsw==}
 
   '@types/web-bluetooth@0.0.20':
     resolution: {integrity: sha512-g9gZnnXVq7gM7v3tJCWV/qw7w+KeOlSHAhgF9RytFyifW6AF61hdT2ucrYhPq9hLs5JIryeupHV3qGk95dH9ow==}
@@ -10038,6 +10083,10 @@ packages:
   node-addon-api@3.2.1:
     resolution: {integrity: sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==}
 
+  node-addon-api@8.5.0:
+    resolution: {integrity: sha512-/bRZty2mXUIFY/xU5HLvveNHlswNJej+RnxBjOMkidWfwZzgTbPG1E3K5TOxRLOR+5hX7bSofy8yf1hZevMS8A==}
+    engines: {node: ^18 || ^20 || >= 21}
+
   node-api-version@0.2.1:
     resolution: {integrity: sha512-2xP/IGGMmmSQpI1+O/k72jF/ykvZ89JeuKX3TLJAYPDVLUalrshrLHkeVcCCZqG/eEa635cr8IBYzgnDvM2O8Q==}
 
@@ -12438,6 +12487,10 @@ packages:
     resolution: {integrity: sha512-oCwdVC7mTuWiPyjLUz/COz5TLk6wgp0RCsN+wHZ2Ekneac9w8uuV0njcbbie2ME+Vs+d6duwmYuR3HgQXs1fOg==}
     engines: {node: '>= 0.4'}
 
+  usb@2.16.0:
+    resolution: {integrity: sha512-jD88fvzDViMDH5KmmNJgzMBDj/95bDTt6+kBNaNxP4G98xUTnDMiLUY2CYmToba6JAFhM9VkcaQuxCNRLGR7zg==}
+    engines: {node: '>=12.22.0 <13.0 || >=14.17.0'}
+
   use-isomorphic-layout-effect@1.1.2:
     resolution: {integrity: sha512-49L8yCO3iGT/ZF9QttjwLF/ZD9Iwto5LnH5LmEdk/6cFmXddqi2ulF0edxTwjj+7mqvpVVGQWvbXZdn32wRSHA==}
     peerDependencies:
@@ -13926,7 +13979,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.7.2
+      semver: 7.7.3
 
   '@changesets/assemble-release-plan@6.0.9':
     dependencies:
@@ -13935,7 +13988,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.2
       '@changesets/types': 6.1.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.7.2
+      semver: 7.7.3
 
   '@changesets/changelog-git@0.2.1':
     dependencies:
@@ -14001,7 +14054,7 @@ snapshots:
       '@changesets/types': 6.1.0
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.1
-      semver: 7.7.2
+      semver: 7.7.3
 
   '@changesets/get-github-info@0.6.0(encoding@0.1.13)':
     dependencies:
@@ -14218,7 +14271,7 @@ snapshots:
       node-gyp: 9.4.1
       ora: 5.4.1
       read-binary-file-arch: 1.0.6
-      semver: 7.7.2
+      semver: 7.7.3
       tar: 6.2.1
       yargs: 17.7.2
     transitivePeerDependencies:
@@ -14829,6 +14882,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@inquirer/checkbox@4.1.3(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/checkbox@4.1.3(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14839,12 +14902,32 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/confirm@5.1.7(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/confirm@5.1.7(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
       '@inquirer/type': 3.0.5(@types/node@24.3.0)
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/core@10.1.8(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+      cli-width: 4.1.0
+      mute-stream: 2.0.0
+      signal-exit: 4.1.0
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/core@10.1.8(@types/node@24.3.0)':
     dependencies:
@@ -14859,6 +14942,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/editor@4.2.8(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      external-editor: 3.1.0
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/editor@4.2.8(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14866,6 +14957,14 @@ snapshots:
       external-editor: 3.1.0
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/expand@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/expand@4.0.10(@types/node@24.3.0)':
     dependencies:
@@ -14884,12 +14983,26 @@ snapshots:
 
   '@inquirer/figures@1.0.11': {}
 
+  '@inquirer/input@4.1.7(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/input@4.1.7(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
       '@inquirer/type': 3.0.5(@types/node@24.3.0)
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/number@3.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/number@3.0.10(@types/node@24.3.0)':
     dependencies:
@@ -14898,6 +15011,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/password@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/password@4.0.10(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14905,6 +15026,21 @@ snapshots:
       ansi-escapes: 4.3.2
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/prompts@7.3.3(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/checkbox': 4.1.3(@types/node@22.10.1)
+      '@inquirer/confirm': 5.1.7(@types/node@22.10.1)
+      '@inquirer/editor': 4.2.8(@types/node@22.10.1)
+      '@inquirer/expand': 4.0.10(@types/node@22.10.1)
+      '@inquirer/input': 4.1.7(@types/node@22.10.1)
+      '@inquirer/number': 3.0.10(@types/node@22.10.1)
+      '@inquirer/password': 4.0.10(@types/node@22.10.1)
+      '@inquirer/rawlist': 4.0.10(@types/node@22.10.1)
+      '@inquirer/search': 3.0.10(@types/node@22.10.1)
+      '@inquirer/select': 4.0.10(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/prompts@7.3.3(@types/node@24.3.0)':
     dependencies:
@@ -14921,6 +15057,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/rawlist@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/rawlist@4.0.10(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14928,6 +15072,15 @@ snapshots:
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/search@3.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/search@3.0.10(@types/node@24.3.0)':
     dependencies:
@@ -14938,6 +15091,16 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/select@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/select@4.0.10(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14947,6 +15110,10 @@ snapshots:
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/type@3.0.5(@types/node@22.10.1)':
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/type@3.0.5(@types/node@24.3.0)':
     optionalDependencies:
@@ -15378,7 +15545,7 @@ snapshots:
   '@npmcli/fs@2.1.2':
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.7.2
+      semver: 7.7.3
 
   '@npmcli/move-file@2.0.1':
     dependencies:
@@ -15536,7 +15703,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.57.2(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.28.0
       forwarded-parse: 2.1.2
-      semver: 7.7.2
+      semver: 7.7.3
     transitivePeerDependencies:
       - supports-color
 
@@ -15661,7 +15828,7 @@ snapshots:
       '@types/shimmer': 1.2.0
       import-in-the-middle: 1.14.2
       require-in-the-middle: 7.3.0
-      semver: 7.7.2
+      semver: 7.7.3
       shimmer: 1.2.1
     transitivePeerDependencies:
       - supports-color
@@ -15864,7 +16031,7 @@ snapshots:
       execa: 5.1.1
       node-stream-zip: 1.15.0
       ora: 5.4.1
-      semver: 7.7.2
+      semver: 7.7.3
       strip-ansi: 5.2.0
       wcwidth: 1.0.1
       yaml: 2.7.0
@@ -15918,7 +16085,7 @@ snapshots:
       open: 6.4.0
       ora: 5.4.1
       prompts: 2.4.2
-      semver: 7.7.2
+      semver: 7.7.3
       shell-quote: 1.8.2
       sudo-prompt: 9.2.1
 
@@ -15943,7 +16110,7 @@ snapshots:
       fs-extra: 8.1.0
       graceful-fs: 4.2.11
       prompts: 2.4.2
-      semver: 7.7.2
+      semver: 7.7.3
     transitivePeerDependencies:
       - bufferutil
       - supports-color
@@ -16103,7 +16270,7 @@ snapshots:
       metro-core: 0.81.1
       node-fetch: 2.7.0(encoding@0.1.13)
       readline: 1.3.0
-      semver: 7.7.2
+      semver: 7.7.3
     optionalDependencies:
       '@react-native-community/cli-server-api': 15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
@@ -16459,7 +16626,7 @@ snapshots:
       '@rozenite/runtime': 1.0.0-alpha.15
       '@rozenite/tools': 1.0.0-alpha.15
       express: 5.2.1
-      semver: 7.7.2
+      semver: 7.7.3
       serve-static: 2.2.1
       tslib: 2.8.1
     transitivePeerDependencies:
@@ -17293,6 +17460,8 @@ snapshots:
 
   '@types/mdx@2.0.13': {}
 
+  '@types/minimist@1.2.5': {}
+
   '@types/ms@0.7.34': {}
 
   '@types/mysql@2.15.26':
@@ -17418,6 +17587,8 @@ snapshots:
 
   '@types/w3c-web-hid@1.0.6': {}
 
+  '@types/w3c-web-usb@1.0.13': {}
+
   '@types/web-bluetooth@0.0.20': {}
 
   '@types/ws@7.4.7':
@@ -17514,7 +17685,7 @@ snapshots:
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.7.2
+      semver: 7.7.3
       ts-api-utils: 2.1.0(typescript@5.9.2)
       typescript: 5.9.2
     transitivePeerDependencies:
@@ -18008,7 +18179,7 @@ snapshots:
       minimatch: 10.0.3
       resedit: 1.7.2
       sanitize-filename: 1.6.3
-      semver: 7.7.2
+      semver: 7.7.3
       tar: 6.2.1
       temp-file: 3.4.0
     transitivePeerDependencies:
@@ -18911,7 +19082,7 @@ snapshots:
       dot-prop: 9.0.0
       env-paths: 3.0.0
       json-schema-typed: 8.0.1
-      semver: 7.7.2
+      semver: 7.7.3
       uint8array-extras: 1.4.0
 
   confbox@0.1.8: {}
@@ -20686,7 +20857,7 @@ snapshots:
       es6-error: 4.1.1
       matcher: 3.0.0
       roarr: 2.15.4
-      semver: 7.7.2
+      semver: 7.7.3
       serialize-error: 7.0.1
     optional: true
 
@@ -21451,7 +21622,7 @@ snapshots:
       '@babel/parser': 7.28.3
       '@istanbuljs/schema': 0.1.3
       istanbul-lib-coverage: 3.2.2
-      semver: 7.7.2
+      semver: 7.7.3
     transitivePeerDependencies:
       - supports-color
 
@@ -21733,7 +21904,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.7.2
+      semver: 7.7.3
 
   jsx-ast-utils@3.3.5:
     dependencies:
@@ -21954,7 +22125,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.7.2
+      semver: 7.7.3
 
   make-error@1.3.6: {}
 
@@ -22955,16 +23126,18 @@ snapshots:
 
   node-abi@3.85.0:
     dependencies:
-      semver: 7.7.2
+      semver: 7.7.3
 
   node-addon-api@1.7.2:
     optional: true
 
   node-addon-api@3.2.1: {}
 
+  node-addon-api@8.5.0: {}
+
   node-api-version@0.2.1:
     dependencies:
-      semver: 7.7.2
+      semver: 7.7.3
 
   node-cleanup@2.1.2: {}
 
@@ -22988,8 +23161,7 @@ snapshots:
 
   node-forge@1.3.1: {}
 
-  node-gyp-build@4.8.4:
-    optional: true
+  node-gyp-build@4.8.4: {}
 
   node-gyp@9.4.1:
     dependencies:
@@ -23001,7 +23173,7 @@ snapshots:
       nopt: 6.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.7.2
+      semver: 7.7.3
       tar: 6.2.1
       which: 2.0.2
     transitivePeerDependencies:
@@ -23247,7 +23419,7 @@ snapshots:
       ky: 1.7.2
       registry-auth-token: 5.0.2
       registry-url: 6.0.1
-      semver: 7.7.2
+      semver: 7.7.3
 
   package-manager-detector@0.2.11:
     dependencies:
@@ -24143,7 +24315,7 @@ snapshots:
       react-refresh: 0.14.2
       regenerator-runtime: 0.13.11
       scheduler: 0.24.0-canary-efb381bbf-20230505
-      semver: 7.7.2
+      semver: 7.7.3
       stacktrace-parser: 0.1.10
       whatwg-fetch: 3.6.20
       ws: 6.2.3(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -24995,7 +25167,7 @@ snapshots:
 
   simple-update-notifier@2.0.0:
     dependencies:
-      semver: 7.7.2
+      semver: 7.7.3
 
   sisteransi@1.0.5: {}
 
@@ -25856,7 +26028,7 @@ snapshots:
       is-npm: 6.0.0
       latest-version: 9.0.0
       pupa: 3.1.0
-      semver: 7.7.2
+      semver: 7.7.3
       xdg-basedir: 5.1.0
 
   upper-case-first@1.1.2:
@@ -25873,6 +26045,12 @@ snapshots:
     dependencies:
       punycode: 1.4.1
       qs: 6.14.0
+
+  usb@2.16.0:
+    dependencies:
+      '@types/w3c-web-usb': 1.0.13
+      node-addon-api: 8.5.0
+      node-gyp-build: 4.8.4
 
   use-isomorphic-layout-effect@1.1.2(@types/react@18.3.12)(react@18.3.1):
     dependencies:

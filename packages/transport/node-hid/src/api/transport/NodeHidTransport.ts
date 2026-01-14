@@ -29,6 +29,7 @@ import { v4 as uuid } from "uuid";
 import { FRAME_SIZE } from "@api/data/NodeHidConfig";
 import { NodeHidTransportNotSupportedError } from "@api/model/Errors";
 import { NodeHidDeviceConnection } from "@api/transport/NodeHidDeviceConnection";
+import { Device, usb } from "usb";
 
 type NodeHIDAPI = typeof NodeHIDAPI;
 const NodeHIDAPI = { devicesAsync, HIDAsync } as const;
@@ -119,9 +120,21 @@ export class NodeHidTransport implements Transport {
       try {
         const allDevices = await hidApi.devicesAsync();
 
-        return allDevices.filter(
+        const ledgerDevices = allDevices.filter(
           (hidDevice) => hidDevice.vendorId === LEDGER_VENDOR_ID,
         );
+
+        // Remove duplicates from same devicewith different interfaces by keeping only one device per vendorId:productId combination
+        const uniqueDevices = Array.from(
+          new Map(
+            ledgerDevices.map((device) => [
+              `${device.vendorId}:${device.productId}`,
+              device,
+            ]),
+          ).values(),
+        );
+
+        return uniqueDevices;
       } catch (error) {
         const deviceError = new NoAccessibleDeviceError(error);
         this._logger.error(`getDevices: error getting devices`, {
@@ -141,7 +154,7 @@ export class NodeHidTransport implements Transport {
   ): NodeHidTransportDiscoveredDevice {
     const existingDiscoveredDevice = this._transportDiscoveredDevices
       .getValue()
-      .find((internalDevice) => internalDevice.hidDevice.path === hidDevice.path);
+      .find((internalDevice) => internalDevice.hidDevice.vendorId === hidDevice.vendorId && internalDevice.hidDevice.productId === hidDevice.productId);
 
     if (existingDiscoveredDevice) {
       return existingDiscoveredDevice;
@@ -203,9 +216,9 @@ export class NodeHidTransport implements Transport {
       Right: (hidDevices) => {
         this._transportDiscoveredDevices.next(
           hidDevices.map((hidDevice) =>
-            this.mapHIDDeviceToTransportDiscoveredDevice(hidDevice),
+        this.mapHIDDeviceToTransportDiscoveredDevice(hidDevice),
           ),
-        );
+      );
       },
     });
   }
@@ -300,29 +313,12 @@ export class NodeHidTransport implements Transport {
   private startListeningToConnectionEvents(): void {
     this._logger.debug("startListeningToConnectionEvents");
 
-    this.hidApi.map(async (hidApi) => {
-      const knownDevices = await hidApi.devicesAsync();
-      const pollDevices = async (interval = 2000) => {
-        const devices = await hidApi.devicesAsync();
-        const connectedDevices = devices.filter(
-          (d) => !knownDevices.some((knownD) => knownD.path === d.path),
-        );
-        const disconnectedDevices = knownDevices.filter((knownD) =>
-          devices.some((d) => d.path === knownD.path),
-        );
-        connectedDevices.forEach((device) =>
-          this.handleDeviceConnectionEvent(
-            new CustomEvent("HIDConnectionEvent", { detail: { device } }),
-          ),
-        );
-        disconnectedDevices.forEach((device) =>
-          this.handleDeviceDisconnectionEvent(
-            new CustomEvent("HIDConnectionEvent", { detail: { device } }),
-          ),
-        );
-        setTimeout(() => pollDevices(interval), interval);
-      };
-      pollDevices();
+    usb.on("attach", (device) => {
+      this.handleDeviceConnection(device);
+    });
+
+    usb.on("detach", (device) => {
+      this.handleDeviceDisconnection(device);
     });
   }
 
@@ -462,52 +458,48 @@ export class NodeHidTransport implements Transport {
     return Promise.resolve(Right(undefined));
   }
 
-  // /**
-  //  * Type guard to check if the event is a HID connection event
-  //  * @param event
-  //  * @private
-  //  */
-  // private isHIDConnectionEvent(event: Event): event is HIDConnectionEvent {
-  //   return (
-  //     "device" in event &&
-  //     typeof event.device === "object" &&
-  //     event.device !== null &&
-  //     "productId" in event.device &&
-  //     typeof event.device.productId === "number"
-  //   );
-  // }
-
   /**
    * Handle the disconnection event of a HID device
-   * @param event
+   * @param device USB device that was detached
    */
-  private async handleDeviceDisconnectionEvent(
-    event: CustomEvent<{ device: NodeHIDDevice }>,
-  ) {
+  private async handleDeviceDisconnection(
+    device: Device,
+  ): Promise<void> {
+
+    const { idVendor, idProduct } = device.deviceDescriptor;
+
+    if (idVendor !== LEDGER_VENDOR_ID) {
+      return;
+    }
+
     this._logger.info("[handleDeviceDisconnectionEvent] Device disconnected", {
-      data: { event },
+      data: { vendorId: idVendor, productId: idProduct },
     });
 
-    this.updateTransportDiscoveredDevices();
+    
+    let matchingDeviceConnection: NodeHidDeviceConnection | undefined;
+
+    for (const [hidDevice, deviceConnection] of this._deviceConnectionsByHidDevice.entries()) {
+      if (
+        hidDevice.vendorId === idVendor &&
+        ((hidDevice.productId >> 8) === idProduct ||
+          hidDevice.productId === idProduct)
+      ) {
+        matchingDeviceConnection = deviceConnection;
+        break;
+      }
+    }
 
     try {
-      const c = this._deviceConnectionsByHidDevice.get(event.detail.device);
-      if (this) await c?.disconnect();
+      await matchingDeviceConnection?.disconnect();
     } catch (error) {
-      this._logger.error("Error while closing device ", {
-        data: { event, error },
+      this._logger.error("Error while disconnecting device", {
+        data: { vendorId: idVendor, productId: idProduct, error },
       });
     }
 
-    const matchingDeviceConnection = this._deviceConnectionsByHidDevice.get(
-      event.detail.device,
-    );
-
-    if (matchingDeviceConnection) {
-      matchingDeviceConnection.lostConnection();
-      this._deviceConnectionsPendingReconnection.add(matchingDeviceConnection);
-      this._deviceConnectionsByHidDevice.delete(event.detail.device);
-    }
+    this.updateTransportDiscoveredDevices();
+    return;
   }
 
   private handleDeviceReconnection(
@@ -529,36 +521,70 @@ export class NodeHidTransport implements Transport {
 
   /**
    * Handle the connection event of a HID device
-   * @param event
+   * @param device USB device that was attached
    */
-  private handleDeviceConnectionEvent(
-    event: CustomEvent<{ device: NodeHIDDevice }>,
-  ) {
-    this._logger.info("[handleDeviceConnectionEvent] Device connected", {
-      data: { event },
-    });
+  private async handleDeviceConnection(device: Device): Promise<void> {
+    const { idVendor, idProduct } = device.deviceDescriptor;
 
-    const matchingDeviceConnection = Array.from(
-      this._deviceConnectionsPendingReconnection,
-    ).find(
-      (deviceConnection) =>
-        this.getHidUsbProductId(deviceConnection.device) ===
-        this.getHidUsbProductId(event.detail.device),
-    );
-
-    if (matchingDeviceConnection) {
-      this.handleDeviceReconnection(
-        matchingDeviceConnection,
-        event.detail.device,
-      );
+    if (idVendor !== LEDGER_VENDOR_ID) {
+      return;
     }
 
-    /**
-     * Note: we do this after handling the reconnection to allow the newly
-     * discovered device to keep the same DeviceId as the previous one in case
-     * of a reconnection.
-     */
-    this.updateTransportDiscoveredDevices();
+    this._logger.info("[handleDeviceConnection] New device connected", {
+      data: { vendorId: idVendor, productId: idProduct },
+    });
+
+    // Find the corresponding HID device by matching vendor and product IDs
+    const eitherDevices = await this.getDevices();
+    eitherDevices.caseOf({
+      Left: (error) => {
+        this._logger.error("Error while getting HID devices for reconnection", {
+          data: { error },
+        });
+      },
+      Right: async (hidDevices) => {
+        const matchingHidDevice = hidDevices.find(
+          (hidDevice) =>
+            hidDevice.vendorId === idVendor &&
+            ((hidDevice.productId >> 8) === idProduct ||
+              hidDevice.productId === idProduct),
+        );
+
+        if (!matchingHidDevice) {
+          this._logger.debug(
+            "[handleDeviceConnection] No matching HID device found",
+            {
+              data: { vendorId: idVendor, productId: idProduct },
+            },
+          );
+          
+          return;
+        }
+
+        // Check if there's a pending reconnection for a device with matching product ID
+        const matchingDeviceConnection = Array.from(
+          this._deviceConnectionsPendingReconnection,
+        ).find(
+          (deviceConnection) =>
+            this.getHidUsbProductId(deviceConnection.device) ===
+            this.getHidUsbProductId(matchingHidDevice),
+        );
+
+        if (matchingDeviceConnection) {
+          this.handleDeviceReconnection(
+            matchingDeviceConnection,
+            matchingHidDevice,
+          );
+        }
+
+        /**
+         * Note: we do this after handling the reconnection to allow the newly
+         * discovered device to keep the same DeviceId as the previous one in case
+         * of a reconnection.
+         */
+        await this.updateTransportDiscoveredDevices();
+      },
+    });
   }
 
   public destroy() {
