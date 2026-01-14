@@ -21,7 +21,7 @@
     "./lib"
   ],
   "scripts": {
-    "cli": "tsx src/cli.ts",
+    "cli": "tsx src/index.ts",
     "prebuild": "rimraf lib",
     "build": "pnpm ldmk-tool build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
     "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",

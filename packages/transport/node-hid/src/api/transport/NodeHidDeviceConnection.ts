@@ -11,7 +11,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Device as NodeHIDDevice, HIDAsync } from "node-hid";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
-import { firstValueFrom, from, retry, Subject } from "rxjs";
+import { Subject } from "rxjs";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/NodeHidConfig";
 import { NodeHidSendReportError } from "@api/model/Errors";
@@ -136,6 +136,7 @@ export class NodeHidDeviceConnection implements DeviceConnection {
     }
 
     const frames = this._apduSender.getFrames(apdu);
+    const connection = await this._connection;
     for (const frame of frames) {
       this._logger.debug("Sending Frame", {
         data: { frame: frame.getRawData() },
@@ -143,14 +144,7 @@ export class NodeHidDeviceConnection implements DeviceConnection {
 
       try {
         const report = Buffer.from([0, ...frame.getRawData()]);
-        await firstValueFrom(
-          from((await this._connection).write(report)).pipe(
-            retry({
-              count: 3,
-              delay: 500,
-            }),
-          ),
-        );
+        await connection.write(report);
       } catch (error) {
         this._logger.error("Error sending frame", { data: { error } });
         return Promise.resolve(Left(new NodeHidSendReportError(error)));
@@ -270,9 +264,6 @@ export class NodeHidDeviceConnection implements DeviceConnection {
     if (this._pendingApdu.isJust()) {
       this._sendApduSubject.error(new NodeHidSendReportError());
     }
-
-    (await this._connection).close();
-    this._isConnected = false;
 
     this._logger.info("🔚 Disconnect");
     if (this.lostConnectionTimeout) clearTimeout(this.lostConnectionTimeout);

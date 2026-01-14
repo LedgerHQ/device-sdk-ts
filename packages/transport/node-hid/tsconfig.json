@@ -11,7 +11,8 @@
       "@api/*": ["./src/api/*"]
     },
     "resolveJsonModule": true,
-    "types": ["node", "vitest/globals", "w3c-web-hid", "uuid"]
+    "types": ["node", "vitest/globals", "w3c-web-hid", "uuid"],
+    "skipLibCheck": true
   },
   "include": ["src", "vitest.*.mjs"]
 }

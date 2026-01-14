@@ -323,6 +323,22 @@ To build the required dependencies and start a dev server for the sample app, pl
 pnpm dev
 ```
 
+## CLI Tool
+
+The Device Management Kit provides a CLI tool for interactive device management operations in a node environment (using Node-HID Transport Kit).
+
+You can use it with the following command:
+
+```shell
+# At the root of the repository
+pnpm cli 
+
+# From ldmk-cli directory
+tail -f var/logs.dev
+```
+
+
+
 # Documentation
 
 Each project folder has a `README.md` file which contains basic documentation.
