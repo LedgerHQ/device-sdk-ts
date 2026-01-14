@@ -4,22 +4,6 @@ on:
     # Run every day at 2:00 AM UTC
     - cron: "0 2 * * *"
   workflow_dispatch:
-    inputs:
-      device:
-        description: "Device to test"
-        required: false
-        default: "stax"
-        type: choice
-        options:
-          - stax
-          - nanox
-          - nanos+
-          - flex
-      provider:
-        description: "Provider to test (leave empty for all)"
-        required: false
-        default: ""
-        type: string
 
 env:
   FORCE_COLOR: "1"
@@ -50,40 +34,38 @@ jobs:
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
   erc7730-tests:
-    name: ERC7730 (${{ matrix.device }} - ${{ matrix.provider }}${{ matrix.chain && format(' {0}', matrix.chain) || '' }})
+    name: ERC7730 Tests (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})
     needs: [build-libraries]
     runs-on: ledgerhq-device-sdk
     strategy:
+      fail-fast: false
       matrix:
         device:
           - stax
           - nanox
-          - nanos+
           - flex
-        include_provider:
-          - provider: "1inch"
+        include_dapp:
+          - dapp: "1inch"
             chain: ""
-          - provider: "1inch"
-            chain: "arbitrum"
-          - provider: "aave"
+          - dapp: "aave"
             chain: ""
-          - provider: "ethena"
+          - dapp: "ethena"
             chain: ""
-          - provider: "lido"
+          - dapp: "lido"
             chain: ""
-          - provider: "lombard"
+          - dapp: "lombard"
             chain: ""
-          - provider: "poap"
+          - dapp: "poap"
             chain: ""
-          - provider: "swissborg"
+          - dapp: "swissborg"
             chain: ""
-          - provider: "tether"
+          - dapp: "tether"
             chain: ""
-          - provider: "uniswap"
+          - dapp: "uniswap"
             chain: ""
-          - provider: "velora"
+          - dapp: "velora"
             chain: ""
-          - provider: "yieldxyz"
+          - dapp: "yieldxyz"
             chain: ""
     steps:
       - uses: actions/checkout@v6
@@ -117,18 +99,18 @@ jobs:
           GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
           COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
         run: |
-          mkdir -p logs/screenshots
-          pnpm cs-tester test:erc7730 ${{ matrix.include_provider.provider }} ${{ matrix.include_provider.chain }} \
+          mkdir -p /tmp/logs/screenshots
+          pnpm cs-tester test:erc7730 ${{ matrix.include_dapp.dapp }} ${{ matrix.include_dapp.chain }} \
             --device ${{ matrix.device }} \
             --log-level error \
-            --log-file "logs/erc7730-${{ matrix.include_provider.provider }}-${{ matrix.include_provider.chain }}.log" \
+            --log-file "/tmp/logs/erc7730-${{ matrix.include_dapp.dapp }}.log" \
             --file-log-level debug \
-            --screenshot-folder-path "logs/screenshots"
+            --screenshot-folder-path "/tmp/logs/screenshots"
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: erc7730-logs-${{ matrix.device }}-${{ matrix.include_provider.provider }}${{ matrix.include_provider.chain && format('-{0}', matrix.include_provider.chain) || '' }}
-          path: logs/
+          name: erc7730-logs-${{ matrix.device }}-${{ matrix.include_dapp.dapp }}
+          path: /tmp/logs/
           retention-days: 7

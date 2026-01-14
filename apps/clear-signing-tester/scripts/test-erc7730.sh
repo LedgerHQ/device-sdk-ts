@@ -25,4 +25,4 @@ if [ ! -f "$TEST_FILE" ]; then
   exit 1
 fi
 
-pnpm cs-tester cli raw-file $TEST_FILE $ARGUMENTS
+(cd $ROOT_PATH && pnpm cli raw-file $TEST_FILE $ARGUMENTS)
