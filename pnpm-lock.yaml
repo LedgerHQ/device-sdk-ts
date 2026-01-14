@@ -746,7 +746,11 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
+<<<<<<< Updated upstream
         version: 0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+=======
+        version: 0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))
+>>>>>>> Stashed changes
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -14717,10 +14721,17 @@ snapshots:
       '@babel/code-frame': 7.27.1
       '@babel/generator': 7.28.3
       '@babel/helper-globals': 7.28.0
+<<<<<<< Updated upstream
       '@babel/parser': 7.28.6
       '@babel/template': 7.27.2
       '@babel/types': 7.28.6
       debug: 4.4.3
+=======
+      '@babel/parser': 7.28.4
+      '@babel/template': 7.27.2
+      '@babel/types': 7.28.4
+      debug: 4.4.1(supports-color@5.5.0)
+>>>>>>> Stashed changes
     transitivePeerDependencies:
       - supports-color
 
@@ -15586,7 +15597,11 @@ snapshots:
       '@antfu/install-pkg': 0.4.1
       '@antfu/utils': 0.7.10
       '@iconify/types': 2.0.0
+<<<<<<< Updated upstream
       debug: 4.4.3
+=======
+      debug: 4.4.1(supports-color@5.5.0)
+>>>>>>> Stashed changes
       kolorist: 1.8.0
       local-pkg: 0.5.1
       mlly: 1.7.3
@@ -17055,7 +17070,11 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
+<<<<<<< Updated upstream
   '@react-native/metro-config@0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+=======
+  '@react-native/metro-config@0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))':
+>>>>>>> Stashed changes
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))
@@ -17064,9 +17083,13 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+<<<<<<< Updated upstream
       - bufferutil
       - supports-color
       - utf-8-validate
+=======
+      - supports-color
+>>>>>>> Stashed changes
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -18177,11 +18200,19 @@ snapshots:
   '@types/eslint-scope@3.7.7':
     dependencies:
       '@types/eslint': 9.6.1
+<<<<<<< Updated upstream
       '@types/estree': 1.0.8
 
   '@types/eslint@9.6.1':
     dependencies:
       '@types/estree': 1.0.8
+=======
+      '@types/estree': 1.0.7
+
+  '@types/eslint@9.6.1':
+    dependencies:
+      '@types/estree': 1.0.7
+>>>>>>> Stashed changes
       '@types/json-schema': 7.0.15
 
   '@types/estree-jsx@1.0.5':
@@ -18484,7 +18515,11 @@ snapshots:
 
   '@typescript/vfs@1.6.0(typescript@5.9.2)':
     dependencies:
+<<<<<<< Updated upstream
       debug: 4.4.3
+=======
+      debug: 4.4.1(supports-color@5.5.0)
+>>>>>>> Stashed changes
       typescript: 5.9.2
     transitivePeerDependencies:
       - supports-color
@@ -19181,7 +19216,11 @@ snapshots:
   babel-plugin-jest-hoist@29.6.3:
     dependencies:
       '@babel/template': 7.27.2
+<<<<<<< Updated upstream
       '@babel/types': 7.28.6
+=======
+      '@babel/types': 7.28.4
+>>>>>>> Stashed changes
       '@types/babel__core': 7.20.5
       '@types/babel__traverse': 7.20.6
 
@@ -21395,7 +21434,11 @@ snapshots:
 
   finalhandler@2.1.1:
     dependencies:
+<<<<<<< Updated upstream
       debug: 4.4.3
+=======
+      debug: 4.4.1(supports-color@5.5.0)
+>>>>>>> Stashed changes
       encodeurl: 2.0.0
       escape-html: 1.0.3
       on-finished: 2.4.1
@@ -22466,7 +22509,11 @@ snapshots:
   istanbul-lib-instrument@5.2.1:
     dependencies:
       '@babel/core': 7.28.4
+<<<<<<< Updated upstream
       '@babel/parser': 7.28.6
+=======
+      '@babel/parser': 7.28.4
+>>>>>>> Stashed changes
       '@istanbuljs/schema': 0.1.3
       istanbul-lib-coverage: 3.2.2
       semver: 6.3.1
@@ -23399,8 +23446,13 @@ snapshots:
     dependencies:
       '@babel/core': 7.28.4
       '@babel/generator': 7.28.3
+<<<<<<< Updated upstream
       '@babel/parser': 7.28.6
       '@babel/types': 7.28.6
+=======
+      '@babel/parser': 7.28.4
+      '@babel/types': 7.28.4
+>>>>>>> Stashed changes
       flow-enums-runtime: 0.0.6
       metro: 0.81.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       metro-babel-transformer: 0.81.1
@@ -25660,7 +25712,11 @@ snapshots:
 
   require-in-the-middle@7.3.0:
     dependencies:
+<<<<<<< Updated upstream
       debug: 4.4.3
+=======
+      debug: 4.4.1(supports-color@5.5.0)
+>>>>>>> Stashed changes
       module-details-from-path: 1.0.3
       resolve: 1.22.10
     transitivePeerDependencies:
@@ -25846,7 +25902,11 @@ snapshots:
 
   router@2.2.0:
     dependencies:
+<<<<<<< Updated upstream
       debug: 4.4.3
+=======
+      debug: 4.4.1(supports-color@5.5.0)
+>>>>>>> Stashed changes
       depd: 2.0.0
       is-promise: 4.0.0
       parseurl: 1.3.3
@@ -26172,7 +26232,11 @@ snapshots:
   socks-proxy-agent@7.0.0:
     dependencies:
       agent-base: 6.0.2
+<<<<<<< Updated upstream
       debug: 4.4.3
+=======
+      debug: 4.4.1(supports-color@5.5.0)
+>>>>>>> Stashed changes
       socks: 2.8.4
     transitivePeerDependencies:
       - supports-color
@@ -27324,7 +27388,11 @@ snapshots:
   webpack@5.92.1(esbuild@0.25.4):
     dependencies:
       '@types/eslint-scope': 3.7.7
+<<<<<<< Updated upstream
       '@types/estree': 1.0.8
+=======
+      '@types/estree': 1.0.7
+>>>>>>> Stashed changes
       '@webassemblyjs/ast': 1.14.1
       '@webassemblyjs/wasm-edit': 1.14.1
       '@webassemblyjs/wasm-parser': 1.14.1
