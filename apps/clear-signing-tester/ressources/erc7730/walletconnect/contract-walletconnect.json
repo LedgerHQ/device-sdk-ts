@@ -1,0 +1,18 @@
+{
+  "test": [
+    {
+      "name": "WalletConnect: WalletConnect Token",
+      "owner": "WalletConnect",
+      "address": {
+        "10": "0xef4461891dfb3ac8572ccf7c794664a8dd927945"
+      }
+    },
+    {
+      "name": "WalletConnect: WalletConnect StakeWeight",
+      "owner": "WalletConnect",
+      "address": {
+        "10": "0x521b4c065bbdbe3e20b3727340730936912dfa46"
+      }
+    }
+  ]
+}

@@ -1,0 +1,747 @@
+{
+  "test": [
+    {
+      "name": "Block Analitica: block_analitica-mwETH",
+      "owner": "Block Analitica",
+      "address": {
+        "8453": "0xa0e430870c4604ccfc7b38ca7845b1ff653d0ff1"
+      }
+    },
+    {
+      "name": "LlamaRisk: llamarisk-llama-crvUSD",
+      "owner": "LlamaRisk",
+      "address": {
+        "1": "0x67315dd969b8cd3a3520c245837bf71f54579c75"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDR",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0x30881baa943777f92dc934d53d3bfdf33382cab3"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-smWETH",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0x27d8c7273fd3fcc6956a0b370ce5fd4a7fc65c18"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-bbqUSDT",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xa0804346780b4c2e3be118ac957d1db82f9d7484"
+      }
+    },
+    {
+      "name": "Block Analitica: block_analitica-mwcbBTC",
+      "owner": "Block Analitica",
+      "address": {
+        "8453": "0x543257ef2161176d7c8cd90ba65c2d4caef5a796"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-sbMorphoUSDC",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x4ff4186188f8406917293a9e01a1ca16d3cf9e59"
+      }
+    },
+    {
+      "name": "Block Analitica: block_analitica-bbUSDT",
+      "owner": "Block Analitica",
+      "address": {
+        "1": "0x2c25f6c25770ffec5959d34b94bf898865e5d6b1"
+      }
+    },
+    {
+      "name": "SparkDAO: sparkdao-spDAI",
+      "owner": "SparkDAO",
+      "address": {
+        "1": "0x73e65dbd630f90604062f6e02fab9138e713edd9"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDCrwa",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xbeefc4adbe58173fca2c042097fe33095e68c3d6"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakPYUSD",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeef02e5e13584ab96848af90261f0c8ee04722a"
+      }
+    },
+    {
+      "name": "Apostro: apostro-aprUSDC",
+      "owner": "Apostro",
+      "address": {
+        "8453": "0xcddcdd18a16ed441f6cb10c3909e5e7ec2b9e8f3"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7FRAX",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0xbe40491f3261fd42724f1aeb465796eb11c06ddf"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gteUSDc",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0xc080f56504e0278828a403269db945f6c6d6e014"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-pythETH",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0x80d9964feb4a507dd697b4437fc5b25b618ce446"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtWETH",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x2371e134e3455e0593363cbf89d3b6cf53740618"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtUSDCmkr",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0xebfa750279defa89b8d99bdd145a016f6292757b"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-midasUSDC",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0xa8875aaebc4f830524e35d57f9772ffacbdd6c45"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-MC.eUSDC",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0x1265a81d42d513df40d0031f8f2e1346954d665a"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-bbqWSTETH",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0x833adaef212c5cd3f78906b44bbfb18258f238f0"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtmsUSDc",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x6859b34a9379122d25a9fa46f0882d434fee36c3"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakSUSDS",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xb17b070a56043e1a5a1ab7443afafdebcc1168d7"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-uUSDC",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0xb7890cee6cf4792cdcc13489d36d9d42726ab863"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-MC_USD0",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0x749794e985af5a9a384b9cee6d88dab4ce1576a1"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtUSDCcore",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x8eb67a509616cd6a7c1b3c8c21d48ff57df3d458"
+      }
+    },
+    {
+      "name": "SparkDAO: sparkdao-sparkUSDC",
+      "owner": "SparkDAO",
+      "address": {
+        "8453": "0x7bfa7c4f149e7415b73bdedfe609237e29cbf34a"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-MCwETH",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0x9a8bc3b04b7f3d87cfc09ba407dced575f2d61d8"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtusdcf",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0xc582f04d8a82795aa2ff9c8bb4c1c889fe7b754e"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtLRTcore",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x4881ef0bf6d2365d3dd6499ccd7532bcdbce0658"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7WETH",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0xa2cac0023a4797b4729db94783405189a4203afc"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7cbBTC",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0xa02f5e93f783baf150aa1f8b341ae90fe0a772f7"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-meUSD",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0xbb819d845b573b5d7c538f5b85057160cfb5f313"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDM",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xbeef03f0bf3cb2e348393008a826538aadd7d183"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-sbMorphotBTC",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x059fc6723b9bf77dbf4283c8d7c90ea8af44ef10"
+      }
+    },
+    {
+      "name": "Apostro: apostro-aprUSR",
+      "owner": "Apostro",
+      "address": {
+        "8453": "0xc484d83f667b779cc9907248101214235642258b"
+      }
+    },
+    {
+      "name": "9Summits: 9summits-9SUSDCcore",
+      "owner": "9Summits",
+      "address": {
+        "1": "0xd5ac156319f2491d4ad1ec4aa5ed0ed48c0fa173"
+      }
+    },
+    {
+      "name": "B.Protocol: b_protocol-reETH",
+      "owner": "B.Protocol",
+      "address": {
+        "8453": "0x70f796946ed919e4bc6cd506f8dacc45e4539771"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDA",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xbeefa1abfebe621df50ceaef9f54fdb73648c92c"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-smcbBTC",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0x5a47c803488fe2bb0a0eaaf346b420e4df22f3c7"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7USDT",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0x95eef579155cd2c5510f312c8fa39208c3be01a8"
+      }
+    },
+    {
+      "name": "9Summits: 9summits-9SETHc",
+      "owner": "9Summits",
+      "address": {
+        "8453": "0xf540d790413fcfaedac93518ae99eddace82cb78"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDT",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeef047a543e45807105e51a8bbefcc5950fcfba"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakEURA",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xbeefa28d5e56d41d35df760ab53b94d9ffd7051f"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7USDA",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0x89d80f5e9bc88d8021b352064ae73f0eaf79ebd8"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-elixirUSDC",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x0404fd1a77756eb029f06b5cdea88b2b2ddc2fee"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-mhyETH",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x701907283a57ff77e255c3f1aad790466b8ce4ef"
+      }
+    },
+    {
+      "name": "Block Analitica: block_analitica-mwUSDC",
+      "owner": "Block Analitica",
+      "address": {
+        "8453": "0xc1256ae5ff1cf2719d4937adb3bbccab2e00a2ca"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-bbqDAI",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeefff68cc520d68f82641eff84330c631e2490e"
+      }
+    },
+    {
+      "name": "Block Analitica: block_analitica-mwEURC",
+      "owner": "Block Analitica",
+      "address": {
+        "8453": "0xf24608e0ccb972b0b0f4a6446a0bbf58c701a026"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7RWA",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0x6e37c95b43566e538d8c278eb69b00fc717a001b"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-MCcbBTC",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0x98cf0b67da0f16e1f8f1a1d23ad8dc64c0c70e0b"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtLBTCc",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0x0d05e6ec0a10f9ffe9229eaa785c11606a1d13fb"
+      }
+    },
+    {
+      "name": "9Summits: 9summits-9SUSDC11Core",
+      "owner": "9Summits",
+      "address": {
+        "1": "0x1e2aaadcf528b9cc08f43d4fd7db488ce89f5741"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-ionicWETH",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0x9ab2d181e4b87ba57d5ed564d3ef652c4e710707"
+      }
+    },
+    {
+      "name": "B.Protocol: b_protocol-recbBTC",
+      "owner": "B.Protocol",
+      "address": {
+        "1": "0xb9c9158ab81f90996cad891ffbadfbaad733c8c6"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtUSDT",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x8cb3649114051ca5119141a34c200d65dc0faa73"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-pWBTC",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0x2f1abb81ed86be95bcf8178ba62c8e72d6834775"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-csUSDL",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeefc01767ed5086f35decb6c00e6c12bc7476c1"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-MC-USR",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0xd50da5f859811a91fd1876c9461fd39c23c747ad"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtWBTCc",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x443df5eee3196e9b2dd77cabd3ea76c3dee8f9b2"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7WBTC",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0xe0c98605f279e4d7946d25b75869c69802823763"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtUSDAcore",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x125d41a6e5dbf455cd9df8f80bcc6fd172d52cc6"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-MCwBTC",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0x1c530d6de70c05a81bf1670157b9d928e9699089"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-msolvbtcbbn",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0xdbb316375b4dc992b2c8827d120c09dfb1d3455d"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakWBTC",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeef094333aedd535c130958c204e84f681fd9fa"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtWETHc",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0x6b13c060f13af1fdb319f52315bbbf3fb1d88844"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-resolvUSDC",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x132e6c9c33a62d7727cd359b1f51e5b566e485eb"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-mDEGEN",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0x8c3a6b12332a6354805eb4b72ef619aedd22bcdd"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7USDC",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0x60d715515d4411f7f43e4206dc5d4a3677f0ec78"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakEURC",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xbeef086b8807dc5e5a1740c5e3a7c4c366ea6ab5"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-mMAI",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0x30b8a2c8e7fa41e77b54b8faf45c610e7ad909e3"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtUSDCc",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0xc0c5689e6f4d256e861f65465b691aeecc0deb12"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDC",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xbeef010f9cb27031ad51e3333f9af9c6b1228183"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakETH",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "8453": "0xbeef050a7485865a7a8d8ca0cc5f7536b7a3443e"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-csUSDC",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0x7204b7dbf9412567835633b6f00c3edc3a8d6330"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-smUSDC",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0x616a4e1db48e22028f6bbf20444cd3b8e3273738"
+      }
+    },
+    {
+      "name": "9Summits: 9summits-9SUSR",
+      "owner": "9Summits",
+      "address": {
+        "1": "0x00b6f2c15e4439749f192d10c70f65354848cf4b"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-fxUSDC",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0x4f460bb11cf958606c69a963b4a17f9daeeea8b6"
+      }
+    },
+    {
+      "name": "Fence: fence-ERY",
+      "owner": "Fence",
+      "address": {
+        "1": "0xc21db71648b18c5b9e038d88393c9b254cf8eac8"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDTlite",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0x097ffedb80d4b2ca6105a07a4d90eb739c45a666"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtDAIcore",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x500331c9ff24d9d11aee6b07734aa72343ea74a5"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtUSDC",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0xdd0f28e19c1780eb6396170735d45153d261490d"
+      }
+    },
+    {
+      "name": "B.Protocol: b_protocol-reGOLD",
+      "owner": "B.Protocol",
+      "address": {
+        "1": "0x45c1875f1c48622b3d9740af2d7dc62bc9a72422"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-degenUSDC",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0xdb90a4e973b7663ce0ccc32b6fbd37ffb19bfa83"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtWETHe",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x1e6ffa4e9f63d10b8820a3ab52566af881dab53c"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-pythUSDC",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0x0fabfeacedf47e890c50c8120177fff69c6a1d9b"
+      }
+    },
+    {
+      "name": "Block Analitica: block_analitica-bbETH",
+      "owner": "Block Analitica",
+      "address": {
+        "1": "0x38989bba00bdf8181f4082995b3deae96163ac5d"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtUSDCp",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0xee8f4ec5672f09119b96ab6fb59c27e1b7e44b61"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-ionicUSDC",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0xcd347c1e7d600a9a3e403497562edd0a7bc3ef21"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakRUSD",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeef11ecb698f4b5378685c05a210bdf71093521"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtAUSDc",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x1b4cd53a1a8e5f50ab6320ef34e5fb4d3df7b6f6"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-bbqUSDC",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeefff209270748ddd194831b3fa287a5386f5bc"
+      }
+    },
+    {
+      "name": "Block Analitica: block_analitica-bbUSDC",
+      "owner": "Block Analitica",
+      "address": {
+        "1": "0x186514400e52270cef3d80e1c6f8d10a75d47344"
+      }
+    },
+    {
+      "name": "LeadBlock: leadblock-USDC-RWA",
+      "owner": "LeadBlock",
+      "address": {
+        "1": "0x4ca0e178c94f039d7f202e09d8d1a655ed3fb6b6"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtcbBTCc",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0xf587f2e8aff7d76618d3b6b4626621860fbd54e3"
+      }
+    },
+    {
+      "name": "Morpho DAO: MorphoBlue",
+      "owner": "Morpho DAO",
+      "address": {
+        "1": "0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb",
+        "8453": "0xbbbbbbbbbb9cc5e90e3b3af64bdaf62c37eeffcb"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakPAXG",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xbeef7959ae71d4e45e1863dae0b94c35244af816"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtmsETHc",
+      "owner": "Gauntlet",
+      "address": {
+        "1": "0x78b18e07dc43017fceaabad0751d6464c0f56b25"
+      }
+    },
+    {
+      "name": "9Summits: 9summits-9SETHcore",
+      "owner": "9Summits",
+      "address": {
+        "8453": "0x5496b42ad0decebfab0db944d83260e60d54f667"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7cdxUSD1.1",
+      "owner": "RE7 Labs",
+      "address": {
+        "8453": "0x74b6ea9bfee07c3756969b0139cfacbba5845969"
+      }
+    },
+    {
+      "name": "B.Protocol: b_protocol-reUSDC",
+      "owner": "B.Protocol",
+      "address": {
+        "1": "0x0f359fd18bda75e9c49bc027e7da59a4b01bf32a"
+      }
+    },
+    {
+      "name": "RE7 Labs: re7_labs-Re7wstETH",
+      "owner": "RE7 Labs",
+      "address": {
+        "1": "0xe87ed29896b91421ff43f69257abf78300e40c7a"
+      }
+    },
+    {
+      "name": "Gauntlet: gauntlet-gtEURCc",
+      "owner": "Gauntlet",
+      "address": {
+        "8453": "0x1c155be6bc51f2c37d472d4c2eba7a637806e122"
+      }
+    },
+    {
+      "name": "MEV Capital: mev_capital-USUALUSDC+",
+      "owner": "MEV Capital",
+      "address": {
+        "1": "0xd63070114470f685b75b74d60eec7c1113d33a3d"
+      }
+    },
+    {
+      "name": "Steakhouse Financial: steakhouse_financial-steakUSDQ",
+      "owner": "Steakhouse Financial",
+      "address": {
+        "1": "0xa1b60d96e5c50da627095b9381dc5a46af1a9a42"
+      }
+    },
+    {
+      "name": "Hakutora: hakutora-hUSDC",
+      "owner": "Hakutora",
+      "address": {
+        "1": "0x974c8fbf4fd795f66b85b73ebc988a51f1a040a9"
+      }
+    }
+  ]
+}

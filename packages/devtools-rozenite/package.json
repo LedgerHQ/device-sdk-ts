@@ -1,0 +1,37 @@
+{
+  "name": "@ledgerhq/device-management-kit-devtools-rozenite",
+  "version": "0.0.1",
+  "description": "Inspect and debug your integration of the Device Management Kit",
+  "type": "module",
+  "main": "./dist/react-native.cjs",
+  "module": "./dist/react-native.js",
+  "types": "./dist/react-native.d.ts",
+  "scripts": {
+    "build": "rozenite build",
+    "dev": "rozenite dev"
+  },
+  "dependencies": {
+    "@rozenite/plugin-bridge": "catalog:",
+    "rxjs": "catalog:",
+    "@ledgerhq/device-management-kit-devtools-ui": "workspace:^"
+  },
+  "devDependencies": {
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
+    "vite": "catalog:",
+    "@rozenite/vite-plugin": "catalog:",
+    "typescript": "catalog:",
+    "rozenite": "catalog:",
+    "react-native-web": "0.21.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-native": "catalog:",
+    "@types/react": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*",
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:^"
+  },
+  "license": "MIT",
+  "private": true
+}

@@ -1,0 +1,23 @@
+[
+  {
+    "txHash": "0xf5a55d9b020a5f1eacd09c59cf271d1dbd41fb6b11d6406f58a7a15b6153b329",
+    "contractAddress": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+    "selectorId": "0x38ed1739",
+    "rawTx": "",
+    "description": "QuickSwap: QuickSwap: swapExactTokensForTokens"
+  },
+  {
+    "txHash": "0xea70eb0758cdec1fdbcecb4ad8cd6a595b2252e9ec9a16ddc20d1bc715d040f8",
+    "contractAddress": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+    "selectorId": "0x5c11d795",
+    "rawTx": "",
+    "description": "QuickSwap: QuickSwap: swapExactTokensForETHSupportingFeeOnTransferTokens"
+  },
+  {
+    "txHash": "0x96e6fbb84e39ac69d308f34aa7d43c7fd602deec0eced533d5644e38b60b2106",
+    "contractAddress": "0xa5e0829caced8ffdd4de3c43696c57f7d7a678ff",
+    "selectorId": "0x7ff36ab5",
+    "rawTx": "",
+    "description": "QuickSwap: QuickSwap: swapExactETHForTokens"
+  }
+]

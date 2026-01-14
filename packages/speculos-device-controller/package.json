@@ -1,8 +1,8 @@
 {
   "name": "@ledgerhq/speculos-device-controller",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
@@ -39,7 +39,7 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit": "^1.0.0",
     "@sentry/minimal": "catalog:",
     "axios": "catalog:"
   },
@@ -52,6 +52,6 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "^1.0.0"
   }
 }

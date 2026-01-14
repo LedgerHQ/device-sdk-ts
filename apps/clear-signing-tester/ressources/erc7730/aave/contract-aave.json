@@ -1,0 +1,18 @@
+{
+  "test": [
+    {
+      "name": "Aave: Lending Pool v2",
+      "owner": "Aave",
+      "address": {
+        "1": "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
+      }
+    },
+    {
+      "name": "Aave: PoolInstance",
+      "owner": "Aave",
+      "address": {
+        "1": "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2"
+      }
+    }
+  ]
+}
