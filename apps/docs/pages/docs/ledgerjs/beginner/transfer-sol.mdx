@@ -1,6 +1,13 @@
 import Image from "next/image";
+import KeyTakeaway from '/components/features/key-takeaway';
 
 # Transfer of Sol between accounts
+
+<KeyTakeaway>
+ ☞   The renaming of "Ledger Live" to "Ledger Wallet" and  
+     "wallet" (in the hardware sense) to "signer" is still in progress.  
+     This page may contain legacy references that will be updated.
+</KeyTakeaway>
 
 ## Introduction
 
@@ -13,7 +20,7 @@ Before starting, make sure you have gone through the [prerequisites](../info#pre
 
 ### Install the Solana Embedded App
 
-First you need to install the Solana Embedded App from Ledger Live as shown in the [prerequisites](../info#prerequisites) for Ethereum.
+First you need to install the Solana Embedded App from Ledger Wallet as shown in the [prerequisites](../info#prerequisites) for Ethereum.
 
 ## Tutorial implementation
 
@@ -447,8 +454,8 @@ The steps are described below.
 Now you can click on the "Connect your Wallet" button and a modal will be opened.
 Click on the Ledger logo.
 
-![Choice of Wallet](/device-interaction/tutorial-1-solana-wallet.png)  
-_Fig. 6: Choice of Wallet_
+![Choice of signer](/device-interaction/tutorial-1-solana-wallet.png) (formerly 'wallet')
+_Fig. 6: Choice of signer (formerly 'hardware wallet')_
 
 Now choose the Ledger Nano to connect it to the browser.
 
@@ -469,11 +476,11 @@ To send some sol tokens on the Devnet network, you can either go to one of the s
 
 If you are looking for the easier and quicker way, use the Solana Faucet. If you would rather use the Solana CLI, please read this documentation to [install it](https://docs.solana.com/cli) before starting sending Sol.
 
-The Solana Devnet is not visible on Ledger Live, you can then check the transaction passed on [the Solana Explorer](https://explorer.solana.com/?cluster=devnet).
+The Solana Devnet is not visible on Ledger Wallet, you can then check the transaction passed on [the Solana Explorer](https://explorer.solana.com/?cluster=devnet).
 
 #### Option n°1 - Solana Faucet
 
-Go to the [Solana Faucet](https://solfaucet.com/) website put your Wallet Public Key (displayed on the web app) on the input and click on "Devnet"
+Go to the [Solana Faucet](https://solfaucet.com/) website put your signer Public Key (displayed on the web app) on the input and click on "Devnet"
 
 ![Solana Faucet](/device-interaction/solana-faucet.png)
 _Fig. 9: Solana Faucet_
