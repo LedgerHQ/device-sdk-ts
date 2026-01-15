@@ -746,7 +746,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -1504,8 +1504,8 @@ importers:
   packages/speculos-device-controller:
     dependencies:
       '@ledgerhq/device-management-kit':
-        specifier: ^1.0.0
-        version: 1.0.0(bufferutil@4.0.9)(rxjs@7.8.2)(utf-8-validate@5.0.10)
+        specifier: workspace:^
+        version: link:../device-management-kit
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7
@@ -4022,11 +4022,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/device-management-kit@1.0.0':
-    resolution: {integrity: sha512-s4WRq1SBGtl+96FuP/vIK5Z04RsJTelHR3KP31h59/lJCSSZ+IFnXE0Erd0CINqvBsBUIHWeSUOv80EyXQy80Q==}
-    peerDependencies:
-      rxjs: 7.8.2
 
   '@ledgerhq/icons-ui@0.8.1':
     resolution: {integrity: sha512-R1l7wWz1nblFx5GENn/sr0oXEBDYnwwOnkd+L829SFsWj9oOgH4g15E/LsXwDvJJ1H4SVY9uD+NJxoYsRWllNw==}
@@ -15041,26 +15036,6 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.12
 
-  '@ledgerhq/device-management-kit@1.0.0(bufferutil@4.0.9)(rxjs@7.8.2)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@noble/hashes': 1.8.0
-      '@sentry/minimal': 6.19.7
-      axios: 1.13.2
-      inversify: 7.5.1(reflect-metadata@0.2.2)
-      isomorphic-ws: 5.0.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
-      purify-ts: 2.1.0
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-      semver: 7.7.2
-      url: 0.11.4
-      uuid: 11.0.3
-      ws: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      xstate: 5.19.2
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - utf-8-validate
-
   '@ledgerhq/icons-ui@0.8.1(@types/react@18.3.12)(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
       react: 18.3.1
@@ -16111,7 +16086,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -16120,7 +16095,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
