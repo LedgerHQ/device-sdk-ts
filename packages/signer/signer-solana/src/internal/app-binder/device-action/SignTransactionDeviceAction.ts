@@ -38,6 +38,7 @@ import {
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
+import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -81,6 +82,21 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAIntermediateValue,
   SignTransactionDAInternalState
 > {
+  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
+
+  constructor(args: {
+    input: SignTransactionDAInput;
+    inspect?: boolean;
+    loggerFactory?: (tag: string) => LoggerPublisherService;
+  }) {
+    super({
+      input: args.input,
+      inspect: args.inspect,
+      logger: args.loggerFactory?.("SignTransactionDeviceAction"),
+    });
+    this._loggerFactory = args.loggerFactory ?? NullLoggerPublisherService;
+  }
+
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
@@ -105,17 +121,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       provideContext,
       inspectTransaction,
     } = this.extractDependencies(internalApi);
-
-    let loggerSingleton: LoggerPublisherService | undefined;
-
-    const getLoggerInstance = (context: types["context"]) => {
-      if (!loggerSingleton) {
-        const { loggerFactory } = context.input;
-        loggerSingleton = loggerFactory("SignTransactionDeviceAction");
-      }
-
-      return loggerSingleton;
-    };
 
     return setup({
       types: {
@@ -178,23 +183,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             ),
           }),
         }),
-        logInput: ({ context }, params: { step: string }) => {
-          getLoggerInstance(context).debug(
-            `[makeStateMachine] step ${params.step}`,
-            {
-              data: { input: context.input },
-            },
-          );
-        },
-
-        logInternalState: ({ context }, params: { step: string }) => {
-          getLoggerInstance(context).debug(
-            `[makeStateMachine] step ${params.step}`,
-            {
-              data: { internalState: context._internalState },
-            },
-          );
-        },
       },
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EAJgCMADg4BWAGw7jAGhABPRHr3SA7Bx0BONwGYALNOPfvUz1jHQBfUOs0TFwCIjYqWgYmVnIqbl5+IRExKT15JBBlVVSMDW0EfSMzC2s7BDdvHQ5pby9ff0DgsIiQKOx8QhISxMYWeM4AeUUwDGZFRRHk8fEIKjAOVAw6CgBrdYpp2fnhUTAAWRIAC02wGXylFTUqMsQnN1MON2lzK1tEN0MJicOicTlMoM8LXe4Ui6H6sSG7EWYxKHAAwpcwMQdlMZnMFvRRil2AAlOAAVwEpCkcg0RSepQK5T0nmMRmkwR+tX+3iMgVM0mc+j0OgM3Vh0QGcWGhKWqIxWJxh3xyOJVDJsEp1MkeTpjxKLwQLLZzU5NT+CAMeg4rTcBneLN8bx8MN6cJig3GqvGHAA4mBSPi0VQAGboFZrDZbXbrGCB+bBjBhqB3PXFdRM+wGUzeVymaq-OqOMWfe0BHyeNxOPSmV19D3SpGylHsP0BoOh8NgHA4Cg4DiKASiEN9gC2HDjHaT6FTBXpBszRuzuZ0+a5Fr0Hk+HjL2YsLNMtZ69aliISzbVnH98cUieTGq1CuxNPuhX1GdA5R0nh0TRapgMJxC3sBwmgMMVwU8QC3l5Yw63dU8vQvH1ryne8KSpJ8dlyV95w-LRdB-P9AkA4CEB8a0qxzYwnE8H5jW8eDJQRJCkhbNIeFgaYyAbM8MAjDB1k2bY9ijLisVIXjxlnB502eRdRS+Dgc2+c0i2kBoODBUUDA0ytqyPCV4U9GU2MvdJxJ4xCSnEbte37QdhzHMTuMk6z2Bkt85MZT9dHtaRlN8dc6kCALvDBbwzA0jTwqApjjMbc8zJ9ZgQzEHBONcl80wZQ0fyCLSKyA7kjRZa1+UFYFQLFeKpNMokUrS7tMoknCcoXXzyNXa1aO8Txio3SFjC0jwfD8AIghCWr3KShrUVS9KWrIKQdFw995M6-KeqKsiBSaSLIUMYwvgaUFppY+q5VbAAhclUAECBEzETRqVWQSoxE9YACM7oep6wBezy8I2gjyKcbMbQMPqBqLBxPA4HxzD0RpaKhQy3WYkym2S1Fbvux6qGe6k7L7Ach1IEccHHH78f+wHaTndafNB-qId5aGyOBAK3GMQ7aM3KD9HOrHZqutIAAVewYCAwDp17I2EmMByl1AZbloGmcNPrRQRr5gpA8EOHA1daOghoDDg48EIu7G5tbSWKGl2XCYB4me1JxyKecxQVbVl36bW7ytZ-IxK1Usi90+dwaLtAWxT0YXEpoZDUQdp25YfTDMWfDWg8XcKeYR47+rIhwgOaVoxo6SbxQxhK+O9VPfedjAicz0gsLaxm886gvhtZLwYfsQVcz15HvzjoWrcxpPG9bE8baoAShOjUTVBnvjc9yxdeZ0XN-AAoejVXIxVx0vSqxrROG5T+frZF-iSYc8nKfHdf6+khnZO3zrd-3kij6gXhkFZGjhwpWhzNfVids0gLwfu3TuW8OqgxjsNNwlRAGeAcAjMUTgOQjwAryKBl12KcDgUnBB2dsI6kDj-FBbw0EYNLqufuuDpCsnATWRiroMAUBlvAAo5Cb443wsDZm5QAC0pgSpSOaIKeRCiFFOGIbbMWnAeBqEECcMQ7V8LlEaCVRwhs3heErCCSErR0ZCOgWojguIjgEhESDMRWtBSfHDiVMsrhRpmNRpYlRotSHoiofYlUt91QYVILokGzJ-zKVIiVBoAV3CmPQX46E08P4kPMqhBMnYoDRPEfYfwRhB6lyhMpH8wIALHQtpbIydVVFBNybefJlDFSFMNDoIUrhDCALAVpGsgpi6XysffWe4T1GEFco05xmsFLGBFJ8Q+5SnC5lMPlap3xBYGACcnJxnAFrNWmRJTpi4sE1kKhzQxIo3CDIFH4Lwoy9lzzSHjP6-sondzoeUHwUMjYinKV4XpDyRkGU8C8yZHA06qxbkTM5m0PC5muRuBwPUfFpIsRkhpM19kwM4DCv2rdXbtOxAi0GB0Pg7RuYeI2EEtkbLFLszJsy8W2Oscglx+c7QfFFICwxe8jAshNqubZTLIUHI4By0kkSsLkvKMYXeJhDGQnhvoY6e9FU82cGMjeNignIHJMQJgsABHf2QeUAUtKoYlxVdIUOEEPC0QuW4CV+KOAAFF3Y4HlYgK1HwbWAL3vDMwkVumRV0ofcI4QgA */
@@ -216,7 +204,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       }),
       states: {
         InitialState: {
-          entry: [{ type: "logInput", params: { step: "InitialState" } }],
           always: [
             { target: "GetAppConfig", guard: "skipOpenApp" },
             { target: "OpenAppDeviceAction" },
@@ -315,18 +302,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "AfterInspect",
-              actions: [
-                assign({
-                  _internalState: ({ context, event }) => ({
-                    ...context._internalState,
-                    inspectorResult: event.output,
-                  }),
+              actions: assign({
+                _internalState: ({ context, event }) => ({
+                  ...context._internalState,
+                  inspectorResult: event.output,
                 }),
-                {
-                  type: "logInternalState",
-                  params: { step: "OnDoneInspectTransaction" },
-                },
-              ],
+              }),
             },
             onError: {
               target: "SignTransaction",
@@ -354,7 +335,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 context._internalState.inspectorResult?.data;
               return {
                 contextModule: context.input.contextModule,
-                loggerFactory: context.input.loggerFactory,
+                loggerFactory: this._loggerFactory,
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
@@ -369,23 +350,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             onDone: {
               target: "ProvideContext",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => ({
-                    ...context._internalState,
-                    solanaTransactionContext: {
-                      tlvDescriptor: event.output.tlvDescriptor,
-                      trustedNamePKICertificate:
-                        event.output.trustedNamePKICertificate,
-                      loadersResults: event.output.loadersResults,
-                    },
-                  }),
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  solanaTransactionContext: {
+                    tlvDescriptor: event.output.tlvDescriptor,
+                    trustedNamePKICertificate:
+                      event.output.trustedNamePKICertificate,
+                    loadersResults: event.output.loadersResults,
+                  },
                 }),
-                {
-                  type: "logInternalState",
-                  params: { step: "OnDoneBuildContext" },
-                },
-              ],
+              }),
             },
             onError: {
               target: "SignTransaction",
@@ -411,7 +386,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               return {
                 ...context._internalState.solanaTransactionContext,
                 transactionBytes: context.input.transaction,
-                loggerFactory: context.input.loggerFactory,
+                loggerFactory: this._loggerFactory,
               };
             },
             onDone: {
@@ -443,40 +418,31 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             onDone: {
               target: "SignTransactionResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (!isSuccessCommandResult(event.output))
-                      return {
-                        ...context._internalState,
-                        error: event.output.error,
-                      };
-
-                    const data = event.output.data.extract();
-                    if (
-                      event.output.data.isJust() &&
-                      data instanceof Uint8Array
-                    )
-                      return {
-                        ...context._internalState,
-                        signature: data,
-                      };
-
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (!isSuccessCommandResult(event.output))
                     return {
                       ...context._internalState,
-                      error: new UnknownDAError("No Signature available"),
+                      error: event.output.error,
                     };
-                  },
-                  intermediateValue: {
-                    requiredUserInteraction: UserInteractionRequired.None,
-                    step: signTransactionDAStateSteps.SIGN_TRANSACTION,
-                  },
-                }),
-                {
-                  type: "logInternalState",
-                  params: { step: "OnDoneSignTransaction" },
+
+                  const data = event.output.data.extract();
+                  if (event.output.data.isJust() && data instanceof Uint8Array)
+                    return {
+                      ...context._internalState,
+                      signature: data,
+                    };
+
+                  return {
+                    ...context._internalState,
+                    error: new UnknownDAError("No Signature available"),
+                  };
                 },
-              ],
+                intermediateValue: {
+                  requiredUserInteraction: UserInteractionRequired.None,
+                  step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+                },
+              }),
             },
             onError: {
               target: "Error",
