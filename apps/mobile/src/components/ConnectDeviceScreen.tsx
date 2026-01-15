@@ -33,11 +33,31 @@ const DeviceList = styled(
   },
 })<FlatListProps<DiscoveredDevice>>``;
 
+const ErrorBanner = styled.View`
+  background-color: ${({ theme }: ThemeProps) => theme.colors.error.c60};
+  padding: 12px;
+  margin-top: 12px;
+  border-radius: 8px;
+`;
+
+const ErrorText = styled(Text)`
+  color: ${({ theme }: ThemeProps) => theme.colors.neutral.c00};
+  font-size: 14px;
+`;
+
+const ErrorTitle = styled(Text)`
+  color: ${({ theme }: ThemeProps) => theme.colors.neutral.c00};
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 8px;
+`;
+
 export const ConnectDeviceScreen: React.FC = () => {
   const dmk = useDmk();
   const [devices, setDevices] = React.useState<DiscoveredDevice[]>([]);
   const [listenToAvailableDevicesError, setListenToAvailableDevicesError] =
     React.useState<Error | null>(null);
+  const [connectionError, setConnectionError] = React.useState<unknown>(null);
   const [isScanningDevices, setIsScanningDevices] = React.useState(false);
   const {
     state: { selectedId: deviceSessionId },
@@ -79,6 +99,7 @@ export const ConnectDeviceScreen: React.FC = () => {
 
   const startScanning = () => {
     setListenToAvailableDevicesError(null);
+    setConnectionError(null);
     setIsScanningDevices(true);
   };
 
@@ -89,12 +110,14 @@ export const ConnectDeviceScreen: React.FC = () => {
   const onConnect = useCallback(
     async (device: DiscoveredDevice) => {
       setIsScanningDevices(false);
+      setConnectionError(null);
       try {
         await dmk.connect({ device });
         navigate(RootScreens.Command, {
           screen: CommandsScreens.DeviceActionTester,
         });
       } catch (error) {
+        setConnectionError(error);
         console.error(error);
       }
     },
@@ -154,9 +177,11 @@ export const ConnectDeviceScreen: React.FC = () => {
                   style={{
                     flex: 1,
                     flexDirection: "row",
+                    flexWrap: "wrap",
                     justifyContent: "center",
                     alignItems: "center",
                     padding: 10,
+                    gap: 8,
                   }}>
                   {autoConnectingToFirstHidDevice ? (
                     <>
@@ -204,6 +229,21 @@ export const ConnectDeviceScreen: React.FC = () => {
                   Disconnect
                 </Button>
               </>
+            )}
+            {connectionError !== null && (
+              <ErrorBanner>
+                <ErrorTitle>Error connecting to device</ErrorTitle>
+                <ErrorText>
+                  {JSON.stringify(connectionError, null, 2)}
+                </ErrorText>
+                <Button
+                  type="shade"
+                  size="small"
+                  onPress={() => setConnectionError(null)}
+                  style={{ marginTop: 12, alignSelf: "flex-start" }}>
+                  Dismiss
+                </Button>
+              </ErrorBanner>
             )}
           </View>
         }
