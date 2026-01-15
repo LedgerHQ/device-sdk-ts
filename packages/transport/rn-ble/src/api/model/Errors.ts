@@ -63,6 +63,19 @@ export class PairingRefusedError extends OpeningConnectionError {
   }
 }
 
+/**
+ * Thrown when pairing is refused too quickly to be a deliberate user action.
+ * This typically indicates the device is locked, as locked devices automatically reject pairing requests.
+ * Since this is the only reliable signal that the device may be locked, users should be prompted
+ * to unlock their device and retry.
+ */
+export class PairingRefusedQuicklyError extends OpeningConnectionError {
+  override readonly _tag = "PairingRefusedQuicklyError";
+  constructor(readonly err?: unknown) {
+    super(err);
+  }
+}
+
 export class UnknownBleError extends GeneralDmkError {
   override readonly _tag = "UnknownBleError";
   constructor(readonly err?: unknown) {

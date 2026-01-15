@@ -24,9 +24,20 @@ import { Base64 } from "js-base64";
 import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { BehaviorSubject, type Subscription } from "rxjs";
 
-import { PairingRefusedError, UnknownBleError } from "@api/model/Errors";
+import {
+  PairingRefusedError,
+  PairingRefusedQuicklyError,
+  UnknownBleError,
+} from "@api/model/Errors";
 
 const FRAME_HEADER_SIZE = 3;
+
+/**
+ * This is arbitrary but there is no better way to know if the pairing is refused too quickly to be considered a user action.
+ * If the pairing is refused too quickly, we consider it as an automatic refusal and we throw a PairingRefusedQuicklyError.
+ * If the pairing is refused after a longer period of time, we consider it as a genuine pairing refusal from the user and we throw a PairingRefusedError.
+ */
+const PAIRING_REFUSED_QUICKLY_LIMIT_MS = 1000;
 
 export type RNBleInternalDevice = {
   id: DeviceId;
@@ -149,17 +160,29 @@ export class RNBleApduSender
   }
 
   public async setupConnection() {
+    const setupConnectionStartTime = Date.now();
+
     this._characteristicSubscription =
       this._dependencies.device.monitorCharacteristicForService(
         this._dependencies.internalDevice.bleDeviceInfos.serviceUuid,
         this._dependencies.internalDevice.bleDeviceInfos.notifyUuid,
         (error, characteristic) => {
+          /**
+           * On iOS, when the pairing is refused, the error is caught here.
+           */
           if (error?.message.includes("notify change failed")) {
-            // iOS pairing refused error
-            this._isDeviceReady.error(new PairingRefusedError(error));
-            this._logger.error("Pairing failed", {
-              data: { error },
-            });
+            const duration = Date.now() - setupConnectionStartTime;
+            this._logger.error(
+              `[setupConnection][onMonitor] iOS pairing refused in ${duration}ms`,
+              {
+                data: { error, duration },
+              },
+            );
+            if (duration < PAIRING_REFUSED_QUICKLY_LIMIT_MS) {
+              this._isDeviceReady.error(new PairingRefusedQuicklyError(error));
+            } else {
+              this._isDeviceReady.error(new PairingRefusedError(error));
+            }
             return;
           } else if (error) {
             this._isDeviceReady.error(new UnknownBleError(error));
@@ -204,12 +227,25 @@ export class RNBleApduSender
     }
 
     const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
+
+    const writeMtuFrameStartTime = Date.now();
+
     await this.write(Base64.fromUint8Array(requestMtuFrame)).catch((error) => {
-      // Android pairing refused error
-      this._logger.error("Pairing failed", {
-        data: { error },
-      });
-      throw new PairingRefusedError(error);
+      /**
+       * On Android, when the pairing is refused, the error is caught here.
+       */
+      const duration = Date.now() - writeMtuFrameStartTime;
+      this._logger.error(
+        `[setupConnection][writeMtuFrame] Pairing failed (write mtu request) in ${duration}ms`,
+        {
+          data: { error, duration },
+        },
+      );
+      if (duration < PAIRING_REFUSED_QUICKLY_LIMIT_MS) {
+        throw new PairingRefusedQuicklyError(error);
+      } else {
+        throw new PairingRefusedError(error);
+      }
     });
     let sub: Subscription | undefined;
     await new Promise<void>((resolve, reject) => {
