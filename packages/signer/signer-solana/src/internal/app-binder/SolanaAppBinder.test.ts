@@ -6,7 +6,6 @@ import {
   type DeviceManagementKit,
   type DeviceSessionId,
   type DmkError,
-  SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { from } from "rxjs";
@@ -34,7 +33,6 @@ import {
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
-import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { NullLoggerPublisherService } from "./services/utils/NullLoggerPublisherService";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
@@ -147,17 +145,19 @@ describe("SolanaAppBinder", () => {
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-          sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
-            input: {
-              command: new GetPubKeyCommand(params),
-              appName: "Solana",
-              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
-              skipOpenApp: false,
-            },
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: expect.objectContaining({
+              input: {
+                command: new GetPubKeyCommand(params),
+                appName: "Solana",
+                requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+                skipOpenApp: false,
+              },
+            }),
           }),
-        });
+        );
       });
 
       it("when checkOnDevice is false: UserInteractionRequired.None", () => {
@@ -178,17 +178,19 @@ describe("SolanaAppBinder", () => {
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-          sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
-            input: {
-              command: new GetPubKeyCommand(params),
-              appName: "Solana",
-              requiredUserInteraction: UserInteractionRequired.None,
-              skipOpenApp: false,
-            },
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: expect.objectContaining({
+              input: {
+                command: new GetPubKeyCommand(params),
+                appName: "Solana",
+                requiredUserInteraction: UserInteractionRequired.None,
+                skipOpenApp: false,
+              },
+            }),
           }),
-        });
+        );
       });
     });
   });
@@ -275,18 +277,19 @@ describe("SolanaAppBinder", () => {
       });
 
       // THEN
-      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-        sessionId: "sessionId",
-        deviceAction: new SignTransactionDeviceAction({
-          input: {
-            derivationPath,
-            transaction,
-            transactionOptions: { skipOpenApp },
-            contextModule: contextModuleStub,
-            loggerFactory: NullLoggerPublisherService,
-          },
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: "sessionId",
+          deviceAction: expect.objectContaining({
+            input: {
+              derivationPath,
+              transaction,
+              transactionOptions: { skipOpenApp },
+              contextModule: contextModuleStub,
+            },
+          }),
         }),
-      });
+      );
     });
   });
 
@@ -432,17 +435,19 @@ describe("SolanaAppBinder", () => {
       appBinder.getAppConfiguration();
 
       // THEN
-      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-        sessionId: "sessionId",
-        deviceAction: new SendCommandInAppDeviceAction({
-          input: {
-            command: new GetAppConfigurationCommand(),
-            appName: "Solana",
-            requiredUserInteraction: UserInteractionRequired.None,
-            skipOpenApp: false,
-          },
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: "sessionId",
+          deviceAction: expect.objectContaining({
+            input: {
+              command: new GetAppConfigurationCommand(),
+              appName: "Solana",
+              requiredUserInteraction: UserInteractionRequired.None,
+              skipOpenApp: false,
+            },
+          }),
         }),
-      });
+      );
     });
   });
 

@@ -18,6 +18,7 @@ import {
   DeviceActionStatus,
 } from "@api/device-action/model/DeviceActionState";
 import { type DmkError } from "@api/Error";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 
 import { type StateMachineTypes } from "./StateMachineTypes";
 
@@ -85,15 +86,22 @@ export abstract class XStateDeviceAction<
 {
   readonly input: Input;
   readonly inspect: boolean = false;
+  protected readonly logger?: LoggerPublisherService;
 
   /**
    *
    * @param input The input for the DeviceAction
    * @param inspect If true, the state machine will be inspected in the browser
+   * @param logger Optional logger for debugging. If provided, input and internal state will be logged on state transitions.
    */
-  constructor(args: { input: Input; inspect?: boolean }) {
+  constructor(args: {
+    input: Input;
+    inspect?: boolean;
+    logger?: LoggerPublisherService;
+  }) {
     this.input = args.input;
     this.inspect = Boolean(args.inspect);
+    this.logger = args.logger;
   }
 
   protected abstract makeStateMachine(
@@ -138,10 +146,32 @@ export abstract class XStateDeviceAction<
       DeviceActionState<Output, Error, IntermediateValue>
     >();
 
+    let hasLoggedInput = false;
+
     const handleActorSnapshot = (
       snapshot: SnapshotFrom<typeof stateMachine>,
     ) => {
       const { context, status, output, error } = snapshot;
+
+      // Log input once at the beginning
+      if (this.logger && !hasLoggedInput) {
+        hasLoggedInput = true;
+        this.logger.debug("[XStateDeviceAction] Input", {
+          data: { input: context.input },
+        });
+      }
+
+      // Log internal state on each state transition
+      if (this.logger && status === "active") {
+        const stateValue =
+          typeof snapshot.value === "string"
+            ? snapshot.value
+            : JSON.stringify(snapshot.value);
+        this.logger.debug(`[XStateDeviceAction] State: ${stateValue}`, {
+          data: { internalState: context._internalState },
+        });
+      }
+
       switch (status) {
         case "active":
           subject.next({
