@@ -33,5 +33,6 @@
     "react-native": "*",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "private": true
 }
