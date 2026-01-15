@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
 function KeyTakeaway({ children }: { children: ReactNode }) {
+
     const mystyle = {
       color: "#E5C6FF",
       backgroundColor: "rgba(212,160,255, 0.2)",
