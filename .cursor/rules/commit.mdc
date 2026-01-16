@@ -1,0 +1,57 @@
+---
+description: How to create a commit
+alwaysApply: false
+---
+
+## How to commit
+
+We use [gitmoji](https://gitmoji.dev/) for commit messages to standardize and improve readability.
+
+### Commit message rules
+
+The rules are enforced by the `danger` CI bot. Make sure each commit message follows **all** of these requirements:
+
+- **Start with a [gitmoji](https://gitmoji.dev/)** (which can be viewed with `pnpm gitmoji --list`)
+- Follow with a **space**
+- Specify a **scope** in parentheses, all in **lowercase**  
+  Example:
+  - `(signer-eth)`
+  - `(context-module)`
+  - `(chore)`
+  - `(release)`
+  - `(ci)`
+- Do **not** repeat JIRA ticket tags (e.g. `[DSDK-1234]`, `[NO-ISSUE]`) in your commit message—these tags are optional for commits and required in PR titles.
+- Add a **colon `:` and a space**
+- Write a message that **starts with a capital letter**
+
+**Pattern:**
+
+```
+<gitmoji> (scope): Description starting with capital letter
+```
+
+**Examples:**
+
+- `💚 (api): Add new endpoint`
+- `✨ (cli): Support new flags`
+- `🐛 (parser): Fix buffer overflow`
+
+**Special notes:**
+
+If you're unsure which gitmoji to use, you can list all available emojis with:
+
+```
+pnpm gitmoji --list
+```
+
+You can also see commit message examples by running:
+
+```
+git log --oneline
+```
+
+Refer to these resources to help you select appropriate emojis and follow the commit convention.
+
+For more details or troubleshooting, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
+
+Commits that don't follow this convention will fail CI and block merging.
