@@ -3,6 +3,7 @@ import {
   type DeviceActionStateMachine,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UserInteractionRequired,
@@ -44,6 +45,18 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
   VerifySafeAddressDAIntermediateValue,
   VerifySafeAddressDAInternalState
 > {
+  constructor(args: {
+    input: VerifySafeAddressDAInput;
+    inspect?: boolean;
+    loggerFactory?: (tag: string) => LoggerPublisherService;
+  }) {
+    super({
+      input: args.input,
+      inspect: args.inspect,
+      logger: args.loggerFactory?.("VerifySafeAddressDeviceAction"),
+    });
+  }
+
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<

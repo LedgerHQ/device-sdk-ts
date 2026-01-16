@@ -8,6 +8,7 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   LoadCertificateCommand,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
@@ -40,6 +41,10 @@ export type ProvideContextTaskArgs = {
    * The clear sign context to provide.
    */
   context: ClearSignContextSuccess;
+  /**
+   * Optional logger for debugging.
+   */
+  logger?: LoggerPublisherService;
 };
 
 export type ProvideContextTaskResult = CommandResult<unknown, EthErrorCodes>;
@@ -59,6 +64,13 @@ export class ProvideContextTask {
 
   async run(): Promise<ProvideContextTaskResult> {
     const { type, payload, certificate } = this._args.context;
+    this._args.logger?.debug("[run] Providing context", {
+      data: {
+        type,
+        payloadLength: payload.length,
+        hasCertificate: !!certificate,
+      },
+    });
 
     // if a certificate is provided, we load it before sending the command
     if (certificate) {
