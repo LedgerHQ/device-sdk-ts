@@ -44,7 +44,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     safeModuleFactory(),
     tokenModuleFactory(),
     calldataModuleFactory(),
-    trustedNameModuleFactory(),
+    trustedNameModuleFactory(config),
     typedDataModuleFactory(),
     nanoPkiModuleFactory(),
     uniswapModuleFactory(),
