@@ -1,5 +1,23 @@
 # @ledgerhq/speculos-device-controller
 
+## 0.2.2
+
+### Patch Changes
+
+- [#1226](https://github.com/LedgerHQ/device-sdk-ts/pull/1226) [`20304ae`](https://github.com/LedgerHQ/device-sdk-ts/commit/20304ae02c28a56c3843bdd3644690294de1d536) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Bump pkgs due to DMK release
+
+## 0.2.1
+
+### Patch Changes
+
+- [#1200](https://github.com/LedgerHQ/device-sdk-ts/pull/1200) [`a808f2b`](https://github.com/LedgerHQ/device-sdk-ts/commit/a808f2b16ba046fcfe0f84c4af42e6aac50a91f2) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Patch release to use the latest DMK version
+
+## 0.2.0
+
+### Minor Changes
+
+- [#1062](https://github.com/LedgerHQ/device-sdk-ts/pull/1062) [`14371d5`](https://github.com/LedgerHQ/device-sdk-ts/commit/14371d5d665c12215a364d9b3d301f64c645e32c) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add sign, reject, navigateNext, navigatePrevious, mainButton, secondaryButton touch use cases
+
 ## 0.1.0
 
 ### Minor Changes

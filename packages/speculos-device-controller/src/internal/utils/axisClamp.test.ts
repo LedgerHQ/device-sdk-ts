@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+
 import type { DeviceScreens, Percent } from "@internal/core/types";
 
 import { type AxisMap, clampValue, createAxes, createAxis } from "./axisClamp";

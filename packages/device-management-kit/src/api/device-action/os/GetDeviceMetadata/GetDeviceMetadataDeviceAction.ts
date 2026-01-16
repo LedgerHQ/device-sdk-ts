@@ -381,8 +381,15 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
               actions: assign({
                 intermediateValue: (_) => {
                   switch (_.event.snapshot.context?.type) {
+                    case SecureChannelEventType.DeviceId: {
+                      return {
+                        ..._.context.intermediateValue,
+                        deviceId: _.event.snapshot.context.payload.deviceId,
+                      };
+                    }
                     case SecureChannelEventType.PermissionRequested: {
                       return {
+                        ..._.context.intermediateValue,
                         requiredUserInteraction:
                           UserInteractionRequired.AllowSecureConnection,
                       };
@@ -399,6 +406,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
                         });
                       }
                       return {
+                        ..._.context.intermediateValue,
                         requiredUserInteraction: UserInteractionRequired.None,
                       };
                     }
@@ -609,12 +617,10 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const getDeviceMetadata = async () => {
+    const getDeviceMetadata = () => {
       const deviceState = internalApi.getDeviceSessionState();
-      if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
-        return null;
-      }
       if (
+        deviceState.sessionStateType === DeviceSessionStateType.Connected ||
         deviceState.firmwareVersion?.metadata === undefined ||
         deviceState.firmwareUpdateContext === undefined ||
         deviceState.customImage === undefined ||
@@ -623,9 +629,9 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
         deviceState.installedLanguages === undefined ||
         deviceState.catalog === undefined
       ) {
-        return null;
+        return Promise.resolve(null);
       }
-      return {
+      return Promise.resolve({
         firmwareVersion: deviceState.firmwareVersion,
         firmwareUpdateContext: deviceState.firmwareUpdateContext,
         customImage: deviceState.customImage,
@@ -633,7 +639,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
         applicationsUpdates: deviceState.appsUpdates,
         installedLanguages: deviceState.installedLanguages,
         catalog: deviceState.catalog,
-      };
+      });
     };
 
     const getFirmwareMetadata = async () =>

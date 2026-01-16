@@ -1,0 +1,118 @@
+name: "[Tests] ERC7730 Nightly"
+on:
+  schedule:
+    # Run every day at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: Setup toolchain and dependencies
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+
+  build-libraries:
+    name: Build libraries
+    needs: [setup]
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+  erc7730-tests:
+    name: ERC7730 Tests (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})
+    needs: [build-libraries]
+    runs-on: ledgerhq-device-sdk
+    strategy:
+      fail-fast: false
+      matrix:
+        device:
+          - stax
+          - nanox
+          - flex
+        include_dapp:
+          - dapp: "1inch"
+            chain: ""
+          - dapp: "aave"
+            chain: ""
+          - dapp: "ethena"
+            chain: ""
+          - dapp: "lido"
+            chain: ""
+          - dapp: "lombard"
+            chain: ""
+          - dapp: "poap"
+            chain: ""
+          - dapp: "swissborg"
+            chain: ""
+          - dapp: "tether"
+            chain: ""
+          - dapp: "uniswap"
+            chain: ""
+          - dapp: "velora"
+            chain: ""
+          - dapp: "yieldxyz"
+            chain: ""
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Generate token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: LedgerHQ
+          repositories: coin-apps
+
+      - name: Retrieving coin apps
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          repository: LedgerHQ/coin-apps
+          token: ${{ steps.generate-token.outputs.token }}
+          path: coin-apps
+          sparse-checkout: |
+            ${{ matrix.device }}/*/Ethereum/*.elf
+          sparse-checkout-cone-mode: false
+
+      - name: Pull Speculos Docker image
+        run: docker pull ghcr.io/ledgerhq/speculos
+
+      - name: Run ERC7730 Test
+        id: erc7730-test
+        env:
+          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
+        run: |
+          mkdir -p /tmp/logs/screenshots
+          pnpm cs-tester test:erc7730 ${{ matrix.include_dapp.dapp }} ${{ matrix.include_dapp.chain }} \
+            --device ${{ matrix.device }} \
+            --log-level error \
+            --log-file "/tmp/logs/erc7730-${{ matrix.include_dapp.dapp }}.log" \
+            --file-log-level debug \
+            --screenshot-folder-path "/tmp/logs/screenshots"
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: erc7730-logs-${{ matrix.device }}-${{ matrix.include_dapp.dapp }}
+          path: /tmp/logs/
+          retention-days: 7

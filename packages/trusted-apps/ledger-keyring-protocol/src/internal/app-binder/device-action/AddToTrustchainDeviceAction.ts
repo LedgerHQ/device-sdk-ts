@@ -203,7 +203,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                   clientName: input.clientName,
                   sessionKeypair: () =>
                     context._internalState.chain(({ sessionKeypair }) =>
-                      required(sessionKeypair, "Missing session keypair"),
+                      required(sessionKeypair, "Missing session keyPair"),
                     ),
                   path: () =>
                     required(
@@ -223,7 +223,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     type: "addMember",
                     data: {
                       name: input.clientName,
-                      publicKey: input.keypair.getPublicKey(),
+                      publicKey: input.keyPair.getPublicKey(),
                       permissions: input.permissions,
                     },
                   },
@@ -258,7 +258,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                   clientName: input.clientName,
                   sessionKeypair: () =>
                     context._internalState.chain(({ sessionKeypair }) =>
-                      required(sessionKeypair, "Missing session keypair"),
+                      required(sessionKeypair, "Missing session keyPair"),
                     ),
                   path: `m/0'/${input.appId}'/0'`,
                   parent: () =>
@@ -275,7 +275,7 @@ export class AddToTrustchainDeviceAction extends XStateDeviceAction<
                     type: "derive",
                     data: {
                       name: input.clientName,
-                      publicKey: input.keypair.getPublicKey(),
+                      publicKey: input.keyPair.getPublicKey(),
                       permissions: input.permissions,
                     },
                   },

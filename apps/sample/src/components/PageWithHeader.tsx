@@ -3,7 +3,7 @@ import { Breadcrumb, Divider, Flex } from "@ledgerhq/react-ui";
 import { type Props as BreadCrumbProps } from "@ledgerhq/react-ui/components/navigation/Breadcrumb/index";
 import styled from "styled-components";
 
-const Root = styled(Flex).attrs({ mx: 15, mb: 5 })`
+const Root = styled(Flex).attrs({ px: 6 })`
   flex-direction: column;
   flex: 1;
   justify-content: center;
@@ -12,13 +12,12 @@ const Root = styled(Flex).attrs({ mx: 15, mb: 5 })`
 
 const Container = styled(Flex)`
   flex-direction: column;
-  border-radius: 12px;
   overflow: hidden;
   height: 100%;
   width: 100%;
 `;
 
-const Header = styled(Flex).attrs({ py: 6 })``;
+const Header = styled(Flex).attrs({ pt: 9 })``;
 
 export const PageWithHeader: React.FC<
   {

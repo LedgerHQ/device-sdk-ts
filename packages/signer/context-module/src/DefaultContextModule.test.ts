@@ -6,6 +6,7 @@ import {
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
+import { NullLoggerPublisherService } from "./shared/utils/NullLoggerPublisherService";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -20,7 +21,7 @@ const contextLoaderStubBuilder = (canHandle: boolean): ContextLoader => {
 
 const fieldLoaderStubBuilder = (): ContextFieldLoader => {
   return {
-    canHandle: vi.fn(),
+    canHandle: vi.fn() as unknown as ContextFieldLoader["canHandle"],
     loadField: vi.fn(),
   };
 };
@@ -45,6 +46,7 @@ describe("DefaultContextModule", () => {
       url: "https://metadata.com",
     },
     originToken: "originToken",
+    loggerFactory: NullLoggerPublisherService,
   };
 
   beforeEach(() => {

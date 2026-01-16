@@ -39,6 +39,7 @@ export type GenuineCheckDARequiredInteraction =
 
 export type GenuineCheckDAIntermediateValue = {
   requiredUserInteraction: GenuineCheckDARequiredInteraction;
+  deviceId?: Uint8Array;
 };
 
 export type GenuineCheckDAState = DeviceActionState<

@@ -1,5 +1,25 @@
 # @ledgerhq/device-transport-kit-speculos
 
+## 1.1.3
+
+### Patch Changes
+
+- [#1214](https://github.com/LedgerHQ/device-sdk-ts/pull/1214) [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Move APDU exchange logging to transport layer for more accurate timing
+
+- Updated dependencies [[`df480c2`](https://github.com/LedgerHQ/device-sdk-ts/commit/df480c2072cdc6e9a0865bf1e92a2950be04c0a8), [`f4da0a6`](https://github.com/LedgerHQ/device-sdk-ts/commit/f4da0a66cd530c811af595cb91ac0c11370862f0), [`52fe14e`](https://github.com/LedgerHQ/device-sdk-ts/commit/52fe14e0698ab32e84014bae4a92e5d85e961f88)]:
+  - @ledgerhq/device-management-kit@1.0.0
+
+## 1.1.2
+
+### Patch Changes
+
+- [#1181](https://github.com/LedgerHQ/device-sdk-ts/pull/1181) [`044b764`](https://github.com/LedgerHQ/device-sdk-ts/commit/044b764dba7d0b7e6948a8f2de0c7c5ca7373f72) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Bump patch versions to use ^ instead of \* to avoid duplication in LW and prepare a release
+
+- [#1178](https://github.com/LedgerHQ/device-sdk-ts/pull/1178) [`b550c02`](https://github.com/LedgerHQ/device-sdk-ts/commit/b550c02bff4ec5cf99d76ee362697bccedc88120) Thanks [@ofreyssinet-ledger](https://github.com/ofreyssinet-ledger)! - Breaking change: Replace TransportDeviceModel.blockSize by dynamic getBlockSize (where the result depends on the firmware version). This allows us to correctly handle available memory prediction for the Ledger Nano S.
+
+- Updated dependencies [[`b550c02`](https://github.com/LedgerHQ/device-sdk-ts/commit/b550c02bff4ec5cf99d76ee362697bccedc88120)]:
+  - @ledgerhq/device-management-kit@0.13.0
+
 ## 1.1.1
 
 ### Patch Changes

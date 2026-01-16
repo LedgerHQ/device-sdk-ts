@@ -3,12 +3,17 @@ import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import {
   UnknownDAError,
+  UnsupportedApplicationDAError,
   UnsupportedFirmwareDAError,
 } from "@api/device-action/os/Errors";
 import type { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
-import type { DeviceSessionState } from "@api/device-session/DeviceSessionState";
+import type {
+  DeviceSessionState,
+  FirmwareUpdate,
+} from "@api/device-session/DeviceSessionState";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import type { Application } from "@internal/manager-api/model/Application";
+import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
 import { BuildAppsInstallPlanTask } from "./BuildAppsInstallPlanTask";
 
@@ -391,66 +396,138 @@ describe("BuildAppsInstallPlanTask", () => {
     });
   });
 
-  it("Error when an app is not found in the catalog", () => {
-    // GIVEN
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [] as unknown as Application[],
-      catalog: {
-        applications: [] as unknown as Application[],
-        languagePackages: [],
-      },
-    } as unknown as DeviceSessionState);
+  describe("Error cases for unsupported applications and firmwares", () => {
+    describe("when firmware is up to date", () => {
+      it("should throw `UnsupportedApplicationDAError` when application not found in catalog", () => {
+        // GIVEN
+        apiMock.getDeviceSessionState.mockReturnValueOnce({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          firmwareUpdateContext: {
+            currentFirmware: {} as FinalFirmware,
+          },
+          installedApps: [] as unknown as Application[],
+          catalog: {
+            applications: [] as unknown as Application[],
+            languagePackages: [],
+          },
+        } as unknown as DeviceSessionState);
 
-    // WHEN
-    const result = new BuildAppsInstallPlanTask(apiMock, {
-      applications: [
-        { name: "Ethereum" },
-        { name: "Bitcoin" },
-        { name: "Solana" },
-      ],
-      allowMissingApplication: false,
-    }).run();
+        // WHEN
+        const result = new BuildAppsInstallPlanTask(apiMock, {
+          applications: [{ name: "Ethereum" }],
+          allowMissingApplication: false,
+        }).run();
 
-    // THEN
-    expect(result).toStrictEqual({
-      error: new UnknownDAError(
-        "Application Ethereum not found in the catalog",
-      ),
+        // THEN
+        expect(result).toStrictEqual({
+          error: new UnsupportedApplicationDAError(
+            "Application Ethereum not supported for this device",
+          ),
+        });
+      });
+      it("should throw `UnsupportedApplicationDAError` when application version is not supported", () => {
+        // GIVEN
+        apiMock.getDeviceSessionState.mockReturnValueOnce({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          firmwareUpdateContext: {
+            currentFirmware: {} as FinalFirmware,
+          },
+          installedApps: [] as unknown as Application[],
+          catalog: {
+            applications: [
+              { versionName: "Ethereum", version: "1.5.0" },
+            ] as Application[],
+            languagePackages: [],
+          },
+        } as unknown as DeviceSessionState);
+
+        // WHEN
+        const result = new BuildAppsInstallPlanTask(apiMock, {
+          applications: [
+            {
+              name: "Ethereum",
+              constraints: [{ minVersion: "1.6.0" }],
+            },
+          ],
+          allowMissingApplication: false,
+        }).run();
+
+        // THEN
+        expect(result).toStrictEqual({
+          error: new UnsupportedApplicationDAError(
+            "Application Ethereum not supported for this device",
+          ),
+        });
+      });
     });
-  });
+    describe("when firmware is out of date", () => {
+      it("should throw `UnsupportedFirmwareDAError` when application not found in catalog", () => {
+        // GIVEN
+        apiMock.getDeviceSessionState.mockReturnValueOnce({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          firmwareUpdateContext: {
+            currentFirmware: {} as FinalFirmware,
+            availableUpdate: {} as FirmwareUpdate,
+          },
+          installedApps: [] as unknown as Application[],
+          catalog: {
+            applications: [] as unknown as Application[],
+            languagePackages: [],
+          },
+        } as unknown as DeviceSessionState);
 
-  it("Error when an app version is not found in the catalog", () => {
-    // GIVEN
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
-      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-      deviceStatus: DeviceStatus.CONNECTED,
-      installedApps: [] as unknown as Application[],
-      catalog: {
-        applications: [
-          { versionName: "Ethereum", version: "1.5.0" },
-        ] as unknown as Application[],
-        languagePackages: [],
-      },
-    } as unknown as DeviceSessionState);
+        // WHEN
+        const result = new BuildAppsInstallPlanTask(apiMock, {
+          applications: [{ name: "Ethereum" }],
+          allowMissingApplication: false,
+        }).run();
 
-    // WHEN
-    const result = new BuildAppsInstallPlanTask(apiMock, {
-      applications: [
-        {
-          name: "Ethereum",
-          constraints: [{ minVersion: "1.6.0" }],
-        },
-      ],
-      allowMissingApplication: false,
-    }).run();
+        // THEN
+        expect(result).toStrictEqual({
+          error: new UnsupportedFirmwareDAError(
+            "Application Ethereum needs latest firmware",
+          ),
+        });
+      });
+      it("should throw `UnsupportedFirmwareDAError` when application version is not supported", () => {
+        // GIVEN
+        apiMock.getDeviceSessionState.mockReturnValueOnce({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          installedApps: [] as unknown as Application[],
+          firmwareUpdateContext: {
+            currentFirmware: {} as FinalFirmware,
+            availableUpdate: {} as FirmwareUpdate,
+          },
+          catalog: {
+            applications: [
+              { versionName: "Ethereum", version: "1.5.0" },
+            ] as Application[],
+            languagePackages: [],
+          },
+        } as unknown as DeviceSessionState);
 
-    // THEN
-    expect(result).toStrictEqual({
-      error: new UnsupportedFirmwareDAError(
-        "Application Ethereum not found in the catalog",
-      ),
+        // WHEN
+        const result = new BuildAppsInstallPlanTask(apiMock, {
+          applications: [
+            {
+              name: "Ethereum",
+              constraints: [{ minVersion: "1.6.0" }],
+            },
+          ],
+          allowMissingApplication: false,
+        }).run();
+
+        // THEN
+        expect(result).toStrictEqual({
+          error: new UnsupportedFirmwareDAError(
+            "Application Ethereum needs latest firmware",
+          ),
+        });
+      });
     });
   });
 });

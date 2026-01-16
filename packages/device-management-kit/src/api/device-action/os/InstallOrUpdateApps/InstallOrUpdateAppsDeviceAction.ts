@@ -208,6 +208,9 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
                   requiredUserInteraction:
                     _.event.snapshot.context.intermediateValue
                       .requiredUserInteraction,
+                  deviceId:
+                    _.event.snapshot.context.intermediateValue.deviceId ??
+                    _.context.intermediateValue.deviceId,
                 }),
               }),
             },
@@ -425,6 +428,12 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
               actions: assign({
                 intermediateValue: (_) => {
                   switch (_.event.snapshot.context?.type) {
+                    case SecureChannelEventType.DeviceId: {
+                      return {
+                        ..._.context.intermediateValue,
+                        deviceId: _.event.snapshot.context.payload.deviceId,
+                      };
+                    }
                     case SecureChannelEventType.PermissionRequested: {
                       return {
                         ..._.context.intermediateValue,
@@ -527,25 +536,29 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const buildInstallPlan = async (arg0: {
+    const buildInstallPlan = (arg0: {
       input: {
         applications: ApplicationDependency[];
         allowMissingApplication: boolean;
       };
     }) =>
-      new BuildAppsInstallPlanTask(internalApi, {
-        applications: arg0.input.applications,
-        allowMissingApplication: arg0.input.allowMissingApplication,
-      }).run();
+      Promise.resolve(
+        new BuildAppsInstallPlanTask(internalApi, {
+          applications: arg0.input.applications,
+          allowMissingApplication: arg0.input.allowMissingApplication,
+        }).run(),
+      );
 
-    const predictOutOfMemory = async (arg0: {
+    const predictOutOfMemory = (arg0: {
       input: {
         installPlan: Application[];
       };
     }) =>
-      new PredictOutOfMemoryTask(internalApi, {
-        installPlan: arg0.input.installPlan,
-      }).run();
+      Promise.resolve(
+        new PredictOutOfMemoryTask(internalApi, {
+          installPlan: arg0.input.installPlan,
+        }).run(),
+      );
 
     const installApp = (arg0: {
       input: {

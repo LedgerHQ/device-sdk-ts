@@ -1,5 +1,20 @@
 # @ledgerhq/signer-utils
 
+## 1.1.2
+
+### Patch Changes
+
+- [#1226](https://github.com/LedgerHQ/device-sdk-ts/pull/1226) [`20304ae`](https://github.com/LedgerHQ/device-sdk-ts/commit/20304ae02c28a56c3843bdd3644690294de1d536) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Bump pkgs due to DMK release
+
+## 1.1.1
+
+### Patch Changes
+
+- [#1181](https://github.com/LedgerHQ/device-sdk-ts/pull/1181) [`044b764`](https://github.com/LedgerHQ/device-sdk-ts/commit/044b764dba7d0b7e6948a8f2de0c7c5ca7373f72) Thanks [@jiyuzhuang](https://github.com/jiyuzhuang)! - Bump patch versions to use ^ instead of \* to avoid duplication in LW and prepare a release
+
+- Updated dependencies [[`b550c02`](https://github.com/LedgerHQ/device-sdk-ts/commit/b550c02bff4ec5cf99d76ee362697bccedc88120)]:
+  - @ledgerhq/device-management-kit@0.13.0
+
 ## 1.1.0
 
 ### Patch Changes

@@ -47,6 +47,7 @@ export type OpenAppWithDependenciesDARequiredInteraction =
 export type OpenAppWithDependenciesDAIntermediateValue = {
   requiredUserInteraction: OpenAppWithDependenciesDARequiredInteraction;
   installPlan: InstallPlan | null;
+  deviceId?: Uint8Array;
 };
 
 export type OpenAppWithDependenciesDAState = DeviceActionState<

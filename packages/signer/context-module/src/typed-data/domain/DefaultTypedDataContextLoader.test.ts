@@ -841,10 +841,15 @@ describe("TypedDataContextLoader", () => {
           KeyUsage: "testKeyUsage",
         }),
       );
-      loadCertificateMock.mockResolvedValue({
-        keyUsageNumber: 1,
-        payload: new Uint8Array([1, 2, 3, 4]),
-      });
+      loadCertificateMock
+        .mockResolvedValueOnce({
+          keyUsageNumber: 1,
+          payload: new Uint8Array([1, 2, 3, 4]),
+        })
+        .mockResolvedValueOnce({
+          keyUsageNumber: 2,
+          payload: new Uint8Array([1, 2, 3, 4]),
+        });
       getTypedDataFiltersMock
         .mockResolvedValueOnce(Promise.resolve(Left(new Error("error"))))
         .mockResolvedValueOnce(
@@ -891,6 +896,10 @@ describe("TypedDataContextLoader", () => {
             keyUsageNumber: 1,
             payload: new Uint8Array([1, 2, 3, 4]),
           },
+        },
+        certificate: {
+          keyUsageNumber: 2,
+          payload: new Uint8Array([1, 2, 3, 4]),
         },
         filters: {},
       });

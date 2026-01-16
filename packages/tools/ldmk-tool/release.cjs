@@ -52,6 +52,8 @@ async function getPackages() {
       name: packageJson.name,
       version: packageJson.version,
       private: packageJson.private,
+      dependencies: packageJson.dependencies || {},
+      peerDependencies: packageJson.peerDependencies || {},
     };
     pkgs.push(item);
     groups[group].push(item);
@@ -96,7 +98,7 @@ async function resetPrivatePackagesDependencies(pkgs) {
       for (const dependency of Object.keys(dependencies)) {
         if (!dependency) continue;
         if (pkgs.some((p) => p.name === dependency)) {
-          json.dependencies[dependency] = "workspace:*";
+          json.dependencies[dependency] = "workspace:^";
           shouldUpdate = true;
         }
       }
@@ -106,7 +108,7 @@ async function resetPrivatePackagesDependencies(pkgs) {
       for (const dependency of Object.keys(peerDependencies)) {
         if (!dependency) continue;
         if (pkgs.some((p) => p.name === dependency)) {
-          json.peerDependencies[dependency] = "workspace:*";
+          json.peerDependencies[dependency] = "workspace:^";
           shouldUpdate = true;
         }
       }
@@ -259,6 +261,174 @@ async function enterRelease() {
               console.log("");
             }
           }
+        }
+      }
+    }
+
+    // =======================
+    // Check for packages that depend on released packages with MAJOR bumps
+    // =======================
+
+    // Read all changeset files to find which packages have major bumps
+    const changesetDir = path.join(process.cwd(), ".changeset");
+    let changesetMdFiles = [];
+    try {
+      const changesetFiles = await fs.readdir(changesetDir);
+      changesetMdFiles = changesetFiles.filter(
+        (f) => f.endsWith(".md") && f !== "README.md",
+      );
+    } catch (err) {
+      // If the .changeset directory is missing or inaccessible, treat as no changesets
+      if (
+        !err ||
+        !err.code ||
+        !["ENOENT", "ENOTDIR", "EACCES"].includes(err.code)
+      ) {
+        throw err;
+      }
+    }
+
+    const packagesWithMajorBump = new Set();
+
+    // Read all changeset files in parallel for better performance
+    const changesetContents = await Promise.all(
+      changesetMdFiles.map(async (file) => ({
+        file,
+        content: await fs.readFile(path.join(changesetDir, file), "utf-8"),
+      })),
+    );
+
+    for (const { content } of changesetContents) {
+      // Parse the frontmatter to find packages with major bumps
+      const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+      if (frontmatterMatch) {
+        const frontmatter = frontmatterMatch[1];
+        const lines = frontmatter.split("\n");
+        for (const line of lines) {
+          // Match lines like: "@ledgerhq/package-name": major
+          const match = line.match(/"([^"]+)":\s*major/);
+          if (match) {
+            packagesWithMajorBump.add(match[1]);
+          }
+        }
+      }
+    }
+
+    // Only proceed if there are selected packages with major bumps
+    const selectedPackageNames = checkBoxes;
+    const selectedWithMajorBump = selectedPackageNames.filter((pkg) =>
+      packagesWithMajorBump.has(pkg),
+    );
+
+    if (selectedWithMajorBump.length > 0) {
+      const { pkgs: allPackages } = await getPackages();
+      const nonSelectedPackages = allPackages.filter(
+        (pkg) => !selectedPackageNames.includes(pkg.name),
+      );
+
+      // Find packages that depend on any of the selected packages WITH MAJOR bumps
+      const dependentPackages = [];
+      for (const pkg of nonSelectedPackages) {
+        const allDeps = {
+          ...pkg.dependencies,
+          ...pkg.peerDependencies,
+        };
+
+        // Only check dependencies on packages that have major bumps
+        const dependsOnMajorBump = selectedWithMajorBump.filter(
+          (selectedPkg) => selectedPkg in allDeps,
+        );
+
+        if (dependsOnMajorBump.length > 0) {
+          dependentPackages.push({
+            ...pkg,
+            dependsOn: dependsOnMajorBump,
+          });
+        }
+      }
+
+      if (dependentPackages.length > 0) {
+        console.log("");
+        console.log(
+          chalk.yellow(
+            "⚠️  WARNING: The following packages have MAJOR version bumps:",
+          ),
+        );
+        for (const pkg of selectedWithMajorBump) {
+          console.log(chalk.red(`  🔺 ${pkg}`));
+        }
+        console.log("");
+        console.log(
+          chalk.yellow(
+            "The following packages depend on them but are not selected for release:",
+          ),
+        );
+        console.log("");
+
+        for (const pkg of dependentPackages) {
+          console.log(
+            chalk.magenta(`  📦 ${pkg.name}`) +
+              chalk.gray(` depends on: ${pkg.dependsOn.join(", ")}`),
+          );
+        }
+
+        console.log("");
+        console.log(
+          chalk.yellow(
+            "Since these are MAJOR bumps, the ^ version range won't cover them.",
+          ),
+        );
+        console.log(
+          chalk.yellow(
+            "Consumers may experience issues with duplicate dependencies.",
+          ),
+        );
+        console.log("");
+
+        const shouldIncludeDependents = await confirm({
+          message:
+            "Do you want to include these dependent packages in the release? (will create patch changesets and set private: false)",
+          default: true,
+        });
+
+        if (shouldIncludeDependents) {
+          // Set private: false for dependent packages (only if not already public)
+          for (const pkg of dependentPackages) {
+            if (pkg.private !== false) {
+              await setPrivateValue(pkg, false);
+              console.log(
+                chalk.green(`  ✅ Set ${pkg.name} as public (private: false)`),
+              );
+            }
+          }
+
+          // Create a changeset file for dependent packages
+          const changesetId = `dependent-packages-${Date.now()}`;
+          const changesetPath = path.join(changesetDir, `${changesetId}.md`);
+
+          const dependentPackageNames = dependentPackages.map((pkg) => pkg.name);
+          const changesetContent = `---
+${dependentPackageNames.map((name) => `"${name}": patch`).join("\n")}
+---
+
+Bump packages due to major dependency updates
+`;
+
+          await fs.writeFile(changesetPath, changesetContent, "utf-8");
+          console.log("");
+          console.log(
+            chalk.green(
+              `  ✅ Created changeset for dependent packages: .changeset/${changesetId}.md`,
+            ),
+          );
+          console.log("");
+        } else {
+          console.log(
+            chalk.yellow(
+              "⚠️  Skipping dependent packages. Be aware of potential dependency duplication issues.",
+            ),
+          );
+          console.log("");
         }
       }
     }

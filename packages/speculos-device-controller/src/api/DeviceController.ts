@@ -11,7 +11,16 @@ import {
   pressButtons,
   pressSequence,
 } from "@root/src/internal/use-cases/buttonUseCases";
-import { tapLong, tapQuick } from "@root/src/internal/use-cases/touchUseCases";
+import {
+  mainButton,
+  navigateNext,
+  navigatePrevious,
+  reject,
+  secondaryButton,
+  sign,
+  tapLong,
+  tapQuick,
+} from "@root/src/internal/use-cases/touchUseCases";
 
 export type ButtonFactory = () => ButtonController & {
   left(): Promise<void>;
@@ -22,7 +31,13 @@ export type ButtonFactory = () => ButtonController & {
 
 export type TapFactory = (deviceKey: string) => {
   tapQuick: (point: PercentCoordinates) => Promise<void>;
-  tapLong: (point: PercentCoordinates) => Promise<void>;
+  tapLong: (point: PercentCoordinates, delayMs?: number) => Promise<void>;
+  sign: (delayMs?: number) => Promise<void>;
+  reject: () => Promise<void>;
+  navigateNext: () => Promise<void>;
+  navigatePrevious: () => Promise<void>;
+  mainButton: () => Promise<void>;
+  secondaryButton: () => Promise<void>;
 };
 
 export type DeviceControllerClientFactory = (
@@ -63,6 +78,12 @@ export const deviceControllerClientFactory: DeviceControllerClientFactory = (
     tapFactory: (key) => ({
       tapQuick: tapQuick(touch, key),
       tapLong: tapLong(touch, key),
+      sign: sign(touch, key),
+      reject: reject(touch, key),
+      navigateNext: navigateNext(touch, key),
+      navigatePrevious: navigatePrevious(touch, key),
+      mainButton: mainButton(touch, key),
+      secondaryButton: secondaryButton(touch, key),
     }),
   };
 };

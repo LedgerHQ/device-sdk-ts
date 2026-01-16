@@ -1,0 +1,2179 @@
+#!/usr/bin/env zx
+
+require("zx/globals");
+const { input, confirm, checkbox } = require("@inquirer/prompts");
+const path = require("path");
+
+// ============================================================================
+// API Configuration - defines the structure for each available API
+// ============================================================================
+
+const API_CONFIGS = {
+  getAppConfig: {
+    name: "getAppConfig",
+    displayName: "getAppConfig - Get app configuration (SendCommandInApp)",
+    deviceActionType: "SendCommandInApp",
+    useCaseDir: "config",
+    useCaseTypesName: "configTypes",
+    useCaseClassName: "GetAppConfigUseCase",
+    commandClassName: "GetAppConfigCommand",
+    userInteraction: "UserInteractionRequired.None",
+    userInteractionTypes: "UserInteractionRequired.None",
+    hasDerivationPath: false,
+    hasOptions: false,
+  },
+  getAddress: {
+    name: "getAddress",
+    displayName: "getAddress - Get address from derivation path (SendCommandInApp)",
+    deviceActionType: "SendCommandInApp",
+    useCaseDir: "address",
+    useCaseTypesName: "addressTypes",
+    useCaseClassName: "GetAddressUseCase",
+    commandClassName: "GetAddressCommand",
+    userInteraction: "args.checkOnDevice ? UserInteractionRequired.VerifyAddress : UserInteractionRequired.None",
+    userInteractionTypes: "UserInteractionRequired.None | UserInteractionRequired.VerifyAddress",
+    hasDerivationPath: true,
+    hasOptions: true,
+    optionsType: "AddressOptions",
+  },
+  signTransaction: {
+    name: "signTransaction",
+    displayName: "signTransaction - Sign a transaction (CallTaskInApp)",
+    deviceActionType: "CallTaskInApp",
+    useCaseDir: "transaction",
+    useCaseTypesName: "transactionTypes",
+    useCaseClassName: "SignTransactionUseCase",
+    taskClassName: "SignTransactionTask",
+    commandClassName: "SignTransactionCommand",
+    userInteraction: "UserInteractionRequired.SignTransaction",
+    userInteractionTypes: "UserInteractionRequired.SignTransaction",
+    hasDerivationPath: true,
+    hasOptions: true,
+    optionsType: "TransactionOptions",
+  },
+  signMessage: {
+    name: "signMessage",
+    displayName: "signMessage - Sign a personal message (SendCommandInApp)",
+    deviceActionType: "SendCommandInApp",
+    useCaseDir: "message",
+    useCaseTypesName: "messageTypes",
+    useCaseClassName: "SignMessageUseCase",
+    commandClassName: "SignMessageCommand",
+    userInteraction: "UserInteractionRequired.SignPersonalMessage",
+    userInteractionTypes: "UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage",
+    hasDerivationPath: true,
+    hasOptions: false,
+  },
+};
+
+// ============================================================================
+// Helper Functions for Code Generation
+// ============================================================================
+
+/**
+ * Generates device action types for SendCommandInApp APIs
+ */
+function generateSendCommandInAppDATypes(config, pascalCase, kebabCase) {
+  const pascal = config.name.charAt(0).toUpperCase() + config.name.slice(1);
+  const isGetApi = config.name.startsWith("get");
+  // Use slice to remove "Get" (3 chars) or "Sign" (4 chars) prefix
+  const baseName = isGetApi ? pascal.slice(3) : pascal.slice(4);
+  const commandName = isGetApi ? `Get${baseName}` : `Sign${baseName}`;
+  
+  return `import {
+  type CommandErrorResult,
+  type ExecuteDeviceActionReturnType,
+  type OpenAppDAError,
+  type SendCommandInAppDAIntermediateValue,
+  type SendCommandInAppDAOutput,
+  type UserInteractionRequired,
+} from "@ledgerhq/device-management-kit";
+
+import { type ${commandName}CommandResponse } from "@internal/app-binder/command/${commandName}Command";
+import { type ${pascalCase}ErrorCodes } from "@internal/app-binder/command/utils/${kebabCase}ApplicationErrors";
+
+type ${pascal}DAUserInteractionRequired =
+  | ${config.userInteractionTypes || "UserInteractionRequired.None"};
+
+export type ${pascal}DAOutput =
+  SendCommandInAppDAOutput<${commandName}CommandResponse>;
+
+export type ${pascal}DAError =
+  | OpenAppDAError
+  | CommandErrorResult<${pascalCase}ErrorCodes>["error"];
+
+export type ${pascal}DAIntermediateValue =
+  SendCommandInAppDAIntermediateValue<${pascal}DAUserInteractionRequired>;
+
+export type ${pascal}DAReturnType = ExecuteDeviceActionReturnType<
+  ${pascal}DAOutput,
+  ${pascal}DAError,
+  ${pascal}DAIntermediateValue
+>;
+`;
+}
+
+/**
+ * Generates device action types for CallTaskInApp APIs
+ */
+function generateCallTaskInAppDATypes(config, pascalCase, kebabCase) {
+  const pascal = config.name.charAt(0).toUpperCase() + config.name.slice(1);
+  return `import {
+  type CommandErrorResult,
+  type ExecuteDeviceActionReturnType,
+  type OpenAppDAError,
+  type OpenAppDARequiredInteraction,
+  type UserInteractionRequired,
+} from "@ledgerhq/device-management-kit";
+
+import { type Signature } from "@api/model/Signature";
+import { type ${pascalCase}ErrorCodes } from "@internal/app-binder/command/utils/${kebabCase}ApplicationErrors";
+
+export type ${pascal}DAOutput = Signature;
+
+export type ${pascal}DAError =
+  | OpenAppDAError
+  | CommandErrorResult<${pascalCase}ErrorCodes>["error"];
+
+type ${pascal}DARequiredInteraction =
+  | OpenAppDARequiredInteraction
+  | ${config.userInteraction};
+
+export type ${pascal}DAIntermediateValue = {
+  requiredUserInteraction: ${pascal}DARequiredInteraction;
+};
+
+export type ${pascal}DAReturnType = ExecuteDeviceActionReturnType<
+  ${pascal}DAOutput,
+  ${pascal}DAError,
+  ${pascal}DAIntermediateValue
+>;
+`;
+}
+
+/**
+ * Generates use case DI types file
+ */
+function generateUseCaseDITypes(config) {
+  return `export const ${config.useCaseTypesName} = {
+  ${config.useCaseClassName}: Symbol.for("${config.useCaseClassName}"),
+} as const;
+`;
+}
+
+/**
+ * Generates use case DI module file
+ */
+function generateUseCaseDIModule(config) {
+  return `import { ContainerModule } from "inversify";
+
+import { ${config.useCaseTypesName} } from "@internal/use-cases/${config.useCaseDir}/di/${config.useCaseTypesName}";
+import { ${config.useCaseClassName} } from "@internal/use-cases/${config.useCaseDir}/${config.useCaseClassName}";
+
+export const ${config.useCaseDir}ModuleFactory = () =>
+  new ContainerModule(({ bind }) => {
+    bind(${config.useCaseTypesName}.${config.useCaseClassName}).to(${config.useCaseClassName});
+  });
+`;
+}
+
+/**
+ * Generates a command file with boilerplate implementation
+ */
+function generateCommand(config, pascalCase, kebabCase) {
+  const isGetApi = config.name.startsWith("get");
+  const baseName = isGetApi ? config.name.slice(3) : config.name.slice(4); // remove 'get' or 'sign'
+  const commandName = isGetApi ? `Get${baseName.charAt(0).toUpperCase() + baseName.slice(1)}` : `Sign${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`;
+  
+  const argsType = config.commandArgs || null;
+  const responseType = config.commandResponse || `{ /* Define response fields */ }`;
+  const hasArgs = config.hasDerivationPath || argsType;
+  
+  const imports = `import {
+  type Apdu,
+  type ApduResponse,
+  type Command,
+  type CommandResult,
+} from "@ledgerhq/device-management-kit";
+${config.name === "signMessage" ? '\nimport { type Signature } from "@api/model/Signature";' : ''}
+import { type ${pascalCase}ErrorCodes } from "./utils/${kebabCase}ApplicationErrors";`;
+
+  const argsTypeDefinition = hasArgs ? generateCommandArgsType(config) : '';
+  const responseTypeDefinition = generateCommandResponseType(config);
+  
+  const constructorAndArgs = hasArgs ? `
+  private readonly args: ${commandName}CommandArgs;
+
+  constructor(args: ${commandName}CommandArgs) {
+    this.args = args;
+  }` : '';
+
+  const implementsType = hasArgs 
+    ? `Command<${commandName}CommandResponse, ${commandName}CommandArgs, ${pascalCase}ErrorCodes>`
+    : `Command<${commandName}CommandResponse, void, ${pascalCase}ErrorCodes>`;
+
+  return `${imports}
+
+${argsTypeDefinition}${responseTypeDefinition}
+export class ${commandName}Command
+  implements
+    ${implementsType}
+{
+  readonly name = "${commandName}";
+${constructorAndArgs}
+
+  getApdu(): Apdu {
+    // TODO: Implement APDU construction based on your blockchain's protocol
+    // Example structure:
+    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
+    // Add derivation path and other data to builder
+    // return builder.build();
+    throw new Error("${commandName}Command.getApdu() not implemented");
+  }
+
+  parseResponse(
+    _apduResponse: ApduResponse,
+  ): CommandResult<${commandName}CommandResponse, ${pascalCase}ErrorCodes> {
+    // TODO: Implement response parsing based on your blockchain's protocol
+    // return CommandResultFactory({ data: { ... } });
+    throw new Error("${commandName}Command.parseResponse() not implemented");
+  }
+}
+`;
+}
+
+function generateCommandArgsType(config) {
+  switch (config.name) {
+    case "getAddress":
+      return `export type GetAddressCommandArgs = {
+  readonly derivationPath: string;
+  readonly checkOnDevice?: boolean;
+};
+
+`;
+    case "signTransaction":
+      return `export type SignTransactionCommandArgs = {
+  derivationPath: string;
+  transaction: Uint8Array;
+};
+
+`;
+    case "signMessage":
+      return `export type SignMessageCommandArgs = {
+  derivationPath: string;
+  message: string | Uint8Array;
+};
+
+`;
+    default:
+      return '';
+  }
+}
+
+function generateCommandResponseType(config) {
+  switch (config.name) {
+    case "getAppConfig":
+      return `export type GetAppConfigCommandResponse = {
+  // Define your app configuration response fields here
+  // Example:
+  // version: string;
+  // flags: number;
+};
+`;
+    case "getAddress":
+      return `export type GetAddressCommandResponse = {
+  readonly publicKey: Uint8Array;
+  readonly chainCode?: Uint8Array;
+};
+`;
+    case "signTransaction":
+      return `export type SignTransactionCommandResponse = {
+  signature: {
+    r: string;
+    s: string;
+    v?: number;
+  };
+};
+`;
+    case "signMessage":
+      return `export type SignMessageCommandResponse = Signature;
+`;
+    default:
+      return `export type ${config.commandClassName}Response = {
+  // Define response fields
+};
+`;
+  }
+}
+
+/**
+ * Generates a use case class file
+ */
+function generateUseCase(config, pascalCase) {
+  const isGetApi = config.name.startsWith("get");
+  const baseName = isGetApi ? config.name.slice(3) : config.name.slice(4);
+  const pascal = config.name.charAt(0).toUpperCase() + config.name.slice(1);
+  
+  const imports = [`import { inject, injectable } from "inversify";`,
+    ``,
+    `import { type ${pascal}DAReturnType } from "@api/app-binder/${pascal}DeviceActionTypes";`];
+  
+  if (config.optionsType) {
+    imports.push(`import { type ${config.optionsType} } from "@api/model/${config.optionsType}";`);
+  }
+  imports.push(`import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";`);
+  imports.push(`import { ${pascalCase}AppBinder } from "@internal/app-binder/${pascalCase}AppBinder";`);
+
+  const executeParams = generateUseCaseExecuteParams(config);
+  const appBinderCall = generateAppBinderCall(config);
+
+  return `${imports.join("\n")}
+
+@injectable()
+export class ${config.useCaseClassName} {
+  private readonly _appBinder: ${pascalCase}AppBinder;
+
+  constructor(
+    @inject(appBinderTypes.AppBinding) appBinder: ${pascalCase}AppBinder,
+  ) {
+    this._appBinder = appBinder;
+  }
+
+  execute(${executeParams}): ${pascal}DAReturnType {
+    return this._appBinder.${config.name}(${appBinderCall});
+  }
+}
+`;
+}
+
+function generateUseCaseExecuteParams(config) {
+  const params = [];
+  if (config.hasDerivationPath) {
+    params.push("derivationPath: string");
+  }
+  if (config.name === "signTransaction") {
+    params.push("transaction: Uint8Array");
+  }
+  if (config.name === "signMessage") {
+    params.push("message: string | Uint8Array");
+  }
+  if (config.optionsType) {
+    params.push(`options?: ${config.optionsType}`);
+  }
+  return params.length > 0 ? `\n    ${params.join(",\n    ")},\n  ` : "";
+}
+
+function generateAppBinderCall(config) {
+  if (config.name === "getAppConfig") {
+    return `{
+      skipOpenApp: false,
+    }`;
+  }
+  if (config.name === "getAddress") {
+    return `{
+      derivationPath,
+      checkOnDevice: options?.checkOnDevice ?? false,
+      skipOpenApp: options?.skipOpenApp ?? false,
+    }`;
+  }
+  if (config.name === "signTransaction") {
+    return `{
+      derivationPath,
+      transaction,
+      skipOpenApp: options?.skipOpenApp,
+    }`;
+  }
+  if (config.name === "signMessage") {
+    return `{
+      derivationPath,
+      message,
+      skipOpenApp: false,
+    }`;
+  }
+  return "{}";
+}
+
+/**
+ * Generates device action placeholder comment
+ */
+function generateDeviceActionPlaceholder(config) {
+  const deviceActionType = config.deviceActionType === "CallTaskInApp" 
+    ? "CallTaskInAppDeviceAction" 
+    : "SendCommandInAppDeviceAction";
+  const taskOrCommand = config.taskClassName 
+    ? `${config.taskClassName}` 
+    : `${config.commandClassName}`;
+  
+  return `// TODO: Implement ${config.useCaseClassName.replace("UseCase", "")}DeviceAction if needed
+// This is a placeholder - you may not need a custom device action for ${config.name}
+// if ${deviceActionType}${config.taskClassName ? ` with ${taskOrCommand}` : ''} is sufficient
+`;
+}
+
+/**
+ * Generates a task file for CallTaskInApp APIs
+ */
+function generateTask(config, pascalCase, kebabCase) {
+  const pascal = config.name.charAt(0).toUpperCase() + config.name.slice(1);
+  const baseName = pascal.replace("sign", "");
+  
+  return `import {
+  type CommandResult,
+  CommandResultFactory,
+  type InternalApi,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
+
+import { type Signature } from "@api/model/Signature";
+import { ${config.commandClassName} } from "@internal/app-binder/command/${config.commandClassName}";
+import { type ${pascalCase}ErrorCodes } from "@internal/app-binder/command/utils/${kebabCase}ApplicationErrors";
+
+type ${config.taskClassName}Args = {
+  derivationPath: string;
+  transaction: Uint8Array;
+};
+
+export class ${config.taskClassName} {
+  constructor(
+    private api: InternalApi,
+    private args: ${config.taskClassName}Args,
+  ) {}
+
+  async run(): Promise<CommandResult<Signature, ${pascalCase}ErrorCodes>> {
+    // TODO: Adapt this implementation to your blockchain's signing protocol
+    // For transactions larger than a single APDU, you may need to:
+    // 1. Split the transaction into chunks
+    // 2. Send each chunk with appropriate first/continue flags
+    // 3. Collect the final signature from the last response
+
+    const result = await this.api.sendCommand(
+      new ${config.commandClassName}({
+        derivationPath: this.args.derivationPath,
+        transaction: this.args.transaction,
+      }),
+    );
+
+    if (!isSuccessCommandResult(result)) {
+      return result;
+    }
+
+    return CommandResultFactory({
+      data: result.data.signature,
+    });
+  }
+}
+`;
+}
+
+// ============================================================================
+// Sample App Helper Functions
+// ============================================================================
+
+/**
+ * Generates the signer provider for the sample app
+ */
+function generateSignerProvider(pascalCase, kebabCase) {
+  return `"use client";
+
+import React, {
+  createContext,
+  type PropsWithChildren,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useSelector } from "react-redux";
+import {
+  type Signer${pascalCase},
+  Signer${pascalCase}Builder,
+} from "@ledgerhq/device-signer-kit-${kebabCase}";
+
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { selectSelectedSessionId } from "@/state/sessions/selectors";
+
+type Signer${pascalCase}ContextType = {
+  signer: Signer${pascalCase} | null;
+};
+
+const initialState: Signer${pascalCase}ContextType = {
+  signer: null,
+};
+
+const Signer${pascalCase}Context = createContext<Signer${pascalCase}ContextType>(initialState);
+
+export const Signer${pascalCase}Provider: React.FC<PropsWithChildren> = ({
+  children,
+}) => {
+  const dmk = useDmk();
+  const sessionId = useSelector(selectSelectedSessionId);
+
+  const [signer, setSigner] = useState<Signer${pascalCase} | null>(null);
+
+  useEffect(() => {
+    if (!sessionId || !dmk) {
+      setSigner(null);
+      return;
+    }
+
+    const newSigner = new Signer${pascalCase}Builder({
+      dmk,
+      sessionId,
+    }).build();
+    setSigner(newSigner);
+  }, [dmk, sessionId]);
+
+  return (
+    <Signer${pascalCase}Context.Provider
+      value={{
+        signer,
+      }}
+    >
+      {children}
+    </Signer${pascalCase}Context.Provider>
+  );
+};
+
+export const useSigner${pascalCase} = (): Signer${pascalCase} | null => {
+  return useContext(Signer${pascalCase}Context).signer;
+};
+`;
+}
+
+// Sample app device action configurations
+const SAMPLE_APP_DEVICE_ACTIONS = {
+  getAppConfig: {
+    typeImports: ["GetAppConfigDAError", "GetAppConfigDAIntermediateValue", "GetAppConfigDAOutput"],
+    action: `{
+        title: "Get App Config",
+        description: "Get the app configuration from the device",
+        executeDeviceAction: () => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.getAppConfig();
+        },
+        initialValues: {},
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetAppConfigDAOutput,
+        Record<string, never>,
+        GetAppConfigDAError,
+        GetAppConfigDAIntermediateValue
+      >`,
+  },
+  getAddress: {
+    typeImports: ["GetAddressDAError", "GetAddressDAIntermediateValue", "GetAddressDAOutput"],
+    action: `{
+        title: "Get Address",
+        description: "Get an address from the device",
+        executeDeviceAction: ({ derivationPath, checkOnDevice, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.getAddress(derivationPath, {
+            checkOnDevice,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/0'/0'/0/0",
+          checkOnDevice: false,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetAddressDAOutput,
+        {
+          derivationPath: string;
+          checkOnDevice?: boolean;
+          skipOpenApp?: boolean;
+        },
+        GetAddressDAError,
+        GetAddressDAIntermediateValue
+      >`,
+  },
+  signTransaction: {
+    typeImports: ["SignTransactionDAError", "SignTransactionDAIntermediateValue", "SignTransactionDAOutput"],
+    action: `{
+        title: "Sign Transaction",
+        description: "Sign a transaction with the device",
+        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          // Convert hex string to Uint8Array
+          const txBytes = transaction.startsWith("0x")
+            ? new Uint8Array(
+                transaction
+                  .slice(2)
+                  .match(/.{1,2}/g)
+                  ?.map((byte) => parseInt(byte, 16)) ?? []
+              )
+            : new Uint8Array(
+                transaction
+                  .match(/.{1,2}/g)
+                  ?.map((byte) => parseInt(byte, 16)) ?? []
+              );
+          return signer.signTransaction(derivationPath, txBytes, {
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/0'/0'/0/0",
+          transaction: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignTransactionDAOutput,
+        {
+          derivationPath: string;
+          transaction: string;
+          skipOpenApp?: boolean;
+        },
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >`,
+  },
+  signMessage: {
+    typeImports: ["SignMessageDAError", "SignMessageDAIntermediateValue", "SignMessageDAOutput"],
+    action: `{
+        title: "Sign Message",
+        description: "Sign a message with the device",
+        executeDeviceAction: ({ derivationPath, message }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.signMessage(derivationPath, message);
+        },
+        initialValues: {
+          derivationPath: "44'/0'/0'/0/0",
+          message: "Hello World",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignMessageDAOutput,
+        {
+          derivationPath: string;
+          message: string;
+        },
+        SignMessageDAError,
+        SignMessageDAIntermediateValue
+      >`,
+  },
+};
+
+/**
+ * Generates the signer view component for the sample app
+ */
+function generateSignerView(pascalCase, kebabCase, selectedApis) {
+  // Collect type imports and device actions from selected APIs
+  const typeImports = [];
+  const deviceActions = [];
+  
+  for (const apiName of selectedApis) {
+    const config = SAMPLE_APP_DEVICE_ACTIONS[apiName];
+    if (config) {
+      typeImports.push(...config.typeImports.map(t => `type ${t}`));
+      deviceActions.push(config.action);
+    }
+  }
+  
+  return `import React, { useMemo } from "react";
+import {
+  ${typeImports.join(",\n  ")},
+} from "@ledgerhq/device-signer-kit-${kebabCase}";
+import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
+import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { useSigner${pascalCase} } from "@/providers/Signer${pascalCase}Provider";
+
+export const Signer${pascalCase}View: React.FC<{ sessionId: string }> = ({
+  sessionId,
+}) => {
+  const dmk = useDmk();
+  const signer = useSigner${pascalCase}();
+
+  const deviceModelId = dmk.getConnectedDevice({
+    sessionId,
+  }).modelId;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
+    () => [
+      ${deviceActions.join(",\n      ")},
+    ],
+    [deviceModelId, signer],
+  );
+
+  return (
+    <DeviceActionsList title="Signer ${pascalCase}" deviceActions={deviceActions} />
+  );
+};
+`;
+}
+
+/**
+ * Generates the signer page for the sample app
+ */
+function generateSignerPage(pascalCase) {
+  return `"use client";
+import React from "react";
+
+import { SessionIdWrapper } from "@/components/SessionIdWrapper";
+import { Signer${pascalCase}View } from "@/components/Signer${pascalCase}View";
+
+const Signer: React.FC = () => {
+  return <SessionIdWrapper ChildComponent={Signer${pascalCase}View} />;
+};
+
+export default Signer;
+`;
+}
+
+// ============================================================================
+// Main Generator Function
+// ============================================================================
+
+async function generateSigner() {
+  console.log(chalk.blue("🚀 Welcome to the Ledger Device SDK Signer Generator"));
+  console.log(chalk.gray("This will create a new signer package skeleton for your cryptocurrency.\n"));
+
+  try {
+    const fs = require("fs");
+    const signerDir = "packages/signer";
+
+    // Get cryptocurrency name
+    const cryptoName = await input({
+      message: "What is the name of your cryptocurrency?",
+      validate: (value) => {
+        if (!value || value.trim().length === 0) {
+          return "Cryptocurrency name is required";
+        }
+        if (!/^[a-zA-Z][a-zA-Z0-9]*$/.test(value)) {
+          return "Cryptocurrency name must start with a letter and contain only letters and numbers";
+        }
+        // Check if signer already exists
+        const kebabCase = value.toLowerCase();
+        const targetDir = `packages/signer/signer-${kebabCase}`;
+        if (fs.existsSync(targetDir)) {
+          return `Signer package already exists: ${targetDir}`;
+        }
+        return true;
+      },
+    });
+
+    // Ask which APIs to include
+    const selectedApis = await checkbox({
+      message: "Which APIs do you want to include?",
+      choices: [
+        { name: "getAppConfig - Get app configuration (SendCommandInApp)", value: "getAppConfig", checked: true },
+        { name: "getAddress - Get address from derivation path (SendCommandInApp)", value: "getAddress", checked: true },
+        { name: "signTransaction - Sign a transaction (CallTaskInApp)", value: "signTransaction", checked: true },
+        { name: "signMessage - Sign a personal message (SendCommandInApp)", value: "signMessage", checked: true },
+      ],
+      validate: (value) => {
+        if (value.length === 0) {
+          return "You must select at least one API";
+        }
+        return true;
+      },
+    });
+
+    const includeGetAppConfig = selectedApis.includes("getAppConfig");
+    const includeGetAddress = selectedApis.includes("getAddress");
+    const includeSignTransaction = selectedApis.includes("signTransaction");
+    const includeSignMessage = selectedApis.includes("signMessage");
+
+    // Ask about context module usage
+    const useContextModule = await confirm({
+      message: "Do you want to include the context-module dependency?",
+      default: false,
+    });
+
+    console.log(chalk.green("\n✅ Generating signer package for"), chalk.bold(cryptoName));
+    console.log(chalk.gray("APIs:"), selectedApis.join(", "));
+    console.log(chalk.gray("Context module:"), useContextModule ? chalk.green("Yes") : chalk.red("No"));
+
+    // Normalize to PascalCase for class/interface names (first letter uppercase, rest lowercase)
+    const pascalCase = cryptoName.charAt(0).toUpperCase() + cryptoName.slice(1).toLowerCase();
+    const kebabCase = cryptoName.toLowerCase();
+    const baseDir = `packages/signer/signer-${kebabCase}`;
+    
+    // Check if target directory already exists
+    if (fs.existsSync(baseDir)) {
+      console.error(chalk.red(`\n❌ Directory already exists: ${baseDir}`));
+      console.error(chalk.red("Please remove it first or choose a different cryptocurrency name."));
+      process.exit(1);
+    }
+    
+    console.log(chalk.gray("\n📦 Creating directory structure..."));
+    
+    // Create the directory structure
+    const dirs = [
+      baseDir,
+      `${baseDir}/src`,
+      `${baseDir}/src/api`,
+      `${baseDir}/src/api/model`,
+      `${baseDir}/src/api/app-binder`,
+      `${baseDir}/src/internal`,
+      `${baseDir}/src/internal/app-binder`,
+      `${baseDir}/src/internal/app-binder/di`,
+      `${baseDir}/src/internal/app-binder/command`,
+      `${baseDir}/src/internal/app-binder/command/utils`,
+      `${baseDir}/src/internal/use-cases`,
+      `${baseDir}/src/internal/use-cases/di`,
+    ];
+
+    // Add conditional directories based on selected APIs
+    if (includeGetAddress) {
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action`);
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action/GetAddress`);
+      dirs.push(`${baseDir}/src/internal/use-cases/address`);
+      dirs.push(`${baseDir}/src/internal/use-cases/address/di`);
+    }
+    if (includeSignTransaction) {
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action`);
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action/SignTransaction`);
+      dirs.push(`${baseDir}/src/internal/app-binder/task`);
+      dirs.push(`${baseDir}/src/internal/use-cases/transaction`);
+      dirs.push(`${baseDir}/src/internal/use-cases/transaction/di`);
+    }
+    if (includeSignMessage) {
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action`);
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action/SignMessage`);
+      dirs.push(`${baseDir}/src/internal/use-cases/message`);
+      dirs.push(`${baseDir}/src/internal/use-cases/message/di`);
+    }
+    if (includeGetAppConfig) {
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action`);
+      dirs.push(`${baseDir}/src/internal/app-binder/device-action/GetAppConfig`);
+      dirs.push(`${baseDir}/src/internal/use-cases/config`);
+      dirs.push(`${baseDir}/src/internal/use-cases/config/di`);
+    }
+
+    dirs.forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    });
+
+    function writeFile(filePath, content) {
+      fs.writeFileSync(filePath, content);
+      console.log(chalk.green(`✅ Created ${filePath}`));
+    }
+
+    console.log(chalk.gray("\n📦 Generating files..."));
+    
+    // Generate package.json
+    const packageJson = {
+      name: `@ledgerhq/device-signer-kit-${kebabCase}`,
+      version: "0.1.0",
+      private: false,
+      license: "Apache-2.0",
+      repository: {
+        type: "git",
+        url: "https://github.com/LedgerHQ/device-sdk-ts.git"
+      },
+      exports: {
+        ".": {
+          types: "./lib/types/index.d.ts",
+          import: "./lib/esm/index.js",
+          require: "./lib/cjs/index.js"
+        },
+        "./*": {
+          types: "./lib/types/*",
+          import: "./lib/esm/*",
+          require: "./lib/cjs/*"
+        }
+      },
+      files: ["./lib"],
+      scripts: {
+        prebuild: "rimraf lib",
+        build: "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+        dev: "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+        "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+        "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+        lint: "eslint",
+        "lint:fix": "pnpm lint --fix",
+        prettier: "prettier . --check",
+        "prettier:fix": "prettier . --write",
+        typecheck: "tsc --noEmit",
+        test: "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage"
+      },
+      dependencies: {
+        "@ledgerhq/signer-utils": "workspace:^",
+        "inversify": "catalog:",
+        "purify-ts": "catalog:",
+        "reflect-metadata": "catalog:",
+        "xstate": "catalog:"
+      },
+      devDependencies: {
+        "@ledgerhq/device-management-kit": "workspace:^",
+        "@ledgerhq/ldmk-tool": "workspace:^",
+        "@ledgerhq/eslint-config-dsdk": "workspace:^",
+        "@ledgerhq/prettier-config-dsdk": "workspace:^",
+        "@ledgerhq/tsconfig-dsdk": "workspace:^",
+        "@ledgerhq/vitest-config-dmk": "workspace:^",
+        "rxjs": "catalog:",
+        "ts-node": "catalog:"
+      },
+      peerDependencies: {
+        "@ledgerhq/device-management-kit": "workspace:^"
+      }
+    };
+
+    if (useContextModule) {
+      packageJson.dependencies["@ledgerhq/context-module"] = "workspace:^";
+      packageJson.peerDependencies["@ledgerhq/context-module"] = "workspace:^";
+      packageJson.devDependencies["@ledgerhq/context-module"] = "workspace:^";
+    }
+
+    writeFile(`${baseDir}/package.json`, JSON.stringify(packageJson, null, 2) + '\n');
+
+    // Generate tsconfig.json
+    writeFile(`${baseDir}/tsconfig.json`, `{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "./lib/types",
+    "module": "ES2022",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "emitDeclarationOnly": true,
+    "paths": {
+      "@api/*": ["./src/api/*"],
+      "@internal/*": ["./src/internal/*"],
+      "@root/*": ["./*"]
+    },
+    "resolveJsonModule": true,
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["src", "vitest.*.mjs"]
+}
+`);
+
+    // Generate tsconfig.prod.json
+    writeFile(`${baseDir}/tsconfig.prod.json`, `{
+  "extends": "./tsconfig.json",
+  "include": ["src"]
+}
+`);
+
+    // Generate vitest.config.mjs
+    writeFile(`${baseDir}/vitest.config.mjs`, `import { defineConfig } from "vitest/config";
+import { vitestConfigDmk } from "@ledgerhq/vitest-config-dmk";
+
+export default defineConfig({
+  ...vitestConfigDmk,
+  test: {
+    ...vitestConfigDmk.test,
+    setupFiles: ["./vitest.setup.mjs"],
+  },
+});
+`);
+
+    // Generate vitest.setup.mjs
+    writeFile(`${baseDir}/vitest.setup.mjs`, `import "reflect-metadata";
+`);
+
+    // Generate .prettierrc.js
+    writeFile(`${baseDir}/.prettierrc.js`, `module.exports = require("@ledgerhq/prettier-config-dsdk");
+`);
+
+    // Generate .prettierignore
+    writeFile(`${baseDir}/.prettierignore`, `lib/
+node_modules/
+`);
+
+    // Generate eslint.config.mjs
+    writeFile(`${baseDir}/eslint.config.mjs`, `import { eslintConfigDmk } from "@ledgerhq/eslint-config-dsdk";
+
+export default eslintConfigDmk;
+`);
+
+    // Generate src/index.ts
+    writeFile(`${baseDir}/src/index.ts`, `// inversify requirement
+import "reflect-metadata";
+
+export * from "@api/index";
+`);
+
+    // Generate src/api/index.ts
+    writeFile(`${baseDir}/src/api/index.ts`, `export * from "@api/Signer${pascalCase}";
+export * from "@api/Signer${pascalCase}Builder";
+// Export other types as needed
+`);
+
+    // Generate src/api/Signer{pascalCase}.ts - dynamic based on selected APIs
+    const signerImports = [];
+    const signerMethods = [];
+
+    if (includeGetAppConfig) {
+      signerImports.push(`import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`);
+      signerMethods.push(`  getAppConfig: () => GetAppConfigDAReturnType;`);
+    }
+    if (includeGetAddress) {
+      signerImports.push(`import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`);
+      signerImports.push(`import { type AddressOptions } from "@api/model/AddressOptions";`);
+      signerMethods.push(`  getAddress: (
+    derivationPath: string,
+    options?: AddressOptions,
+  ) => GetAddressDAReturnType;`);
+    }
+    if (includeSignTransaction) {
+      signerImports.push(`import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`);
+      signerImports.push(`import { type TransactionOptions } from "@api/model/TransactionOptions";`);
+      signerMethods.push(`  signTransaction: (
+    derivationPath: string,
+    transaction: Uint8Array,
+    options?: TransactionOptions,
+  ) => SignTransactionDAReturnType;`);
+    }
+    if (includeSignMessage) {
+      signerImports.push(`import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`);
+      signerMethods.push(`  signMessage: (
+    derivationPath: string,
+    message: string | Uint8Array,
+  ) => SignMessageDAReturnType;`);
+    }
+
+    writeFile(`${baseDir}/src/api/Signer${pascalCase}.ts`, `${signerImports.join("\n")}
+
+export interface Signer${pascalCase} {
+${signerMethods.join("\n\n")}
+}
+`);
+
+    // Generate src/api/Signer{pascalCase}Builder.ts
+    writeFile(`${baseDir}/src/api/Signer${pascalCase}Builder.ts`, `import {
+  type DeviceManagementKit,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
+
+import { DefaultSigner${pascalCase} } from "@internal/DefaultSigner${pascalCase}";
+
+type Signer${pascalCase}BuilderConstructorArgs = {
+  dmk: DeviceManagementKit;
+  sessionId: DeviceSessionId;
+};
+
+/**
+ * Builder for the \`Signer${pascalCase}\` class.
+ */
+export class Signer${pascalCase}Builder {
+  private readonly _dmk: DeviceManagementKit;
+  private readonly _sessionId: DeviceSessionId;
+
+  constructor({ dmk, sessionId }: Signer${pascalCase}BuilderConstructorArgs) {
+    this._dmk = dmk;
+    this._sessionId = sessionId;
+  }
+
+  /**
+   * Build the signer instance
+   *
+   * @returns the signer instance
+   */
+  public build() {
+    return new DefaultSigner${pascalCase}({
+      dmk: this._dmk,
+      sessionId: this._sessionId,
+    });
+  }
+}
+`);
+
+    // Generate model files (conditional)
+    if (includeGetAddress) {
+      writeFile(`${baseDir}/src/api/model/AddressOptions.ts`, `export type AddressOptions = {
+  checkOnDevice?: boolean;
+  skipOpenApp?: boolean;
+};
+`);
+    }
+
+    if (includeSignTransaction) {
+      writeFile(`${baseDir}/src/api/model/TransactionOptions.ts`, `export type TransactionOptions = {
+  skipOpenApp?: boolean;
+  // Add other options as needed
+};
+`);
+    }
+
+    if (includeSignTransaction || includeSignMessage) {
+      writeFile(`${baseDir}/src/api/model/Signature.ts`, `export type Signature = {
+  r: string;
+  s: string;
+  v?: number;
+  // Adjust based on your blockchain's signature format
+};
+`);
+    }
+
+    if (includeGetAppConfig) {
+      writeFile(`${baseDir}/src/api/model/AppConfig.ts`, `export type AppConfig = {
+  // Define your app configuration fields here
+  // Example:
+  // version: string;
+  // flags: number;
+};
+`);
+    }
+
+    // Generate app-binder device action types using helper functions
+    for (const apiName of selectedApis) {
+      const config = API_CONFIGS[apiName];
+      const pascal = apiName.charAt(0).toUpperCase() + apiName.slice(1);
+      const content = config.deviceActionType === "CallTaskInApp"
+        ? generateCallTaskInAppDATypes(config, pascalCase, kebabCase)
+        : generateSendCommandInAppDATypes(config, pascalCase, kebabCase);
+      writeFile(`${baseDir}/src/api/app-binder/${pascal}DeviceActionTypes.ts`, content);
+    }
+
+    // Generate internal files
+    writeFile(`${baseDir}/src/internal/externalTypes.ts`, `export const externalTypes = {
+  Dmk: Symbol.for("Dmk"),
+  SessionId: Symbol.for("SessionId"),
+  ${useContextModule ? 'ContextModule: Symbol.for("ContextModule"),' : '// Add ContextModule if needed\n  // ContextModule: Symbol.for("ContextModule"),'}
+} as const;
+`);
+
+    // Generate DefaultSigner - dynamic based on selected APIs
+    const defaultSignerImports = [
+      `import {
+  type DeviceManagementKit,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";`,
+      `import { type Container } from "inversify";`,
+      `import { type Signer${pascalCase} } from "@api/Signer${pascalCase}";`,
+      `import { makeContainer } from "@internal/di";`,
+    ];
+    const defaultSignerMethods = [];
+
+    if (includeGetAppConfig) {
+      defaultSignerImports.push(`import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`);
+      defaultSignerImports.push(`import { configTypes } from "@internal/use-cases/config/di/configTypes";`);
+      defaultSignerImports.push(`import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";`);
+      defaultSignerMethods.push(`  getAppConfig(): GetAppConfigDAReturnType {
+    return this._container
+      .get<GetAppConfigUseCase>(configTypes.GetAppConfigUseCase)
+      .execute();
+  }`);
+    }
+    if (includeGetAddress) {
+      defaultSignerImports.push(`import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`);
+      defaultSignerImports.push(`import { type AddressOptions } from "@api/model/AddressOptions";`);
+      defaultSignerImports.push(`import { addressTypes } from "@internal/use-cases/address/di/addressTypes";`);
+      defaultSignerImports.push(`import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";`);
+      defaultSignerMethods.push(`  getAddress(
+    derivationPath: string,
+    options?: AddressOptions,
+  ): GetAddressDAReturnType {
+    return this._container
+      .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
+      .execute(derivationPath, options);
+  }`);
+    }
+    if (includeSignTransaction) {
+      defaultSignerImports.push(`import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`);
+      defaultSignerImports.push(`import { type TransactionOptions } from "@api/model/TransactionOptions";`);
+      defaultSignerImports.push(`import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";`);
+      defaultSignerImports.push(`import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";`);
+      defaultSignerMethods.push(`  signTransaction(
+    derivationPath: string,
+    transaction: Uint8Array,
+    options?: TransactionOptions,
+  ): SignTransactionDAReturnType {
+    return this._container
+      .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
+      .execute(derivationPath, transaction, options);
+  }`);
+    }
+    if (includeSignMessage) {
+      defaultSignerImports.push(`import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`);
+      defaultSignerImports.push(`import { messageTypes } from "@internal/use-cases/message/di/messageTypes";`);
+      defaultSignerImports.push(`import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";`);
+      defaultSignerMethods.push(`  signMessage(
+    derivationPath: string,
+    message: string | Uint8Array,
+  ): SignMessageDAReturnType {
+    return this._container
+      .get<SignMessageUseCase>(messageTypes.SignMessageUseCase)
+      .execute(derivationPath, message);
+  }`);
+    }
+
+    writeFile(`${baseDir}/src/internal/DefaultSigner${pascalCase}.ts`, `${defaultSignerImports.join("\n")}
+
+type DefaultSigner${pascalCase}ConstructorArgs = {
+  dmk: DeviceManagementKit;
+  sessionId: DeviceSessionId;
+};
+
+export class DefaultSigner${pascalCase} implements Signer${pascalCase} {
+  private readonly _container: Container;
+
+  constructor({ dmk, sessionId }: DefaultSigner${pascalCase}ConstructorArgs) {
+    this._container = makeContainer({ dmk, sessionId });
+  }
+
+${defaultSignerMethods.join("\n\n")}
+}
+`);
+
+    // Generate DI container - dynamic based on selected APIs
+    const diImports = [
+      `import {
+  type DeviceManagementKit,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";`,
+      `import { Container } from "inversify";`,
+      `import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";`,
+      `import { externalTypes } from "@internal/externalTypes";`,
+    ];
+    const diModules = [`appBindingModuleFactory()`];
+
+    if (includeGetAppConfig) {
+      diImports.push(`import { configModuleFactory } from "@internal/use-cases/config/di/configModule";`);
+      diModules.push(`configModuleFactory()`);
+    }
+    if (includeGetAddress) {
+      diImports.push(`import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";`);
+      diModules.push(`addressModuleFactory()`);
+    }
+    if (includeSignTransaction) {
+      diImports.push(`import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";`);
+      diModules.push(`transactionModuleFactory()`);
+    }
+    if (includeSignMessage) {
+      diImports.push(`import { messageModuleFactory } from "@internal/use-cases/message/di/messageModule";`);
+      diModules.push(`messageModuleFactory()`);
+    }
+
+    writeFile(`${baseDir}/src/internal/di.ts`, `${diImports.join("\n")}
+
+type MakeContainerProps = {
+  dmk: DeviceManagementKit;
+  sessionId: DeviceSessionId;
+};
+
+export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
+  const container = new Container();
+
+  container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
+  container
+    .bind<DeviceSessionId>(externalTypes.SessionId)
+    .toConstantValue(sessionId);
+
+  container.loadSync(
+    ${diModules.join(",\n    ")},
+  );
+
+  return container;
+};
+`);
+
+    // Generate app-binder files
+    writeFile(`${baseDir}/src/internal/app-binder/di/appBinderTypes.ts`, `export const appBinderTypes = {
+  AppBinding: Symbol.for("AppBinding"),
+} as const;
+`);
+
+    writeFile(`${baseDir}/src/internal/app-binder/di/appBinderModule.ts`, `import { ContainerModule } from "inversify";
+
+import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { ${pascalCase}AppBinder } from "@internal/app-binder/${pascalCase}AppBinder";
+
+export const appBindingModuleFactory = () =>
+  new ContainerModule(({ bind }) => {
+    bind(appBinderTypes.AppBinding).to(${pascalCase}AppBinder);
+  });
+`);
+
+    // Generate AppBinder - dynamic based on selected APIs
+    const appBinderDmkImports = ["type DeviceManagementKit", "type DeviceSessionId"];
+    if (includeGetAppConfig || includeGetAddress || includeSignMessage) {
+      appBinderDmkImports.push("SendCommandInAppDeviceAction");
+    }
+    if (includeSignTransaction) {
+      appBinderDmkImports.push("CallTaskInAppDeviceAction");
+    }
+    appBinderDmkImports.push("UserInteractionRequired");
+
+    const appBinderImports = [
+      `import {
+  ${appBinderDmkImports.join(",\n  ")},
+} from "@ledgerhq/device-management-kit";`,
+      `import { inject, injectable } from "inversify";`,
+      `import { externalTypes } from "@internal/externalTypes";`,
+    ];
+    const appBinderCommandImports = [];
+    const appBinderMethods = [];
+
+    if (includeGetAppConfig) {
+      appBinderImports.push(`import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";`);
+      appBinderCommandImports.push(`import { GetAppConfigCommand } from "./command/GetAppConfigCommand";`);
+      appBinderMethods.push(`  getAppConfig(args: {
+    skipOpenApp: boolean;
+  }): GetAppConfigDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetAppConfigCommand(),
+          appName: "${pascalCase}",
+          requiredUserInteraction: UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }`);
+    }
+
+    if (includeGetAddress) {
+      appBinderImports.push(`import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";`);
+      appBinderCommandImports.push(`import { GetAddressCommand } from "./command/GetAddressCommand";`);
+      appBinderMethods.push(`  getAddress(args: {
+    derivationPath: string;
+    checkOnDevice: boolean;
+    skipOpenApp: boolean;
+  }): GetAddressDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetAddressCommand(args),
+          appName: "${pascalCase}",
+          requiredUserInteraction: args.checkOnDevice
+            ? UserInteractionRequired.VerifyAddress
+            : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }`);
+    }
+
+    if (includeSignTransaction) {
+      appBinderImports.push(`import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";`);
+      appBinderCommandImports.push(`import { SignTransactionTask } from "./task/SignTransactionTask";`);
+      appBinderMethods.push(`  signTransaction(args: {
+    derivationPath: string;
+    transaction: Uint8Array;
+    skipOpenApp?: boolean;
+  }): SignTransactionDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SignTransactionTask(internalApi, args).run(),
+          appName: "${pascalCase}",
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp ?? false,
+        },
+      }),
+    });
+  }`);
+    }
+
+    if (includeSignMessage) {
+      appBinderImports.push(`import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";`);
+      appBinderCommandImports.push(`import { SignMessageCommand } from "./command/SignMessageCommand";`);
+      appBinderMethods.push(`  signMessage(args: {
+    derivationPath: string;
+    message: string | Uint8Array;
+    skipOpenApp: boolean;
+  }): SignMessageDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new SignMessageCommand(args),
+          appName: "${pascalCase}",
+          requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }`);
+    }
+
+    writeFile(`${baseDir}/src/internal/app-binder/${pascalCase}AppBinder.ts`, `${appBinderImports.join("\n")}
+
+${appBinderCommandImports.join("\n")}
+
+@injectable()
+export class ${pascalCase}AppBinder {
+  constructor(
+    @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
+    @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+  ) {}
+
+${appBinderMethods.join("\n\n")}
+}
+`);
+
+    // Generate command files
+    writeFile(`${baseDir}/src/internal/app-binder/command/utils/${kebabCase}ApplicationErrors.ts`, `export enum ${pascalCase}ErrorCodes {
+  // Define your error codes here
+  // Example:
+  // INVALID_DERIVATION_PATH = 0x6a80,
+  // TRANSACTION_PARSING_ERROR = 0x6a81,
+}
+`);
+
+    // Generate command files using helper function
+    for (const apiName of selectedApis) {
+      const config = API_CONFIGS[apiName];
+      writeFile(
+        `${baseDir}/src/internal/app-binder/command/${config.commandClassName}.ts`,
+        generateCommand(config, pascalCase, kebabCase)
+      );
+    }
+
+    // Generate use-case files using helper functions
+    for (const apiName of selectedApis) {
+      const config = API_CONFIGS[apiName];
+      // Generate DI types
+      writeFile(
+        `${baseDir}/src/internal/use-cases/${config.useCaseDir}/di/${config.useCaseTypesName}.ts`,
+        generateUseCaseDITypes(config)
+      );
+      // Generate DI module
+      writeFile(
+        `${baseDir}/src/internal/use-cases/${config.useCaseDir}/di/${config.useCaseDir}Module.ts`,
+        generateUseCaseDIModule(config)
+      );
+      // Generate use case class
+      writeFile(
+        `${baseDir}/src/internal/use-cases/${config.useCaseDir}/${config.useCaseClassName}.ts`,
+        generateUseCase(config, pascalCase)
+      );
+    }
+
+    // Generate device action placeholders and tasks using helper functions
+    for (const apiName of selectedApis) {
+      const config = API_CONFIGS[apiName];
+      const pascal = apiName.charAt(0).toUpperCase() + apiName.slice(1);
+      
+      // Generate device action placeholder
+      writeFile(
+        `${baseDir}/src/internal/app-binder/device-action/${pascal}/${pascal}DeviceAction.ts`,
+        generateDeviceActionPlaceholder(config)
+      );
+      
+      // Generate task if needed (for CallTaskInApp APIs)
+      if (config.taskClassName) {
+        writeFile(
+          `${baseDir}/src/internal/app-binder/task/${config.taskClassName}.ts`,
+          generateTask(config, pascalCase, kebabCase)
+        );
+      }
+    }
+
+    // Generate README.md
+    writeFile(`${baseDir}/README.md`, `# Signer ${cryptoName}
+
+This package provides a signer implementation for ${cryptoName}.
+
+## Installation
+
+\`\`\`bash
+pnpm add @ledgerhq/device-signer-kit-${kebabCase}
+\`\`\`
+
+## Usage
+
+\`\`\`typescript
+import { Signer${pascalCase}Builder } from "@ledgerhq/device-signer-kit-${kebabCase}";
+
+const signer = new Signer${pascalCase}Builder({ dmk, sessionId }).build();
+
+// Get address
+const address = await signer.getAddress("m/44'/0'/0'/0/0");
+
+// Sign transaction
+const signature = await signer.signTransaction(
+  "m/44'/0'/0'/0/0",
+  transactionBytes
+);
+\`\`\`
+
+## Development
+
+\`\`\`bash
+# Install dependencies
+pnpm install
+
+# Build
+pnpm build
+
+# Test
+pnpm test
+
+# Lint
+pnpm lint
+\`\`\`
+`);
+
+    // Generate CHANGELOG.md
+    writeFile(`${baseDir}/CHANGELOG.md`, `# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.1.0] - ${new Date().toISOString().split('T')[0]}
+
+### Added
+- Initial signer implementation for ${cryptoName}
+`);
+    console.log(chalk.gray("\n📚 Generating documentation and sample app files..."));
+
+    // Generate documentation page dynamically based on selected methods
+    const docsDir = `apps/docs/pages/docs/references/signers`;
+    const docFileName = `${kebabCase}.mdx`;
+    
+    // Build the list of capabilities dynamically
+    const capabilities = [];
+    if (includeGetAddress) capabilities.push(`- Retrieving the ${cryptoName} address using a given derivation path`);
+    if (includeSignTransaction) capabilities.push(`- Signing a ${cryptoName} transaction`);
+    if (includeSignMessage) capabilities.push(`- Signing a message displayed on a Ledger device`);
+    if (includeGetAppConfig) capabilities.push(`- Retrieving the app configuration`);
+    
+    // Build the index links dynamically
+    const indexLinks = [
+      "1. [How it works](#-how-it-works)",
+      "2. [Installation](#-installation)",
+      "3. [Initialisation](#-initialisation)",
+      "4. [Use Cases](#-use-cases)"
+    ];
+    
+    let useCaseNumber = 1;
+    const useCaseLinks = [];
+    if (includeGetAppConfig) {
+      useCaseLinks.push(`   - [Get App Configuration](#use-case-${useCaseNumber}-get-app-configuration)`);
+      useCaseNumber++;
+    }
+    if (includeGetAddress) {
+      useCaseLinks.push(`   - [Get Address](#use-case-${useCaseNumber}-get-address)`);
+      useCaseNumber++;
+    }
+    if (includeSignTransaction) {
+      useCaseLinks.push(`   - [Sign Transaction](#use-case-${useCaseNumber}-sign-transaction)`);
+      useCaseNumber++;
+    }
+    if (includeSignMessage) {
+      useCaseLinks.push(`   - [Sign Message](#use-case-${useCaseNumber}-sign-message)`);
+      useCaseNumber++;
+    }
+    
+    indexLinks.push(...useCaseLinks);
+    indexLinks.push("5. [Observable Behavior](#-observable-behavior)", "6. [Example](#-example)");
+    
+    // Build use case sections dynamically
+    let useCaseSections = [];
+    useCaseNumber = 1;
+    
+    if (includeGetAppConfig) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Get App Configuration
+
+This method allows users to retrieve the app configuration from the Ledger device.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.getAppConfig();
+\`\`\`
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type GetAppConfigCommandResponse = {
+  // TODO: Define the app configuration response type
+  // Example:
+  // version: string;
+  // flags: number;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    if (includeGetAddress) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Get Address
+
+This method allows users to retrieve the ${cryptoName} address based on a given \`derivationPath\`.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.getAddress(derivationPath, options);
+\`\`\`
+
+#### **Parameters**
+
+- \`derivationPath\`
+
+  - **Required**
+  - **Type:** \`string\` (e.g., \`"m/44'/0'/0'/0/0"\`)
+  - The derivation path used for the ${cryptoName} address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- \`options\`
+
+  - Optional
+  - Type: \`AddressOptions\`
+
+    \`\`\`typescript
+    type AddressOptions = {
+      checkOnDevice?: boolean;
+      skipOpenApp?: boolean;
+    };
+    \`\`\`
+
+  - \`checkOnDevice\`: An optional boolean indicating whether user confirmation on the device is required (\`true\`) or not (\`false\`).
+  - \`skipOpenApp\`: An optional boolean indicating whether to skip opening the ${cryptoName} app automatically (\`true\`) or not (\`false\`).
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type GetAddressCommandResponse = {
+  publicKey: Uint8Array;
+  chainCode?: Uint8Array;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    if (includeSignTransaction) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Sign Transaction
+
+This method allows users to sign a ${cryptoName} transaction.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.signTransaction(
+  derivationPath,
+  transaction,
+  options,
+);
+\`\`\`
+
+#### **Parameters**
+
+- \`derivationPath\`
+
+  - **Required**
+  - **Type:** \`string\` (e.g., \`"m/44'/0'/0'/0/0"\`)
+  - The derivation path used for the ${cryptoName} transaction. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- \`transaction\`
+
+  - **Required**
+  - **Type:** \`Uint8Array\`
+  - The serialized transaction to be signed.
+
+- \`options\`
+
+  - Optional
+  - Type: \`TransactionOptions\`
+
+    \`\`\`typescript
+    type TransactionOptions = {
+      skipOpenApp?: boolean;
+    };
+    \`\`\`
+
+  - \`skipOpenApp\`: An optional boolean indicating whether to skip opening the ${cryptoName} app automatically (\`true\`) or not (\`false\`).
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type Signature = {
+  r: string;
+  s: string;
+  v?: number;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    if (includeSignMessage) {
+      useCaseSections.push(`### Use Case ${useCaseNumber}: Sign Message
+
+This method allows users to sign a text string that is displayed on Ledger devices.
+
+\`\`\`typescript
+const { observable, cancel } = signer${pascalCase}.signMessage(
+  derivationPath,
+  message,
+);
+\`\`\`
+
+#### **Parameters**
+
+- \`derivationPath\`
+
+  - **Required**
+  - **Type:** \`string\` (e.g., \`"m/44'/0'/0'/0/0"\`)
+  - The derivation path used for the ${cryptoName} message. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- \`message\`
+
+  - **Required**
+  - **Type:** \`string | Uint8Array\`
+  - The message to be signed, which will be displayed on the Ledger device.
+
+#### **Returns**
+
+- \`observable\` Emits DeviceActionState updates, including the following details:
+
+\`\`\`typescript
+type Signature = {
+  r: string;
+  s: string;
+  v?: number;
+};
+\`\`\`
+
+- \`cancel\` A function to cancel the action on the Ledger device.
+
+---`);
+      useCaseNumber++;
+    }
+    
+    // Count total methods for the description
+    const methodCount = selectedApis.length;
+    const methodPlural = methodCount === 1 ? "method" : "methods";
+    
+    const docContent = `# ${pascalCase} Signer Kit
+
+This module provides the implementation of the Ledger ${cryptoName} signer of the Device Management Kit. It enables interaction with the ${cryptoName} application on a Ledger device including:
+
+${capabilities.join("\n")}
+
+## 🔹 Index
+
+${indexLinks.join("\n")}
+
+## 🔹 How it works
+
+The Ledger ${pascalCase} Signer utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device Management Kit to establish communication with the Ledger device and execute various operations. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the \`Command\` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within \`DeviceAction\` objects to handle different real-world scenarios. Finally, the Signer exposes dedicated and independent use cases that can be directly utilized by end users.
+
+## 🔹 Installation
+
+> **Note:** This module is not standalone; it depends on the [@ledgerhq/device-management-kit](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/device-management-kit) package, so you need to install it first.
+
+To install the \`device-signer-kit-${kebabCase}\` package, run the following command:
+
+\`\`\`sh
+npm install @ledgerhq/device-signer-kit-${kebabCase}
+\`\`\`
+
+## 🔹 Initialisation
+
+To initialise a ${pascalCase} signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the \`Signer${pascalCase}Builder\`:
+
+\`\`\`typescript
+const signer${pascalCase} = new Signer${pascalCase}Builder({ dmk, sessionId }).build();
+\`\`\`
+
+## 🔹 Use Cases
+
+The \`Signer${pascalCase}Builder.build()\` method will return a \`Signer${pascalCase}\` instance that exposes ${methodCount} dedicated ${methodPlural}, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called \`cancel\`.
+
+---
+
+${useCaseSections.join("\n\n")}
+
+## 🔹 Observable Behavior
+
+Each method returns an [Observable](https://rxjs.dev/guide/observable) emitting updates structured as [\`DeviceActionState\`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts). These updates reflect the operation's progress and status:
+
+- **NotStarted**: The operation hasn't started.
+- **Pending**: The operation is in progress and may require user interaction.
+- **Stopped**: The operation was canceled or stopped.
+- **Completed**: The operation completed successfully, with results available.
+- **Error**: An error occurred.
+
+**Example Observable Subscription:**
+
+\`\`\`typescript
+observable.subscribe({
+  next: (state: DeviceActionState) => {
+    switch (state.status) {
+      case DeviceActionStatus.NotStarted: {
+        console.log("The action is not started yet.");
+        break;
+      }
+      case DeviceActionStatus.Pending: {
+        const {
+          intermediateValue: { requiredUserInteraction },
+        } = state;
+        // Access the intermediate value here, explained below
+        console.log(
+          "The action is pending and the intermediate value is: ",
+          intermediateValue,
+        );
+        break;
+      }
+      case DeviceActionStatus.Stopped: {
+        console.log("The action has been stopped.");
+        break;
+      }
+      case DeviceActionStatus.Completed: {
+        const { output } = state;
+        // Access the output of the completed action here
+        console.log("The action has been completed: ", output);
+        break;
+      }
+      case DeviceActionStatus.Error: {
+        const { error } = state;
+        // Access the error here if occurred
+        console.log("An error occurred during the action: ", error);
+        break;
+      }
+    }
+  },
+});
+\`\`\`
+
+**Intermediate Values in Pending Status:**
+
+When the status is DeviceActionStatus.Pending, the state will include an \`intermediateValue\` object that provides useful information for interaction:
+
+\`\`\`typescript
+const { requiredUserInteraction } = intermediateValue;
+
+switch (requiredUserInteraction) {
+  case UserInteractionRequired.VerifyAddress: {
+    // User needs to verify the address displayed on the device
+    console.log("User needs to verify the address displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.SignTransaction: {
+    // User needs to sign the transaction displayed on the device
+    console.log("User needs to sign the transaction displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.SignPersonalMessage: {
+    // User needs to sign the message displayed on the device
+    console.log("User needs to sign the message displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.None: {
+    // No user action required
+    console.log("No user action needed.");
+    break;
+  }
+  case UserInteractionRequired.UnlockDevice: {
+    // User needs to unlock the device
+    console.log("The user needs to unlock the device.");
+    break;
+  }
+  case UserInteractionRequired.ConfirmOpenApp: {
+    // User needs to confirm on the device to open the app
+    console.log("The user needs to confirm on the device to open the app.");
+    break;
+  }
+  default:
+    // Type guard to ensure all cases are handled
+    const uncaughtUserInteraction: never = requiredUserInteraction;
+    console.error("Unhandled user interaction case:", uncaughtUserInteraction);
+}
+\`\`\`
+
+## 🔹 Example
+
+We encourage you to explore the ${pascalCase} Signer by trying it out in our online [sample application](https://app.devicesdk.ledger-test.com/). Experience how it works and see its capabilities in action. Of course, you will need a Ledger device connected.
+`;
+
+    writeFile(`${docsDir}/${docFileName}`, docContent);
+
+    // Update _meta.js in docs
+    const metaFilePath = `${docsDir}/_meta.js`;
+    let metaContent = fs.readFileSync(metaFilePath, 'utf8');
+    // Add new entry before the closing brace
+    metaContent = metaContent.replace(
+      /(\s+)(};)/,
+      `$1  ${kebabCase}: "Signer ${pascalCase}",\n$1$2`
+    );
+    writeFile(metaFilePath, metaContent);
+
+    // Generate sample app files
+    console.log(chalk.gray("\n📱 Generating sample app files..."));
+    
+    const sampleAppDir = "apps/sample/src";
+    
+    // Create directories for sample app
+    const sampleDirs = [
+      `${sampleAppDir}/providers/Signer${pascalCase}Provider`,
+      `${sampleAppDir}/components/Signer${pascalCase}View`,
+      `${sampleAppDir}/app/signers/${kebabCase}`,
+    ];
+    sampleDirs.forEach(dir => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    });
+    
+    // Generate provider
+    writeFile(
+      `${sampleAppDir}/providers/Signer${pascalCase}Provider/index.tsx`,
+      generateSignerProvider(pascalCase, kebabCase)
+    );
+    
+    // Generate view component
+    writeFile(
+      `${sampleAppDir}/components/Signer${pascalCase}View/index.tsx`,
+      generateSignerView(pascalCase, kebabCase, selectedApis)
+    );
+    
+    // Generate page
+    writeFile(
+      `${sampleAppDir}/app/signers/${kebabCase}/page.tsx`,
+      generateSignerPage(pascalCase)
+    );
+    
+    // Update client-layout.tsx to add the new signer provider
+    const clientLayoutPath = `${sampleAppDir}/app/client-layout.tsx`;
+    if (fs.existsSync(clientLayoutPath)) {
+      let clientLayoutContent = fs.readFileSync(clientLayoutPath, "utf-8");
+      
+      const providerImport = `import { Signer${pascalCase}Provider } from "@/providers/Signer${pascalCase}Provider";`;
+      const providerName = `Signer${pascalCase}Provider`;
+      
+      // Check if already imported
+      if (clientLayoutContent.includes(providerImport) || clientLayoutContent.includes(`<${providerName}>`)) {
+        console.log(chalk.yellow(`⚠️  ${providerName} already exists in ${clientLayoutPath}`));
+      } else {
+        // Add import after the last SignerProvider import or after other provider imports
+        const importRegex = /(import \{ Signer\w+Provider \} from "@\/providers\/Signer\w+Provider";)/g;
+        let lastImportMatch;
+        let match;
+        while ((match = importRegex.exec(clientLayoutContent)) !== null) {
+          lastImportMatch = match;
+        }
+        
+        if (lastImportMatch) {
+          // Insert after the last signer provider import
+          const insertPosition = lastImportMatch.index + lastImportMatch[0].length;
+          clientLayoutContent = 
+            clientLayoutContent.slice(0, insertPosition) + 
+            "\n" + providerImport +
+            clientLayoutContent.slice(insertPosition);
+        } else {
+          // Fallback: add after the store import
+          clientLayoutContent = clientLayoutContent.replace(
+            /(import \{ store \} from "@\/state\/store";)/,
+            `$1\n${providerImport}`
+          );
+        }
+        
+        // Add provider wrapper - find the innermost provider (before CalInterceptorProvider or GlobalStyle)
+        // Look for pattern like <SignerEthProvider> and wrap inside it
+        const providerWrapperRegex = /(<SignerEthProvider>)/;
+        if (clientLayoutContent.match(providerWrapperRegex)) {
+          clientLayoutContent = clientLayoutContent.replace(
+            providerWrapperRegex,
+            `$1\n                  <${providerName}>`
+          );
+          // Find the closing tag and add our closing tag before it
+          clientLayoutContent = clientLayoutContent.replace(
+            /(<\/SignerEthProvider>)/,
+            `</${providerName}>\n                $1`
+          );
+        } else {
+          // Fallback: wrap around CalInterceptorProvider
+          clientLayoutContent = clientLayoutContent.replace(
+            /(<CalInterceptorProvider>)/,
+            `<${providerName}>\n                    $1`
+          );
+          clientLayoutContent = clientLayoutContent.replace(
+            /(<\/CalInterceptorProvider>)/,
+            `$1\n                  </${providerName}>`
+          );
+        }
+        
+        fs.writeFileSync(clientLayoutPath, clientLayoutContent);
+        console.log(chalk.green(`✅ Updated ${clientLayoutPath}`));
+      }
+    }
+
+    // Update sample app package.json to add the new signer dependency
+    const samplePackageJsonPath = "apps/sample/package.json";
+    if (fs.existsSync(samplePackageJsonPath)) {
+      const packageJson = JSON.parse(fs.readFileSync(samplePackageJsonPath, "utf-8"));
+      const depName = `@ledgerhq/device-signer-kit-${kebabCase}`;
+      
+      if (packageJson.dependencies && !packageJson.dependencies[depName]) {
+        packageJson.dependencies[depName] = "workspace:^";
+        
+        // Sort dependencies alphabetically
+        packageJson.dependencies = Object.keys(packageJson.dependencies)
+          .sort()
+          .reduce((obj, key) => {
+            obj[key] = packageJson.dependencies[key];
+            return obj;
+          }, {});
+        
+        fs.writeFileSync(samplePackageJsonPath, JSON.stringify(packageJson, null, 2) + "\n");
+        console.log(chalk.green(`✅ Added ${depName} to ${samplePackageJsonPath}`));
+      } else if (packageJson.dependencies && packageJson.dependencies[depName]) {
+        console.log(chalk.yellow(`⚠️  ${depName} already exists in ${samplePackageJsonPath}`));
+      }
+    }
+
+    // Update root package.json to add the signer alias
+    const rootPackageJsonPath = "package.json";
+    if (fs.existsSync(rootPackageJsonPath)) {
+      const rootPackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, "utf-8"));
+      const aliasName = `signer-${kebabCase}`;
+      const packageName = `@ledgerhq/device-signer-kit-${kebabCase}`;
+      const aliasValue = `pnpm --filter ${packageName}`;
+      
+      if (!rootPackageJson.scripts) {
+        rootPackageJson.scripts = {};
+      }
+      
+      if (!rootPackageJson.scripts[aliasName]) {
+        // Insert the alias in alphabetical order after other signer aliases
+        const scripts = rootPackageJson.scripts;
+        const scriptKeys = Object.keys(scripts);
+        
+        // Find the position to insert (after the last signer-* alias, before signer-utils)
+        let insertIndex = scriptKeys.length;
+        for (let i = 0; i < scriptKeys.length; i++) {
+          if (scriptKeys[i].startsWith("signer-") && scriptKeys[i] > aliasName) {
+            insertIndex = i;
+            break;
+          }
+        }
+        
+        // If we didn't find a position, check if we should insert before signer-utils
+        if (insertIndex === scriptKeys.length) {
+          const signerUtilsIndex = scriptKeys.indexOf("signer-utils");
+          if (signerUtilsIndex !== -1 && aliasName < "signer-utils") {
+            insertIndex = signerUtilsIndex;
+          }
+        }
+        
+        // Create new scripts object with the alias inserted
+        const newScripts = {};
+        let inserted = false;
+        for (let i = 0; i < scriptKeys.length; i++) {
+          if (i === insertIndex && !inserted) {
+            newScripts[aliasName] = aliasValue;
+            inserted = true;
+          }
+          newScripts[scriptKeys[i]] = scripts[scriptKeys[i]];
+        }
+        if (!inserted) {
+          newScripts[aliasName] = aliasValue;
+        }
+        
+        rootPackageJson.scripts = newScripts;
+        fs.writeFileSync(rootPackageJsonPath, JSON.stringify(rootPackageJson, null, 2) + "\n");
+        console.log(chalk.green(`✅ Added alias "${aliasName}" to ${rootPackageJsonPath}`));
+      } else {
+        console.log(chalk.yellow(`⚠️  Alias "${aliasName}" already exists in ${rootPackageJsonPath}`));
+      }
+    }
+
+    // Update SignerView/index.tsx to add the new signer
+    const signerViewPath = `${sampleAppDir}/components/SignerView/index.tsx`;
+    if (fs.existsSync(signerViewPath)) {
+      let signerViewContent = fs.readFileSync(signerViewPath, "utf-8");
+      
+      // Check if this signer already exists
+      if (signerViewContent.includes(`title: "${pascalCase}"`)) {
+        console.log(chalk.yellow(`⚠️  ${pascalCase} already exists in ${signerViewPath}`));
+      } else {
+        // Find the SUPPORTED_SIGNERS array and add the new entry
+        // Use uppercase ticker symbol if it's a known crypto, otherwise use BTC as placeholder
+        const ticker = kebabCase.toUpperCase();
+        const iconName = ["ETH", "BTC", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC", "LINK", "UNI"].includes(ticker) 
+          ? ticker 
+          : "BTC"; // Use BTC as fallback placeholder
+        
+        const newSignerEntry = `  {
+    title: "${pascalCase}",
+    description: "Access ${pascalCase} signer functionality",
+    icon: <CryptoIcons.${iconName} size={80} />, // TODO: Update icon if needed
+  },`;
+        
+        // Find the closing of SUPPORTED_SIGNERS array and insert before it
+        // Look for the pattern: },\n]; at the end of the array
+        const arrayEndRegex = /(const SUPPORTED_SIGNERS = \[[\s\S]*?},)\n\];/;
+        const match = signerViewContent.match(arrayEndRegex);
+        
+        if (match) {
+          signerViewContent = signerViewContent.replace(
+            arrayEndRegex,
+            `$1\n${newSignerEntry}\n];`
+          );
+          fs.writeFileSync(signerViewPath, signerViewContent);
+          console.log(chalk.green(`✅ Updated ${signerViewPath}`));
+        } else {
+          console.log(chalk.yellow(`⚠️  Could not update ${signerViewPath} - please add the signer manually`));
+        }
+      }
+    }
+
+    console.log(chalk.green("\n🎉 Signer package generated successfully!"));
+    console.log(chalk.gray("\nGenerated files:"));
+    console.log(chalk.cyan(`   ✓ Signer package: packages/signer/signer-${kebabCase}`));
+    console.log(chalk.cyan(`   ✓ Documentation: apps/docs/pages/docs/references/signers/${kebabCase}.mdx`));
+    console.log(chalk.cyan(`   ✓ Sample component: apps/sample/src/components/Signer${pascalCase}View/index.tsx`));
+    console.log(chalk.cyan(`   ✓ Sample page: apps/sample/src/app/signers/${kebabCase}/page.tsx`));
+    console.log(chalk.gray("\nNext steps:"));
+    console.log(chalk.gray("1. Install dependencies from the root:"));
+    console.log(chalk.cyan("   pnpm install"));
+    console.log(chalk.gray("2. Build the package:"));
+    console.log(chalk.cyan(`   pnpm --filter @ledgerhq/device-signer-kit-${kebabCase} build`));
+    console.log(chalk.gray("3. Run the sample app to test:"));
+    console.log(chalk.cyan("   pnpm sample dev"));
+    console.log(chalk.gray(`4. Start developing your ${cryptoName} signer implementation!`));
+    console.log(chalk.yellow("\n⚠️  Remember to implement:"));
+    console.log(chalk.yellow("   - APDU construction in commands (getApdu methods)"));
+    console.log(chalk.yellow("   - Response parsing in commands (parseResponse methods)"));
+    console.log(chalk.yellow("   - Error codes in " + kebabCase + "ApplicationErrors.ts"));
+    if (includeSignTransaction) {
+      console.log(chalk.yellow("   - SignTransactionTask implementation"));
+    }
+    console.log(chalk.gray("\nGenerated files:"));
+    console.log(chalk.gray("  Signer package: ") + chalk.cyan(`packages/signer/signer-${kebabCase}/`));
+    console.log(chalk.gray("  Sample app provider: ") + chalk.cyan(`apps/sample/src/providers/Signer${pascalCase}Provider/`));
+    console.log(chalk.gray("  Sample app view: ") + chalk.cyan(`apps/sample/src/components/Signer${pascalCase}View/`));
+    console.log(chalk.gray("  Sample app page: ") + chalk.cyan(`apps/sample/src/app/signers/${kebabCase}/`));
+    console.log(chalk.gray("\nGenerated APIs: ") + chalk.cyan(selectedApis.join(", ")));
+
+  } catch (error) {
+    if (error.name === "ExitPromptError") {
+      console.log(chalk.yellow("\n❌ Generation cancelled by user"));
+      process.exit(0);
+    } else {
+      console.error(chalk.red("\n❌ Error generating signer package:"), error.message);
+      console.error(error.stack);
+      process.exit(1);
+    }
+  }
+}
+
+module.exports = {
+  generateSigner,
+};

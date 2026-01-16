@@ -3,6 +3,7 @@ import {
   CallTaskInAppDeviceAction,
   DeviceManagementKit,
   type DeviceSessionId,
+  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -29,6 +30,8 @@ export class SolanaAppBinder {
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
     @inject(externalTypes.ContextModule) private contextModule: ContextModule,
+    @inject(externalTypes.DmkLoggerFactory)
+    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAddress(args: {
@@ -47,6 +50,7 @@ export class SolanaAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("SendCommandInAppDeviceAction"),
       }),
     });
   }
@@ -65,6 +69,7 @@ export class SolanaAppBinder {
           transactionOptions: args.solanaTransactionOptionalConfig,
           contextModule: this.contextModule,
         },
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }
@@ -103,6 +108,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("CallTaskInAppDeviceAction"),
       }),
     });
   }
@@ -117,6 +123,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: false,
         },
+        logger: this.dmkLoggerFactory("SendCommandInAppDeviceAction"),
       }),
     });
   }

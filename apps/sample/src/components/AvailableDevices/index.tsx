@@ -1,12 +1,17 @@
 import React, { useCallback, useState } from "react";
-import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
+import {
+  type ConnectionType,
+  type DiscoveredDevice,
+  type TransportIdentifier,
+} from "@ledgerhq/device-management-kit";
+import { webBleIdentifier } from "@ledgerhq/device-transport-kit-web-ble";
+import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { AvailableDevice } from "@/components/Device";
 import { useAvailableDevices } from "@/hooks/useAvailableDevices";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useDeviceSessionsContext } from "@/providers/DeviceSessionsProvider";
 
 const Title = styled(Text)<{ disabled: boolean }>`
   :hover {
@@ -62,30 +67,32 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
   );
 };
 
+const mapTransportToType = (transport: TransportIdentifier): ConnectionType => {
+  switch (transport) {
+    case webBleIdentifier:
+      return "BLE";
+    case webHidIdentifier:
+      return "USB";
+    default:
+      return "MOCK";
+  }
+};
+
 const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   device,
 ) => {
-  const { deviceModel, connected } = device;
+  const { deviceModel, connected, name } = device;
   const dmk = useDmk();
-  const { dispatch } = useDeviceSessionsContext();
-  const connectToDevice = useCallback(() => {
-    dmk.connect({ device }).then((sessionId) => {
-      dispatch({
-        type: "add_session",
-        payload: {
-          sessionId,
-          connectedDevice: dmk.getConnectedDevice({ sessionId }),
-        },
-      });
-    });
-  }, [dmk, device, dispatch]);
+  const connectToDevice = useCallback(async () => {
+    await dmk.connect({ device });
+  }, [dmk, device]);
 
   return (
     <Flex flexDirection="row" alignItems="center">
       <AvailableDevice
-        name={deviceModel.name}
+        name={name ?? deviceModel.name}
         model={deviceModel.model}
-        type={"USB"}
+        type={mapTransportToType(device.transport)}
         connected={connected}
         onConnect={connectToDevice}
       />

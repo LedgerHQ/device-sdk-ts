@@ -29,6 +29,10 @@ export type {
 export type { Signature } from "@api/model/Signature";
 export type { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 export type { Transaction } from "@api/model/Transaction";
+export type {
+  TransactionResolutionContext,
+  UserInputType,
+} from "@api/model/TransactionResolutionContext";
 export type { SignerSolana } from "@api/SignerSolana";
 export { SignerSolanaBuilder } from "@api/SignerSolanaBuilder";
 export type { SolanaTools } from "@api/SolanaTools";

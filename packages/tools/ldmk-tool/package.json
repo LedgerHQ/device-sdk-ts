@@ -16,8 +16,8 @@
     "semver": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "esbuild": "catalog:",
     "esbuild-node-externals": "catalog:"
   }

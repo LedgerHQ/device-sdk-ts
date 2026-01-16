@@ -7,9 +7,9 @@
     "clean": "rimraf -g **/.turbo **/.next **/coverage **/node_modules",
     "build": "turbo run build",
     "build:libs": "turbo run build --filter=./packages/**",
-    "dev": "turbo run dev  --concurrency 20 --filter=!./apps/docs",
-    "dev:doc": "turbo run dev  --concurrency 20 --filter=!./apps/sample",
-    "dev:libs": "turbo run dev --concurrency 20 --filter=./packages/**",
+    "dev": "turbo run dev  --concurrency 30 --filter=!./apps/docs",
+    "dev:doc": "turbo run dev  --concurrency 30 --filter=!./apps/sample",
+    "dev:libs": "turbo run dev --concurrency 30 --filter=./packages/**",
     "lint": "turbo run lint",
     "lint:fix": "turbo run lint:fix",
     "prettier": "turbo run prettier",
@@ -19,6 +19,7 @@
     "typecheck": "turbo run typecheck",
     "health-check": "turbo run health-check --output-logs=errors-only --continue",
     "dmk": "pnpm --filter @ledgerhq/device-management-kit",
+    "devtools": "pnpm --filter @ledgerhq/device-management-kit-devtools",
     "speculos-device-controller": "pnpm --filter @ledgerhq/speculos-device-controller",
     "context-module": "pnpm --filter @ledgerhq/context-module",
     "signer-btc": "pnpm --filter @ledgerhq/device-signer-kit-bitcoin",
@@ -37,13 +38,10 @@
     "transport-speculos": "pnpm --filter @ledgerhq/device-transport-kit-speculos",
     "apps": "pnpm --filter @ledgerhq/device-trusted-app-*",
     "app-keyring": "pnpm --filter @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
-    "flipper": "pnpm --filter @ledgerhq/device-management-kit-flipper-plugin-client",
     "sample": "pnpm --filter @ledgerhq/device-management-kit-sample",
     "mobile": "pnpm --filter @ledgerhq/device-management-kit-mobile-sample",
     "doc": "pnpm --filter @ledgerhq/ledger-dmk-docs",
-    "bump": "changeset version",
-    "prerelease": "pnpm recursive exec -- pnpm pack",
-    "release": "changeset publish",
+    "cs-tester": "pnpm --filter @ledgerhq/ethereum-clear-signing-tester",
     "changelog": "changeset add",
     "commit": "gitmoji -c",
     "commitcl": "pnpm changelog && git add .changeset && pnpm commit",
@@ -56,8 +54,8 @@
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",
     "@changesets/cli": "catalog:",
-    "@ledgerhq/ldmk-cli": "workspace:*",
-    "@ledgerhq/ldmk-tool": "workspace:*",
+    "@ledgerhq/ldmk-cli": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
     "@types/node": "catalog:",
     "@vitest/coverage-istanbul": "catalog:",
     "concurrently": "catalog:",
@@ -79,5 +77,5 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@10.20.0"
+  "packageManager": "pnpm@10.28.0"
 }

@@ -6,7 +6,6 @@ import {
   type DeviceManagementKit,
   type DeviceSessionId,
   type DmkError,
-  SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { from } from "rxjs";
@@ -34,7 +33,7 @@ import {
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
-import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
+import { NullLoggerPublisherService } from "./services/utils/NullLoggerPublisherService";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 describe("SolanaAppBinder", () => {
@@ -45,7 +44,6 @@ describe("SolanaAppBinder", () => {
     sendCommand: vi.fn(),
     executeDeviceAction: vi.fn(),
   } as unknown as DeviceManagementKit;
-
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -55,6 +53,7 @@ describe("SolanaAppBinder", () => {
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
       contextModuleStub,
+      NullLoggerPublisherService,
     );
     expect(binder).toBeDefined();
   });
@@ -84,6 +83,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/501'",
@@ -140,21 +140,24 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          NullLoggerPublisherService,
         );
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-          sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
-            input: {
-              command: new GetPubKeyCommand(params),
-              appName: "Solana",
-              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
-              skipOpenApp: false,
-            },
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: expect.objectContaining({
+              input: {
+                command: new GetPubKeyCommand(params),
+                appName: "Solana",
+                requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+                skipOpenApp: false,
+              },
+            }),
           }),
-        });
+        );
       });
 
       it("when checkOnDevice is false: UserInteractionRequired.None", () => {
@@ -170,21 +173,24 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          NullLoggerPublisherService,
         );
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-          sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
-            input: {
-              command: new GetPubKeyCommand(params),
-              appName: "Solana",
-              requiredUserInteraction: UserInteractionRequired.None,
-              skipOpenApp: false,
-            },
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: expect.objectContaining({
+              input: {
+                command: new GetPubKeyCommand(params),
+                appName: "Solana",
+                requiredUserInteraction: UserInteractionRequired.None,
+                skipOpenApp: false,
+              },
+            }),
           }),
-        });
+        );
       });
     });
   });
@@ -214,6 +220,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
@@ -261,6 +268,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
+        NullLoggerPublisherService,
       );
       appBinder.signTransaction({
         derivationPath,
@@ -269,17 +277,19 @@ describe("SolanaAppBinder", () => {
       });
 
       // THEN
-      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-        sessionId: "sessionId",
-        deviceAction: new SignTransactionDeviceAction({
-          input: {
-            derivationPath,
-            transaction,
-            transactionOptions: { skipOpenApp },
-            contextModule: contextModuleStub,
-          },
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: "sessionId",
+          deviceAction: expect.objectContaining({
+            input: {
+              derivationPath,
+              transaction,
+              transactionOptions: { skipOpenApp },
+              contextModule: contextModuleStub,
+            },
+          }),
         }),
-      });
+      );
     });
   });
 
@@ -315,6 +325,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.signMessage(signMessageArgs);
 
@@ -377,6 +388,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.getAppConfiguration();
 
@@ -416,23 +428,26 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
+        NullLoggerPublisherService,
       );
 
       // WHEN
       appBinder.getAppConfiguration();
 
       // THEN
-      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-        sessionId: "sessionId",
-        deviceAction: new SendCommandInAppDeviceAction({
-          input: {
-            command: new GetAppConfigurationCommand(),
-            appName: "Solana",
-            requiredUserInteraction: UserInteractionRequired.None,
-            skipOpenApp: false,
-          },
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: "sessionId",
+          deviceAction: expect.objectContaining({
+            input: {
+              command: new GetAppConfigurationCommand(),
+              appName: "Solana",
+              requiredUserInteraction: UserInteractionRequired.None,
+              skipOpenApp: false,
+            },
+          }),
         }),
-      });
+      );
     });
   });
 
@@ -461,6 +476,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.generateTransaction({
           derivationPath: "44'/501'/0'/0'",
@@ -499,6 +515,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
+        NullLoggerPublisherService,
       );
       appBinder.generateTransaction({ derivationPath, skipOpenApp });
 

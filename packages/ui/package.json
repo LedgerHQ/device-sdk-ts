@@ -1,5 +1,5 @@
 {
-  "name": "@ledgerhq/device-sdk-ui",
+  "name": "@ledgerhq/device-management-kit-ui",
   "version": "1.0.1",
   "license": "Apache-2.0",
   "private": true,
@@ -39,10 +39,10 @@
     "reflect-metadata": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/ldmk-tool": "workspace:*",
-    "@ledgerhq/eslint-config-dsdk": "workspace:*",
-    "@ledgerhq/prettier-config-dsdk": "workspace:*",
-    "@ledgerhq/tsconfig-dsdk": "workspace:*",
-    "@ledgerhq/vitest-config-dmk": "workspace:*"
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^"
   }
 }

@@ -62,3 +62,14 @@ export class UnknownDAError implements DmkError {
     this.originalError = new Error(message ?? "Unknown error.");
   }
 }
+
+export class UnsupportedApplicationDAError implements DmkError {
+  readonly _tag = "UnsupportedApplicationDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(
+      message ?? "Application currently not supported.",
+    );
+  }
+}
