@@ -2,6 +2,7 @@ import {
   CallTaskInAppDeviceAction,
   DeviceManagementKit,
   type DeviceSessionId,
+  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -60,6 +61,8 @@ export class BtcAppBinder {
     private readonly _psbtMapper: PsbtMapper,
     @inject(psbtTypes.ValueParser)
     private readonly _valueParser: ValueParser,
+    @inject(externalTypes.DmkLoggerFactory)
+    private readonly _dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getExtendedPublicKey(
@@ -76,6 +79,7 @@ export class BtcAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this._dmkLoggerFactory("SendCommandInAppDeviceAction"),
       }),
     });
   }
@@ -92,6 +96,7 @@ export class BtcAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this._dmkLoggerFactory("SendCommandInAppDeviceAction"),
       }),
     });
   }
@@ -108,13 +113,18 @@ export class BtcAppBinder {
           task: async (internalApi) =>
             new SendSignMessageTask(
               internalApi,
-              args,
+              {
+                derivationPath: args.derivationPath,
+                message: args.message,
+                loggerFactory: this._dmkLoggerFactory,
+              },
               this._dataStoreService,
             ).run(),
           appName: "Bitcoin",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this._dmkLoggerFactory("CallTaskInAppDeviceAction"),
       }),
     });
   }
@@ -137,6 +147,7 @@ export class BtcAppBinder {
           valueParser: this._valueParser,
           skipOpenApp: args.skipOpenApp,
         },
+        loggerFactory: this._dmkLoggerFactory,
       }),
     });
   }
@@ -161,6 +172,7 @@ export class BtcAppBinder {
           walletSerializer: this._walletSerializer,
           dataStoreService: this._dataStoreService,
         },
+        loggerFactory: this._dmkLoggerFactory,
       }),
     });
   }
@@ -183,6 +195,7 @@ export class BtcAppBinder {
           valueParser: this._valueParser,
           skipOpenApp: args.skipOpenApp,
         },
+        loggerFactory: this._dmkLoggerFactory,
       }),
     });
   }
@@ -195,7 +208,10 @@ export class BtcAppBinder {
           task: async (internalApi) =>
             new RegisterWalletTask(
               internalApi,
-              { walletPolicy: args.wallet },
+              {
+                walletPolicy: args.wallet,
+                loggerFactory: this._dmkLoggerFactory,
+              },
               this._walletBuilder,
               this._walletSerializer,
               this._dataStoreService,
@@ -204,6 +220,7 @@ export class BtcAppBinder {
           requiredUserInteraction: UserInteractionRequired.RegisterWallet,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this._dmkLoggerFactory("CallTaskInAppDeviceAction"),
       }),
     });
   }

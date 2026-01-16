@@ -3,7 +3,6 @@ import {
   DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
-  SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { from, type Subscription } from "rxjs";
@@ -39,6 +38,8 @@ import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
+import { NullLoggerPublisherService } from "./services/utils/NullLoggerPublisherService";
+
 describe("BtcAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
     sendCommand: vi.fn(),
@@ -58,6 +59,7 @@ describe("BtcAppBinder", () => {
       {} as DataStoreService,
       {} as PsbtMapper,
       {} as ValueParser,
+      NullLoggerPublisherService,
     );
     expect(binder).toBeDefined();
   });
@@ -98,6 +100,7 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.getExtendedPublicKey({
           derivationPath: "44'/501'",
@@ -158,13 +161,14 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
+          NullLoggerPublisherService,
         );
         appBinder.getExtendedPublicKey(params);
 
         // THEN
         expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
           sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
+          deviceAction: expect.objectContaining({
             input: {
               command: new GetExtendedPublicKeyCommand(params),
               appName: "Bitcoin",
@@ -192,13 +196,14 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
+          NullLoggerPublisherService,
         );
         appBinder.getExtendedPublicKey(params);
 
         // THEN
         expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
           sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
+          deviceAction: expect.objectContaining({
             input: {
               command: new GetExtendedPublicKeyCommand(params),
               appName: "Bitcoin",
@@ -247,6 +252,7 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.getMasterFingerprint({
           skipOpenApp: false,
@@ -296,13 +302,14 @@ describe("BtcAppBinder", () => {
         {} as DataStoreService,
         {} as PsbtMapper,
         {} as ValueParser,
+        NullLoggerPublisherService,
       );
       appBinder.getMasterFingerprint(params);
 
       // THEN
       expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
         sessionId: "sessionId",
-        deviceAction: new SendCommandInAppDeviceAction({
+        deviceAction: expect.objectContaining({
           input: {
             command: new GetMasterFingerprintCommand(),
             appName: "Bitcoin",
@@ -328,13 +335,14 @@ describe("BtcAppBinder", () => {
         {} as DataStoreService,
         {} as PsbtMapper,
         {} as ValueParser,
+        NullLoggerPublisherService,
       );
       appBinder.getMasterFingerprint(params);
 
       // THEN
       expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
         sessionId: "sessionId",
-        deviceAction: new SendCommandInAppDeviceAction({
+        deviceAction: expect.objectContaining({
           input: {
             command: new GetMasterFingerprintCommand(),
             appName: "Bitcoin",
@@ -380,6 +388,7 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.signMessage({
           derivationPath: "44'/60'/3'/2/1",
@@ -463,6 +472,7 @@ describe("BtcAppBinder", () => {
           {} as DataStoreService,
           {} as PsbtMapper,
           {} as ValueParser,
+          NullLoggerPublisherService,
         );
         const { observable } = appBinder.registerWallet({
           wallet: walletPolicy,
@@ -515,6 +525,7 @@ describe("BtcAppBinder", () => {
         {} as DataStoreService,
         {} as PsbtMapper,
         {} as ValueParser,
+        NullLoggerPublisherService,
       );
       appBinder.registerWallet({
         wallet: walletPolicy,
