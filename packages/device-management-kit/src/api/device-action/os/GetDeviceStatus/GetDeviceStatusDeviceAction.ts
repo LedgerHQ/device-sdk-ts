@@ -40,6 +40,7 @@ import {
   type GetDeviceStatusDAInput,
   type GetDeviceStatusDAIntermediateValue,
   type GetDeviceStatusDAOutput,
+  getDeviceStatusDAStateStep,
 } from "./types";
 
 type GetDeviceStatusMachineInternalState = {
@@ -131,6 +132,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           }),
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+            step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
           },
         }),
         assignErrorFromEvent: assign({
@@ -151,6 +153,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             ({
               ..._.context.intermediateValue,
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             }) satisfies types["context"]["intermediateValue"],
         }),
       },
@@ -167,6 +170,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
           },
           _internalState: {
             onboarded: false, // we don't know how to check yet

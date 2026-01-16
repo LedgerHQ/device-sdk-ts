@@ -11,6 +11,15 @@ import {
 import { type Application } from "@internal/manager-api/model/Application";
 import { type HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
+export const listAppsWithMetadataDAStateStep = Object.freeze({
+  LIST_APPS: "os.listAppsWithMetadata.steps.listApps",
+  FETCH_METADATA: "os.listAppsWithMetadata.steps.fetchMetadata",
+  SAVE_SESSION: "os.listAppsWithMetadata.steps.saveSession",
+} as const);
+
+export type ListAppsWithMetadataDAStateStep =
+  (typeof listAppsWithMetadataDAStateStep)[keyof typeof listAppsWithMetadataDAStateStep];
+
 export type ListAppsWithMetadataDAOutput = Array<Application | null>;
 export type ListAppsWithMetadataDAInput = ListAppsDAInput;
 
@@ -26,7 +35,8 @@ export type ListAppsWithMetadataDARequiredInteraction =
 export type ListAppsWithMetadataDAIntermediateValue =
   | ListAppsDAIntermediateValue
   | {
-      requiredUserInteraction: ListAppsWithMetadataDARequiredInteraction;
+      readonly requiredUserInteraction: ListAppsWithMetadataDARequiredInteraction;
+      readonly step: ListAppsWithMetadataDAStateStep;
     };
 
 export type ListAppsWithMetadataDAState = DeviceActionState<
