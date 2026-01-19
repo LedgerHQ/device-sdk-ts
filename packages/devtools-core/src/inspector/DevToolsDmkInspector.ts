@@ -1,7 +1,4 @@
-import {
-  type DeviceManagementKit,
-  type DiscoveredDevice,
-} from "@ledgerhq/device-management-kit";
+import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
 import { DEVTOOLS_MODULES, MODULE_CONNECTED_MESSAGE_TYPE } from "../modules";
 import { type Connector } from "../types";
@@ -15,10 +12,7 @@ import {
 } from "./commandHandlers";
 import { INSPECTOR_COMMAND_TYPES } from "./constants";
 import { createDeviceObserver } from "./deviceObserver";
-import {
-  startDiscoveringObserver,
-  startListeningObserver,
-} from "./discoveryObserver";
+import { DiscoveryHandler } from "./DiscoveryHandler";
 
 /**
  * DevToolsDmkInspector enables the devtools dashboard to inspect and interact
@@ -44,12 +38,8 @@ import {
 export class DevToolsDmkInspector {
   private readonly ctx: CommandHandlerContext;
   private readonly destroyDeviceObserver: () => void;
+  private readonly discoveryHandler: DiscoveryHandler;
   private commandListenerUnsubscribe: (() => void) | null = null;
-
-  // Discovery state (both methods share the same device list)
-  private stopListeningObserver: (() => void) | null = null;
-  private stopDiscoveringObserver: (() => void) | null = null;
-  private currentDiscoveredDevices: DiscoveredDevice[] = [];
 
   constructor(connector: Connector, dmk: DeviceManagementKit) {
     this.ctx = { connector, dmk };
@@ -63,6 +53,9 @@ export class DevToolsDmkInspector {
     // Start observing devices
     this.destroyDeviceObserver = createDeviceObserver(dmk, connector);
 
+    // Initialize discovery handler
+    this.discoveryHandler = new DiscoveryHandler(dmk, connector);
+
     // Listen for commands from dashboard
     this.setupCommandListener();
   }
@@ -72,69 +65,11 @@ export class DevToolsDmkInspector {
    */
   destroy(): void {
     this.destroyDeviceObserver();
-    this.stopListening();
-    this.stopDiscovering();
+    this.discoveryHandler.destroy();
 
     if (this.commandListenerUnsubscribe) {
       this.commandListenerUnsubscribe();
       this.commandListenerUnsubscribe = null;
-    }
-  }
-
-  /**
-   * Start listening for available devices (passive, no user gesture required).
-   */
-  private startListening(): void {
-    if (this.stopListeningObserver) {
-      return; // Already listening
-    }
-
-    this.stopListeningObserver = startListeningObserver(
-      this.ctx.dmk,
-      this.ctx.connector,
-      (devices) => {
-        this.currentDiscoveredDevices = devices;
-      },
-    );
-  }
-
-  /**
-   * Stop listening for available devices.
-   */
-  private stopListening(): void {
-    if (this.stopListeningObserver) {
-      this.stopListeningObserver();
-      this.stopListeningObserver = null;
-      this.currentDiscoveredDevices = [];
-    }
-  }
-
-  /**
-   * Start active device discovery (triggers permission prompt in web apps).
-   * NOTE: In web apps, this requires a user gesture in the app context.
-   */
-  private startDiscovering(): void {
-    if (this.stopDiscoveringObserver) {
-      return; // Already discovering
-    }
-
-    this.stopDiscoveringObserver = startDiscoveringObserver(
-      this.ctx.dmk,
-      this.ctx.connector,
-      (devices) => {
-        this.currentDiscoveredDevices = devices;
-      },
-    );
-  }
-
-  /**
-   * Stop active device discovery.
-   */
-  private stopDiscovering(): void {
-    if (this.stopDiscoveringObserver) {
-      this.stopDiscoveringObserver();
-      this.stopDiscoveringObserver = null;
-      this.currentDiscoveredDevices = [];
     }
   }
 
@@ -159,22 +94,22 @@ export class DevToolsDmkInspector {
               handleSetProvider(this.ctx, payload);
               break;
             case INSPECTOR_COMMAND_TYPES.START_LISTENING_DEVICES:
-              this.startListening();
+              this.discoveryHandler.startListening();
               break;
             case INSPECTOR_COMMAND_TYPES.STOP_LISTENING_DEVICES:
-              this.stopListening();
+              this.discoveryHandler.stopListening();
               break;
             case INSPECTOR_COMMAND_TYPES.START_DISCOVERING:
-              this.startDiscovering();
+              this.discoveryHandler.startDiscovering();
               break;
             case INSPECTOR_COMMAND_TYPES.STOP_DISCOVERING:
-              this.stopDiscovering();
+              this.discoveryHandler.stopDiscovering();
               break;
             case INSPECTOR_COMMAND_TYPES.CONNECT_DEVICE:
               await handleConnectDevice(
                 this.ctx,
                 payload,
-                this.currentDiscoveredDevices,
+                this.discoveryHandler.discoveredDevices,
               );
               break;
           }
