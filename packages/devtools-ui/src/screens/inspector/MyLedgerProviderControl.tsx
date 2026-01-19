@@ -47,13 +47,13 @@ const RefreshButton = styled.button`
   }
 `;
 
-type ProviderControlProps = {
+type MyLedgerProviderControlProps = {
   currentValue: number | null;
   onGet: () => void;
   onSet: (value: number) => void;
 };
 
-export const ProviderControl: React.FC<ProviderControlProps> = ({
+export const MyLedgerProviderControl: React.FC<MyLedgerProviderControlProps> = ({
   currentValue,
   onGet,
   onSet,

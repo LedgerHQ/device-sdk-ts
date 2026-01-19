@@ -4,12 +4,7 @@ import {
   type DeviceSessionState,
   type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
-import {
-  type DevToolsModule,
-  parseConnectedDevice,
-  parseDeviceSessionState,
-  parseDiscoveredDevice,
-} from "@ledgerhq/device-management-kit-devtools-core";
+import { type DevToolsModule } from "@ledgerhq/device-management-kit-devtools-core";
 
 import { mapConnectorMessageToLogData } from "../screens/logger/mapConnectorMessageToLogData";
 import { type LogData } from "../screens/logger/types";
@@ -54,8 +49,7 @@ export function handleConnectedDevicesUpdate(
   setConnectedDevices: Dispatch<SetStateAction<ConnectedDevice[]>>,
 ): void {
   try {
-    const rawDevices = JSON.parse(payload) as unknown[];
-    const devices = rawDevices.map(parseConnectedDevice);
+    const devices = JSON.parse(payload) as ConnectedDevice[];
     setConnectedDevices(devices);
   } catch (e) {
     console.error("Failed to parse connectedDevicesUpdate payload", e);
@@ -72,11 +66,9 @@ export function handleDeviceSessionStateUpdate(
   try {
     const { sessionId, state } = JSON.parse(payload) as {
       sessionId: string;
-      state: unknown;
+      state: DeviceSessionState;
     };
-    setSessionStates((prev) =>
-      new Map(prev).set(sessionId, parseDeviceSessionState(state)),
-    );
+    setSessionStates((prev) => new Map(prev).set(sessionId, state));
   } catch (e) {
     console.error("Failed to parse deviceSessionStateUpdate payload", e);
   }
@@ -90,8 +82,7 @@ export function handleDiscoveredDevicesUpdate(
   setDiscoveredDevices: Dispatch<SetStateAction<DiscoveredDevice[]>>,
 ): void {
   try {
-    const rawDevices = JSON.parse(payload) as unknown[];
-    const devices = rawDevices.map(parseDiscoveredDevice);
+    const devices = JSON.parse(payload) as DiscoveredDevice[];
     setDiscoveredDevices(devices);
   } catch (e) {
     console.error("Failed to parse discoveredDevicesUpdate payload", e);

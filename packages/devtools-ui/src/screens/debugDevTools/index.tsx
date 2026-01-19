@@ -1,3 +1,11 @@
+/**
+ * @file DebugDevTools screen
+ *
+ * A debugging tool for DevTools developers. Displays raw sent and received
+ * connector messages, allows filtering by message type, and provides a way
+ * to manually send custom messages for testing.
+ */
+
 import React, { useMemo, useState } from "react";
 
 import { type Message } from "../../shared/PluginEvents";

@@ -1,3 +1,10 @@
+/**
+ * @file DebugDrawer component
+ *
+ * A slide-up drawer that displays the Debug DevTools panel.
+ * Shows raw sent/received connector messages for debugging purposes.
+ */
+
 import React from "react";
 import styled from "styled-components";
 

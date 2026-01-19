@@ -5,9 +5,9 @@ import styled from "styled-components";
 
 import { DashboardFooter } from "./components/DashboardFooter";
 import {
-  DashboardNavigation,
+  DashboardNavigationBar,
   DashboardScreen,
-} from "./components/DashboardNavigation";
+} from "./components/DashboardNavigationBar";
 import { DebugDrawer } from "./components/DebugDrawer";
 import { SplitView } from "./components/SplitView";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
@@ -60,11 +60,11 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   );
   const [isDebugOpen, setIsDebugOpen] = useState(false);
 
-  const renderLogger = () => (
+  const logger = (
     <Logger logs={logs} clearLogs={clearLogs} isConnected={isLoggerConnected} />
   );
 
-  const renderInspector = () => (
+  const inspector = (
     <Inspector
       devices={connectedDevices}
       sessionStates={sessionStates}
@@ -86,42 +86,34 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     />
   );
 
-  const renderContent = () => {
+  const content = (() => {
     switch (currentScreen) {
       case DashboardScreen.logs:
-        return renderLogger();
+        return logger;
       case DashboardScreen.inspector:
-        return renderInspector();
+        return inspector;
       case DashboardScreen.splitHorizontal:
         return (
-          <SplitView
-            direction="horizontal"
-            first={renderLogger()}
-            second={renderInspector()}
-          />
+          <SplitView direction="horizontal" first={logger} second={inspector} />
         );
       case DashboardScreen.splitVertical:
         return (
-          <SplitView
-            direction="vertical"
-            first={renderLogger()}
-            second={renderInspector()}
-          />
+          <SplitView direction="vertical" first={logger} second={inspector} />
         );
       default:
-        return renderLogger();
+        return logger;
     }
-  };
+  })();
 
   return (
     <DashboardContainer>
-      <DashboardNavigation
+      <DashboardNavigationBar
         currentScreen={currentScreen}
         onScreenChange={setCurrentScreen}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
       />
-      <ContentArea>{renderContent()}</ContentArea>
+      <ContentArea>{content}</ContentArea>
       <DashboardFooter
         isDebugOpen={isDebugOpen}
         onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}

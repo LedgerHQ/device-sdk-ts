@@ -102,14 +102,14 @@ const SplitVerticalIcon = () => (
   </svg>
 );
 
-type DashboardNavigationProps = {
+type DashboardNavigationBarProps = {
   currentScreen: DashboardScreen;
   onScreenChange: (screen: DashboardScreen) => void;
   isLoggerConnected: boolean;
   isInspectorConnected: boolean;
 };
 
-export const DashboardNavigation: React.FC<DashboardNavigationProps> = ({
+export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
   currentScreen,
   onScreenChange,
   isLoggerConnected,

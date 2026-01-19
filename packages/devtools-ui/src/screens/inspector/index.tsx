@@ -10,7 +10,7 @@ import { type ApduResponse } from "../../hooks/useConnectorMessages";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { DeviceCard } from "./DeviceCard";
 import { DiscoveredDeviceCard } from "./DiscoveredDeviceCard";
-import { ProviderControl } from "./ProviderControl";
+import { MyLedgerProviderControl } from "./MyLedgerProviderControl";
 import {
   Button,
   ButtonGroup,
@@ -121,8 +121,8 @@ export const Inspector: React.FC<InspectorProps> = ({
 
   return (
     <Container>
-      {/* Provider Control */}
-      <ProviderControl
+      {/* My Ledger Provider Control */}
+      <MyLedgerProviderControl
         currentValue={providerValue}
         onGet={getProvider}
         onSet={setProvider}

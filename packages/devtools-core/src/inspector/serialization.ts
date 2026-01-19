@@ -15,13 +15,6 @@ export function serializeConnectedDevice(
 }
 
 /**
- * Parse a serialized ConnectedDevice.
- */
-export function parseConnectedDevice(data: unknown): ConnectedDevice {
-  return data as ConnectedDevice;
-}
-
-/**
  * Serialize a DeviceSessionState to a plain object for JSON transmission.
  * Converts enum values to their string names for readability.
  */
@@ -39,25 +32,10 @@ export function serializeDeviceSessionState(
 }
 
 /**
- * Parse a serialized DeviceSessionState.
- * Note: sessionStateType will be a string (enum name), not the enum value.
- */
-export function parseDeviceSessionState(data: unknown): DeviceSessionState {
-  return data as DeviceSessionState;
-}
-
-/**
  * Serialize a DiscoveredDevice to a plain object for JSON transmission.
  */
 export function serializeDiscoveredDevice(
   device: DiscoveredDevice,
 ): DiscoveredDevice {
   return JSON.parse(JSON.stringify(device)) as DiscoveredDevice;
-}
-
-/**
- * Parse a serialized DiscoveredDevice.
- */
-export function parseDiscoveredDevice(data: unknown): DiscoveredDevice {
-  return data as DiscoveredDevice;
 }

@@ -6,9 +6,6 @@ export {
 } from "./inspector/constants";
 export { DevToolsDmkInspector } from "./inspector/DevToolsDmkInspector";
 export {
-  parseConnectedDevice,
-  parseDeviceSessionState,
-  parseDiscoveredDevice,
   serializeConnectedDevice,
   serializeDeviceSessionState,
   serializeDiscoveredDevice,

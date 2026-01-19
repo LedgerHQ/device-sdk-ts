@@ -1,3 +1,11 @@
+/**
+ * @file useConnectorMessages hook
+ *
+ * Central hook for managing DevTools connector state and actions.
+ * Handles all communication between the Dashboard UI and the client app
+ * via the connector (WebSocket or Rozenite).
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type ConnectedDevice,
@@ -15,10 +23,10 @@ import {
 import { type Message } from "../PluginEvents";
 import { type LogData } from "../screens/logger/types";
 import {
-  createApduActions,
-  createDiscoveryActions,
-  createProviderActions,
-} from "./connectorActions";
+  createApduCommands,
+  createDiscoveryCommands,
+  createProviderCommands,
+} from "./commandDispatcher";
 import {
   handleApduResponse,
   handleConnectedDevicesUpdate,
@@ -71,6 +79,18 @@ export type ConnectorMessagesState = {
 // Hook
 // ============================================================================
 
+/**
+ * Central hook for managing DevTools connector state and communication.
+ *
+ * This hook:
+ * - Listens to messages from the connector and dispatches them to handlers
+ * - Tracks all sent/received messages for debugging
+ * - Manages device discovery, sessions, and DMK configuration state
+ * - Provides action functions to send commands to the inspector module
+ *
+ * @param connector - The connector instance (WebSocket or Rozenite)
+ * @returns State and actions for the Dashboard UI
+ */
 export function useConnectorMessages(
   connector: Connector,
 ): ConnectorMessagesState {
@@ -142,44 +162,44 @@ export function useConnectorMessages(
     return unsubscribe;
   }, [connector]);
 
-  // === Actions (using tracked connector to log all sent messages) ===
-  const discoveryActions = useMemo(
-    () => createDiscoveryActions(trackedConnector),
+  // === Commands (using tracked connector to log all sent messages) ===
+  const discoveryCommands = useMemo(
+    () => createDiscoveryCommands(trackedConnector),
     [trackedConnector],
   );
-  const providerActions = useMemo(
-    () => createProviderActions(trackedConnector),
+  const providerCommands = useMemo(
+    () => createProviderCommands(trackedConnector),
     [trackedConnector],
   );
-  const apduActions = useMemo(
-    () => createApduActions(trackedConnector),
+  const apduCommands = useMemo(
+    () => createApduCommands(trackedConnector),
     [trackedConnector],
   );
 
-  // === Wrapped Actions (with local state updates) ===
+  // === Wrapped Commands (with local state updates) ===
   const startListening = useCallback(() => {
     setIsListening(true);
     setDiscoveredDevices([]);
-    discoveryActions.startListeningCommand();
-  }, [discoveryActions]);
+    discoveryCommands.startListeningCommand();
+  }, [discoveryCommands]);
 
   const stopListening = useCallback(() => {
     setIsListening(false);
     setDiscoveredDevices([]);
-    discoveryActions.stopListeningCommand();
-  }, [discoveryActions]);
+    discoveryCommands.stopListeningCommand();
+  }, [discoveryCommands]);
 
   const startDiscovering = useCallback(() => {
     setIsActivelyDiscovering(true);
     setDiscoveredDevices([]);
-    discoveryActions.startDiscoveringCommand();
-  }, [discoveryActions]);
+    discoveryCommands.startDiscoveringCommand();
+  }, [discoveryCommands]);
 
   const stopDiscovering = useCallback(() => {
     setIsActivelyDiscovering(false);
     setDiscoveredDevices([]);
-    discoveryActions.stopDiscoveringCommand();
-  }, [discoveryActions]);
+    discoveryCommands.stopDiscoveringCommand();
+  }, [discoveryCommands]);
 
   const clearLogs = useCallback(() => {
     setLogs([]);
@@ -213,9 +233,9 @@ export function useConnectorMessages(
     stopListening,
     startDiscovering,
     stopDiscovering,
-    connectDevice: discoveryActions.connectDeviceCommand,
-    getProvider: providerActions.getProviderCommand,
-    setProvider: providerActions.setProviderCommand,
-    sendApdu: apduActions.sendApduCommand,
+    connectDevice: discoveryCommands.connectDeviceCommand,
+    getProvider: providerCommands.getProviderCommand,
+    setProvider: providerCommands.setProviderCommand,
+    sendApdu: apduCommands.sendApduCommand,
   };
 }

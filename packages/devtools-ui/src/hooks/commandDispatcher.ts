@@ -4,9 +4,9 @@ import {
 } from "@ledgerhq/device-management-kit-devtools-core";
 
 /**
- * Create discovery-related actions.
+ * Create discovery-related command dispatchers.
  */
-export function createDiscoveryActions(connector: Connector) {
+export function createDiscoveryCommands(connector: Connector) {
   return {
     startListeningCommand: () =>
       connector.sendMessage(
@@ -31,9 +31,9 @@ export function createDiscoveryActions(connector: Connector) {
 }
 
 /**
- * Create provider-related actions.
+ * Create provider-related command dispatchers.
  */
-export function createProviderActions(connector: Connector) {
+export function createProviderCommands(connector: Connector) {
   return {
     getProviderCommand: () =>
       connector.sendMessage(INSPECTOR_COMMAND_TYPES.GET_PROVIDER, "{}"),
@@ -48,9 +48,9 @@ export function createProviderActions(connector: Connector) {
 let apduRequestCounter = 0;
 
 /**
- * Create APDU-related actions.
+ * Create APDU-related command dispatchers.
  */
-export function createApduActions(connector: Connector) {
+export function createApduCommands(connector: Connector) {
   return {
     sendApduCommand: (sessionId: string, apduHex: string): string => {
       const requestId = `apdu-${++apduRequestCounter}`;

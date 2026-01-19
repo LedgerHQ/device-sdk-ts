@@ -72,6 +72,8 @@ This interface is implemented by:
 
 When a module is instantiated, it sends a `moduleConnected` message to identify itself to the dashboard. This allows the dashboard UI to show connection status for each module and conditionally render UI elements.
 
+This mechanism helps developers integrating the tools verify that their setup is working as expected. For instance, if someone only sets up `DevToolsLogger` or only `DevToolsDmkInspector` (which is allowed, but could be a user mistake), the Dashboard UI will reflect it with visual indicators.
+
 #### DevToolsLogger Protocol
 
 `DevToolsLogger` provides **one-way communication** from the client app to the dashboard for log streaming.
