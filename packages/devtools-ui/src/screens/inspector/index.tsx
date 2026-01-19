@@ -5,13 +5,26 @@ import {
   type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import { INSPECTOR_COMMAND_TYPES } from "@ledgerhq/device-management-kit-devtools-core";
-import { Flex, Text } from "@ledgerhq/react-ui";
 
+import { type ApduResponse } from "../../hooks/useConnectorMessages";
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { DeviceCard } from "./DeviceCard";
 import { DiscoveredDeviceCard } from "./DiscoveredDeviceCard";
+import { ProviderControl } from "./ProviderControl";
+import {
+  Button,
+  ButtonGroup,
+  CenteredMessage,
+  Container,
+  DeviceList,
+  ItalicNote,
+  Section,
+  SectionTitle,
+  SmallText,
+  SubsectionTitle,
+} from "./styles";
 
-type SessionsProps = {
+type InspectorProps = {
   devices: ConnectedDevice[];
   sessionStates: Map<string, DeviceSessionState>;
   discoveredDevices: DiscoveredDevice[];
@@ -24,6 +37,11 @@ type SessionsProps = {
   startDiscovering: () => void;
   stopDiscovering: () => void;
   connectDevice: (deviceId: string) => void;
+  providerValue: number | null;
+  getProvider: () => void;
+  setProvider: (value: number) => void;
+  sendApdu: (sessionId: string, apduHex: string) => string;
+  apduResponses: Map<string, ApduResponse>;
 };
 
 const INSPECTOR_CODE_EXAMPLE = `import { DevToolsDmkInspector } from "@ledgerhq/device-management-kit-devtools-core";
@@ -44,7 +62,7 @@ const isDeviceConnected = (
   return state.deviceStatus !== "NOT CONNECTED";
 };
 
-export const Sessions: React.FC<SessionsProps> = ({
+export const Inspector: React.FC<InspectorProps> = ({
   devices,
   sessionStates,
   discoveredDevices,
@@ -57,6 +75,11 @@ export const Sessions: React.FC<SessionsProps> = ({
   startDiscovering,
   stopDiscovering,
   connectDevice,
+  providerValue,
+  getProvider,
+  setProvider,
+  sendApdu,
+  apduResponses,
 }) => {
   const isAnyDiscoveryActive = isListening || isActivelyDiscovering;
   const handleDisconnect = (sessionId: string) => {
@@ -87,9 +110,8 @@ export const Sessions: React.FC<SessionsProps> = ({
         title="Inspector not connected"
         description={
           <>
-            To enable the Sessions inspector, add{" "}
-            <code>DevToolsDmkInspector</code> to your app after building the
-            DMK:
+            To enable the Inspector, add <code>DevToolsDmkInspector</code> to
+            your app after building the DMK:
           </>
         }
         codeExample={INSPECTOR_CODE_EXAMPLE}
@@ -98,76 +120,47 @@ export const Sessions: React.FC<SessionsProps> = ({
   }
 
   return (
-    <Flex flexDirection="column" flex={1} padding={4} overflow="auto">
-      {/* Discovery Section */}
-      <Flex
-        flexDirection="column"
-        mb={4}
-        pb={4}
-        style={{ borderBottom: "1px solid #eee" }}
-      >
-        <Text variant="h4" mb={3}>
-          Device Discovery
-        </Text>
+    <Container>
+      {/* Provider Control */}
+      <ProviderControl
+        currentValue={providerValue}
+        onGet={getProvider}
+        onSet={setProvider}
+      />
 
-        {/* Discovery buttons */}
-        <Flex columnGap={3} mb={3}>
-          {/* Passive listening */}
-          <button
+      {/* Discovery Section */}
+      <Section>
+        <SectionTitle>Device Discovery</SectionTitle>
+
+        <ButtonGroup>
+          <Button
+            $variant={isListening ? "warning" : "primary"}
+            $size="medium"
             onClick={isListening ? stopListening : startListening}
             disabled={isActivelyDiscovering}
-            style={{
-              background: isListening
-                ? "#ff9800"
-                : isActivelyDiscovering
-                  ? "#ccc"
-                  : "#2196F3",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              padding: "8px 16px",
-              cursor: isActivelyDiscovering ? "not-allowed" : "pointer",
-            }}
           >
             {isListening ? "Stop Listening" : "Listen for Devices"}
-          </button>
+          </Button>
 
-          {/* Active discovery */}
-          <button
+          <Button
+            $variant={isActivelyDiscovering ? "warning" : "success"}
+            $size="medium"
             onClick={isActivelyDiscovering ? stopDiscovering : startDiscovering}
             disabled={isListening}
-            style={{
-              background: isActivelyDiscovering
-                ? "#ff9800"
-                : isListening
-                  ? "#ccc"
-                  : "#4CAF50",
-              color: "white",
-              border: "none",
-              borderRadius: 4,
-              padding: "8px 16px",
-              cursor: isListening ? "not-allowed" : "pointer",
-            }}
           >
             {isActivelyDiscovering ? "Stop Discovery" : "Start Discovery"}
-          </button>
-        </Flex>
+          </Button>
+        </ButtonGroup>
 
-        {/* Status message */}
         {isListening && discoveredDevices.length === 0 && (
-          <Text variant="body" color="neutral.c70">
-            Listening for available devices...
-          </Text>
+          <SmallText>Listening for available devices...</SmallText>
         )}
         {isActivelyDiscovering && discoveredDevices.length === 0 && (
-          <Text variant="body" color="neutral.c70">
-            Discovering devices...
-          </Text>
+          <SmallText>Discovering devices...</SmallText>
         )}
 
-        {/* Discovered devices list */}
         {discoveredDevices.length > 0 && (
-          <Flex flexDirection="column" rowGap={3}>
+          <DeviceList>
             {discoveredDevices.map((device) => (
               <DiscoveredDeviceCard
                 key={device.id}
@@ -175,78 +168,68 @@ export const Sessions: React.FC<SessionsProps> = ({
                 onConnect={() => connectDevice(device.id)}
               />
             ))}
-          </Flex>
+          </DeviceList>
         )}
 
         {!isAnyDiscoveryActive && discoveredDevices.length === 0 && (
-          <Text variant="body" color="neutral.c70">
+          <SmallText>
             Use &quot;Listen for Devices&quot; to see already-paired devices, or
             &quot;Start Discovery&quot; to scan for new devices.
-          </Text>
+          </SmallText>
         )}
 
-        {/* Web limitations note */}
-        <Text
-          variant="small"
-          color="neutral.c60"
-          mt={3}
-          style={{ fontStyle: "italic" }}
-        >
+        <ItalicNote>
           Note: &quot;Start Discovery&quot; may not work in web apps due to
           browser security restrictions. WebHID and WebBLE require a user
           gesture (click) in the app context to trigger device discovery.
-        </Text>
-      </Flex>
+        </ItalicNote>
+      </Section>
 
-      {/* Connected Sessions */}
+      {/* Active Sessions */}
       {activeDevices.length > 0 && (
         <>
-          <Text variant="h4" mb={4}>
-            Active Sessions ({activeDevices.length})
-          </Text>
-          <Flex flexDirection="column" rowGap={3} mb={4}>
+          <SectionTitle>Active Sessions ({activeDevices.length})</SectionTitle>
+          <DeviceList style={{ marginBottom: 16 }}>
             {activeDevices.map((device) => (
               <DeviceCard
                 key={device.sessionId}
                 device={device}
                 state={sessionStates.get(device.sessionId)}
                 onDisconnect={() => handleDisconnect(device.sessionId)}
+                onSendApdu={sendApdu}
+                apduResponses={apduResponses}
               />
             ))}
-          </Flex>
+          </DeviceList>
         </>
       )}
 
+      {/* Disconnected Sessions */}
       {disconnectedDevices.length > 0 && (
         <>
-          <Text variant="h5" mb={3} color="neutral.c70">
+          <SubsectionTitle>
             Disconnected Sessions ({disconnectedDevices.length})
-          </Text>
-          <Flex flexDirection="column" rowGap={3}>
+          </SubsectionTitle>
+          <DeviceList>
             {disconnectedDevices.map((device) => (
               <DeviceCard
                 key={device.sessionId}
                 device={device}
                 state={sessionStates.get(device.sessionId)}
                 onDisconnect={() => handleDisconnect(device.sessionId)}
+                onSendApdu={sendApdu}
+                apduResponses={apduResponses}
               />
             ))}
-          </Flex>
+          </DeviceList>
         </>
       )}
 
       {devices.length === 0 && !isAnyDiscoveryActive && (
-        <Flex
-          flexDirection="column"
-          alignItems="center"
-          justifyContent="center"
-          flex={1}
-          padding={6}
-          style={{ opacity: 0.6 }}
-        >
-          <Text variant="body">No devices connected yet.</Text>
-        </Flex>
+        <CenteredMessage>
+          <p>No devices connected yet.</p>
+        </CenteredMessage>
       )}
-    </Flex>
+    </Container>
   );
 };

@@ -37,17 +37,19 @@ export async function handleSendApdu(
 ): Promise<void> {
   const { sessionId, apdu, requestId } = JSON.parse(payload) as {
     sessionId: DeviceSessionId;
-    apdu: Uint8Array;
+    apdu: number[];
     requestId: string;
   };
   try {
-    const response = await ctx.dmk.sendApdu({ sessionId, apdu });
+    // Convert array to Uint8Array for DMK
+    const apduBytes = new Uint8Array(apdu);
+    const response = await ctx.dmk.sendApdu({ sessionId, apdu: apduBytes });
     ctx.connector.sendMessage(
       INSPECTOR_MESSAGE_TYPES.APDU_RESPONSE,
       JSON.stringify({
         requestId,
         success: true,
-        statusCode: response.statusCode,
+        statusCode: Array.from(response.statusCode),
         data: Array.from(response.data),
       }),
     );

@@ -1,17 +1,33 @@
 import React, { useState } from "react";
 import { type Connector } from "@ledgerhq/device-management-kit-devtools-core";
-import { Flex } from "@ledgerhq/react-ui/components/layout/index";
 import { StyleProvider } from "@ledgerhq/react-ui/styles/index";
+import styled from "styled-components";
 
+import { DashboardFooter } from "./components/DashboardFooter";
 import {
   DashboardNavigation,
   DashboardScreen,
 } from "./components/DashboardNavigation";
+import { DebugDrawer } from "./components/DebugDrawer";
+import { SplitView } from "./components/SplitView";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
-import { DebugDevTools } from "./screens/debugDevTools";
+import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
-import { Sessions } from "./screens/sessions";
 import { ErrorBoundary } from "./ErrorBoundary";
+
+const DashboardContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+`;
+
+const ContentArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+`;
 
 const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
   const {
@@ -25,6 +41,8 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     isActivelyDiscovering,
     isLoggerConnected,
     isInspectorConnected,
+    providerValue,
+    apduResponses,
     sendMessage,
     clearLogs,
     startListening,
@@ -32,51 +50,90 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     startDiscovering,
     stopDiscovering,
     connectDevice,
+    getProvider,
+    setProvider,
+    sendApdu,
   } = useConnectorMessages(connector);
 
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
     DashboardScreen.logs,
   );
+  const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+  const renderLogger = () => (
+    <Logger logs={logs} clearLogs={clearLogs} isConnected={isLoggerConnected} />
+  );
+
+  const renderInspector = () => (
+    <Inspector
+      devices={connectedDevices}
+      sessionStates={sessionStates}
+      discoveredDevices={discoveredDevices}
+      isListening={isListening}
+      isActivelyDiscovering={isActivelyDiscovering}
+      sendMessage={sendMessage}
+      isConnected={isInspectorConnected}
+      startListening={startListening}
+      stopListening={stopListening}
+      startDiscovering={startDiscovering}
+      stopDiscovering={stopDiscovering}
+      connectDevice={connectDevice}
+      providerValue={providerValue}
+      getProvider={getProvider}
+      setProvider={setProvider}
+      sendApdu={sendApdu}
+      apduResponses={apduResponses}
+    />
+  );
+
+  const renderContent = () => {
+    switch (currentScreen) {
+      case DashboardScreen.logs:
+        return renderLogger();
+      case DashboardScreen.inspector:
+        return renderInspector();
+      case DashboardScreen.splitHorizontal:
+        return (
+          <SplitView
+            direction="horizontal"
+            first={renderLogger()}
+            second={renderInspector()}
+          />
+        );
+      case DashboardScreen.splitVertical:
+        return (
+          <SplitView
+            direction="vertical"
+            first={renderLogger()}
+            second={renderInspector()}
+          />
+        );
+      default:
+        return renderLogger();
+    }
+  };
 
   return (
-    <Flex flexDirection="column" height="100vh" overflow="hidden">
+    <DashboardContainer>
       <DashboardNavigation
         currentScreen={currentScreen}
         onScreenChange={setCurrentScreen}
         isLoggerConnected={isLoggerConnected}
         isInspectorConnected={isInspectorConnected}
       />
-      {currentScreen === DashboardScreen.debug && (
-        <DebugDevTools
-          sentMessages={sentMessages}
-          receivedMessages={receivedMessages}
-          sendMessage={sendMessage}
-        />
-      )}
-      {currentScreen === DashboardScreen.logs && (
-        <Logger
-          logs={logs}
-          clearLogs={clearLogs}
-          isConnected={isLoggerConnected}
-        />
-      )}
-      {currentScreen === DashboardScreen.sessions && (
-        <Sessions
-          devices={connectedDevices}
-          sessionStates={sessionStates}
-          discoveredDevices={discoveredDevices}
-          isListening={isListening}
-          isActivelyDiscovering={isActivelyDiscovering}
-          sendMessage={sendMessage}
-          isConnected={isInspectorConnected}
-          startListening={startListening}
-          stopListening={stopListening}
-          startDiscovering={startDiscovering}
-          stopDiscovering={stopDiscovering}
-          connectDevice={connectDevice}
-        />
-      )}
-    </Flex>
+      <ContentArea>{renderContent()}</ContentArea>
+      <DashboardFooter
+        isDebugOpen={isDebugOpen}
+        onToggleDebug={() => setIsDebugOpen(!isDebugOpen)}
+      />
+      <DebugDrawer
+        isOpen={isDebugOpen}
+        onClose={() => setIsDebugOpen(false)}
+        sentMessages={sentMessages}
+        receivedMessages={receivedMessages}
+        sendMessage={sendMessage}
+      />
+    </DashboardContainer>
   );
 };
 
