@@ -11,6 +11,5 @@ export function makeDeviceActionInternalApiMock(): Mocked<InternalApi> {
     setDeviceSessionState: vi.fn(),
     getManagerApiService: vi.fn(),
     getSecureChannelService: vi.fn(),
-    disableRefresher: vi.fn(),
   };
 }
