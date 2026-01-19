@@ -11,6 +11,7 @@ import {
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { NullLoggerPublisherService } from "./shared/utils/NullLoggerPublisherService";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
+import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
@@ -41,7 +42,7 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
 };
 
 export class ContextModuleBuilder {
-  private config: ContextModuleConfig = DEFAULT_CONFIG;
+  private config: ContextModuleConfig;
   private originToken?: string;
 
   constructor({
@@ -49,6 +50,12 @@ export class ContextModuleBuilder {
     loggerFactory,
   }: ContextModuleConstructorArgs = {}) {
     this.originToken = originToken;
+
+    this.config = {
+      ...DEFAULT_CONFIG,
+      customLoaders: [],
+      customFieldLoaders: [],
+    };
 
     if (loggerFactory) {
       this.config.loggerFactory = loggerFactory;
@@ -141,6 +148,17 @@ export class ContextModuleBuilder {
    */
   setDatasourceConfig(datasourceConfig: ContextModuleDatasourceConfig) {
     this.config.datasource = datasourceConfig;
+    return this;
+  }
+
+  /**
+   * Set a custom trusted name data source
+   *
+   * @param dataSource data source to use for trusted name resolution
+   * @returns this
+   */
+  setTrustedNameDataSource(dataSource: TrustedNameDataSource) {
+    this.config.customTrustedNameDataSource = dataSource;
     return this;
   }
 
