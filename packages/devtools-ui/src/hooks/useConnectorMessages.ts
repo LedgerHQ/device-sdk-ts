@@ -16,7 +16,6 @@ import { type Message } from "../PluginEvents";
 import { type LogData } from "../screens/logger/types";
 import {
   createApduActions,
-  createDebugActions,
   createDiscoveryActions,
   createProviderActions,
 } from "./connectorActions";
@@ -98,6 +97,18 @@ export function useConnectorMessages(
     new Map(),
   );
 
+  // === Tracked Connector (keeps all sent messages in state) ===
+  const trackedConnector: Connector = useMemo(
+    () => ({
+      ...connector,
+      sendMessage: (type: string, payload: string) => {
+        connector.sendMessage(type, payload);
+        setSentMessages((prev) => [...prev, { type, payload }]);
+      },
+    }),
+    [connector],
+  );
+
   // === Message Listener ===
   useEffect(() => {
     const { unsubscribe } = connector.listenToMessages((type, payload) => {
@@ -131,22 +142,18 @@ export function useConnectorMessages(
     return unsubscribe;
   }, [connector]);
 
-  // === Actions ===
+  // === Actions (using tracked connector to log all sent messages) ===
   const discoveryActions = useMemo(
-    () => createDiscoveryActions(connector),
-    [connector],
+    () => createDiscoveryActions(trackedConnector),
+    [trackedConnector],
   );
   const providerActions = useMemo(
-    () => createProviderActions(connector),
-    [connector],
+    () => createProviderActions(trackedConnector),
+    [trackedConnector],
   );
-  const apduActions = useMemo(() => createApduActions(connector), [connector]);
-  const debugActions = useMemo(
-    () =>
-      createDebugActions(connector, (type, payload) => {
-        setSentMessages((prev) => [...prev, { type, payload }]);
-      }),
-    [connector],
+  const apduActions = useMemo(
+    () => createApduActions(trackedConnector),
+    [trackedConnector],
   );
 
   // === Wrapped Actions (with local state updates) ===
@@ -200,7 +207,7 @@ export function useConnectorMessages(
     providerValue,
     apduResponses,
     // Actions
-    sendMessage: debugActions.sendMessageCommand,
+    sendMessage: trackedConnector.sendMessage,
     clearLogs,
     startListening,
     stopListening,

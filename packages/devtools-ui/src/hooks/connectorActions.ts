@@ -66,17 +66,3 @@ export function createApduActions(connector: Connector) {
   };
 }
 
-/**
- * Create debug message actions.
- */
-export function createDebugActions(
-  connector: Connector,
-  onSent: (type: string, payload: string) => void,
-) {
-  return {
-    sendMessageCommand: (type: string, payload: string) => {
-      connector.sendMessage(type, payload);
-      onSent(type, payload);
-    },
-  };
-}
