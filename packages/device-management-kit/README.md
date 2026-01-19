@@ -398,10 +398,10 @@ import {
   DevToolsDmkInspector,
 } from "@ledgerhq/device-management-kit-devtools-core";
 import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
-import { DevtoolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
+import { DevToolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
 
 // Create the connector (shared between logger and inspector)
-const connector = DevtoolsWebSocketConnector.getInstance().connect({
+const connector = DevToolsWebSocketConnector.getInstance().connect({
   url: DEFAULT_CLIENT_WS_URL,
 });
 
@@ -471,4 +471,4 @@ const inspector = new DevToolsDmkInspector(connector, dmk);
 
 1. Run your React Native app
 2. [Open the React Native DevTools](https://reactnative.dev/docs/react-native-devtools)
-3. Navigate to the DMK Devtools tab
+3. Navigate to the DMK DevTools tab

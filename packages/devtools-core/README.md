@@ -65,7 +65,7 @@ interface Connector {
 
 This interface is implemented by:
 
-- `DevtoolsWebSocketConnector` — for web, Node.js, Electron, and React Native apps
+- `DevToolsWebSocketConnector` — for web, Node.js, Electron, and React Native apps
 - `RozeniteConnector` — for React Native apps using Rozenite
 
 #### Module Handshake

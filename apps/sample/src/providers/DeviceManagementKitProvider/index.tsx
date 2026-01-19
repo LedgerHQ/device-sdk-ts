@@ -13,7 +13,7 @@ import {
   DevToolsLogger,
 } from "@ledgerhq/device-management-kit-devtools-core";
 import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
-import { DevtoolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
+import { DevToolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
 import {
   mockserverIdentifier,
   mockserverTransportFactory,
@@ -37,7 +37,7 @@ const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
 function getDevToolsConnector(): Connector {
-  return DevtoolsWebSocketConnector.getInstance().connect({
+  return DevToolsWebSocketConnector.getInstance().connect({
     url: DEFAULT_CLIENT_WS_URL,
   });
 }

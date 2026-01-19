@@ -31,7 +31,7 @@ import {
  *
  * @example
  * ```ts
- * const connector = DevtoolsWebSocketConnector.getInstance().connect({ url });
+ * const connector = DevToolsWebSocketConnector.getInstance().connect({ url });
  * const dmk = new DeviceManagementKitBuilder().build();
  *
  * // Enable inspector after DMK is built
