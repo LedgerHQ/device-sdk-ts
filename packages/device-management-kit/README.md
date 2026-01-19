@@ -375,8 +375,13 @@ Check [the sample app](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/ap
 
 ## Developer tools
 
-Developer tools are available to help debug your DMK integration.
-For now they allow viewing logs from the Device Management Kit. More advanced features are coming soon.
+Developer tools are available to help debug your DMK integration:
+
+- **Real-time logging** — View DMK logs with filtering by level and tag
+- **Device session inspector** — Monitor connected devices and their states
+- **Device discovery** — Discover and connect to devices from the dashboard
+- **APDU sender** — Send raw APDU commands to devices
+- **DMK configuration** — View and modify settings like the My Ledger API provider
 
 ### Web, Node.js or Electron app
 
