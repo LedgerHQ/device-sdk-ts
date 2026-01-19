@@ -20,10 +20,18 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     logs,
     connectedDevices,
     sessionStates,
+    discoveredDevices,
+    isListening,
+    isActivelyDiscovering,
     isLoggerConnected,
     isInspectorConnected,
     sendMessage,
     clearLogs,
+    startListening,
+    stopListening,
+    startDiscovering,
+    stopDiscovering,
+    connectDevice,
   } = useConnectorMessages(connector);
 
   const [currentScreen, setCurrentScreen] = useState<DashboardScreen>(
@@ -56,8 +64,16 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
         <Sessions
           devices={connectedDevices}
           sessionStates={sessionStates}
+          discoveredDevices={discoveredDevices}
+          isListening={isListening}
+          isActivelyDiscovering={isActivelyDiscovering}
           sendMessage={sendMessage}
           isConnected={isInspectorConnected}
+          startListening={startListening}
+          stopListening={stopListening}
+          startDiscovering={startDiscovering}
+          stopDiscovering={stopDiscovering}
+          connectDevice={connectDevice}
         />
       )}
     </Flex>

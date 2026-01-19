@@ -2,6 +2,7 @@ import {
   type ConnectedDevice,
   type DeviceSessionState,
   DeviceSessionStateType,
+  type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 
 /**
@@ -43,4 +44,20 @@ export function serializeDeviceSessionState(
  */
 export function parseDeviceSessionState(data: unknown): DeviceSessionState {
   return data as DeviceSessionState;
+}
+
+/**
+ * Serialize a DiscoveredDevice to a plain object for JSON transmission.
+ */
+export function serializeDiscoveredDevice(
+  device: DiscoveredDevice,
+): DiscoveredDevice {
+  return JSON.parse(JSON.stringify(device)) as DiscoveredDevice;
+}
+
+/**
+ * Parse a serialized DiscoveredDevice.
+ */
+export function parseDiscoveredDevice(data: unknown): DiscoveredDevice {
+  return data as DiscoveredDevice;
 }

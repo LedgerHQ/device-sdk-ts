@@ -10,6 +10,8 @@ export const INSPECTOR_MESSAGE_TYPES = {
   PROVIDER_VALUE: "providerValue",
   /** Response to a sendApdu request */
   APDU_RESPONSE: "apduResponse",
+  /** List of discovered (available) devices updated */
+  DISCOVERED_DEVICES_UPDATE: "discoveredDevicesUpdate",
 } as const;
 
 /**
@@ -24,4 +26,14 @@ export const INSPECTOR_COMMAND_TYPES = {
   GET_PROVIDER: "getProvider",
   /** Request to set provider */
   SET_PROVIDER: "setProvider",
+  /** Request to start listening for available devices (passive, no user gesture required) */
+  START_LISTENING_DEVICES: "startListeningDevices",
+  /** Request to stop listening for available devices */
+  STOP_LISTENING_DEVICES: "stopListeningDevices",
+  /** Request to start discovering devices (triggers permission prompt, requires user gesture in web apps) */
+  START_DISCOVERING: "startDiscovering",
+  /** Request to stop discovering devices */
+  STOP_DISCOVERING: "stopDiscovering",
+  /** Request to connect to a discovered device */
+  CONNECT_DEVICE: "connectDevice",
 } as const;

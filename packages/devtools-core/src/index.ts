@@ -8,8 +8,10 @@ export { DevToolsDmkInspector } from "./inspector/DevToolsDmkInspector";
 export {
   parseConnectedDevice,
   parseDeviceSessionState,
+  parseDiscoveredDevice,
   serializeConnectedDevice,
   serializeDeviceSessionState,
+  serializeDiscoveredDevice,
 } from "./inspector/serialization";
 
 // Logger module

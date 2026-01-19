@@ -104,22 +104,28 @@ sequenceDiagram
 
 **Messages from Inspector to Dashboard:**
 
-| Message Type               | Payload                                              | Description                   |
-| -------------------------- | ---------------------------------------------------- | ----------------------------- |
-| `moduleConnected`          | `{ module: "dmk-inspector" }`                        | Handshake                     |
-| `connectedDevicesUpdate`   | `ConnectedDevice[]`                                  | List of all connected devices |
-| `deviceSessionStateUpdate` | `{ sessionId, state }`                               | Session state change          |
-| `providerValue`            | `{ provider: number }`                               | Response to getProvider       |
-| `apduResponse`             | `{ requestId, success, statusCode?, data?, error? }` | Response to sendApdu          |
+| Message Type               | Payload                                              | Description                              |
+| -------------------------- | ---------------------------------------------------- | ---------------------------------------- |
+| `moduleConnected`          | `{ module: "dmk-inspector" }`                        | Handshake                                |
+| `connectedDevicesUpdate`   | `ConnectedDevice[]`                                  | List of all connected devices            |
+| `deviceSessionStateUpdate` | `{ sessionId, state }`                               | Session state change                     |
+| `providerValue`            | `{ provider: number }`                               | Response to getProvider                  |
+| `apduResponse`             | `{ requestId, success, statusCode?, data?, error? }` | Response to sendApdu                     |
+| `discoveredDevicesUpdate`  | `DiscoveredDevice[]`                                 | List of available devices for connection |
 
 **Commands from Dashboard to Inspector:**
 
-| Command Type  | Payload                          | Description                    |
-| ------------- | -------------------------------- | ------------------------------ |
-| `disconnect`  | `{ sessionId }`                  | Disconnect a device session    |
-| `sendApdu`    | `{ sessionId, apdu, requestId }` | Send raw APDU to device        |
-| `getProvider` | —                                | Request current provider value |
-| `setProvider` | `{ provider: number }`           | Set provider value             |
+| Command Type            | Payload                          | Description                                         |
+| ----------------------- | -------------------------------- | --------------------------------------------------- |
+| `disconnect`            | `{ sessionId }`                  | Disconnect a device session                         |
+| `sendApdu`              | `{ sessionId, apdu, requestId }` | Send raw APDU to device                             |
+| `getProvider`           | —                                | Request current provider value                      |
+| `setProvider`           | `{ provider: number }`           | Set provider value                                  |
+| `startListeningDevices` | —                                | Start listening for available devices (passive)     |
+| `stopListeningDevices`  | —                                | Stop listening for available devices                |
+| `startDiscovering`      | —                                | Start active discovery (triggers permission prompt) |
+| `stopDiscovering`       | —                                | Stop active discovery                               |
+| `connectDevice`         | `{ deviceId }`                   | Connect to a discovered device                      |
 
 #### Lifecycle
 
@@ -149,6 +155,13 @@ sequenceDiagram
 - [x] **DMK configuration** — View and modify DMK settings
 
   - View and set the Manager API provider (`getProvider` / `setProvider`) (backend ready, UI pending)
+  - _Module: `DevToolsDmkInspector`_
+
+- [x] **Device discovery** — Discover and connect to devices from the dashboard
+
+  - Start/stop device discovery
+  - View list of available devices
+  - Connect to a discovered device
   - _Module: `DevToolsDmkInspector`_
 
 - [ ] **Advanced logging** — Enhanced log viewing experience

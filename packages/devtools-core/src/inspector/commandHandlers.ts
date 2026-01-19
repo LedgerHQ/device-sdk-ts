@@ -1,6 +1,8 @@
 import {
+  type DeviceId,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 
 import { type Connector } from "../types";
@@ -83,4 +85,37 @@ export function handleSetProvider(
   ctx.dmk.setProvider(provider);
   // Send back the new value to confirm
   handleGetProvider(ctx);
+}
+
+/**
+ * Handle connectDevice command - connects to a discovered device.
+ *
+ * @param ctx - Command handler context
+ * @param payload - JSON payload containing deviceId
+ * @param discoveredDevices - Current list of discovered devices to find the device
+ */
+export async function handleConnectDevice(
+  ctx: CommandHandlerContext,
+  payload: string,
+  discoveredDevices: DiscoveredDevice[],
+): Promise<void> {
+  const { deviceId } = JSON.parse(payload) as { deviceId: DeviceId };
+
+  const device = discoveredDevices.find((d) => d.id === deviceId);
+  if (!device) {
+    console.error(
+      `[DevToolsDmkInspector] Device not found for connect: ${deviceId}`,
+    );
+    return;
+  }
+
+  try {
+    await ctx.dmk.connect({ device });
+    // The connected device will be picked up by the deviceObserver
+  } catch (error) {
+    console.error(
+      `[DevToolsDmkInspector] Error connecting to device ${deviceId}`,
+      error,
+    );
+  }
 }

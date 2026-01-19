@@ -2,15 +2,18 @@ import { useCallback, useEffect, useState } from "react";
 import {
   type ConnectedDevice,
   type DeviceSessionState,
+  type DiscoveredDevice,
 } from "@ledgerhq/device-management-kit";
 import {
   type Connector,
   DEVTOOLS_MODULES,
   type DevToolsModule,
+  INSPECTOR_COMMAND_TYPES,
   INSPECTOR_MESSAGE_TYPES,
   MODULE_CONNECTED_MESSAGE_TYPE,
   parseConnectedDevice,
   parseDeviceSessionState,
+  parseDiscoveredDevice,
 } from "@ledgerhq/device-management-kit-devtools-core";
 
 import { type Message } from "../PluginEvents";
@@ -24,10 +27,18 @@ export type ConnectorMessagesState = {
   connectedModules: Set<DevToolsModule>;
   connectedDevices: ConnectedDevice[];
   sessionStates: Map<string, DeviceSessionState>;
+  discoveredDevices: DiscoveredDevice[];
+  isListening: boolean;
+  isActivelyDiscovering: boolean;
   isLoggerConnected: boolean;
   isInspectorConnected: boolean;
   sendMessage: (type: string, payload: string) => void;
   clearLogs: () => void;
+  startListening: () => void;
+  stopListening: () => void;
+  startDiscovering: () => void;
+  stopDiscovering: () => void;
+  connectDevice: (deviceId: string) => void;
 };
 
 export function useConnectorMessages(
@@ -45,6 +56,11 @@ export function useConnectorMessages(
   const [sessionStates, setSessionStates] = useState<
     Map<string, DeviceSessionState>
   >(new Map());
+  const [discoveredDevices, setDiscoveredDevices] = useState<
+    DiscoveredDevice[]
+  >([]);
+  const [isListening, setIsListening] = useState(false);
+  const [isActivelyDiscovering, setIsActivelyDiscovering] = useState(false);
 
   useEffect(() => {
     const { unsubscribe } = connector.listenToMessages((type, payload) => {
@@ -96,6 +112,17 @@ export function useConnectorMessages(
         }
         return;
       }
+
+      if (type === INSPECTOR_MESSAGE_TYPES.DISCOVERED_DEVICES_UPDATE) {
+        try {
+          const rawDevices = JSON.parse(payload) as unknown[];
+          const devices = rawDevices.map(parseDiscoveredDevice);
+          setDiscoveredDevices(devices);
+        } catch (e) {
+          console.error("Failed to parse discoveredDevicesUpdate payload", e);
+        }
+        return;
+      }
     });
     return () => {
       unsubscribe();
@@ -114,6 +141,45 @@ export function useConnectorMessages(
     setLogs([]);
   }, []);
 
+  // Passive listening (listenToAvailableDevices)
+  const startListening = useCallback(() => {
+    setIsListening(true);
+    setDiscoveredDevices([]);
+    connector.sendMessage(
+      INSPECTOR_COMMAND_TYPES.START_LISTENING_DEVICES,
+      "{}",
+    );
+  }, [connector]);
+
+  const stopListening = useCallback(() => {
+    setIsListening(false);
+    setDiscoveredDevices([]);
+    connector.sendMessage(INSPECTOR_COMMAND_TYPES.STOP_LISTENING_DEVICES, "{}");
+  }, [connector]);
+
+  // Active discovery (startDiscovering) - triggers permission prompts
+  const startDiscovering = useCallback(() => {
+    setIsActivelyDiscovering(true);
+    setDiscoveredDevices([]);
+    connector.sendMessage(INSPECTOR_COMMAND_TYPES.START_DISCOVERING, "{}");
+  }, [connector]);
+
+  const stopDiscovering = useCallback(() => {
+    setIsActivelyDiscovering(false);
+    setDiscoveredDevices([]);
+    connector.sendMessage(INSPECTOR_COMMAND_TYPES.STOP_DISCOVERING, "{}");
+  }, [connector]);
+
+  const connectDevice = useCallback(
+    (deviceId: string) => {
+      connector.sendMessage(
+        INSPECTOR_COMMAND_TYPES.CONNECT_DEVICE,
+        JSON.stringify({ deviceId }),
+      );
+    },
+    [connector],
+  );
+
   const isLoggerConnected = connectedModules.has(DEVTOOLS_MODULES.LOGGER);
   const isInspectorConnected = connectedModules.has(
     DEVTOOLS_MODULES.DMK_INSPECTOR,
@@ -126,9 +192,17 @@ export function useConnectorMessages(
     connectedModules,
     connectedDevices,
     sessionStates,
+    discoveredDevices,
+    isListening,
+    isActivelyDiscovering,
     isLoggerConnected,
     isInspectorConnected,
     sendMessage,
     clearLogs,
+    startListening,
+    stopListening,
+    startDiscovering,
+    stopDiscovering,
+    connectDevice,
   };
 }
