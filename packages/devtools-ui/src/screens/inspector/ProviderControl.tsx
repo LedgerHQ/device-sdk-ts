@@ -5,26 +5,17 @@ const Container = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   padding: 12px 16px;
   background: #f5f5f5;
   border-radius: 8px;
   margin-bottom: 16px;
 `;
 
-const Label = styled.span`
+const Label = styled.label`
   font-size: 14px;
   font-weight: 500;
   color: #333;
-`;
-
-const Value = styled.span`
-  font-size: 14px;
-  font-family: monospace;
-  background: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
 `;
 
 const Input = styled.input`
@@ -41,33 +32,18 @@ const Input = styled.input`
   }
 `;
 
-const Button = styled.button`
-  padding: 6px 12px;
+const RefreshButton = styled.button`
+  padding: 4px 8px;
   border: 1px solid #ddd;
   border-radius: 4px;
   background: white;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
 
   &:hover {
     background: #f0f0f0;
     border-color: #bbb;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-const SetButton = styled(Button)`
-  background: #4caf50;
-  color: white;
-  border-color: #4caf50;
-
-  &:hover:not(:disabled) {
-    background: #43a047;
   }
 `;
 
@@ -82,36 +58,55 @@ export const ProviderControl: React.FC<ProviderControlProps> = ({
   onGet,
   onSet,
 }) => {
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState<string>("");
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch provider value on mount
   useEffect(() => {
     onGet();
   }, [onGet]);
 
-  const handleSet = () => {
-    const parsed = parseInt(inputValue, 10);
-    if (!isNaN(parsed)) {
+  // Sync input with current value when it changes from server (only if not actively editing)
+  useEffect(() => {
+    if (currentValue !== null && !isEditing) {
+      setInputValue(String(currentValue));
+    }
+  }, [currentValue, isEditing]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    setIsEditing(true);
+
+    const parsed = parseInt(value, 10);
+    if (!isNaN(parsed) && parsed >= 0 && String(parsed) === value) {
       onSet(parsed);
-      setInputValue("");
+    }
+  };
+
+  const handleRefresh = () => {
+    setIsEditing(false);
+    onGet();
+    // Immediately sync to current value if available
+    if (currentValue !== null) {
+      setInputValue(String(currentValue));
     }
   };
 
   return (
     <Container>
-      <Label>Provider:</Label>
-      <Value>{currentValue !== null ? currentValue : "—"}</Value>
-      <Button onClick={onGet}>Refresh</Button>
+      <Label htmlFor="provider-input">My Ledger API provider:</Label>
       <Input
+        id="provider-input"
         type="number"
-        placeholder="New value"
+        min="0"
         value={inputValue}
-        onChange={(e) => setInputValue(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && handleSet()}
+        onChange={handleChange}
+        onBlur={() => setIsEditing(false)}
       />
-      <SetButton onClick={handleSet} disabled={!inputValue}>
-        Set
-      </SetButton>
+      <RefreshButton onClick={handleRefresh} title="Refresh">
+        🔄
+      </RefreshButton>
     </Container>
   );
 };
