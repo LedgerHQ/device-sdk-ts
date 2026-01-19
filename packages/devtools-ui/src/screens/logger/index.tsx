@@ -74,15 +74,8 @@ export const Logger: React.FC<Props> = ({
   }
 
   return (
-    <Flex
-      flex={1}
-      flexDirection="column"
-      p={6}
-      pt={0}
-      minHeight={0}
-      overflow="hidden"
-    >
-      <Flex flexDirection="column" py={"5px"} flexShrink={0}>
+    <Flex flex={1} flexDirection="column" minHeight={0} overflow="hidden">
+      <Flex flexDirection="column" px={6} py={2} flexShrink={0}>
         <LoggerToolbar
           clearLogs={onClickClearLogs}
           downloadLogs={downloadLogs}
