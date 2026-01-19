@@ -29,6 +29,10 @@ import { type GetDmkVersionUseCase } from "@internal/config/use-case/GetDmkVersi
 import { deviceSessionTypes } from "@internal/device-session/di/deviceSessionTypes";
 import { type CloseSessionsUseCase } from "@internal/device-session/use-case/CloseSessionsUseCase";
 import { type GetDeviceSessionStateUseCase } from "@internal/device-session/use-case/GetDeviceSessionStateUseCase";
+import {
+  type UnsafeBypassIntentQueueUseCase,
+  type UnsafeBypassIntentQueueUseCaseArgs,
+} from "@internal/device-session/use-case/UnsafeBypassIntentQueueUseCase";
 import { discoveryTypes } from "@internal/discovery/di/discoveryTypes";
 import { type ConnectUseCase } from "@internal/discovery/use-case/ConnectUseCase";
 import { type DisconnectUseCase } from "@internal/discovery/use-case/DisconnectUseCase";
@@ -308,6 +312,22 @@ export class DeviceManagementKit {
     return this.container
       .get<DisableDeviceSessionRefresherUseCase>(
         deviceSessionTypes.DisableDeviceSessionRefresherUseCase,
+      )
+      .execute(args);
+  }
+
+  /**
+   * UNSAFE: Bypasses the intent queue for a device session.
+   * This allows all intents (sendApdu, sendCommand, executeDeviceAction) to execute
+   * directly without being queued. Use with extreme caution as this can lead to
+   * race conditions and concurrent execution issues.
+   *
+   * @param {UnsafeBypassIntentQueueUseCaseArgs} args - The device session ID and bypass flag.
+   */
+  _unsafeBypassIntentQueue(args: UnsafeBypassIntentQueueUseCaseArgs): void {
+    return this.container
+      .get<UnsafeBypassIntentQueueUseCase>(
+        deviceSessionTypes.UnsafeBypassIntentQueueUseCase,
       )
       .execute(args);
   }
