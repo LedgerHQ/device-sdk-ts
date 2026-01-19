@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import { Divider, Flex } from "@ledgerhq/react-ui";
 
+import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
 import { LoggerToolbar } from "./LoggerToolbar";
 import { LogsTable } from "./logsTable";
 import { type LogData } from "./types";
@@ -9,9 +10,20 @@ import { useLogsDataAndOptions } from "./useLogsDataAndOptions";
 type Props = {
   logs: Array<LogData>;
   clearLogs: () => void;
+  isConnected?: boolean;
 };
 
-export const Logger: React.FC<Props> = ({ logs, clearLogs }) => {
+const LOGGER_CODE_EXAMPLE = `import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+
+const dmk = new DeviceManagementKitBuilder()
+  .addLogger(new DevToolsLogger(connector))
+  .build();`;
+
+export const Logger: React.FC<Props> = ({
+  logs,
+  clearLogs,
+  isConnected = true,
+}) => {
   const [nonce, setNonce] = React.useState(0);
   const { options, setOptions, displayedLogs, uniqueTags } =
     useLogsDataAndOptions({
@@ -45,6 +57,21 @@ export const Logger: React.FC<Props> = ({ logs, clearLogs }) => {
     a.click();
     URL.revokeObjectURL(url);
   }, [logs]);
+
+  if (!isConnected) {
+    return (
+      <NotConnectedMessage
+        title="Logger not connected"
+        description={
+          <>
+            To enable logging, add <code>DevToolsLogger</code> to your DMK
+            builder:
+          </>
+        }
+        codeExample={LOGGER_CODE_EXAMPLE}
+      />
+    );
+  }
 
   return (
     <Flex
