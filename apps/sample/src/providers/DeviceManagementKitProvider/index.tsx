@@ -7,7 +7,11 @@ import {
   DeviceManagementKitBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
-import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import {
+  type Connector,
+  DevToolsDmkInspector,
+  DevToolsLogger,
+} from "@ledgerhq/device-management-kit-devtools-core";
 import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
 import { DevtoolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
 import {
@@ -32,12 +36,10 @@ import {
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
-function buildDevToolsLogger() {
-  const devToolsWebSocketConnector =
-    DevtoolsWebSocketConnector.getInstance().connect({
-      url: DEFAULT_CLIENT_WS_URL,
-    });
-  return new DevToolsLogger(devToolsWebSocketConnector);
+function getDevToolsConnector(): Connector {
+  return DevtoolsWebSocketConnector.getInstance().connect({
+    url: DEFAULT_CLIENT_WS_URL,
+  });
 }
 
 function buildDefaultDmk(
@@ -91,9 +93,15 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const mockServerEnabled = transport === mockserverIdentifier;
   const speculosEnabled = transport === speculosIdentifier;
 
+  // Keep connector and logger refs stable across renders
+  const devToolsConnector = useRef<Connector | null>(null);
   const devToolsLogger = useRef<DevToolsLogger | null>(null);
+
+  if (devToolsConnector.current === null) {
+    devToolsConnector.current = getDevToolsConnector();
+  }
   if (devToolsLogger.current === null) {
-    devToolsLogger.current = buildDevToolsLogger();
+    devToolsLogger.current = new DevToolsLogger(devToolsConnector.current);
   }
 
   const [state, setState] = useState(() => {
@@ -103,6 +111,7 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
       : mockServerEnabled
         ? buildMockDmk(mockServerUrl, logsExporter, devToolsLogger.current!)
         : buildDefaultDmk(logsExporter, devToolsLogger.current!);
+
     return { dmk, logsExporter };
   });
 
@@ -116,16 +125,24 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
     speculosEnabledChanged
   ) {
     setState(({ logsExporter }) => {
-      return {
-        dmk: speculosEnabled
-          ? buildSpeculosDmk(logsExporter, devToolsLogger.current!, speculosUrl)
-          : mockServerEnabled
-            ? buildMockDmk(mockServerUrl, logsExporter, devToolsLogger.current!)
-            : buildDefaultDmk(logsExporter, devToolsLogger.current!),
-        logsExporter,
-      };
+      const dmk = speculosEnabled
+        ? buildSpeculosDmk(logsExporter, devToolsLogger.current!, speculosUrl)
+        : mockServerEnabled
+          ? buildMockDmk(mockServerUrl, logsExporter, devToolsLogger.current!)
+          : buildDefaultDmk(logsExporter, devToolsLogger.current!);
+
+      return { dmk, logsExporter };
     });
   }
+
+  // Create inspector in useEffect to ensure proper lifecycle handling
+  useEffect(() => {
+    const inspector = new DevToolsDmkInspector(
+      devToolsConnector.current!,
+      state.dmk,
+    );
+    return () => inspector.destroy();
+  }, [state.dmk]);
 
   // Sync appProvider to DMK when it changes
   const isFirstRender = useRef(true);
