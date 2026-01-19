@@ -16,6 +16,18 @@ Choose the setup that matches your app:
 
 The devtools system provides a bi-directional communication bridge between a client app (hosting the DMK) and a "Dashboard" app where the developer tools UI is displayed.
 
+```
+Client App                    Dashboard
+┌──────────────────┐         ┌──────────────────┐
+│  DevToolsLogger  │────────▶│  Logger Screen   │
+│                  │         │                  │
+│ DevToolsDmkInspector ◀────▶│ Inspector Screen │
+└──────────────────┘         └──────────────────┘
+        │                            │
+        └───────── Connector ────────┘
+            (WebSocket/Rozenite)
+```
+
 ![DMK DevTools architecture](https://github.com/user-attachments/assets/2fa7785d-97e7-4f6c-a516-01eab2bccf15)
 
 ### Packages
@@ -84,6 +96,8 @@ sequenceDiagram
 
 `DevToolsDmkInspector` provides **bi-directional communication** for device session inspection and DMK interaction.
 
+**Session inspection flow:**
+
 ```mermaid
 sequenceDiagram
     participant DMK
@@ -100,6 +114,25 @@ sequenceDiagram
     Dashboard->>Inspector: sendApdu
     Inspector->>DMK: sendApdu()
     Inspector->>Dashboard: apduResponse
+```
+
+**Device discovery flow:**
+
+```mermaid
+sequenceDiagram
+    participant DMK
+    participant Inspector as DevToolsDmkInspector
+    participant Dashboard
+
+    Dashboard->>Inspector: startListeningDevices
+    Inspector->>DMK: listenToAvailableDevices()
+    DMK-->>Inspector: DiscoveredDevice[]
+    Inspector->>Dashboard: discoveredDevicesUpdate
+    Dashboard->>Inspector: connectDevice
+    Inspector->>DMK: connect(device)
+    DMK-->>Inspector: sessionId
+    Inspector->>Dashboard: connectedDevicesUpdate
+    Dashboard->>Inspector: stopListeningDevices
 ```
 
 **Messages from Inspector to Dashboard:**
@@ -136,36 +169,23 @@ sequenceDiagram
 
 ### Features
 
-- [x] **Real-time log display** — View all DMK logs in real-time with verbosity levels and tags
+#### DevToolsLogger
 
-  - _Module: `DevToolsLogger`_
+- [x] **Real-time log display** — View all DMK logs in real-time with verbosity levels and tags
+- [x] **Filtering** — Filter logs by level and tag
+- [x] **Export** — Export logs to JSON
+
+#### DevToolsDmkInspector
 
 - [x] **Device sessions inspector** — Display all connected device sessions and their live states
-
   - List all active device sessions with device info (model, name, connection type)
   - Show live `DeviceSessionState` for each session (status, battery, current app, OS info)
-  - _Module: `DevToolsDmkInspector`_
-
 - [x] **Device session actions** — Interact with device sessions from the dashboard
-
   - Disconnect a device session
-  - Send raw APDU commands to a session (backend ready, UI pending)
-  - _Module: `DevToolsDmkInspector`_
-
-- [x] **DMK configuration** — View and modify DMK settings
-
-  - View and set the Manager API provider (`getProvider` / `setProvider`) (backend ready, UI pending)
-  - _Module: `DevToolsDmkInspector`_
-
+  - Send raw APDU commands to a session
 - [x] **Device discovery** — Discover and connect to devices from the dashboard
-
-  - Start/stop device discovery
+  - Start/stop device discovery (passive listening and active discovery)
   - View list of available devices
   - Connect to a discovered device
-  - _Module: `DevToolsDmkInspector`_
-
-- [ ] **Advanced logging** — Enhanced log viewing experience
-  - Filter by log level, tag, or content
-  - Log context visualization (expand/collapse structured data)
-  - Export logs
-  - _Module: `DevToolsLogger`_
+- [x] **DMK configuration** — View and modify DMK settings
+  - View and set the Manager API provider (`getProvider` / `setProvider`)
