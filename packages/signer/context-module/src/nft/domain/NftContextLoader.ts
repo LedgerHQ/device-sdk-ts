@@ -1,6 +1,11 @@
-import { HexaString, isHexaString } from "@ledgerhq/device-management-kit";
+import {
+  HexaString,
+  isHexaString,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
 import type { NftDataSource } from "@/nft/data/NftDataSource";
 import { nftTypes } from "@/nft/di/nftTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
@@ -42,9 +47,15 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 @injectable()
 export class NftContextLoader implements ContextLoader<NftContextInput> {
   private _dataSource: NftDataSource;
+  private logger: LoggerPublisherService;
 
-  constructor(@inject(nftTypes.NftDataSource) dataSource: NftDataSource) {
+  constructor(
+    @inject(nftTypes.NftDataSource) dataSource: NftDataSource,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
     this._dataSource = dataSource;
+    this.logger = loggerFactory("NftContextLoader");
   }
 
   canHandle(
@@ -92,6 +103,7 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
     });
 
     if (pluginPayload.type === ClearSignContextType.ERROR) {
+      this.logger.debug("load result", { data: { result: [pluginPayload] } });
       return [pluginPayload];
     }
 
@@ -115,11 +127,13 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
     });
 
     if (nftInfosPayload.type === ClearSignContextType.ERROR) {
+      this.logger.debug("load result", { data: { result: [nftInfosPayload] } });
       return [nftInfosPayload];
     }
 
     responses.push(nftInfosPayload);
 
+    this.logger.debug("load result", { data: { result: responses } });
     return responses;
   }
 

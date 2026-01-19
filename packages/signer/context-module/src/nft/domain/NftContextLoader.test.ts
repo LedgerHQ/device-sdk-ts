@@ -6,6 +6,7 @@ import {
   NftContextLoader,
 } from "@/nft/domain/NftContextLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 
 describe("NftContextLoader", () => {
   const spyGetNftInfosPayload = vi.fn();
@@ -19,7 +20,7 @@ describe("NftContextLoader", () => {
       getNftInfosPayload: spyGetNftInfosPayload,
       getSetPluginPayload: spyGetPluginPayload,
     };
-    loader = new NftContextLoader(mockDataSource);
+    loader = new NftContextLoader(mockDataSource, NullLoggerPublisherService);
   });
 
   describe("canHandle function", () => {

@@ -1,6 +1,11 @@
-import { HexaString, isHexaString } from "@ledgerhq/device-management-kit";
+import {
+  HexaString,
+  isHexaString,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -29,9 +34,15 @@ export type TokenContextInput = {
 @injectable()
 export class TokenContextLoader implements ContextLoader<TokenContextInput> {
   private _dataSource: TokenDataSource;
+  private logger: LoggerPublisherService;
 
-  constructor(@inject(tokenTypes.TokenDataSource) dataSource: TokenDataSource) {
+  constructor(
+    @inject(tokenTypes.TokenDataSource) dataSource: TokenDataSource,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
     this._dataSource = dataSource;
+    this.logger = loggerFactory("TokenContextLoader");
   }
 
   canHandle(
@@ -61,7 +72,7 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
       chainId,
     });
 
-    return [
+    const result = [
       payload.caseOf({
         Left: (error): ClearSignContext => ({
           type: ClearSignContextType.ERROR,
@@ -73,6 +84,9 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
         }),
       }),
     ];
+
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 
   private isSelectorSupported(selector: HexaString) {

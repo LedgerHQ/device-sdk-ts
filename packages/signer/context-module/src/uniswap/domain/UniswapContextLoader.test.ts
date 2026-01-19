@@ -2,6 +2,7 @@ import { Interface, type TransactionDescription } from "ethers";
 import { Left, Right } from "purify-ts";
 
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import { type HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import {
   UNISWAP_EXECUTE_SELECTOR,
@@ -30,6 +31,7 @@ describe("UniswapContextLoader", () => {
       loader = new UniswapContextLoader(
         new DefaultCommandDecoderDataSource(new EthersAbiDecoderDataSource()),
         tokenDataSourceMock as unknown as HttpTokenDataSource,
+        NullLoggerPublisherService,
       );
     });
 
@@ -88,6 +90,7 @@ describe("UniswapContextLoader", () => {
         loader = new UniswapContextLoader(
           new DefaultCommandDecoderDataSource(new EthersAbiDecoderDataSource()),
           tokenDataSourceMock as unknown as HttpTokenDataSource,
+          NullLoggerPublisherService,
         );
       });
 
@@ -193,6 +196,7 @@ describe("UniswapContextLoader", () => {
         loader = new UniswapContextLoader(
           commandDecoderMock,
           tokenDataSourceMock as unknown as HttpTokenDataSource,
+          NullLoggerPublisherService,
         );
       });
 

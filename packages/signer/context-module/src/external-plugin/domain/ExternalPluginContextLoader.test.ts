@@ -10,6 +10,7 @@ import {
 import { type DappInfos } from "@/external-plugin/model/DappInfos";
 import { type SelectorDetails } from "@/external-plugin/model/SelectorDetails";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { type UniswapContextLoader } from "@/uniswap/domain/UniswapContextLoader";
 
@@ -63,6 +64,7 @@ describe("ExternalPluginContextLoader", () => {
     mockExternalPluginDataSource,
     mockTokenDataSource,
     mockUniswapLoader,
+    NullLoggerPublisherService,
   );
 
   beforeEach(() => {
