@@ -34,6 +34,8 @@ export const selectAppProvider = (state: RootState) =>
   state.settings.appProvider;
 export const selectPollingInterval = (state: RootState) =>
   state.settings.pollingInterval;
+export const selectBypassIntentQueue = (state: RootState) =>
+  state.settings.bypassIntentQueue;
 
 // CAL config selectors
 export const selectCalConfig = (state: RootState) => state.settings.calConfig;

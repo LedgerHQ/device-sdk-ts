@@ -5,6 +5,7 @@ import { Block } from "@/components/Block";
 import { PageWithHeader } from "@/components/PageWithHeader";
 
 import { AppProviderSetting } from "./AppProviderSetting";
+import { BypassIntentQueueSetting } from "./BypassIntentQueueSetting";
 import { CalBranchSetting } from "./CalBranchSetting";
 import { CalModeSetting } from "./CalModeSetting";
 import { CalUrlSetting } from "./CalUrlSetting";
@@ -30,6 +31,7 @@ export const SettingsView: React.FC = () => {
           <SectionTitle>Device Management Kit</SectionTitle>
           <AppProviderSetting />
           <PollingIntervalSetting />
+          <BypassIntentQueueSetting />
         </SectionContainer>
 
         <SectionContainer>

@@ -48,6 +48,12 @@ export const settingsSlice = createSlice({
     ) => {
       state.pollingInterval = action.payload.pollingInterval;
     },
+    setBypassIntentQueue: (
+      state,
+      action: PayloadAction<{ bypassIntentQueue: boolean }>,
+    ) => {
+      state.bypassIntentQueue = action.payload.bypassIntentQueue;
+    },
 
     // CAL config
     setCalConfig: (
@@ -119,6 +125,7 @@ export const {
   setSpeculosVncUrl,
   setAppProvider,
   setPollingInterval,
+  setBypassIntentQueue,
   setCalConfig,
   setCalUrl,
   setCalMode,
