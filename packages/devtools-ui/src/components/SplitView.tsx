@@ -2,7 +2,9 @@ import React from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import styled from "styled-components";
 
-const ResizeHandle = styled(Separator)<{ $direction: "horizontal" | "vertical" }>`
+const ResizeHandle = styled(Separator)<{
+  $direction: "horizontal" | "vertical";
+}>`
   background: #e0e0e0;
   transition: background 0.15s ease;
 
@@ -57,7 +59,8 @@ export const SplitView: React.FC<SplitViewProps> = ({
 }) => {
   // react-resizable-panels uses "horizontal" for left/right split
   // and "vertical" for top/bottom split (opposite of our naming)
-  const panelOrientation = direction === "horizontal" ? "vertical" : "horizontal";
+  const panelOrientation =
+    direction === "horizontal" ? "vertical" : "horizontal";
 
   return (
     <Group orientation={panelOrientation} style={{ flex: 1 }}>

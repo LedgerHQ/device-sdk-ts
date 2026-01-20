@@ -1,5 +1,6 @@
-import { type LogParams, LogLevel } from "@ledgerhq/device-management-kit";
-import { DevToolsLog } from "./DevToolsLog";
+import { LogLevel, type LogParams } from "@ledgerhq/device-management-kit";
+
+import { type DevToolsLog } from "./DevToolsLog";
 
 export function mapDmkLogToDevToolsLog(dmkLog: LogParams): DevToolsLog {
   const [level, message, options] = dmkLog;

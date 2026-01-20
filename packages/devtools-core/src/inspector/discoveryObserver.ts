@@ -112,6 +112,6 @@ export function startDiscoveringObserver(
       subscription.unsubscribe();
       subscription = null;
     }
-    dmk.stopDiscovering();
+    void dmk.stopDiscovering();
   };
 }

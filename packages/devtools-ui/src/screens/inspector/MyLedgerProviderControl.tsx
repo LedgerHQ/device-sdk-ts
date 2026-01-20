@@ -53,11 +53,9 @@ type MyLedgerProviderControlProps = {
   onSet: (value: number) => void;
 };
 
-export const MyLedgerProviderControl: React.FC<MyLedgerProviderControlProps> = ({
-  currentValue,
-  onGet,
-  onSet,
-}) => {
+export const MyLedgerProviderControl: React.FC<
+  MyLedgerProviderControlProps
+> = ({ currentValue, onGet, onSet }) => {
   const [inputValue, setInputValue] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
 
