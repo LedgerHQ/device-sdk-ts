@@ -41,6 +41,12 @@ export const settingsSlice = createSlice({
     setAppProvider: (state, action: PayloadAction<{ appProvider: number }>) => {
       state.appProvider = action.payload.appProvider;
     },
+    setBypassIntentQueue: (
+      state,
+      action: PayloadAction<{ bypassIntentQueue: boolean }>,
+    ) => {
+      state.bypassIntentQueue = action.payload.bypassIntentQueue;
+    },
 
     // CAL config
     setCalConfig: (
@@ -100,6 +106,7 @@ export const {
   setSpeculosUrl,
   setSpeculosVncUrl,
   setAppProvider,
+  setBypassIntentQueue,
   setCalConfig,
   setCalUrl,
   setCalMode,
