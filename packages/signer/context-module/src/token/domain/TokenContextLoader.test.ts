@@ -1,6 +1,7 @@
 import { Left, Right } from "purify-ts";
 
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import {
   type TokenContextInput,
@@ -11,7 +12,10 @@ describe("TokenContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
     getTokenInfosPayload: vi.fn(),
   };
-  const loader = new TokenContextLoader(mockTokenDataSource);
+  const loader = new TokenContextLoader(
+    mockTokenDataSource,
+    NullLoggerPublisherService,
+  );
 
   beforeEach(() => {
     vi.restoreAllMocks();

@@ -1,6 +1,11 @@
-import { DeviceModelId, isHexaString } from "@ledgerhq/device-management-kit";
+import {
+  DeviceModelId,
+  isHexaString,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
@@ -29,12 +34,18 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 export class TypedDataCheckContextLoader
   implements ContextLoader<TypedDataCheckContextInput>
 {
+  private logger: LoggerPublisherService;
+
   constructor(
     @inject(transactionCheckTypes.TypedDataCheckDataSource)
     private typedDataCheckDataSource: TypedDataCheckDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this.logger = loggerFactory("TypedDataCheckContextLoader");
+  }
 
   canHandle(
     input: unknown,
@@ -61,6 +72,7 @@ export class TypedDataCheckContextLoader
     const { from, data } = ctx;
 
     if (!from || !data) {
+      this.logger.debug("load result", { data: { result: [] } });
       return [];
     }
 
@@ -75,21 +87,23 @@ export class TypedDataCheckContextLoader
           type: ClearSignContextType.ERROR,
           error,
         }),
-      Right: async (result) => {
+      Right: async (checkResult) => {
         const certificate = await this.certificateLoader.loadCertificate({
-          keyId: result.publicKeyId,
+          keyId: checkResult.publicKeyId,
           keyUsage: KeyUsage.TxSimulationSigner,
           targetDevice: ctx.deviceModelId,
         });
 
         return {
           type: ClearSignContextType.TRANSACTION_CHECK,
-          payload: result.descriptor,
+          payload: checkResult.descriptor,
           certificate,
         };
       },
     });
 
-    return [context];
+    const result = [context];
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 }

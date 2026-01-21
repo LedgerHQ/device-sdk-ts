@@ -1,8 +1,13 @@
-import { HexaString, isHexaString } from "@ledgerhq/device-management-kit";
+import {
+  HexaString,
+  isHexaString,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { ethers, Interface } from "ethers";
 import { inject, injectable } from "inversify";
 import { Either, EitherAsync, Left, Right } from "purify-ts";
 
+import { configTypes } from "@/config/di/configTypes";
 import type { ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { externalPluginTypes } from "@/external-plugin/di/externalPluginTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
@@ -41,6 +46,7 @@ export class ExternalPluginContextLoader
     string,
     ContextLoader<ExternalPluginTokensInput>
   >;
+  private logger: LoggerPublisherService;
 
   constructor(
     @inject(externalPluginTypes.ExternalPluginDataSource)
@@ -49,10 +55,13 @@ export class ExternalPluginContextLoader
     private _tokenDataSource: TokenDataSource,
     @inject(uniswapTypes.UniswapContextLoader)
     private _uniswapLoader: UniswapContextLoader,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._customPluginLoaders = {
       Uniswap: this._uniswapLoader,
     };
+    this.logger = loggerFactory("ExternalPluginContextLoader");
   }
 
   canHandle(
@@ -86,77 +95,82 @@ export class ExternalPluginContextLoader
       selector,
     });
 
-    return EitherAsync<Error, ClearSignContext[]>(async ({ liftEither }) => {
-      const dappInfos = await liftEither(eitherDappInfos);
+    const result = await EitherAsync<Error, ClearSignContext[]>(
+      async ({ liftEither }) => {
+        const dappInfos = await liftEither(eitherDappInfos);
 
-      // if the dappInfos is null, return an empty array
-      // this means that the selector is not a known selector
-      if (!dappInfos) {
-        return [];
-      }
+        // if the dappInfos is null, return an empty array
+        // this means that the selector is not a known selector
+        if (!dappInfos) {
+          return [];
+        }
 
-      const externalPluginContext: ClearSignContext = {
-        type: ClearSignContextType.EXTERNAL_PLUGIN,
-        payload: dappInfos.selectorDetails.serializedData.concat(
-          dappInfos.selectorDetails.signature,
-        ),
-      };
+        const externalPluginContext: ClearSignContext = {
+          type: ClearSignContextType.EXTERNAL_PLUGIN,
+          payload: dappInfos.selectorDetails.serializedData.concat(
+            dappInfos.selectorDetails.signature,
+          ),
+        };
 
-      const customLoader =
-        this._customPluginLoaders[dappInfos.selectorDetails.plugin];
-      if (
-        customLoader !== undefined &&
-        customLoader.canHandle(input, [ClearSignContextType.TOKEN])
-      ) {
-        const tokens = await customLoader.load(input);
-        return [externalPluginContext, ...tokens];
-      }
+        const customLoader =
+          this._customPluginLoaders[dappInfos.selectorDetails.plugin];
+        if (
+          customLoader !== undefined &&
+          customLoader.canHandle(input, [ClearSignContextType.TOKEN])
+        ) {
+          const tokens = await customLoader.load(input);
+          return [externalPluginContext, ...tokens];
+        }
 
-      const decodedCallData = this.getDecodedCallData(
-        dappInfos.abi,
-        dappInfos.selectorDetails.method,
-        data,
-      );
+        const decodedCallData = this.getDecodedCallData(
+          dappInfos.abi,
+          dappInfos.selectorDetails.method,
+          data,
+        );
 
-      // if the call data cannot be decoded, return the error
-      // but also the externalPluginContext because it is still valid
-      if (decodedCallData.isLeft()) {
-        return [
-          {
-            type: ClearSignContextType.ERROR,
-            error: decodedCallData.extract(),
-          },
-          externalPluginContext,
-        ];
-      }
+        // if the call data cannot be decoded, return the error
+        // but also the externalPluginContext because it is still valid
+        if (decodedCallData.isLeft()) {
+          return [
+            {
+              type: ClearSignContextType.ERROR,
+              error: decodedCallData.extract(),
+            },
+            externalPluginContext,
+          ];
+        }
 
-      // decodedCallData is a Right so we can extract it safely
-      const extractedDecodedCallData =
-        decodedCallData.extract() as ethers.Result;
+        // decodedCallData is a Right so we can extract it safely
+        const extractedDecodedCallData =
+          decodedCallData.extract() as ethers.Result;
 
-      // get the token payload for each erc20OfInterest
-      // and return the payload or the error
-      const promises = dappInfos.selectorDetails.erc20OfInterest.map(
-        async (erc20Path) =>
-          this.getTokenPayload(input, erc20Path, extractedDecodedCallData),
-      );
+        // get the token payload for each erc20OfInterest
+        // and return the payload or the error
+        const promises = dappInfos.selectorDetails.erc20OfInterest.map(
+          async (erc20Path) =>
+            this.getTokenPayload(input, erc20Path, extractedDecodedCallData),
+        );
 
-      const tokensPayload = await Promise.all(promises);
+        const tokensPayload = await Promise.all(promises);
 
-      // map the payload or the error to a ClearSignContext
-      const contexts: ClearSignContext[] = tokensPayload.map((eitherToken) =>
-        eitherToken.caseOf<ClearSignContext>({
-          Left: (error) => ({ type: ClearSignContextType.ERROR, error }),
-          Right: (payload) => ({ type: ClearSignContextType.TOKEN, payload }),
-        }),
-      );
+        // map the payload or the error to a ClearSignContext
+        const contexts: ClearSignContext[] = tokensPayload.map((eitherToken) =>
+          eitherToken.caseOf<ClearSignContext>({
+            Left: (error) => ({ type: ClearSignContextType.ERROR, error }),
+            Right: (payload) => ({ type: ClearSignContextType.TOKEN, payload }),
+          }),
+        );
 
-      return [...contexts, externalPluginContext];
-    }).caseOf<ClearSignContext[]>({
+        return [...contexts, externalPluginContext];
+      },
+    ).caseOf<ClearSignContext[]>({
       // parse all errors into ClearSignContext
       Left: (error) => [{ type: ClearSignContextType.ERROR, error }],
       Right: (contexts) => contexts,
     });
+
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 
   private getTokenPayload(

@@ -2,12 +2,14 @@ import {
   DeviceModelId,
   HexaString,
   isHexaString,
+  LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { MaybeAsync } from "purify-ts";
 
 import type { CalldataDescriptorDataSource } from "@/calldata/data/CalldataDescriptorDataSource";
 import { calldataTypes } from "@/calldata/di/calldataTypes";
+import { configTypes } from "@/config/di/configTypes";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/proxy/di/proxyTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
@@ -43,6 +45,8 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 export class CalldataContextLoader
   implements ContextLoader<CalldataContextInput>
 {
+  private logger: LoggerPublisherService;
+
   constructor(
     @inject(calldataTypes.DappCalldataDescriptorDataSource)
     private dappDataSource: CalldataDescriptorDataSource,
@@ -50,7 +54,11 @@ export class CalldataContextLoader
     private tokenDataSource: CalldataDescriptorDataSource,
     @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this.logger = loggerFactory("CalldataContextLoader");
+  }
 
   canHandle(
     input: unknown,
@@ -87,17 +95,25 @@ export class CalldataContextLoader
       data,
     };
 
-    return this._getContexts(param, this.dappDataSource)
+    const maybeResult = await this._getContexts(param, this.dappDataSource)
       .alt(this._getContexts(param, this.tokenDataSource))
       .alt(this._getContextsWithProxy(param, this.dappDataSource))
-      .orDefault([
+      .run();
+
+    const result = maybeResult.caseOf({
+      Just: (contexts) => contexts,
+      Nothing: () => [
         {
-          type: ClearSignContextType.ERROR,
+          type: ClearSignContextType.ERROR as const,
           error: new Error(
             "[ContextModule] CalldataContextLoader: No calldata contexts found",
           ),
         },
-      ]);
+      ],
+    });
+
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 
   private _getContexts(

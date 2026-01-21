@@ -1,7 +1,11 @@
 import type { HexaString } from "@ledgerhq/device-management-kit";
-import { bufferToHexaString } from "@ledgerhq/device-management-kit";
+import {
+  bufferToHexaString,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
@@ -41,6 +45,8 @@ type ResolvedProxy = {
 
 @injectable()
 export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
+  private logger: LoggerPublisherService;
+
   constructor(
     @inject(typedDataTypes.TypedDataDataSource)
     private dataSource: TypedDataDataSource,
@@ -50,7 +56,11 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
     private proxyDataSource: ProxyDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this.logger = loggerFactory("DefaultTypedDataContextLoader");
+  }
 
   async load(typedData: TypedDataContext): Promise<TypedDataClearSignContext> {
     // Get the typed data filters from the data source
@@ -76,12 +86,14 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
           schema: typedData.schema,
         });
       }
-      // If there was stil an error, return immediately
+      // If there was still an error, return immediately
       if (data.isLeft()) {
-        return {
+        const result: TypedDataClearSignContext = {
           type: "error",
           error: data.extract(),
         };
+        this.logger.debug("load result", { data: { result } });
+        return result;
       }
     }
 
@@ -102,7 +114,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
       targetDevice: typedData.deviceModelId,
     });
 
-    return {
+    const result: TypedDataClearSignContext = {
       type: "success",
       messageInfo,
       filters: mappedFilters,
@@ -112,6 +124,9 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
       certificate,
       proxy,
     };
+
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 
   private async resolveProxy(

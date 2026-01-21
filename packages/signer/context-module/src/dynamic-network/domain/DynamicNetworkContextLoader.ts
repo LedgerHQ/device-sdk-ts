@@ -1,4 +1,7 @@
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import {
+  DeviceModelId,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
@@ -35,6 +38,7 @@ export class DynamicNetworkContextLoader
   private readonly _networkDataSource: DynamicNetworkDataSource;
   private readonly _config: ContextModuleConfig;
   private readonly _certificateLoader: PkiCertificateLoader;
+  private logger: LoggerPublisherService;
 
   constructor(
     @inject(dynamicNetworkTypes.DynamicNetworkDataSource)
@@ -43,10 +47,13 @@ export class DynamicNetworkContextLoader
     config: ContextModuleConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     certificateLoader: PkiCertificateLoader,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._networkDataSource = networkDataSource;
     this._config = config;
     this._certificateLoader = certificateLoader;
+    this.logger = loggerFactory("DynamicNetworkContextLoader");
   }
 
   canHandle(
@@ -68,7 +75,7 @@ export class DynamicNetworkContextLoader
   async load(input: DynamicNetworkContextInput): Promise<ClearSignContext[]> {
     const { chainId, deviceModelId } = input;
 
-    const result =
+    const networkConfig =
       await this._networkDataSource.getDynamicNetworkConfiguration(chainId);
 
     // Fetch certificate for the network configuration upfront
@@ -78,7 +85,7 @@ export class DynamicNetworkContextLoader
       targetDevice: deviceModelId,
     });
 
-    return result.caseOf({
+    const result = networkConfig.caseOf({
       Left: () => [],
       Right: (configuration) => {
         const contexts: ClearSignContext[] = [];
@@ -118,5 +125,8 @@ export class DynamicNetworkContextLoader
         return contexts;
       },
     });
+
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 }
