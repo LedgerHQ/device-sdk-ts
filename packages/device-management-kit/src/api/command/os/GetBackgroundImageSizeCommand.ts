@@ -16,34 +16,38 @@ import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
-export type GetCustomImageSizeResponse = number;
+export type GetBackgroundImageSizeResponse = number;
 
-export type GetCustomImageSizeErrorCodes = "662e" | "662f";
+export type GetBackgroundImageSizeErrorCodes = "662e" | "662f";
 
-const IMAGE_SIZE_ERRORS: CommandErrors<GetCustomImageSizeErrorCodes> = {
+const IMAGE_SIZE_ERRORS: CommandErrors<GetBackgroundImageSizeErrorCodes> = {
   "662e": { message: "Invalid state, no background image loaded." },
   "662f": { message: "Invalid state, device is in recovery mode." },
 };
 
-export type GetCustomImageSizeCommandResult = CommandResult<
-  GetCustomImageSizeResponse,
-  GetCustomImageSizeErrorCodes
+export type GetBackgroundImageSizeCommandResult = CommandResult<
+  GetBackgroundImageSizeResponse,
+  GetBackgroundImageSizeErrorCodes
 >;
 
-export class GetCustomImageSizeCommandError extends DeviceExchangeError<GetCustomImageSizeErrorCodes> {
+export class GetBackgroundImageSizeCommandError extends DeviceExchangeError<GetBackgroundImageSizeErrorCodes> {
   constructor({
     message,
     errorCode,
-  }: CommandErrorArgs<GetCustomImageSizeErrorCodes>) {
-    super({ message, errorCode, tag: "GetCustomImageSizeCommandError" });
+  }: CommandErrorArgs<GetBackgroundImageSizeErrorCodes>) {
+    super({ message, errorCode, tag: "GetBackgroundImageSizeCommandError" });
   }
 }
 
-export class GetCustomImageSizeCommand
+export class GetBackgroundImageSizeCommand
   implements
-    Command<GetCustomImageSizeResponse, void, GetCustomImageSizeErrorCodes>
+    Command<
+      GetBackgroundImageSizeResponse,
+      void,
+      GetBackgroundImageSizeErrorCodes
+    >
 {
-  readonly name = "getCustomImageSize";
+  readonly name = "getBackgroundImageSize";
 
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
@@ -55,14 +59,16 @@ export class GetCustomImageSizeCommand
     return new ApduBuilder(apduArgs).build();
   }
 
-  parseResponse(apduResponse: ApduResponse): GetCustomImageSizeCommandResult {
+  parseResponse(
+    apduResponse: ApduResponse,
+  ): GetBackgroundImageSizeCommandResult {
     const parser = new ApduParser(apduResponse);
 
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       const errorCode = parser.encodeToHexaString(apduResponse.statusCode);
       if (isCommandErrorCode(errorCode, IMAGE_SIZE_ERRORS)) {
         return CommandResultFactory({
-          error: new GetCustomImageSizeCommandError({
+          error: new GetBackgroundImageSizeCommandError({
             ...IMAGE_SIZE_ERRORS[errorCode],
             errorCode,
           }),
