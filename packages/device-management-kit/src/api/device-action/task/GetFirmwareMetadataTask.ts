@@ -4,7 +4,7 @@ import {
   CommandResultFactory,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
-import { GetCustomImageSizeCommand } from "@api/command/os/GetCustomImageSizeCommand";
+import { GetBackgroundImageSizeCommand } from "@api/command/os/GetBackgroundImageSizeCommand";
 import { GetOsVersionCommand } from "@api/command/os/GetOsVersionCommand";
 import type { InternalApi } from "@api/device-action/DeviceAction";
 import {
@@ -88,7 +88,7 @@ export class GetFirmwareMetadataTask {
     // Get custom image metadata
     let customImage: CustomImage = {};
     const imageSize = await this.api.sendCommand(
-      new GetCustomImageSizeCommand(),
+      new GetBackgroundImageSizeCommand(),
     );
     if (isSuccessCommandResult(imageSize)) {
       customImage = { size: imageSize.data };
