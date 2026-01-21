@@ -5,6 +5,7 @@ import {
   DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -97,6 +98,18 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
   SignTypedDataDAIntermediateValue,
   SignTypedDataDAInternalState
 > {
+  constructor(args: {
+    input: SignTypedDataDAInput;
+    inspect?: boolean;
+    loggerFactory?: (tag: string) => LoggerPublisherService;
+  }) {
+    super({
+      input: args.input,
+      inspect: args.inspect,
+      logger: args.loggerFactory?.("SignTypedDataDeviceAction"),
+    });
+  }
+
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<

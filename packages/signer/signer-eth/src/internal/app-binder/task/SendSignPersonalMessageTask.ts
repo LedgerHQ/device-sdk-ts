@@ -5,6 +5,7 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
@@ -22,16 +23,29 @@ const PATH_SIZE = 4;
 type SendSignPersonalMessageTaskArgs = {
   derivationPath: string;
   message: string | Uint8Array;
+  logger?: LoggerPublisherService;
 };
 
 export class SendSignPersonalMessageTask {
+  private readonly _logger?: LoggerPublisherService;
+
   constructor(
     private api: InternalApi,
     private args: SendSignPersonalMessageTaskArgs,
-  ) {}
+  ) {
+    this._logger = args.logger;
+  }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
     const { derivationPath, message } = this.args;
+    this._logger?.debug("[run] Starting SendSignPersonalMessageTask", {
+      data: {
+        derivationPath,
+        messageLength: message.length,
+        messageType: typeof message === "string" ? "string" : "Uint8Array",
+      },
+    });
+
     const paths = DerivationPathUtils.splitPath(derivationPath);
 
     const builder = new ByteArrayBuilder(
@@ -54,6 +68,10 @@ export class SendSignPersonalMessageTask {
 
     const buffer = builder.build();
 
+    this._logger?.debug("[run] Sending message in chunks", {
+      data: { bufferLength: buffer.length },
+    });
+
     const result =
       await new SendCommandInChunksTask<SignPersonalMessageCommandResponse>(
         this.api,
@@ -68,9 +86,13 @@ export class SendSignPersonalMessageTask {
       ).run();
 
     if (!isSuccessCommandResult(result)) {
+      this._logger?.error("[run] Failed to sign personal message", {
+        data: { error: result.error },
+      });
       return result;
     }
 
+    this._logger?.debug("[run] Personal message signed successfully");
     return result.data.mapOrDefault(
       (data) => CommandResultFactory({ data }),
       CommandResultFactory({
