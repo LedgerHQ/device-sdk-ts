@@ -1,5 +1,6 @@
 import {
   DeviceModelId,
+  isHexaString,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
@@ -17,7 +18,7 @@ import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
 export type TrustedNameContextInput = {
   chainId: number;
-  domain: string;
+  to: string;
   challenge: string;
   deviceModelId: DeviceModelId;
 };
@@ -30,18 +31,16 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 export class TrustedNameContextLoader
   implements ContextLoader<TrustedNameContextInput>
 {
-  private _dataSource: TrustedNameDataSource;
   private logger: LoggerPublisherService;
 
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
-    dataSource: TrustedNameDataSource,
+    private _dataSource: TrustedNameDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
-    private certificateLoader: PkiCertificateLoader,
+    private _certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this._dataSource = dataSource;
     this.logger = loggerFactory("TrustedNameContextLoader");
   }
 
@@ -53,69 +52,49 @@ export class TrustedNameContextLoader
       typeof input === "object" &&
       input !== null &&
       "chainId" in input &&
-      "domain" in input &&
-      "challenge" in input &&
-      "deviceModelId" in input &&
-      input.deviceModelId !== undefined &&
+      input.chainId !== undefined &&
       typeof input.chainId === "number" &&
-      typeof input.domain === "string" &&
-      input.domain.length > 0 &&
+      "to" in input &&
+      input.to !== undefined &&
+      isHexaString(input.to) &&
+      input.to !== "0x" &&
+      "challenge" in input &&
       typeof input.challenge === "string" &&
       input.challenge.length > 0 &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
     );
   }
 
   async load(input: TrustedNameContextInput): Promise<ClearSignContext[]> {
-    const { chainId, domain, challenge, deviceModelId } = input;
-
-    if (!this.isDomainValid(domain)) {
-      const result = [
-        {
-          type: ClearSignContextType.ERROR as const,
-          error: new Error("[ContextModule] TrustedNameLoader: invalid domain"),
-        },
-      ];
-      this.logger.debug("load result", { data: { result } });
-      return result;
-    }
-
-    const payload = await this._dataSource.getDomainNamePayload({
-      chainId,
-      domain,
-      challenge,
+    const payload = await this._dataSource.getTrustedNamePayload({
+      chainId: input.chainId,
+      address: input.to,
+      challenge: input.challenge,
+      types: ["eoa"],
+      sources: ["ens"],
     });
-    const response = await payload.caseOf({
-      Left: (error): Promise<ClearSignContext> =>
-        Promise.resolve({
-          type: ClearSignContextType.ERROR,
-          error: error,
-        }),
-      Right: async ({ data, keyId, keyUsage }): Promise<ClearSignContext> => {
-        const certificate = await this.certificateLoader.loadCertificate({
+
+    this.logger.debug("[ContextModule]: load result", { data: { payload } });
+
+    return await payload.caseOf({
+      Left: (error): Promise<ClearSignContext[]> =>
+        Promise.resolve([{ type: ClearSignContextType.ERROR, error }]),
+      Right: async ({ data, keyId, keyUsage }): Promise<ClearSignContext[]> => {
+        const certificate = await this._certificateLoader.loadCertificate({
           keyId,
           keyUsage,
-          targetDevice: deviceModelId,
+          targetDevice: input.deviceModelId,
         });
-        return {
-          type: ClearSignContextType.TRUSTED_NAME,
-          payload: data,
-          certificate,
-        };
+        return [
+          {
+            type: ClearSignContextType.TRUSTED_NAME,
+            payload: data,
+            certificate,
+          },
+        ];
       },
     });
-
-    const result = [response];
-    this.logger.debug("load result", { data: { result } });
-    return result;
-  }
-
-  private isDomainValid(domain: string) {
-    const lengthIsValid = domain.length > 0 && Number(domain.length) < 30;
-    const containsOnlyValidChars = new RegExp("^[a-zA-Z0-9\\-\\_\\.]+$").test(
-      domain,
-    );
-
-    return lengthIsValid && containsOnlyValidChars;
   }
 }
