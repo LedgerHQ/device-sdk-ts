@@ -68,8 +68,7 @@ export class BuildBaseContexts {
   ) {}
 
   async run(): Promise<BuildBaseContextsResult> {
-    const { contextModule, options, appConfig, transaction, subset } =
-      this._args;
+    const { contextModule, appConfig, transaction, subset } = this._args;
     const isNestedCallData = transaction === undefined;
     // As only transaction checks needs the transaction, we don't need to send it if it's not needed
     const needTransaction = !isNestedCallData && appConfig.web3ChecksEnabled;
@@ -92,7 +91,6 @@ export class BuildBaseContexts {
       await contextModule.getContexts(
         {
           challenge: challenge,
-          domain: options.domain,
           deviceModelId: deviceState.deviceModelId,
           transaction: needTransaction ? transaction : undefined,
           ...subset,
