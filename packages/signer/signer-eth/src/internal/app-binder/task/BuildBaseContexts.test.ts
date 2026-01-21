@@ -29,9 +29,7 @@ describe("BuildBaseContexts", () => {
     getTypedDataFilters: vi.fn(),
     getSolanaContext: vi.fn(),
   };
-  const defaultOptions = {
-    domain: "domain-name.eth",
-  };
+  const defaultOptions = {};
   const defaultTransaction: Uint8Array = hexaStringToBuffer(
     Transaction.from({
       chainId: 1n,
@@ -366,7 +364,6 @@ describe("BuildBaseContexts", () => {
       {
         deviceModelId: DeviceModelId.FLEX,
         challenge: "challenge",
-        domain: "domain-name.eth",
         transaction: defaultTransaction,
         ...defaultArgs.subset,
       },
@@ -398,7 +395,6 @@ describe("BuildBaseContexts", () => {
       {
         deviceModelId: DeviceModelId.FLEX,
         challenge: "challenge",
-        domain: "domain-name.eth",
         ...defaultArgs.subset,
       },
       BASE_CONTEXT_TYPES_FILTER,
@@ -425,7 +421,6 @@ describe("BuildBaseContexts", () => {
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
       {
         deviceModelId: DeviceModelId.NANO_S,
-        domain: "domain-name.eth",
         challenge: undefined,
         ...defaultArgs.subset,
       },

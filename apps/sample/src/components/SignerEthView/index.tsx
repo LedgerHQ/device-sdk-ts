@@ -129,12 +129,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         title: "Sign transaction",
         description:
           "Perform all the actions necessary to sign a transaction with the device (JSON or serialized raw TX)",
-        executeDeviceAction: ({
-          derivationPath,
-          transaction,
-          recipientDomain,
-          skipOpenApp,
-        }) => {
+        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
@@ -160,14 +155,12 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           }
 
           return signer.signTransaction(derivationPath, tx, {
-            domain: recipientDomain,
             skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
           transaction: "",
-          recipientDomain: "",
           skipOpenApp: false,
         },
         deviceModelId,
@@ -176,7 +169,6 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           transaction: string;
-          recipientDomain: string;
           skipOpenApp?: boolean;
         },
         SignTransactionDAError,
