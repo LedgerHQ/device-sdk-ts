@@ -1,0 +1,3 @@
+{
+  "installCommand": "pnpm install --filter \"!@ledgerhq/device-management-kit-devtools\""
+}
