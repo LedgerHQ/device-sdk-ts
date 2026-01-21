@@ -47,6 +47,7 @@ jobs:
               - 'packages/signer/signer-eth/**'
             cs-tester:
               - 'apps/clear-signing-tester/**'
+              - '.github/**'
 
   setup:
     name: Setup toolchain and dependencies
@@ -167,6 +168,24 @@ jobs:
       - name: Run Clear Signing Tester
         id: cs-tester
         env:
+          FORCE_COLOR: "0"
           GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
           COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
-        run: pnpm cs-tester ${{ matrix.test }} --device ${{ matrix.device }}
+        run: |
+          set -o pipefail
+          pnpm cs-tester ${{ matrix.test }} --device ${{ matrix.device }} 2>&1 | tee /tmp/cs-tester-output.log
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## 🧪 Clear Signing Tester Results (${{ matrix.device }} - ${{ matrix.test }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/cs-tester-output.log ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            sed -n '/📋/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            sed -n '/📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No test output available" >> $GITHUB_STEP_SUMMARY
+          fi
