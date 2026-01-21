@@ -10,6 +10,7 @@ import {
   type DeviceSessionState,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
@@ -42,6 +43,7 @@ export class BuildEIP712ContextTask {
     private readonly derivationPath: string,
     private readonly appConfig: GetConfigCommandResponse,
     private readonly from: string,
+    private readonly logger: LoggerPublisherService,
     private readonly buildFullContextFactory = (
       api: InternalApi,
       args: BuildFullContextsTaskArgs,
@@ -116,6 +118,7 @@ export class BuildEIP712ContextTask {
       clearSignContext,
       calldatasContexts,
       deviceModelId: deviceState.deviceModelId,
+      logger: this.logger,
     };
     return provideTaskArgs;
   }
@@ -191,6 +194,7 @@ export class BuildEIP712ContextTask {
         derivationPath: this.derivationPath,
         subset,
         deviceModelId: deviceState.deviceModelId,
+        logger: this.logger,
       }).run();
       if (calldataContext.clearSigningType === ClearSigningType.EIP7730) {
         calldatasContexts[calldataIndex] = calldataContext.clearSignContexts;

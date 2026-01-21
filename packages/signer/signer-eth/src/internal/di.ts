@@ -8,7 +8,6 @@ import { Container } from "inversify";
 
 import { addressModuleFactory } from "@internal/address/di/addressModule";
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
-import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 import { eip7702ModuleFactory } from "@internal/eip7702/di/eip7702Module";
 import { externalTypes } from "@internal/externalTypes";
 import { messageModuleFactory } from "@internal/message/di/messageModule";
@@ -41,12 +40,9 @@ export const makeContainer = ({
     .bind<
       (tag: string) => LoggerPublisherService
     >(externalTypes.DmkLoggerFactory)
-    .toConstantValue((tag: string) => {
-      const factory = dmk.getLoggerFactory?.();
-      return factory
-        ? factory(`SignerEth-${tag}`)
-        : NullLoggerPublisherService(`SignerEth-${tag}`);
-    });
+    .toConstantValue((tag: string) =>
+      dmk.getLoggerFactory()(`SignerEth-${tag}`),
+    );
 
   container.loadSync(
     addressModuleFactory(),

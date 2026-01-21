@@ -25,8 +25,17 @@ describe("ContextModuleBuilder", () => {
   const defaultWeb3ChecksConfig = {
     url: "https://web3checks/v1",
   };
+  const mockLoggerFactory = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    subscribers: [],
+  });
+
   const defaultBuilderArgs: ContextModuleConstructorArgs = {
     originToken: "test",
+    loggerFactory: mockLoggerFactory,
   };
 
   beforeEach(() => {

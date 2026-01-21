@@ -8,7 +8,14 @@ import {
 } from "@/calldata/domain/CalldataContextLoader";
 import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("CalldataContextLoader", () => {
   const getProxyImplementationAddress = vi.fn();
@@ -27,7 +34,7 @@ describe("CalldataContextLoader", () => {
     mockDappDataSource,
     mockTokenDataSource,
     mockProxyDatasource,
-    NullLoggerPublisherService,
+    mockLoggerFactory,
   );
   const SUPPORTED_TYPES: ClearSignContextType[] = [
     ClearSignContextType.TRANSACTION_INFO,

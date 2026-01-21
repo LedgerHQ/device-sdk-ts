@@ -24,7 +24,6 @@ import { type Psbt as ApiPsbt } from "@api/model/Psbt";
 import { type PsbtSignature } from "@api/model/Signature";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
 import { SignPsbtDeviceAction } from "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction";
-import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 import { ExtractTransactionTask } from "@internal/app-binder/task/ExtractTransactionTask";
 import { UpdatePsbtTask } from "@internal/app-binder/task/UpdatePsbtTask";
 import { type Psbt as InternalPsbt } from "@internal/psbt/model/Psbt";
@@ -61,14 +60,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   constructor(args: {
     input: SignTransactionDAInput;
     inspect?: boolean;
-    loggerFactory?: (tag: string) => LoggerPublisherService;
+    loggerFactory: (tag: string) => LoggerPublisherService;
   }) {
     super({
       input: args.input,
       inspect: args.inspect,
-      logger: args.loggerFactory?.("SignTransactionDeviceAction"),
+      logger: args.loggerFactory("SignTransactionDeviceAction"),
     });
-    this._loggerFactory = args.loggerFactory ?? NullLoggerPublisherService;
+    this._loggerFactory = args.loggerFactory;
   }
 
   makeStateMachine(

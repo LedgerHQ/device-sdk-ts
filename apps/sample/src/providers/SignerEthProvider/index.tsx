@@ -53,6 +53,8 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
 
     const contextModule = new ContextModuleBuilder({
       originToken,
+      loggerFactory: (tag: string) =>
+        dmk.getLoggerFactory()(`ContextModule-${tag}`),
     })
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)

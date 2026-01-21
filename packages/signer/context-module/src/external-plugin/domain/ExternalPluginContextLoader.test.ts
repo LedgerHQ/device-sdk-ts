@@ -10,9 +10,16 @@ import {
 import { type DappInfos } from "@/external-plugin/model/DappInfos";
 import { type SelectorDetails } from "@/external-plugin/model/SelectorDetails";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { type UniswapContextLoader } from "@/uniswap/domain/UniswapContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 const dappInfosBuilder = ({
   abi,
@@ -64,7 +71,7 @@ describe("ExternalPluginContextLoader", () => {
     mockExternalPluginDataSource,
     mockTokenDataSource,
     mockUniswapLoader,
-    NullLoggerPublisherService,
+    mockLoggerFactory,
   );
 
   beforeEach(() => {

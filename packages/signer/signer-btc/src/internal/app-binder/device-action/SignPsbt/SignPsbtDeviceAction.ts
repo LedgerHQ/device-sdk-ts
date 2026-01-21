@@ -76,12 +76,12 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
   constructor(args: {
     input: SignPsbtDAInput;
     inspect?: boolean;
-    loggerFactory?: (tag: string) => LoggerPublisherService;
+    loggerFactory: (tag: string) => LoggerPublisherService;
   }) {
     super({
       input: args.input,
       inspect: args.inspect,
-      logger: args.loggerFactory?.("SignPsbtDeviceAction"),
+      logger: args.loggerFactory("SignPsbtDeviceAction"),
     });
   }
 

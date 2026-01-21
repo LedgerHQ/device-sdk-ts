@@ -1,21 +1,25 @@
 import { Left, Right } from "purify-ts";
 
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import {
   type TokenContextInput,
   TokenContextLoader,
 } from "@/token/domain/TokenContextLoader";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("TokenContextLoader", () => {
   const mockTokenDataSource: TokenDataSource = {
     getTokenInfosPayload: vi.fn(),
   };
-  const loader = new TokenContextLoader(
-    mockTokenDataSource,
-    NullLoggerPublisherService,
-  );
+  const loader = new TokenContextLoader(mockTokenDataSource, mockLoggerFactory);
 
   beforeEach(() => {
     vi.restoreAllMocks();

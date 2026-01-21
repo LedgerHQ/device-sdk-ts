@@ -9,13 +9,20 @@ import {
   SolanaContextTypes,
   type SolanaTransactionDescriptorList,
 } from "@/shared/model/SolanaContextTypes";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import {
   type GetTransactionDescriptorsResponse,
   type SolanaLifiDataSource,
 } from "@/solanaLifi/data/SolanaLifiDataSource";
 
 import { SolanaLifiContextLoader } from "./SolanaLifiContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("SolanaLifiContextLoader", () => {
   let mockDataSource: SolanaLifiDataSource;
@@ -42,7 +49,7 @@ describe("SolanaLifiContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new SolanaLifiContextLoader(mockDataSource, NullLoggerPublisherService);
+    new SolanaLifiContextLoader(mockDataSource, mockLoggerFactory);
 
   describe("canHandle", () => {
     it("returns true when templateId is provided", () => {

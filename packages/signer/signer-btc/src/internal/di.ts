@@ -13,7 +13,6 @@ import { useCasesModuleFactory } from "@internal/use-cases/di/useCasesModule";
 import { walletModuleFactory } from "@internal/wallet/di/walletModule";
 
 import { appBinderModuleFactory } from "./app-binder/di/appBinderModule";
-import { NullLoggerPublisherService } from "./app-binder/services/utils/NullLoggerPublisherService";
 
 type MakeContainerProps = {
   dmk: DeviceManagementKit;
@@ -32,12 +31,9 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
     .bind<
       (tag: string) => LoggerPublisherService
     >(externalTypes.DmkLoggerFactory)
-    .toConstantValue((tag: string) => {
-      const factory = dmk.getLoggerFactory?.();
-      return factory
-        ? factory(`signer-btc-${tag}`)
-        : NullLoggerPublisherService(`signer-btc-${tag}`);
-    });
+    .toConstantValue((tag: string) =>
+      dmk.getLoggerFactory()(`SignerBtc-${tag}`),
+    );
 
   container.loadSync(
     appBinderModuleFactory(),

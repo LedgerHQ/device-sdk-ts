@@ -38,7 +38,6 @@ import {
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
-import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -87,14 +86,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   constructor(args: {
     input: SignTransactionDAInput;
     inspect?: boolean;
-    loggerFactory?: (tag: string) => LoggerPublisherService;
+    loggerFactory: (tag: string) => LoggerPublisherService;
   }) {
     super({
       input: args.input,
       inspect: args.inspect,
-      logger: args.loggerFactory?.("SignTransactionDeviceAction"),
+      logger: args.loggerFactory("SignTransactionDeviceAction"),
     });
-    this._loggerFactory = args.loggerFactory ?? NullLoggerPublisherService;
+    this._loggerFactory = args.loggerFactory;
   }
 
   makeStateMachine(

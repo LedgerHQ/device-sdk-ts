@@ -28,11 +28,11 @@ type SendSignAuthorizationDelegationTaskArgs = {
   chainId: number;
   address: string;
   nonce: number;
-  logger?: LoggerPublisherService;
+  logger: LoggerPublisherService;
 };
 
 export class SendSignAuthorizationDelegationTask {
-  private readonly _logger?: LoggerPublisherService;
+  private readonly _logger: LoggerPublisherService;
 
   constructor(
     private api: InternalApi,
@@ -43,7 +43,7 @@ export class SendSignAuthorizationDelegationTask {
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
     const { derivationPath, chainId, address, nonce } = this.args;
-    this._logger?.debug("[run] Starting SendSignAuthorizationDelegationTask", {
+    this._logger.debug("[run] Starting SendSignAuthorizationDelegationTask", {
       data: { derivationPath, chainId, address, nonce },
     });
 
@@ -51,7 +51,7 @@ export class SendSignAuthorizationDelegationTask {
 
     const buffer = this.buildData(paths, chainId, address, nonce);
 
-    this._logger?.debug("[run] Sending authorization delegation in chunks", {
+    this._logger.debug("[run] Sending authorization delegation in chunks", {
       data: { bufferLength: buffer.length },
     });
 
@@ -69,13 +69,13 @@ export class SendSignAuthorizationDelegationTask {
       ).run();
 
     if (!isSuccessCommandResult(result)) {
-      this._logger?.error("[run] Failed to sign authorization delegation", {
+      this._logger.error("[run] Failed to sign authorization delegation", {
         data: { error: result.error },
       });
       return result;
     }
 
-    this._logger?.debug("[run] Authorization delegation signed successfully");
+    this._logger.debug("[run] Authorization delegation signed successfully");
     return result.data.mapOrDefault(
       (data) => CommandResultFactory({ data }),
       CommandResultFactory({

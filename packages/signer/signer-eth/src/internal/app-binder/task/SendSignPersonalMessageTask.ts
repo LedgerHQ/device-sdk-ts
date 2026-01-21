@@ -23,11 +23,11 @@ const PATH_SIZE = 4;
 type SendSignPersonalMessageTaskArgs = {
   derivationPath: string;
   message: string | Uint8Array;
-  logger?: LoggerPublisherService;
+  logger: LoggerPublisherService;
 };
 
 export class SendSignPersonalMessageTask {
-  private readonly _logger?: LoggerPublisherService;
+  private readonly _logger: LoggerPublisherService;
 
   constructor(
     private api: InternalApi,
@@ -38,7 +38,7 @@ export class SendSignPersonalMessageTask {
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
     const { derivationPath, message } = this.args;
-    this._logger?.debug("[run] Starting SendSignPersonalMessageTask", {
+    this._logger.debug("[run] Starting SendSignPersonalMessageTask", {
       data: {
         derivationPath,
         messageLength: message.length,
@@ -68,7 +68,7 @@ export class SendSignPersonalMessageTask {
 
     const buffer = builder.build();
 
-    this._logger?.debug("[run] Sending message in chunks", {
+    this._logger.debug("[run] Sending message in chunks", {
       data: { bufferLength: buffer.length },
     });
 
@@ -86,13 +86,13 @@ export class SendSignPersonalMessageTask {
       ).run();
 
     if (!isSuccessCommandResult(result)) {
-      this._logger?.error("[run] Failed to sign personal message", {
+      this._logger.error("[run] Failed to sign personal message", {
         data: { error: result.error },
       });
       return result;
     }
 
-    this._logger?.debug("[run] Personal message signed successfully");
+    this._logger.debug("[run] Personal message signed successfully");
     return result.data.mapOrDefault(
       (data) => CommandResultFactory({ data }),
       CommandResultFactory({

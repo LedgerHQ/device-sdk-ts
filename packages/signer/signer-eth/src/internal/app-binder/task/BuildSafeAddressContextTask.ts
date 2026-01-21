@@ -18,7 +18,7 @@ export type BuildSafeAddressContextTaskArgs = {
   readonly safeContractAddress: string;
   readonly options: SafeAddressOptions;
   readonly deviceModelId: DeviceModelId;
-  readonly logger?: LoggerPublisherService;
+  readonly logger: LoggerPublisherService;
 };
 
 export type BuildSafeAddressContextTaskResult = {
@@ -32,7 +32,7 @@ export class BuildSafeAddressContextTask {
   ) {}
 
   async run(): Promise<BuildSafeAddressContextTaskResult> {
-    this._args.logger?.debug("[run] Starting BuildSafeAddressContextTask", {
+    this._args.logger.debug("[run] Starting BuildSafeAddressContextTask", {
       data: {
         safeContractAddress: this._args.safeContractAddress,
         chainId: this._args.options.chainId,
@@ -44,7 +44,7 @@ export class BuildSafeAddressContextTask {
     );
 
     if (!isSuccessCommandResult(challengeResponse)) {
-      this._args.logger?.error("[run] Failed to get challenge");
+      this._args.logger.error("[run] Failed to get challenge");
       throw new Error("Failed to get challenge");
     }
 
@@ -75,7 +75,7 @@ export class BuildSafeAddressContextTask {
         (context) => context.type === ClearSignContextType.SIGNER,
       ) === undefined
     ) {
-      this._args.logger?.error("[run] Invalid safe address contexts", {
+      this._args.logger.error("[run] Invalid safe address contexts", {
         data: {
           receivedTypes: contexts.map((c) => c.type),
           expectedTypes: [
@@ -87,7 +87,7 @@ export class BuildSafeAddressContextTask {
       throw new Error("Invalid safe address contexts");
     }
 
-    this._args.logger?.debug(
+    this._args.logger.debug(
       "[run] BuildSafeAddressContextTask completed successfully",
     );
 

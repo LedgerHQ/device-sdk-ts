@@ -9,7 +9,6 @@ import {
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
-import { NullLoggerPublisherService } from "./shared/utils/NullLoggerPublisherService";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
@@ -20,46 +19,33 @@ const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
 
-export const DEFAULT_CONFIG: ContextModuleConfig = {
-  cal: {
-    url: DEFAULT_CAL_URL,
-    mode: "prod",
-    branch: "main",
-  },
-  web3checks: {
-    url: DEFAULT_WEB3_CHECKS_URL,
-  },
-  metadataServiceDomain: {
-    url: DEFAULT_METADATA_SERVICE_DOMAIN,
-  },
-  defaultLoaders: true,
-  customLoaders: [],
-  defaultFieldLoaders: true,
-  customFieldLoaders: [],
-  customTypedDataLoader: undefined,
-  customSolanaLoader: undefined,
-  loggerFactory: NullLoggerPublisherService,
-};
-
 export class ContextModuleBuilder {
   private config: ContextModuleConfig;
   private originToken?: string;
 
-  constructor({
-    originToken,
-    loggerFactory,
-  }: ContextModuleConstructorArgs = {}) {
+  constructor({ originToken, loggerFactory }: ContextModuleConstructorArgs) {
     this.originToken = originToken;
 
     this.config = {
-      ...DEFAULT_CONFIG,
+      cal: {
+        url: DEFAULT_CAL_URL,
+        mode: "prod",
+        branch: "main",
+      },
+      web3checks: {
+        url: DEFAULT_WEB3_CHECKS_URL,
+      },
+      metadataServiceDomain: {
+        url: DEFAULT_METADATA_SERVICE_DOMAIN,
+      },
+      defaultLoaders: true,
       customLoaders: [],
+      defaultFieldLoaders: true,
       customFieldLoaders: [],
+      customTypedDataLoader: undefined,
+      customSolanaLoader: undefined,
+      loggerFactory,
     };
-
-    if (loggerFactory) {
-      this.config.loggerFactory = loggerFactory;
-    }
   }
 
   /**

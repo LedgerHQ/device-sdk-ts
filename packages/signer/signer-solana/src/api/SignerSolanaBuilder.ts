@@ -7,7 +7,6 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 
-import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 import { DefaultSignerSolana } from "@internal/DefaultSignerSolana";
 
 type SignerSolanaBuilderConstructorArgs = {
@@ -65,12 +64,8 @@ export class SignerSolanaBuilder {
         this._customContextModule ??
         new ContextModuleBuilder({
           originToken: this._originToken,
-          loggerFactory: (tag: string) => {
-            const factory = this._dmk.getLoggerFactory?.();
-            return factory
-              ? factory(`SignerSolanaContextModule-${tag}`)
-              : NullLoggerPublisherService(`SignerSolanaContextModule-${tag}`);
-          },
+          loggerFactory: (tag: string) =>
+            this._dmk.getLoggerFactory()(`ContextModule-${tag}`),
         }).build(),
     });
   }

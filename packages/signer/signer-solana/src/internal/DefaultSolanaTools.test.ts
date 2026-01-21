@@ -7,6 +7,14 @@ import { vi } from "vitest";
 
 import { DefaultSolanaTools } from "./DefaultSolanaTools";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("DefaultSolanaTools", () => {
   const contextModuleStub: ContextModule = {} as ContextModule;
 
@@ -22,6 +30,7 @@ describe("DefaultSolanaTools", () => {
   it("should call getAddress", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const solanaTools = new DefaultSolanaTools({
@@ -36,6 +45,7 @@ describe("DefaultSolanaTools", () => {
   it("should call getAppConfiguration", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const solanaTools = new DefaultSolanaTools({
@@ -50,6 +60,7 @@ describe("DefaultSolanaTools", () => {
   it("should call generateTransaction", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const solanaTools = new DefaultSolanaTools({

@@ -33,8 +33,15 @@ import {
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
-import { NullLoggerPublisherService } from "./services/utils/NullLoggerPublisherService";
 import { SolanaAppBinder } from "./SolanaAppBinder";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("SolanaAppBinder", () => {
   // stub ContextModule for tests
@@ -53,7 +60,7 @@ describe("SolanaAppBinder", () => {
       {} as DeviceManagementKit,
       {} as DeviceSessionId,
       contextModuleStub,
-      NullLoggerPublisherService,
+      mockLoggerFactory,
     );
     expect(binder).toBeDefined();
   });
@@ -83,7 +90,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/501'",
@@ -140,7 +147,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         appBinder.getAddress(params);
 
@@ -173,7 +180,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         appBinder.getAddress(params);
 
@@ -220,7 +227,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
@@ -268,7 +275,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
-        NullLoggerPublisherService,
+        mockLoggerFactory,
       );
       appBinder.signTransaction({
         derivationPath,
@@ -325,7 +332,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signMessage(signMessageArgs);
 
@@ -388,7 +395,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.getAppConfiguration();
 
@@ -428,7 +435,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
-        NullLoggerPublisherService,
+        mockLoggerFactory,
       );
 
       // WHEN
@@ -476,7 +483,7 @@ describe("SolanaAppBinder", () => {
           mockedDmk,
           "sessionId",
           contextModuleStub,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.generateTransaction({
           derivationPath: "44'/501'/0'/0'",
@@ -515,7 +522,7 @@ describe("SolanaAppBinder", () => {
         mockedDmk,
         "sessionId",
         contextModuleStub,
-        NullLoggerPublisherService,
+        mockLoggerFactory,
       );
       appBinder.generateTransaction({ derivationPath, skipOpenApp });
 

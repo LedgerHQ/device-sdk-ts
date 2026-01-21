@@ -7,7 +7,6 @@ import {
 import { Container } from "inversify";
 
 import { appBinderModuleFactory } from "./app-binder/di/appBinderModule";
-import { NullLoggerPublisherService } from "./app-binder/services/utils/NullLoggerPublisherService";
 import { useCasesModuleFactory } from "./use-cases/di/useCasesModule";
 import { externalTypes } from "./externalTypes";
 
@@ -36,12 +35,9 @@ export const makeContainer = ({
     .bind<
       (tag: string) => LoggerPublisherService
     >(externalTypes.DmkLoggerFactory)
-    .toConstantValue((tag: string) => {
-      const factory = dmk.getLoggerFactory?.();
-      return factory
-        ? factory(`SignerSolana-${tag}`)
-        : NullLoggerPublisherService(`SignerSolana-${tag}`);
-    });
+    .toConstantValue((tag: string) =>
+      dmk.getLoggerFactory()(`SignerSolana-${tag}`),
+    );
 
   container.loadSync(appBinderModuleFactory(), useCasesModuleFactory());
 

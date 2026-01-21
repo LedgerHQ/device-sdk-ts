@@ -41,8 +41,15 @@ import { type TransactionParserService } from "@internal/transaction/service/par
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
-import { NullLoggerPublisherService } from "./services/utils/NullLoggerPublisherService";
 import { EthAppBinder } from "./EthAppBinder";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("EthAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
@@ -94,7 +101,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/60'/3'/2/1",
@@ -155,7 +162,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         appBinder.getAddress(params);
 
@@ -190,7 +197,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         appBinder.getAddress(params);
 
@@ -250,7 +257,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/60'/3'/2/1",
@@ -323,7 +330,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/60'/3'/2/1",
@@ -393,7 +400,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signPersonalMessage({
           derivationPath: "44'/60'/3'/2/1",
@@ -465,7 +472,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signDelegationAuthorization({
           derivationPath: "44'/60'/3'/2/1",
@@ -544,7 +551,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signTypedData({
           derivationPath: "44'/60'/3'/2/1",

@@ -6,6 +6,14 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 
 import { SignTypedDataLegacyTask } from "./SignTypedDataLegacyTask";
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+
 describe("SignTypedDataLegacyTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
 
@@ -60,6 +68,7 @@ describe("SignTypedDataLegacyTask", () => {
       apiMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
+      mockLogger,
     );
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({
@@ -104,6 +113,7 @@ describe("SignTypedDataLegacyTask", () => {
         primaryType: "Wat?",
       },
       "44'/60'/0'/0/0",
+      mockLogger,
     );
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({

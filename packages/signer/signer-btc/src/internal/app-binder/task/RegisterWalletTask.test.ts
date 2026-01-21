@@ -7,8 +7,15 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { RegisteredWallet, WalletPolicy } from "@api/model/Wallet";
-import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 import { type ContinueTask } from "@internal/app-binder/task/ContinueTask";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { type Wallet } from "@internal/wallet/model/Wallet";
@@ -78,7 +85,7 @@ describe("RegisterWalletTask", () => {
       // GIVEN
       const args = {
         walletPolicy: WALLET_POLICY,
-        loggerFactory: NullLoggerPublisherService,
+        loggerFactory: mockLoggerFactory,
       };
 
       const successResult = CommandResultFactory<ApduResponse, void>({
@@ -132,7 +139,7 @@ describe("RegisterWalletTask", () => {
       // GIVEN
       const args = {
         walletPolicy: WALLET_POLICY,
-        loggerFactory: NullLoggerPublisherService,
+        loggerFactory: mockLoggerFactory,
       };
 
       const resultError = CommandResultFactory<ApduResponse, void>({
@@ -166,7 +173,7 @@ describe("RegisterWalletTask", () => {
       // GIVEN
       const args = {
         walletPolicy: WALLET_POLICY,
-        loggerFactory: NullLoggerPublisherService,
+        loggerFactory: mockLoggerFactory,
       };
 
       const successResult = CommandResultFactory<ApduResponse, void>({

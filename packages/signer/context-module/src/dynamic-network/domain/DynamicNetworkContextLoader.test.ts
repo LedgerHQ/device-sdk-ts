@@ -16,7 +16,14 @@ import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("DynamicNetworkContextLoader", () => {
   const mockNetworkDataSource: DynamicNetworkDataSource = {
@@ -44,7 +51,7 @@ describe("DynamicNetworkContextLoader", () => {
     mockNetworkDataSource,
     mockConfig,
     mockCertificateLoader,
-    NullLoggerPublisherService,
+    mockLoggerFactory,
   );
 
   // Helper function to create a mock NetworkDescriptor
@@ -394,7 +401,7 @@ describe("DynamicNetworkContextLoader", () => {
         mockNetworkDataSource,
         { ...mockConfig, cal: { ...mockConfig.cal, mode: "test" } },
         mockCertificateLoader,
-        NullLoggerPublisherService,
+        mockLoggerFactory,
       );
       const input: DynamicNetworkContextInput = {
         chainId: 1,

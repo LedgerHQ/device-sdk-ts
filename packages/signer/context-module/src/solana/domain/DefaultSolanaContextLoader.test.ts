@@ -10,13 +10,20 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { SolanaContextTypes } from "@/shared/model/SolanaContextTypes";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import {
   type SolanaTokenDataSource,
   type TokenDataResponse,
 } from "@/solanaToken/data/SolanaTokenDataSource";
 import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("SolanaTokenContextLoader", () => {
   let mockDataSource: SolanaTokenDataSource;
@@ -57,7 +64,7 @@ describe("SolanaTokenContextLoader", () => {
       mockDataSource,
       config,
       mockCertLoader,
-      NullLoggerPublisherService,
+      mockLoggerFactory,
     );
   };
 

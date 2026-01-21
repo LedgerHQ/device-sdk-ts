@@ -17,11 +17,11 @@ export class SignTypedDataLegacyTask {
     private readonly api: InternalApi,
     private readonly data: TypedData,
     private readonly derivationPath: string,
-    private readonly logger?: LoggerPublisherService,
+    private readonly logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
-    this.logger?.debug("[run] Starting SignTypedDataLegacyTask", {
+    this.logger.debug("[run] Starting SignTypedDataLegacyTask", {
       data: {
         derivationPath: this.derivationPath,
         primaryType: this.data.primaryType,
@@ -32,7 +32,7 @@ export class SignTypedDataLegacyTask {
     const domainHash = TypedDataEncoder.hashDomain(this.data.domain);
 
     if (!this.data.types[this.data.primaryType]) {
-      this.logger?.error("[run] Primary type not defined in types", {
+      this.logger.error("[run] Primary type not defined in types", {
         data: { primaryType: this.data.primaryType },
       });
       throw new Error(
@@ -48,7 +48,7 @@ export class SignTypedDataLegacyTask {
       this.data.message,
     );
 
-    this.logger?.debug("[run] Computed hashes, sending blind sign command");
+    this.logger.debug("[run] Computed hashes, sending blind sign command");
 
     // Blind sign the hash
     return await this.api.sendCommand(

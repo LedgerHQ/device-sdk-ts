@@ -4,12 +4,19 @@ import { Left, Right } from "purify-ts";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import {
   type TrustedNameContextInput,
   TrustedNameContextLoader,
 } from "@/trusted-name/domain/TrustedNameContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("TrustedNameContextLoader", () => {
   const mockTrustedNameDataSource: TrustedNameDataSource = {
@@ -22,7 +29,7 @@ describe("TrustedNameContextLoader", () => {
   const loader = new TrustedNameContextLoader(
     mockTrustedNameDataSource,
     mockCertificateLoader,
-    NullLoggerPublisherService,
+    mockLoggerFactory,
   );
 
   const mockCertificate: PkiCertificate = {

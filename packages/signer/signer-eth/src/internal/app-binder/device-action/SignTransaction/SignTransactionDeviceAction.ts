@@ -92,17 +92,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAIntermediateValue,
   SignTransactionDAInternalState
 > {
-  private readonly _loggerFactory?: (tag: string) => LoggerPublisherService;
+  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
 
   constructor(args: {
     input: SignTransactionDAInput;
     inspect?: boolean;
-    loggerFactory?: (tag: string) => LoggerPublisherService;
+    loggerFactory: (tag: string) => LoggerPublisherService;
   }) {
     super({
       input: args.input,
       inspect: args.inspect,
-      logger: args.loggerFactory?.("SignTransactionDeviceAction"),
+      logger: args.loggerFactory("SignTransactionDeviceAction"),
     });
     this._loggerFactory = args.loggerFactory;
   }
@@ -450,6 +450,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               subset: context._internalState.subset!,
               transaction: context.input.transaction,
               deviceModelId: internalApi.getDeviceModel().id,
+              logger: this._loggerFactory("BuildFullContextsTask"),
             }),
             onDone: {
               target: "ProvideContexts",
@@ -492,6 +493,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               contexts: context._internalState.contexts,
               derivationPath: context.input.derivationPath,
               serializedTransaction: context.input.transaction,
+              logger: this._loggerFactory("ProvideTransactionContextsTask"),
             }),
             onDone: {
               target: "SignTransaction",
@@ -655,7 +657,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }) =>
       new SendSignTransactionTask(internalApi, {
         ...arg0.input,
-        logger: this._loggerFactory?.("SendSignTransactionTask"),
+        logger: this._loggerFactory("SendSignTransactionTask"),
       }).run();
 
     return {

@@ -5,6 +5,7 @@ import { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 import { LogSubscriberOptions } from "@api/logger-subscriber/model/LogSubscriberOptions";
 import { LoggerSubscriberService } from "@api/logger-subscriber/service/LoggerSubscriberService";
 import { LogPublisherOptions } from "@internal/logger-publisher/model/LogPublisherOptions";
+import { sanitiseData } from "@internal/logger-publisher/service/sanitiseData";
 
 @injectable()
 export class DefaultLoggerPublisherService implements LoggerPublisherService {
@@ -17,11 +18,16 @@ export class DefaultLoggerPublisherService implements LoggerPublisherService {
   }
 
   _log(level: LogLevel, message: string, options?: LogPublisherOptions): void {
+    const sanitisedData = options?.data
+      ? sanitiseData(options.data)
+      : undefined;
+
     this.subscribers.forEach((subscriber) => {
       const subscriberOptions: LogSubscriberOptions = {
         timestamp: Date.now(),
         tag: this.tag,
         ...options,
+        data: sanitisedData,
       };
       subscriber.log(level, message, subscriberOptions);
     });

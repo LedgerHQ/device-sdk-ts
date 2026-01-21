@@ -10,8 +10,15 @@ import {
   CHUNK_SIZE,
   SHA256_SIZE,
 } from "@internal/app-binder/command/utils/constants";
-import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 import { type ContinueTask } from "@internal/app-binder/task/ContinueTask";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 
@@ -57,7 +64,7 @@ describe("SignMessageTask", () => {
       const args = {
         derivationPath: DERIVATION_PATH,
         message: EXACT_ONE_CHUNK_MESSAGE,
-        loggerFactory: NullLoggerPublisherService,
+        loggerFactory: mockLoggerFactory,
       };
 
       const dataStoreService = {
@@ -90,7 +97,7 @@ describe("SignMessageTask", () => {
       const args = {
         derivationPath: DERIVATION_PATH,
         message: EXACT_TWO_CHUNKS_MESSAGE,
-        loggerFactory: NullLoggerPublisherService,
+        loggerFactory: mockLoggerFactory,
       };
 
       const dataStoreService = {
@@ -126,7 +133,7 @@ describe("SignMessageTask", () => {
       const args = {
         derivationPath: DERIVATION_PATH,
         message: EXACT_ONE_CHUNK_MESSAGE,
-        loggerFactory: NullLoggerPublisherService,
+        loggerFactory: mockLoggerFactory,
       };
 
       const resultError = CommandResultFactory<Signature, void>({
