@@ -90,7 +90,9 @@ export class FileLogger implements LoggerSubscriberService {
   ): Promise<void> {
     let logLine = `${timestamp} [${level}] ${tag} ${message}`;
     if (options.data) {
-      logLine += ` ${JSON.stringify(options.data)}`;
+      logLine += ` ${JSON.stringify(options.data, (_, value: unknown) =>
+        typeof value === "bigint" ? `${value.toString()}n` : value,
+      )}`;
     }
     await fs.appendFile(this.filePath, logLine + "\n");
   }
