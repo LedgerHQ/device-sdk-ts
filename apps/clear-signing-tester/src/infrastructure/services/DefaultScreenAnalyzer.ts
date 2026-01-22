@@ -145,7 +145,7 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
       const screenText = events
         .filter((event) => event.text && event.text.trim())
         .map((event) => event.text.trim())
-        .join(" ");
+        .join("");
 
       // Business logic: Accumulate meaningful screen text
       if (screenText.trim()) {
