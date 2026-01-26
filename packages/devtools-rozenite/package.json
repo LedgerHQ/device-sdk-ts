@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-rozenite",
-  "private": true,
+  "private": false,
   "version": "0.0.1",
   "description": "Inspect and debug your integration of the Device Management Kit",
   "type": "module",
@@ -33,6 +33,5 @@
     "react-native": "*",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^"
   },
-  "license": "MIT",
-  "private": true
+  "license": "MIT"
 }
