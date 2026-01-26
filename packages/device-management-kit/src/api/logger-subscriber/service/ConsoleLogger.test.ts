@@ -10,10 +10,11 @@ const error = vi.spyOn(console, "error").mockImplementation(vi.fn());
 const log = vi.spyOn(console, "log").mockImplementation(vi.fn());
 
 let logger: ConsoleLogger;
+// Tags are pre-formatted by the publisher before reaching subscribers
 const options: LogSubscriberOptions = {
   data: { key: "value" },
   timestamp: 1,
-  tag: "tag",
+  tag: "[tag]",
 };
 const message = "message";
 
@@ -31,62 +32,38 @@ describe("ConsoleLogger", () => {
     describe("log", () => {
       it("should log Info level", () => {
         logger.log(LogLevel.Info, message, options);
-        expect(info).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(info).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Info level with a custom tag", () => {
-        const tag = "custom-tag";
+        const tag = "[custom-tag]";
         logger.log(LogLevel.Info, message, { ...options, tag });
-        expect(info).toHaveBeenCalledWith(`[${tag}]`, message, options.data);
+        expect(info).toHaveBeenCalledWith(tag, message, options.data);
       });
 
       it("should log Warn level", () => {
         logger.log(LogLevel.Warning, message, options);
-        expect(warn).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(warn).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Debug level", () => {
         logger.log(LogLevel.Debug, message, options);
-        expect(debug).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(debug).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Fatal level", () => {
         logger.log(LogLevel.Fatal, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should default to Log level if none present", () => {
         logger.log(null, message, options);
-        expect(log).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(log).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Error level", () => {
         logger.log(LogLevel.Error, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
     });
   });
@@ -100,26 +77,18 @@ describe("ConsoleLogger", () => {
     describe("log", () => {
       it("should log Info level", () => {
         logger.log(LogLevel.Info, message, options);
-        expect(info).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(info).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Info level with a custom tag", () => {
-        const tag = "custom-tag";
+        const tag = "[custom-tag]";
         logger.log(LogLevel.Info, message, { ...options, tag });
-        expect(info).toHaveBeenCalledWith(`[${tag}]`, message, options.data);
+        expect(info).toHaveBeenCalledWith(tag, message, options.data);
       });
 
       it("should log Warn level", () => {
         logger.log(LogLevel.Warning, message, options);
-        expect(warn).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(warn).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should not log Debug level", () => {
@@ -129,29 +98,17 @@ describe("ConsoleLogger", () => {
 
       it("should default to Log level if none present", () => {
         logger.log(null, message, options);
-        expect(log).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(log).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Error level", () => {
         logger.log(LogLevel.Error, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Fatal level", () => {
         logger.log(LogLevel.Fatal, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
     });
   });
@@ -170,11 +127,7 @@ describe("ConsoleLogger", () => {
 
       it("should log Warn level", () => {
         logger.log(LogLevel.Warning, message, options);
-        expect(warn).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(warn).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should not log Debug level", () => {
@@ -184,29 +137,17 @@ describe("ConsoleLogger", () => {
 
       it("should default to Log level if none present", () => {
         logger.log(null, message, options);
-        expect(log).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(log).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Error level", () => {
         logger.log(LogLevel.Error, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Fatal level", () => {
         logger.log(LogLevel.Fatal, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
     });
   });
@@ -235,29 +176,17 @@ describe("ConsoleLogger", () => {
 
       it("should default to Log level if none present", () => {
         logger.log(null, message, options);
-        expect(log).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(log).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Error level", () => {
         logger.log(LogLevel.Error, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
 
       it("should log Fatal level", () => {
         logger.log(LogLevel.Fatal, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
     });
   });
@@ -286,11 +215,7 @@ describe("ConsoleLogger", () => {
 
       it("should log Fatal level", () => {
         logger.log(LogLevel.Fatal, message, options);
-        expect(error).toHaveBeenCalledWith(
-          `[${options.tag}]`,
-          message,
-          options.data,
-        );
+        expect(error).toHaveBeenCalledWith(options.tag, message, options.data);
       });
     });
   });

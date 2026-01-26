@@ -17,6 +17,14 @@ import {
   type BuildSafeAddressContextTaskArgs,
 } from "./BuildSafeAddressContextTask";
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+
 describe("BuildSafeAddressContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {
@@ -59,6 +67,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -110,6 +119,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -135,6 +145,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(errorResult);
 
@@ -156,6 +167,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -176,6 +188,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -196,6 +209,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi.fn().mockResolvedValue([]);
@@ -219,6 +233,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -243,6 +258,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -263,6 +279,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -292,6 +309,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -320,6 +338,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(successChallengeResult);
       contextModuleMock.getContexts = vi
@@ -350,6 +369,7 @@ describe("BuildSafeAddressContextTask", () => {
           safeContractAddress: TEST_SAFE_ADDRESS,
           options: { chainId: TEST_CHAIN_ID },
           deviceModelId,
+          logger: mockLogger,
         };
         apiMock.sendCommand.mockResolvedValue(successChallengeResult);
         contextModuleMock.getContexts = vi
@@ -383,6 +403,7 @@ describe("BuildSafeAddressContextTask", () => {
         safeContractAddress: TEST_SAFE_ADDRESS,
         options: { chainId: TEST_CHAIN_ID },
         deviceModelId: DeviceModelId.FLEX,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValue(
         CommandResultFactory({

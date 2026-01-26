@@ -98,16 +98,19 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
   SignTypedDataDAIntermediateValue,
   SignTypedDataDAInternalState
 > {
+  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
+
   constructor(args: {
     input: SignTypedDataDAInput;
     inspect?: boolean;
-    loggerFactory?: (tag: string) => LoggerPublisherService;
+    loggerFactory: (tag: string) => LoggerPublisherService;
   }) {
     super({
       input: args.input,
       inspect: args.inspect,
-      logger: args.loggerFactory?.("SignTypedDataDeviceAction"),
+      logger: args.loggerFactory("SignTypedDataDeviceAction"),
     });
+    this._loggerFactory = args.loggerFactory;
   }
 
   makeStateMachine(
@@ -610,6 +613,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         arg0.input.derivationPath,
         arg0.input.appConfig,
         arg0.input.from,
+        this._loggerFactory("BuildEIP712ContextTask"),
       ).run();
 
     const provideContext = async (arg0: {
@@ -646,6 +650,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         internalApi,
         arg0.input.data,
         arg0.input.derivationPath,
+        this._loggerFactory("SignTypedDataLegacyTask"),
       ).run();
 
     return {

@@ -38,9 +38,9 @@ export type ProvideTransactionContextsTaskArgs = {
    */
   serializedTransaction?: Uint8Array;
   /**
-   * Optional logger for debugging.
+   * Logger for debugging.
    */
-  logger?: LoggerPublisherService;
+  logger: LoggerPublisherService;
 };
 
 export type ProvideTransactionContextsTaskResult = Either<
@@ -67,7 +67,7 @@ export class ProvideTransactionContextsTask {
   ) {}
 
   async run(): Promise<ProvideTransactionContextsTaskResult> {
-    this._args.logger?.debug("[run] Starting ProvideTransactionContextsTask", {
+    this._args.logger.debug("[run] Starting ProvideTransactionContextsTask", {
       data: {
         derivationPath: this._args.derivationPath,
         contextTypes: this._args.contexts.map((c) => c.context.type),
@@ -92,6 +92,7 @@ export class ProvideTransactionContextsTask {
         // Don't fail immediately on subcontext errors because the main context may still be successful
         await this._provideContextTaskFactory(this._api, {
           context: subcontext,
+          logger: this._args.logger,
         }).run();
       }
 
@@ -129,16 +130,17 @@ export class ProvideTransactionContextsTask {
 
       const res = await this._provideContextTaskFactory(this._api, {
         context,
+        logger: this._args.logger,
       }).run();
       if (!isSuccessCommandResult(res)) {
-        this._args.logger?.error("[run] Failed to provide context", {
+        this._args.logger.error("[run] Failed to provide context", {
           data: { contextType: context.type, error: res.error },
         });
         return Left(res);
       }
     }
 
-    this._args.logger?.debug(
+    this._args.logger.debug(
       "[run] ProvideTransactionContextsTask completed successfully",
     );
     return Right(void 0);

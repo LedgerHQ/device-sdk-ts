@@ -12,8 +12,13 @@ let service: DefaultLoggerPublisherService;
 let subscriber: Mocked<ConsoleLogger>;
 const message = "message";
 const tag = "logger-tag";
+const formattedTag = `[${tag}]`;
 const options = { data: { key: "value" } };
-const generatedOptions = { tag, timestamp: Date.now(), ...options };
+const generatedOptions = {
+  tag: formattedTag,
+  timestamp: Date.now(),
+  ...options,
+};
 
 describe("LoggerPublisherService", () => {
   beforeEach(() => {
@@ -31,12 +36,13 @@ describe("LoggerPublisherService", () => {
     );
   });
 
-  it("should call subscriber.log with the correct log object when a tag is provided", () => {
+  it("should call subscriber.log with the correct log object when a tag is provided in options", () => {
     const newTag = "new-tag";
     service.info(message, { ...options, tag: newTag });
+    // Note: options.tag overrides and is formatted
     expect(subscriber.log).toHaveBeenCalledWith(LogLevel.Info, message, {
       ...generatedOptions,
-      tag: newTag,
+      tag: `[${newTag}]`,
     });
   });
 

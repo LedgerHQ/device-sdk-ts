@@ -7,6 +7,14 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 
 import { SendSignAuthorizationDelegationTask } from "./SendSignAuthorizationDelegationTask";
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+
 const SMALL_MESSAGE_DATA = new Uint8Array([
   0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00, 0x3c, 0x80, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x2d, 0x00, 0x01, 0x01,
@@ -66,6 +74,7 @@ describe("SendSignAuthorizationDelegationTask", () => {
         address: "0x4Cd241E8d1510e30b2076397afc7508Ae59C66c9",
         chainId: 1,
         nonce: 41,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -96,6 +105,7 @@ describe("SendSignAuthorizationDelegationTask", () => {
           "0x4Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c94Cd241E8d1510e30b2076397afc7508Ae59C66c9",
         chainId: 1,
         nonce: 41,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
@@ -131,6 +141,7 @@ describe("SendSignAuthorizationDelegationTask", () => {
         address: "0x4Cd241E8d1510e30b2076397afc7508Ae59C66c9",
         chainId: 1,
         nonce: 41,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -159,6 +170,7 @@ describe("SendSignAuthorizationDelegationTask", () => {
         address: "0x4Cd241E8d1510e30b2076397afc7508Ae59C66c9",
         chainId: 1,
         nonce: 41,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 

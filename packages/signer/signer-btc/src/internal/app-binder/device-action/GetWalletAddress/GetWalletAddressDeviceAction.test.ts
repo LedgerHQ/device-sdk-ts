@@ -17,6 +17,14 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 import { GetWalletAddressDeviceAction } from "./GetWalletAddressDeviceAction";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
@@ -56,6 +64,7 @@ describe("GetWalletAddressDeviceAction", () => {
             change: false,
             addressIndex: 1,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
@@ -131,6 +140,7 @@ describe("GetWalletAddressDeviceAction", () => {
             change: false,
             addressIndex: 1,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
@@ -219,6 +229,7 @@ describe("GetWalletAddressDeviceAction", () => {
             change: false,
             addressIndex: 1,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
@@ -255,6 +266,7 @@ describe("GetWalletAddressDeviceAction", () => {
             change: false,
             addressIndex: 1,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
@@ -321,6 +333,7 @@ describe("GetWalletAddressDeviceAction", () => {
             change: false,
             addressIndex: 1,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(

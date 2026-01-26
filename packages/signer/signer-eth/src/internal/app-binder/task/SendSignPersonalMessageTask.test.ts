@@ -7,6 +7,14 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 
 import { SendSignPersonalMessageTask } from "./SendSignPersonalMessageTask";
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+
 const SEND_MESSAGE_HELLO_WORLD = "Hello, World!";
 const SEND_MESSAGE_HELLO_WORLD_BYTES = new Uint8Array([
   0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x57, 0x6f, 0x72, 0x6c, 0x64, 0x21,
@@ -81,6 +89,7 @@ describe("SendSignPersonalMessageTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         message: SEND_MESSAGE_HELLO_WORLD,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -105,6 +114,7 @@ describe("SendSignPersonalMessageTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         message: SEND_MESSAGE_HELLO_WORLD_BYTES,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -129,6 +139,7 @@ describe("SendSignPersonalMessageTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         message: MESSAGE_LONG,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
@@ -159,6 +170,7 @@ describe("SendSignPersonalMessageTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         message: SEND_MESSAGE_HELLO_WORLD,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -182,6 +194,7 @@ describe("SendSignPersonalMessageTask", () => {
       const args = {
         derivationPath: "44'/60'/0'/0/0",
         message: SEND_MESSAGE_HELLO_WORLD,
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 

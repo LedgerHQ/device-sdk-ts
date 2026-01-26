@@ -46,7 +46,7 @@ export type BuildFullContextsTaskArgs = {
   readonly subset: TransactionSubset;
   readonly deviceModelId: DeviceModelId;
   readonly transaction?: Uint8Array;
-  readonly logger?: LoggerPublisherService;
+  readonly logger: LoggerPublisherService;
 };
 
 export type ContextWithSubContexts = {
@@ -72,13 +72,13 @@ export class BuildFullContextsTask {
   ) {}
 
   async run(): Promise<BuildFullContextsTaskResult> {
-    this._args.logger?.debug("[run] Starting BuildFullContextsTask");
+    this._args.logger.debug("[run] Starting BuildFullContextsTask");
 
     // get the base contexts
     const { clearSignContexts, clearSigningType, clearSignContextsOptional } =
       await this._buildBaseContextsTaskFactory(this._api, this._args).run();
 
-    this._args.logger?.debug("[run] Base contexts built", {
+    this._args.logger.debug("[run] Base contexts built", {
       data: {
         clearSigningType,
         contextTypes: clearSignContexts.map((c) => c.type),
@@ -147,7 +147,7 @@ export class BuildFullContextsTask {
       }
     }
 
-    this._args.logger?.debug("[run] BuildFullContextsTask completed", {
+    this._args.logger.debug("[run] BuildFullContextsTask completed", {
       data: {
         clearSigningType,
         contextTypes: contextWithNestedContexts.map((c) => c.context.type),

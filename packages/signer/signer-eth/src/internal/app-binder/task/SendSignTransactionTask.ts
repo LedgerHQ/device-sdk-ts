@@ -31,11 +31,11 @@ type SendSignTransactionTaskArgs = {
   chainId: number;
   transactionType: TransactionType;
   clearSigningType: ClearSigningType;
-  logger?: LoggerPublisherService;
+  logger: LoggerPublisherService;
 };
 
 export class SendSignTransactionTask {
-  private readonly _logger?: LoggerPublisherService;
+  private readonly _logger: LoggerPublisherService;
 
   constructor(
     private api: InternalApi,
@@ -45,7 +45,7 @@ export class SendSignTransactionTask {
   }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
-    this._logger?.debug("[run] Starting SendSignTransactionTask", {
+    this._logger.debug("[run] Starting SendSignTransactionTask", {
       data: {
         derivationPath: this.args.derivationPath,
         chainId: this.args.chainId,
@@ -57,19 +57,19 @@ export class SendSignTransactionTask {
 
     // For generic-parser transactions, the derivation path and transaction were previously sent
     if (this.args.clearSigningType === ClearSigningType.EIP7730) {
-      this._logger?.debug(
+      this._logger.debug(
         "[run] Using EIP7730 clear signing, starting transaction",
       );
       const signature = await this.api.sendCommand(
         new StartTransactionCommand(),
       );
       if (!isSuccessCommandResult(signature)) {
-        this._logger?.error("[run] Failed to start transaction", {
+        this._logger.error("[run] Failed to start transaction", {
           data: { error: signature.error },
         });
         return signature;
       }
-      this._logger?.debug("[run] Transaction signed successfully (EIP7730)");
+      this._logger.debug("[run] Transaction signed successfully (EIP7730)");
       return this.recoverSignature(signature.data).mapOrDefault(
         (data) => CommandResultFactory({ data }),
         CommandResultFactory({
@@ -94,7 +94,7 @@ export class SendSignTransactionTask {
 
     // Send chunks
     const chunks = this.getChunks(derivations, serializedTransaction);
-    this._logger?.debug("[run] Sending transaction in chunks", {
+    this._logger.debug("[run] Sending transaction in chunks", {
       data: { chunksCount: chunks.length },
     });
 
@@ -107,7 +107,7 @@ export class SendSignTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(result)) {
-        this._logger?.error("[run] Failed to send transaction chunk", {
+        this._logger.error("[run] Failed to send transaction chunk", {
           data: { chunkIndex: i, error: result.error },
         });
         return result;
@@ -115,7 +115,7 @@ export class SendSignTransactionTask {
       resultData = result.data;
     }
 
-    this._logger?.debug("[run] Transaction signed successfully");
+    this._logger.debug("[run] Transaction signed successfully");
     return this.recoverSignature(resultData).mapOrDefault(
       (data) => CommandResultFactory({ data }),
       CommandResultFactory({

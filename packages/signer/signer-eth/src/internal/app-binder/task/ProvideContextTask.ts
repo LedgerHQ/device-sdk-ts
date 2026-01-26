@@ -42,9 +42,9 @@ export type ProvideContextTaskArgs = {
    */
   context: ClearSignContextSuccess;
   /**
-   * Optional logger for debugging.
+   * Logger for debugging.
    */
-  logger?: LoggerPublisherService;
+  logger: LoggerPublisherService;
 };
 
 export type ProvideContextTaskResult = CommandResult<unknown, EthErrorCodes>;
@@ -64,7 +64,7 @@ export class ProvideContextTask {
 
   async run(): Promise<ProvideContextTaskResult> {
     const { type, payload, certificate } = this._args.context;
-    this._args.logger?.debug("[run] Providing context", {
+    this._args.logger.debug("[run] Providing context", {
       data: {
         type,
         payloadLength: payload.length,

@@ -6,10 +6,17 @@ import type { ProxyDataSource } from "@/proxy/data/ProxyDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import type { TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource";
 import { DefaultTypedDataContextLoader } from "@/typed-data/domain/DefaultTypedDataContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("TypedDataContextLoader", () => {
   const getProxyImplementationAddressMock = vi.fn();
@@ -32,7 +39,7 @@ describe("TypedDataContextLoader", () => {
     mockTokenDataSource,
     mockProxyDatasource,
     mockCertificateLoader,
-    NullLoggerPublisherService,
+    mockLoggerFactory,
   );
 
   const TEST_TYPES = {

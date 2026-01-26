@@ -16,6 +16,7 @@ import type {
   CommandResult,
   DeviceModelId,
   InternalApi,
+  LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import {
   bufferToHexaString,
@@ -74,6 +75,7 @@ export type ProvideEIP712ContextTaskArgs = {
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
   calldatasContexts: Record<TypedDataCalldataIndex, ContextWithSubContexts[]>;
   transactionChecks?: ClearSignContextSuccess;
+  logger: LoggerPublisherService;
 };
 
 const DEVICE_ASSETS_MAX = 5;
@@ -687,6 +689,7 @@ export class ProvideEIP712ContextTask {
           await this.provideContextFactory({
             contexts: metadata.contexts,
             derivationPath: this.args.derivationPath,
+            logger: this.args.logger,
           }).run();
         }
         delete this.calldataMetadatas[calldataIndex];

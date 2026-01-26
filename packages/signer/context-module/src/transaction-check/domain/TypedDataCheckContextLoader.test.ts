@@ -4,7 +4,6 @@ import { Left, Right } from "purify-ts";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import {
   type TypedData,
   type TypedDataCheckDataSource,
@@ -13,6 +12,14 @@ import {
   type TypedDataCheckContextInput,
   TypedDataCheckContextLoader,
 } from "@/transaction-check/domain/TypedDataCheckContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("TypedDataCheckContextLoader", () => {
   const mockTypedDataCheckDataSource: TypedDataCheckDataSource = {
@@ -24,7 +31,7 @@ describe("TypedDataCheckContextLoader", () => {
   const loader = new TypedDataCheckContextLoader(
     mockTypedDataCheckDataSource,
     mockCertificateLoader,
-    NullLoggerPublisherService,
+    mockLoggerFactory,
   );
 
   const SUPPORTED_TYPES: ClearSignContextType[] = [

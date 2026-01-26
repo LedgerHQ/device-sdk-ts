@@ -2,7 +2,6 @@ import { Interface, type TransactionDescription } from "ethers";
 import { Left, Right } from "purify-ts";
 
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { NullLoggerPublisherService } from "@/shared/utils/NullLoggerPublisherService";
 import { type HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import {
   UNISWAP_EXECUTE_SELECTOR,
@@ -16,6 +15,14 @@ import {
   type UniswapContextInput,
   UniswapContextLoader,
 } from "./UniswapContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("UniswapContextLoader", () => {
   const commandDecoderMock: CommandDecoderDataSource = {
@@ -31,7 +38,7 @@ describe("UniswapContextLoader", () => {
       loader = new UniswapContextLoader(
         new DefaultCommandDecoderDataSource(new EthersAbiDecoderDataSource()),
         tokenDataSourceMock as unknown as HttpTokenDataSource,
-        NullLoggerPublisherService,
+        mockLoggerFactory,
       );
     });
 
@@ -90,7 +97,7 @@ describe("UniswapContextLoader", () => {
         loader = new UniswapContextLoader(
           new DefaultCommandDecoderDataSource(new EthersAbiDecoderDataSource()),
           tokenDataSourceMock as unknown as HttpTokenDataSource,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
       });
 
@@ -196,7 +203,7 @@ describe("UniswapContextLoader", () => {
         loader = new UniswapContextLoader(
           commandDecoderMock,
           tokenDataSourceMock as unknown as HttpTokenDataSource,
-          NullLoggerPublisherService,
+          mockLoggerFactory,
         );
       });
 

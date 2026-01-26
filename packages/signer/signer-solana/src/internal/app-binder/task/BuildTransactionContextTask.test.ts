@@ -11,12 +11,19 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { NullLoggerPublisherService } from "@internal/app-binder/services/utils/NullLoggerPublisherService";
 
 import {
   BuildTransactionContextTask,
   type SolanaBuildContextResult,
 } from "./BuildTransactionContextTask";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 const contextModuleMock: ContextModule = {
   getSolanaContext: vi.fn(),
@@ -24,7 +31,7 @@ const contextModuleMock: ContextModule = {
 
 const defaultArgs = {
   contextModule: contextModuleMock,
-  loggerFactory: NullLoggerPublisherService,
+  loggerFactory: mockLoggerFactory,
   options: {
     tokenAddress: "someAddress",
     createATA: undefined,

@@ -6,9 +6,16 @@ import {
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
-import { NullLoggerPublisherService } from "./shared/utils/NullLoggerPublisherService";
 import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 const contextLoaderStubBuilder = (canHandle: boolean): ContextLoader => {
   return {
@@ -46,7 +53,7 @@ describe("DefaultContextModule", () => {
       url: "https://metadata.com",
     },
     originToken: "originToken",
-    loggerFactory: NullLoggerPublisherService,
+    loggerFactory: mockLoggerFactory,
   };
 
   beforeEach(() => {

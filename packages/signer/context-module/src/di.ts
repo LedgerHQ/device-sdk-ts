@@ -27,13 +27,11 @@ type MakeContainerArgs = {
 export const makeContainer = ({ config }: MakeContainerArgs) => {
   const container = new Container();
 
-  if (config.loggerFactory) {
-    container
-      .bind<
-        (tag: string) => LoggerPublisherService
-      >(configTypes.ContextModuleLoggerFactory)
-      .toConstantValue(config.loggerFactory);
-  }
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(configTypes.ContextModuleLoggerFactory)
+    .toConstantValue(config.loggerFactory);
 
   container.loadSync(
     configModuleFactory(config),

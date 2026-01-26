@@ -64,12 +64,12 @@ export class GetWalletAddressDeviceAction extends XStateDeviceAction<
   constructor(args: {
     input: GetWalletAddressDAInput;
     inspect?: boolean;
-    loggerFactory?: (tag: string) => LoggerPublisherService;
+    loggerFactory: (tag: string) => LoggerPublisherService;
   }) {
     super({
       input: args.input,
       inspect: args.inspect,
-      logger: args.loggerFactory?.("GetWalletAddressDeviceAction"),
+      logger: args.loggerFactory("GetWalletAddressDeviceAction"),
     });
   }
 

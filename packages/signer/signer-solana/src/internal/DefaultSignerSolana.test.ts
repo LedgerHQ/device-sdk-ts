@@ -7,6 +7,14 @@ import { vi } from "vitest";
 
 import { DefaultSignerSolana } from "./DefaultSignerSolana";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("DefaultSignerSolana", () => {
   const contextModuleStub: ContextModule = {} as ContextModule;
 
@@ -22,6 +30,7 @@ describe("DefaultSignerSolana", () => {
   it("should call getAddress", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({
@@ -36,6 +45,7 @@ describe("DefaultSignerSolana", () => {
   it("should call signTransaction", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({
@@ -50,6 +60,7 @@ describe("DefaultSignerSolana", () => {
   it("should call signMessage", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({
@@ -64,6 +75,7 @@ describe("DefaultSignerSolana", () => {
   it("should call getAppConfiguration", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
     } as unknown as DeviceManagementKit;
     const sessionId = {} as DeviceSessionId;
     const signer = new DefaultSignerSolana({

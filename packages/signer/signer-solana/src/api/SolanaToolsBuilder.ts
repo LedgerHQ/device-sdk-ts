@@ -62,7 +62,11 @@ export class SolanaToolsBuilder {
       sessionId: this._sessionId,
       contextModule:
         this._customContextModule ??
-        new ContextModuleBuilder({ originToken: this._originToken }).build(),
+        new ContextModuleBuilder({
+          originToken: this._originToken,
+          loggerFactory: (tag: string) =>
+            this._dmk.getLoggerFactory()(["ContextModule", tag]),
+        }).build(),
     });
   }
 }
