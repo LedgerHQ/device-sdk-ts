@@ -1,6 +1,7 @@
 import type {
   CommandResult,
   InternalApi,
+  LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import type { TypedDataField } from "ethers";
 import { TypedDataEncoder } from "ethers";
@@ -16,13 +17,24 @@ export class SignTypedDataLegacyTask {
     private readonly api: InternalApi,
     private readonly data: TypedData,
     private readonly derivationPath: string,
+    private readonly logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
+    this.logger.debug("[run] Starting SignTypedDataLegacyTask", {
+      data: {
+        derivationPath: this.derivationPath,
+        primaryType: this.data.primaryType,
+      },
+    });
+
     // Compute domain hash and message hash on client side
     const domainHash = TypedDataEncoder.hashDomain(this.data.domain);
 
     if (!this.data.types[this.data.primaryType]) {
+      this.logger.error("[run] Primary type not defined in types", {
+        data: { primaryType: this.data.primaryType },
+      });
       throw new Error(
         `Primary type "${this.data.primaryType}" is not defined in the types.`,
       );
@@ -35,6 +47,8 @@ export class SignTypedDataLegacyTask {
       rest,
       this.data.message,
     );
+
+    this.logger.debug("[run] Computed hashes, sending blind sign command");
 
     // Blind sign the hash
     return await this.api.sendCommand(

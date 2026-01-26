@@ -1,6 +1,10 @@
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import {
+  DeviceModelId,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
@@ -27,14 +31,18 @@ export class TrustedNameContextLoader
   implements ContextLoader<TrustedNameContextInput>
 {
   private _dataSource: TrustedNameDataSource;
+  private logger: LoggerPublisherService;
 
   constructor(
     @inject(trustedNameTypes.TrustedNameDataSource)
     dataSource: TrustedNameDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this._dataSource = dataSource;
+    this.logger = loggerFactory("TrustedNameContextLoader");
   }
 
   canHandle(
@@ -62,12 +70,14 @@ export class TrustedNameContextLoader
     const { chainId, domain, challenge, deviceModelId } = input;
 
     if (!this.isDomainValid(domain)) {
-      return [
+      const result = [
         {
-          type: ClearSignContextType.ERROR,
+          type: ClearSignContextType.ERROR as const,
           error: new Error("[ContextModule] TrustedNameLoader: invalid domain"),
         },
       ];
+      this.logger.debug("load result", { data: { result } });
+      return result;
     }
 
     const payload = await this._dataSource.getDomainNamePayload({
@@ -95,7 +105,9 @@ export class TrustedNameContextLoader
       },
     });
 
-    return [response];
+    const result = [response];
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 
   private isDomainValid(domain: string) {

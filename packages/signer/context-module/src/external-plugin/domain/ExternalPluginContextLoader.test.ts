@@ -13,6 +13,14 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { type UniswapContextLoader } from "@/uniswap/domain/UniswapContextLoader";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 const dappInfosBuilder = ({
   abi,
   selectorDetails,
@@ -63,6 +71,7 @@ describe("ExternalPluginContextLoader", () => {
     mockExternalPluginDataSource,
     mockTokenDataSource,
     mockUniswapLoader,
+    mockLoggerFactory,
   );
 
   beforeEach(() => {

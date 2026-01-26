@@ -10,6 +10,14 @@ import {
   TransactionCheckContextLoader,
 } from "@/transaction-check/domain/TransactionCheckContextLoader";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("TransactionCheckContextLoader", () => {
   const mockTransactionCheckDataSource: TransactionCheckDataSource = {
     getTransactionCheck: vi.fn(),
@@ -20,6 +28,7 @@ describe("TransactionCheckContextLoader", () => {
   const loader = new TransactionCheckContextLoader(
     mockTransactionCheckDataSource,
     mockCertificateLoader,
+    mockLoggerFactory,
   );
 
   const SUPPORTED_TYPES: ClearSignContextType[] = [

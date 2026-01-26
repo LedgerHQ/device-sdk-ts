@@ -1,5 +1,13 @@
 # @ledgerhq/device-management-kit
 
+## 1.0.1
+
+### Patch Changes
+
+- [#1248](https://github.com/LedgerHQ/device-sdk-ts/pull/1248) [`b2c8d80`](https://github.com/LedgerHQ/device-sdk-ts/commit/b2c8d8010d9788715a27d15c54d2cacbf9491b87) Thanks [@bsureau](https://github.com/bsureau)! - Unsubscribe DevicePinger from EventDispatcher on device session close
+
+- [#1240](https://github.com/LedgerHQ/device-sdk-ts/pull/1240) [`9b50644`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b506446ed469adb332b73ab847d2dd7406c366c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Move logger into XStateDeviceAction
+
 ## 1.0.0
 
 ### Minor Changes

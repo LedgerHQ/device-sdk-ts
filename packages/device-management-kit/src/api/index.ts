@@ -108,6 +108,8 @@ export { DeviceManagementKitBuilder } from "@api/DeviceManagementKitBuilder";
 export * from "@api/Error";
 export { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
+export { DefaultLogTagFormatter } from "@api/logger-subscriber/service/DefaultLogTagFormatter";
+export { type LogTagFormatter } from "@api/logger-subscriber/service/LogTagFormatter";
 export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";
 export { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 export {

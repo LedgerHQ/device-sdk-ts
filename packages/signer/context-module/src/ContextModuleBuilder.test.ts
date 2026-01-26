@@ -10,6 +10,9 @@ import {
   type ContextModuleMetadataServiceConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { HttpTrustedNameDataSource } from "./trusted-name/data/HttpTrustedNameDataSource";
+import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
+import { trustedNameTypes } from "./trusted-name/di/trustedNameTypes";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -22,8 +25,17 @@ describe("ContextModuleBuilder", () => {
   const defaultWeb3ChecksConfig = {
     url: "https://web3checks/v1",
   };
+  const mockLoggerFactory = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    subscribers: [],
+  });
+
   const defaultBuilderArgs: ContextModuleConstructorArgs = {
     originToken: "test",
+    loggerFactory: mockLoggerFactory,
   };
 
   beforeEach(() => {
@@ -329,6 +341,55 @@ describe("ContextModuleBuilder", () => {
 
       expect(config.loggerFactory).toBe(overrideLoggerFactory);
       expect(config.loggerFactory).not.toBe(constructorLoggerFactory);
+    });
+  });
+
+  describe("setTrustedNameDataSource", () => {
+    it("should set a custom trusted name data source", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDataSource: TrustedNameDataSource = {
+        getDomainNamePayload: vi.fn(),
+        getTrustedNamePayload: vi.fn(),
+      };
+
+      const res = contextModuleBuilder
+        .setTrustedNameDataSource(customDataSource)
+        .build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.customTrustedNameDataSource).toBe(customDataSource);
+    });
+
+    it("should inject the custom data source into the container", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+      const customDataSource: TrustedNameDataSource = {
+        getDomainNamePayload: vi.fn(),
+        getTrustedNamePayload: vi.fn(),
+      };
+
+      const res = contextModuleBuilder
+        .setTrustedNameDataSource(customDataSource)
+        .build();
+      const injectedDataSource = (res as DefaultContextModule)[
+        "_container"
+      ].get<TrustedNameDataSource>(trustedNameTypes.TrustedNameDataSource);
+
+      expect(injectedDataSource).toBe(customDataSource);
+    });
+
+    it("should use HttpTrustedNameDataSource when no custom data source is set", () => {
+      const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+
+      const res = contextModuleBuilder.build();
+      const injectedDataSource = (res as DefaultContextModule)[
+        "_container"
+      ].get<TrustedNameDataSource>(trustedNameTypes.TrustedNameDataSource);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(injectedDataSource).toBeInstanceOf(HttpTrustedNameDataSource);
     });
   });
 });

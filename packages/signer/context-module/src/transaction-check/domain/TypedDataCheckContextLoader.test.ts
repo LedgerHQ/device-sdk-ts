@@ -13,6 +13,14 @@ import {
   TypedDataCheckContextLoader,
 } from "@/transaction-check/domain/TypedDataCheckContextLoader";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("TypedDataCheckContextLoader", () => {
   const mockTypedDataCheckDataSource: TypedDataCheckDataSource = {
     getTypedDataCheck: vi.fn(),
@@ -23,6 +31,7 @@ describe("TypedDataCheckContextLoader", () => {
   const loader = new TypedDataCheckContextLoader(
     mockTypedDataCheckDataSource,
     mockCertificateLoader,
+    mockLoggerFactory,
   );
 
   const SUPPORTED_TYPES: ClearSignContextType[] = [

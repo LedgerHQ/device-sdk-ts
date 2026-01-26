@@ -10,6 +10,14 @@ import {
   TrustedNameContextLoader,
 } from "@/trusted-name/domain/TrustedNameContextLoader";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("TrustedNameContextLoader", () => {
   const mockTrustedNameDataSource: TrustedNameDataSource = {
     getDomainNamePayload: vi.fn(),
@@ -21,6 +29,7 @@ describe("TrustedNameContextLoader", () => {
   const loader = new TrustedNameContextLoader(
     mockTrustedNameDataSource,
     mockCertificateLoader,
+    mockLoggerFactory,
   );
 
   const mockCertificate: PkiCertificate = {

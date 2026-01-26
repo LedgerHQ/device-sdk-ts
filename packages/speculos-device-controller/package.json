@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/speculos-device-controller",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "license": "Apache-2.0",
   "private": false,
   "repository": {
@@ -39,7 +39,7 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@ledgerhq/device-management-kit": "^1.0.0",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "@sentry/minimal": "catalog:",
     "axios": "catalog:"
   },
@@ -52,6 +52,6 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.0.0"
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

@@ -10,6 +10,14 @@ import type { TokenDataSource } from "@/token/data/TokenDataSource";
 import type { TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource";
 import { DefaultTypedDataContextLoader } from "@/typed-data/domain/DefaultTypedDataContextLoader";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 describe("TypedDataContextLoader", () => {
   const getProxyImplementationAddressMock = vi.fn();
   const loadCertificateMock = vi.fn();
@@ -31,6 +39,7 @@ describe("TypedDataContextLoader", () => {
     mockTokenDataSource,
     mockProxyDatasource,
     mockCertificateLoader,
+    mockLoggerFactory,
   );
 
   const TEST_TYPES = {

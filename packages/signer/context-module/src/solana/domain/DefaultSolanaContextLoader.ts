@@ -76,7 +76,7 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
       //   loader: this._solanaLifiLoader,
       //   expectedType: SolanaContextTypes.SOLANA_LIFI,
       // },
-    ] as const;
+    ];
 
     const loaderPromises: Promise<LoaderResult>[] = loaderEntries
       .map(({ loader, expectedType }) => {

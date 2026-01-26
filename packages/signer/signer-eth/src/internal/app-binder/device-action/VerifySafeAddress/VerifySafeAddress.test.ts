@@ -28,6 +28,14 @@ import { executeUntilStep } from "@internal/app-binder/device-action/__test-util
 
 import { VerifySafeAddressDeviceAction } from "./VerifySafeAddress";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
@@ -116,6 +124,7 @@ describe("VerifySafeAddressDeviceAction", () => {
             options: { chainId: TEST_CHAIN_ID },
             contextModule: contextModuleMock as unknown as ContextModule,
           },
+          loggerFactory: mockLoggerFactory,
         });
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
@@ -145,12 +154,12 @@ describe("VerifySafeAddressDeviceAction", () => {
         );
         expect(buildSafeAddressContextsMock).toHaveBeenCalledWith(
           expect.objectContaining({
-            input: {
+            input: expect.objectContaining({
               contextModule: contextModuleMock as unknown as ContextModule,
               safeContractAddress: TEST_SAFE_ADDRESS,
               options: { chainId: TEST_CHAIN_ID },
               deviceModelId: DeviceModelId.FLEX,
-            },
+            }),
           }),
         );
       });
@@ -190,6 +199,7 @@ describe("VerifySafeAddressDeviceAction", () => {
             options: { chainId: TEST_CHAIN_ID, skipOpenApp: true },
             contextModule: contextModuleMock as unknown as ContextModule,
           },
+          loggerFactory: mockLoggerFactory,
         });
         buildSafeAddressContextsMock.mockResolvedValueOnce({
           clearSignContexts: [validSafeContext, validSignerContext],
@@ -238,6 +248,7 @@ describe("VerifySafeAddressDeviceAction", () => {
               options: { chainId: TEST_CHAIN_ID, skipOpenApp: true },
               contextModule: contextModuleMock as unknown as ContextModule,
             },
+            loggerFactory: mockLoggerFactory,
           });
           vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
             extractDependenciesMock(),
@@ -299,6 +310,7 @@ describe("VerifySafeAddressDeviceAction", () => {
             options: { chainId: TEST_CHAIN_ID, skipOpenApp: true },
             contextModule: contextModuleMock as unknown as ContextModule,
           },
+          loggerFactory: mockLoggerFactory,
         });
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
@@ -332,6 +344,7 @@ describe("VerifySafeAddressDeviceAction", () => {
           options: { chainId: TEST_CHAIN_ID },
           contextModule: contextModuleMock as unknown as ContextModule,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -361,6 +374,7 @@ describe("VerifySafeAddressDeviceAction", () => {
           options: { chainId: TEST_CHAIN_ID },
           contextModule: contextModuleMock as unknown as ContextModule,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -394,6 +408,7 @@ describe("VerifySafeAddressDeviceAction", () => {
           options: { chainId: TEST_CHAIN_ID },
           contextModule: contextModuleMock as unknown as ContextModule,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -426,6 +441,7 @@ describe("VerifySafeAddressDeviceAction", () => {
           options: { chainId: TEST_CHAIN_ID },
           contextModule: contextModuleMock as unknown as ContextModule,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -455,6 +471,7 @@ describe("VerifySafeAddressDeviceAction", () => {
           options: { chainId: TEST_CHAIN_ID },
           contextModule: contextModuleMock as unknown as ContextModule,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -489,6 +506,7 @@ describe("VerifySafeAddressDeviceAction", () => {
           options: { chainId: TEST_CHAIN_ID },
           contextModule: contextModuleMock as unknown as ContextModule,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),

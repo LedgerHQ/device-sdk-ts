@@ -23,6 +23,14 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 import { SignPsbtDeviceAction } from "./SignPsbtDeviceAction";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
@@ -63,6 +71,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: "ValueParser" as unknown as ValueParser,
             skipOpenApp: false,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -194,6 +203,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: "ValueParser" as unknown as ValueParser,
             skipOpenApp: true,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -305,6 +315,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         testDeviceActionStates(
@@ -333,6 +344,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -396,6 +408,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -470,6 +483,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -555,6 +569,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -634,6 +649,7 @@ describe("SignPsbtDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data

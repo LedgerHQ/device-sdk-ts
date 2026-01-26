@@ -27,13 +27,11 @@ type MakeContainerArgs = {
 export const makeContainer = ({ config }: MakeContainerArgs) => {
   const container = new Container();
 
-  if (config.loggerFactory) {
-    container
-      .bind<
-        (tag: string) => LoggerPublisherService
-      >(configTypes.ContextModuleLoggerFactory)
-      .toConstantValue(config.loggerFactory);
-  }
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(configTypes.ContextModuleLoggerFactory)
+    .toConstantValue(config.loggerFactory);
 
   container.loadSync(
     configModuleFactory(config),
@@ -44,7 +42,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     safeModuleFactory(),
     tokenModuleFactory(),
     calldataModuleFactory(),
-    trustedNameModuleFactory(),
+    trustedNameModuleFactory(config),
     typedDataModuleFactory(),
     nanoPkiModuleFactory(),
     uniswapModuleFactory(),

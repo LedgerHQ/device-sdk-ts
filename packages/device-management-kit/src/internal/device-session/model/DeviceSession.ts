@@ -258,6 +258,7 @@ export class DeviceSession {
     this._updateDeviceStatus(DeviceStatus.NOT_CONNECTED);
     this._deviceState.complete();
     this._deviceSessionRefresher.stopRefresher();
+    this._pinger.unsubscribe();
   }
 
   public disableRefresher(id: string): () => void {

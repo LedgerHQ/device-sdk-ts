@@ -3,6 +3,7 @@ import {
   type DeviceActionStateMachine,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -72,9 +73,18 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
   SignPsbtDAIntermediateValue,
   SignPsbtDAInternalState
 > {
-  constructor(args: { input: SignPsbtDAInput; inspect?: boolean }) {
-    super(args);
+  constructor(args: {
+    input: SignPsbtDAInput;
+    inspect?: boolean;
+    loggerFactory: (tag: string) => LoggerPublisherService;
+  }) {
+    super({
+      input: args.input,
+      inspect: args.inspect,
+      logger: args.loggerFactory("SignPsbtDeviceAction"),
+    });
   }
+
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
@@ -202,22 +212,20 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "PrepareWalletPolicyResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        wallet: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      wallet: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",
@@ -243,22 +251,20 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "BuildPsbtResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        buildPsbtResult: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      buildPsbtResult: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",
@@ -294,22 +300,20 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "SignPsbtResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        signatures: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      signatures: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",

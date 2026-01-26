@@ -2,9 +2,11 @@ import {
   bufferToHexaString,
   DeviceModelId,
   isHexaString,
+  LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
@@ -31,12 +33,18 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 export class TransactionCheckContextLoader
   implements ContextLoader<TransactionCheckContextInput>
 {
+  private logger: LoggerPublisherService;
+
   constructor(
     @inject(transactionCheckTypes.TransactionCheckDataSource)
     private transactionCheckDataSource: TransactionCheckDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this.logger = loggerFactory("TransactionCheckContextLoader");
+  }
 
   canHandle(
     input: unknown,
@@ -69,6 +77,7 @@ export class TransactionCheckContextLoader
     const rawTx = bufferToHexaString(transaction);
 
     if (!from || !rawTx) {
+      this.logger.debug("load result", { data: { result: [] } });
       return [];
     }
 
@@ -99,6 +108,8 @@ export class TransactionCheckContextLoader
       },
     });
 
-    return [context];
+    const result = [context];
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 }

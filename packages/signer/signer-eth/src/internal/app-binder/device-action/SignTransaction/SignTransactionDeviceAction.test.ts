@@ -38,6 +38,14 @@ import { type TransactionParserService } from "@internal/transaction/service/par
 
 import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
@@ -209,6 +217,7 @@ describe("SignTransactionDeviceAction", () => {
             mapper: mapperMock,
             parser: parserMock,
           },
+          loggerFactory: mockLoggerFactory,
         });
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
@@ -271,7 +280,7 @@ describe("SignTransactionDeviceAction", () => {
         expect(buildContextsMock).toHaveBeenNthCalledWith(
           1,
           expect.objectContaining({
-            input: {
+            input: expect.objectContaining({
               contextModule: contextModuleMock,
               parser: parserMock,
               mapper: mapperMock,
@@ -281,7 +290,7 @@ describe("SignTransactionDeviceAction", () => {
               appConfig: createAppConfig("1.15.0", false, false),
               derivationPath: "44'/60'/0'/0/0",
               deviceModelId: DeviceModelId.FLEX,
-            },
+            }),
           }),
         );
       });
@@ -295,11 +304,11 @@ describe("SignTransactionDeviceAction", () => {
         expect(provideContextsMock).toHaveBeenNthCalledWith(
           1,
           expect.objectContaining({
-            input: {
+            input: expect.objectContaining({
               contexts: contexts,
               serializedTransaction: defaultTransaction,
               derivationPath: "44'/60'/0'/0/0",
-            },
+            }),
           }),
         );
       });
@@ -357,6 +366,7 @@ describe("SignTransactionDeviceAction", () => {
             mapper: mapperMock,
             parser: parserMock,
           },
+          loggerFactory: mockLoggerFactory,
         });
         parseTransactionMock.mockResolvedValueOnce({
           subset: defaultSubset,
@@ -409,6 +419,7 @@ describe("SignTransactionDeviceAction", () => {
             mapper: mapperMock,
             parser: parserMock,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
@@ -451,6 +462,7 @@ describe("SignTransactionDeviceAction", () => {
             mapper: mapperMock,
             parser: parserMock,
           },
+          loggerFactory: mockLoggerFactory,
         });
 
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
@@ -498,6 +510,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -531,6 +544,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -562,6 +576,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -590,6 +605,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -650,6 +666,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -681,6 +698,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -742,6 +760,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -826,6 +845,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -879,6 +899,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -930,6 +951,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),
@@ -989,6 +1011,7 @@ describe("SignTransactionDeviceAction", () => {
           mapper: mapperMock,
           parser: parserMock,
         },
+        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
         extractDependenciesMock(),

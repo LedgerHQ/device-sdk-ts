@@ -1,6 +1,7 @@
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
@@ -17,6 +18,7 @@ type MakeContainerProps = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
 };
+
 export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
   const container = new Container();
 
@@ -24,6 +26,14 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
   container
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
+
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(externalTypes.DmkLoggerFactory)
+    .toConstantValue((tag: string) =>
+      dmk.getLoggerFactory()(["SignerBtc", tag]),
+    );
 
   container.loadSync(
     appBinderModuleFactory(),

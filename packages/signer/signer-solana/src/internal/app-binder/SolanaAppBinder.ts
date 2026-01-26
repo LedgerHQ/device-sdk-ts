@@ -50,6 +50,7 @@ export class SolanaAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("SendCommandInAppDeviceAction"),
       }),
     });
   }
@@ -67,8 +68,8 @@ export class SolanaAppBinder {
           transaction: args.transaction,
           transactionOptions: args.solanaTransactionOptionalConfig,
           contextModule: this.contextModule,
-          loggerFactory: this.dmkLoggerFactory,
         },
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }
@@ -107,6 +108,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("CallTaskInAppDeviceAction"),
       }),
     });
   }
@@ -121,6 +123,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: false,
         },
+        logger: this.dmkLoggerFactory("SendCommandInAppDeviceAction"),
       }),
     });
   }

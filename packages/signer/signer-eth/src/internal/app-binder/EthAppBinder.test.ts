@@ -5,7 +5,6 @@ import {
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
-import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
 import { from } from "rxjs";
@@ -43,6 +42,14 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { EthAppBinder } from "./EthAppBinder";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("EthAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
@@ -94,6 +101,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/60'/3'/2/1",
@@ -154,21 +162,24 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-          sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
-            input: {
-              command: new GetAddressCommand(params),
-              appName: "Ethereum",
-              requiredUserInteraction: UserInteractionRequired.VerifyAddress,
-              skipOpenApp: false,
-            },
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: expect.objectContaining({
+              input: {
+                command: new GetAddressCommand(params),
+                appName: "Ethereum",
+                requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+                skipOpenApp: false,
+              },
+            }),
           }),
-        });
+        );
       });
 
       test("when checkOnDevice is false: UserInteractionRequired.None", () => {
@@ -186,21 +197,24 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         appBinder.getAddress(params);
 
         // THEN
-        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-          sessionId: "sessionId",
-          deviceAction: new SendCommandInAppDeviceAction({
-            input: {
-              command: new GetAddressCommand(params),
-              appName: "Ethereum",
-              requiredUserInteraction: UserInteractionRequired.None,
-              skipOpenApp: false,
-            },
+        expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+          expect.objectContaining({
+            sessionId: "sessionId",
+            deviceAction: expect.objectContaining({
+              input: {
+                command: new GetAddressCommand(params),
+                appName: "Ethereum",
+                requiredUserInteraction: UserInteractionRequired.None,
+                skipOpenApp: false,
+              },
+            }),
           }),
-        });
+        );
       });
     });
   });
@@ -243,6 +257,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/60'/3'/2/1",
@@ -315,6 +330,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/60'/3'/2/1",
@@ -384,6 +400,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signPersonalMessage({
           derivationPath: "44'/60'/3'/2/1",
@@ -455,6 +472,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signDelegationAuthorization({
           derivationPath: "44'/60'/3'/2/1",
@@ -533,6 +551,7 @@ describe("EthAppBinder", () => {
           mockedMapper,
           mockedParser,
           "sessionId",
+          mockLoggerFactory,
         );
         const { observable } = appBinder.signTypedData({
           derivationPath: "44'/60'/3'/2/1",

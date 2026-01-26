@@ -4,6 +4,7 @@ import {
   type HexaString,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
   type StateMachineTypes,
   UnknownDAError,
   UserInteractionRequired,
@@ -54,9 +55,21 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAIntermediateValue,
   SignTransactionDAInternalState
 > {
-  constructor(args: { input: SignTransactionDAInput; inspect?: boolean }) {
-    super(args);
+  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
+
+  constructor(args: {
+    input: SignTransactionDAInput;
+    inspect?: boolean;
+    loggerFactory: (tag: string) => LoggerPublisherService;
+  }) {
+    super({
+      input: args.input,
+      inspect: args.inspect,
+      logger: args.loggerFactory("SignTransactionDeviceAction"),
+    });
+    this._loggerFactory = args.loggerFactory;
   }
+
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
@@ -86,6 +99,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       actors: {
         signPsbtStateMachine: new SignPsbtDeviceAction({
           input: this.input,
+          loggerFactory: this._loggerFactory,
         }).makeStateMachine(internalApi),
         updatePsbt: fromPromise(updatePsbt),
         extractTransaction: fromPromise(extractTransaction),
@@ -138,22 +152,20 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             onDone: {
               target: "SignPsbtResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    return event.output.caseOf<SignTransactionDAInternalState>({
-                      Right: (data) => ({
-                        ...context._internalState,
-                        signatures: data,
-                      }),
-                      Left: (error) => ({
-                        ...context._internalState,
-                        error,
-                      }),
-                    });
-                  },
-                }),
-              ],
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  return event.output.caseOf<SignTransactionDAInternalState>({
+                    Right: (data) => ({
+                      ...context._internalState,
+                      signatures: data,
+                    }),
+                    Left: (error) => ({
+                      ...context._internalState,
+                      error,
+                    }),
+                  });
+                },
+              }),
             },
             onError: {
               target: "Error",
@@ -179,23 +191,21 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "UpdatePsbtResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        signedPsbt: event.output.data,
-                      };
-                    } else {
-                      return {
-                        ...context._internalState,
-                        error: event.output.error,
-                      };
-                    }
-                  },
-                }),
-              ],
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
+                    return {
+                      ...context._internalState,
+                      signedPsbt: event.output.data,
+                    };
+                  } else {
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  }
+                },
+              }),
             },
             onError: {
               target: "Error",
@@ -219,23 +229,21 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "ExtractTransactionResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        transaction: event.output.data,
-                      };
-                    } else {
-                      return {
-                        ...context._internalState,
-                        error: event.output.error,
-                      };
-                    }
-                  },
-                }),
-              ],
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
+                    return {
+                      ...context._internalState,
+                      transaction: event.output.data,
+                    };
+                  } else {
+                    return {
+                      ...context._internalState,
+                      error: event.output.error,
+                    };
+                  }
+                },
+              }),
             },
             onError: {
               target: "Error",

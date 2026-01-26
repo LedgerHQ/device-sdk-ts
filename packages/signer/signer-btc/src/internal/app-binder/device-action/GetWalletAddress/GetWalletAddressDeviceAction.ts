@@ -3,6 +3,7 @@ import {
   type DeviceActionStateMachine,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -60,8 +61,16 @@ export class GetWalletAddressDeviceAction extends XStateDeviceAction<
   GetWalletAddressDAIntermediateValue,
   GetWalletAddressDAInternalState
 > {
-  constructor(args: { input: GetWalletAddressDAInput; inspect?: boolean }) {
-    super(args);
+  constructor(args: {
+    input: GetWalletAddressDAInput;
+    inspect?: boolean;
+    loggerFactory: (tag: string) => LoggerPublisherService;
+  }) {
+    super({
+      input: args.input,
+      inspect: args.inspect,
+      logger: args.loggerFactory("GetWalletAddressDeviceAction"),
+    });
   }
 
   makeStateMachine(
@@ -190,22 +199,20 @@ export class GetWalletAddressDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "PrepareWalletPolicyResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        wallet: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      wallet: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",
@@ -246,22 +253,20 @@ export class GetWalletAddressDeviceAction extends XStateDeviceAction<
             }),
             onDone: {
               target: "GetWalletAddressResultCheck",
-              actions: [
-                assign({
-                  _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
-                      return {
-                        ...context._internalState,
-                        walletAddress: event.output.data,
-                      };
-                    }
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
                     return {
                       ...context._internalState,
-                      error: event.output.error,
+                      walletAddress: event.output.data,
                     };
-                  },
-                }),
-              ],
+                  }
+                  return {
+                    ...context._internalState,
+                    error: event.output.error,
+                  };
+                },
+              }),
             },
             onError: {
               target: "Error",

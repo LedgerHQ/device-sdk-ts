@@ -9,6 +9,7 @@ import {
 import {
   type DeviceModelId,
   type InternalApi,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
@@ -45,6 +46,7 @@ export type BuildFullContextsTaskArgs = {
   readonly subset: TransactionSubset;
   readonly deviceModelId: DeviceModelId;
   readonly transaction?: Uint8Array;
+  readonly logger: LoggerPublisherService;
 };
 
 export type ContextWithSubContexts = {
@@ -70,9 +72,18 @@ export class BuildFullContextsTask {
   ) {}
 
   async run(): Promise<BuildFullContextsTaskResult> {
+    this._args.logger.debug("[run] Starting BuildFullContextsTask");
+
     // get the base contexts
     const { clearSignContexts, clearSigningType, clearSignContextsOptional } =
       await this._buildBaseContextsTaskFactory(this._api, this._args).run();
+
+    this._args.logger.debug("[run] Base contexts built", {
+      data: {
+        clearSigningType,
+        contextTypes: clearSignContexts.map((c) => c.type),
+      },
+    });
 
     // for each context, build the subcontexts
     const contextsWithSubContexts: ContextWithSubContexts[] =
@@ -135,6 +146,15 @@ export class BuildFullContextsTask {
         }
       }
     }
+
+    this._args.logger.debug("[run] BuildFullContextsTask completed", {
+      data: {
+        clearSigningType,
+        contextTypes: contextWithNestedContexts.map((c) => c.context.type),
+        hasNestedContexts:
+          contextWithNestedContexts.length > clearSignContexts.length,
+      },
+    });
 
     return {
       clearSignContexts: contextWithNestedContexts,

@@ -5,6 +5,7 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
@@ -27,19 +28,32 @@ type SendSignAuthorizationDelegationTaskArgs = {
   chainId: number;
   address: string;
   nonce: number;
+  logger: LoggerPublisherService;
 };
 
 export class SendSignAuthorizationDelegationTask {
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     private api: InternalApi,
     private args: SendSignAuthorizationDelegationTaskArgs,
-  ) {}
+  ) {
+    this._logger = args.logger;
+  }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {
     const { derivationPath, chainId, address, nonce } = this.args;
+    this._logger.debug("[run] Starting SendSignAuthorizationDelegationTask", {
+      data: { derivationPath, chainId, address, nonce },
+    });
+
     const paths = DerivationPathUtils.splitPath(derivationPath);
 
     const buffer = this.buildData(paths, chainId, address, nonce);
+
+    this._logger.debug("[run] Sending authorization delegation in chunks", {
+      data: { bufferLength: buffer.length },
+    });
 
     const result =
       await new SendCommandInChunksTask<SignEIP7702AuthorizationCommandResponse>(
@@ -55,9 +69,13 @@ export class SendSignAuthorizationDelegationTask {
       ).run();
 
     if (!isSuccessCommandResult(result)) {
+      this._logger.error("[run] Failed to sign authorization delegation", {
+        data: { error: result.error },
+      });
       return result;
     }
 
+    this._logger.debug("[run] Authorization delegation signed successfully");
     return result.data.mapOrDefault(
       (data) => CommandResultFactory({ data }),
       CommandResultFactory({

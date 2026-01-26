@@ -1,8 +1,13 @@
-import { HexaString, isHexaString } from "@ledgerhq/device-management-kit";
+import {
+  HexaString,
+  isHexaString,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { Interface } from "ethers";
 import { inject, injectable } from "inversify";
 import { Maybe, Nothing } from "purify-ts";
 
+import { configTypes } from "@/config/di/configTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -32,12 +37,18 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [ClearSignContextType.TOKEN];
 export class UniswapContextLoader
   implements ContextLoader<UniswapContextInput>
 {
+  private logger: LoggerPublisherService;
+
   constructor(
     @inject(uniswapTypes.CommandDecoderDataSource)
     private commandDecoderDataSource: CommandDecoderDataSource,
     @inject(tokenTypes.TokenDataSource)
     private tokenDataSource: TokenDataSource,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this.logger = loggerFactory("UniswapContextLoader");
+  }
 
   canHandle(
     input: unknown,
@@ -60,7 +71,9 @@ export class UniswapContextLoader
 
   async load(input: UniswapContextInput): Promise<ClearSignContext[]> {
     const { data, chainId } = input;
-    return await this._extractClearSignContexts(data, chainId);
+    const result = await this._extractClearSignContexts(data, chainId);
+    this.logger.debug("load result", { data: { result } });
+    return result;
   }
 
   /**
@@ -130,13 +143,15 @@ export class UniswapContextLoader
         ),
       );
 
-      return tokensPayload.map((either) =>
+      const contexts = tokensPayload.map((either) =>
         either.caseOf<ClearSignContext>({
           Left: (error) => ({ type: ClearSignContextType.ERROR, error }),
           Right: (payload) => ({ type: ClearSignContextType.TOKEN, payload }),
         }),
       );
-    } catch (_) {
+
+      return contexts;
+    } catch (_error) {
       return [];
     }
   }

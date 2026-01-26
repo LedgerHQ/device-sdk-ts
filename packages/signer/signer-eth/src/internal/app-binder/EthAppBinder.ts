@@ -2,6 +2,7 @@ import { type ContextModule } from "@ledgerhq/context-module";
 import {
   DeviceManagementKit,
   type DeviceSessionId,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import {
   CallTaskInAppDeviceAction,
@@ -42,6 +43,8 @@ export class EthAppBinder {
     @inject(transactionTypes.TransactionParserService)
     private parser: TransactionParserService,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @inject(externalTypes.DmkLoggerFactory)
+    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAddress(args: {
@@ -61,6 +64,7 @@ export class EthAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("SendCommandInAppDeviceAction"),
       }),
     });
   }
@@ -77,6 +81,7 @@ export class EthAppBinder {
           contextModule: this.contextModule,
           options: args.options ?? { chainId: 1 },
         },
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }
@@ -86,16 +91,21 @@ export class EthAppBinder {
     message: string | Uint8Array;
     skipOpenApp: boolean;
   }): SignPersonalMessageDAReturnType {
+    const taskLogger = this.dmkLoggerFactory("SendSignPersonalMessageTask");
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SendSignPersonalMessageTask(internalApi, args).run(),
+            new SendSignPersonalMessageTask(internalApi, {
+              ...args,
+              logger: taskLogger,
+            }).run(),
           appName: "Ethereum",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("CallTaskInAppDeviceAction"),
       }),
     });
   }
@@ -116,6 +126,7 @@ export class EthAppBinder {
           contextModule: this.contextModule,
           options: args.options ?? {},
         },
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }
@@ -138,6 +149,7 @@ export class EthAppBinder {
           contextModule: this.contextModule,
           skipOpenApp: args.skipOpenApp,
         },
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }
@@ -148,17 +160,24 @@ export class EthAppBinder {
     address: string;
     nonce: number;
   }): SignDelegationAuthorizationDAReturnType {
+    const taskLogger = this.dmkLoggerFactory(
+      "SendSignAuthorizationDelegationTask",
+    );
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SendSignAuthorizationDelegationTask(internalApi, args).run(),
+            new SendSignAuthorizationDelegationTask(internalApi, {
+              ...args,
+              logger: taskLogger,
+            }).run(),
           appName: "Ethereum",
           requiredUserInteraction:
             UserInteractionRequired.SignDelegationAuthorization,
           skipOpenApp: false,
         },
+        logger: this.dmkLoggerFactory("CallTaskInAppDeviceAction"),
       }),
     });
   }

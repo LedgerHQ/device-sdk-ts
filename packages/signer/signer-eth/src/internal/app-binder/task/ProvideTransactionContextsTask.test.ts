@@ -23,6 +23,14 @@ import {
   type SendCommandInChunksTaskArgs,
 } from "./SendCommandInChunksTask";
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+
 describe("ProvideTransactionContextsTask", () => {
   const api = makeDeviceActionInternalApiMock();
   const successResult = CommandResultFactory<void, EthErrorCodes>({
@@ -76,6 +84,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
         provideContextTaskRunMock.mockResolvedValue(successResult);
@@ -121,6 +130,7 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.TRANSACTION_INFO,
             payload: "0x00",
           },
+          logger: mockLogger,
         });
       });
 
@@ -137,6 +147,7 @@ describe("ProvideTransactionContextsTask", () => {
             },
           ],
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -175,6 +186,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -195,6 +207,7 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.PROXY_INFO,
             payload: "subcontext payload",
           },
+          logger: mockLogger,
         });
       });
 
@@ -218,6 +231,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -239,6 +253,7 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "payload",
           },
+          logger: mockLogger,
         });
       });
 
@@ -263,6 +278,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array([1, 2, 3]),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
         provideContextTaskRunMock.mockResolvedValue(successResult);
@@ -306,6 +322,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -327,6 +344,7 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "subcontext payload",
           },
+          logger: mockLogger,
         });
         // Then main context
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
@@ -334,6 +352,7 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "main payload",
           },
+          logger: mockLogger,
         });
       });
 
@@ -362,6 +381,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -382,18 +402,21 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.NFT,
             payload: "subcontext1",
           },
+          logger: mockLogger,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
           context: {
             type: ClearSignContextType.TOKEN,
             payload: "subcontext2",
           },
+          logger: mockLogger,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
             type: ClearSignContextType.TRUSTED_NAME,
             payload: "main payload",
           },
+          logger: mockLogger,
         });
       });
 
@@ -417,6 +440,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock
           .mockResolvedValueOnce(errorResult) // subcontext fails
@@ -466,6 +490,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(successResult);
 
@@ -486,18 +511,21 @@ describe("ProvideTransactionContextsTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "payload1",
           },
+          logger: mockLogger,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
           context: {
             type: ClearSignContextType.NFT,
             payload: "payload2",
           },
+          logger: mockLogger,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
             type: ClearSignContextType.TRUSTED_NAME,
             payload: "payload3",
           },
+          logger: mockLogger,
         });
       });
     });
@@ -517,6 +545,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(errorResult);
 
@@ -554,6 +583,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         provideContextTaskRunMock.mockResolvedValue(errorResult);
 
@@ -588,6 +618,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array([0xaa, 0xbb, 0xcc]),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         };
         sendCommandInChunksTaskRunMock.mockResolvedValue(successResult);
         provideContextTaskRunMock.mockResolvedValue(successResult);
@@ -651,6 +682,7 @@ describe("ProvideTransactionContextsTask", () => {
           ],
           serializedTransaction: new Uint8Array(),
           derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
         });
 
         // THEN

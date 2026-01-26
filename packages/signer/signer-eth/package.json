@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-ethereum",
-  "version": "1.9.5",
+  "version": "1.10.0",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -39,7 +39,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "workspace:^",
+    "@ledgerhq/signer-utils": "^1.1.2",
     "ethers": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
@@ -60,7 +60,7 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/context-module": "^1.12.0",
-    "@ledgerhq/device-management-kit": "^1.0.0"
+    "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

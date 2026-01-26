@@ -26,6 +26,14 @@ import {
 
 import { BuildEIP712ContextTask } from "./BuildEIP712ContextTask";
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+
 describe("BuildEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {
@@ -190,6 +198,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
+      mockLogger,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -219,6 +228,7 @@ describe("BuildEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
+      logger: mockLogger,
     });
   });
 
@@ -234,6 +244,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
+      mockLogger,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -267,6 +278,7 @@ describe("BuildEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
+      logger: mockLogger,
     });
   });
 
@@ -286,6 +298,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
+      mockLogger,
       buildFullContextFactoryMock,
     );
     contextModuleMock.getContexts.mockResolvedValueOnce([txCheckContext]);
@@ -319,6 +332,7 @@ describe("BuildEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
+      logger: mockLogger,
     });
     expect(parserMock.parse).toHaveBeenCalledWith(TEST_DATA);
     expect(contextModuleMock.getTypedDataFilters).toHaveBeenCalledWith({
@@ -357,6 +371,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(true),
       TEST_FROM,
+      mockLogger,
       buildFullContextFactoryMock,
     );
     contextModuleMock.getContexts.mockResolvedValueOnce([txCheckContext]);
@@ -390,6 +405,7 @@ describe("BuildEIP712ContextTask", () => {
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
       transactionChecks: txCheckContext,
+      logger: mockLogger,
     });
   });
 
@@ -405,6 +421,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
+      mockLogger,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -460,6 +477,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
+      mockLogger,
       buildFullContextFactoryMock,
     );
     const subset = {
@@ -528,6 +546,7 @@ describe("BuildEIP712ContextTask", () => {
       calldatasContexts: {
         0: [],
       },
+      logger: mockLogger,
     });
   });
 
@@ -543,6 +562,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
+      mockLogger,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(Left(new Error("Parsing error")));

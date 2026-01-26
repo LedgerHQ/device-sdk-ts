@@ -4,6 +4,7 @@ import {
   type CommandErrorResult,
   type InternalApi,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { type Either, Left, Right } from "purify-ts";
@@ -36,6 +37,10 @@ export type ProvideTransactionContextsTaskArgs = {
    * if there is only a standalone calldata embedded in a message.
    */
   serializedTransaction?: Uint8Array;
+  /**
+   * Logger for debugging.
+   */
+  logger: LoggerPublisherService;
 };
 
 export type ProvideTransactionContextsTaskResult = Either<
@@ -62,6 +67,17 @@ export class ProvideTransactionContextsTask {
   ) {}
 
   async run(): Promise<ProvideTransactionContextsTaskResult> {
+    this._args.logger.debug("[run] Starting ProvideTransactionContextsTask", {
+      data: {
+        derivationPath: this._args.derivationPath,
+        contextTypes: this._args.contexts.map((c) => c.context.type),
+        subcontextCounts: this._args.contexts.map(
+          (c) => c.subcontextCallbacks.length,
+        ),
+        transactionLength: this._args.serializedTransaction?.length,
+      },
+    });
+
     let transactionInfoProvided = false;
 
     for (const { context, subcontextCallbacks } of this._args.contexts) {
@@ -76,6 +92,7 @@ export class ProvideTransactionContextsTask {
         // Don't fail immediately on subcontext errors because the main context may still be successful
         await this._provideContextTaskFactory(this._api, {
           context: subcontext,
+          logger: this._args.logger,
         }).run();
       }
 
@@ -113,12 +130,19 @@ export class ProvideTransactionContextsTask {
 
       const res = await this._provideContextTaskFactory(this._api, {
         context,
+        logger: this._args.logger,
       }).run();
       if (!isSuccessCommandResult(res)) {
+        this._args.logger.error("[run] Failed to provide context", {
+          data: { contextType: context.type, error: res.error },
+        });
         return Left(res);
       }
     }
 
+    this._args.logger.debug(
+      "[run] ProvideTransactionContextsTask completed successfully",
+    );
     return Right(void 0);
   }
 }
