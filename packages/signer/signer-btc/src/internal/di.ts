@@ -32,7 +32,7 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
       (tag: string) => LoggerPublisherService
     >(externalTypes.DmkLoggerFactory)
     .toConstantValue((tag: string) =>
-      dmk.getLoggerFactory()(`SignerBtc-${tag}`),
+      dmk.getLoggerFactory()(["SignerBtc", tag]),
     );
 
   container.loadSync(

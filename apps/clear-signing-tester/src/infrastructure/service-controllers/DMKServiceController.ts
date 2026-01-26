@@ -63,7 +63,7 @@ export class DMKServiceController implements ServiceController {
     this.contextModule = new ContextModuleBuilder({
       originToken: this.signerConfig.originToken,
       loggerFactory: (tag: string) =>
-        this.dmk.getLoggerFactory()(`ContextModule-${tag}`),
+        this.dmk.getLoggerFactory()(["ContextModule", tag]),
     })
       .setDatasourceConfig({ proxy: "safe" })
       .setCalConfig(this.calConfig)
