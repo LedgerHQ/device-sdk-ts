@@ -1,5 +1,19 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 2.0.0
+
+### Minor Changes
+
+- [#1249](https://github.com/LedgerHQ/device-sdk-ts/pull/1249) [`d15c312`](https://github.com/LedgerHQ/device-sdk-ts/commit/d15c3121e4544116b73b6ed40b01bf84b31a0209) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add logger to signer ETH flows
+
+### Patch Changes
+
+- [#1256](https://github.com/LedgerHQ/device-sdk-ts/pull/1256) [`1b0c772`](https://github.com/LedgerHQ/device-sdk-ts/commit/1b0c772f186359790f35bfcb151eb38b37a3b0fe) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Polish loggers
+
+- Updated dependencies [[`1c5b7e6`](https://github.com/LedgerHQ/device-sdk-ts/commit/1c5b7e65c53aba67d7aa49b03818ecad837e83f2), [`1b0c772`](https://github.com/LedgerHQ/device-sdk-ts/commit/1b0c772f186359790f35bfcb151eb38b37a3b0fe), [`b2c8d80`](https://github.com/LedgerHQ/device-sdk-ts/commit/b2c8d8010d9788715a27d15c54d2cacbf9491b87), [`9b50644`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b506446ed469adb332b73ab847d2dd7406c366c), [`777f003`](https://github.com/LedgerHQ/device-sdk-ts/commit/777f003715cd863b0e4630b132a9e8583276608a)]:
+  - @ledgerhq/context-module@1.13.0
+  - @ledgerhq/device-management-kit@1.0.1
+
 ## 1.9.5
 
 ### Patch Changes

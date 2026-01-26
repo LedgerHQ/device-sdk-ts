@@ -1,5 +1,17 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.6.1
+
+### Patch Changes
+
+- [#1256](https://github.com/LedgerHQ/device-sdk-ts/pull/1256) [`1b0c772`](https://github.com/LedgerHQ/device-sdk-ts/commit/1b0c772f186359790f35bfcb151eb38b37a3b0fe) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Polish loggers
+
+- [#1240](https://github.com/LedgerHQ/device-sdk-ts/pull/1240) [`9b50644`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b506446ed469adb332b73ab847d2dd7406c366c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Move logger into XStateDeviceAction
+
+- Updated dependencies [[`1c5b7e6`](https://github.com/LedgerHQ/device-sdk-ts/commit/1c5b7e65c53aba67d7aa49b03818ecad837e83f2), [`1b0c772`](https://github.com/LedgerHQ/device-sdk-ts/commit/1b0c772f186359790f35bfcb151eb38b37a3b0fe), [`b2c8d80`](https://github.com/LedgerHQ/device-sdk-ts/commit/b2c8d8010d9788715a27d15c54d2cacbf9491b87), [`9b50644`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b506446ed469adb332b73ab847d2dd7406c366c), [`777f003`](https://github.com/LedgerHQ/device-sdk-ts/commit/777f003715cd863b0e4630b132a9e8583276608a)]:
+  - @ledgerhq/context-module@1.13.0
+  - @ledgerhq/device-management-kit@1.0.1
+
 ## 1.6.0
 
 ### Minor Changes

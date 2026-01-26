@@ -1,5 +1,18 @@
 # @ledgerhq/device-signer-kit-bitcoin
 
+## 1.2.0
+
+### Minor Changes
+
+- [#1233](https://github.com/LedgerHQ/device-sdk-ts/pull/1233) [`96193f4`](https://github.com/LedgerHQ/device-sdk-ts/commit/96193f429060cbd84186bfa66638d57777024197) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add logger into BTC signer flows
+
+### Patch Changes
+
+- [#1256](https://github.com/LedgerHQ/device-sdk-ts/pull/1256) [`1b0c772`](https://github.com/LedgerHQ/device-sdk-ts/commit/1b0c772f186359790f35bfcb151eb38b37a3b0fe) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Polish loggers
+
+- Updated dependencies [[`b2c8d80`](https://github.com/LedgerHQ/device-sdk-ts/commit/b2c8d8010d9788715a27d15c54d2cacbf9491b87), [`9b50644`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b506446ed469adb332b73ab847d2dd7406c366c)]:
+  - @ledgerhq/device-management-kit@1.0.1
+
 ## 1.1.0
 
 ### Minor Changes

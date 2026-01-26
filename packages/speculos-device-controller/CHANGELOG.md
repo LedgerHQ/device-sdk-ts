@@ -1,5 +1,14 @@
 # @ledgerhq/speculos-device-controller
 
+## 0.2.3
+
+### Patch Changes
+
+- [#1232](https://github.com/LedgerHQ/device-sdk-ts/pull/1232) [`9cfbc10`](https://github.com/LedgerHQ/device-sdk-ts/commit/9cfbc1012282862e10975c4b167593c7ee0e55cf) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix `sign()` delay parameter
+
+- Updated dependencies [[`b2c8d80`](https://github.com/LedgerHQ/device-sdk-ts/commit/b2c8d8010d9788715a27d15c54d2cacbf9491b87), [`9b50644`](https://github.com/LedgerHQ/device-sdk-ts/commit/9b506446ed469adb332b73ab847d2dd7406c366c)]:
+  - @ledgerhq/device-management-kit@1.0.1
+
 ## 0.2.2
 
 ### Patch Changes
