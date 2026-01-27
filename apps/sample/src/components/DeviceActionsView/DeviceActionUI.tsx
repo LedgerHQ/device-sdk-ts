@@ -1,8 +1,4 @@
 import React from "react";
-import dynamic from "next/dynamic";
-
-// Dynamic import to avoid SSR issues (react-lottie accesses `document` at load time)
-const Lottie = dynamic(() => import("react-lottie"), { ssr: false });
 import {
   type DeviceActionIntermediateValue,
   DeviceActionStatus,
@@ -17,6 +13,7 @@ import {
   Text,
   Tooltip,
 } from "@ledgerhq/react-ui";
+import dynamic from "next/dynamic";
 import styled from "styled-components";
 
 import * as PinFlexDark from "./lotties/flex/01_EUROPA_DARK_PIN.json";
@@ -40,6 +37,9 @@ import {
   type DeviceActionResponseProps,
   deviceActionStatusToColor,
 } from "./DeviceActionResponse";
+
+// Dynamic import to avoid SSR issues (react-lottie accesses `document` at load time)
+const Lottie = dynamic(() => import("react-lottie"), { ssr: false });
 
 type DeviceAnimationProps = {
   userInteractionRequired: UserInteractionRequired | string;
