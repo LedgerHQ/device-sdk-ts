@@ -22,6 +22,13 @@ export {
   type GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
 export {
+  GetBackgroundImageSizeCommand,
+  GetBackgroundImageSizeCommandError,
+  type GetBackgroundImageSizeCommandResult,
+  type GetBackgroundImageSizeErrorCodes,
+  type GetBackgroundImageSizeResponse,
+} from "@api/command/os/GetBackgroundImageSizeCommand";
+export {
   BatteryStatusType,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
@@ -66,6 +73,7 @@ export {
 } from "@api/device-action/model/DeviceActionState";
 export { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
+export { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 export {
   AppAlreadyInstalledDAError,
   DeviceLockedError,
@@ -78,6 +86,14 @@ export {
 export { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
 export { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 export { GoToDashboardDeviceAction } from "@api/device-action/os/GoToDashboard/GoToDashboardDeviceAction";
+export type {
+  GoToDashboardDAError,
+  GoToDashboardDAInput,
+  GoToDashboardDAIntermediateValue,
+  GoToDashboardDAOutput,
+  GoToDashboardDARequiredInteraction,
+  GoToDashboardDAState,
+} from "@api/device-action/os/GoToDashboard/types";
 export { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOrUpdateApps/InstallOrUpdateAppsDeviceAction";
 export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction";
