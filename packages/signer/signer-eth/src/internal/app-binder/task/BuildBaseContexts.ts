@@ -19,6 +19,7 @@ import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCo
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
+  ClearSignContextType.TRUSTED_NAME,
   ClearSignContextType.TRANSACTION_INFO,
   ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
   ClearSignContextType.ENUM,
