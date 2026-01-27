@@ -1,7 +1,7 @@
 # @ledgerhq/dmk-ledger-wallet
 
 > [!CAUTION]
-> This package is destined to be used only in Ledger Wallet. Other applications do not need those features.
+> This package is destined to be used only in Ledger Wallet. Other applications do not need these features.
 
 ## Description
 
