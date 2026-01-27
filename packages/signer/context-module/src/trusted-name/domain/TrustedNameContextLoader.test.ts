@@ -55,7 +55,6 @@ describe("TrustedNameContextLoader", () => {
     const validInput: TrustedNameContextInput = {
       chainId: 1,
       to: "0x1234567890abcdef1234567890abcdef12345678",
-      challenge: "challenge",
       deviceModelId: DeviceModelId.STAX,
     };
 
@@ -113,7 +112,6 @@ describe("TrustedNameContextLoader", () => {
       const input: TrustedNameContextInput = {
         chainId: 1,
         to: "0x1234567890abcdef1234567890abcdef12345678",
-        challenge: "challenge",
         deviceModelId: DeviceModelId.STAX,
       };
 
@@ -124,7 +122,7 @@ describe("TrustedNameContextLoader", () => {
       ).toHaveBeenCalledWith({
         chainId: 1,
         address: "0x1234567890abcdef1234567890abcdef12345678",
-        challenge: "challenge",
+        challenge: "",
         types: ["eoa"],
         sources: ["ens"],
       });
@@ -147,7 +145,6 @@ describe("TrustedNameContextLoader", () => {
       const input: TrustedNameContextInput = {
         chainId: 1,
         to: "0x1234567890abcdef1234567890abcdef12345678",
-        challenge: "challenge",
         deviceModelId: DeviceModelId.STAX,
       };
 

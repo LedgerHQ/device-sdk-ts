@@ -19,7 +19,6 @@ import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 export type TrustedNameContextInput = {
   chainId: number;
   to: string;
-  challenge: string;
   deviceModelId: DeviceModelId;
 };
 
@@ -58,9 +57,6 @@ export class TrustedNameContextLoader
       input.to !== undefined &&
       isHexaString(input.to) &&
       input.to !== "0x" &&
-      "challenge" in input &&
-      typeof input.challenge === "string" &&
-      input.challenge.length > 0 &&
       "deviceModelId" in input &&
       input.deviceModelId !== undefined &&
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
@@ -71,7 +67,7 @@ export class TrustedNameContextLoader
     const payload = await this._dataSource.getTrustedNamePayload({
       chainId: input.chainId,
       address: input.to,
-      challenge: input.challenge,
+      challenge: "", // use empty challenge for trusted name context loader as it will be re fetched during the provide step
       types: ["eoa"],
       sources: ["ens"],
     });

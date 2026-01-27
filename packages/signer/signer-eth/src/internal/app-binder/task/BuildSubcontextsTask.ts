@@ -50,7 +50,6 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.ENUM:
-      case ClearSignContextType.TRUSTED_NAME:
       case ClearSignContextType.TOKEN:
       case ClearSignContextType.NFT:
       case ClearSignContextType.SAFE:
@@ -67,6 +66,10 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.PROXY_INFO:
         return {
           subcontextCallbacks: this._getSubcontextFromProxy(context),
+        };
+      case ClearSignContextType.TRUSTED_NAME:
+        return {
+          subcontextCallbacks: this._getSubcontextFromTrustedName(context),
         };
       default: {
         const uncoveredType: never = type;
@@ -245,6 +248,38 @@ export class BuildSubcontextsTask {
     }
 
     return subcontextCallbacks;
+  }
+
+  private _getSubcontextFromTrustedName(
+    _context: ClearSignContextSuccess<ClearSignContextType.TRUSTED_NAME>,
+  ): SubcontextCallback[] {
+    return [
+      async () => {
+        const getChallengeResult = await this.api.sendCommand(
+          new GetChallengeCommand(),
+        );
+        if (!isSuccessCommandResult(getChallengeResult)) {
+          return {
+            type: ClearSignContextType.ERROR,
+            error: new Error("Failed to get challenge"),
+          };
+        }
+
+        const subcontext = await this.args.contextModule.getFieldContext(
+          {
+            chainId: this.args.subset.chainId,
+            address: this.args.subset.to,
+            challenge: getChallengeResult.data.challenge,
+            types: ["eoa"],
+            sources: ["ens"],
+            deviceModelId: this.args.deviceModelId,
+          },
+          ClearSignContextType.TRUSTED_NAME,
+        );
+
+        return subcontext;
+      },
+    ];
   }
 
   private _getSubcontextFromProxy(

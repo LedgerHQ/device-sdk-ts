@@ -96,7 +96,10 @@ export class ProvideTransactionContextsTask {
         }).run();
       }
 
-      if (context.type === ClearSignContextType.PROXY_INFO) {
+      if (
+        context.type === ClearSignContextType.PROXY_INFO ||
+        context.type === ClearSignContextType.TRUSTED_NAME
+      ) {
         // In this specific case, the context is not valid as the challenge is not valid on the first call
         // the real data is provided in the subcontext callback
         continue;
