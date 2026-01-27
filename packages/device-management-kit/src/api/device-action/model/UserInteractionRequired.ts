@@ -16,4 +16,7 @@ export enum UserInteractionRequired {
   Web3ChecksOptIn = "web3-checks-opt-in",
   VerifySafeAddress = "verify-safe-address",
   RegisterWallet = "register-wallet",
+  ConfirmLoadImage = "confirm-load-image",
+  ConfirmCommitImage = "confirm-commit-image",
+  ConfirmRemoveImage = "confirm-remove-image",
 }
