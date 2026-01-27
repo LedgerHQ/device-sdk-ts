@@ -48,6 +48,11 @@ export type DeviceActionProps<
     valueSelector?: ValueSelector<FieldType>;
     disabled?: boolean;
   }>;
+  /** Optional custom component to render the successful output */
+  OutputComponent?: React.FC<{
+    output: Output;
+    deviceModelId: DeviceModelId;
+  }>;
   validateValues?: (args: Input) => boolean;
   valueSelector?: ValueSelector<FieldType>;
   labelSelector?: Partial<Record<string, string>>;
@@ -102,6 +107,7 @@ export function DeviceActionTester<
     linkedFields,
     validateValues,
     InputValuesComponent,
+    OutputComponent,
   } = props;
 
   const nonce = useRef(-1);
@@ -294,7 +300,12 @@ export function DeviceActionTester<
                   flexDirection="column"
                   key={`${response.date.toISOString()}-index-${index}`}
                 >
-                  <DeviceActionResponse {...response} isLatest={isLatest} />
+                  <DeviceActionResponse
+                    {...response}
+                    isLatest={isLatest}
+                    OutputComponent={OutputComponent}
+                    deviceModelId={deviceModelId}
+                  />
                   <div hidden={isLatest}>
                     {/** if I just unmount it, all dividers are glitching out */}
                     <Divider my={2} />
