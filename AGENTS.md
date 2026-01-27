@@ -1,10 +1,10 @@
-# Description
-
-The Device Management Kit (DMK) is a TypeScript library that provides easy communication with Ledger devices.
-
-# Agent Guidelines
+# AI Agent Guidelines
 
 AI agents contributing to this repository must follow project conventions.
+
+## Description
+
+The Device Management Kit (DMK) is a TypeScript library that provides easy communication with Ledger devices.
 
 ## Documentation
 

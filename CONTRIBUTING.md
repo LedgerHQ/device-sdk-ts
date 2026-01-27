@@ -24,7 +24,7 @@ While you explore these projects, here are some key points to keep in mind:
 3. Follow additional installation steps depending on which package you want to contribute to.
 4. Make your changes.
 5. If you’ve fixed a bug or added code that should be tested, add tests!
-6. Add an entry to the changelog (`pnpm changeset`).
+6. If your changes affect published packages, add an entry to the changelog (`pnpm changeset`).
 7. Make sure that the code passes linter and type checks (`pnpm lint:fix` and `pnpm typecheck`).
 8. Make sure that the code passes the prettier checks.
 9. Make sure the code passes unit and end to end tests (`pnpm test`).
@@ -43,7 +43,9 @@ Depending on the purpose every git branch should be prefixed.
 - `feat/` / `feature/` Add a new feature to the application or library
 - `bugfix/` / `bug/` / `fix/` Fixing an existing bug
 - `support/` For any other changes (tests, improvements, CI…)
-  _For Ledger Employees:_
+
+_For Ledger Employees:_
+
 - `chore/` / `core/` For maintenance work on the repo
 - `doc/` Add or modify documentation
 - `refacto/` / `refactor/` Modify the code organisation
@@ -88,9 +90,14 @@ We use [**gitmoji**](https://gitmoji.dev/) for commit messages. The format is:
 
 `<emoji> (<scope>): <Description>`
 
+or with an optional ticket reference (for merge commits):
+
+`<emoji> (<scope>) [<ticket>]: <Description>`
+
 - `<emoji>` - Use `pnpm gitmoji --list` to see available emojis
 - ` ` - Space
 - `(<scope>)` - The module/package impacted (lowercase, in parentheses)
+- `[<ticket>]` - Optional: `[DSDK-1234]`, `[NO-ISSUE]`, etc. (typically used for merge commits)
 - `:` - Colon
 - ` ` - Space
 - `<Description>` - Should start with an uppercase letter
