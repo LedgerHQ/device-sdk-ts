@@ -1242,6 +1242,37 @@ importers:
         specifier: 'catalog:'
         version: 4.19.2
 
+  packages/ledger-wallet:
+    dependencies:
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../config/vitest
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
   packages/mockserver-client:
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
