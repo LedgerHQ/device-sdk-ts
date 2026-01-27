@@ -1,4 +1,8 @@
-// Package setup - exports will be added as features are implemented
+// Custom Lock Screen Utilities - Codec (device binary format)
+export type { DecodeImageFromDeviceResult } from "./api/customLockScreenUtils/codec/decodeImageFromDevice";
+export { decodeImageFromDevice } from "./api/customLockScreenUtils/codec/decodeImageFromDevice";
+export type { EncodeImageForDeviceArgs } from "./api/customLockScreenUtils/codec/encodeImageForDevice";
+export { encodeImageForDevice } from "./api/customLockScreenUtils/codec/encodeImageForDevice";
 
 // Custom Lock Screen Utilities - Fit (resize/crop to screen)
 // Note: These functions require a Web runtime environment (browser)
@@ -36,8 +40,6 @@ export {
   ImageResizeError,
   ImageSizeLoadingError,
 } from "./api/customLockScreenUtils/types";
-
-// Custom Lock Screen Errors
 export {
   CustomLockScreenDeviceInternalErrorDAError,
   DeviceInRecoveryModeDAError,

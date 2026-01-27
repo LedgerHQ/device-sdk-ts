@@ -289,25 +289,25 @@ Each DA has a specific error type union based on its underlying commands:
 
 **`DownloadCustomLockScreenDAError`** (uses GetHash, GetSize, Fetch commands):
 
-| Error Type                                | Error Codes | Description                           |
-| ----------------------------------------- | ----------- | ------------------------------------- |
-| `NoCustomLockScreenImageDAError`          | `662e`      | No image exists on device             |
-| `DeviceInRecoveryModeDAError`             | `662f`      | Device is in recovery mode            |
-| `InvalidCustomLockScreenImageDataDAError` | `6832`      | Invalid chunk size requested          |
-| `GoToDashboardDAError`                    | Various     | Failed to reach dashboard             |
-| `UnknownDAError`                          | Fallback    | Unexpected errors                     |
+| Error Type                                | Error Codes | Description                  |
+| ----------------------------------------- | ----------- | ---------------------------- |
+| `NoCustomLockScreenImageDAError`          | `662e`      | No image exists on device    |
+| `DeviceInRecoveryModeDAError`             | `662f`      | Device is in recovery mode   |
+| `InvalidCustomLockScreenImageDataDAError` | `6832`      | Invalid chunk size requested |
+| `GoToDashboardDAError`                    | Various     | Failed to reach dashboard    |
+| `UnknownDAError`                          | Fallback    | Unexpected errors            |
 
 **`UploadCustomLockScreenDAError`** (uses Create, Load, Commit commands):
 
-| Error Type                                | Error Codes                    | Description                      |
-| ----------------------------------------- | ------------------------------ | -------------------------------- |
-| `RefusedByUserDAError`                    | `5501`                         | User refused on device           |
-| `DeviceNotOnboardedError`                 | `5502`                         | Device PIN not set               |
-| `DeviceInRecoveryModeDAError`             | `662f`                         | Device is in recovery mode       |
+| Error Type                                | Error Codes                    | Description                        |
+| ----------------------------------------- | ------------------------------ | ---------------------------------- |
+| `RefusedByUserDAError`                    | `5501`                         | User refused on device             |
+| `DeviceNotOnboardedError`                 | `5502`                         | Device PIN not set                 |
+| `DeviceInRecoveryModeDAError`             | `662f`                         | Device is in recovery mode         |
 | `InvalidCustomLockScreenStateDAError`     | `5106`, `551e`                 | CLS commands called in wrong order |
-| `InvalidCustomLockScreenImageDataDAError` | `6703`, `680b`, `681f`, `6820` | Invalid image data               |
-| `GoToDashboardDAError`                    | Various                        | Failed to reach dashboard        |
-| `UnknownDAError`                          | Fallback                       | Unexpected errors                |
+| `InvalidCustomLockScreenImageDataDAError` | `6703`, `680b`, `681f`, `6820` | Invalid image data                 |
+| `GoToDashboardDAError`                    | Various                        | Failed to reach dashboard          |
+| `UnknownDAError`                          | Fallback                       | Unexpected errors                  |
 
 **`RemoveCustomLockScreenDAError`** (uses Delete command):
 
@@ -325,9 +325,9 @@ Each DA has a specific error type union based on its underlying commands:
 
 Some errors are handled automatically by the `CommandErrorHelper` as global errors before CLS-specific mapping:
 
-| Error Type         | Error Code | Description      |
-| ------------------ | ---------- | ---------------- |
-| `DeviceLockedError`| `5515`     | Device is locked |
+| Error Type          | Error Code | Description      |
+| ------------------- | ---------- | ---------------- |
+| `DeviceLockedError` | `5515`     | Device is locked |
 
 ### Error Handling Example
 
@@ -426,7 +426,13 @@ flowchart TB
 | `CreateBackgroundImageCommand`      | `0x60` | Create image slot  |
 | `UploadBackgroundImageChunkCommand` | `0x61` | Upload image chunk |
 | `CommitBackgroundImageCommand`      | `0x62` | Finalize image     |
-| `DeleteBackgroundImageCommand`      | `0x63` | Delete image       |
-| `GetBackgroundImageSizeCommand`     | `0x64` | Get image size     |
-| `FetchBackgroundImageChunkCommand`  | `0x65` | Fetch image chunk  |
-| `GetBackgroundImageHashCommand`     | `0x66` | Get image hash     |
+
+<<<<<<< HEAD
+| `DeleteBackgroundImageCommand` | `0x63` | Delete image |
+=======
+| `RemoveBackgroundImageCommand` | `0x63` | Remove image |
+
+> > > > > > > 525772e2 (✨ (ledger-wallet): Custom lock screen utils (fitting, dithering, encoding))
+> > > > > > > | `GetBackgroundImageSizeCommand` | `0x64` | Get image size |
+> > > > > > > | `FetchBackgroundImageChunkCommand` | `0x65` | Fetch image chunk |
+> > > > > > > | `GetBackgroundImageHashCommand` | `0x66` | Get image hash |
