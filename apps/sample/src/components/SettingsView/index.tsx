@@ -8,6 +8,7 @@ import { AppProviderSetting } from "./AppProviderSetting";
 import { CalBranchSetting } from "./CalBranchSetting";
 import { CalModeSetting } from "./CalModeSetting";
 import { CalUrlSetting } from "./CalUrlSetting";
+import { DatasourceProxySetting } from "./DatasourceProxySetting";
 import { MetadataServiceUrlSetting } from "./MetadataServiceUrlSetting";
 import { MockServerToggleSetting } from "./MockServerToggleSetting";
 import { MockServerUrlSetting } from "./MockServerUrlSetting";
@@ -58,6 +59,11 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Web3Checks</SectionTitle>
           <Web3ChecksUrlSetting />
+        </SectionContainer>
+
+        <SectionContainer>
+          <SectionTitle>Ethereum Signer</SectionTitle>
+          <DatasourceProxySetting />
         </SectionContainer>
       </Flex>
     </PageWithHeader>

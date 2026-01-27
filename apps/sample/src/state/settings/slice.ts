@@ -5,6 +5,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import {
   type CalBranch,
   type CalMode,
+  type DatasourceProxy,
   initialState,
   type SettingsState,
 } from "./schema";
@@ -87,6 +88,17 @@ export const settingsSlice = createSlice({
       };
     },
 
+    // Datasource config
+    setDatasourceProxy: (
+      state,
+      action: PayloadAction<{ datasourceProxy: DatasourceProxy }>,
+    ) => {
+      state.datasourceConfig = {
+        ...state.datasourceConfig,
+        proxy: action.payload.datasourceProxy,
+      };
+    },
+
     // Hydration action for loading persisted settings
     hydrateSettings: (_state, action: PayloadAction<SettingsState>) => {
       return action.payload;
@@ -107,6 +119,7 @@ export const {
   setOriginToken,
   setWeb3ChecksUrl,
   setMetadataServiceUrl,
+  setDatasourceProxy,
   hydrateSettings,
 } = settingsSlice.actions;
 
