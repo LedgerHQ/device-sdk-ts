@@ -2,6 +2,7 @@ import {
   type ContextModuleCalBranch,
   type ContextModuleCalConfig,
   type ContextModuleCalMode,
+  type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "@ledgerhq/context-module";
@@ -12,6 +13,9 @@ import { DEFAULT_SPECULOS_URL, DEFAULT_SPECULOS_VNC_URL } from "@/utils/const";
 
 export type CalMode = ContextModuleCalMode;
 export type CalBranch = ContextModuleCalBranch;
+export type DatasourceProxy = NonNullable<
+  ContextModuleDatasourceConfig["proxy"]
+>;
 
 export type SettingsState = {
   // Transport settings
@@ -28,6 +32,7 @@ export type SettingsState = {
   web3ChecksConfig: ContextModuleWeb3ChecksConfig;
   metadataServiceConfig: ContextModuleMetadataServiceConfig;
   originToken: string;
+  datasourceConfig: ContextModuleDatasourceConfig;
 };
 
 export const initialState: SettingsState = {
@@ -53,4 +58,7 @@ export const initialState: SettingsState = {
     url: "https://nft.api.live.ledger.com",
   },
   originToken: process.env.NEXT_PUBLIC_GATING_TOKEN || "origin-token",
+  datasourceConfig: {
+    proxy: "default",
+  },
 };
