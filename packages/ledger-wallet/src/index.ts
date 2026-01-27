@@ -61,6 +61,15 @@ export type {
   DownloadCustomLockScreenDARequiredInteraction,
   DownloadCustomLockScreenDAState,
 } from "./api/device-action/DownloadCustomLockScreen/types";
+export { GetCustomLockScreenInfoDeviceAction } from "./api/device-action/GetCustomLockScreenInfo/GetCustomLockScreenInfoDeviceAction";
+export type {
+  GetCustomLockScreenInfoDAError,
+  GetCustomLockScreenInfoDAInput,
+  GetCustomLockScreenInfoDAIntermediateValue,
+  GetCustomLockScreenInfoDAOutput,
+  GetCustomLockScreenInfoDARequiredInteraction,
+  GetCustomLockScreenInfoDAState,
+} from "./api/device-action/GetCustomLockScreenInfo/types";
 export { RemoveCustomLockScreenDeviceAction } from "./api/device-action/RemoveCustomLockScreen/RemoveCustomLockScreenDeviceAction";
 export type {
   RemoveCustomLockScreenDAError,
