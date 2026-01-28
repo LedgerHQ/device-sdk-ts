@@ -26,3 +26,11 @@ This package requires `@ledgerhq/device-management-kit` as a peer dependency:
 ```sh
 npm install @ledgerhq/device-management-kit
 ```
+
+## Features
+
+### Custom Lock Screen Management
+
+Easily manage and customize your Ledger device's lock screen images with upload, fetch, and removal actions.
+
+For full details, usage examples, and image format documentation, see [Custom Lock Screen documentation](./doc/CustomLockScreen.md).

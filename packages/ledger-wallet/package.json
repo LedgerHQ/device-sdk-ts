@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:^",
+    "pako": "^2.1.0",
     "purify-ts": "catalog:",
     "xstate": "catalog:"
   },
@@ -50,6 +51,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "@types/pako": "^2.0.3",
     "ts-node": "catalog:"
   },
   "peerDependencies": {
