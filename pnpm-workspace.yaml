@@ -48,7 +48,6 @@ catalog:
   "@types/node": 22.10.1
   "@types/react": 18.3.12
   "@types/react-dom": 18.3.1
-  "@types/react-lottie": ^1.2.10
   "@types/react-test-renderer": ^18.0.0
   "@types/semver": 7.7.0
   "@types/styled-components": ^5.1.25
@@ -97,7 +96,7 @@ catalog:
   purify-ts: 2.1.0
   react: 18.3.1
   react-dom: 18.3.1
-  react-lottie: ^1.2.10
+  lottie-react: ^2.4.0
   react-medium-image-zoom: 5.1.8
   react-native: 0.76.6
   react-native-ble-plx: 3.4.0
