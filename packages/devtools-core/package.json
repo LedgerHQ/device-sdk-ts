@@ -42,9 +42,11 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
-    "@ledgerhq/vitest-config-dmk": "workspace:^"
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "rxjs": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "rxjs": "catalog:"
   }
 }

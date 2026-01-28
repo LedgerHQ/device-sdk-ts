@@ -36,19 +36,20 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "rxjs": "catalog:",
     "@ledgerhq/react-ui": "catalog:",
-    "styled-components": "catalog:",
+    "@tanstack/react-table": "8.20.5",
+    "@tanstack/react-virtual": "3.10.8",
     "antd": "5.20.0",
     "react-inspector": "9.0.0",
-    "@tanstack/react-table": "8.20.5",
-    "@tanstack/react-virtual": "3.10.8"
+    "react-resizable-panels": "^4.4.1",
+    "rxjs": "catalog:",
+    "styled-components": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
-    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",

@@ -11,22 +11,22 @@ type Params = {
   url: string;
 };
 
-export class DevtoolsWebSocketConnector implements Connector {
+export class DevToolsWebSocketConnector implements Connector {
   /**
    * STATIC METHODS
    */
-  static instance: DevtoolsWebSocketConnector | null = null;
-  static getInstance(): DevtoolsWebSocketConnector {
-    if (!DevtoolsWebSocketConnector.instance) {
-      DevtoolsWebSocketConnector.instance = new DevtoolsWebSocketConnector();
+  static instance: DevToolsWebSocketConnector | null = null;
+  static getInstance(): DevToolsWebSocketConnector {
+    if (!DevToolsWebSocketConnector.instance) {
+      DevToolsWebSocketConnector.instance = new DevToolsWebSocketConnector();
     }
-    return DevtoolsWebSocketConnector.instance;
+    return DevToolsWebSocketConnector.instance;
   }
 
   static destroyInstance(): void {
-    if (DevtoolsWebSocketConnector.instance) {
-      DevtoolsWebSocketConnector.instance.destroy();
-      DevtoolsWebSocketConnector.instance = null;
+    if (DevToolsWebSocketConnector.instance) {
+      DevToolsWebSocketConnector.instance.destroy();
+      DevToolsWebSocketConnector.instance = null;
     }
   }
 
@@ -49,8 +49,8 @@ export class DevtoolsWebSocketConnector implements Connector {
    * LIFE CYCLE
    */
 
-  connect(params: Params): DevtoolsWebSocketConnector {
-    console.log("[DevtoolsWebSocketConnector] 🔌 Connecting to", params.url);
+  connect(params: Params): DevToolsWebSocketConnector {
+    console.log("[DevToolsWebSocketConnector] 🔌 Connecting to", params.url);
     if (this.destroyed) {
       throw new Error("Connector is destroyed");
     }
@@ -75,11 +75,11 @@ export class DevtoolsWebSocketConnector implements Connector {
         }
       };
       console.log(
-        "[DevtoolsWebSocketConnector] Already connected to the same URL",
+        "[DevToolsWebSocketConnector] Already connected to the same URL",
         params.url,
       );
       console.log(
-        "[DevtoolsWebSocketConnector]",
+        "[DevToolsWebSocketConnector]",
         mapReadyStateToText(this.ws.readyState),
       );
       return this;
@@ -91,13 +91,13 @@ export class DevtoolsWebSocketConnector implements Connector {
     }
     if (this.ws) {
       console.log(
-        "[DevtoolsWebSocketConnector] Already connected to different URL, closing previous connection",
+        "[DevToolsWebSocketConnector] Already connected to different URL, closing previous connection",
       );
       this.ws.close();
     }
 
     console.log(
-      "[DevtoolsWebSocketConnector] WebSocket connecting to",
+      "[DevToolsWebSocketConnector] WebSocket connecting to",
       params.url,
     );
 
@@ -105,7 +105,7 @@ export class DevtoolsWebSocketConnector implements Connector {
     this.wsUrl = params.url;
 
     this.ws.onopen = () => {
-      console.log("[DevtoolsWebSocketConnector] WebSocket connected");
+      console.log("[DevToolsWebSocketConnector] WebSocket connected");
       if (this.reconnectionTimeout) {
         clearTimeout(this.reconnectionTimeout);
         this.reconnectionTimeout = null;
@@ -114,7 +114,7 @@ export class DevtoolsWebSocketConnector implements Connector {
     };
 
     this.ws.onclose = () => {
-      console.log("[DevtoolsWebSocketConnector] WebSocket closed");
+      console.log("[DevToolsWebSocketConnector] WebSocket closed");
       this.ws = null;
       this.wsUrl = null;
       if (this.messagesToSendSubscription) {
@@ -124,7 +124,7 @@ export class DevtoolsWebSocketConnector implements Connector {
     };
 
     this.ws.onerror = (event) => {
-      console.warn("[DevtoolsWebSocketConnector] WebSocket error", event);
+      console.warn("[DevToolsWebSocketConnector] WebSocket error", event);
       if (event.target.readyState === WebSocket.CLOSED) {
         this.ws = null;
         this.wsUrl = null;
@@ -134,7 +134,7 @@ export class DevtoolsWebSocketConnector implements Connector {
 
     this.ws.onmessage = (event) => {
       console.log(
-        "[DevtoolsWebSocketConnector] WebSocket message received",
+        "[DevToolsWebSocketConnector] WebSocket message received",
         event.data,
       );
       try {
@@ -150,7 +150,7 @@ export class DevtoolsWebSocketConnector implements Connector {
             const payload = parsedMessage.payload;
             if (typeof type !== "string" || typeof payload !== "string") {
               console.error(
-                "[DevtoolsWebSocketConnector] Invalid message received",
+                "[DevToolsWebSocketConnector] Invalid message received",
                 {
                   type,
                   payload,
@@ -163,7 +163,7 @@ export class DevtoolsWebSocketConnector implements Connector {
             const errorMessage =
               error instanceof Error ? error.message : String(error);
             console.error(
-              "[DevtoolsWebSocketConnector] Failed to parse message payload",
+              "[DevToolsWebSocketConnector] Failed to parse message payload",
               errorMessage,
             );
           }
@@ -172,7 +172,7 @@ export class DevtoolsWebSocketConnector implements Connector {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         console.error(
-          "[DevtoolsWebSocketConnector] Failed to parse message",
+          "[DevToolsWebSocketConnector] Failed to parse message",
           errorMessage,
         );
       }
@@ -187,20 +187,20 @@ export class DevtoolsWebSocketConnector implements Connector {
       return;
     }
     console.log(
-      "[DevtoolsWebSocketConnector] Scheduling reconnect in 5 seconds",
+      "[DevToolsWebSocketConnector] Scheduling reconnect in 5 seconds",
     );
     if (this.reconnectionTimeout) {
       clearTimeout(this.reconnectionTimeout);
       this.reconnectionTimeout = null;
     }
     this.reconnectionTimeout = setTimeout(() => {
-      console.log("[DevtoolsWebSocketConnector] Reconnecting...");
+      console.log("[DevToolsWebSocketConnector] Reconnecting...");
       this.connect(params);
     }, 5000);
   }
 
   private initialize() {
-    console.log("[DevtoolsWebSocketConnector] Initializing...");
+    console.log("[DevToolsWebSocketConnector] Initializing...");
     // WebSocket.OPEN is 1
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(
@@ -244,7 +244,7 @@ export class DevtoolsWebSocketConnector implements Connector {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         console.error(
-          "[DevtoolsWebSocketConnector] Failed to close WebSocket",
+          "[DevToolsWebSocketConnector] Failed to close WebSocket",
           errorMessage,
         );
       }

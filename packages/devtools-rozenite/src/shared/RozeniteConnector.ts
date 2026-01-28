@@ -50,7 +50,6 @@ export class RozeniteConnector implements Connector {
   }
 
   private destroy(): void {
-    console.log("[RozeniteConnector][destroy] Destroying...");
     if (this.messagesToSendSubscription) {
       this.messagesToSendSubscription.unsubscribe();
       this.messagesToSendSubscription = null;
@@ -61,32 +60,49 @@ export class RozeniteConnector implements Connector {
   }
 
   private async initialize(): Promise<void> {
-    console.log("[RozeniteConnector][initialize] Initializing...");
     const rozeniteClient = this.rozeniteClient;
     if (!rozeniteClient) {
       throw new Error("[RozeniteConnector] Client not set");
     }
-    rozeniteClient.send("init", "init message from client");
-    console.log("[RozeniteConnector][initialize] Client initialized");
 
     // Clean up old subscription if it exists
     if (this.messagesToSendSubscription) {
       this.messagesToSendSubscription.unsubscribe();
+      this.messagesToSendSubscription = null;
     }
 
-    this.messagesToSendSubscription = this.messagesToSend.subscribe({
-      next: (message) => {
-        rozeniteClient.send("message", message);
-      },
-    });
-    rozeniteClient.onMessage("init", (message) => {
-      console.log("[RozeniteConnector] Received init message", {
-        message,
+    // Helper to create/recreate the message forwarding subscription
+    const setupMessageForwarding = () => {
+      if (this.messagesToSendSubscription) {
+        this.messagesToSendSubscription.unsubscribe();
+      }
+      this.messagesToSendSubscription = this.messagesToSend.subscribe({
+        next: (msg) => {
+          rozeniteClient.send("message", msg);
+        },
       });
+    };
+
+    // Set up message handlers FIRST, before sending init
+    rozeniteClient.onMessage("init", () => {
+      // When we receive "init" from the other side, they're ready to receive messages.
+      // Set up or refresh the message forwarding subscription.
+      const wasAlreadySetup = !!this.messagesToSendSubscription;
+      setupMessageForwarding();
+
+      // If we hadn't set up yet, the other side might have sent their init before
+      // we were ready. Send our init again so they can set up their subscription too.
+      if (!wasAlreadySetup) {
+        rozeniteClient.send("init", "init response");
+      }
     });
+
     rozeniteClient.onMessage("message", ({ type, payload }) => {
       this.messagesFromDashboard.next({ type, payload });
     });
+
+    // THEN send our init - the other side will receive it and know we're ready
+    rozeniteClient.send("init", "init message from client");
   }
 
   public sendMessage(type: string, payload: string): void {
