@@ -158,6 +158,11 @@ describe("DeviceSessionStateHandler", () => {
       eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
     });
 
+    // Trigger NEW_STATE to apply the pending status
+    fakeEventSubject.next({
+      eventName: SessionEvents.NEW_STATE,
+    });
+
     // Then
     expect(setDeviceSessionState).toHaveBeenCalledWith(
       expect.objectContaining({ deviceStatus: DeviceStatus.CONNECTED }),

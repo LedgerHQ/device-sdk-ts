@@ -22,6 +22,7 @@ export type SettingsState = {
 
   // DMK settings
   appProvider: number;
+  bypassIntentQueue: boolean;
 
   // Context module config
   calConfig: ContextModuleCalConfig;
@@ -39,6 +40,7 @@ export const initialState: SettingsState = {
 
   // DMK settings
   appProvider: 1,
+  bypassIntentQueue: false,
 
   // Context module config objects
   calConfig: {

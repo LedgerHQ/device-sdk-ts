@@ -12,6 +12,8 @@ export const selectSpeculosVncUrl = (state: RootState) =>
 // DMK settings selectors
 export const selectAppProvider = (state: RootState) =>
   state.settings.appProvider;
+export const selectBypassIntentQueue = (state: RootState) =>
+  state.settings.bypassIntentQueue;
 
 // CAL config selectors
 export const selectCalConfig = (state: RootState) => state.settings.calConfig;
