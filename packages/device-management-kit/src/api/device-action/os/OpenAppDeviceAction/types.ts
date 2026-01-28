@@ -7,7 +7,22 @@ import {
   type DeviceNotOnboardedError,
   type UnknownDAError,
 } from "@api/device-action/os/Errors";
-import { type GetDeviceStatusDAInput } from "@api/device-action/os/GetDeviceStatus/types";
+import {
+  type GetDeviceStatusDAInput,
+  type GetDeviceStatusDAStateStep,
+} from "@api/device-action/os/GetDeviceStatus/types";
+
+export const openAppDAStateStep = Object.freeze({
+  LIST_APPS: "os.openApp.steps.listApps",
+  ONBOARD_CHECK: "os.openApp.steps.onboardCheck",
+  GET_DEVICE_STATUS: "os.openApp.steps.getDeviceStatus",
+  DASHBOARD_CHECK: "os.openApp.steps.dashboardCheck",
+  CONFIRM_OPEN_APP: "os.openApp.steps.confirmOpenApp",
+  CLOSE_APP: "os.openApp.steps.closeApp",
+} as const);
+
+export type OpenAppDAStateStep =
+  (typeof openAppDAStateStep)[keyof typeof openAppDAStateStep];
 
 export type OpenAppDAOutput = void;
 
@@ -27,7 +42,8 @@ export type OpenAppDARequiredInteraction =
   | UserInteractionRequired.ConfirmOpenApp;
 
 export type OpenAppDAIntermediateValue = {
-  requiredUserInteraction: OpenAppDARequiredInteraction;
+  readonly requiredUserInteraction: OpenAppDARequiredInteraction;
+  readonly step: OpenAppDAStateStep | GetDeviceStatusDAStateStep;
 };
 
 export type OpenAppDAState = DeviceActionState<
