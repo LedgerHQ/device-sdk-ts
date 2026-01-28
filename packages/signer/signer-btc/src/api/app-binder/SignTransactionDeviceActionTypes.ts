@@ -21,6 +21,15 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 export type SignTransactionDAOutput = HexaString;
 
+export const signTransactionDAStateSteps = Object.freeze({
+  SIGN_PSBT: "signer.btc.steps.signPsbt",
+  UPDATE_PSBT: "signer.btc.steps.updatePsbt",
+  EXTRACT_TRANSACTION: "signer.btc.steps.extractTransaction",
+} as const);
+
+export type SignTransactionDAStateStep =
+  (typeof signTransactionDAStateSteps)[keyof typeof signTransactionDAStateSteps];
+
 export type SignTransactionDAInput = {
   psbt: ApiPsbt;
   wallet: ApiWallet;
@@ -42,6 +51,7 @@ type SignTransactionDARequiredInteraction =
 
 export type SignTransactionDAIntermediateValue = {
   requiredUserInteraction: SignTransactionDARequiredInteraction;
+  step: SignTransactionDAStateStep;
 };
 
 export type SignTransactionDAState = DeviceActionState<

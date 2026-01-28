@@ -6,7 +6,10 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type GetWalletAddressDAState } from "@api/app-binder/GetWalletAddressDeviceActionTypes";
+import {
+  type GetWalletAddressDAState,
+  getWalletAddressDAStateSteps,
+} from "@api/app-binder/GetWalletAddressDeviceActionTypes";
 import { type RegisteredWallet, type WalletAddress } from "@api/model/Wallet";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
@@ -85,24 +88,28 @@ describe("GetWalletAddressDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.PREPARE_WALLET_POLICY,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: getWalletAddressDAStateSteps.GET_WALLET_ADDRESS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -161,12 +168,14 @@ describe("GetWalletAddressDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.PREPARE_WALLET_POLICY,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: getWalletAddressDAStateSteps.GET_WALLET_ADDRESS,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -204,12 +213,14 @@ describe("GetWalletAddressDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
           },
           {
@@ -283,18 +294,21 @@ describe("GetWalletAddressDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.PREPARE_WALLET_POLICY,
             },
           },
           {
@@ -355,24 +369,28 @@ describe("GetWalletAddressDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: getWalletAddressDAStateSteps.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getWalletAddressDAStateSteps.PREPARE_WALLET_POLICY,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: getWalletAddressDAStateSteps.GET_WALLET_ADDRESS,
             },
           },
           {
