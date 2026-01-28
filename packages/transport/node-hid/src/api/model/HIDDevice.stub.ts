@@ -1,22 +1,16 @@
-const oninputreport = vi.fn().mockResolvedValue(undefined);
+import type { Device as NodeHIDDevice } from "node-hid";
 
-export const hidDeviceStubBuilder = (
-  props: Partial<HIDDevice> = {},
-): HIDDevice => ({
-  opened: false,
-  productId: 0x4011,
+export const nodeHidDeviceStubBuilder = (
+  props: Partial<NodeHIDDevice> = {},
+): NodeHIDDevice => ({
   vendorId: 0x2c97,
-  productName: "Ledger Nano X",
-  collections: [],
-  open: vi.fn().mockResolvedValue(undefined),
-  oninputreport,
-  close: vi.fn().mockResolvedValue(undefined),
-  sendReport: vi.fn().mockResolvedValue(oninputreport()),
-  sendFeatureReport: vi.fn(),
-  forget: vi.fn(),
-  receiveFeatureReport: vi.fn(),
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  dispatchEvent: vi.fn(),
+  productId: 0x4011,
+  path: "/dev/hidraw0",
+  manufacturer: "Ledger",
+  product: "Ledger Nano X",
+  release: 0x0100,
+  interface: 0,
+  usagePage: 0xffa0,
+  usage: 0x0001,
   ...props,
 });
