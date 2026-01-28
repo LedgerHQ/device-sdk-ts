@@ -746,7 +746,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -810,6 +810,9 @@ importers:
       '@ledgerhq/device-signer-kit-bitcoin':
         specifier: workspace:^
         version: link:../../packages/signer/signer-btc
+      '@ledgerhq/device-signer-kit-cosmos':
+        specifier: workspace:*
+        version: link:../../packages/signer/signer-cosmos
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:^
         version: link:../../packages/signer/signer-eth
@@ -1391,6 +1394,58 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-cosmos:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:*
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:*
+        version: link:../context-module
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:*
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:*
+        version: link:../../config/vitest
+      '@types/semver':
+        specifier: 'catalog:'
+        version: 7.7.0
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-eth:
     dependencies:
@@ -15747,7 +15802,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -15756,7 +15811,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
