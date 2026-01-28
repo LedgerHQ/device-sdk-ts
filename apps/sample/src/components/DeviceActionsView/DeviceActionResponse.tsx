@@ -57,7 +57,7 @@ function bufferStringifyReplacer(_key: string, value: unknown): unknown {
 /**
  * Component to display an event emitted by a device action.
  */
-export function DeviceActionResponse<
+function DeviceActionResponseInternal<
   Output,
   Error,
   IntermediateValue extends DeviceActionIntermediateValue,
@@ -164,3 +164,7 @@ export function DeviceActionResponse<
     </Flex>
   );
 }
+
+export const DeviceActionResponse = React.memo(
+  DeviceActionResponseInternal,
+) as typeof DeviceActionResponseInternal;
