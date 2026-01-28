@@ -93,7 +93,7 @@ describe("DevicePinger", () => {
     dummySendCommandFunction.mockRejectedValue(dummyError);
 
     // then
-    await expect(devicePinger.ping()).rejects.toThrow("ping failed");
+    expect(await devicePinger.ping()).toBeNull();
     expect(dummySendCommandFunction).toHaveBeenCalledTimes(1);
   });
 
