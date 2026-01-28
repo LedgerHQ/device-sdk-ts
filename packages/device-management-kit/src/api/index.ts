@@ -6,6 +6,7 @@ export { ApduParser } from "@api/apdu/utils/ApduParser";
 export * from "@api/apdu/utils/AppBuilderError";
 export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
+export { type Command } from "@api/command/Command";
 export {
   InvalidGetFirmwareMetadataResponseError,
   InvalidStatusWordError,
@@ -48,6 +49,7 @@ export {
 export { isCommandErrorCode } from "@api/command/utils/CommandErrors";
 export { CommandUtils } from "@api/command/utils/CommandUtils";
 export {
+  GLOBAL_ERRORS,
   GlobalCommandError,
   GlobalCommandErrorHandler,
 } from "@api/command/utils/GlobalCommandError";
@@ -67,6 +69,7 @@ export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDe
 export {
   AppAlreadyInstalledDAError,
   DeviceLockedError,
+  DeviceNotOnboardedError,
   OutOfMemoryDAError,
   RefusedByUserDAError,
   UnknownDAError,

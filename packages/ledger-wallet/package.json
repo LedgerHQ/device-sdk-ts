@@ -39,6 +39,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/signer-utils": "workspace:^",
     "purify-ts": "catalog:",
     "xstate": "catalog:"
   },
