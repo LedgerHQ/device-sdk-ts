@@ -81,6 +81,12 @@ const BoxHeader: React.FC<{ children: string; hint: string }> = ({
 };
 
 /**
+ * For perf in fast flows, we only display the last 10 responses.
+ * Impacts mainly app installs / Custom lock screen upload flows.
+ */
+const MAX_DISPLAYED_RESPONSES = 10;
+
+/**
  * Component to display an UI where a device action can be executed.
  * This UI is divided in three parts:
  * - Device Action input: where the user can input the arguments for the device action
@@ -115,6 +121,7 @@ export function DeviceActionTester<
   >([]);
 
   const [loading, setLoading] = useState(false);
+  const [showAllResponses, setShowAllResponses] = useState(false);
 
   const cancelDeviceActionRef = useRef(() => {});
 
@@ -283,11 +290,27 @@ export function DeviceActionTester<
             flexDirection="column"
             rowGap={4}
             overflowY="scroll"
-            height="100%"
             flex={1}
+            height="100%"
             data-testid="box_device-commands-responses"
           >
-            {responses.map((response, index, arr) => {
+            {/* only show last 20 responses unless "showAllResponses" is true */}
+            {responses.length > MAX_DISPLAYED_RESPONSES && (
+              <Button
+                variant="shade"
+                size="small"
+                flexShrink={0}
+                onClick={() => setShowAllResponses((prev) => !prev)}
+              >
+                {showAllResponses
+                  ? `Show last ${MAX_DISPLAYED_RESPONSES}`
+                  : `Show all (${responses.length})`}
+              </Button>
+            )}
+            {(showAllResponses
+              ? responses
+              : responses.slice(-MAX_DISPLAYED_RESPONSES)
+            ).map((response, index, arr) => {
               const isLatest = index === arr.length - 1;
               return (
                 <Flex
