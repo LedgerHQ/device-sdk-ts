@@ -65,21 +65,6 @@ describe("CreateBackgroundImageCommand", () => {
       }
     });
 
-    it("should return error on PIN not validated (5502)", () => {
-      const response = new ApduResponse({
-        statusCode: new Uint8Array([0x55, 0x02]),
-        data: new Uint8Array([]),
-      });
-      const result = command.parseResponse(response);
-      expect(isSuccessCommandResult(result)).toBe(false);
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toBeInstanceOf(BackgroundImageCommandError);
-        expect((result.error as BackgroundImageCommandError).message).toBe(
-          "PIN not validated",
-        );
-      }
-    });
-
     it("should return error on recovery mode (662f)", () => {
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x66, 0x2f]),

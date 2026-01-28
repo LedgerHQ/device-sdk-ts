@@ -319,7 +319,6 @@ Note: When there is no image on the device, GetSize returns `size=0` (per spec),
 | Error Type                                | Error Codes                    | Description                        |
 | ----------------------------------------- | ------------------------------ | ---------------------------------- |
 | `RefusedByUserDAError`                    | `5501`                         | User refused on device             |
-| `DeviceNotOnboardedError`                 | `5502`                         | Device PIN not set                 |
 | `DeviceInRecoveryModeDAError`             | `662f`                         | Device is in recovery mode         |
 | `InvalidCustomLockScreenStateDAError`     | `5106`, `551e`                 | CLS commands called in wrong order |
 | `InvalidCustomLockScreenImageDataDAError` | `6703`, `680b`, `681f`, `6820` | Invalid image data                 |
@@ -331,7 +330,6 @@ Note: When there is no image on the device, GetSize returns `size=0` (per spec),
 | Error Type                                   | Error Codes | Description                |
 | -------------------------------------------- | ----------- | -------------------------- |
 | `RefusedByUserDAError`                       | `5501`      | User refused on device     |
-| `DeviceNotOnboardedError`                    | `5502`      | Device PIN not set         |
 | `CustomLockScreenDeviceInternalErrorDAError` | `6621`      | Internal registry error    |
 | `NoCustomLockScreenImageDAError`             | `662e`      | No image exists on device  |
 | `DeviceInRecoveryModeDAError`                | `662f`      | Device is in recovery mode |
@@ -351,7 +349,6 @@ Some errors are handled automatically by the `CommandErrorHelper` as global erro
 ```typescript
 import {
   DeviceActionStatus,
-  DeviceNotOnboardedError,
   RefusedByUserDAError,
 } from "@ledgerhq/device-management-kit";
 import {
@@ -375,8 +372,6 @@ observable.subscribe({
       // Upload DA specific errors
       if (error instanceof RefusedByUserDAError) {
         console.log("User refused on device");
-      } else if (error instanceof DeviceNotOnboardedError) {
-        console.log("Device PIN not set");
       } else if (error instanceof DeviceInRecoveryModeDAError) {
         console.log("Device is in recovery mode");
       } else if (error instanceof InvalidCustomLockScreenImageDataDAError) {

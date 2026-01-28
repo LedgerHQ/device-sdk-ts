@@ -13,7 +13,6 @@ import {
 export const CLS_ERROR_USER_REFUSED = "5501" as const;
 
 // Device state
-export const CLS_ERROR_PIN_NOT_SET = "5502" as const;
 export const CLS_ERROR_DEVICE_LOCKED = "5515" as const;
 export const CLS_ERROR_RECOVERY_MODE = "662f" as const;
 
@@ -40,12 +39,11 @@ export const CLS_ERROR_INS_NOT_SUPPORTED = "6d00" as const;
 // ============================================================================
 
 /**
- * Create Background Image (0x60) errors: 662f, 5501, 5502
+ * Create Background Image (0x60) errors: 662f, 5501
  */
 export const CREATE_BACKGROUND_IMAGE_ERRORS = {
   [CLS_ERROR_RECOVERY_MODE]: { message: "Device is in recovery mode" },
   [CLS_ERROR_USER_REFUSED]: { message: "User refused on device" },
-  [CLS_ERROR_PIN_NOT_SET]: { message: "PIN not validated" },
 } as const satisfies CommandErrors<string>;
 export type CreateBackgroundImageErrorCodes =
   keyof typeof CREATE_BACKGROUND_IMAGE_ERRORS;
@@ -68,11 +66,10 @@ export type UploadBackgroundImageChunkErrorCodes =
   keyof typeof UPLOAD_BACKGROUND_IMAGE_CHUNK_ERRORS;
 
 /**
- * Commit Background Image (0x62) errors: 5501, 5502, 551e, 662f, 681f, 6820
+ * Commit Background Image (0x62) errors: 5501, 551e, 662f, 681f, 6820
  */
 export const COMMIT_BACKGROUND_IMAGE_ERRORS = {
   [CLS_ERROR_USER_REFUSED]: { message: "User refused on device" },
-  [CLS_ERROR_PIN_NOT_SET]: { message: "PIN not validated" },
   [CLS_ERROR_IMAGE_SLOT_NOT_ALLOCATED]: { message: "Image not created" },
   [CLS_ERROR_RECOVERY_MODE]: { message: "Device is in recovery mode" },
   [CLS_ERROR_INVALID_METADATA]: { message: "Image metadata are not valid" },
@@ -82,11 +79,10 @@ export type CommitBackgroundImageErrorCodes =
   keyof typeof COMMIT_BACKGROUND_IMAGE_ERRORS;
 
 /**
- * Delete Background Image (0x63) errors: 5501, 5502, 6621, 662e, 662f
+ * Delete Background Image (0x63) errors: 5501, 6621, 662e, 662f
  */
 export const DELETE_BACKGROUND_IMAGE_ERRORS = {
   [CLS_ERROR_USER_REFUSED]: { message: "User refused on device" },
-  [CLS_ERROR_PIN_NOT_SET]: { message: "PIN not validated" },
   [CLS_ERROR_REGISTRY_ERROR]: { message: "Internal registry error" },
   [CLS_ERROR_NO_BACKGROUND_IMAGE]: {
     message: "No background image loaded on device",

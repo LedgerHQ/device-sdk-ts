@@ -20,7 +20,7 @@ export type RemoveCustomLockScreenDAOutput = void;
 
 /**
  * Possible errors that can occur during the remove custom lock screen operation.
- * Based on Delete command errors: 5501, 5502, 6621, 662e, 662f
+ * Based on Delete command errors: 5501, 6621, 662e, 662f
  */
 export type RemoveCustomLockScreenDAError =
   | GoToDashboardDAError

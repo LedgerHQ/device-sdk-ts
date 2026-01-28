@@ -1,5 +1,4 @@
 import {
-  DeviceNotOnboardedError,
   type DmkError,
   RefusedByUserDAError,
   UnknownDAError,
@@ -14,7 +13,6 @@ import {
   CLS_ERROR_INVALID_METADATA,
   CLS_ERROR_INVALID_SIZE,
   CLS_ERROR_NO_BACKGROUND_IMAGE,
-  CLS_ERROR_PIN_NOT_SET,
   CLS_ERROR_RECOVERY_MODE,
   CLS_ERROR_REGISTRY_ERROR,
   CLS_ERROR_USER_REFUSED,
@@ -109,11 +107,10 @@ function getErrorCode(error: unknown): string | null {
 
 /**
  * Errors possible from Remove DA (uses Delete command).
- * Delete errors: 5501, 5502, 6621, 662e, 662f
+ * Delete errors: 5501, 6621, 662e, 662f
  */
 export type RemoveCommandDAError =
   | RefusedByUserDAError
-  | DeviceNotOnboardedError
   | CustomLockScreenDeviceInternalErrorDAError
   | NoCustomLockScreenImageDAError
   | DeviceInRecoveryModeDAError
@@ -134,8 +131,6 @@ export function mapRemoveCommandError(error: unknown): RemoveCommandDAError {
   switch (errorCode) {
     case CLS_ERROR_USER_REFUSED:
       return new RefusedByUserDAError("User refused on device");
-    case CLS_ERROR_PIN_NOT_SET:
-      return new DeviceNotOnboardedError("Device PIN not set");
     case CLS_ERROR_REGISTRY_ERROR:
       return new CustomLockScreenDeviceInternalErrorDAError(error);
     case CLS_ERROR_NO_BACKGROUND_IMAGE:
@@ -149,13 +144,12 @@ export function mapRemoveCommandError(error: unknown): RemoveCommandDAError {
 
 /**
  * Errors possible from Upload DA (uses Create, Load, Commit commands).
- * Create errors: 662f, 5501, 5502
+ * Create errors: 662f, 5501
  * Load errors: 5106, 551e, 662f, 6703, 680b
- * Commit errors: 5501, 5502, 551e, 662f, 681f, 6820
+ * Commit errors: 5501, 551e, 662f, 681f, 6820
  */
 export type UploadCommandsDAError =
   | RefusedByUserDAError
-  | DeviceNotOnboardedError
   | DeviceInRecoveryModeDAError
   | InvalidCustomLockScreenStateDAError
   | InvalidCustomLockScreenImageDataDAError
@@ -177,9 +171,6 @@ export function mapUploadCommandError(error: unknown): UploadCommandsDAError {
     // User refused (Create, Commit)
     case CLS_ERROR_USER_REFUSED:
       return new RefusedByUserDAError("User refused on device");
-    // PIN not set (Create, Commit)
-    case CLS_ERROR_PIN_NOT_SET:
-      return new DeviceNotOnboardedError("Device PIN not set");
     // Recovery mode (Create, Load, Commit)
     case CLS_ERROR_RECOVERY_MODE:
       return new DeviceInRecoveryModeDAError(error);

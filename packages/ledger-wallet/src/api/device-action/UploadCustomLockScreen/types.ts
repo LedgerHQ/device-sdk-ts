@@ -37,9 +37,9 @@ export type UploadCustomLockScreenDAOutput = {
 /**
  * Possible errors that can occur during the upload custom lock screen operation.
  * Based on Create/Load/Commit command errors:
- * - Create: 662f, 5501, 5502
+ * - Create: 662f, 5501
  * - Load: 5106, 551e, 662f, 6703, 680b
- * - Commit: 5501, 5502, 551e, 662f, 681f, 6820
+ * - Commit: 5501, 551e, 662f, 681f, 6820
  */
 export type UploadCustomLockScreenDAError =
   | GoToDashboardDAError
