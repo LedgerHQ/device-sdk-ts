@@ -85,10 +85,8 @@ stateDiagram-v2
 ## Usage Example
 
 ```typescript
-import {
-  DeviceActionStatus,
-  UploadCustomLockScreenDeviceAction,
-} from "@ledgerhq/device-management-kit";
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+import { UploadCustomLockScreenDeviceAction } from "@ledgerhq/ledger-wallet";
 
 const deviceAction = new UploadCustomLockScreenDeviceAction({
   input: {
@@ -129,4 +127,4 @@ observable.subscribe({
 
 ## Related Documentation
 
-For image data format, image processing utilities, and error handling, see the [Custom Lock Screen Device Actions documentation](../../../doc/CustomLockScreenDeviceActions.md).
+For image data format, image processing utilities, and error handling, see the [Custom Lock Screen Device Actions documentation](../../../../doc/CustomLockScreen.md).
