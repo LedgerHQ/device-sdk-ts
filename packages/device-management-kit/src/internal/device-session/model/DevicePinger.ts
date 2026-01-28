@@ -55,7 +55,7 @@ export class DevicePinger {
           error,
         },
       });
-      throw error;
+      return null;
     }
   }
 
