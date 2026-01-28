@@ -46,7 +46,7 @@ stateDiagram-v2
 ## Usage Example
 
 ```typescript
-import { RemoveCustomLockScreenDeviceAction } from "@ledgerhq/device-management-kit";
+import { RemoveCustomLockScreenDeviceAction } from "@ledgerhq/ledger-wallet";
 
 const deviceAction = new RemoveCustomLockScreenDeviceAction({
   input: {},
@@ -69,4 +69,4 @@ result.caseOf({
 
 ## Related Documentation
 
-For image data format, image processing utilities, and error handling, see the [Custom Lock Screen Device Actions documentation](../../../doc/CustomLockScreenDeviceActions.md).
+For image data format, image processing utilities, and error handling, see the [Custom Lock Screen Device Actions documentation](../../../../doc/CustomLockScreen.md).

@@ -6,8 +6,9 @@ This module provides device actions and utils for managing custom lock screen im
 
 Custom Lock Screen (CLS) allows users to personalize their Ledger device by uploading a custom image that displays on the lock screen. These device actions handle the complete lifecycle:
 
-- **Load**: Upload and set a new custom lock screen image
-- **Fetch**: Retrieve the current custom lock screen image from the device
+- **Upload**: Upload and set a new custom lock screen image
+- **Download**: Retrieve the current custom lock screen image from the device
+- **Get Info**: Query whether a custom lock screen exists and get its metadata (size, hash)
 - **Remove**: Delete the custom lock screen image from the device
 
 All device actions automatically ensure the device is on the dashboard before performing CLS operations.
@@ -25,6 +26,12 @@ Uploads a custom lock screen image to the device. Handles chunked upload with pr
 Retrieves the current custom lock screen image from the device. Supports backup hash comparison to skip download if image hasn't changed.
 
 [View full documentation](../src/api/device-action/DownloadCustomLockScreen/README.md)
+
+### GetCustomLockScreenInfoDeviceAction
+
+Gets information about the custom lock screen on the device without downloading the image data. Returns whether a custom lock screen exists, and if so, its size in bytes and hash.
+
+[View full documentation](../src/api/device-action/GetCustomLockScreenInfo/README.md)
 
 ### RemoveCustomLockScreenDeviceAction
 
@@ -297,6 +304,16 @@ Each DA has a specific error type union based on its underlying commands:
 | `GoToDashboardDAError`                    | Various     | Failed to reach dashboard    |
 | `UnknownDAError`                          | Fallback    | Unexpected errors            |
 
+**`GetCustomLockScreenInfoDAError`** (uses GetSize, GetHash commands):
+
+| Error Type                    | Error Codes | Description                |
+| ----------------------------- | ----------- | -------------------------- |
+| `DeviceInRecoveryModeDAError` | `662f`      | Device is in recovery mode |
+| `GoToDashboardDAError`        | Various     | Failed to reach dashboard  |
+| `UnknownDAError`              | Fallback    | Unexpected errors          |
+
+Note: When there is no image on the device, GetSize returns `size=0` (per spec), which results in a successful `{ hasCustomLockScreen: false }` output. Error code `662e` is also handled as a fallback.
+
 **`UploadCustomLockScreenDAError`** (uses Create, Load, Commit commands):
 
 | Error Type                                | Error Codes                    | Description                        |
@@ -383,6 +400,7 @@ flowchart TB
     subgraph "Device Actions"
         LA[UploadCustomLockScreenDeviceAction]
         FA[DownloadCustomLockScreenDeviceAction]
+        GA[GetCustomLockScreenInfoDeviceAction]
         RA[RemoveCustomLockScreenDeviceAction]
     end
 
@@ -402,6 +420,7 @@ flowchart TB
 
     LA --> GTD
     FA --> GTD
+    GA --> GTD
     RA --> GTD
 
     LA --> C1
@@ -413,6 +432,9 @@ flowchart TB
     FA --> C4
     FA --> C5
     FA --> C6
+
+    GA --> C4
+    GA --> C5
 
     RA --> C7
 ```
@@ -426,13 +448,7 @@ flowchart TB
 | `CreateBackgroundImageCommand`      | `0x60` | Create image slot  |
 | `UploadBackgroundImageChunkCommand` | `0x61` | Upload image chunk |
 | `CommitBackgroundImageCommand`      | `0x62` | Finalize image     |
-
-<<<<<<< HEAD
-| `DeleteBackgroundImageCommand` | `0x63` | Delete image |
-=======
-| `RemoveBackgroundImageCommand` | `0x63` | Remove image |
-
-> > > > > > > 525772e2 (✨ (ledger-wallet): Custom lock screen utils (fitting, dithering, encoding))
-> > > > > > > | `GetBackgroundImageSizeCommand` | `0x64` | Get image size |
-> > > > > > > | `FetchBackgroundImageChunkCommand` | `0x65` | Fetch image chunk |
-> > > > > > > | `GetBackgroundImageHashCommand` | `0x66` | Get image hash |
+| `DeleteBackgroundImageCommand`      | `0x63` | Delete image       |
+| `GetBackgroundImageSizeCommand`     | `0x64` | Get image size     |
+| `FetchBackgroundImageChunkCommand`  | `0x65` | Fetch image chunk  |
+| `GetBackgroundImageHashCommand`     | `0x66` | Get image hash     |
