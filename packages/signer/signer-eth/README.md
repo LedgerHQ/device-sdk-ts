@@ -140,11 +140,11 @@ const { observable, cancel } = signerEth.signTransaction(
 
     ```typescript
     type TransactionOptions = {
-      domain?: string;
+      skipOpenApp?: boolean;
     };
     ```
 
-  - `domain` An optional string representing the domain present in the transaction. Currently, only ENS domains are supported.
+  - `skipOpenApp` An optional boolean to skip the automatic opening of the Ethereum app on the device.
 
 #### **Returns**
 
