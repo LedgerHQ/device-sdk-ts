@@ -123,9 +123,6 @@ catalogs:
     '@types/react-dom':
       specifier: 18.3.1
       version: 18.3.1
-    '@types/react-lottie':
-      specifier: ^1.2.10
-      version: 1.2.10
     '@types/react-test-renderer':
       specifier: ^18.0.0
       version: 18.3.1
@@ -243,6 +240,9 @@ catalogs:
     jsdom:
       specifier: ^26.0.0
       version: 26.0.0
+    lottie-react:
+      specifier: ^2.4.0
+      version: 2.4.1
     next:
       specifier: 14.2.35
       version: 14.2.35
@@ -267,9 +267,6 @@ catalogs:
     react-dom:
       specifier: 18.3.1
       version: 18.3.1
-    react-lottie:
-      specifier: ^1.2.10
-      version: 1.2.10
     react-medium-image-zoom:
       specifier: 5.1.8
       version: 5.1.8
@@ -746,7 +743,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -849,6 +846,9 @@ importers:
       ethers:
         specifier: 'catalog:'
         version: 6.14.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+      lottie-react:
+        specifier: 'catalog:'
+        version: 2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       next:
         specifier: 'catalog:'
         version: 14.2.35(@babel/core@7.28.3)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -858,9 +858,6 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 18.3.1(react@18.3.1)
-      react-lottie:
-        specifier: 'catalog:'
-        version: 1.2.10(react@18.3.1)
       react-redux:
         specifier: 'catalog:'
         version: 9.2.0(@types/react@18.3.12)(react@18.3.1)(redux@5.0.1)
@@ -886,9 +883,6 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 18.3.12
-      '@types/react-lottie':
-        specifier: 'catalog:'
-        version: 1.2.10
       '@types/styled-components':
         specifier: 'catalog:'
         version: 5.1.34
@@ -5636,9 +5630,6 @@ packages:
   '@types/react-dom@18.3.1':
     resolution: {integrity: sha512-qW1Mfv8taImTthu4KoXgDfLuk4bydU6Q/TkADnDWWHwi4NX4BR+LWfTp2sVmTqRrsHvyDDTelgelxJ+SsejKKQ==}
 
-  '@types/react-lottie@1.2.10':
-    resolution: {integrity: sha512-rCd1p3US4ELKJlqwVnP0h5b24zt5p9OCvKUoNpYExLqwbFZMWEiJ6EGLMmH7nmq5V7KomBIbWO2X/XRFsL0vCA==}
-
   '@types/react-native@0.70.19':
     resolution: {integrity: sha512-c6WbyCgWTBgKKMESj/8b4w+zWcZSsCforson7UdXtXMecG3MxCinYi6ihhrHVPyUrVzORsvEzK8zg32z4pK6Sg==}
 
@@ -6306,9 +6297,6 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
 
-  babel-runtime@6.26.0:
-    resolution: {integrity: sha512-ITKNuq2wKlW1fJg9sSW52eepoYgZBggvOAHC0u/CYu/qxQ9EVzThCgR69BnSXLHjy2f7SY5zaQ4yt7H9ZVxY2g==}
-
   bail@2.0.2:
     resolution: {integrity: sha512-0xO6mYd7JB2YesxDKplafRpsiOzPt9V02ddPCLbY1xYGPOX24NTyN50qnUxgCPcSoYMhKpAuBTjQoRZCAkUDRw==}
 
@@ -6861,10 +6849,6 @@ packages:
 
   core-js-compat@3.40.0:
     resolution: {integrity: sha512-0XEDpr5y5mijvw8Lbc6E5AkjrHfp7eEoPlu36SWeAbcL8fn1G1ANe8DBlo2XoNN89oVpxWwOjYIPVzR4ZvsKCQ==}
-
-  core-js@2.6.12:
-    resolution: {integrity: sha512-Kb2wC0fvsWfQrgk8HU5lW6U/Lcs8+9aaYcy4ZFc6DDlo4nZ7n70dEgE5rtR0oG6ufKDUnrwfWL1mXR5ljDatrQ==}
-    deprecated: core-js@<3.23.3 is no longer maintained and not recommended for usage due to the number of issues. Because of the V8 engine whims, feature detection in old core-js versions could cause a slowdown up to 100x even if nothing is polyfilled. Some versions have web compatibility issues. Please, upgrade your dependencies to the actual version of core-js.
 
   core-js@3.37.1:
     resolution: {integrity: sha512-Xn6qmxrQZyB0FFY8E3bgRXei3lWDJHhvI+u0q9TKIYM49G8pAr0FgnnrFRAmsbptZL1yxRADVXn+x5AGsbBfyw==}
@@ -9198,6 +9182,12 @@ packages:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
 
+  lottie-react@2.4.1:
+    resolution: {integrity: sha512-LQrH7jlkigIIv++wIyrOYFLHSKQpEY4zehPicL9bQsrt1rnoKRYCYgpCUe5maqylNtacy58/sQDZTkwMcTRxZw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   lottie-web@5.12.2:
     resolution: {integrity: sha512-uvhvYPC8kGPjXT3MyKMrL3JitEAmDMp30lVkuq/590Mw9ok6pWcFCwXJveo0t5uqYw1UREQHofD+jVpdjBv8wg==}
 
@@ -10707,11 +10697,6 @@ packages:
   react-is@18.3.1:
     resolution: {integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==}
 
-  react-lottie@1.2.10:
-    resolution: {integrity: sha512-x0eWX3Z6zSx1XM5QSjnLupc6D22LlMCB0PH06O/N/epR2hsLaj1Vxd9RtMnbbEHjJ/qlsgHJ6bpN3vnZI92hjw==}
-    peerDependencies:
-      react: '>=15.0.0'
-
   react-medium-image-zoom@5.1.8:
     resolution: {integrity: sha512-2X4oLlEopIWg7qalR1Qpy4gPrU9CTF0DvJ7HNu5u/NwdyQWupEsje2vuMbjBz7+np8MmQ4DKJ6zGr1ofCuzB3g==}
     peerDependencies:
@@ -10937,9 +10922,6 @@ packages:
 
   regenerate@1.4.2:
     resolution: {integrity: sha512-zrceR/XhGYU/d/opr2EKO7aRHUeiBI8qjtfHqADTwZd6Szfy16la6kqD0MIUs5z5hx6AaKa+PixpPrR289+I0A==}
-
-  regenerator-runtime@0.11.1:
-    resolution: {integrity: sha512-MguG95oij0fC3QV3URf4V2SDYGJhJnJGqvIIgdECeODCT98wSWDAJ94SSuVpYQUoTcGUIL6L4yNB7j1DFFHSBg==}
 
   regenerator-runtime@0.13.11:
     resolution: {integrity: sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==}
@@ -15747,7 +15729,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -15756,7 +15738,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -16946,10 +16930,6 @@ snapshots:
     dependencies:
       '@types/react': 18.3.12
 
-  '@types/react-lottie@1.2.10':
-    dependencies:
-      '@types/react': 18.3.12
-
   '@types/react-native@0.70.19':
     dependencies:
       '@types/react': 18.3.12
@@ -17926,11 +17906,6 @@ snapshots:
       babel-plugin-jest-hoist: 29.6.3
       babel-preset-current-node-syntax: 1.1.0(@babel/core@7.28.3)
 
-  babel-runtime@6.26.0:
-    dependencies:
-      core-js: 2.6.12
-      regenerator-runtime: 0.11.1
-
   bail@2.0.2: {}
 
   balanced-match@1.0.2: {}
@@ -18571,8 +18546,6 @@ snapshots:
   core-js-compat@3.40.0:
     dependencies:
       browserslist: 4.25.4
-
-  core-js@2.6.12: {}
 
   core-js@3.37.1: {}
 
@@ -21452,6 +21425,12 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
+  lottie-react@2.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      lottie-web: 5.12.2
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
   lottie-web@5.12.2: {}
 
   loupe@3.2.0: {}
@@ -23513,13 +23492,6 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-lottie@1.2.10(react@18.3.1):
-    dependencies:
-      babel-runtime: 6.26.0
-      lottie-web: 5.12.2
-      prop-types: 15.8.1
-      react: 18.3.1
-
   react-medium-image-zoom@5.1.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       react: 18.3.1
@@ -23857,8 +23829,6 @@ snapshots:
       regenerate: 1.4.2
 
   regenerate@1.4.2: {}
-
-  regenerator-runtime@0.11.1: {}
 
   regenerator-runtime@0.13.11: {}
 
