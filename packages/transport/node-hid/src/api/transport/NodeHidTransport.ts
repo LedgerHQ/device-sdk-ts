@@ -4,7 +4,7 @@ import {
   type ConnectError,
   type ConnectionType,
   DeviceConnectionStateMachine,
-  DeviceConnectionStateMachineParams,
+  type DeviceConnectionStateMachineParams,
   type DeviceId,
   type DeviceModelDataSource,
   DeviceNotRecognizedError,
@@ -24,14 +24,26 @@ import {
 } from "@ledgerhq/device-management-kit";
 import * as Sentry from "@sentry/minimal";
 import { type Device as NodeHIDDevice, devicesAsync, HIDAsync } from "node-hid";
-import { type Either, EitherAsync, Just, Left, Maybe, Nothing, Right } from "purify-ts";
+import {
+  type Either,
+  EitherAsync,
+  Just,
+  Left,
+  Maybe,
+  Nothing,
+  Right,
+} from "purify-ts";
 import { BehaviorSubject, from, map, type Observable, switchMap } from "rxjs";
+import { type Device, usb } from "usb";
 import { v4 as uuid } from "uuid";
 
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/NodeHidConfig";
 import { NodeHidTransportNotSupportedError } from "@api/model/Errors";
-import { Device, usb } from "usb";
-import { NodeHidApduSender, NodeHidApduSenderDependencies, NodeHidApduSenderConstructorArgs } from "@api/transport/NodeHidApduSender";
+import {
+  NodeHidApduSender,
+  type NodeHidApduSenderConstructorArgs,
+  type NodeHidApduSenderDependencies,
+} from "@api/transport/NodeHidApduSender";
 
 type NodeHIDAPI = typeof NodeHIDAPI;
 const NodeHIDAPI = { devicesAsync, HIDAsync } as const;
@@ -62,8 +74,9 @@ export class NodeHidTransport implements Transport {
    * Set of NodeHidDeviceConnection for which the HIDDevice has been
    * disconnected, so they are waiting for a reconnection
    */
-  private _deviceConnectionsPendingReconnection: Set<DeviceConnectionStateMachine<NodeHidApduSenderDependencies>> =
-    new Set();
+  private _deviceConnectionsPendingReconnection: Set<
+    DeviceConnectionStateMachine<NodeHidApduSenderDependencies>
+  > = new Set();
 
   /** AbortController to stop listening to HID connection events */
   private _connectionListenersAbortController: AbortController =
@@ -81,12 +94,13 @@ export class NodeHidTransport implements Transport {
     private readonly _apduReceiverFactory: ApduReceiverServiceFactory,
     private readonly _deviceConnectionStateMachineFactory: (
       args: DeviceConnectionStateMachineParams<NodeHidApduSenderDependencies>,
-    ) => DeviceConnectionStateMachine<NodeHidApduSenderDependencies> = (args) => new DeviceConnectionStateMachine(args),
+    ) => DeviceConnectionStateMachine<NodeHidApduSenderDependencies> = (args) =>
+      new DeviceConnectionStateMachine(args),
     private readonly _deviceApduSenderFactory: (
-      args: NodeHidApduSenderConstructorArgs
-    ) => NodeHidApduSender = (args) => new NodeHidApduSender(args)
+      args: NodeHidApduSenderConstructorArgs,
+    ) => NodeHidApduSender = (args) => new NodeHidApduSender(args),
   ) {
-    this._logger = _loggerServiceFactory("NodNodeHidTransport");
+    this._logger = _loggerServiceFactory("NodeHidTransport");
 
     this.startListeningToConnectionEvents();
   }
@@ -99,7 +113,7 @@ export class NodeHidTransport implements Transport {
     if (this.isSupported()) {
       return Right(NodeHIDAPI);
     }
-    
+
     return Left(new NodeHidTransportNotSupportedError("NodeHID not supported"));
   }
 
@@ -162,7 +176,11 @@ export class NodeHidTransport implements Transport {
   ): NodeHidTransportDiscoveredDevice {
     const existingDiscoveredDevice = this._transportDiscoveredDevices
       .getValue()
-      .find((internalDevice) => internalDevice.hidDevice.vendorId === hidDevice.vendorId && internalDevice.hidDevice.productId === hidDevice.productId);
+      .find(
+        (internalDevice) =>
+          internalDevice.hidDevice.vendorId === hidDevice.vendorId &&
+          internalDevice.hidDevice.productId === hidDevice.productId,
+      );
 
     if (existingDiscoveredDevice) {
       return existingDiscoveredDevice;
@@ -224,9 +242,9 @@ export class NodeHidTransport implements Transport {
       Right: (hidDevices) => {
         this._transportDiscoveredDevices.next(
           hidDevices.map((hidDevice) =>
-        this.mapHIDDeviceToTransportDiscoveredDevice(hidDevice),
+            this.mapHIDDeviceToTransportDiscoveredDevice(hidDevice),
           ),
-      );
+        );
       },
     });
   }
@@ -356,17 +374,18 @@ export class NodeHidTransport implements Transport {
       return Left(new UnknownDeviceError(`Unknown device ${deviceId}`));
     }
 
-    const alreadyExistingDeviceConnection = this._deviceConnectionsByHidDevice.get(matchingInternalDevice.hidDevice);
+    const alreadyExistingDeviceConnection =
+      this._deviceConnectionsByHidDevice.get(matchingInternalDevice.hidDevice);
     if (alreadyExistingDeviceConnection) {
       return Right(
         new TransportConnectedDevice({
           id: deviceId,
           deviceModel: matchingInternalDevice.deviceModel,
           type: this.connectionType,
-          sendApdu: (...args) => 
+          sendApdu: (...args) =>
             alreadyExistingDeviceConnection.sendApdu(...args),
           transport: this.identifier,
-        })
+        }),
       );
     }
 
@@ -382,26 +401,34 @@ export class NodeHidTransport implements Transport {
       deviceApduSender: nodeHidApduSender,
       timeoutDuration: RECONNECT_DEVICE_TIMEOUT,
       tryToReconnect: () => {
-        this._deviceConnectionsByHidDevice.forEach((deviceConnection, hidDevice) => {
-          if (deviceConnection.getDeviceId() === deviceId) {
-            this._deviceConnectionsPendingReconnection.add(deviceConnection);
-            this._deviceConnectionsByHidDevice.delete(hidDevice);
-          }
-        });
+        this._deviceConnectionsByHidDevice.forEach(
+          (deviceConnection, hidDevice) => {
+            if (deviceConnection.getDeviceId() === deviceId) {
+              this._deviceConnectionsPendingReconnection.add(deviceConnection);
+              this._deviceConnectionsByHidDevice.delete(hidDevice);
+            }
+          },
+        );
       },
       onTerminated: () => {
-        this._deviceConnectionsPendingReconnection.forEach((deviceConnection) => {
-          if (deviceConnection.getDeviceId() === deviceId) {
-            this._deviceConnectionsPendingReconnection.delete(deviceConnection);
-            onDisconnect(deviceConnection.getDeviceId());
-          }
-        });
-        this._deviceConnectionsByHidDevice.forEach((deviceConnection, hidDevice) => {
-          if (deviceConnection.getDeviceId() === deviceId) {
-            this._deviceConnectionsByHidDevice.delete(hidDevice);
-            onDisconnect(deviceConnection.getDeviceId());
-          }
-        });
+        this._deviceConnectionsPendingReconnection.forEach(
+          (deviceConnection) => {
+            if (deviceConnection.getDeviceId() === deviceId) {
+              this._deviceConnectionsPendingReconnection.delete(
+                deviceConnection,
+              );
+              onDisconnect(deviceConnection.getDeviceId());
+            }
+          },
+        );
+        this._deviceConnectionsByHidDevice.forEach(
+          (deviceConnection, hidDevice) => {
+            if (deviceConnection.getDeviceId() === deviceId) {
+              this._deviceConnectionsByHidDevice.delete(hidDevice);
+              onDisconnect(deviceConnection.getDeviceId());
+            }
+          },
+        );
       },
     });
 
@@ -421,8 +448,7 @@ export class NodeHidTransport implements Transport {
     );
 
     const connectedDevice = new TransportConnectedDevice({
-      sendApdu: (...args) =>
-         deviceConnection.sendApdu(...args),
+      sendApdu: (...args) => deviceConnection.sendApdu(...args),
       deviceModel: matchingInternalDevice.deviceModel,
       id: deviceId,
       type: this.connectionType,
@@ -486,10 +512,7 @@ export class NodeHidTransport implements Transport {
    * Handle the disconnection event of a HID device
    * @param device USB device that was detached
    */
-  private async handleDeviceDisconnection(
-    device: Device,
-  ): Promise<void> {
-
+  private async handleDeviceDisconnection(device: Device): Promise<void> {
     const { idVendor, idProduct } = device.deviceDescriptor;
 
     if (idVendor !== LEDGER_VENDOR_ID) {
@@ -502,11 +525,16 @@ export class NodeHidTransport implements Transport {
 
     this.updateTransportDiscoveredDevices();
 
-    const matchingDeviceConnection = () : Maybe<DeviceConnectionStateMachine<NodeHidApduSenderDependencies>> => {
-      for (const [hidDevice, deviceConnection] of this._deviceConnectionsByHidDevice.entries()) {
+    const matchingDeviceConnection = (): Maybe<
+      DeviceConnectionStateMachine<NodeHidApduSenderDependencies>
+    > => {
+      for (const [
+        hidDevice,
+        deviceConnection,
+      ] of this._deviceConnectionsByHidDevice.entries()) {
         if (
           hidDevice.vendorId === idVendor &&
-          ((hidDevice.productId >> 8) === idProduct ||
+          (hidDevice.productId >> 8 === idProduct ||
             hidDevice.productId === idProduct)
         ) {
           return Just(deviceConnection);
@@ -539,7 +567,7 @@ export class NodeHidTransport implements Transport {
   ) {
     this._deviceConnectionsPendingReconnection.delete(deviceConnection);
     this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
-    
+
     try {
       deviceConnection.setDependencies({ device: hidDevice });
       await deviceConnection.setupConnection();
@@ -579,7 +607,7 @@ export class NodeHidTransport implements Transport {
         const matchingHidDevice = hidDevices.find(
           (hidDevice) =>
             hidDevice.vendorId === idVendor &&
-            ((hidDevice.productId >> 8) === idProduct ||
+            (hidDevice.productId >> 8 === idProduct ||
               hidDevice.productId === idProduct),
         );
 
@@ -590,7 +618,7 @@ export class NodeHidTransport implements Transport {
               data: { vendorId: idVendor, productId: idProduct },
             },
           );
-          
+
           return;
         }
 
@@ -599,8 +627,9 @@ export class NodeHidTransport implements Transport {
           this._deviceConnectionsPendingReconnection,
         ).find(
           (deviceConnection) =>
-            this.getHidUsbProductId(deviceConnection.getDependencies().device) ===
-            this.getHidUsbProductId(matchingHidDevice),
+            this.getHidUsbProductId(
+              deviceConnection.getDependencies().device,
+            ) === this.getHidUsbProductId(matchingHidDevice),
         );
 
         if (matchingDeviceConnection) {

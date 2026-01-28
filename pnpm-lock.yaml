@@ -362,7 +362,7 @@ catalogs:
       version: 0.11.4
     usb:
       specifier: ^2.16.0
-      version: 2.16.0
+      version: 2.17.0
     util:
       specifier: ^0.12.5
       version: 0.12.5
@@ -659,6 +659,15 @@ importers:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
         version: link:../../packages/device-management-kit
+      '@ledgerhq/device-management-kit-devtools-core':
+        specifier: workspace:^
+        version: link:../../packages/devtools-core
+      '@ledgerhq/device-management-kit-devtools-websocket-common':
+        specifier: workspace:^
+        version: link:../../packages/devtools-websocket-common
+      '@ledgerhq/device-management-kit-devtools-websocket-connector':
+        specifier: workspace:^
+        version: link:../../packages/devtools-websocket-connector
       '@ledgerhq/device-transport-kit-node-hid':
         specifier: workspace:^
         version: link:../../packages/transport/node-hid
@@ -1736,7 +1745,7 @@ importers:
         version: 2.1.0
       usb:
         specifier: 'catalog:'
-        version: 2.16.0
+        version: 2.17.0
       uuid:
         specifier: 'catalog:'
         version: 11.0.3
@@ -10410,17 +10419,11 @@ packages:
     resolution: {integrity: sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==}
     engines: {node: '>=6'}
 
-<<<<<<< HEAD
-=======
   pkg-prebuilds@1.0.0:
     resolution: {integrity: sha512-D9wlkXZCmjxj2kBHTw3fGSyjoahr33breGBoJcoezpi7ouYS59DJVOHMZ+dgqacSrZiJo4qtkXxLQTE+BqXJmQ==}
     engines: {node: '>= 14.15.0'}
     hasBin: true
 
-  pkg-types@1.2.1:
-    resolution: {integrity: sha512-sQoqa8alT3nHjGuTjuKgOnvjo4cljkufdtLMnO2LBP/wRwuDlo1tkaEdMxCRhyGRPacv/ztlZgDPm2b7FAmEvw==}
-
->>>>>>> aca7e3ad (:sparkles: (node-hid): add node-hid transport management kit)
   pkg-types@1.3.1:
     resolution: {integrity: sha512-/Jm5M4RvtBFVkKWRu2BLUTNP8/M2a+UwuAX+ae4770q1qVGtfjG+WTCupoZixokjmHiry8uI+dlY8KXYV5HVVQ==}
 
@@ -12364,8 +12367,8 @@ packages:
     resolution: {integrity: sha512-oCwdVC7mTuWiPyjLUz/COz5TLk6wgp0RCsN+wHZ2Ekneac9w8uuV0njcbbie2ME+Vs+d6duwmYuR3HgQXs1fOg==}
     engines: {node: '>= 0.4'}
 
-  usb@2.16.0:
-    resolution: {integrity: sha512-jD88fvzDViMDH5KmmNJgzMBDj/95bDTt6+kBNaNxP4G98xUTnDMiLUY2CYmToba6JAFhM9VkcaQuxCNRLGR7zg==}
+  usb@2.17.0:
+    resolution: {integrity: sha512-UuFgrlglgDn5ll6d5l7kl3nDb2Yx43qLUGcDq+7UNLZLtbNug0HZBb2Xodhgx2JZB1LqvU+dOGqLEeYUeZqsHg==}
     engines: {node: '>=12.22.0 <13.0 || >=14.17.0'}
 
   use-isomorphic-layout-effect@1.2.1:
@@ -23265,19 +23268,10 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
-<<<<<<< HEAD
-=======
   pkg-prebuilds@1.0.0:
     dependencies:
       yargs: 17.7.2
 
-  pkg-types@1.2.1:
-    dependencies:
-      confbox: 0.1.8
-      mlly: 1.7.3
-      pathe: 1.1.2
-
->>>>>>> aca7e3ad (:sparkles: (node-hid): add node-hid transport management kit)
   pkg-types@1.3.1:
     dependencies:
       confbox: 0.1.8
@@ -25701,7 +25695,7 @@ snapshots:
       punycode: 1.4.1
       qs: 6.14.1
 
-  usb@2.16.0:
+  usb@2.17.0:
     dependencies:
       '@types/w3c-web-usb': 1.0.13
       node-addon-api: 8.5.0

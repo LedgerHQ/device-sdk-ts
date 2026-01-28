@@ -176,9 +176,12 @@ describe("NodeHidApduSender", () => {
     await nodeHidApduSender.setupConnection();
 
     await expect(nodeHidApduSender.closeConnection()).rejects.toThrow(error);
-    expect(mockLogger.error).toHaveBeenCalledWith("Error while closing device", {
-      data: { device: mockDevice, error },
-    });
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      "Error while closing device",
+      {
+        data: { device: mockDevice, error },
+      },
+    );
   });
 
   it("should do nothing when closing without connection", async () => {
@@ -209,9 +212,7 @@ describe("NodeHidApduSender", () => {
     } as ApduResponse;
 
     mockApduSender.getFrames.mockReturnValue(frames);
-    mockApduReceiver.handleFrame.mockReturnValue(
-      Right(Maybe.of(apduResponse)),
-    );
+    mockApduReceiver.handleFrame.mockReturnValue(Right(Maybe.of(apduResponse)));
 
     // Setup connection
     await nodeHidApduSender.setupConnection();
@@ -332,9 +333,7 @@ describe("NodeHidApduSender", () => {
     } as ApduResponse;
 
     mockApduSender.getFrames.mockReturnValue(frames);
-    mockApduReceiver.handleFrame.mockReturnValue(
-      Right(Maybe.of(apduResponse)),
-    );
+    mockApduReceiver.handleFrame.mockReturnValue(Right(Maybe.of(apduResponse)));
 
     await nodeHidApduSender.setupConnection();
     const promise = nodeHidApduSender.sendApdu(apdu, false, 1000);

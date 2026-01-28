@@ -108,12 +108,12 @@ const digestResponse = (choice: DeviceCommandName, response: CommandResult<unkno
 }
 
 export const handleSendCommand = async (listenForCommand: ListenForCommand): Promise<void> => {
-  if (false === deviceConnected()) {
+  if (!deviceConnected()) {
     logError("\nNo device connected! Please, first connect to a device.\n");
     return listenForCommand();
   }
 
-  if (true === deviceLocked()) {
+  if (deviceLocked()) {
     logError("\nDevice locked! Please, first unlock your device.\n");
     return listenForCommand();
   }

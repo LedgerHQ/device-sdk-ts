@@ -25,7 +25,10 @@ import { lastValueFrom, toArray } from "rxjs";
 import { RECONNECT_DEVICE_TIMEOUT } from "@api/data/NodeHidConfig";
 import { nodeHidDeviceStubBuilder } from "@api/model/HIDDevice.stub";
 
-import { NodeHidApduSender, type NodeHidApduSenderDependencies } from "./NodeHidApduSender";
+import {
+  NodeHidApduSender,
+  type NodeHidApduSenderDependencies,
+} from "./NodeHidApduSender";
 import { NodeHidTransport } from "./NodeHidTransport";
 
 // Mock node-hid module
@@ -155,7 +158,9 @@ describe("NodeHidTransport", () => {
     apduReceiverServiceFactoryStub = vi.fn();
     apduSenderServiceFactoryStub = vi.fn();
     mockDeviceConnectionStateMachineFactory = vi.fn(
-      (params: DeviceConnectionStateMachineParams<NodeHidApduSenderDependencies>) => {
+      (
+        params: DeviceConnectionStateMachineParams<NodeHidApduSenderDependencies>,
+      ) => {
         return {
           ...mockDeviceConnectionStateMachine,
           getDeviceId: vi.fn().mockReturnValue(params.deviceId),

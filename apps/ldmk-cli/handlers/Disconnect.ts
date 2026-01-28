@@ -5,7 +5,7 @@ import { logInfo, logError } from "../utils";
 import { ListenForCommand } from "../utils/Constants";
 
 export const handleDisconnect = async (listenForCommand: ListenForCommand): Promise<void> => {
-  if (false === deviceConnected()) {
+  if (!deviceConnected()) {
     logInfo("\nNo device connected! Please, first connect to a device.\n");
     return listenForCommand();
   }
