@@ -56,7 +56,7 @@ $DRAFT
 
 ### Step 3: Analyze changes
 
-1. Run `git fetch origin develop && git diff origin/develop` to understand the changes (use remote to avoid stale local branch)
+1. Run `git fetch origin develop && git diff origin/develop...HEAD` to understand the changes (three dots to show only branch changes, not upstream changes)
 2. Run `git status` to see modified files
 3. Validate existing commit messages against the regex in [danger/helpers.ts](../../danger/helpers.ts):
    ```bash
@@ -90,13 +90,33 @@ If there are changes after creating the changeset:
 2. Create a commit following the format in [CONTRIBUTING.md](../../CONTRIBUTING.md)
 3. Validate the commit message against the regex in [danger/helpers.ts](../../danger/helpers.ts)
 
-### Step 7: Push branch
+### Step 7: Run Danger validation (MANDATORY)
+
+**This step is mandatory.** Run the local Danger checks to validate branch name, commit messages, and changesets before pushing:
+
+```bash
+# For non-fork repositories
+pnpm danger:local
+
+# For fork repositories (relaxed validation rules)
+pnpm danger:local:fork
+```
+
+If any checks fail:
+
+- **Branch name invalid**: Follow the dangerfile rules and suggest a new branch name. A wrong branch name will force closing the PR and reopening a new one. As long as this check is failing, DO NOT open the PR.
+- **Commit messages invalid**: Warn user they need to amend commits (e.g., `git rebase -i origin/develop`) before the PR can pass CI.
+- **Changeset missing**: Go back to Step 5 to create one if needed.
+
+Do NOT proceed to push until all Danger checks pass.
+
+### Step 8: Push branch
 
 ```bash
 git push -u origin HEAD
 ```
 
-### Step 8: Create or update PR
+### Step 9: Create or update PR
 
 **Read [CONTRIBUTING.md](../../CONTRIBUTING.md) for the exact PR title format** (different for forks vs non-forks).
 
@@ -119,7 +139,7 @@ When updating an existing PR, ask the user if they want to update the body as we
 gh pr edit --title "<TITLE>" --body "<BODY>"
 ```
 
-### Step 9: Output PR URL
+### Step 10: Output PR URL
 
 After creating/updating the PR, output the URL in two formats (do NOT auto-open):
 
