@@ -450,7 +450,10 @@ import {
   DevToolsLogger,
   DevToolsDmkInspector,
 } from "@ledgerhq/device-management-kit-devtools-core";
-import { RozeniteConnector } from "@ledgerhq/device-management-kit-devtools-rozenite";
+import {
+  RozeniteConnector,
+  useRozeniteConnector,
+} from "@ledgerhq/device-management-kit-devtools-rozenite";
 
 // Create the connector (shared between logger and inspector)
 const connector = RozeniteConnector.getInstance();
@@ -470,6 +473,9 @@ const inspector = new DevToolsDmkInspector(connector, dmk);
 
 // Clean up when done (e.g., on app unmount)
 // inspector.destroy();
+
+// At the root of your React app, call this hook to initialise the connection
+useRozeniteConnector();
 ```
 
 #### Usage
