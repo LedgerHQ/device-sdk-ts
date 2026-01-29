@@ -332,12 +332,7 @@ You can use it with the following command:
 ```shell
 # At the root of the repository
 pnpm cli 
-
-# From ldmk-cli directory
-tail -f var/logs.dev
 ```
-
-
 
 # Documentation
 

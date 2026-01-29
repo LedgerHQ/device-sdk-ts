@@ -57,7 +57,6 @@ const dmk = new DeviceManagementKitBuilder()
   .addTransport(({
     deviceModelDataSource: DeviceModelDataSource;
     loggerServiceFactory: (tag: string) => LoggerPublisherService;
-    config: DmkConfig;
     apduSenderServiceFactory: ApduSenderServiceFactory;
     apduReceiverServiceFactory: ApduReceiverServiceFactory;
   }) => {
@@ -65,7 +64,6 @@ const dmk = new DeviceManagementKitBuilder()
     return new NodeHidTransport(
       deviceModelDataSource,
       loggerServiceFactory,
-      config,
       apduSenderServiceFactory,
       apduReceiverServiceFactory,
     );
