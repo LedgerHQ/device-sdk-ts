@@ -110,7 +110,9 @@ describe("NodeHidApduSender", () => {
   it("should setup connection", async () => {
     const { HIDAsync } = await import("node-hid");
 
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
 
     expect(HIDAsync.open).toHaveBeenCalledWith(mockDevice.path, {
       nonExclusive: true,
@@ -141,7 +143,9 @@ describe("NodeHidApduSender", () => {
 
   it("should close existing connection before setting up new one", async () => {
     // Setup first connection
-    await nodeHidApduSender.setupConnection();
+    const firstSetupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await firstSetupPromise;
 
     // Create a new mock for the second connection
     const secondMockHidAsync = {
@@ -156,13 +160,18 @@ describe("NodeHidApduSender", () => {
     );
 
     // Setup second connection - should close the first
-    await nodeHidApduSender.setupConnection();
+    const secondSetupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await secondSetupPromise;
 
     expect(mockHidAsync.close).toHaveBeenCalled();
   });
 
   it("should close connection", async () => {
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
+
     await nodeHidApduSender.closeConnection();
 
     expect(mockHidAsync.close).toHaveBeenCalled();
@@ -173,7 +182,9 @@ describe("NodeHidApduSender", () => {
     const error = new Error("Failed to close device");
     mockHidAsync.close = vi.fn().mockRejectedValue(error);
 
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
 
     await expect(nodeHidApduSender.closeConnection()).rejects.toThrow(error);
     expect(mockLogger.error).toHaveBeenCalledWith(
@@ -215,7 +226,9 @@ describe("NodeHidApduSender", () => {
     mockApduReceiver.handleFrame.mockReturnValue(Right(Maybe.of(apduResponse)));
 
     // Setup connection
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
 
     // Send APDU
     const promise = nodeHidApduSender.sendApdu(apdu);
@@ -242,7 +255,10 @@ describe("NodeHidApduSender", () => {
     mockApduSender.getFrames.mockReturnValue(frames);
     mockHidAsync.write = vi.fn().mockRejectedValue(error);
 
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
+
     const result = await nodeHidApduSender.sendApdu(apdu);
 
     expect(result.isLeft()).toBe(true);
@@ -261,7 +277,9 @@ describe("NodeHidApduSender", () => {
     mockApduReceiver.handleFrame.mockReturnValue(Left(apduError));
 
     // Setup connection
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
 
     // Send APDU
     const promise = nodeHidApduSender.sendApdu(apdu);
@@ -285,7 +303,9 @@ describe("NodeHidApduSender", () => {
     mockApduSender.getFrames.mockReturnValue(frames);
 
     // Setup connection
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
 
     // Send APDU
     const promise = nodeHidApduSender.sendApdu(apdu);
@@ -313,7 +333,10 @@ describe("NodeHidApduSender", () => {
 
     mockApduSender.getFrames.mockReturnValue(frames);
 
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
+
     const promise = nodeHidApduSender.sendApdu(apdu, false, 100);
 
     // Advance timers to trigger timeout - need to run pending timers
@@ -335,7 +358,10 @@ describe("NodeHidApduSender", () => {
     mockApduSender.getFrames.mockReturnValue(frames);
     mockApduReceiver.handleFrame.mockReturnValue(Right(Maybe.of(apduResponse)));
 
-    await nodeHidApduSender.setupConnection();
+    const setupPromise = nodeHidApduSender.setupConnection();
+    await vi.advanceTimersByTimeAsync(300);
+    await setupPromise;
+
     const promise = nodeHidApduSender.sendApdu(apdu, false, 1000);
 
     // Respond before timeout
