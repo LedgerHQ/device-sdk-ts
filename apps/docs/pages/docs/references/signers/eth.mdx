@@ -56,7 +56,7 @@ You can also configure the context module yourself:
 
 ```typescript
 // Initialise an Ethereum signer instance using customized context module
-const signerEth = new SignerEthBuilder({ sdk, sessionId })
+const signerEth = new SignerEthBuilder({ dmk, sessionId })
   .withContextModule(customContextModule)
   .build();
 ```
