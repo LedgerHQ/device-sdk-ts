@@ -42,14 +42,16 @@ Branch names **MUST** follow this format and are validated by CI.
 
 **Format:** `<type>/<ticket>-<description>`
 
-**Type** (required): One of the following prefixes:
+**Type** (required): Must be one of the prefixes defined in [`danger/helpers.ts`](danger/helpers.ts) (`BRANCH_PREFIX` constant). Common types include:
 
 - `feat/` / `feature/` — Add a new feature to the application or library
-- `bugfix/` / `bug/` / `fix/` — Fixing an existing bug
+- `bugfix/` / `bug/` / `fix/` / `hotfix/` — Fixing an existing bug
 - `support/` — For any other changes (tests, improvements, CI…)
 - `chore/` / `core/` — For maintenance work on the repo _(Ledger employees only)_
 - `doc/` — Add or modify documentation _(Ledger employees only)_
 - `refacto/` / `refactor/` — Modify the code organisation _(Ledger employees only)_
+
+> **Note:** The complete list of accepted types is enforced by CI via the regex in `danger/helpers.ts`. Refer to that file for the authoritative list.
 
 **Ticket** (required for branches on the main repository, not forks):
 
