@@ -1,15 +1,15 @@
 import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit";
 import { nodeHidTransportFactory } from "@ledgerhq/device-transport-kit-node-hid";
 import type { DeviceManagementKit } from "@ledgerhq/device-management-kit";
-import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import { DevToolsDmkInspector, DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
 import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
-import { DevtoolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
+import { DevToolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
 import { FileLogger } from "../logger/FileLogger";
 
 
 let dmkInstance: DeviceManagementKit | null = null;
 
-const devToolsWebSocketConnector = DevtoolsWebSocketConnector.getInstance().connect({
+const devToolsWebSocketConnector = DevToolsWebSocketConnector.getInstance().connect({
   url: DEFAULT_CLIENT_WS_URL,
 });
 
@@ -22,7 +22,10 @@ export const useDmk = (): DeviceManagementKit => {
       .addLogger(new FileLogger())
       .addLogger(devToolsLogger)
       .build();
+
+    new DevToolsDmkInspector(devToolsWebSocketConnector, dmkInstance);
   }
+  
   return dmkInstance;
 };
 

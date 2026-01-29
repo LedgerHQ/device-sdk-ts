@@ -661,13 +661,13 @@ importers:
         version: link:../../packages/device-management-kit
       '@ledgerhq/device-management-kit-devtools-core':
         specifier: workspace:^
-        version: link:../../packages/devtools-core
+        version: link:../../packages/devtools/core
       '@ledgerhq/device-management-kit-devtools-websocket-common':
         specifier: workspace:^
-        version: link:../../packages/devtools-websocket-common
+        version: link:../../packages/devtools/websocket-common
       '@ledgerhq/device-management-kit-devtools-websocket-connector':
         specifier: workspace:^
-        version: link:../../packages/devtools-websocket-connector
+        version: link:../../packages/devtools/websocket-connector
       '@ledgerhq/device-transport-kit-node-hid':
         specifier: workspace:^
         version: link:../../packages/transport/node-hid
