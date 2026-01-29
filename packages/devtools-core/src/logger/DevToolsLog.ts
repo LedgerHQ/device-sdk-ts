@@ -6,7 +6,3 @@ export type DevToolsLog = {
   message: string;
   payloadJSON: string; // extra data, can be an empty string
 };
-
-export type LogData = DevToolsLog & {
-  payload: string | Record<string, unknown>;
-};

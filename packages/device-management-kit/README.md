@@ -21,6 +21,9 @@
     - [Executing a device action](#executing-a-device-action)
       - [Open App Device Action](#open-app-device-action)
     - [Example in React](#example-in-react)
+  - [Developer tools](#developer-tools)
+    - [Web, Node.js or Electron app](#web-nodejs-or-electron-app)
+    - [React Native app (with Rozenite)](#react-native-app-with-rozenite)
 
 ## Description
 
@@ -372,12 +375,19 @@ Check [the sample app](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/ap
 
 ## Developer tools
 
-Some basic developer tools are available.
-For now they allow to view logs from the Device Management Kit. They will have more advanced features soon.
+Developer tools are available to help debug your DMK integration:
 
-### JavaScript app
+- **Real-time logging** — View DMK logs with filtering by level and tag
+- **Device session inspector** — Monitor connected devices and their states
+- **Device discovery** — Discover and connect to devices from the dashboard
+- **APDU sender** — Send raw APDU commands to devices
+- **DMK configuration** — View and modify settings like the My Ledger API provider
 
-The devtools can be set up in any JavaScript runtime with WebSocket support. (e.g. web apps, React Native apps etc.)
+### Web, Node.js or Electron app
+
+For web apps, Node.js apps, Electron apps, or any JavaScript runtime with WebSocket support (including React Native), use the WebSocket-based devtools with the Electron dashboard app.
+
+> **React Native users:** This setup also works for React Native apps. However, if you have [Rozenite](https://www.rozenite.dev/) set up in your app, we recommend the [Rozenite-based devtools](#react-native-app-with-rozenite) instead — it provides a more integrated experience directly within the React Native DevTools, with less setup required.
 
 #### Set up
 
@@ -388,24 +398,33 @@ Install those packages:
 - `@ledgerhq/device-management-kit-devtools-websocket-connector`
 
 ```ts
-import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import {
+  DevToolsLogger,
+  DevToolsDmkInspector,
+} from "@ledgerhq/device-management-kit-devtools-core";
 import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
-import { DevtoolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
+import { DevToolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
 
-// Build the dev tools logger
-function buildDevToolsLogger() {
-  const devToolsWebSocketConnector =
-    DevtoolsWebSocketConnector.getInstance().connect({
-      url: DEFAULT_CLIENT_WS_URL,
-    });
-  return new DevToolsLogger(devToolsWebSocketConnector);
-}
+// Create the connector (shared between logger and inspector)
+const connector = DevToolsWebSocketConnector.getInstance().connect({
+  url: DEFAULT_CLIENT_WS_URL,
+});
 
-// Pass the logger to your DMK builder
-new DeviceManagementKitBuilder()
+// Create the logger (before DMK is built)
+const devToolsLogger = new DevToolsLogger(connector);
+
+// Build the DMK with the logger
+const dmk = new DeviceManagementKitBuilder()
   //...
-  .addLogger(buildDevToolsLogger())
+  .addLogger(devToolsLogger)
   .build();
+
+// Optional: Enable inspector for device sessions and DMK interaction
+// This must be done AFTER the DMK is built
+const inspector = new DevToolsDmkInspector(connector, dmk);
+
+// Clean up when done (e.g., on app unmount)
+// inspector.destroy();
 ```
 
 #### Usage
@@ -427,24 +446,34 @@ Install those packages:
 - `@ledgerhq/device-management-kit-devtools-rozenite`
 
 ```ts
-import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import {
+  DevToolsLogger,
+  DevToolsDmkInspector,
+} from "@ledgerhq/device-management-kit-devtools-core";
 import { RozeniteConnector } from "@ledgerhq/device-management-kit-devtools-rozenite";
 
-// Build the dev tools logger
-function buildDevToolsLogger() {
-  const connector = RozeniteConnector.getInstance();
-  return new DevToolsLogger(connector);
-}
+// Create the connector (shared between logger and inspector)
+const connector = RozeniteConnector.getInstance();
 
-// Pass the logger to your DMK builder
-new DeviceManagementKitBuilder()
+// Create the logger (before DMK is built)
+const devToolsLogger = new DevToolsLogger(connector);
+
+// Build the DMK with the logger
+const dmk = new DeviceManagementKitBuilder()
   //...
-  .addLogger(buildDevToolsLogger())
+  .addLogger(devToolsLogger)
   .build();
+
+// Optional: Enable inspector for device sessions and DMK interaction
+// This must be done AFTER the DMK is built
+const inspector = new DevToolsDmkInspector(connector, dmk);
+
+// Clean up when done (e.g., on app unmount)
+// inspector.destroy();
 ```
 
 #### Usage
 
 1. Run your React Native app
 2. [Open the React Native DevTools](https://reactnative.dev/docs/react-native-devtools)
-3. Navigate to the DMK Devtools tab
+3. Navigate to the DMK DevTools tab

@@ -115,6 +115,25 @@ A brief overview of this project's packages:
 | -------------------------------------------------------- | --------------------------------------------- | -------------------------------------- |
 | @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol | packages/trusted-apps/ledger-keyring-protocol | Ledger Keyring Protocol implementation |
 
+### Developer Tools
+
+| Name                                                         | Path                                  | Description                                    |
+| ------------------------------------------------------------ | ------------------------------------- | ---------------------------------------------- |
+| @ledgerhq/device-management-kit-devtools                     | apps/devtools                         | Electron app for DMK developer tools           |
+| @ledgerhq/device-management-kit-devtools-core                | packages/devtools-core                | Core types and DevToolsLogger                  |
+| @ledgerhq/device-management-kit-devtools-rozenite            | packages/devtools-rozenite            | Rozenite connector for React Native devtools   |
+| @ledgerhq/device-management-kit-devtools-ui                  | packages/devtools-ui                  | React UI components for devtools dashboard     |
+| @ledgerhq/device-management-kit-devtools-websocket-common    | packages/devtools-websocket-common    | Common types and constants for WebSocket layer |
+| @ledgerhq/device-management-kit-devtools-websocket-connector | packages/devtools-websocket-connector | WebSocket connector for client apps            |
+| @ledgerhq/device-management-kit-devtools-websocket-server    | packages/devtools-websocket-server    | WebSocket server for devtools communication    |
+
+**Getting started:**
+
+- [Web, Node.js, Electron or React Native app → WebSocket devtools](packages/device-management-kit/README.md#web-nodejs-or-electron-app)
+- [React Native app with Rozenite → Rozenite devtools](packages/device-management-kit/README.md#react-native-app-with-rozenite) _(recommended for RN — better DX, less setup)_
+
+See [devtools-core README](packages/devtools-core/README.md) for architecture details.
+
 ### Development & Testing
 
 | Name                                                  | Path                           | Description                                                                     |

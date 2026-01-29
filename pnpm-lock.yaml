@@ -743,7 +743,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -1039,6 +1039,9 @@ importers:
       '@ledgerhq/vitest-config-dmk':
         specifier: workspace:^
         version: link:../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
 
   packages/devtools-rozenite:
     dependencies:
@@ -1100,6 +1103,9 @@ importers:
       react-inspector:
         specifier: 9.0.0
         version: 9.0.0(react@18.3.1)
+      react-resizable-panels:
+        specifier: ^4.4.1
+        version: 4.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -10805,6 +10811,12 @@ packages:
     resolution: {integrity: sha512-z6F7K9bV85EfseRCp2bzrpyQ0Gkw1uLoCel9XBVWPg/TjRj94SkJzUTGfOa4bs7iJvBWtQG0Wq7wnI0syw3EBQ==}
     engines: {node: '>=0.10.0'}
 
+  react-resizable-panels@4.4.1:
+    resolution: {integrity: sha512-dpM9oI6rGlAq7VYDeafSRA1JmkJv8aNuKySR+tZLQQLfaeqTnQLSM52EcoI/QdowzsjVUCk6jViKS0xHWITVRQ==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+
   react-select@5.8.0:
     resolution: {integrity: sha512-TfjLDo58XrhP6VG5M/Mi56Us0Yt8X7xD6cDybC7yoRMUNm7BGO7qk8J0TLQOua/prb8vUOtsfnXZwfm30HGsAA==}
     peerDependencies:
@@ -15729,7 +15741,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -15738,9 +15750,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -23656,6 +23666,11 @@ snapshots:
   react-refresh@0.14.2: {}
 
   react-refresh@0.17.0: {}
+
+  react-resizable-panels@4.4.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   react-select@5.8.0(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:

@@ -1,1 +1,1 @@
-export * from "./src/DevtoolsWebSocketConnector";
+export * from "./src/DevToolsWebSocketConnector";

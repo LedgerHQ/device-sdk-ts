@@ -34,7 +34,6 @@ const StyledTable = styled.table`
 const TableContainer = styled.div`
   flex: 1;
   position: relative;
-  border: 1px grey solid;
   display: flex;
   flex-direction: column;
   min-height: 0;
