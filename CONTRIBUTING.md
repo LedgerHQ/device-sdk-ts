@@ -38,32 +38,38 @@ We use the following git conventions for the `Device Management Kit` monorepo.
 
 #### Branch naming
 
-Depending on the purpose every git branch should be prefixed.
+Branch names **MUST** follow this format and are validated by CI.
 
-- `feat/` / `feature/` Add a new feature to the application or library
-- `bugfix/` / `bug/` / `fix/` Fixing an existing bug
-- `support/` For any other changes (tests, improvements, CI…)
+**Format:** `<type>/<ticket>-<description>`
 
-_For Ledger Employees:_
+**Type** (required): Must be one of the prefixes defined in [`danger/helpers.ts`](danger/helpers.ts) (`BRANCH_PREFIX` constant). Common types include:
 
-- `chore/` / `core/` For maintenance work on the repo
-- `doc/` Add or modify documentation
-- `refacto/` / `refactor/` Modify the code organisation
+- `feat/` / `feature/` — Add a new feature to the application or library
+- `bugfix/` / `bug/` / `fix/` / `hotfix/` — Fixing an existing bug
+- `support/` — For any other changes (tests, improvements, CI…)
+- `chore/` / `core/` — For maintenance work on the repo _(Ledger employees only)_
+- `doc/` — Add or modify documentation _(Ledger employees only)_
+- `refacto/` / `refactor/` — Modify the code organisation _(Ledger employees only)_
 
-_For Ledger Employees only:_ Add the Jira ticket number `DSDK-<number>` _(case insensitive)_ or `NO-ISSUE` if not applicable.
+> **Note:** The complete list of accepted types is enforced by CI via the regex in `danger/helpers.ts`. Refer to that file for the authoritative list.
 
-_If resolving a Github issue (optional and not to be combined with Jira ticket number):_ add `ISSUE-<number>`
+**Ticket** (required for branches on the main repository, not forks):
 
-Followed by a small description.
+- `DSDK-<number>` or `LIVE-<number>` — Jira ticket reference
+- `no-issue` — When no ticket exists (**default for automated/AI contributions**)
+- `issue-<number>` — GitHub issue reference
+
+**Description**: Short kebab-case description of the change.
 
 **Examples:**
 
-| User type     | Ticket | Example                          |
-| ------------- | ------ | -------------------------------- |
-| `employee`    | yes    | feature/dsdk-350-add-sparkles    |
-| `employee`    | no     | refacto/no-issue-remove-sparkles |
-| `contributor` | yes    | feat/issue-37-add-new-transport  |
-| `contributor` | no     | fix/missing-dependencies         |
+| Context                     | Example                            |
+| --------------------------- | ---------------------------------- |
+| With Jira ticket            | `feature/dsdk-350-add-sparkles`    |
+| No ticket (use when unsure) | `fix/no-issue-typo-in-readme`      |
+| GitHub issue reference      | `bugfix/issue-42-connection-error` |
+
+**Note for external contributors (forks):** The ticket requirement is relaxed by CI. A simple `feat/my-feature` format is valid.
 
 #### Changelogs
 
