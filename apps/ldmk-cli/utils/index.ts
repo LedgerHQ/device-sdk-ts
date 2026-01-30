@@ -1,2 +1,7 @@
-export { PREFIX, commands, type Command } from "./Constants";
+export {
+  PREFIX,
+  commands,
+  getAvailableCommands,
+  type Command,
+} from "./Constants";
 export { logSuccess, logInfo, logError } from "./Logger";

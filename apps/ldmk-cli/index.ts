@@ -2,7 +2,7 @@
 import "zx/globals";
 import { usePowerShell } from "zx";
 import { select } from "@inquirer/prompts";
-import { commands, logInfo, type Command } from "./utils";
+import { getAvailableCommands, logInfo, type Command } from "./utils";
 import { createHandlers } from "./handlers";
 import { listenToAvailableDevices } from "./services";
 import { type Subscription } from "rxjs";
@@ -13,12 +13,14 @@ import { resetDmk } from "./services/Dmk";
 let handlers: ReturnType<typeof createHandlers> | null = null;
 
 async function listenForCommand(): Promise<void> {
+  const isConnected = state.sessionId !== null;
+  const availableCommands = getAvailableCommands(isConnected);
 
   const selectedCommandName = await select<Command["name"]>({
     message: "Which command would you like to run?",
-    choices: commands.map((command) => ({
+    choices: availableCommands.map((command) => ({
       name: command.description,
-      value: command.name
+      value: command.name,
     })),
   });
 
