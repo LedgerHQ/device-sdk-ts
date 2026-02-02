@@ -32,12 +32,11 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
   }, []);
 
   return (
-    <>
+    <Flex flexDirection="column">
       <Flex
         flexDirection="row"
         onClick={noDevice ? undefined : toggleUnfolded}
         alignItems="center"
-        mt={1}
       >
         <Title variant="tiny" disabled={noDevice}>
           Available devices ({discoveredDevices.length})
@@ -55,7 +54,6 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
         rowGap={4}
         alignSelf="stretch"
         mt={unfolded ? 5 : 0}
-        mb={4}
       >
         {unfolded
           ? discoveredDevices.map((device) => (
@@ -63,7 +61,7 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
             ))
           : null}
       </Flex>
-    </>
+    </Flex>
   );
 };
 
@@ -88,7 +86,7 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   }, [dmk, device]);
 
   return (
-    <Flex flexDirection="row" alignItems="center">
+    <Flex flexDirection="row" alignItems="center" minWidth={0} flex={1}>
       <AvailableDevice
         name={name ?? deviceModel.name}
         model={deviceModel.model}

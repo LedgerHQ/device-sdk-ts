@@ -5,22 +5,16 @@ import {
   DeviceModelId,
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
-import {
-  Box,
-  Button,
-  DropdownGeneric,
-  Flex,
-  Icons,
-  Text,
-} from "@ledgerhq/react-ui";
+import { Box, Button, Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled, { type DefaultTheme } from "styled-components";
 
+import { Dropdown, DropdownItem } from "@/components/Dropdown";
 import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
 import { StatusText } from "./StatusText";
 
-const Root = styled(Flex).attrs({ p: 5, mb: 8, borderRadius: 2 })`
+const Root = styled(Flex).attrs({ p: 5, borderRadius: 2 })`
   background: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.neutral.c30};
   align-items: center;
@@ -35,16 +29,6 @@ const IconContainer = styled(Flex).attrs({ p: 4, mr: 3, borderRadius: 100 })`
     theme.colors.neutral.c40};
   justify-content: center;
   align-items: center;
-`;
-
-const ActionRow = styled(Flex).attrs({ py: 4, px: 2 })`
-  position: relative;
-  cursor: pointer;
-  flex-direction: row;
-  flex: 1;
-  min-width: 120px;
-  align-items: center;
-  justify-content: space-between;
 `;
 
 // These props are subject to change.
@@ -64,6 +48,8 @@ function getIconComponent(model: DeviceModelId) {
       return Icons.Stax;
     case DeviceModelId.FLEX:
       return Icons.Flex;
+    case DeviceModelId.APEX:
+      return Icons.Apex;
     default:
       return Icons.Nano;
   }
@@ -124,26 +110,24 @@ export const Device: React.FC<DeviceProps> = ({
         </Flex>
       </Box>
       <div data-testid="dropdown_device-option">
-        <DropdownGeneric closeOnClickOutside label="" placement="bottom">
-          <ActionRow
+        <Dropdown trigger={<Icons.MoreHorizontal size="S" />}>
+          <DropdownItem
             data-testid="CTA_disconnect-device"
             onClick={handleDisconnect}
           >
             <Text variant="paragraph" color="neutral.c80">
               Disconnect
             </Text>
-            <Icons.ChevronRight size="S" />
-          </ActionRow>
-          <ActionRow
+          </DropdownItem>
+          <DropdownItem
             data-testid="CTA_reconnect-device"
             onClick={handleReconnect}
           >
             <Text variant="paragraph" color="neutral.c80">
               Reconnect
             </Text>
-            <Icons.ChevronRight size="S" />
-          </ActionRow>
-        </DropdownGeneric>
+          </DropdownItem>
+        </Dropdown>
       </div>
     </Root>
   );
@@ -166,12 +150,25 @@ export const AvailableDevice: React.FC<AvailableDeviceProps> = ({
 }) => {
   const IconComponent = getIconComponent(model);
   return (
-    <Root flex={1} mb={0} m={0} active={false}>
+    <Root flex={1} mb={0} m={0} active={false} overflow="hidden">
       <IconContainer>
         <IconComponent size="S" />
       </IconContainer>
-      <Flex flexDirection="column" flex={1} rowGap={2}>
-        <Text variant="body">{name}</Text>
+      <Flex
+        flexDirection="column"
+        flex={1}
+        minWidth={0}
+        overflow="hidden"
+        rowGap={2}
+      >
+        <Text
+          variant="body"
+          overflow="hidden"
+          textOverflow="ellipsis"
+          whiteSpace="nowrap"
+        >
+          {name}
+        </Text>
         <Flex>
           <Text variant="paragraph" color="neutral.c80">
             {type}
