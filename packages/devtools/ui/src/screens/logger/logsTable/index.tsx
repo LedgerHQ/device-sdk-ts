@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useLayoutEffect, useMemo } from "react";
 import {
   getCoreRowModel,
   getSortedRowModel,
@@ -13,18 +13,19 @@ import { ScrollDownButton } from "./ScrollDownButton";
 import { TableBody } from "./TableBody";
 import { createColumns } from "./TableColumns";
 import { TableHeader } from "./TableHeader";
-import { useColumnSizeVars } from "./useColumnSizeVars";
 import { useScrollLogic } from "./useScrollLogic";
 
-const ScrollContainer = styled.div<{ height: number }>`
+const ScrollContainer = styled.div<{ height: number; disableScroll: boolean }>`
   height: ${({ height }) => height}px;
-  overflow: auto;
+  overflow: ${({ disableScroll }) => (disableScroll ? "hidden" : "auto")};
+  overflow-anchor: auto;
   position: relative;
   width: 100%;
 `;
 
-const TableWrapper = styled.div<{ width: number }>`
-  width: ${({ width }) => width}px;
+const TableWrapper = styled.div`
+  width: 100%;
+  min-width: fit-content;
 `;
 
 const StyledTable = styled.table`
@@ -39,11 +40,28 @@ const TableContainer = styled.div`
   min-height: 0;
 `;
 
+const EmptyState = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: #999;
+  font-size: 14px;
+`;
+
 type ScrollableLogTableProps = {
   data: Array<LogData>;
+  highlightedIndices?: Set<number>;
+  currentHighlightIndex?: number;
+  scrollToIndex?: number;
 };
 
-export const LogsTable: React.FC<ScrollableLogTableProps> = ({ data }) => {
+export const LogsTable: React.FC<ScrollableLogTableProps> = ({
+  data,
+  highlightedIndices,
+  currentHighlightIndex,
+  scrollToIndex,
+}) => {
   const {
     autoScrollEnabled,
     onScroll,
@@ -76,6 +94,7 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({ data }) => {
     count: rows.length,
     estimateSize: () => TABLE_CONFIG.ROW_HEIGHT_ESTIMATE,
     getScrollElement: () => scrollContainerRef.current,
+    getItemKey: (index) => rows[index]?.id ?? String(index),
     measureElement:
       typeof window !== "undefined" &&
       navigator.userAgent.indexOf("Firefox") === -1
@@ -84,33 +103,23 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({ data }) => {
     overscan: TABLE_CONFIG.OVERSCAN,
   });
 
+  // Skip during column resize to avoid scroll position jumping
+  const isResizingColumn = table.getState().columnSizingInfo.isResizingColumn;
+
   // Notify virtualizer when container height changes
   useEffect(() => {
-    // Force virtualizer to recalculate when height changes
+    if (isResizingColumn) return;
     rowVirtualizer.measure();
-  }, [scrollZoneHeight, rowVirtualizer]);
+  }, [scrollZoneHeight, rowVirtualizer, isResizingColumn]);
 
-  // Also listen to window resize as a fallback
-  useEffect(() => {
-    const handleResize = () => {
-      // Small delay to ensure DOM has updated
-      requestAnimationFrame(() => {
-        rowVirtualizer.measure();
-      });
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [rowVirtualizer]);
-
-  // Also observe the scroll container directly
+  // Observe the scroll container for size changes
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
     const observer = new ResizeObserver(() => {
+      // Skip measure during column resize
+      if (table.getState().columnSizingInfo.isResizingColumn) return;
       requestAnimationFrame(() => {
         rowVirtualizer.measure();
       });
@@ -121,9 +130,33 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({ data }) => {
     return () => {
       observer.disconnect();
     };
-  }, [rowVirtualizer, scrollContainerRef]);
+  }, [rowVirtualizer, scrollContainerRef, table]);
 
-  const columnSizeVars = useColumnSizeVars(table);
+  // Scroll to current search match
+  useEffect(() => {
+    if (scrollToIndex !== undefined && scrollToIndex >= 0) {
+      rowVirtualizer.scrollToIndex(scrollToIndex, { align: "center" });
+    }
+  }, [scrollToIndex, rowVirtualizer]);
+
+  // Reset virtualizer when data changes and is small (helps with filter transitions)
+  // Scroll to top first to avoid invalid scroll position, then recalculate
+  // Use useLayoutEffect to run synchronously before browser paints
+  useLayoutEffect(() => {
+    if (rows.length < 100 && rows.length > 0) {
+      rowVirtualizer.scrollToOffset(0);
+      rowVirtualizer.measure();
+    }
+  }, [rows.length, rowVirtualizer]);
+
+  // Show empty state when no data matches the filter
+  if (data.length === 0) {
+    return (
+      <TableContainer ref={scrollZoneRef}>
+        <EmptyState>No logs match the current filter</EmptyState>
+      </TableContainer>
+    );
+  }
 
   return (
     <TableContainer ref={scrollZoneRef}>
@@ -132,11 +165,17 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({ data }) => {
         ref={scrollContainerRef}
         onScroll={onScroll}
         height={scrollZoneHeight}
+        disableScroll={!!isResizingColumn}
       >
-        <TableWrapper width={table.getTotalSize()} style={columnSizeVars}>
+        <TableWrapper>
           <StyledTable>
             <TableHeader headerGroups={table.getHeaderGroups()} />
-            <TableBody virtualizer={rowVirtualizer} rows={rows} />
+            <TableBody
+              virtualizer={rowVirtualizer}
+              rows={rows}
+              highlightedIndices={highlightedIndices}
+              currentHighlightIndex={currentHighlightIndex}
+            />
           </StyledTable>
         </TableWrapper>
       </ScrollContainer>

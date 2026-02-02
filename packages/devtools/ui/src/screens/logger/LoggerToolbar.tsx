@@ -2,10 +2,14 @@ import React from "react";
 import { Flex, Icons, Tooltip } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
+import { FilterInput } from "./FilterInput";
 import { type LoggerOptions, LoggerOptionsView } from "./LoggerOptions";
+import { SearchInput } from "./SearchInput";
 
 const ButtonContainer = styled.div`
   opacity: 0.65;
+  cursor: pointer;
+  flex-shrink: 0;
   &:hover {
     opacity: 1;
   }
@@ -17,8 +21,32 @@ export const LoggerToolbar: React.FC<{
   options: LoggerOptions;
   setOptions: (options: LoggerOptions) => void;
   uniqueTags: Set<string>;
-}> = ({ clearLogs, downloadLogs, options, setOptions, uniqueTags }) => (
-  <Flex flexDirection="row" columnGap={5}>
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  matchCount: number;
+  currentMatchIndex: number;
+  onSearchNext: () => void;
+  onSearchPrevious: () => void;
+  onSearchFirst: () => void;
+  onSearchLast: () => void;
+  searchInputRef?: React.RefObject<HTMLInputElement>;
+}> = ({
+  clearLogs,
+  downloadLogs,
+  options,
+  setOptions,
+  uniqueTags,
+  searchQuery,
+  onSearchChange,
+  matchCount,
+  currentMatchIndex,
+  onSearchNext,
+  onSearchPrevious,
+  onSearchFirst,
+  onSearchLast,
+  searchInputRef,
+}) => (
+  <Flex flexDirection="row" columnGap={5} alignItems="center" flex={1}>
     <ButtonContainer onClick={clearLogs}>
       <Icons.DeleteStop size="S" />
     </ButtonContainer>
@@ -41,5 +69,20 @@ export const LoggerToolbar: React.FC<{
     <ButtonContainer onClick={downloadLogs}>
       <Icons.Download size="S" />
     </ButtonContainer>
+    <FilterInput
+      value={options.filterText}
+      onChange={(filterText) => setOptions({ ...options, filterText })}
+    />
+    <SearchInput
+      value={searchQuery}
+      onChange={onSearchChange}
+      matchCount={matchCount}
+      currentMatchIndex={currentMatchIndex}
+      onNext={onSearchNext}
+      onPrevious={onSearchPrevious}
+      onFirst={onSearchFirst}
+      onLast={onSearchLast}
+      inputRef={searchInputRef}
+    />
   </Flex>
 );
