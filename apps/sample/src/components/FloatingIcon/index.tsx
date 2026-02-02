@@ -9,14 +9,13 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
 import { Icons } from "@ledgerhq/react-ui/index";
 import styled from "styled-components";
 
 import { VncViewer } from "@/components/VncViewer";
 import {
   selectSpeculosVncUrl,
-  selectTransport,
+  selectTransportType,
 } from "@/state/settings/selectors";
 
 const CONSTANTS = {
@@ -97,7 +96,7 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
   onDragStart,
   onDragEnd,
 }) => {
-  const transport = useSelector(selectTransport);
+  const transportType = useSelector(selectTransportType);
   const speculosVncUrl = useSelector(selectSpeculosVncUrl);
 
   const [position, setPosition] = useState<Position>(
@@ -245,7 +244,7 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, [calculateBounds, isVncOpen]);
 
-  if (transport !== speculosIdentifier) {
+  if (transportType !== "speculos") {
     return null;
   }
 

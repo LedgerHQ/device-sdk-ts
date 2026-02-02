@@ -1,5 +1,4 @@
 import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
-import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import {
@@ -7,6 +6,7 @@ import {
   type CalMode,
   initialState,
   type SettingsState,
+  type TransportType,
 } from "./schema";
 
 export const settingsSlice = createSlice({
@@ -15,11 +15,11 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     // Transport settings
-    setTransport: (
+    setTransportType: (
       state,
-      action: PayloadAction<{ transport: TransportIdentifier }>,
+      action: PayloadAction<{ transportType: TransportType }>,
     ) => {
-      state.transport = action.payload.transport;
+      state.transportType = action.payload.transportType;
     },
     setMockServerUrl: (
       state,
@@ -95,7 +95,7 @@ export const settingsSlice = createSlice({
 });
 
 export const {
-  setTransport,
+  setTransportType,
   setMockServerUrl,
   setSpeculosUrl,
   setSpeculosVncUrl,

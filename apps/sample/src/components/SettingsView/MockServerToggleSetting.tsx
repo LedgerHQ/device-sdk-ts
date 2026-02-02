@@ -1,32 +1,30 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
-import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
-import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Flex, Switch } from "@ledgerhq/react-ui";
 
-import { selectTransport } from "@/state/settings/selectors";
-import { setTransport } from "@/state/settings/slice";
+import { type TransportType } from "@/state/settings/schema";
+import { selectTransportType } from "@/state/settings/selectors";
+import { setTransportType } from "@/state/settings/slice";
 
 import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const MockServerToggleSetting: React.FC = () => {
-  const transport = useSelector(selectTransport);
+  const transportType = useSelector(selectTransportType);
   const dispatch = useDispatch();
 
-  const mockServerEnabled = transport === mockserverIdentifier;
+  const mockServerEnabled = transportType === "mockserver";
 
-  const setTransportFn = useCallback(
-    (value: TransportIdentifier) => {
-      dispatch(setTransport({ transport: value }));
+  const setTransportTypeFn = useCallback(
+    (value: TransportType) => {
+      dispatch(setTransportType({ transportType: value }));
     },
     [dispatch],
   );
 
   const onToggle = useCallback(() => {
-    setTransportFn(mockServerEnabled ? webHidIdentifier : mockserverIdentifier);
-  }, [setTransportFn, mockServerEnabled]);
+    setTransportTypeFn(mockServerEnabled ? "default" : "mockserver");
+  }, [setTransportTypeFn, mockServerEnabled]);
 
   return (
     <SettingBox>
@@ -40,8 +38,8 @@ export const MockServerToggleSetting: React.FC = () => {
         />
       </Flex>
       <ResetSettingCTA
-        stateSelector={selectTransport}
-        setStateAction={setTransportFn}
+        stateSelector={selectTransportType}
+        setStateAction={setTransportTypeFn}
       />
     </SettingBox>
   );
