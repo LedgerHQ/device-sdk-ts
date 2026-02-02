@@ -4,8 +4,8 @@ import { type DmkError } from "@ledgerhq/device-management-kit";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import {
-  transportOptionsMap,
   type TransportOption,
+  transportOptionsMap,
 } from "@/providers/DeviceManagementKitProvider/transportConfig";
 import { selectTransportType } from "@/state/settings/selectors";
 
