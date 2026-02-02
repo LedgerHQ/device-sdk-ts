@@ -2,12 +2,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
-import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
-import { Box, Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
+import { Flex, IconsLegacy, Link, Text } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { AvailableDevices } from "@/components/AvailableDevices";
+import { ConnectDeviceButton } from "@/components/ConnectDeviceButton";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import {
@@ -19,9 +19,9 @@ import {
   selectSelectedSessionId,
 } from "@/state/sessions/selectors";
 import { setSelectedSession } from "@/state/sessions/slice";
-import { selectTransport } from "@/state/settings/selectors";
+import { selectTransportType } from "@/state/settings/selectors";
 
-const Root = styled(Flex).attrs({ py: 8, px: 6 })`
+const Root = styled(Flex).attrs({ py: 8, px: 6, rowGap: 6 })`
   flex-direction: column;
   width: 280px;
   background-color: ${({
@@ -34,12 +34,12 @@ const Root = styled(Flex).attrs({ py: 8, px: 6 })`
     mockServerEnabled
       ? theme.colors.constant.purple
       : theme.colors.background.card};
+  overflow-y: auto;
 `;
 
-const Subtitle = styled(Text).attrs({ mb: 5 })``;
-
-const MenuContainer = styled(Box)`
+const MenuContainer = styled(Flex)`
   flex: 1;
+  flex-direction: column;
   opacity: ${({ active }: { active: boolean }) => (active ? 1 : 0.5)};
 `;
 
@@ -60,7 +60,7 @@ export const Sidebar: React.FC = () => {
   const orderedConnectedDevices = useSelector(selectOrderedConnectedDevices);
   const selectedSessionId = useSelector(selectSelectedSessionId);
   const dispatch = useDispatch();
-  const transport = useSelector(selectTransport);
+  const transportType = useSelector(selectTransportType);
 
   const selectSession = useCallback(
     (sessionId: DeviceSessionId) => {
@@ -104,7 +104,7 @@ export const Sidebar: React.FC = () => {
 
   const router = useRouter();
   return (
-    <Root mockServerEnabled={transport === mockserverIdentifier}>
+    <Root mockServerEnabled={transportType === "mockserver"}>
       <Link
         onClick={() => router.push("/")}
         mb={8}
@@ -114,13 +114,13 @@ export const Sidebar: React.FC = () => {
         }}
       >
         Ledger Device Management Kit
-        {transport === mockserverIdentifier && <span> (MOCKED)</span>}
+        {transportType === "mockserver" && <span> (MOCKED)</span>}
       </Link>
 
-      <Subtitle variant={"tiny"}>
-        Device sessions ({orderedConnectedDevices.length})
-      </Subtitle>
-      <div data-testid="container_devices">
+      <Flex data-testid="container_devices" rowGap={4} flexDirection="column">
+        <Text variant={"tiny"}>
+          Device sessions ({orderedConnectedDevices.length})
+        </Text>
         {orderedConnectedDevices.map(({ sessionId, connectedDevice }) => (
           <Device
             key={sessionId}
@@ -133,10 +133,11 @@ export const Sidebar: React.FC = () => {
             onReconnect={onDeviceReconnect}
           />
         ))}
-      </div>
+      </Flex>
       <AvailableDevices />
+      <ConnectDeviceButton />
       <MenuContainer active={!!selectedSessionId}>
-        <Subtitle variant={"tiny"}>Menu</Subtitle>
+        <Text variant={"tiny"}>Menu</Text>
         <Menu />
       </MenuContainer>
 

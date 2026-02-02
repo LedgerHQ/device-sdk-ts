@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
+import { ConnectDeviceActions } from "./MainView/ConnectDeviceActions";
+
 /**
  * Component that wraps the child component and passes it the selected sessionId.
  * If there is no selected sessionId, it renders a message and a button to go to the home page.
@@ -32,9 +34,7 @@ export const SessionIdWrapper: React.FC<{
         <Text textAlign="center">
           No selected session id, first connect a device.
         </Text>
-        <Button variant="main" onClick={() => router.replace("/")}>
-          Go to the home page
-        </Button>
+        <ConnectDeviceActions onError={() => {}} />
       </Flex>
     );
   }
