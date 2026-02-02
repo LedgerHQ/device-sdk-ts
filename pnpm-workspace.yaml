@@ -20,6 +20,7 @@ catalog:
   "@inquirer/prompts": ^7.3.3
   "@ledgerhq/native-ui": ^0.27.1
   "@ledgerhq/react-ui": ^0.45.0
+  "@ledgerhq/crypto-icons": ^1.4.0
   "@playwright/test": ^1.49.0
   "@react-native-community/cli": 15.0.1
   "@react-native-community/cli-platform-android": 15.0.1
