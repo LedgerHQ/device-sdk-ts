@@ -650,6 +650,9 @@ importers:
       '@inquirer/prompts':
         specifier: 'catalog:'
         version: 7.3.3(@types/node@22.10.1)
+      '@ledgerhq/context-module':
+        specifier: workspace:^
+        version: link:../../packages/signer/context-module
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
         version: link:../../packages/device-management-kit
@@ -662,6 +665,9 @@ importers:
       '@ledgerhq/device-management-kit-devtools-websocket-connector':
         specifier: workspace:^
         version: link:../../packages/devtools/websocket-connector
+      '@ledgerhq/device-signer-kit-ethereum':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-eth
       '@ledgerhq/device-transport-kit-node-hid':
         specifier: workspace:^
         version: link:../../packages/transport/node-hid

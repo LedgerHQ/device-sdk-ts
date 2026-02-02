@@ -44,6 +44,12 @@ export const commands: Command[] = [
     connectionMode: "connected",
   },
   {
+    name: "useSigner",
+    description: "Use a signer to sign transactions and messages",
+    flags: [],
+    connectionMode: "connected",
+  },
+  {
     name: "disconnect",
     description: "Disconnect from the connected device",
     flags: [],

@@ -5,6 +5,7 @@ import { handleExecuteDeviceAction } from "./ExecuteDeviceAction";
 import { handleExit } from "./Exit";
 import { handleSendApdu } from "./SendApdu";
 import { handleSendCommand } from "./SendCommand";
+import { handleUseSigner } from "./UseSigner";
 import { handleVersion } from "./Version";
 
 export const createHandlers = (listenForCommand: ListenForCommand) => {
@@ -15,6 +16,7 @@ export const createHandlers = (listenForCommand: ListenForCommand) => {
     sendApdu: () => handleSendApdu(listenForCommand),
     sendCommand: () => handleSendCommand(listenForCommand),
     executeDeviceAction: () => handleExecuteDeviceAction(listenForCommand),
+    useSigner: () => handleUseSigner(listenForCommand),
     exit: () => handleExit(),
   };
 };

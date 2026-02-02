@@ -18,6 +18,8 @@
     "@ledgerhq/device-management-kit-devtools-websocket-common": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-websocket-connector": "workspace:^",
     "@ledgerhq/device-transport-kit-node-hid": "workspace:^",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
+    "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/ldmk-tool": "workspace:^",
     "rxjs": "catalog:",
     "semver": "catalog:",
