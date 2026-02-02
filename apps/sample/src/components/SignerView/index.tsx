@@ -21,6 +21,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Solana signer functionality",
     icon: <CryptoIcons.SOL size={80} />,
   },
+  {
+    title: "Zcash",
+    description: "Access Zcash signer functionality",
+    icon: <CryptoIcons.ZEC size={80} />,
+  },
 ];
 
 export const SignerView = () => {

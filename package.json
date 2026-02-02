@@ -49,7 +49,8 @@
     "danger:local:fork": "pnpm danger local --dangerfile danger/dangerfile-local-fork.ts --base origin/develop",
     "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts --failOnErrors",
     "cli": "pnpm ldmk-cli",
-    "tool": "pnpm ldmk-tool"
+    "tool": "pnpm ldmk-tool",
+    "signer-zcash": "pnpm --filter @ledgerhq/device-signer-kit-zcash"
   },
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",
