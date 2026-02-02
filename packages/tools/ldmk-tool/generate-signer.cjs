@@ -2104,16 +2104,12 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
         console.log(chalk.yellow(`⚠️  ${pascalCase} already exists in ${signerViewPath}`));
       } else {
         // Find the SUPPORTED_SIGNERS array and add the new entry
-        // Use uppercase ticker symbol if it's a known crypto, otherwise use BTC as placeholder
         const ticker = kebabCase.toUpperCase();
-        const iconName = ["ETH", "BTC", "SOL", "XRP", "ADA", "DOT", "AVAX", "MATIC", "LINK", "UNI"].includes(ticker) 
-          ? ticker 
-          : "BTC"; // Use BTC as fallback placeholder
         
         const newSignerEntry = `  {
     title: "${pascalCase}",
     description: "Access ${pascalCase} signer functionality",
-    icon: <CryptoIcons.${iconName} size={80} />, // TODO: Update icon if needed
+    icon: <CryptoIcon ledgerId="${kebabCase}" ticker="${ticker}" size="56px" />,
   },`;
         
         // Find the closing of SUPPORTED_SIGNERS array and insert before it
