@@ -6,16 +6,21 @@ runs:
   steps:
     - uses: moonrepo/setup-toolchain@v0
 
-    - name: Install toolchain
+    - name: Install toolchain and setup PATH
       shell: bash
-      run: proto use
+      run: |
+        proto use
+        # Get actual binary directories and add to PATH
+        echo "$(dirname $(proto bin node))" >> $GITHUB_PATH
+        echo "$(dirname $(proto bin pnpm))" >> $GITHUB_PATH
+        echo "/home/runner/.proto/bin" >> $GITHUB_PATH
 
     - name: Get pnpm store directory
       shell: bash
       run: |
-        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+        echo "STORE_PATH=$(proto run pnpm -- store path --silent)" >> $GITHUB_ENV
 
-    - name: Restore pnpm cache
+    - name: Setup pnpm cache
       uses: actions/cache@v4
       with:
         path: ${{ env.STORE_PATH }}
@@ -25,4 +30,4 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: pnpm install
+      run: proto run pnpm -- install
