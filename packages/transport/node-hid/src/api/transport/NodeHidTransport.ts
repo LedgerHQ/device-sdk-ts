@@ -132,11 +132,6 @@ export class NodeHidTransport implements Transport {
     return this.identifier;
   }
 
-  /**
-   * Wrapper around `navigator.hid.getDevices()`.
-   * It will return the list of plugged in HID devices to which the user has
-   * previously granted access through `navigator.hid.requestDevice()`.
-   */
   private async getDevices(): Promise<Either<DmkError, NodeHIDDevice[]>> {
     return EitherAsync.liftEither(this.hidApi).map(async (hidApi) => {
       try {
@@ -249,16 +244,11 @@ export class NodeHidTransport implements Transport {
     });
   }
 
-  /**
-   * Wrapper around navigator.hid.requestDevice()
-   * In a browser, it will show a native dialog to select a HID device.
-   */
   private async promptDeviceAccess(): Promise<
     Either<PromptDeviceAccessError, NodeHIDDevice[]>
   > {
     return EitherAsync.liftEither(this.hidApi)
       .map(async (hidApi) => {
-        // `requestDevice` returns an array. but normally the user can select only one device at a time.
         let hidDevices: NodeHIDDevice[] = [];
 
         try {
@@ -346,11 +336,17 @@ export class NodeHidTransport implements Transport {
     usb.on("detach", (device) => {
       this.handleDeviceDisconnection(device);
     });
+
+    process.on("exit", () => {
+      usb.unrefHotplugEvents();
+      usb.removeAllListeners();
+    });
   }
 
   private stopListeningToConnectionEvents(): void {
     this._logger.debug("stopListeningToConnectionEvents");
     this._connectionListenersAbortController.abort();
+    usb.removeAllListeners();
   }
 
   /**

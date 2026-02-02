@@ -51,7 +51,6 @@ catalog:
   "@types/react": 18.3.12
   "@types/react-dom": 18.3.1
   "@types/react-test-renderer": ^18.0.0
-  "@types/minimist": ^1.2.5
   "@types/semver": 7.7.0
   "@types/styled-components": ^5.1.25
   "@types/styled-components-react-native": ^5.2.5
@@ -91,7 +90,6 @@ catalog:
   js-base64: ^3.7.8
   js-flipper: ^0.273.0
   jsdom: ^26.0.0
-  minimist: ^1.2.8
   next: 14.2.35
   nextra: ^3.0.13
   nextra-theme-docs: ^3.0.15

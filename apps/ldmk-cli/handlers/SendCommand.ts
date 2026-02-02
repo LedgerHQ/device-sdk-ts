@@ -57,7 +57,7 @@ export const commands: DeviceCommand[] = [
   },
   {
     name: "CloseAppCommand",
-    description: "Close the current installed app (if any openned)",
+    description: "Close the current installed app (if any opened)",
   },
   {
     name: "Cancel",

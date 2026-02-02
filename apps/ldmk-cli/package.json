@@ -19,7 +19,6 @@
     "@ledgerhq/device-management-kit-devtools-websocket-connector": "workspace:^",
     "@ledgerhq/device-transport-kit-node-hid": "workspace:^",
     "@ledgerhq/ldmk-tool": "workspace:^",
-    "minimist": "catalog:",
     "rxjs": "catalog:",
     "semver": "catalog:",
     "tsx": "catalog:",
@@ -29,7 +28,6 @@
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
-    "@types/minimist": "catalog:",
     "@types/node": "catalog:",
     "typescript": "catalog:"
   }

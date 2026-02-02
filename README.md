@@ -331,7 +331,7 @@ You can use it with the following command:
 
 ```shell
 # At the root of the repository
-pnpm cli 
+pnpm cli dev
 ```
 
 # Documentation

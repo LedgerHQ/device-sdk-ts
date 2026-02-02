@@ -28,7 +28,7 @@ npm install @ledgerhq/device-transport-kit-node-hid
 
 ### Compatibility
 
-This library works in Node projects from Node v10 to Node v20 and Electron projects from Electron v3 to Electron v24.
+This library has been tested successfully on Node v20
 
 ### Pre-requisites
 
@@ -41,7 +41,7 @@ To use this transport, ensure you have the Device Management Kit installed in yo
 
 ### How To
 
-To use the transport, you need to inject it in the DeviceManagementKitBuilder before the build. This will allow the Devivce Management Kit to find and interact with devices with Node HID protocol.
+To use the transport, you need to inject it in the DeviceManagementKitBuilder before the build. This will allow the Device Management Kit to find and interact with devices with Node HID protocol.
 
 ```typescript
 import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit"

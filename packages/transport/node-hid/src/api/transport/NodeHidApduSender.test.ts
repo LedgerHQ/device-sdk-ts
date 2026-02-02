@@ -138,7 +138,14 @@ describe("NodeHidApduSender", () => {
     const { HIDAsync } = await import("node-hid");
     vi.mocked(HIDAsync.open).mockRejectedValue(error);
 
-    await expect(nodeHidApduSender.setupConnection()).rejects.toThrow(error);
+    // Capture the promise and its rejection handler immediately
+    const setupPromise = nodeHidApduSender.setupConnection();
+    // Attach rejection handler before advancing timers to avoid unhandled rejection warning
+    const resultPromise = setupPromise.catch((e) => e);
+
+    await vi.advanceTimersByTimeAsync(300);
+    const result = await resultPromise;
+    expect(result).toBe(error);
   });
 
   it("should close existing connection before setting up new one", async () => {

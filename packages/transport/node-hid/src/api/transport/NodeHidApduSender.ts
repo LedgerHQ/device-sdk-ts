@@ -14,7 +14,6 @@ import {
   type SendApduResult,
   SendApduTimeoutError,
 } from "@ledgerhq/device-management-kit";
-import * as Sentry from "@sentry/minimal";
 import { type Device as NodeHIDDevice, HIDAsync } from "node-hid";
 import { type Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
@@ -84,8 +83,6 @@ export class NodeHidApduSender
           },
         );
 
-        this.logger.debug(formatApduSentLog(apdu));
-
         for (const frame of this.apduSender.getFrames(apdu)) {
           try {
             const report = Buffer.from([0x00].concat([...frame.getRawData()]));
@@ -95,6 +92,8 @@ export class NodeHidApduSender
             return Promise.resolve(Left(new NodeHidSendReportError(error)));
           }
         }
+
+        this.logger.debug(formatApduSentLog(apdu));
 
         if (abortTimeout) {
           this.abortTimeout = Just(
@@ -149,12 +148,13 @@ export class NodeHidApduSender
       throw new Error("Missing device path");
     }
 
+    await new Promise((resolve) => setTimeout(resolve, 300)); //make sure the device is opened on the OS level
+
     this.hidAsync = Maybe.of(
       await HIDAsync.open(this.dependencies.device.path, {
         nonExclusive: true,
       }),
     );
-    await new Promise((resolve) => setTimeout(resolve, 300)); //make sure the device is opened on the OS level
 
     return this.hidAsync.caseOf({
       Just: (hidAsync) => {
@@ -168,7 +168,6 @@ export class NodeHidApduSender
       Nothing: () => {
         const error = new Error("Error while opening device");
         this.logger.error(`Error while opening device`, { data: { error } });
-        Sentry.captureException(new OpeningConnectionError(error));
         throw error;
       },
     });

@@ -117,9 +117,6 @@ catalogs:
     '@types/crypto-js':
       specifier: ^4.2.0
       version: 4.2.2
-    '@types/minimist':
-      specifier: ^1.2.5
-      version: 1.2.5
     '@types/node':
       specifier: 22.10.1
       version: 22.10.1
@@ -249,9 +246,6 @@ catalogs:
     lottie-react:
       specifier: ^2.4.0
       version: 2.4.1
-    minimist:
-      specifier: ^1.2.8
-      version: 1.2.8
     next:
       specifier: 14.2.35
       version: 14.2.35
@@ -674,9 +668,6 @@ importers:
       '@ledgerhq/ldmk-tool':
         specifier: workspace:^
         version: link:../../packages/tools/ldmk-tool
-      minimist:
-        specifier: 'catalog:'
-        version: 1.2.8
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
@@ -699,9 +690,6 @@ importers:
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:^
         version: link:../../packages/config/typescript
-      '@types/minimist':
-        specifier: 'catalog:'
-        version: 1.2.5
       '@types/node':
         specifier: 'catalog:'
         version: 22.10.1
@@ -5765,9 +5753,6 @@ packages:
 
   '@types/mdx@2.0.13':
     resolution: {integrity: sha512-+OWZQfAYyio6YkJb3HLxDrvnx6SWWDbC0zVPfBRzUk0/nqoDyf6dNxQi3eArPe8rJ473nobTMQ/8Zk+LxJ+Yuw==}
-
-  '@types/minimist@1.2.5':
-    resolution: {integrity: sha512-hov8bUuiLiyFPGyFPE1lwWhmzYbirOXQNNo40+y3zow8aFVTeyn3VWL0VFFfdNddA8S4Vf0Tc062rzyNr7Paag==}
 
   '@types/ms@0.7.34':
     resolution: {integrity: sha512-nG96G3Wp6acyAgJqGasjODb+acrI7KltPiRxzHPXnP3NgI28bpQDRv53olbqGXbfcgF5aiiHmO3xpwEpS5Ld9g==}
@@ -17227,8 +17212,6 @@ snapshots:
       '@types/unist': 3.0.3
 
   '@types/mdx@2.0.13': {}
-
-  '@types/minimist@1.2.5': {}
 
   '@types/ms@0.7.34': {}
 

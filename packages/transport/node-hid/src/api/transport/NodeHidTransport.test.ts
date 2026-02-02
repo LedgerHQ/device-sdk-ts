@@ -55,6 +55,8 @@ vi.mock("usb", () => ({
         mockUsbDetachCallbacks.push(callback);
       }
     },
+    removeAllListeners: vi.fn(),
+    unrefHotplugEvents: vi.fn(),
   },
   Device: class {},
 }));
