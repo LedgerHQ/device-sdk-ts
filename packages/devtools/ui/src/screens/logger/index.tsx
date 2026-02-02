@@ -66,17 +66,17 @@ export const Logger: React.FC<Props> = ({
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Keyboard shortcuts (Cmd+F, Cmd+G / Cmd+Shift+G)
+  // Keyboard shortcuts (Ctrl/Cmd+F, Ctrl/Cmd+G / Ctrl/Cmd+Shift+G)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd+F to focus search
-      if (e.metaKey && e.key.toLowerCase() === "f") {
+      // Ctrl/Cmd+F to focus search
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
         e.preventDefault();
         searchInputRef.current?.focus();
         searchInputRef.current?.select();
       }
-      // Cmd+G / Cmd+Shift+G for navigation
-      if (e.metaKey && e.key.toLowerCase() === "g") {
+      // Ctrl/Cmd+G / Ctrl/Cmd+Shift+G for navigation
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "g") {
         e.preventDefault();
         if (e.shiftKey) {
           goToPrevious();

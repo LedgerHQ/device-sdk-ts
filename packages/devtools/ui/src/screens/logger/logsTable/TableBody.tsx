@@ -21,11 +21,11 @@ const StyledTr = styled.tr<{ start: number }>`
 `;
 
 // Anchor element at the bottom - browser will anchor to this when scrolled to bottom
-const ScrollAnchor = styled.div<{ totalSize: number }>`
+// Using tr/td for valid HTML inside tbody
+const ScrollAnchor = styled.tr<{ totalSize: number }>`
   position: absolute;
   top: ${({ totalSize }) => totalSize}px;
   height: 1px;
-  width: 100%;
   overflow-anchor: auto;
 `;
 
@@ -107,7 +107,9 @@ export const TableBody: React.FC<TableBodyProps> = ({
         );
       })}
       {/* Anchor element at the bottom for overflow-anchor to latch onto */}
-      <ScrollAnchor totalSize={totalSize} />
+      <ScrollAnchor totalSize={totalSize}>
+        <td />
+      </ScrollAnchor>
     </StyledTbody>
   );
 };

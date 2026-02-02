@@ -126,7 +126,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
         <StyledInput
           ref={effectiveRef}
           type="text"
-          placeholder="Search (Cmd+F)"
+          placeholder="Search (Ctrl/Cmd+F)"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setIsFocused(true)}

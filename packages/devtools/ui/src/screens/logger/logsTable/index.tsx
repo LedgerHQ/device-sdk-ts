@@ -149,11 +149,11 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({
     }
   }, [rows.length, rowVirtualizer]);
 
-  // Show empty state when no data matches the filter
+  // Show empty state when there are no logs to display
   if (data.length === 0) {
     return (
       <TableContainer ref={scrollZoneRef}>
-        <EmptyState>No logs match the current filter</EmptyState>
+        <EmptyState>No logs to display</EmptyState>
       </TableContainer>
     );
   }
