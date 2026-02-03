@@ -1,7 +1,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Button, Flex, Icons, Text } from "@ledgerhq/react-ui";
-import { useRouter } from "next/navigation";
+import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
@@ -15,8 +14,6 @@ export const SessionIdWrapper: React.FC<{
   ChildComponent: React.FC<{ sessionId: string }>;
 }> = ({ ChildComponent }) => {
   const sessionId = useSelector(selectSelectedSessionId);
-
-  const router = useRouter();
 
   if (!sessionId) {
     return (

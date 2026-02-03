@@ -53,6 +53,7 @@
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
     "@types/styled-components": "catalog:",
     "autoprefixer": "catalog:",
     "globals": "catalog:",
