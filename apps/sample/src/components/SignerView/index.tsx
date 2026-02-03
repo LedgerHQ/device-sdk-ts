@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { PageWithHeader } from "@/components//PageWithHeader";
 import { ClickableListItem } from "@/components/ClickableListItem";
 
-const size = "50px";
+const size = "48px";
 
 const SUPPORTED_SIGNERS = [
   {

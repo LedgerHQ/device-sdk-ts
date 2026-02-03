@@ -1,19 +1,10 @@
 import React from "react";
-import { type DmkError } from "@ledgerhq/device-management-kit";
 import { Button, Flex } from "@ledgerhq/react-ui";
 
 import { useConnectDevice } from "@/hooks/useConnectDevice";
 
-type ConnectDeviceActionsProps = {
-  onError: (error: DmkError | null) => void;
-};
-
-export const ConnectDeviceActions = ({
-  onError,
-}: ConnectDeviceActionsProps) => {
-  const { transportOptions, connectWithTransport } = useConnectDevice({
-    onError,
-  });
+export const ConnectDeviceButtons: React.FC = () => {
+  const { transportOptions, connectWithTransport } = useConnectDevice();
 
   return (
     <Flex flexDirection="row" columnGap={6}>
@@ -22,7 +13,6 @@ export const ConnectDeviceActions = ({
           key={option.identifier}
           onClick={() => connectWithTransport(option.identifier)}
           variant="main"
-          backgroundColor="main"
           size="large"
           data-testid={`CTA_select-device-${option.identifier}`}
         >

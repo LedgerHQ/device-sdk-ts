@@ -67,9 +67,15 @@ export const Dropdown: React.FC<DropdownProps> = ({
       }
     };
 
+    const handleScroll = () => {
+      setIsOpen(false);
+    };
+
     document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
     };
   }, [isOpen]);
 

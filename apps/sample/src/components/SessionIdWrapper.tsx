@@ -4,11 +4,12 @@ import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
-import { ConnectDeviceActions } from "./MainView/ConnectDeviceActions";
+import { ConnectDeviceButtons } from "./ConnectDevice/ConnectDeviceButtons";
 
 /**
  * Component that wraps the child component and passes it the selected sessionId.
- * If there is no selected sessionId, it renders a message and a button to go to the home page.
+ * If there is no selected sessionId, it renders a message and a button to
+ * connect a device.
  */
 export const SessionIdWrapper: React.FC<{
   ChildComponent: React.FC<{ sessionId: string }>;
@@ -31,7 +32,7 @@ export const SessionIdWrapper: React.FC<{
         <Text textAlign="center">
           No selected session id, first connect a device.
         </Text>
-        <ConnectDeviceActions onError={() => {}} />
+        <ConnectDeviceButtons />
       </Flex>
     );
   }

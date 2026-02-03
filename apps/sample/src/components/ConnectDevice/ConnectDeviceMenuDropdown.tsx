@@ -13,7 +13,7 @@ const Title = styled(Text)`
   }
 `;
 
-export const ConnectDeviceButton: React.FC = () => {
+export const ConnectDeviceMenuDropdown: React.FC = () => {
   const { transportOptions, connectWithTransport } = useConnectDevice();
 
   return (

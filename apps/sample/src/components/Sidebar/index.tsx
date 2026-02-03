@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { AvailableDevices } from "@/components/AvailableDevices";
-import { ConnectDeviceButton } from "@/components/ConnectDeviceButton";
+import { ConnectDeviceMenuDropdown } from "@/components/ConnectDevice/ConnectDeviceMenuDropdown";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
 import {
@@ -135,7 +135,7 @@ export const Sidebar: React.FC = () => {
         ))}
       </Flex>
       <AvailableDevices />
-      <ConnectDeviceButton />
+      <ConnectDeviceMenuDropdown />
       <MenuContainer active={!!selectedSessionId}>
         <Text variant={"tiny"}>Menu</Text>
         <Menu />

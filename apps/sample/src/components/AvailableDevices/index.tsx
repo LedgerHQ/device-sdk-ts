@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { useDispatch } from "react-redux";
 import {
   type ConnectionType,
   type DiscoveredDevice,
@@ -12,6 +13,7 @@ import styled from "styled-components";
 import { AvailableDevice } from "@/components/Device";
 import { useAvailableDevices } from "@/hooks/useAvailableDevices";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { setDisplayedError } from "@/state/ui/slice";
 
 const Title = styled(Text)<{ disabled: boolean }>`
   :hover {
@@ -80,10 +82,14 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   device,
 ) => {
   const { deviceModel, connected, name } = device;
+  const dispatch = useDispatch();
+
   const dmk = useDmk();
   const connectToDevice = useCallback(async () => {
-    await dmk.connect({ device });
-  }, [dmk, device]);
+    await dmk.connect({ device }).catch((error) => {
+      dispatch(setDisplayedError(error));
+    });
+  }, [dmk, device, dispatch]);
 
   return (
     <Flex flexDirection="row" alignItems="center" minWidth={0} flex={1}>
