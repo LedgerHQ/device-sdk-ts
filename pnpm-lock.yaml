@@ -1728,9 +1728,6 @@ importers:
 
   packages/transport/node-hid:
     dependencies:
-      '@sentry/minimal':
-        specifier: 'catalog:'
-        version: 6.19.7
       node-hid:
         specifier: 'catalog:'
         version: 3.2.0

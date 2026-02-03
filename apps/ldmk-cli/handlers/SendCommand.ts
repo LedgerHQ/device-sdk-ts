@@ -113,11 +113,6 @@ export const handleSendCommand = async (listenForCommand: ListenForCommand): Pro
     return listenForCommand();
   }
 
-  if (deviceLocked()) {
-    logError("\nDevice locked! Please, first unlock your device.\n");
-    return listenForCommand();
-  }
-
   const choice = await select<DeviceCommandName>({
     message: "Select a command to send",
     choices: commands.map((cmd) => ({ name: cmd.description, value: cmd.name })),

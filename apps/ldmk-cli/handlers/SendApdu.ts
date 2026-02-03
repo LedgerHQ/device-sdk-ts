@@ -10,12 +10,7 @@ export const handleSendApdu = async (listenForCommand: ListenForCommand): Promis
     logError("\nNo device connected! Please, first connect to a device.\n");
     return listenForCommand();
   }
-
-  if (deviceLocked()) {
-    logError("\nDevice locked! Please, first unlock your device.\n");
-    return listenForCommand();
-  }
-
+  
   const CLA = await input({ message: "Enter CLA (e.g., E0)" });
   const INS = await input({ message: "Enter INS (e.g., 01)" });
   const P1 = await input({ message: "Enter P1 (e.g., 00)" });

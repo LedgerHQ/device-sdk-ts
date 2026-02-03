@@ -7,7 +7,7 @@ import { DeviceStatus, DiscoveredDevice } from "@ledgerhq/device-management-kit"
 
 export const handleConnect = async (listenForCommand: ListenForCommand): Promise<void> => {
 
-  const deviceChoices = Array.from(state.connectedDevices.keys());
+  const deviceChoices = Array.from(state.discoveredDevices.keys());
 
   if (deviceChoices.length === 0) {
     logError("\nNo device found. Please ensure a device is connected.\n");
@@ -32,7 +32,7 @@ export const handleConnect = async (listenForCommand: ListenForCommand): Promise
     const dmk = useDmk();
 
     state.sessionId = await dmk.connect({
-      device: state.connectedDevices.get(selectedDeviceName) as DiscoveredDevice,
+      device: state.discoveredDevices.get(selectedDeviceName) as DiscoveredDevice,
     });
 
     state.selectedDeviceName = selectedDeviceName;

@@ -61,9 +61,9 @@ async function main(): Promise<void> {
   subscription = listenToAvailableDevices();
   state.subscriptions.push(subscription);
   try {
-    await new Promise((resolve) => setTimeout(resolve, 200));
-        logInfo("\nWelcome to the DMK CLI!\n");
-        await listenForCommand();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      logInfo("\nWelcome to the DMK CLI!\n");
+      await listenForCommand();
     } finally {
       cleanup();
       process.exit(0);

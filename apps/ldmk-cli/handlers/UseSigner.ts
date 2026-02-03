@@ -397,11 +397,6 @@ export const handleUseSigner = async (
     return listenForCommand();
   }
 
-  if (deviceLocked()) {
-    logError("\nDevice locked! Please, first unlock your device.\n");
-    return listenForCommand();
-  }
-
   const choice = await select<SignerType>({
     message: "Select a signer to use",
     choices: signerChoices.map((s) => ({

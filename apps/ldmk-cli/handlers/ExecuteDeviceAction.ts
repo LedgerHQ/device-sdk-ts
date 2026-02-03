@@ -171,12 +171,7 @@ export const handleExecuteDeviceAction = async (
     logError("\nNo device connected! Please, first connect to a device.\n");
     return listenForCommand();
   }
-
-  if (deviceLocked()) {
-    logError("\nDevice locked! Please, first unlock your device.\n");
-    return listenForCommand();
-  }
-
+  
   const choice = await select<DeviceActionName>({
     message: "Select a device action to execute",
     choices: deviceActions.map((action) => ({

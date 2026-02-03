@@ -8,6 +8,7 @@ import { FileLogger } from "../logger/FileLogger";
 
 
 let dmkInstance: DeviceManagementKit | null = null;
+let devToolsDmkInspector: DevToolsDmkInspector | null = null;
 
 const devToolsWebSocketConnector = DevToolsWebSocketConnector.getInstance().connect({
   url: DEFAULT_CLIENT_WS_URL,
@@ -23,13 +24,17 @@ export const useDmk = (): DeviceManagementKit => {
       .addLogger(devToolsLogger)
       .build();
 
-    new DevToolsDmkInspector(devToolsWebSocketConnector, dmkInstance);
+      devToolsDmkInspector = new DevToolsDmkInspector(devToolsWebSocketConnector, dmkInstance);
   }
   
   return dmkInstance;
 };
 
 export const resetDmk = (): void => {
+  if (devToolsDmkInspector) {
+    devToolsDmkInspector.destroy();
+    devToolsDmkInspector = null;
+  }
   if (dmkInstance) {
     dmkInstance.close();
     dmkInstance = null;

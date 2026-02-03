@@ -22,7 +22,6 @@ import {
   type TransportIdentifier,
   UnknownDeviceError,
 } from "@ledgerhq/device-management-kit";
-import * as Sentry from "@sentry/minimal";
 import { type Device as NodeHIDDevice, devicesAsync, HIDAsync } from "node-hid";
 import {
   type Either,
@@ -157,7 +156,6 @@ export class NodeHidTransport implements Transport {
         this._logger.error(`getDevices: error getting devices`, {
           data: { error },
         });
-        Sentry.captureException(deviceError);
         throw deviceError;
       }
     });
@@ -232,7 +230,6 @@ export class NodeHidTransport implements Transport {
         this._logger.error("Error while getting accessible device", {
           data: { error },
         });
-        Sentry.captureException(error);
       },
       Right: (hidDevices) => {
         this._transportDiscoveredDevices.next(
@@ -263,7 +260,6 @@ export class NodeHidTransport implements Transport {
           this._logger.error(`promptDeviceAccess: error requesting device`, {
             data: { error },
           });
-          Sentry.captureException(deviceError);
           throw deviceError;
         }
 
@@ -302,7 +298,6 @@ export class NodeHidTransport implements Transport {
             this._logger.error("Error while getting accessible device", {
               data: { error },
             });
-            Sentry.captureException(error);
             throw error;
           },
           Right: (hidDevices) => {
@@ -561,12 +556,11 @@ export class NodeHidTransport implements Transport {
     deviceConnection: DeviceConnectionStateMachine<NodeHidApduSenderDependencies>,
     hidDevice: NodeHIDDevice,
   ) {
-    this._deviceConnectionsPendingReconnection.delete(deviceConnection);
-    this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
-
     try {
+      this._deviceConnectionsPendingReconnection.delete(deviceConnection);
       deviceConnection.setDependencies({ device: hidDevice });
       await deviceConnection.setupConnection();
+      this._deviceConnectionsByHidDevice.set(hidDevice, deviceConnection);
       deviceConnection.eventDeviceConnected();
     } catch (error) {
       this._logger.error("Error while reconnecting to device", {

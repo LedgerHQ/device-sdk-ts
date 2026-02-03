@@ -8,9 +8,9 @@ export const listenToAvailableDevices = () : Subscription  => {
     .listenToAvailableDevices({ transport: nodeHidIdentifier })
     .subscribe({
       next: (discoveredDevices) => {
-        state.connectedDevices.clear();
+        state.discoveredDevices.clear();
         discoveredDevices.forEach((discoveredDevice) => { 
-          state.connectedDevices.set(discoveredDevice.name, discoveredDevice);
+          state.discoveredDevices.set(discoveredDevice.name, discoveredDevice);
         });
       },
     });
