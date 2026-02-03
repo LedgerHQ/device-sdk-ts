@@ -17,6 +17,8 @@ import {
 
 // const { inspect } = createBrowserInspector();
 
+const TRANSPORT_BUSY_WAIT_TIME = 10000; // 10 seconds
+
 type DeviceDisconnectedEvent = {
   type: "DeviceDisconnected";
 };
@@ -76,6 +78,9 @@ export class DeviceConnectionStateMachine<Dependencies> {
 
   private timeoutDuration: number;
   private timeout: ReturnType<typeof setTimeout> | null = null;
+  private previousSendApduPromise: Promise<
+    Either<DmkError, ApduResponse>
+  > | null = null;
 
   startReconnectionTimeout() {
     this.timeout = setTimeout(() => {
@@ -161,20 +166,36 @@ export class DeviceConnectionStateMachine<Dependencies> {
     return this.deviceId;
   }
 
-  public sendApdu(
+  public async sendApdu(
     apdu: Uint8Array,
     triggersDisconnection?: boolean,
     abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
-    return new Promise((responseCallback) => {
-      this.machineActor.send({
-        type: "SendApduCalled",
-        apdu,
-        triggersDisconnection: !!triggersDisconnection,
-        abortTimeout,
-        responseCallback,
-      });
+    if (this.machineActor.getSnapshot().context.apduInProgress.isJust()) {
+      await Promise.race([
+        new Promise((resolve) => setTimeout(resolve, TRANSPORT_BUSY_WAIT_TIME)),
+        this.previousSendApduPromise,
+      ]);
+    }
+
+    const promise = new Promise<Either<DmkError, ApduResponse>>(
+      (responseCallback) => {
+        this.machineActor.send({
+          type: "SendApduCalled",
+          apdu,
+          triggersDisconnection: !!triggersDisconnection,
+          abortTimeout,
+          responseCallback,
+        });
+      },
+    );
+    this.previousSendApduPromise = promise;
+    void promise.finally(() => {
+      if (this.previousSendApduPromise === promise) {
+        this.previousSendApduPromise = null;
+      }
     });
+    return promise;
   }
 
   public async setupConnection() {
