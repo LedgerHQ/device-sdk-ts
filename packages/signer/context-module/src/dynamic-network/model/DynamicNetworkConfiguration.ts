@@ -11,7 +11,9 @@ export type DynamicNetworkDescriptor = {
   icon: string | undefined;
 };
 
+export type LowercaseDeviceModelId = Lowercase<DeviceModelId>;
+
 export type DynamicNetworkConfiguration = {
   id: string;
-  descriptors: Record<DeviceModelId, DynamicNetworkDescriptor>;
+  descriptors: Record<LowercaseDeviceModelId, DynamicNetworkDescriptor>;
 };

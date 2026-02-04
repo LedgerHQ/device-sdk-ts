@@ -1,4 +1,3 @@
-import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
@@ -8,6 +7,7 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
+  type LowercaseDeviceModelId,
 } from "@/dynamic-network/model/DynamicNetworkConfiguration";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
@@ -137,7 +137,7 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
   ): DynamicNetworkConfiguration {
     const descriptors = Object.entries(networkData.descriptors).reduce(
       (acc, [deviceModel, descriptor]) => {
-        acc[deviceModel as DeviceModelId] = {
+        acc[deviceModel as LowercaseDeviceModelId] = {
           descriptorType: descriptor.descriptorType,
           descriptorVersion: descriptor.descriptorVersion,
           data: descriptor.data,
@@ -146,7 +146,7 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
         };
         return acc;
       },
-      {} as Record<DeviceModelId, DynamicNetworkDescriptor>,
+      {} as Record<LowercaseDeviceModelId, DynamicNetworkDescriptor>,
     );
 
     return {
