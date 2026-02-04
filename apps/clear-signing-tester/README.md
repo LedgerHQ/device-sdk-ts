@@ -52,6 +52,7 @@ Options:
   --plugin <plugin>              Plugin to use (e.g., Paraswap). If not specified, uses no plugin.
   --plugin-version <version>     Plugin version to use. If not specified, uses latest version.
   --screenshot-folder-path <path>  Save screenshots to a folder during transaction signing
+  --custom-app <path>            Custom app file path (relative to COIN_APPS_PATH or absolute). Bypasses automatic Ethereum app version resolution.
 
   # @config.signer
   --derivation-path <path>       Derivation path (default: "44'/60'/0'/0/0")
@@ -252,6 +253,30 @@ pnpm cs-tester cli typed-data-file ./test-data.json --erc7730-files ./descriptor
 # Test a contract with custom descriptors
 pnpm cs-tester cli contract 0x1234... --erc7730-files ./descriptor.json
 ```
+
+### Custom App Support
+
+The tester supports running Speculos with a custom app file, bypassing the automatic Ethereum app version resolution. This is useful for testing development builds of apps or non-Ethereum apps.
+
+#### Using Custom App
+
+```bash
+# Use a custom app file (path relative to COIN_APPS_PATH)
+pnpm cs-tester cli start-speculos --custom-app stax/1.8.1/MyApp/app_1.0.0.elf
+
+# Use an absolute path on your host machine (will be mounted automatically)
+pnpm cs-tester cli start-speculos --custom-app /home/user/builds/my_app.elf
+
+# Test transactions with a custom app
+pnpm cs-tester cli raw-transaction <tx> --custom-app stax/1.8.1/Ethereum/app_dev.elf
+```
+
+**Important Notes:**
+
+- When using `--custom-app`, the `--app-eth-version` and `--os-version` options are ignored
+- **Relative paths** (e.g., `stax/1.8.1/MyApp/app.elf`) are resolved relative to `COIN_APPS_PATH` (mounted at `/apps` in the container)
+- **Absolute paths** (e.g., `/home/user/builds/my_app.elf`) are automatically mounted into the container at `/custom-app/app.elf`
+- Plugin options (`--plugin`, `--plugin-version`) are also ignored when using a custom app
 
 ## Output
 
