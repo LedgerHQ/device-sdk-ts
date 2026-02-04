@@ -31,8 +31,21 @@ export class RozeniteConnector implements Connector {
   private messagesFromDashboard: Subject<{ type: string; payload: string }> =
     new Subject();
   private messagesToSendSubscription: Subscription | null = null;
+  private verbose: boolean = false;
 
   private constructor() {}
+
+  /**
+   * VERBOSE LOGGING
+   */
+
+  public setVerbose(verbose: boolean): void {
+    this.verbose = verbose;
+  }
+
+  private error(...args: unknown[]): void {
+    if (this.verbose) console.error(...args);
+  }
 
   setClient(rozeniteClient: RozeniteDevToolsClient<PluginEvents>): void {
     // Clean up old subscription if it exists
@@ -45,7 +58,7 @@ export class RozeniteConnector implements Connector {
     }
     this.rozeniteClient = rozeniteClient;
     this.initialize().catch((error) => {
-      console.error("[RozeniteConnector] Error initializing", error);
+      this.error("[RozeniteConnector] Error initializing", error);
     });
   }
 

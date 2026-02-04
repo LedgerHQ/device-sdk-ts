@@ -44,13 +44,34 @@ export class DevToolsWebSocketConnector implements Connector {
     new Subject();
   private messagesToSendSubscription: Subscription | null = null;
   private destroyed: boolean = false;
+  private verbose: boolean = false;
+
+  /**
+   * VERBOSE LOGGING
+   */
+
+  public setVerbose(verbose: boolean): void {
+    this.verbose = verbose;
+  }
+
+  private log(...args: unknown[]): void {
+    if (this.verbose) console.log(...args);
+  }
+
+  private warn(...args: unknown[]): void {
+    if (this.verbose) console.warn(...args);
+  }
+
+  private error(...args: unknown[]): void {
+    if (this.verbose) console.error(...args);
+  }
 
   /**
    * LIFE CYCLE
    */
 
   connect(params: Params): DevToolsWebSocketConnector {
-    console.log("[DevToolsWebSocketConnector] 🔌 Connecting to", params.url);
+    this.log("[DevToolsWebSocketConnector] 🔌 Connecting to", params.url);
     if (this.destroyed) {
       throw new Error("Connector is destroyed");
     }
@@ -74,11 +95,11 @@ export class DevToolsWebSocketConnector implements Connector {
             return "UNKNOWN";
         }
       };
-      console.log(
+      this.log(
         "[DevToolsWebSocketConnector] Already connected to the same URL",
         params.url,
       );
-      console.log(
+      this.log(
         "[DevToolsWebSocketConnector]",
         mapReadyStateToText(this.ws.readyState),
       );
@@ -90,13 +111,13 @@ export class DevToolsWebSocketConnector implements Connector {
       this.messagesToSendSubscription = null;
     }
     if (this.ws) {
-      console.log(
+      this.log(
         "[DevToolsWebSocketConnector] Already connected to different URL, closing previous connection",
       );
       this.ws.close();
     }
 
-    console.log(
+    this.log(
       "[DevToolsWebSocketConnector] WebSocket connecting to",
       params.url,
     );
@@ -105,7 +126,7 @@ export class DevToolsWebSocketConnector implements Connector {
     this.wsUrl = params.url;
 
     this.ws.onopen = () => {
-      console.log("[DevToolsWebSocketConnector] WebSocket connected");
+      this.log("[DevToolsWebSocketConnector] WebSocket connected");
       if (this.reconnectionTimeout) {
         clearTimeout(this.reconnectionTimeout);
         this.reconnectionTimeout = null;
@@ -114,7 +135,7 @@ export class DevToolsWebSocketConnector implements Connector {
     };
 
     this.ws.onclose = () => {
-      console.log("[DevToolsWebSocketConnector] WebSocket closed");
+      this.log("[DevToolsWebSocketConnector] WebSocket closed");
       this.ws = null;
       this.wsUrl = null;
       if (this.messagesToSendSubscription) {
@@ -124,7 +145,7 @@ export class DevToolsWebSocketConnector implements Connector {
     };
 
     this.ws.onerror = (event) => {
-      console.warn("[DevToolsWebSocketConnector] WebSocket error", event);
+      this.warn("[DevToolsWebSocketConnector] WebSocket error", event);
       if (event.target.readyState === WebSocket.CLOSED) {
         this.ws = null;
         this.wsUrl = null;
@@ -133,7 +154,7 @@ export class DevToolsWebSocketConnector implements Connector {
     };
 
     this.ws.onmessage = (event) => {
-      console.log(
+      this.log(
         "[DevToolsWebSocketConnector] WebSocket message received",
         event.data,
       );
@@ -149,7 +170,7 @@ export class DevToolsWebSocketConnector implements Connector {
             const type = parsedMessage.type;
             const payload = parsedMessage.payload;
             if (typeof type !== "string" || typeof payload !== "string") {
-              console.error(
+              this.error(
                 "[DevToolsWebSocketConnector] Invalid message received",
                 {
                   type,
@@ -162,7 +183,7 @@ export class DevToolsWebSocketConnector implements Connector {
           } catch (error: unknown) {
             const errorMessage =
               error instanceof Error ? error.message : String(error);
-            console.error(
+            this.error(
               "[DevToolsWebSocketConnector] Failed to parse message payload",
               errorMessage,
             );
@@ -171,7 +192,7 @@ export class DevToolsWebSocketConnector implements Connector {
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error(
+        this.error(
           "[DevToolsWebSocketConnector] Failed to parse message",
           errorMessage,
         );
@@ -186,21 +207,19 @@ export class DevToolsWebSocketConnector implements Connector {
     if (this.destroyed) {
       return;
     }
-    console.log(
-      "[DevToolsWebSocketConnector] Scheduling reconnect in 5 seconds",
-    );
+    this.log("[DevToolsWebSocketConnector] Scheduling reconnect in 5 seconds");
     if (this.reconnectionTimeout) {
       clearTimeout(this.reconnectionTimeout);
       this.reconnectionTimeout = null;
     }
     this.reconnectionTimeout = setTimeout(() => {
-      console.log("[DevToolsWebSocketConnector] Reconnecting...");
+      this.log("[DevToolsWebSocketConnector] Reconnecting...");
       this.connect(params);
     }, 5000);
   }
 
   private initialize() {
-    console.log("[DevToolsWebSocketConnector] Initializing...");
+    this.log("[DevToolsWebSocketConnector] Initializing...");
     // WebSocket.OPEN is 1
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(
@@ -243,7 +262,7 @@ export class DevToolsWebSocketConnector implements Connector {
       } catch (error: unknown) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        console.error(
+        this.error(
           "[DevToolsWebSocketConnector] Failed to close WebSocket",
           errorMessage,
         );
