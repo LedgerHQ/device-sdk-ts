@@ -32,6 +32,8 @@ export const selectTransportConfig = createSelector(
 // DMK settings selectors
 export const selectAppProvider = (state: RootState) =>
   state.settings.appProvider;
+export const selectPollingInterval = (state: RootState) =>
+  state.settings.pollingInterval;
 
 // CAL config selectors
 export const selectCalConfig = (state: RootState) => state.settings.calConfig;

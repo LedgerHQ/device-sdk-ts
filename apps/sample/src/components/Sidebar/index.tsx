@@ -19,7 +19,11 @@ import {
   selectSelectedSessionId,
 } from "@/state/sessions/selectors";
 import { setSelectedSession } from "@/state/sessions/slice";
-import { selectTransportType } from "@/state/settings/selectors";
+import {
+  selectPollingInterval,
+  selectTransportType,
+} from "@/state/settings/selectors";
+import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6, rowGap: 6 })`
   flex-direction: column;
@@ -61,6 +65,7 @@ export const Sidebar: React.FC = () => {
   const selectedSessionId = useSelector(selectSelectedSessionId);
   const dispatch = useDispatch();
   const transportType = useSelector(selectTransportType);
+  const pollingInterval = useSelector(selectPollingInterval);
 
   const selectSession = useCallback(
     (sessionId: DeviceSessionId) => {
@@ -94,12 +99,16 @@ export const Sidebar: React.FC = () => {
     async (sessionId: DeviceSessionId) => {
       try {
         const device = dmk.getConnectedDevice({ sessionId });
-        await dmk.reconnect({ device });
+        await dmk.reconnect({
+          device,
+          sessionRefresherOptions:
+            buildSessionRefresherOptions(pollingInterval),
+        });
       } catch (e) {
         console.error(e);
       }
     },
-    [dmk],
+    [dmk, pollingInterval],
   );
 
   const router = useRouter();

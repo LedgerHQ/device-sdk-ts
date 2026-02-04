@@ -35,6 +35,7 @@ export type SettingsState = {
 
   // DMK settings
   appProvider: number;
+  pollingInterval: number;
 
   // Context module config
   calConfig: ContextModuleCalConfig;
@@ -52,6 +53,7 @@ export const initialState: SettingsState = {
 
   // DMK settings
   appProvider: 1,
+  pollingInterval: 1000,
 
   // Context module config objects
   calConfig: {

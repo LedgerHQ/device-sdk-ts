@@ -7,8 +7,12 @@ import {
   type TransportOption,
   transportOptionsMap,
 } from "@/providers/DeviceManagementKitProvider/transportConfig";
-import { selectTransportType } from "@/state/settings/selectors";
+import {
+  selectPollingInterval,
+  selectTransportType,
+} from "@/state/settings/selectors";
 import { setDisplayedError } from "@/state/ui/slice";
+import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
 
 type UseConnectDeviceResult = {
   transportOptions: TransportOption[];
@@ -23,6 +27,7 @@ export function useConnectDevice(): UseConnectDeviceResult {
   const dispatch = useDispatch();
 
   const transportType = useSelector(selectTransportType);
+  const pollingInterval = useSelector(selectPollingInterval);
   const dmk = useDmk();
 
   const onError = useCallback(
@@ -41,7 +46,11 @@ export function useConnectDevice(): UseConnectDeviceResult {
       dmk.startDiscovering({ transport: transportIdentifier }).subscribe({
         next: (device) => {
           dmk
-            .connect({ device })
+            .connect({
+              device,
+              sessionRefresherOptions:
+                buildSessionRefresherOptions(pollingInterval),
+            })
             .then((sessionId) => {
               console.log(
                 `🦖 Response from connect: ${JSON.stringify(sessionId)} 🎉`,
@@ -58,7 +67,7 @@ export function useConnectDevice(): UseConnectDeviceResult {
         },
       });
     },
-    [onError, dmk],
+    [onError, dmk, pollingInterval],
   );
 
   return {
