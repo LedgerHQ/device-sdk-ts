@@ -15,6 +15,7 @@ import { Flex, StyleProvider } from "@ledgerhq/react-ui";
 import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
+import { Notifications } from "@/components/Notifications";
 import { Sidebar } from "@/components/Sidebar";
 import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
@@ -56,6 +57,7 @@ const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
       <Sidebar />
       <PageContainer>{children}</PageContainer>
       <FloatingIcon />
+      <Notifications />
     </Root>
   );
 };

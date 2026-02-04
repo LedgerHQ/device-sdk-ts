@@ -1,25 +1,28 @@
 import React from "react";
-import { CryptoIcons, Grid } from "@ledgerhq/react-ui";
+import { CryptoIcon } from "@ledgerhq/crypto-icons";
+import { Grid } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 
 import { PageWithHeader } from "@/components//PageWithHeader";
 import { ClickableListItem } from "@/components/ClickableListItem";
 
+const size = "48px";
+
 const SUPPORTED_SIGNERS = [
   {
     title: "Ethereum",
     description: "Access EVM compatible signer functionality",
-    icon: <CryptoIcons.ETH size={80} />,
+    icon: <CryptoIcon ledgerId="ethereum" ticker="ETH" size={size} />,
   },
   {
     title: "Bitcoin",
     description: "Access Bitcoin signer functionality",
-    icon: <CryptoIcons.BTC size={80} />,
+    icon: <CryptoIcon ledgerId="bitcoin" ticker="BTC" size={size} />,
   },
   {
     title: "Solana",
     description: "Access Solana signer functionality",
-    icon: <CryptoIcons.SOL size={80} />,
+    icon: <CryptoIcon ledgerId="solana" ticker="SOL" size={size} />,
   },
 ];
 

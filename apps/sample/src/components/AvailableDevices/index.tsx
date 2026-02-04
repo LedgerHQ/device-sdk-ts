@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { useDispatch } from "react-redux";
 import {
   type ConnectionType,
   type DiscoveredDevice,
@@ -12,6 +13,7 @@ import styled from "styled-components";
 import { AvailableDevice } from "@/components/Device";
 import { useAvailableDevices } from "@/hooks/useAvailableDevices";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { setDisplayedError } from "@/state/ui/slice";
 
 const Title = styled(Text)<{ disabled: boolean }>`
   :hover {
@@ -32,12 +34,11 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
   }, []);
 
   return (
-    <>
+    <Flex flexDirection="column">
       <Flex
         flexDirection="row"
         onClick={noDevice ? undefined : toggleUnfolded}
         alignItems="center"
-        mt={1}
       >
         <Title variant="tiny" disabled={noDevice}>
           Available devices ({discoveredDevices.length})
@@ -55,7 +56,6 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
         rowGap={4}
         alignSelf="stretch"
         mt={unfolded ? 5 : 0}
-        mb={4}
       >
         {unfolded
           ? discoveredDevices.map((device) => (
@@ -63,7 +63,7 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
             ))
           : null}
       </Flex>
-    </>
+    </Flex>
   );
 };
 
@@ -82,13 +82,17 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
   device,
 ) => {
   const { deviceModel, connected, name } = device;
+  const dispatch = useDispatch();
+
   const dmk = useDmk();
   const connectToDevice = useCallback(async () => {
-    await dmk.connect({ device });
-  }, [dmk, device]);
+    await dmk.connect({ device }).catch((error) => {
+      dispatch(setDisplayedError(error));
+    });
+  }, [dmk, device, dispatch]);
 
   return (
-    <Flex flexDirection="row" alignItems="center">
+    <Flex flexDirection="row" alignItems="center" minWidth={0} flex={1}>
       <AvailableDevice
         name={name ?? deviceModel.name}
         model={deviceModel.model}

@@ -1,20 +1,20 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { Button, Flex, Icons, Text } from "@ledgerhq/react-ui";
-import { useRouter } from "next/navigation";
+import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
+import { ConnectDeviceButtons } from "./ConnectDevice/ConnectDeviceButtons";
+
 /**
  * Component that wraps the child component and passes it the selected sessionId.
- * If there is no selected sessionId, it renders a message and a button to go to the home page.
+ * If there is no selected sessionId, it renders a message and a button to
+ * connect a device.
  */
 export const SessionIdWrapper: React.FC<{
   ChildComponent: React.FC<{ sessionId: string }>;
 }> = ({ ChildComponent }) => {
   const sessionId = useSelector(selectSelectedSessionId);
-
-  const router = useRouter();
 
   if (!sessionId) {
     return (
@@ -32,9 +32,7 @@ export const SessionIdWrapper: React.FC<{
         <Text textAlign="center">
           No selected session id, first connect a device.
         </Text>
-        <Button variant="main" onClick={() => router.replace("/")}>
-          Go to the home page
-        </Button>
+        <ConnectDeviceButtons />
       </Flex>
     );
   }
