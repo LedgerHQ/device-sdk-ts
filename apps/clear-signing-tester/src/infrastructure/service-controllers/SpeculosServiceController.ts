@@ -20,6 +20,22 @@ const SPECULOS_DOCKER_IMAGE_BASE =
 const SPECULOS_API_PORT = 5000;
 const SPECULOS_VNC_PORT = 5900;
 
+/**
+ * Validates that a relative path does not contain path traversal sequences.
+ * @throws Error if the path contains path traversal sequences
+ */
+function validateRelativePath(relativePath: string): void {
+  // Check for path traversal patterns
+  const pathSegments = relativePath.split("/");
+  for (const segment of pathSegments) {
+    if (segment === ".." || segment === ".") {
+      throw new Error(
+        `Invalid custom app path: path traversal sequences ("${segment}") are not allowed in relative paths`,
+      );
+    }
+  }
+}
+
 @injectable()
 export class SpeculosServiceController implements ServiceController {
   private readonly logger: LoggerPublisherService;
@@ -59,7 +75,8 @@ export class SpeculosServiceController implements ServiceController {
         customAppVolume = `${this.config.customAppPath}:/custom-app/app.elf`;
         appPath = "/custom-app/app.elf";
       } else {
-        // Relative path: use /apps mount (COIN_APPS_PATH)
+        // Relative path: validate against path traversal and use /apps mount (COIN_APPS_PATH)
+        validateRelativePath(this.config.customAppPath);
         appPath = `/apps/${this.config.customAppPath}`;
       }
 
