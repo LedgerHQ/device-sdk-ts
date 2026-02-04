@@ -12,6 +12,7 @@ import { MetadataServiceUrlSetting } from "./MetadataServiceUrlSetting";
 import { MockServerToggleSetting } from "./MockServerToggleSetting";
 import { MockServerUrlSetting } from "./MockServerUrlSetting";
 import { OriginTokenSetting } from "./OriginTokenSetting";
+import { PollingIntervalSetting } from "./PollingIntervalSetting";
 import { SectionTitle } from "./SectionTitle";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
 import { SpeculosUrlSetting } from "./SpeculosUrlSetting";
@@ -27,6 +28,7 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Device Management Kit</SectionTitle>
           <AppProviderSetting />
+          <PollingIntervalSetting />
         </SectionContainer>
 
         <SectionContainer>

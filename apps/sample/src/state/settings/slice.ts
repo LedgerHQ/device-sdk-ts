@@ -41,6 +41,12 @@ export const settingsSlice = createSlice({
     setAppProvider: (state, action: PayloadAction<{ appProvider: number }>) => {
       state.appProvider = action.payload.appProvider;
     },
+    setPollingInterval: (
+      state,
+      action: PayloadAction<{ pollingInterval: number }>,
+    ) => {
+      state.pollingInterval = action.payload.pollingInterval;
+    },
 
     // CAL config
     setCalConfig: (
@@ -100,6 +106,7 @@ export const {
   setSpeculosUrl,
   setSpeculosVncUrl,
   setAppProvider,
+  setPollingInterval,
   setCalConfig,
   setCalUrl,
   setCalMode,

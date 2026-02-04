@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   type ConnectionType,
   type DiscoveredDevice,
@@ -13,7 +13,9 @@ import styled from "styled-components";
 import { AvailableDevice } from "@/components/Device";
 import { useAvailableDevices } from "@/hooks/useAvailableDevices";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { selectPollingInterval } from "@/state/settings/selectors";
 import { setDisplayedError } from "@/state/ui/slice";
+import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
 
 const Title = styled(Text)<{ disabled: boolean }>`
   :hover {
@@ -83,13 +85,19 @@ const KnownDevice: React.FC<DiscoveredDevice & { connected: boolean }> = (
 ) => {
   const { deviceModel, connected, name } = device;
   const dispatch = useDispatch();
-
   const dmk = useDmk();
+  const pollingInterval = useSelector(selectPollingInterval);
+
   const connectToDevice = useCallback(async () => {
-    await dmk.connect({ device }).catch((error) => {
-      dispatch(setDisplayedError(error));
-    });
-  }, [dmk, device, dispatch]);
+    await dmk
+      .connect({
+        device,
+        sessionRefresherOptions: buildSessionRefresherOptions(pollingInterval),
+      })
+      .catch((error) => {
+        dispatch(setDisplayedError(error));
+      });
+  }, [dmk, device, pollingInterval, dispatch]);
 
   return (
     <Flex flexDirection="row" alignItems="center" minWidth={0} flex={1}>
