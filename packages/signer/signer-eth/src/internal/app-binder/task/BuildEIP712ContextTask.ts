@@ -43,7 +43,7 @@ export class BuildEIP712ContextTask {
     private readonly derivationPath: string,
     private readonly appConfig: GetConfigCommandResponse,
     private readonly from: string,
-    private readonly logger: LoggerPublisherService,
+    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     private readonly buildFullContextFactory = (
       api: InternalApi,
       args: BuildFullContextsTaskArgs,
@@ -118,7 +118,7 @@ export class BuildEIP712ContextTask {
       clearSignContext,
       calldatasContexts,
       deviceModelId: deviceState.deviceModelId,
-      logger: this.logger,
+      loggerFactory: this.loggerFactory,
     };
     return provideTaskArgs;
   }
@@ -194,7 +194,7 @@ export class BuildEIP712ContextTask {
         derivationPath: this.derivationPath,
         subset,
         deviceModelId: deviceState.deviceModelId,
-        logger: this.logger,
+        loggerFactory: this.loggerFactory,
       }).run();
       if (
         calldataContext.clearSigningType === ClearSigningType.EIP7730 ||

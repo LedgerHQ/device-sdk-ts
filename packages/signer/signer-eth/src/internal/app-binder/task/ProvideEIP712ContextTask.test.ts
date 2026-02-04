@@ -51,6 +51,8 @@ const mockLogger = {
   subscribers: [],
 };
 
+const mockLoggerFactory = (_tag: string) => mockLogger;
+
 describe("ProvideEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const provideContextFactoryMock = vi.fn();
@@ -247,7 +249,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -374,7 +376,7 @@ describe("ProvideEIP712ContextTask", () => {
           payload: new Uint8Array([0x01, 0x02, 0x03]),
         },
       },
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -401,7 +403,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: undefined }))
@@ -614,7 +616,7 @@ describe("ProvideEIP712ContextTask", () => {
         tokens: {},
       }),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -774,7 +776,7 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasContexts: {
         0: [],
       },
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -793,7 +795,7 @@ describe("ProvideEIP712ContextTask", () => {
     expect(provideContextFactoryMock).toHaveBeenCalledWith({
       contexts: [],
       derivationPath: "44'/60'/0'/0/0",
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     });
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
@@ -899,7 +901,7 @@ describe("ProvideEIP712ContextTask", () => {
         tokens: { 255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3" },
       }),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -953,7 +955,7 @@ describe("ProvideEIP712ContextTask", () => {
         tokens: { 0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619" },
       }),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1007,7 +1009,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1049,7 +1051,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1096,7 +1098,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT), // No certificate in this context
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
 
     // WHEN
@@ -1129,7 +1131,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand.mockResolvedValueOnce(
       CommandResultFactory({
@@ -1162,7 +1164,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand
       .mockResolvedValueOnce(CommandResultFactory({ data: { tokenIndex: 4 } }))
@@ -1197,7 +1199,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand
@@ -1290,7 +1292,7 @@ describe("ProvideEIP712ContextTask", () => {
         },
       }),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(

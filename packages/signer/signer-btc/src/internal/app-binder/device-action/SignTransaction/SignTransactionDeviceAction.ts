@@ -4,7 +4,6 @@ import {
   type HexaString,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
   type StateMachineTypes,
   UnknownDAError,
   UserInteractionRequired,
@@ -55,21 +54,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAIntermediateValue,
   SignTransactionDAInternalState
 > {
-  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
-
-  constructor(args: {
-    input: SignTransactionDAInput;
-    inspect?: boolean;
-    loggerFactory: (tag: string) => LoggerPublisherService;
-  }) {
-    super({
-      input: args.input,
-      inspect: args.inspect,
-      logger: args.loggerFactory("SignTransactionDeviceAction"),
-    });
-    this._loggerFactory = args.loggerFactory;
-  }
-
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
@@ -99,7 +83,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       actors: {
         signPsbtStateMachine: new SignPsbtDeviceAction({
           input: this.input,
-          loggerFactory: this._loggerFactory,
+          loggerFactory: this.getLoggerFactory(internalApi),
         }).makeStateMachine(internalApi),
         updatePsbt: fromPromise(updatePsbt),
         extractTransaction: fromPromise(extractTransaction),

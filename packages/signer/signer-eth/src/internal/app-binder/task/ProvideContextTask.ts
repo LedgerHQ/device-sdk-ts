@@ -42,9 +42,9 @@ export type ProvideContextTaskArgs = {
    */
   context: ClearSignContextSuccess;
   /**
-   * Logger for debugging.
+   * Logger factory for creating loggers with custom tags.
    */
-  logger: LoggerPublisherService;
+  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type ProvideContextTaskResult = CommandResult<unknown, EthErrorCodes>;
@@ -53,6 +53,8 @@ export type ProvideContextTaskResult = CommandResult<unknown, EthErrorCodes>;
  * This task is responsible for providing a single context to the device.
  */
 export class ProvideContextTask {
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     private _api: InternalApi,
     private _args: ProvideContextTaskArgs,
@@ -60,11 +62,13 @@ export class ProvideContextTask {
       api: InternalApi,
       args: SendPayloadInChunksTaskArgs<unknown>,
     ) => new SendPayloadInChunksTask(api, args),
-  ) {}
+  ) {
+    this._logger = _args.loggerFactory("ProvideContextTask");
+  }
 
   async run(): Promise<ProvideContextTaskResult> {
     const { type, payload, certificate } = this._args.context;
-    this._args.logger.debug("[run] Providing context", {
+    this._logger.debug("[run] Providing context", {
       data: {
         type,
         payloadLength: payload.length,

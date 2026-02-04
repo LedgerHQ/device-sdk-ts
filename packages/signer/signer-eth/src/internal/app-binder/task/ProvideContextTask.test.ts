@@ -48,6 +48,8 @@ const mockLogger = {
   subscribers: [],
 };
 
+const mockLoggerFactory = (_tag: string) => mockLogger;
+
 describe("ProvideContextTask", () => {
   const api = makeDeviceActionInternalApiMock();
   const successResult = CommandResultFactory<void, EthErrorCodes>({
@@ -92,7 +94,7 @@ describe("ProvideContextTask", () => {
               type: contextType,
               payload: "payload",
             },
-            logger: mockLogger,
+            loggerFactory: mockLoggerFactory,
           };
           api.sendCommand.mockResolvedValue(successResult);
 
@@ -137,7 +139,7 @@ describe("ProvideContextTask", () => {
               type: contextType,
               payload: "payload",
             } as ClearSignContextSuccess<typeof contextType>,
-            logger: mockLogger,
+            loggerFactory: mockLoggerFactory,
           };
           sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -179,7 +181,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.DYNAMIC_NETWORK,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -219,7 +221,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.DYNAMIC_NETWORK_ICON,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -265,7 +267,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.SAFE,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -305,7 +307,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.SIGNER,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
 
@@ -351,7 +353,7 @@ describe("ProvideContextTask", () => {
               payload: new Uint8Array([1, 2, 3]),
             },
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(successResult);
 
@@ -387,7 +389,7 @@ describe("ProvideContextTask", () => {
               payload: new Uint8Array([4, 5, 6]),
             },
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(successResult);
         sendPayloadInChunksRunMock.mockResolvedValue(successResult);
@@ -416,7 +418,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(successResult);
 
@@ -445,7 +447,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.NFT,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         api.sendCommand.mockResolvedValue(errorResult);
 
@@ -468,7 +470,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.TRUSTED_NAME,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         sendPayloadInChunksRunMock.mockResolvedValue(errorResult);
 
@@ -491,7 +493,7 @@ describe("ProvideContextTask", () => {
             type: "unsupported" as unknown as ClearSignContextType.TOKEN,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
 
         // WHEN
@@ -521,7 +523,7 @@ describe("ProvideContextTask", () => {
             type: ClearSignContextType.TOKEN,
             payload: "payload",
           },
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
 
         // WHEN

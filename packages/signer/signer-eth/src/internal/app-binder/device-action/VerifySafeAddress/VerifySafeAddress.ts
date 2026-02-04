@@ -3,7 +3,6 @@ import {
   type DeviceActionStateMachine,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UserInteractionRequired,
@@ -45,21 +44,6 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
   VerifySafeAddressDAIntermediateValue,
   VerifySafeAddressDAInternalState
 > {
-  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
-
-  constructor(args: {
-    input: VerifySafeAddressDAInput;
-    inspect?: boolean;
-    loggerFactory: (tag: string) => LoggerPublisherService;
-  }) {
-    super({
-      input: args.input,
-      inspect: args.inspect,
-      logger: args.loggerFactory("VerifySafeAddressDeviceAction"),
-    });
-    this._loggerFactory = args.loggerFactory;
-  }
-
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
@@ -189,7 +173,7 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
               safeContractAddress: context.input.safeContractAddress,
               options: context.input.options,
               deviceModelId: internalApi.getDeviceModel().id,
-              logger: this._loggerFactory("BuildSafeAddressContextTask"),
+              loggerFactory: this.getLoggerFactory(internalApi),
             }),
             onDone: {
               target: "ProvideContexts",
@@ -281,7 +265,7 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
       for (const context of arg0.input.contexts) {
         const res = await new ProvideContextTask(internalApi, {
           context,
-          logger: this._loggerFactory("ProvideContextTask"),
+          loggerFactory: this.getLoggerFactory(internalApi),
         }).run();
 
         if (!isSuccessCommandResult(res)) {

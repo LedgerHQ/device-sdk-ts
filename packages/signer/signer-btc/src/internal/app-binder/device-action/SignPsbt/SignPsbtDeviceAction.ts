@@ -3,7 +3,6 @@ import {
   type DeviceActionStateMachine,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -73,18 +72,6 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
   SignPsbtDAIntermediateValue,
   SignPsbtDAInternalState
 > {
-  constructor(args: {
-    input: SignPsbtDAInput;
-    inspect?: boolean;
-    loggerFactory: (tag: string) => LoggerPublisherService;
-  }) {
-    super({
-      input: args.input,
-      inspect: args.inspect,
-      logger: args.loggerFactory("SignPsbtDeviceAction"),
-    });
-  }
-
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<

@@ -18,7 +18,7 @@ export type BuildSafeAddressContextTaskArgs = {
   readonly safeContractAddress: string;
   readonly options: SafeAddressOptions;
   readonly deviceModelId: DeviceModelId;
-  readonly logger: LoggerPublisherService;
+  readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type BuildSafeAddressContextTaskResult = {
@@ -26,13 +26,17 @@ export type BuildSafeAddressContextTaskResult = {
 };
 
 export class BuildSafeAddressContextTask {
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     private readonly _api: InternalApi,
     private readonly _args: BuildSafeAddressContextTaskArgs,
-  ) {}
+  ) {
+    this._logger = _args.loggerFactory("BuildSafeAddressContextTask");
+  }
 
   async run(): Promise<BuildSafeAddressContextTaskResult> {
-    this._args.logger.debug("[run] Starting BuildSafeAddressContextTask", {
+    this._logger.debug("[run] Starting BuildSafeAddressContextTask", {
       data: {
         safeContractAddress: this._args.safeContractAddress,
         chainId: this._args.options.chainId,
@@ -44,7 +48,7 @@ export class BuildSafeAddressContextTask {
     );
 
     if (!isSuccessCommandResult(challengeResponse)) {
-      this._args.logger.error("[run] Failed to get challenge");
+      this._logger.error("[run] Failed to get challenge");
       throw new Error("Failed to get challenge");
     }
 
@@ -75,7 +79,7 @@ export class BuildSafeAddressContextTask {
         (context) => context.type === ClearSignContextType.SIGNER,
       ) === undefined
     ) {
-      this._args.logger.error("[run] Invalid safe address contexts", {
+      this._logger.error("[run] Invalid safe address contexts", {
         data: {
           receivedTypes: contexts.map((c) => c.type),
           expectedTypes: [
@@ -87,7 +91,7 @@ export class BuildSafeAddressContextTask {
       throw new Error("Invalid safe address contexts");
     }
 
-    this._args.logger.debug(
+    this._logger.debug(
       "[run] BuildSafeAddressContextTask completed successfully",
     );
 

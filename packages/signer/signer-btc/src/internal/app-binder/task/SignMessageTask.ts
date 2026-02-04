@@ -32,7 +32,7 @@ export class SendSignMessageTask {
       dataStore: DataStore,
     ) => new ContinueTask(api, dataStore),
   ) {
-    this._logger = _args.loggerFactory("SendSignMessageTask");
+    this._logger = this._args.loggerFactory("SendSignMessageTask");
   }
 
   async run(): Promise<CommandResult<Signature, BtcErrorCodes>> {

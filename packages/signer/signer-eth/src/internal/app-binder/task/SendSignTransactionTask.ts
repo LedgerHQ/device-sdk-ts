@@ -31,7 +31,7 @@ type SendSignTransactionTaskArgs = {
   chainId: number;
   transactionType: TransactionType;
   clearSigningType: ClearSigningType;
-  logger: LoggerPublisherService;
+  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export class SendSignTransactionTask {
@@ -41,7 +41,7 @@ export class SendSignTransactionTask {
     private api: InternalApi,
     private args: SendSignTransactionTaskArgs,
   ) {
-    this._logger = args.logger;
+    this._logger = args.loggerFactory("SendSignTransactionTask");
   }
 
   async run(): Promise<CommandResult<Signature, EthErrorCodes>> {

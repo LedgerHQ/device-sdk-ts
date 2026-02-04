@@ -38,6 +38,8 @@ const mockLogger = {
   subscribers: [],
 };
 
+const mockLoggerFactory = (_tag: string) => mockLogger;
+
 describe("BuildFullContextsTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {} as ContextModule;
@@ -95,7 +97,7 @@ describe("BuildFullContextsTask", () => {
         derivationPath: defaultDerivationPath,
         subset: defaultSubset,
         deviceModelId: DeviceModelId.STAX,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       });
 
       expect(task).toBeDefined();
@@ -143,7 +145,7 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -194,7 +196,7 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -278,7 +280,7 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,
@@ -379,7 +381,7 @@ describe("BuildFullContextsTask", () => {
           derivationPath: defaultDerivationPath,
           subset: defaultSubset,
           deviceModelId: DeviceModelId.STAX,
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         },
         buildSubcontextsTaskFactory,
         buildBaseContextsTaskFactory,

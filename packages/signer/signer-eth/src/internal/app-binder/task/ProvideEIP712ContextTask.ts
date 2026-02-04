@@ -75,7 +75,7 @@ export type ProvideEIP712ContextTaskArgs = {
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
   calldatasContexts: Record<TypedDataCalldataIndex, ContextWithSubContexts[]>;
   transactionChecks?: ClearSignContextSuccess;
-  logger: LoggerPublisherService;
+  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 const DEVICE_ASSETS_MAX = 5;
@@ -689,7 +689,7 @@ export class ProvideEIP712ContextTask {
           await this.provideContextFactory({
             contexts: metadata.contexts,
             derivationPath: this.args.derivationPath,
-            logger: this.args.logger,
+            loggerFactory: this.args.loggerFactory,
           }).run();
         }
         delete this.calldataMetadatas[calldataIndex];
