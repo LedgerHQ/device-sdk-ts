@@ -19,6 +19,7 @@ export {
   type SignPersonalMessageDAReturnType,
 } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 export {
+  type SigningContextInfo,
   type SignTransactionDAError,
   type SignTransactionDAInput,
   type SignTransactionDAIntermediateValue,
@@ -37,6 +38,7 @@ export {
   type SignTypedDataDAReturnType,
   type SignTypedDataDAState,
   SignTypedDataDAStateStep,
+  type TypedDataSigningContextInfo,
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";

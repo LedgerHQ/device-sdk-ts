@@ -99,7 +99,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
 
         // StoreTransactionCommand should be called
         expect(sendCommandInChunksTaskRunMock).toHaveBeenCalledTimes(1);
@@ -161,7 +161,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
         expect(sendCommandInChunksTaskRunMock).not.toHaveBeenCalled();
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
       });
@@ -200,7 +200,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
         expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
           context: {
@@ -245,7 +245,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
         // Only the subcontext should be provided, the main TRUSTED_NAME context is skipped
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
         expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
@@ -257,7 +257,7 @@ describe("ProvideTransactionContextsTask", () => {
         });
       });
 
-      it("should skip ERROR subcontexts silently", async () => {
+      it("should skip ERROR subcontexts but track them", async () => {
         // GIVEN
         const args: ProvideTransactionContextsTaskArgs = {
           contexts: [
@@ -290,8 +290,8 @@ describe("ProvideTransactionContextsTask", () => {
         );
         const result = await task.run();
 
-        // THEN
-        expect(result).toEqual(Right(void 0));
+        // THEN - ERROR subcontext is tracked but doesn't stop the flow
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 1, provisionFailed: 0 } }));
         // Only the main context should be provided, not the error subcontext
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
         expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
@@ -339,7 +339,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
         // StoreTransactionCommand should only be called once
         expect(sendCommandInChunksTaskRunMock).toHaveBeenCalledTimes(1);
         // But both contexts should be provided
@@ -382,7 +382,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(2);
         // Subcontext should be provided first
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(1, api, {
@@ -441,7 +441,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(3);
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(1, api, {
           context: {
@@ -501,8 +501,8 @@ describe("ProvideTransactionContextsTask", () => {
         );
         const result = await task.run();
 
-        // THEN
-        expect(result).toEqual(Right(void 0));
+        // THEN - subcontext failure is tracked but doesn't stop the flow
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 1 } }));
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(2);
       });
     });
@@ -550,7 +550,7 @@ describe("ProvideTransactionContextsTask", () => {
         const result = await task.run();
 
         // THEN
-        expect(result).toEqual(Right(void 0));
+        expect(result).toEqual(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(3);
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(1, api, {
           context: {

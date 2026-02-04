@@ -43,9 +43,18 @@ export type ProvideTransactionContextsTaskArgs = {
   logger: LoggerPublisherService;
 };
 
+export type ContextProvisionWarnings = {
+  readonly contextNotFound: number;
+  readonly provisionFailed: number;
+};
+
+export type ProvideTransactionContextsTaskSuccessResult = {
+  readonly warnings: ContextProvisionWarnings;
+};
+
 export type ProvideTransactionContextsTaskResult = Either<
   CommandErrorResult<EthErrorCodes>,
-  void
+  ProvideTransactionContextsTaskSuccessResult
 >;
 
 /**
@@ -79,21 +88,40 @@ export class ProvideTransactionContextsTask {
     });
 
     let transactionInfoProvided = false;
+    let contextNotFoundCount = 0;
+    let provisionFailedCount = 0;
 
     for (const { context, subcontextCallbacks } of this._args.contexts) {
       for (const callback of subcontextCallbacks) {
         const subcontext = await callback();
 
         if (subcontext.type === ClearSignContextType.ERROR) {
-          // silently ignore error subcontexts
+          contextNotFoundCount++;
+          this._args.logger.debug(
+            "[run] Subcontext not found (ERROR type), continuing",
+          );
           continue;
         }
 
         // Don't fail immediately on subcontext errors because the main context may still be successful
-        await this._provideContextTaskFactory(this._api, {
-          context: subcontext,
-          logger: this._args.logger,
-        }).run();
+        const subcontextResult = await this._provideContextTaskFactory(
+          this._api,
+          {
+            context: subcontext,
+            logger: this._args.logger,
+          },
+        ).run();
+
+        // Track provision failures for subcontexts (device rejected but we continue)
+        if (!isSuccessCommandResult(subcontextResult)) {
+          provisionFailedCount++;
+          this._args.logger.debug(
+            "[run] Subcontext provision failed, continuing",
+            {
+              data: { subcontextType: subcontext.type },
+            },
+          );
+        }
       }
 
       if (
@@ -145,7 +173,18 @@ export class ProvideTransactionContextsTask {
 
     this._args.logger.debug(
       "[run] ProvideTransactionContextsTask completed successfully",
+      {
+        data: {
+          contextNotFoundCount,
+          provisionFailedCount,
+        },
+      },
     );
-    return Right(void 0);
+    return Right({
+      warnings: {
+        contextNotFound: contextNotFoundCount,
+        provisionFailed: provisionFailedCount,
+      },
+    });
   }
 }

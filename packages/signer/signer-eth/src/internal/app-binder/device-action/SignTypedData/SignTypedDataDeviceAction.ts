@@ -47,6 +47,7 @@ import {
 import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
+
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
@@ -203,6 +204,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             from: null,
             typedDataContext: null,
             signature: null,
+            typedDataSigningContextInfo: null,
           },
         };
       },
@@ -427,12 +429,29 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                   _internalState: ({ event, context }) => ({
                     ...context._internalState,
                     typedDataContext: event.output,
+                    typedDataSigningContextInfo: {
+                      isBlindSign: false, 
+                      chainId: context.input.data.domain.chainId,
+                      verifyingContract: context.input.data.domain.verifyingContract,
+                    },
                   }),
                 }),
               ],
             },
             onError: {
               target: "SignTypedDataLegacy",
+              actions: [
+                assign({
+                  _internalState: ({ context }) => ({
+                    ...context._internalState,
+                    typedDataSigningContextInfo: {
+                      isBlindSign: true, 
+                      chainId: context.input.data.domain.chainId,
+                      verifyingContract: context.input.data.domain.verifyingContract,
+                    },
+                  }),
+                }),
+              ],
             },
           },
         },
@@ -479,10 +498,11 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         },
         SignTypedData: {
           entry: assign({
-            intermediateValue: {
+            intermediateValue: ({ context }) => ({
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
-            },
+              signingContext: context._internalState.typedDataSigningContextInfo!,
+            }),
           }),
           invoke: {
             id: "signTypedData",
@@ -524,10 +544,35 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         },
         SignTypedDataLegacy: {
           entry: assign({
-            intermediateValue: {
+            _internalState: ({ context }) => ({
+              ...context._internalState,
+              typedDataSigningContextInfo: {
+                ...(context._internalState.typedDataSigningContextInfo ?? {
+                  chainId: context.input.data.domain.chainId,
+                  verifyingContract:
+                    context.input.data.domain.verifyingContract,
+                }),
+                isBlindSign: true, // Legacy signing is always blind
+              },
+            }),
+            intermediateValue: ({ context }) => ({
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
-            },
+              signingContext: {
+                ...(context._internalState.typedDataSigningContextInfo ?? {
+                  chainId: context.input.data.domain.chainId,
+                  verifyingContract:
+                    context.input.data.domain.verifyingContract,
+                }),
+                isBlindSign: true, // Legacy signing is always blind
+              },
+              fallbackErrorCode:
+                context._internalState.error &&
+                "errorCode" in context._internalState.error &&
+                context._internalState.error.errorCode
+                  ? context._internalState.error.errorCode
+                  : undefined,
+            }),
           }),
           invoke: {
             id: "signTypedDataLegacy",

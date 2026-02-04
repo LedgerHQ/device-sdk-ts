@@ -14,6 +14,8 @@ import {
 import { Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
+import { ClearSignContextType } from "@ledgerhq/context-module";
+
 import {
   type GetAddressCommandArgs,
   type GetAddressCommandResponse,
@@ -200,6 +202,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             clearSigningType: null,
             transactionType: null,
             signature: null,
+            signingContextInfo: null,
+            partialContextErrors: 0,
           },
         };
       },
@@ -460,6 +464,38 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     ...context._internalState,
                     contexts: event.output.clearSignContexts,
                     clearSigningType: event.output.clearSigningType,
+                    signingContextInfo: (() => {
+                      const hasCalldata =
+                        !!context._internalState.subset!.data &&
+                        context._internalState.subset!.data.length > 2;
+                      const hasTransactionInfo =
+                        event.output.clearSignContexts.some(
+                          (c) =>
+                            c.context.type ===
+                            ClearSignContextType.TRANSACTION_INFO,
+                        );
+                      const hasPlugin = event.output.clearSignContexts.some(
+                        (c) => c.context.type === ClearSignContextType.PLUGIN,
+                      );
+                      const hasExternalPlugin =
+                        event.output.clearSignContexts.some(
+                          (c) =>
+                            c.context.type ===
+                            ClearSignContextType.EXTERNAL_PLUGIN,
+                        );
+                      const isBlindSign =
+                        hasCalldata &&
+                        !hasTransactionInfo &&
+                        !hasPlugin &&
+                        !hasExternalPlugin;
+                      return {
+                        clearSigningType: event.output.clearSigningType,
+                        chainId: context._internalState.subset!.chainId,
+                        contractAddress: context._internalState.subset!.to,
+                        isBlindSign,
+                        partialContextErrors: 0,
+                      };
+                    })(),
                   }),
                 }),
               ],
@@ -496,7 +532,34 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               logger: this._loggerFactory("ProvideTransactionContextsTask"),
             }),
             onDone: {
-              target: "SignTransaction",
+              target: "ProvideContextsResultCheck",
+              actions: [
+                assign({
+                  _internalState: ({ event, context }) =>
+                    event.output.caseOf<SignTransactionDAInternalState>({
+                      Right: (result) => {
+                        const partialErrors =
+                          result.warnings.contextNotFound +
+                          result.warnings.provisionFailed;
+                        return {
+                          ...context._internalState,
+                          partialContextErrors: partialErrors,
+                          signingContextInfo: context._internalState
+                            .signingContextInfo
+                            ? {
+                                ...context._internalState.signingContextInfo,
+                                partialContextErrors: partialErrors,
+                              }
+                            : null,
+                        };
+                      },
+                      Left: (error) => ({
+                        ...context._internalState,
+                        error: error.error,
+                      }),
+                    }),
+                }),
+              ],
             },
             onError: {
               target: "Error",
@@ -504,12 +567,20 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
+        ProvideContextsResultCheck: {
+          always: [
+            { guard: "noInternalError", target: "SignTransaction" },
+            { guard: "notRefusedByUser", target: "BlindSignTransactionFallback" },
+            { target: "Error" },
+          ],
+        },
         SignTransaction: {
           entry: assign({
-            intermediateValue: {
+            intermediateValue: ({ context }) => ({
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
               step: SignTransactionDAStep.SIGN_TRANSACTION,
-            },
+              signingContext: context._internalState.signingContextInfo!,
+            }),
           }),
           invoke: {
             id: "signTransaction",
@@ -558,10 +629,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         BlindSignTransactionFallback: {
           entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
+            intermediateValue: ({ context }) => ({
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
               step: SignTransactionDAStep.BLIND_SIGN_TRANSACTION_FALLBACK,
-            },
+              signingContext: context._internalState.signingContextInfo!,
+              fallbackErrorCode:
+                context._internalState.error &&
+                "errorCode" in context._internalState.error &&
+                context._internalState.error.errorCode
+                  ? context._internalState.error.errorCode
+                  : undefined,
+            }),
           }),
           invoke: {
             id: "blindSignTransactionFallback",

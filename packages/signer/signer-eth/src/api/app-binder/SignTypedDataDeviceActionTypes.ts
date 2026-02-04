@@ -30,6 +30,12 @@ export enum SignTypedDataDAStateStep {
   SIGN_TYPED_DATA_LEGACY = "signer.eth.steps.signTypedDataLegacy",
 }
 
+export type TypedDataSigningContextInfo = {
+  readonly isBlindSign: boolean;
+  readonly chainId: number | undefined;
+  readonly verifyingContract: string | undefined;
+};
+
 export type SignTypedDataDAOutput = Signature;
 
 export type SignTypedDataDAInput = {
@@ -56,13 +62,26 @@ export type SignTypedDataDAIntermediateValue =
       requiredUserInteraction: SignTypedDataDARequiredInteraction;
       step: Exclude<
         SignTypedDataDAStateStep,
-        SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT
+        | SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT
+        | SignTypedDataDAStateStep.SIGN_TYPED_DATA
+        | SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY
       >;
     }
   | {
       requiredUserInteraction: UserInteractionRequired.None;
       step: SignTypedDataDAStateStep.WEB3_CHECKS_OPT_IN_RESULT;
       result: boolean;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.SignTypedData;
+      step: SignTypedDataDAStateStep.SIGN_TYPED_DATA;
+      signingContext: TypedDataSigningContextInfo;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.SignTypedData;
+      step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY;
+      signingContext: TypedDataSigningContextInfo;
+      fallbackErrorCode: string | undefined;
     };
 
 export type SignTypedDataDAState = DeviceActionState<
@@ -77,6 +96,7 @@ export type SignTypedDataDAInternalState = {
   readonly from: string | null;
   readonly typedDataContext: ProvideEIP712ContextTaskArgs | null;
   readonly signature: Signature | null;
+  readonly typedDataSigningContextInfo: TypedDataSigningContextInfo | null;
 };
 
 export type SignTypedDataDAReturnType = ExecuteDeviceActionReturnType<

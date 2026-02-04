@@ -271,6 +271,11 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+              signingContext: {
+                isBlindSign: false,
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
             },
             status: DeviceActionStatus.Pending,
           },
@@ -401,6 +406,11 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+              signingContext: {
+                isBlindSign: false,
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
             },
             status: DeviceActionStatus.Pending,
           },
@@ -513,6 +523,12 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+              signingContext: {
+                isBlindSign: true, // Legacy signing is always blind
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
+              fallbackErrorCode: "6a80",
             },
             status: DeviceActionStatus.Pending,
           },
@@ -610,6 +626,12 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+              signingContext: {
+                isBlindSign: true,
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
+              fallbackErrorCode: undefined,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -820,6 +842,11 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+              signingContext: {
+                isBlindSign: false,
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1065,6 +1092,11 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+              signingContext: {
+                isBlindSign: false,
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1072,6 +1104,12 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+              signingContext: {
+                isBlindSign: true, // Legacy signing is always blind
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
+              fallbackErrorCode: "6a80",
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1186,6 +1224,11 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+              signingContext: {
+                isBlindSign: false,
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1193,6 +1236,12 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+              signingContext: {
+                isBlindSign: true, // Legacy signing is always blind
+                chainId: undefined,
+                verifyingContract: undefined,
+              },
+              fallbackErrorCode: "6a80",
             },
             status: DeviceActionStatus.Pending,
           },

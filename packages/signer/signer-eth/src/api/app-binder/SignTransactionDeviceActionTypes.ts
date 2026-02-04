@@ -34,6 +34,14 @@ export enum SignTransactionDAStep {
   BLIND_SIGN_TRANSACTION_FALLBACK = "signer.eth.steps.blindSignTransactionFallback",
 }
 
+export type SigningContextInfo = {
+  readonly clearSigningType: ClearSigningType;
+  readonly chainId: number;
+  readonly contractAddress: string | undefined;
+  readonly isBlindSign: boolean;
+  readonly partialContextErrors: number;
+};
+
 export type SignTransactionDAOutput = Signature;
 
 export type SignTransactionDAInput = {
@@ -59,13 +67,26 @@ export type SignTransactionDAIntermediateValue =
       requiredUserInteraction: SignTransactionDARequiredInteraction;
       step: Exclude<
         SignTransactionDAStep,
-        SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT
+        | SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT
+        | SignTransactionDAStep.SIGN_TRANSACTION
+        | SignTransactionDAStep.BLIND_SIGN_TRANSACTION_FALLBACK
       >;
     }
   | {
       requiredUserInteraction: UserInteractionRequired.None;
       step: SignTransactionDAStep.WEB3_CHECKS_OPT_IN_RESULT;
       result: boolean;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.SignTransaction;
+      step: SignTransactionDAStep.SIGN_TRANSACTION;
+      signingContext: SigningContextInfo;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.SignTransaction;
+      step: SignTransactionDAStep.BLIND_SIGN_TRANSACTION_FALLBACK;
+      signingContext: SigningContextInfo;
+      fallbackErrorCode: string | undefined;
     };
 
 export type SignTransactionDAState = DeviceActionState<
@@ -82,6 +103,8 @@ export type SignTransactionDAInternalState = {
   readonly clearSigningType: ClearSigningType | null;
   readonly transactionType: TransactionType | null;
   readonly signature: Signature | null;
+  readonly signingContextInfo: SigningContextInfo | null;
+  readonly partialContextErrors: number;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
