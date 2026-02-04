@@ -15,6 +15,7 @@
     "prettier": "turbo run prettier",
     "prettier:fix": "turbo run prettier:fix",
     "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
     "typecheck": "turbo run typecheck",
     "health-check": "turbo run health-check --output-logs=errors-only --continue",

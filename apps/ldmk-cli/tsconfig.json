@@ -5,9 +5,12 @@
     "moduleResolution": "bundler",
     "outDir": "./lib",
     "rootDir": "./",
-    "types": ["node"],
-    "skipLibCheck": true
+    "types": ["node", "vitest/globals"],
+    "skipLibCheck": true,
+    "paths": {
+      "@ldmk/*": ["./*"]
+    }
   },
-  "include": ["**/*.ts"],
+  "include": ["**/*.ts", "vitest.*.mjs"],
   "exclude": ["node_modules", "lib"]
 }

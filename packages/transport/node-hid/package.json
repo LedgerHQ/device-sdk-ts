@@ -10,6 +10,7 @@
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
+      "import": "./lib/cjs/index.js",
       "require": "./lib/cjs/index.js"
     }
   },
