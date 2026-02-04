@@ -48,58 +48,87 @@ export class SpeculosServiceController implements ServiceController {
   }
 
   async start(): Promise<void> {
-    // Resolve the Ethereum app version and OS using the resolver
-    const resolvedEthereum = this.appVersionResolver.resolve(
-      this.model,
-      "Ethereum",
-      this.config.os,
-      this.config.version,
-    );
+    let appPath: string;
+    let pluginArgs: string[] = [];
+    let customAppVolume: string | null = null;
 
-    const ethereumPath = `/apps/${this.model}/${resolvedEthereum.os}/Ethereum/app_${resolvedEthereum.version}.elf`;
+    if (this.config.customAppPath) {
+      // Use custom app path directly
+      if (this.config.customAppPath.startsWith("/")) {
+        // Absolute path on host: mount the file directly to /custom-app/app.elf
+        customAppVolume = `${this.config.customAppPath}:/custom-app/app.elf`;
+        appPath = "/custom-app/app.elf";
+      } else {
+        // Relative path: use /apps mount (COIN_APPS_PATH)
+        appPath = `/apps/${this.config.customAppPath}`;
+      }
 
-    // Optionally resolve plugin
-    const resolvedPlugin = this.config.plugin
-      ? this.appVersionResolver.resolve(
-          this.model,
-          this.config.plugin,
-          resolvedEthereum.os,
-          this.config.pluginVersion,
-        )
-      : null;
-
-    const pluginArgs = resolvedPlugin
-      ? [
-          "-l",
-          `/apps/${this.model}/${resolvedEthereum.os}/${this.config.plugin}/app_${resolvedPlugin.version}.elf`,
-        ]
-      : [];
-
-    // Logging
-    this.logger.info(
-      `Starting Docker container with name: ${this.containerName}`,
-    );
-    this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
-    this.logger.info(
-      `VNC url: ${this.config.url.replace("http://", "vnc://")}:${this.config.vncPort}`,
-    );
-    this.logger.debug(`Using app: ${resolvedEthereum.path}`);
-    if (resolvedPlugin) {
-      this.logger.debug(`Using plugin: ${resolvedPlugin.path}`);
-    }
-    this.logger.info(`device=${this.model}`);
-    this.logger.info(`os=${resolvedEthereum.os}`);
-    this.logger.info(`ethereum=${resolvedEthereum.version}`);
-    if (resolvedPlugin) {
       this.logger.info(
-        `plugin=${this.config.plugin}@${resolvedPlugin.version}`,
+        `Starting Docker container with name: ${this.containerName}`,
       );
+      this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
+      this.logger.info(
+        `VNC url: ${this.config.url.replace("http://", "vnc://")}:${this.config.vncPort}`,
+      );
+      this.logger.info(`device=${this.model}`);
+      this.logger.info(`Using custom app: ${appPath}`);
+      if (customAppVolume) {
+        this.logger.info(`Custom app volume: ${customAppVolume}`);
+      }
+    } else {
+      // Resolve the Ethereum app version and OS using the resolver
+      const resolvedEthereum = this.appVersionResolver.resolve(
+        this.model,
+        "Ethereum",
+        this.config.os,
+        this.config.version,
+      );
+
+      appPath = `/apps/${this.model}/${resolvedEthereum.os}/Ethereum/app_${resolvedEthereum.version}.elf`;
+
+      // Optionally resolve plugin
+      const resolvedPlugin = this.config.plugin
+        ? this.appVersionResolver.resolve(
+            this.model,
+            this.config.plugin,
+            resolvedEthereum.os,
+            this.config.pluginVersion,
+          )
+        : null;
+
+      pluginArgs = resolvedPlugin
+        ? [
+            "-l",
+            `/apps/${this.model}/${resolvedEthereum.os}/${this.config.plugin}/app_${resolvedPlugin.version}.elf`,
+          ]
+        : [];
+
+      // Logging
+      this.logger.info(
+        `Starting Docker container with name: ${this.containerName}`,
+      );
+      this.logger.info(`API url: ${this.config.url}:${this.config.port}`);
+      this.logger.info(
+        `VNC url: ${this.config.url.replace("http://", "vnc://")}:${this.config.vncPort}`,
+      );
+      this.logger.debug(`Using app: ${resolvedEthereum.path}`);
+      if (resolvedPlugin) {
+        this.logger.debug(`Using plugin: ${resolvedPlugin.path}`);
+      }
+      this.logger.info(`device=${this.model}`);
+      this.logger.info(`os=${resolvedEthereum.os}`);
+      this.logger.info(`ethereum=${resolvedEthereum.version}`);
+      if (resolvedPlugin) {
+        this.logger.info(
+          `plugin=${this.config.plugin}@${resolvedPlugin.version}`,
+        );
+      }
     }
 
     // Build command arguments
     const command = [
       "speculos",
-      ethereumPath,
+      appPath,
       ...pluginArgs,
       "--display",
       "headless",
@@ -122,9 +151,15 @@ export class SpeculosServiceController implements ServiceController {
       await this.dockerContainer.pull(dockerImage);
     }
 
+    // Build volumes array
+    const volumes = [`${this.appsConfig.path}:/apps`];
+    if (customAppVolume) {
+      volumes.push(customAppVolume);
+    }
+
     await this.dockerContainer.start(dockerImage, {
       command,
-      volumes: [`${this.appsConfig.path}:/apps`],
+      volumes,
       ports: [
         `${this.config.port}:${SPECULOS_API_PORT}`,
         `${this.config.vncPort}:${SPECULOS_VNC_PORT}`,
