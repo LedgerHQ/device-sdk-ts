@@ -40,22 +40,31 @@ const PanelContainer = styled.div`
   overflow: hidden;
 `;
 
+const SplitViewContainer = styled.div`
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+`;
+
 type SplitViewProps = {
   direction: "horizontal" | "vertical";
   first: React.ReactNode;
   second: React.ReactNode;
-  defaultFirstSize?: number;
-  minFirstSize?: number;
-  minSecondSize?: number;
+  defaultFirstSize?: number | string;
+  minFirstSize?: number | string;
+  minSecondSize?: number | string;
 };
 
 export const SplitView: React.FC<SplitViewProps> = ({
   direction,
   first,
   second,
-  defaultFirstSize = 50,
-  minFirstSize = 20,
-  minSecondSize = 20,
+  defaultFirstSize = "50%",
+  minFirstSize = "20%",
+  minSecondSize = "20%",
 }) => {
   // react-resizable-panels uses "horizontal" for left/right split
   // and "vertical" for top/bottom split (opposite of our naming)
@@ -63,14 +72,16 @@ export const SplitView: React.FC<SplitViewProps> = ({
     direction === "horizontal" ? "vertical" : "horizontal";
 
   return (
-    <Group orientation={panelOrientation} style={{ flex: 1 }}>
-      <Panel defaultSize={defaultFirstSize} minSize={minFirstSize}>
-        <PanelContainer>{first}</PanelContainer>
-      </Panel>
-      <ResizeHandle $direction={direction} />
-      <Panel minSize={minSecondSize}>
-        <PanelContainer>{second}</PanelContainer>
-      </Panel>
-    </Group>
+    <SplitViewContainer>
+      <Group orientation={panelOrientation} style={{ flex: 1 }}>
+        <Panel defaultSize={defaultFirstSize} minSize={minFirstSize}>
+          <PanelContainer>{first}</PanelContainer>
+        </Panel>
+        <ResizeHandle $direction={direction} />
+        <Panel minSize={minSecondSize}>
+          <PanelContainer>{second}</PanelContainer>
+        </Panel>
+      </Group>
+    </SplitViewContainer>
   );
 };

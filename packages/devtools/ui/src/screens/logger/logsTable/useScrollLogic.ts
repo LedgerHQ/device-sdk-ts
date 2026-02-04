@@ -12,8 +12,7 @@ export const useScrollLogic = ({ data }: { data: unknown[] }) => {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const isScrollingProgrammaticallyRef = React.useRef(false);
-  const [scrollHeight, setScrollHeight] = useState(0);
-  const scrollHeightRef = React.useRef(0);
+  const prevDataLengthRef = React.useRef(data.length);
 
   const scrollToBottom = useCallback(() => {
     if (scrollContainerRef.current) {
@@ -32,53 +31,7 @@ export const useScrollLogic = ({ data }: { data: unknown[] }) => {
     }
   }, []);
 
-  // Track scrollHeight changes to auto-scroll when content height changes
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const checkScrollHeight = () => {
-      const newScrollHeight = container.scrollHeight;
-      if (newScrollHeight !== scrollHeightRef.current) {
-        scrollHeightRef.current = newScrollHeight;
-        setScrollHeight(newScrollHeight);
-      }
-    };
-
-    // Initial check
-    checkScrollHeight();
-
-    // Use ResizeObserver on the container to detect size changes
-    const resizeObserver = new ResizeObserver(() => {
-      requestAnimationFrame(checkScrollHeight);
-    });
-
-    resizeObserver.observe(container);
-
-    // Also observe the scrollable content for changes
-    const contentObserver = new MutationObserver(() => {
-      requestAnimationFrame(checkScrollHeight);
-    });
-
-    if (container.firstElementChild) {
-      contentObserver.observe(container.firstElementChild, {
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    // Periodic check as a fallback (less frequent to avoid performance issues)
-    const interval = setInterval(() => {
-      requestAnimationFrame(checkScrollHeight);
-    }, 200);
-
-    return () => {
-      resizeObserver.disconnect();
-      contentObserver.disconnect();
-      clearInterval(interval);
-    };
-  }, []);
-
+  // Auto-scroll when new data arrives (not on container resize)
   useEffect(() => {
     if (autoScrollEnabled && scrollContainerRef.current) {
       // Use double requestAnimationFrame to ensure DOM has updated and virtualizer has recalculated
@@ -91,7 +44,21 @@ export const useScrollLogic = ({ data }: { data: unknown[] }) => {
         });
       });
     }
-  }, [data.length, scrollHeight, autoScrollEnabled, scrollToBottom]);
+  }, [data.length, autoScrollEnabled, scrollToBottom]);
+
+  // Reset scroll position when data shrinks significantly (e.g., filter applied)
+  // This prevents the virtualizer from being in an invalid scroll state
+  useEffect(() => {
+    const prevLength = prevDataLengthRef.current;
+    const currentLength = data.length;
+    prevDataLengthRef.current = currentLength;
+
+    // If data shrunk significantly (more than 50% reduction or to near-empty)
+    if (currentLength < prevLength * 0.5 || currentLength <= 3) {
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "instant" });
+      setAutoScrollEnabled(true);
+    }
+  }, [data.length]);
 
   const [scrollZoneHeight, setScrollZoneHeight] = useState(0);
   const updateScrollZoneHeight = useCallback(

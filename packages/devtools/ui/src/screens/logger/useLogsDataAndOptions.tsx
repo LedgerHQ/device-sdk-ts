@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 
+import { matchesFilter, parseFilterQuery } from "./filterUtils";
 import { defaultLoggerOptions, type LoggerOptions } from "./LoggerOptions";
 import { type LogData } from "./types";
 
@@ -10,6 +11,8 @@ export const useLogsDataAndOptions = ({ logs }: { logs: LogData[] }) => {
     React.useState<LoggerOptions>(defaultLoggerOptions);
 
   const displayedLogs = useMemo(() => {
+    const filterTokens = parseFilterQuery(options.filterText);
+
     const filteredLogs = logs.filter((log) => {
       if (!options.activeLevels[log.verbosity]) {
         return false;
@@ -18,6 +21,9 @@ export const useLogsDataAndOptions = ({ logs }: { logs: LogData[] }) => {
         if (!options.includeTags.has(log.tag)) {
           return false;
         }
+      }
+      if (filterTokens.length > 0 && !matchesFilter(log, filterTokens)) {
+        return false;
       }
       return true;
     });

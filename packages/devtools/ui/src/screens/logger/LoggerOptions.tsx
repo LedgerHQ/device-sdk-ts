@@ -10,6 +10,7 @@ export type LoggerOptions = {
   showTimestamp: boolean;
   showTag: boolean;
   includeTags: Set<string>;
+  filterText: string;
 };
 
 type LoggerProps = {
@@ -29,6 +30,7 @@ export const defaultLoggerOptions: LoggerOptions = {
   showTimestamp: true,
   showTag: true,
   includeTags: new Set(),
+  filterText: "",
 };
 
 const ParamContainer = styled(Flex).attrs({

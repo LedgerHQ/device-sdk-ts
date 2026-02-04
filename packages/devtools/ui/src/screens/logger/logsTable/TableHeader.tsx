@@ -19,10 +19,17 @@ const StyledTr = styled.tr`
   background-color: ghostwhite;
 `;
 
-const StyledTh = styled.th<{ headerId: string }>`
+const StyledTh = styled.th<{
+  size: number;
+  minSize: number;
+  flexible: boolean;
+}>`
   display: flex;
-  width: calc(var(--header-${({ headerId }) => headerId}-size) * 1px);
+  flex: ${({ flexible, size, minSize }) =>
+    flexible ? `${size} 1 ${minSize}px` : `0 0 ${size}px`};
+  min-width: ${({ flexible, size, minSize }) => (flexible ? minSize : size)}px;
   position: relative;
+  overflow: hidden;
 `;
 
 const HeaderContent = styled.div<{ canSort: boolean }>`
@@ -40,6 +47,8 @@ const Resizer = styled.div`
   height: 100%;
   cursor: col-resize;
   background-color: lightgrey;
+  touch-action: none;
+  user-select: none;
 `;
 
 type TableHeaderProps = {
@@ -51,28 +60,40 @@ export const TableHeader: React.FC<TableHeaderProps> = ({ headerGroups }) => {
     <StyledThead>
       {headerGroups.map((headerGroup) => (
         <StyledTr key={headerGroup.id}>
-          {headerGroup.headers.map((header) => (
-            <StyledTh key={header.id} headerId={header.id}>
-              <HeaderContent
-                canSort={header.column.getCanSort()}
-                onClick={header.column.getToggleSortingHandler()}
+          {headerGroup.headers.map((header) => {
+            const flexible =
+              (header.column.columnDef.meta as { flexible?: boolean })
+                ?.flexible ?? false;
+            const size = header.getSize();
+            const minSize = header.column.columnDef.minSize ?? 50;
+            return (
+              <StyledTh
+                key={header.id}
+                size={size}
+                minSize={minSize}
+                flexible={flexible}
               >
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext(),
-                )}
-                {{
-                  asc: " 🔼",
-                  desc: " 🔽",
-                }[header.column.getIsSorted() as string] ?? null}
-              </HeaderContent>
-              <Resizer
-                onDoubleClick={() => header.column.resetSize()}
-                onMouseDown={header.getResizeHandler()}
-                onTouchStart={header.getResizeHandler()}
-              />
-            </StyledTh>
-          ))}
+                <HeaderContent
+                  canSort={header.column.getCanSort()}
+                  onClick={header.column.getToggleSortingHandler()}
+                >
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext(),
+                  )}
+                  {{
+                    asc: " 🔼",
+                    desc: " 🔽",
+                  }[header.column.getIsSorted() as string] ?? null}
+                </HeaderContent>
+                <Resizer
+                  onDoubleClick={() => header.column.resetSize()}
+                  onMouseDown={header.getResizeHandler()}
+                  onTouchStart={header.getResizeHandler()}
+                />
+              </StyledTh>
+            );
+          })}
         </StyledTr>
       ))}
     </StyledThead>
