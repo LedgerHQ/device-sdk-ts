@@ -15,9 +15,38 @@ import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContex
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
+const emptyLoggerFactory = (_tag: string): LoggerPublisherService => ({
+  debug: () => {},
+  info: () => {},
+  warn: () => {},
+  error: () => {},
+  subscribers: [],
+});
+
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
+
+export const DEFAULT_CONFIG: ContextModuleConfig = {
+  cal: {
+    url: DEFAULT_CAL_URL,
+    mode: "prod",
+    branch: "main",
+  },
+  web3checks: {
+    url: DEFAULT_WEB3_CHECKS_URL,
+  },
+  metadataServiceDomain: {
+    url: DEFAULT_METADATA_SERVICE_DOMAIN,
+  },
+  defaultLoaders: true,
+  customLoaders: [],
+  defaultFieldLoaders: true,
+  customFieldLoaders: [],
+  customTypedDataLoader: undefined,
+  customSolanaLoader: undefined,
+  loggerFactory: emptyLoggerFactory,
+};
 
 export class ContextModuleBuilder {
   private config: ContextModuleConfig;
@@ -27,23 +56,12 @@ export class ContextModuleBuilder {
     this.originToken = originToken;
 
     this.config = {
-      cal: {
-        url: DEFAULT_CAL_URL,
-        mode: "prod",
-        branch: "main",
-      },
-      web3checks: {
-        url: DEFAULT_WEB3_CHECKS_URL,
-      },
-      metadataServiceDomain: {
-        url: DEFAULT_METADATA_SERVICE_DOMAIN,
-      },
-      defaultLoaders: true,
-      customLoaders: [],
-      defaultFieldLoaders: true,
-      customFieldLoaders: [],
-      customTypedDataLoader: undefined,
-      customSolanaLoader: undefined,
+      ...DEFAULT_CONFIG,
+      cal: { ...DEFAULT_CONFIG.cal },
+      web3checks: { ...DEFAULT_CONFIG.web3checks },
+      metadataServiceDomain: { ...DEFAULT_CONFIG.metadataServiceDomain },
+      customLoaders: [...DEFAULT_CONFIG.customLoaders],
+      customFieldLoaders: [...DEFAULT_CONFIG.customFieldLoaders],
       loggerFactory,
     };
   }
