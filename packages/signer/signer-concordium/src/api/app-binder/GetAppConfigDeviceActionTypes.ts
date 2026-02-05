@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/concordiumApplicationErrors";
+import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/concordiumAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

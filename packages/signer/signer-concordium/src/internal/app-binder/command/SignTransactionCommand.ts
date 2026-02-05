@@ -1,52 +1,95 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type ConcordiumErrorCodes } from "./utils/concordiumApplicationErrors";
+import {
+  CONCORDIUM_APP_ERRORS,
+  ConcordiumAppCommandErrorFactory,
+  type ConcordiumErrorCodes,
+} from "./utils/concordiumAppErrors";
+
+const CLA = 0xe0;
+const INS_SIGN_TRANSFER = 0x02;
+const P2_MORE = 0x80;
+const P2_LAST = 0x00;
 
 export type SignTransactionCommandArgs = {
-  derivationPath: string;
-  transaction: Uint8Array;
+  chunk: Uint8Array;
+  isLastChunk: boolean;
 };
 
 export type SignTransactionCommandResponse = {
-  signature: {
-    r: string;
-    s: string;
-    v?: number;
-  };
+  signature?: string;
 };
 
 export class SignTransactionCommand
-  implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, ConcordiumErrorCodes>
+  implements Command<SignTransactionCommandResponse, SignTransactionCommandArgs, ConcordiumErrorCodes>
 {
   readonly name = "SignTransaction";
 
   private readonly _args: SignTransactionCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    ConcordiumErrorCodes
+  >(CONCORDIUM_APP_ERRORS, ConcordiumAppCommandErrorFactory);
 
   constructor(args: SignTransactionCommandArgs) {
     this._args = args;
   }
 
+  static get CHUNK_SIZE(): number {
+    return 255;
+  }
+
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    const { chunk, isLastChunk } = this._args;
+
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_SIGN_TRANSFER,
+      p1: 0x00, // P1_INITIAL
+      p2: isLastChunk ? P2_LAST : P2_MORE,
+    });
+
+    builder.addBufferToData(chunk);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, ConcordiumErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+        const responseLength = parser.getUnparsedRemainingLength();
+
+        if (responseLength > 0) {
+          const signatureBytes = parser.extractFieldByLength(responseLength);
+          if (signatureBytes === undefined) {
+            return CommandResultFactory({
+              error: new InvalidStatusWordError("Cannot extract signature"),
+            });
+          }
+
+          const signature = Array.from(signatureBytes)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+
+          return CommandResultFactory({ data: { signature } });
+        }
+
+        return CommandResultFactory({ data: {} });
+      },
+    );
   }
 }
