@@ -9,25 +9,25 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import { type Signature } from "@api/model/Signature";
 import {
-  SignTransactionCommand,
-  type SignTransactionCommandResponse,
-} from "@internal/app-binder/command/SignTransactionCommand";
+  SignMessageCommand,
+  type SignMessageCommandResponse,
+} from "@internal/app-binder/command/SignMessageCommand";
 import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoAppErrors";
 
-type SignTransactionTaskArgs = {
+type SignMessageTaskArgs = {
   derivationPath: string;
-  transaction: Uint8Array;
+  message: Uint8Array;
 };
 
-export class SignTransactionTask {
+export class SignMessageTask {
   constructor(
     private api: InternalApi,
-    private args: SignTransactionTaskArgs,
+    private args: SignMessageTaskArgs,
   ) {}
 
   async run(): Promise<CommandResult<Signature, CeloErrorCodes>> {
-    const { derivationPath, transaction } = this.args;
-    const CHUNK_SIZE = SignTransactionCommand.CHUNK_SIZE;
+    const { derivationPath, message } = this.args;
+    const CHUNK_SIZE = SignMessageCommand.CHUNK_SIZE;
 
     // Build path bytes
     const paths = DerivationPathUtils.splitPath(derivationPath);
@@ -38,15 +38,19 @@ export class SignTransactionTask {
       pathDataView.setUint32(1 + index * 4, element, false);
     });
 
-    // First chunk includes path
-    const firstChunkMaxSize = CHUNK_SIZE - pathData.length;
-    const firstChunkTxSize = Math.min(firstChunkMaxSize, transaction.length);
-    const firstChunk = new Uint8Array(pathData.length + firstChunkTxSize);
+    // First chunk: path + message length (4 bytes BE) + message start
+    const messageLengthData = new Uint8Array(4);
+    new DataView(messageLengthData.buffer).setUint32(0, message.length, false);
+
+    const headerSize = pathData.length + messageLengthData.length;
+    const firstChunkMsgSize = Math.min(CHUNK_SIZE - headerSize, message.length);
+    const firstChunk = new Uint8Array(headerSize + firstChunkMsgSize);
     firstChunk.set(pathData, 0);
-    firstChunk.set(transaction.slice(0, firstChunkTxSize), pathData.length);
+    firstChunk.set(messageLengthData, pathData.length);
+    firstChunk.set(message.slice(0, firstChunkMsgSize), headerSize);
 
     let lastResult = await this.api.sendCommand(
-      new SignTransactionCommand({
+      new SignMessageCommand({
         chunk: firstChunk,
         isFirstChunk: true,
       }),
@@ -57,13 +61,13 @@ export class SignTransactionTask {
     }
 
     // Send remaining chunks
-    let offset = firstChunkTxSize;
-    while (offset < transaction.length) {
-      const chunkSize = Math.min(CHUNK_SIZE, transaction.length - offset);
-      const chunk = transaction.slice(offset, offset + chunkSize);
+    let offset = firstChunkMsgSize;
+    while (offset < message.length) {
+      const chunkSize = Math.min(CHUNK_SIZE, message.length - offset);
+      const chunk = message.slice(offset, offset + chunkSize);
 
       lastResult = await this.api.sendCommand(
-        new SignTransactionCommand({
+        new SignMessageCommand({
           chunk,
           isFirstChunk: false,
         }),
@@ -76,7 +80,7 @@ export class SignTransactionTask {
       offset += chunkSize;
     }
 
-    const result = lastResult as CommandResult<SignTransactionCommandResponse, CeloErrorCodes>;
+    const result = lastResult as CommandResult<SignMessageCommandResponse, CeloErrorCodes>;
     if (!isSuccessCommandResult(result) || result.data.v === undefined) {
       return CommandResultFactory({
         error: new InvalidStatusWordError("No signature in response"),

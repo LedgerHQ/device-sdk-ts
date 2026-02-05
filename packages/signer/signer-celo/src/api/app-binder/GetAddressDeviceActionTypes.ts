@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoApplicationErrors";
+import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

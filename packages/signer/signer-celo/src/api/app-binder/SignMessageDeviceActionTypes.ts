@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoApplicationErrors";
+import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

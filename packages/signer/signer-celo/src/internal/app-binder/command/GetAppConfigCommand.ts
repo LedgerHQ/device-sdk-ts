@@ -1,40 +1,82 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type CeloErrorCodes } from "./utils/celoApplicationErrors";
+import {
+  CELO_APP_ERRORS,
+  CeloAppCommandErrorFactory,
+  type CeloErrorCodes,
+} from "./utils/celoAppErrors";
+
+const CLA = 0xe0;
+const INS_GET_CONFIG = 0x06;
 
 export type GetAppConfigCommandResponse = {
-  // Define your app configuration response fields here
-  // Example:
-  // version: string;
-  // flags: number;
+  version: string;
+  blindSigningEnabled: boolean;
 };
 
 export class GetAppConfigCommand
-  implements
-    Command<GetAppConfigCommandResponse, void, CeloErrorCodes>
+  implements Command<GetAppConfigCommandResponse, void, CeloErrorCodes>
 {
   readonly name = "GetAppConfig";
 
+  private readonly errorHelper = new CommandErrorHelper<
+    GetAppConfigCommandResponse,
+    CeloErrorCodes
+  >(CELO_APP_ERRORS, CeloAppCommandErrorFactory);
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    throw new Error("GetAppConfigCommand.getApdu() not implemented");
+    return new ApduBuilder({
+      cla: CLA,
+      ins: INS_GET_CONFIG,
+      p1: 0x00,
+      p2: 0x00,
+    }).build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<GetAppConfigCommandResponse, CeloErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("GetAppConfigCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+
+        const configFlags = parser.extract8BitUInt();
+        if (configFlags === undefined) {
+          return CommandResultFactory({
+            error: new InvalidStatusWordError("Cannot extract config flags"),
+          });
+        }
+
+        const major = parser.extract8BitUInt();
+        const minor = parser.extract8BitUInt();
+        const patch = parser.extract8BitUInt();
+
+        if (major === undefined || minor === undefined || patch === undefined) {
+          return CommandResultFactory({
+            error: new InvalidStatusWordError("Cannot extract version"),
+          });
+        }
+
+        const blindSigningEnabled = !!(configFlags & 0x01);
+
+        return CommandResultFactory({
+          data: {
+            version: `${major}.${minor}.${patch}`,
+            blindSigningEnabled,
+          },
+        });
+      },
+    );
   }
 }

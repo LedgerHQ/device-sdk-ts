@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoApplicationErrors";
+import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

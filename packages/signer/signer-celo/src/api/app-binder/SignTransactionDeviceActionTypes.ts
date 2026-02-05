@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoApplicationErrors";
+import { type CeloErrorCodes } from "@internal/app-binder/command/utils/celoAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 
