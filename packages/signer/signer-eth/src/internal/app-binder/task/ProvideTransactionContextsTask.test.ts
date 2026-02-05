@@ -211,6 +211,52 @@ describe("ProvideTransactionContextsTask", () => {
         });
       });
 
+      it("should skip TRUSTED_NAME context and only provide subcontexts", async () => {
+        // GIVEN
+        const args: ProvideTransactionContextsTaskArgs = {
+          contexts: [
+            {
+              context: {
+                type: ClearSignContextType.TRUSTED_NAME,
+                payload: "main trusted name payload",
+              },
+              subcontextCallbacks: [
+                () =>
+                  Promise.resolve({
+                    type: ClearSignContextType.TRUSTED_NAME,
+                    payload: "resolved trusted name payload",
+                  }),
+              ],
+            },
+          ],
+          serializedTransaction: new Uint8Array(),
+          derivationPath: "44'/60'/0'/0/0",
+          logger: mockLogger,
+        };
+        provideContextTaskRunMock.mockResolvedValue(successResult);
+
+        // WHEN
+        const task = new ProvideTransactionContextsTask(
+          api,
+          args,
+          provideContextTaskMockFactory,
+          sendCommandInChunksTaskMockFactory,
+        );
+        const result = await task.run();
+
+        // THEN
+        expect(result).toEqual(Right(void 0));
+        // Only the subcontext should be provided, the main TRUSTED_NAME context is skipped
+        expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
+        expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
+          context: {
+            type: ClearSignContextType.TRUSTED_NAME,
+            payload: "resolved trusted name payload",
+          },
+          logger: mockLogger,
+        });
+      });
+
       it("should skip ERROR subcontexts silently", async () => {
         // GIVEN
         const args: ProvideTransactionContextsTaskArgs = {
@@ -362,7 +408,7 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRUSTED_NAME,
+                type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
                 payload: "main payload",
               },
               subcontextCallbacks: [
@@ -413,7 +459,7 @@ describe("ProvideTransactionContextsTask", () => {
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
             payload: "main payload",
           },
           logger: mockLogger,
@@ -482,7 +528,7 @@ describe("ProvideTransactionContextsTask", () => {
             },
             {
               context: {
-                type: ClearSignContextType.TRUSTED_NAME,
+                type: ClearSignContextType.PLUGIN,
                 payload: "payload3",
               },
               subcontextCallbacks: [],
@@ -522,7 +568,7 @@ describe("ProvideTransactionContextsTask", () => {
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.PLUGIN,
             payload: "payload3",
           },
           logger: mockLogger,

@@ -95,9 +95,7 @@ describe("SignTransactionDeviceAction", () => {
     };
   }
   const apiMock = makeDeviceActionInternalApiMock();
-  const defaultOptions = {
-    domain: "domain-name.eth",
-  };
+  const defaultOptions = {};
   const defaultTransaction: Uint8Array = hexaStringToBuffer(
     Transaction.from({
       chainId: 1n,

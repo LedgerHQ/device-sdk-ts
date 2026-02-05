@@ -56,3 +56,9 @@ export const selectMetadataServiceConfig = (state: RootState) =>
   state.settings.metadataServiceConfig;
 export const selectMetadataServiceUrl = (state: RootState) =>
   state.settings.metadataServiceConfig.url;
+
+// Datasource config selectors
+export const selectDatasourceConfig = (state: RootState) =>
+  state.settings.datasourceConfig;
+export const selectDatasourceProxy = (state: RootState) =>
+  state.settings.datasourceConfig.proxy;

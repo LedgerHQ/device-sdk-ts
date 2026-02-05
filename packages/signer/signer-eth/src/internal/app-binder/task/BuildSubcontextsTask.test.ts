@@ -64,7 +64,6 @@ describe("BuildSubcontextsTask", () => {
       ClearSignContextType.DYNAMIC_NETWORK,
       ClearSignContextType.DYNAMIC_NETWORK_ICON,
       ClearSignContextType.ENUM,
-      ClearSignContextType.TRUSTED_NAME,
       ClearSignContextType.TOKEN,
       ClearSignContextType.NFT,
     ];

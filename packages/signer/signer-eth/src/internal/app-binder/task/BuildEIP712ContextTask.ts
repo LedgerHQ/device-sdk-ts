@@ -196,7 +196,13 @@ export class BuildEIP712ContextTask {
         deviceModelId: deviceState.deviceModelId,
         logger: this.logger,
       }).run();
-      if (calldataContext.clearSigningType === ClearSigningType.EIP7730) {
+      if (
+        calldataContext.clearSigningType === ClearSigningType.EIP7730 ||
+        (calldataContext.clearSigningType === ClearSigningType.BASIC &&
+          calldataContext.clearSignContexts.every(
+            ({ context }) => context.type === ClearSignContextType.TRUSTED_NAME,
+          ))
+      ) {
         calldatasContexts[calldataIndex] = calldataContext.clearSignContexts;
       }
     }
