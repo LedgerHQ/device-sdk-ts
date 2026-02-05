@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type IconErrorCodes } from "@internal/app-binder/command/utils/iconApplicationErrors";
+import { type IconErrorCodes } from "@internal/app-binder/command/utils/iconAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

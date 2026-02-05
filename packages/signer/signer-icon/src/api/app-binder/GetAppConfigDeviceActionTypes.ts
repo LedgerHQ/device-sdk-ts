@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type IconErrorCodes } from "@internal/app-binder/command/utils/iconApplicationErrors";
+import { type IconErrorCodes } from "@internal/app-binder/command/utils/iconAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;
