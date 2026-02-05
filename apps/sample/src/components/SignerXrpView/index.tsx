@@ -61,7 +61,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/144'/0'/0/0",
           checkOnDevice: false,
           skipOpenApp: false,
         },
@@ -101,7 +101,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/144'/0'/0/0",
           transaction: "",
           skipOpenApp: false,
         },
@@ -126,7 +126,7 @@ export const SignerXrpView: React.FC<{ sessionId: string }> = ({
           return signer.signMessage(derivationPath, message);
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/144'/0'/0/0",
           message: "Hello World",
         },
         deviceModelId,
