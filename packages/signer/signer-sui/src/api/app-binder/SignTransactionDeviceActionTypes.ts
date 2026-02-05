@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type SuiErrorCodes } from "@internal/app-binder/command/utils/suiApplicationErrors";
+import { type SuiErrorCodes } from "@internal/app-binder/command/utils/suiAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

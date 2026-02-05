@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type SuiErrorCodes } from "@internal/app-binder/command/utils/suiApplicationErrors";
+import { type SuiErrorCodes } from "@internal/app-binder/command/utils/suiAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

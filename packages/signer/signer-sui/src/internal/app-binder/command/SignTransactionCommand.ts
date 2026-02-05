@@ -1,52 +1,98 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type SuiErrorCodes } from "./utils/suiApplicationErrors";
+import {
+  SUI_APP_ERRORS,
+  SuiAppCommandErrorFactory,
+  type SuiErrorCodes,
+} from "./utils/suiAppErrors";
+
+const CLA = 0x00;
+const INS_SIGN = 0x03;
 
 export type SignTransactionCommandArgs = {
-  derivationPath: string;
-  transaction: Uint8Array;
+  data: Uint8Array;
+  isFirstChunk: boolean;
+  isLastChunk: boolean;
 };
 
 export type SignTransactionCommandResponse = {
-  signature: {
-    r: string;
-    s: string;
-    v?: number;
-  };
+  signature?: string;
 };
 
 export class SignTransactionCommand
-  implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, SuiErrorCodes>
+  implements Command<SignTransactionCommandResponse, SignTransactionCommandArgs, SuiErrorCodes>
 {
   readonly name = "SignTransaction";
 
   private readonly _args: SignTransactionCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    SuiErrorCodes
+  >(SUI_APP_ERRORS, SuiAppCommandErrorFactory);
 
   constructor(args: SignTransactionCommandArgs) {
     this._args = args;
   }
 
+  static get CHUNK_SIZE(): number {
+    return 250;
+  }
+
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    const { data, isFirstChunk, isLastChunk } = this._args;
+
+    // P1: 0x00 for first chunk, 0x80 for subsequent chunks
+    // P2: 0x00 for more chunks, 0x80 for last chunk
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_SIGN,
+      p1: isFirstChunk ? 0x00 : 0x80,
+      p2: isLastChunk ? 0x80 : 0x00,
+    });
+
+    builder.addBufferToData(data);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, SuiErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+        const responseLength = parser.getUnparsedRemainingLength();
+
+        // Ed25519 signature is 64 bytes
+        if (responseLength >= 64) {
+          const signatureBytes = parser.extractFieldByLength(64);
+          if (signatureBytes === undefined) {
+            return CommandResultFactory({
+              error: new InvalidStatusWordError("Cannot extract signature"),
+            });
+          }
+
+          const signature = Array.from(signatureBytes)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+
+          return CommandResultFactory({ data: { signature } });
+        }
+
+        // Intermediate chunk - return empty data
+        return CommandResultFactory({ data: {} });
+      },
+    );
   }
 }
