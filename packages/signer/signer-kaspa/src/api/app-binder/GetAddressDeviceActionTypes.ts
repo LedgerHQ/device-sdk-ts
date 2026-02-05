@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaApplicationErrors";
+import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

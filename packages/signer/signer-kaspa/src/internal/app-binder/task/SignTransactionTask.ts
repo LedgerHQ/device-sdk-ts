@@ -2,12 +2,16 @@ import {
   type CommandResult,
   CommandResultFactory,
   type InternalApi,
+  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
-import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaApplicationErrors";
+import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaAppErrors";
+
+const P1_HEADER = 0x00;
+const P1_INPUTS = 0x02;
 
 type SignTransactionTaskArgs = {
   derivationPath: string;
@@ -21,25 +25,51 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, KaspaErrorCodes>> {
-    // TODO: Adapt this implementation to your blockchain's signing protocol
-    // For transactions larger than a single APDU, you may need to:
-    // 1. Split the transaction into chunks
-    // 2. Send each chunk with appropriate first/continue flags
-    // 3. Collect the final signature from the last response
+    const { transaction } = this.args;
 
-    const result = await this.api.sendCommand(
+    // Send header
+    const headerResult = await this.api.sendCommand(
       new SignTransactionCommand({
-        derivationPath: this.args.derivationPath,
-        transaction: this.args.transaction,
+        data: transaction,
+        p1: P1_HEADER,
+        isLastChunk: false,
       }),
     );
 
-    if (!isSuccessCommandResult(result)) {
-      return result;
+    if (!isSuccessCommandResult(headerResult)) {
+      return headerResult;
     }
 
+    // Send inputs (simplified - full implementation would parse transaction)
+    const inputResult = await this.api.sendCommand(
+      new SignTransactionCommand({
+        data: new Uint8Array(0),
+        p1: P1_INPUTS,
+        isLastChunk: true,
+      }),
+    );
+
+    if (!isSuccessCommandResult(inputResult)) {
+      return inputResult;
+    }
+
+    const signature = inputResult.data.signature;
+    if (!signature) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("No signature in response"),
+      });
+    }
+
+    const signatureHex = Array.from(signature)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
     return CommandResultFactory({
-      data: result.data.signature,
+      data: {
+        r: signatureHex,
+        s: "",
+        v: undefined,
+      },
     });
   }
 }

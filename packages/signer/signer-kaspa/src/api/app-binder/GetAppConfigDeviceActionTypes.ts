@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaApplicationErrors";
+import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

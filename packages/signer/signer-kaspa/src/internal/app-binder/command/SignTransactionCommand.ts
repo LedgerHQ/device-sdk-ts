@@ -1,52 +1,95 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type KaspaErrorCodes } from "./utils/kaspaApplicationErrors";
+import {
+  KASPA_APP_ERRORS,
+  KaspaAppCommandErrorFactory,
+  type KaspaErrorCodes,
+} from "./utils/kaspaAppErrors";
+
+const CLA = 0xe0;
+const INS_SIGN_TX = 0x06;
+const P2_MORE = 0x80;
+const P2_LAST = 0x00;
 
 export type SignTransactionCommandArgs = {
-  derivationPath: string;
-  transaction: Uint8Array;
+  data: Uint8Array;
+  p1: number;
+  isLastChunk: boolean;
 };
 
 export type SignTransactionCommandResponse = {
-  signature: {
-    r: string;
-    s: string;
-    v?: number;
-  };
+  signature?: Uint8Array;
+  hasMore?: boolean;
+  inputIndex?: number;
 };
 
 export class SignTransactionCommand
-  implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, KaspaErrorCodes>
+  implements Command<SignTransactionCommandResponse, SignTransactionCommandArgs, KaspaErrorCodes>
 {
   readonly name = "SignTransaction";
 
   private readonly _args: SignTransactionCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    KaspaErrorCodes
+  >(KASPA_APP_ERRORS, KaspaAppCommandErrorFactory);
 
   constructor(args: SignTransactionCommandArgs) {
     this._args = args;
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    const { data, p1, isLastChunk } = this._args;
+
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_SIGN_TX,
+      p1: p1,
+      p2: isLastChunk ? P2_LAST : P2_MORE,
+    });
+
+    builder.addBufferToData(data);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, KaspaErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+        const responseLength = parser.getUnparsedRemainingLength();
+
+        if (responseLength > 0) {
+          const hasMore = parser.extract8BitUInt();
+          const inputIndex = parser.extract8BitUInt();
+          const sigLen = parser.extract8BitUInt();
+
+          if (sigLen !== undefined && sigLen > 0) {
+            const signature = parser.extractFieldByLength(sigLen);
+            return CommandResultFactory({
+              data: {
+                signature,
+                hasMore: hasMore === 1,
+                inputIndex,
+              },
+            });
+          }
+        }
+
+        return CommandResultFactory({ data: {} });
+      },
+    );
   }
 }

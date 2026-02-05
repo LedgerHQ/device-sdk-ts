@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaApplicationErrors";
+import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

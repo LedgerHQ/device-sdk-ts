@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaApplicationErrors";
+import { type KaspaErrorCodes } from "@internal/app-binder/command/utils/kaspaAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 
