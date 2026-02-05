@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type StellarErrorCodes } from "@internal/app-binder/command/utils/stellarApplicationErrors";
+import { type StellarErrorCodes } from "@internal/app-binder/command/utils/stellarAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

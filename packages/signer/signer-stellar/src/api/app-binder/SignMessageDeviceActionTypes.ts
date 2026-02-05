@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type StellarErrorCodes } from "@internal/app-binder/command/utils/stellarApplicationErrors";
+import { type StellarErrorCodes } from "@internal/app-binder/command/utils/stellarAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

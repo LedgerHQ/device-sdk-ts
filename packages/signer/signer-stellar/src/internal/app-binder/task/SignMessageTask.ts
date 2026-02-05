@@ -9,25 +9,30 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import { type Signature } from "@api/model/Signature";
 import {
-  SignTransactionCommand,
-  type SignTransactionCommandResponse,
-} from "@internal/app-binder/command/SignTransactionCommand";
+  SignMessageCommand,
+  type SignMessageCommandResponse,
+} from "@internal/app-binder/command/SignMessageCommand";
 import { type StellarErrorCodes } from "@internal/app-binder/command/utils/stellarAppErrors";
 
-type SignTransactionTaskArgs = {
+type SignMessageTaskArgs = {
   derivationPath: string;
-  transaction: Uint8Array;
+  message: string | Uint8Array;
 };
 
-export class SignTransactionTask {
+export class SignMessageTask {
   constructor(
     private api: InternalApi,
-    private args: SignTransactionTaskArgs,
+    private args: SignMessageTaskArgs,
   ) {}
 
   async run(): Promise<CommandResult<Signature, StellarErrorCodes>> {
-    const { derivationPath, transaction } = this.args;
-    const CHUNK_SIZE = SignTransactionCommand.CHUNK_SIZE;
+    const { derivationPath, message } = this.args;
+    const CHUNK_SIZE = SignMessageCommand.CHUNK_SIZE;
+
+    // Convert message to Uint8Array if string
+    const messageBytes = typeof message === "string"
+      ? new Uint8Array(Buffer.from(message, "hex"))
+      : message;
 
     // Build path bytes
     const paths = DerivationPathUtils.splitPath(derivationPath);
@@ -38,10 +43,10 @@ export class SignTransactionTask {
       pathDataView.setUint32(1 + index * 4, element, false);
     });
 
-    // Combine path with transaction
-    const payload = new Uint8Array(pathData.length + transaction.length);
+    // Combine path with message
+    const payload = new Uint8Array(pathData.length + messageBytes.length);
     payload.set(pathData, 0);
-    payload.set(transaction, pathData.length);
+    payload.set(messageBytes, pathData.length);
 
     // Split into chunks
     const chunks: Uint8Array[] = [];
@@ -50,7 +55,7 @@ export class SignTransactionTask {
       chunks.push(payload.slice(i, end));
     }
 
-    let lastResult: CommandResult<SignTransactionCommandResponse, StellarErrorCodes> | undefined;
+    let lastResult: CommandResult<SignMessageCommandResponse, StellarErrorCodes> | undefined;
 
     // Send each chunk
     for (let i = 0; i < chunks.length; i++) {
@@ -59,7 +64,7 @@ export class SignTransactionTask {
       const isLastChunk = i === chunks.length - 1;
 
       lastResult = await this.api.sendCommand(
-        new SignTransactionCommand({
+        new SignMessageCommand({
           chunk: chunk!,
           isFirstChunk,
           isLastChunk,
@@ -81,23 +86,9 @@ export class SignTransactionTask {
       return lastResult;
     }
 
-    const signature = lastResult.data.signature;
-    if (!signature) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("No signature in response"),
-      });
-    }
-
-    const signatureHex = Array.from(signature)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-
+    // SignMessageCommand already returns the signature in correct format
     return CommandResultFactory({
-      data: {
-        r: signatureHex,
-        s: "",
-        v: undefined,
-      },
+      data: lastResult.data,
     });
   }
 }

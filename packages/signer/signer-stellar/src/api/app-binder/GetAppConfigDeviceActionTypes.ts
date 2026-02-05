@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type StellarErrorCodes } from "@internal/app-binder/command/utils/stellarApplicationErrors";
+import { type StellarErrorCodes } from "@internal/app-binder/command/utils/stellarAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;
