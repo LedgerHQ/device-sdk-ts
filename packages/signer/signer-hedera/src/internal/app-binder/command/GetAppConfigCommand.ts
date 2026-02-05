@@ -1,40 +1,57 @@
 import {
   type Apdu,
+  ApduBuilder,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type HederaErrorCodes } from "./utils/hederaApplicationErrors";
+import {
+  HEDERA_APP_ERRORS,
+  HederaAppCommandErrorFactory,
+  type HederaErrorCodes,
+} from "./utils/hederaAppErrors";
+
+const CLA = 0xe0;
 
 export type GetAppConfigCommandResponse = {
-  // Define your app configuration response fields here
-  // Example:
-  // version: string;
-  // flags: number;
+  version: string;
 };
 
 export class GetAppConfigCommand
-  implements
-    Command<GetAppConfigCommandResponse, void, HederaErrorCodes>
+  implements Command<GetAppConfigCommandResponse, void, HederaErrorCodes>
 {
   readonly name = "GetAppConfig";
 
+  private readonly errorHelper = new CommandErrorHelper<
+    GetAppConfigCommandResponse,
+    HederaErrorCodes
+  >(HEDERA_APP_ERRORS, HederaAppCommandErrorFactory);
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    throw new Error("GetAppConfigCommand.getApdu() not implemented");
+    // Hedera doesn't have a dedicated version command
+    // Use a no-op that will return success
+    return new ApduBuilder({
+      cla: CLA,
+      ins: 0x00,
+      p1: 0x00,
+      p2: 0x00,
+    }).build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<GetAppConfigCommandResponse, HederaErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("GetAppConfigCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        // No version info available from Hedera app
+        return CommandResultFactory({
+          data: { version: "0.0.0" },
+        });
+      },
+    );
   }
 }

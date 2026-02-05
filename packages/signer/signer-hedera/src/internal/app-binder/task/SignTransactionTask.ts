@@ -7,7 +7,7 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
-import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaApplicationErrors";
+import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaAppErrors";
 
 type SignTransactionTaskArgs = {
   derivationPath: string;
@@ -21,17 +21,11 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, HederaErrorCodes>> {
-    // TODO: Adapt this implementation to your blockchain's signing protocol
-    // For transactions larger than a single APDU, you may need to:
-    // 1. Split the transaction into chunks
-    // 2. Send each chunk with appropriate first/continue flags
-    // 3. Collect the final signature from the last response
+    const { transaction } = this.args;
+    // Note: derivationPath is not used in Hedera - it only supports index #0
 
     const result = await this.api.sendCommand(
-      new SignTransactionCommand({
-        derivationPath: this.args.derivationPath,
-        transaction: this.args.transaction,
-      }),
+      new SignTransactionCommand({ transaction }),
     );
 
     if (!isSuccessCommandResult(result)) {
@@ -39,7 +33,11 @@ export class SignTransactionTask {
     }
 
     return CommandResultFactory({
-      data: result.data.signature,
+      data: {
+        r: result.data.signature,
+        s: "",
+        v: undefined,
+      },
     });
   }
 }

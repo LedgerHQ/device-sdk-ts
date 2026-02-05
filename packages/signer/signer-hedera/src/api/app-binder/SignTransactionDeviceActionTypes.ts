@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaApplicationErrors";
+import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

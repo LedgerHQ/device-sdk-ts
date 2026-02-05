@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaApplicationErrors";
+import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

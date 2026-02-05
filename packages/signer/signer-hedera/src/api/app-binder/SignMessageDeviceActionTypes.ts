@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaApplicationErrors";
+import { type HederaErrorCodes } from "@internal/app-binder/command/utils/hederaAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;
