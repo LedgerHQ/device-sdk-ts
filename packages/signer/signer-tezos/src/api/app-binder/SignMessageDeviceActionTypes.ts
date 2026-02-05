@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosApplicationErrors";
+import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosApplicationErrors";
+import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

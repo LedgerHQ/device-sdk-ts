@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosApplicationErrors";
+import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

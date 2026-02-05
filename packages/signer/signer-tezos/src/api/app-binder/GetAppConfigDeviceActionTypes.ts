@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosApplicationErrors";
+import { type TezosErrorCodes } from "@internal/app-binder/command/utils/tezosAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;
