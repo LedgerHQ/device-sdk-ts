@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumApplicationErrors";
+import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

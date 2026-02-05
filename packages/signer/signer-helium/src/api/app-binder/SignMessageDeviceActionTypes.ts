@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumApplicationErrors";
+import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

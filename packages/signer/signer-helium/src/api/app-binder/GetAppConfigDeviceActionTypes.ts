@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumApplicationErrors";
+import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumApplicationErrors";
+import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

@@ -1,12 +1,15 @@
 import {
   type Apdu,
+  ApduBuilder,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type HeliumErrorCodes } from "./utils/heliumApplicationErrors";
+import { type HeliumErrorCodes } from "./utils/heliumAppErrors";
 
 export type SignMessageCommandArgs = {
   derivationPath: string;
@@ -16,8 +19,7 @@ export type SignMessageCommandArgs = {
 export type SignMessageCommandResponse = Signature;
 
 export class SignMessageCommand
-  implements
-    Command<SignMessageCommandResponse, SignMessageCommandArgs, HeliumErrorCodes>
+  implements Command<SignMessageCommandResponse, SignMessageCommandArgs, HeliumErrorCodes>
 {
   readonly name = "SignMessage";
 
@@ -28,20 +30,17 @@ export class SignMessageCommand
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignMessageCommand.getApdu() not implemented");
+    void this._args;
+    return new ApduBuilder({ cla: 0xe0, ins: 0x00, p1: 0x00, p2: 0x00 }).build();
   }
 
   parseResponse(
     _apduResponse: ApduResponse,
   ): CommandResult<SignMessageCommandResponse, HeliumErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignMessageCommand.parseResponse() not implemented");
+    return CommandResultFactory({
+      error: new InvalidStatusWordError(
+        "Helium does not support arbitrary message signing. Use signPaymentV2 or other transaction methods.",
+      ),
+    });
   }
 }

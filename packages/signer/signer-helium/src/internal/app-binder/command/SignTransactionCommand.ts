@@ -1,52 +1,88 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type HeliumErrorCodes } from "./utils/heliumApplicationErrors";
+import {
+  HELIUM_APP_ERRORS,
+  HeliumAppCommandErrorFactory,
+  type HeliumErrorCodes,
+} from "./utils/heliumAppErrors";
+
+const CLA = 0xe0;
+const INS_SIGN_PAYMENT = 0x08;
 
 export type SignTransactionCommandArgs = {
-  derivationPath: string;
   transaction: Uint8Array;
+  accountIndex?: number;
 };
 
 export type SignTransactionCommandResponse = {
-  signature: {
-    r: string;
-    s: string;
-    v?: number;
-  };
+  signedTransaction: Uint8Array;
 };
 
 export class SignTransactionCommand
-  implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, HeliumErrorCodes>
+  implements Command<SignTransactionCommandResponse, SignTransactionCommandArgs, HeliumErrorCodes>
 {
   readonly name = "SignTransaction";
 
   private readonly _args: SignTransactionCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    HeliumErrorCodes
+  >(HELIUM_APP_ERRORS, HeliumAppCommandErrorFactory);
 
   constructor(args: SignTransactionCommandArgs) {
     this._args = args;
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    const { transaction, accountIndex = 0 } = this._args;
+
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_SIGN_PAYMENT,
+      p1: accountIndex,
+      p2: 0x00,
+    });
+
+    builder.addBufferToData(transaction);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, HeliumErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+        const responseLength = parser.getUnparsedRemainingLength();
+
+        if (responseLength > 1) {
+          const signedTransaction = parser.extractFieldByLength(responseLength);
+          if (signedTransaction === undefined) {
+            return CommandResultFactory({
+              error: new InvalidStatusWordError("Cannot extract signed transaction"),
+            });
+          }
+
+          return CommandResultFactory({ data: { signedTransaction } });
+        }
+
+        // Response length of 1 means user declined
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("User declined the transaction"),
+        });
+      },
+    );
   }
 }

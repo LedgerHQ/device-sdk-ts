@@ -7,7 +7,7 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
-import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumApplicationErrors";
+import { type HeliumErrorCodes } from "@internal/app-binder/command/utils/heliumAppErrors";
 
 type SignTransactionTaskArgs = {
   derivationPath: string;
@@ -21,25 +21,26 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, HeliumErrorCodes>> {
-    // TODO: Adapt this implementation to your blockchain's signing protocol
-    // For transactions larger than a single APDU, you may need to:
-    // 1. Split the transaction into chunks
-    // 2. Send each chunk with appropriate first/continue flags
-    // 3. Collect the final signature from the last response
+    const { transaction } = this.args;
 
     const result = await this.api.sendCommand(
-      new SignTransactionCommand({
-        derivationPath: this.args.derivationPath,
-        transaction: this.args.transaction,
-      }),
+      new SignTransactionCommand({ transaction }),
     );
 
     if (!isSuccessCommandResult(result)) {
       return result;
     }
 
+    const signatureHex = Array.from(result.data.signedTransaction)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
     return CommandResultFactory({
-      data: result.data.signature,
+      data: {
+        r: signatureHex,
+        s: "",
+        v: undefined,
+      },
     });
   }
 }
