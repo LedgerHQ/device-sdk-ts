@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainApplicationErrors";
+import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

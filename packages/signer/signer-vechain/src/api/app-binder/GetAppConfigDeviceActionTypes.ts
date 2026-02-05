@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainApplicationErrors";
+import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

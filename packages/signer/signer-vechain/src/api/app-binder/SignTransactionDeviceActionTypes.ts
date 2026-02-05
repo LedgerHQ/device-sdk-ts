@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainApplicationErrors";
+import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

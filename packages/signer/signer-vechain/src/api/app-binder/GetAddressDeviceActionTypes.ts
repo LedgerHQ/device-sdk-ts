@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainApplicationErrors";
+import { type VechainErrorCodes } from "@internal/app-binder/command/utils/vechainAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;
