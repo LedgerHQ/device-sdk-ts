@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type AlgorandErrorCodes } from "@internal/app-binder/command/utils/algorandApplicationErrors";
+import { type AlgorandErrorCodes } from "@internal/app-binder/command/utils/algorandAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

@@ -1,40 +1,84 @@
 import {
   type Apdu,
+  ApduBuilder,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type AlgorandErrorCodes } from "./utils/algorandApplicationErrors";
+import {
+  ALGORAND_APP_ERRORS,
+  AlgorandAppCommandErrorFactory,
+  type AlgorandErrorCodes,
+} from "./utils/algorandAppErrors";
+
+// Algorand doesn't have a documented GetAppConfiguration command
+// This is a placeholder implementation
+const CLA = 0x80;
+const INS_GET_APP_CONFIG = 0x01; // Common convention for app config
 
 export type GetAppConfigCommandResponse = {
-  // Define your app configuration response fields here
-  // Example:
-  // version: string;
-  // flags: number;
+  /**
+   * Note: Algorand app may not support this command
+   * Check your specific app version for support
+   */
+  version?: string;
 };
 
 export class GetAppConfigCommand
-  implements
-    Command<GetAppConfigCommandResponse, void, AlgorandErrorCodes>
+  implements Command<GetAppConfigCommandResponse, void, AlgorandErrorCodes>
 {
   readonly name = "GetAppConfig";
 
+  private readonly errorHelper = new CommandErrorHelper<
+    GetAppConfigCommandResponse,
+    AlgorandErrorCodes
+  >(ALGORAND_APP_ERRORS, AlgorandAppCommandErrorFactory);
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    throw new Error("GetAppConfigCommand.getApdu() not implemented");
+    // Attempt to get app configuration
+    // This may not be supported by all Algorand app versions
+    return new ApduBuilder({
+      cla: CLA,
+      ins: INS_GET_APP_CONFIG,
+      p1: 0x00,
+      p2: 0x00,
+    }).build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<GetAppConfigCommandResponse, AlgorandErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("GetAppConfigCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        // If the command succeeded, try to parse version if available
+        if (response.data.length >= 3) {
+          const major = response.data[0];
+          const minor = response.data[1];
+          const patch = response.data[2];
+
+          if (
+            major !== undefined &&
+            minor !== undefined &&
+            patch !== undefined
+          ) {
+            return CommandResultFactory({
+              data: {
+                version: `${major}.${minor}.${patch}`,
+              },
+            });
+          }
+        }
+
+        // Return empty config if no version data available
+        // The errorHelper already handles non-success status codes
+        return CommandResultFactory({
+          data: {},
+        });
+      },
+    );
   }
 }

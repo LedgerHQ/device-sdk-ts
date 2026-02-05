@@ -1,11 +1,26 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type AlgorandErrorCodes } from "./utils/algorandApplicationErrors";
+import {
+  ALGORAND_APP_ERRORS,
+  AlgorandAppCommandErrorFactory,
+  type AlgorandErrorCodes,
+} from "./utils/algorandAppErrors";
+
+// Algorand APDU constants
+const CLA = 0x80;
+const INS_GET_PUBLIC_KEY = 0x03;
+const P1_WITH_REQUEST_USER_APPROVAL = 0x80;
 
 export type GetAddressCommandArgs = {
   readonly derivationPath: string;
@@ -14,8 +29,23 @@ export type GetAddressCommandArgs = {
 
 export type GetAddressCommandResponse = {
   readonly publicKey: Uint8Array;
-  readonly chainCode?: Uint8Array;
 };
+
+/**
+ * Extracts the account index from a BIP32 derivation path.
+ * Algorand uses only the account index (3rd element: 44'/283'/X'/0/0)
+ */
+function extractAccountIndex(derivationPath: string): number {
+  const parts = derivationPath.replace(/'/g, "").split("/");
+  // Remove 'm' if present
+  const indexParts = parts[0] === "m" ? parts.slice(1) : parts;
+  // Account index is the 3rd element (index 2)
+  const accountIndexStr = indexParts[2];
+  if (indexParts.length < 3 || accountIndexStr === undefined) {
+    throw new Error("Invalid derivation path for Algorand");
+  }
+  return parseInt(accountIndexStr, 10);
+}
 
 export class GetAddressCommand
   implements
@@ -24,26 +54,57 @@ export class GetAddressCommand
   readonly name = "GetAddress";
 
   private readonly _args: GetAddressCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    GetAddressCommandResponse,
+    AlgorandErrorCodes
+  >(ALGORAND_APP_ERRORS, AlgorandAppCommandErrorFactory);
 
   constructor(args: GetAddressCommandArgs) {
     this._args = args;
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("GetAddressCommand.getApdu() not implemented");
+    const { derivationPath, checkOnDevice } = this._args;
+
+    // Extract account index from derivation path
+    const accountIndex = extractAccountIndex(derivationPath);
+
+    // Build APDU with account index as 4-byte big-endian
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_GET_PUBLIC_KEY,
+      p1: checkOnDevice ? P1_WITH_REQUEST_USER_APPROVAL : 0x00,
+      p2: 0x00,
+    });
+
+    // Add account index as 4 bytes big-endian
+    builder.add32BitUIntToData(accountIndex);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<GetAddressCommandResponse, AlgorandErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("GetAddressCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+
+        // Response is 32 bytes of public key
+        const publicKey = parser.extractFieldByLength(32);
+
+        if (publicKey === undefined) {
+          return CommandResultFactory({
+            error: new InvalidStatusWordError("Cannot extract public key"),
+          });
+        }
+
+        return CommandResultFactory({
+          data: {
+            publicKey,
+          },
+        });
+      },
+    );
   }
 }
