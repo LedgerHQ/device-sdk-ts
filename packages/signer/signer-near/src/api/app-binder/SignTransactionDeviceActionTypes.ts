@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type NearErrorCodes } from "@internal/app-binder/command/utils/nearApplicationErrors";
+import { type NearErrorCodes } from "@internal/app-binder/command/utils/nearAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

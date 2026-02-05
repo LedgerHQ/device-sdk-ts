@@ -1,12 +1,15 @@
 import {
   type Apdu,
+  ApduBuilder,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type NearErrorCodes } from "./utils/nearApplicationErrors";
+import { type NearErrorCodes } from "./utils/nearAppErrors";
 
 export type SignMessageCommandArgs = {
   derivationPath: string;
@@ -15,6 +18,13 @@ export type SignMessageCommandArgs = {
 
 export type SignMessageCommandResponse = Signature;
 
+/**
+ * SignMessageCommand for NEAR
+ *
+ * Note: The NEAR Ledger app does not support arbitrary message signing.
+ * It only supports transaction signing via INS_SIGN.
+ * This command exists for interface compatibility but will return an error.
+ */
 export class SignMessageCommand
   implements
     Command<SignMessageCommandResponse, SignMessageCommandArgs, NearErrorCodes>
@@ -28,20 +38,24 @@ export class SignMessageCommand
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignMessageCommand.getApdu() not implemented");
+    // NEAR doesn't support arbitrary message signing
+    void this._args;
+    return new ApduBuilder({
+      cla: 0x80,
+      ins: 0x00, // Invalid instruction
+      p1: 0x00,
+      p2: 0x00,
+    }).build();
   }
 
   parseResponse(
     _apduResponse: ApduResponse,
   ): CommandResult<SignMessageCommandResponse, NearErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignMessageCommand.parseResponse() not implemented");
+    // Always return an error since NEAR doesn't support message signing
+    return CommandResultFactory({
+      error: new InvalidStatusWordError(
+        "NEAR does not support arbitrary message signing. Use signTransaction instead.",
+      ),
+    });
   }
 }

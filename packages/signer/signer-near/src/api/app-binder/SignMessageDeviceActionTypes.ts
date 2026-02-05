@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type NearErrorCodes } from "@internal/app-binder/command/utils/nearApplicationErrors";
+import { type NearErrorCodes } from "@internal/app-binder/command/utils/nearAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

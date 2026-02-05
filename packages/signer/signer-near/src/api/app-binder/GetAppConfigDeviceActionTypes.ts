@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type NearErrorCodes } from "@internal/app-binder/command/utils/nearApplicationErrors";
+import { type NearErrorCodes } from "@internal/app-binder/command/utils/nearAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;
