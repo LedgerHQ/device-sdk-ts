@@ -7,4 +7,5 @@ export const deviceSessionTypes = {
     "DisableDeviceSessionRefresherUseCase",
   ),
   CloseSessionsUseCase: Symbol.for("CloseSessionsUseCase"),
+  UnsafeBypassIntentQueueUseCase: Symbol.for("UnsafeBypassIntentQueueUseCase"),
 };

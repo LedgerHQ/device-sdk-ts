@@ -1,4 +1,13 @@
-import { type Subscription, timer } from "rxjs";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  startWith,
+  type Subscription,
+  tap,
+  timer,
+  withLatestFrom,
+} from "rxjs";
 
 import { DeviceModelId } from "@api/device/DeviceModel";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
@@ -36,15 +45,42 @@ export class DeviceSessionRefresher {
 
   public startRefresher(): void {
     if (this._refresherOptions.isRefresherDisabled) return;
+    if (this._refresherSubscription) return;
 
     const pollingInterval =
       this.getValidPollingInterval(this._refresherOptions, this._logger) * 2;
 
-    this._refresherSubscription = timer(0, pollingInterval).subscribe(() => {
-      this._sessionEventDispatcher.dispatch({
-        eventName: SessionEvents.REFRESH_NEEDED,
-      });
-    });
+    const isBusy$ = this._sessionEventDispatcher.listen().pipe(
+      filter(
+        (event) =>
+          event.eventName === SessionEvents.DEVICE_STATE_UPDATE_BUSY ||
+          event.eventName === SessionEvents.NEW_STATE,
+      ),
+      map(
+        (event) => event.eventName === SessionEvents.DEVICE_STATE_UPDATE_BUSY,
+      ),
+      startWith(false),
+      distinctUntilChanged(),
+    );
+
+    this._refresherSubscription = timer(0, pollingInterval)
+      .pipe(
+        withLatestFrom(isBusy$),
+        tap(([_, isBusy]) => {
+          if (isBusy) {
+            this._logger.debug("Refresh skipped: device is busy");
+          }
+        }),
+        filter(([_, isBusy]) => !isBusy),
+        tap(() =>
+          this._sessionEventDispatcher.dispatch({
+            eventName: SessionEvents.REFRESH_NEEDED,
+          }),
+        ),
+      )
+      .subscribe();
+
+    this._logger.info("Refresher started.");
   }
 
   public stopRefresher(): void {
@@ -59,10 +95,6 @@ export class DeviceSessionRefresher {
     this.stopRefresher();
     this.startRefresher();
     this._logger.info("Refresher restarted.");
-  }
-
-  public destroy(): void {
-    this.stopRefresher();
   }
 
   private getValidPollingInterval = (

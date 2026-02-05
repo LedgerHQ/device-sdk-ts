@@ -62,7 +62,7 @@ describe("DeviceSessionRefresher", () => {
   });
 
   afterEach(() => {
-    refresher?.destroy();
+    refresher?.stopRefresher();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -160,6 +160,9 @@ describe("DeviceSessionRefresher", () => {
     );
     refresher.startRefresher();
 
+    // Trigger NEW_STATE event to start the refresher timer
+    subject.next({ eventName: SessionEvents.NEW_STATE });
+
     const timerInterval = validInterval * 2;
 
     vi.advanceTimersByTime(timerInterval * 3);
@@ -220,29 +223,13 @@ describe("DeviceSessionRefresher", () => {
     expect(mockLogger.info).toHaveBeenCalledWith("Refresher stopped.");
     expect(mockLogger.info).toHaveBeenCalledWith("Refresher restarted.");
 
+    // Trigger NEW_STATE event to start the refresher timer
+    subject.next({ eventName: SessionEvents.NEW_STATE });
+
     vi.advanceTimersByTime(2000);
     expect(
       (mockSessionEventDispatcher.dispatch as ReturnType<typeof vi.fn>).mock
         .calls.length,
     ).toBeGreaterThan(0);
-  });
-
-  it("should destroy refresher", () => {
-    const options: DeviceSessionRefresherOptions = {
-      isRefresherDisabled: false,
-      pollingInterval: 1000,
-    };
-    refresher = new DeviceSessionRefresher(
-      mockedLoggerModuleFactory,
-      options,
-      mockSessionEventDispatcher,
-      stubDefaultDevice,
-    );
-    refresher.startRefresher();
-
-    refresher.destroy();
-    vi.advanceTimersByTime(2000);
-
-    expect(mockSessionEventDispatcher.dispatch).not.toHaveBeenCalled();
   });
 });

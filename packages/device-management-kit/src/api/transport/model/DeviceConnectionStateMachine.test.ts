@@ -5,10 +5,7 @@ import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import { type SendApduResult } from "./DeviceConnection";
 import { DeviceConnectionStateMachine } from "./DeviceConnectionStateMachine";
-import {
-  AlreadySendingApduError,
-  DeviceDisconnectedWhileSendingError,
-} from "./Errors";
+import { DeviceDisconnectedWhileSendingError } from "./Errors";
 
 describe("DeviceConnectionStateMachine", () => {
   let machine: DeviceConnectionStateMachine<void>;
@@ -83,13 +80,15 @@ describe("DeviceConnectionStateMachine", () => {
 
       // WHEN
       const promise = machine.sendApdu(apdu);
-      const result2 = await machine.sendApdu(apdu2);
+      const promise2 = machine.sendApdu(apdu2);
       const result = await promise;
+      const result2 = await promise2;
 
       // THEN
-      expect(mockApduSender.sendApdu).toHaveBeenCalledTimes(1);
+      // With the race condition fix, second APDU waits and then sends sequentially
+      expect(mockApduSender.sendApdu).toHaveBeenCalledTimes(2);
       expect(result).toStrictEqual(Right(apduResponse));
-      expect(result2).toStrictEqual(Left(new AlreadySendingApduError()));
+      expect(result2).toStrictEqual(Right(apduResponse));
     });
 
     it("Disconnected while sending APDU", async () => {
@@ -261,17 +260,21 @@ describe("DeviceConnectionStateMachine", () => {
 
       // WHEN
       const promise = machine.sendApdu(apdu, true);
-      const result2 = await machine.sendApdu(apdu2);
+      const promise2 = machine.sendApdu(apdu2);
       const result = await promise;
+      const result2 = await promise2;
 
       // THEN
-      expect(mockApduSender.sendApdu).toHaveBeenCalledTimes(2);
+      // With the race condition fix, second APDU waits and then sends sequentially
+      // First APDU triggers disconnection flow, which sends GetAppAndVersion, then the second APDU is sent
+      expect(mockApduSender.sendApdu).toHaveBeenCalledTimes(3);
       expect(mockApduSender.sendApdu.mock.calls).toEqual([
         [apdu, false, undefined],
         [Uint8Array.from([0xb0, 0x01, 0x00, 0x00, 0x00]), false, undefined], // GetAppAndVersion APDU sent after a successful result from an APDU that triggers disconnection
+        [apdu2, false, undefined], // Second APDU sent after waiting
       ]);
       expect(result).toStrictEqual(Right(apduResponse));
-      expect(result2).toStrictEqual(Left(new AlreadySendingApduError()));
+      expect(result2).toStrictEqual(Right(apduResponse));
     });
 
     it("should send another APDU in promise handler", async () => {
