@@ -1,52 +1,95 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type AptosErrorCodes } from "./utils/aptosApplicationErrors";
+import {
+  APTOS_APP_ERRORS,
+  AptosAppCommandErrorFactory,
+  type AptosErrorCodes,
+} from "./utils/aptosAppErrors";
+
+const CLA = 0x5b;
+const INS_SIGN_TX = 0x06;
 
 export type SignTransactionCommandArgs = {
-  derivationPath: string;
-  transaction: Uint8Array;
+  chunk: Uint8Array;
+  chunkIndex: number;
+  isLastChunk: boolean;
 };
 
 export type SignTransactionCommandResponse = {
-  signature: {
-    r: string;
-    s: string;
-    v?: number;
-  };
+  signature?: Uint8Array;
 };
 
 export class SignTransactionCommand
-  implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, AptosErrorCodes>
+  implements Command<SignTransactionCommandResponse, SignTransactionCommandArgs, AptosErrorCodes>
 {
   readonly name = "SignTransaction";
 
   private readonly _args: SignTransactionCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    AptosErrorCodes
+  >(APTOS_APP_ERRORS, AptosAppCommandErrorFactory);
 
   constructor(args: SignTransactionCommandArgs) {
     this._args = args;
   }
 
+  static get CHUNK_SIZE(): number {
+    return 255;
+  }
+
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    const { chunk, chunkIndex, isLastChunk } = this._args;
+
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_SIGN_TX,
+      p1: chunkIndex,
+      p2: isLastChunk ? 0x00 : 0x80,
+    });
+
+    builder.addBufferToData(chunk);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, AptosErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+        const responseLength = parser.getUnparsedRemainingLength();
+
+        if (responseLength > 0) {
+          const signatureLen = parser.extract8BitUInt();
+          if (signatureLen === undefined || signatureLen === 0) {
+            return CommandResultFactory({ data: {} });
+          }
+
+          const signature = parser.extractFieldByLength(signatureLen);
+          if (signature === undefined) {
+            return CommandResultFactory({
+              error: new InvalidStatusWordError("Cannot extract signature"),
+            });
+          }
+
+          return CommandResultFactory({ data: { signature } });
+        }
+
+        return CommandResultFactory({ data: {} });
+      },
+    );
   }
 }

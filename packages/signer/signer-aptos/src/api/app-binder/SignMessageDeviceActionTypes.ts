@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type AptosErrorCodes } from "@internal/app-binder/command/utils/aptosApplicationErrors";
+import { type AptosErrorCodes } from "@internal/app-binder/command/utils/aptosAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;

@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type AptosErrorCodes } from "@internal/app-binder/command/utils/aptosApplicationErrors";
+import { type AptosErrorCodes } from "@internal/app-binder/command/utils/aptosAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;
