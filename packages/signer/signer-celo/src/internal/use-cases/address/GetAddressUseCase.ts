@@ -1,0 +1,28 @@
+import { inject, injectable } from "inversify";
+
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type AddressOptions } from "@api/model/AddressOptions";
+import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
+import { CeloAppBinder } from "@internal/app-binder/CeloAppBinder";
+
+@injectable()
+export class GetAddressUseCase {
+  private readonly _appBinder: CeloAppBinder;
+
+  constructor(
+    @inject(appBinderTypes.AppBinding) appBinder: CeloAppBinder,
+  ) {
+    this._appBinder = appBinder;
+  }
+
+  execute(
+    derivationPath: string,
+    options?: AddressOptions,
+  ): GetAddressDAReturnType {
+    return this._appBinder.getAddress({
+      derivationPath,
+      checkOnDevice: options?.checkOnDevice ?? false,
+      skipOpenApp: options?.skipOpenApp ?? false,
+    });
+  }
+}

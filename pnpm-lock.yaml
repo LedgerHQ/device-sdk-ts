@@ -500,7 +500,7 @@ importers:
         version: 9.1.0
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
       tsx:
         specifier: 'catalog:'
         version: 4.19.2
@@ -810,15 +810,69 @@ importers:
       '@ledgerhq/device-mockserver-client':
         specifier: workspace:^
         version: link:../../packages/mockserver-client
+      '@ledgerhq/device-signer-kit-algorand':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-algorand
+      '@ledgerhq/device-signer-kit-aptos':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-aptos
       '@ledgerhq/device-signer-kit-bitcoin':
         specifier: workspace:^
         version: link:../../packages/signer/signer-btc
+      '@ledgerhq/device-signer-kit-canton':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-canton
+      '@ledgerhq/device-signer-kit-celo':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-celo
+      '@ledgerhq/device-signer-kit-concordium':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-concordium
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:^
         version: link:../../packages/signer/signer-eth
+      '@ledgerhq/device-signer-kit-hedera':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-hedera
+      '@ledgerhq/device-signer-kit-helium':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-helium
+      '@ledgerhq/device-signer-kit-icon':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-icon
+      '@ledgerhq/device-signer-kit-kaspa':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-kaspa
+      '@ledgerhq/device-signer-kit-multiversx':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-multiversx
+      '@ledgerhq/device-signer-kit-near':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-near
+      '@ledgerhq/device-signer-kit-polkadot':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-polkadot
       '@ledgerhq/device-signer-kit-solana':
         specifier: workspace:^
         version: link:../../packages/signer/signer-solana
+      '@ledgerhq/device-signer-kit-stellar':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-stellar
+      '@ledgerhq/device-signer-kit-sui':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-sui
+      '@ledgerhq/device-signer-kit-tezos':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-tezos
+      '@ledgerhq/device-signer-kit-tron':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-tron
+      '@ledgerhq/device-signer-kit-vechain':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-vechain
+      '@ledgerhq/device-signer-kit-xrp':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-xrp
       '@ledgerhq/device-transport-kit-mockserver':
         specifier: workspace:^
         version: link:../../packages/transport/mockserver
@@ -1029,7 +1083,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/devtools/core:
     devDependencies:
@@ -1356,7 +1410,93 @@ importers:
         version: 4.2.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-algorand:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-aptos:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-btc:
     dependencies:
@@ -1408,7 +1548,136 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-canton:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-celo:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-concordium:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-eth:
     dependencies:
@@ -1463,7 +1732,308 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-hedera:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-helium:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-icon:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-kaspa:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-multiversx:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-near:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-polkadot:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-solana:
     dependencies:
@@ -1527,7 +2097,179 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-stellar:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-sui:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-tezos:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-tron:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-utils:
     devDependencies:
@@ -1551,7 +2293,93 @@ importers:
         version: link:../../config/vitest
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-vechain:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-xrp:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/speculos-device-controller:
     dependencies:
@@ -1582,7 +2410,7 @@ importers:
         version: link:../config/vitest
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/tools/cal-interceptor:
     dependencies:
@@ -1682,7 +2510,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/transport/rn-ble:
     dependencies:
@@ -1722,7 +2550,7 @@ importers:
         version: 10.0.0
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 5.0.1(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 5.0.1(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       react-native:
         specifier: 'catalog:'
         version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
@@ -1734,10 +2562,10 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
       vitest-react-native:
         specifier: 'catalog:'
-        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
 
   packages/transport/rn-hid:
     dependencies:
@@ -1814,7 +2642,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/transport/web-ble:
     dependencies:
@@ -1857,7 +2685,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/transport/web-hid:
     dependencies:
@@ -1900,7 +2728,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/trusted-apps/ledger-keyring-protocol:
     dependencies:
@@ -17264,6 +18092,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@vitejs/plugin-react@5.0.1(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
+    dependencies:
+      '@babel/core': 7.28.3
+      '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.3)
+      '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.28.3)
+      '@rolldown/pluginutils': 1.0.0-beta.32
+      '@types/babel__core': 7.20.5
+      react-refresh: 0.17.0
+      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+    transitivePeerDependencies:
+      - supports-color
+
   '@vitest/coverage-istanbul@3.2.4(vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
     dependencies:
       '@istanbuljs/schema': 0.1.3
@@ -25136,6 +25976,25 @@ snapshots:
       typescript: 5.9.2
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    optional: true
+
+  ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 24.3.0
+      acorn: 8.15.0
+      acorn-walk: 8.3.1
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.9.2
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
 
   tsc-alias@1.8.10:
     dependencies:
@@ -25590,7 +26449,7 @@ snapshots:
       tsx: 4.20.3
       yaml: 2.7.0
 
-  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
+  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
     dependencies:
       '@bunchtogether/vite-plugin-flow': 1.0.2
       '@react-native/polyfills': 2.0.0
@@ -25600,7 +26459,7 @@ snapshots:
       react: 18.3.1
       react-native: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
       regenerator-runtime: 0.13.11
-      vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
 
   vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
     dependencies:

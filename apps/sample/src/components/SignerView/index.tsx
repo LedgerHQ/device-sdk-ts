@@ -24,6 +24,96 @@ const SUPPORTED_SIGNERS = [
     description: "Access Solana signer functionality",
     icon: <CryptoIcon ledgerId="solana" ticker="SOL" size={size} />,
   },
+  {
+    title: "Algorand",
+    description: "Access Algorand signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Aptos",
+    description: "Access Aptos signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Canton",
+    description: "Access Canton signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Celo",
+    description: "Access Celo signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Concordium",
+    description: "Access Concordium signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Hedera",
+    description: "Access Hedera signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Helium",
+    description: "Access Helium signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Icon",
+    description: "Access Icon signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Kaspa",
+    description: "Access Kaspa signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Multiversx",
+    description: "Access Multiversx signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Near",
+    description: "Access Near signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Polkadot",
+    description: "Access Polkadot signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Stellar",
+    description: "Access Stellar signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Sui",
+    description: "Access Sui signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Tezos",
+    description: "Access Tezos signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Tron",
+    description: "Access Tron signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Vechain",
+    description: "Access Vechain signer functionality",
+    icon: <CryptoIcons.BTC size={80} />, // TODO: Update icon if needed
+  },
+  {
+    title: "Xrp",
+    description: "Access Xrp signer functionality",
+    icon: <CryptoIcons.XRP size={80} />, // TODO: Update icon if needed
+  },
 ];
 
 export const SignerView = () => {

@@ -24,6 +24,24 @@ import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SettingsGate } from "@/providers/SettingsGate";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
+import { SignerAlgorandProvider } from "@/providers/SignerAlgorandProvider";
+import { SignerAptosProvider } from "@/providers/SignerAptosProvider";
+import { SignerCantonProvider } from "@/providers/SignerCantonProvider";
+import { SignerCeloProvider } from "@/providers/SignerCeloProvider";
+import { SignerConcordiumProvider } from "@/providers/SignerConcordiumProvider";
+import { SignerHederaProvider } from "@/providers/SignerHederaProvider";
+import { SignerHeliumProvider } from "@/providers/SignerHeliumProvider";
+import { SignerIconProvider } from "@/providers/SignerIconProvider";
+import { SignerKaspaProvider } from "@/providers/SignerKaspaProvider";
+import { SignerMultiversxProvider } from "@/providers/SignerMultiversxProvider";
+import { SignerNearProvider } from "@/providers/SignerNearProvider";
+import { SignerPolkadotProvider } from "@/providers/SignerPolkadotProvider";
+import { SignerStellarProvider } from "@/providers/SignerStellarProvider";
+import { SignerSuiProvider } from "@/providers/SignerSuiProvider";
+import { SignerTezosProvider } from "@/providers/SignerTezosProvider";
+import { SignerTronProvider } from "@/providers/SignerTronProvider";
+import { SignerVechainProvider } from "@/providers/SignerVechainProvider";
+import { SignerXrpProvider } from "@/providers/SignerXrpProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
 
@@ -73,6 +91,24 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <DmkProvider>
               <LedgerKeyringProtocolProvider>
                 <SignerEthProvider>
+                  <SignerXrpProvider>
+                  <SignerVechainProvider>
+                  <SignerTronProvider>
+                  <SignerTezosProvider>
+                  <SignerSuiProvider>
+                  <SignerStellarProvider>
+                  <SignerPolkadotProvider>
+                  <SignerNearProvider>
+                  <SignerMultiversxProvider>
+                  <SignerKaspaProvider>
+                  <SignerIconProvider>
+                  <SignerHeliumProvider>
+                  <SignerHederaProvider>
+                  <SignerConcordiumProvider>
+                  <SignerCeloProvider>
+                  <SignerCantonProvider>
+                  <SignerAptosProvider>
+                  <SignerAlgorandProvider>
                   <CalInterceptorProvider>
                     <GlobalStyle />
                     <head>
@@ -82,6 +118,24 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                       <RootApp>{children}</RootApp>
                     </body>
                   </CalInterceptorProvider>
+                </SignerAlgorandProvider>
+                </SignerAptosProvider>
+                </SignerCantonProvider>
+                </SignerCeloProvider>
+                </SignerConcordiumProvider>
+                </SignerHederaProvider>
+                </SignerHeliumProvider>
+                </SignerIconProvider>
+                </SignerKaspaProvider>
+                </SignerMultiversxProvider>
+                </SignerNearProvider>
+                </SignerPolkadotProvider>
+                </SignerStellarProvider>
+                </SignerSuiProvider>
+                </SignerTezosProvider>
+                </SignerTronProvider>
+                </SignerVechainProvider>
+                </SignerXrpProvider>
                 </SignerEthProvider>
               </LedgerKeyringProtocolProvider>
             </DmkProvider>
