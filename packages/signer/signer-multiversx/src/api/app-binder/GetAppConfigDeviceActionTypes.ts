@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type MultiversxErrorCodes } from "@internal/app-binder/command/utils/multiversxApplicationErrors";
+import { type MultiversxErrorCodes } from "@internal/app-binder/command/utils/multiversxAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

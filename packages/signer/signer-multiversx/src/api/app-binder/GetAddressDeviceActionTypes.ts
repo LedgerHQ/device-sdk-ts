@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type MultiversxErrorCodes } from "@internal/app-binder/command/utils/multiversxApplicationErrors";
+import { type MultiversxErrorCodes } from "@internal/app-binder/command/utils/multiversxAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

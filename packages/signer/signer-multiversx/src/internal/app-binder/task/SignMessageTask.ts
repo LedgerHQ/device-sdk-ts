@@ -9,25 +9,25 @@ import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import { type Signature } from "@api/model/Signature";
 import {
-  SignTransactionCommand,
-  type SignTransactionCommandResponse,
-} from "@internal/app-binder/command/SignTransactionCommand";
+  SignMessageCommand,
+  type SignMessageCommandResponse,
+} from "@internal/app-binder/command/SignMessageCommand";
 import { type MultiversxErrorCodes } from "@internal/app-binder/command/utils/multiversxAppErrors";
 
-type SignTransactionTaskArgs = {
+type SignMessageTaskArgs = {
   derivationPath: string;
-  transaction: Uint8Array;
+  message: Uint8Array;
 };
 
-export class SignTransactionTask {
+export class SignMessageTask {
   constructor(
     private api: InternalApi,
-    private args: SignTransactionTaskArgs,
+    private args: SignMessageTaskArgs,
   ) {}
 
   async run(): Promise<CommandResult<Signature, MultiversxErrorCodes>> {
-    const { derivationPath, transaction } = this.args;
-    const CHUNK_SIZE = SignTransactionCommand.CHUNK_SIZE;
+    const { derivationPath, message } = this.args;
+    const CHUNK_SIZE = SignMessageCommand.CHUNK_SIZE;
 
     // Build path bytes
     const paths = DerivationPathUtils.splitPath(derivationPath);
@@ -38,10 +38,14 @@ export class SignTransactionTask {
       pathDataView.setUint32(1 + index * 4, element, false);
     });
 
-    // Combine path + transaction
-    const fullPayload = new Uint8Array(pathData.length + transaction.length);
+    // Combine path + message length (4 bytes BE) + message
+    const messageLengthData = new Uint8Array(4);
+    new DataView(messageLengthData.buffer).setUint32(0, message.length, false);
+
+    const fullPayload = new Uint8Array(pathData.length + messageLengthData.length + message.length);
     fullPayload.set(pathData, 0);
-    fullPayload.set(transaction, pathData.length);
+    fullPayload.set(messageLengthData, pathData.length);
+    fullPayload.set(message, pathData.length + messageLengthData.length);
 
     // Split into chunks
     const chunks: Uint8Array[] = [];
@@ -49,13 +53,13 @@ export class SignTransactionTask {
       chunks.push(fullPayload.slice(i, Math.min(i + CHUNK_SIZE, fullPayload.length)));
     }
 
-    let lastResult: CommandResult<SignTransactionCommandResponse, MultiversxErrorCodes> | undefined;
+    let lastResult: CommandResult<SignMessageCommandResponse, MultiversxErrorCodes> | undefined;
 
     for (let i = 0; i < chunks.length; i++) {
       const isFirstChunk = i === 0;
 
       lastResult = await this.api.sendCommand(
-        new SignTransactionCommand({
+        new SignMessageCommand({
           data: chunks[i]!,
           isFirstChunk,
         }),
@@ -76,15 +80,6 @@ export class SignTransactionTask {
       return lastResult;
     }
 
-    const signature = lastResult.data.signature;
-    if (!signature) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("No signature in response"),
-      });
-    }
-
-    return CommandResultFactory({
-      data: { r: signature, s: "", v: undefined },
-    });
+    return lastResult;
   }
 }

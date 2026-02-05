@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type MultiversxErrorCodes } from "@internal/app-binder/command/utils/multiversxApplicationErrors";
+import { type MultiversxErrorCodes } from "@internal/app-binder/command/utils/multiversxAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

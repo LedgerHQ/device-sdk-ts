@@ -1,47 +1,96 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
-import { type MultiversxErrorCodes } from "./utils/multiversxApplicationErrors";
+import {
+  MULTIVERSX_APP_ERRORS,
+  MultiversxAppCommandErrorFactory,
+  type MultiversxErrorCodes,
+} from "./utils/multiversxAppErrors";
+
+const CLA = 0xed;
+const INS_SIGN_MSG = 0x06;
 
 export type SignMessageCommandArgs = {
-  derivationPath: string;
-  message: string | Uint8Array;
+  data: Uint8Array;
+  isFirstChunk: boolean;
 };
 
 export type SignMessageCommandResponse = Signature;
 
 export class SignMessageCommand
-  implements
-    Command<SignMessageCommandResponse, SignMessageCommandArgs, MultiversxErrorCodes>
+  implements Command<SignMessageCommandResponse, SignMessageCommandArgs, MultiversxErrorCodes>
 {
   readonly name = "SignMessage";
 
   private readonly _args: SignMessageCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignMessageCommandResponse,
+    MultiversxErrorCodes
+  >(MULTIVERSX_APP_ERRORS, MultiversxAppCommandErrorFactory);
 
   constructor(args: SignMessageCommandArgs) {
     this._args = args;
   }
 
+  static get CHUNK_SIZE(): number {
+    return 255;
+  }
+
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignMessageCommand.getApdu() not implemented");
+    const { data, isFirstChunk } = this._args;
+
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_SIGN_MSG,
+      p1: isFirstChunk ? 0x00 : 0x80,
+      p2: 0x00,
+    });
+
+    builder.addBufferToData(data);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<SignMessageCommandResponse, MultiversxErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignMessageCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+        const responseLength = parser.getUnparsedRemainingLength();
+
+        if (responseLength >= 64) {
+          const signatureBytes = parser.extractFieldByLength(64);
+          if (signatureBytes === undefined) {
+            return CommandResultFactory({
+              error: new InvalidStatusWordError("Cannot extract signature"),
+            });
+          }
+
+          const signature = Array.from(signatureBytes)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+
+          return CommandResultFactory({
+            data: { r: signature, s: "", v: undefined },
+          });
+        }
+
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Invalid signature response"),
+        });
+      },
+    );
   }
 }

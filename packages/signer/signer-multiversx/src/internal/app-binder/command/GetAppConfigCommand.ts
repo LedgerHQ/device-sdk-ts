@@ -1,40 +1,81 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type MultiversxErrorCodes } from "./utils/multiversxApplicationErrors";
+import {
+  MULTIVERSX_APP_ERRORS,
+  MultiversxAppCommandErrorFactory,
+  type MultiversxErrorCodes,
+} from "./utils/multiversxAppErrors";
+
+const CLA = 0xed;
+const INS_GET_APP_CONFIGURATION = 0x02;
 
 export type GetAppConfigCommandResponse = {
-  // Define your app configuration response fields here
-  // Example:
-  // version: string;
-  // flags: number;
+  version: string;
+  contractDataEnabled: boolean;
+  blindSigningEnabled: boolean;
 };
 
 export class GetAppConfigCommand
-  implements
-    Command<GetAppConfigCommandResponse, void, MultiversxErrorCodes>
+  implements Command<GetAppConfigCommandResponse, void, MultiversxErrorCodes>
 {
   readonly name = "GetAppConfig";
 
+  private readonly errorHelper = new CommandErrorHelper<
+    GetAppConfigCommandResponse,
+    MultiversxErrorCodes
+  >(MULTIVERSX_APP_ERRORS, MultiversxAppCommandErrorFactory);
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    throw new Error("GetAppConfigCommand.getApdu() not implemented");
+    return new ApduBuilder({
+      cla: CLA,
+      ins: INS_GET_APP_CONFIGURATION,
+      p1: 0x00,
+      p2: 0x00,
+    }).build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<GetAppConfigCommandResponse, MultiversxErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("GetAppConfigCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+
+        const contractDataEnabled = parser.extract8BitUInt() === 1;
+        const blindSigningEnabled = parser.extract8BitUInt() === 1;
+
+        // Skip unused bytes (account index compatibility)
+        parser.extract8BitUInt();
+
+        const major = parser.extract8BitUInt();
+        const minor = parser.extract8BitUInt();
+        const patch = parser.extract8BitUInt();
+
+        if (major === undefined || minor === undefined || patch === undefined) {
+          return CommandResultFactory({
+            error: new InvalidStatusWordError("Cannot extract version"),
+          });
+        }
+
+        return CommandResultFactory({
+          data: {
+            version: `${major}.${minor}.${patch}`,
+            contractDataEnabled,
+            blindSigningEnabled,
+          },
+        });
+      },
+    );
   }
 }

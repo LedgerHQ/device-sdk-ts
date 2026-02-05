@@ -15,7 +15,7 @@ import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceA
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { SignTransactionTask } from "./task/SignTransactionTask";
-import { SignMessageCommand } from "./command/SignMessageCommand";
+import { SignMessageTask } from "./task/SignMessageTask";
 
 @injectable()
 export class MultiversxAppBinder {
@@ -84,11 +84,20 @@ export class MultiversxAppBinder {
     message: string | Uint8Array;
     skipOpenApp: boolean;
   }): SignMessageDAReturnType {
+    const messageBytes =
+      typeof args.message === "string"
+        ? new TextEncoder().encode(args.message)
+        : args.message;
+
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SendCommandInAppDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          command: new SignMessageCommand(args),
+          task: async (internalApi) =>
+            new SignMessageTask(internalApi, {
+              derivationPath: args.derivationPath,
+              message: messageBytes,
+            }).run(),
           appName: "Multiversx",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
