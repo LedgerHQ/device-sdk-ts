@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type CantonErrorCodes } from "@internal/app-binder/command/utils/cantonApplicationErrors";
+import { type CantonErrorCodes } from "@internal/app-binder/command/utils/cantonAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

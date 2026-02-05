@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type CantonErrorCodes } from "@internal/app-binder/command/utils/cantonApplicationErrors";
+import { type CantonErrorCodes } from "@internal/app-binder/command/utils/cantonAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

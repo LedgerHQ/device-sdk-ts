@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type CantonErrorCodes } from "@internal/app-binder/command/utils/cantonApplicationErrors";
+import { type CantonErrorCodes } from "@internal/app-binder/command/utils/cantonAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 
