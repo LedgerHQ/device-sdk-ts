@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type TronErrorCodes } from "@internal/app-binder/command/utils/tronApplicationErrors";
+import { type TronErrorCodes } from "@internal/app-binder/command/utils/tronAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

@@ -1,16 +1,36 @@
 import {
   type Apdu,
+  ApduBuilder,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
-import { type TronErrorCodes } from "./utils/tronApplicationErrors";
+import {
+  TRON_APP_ERRORS,
+  TronAppCommandErrorFactory,
+  type TronErrorCodes,
+} from "./utils/tronAppErrors";
+
+// Tron APDU constants
+const CLA = 0xe0;
+const INS_SIGN_MESSAGE = 0x08;
 
 export type SignMessageCommandArgs = {
-  derivationPath: string;
-  message: string | Uint8Array;
+  /**
+   * The chunk of message data to send
+   */
+  chunk: Uint8Array;
+  /**
+   * Whether this is the first chunk
+   */
+  isFirstChunk: boolean;
 };
 
 export type SignMessageCommandResponse = Signature;
@@ -22,26 +42,74 @@ export class SignMessageCommand
   readonly name = "SignMessage";
 
   private readonly _args: SignMessageCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignMessageCommandResponse,
+    TronErrorCodes
+  >(TRON_APP_ERRORS, TronAppCommandErrorFactory);
 
   constructor(args: SignMessageCommandArgs) {
     this._args = args;
   }
 
+  /**
+   * Maximum chunk size for Tron message signing (250 bytes)
+   */
+  static get CHUNK_SIZE(): number {
+    return 250;
+  }
+
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    void this._args; // TODO: Use args to build APDU
-    throw new Error("SignMessageCommand.getApdu() not implemented");
+    const { chunk, isFirstChunk } = this._args;
+
+    const builder = new ApduBuilder({
+      cla: CLA,
+      ins: INS_SIGN_MESSAGE,
+      p1: isFirstChunk ? 0x00 : 0x80,
+      p2: 0x00,
+    });
+
+    builder.addBufferToData(chunk);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<SignMessageCommandResponse, TronErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignMessageCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(this.errorHelper.getError(response)).orDefaultLazy(
+      () => {
+        const parser = new ApduParser(response);
+
+        // Signature is 65 bytes
+        const responseLength = parser.getUnparsedRemainingLength();
+
+        if (responseLength >= 65) {
+          const signature = parser.extractFieldByLength(65);
+
+          if (signature === undefined) {
+            return CommandResultFactory({
+              error: new InvalidStatusWordError("Cannot extract signature"),
+            });
+          }
+
+          const signatureHex = Array.from(signature)
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+
+          return CommandResultFactory({
+            data: {
+              r: signatureHex,
+              s: "",
+              v: undefined,
+            },
+          });
+        }
+
+        // Intermediate chunk - no signature yet
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Incomplete signature response"),
+        });
+      },
+    );
   }
 }

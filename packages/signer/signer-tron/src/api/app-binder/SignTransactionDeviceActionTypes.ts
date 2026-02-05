@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type TronErrorCodes } from "@internal/app-binder/command/utils/tronApplicationErrors";
+import { type TronErrorCodes } from "@internal/app-binder/command/utils/tronAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

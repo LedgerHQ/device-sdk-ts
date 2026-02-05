@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type TronErrorCodes } from "@internal/app-binder/command/utils/tronApplicationErrors";
+import { type TronErrorCodes } from "@internal/app-binder/command/utils/tronAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;
