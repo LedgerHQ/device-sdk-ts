@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@internal/app-binder/command/GetAddressCommand";
-import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
+import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotAppErrors";
 
 type GetAddressDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;

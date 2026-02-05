@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
-import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
+import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotAppErrors";
 
 type GetAppConfigDAUserInteractionRequired =
   | UserInteractionRequired.None;

@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
+import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotAppErrors";
 
 export type SignTransactionDAOutput = Signature;
 

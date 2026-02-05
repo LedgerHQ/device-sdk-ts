@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type SignMessageCommandResponse } from "@internal/app-binder/command/SignMessageCommand";
-import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
+import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotAppErrors";
 
 type SignMessageDAUserInteractionRequired =
   | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;
