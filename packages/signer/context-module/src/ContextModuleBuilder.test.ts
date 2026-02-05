@@ -290,6 +290,34 @@ describe("ContextModuleBuilder", () => {
   });
 
   describe("loggerFactory", () => {
+    it("should use the default empty logger when loggerFactory is not provided", () => {
+      const contextModuleBuilder = new ContextModuleBuilder({
+        originToken: "test",
+      });
+
+      const res = contextModuleBuilder.build();
+      const config = (res as DefaultContextModule)[
+        "_container"
+      ].get<ContextModuleConfig>(configTypes.Config);
+
+      expect(res).toBeInstanceOf(DefaultContextModule);
+      expect(config.loggerFactory).toBeDefined();
+
+      // Verify the default logger has empty implementations
+      const logger = config.loggerFactory("test");
+      expect(logger.debug).toBeDefined();
+      expect(logger.info).toBeDefined();
+      expect(logger.warn).toBeDefined();
+      expect(logger.error).toBeDefined();
+      expect(logger.subscribers).toEqual([]);
+
+      // Verify the empty logger functions don't throw
+      expect(() => logger.debug("test")).not.toThrow();
+      expect(() => logger.info("test")).not.toThrow();
+      expect(() => logger.warn("test")).not.toThrow();
+      expect(() => logger.error("test")).not.toThrow();
+    });
+
     it("should set the loggerFactory when provided in the constructor", () => {
       const loggerFactory: (tag: string) => LoggerPublisherService = vi.fn();
 

@@ -62,8 +62,10 @@ export class ContextModuleBuilder {
       metadataServiceDomain: { ...DEFAULT_CONFIG.metadataServiceDomain },
       customLoaders: [...DEFAULT_CONFIG.customLoaders],
       customFieldLoaders: [...DEFAULT_CONFIG.customFieldLoaders],
-      loggerFactory,
     };
+    if (loggerFactory) {
+      this.config.loggerFactory = loggerFactory;
+    }
   }
 
   /**
