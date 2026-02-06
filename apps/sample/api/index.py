@@ -207,6 +207,20 @@ def format_and_sign_eip712_instruction(descriptor: EIP712Instruction) -> Dict[st
     Process a single instruction: convert to JSON, sign, and clean.
     """
     json_descriptor = descriptor.model_dump(mode="json")
+    if json_descriptor.get("name_types") is not None:
+        json_descriptor["name_types"] = [
+            EIP712ResolvedToInstructionsConverter.int_to_name_type(value).value
+            if isinstance(value, int)
+            else value
+            for value in json_descriptor["name_types"]
+        ]
+    if json_descriptor.get("name_sources") is not None:
+        json_descriptor["name_sources"] = [
+            EIP712ResolvedToInstructionsConverter.int_to_name_source(value).value
+            if isinstance(value, int)
+            else value
+            for value in json_descriptor["name_sources"]
+        ]
     serialized = serialize_instruction(descriptor, EIP712Version.V2)
     signature = sign_payload(serialized)
     json_descriptor["descriptor"] = serialized
