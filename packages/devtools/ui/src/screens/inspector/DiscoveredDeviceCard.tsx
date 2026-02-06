@@ -129,7 +129,7 @@ export const DiscoveredDeviceCard: React.FC<DiscoveredDeviceCardProps> = ({
           <CardTitle>{device.name || "Unknown Device"}</CardTitle>
           <DeviceInfo>
             <SmallText>ID: {device.id}</SmallText>
-            <SmallText>Model: {device.deviceModel.model}</SmallText>
+            <SmallText>Model: {device.deviceModel.name}</SmallText>
             <SmallText>Transport: {device.transport}</SmallText>
             {device.rssi !== undefined && device.rssi !== null && (
               <SmallText>Signal: {device.rssi} dBm</SmallText>

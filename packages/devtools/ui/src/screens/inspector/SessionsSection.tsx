@@ -95,7 +95,7 @@ export const SessionsSection: React.FC<SessionsSectionProps> = ({
       {disconnectedDevices.length > 0 && (
         <>
           <SubsectionTitle>
-            Disconnected Sessions ({disconnectedDevices.length})
+            Inactive Sessions ({disconnectedDevices.length})
           </SubsectionTitle>
           <DeviceList>
             {disconnectedDevices.map((device) => (

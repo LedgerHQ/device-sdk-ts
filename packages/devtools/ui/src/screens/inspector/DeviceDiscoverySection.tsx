@@ -100,9 +100,9 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
       )}
 
       <ItalicNote>
-        Note: &quot;Start Discovery&quot; may not work in web apps due to
-        browser security restrictions. WebHID and WebBLE require a user gesture
-        (click) in the app context to trigger device discovery.
+        Note: this may not work in web apps due to browser security
+        restrictions. WebHID and WebBLE require a user gesture (click) in the
+        app context to trigger device discovery.
       </ItalicNote>
     </Section>
   );
