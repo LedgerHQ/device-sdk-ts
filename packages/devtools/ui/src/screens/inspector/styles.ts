@@ -184,6 +184,77 @@ export const CenteredMessage = styled.div`
   opacity: 0.6;
 `;
 
+// Status badge styles
+type BadgeVariant = "success" | "warning" | "error" | "info" | "neutral";
+
+const badgeColors: Record<BadgeVariant, { bg: string; border: string; text: string; dot: string }> = {
+  success: { bg: "#e8f5e9", border: "#c8e6c9", text: "#2e7d32", dot: "#4CAF50" },
+  warning: { bg: "#fff3e0", border: "#ffe0b2", text: "#e65100", dot: "#ff9800" },
+  error:   { bg: "#ffebee", border: "#ffcdd2", text: "#c62828", dot: "#ff4444" },
+  info:    { bg: "#e3f2fd", border: "#bbdefb", text: "#1565c0", dot: "#2196F3" },
+  neutral: { bg: "#f5f5f5", border: "#e0e0e0", text: "#616161", dot: "#9e9e9e" },
+};
+
+export const StatusBadge = styled.span<{ $variant: BadgeVariant }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  line-height: 18px;
+  white-space: nowrap;
+  background: ${({ $variant }) => badgeColors[$variant].bg};
+  border: 1px solid ${({ $variant }) => badgeColors[$variant].border};
+  color: ${({ $variant }) => badgeColors[$variant].text};
+
+  &::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: ${({ $variant }) => badgeColors[$variant].dot};
+  }
+`;
+
+export const BadgeRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+`;
+
+// Collapsible section styles
+export const CollapsibleHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+`;
+
+export const CollapsibleToggle = styled.span<{ $expanded: boolean }>`
+  font-size: 10px;
+  color: #666;
+  transition: transform 0.15s ease;
+  transform: rotate(${({ $expanded }) => ($expanded ? "90deg" : "0deg")});
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+`;
+
+export const CollapsibleContent = styled.div<{ $expanded: boolean }>`
+  display: ${({ $expanded }) => ($expanded ? "flex" : "none")};
+  flex-direction: column;
+  gap: 8px;
+`;
+
 // NotConnected styles
 export const NotConnectedContainer = styled.div`
   display: flex;

@@ -7,6 +7,7 @@ import {
 import { type ApduResponse } from "../../hooks/useConnectorMessages";
 import { ApduSender } from "./ApduSender";
 import {
+  BadgeRow,
   Button,
   Card,
   CardBody,
@@ -14,9 +15,9 @@ import {
   CardHeaderLeft,
   CardSection,
   CardTitle,
-  MutedText,
   SectionLabel,
   SmallText,
+  StatusBadge,
 } from "./styles";
 
 type DeviceCardProps = {
@@ -32,6 +33,52 @@ const isConnected = (state?: DeviceSessionState): boolean => {
   return state.deviceStatus !== "NOT CONNECTED";
 };
 
+/**
+ * Map deviceStatus string to a badge variant.
+ */
+function getDeviceStatusBadgeVariant(
+  status: string,
+): "success" | "warning" | "error" | "info" | "neutral" {
+  switch (status) {
+    case "CONNECTED":
+      return "success";
+    case "LOCKED":
+      return "warning";
+    case "BUSY":
+      return "info";
+    case "NOT CONNECTED":
+      return "error";
+    default:
+      return "neutral";
+  }
+}
+
+/**
+ * Map sessionStateType string to a badge variant.
+ */
+function getSessionStateBadgeVariant(
+  stateType: string | number,
+): "success" | "warning" | "error" | "info" | "neutral" {
+  const stateStr = String(stateType);
+  switch (stateStr) {
+    case "ReadyWithSecureChannel":
+      return "success";
+    case "ReadyWithoutSecureChannel":
+      return "info";
+    case "Connected":
+      return "neutral";
+    default:
+      return "neutral";
+  }
+}
+
+/**
+ * Format sessionStateType for display (add spaces before uppercase letters).
+ */
+function formatSessionStateType(stateType: string | number): string {
+  return String(stateType).replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
 export const DeviceCard: React.FC<DeviceCardProps> = ({
   device,
   state,
@@ -46,7 +93,13 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
       <CardHeader>
         <CardHeaderLeft>
           <CardTitle>{device.name || "Unknown Device"}</CardTitle>
-          {!connected && <MutedText>(disconnected)</MutedText>}
+          {state && (
+            <StatusBadge
+              $variant={getDeviceStatusBadgeVariant(state.deviceStatus)}
+            >
+              {state.deviceStatus}
+            </StatusBadge>
+          )}
         </CardHeaderLeft>
         {connected && (
           <Button $variant="danger" onClick={onDisconnect}>
@@ -65,8 +118,13 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({
       {state && (
         <CardSection>
           <SectionLabel>Session State</SectionLabel>
-          <SmallText>Status: {state.deviceStatus}</SmallText>
-          <SmallText>State Type: {state.sessionStateType}</SmallText>
+          <BadgeRow>
+            <StatusBadge
+              $variant={getSessionStateBadgeVariant(state.sessionStateType)}
+            >
+              {formatSessionStateType(state.sessionStateType)}
+            </StatusBadge>
+          </BadgeRow>
           {"currentApp" in state && state.currentApp && (
             <SmallText>
               Current App: {state.currentApp.name} v{state.currentApp.version}
