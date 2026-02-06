@@ -93,7 +93,7 @@ export function handleSetProvider(
  * Handle connectDevice command - connects to a discovered device.
  *
  * @param ctx - Command handler context
- * @param payload - JSON payload containing deviceId
+ * @param payload - JSON payload containing deviceId and optional sessionRefresherOptions
  * @param discoveredDevices - Current list of discovered devices to find the device
  */
 export async function handleConnectDevice(
@@ -101,7 +101,13 @@ export async function handleConnectDevice(
   payload: string,
   discoveredDevices: DiscoveredDevice[],
 ): Promise<void> {
-  const { deviceId } = JSON.parse(payload) as { deviceId: DeviceId };
+  const { deviceId, sessionRefresherOptions } = JSON.parse(payload) as {
+    deviceId: DeviceId;
+    sessionRefresherOptions?: {
+      isRefresherDisabled: boolean;
+      pollingInterval?: number;
+    };
+  };
 
   const device = discoveredDevices.find((d) => d.id === deviceId);
   if (!device) {
@@ -112,7 +118,7 @@ export async function handleConnectDevice(
   }
 
   try {
-    await ctx.dmk.connect({ device });
+    await ctx.dmk.connect({ device, sessionRefresherOptions });
     // The connected device will be picked up by the deviceObserver
   } catch (error) {
     console.error(
