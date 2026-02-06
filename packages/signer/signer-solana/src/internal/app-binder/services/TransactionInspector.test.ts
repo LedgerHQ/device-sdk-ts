@@ -14,6 +14,7 @@ import {
 } from "@solana/spl-token";
 import {
   Keypair,
+  PublicKey,
   SystemProgram,
   Transaction,
   TransactionInstruction,
@@ -70,6 +71,11 @@ describe("TransactionInspector", () => {
 
     expect(result.transactionType).toBe(SolanaTransactionTypes.STANDARD);
     expect(result.data).toEqual({});
+    expect(result.instructionCount).toBe(1);
+    expect(result.usesAddressLookupTables).toBe(false);
+    expect(result.programIds).toContain(
+      SystemProgram.programId.toBase58(),
+    );
   });
 
   it("detects an SPL Transfer and returns the destination address", async () => {
@@ -302,15 +308,12 @@ describe("TransactionInspector", () => {
     expect(result.data).toEqual({});
   });
 
-  it("falls back to STANDARD if the payload is unparseable", async () => {
+  it("throws if the payload is unparseable", async () => {
     const garbage = new Uint8Array([0xab, 0xad, 0xbe, 0xef]);
 
-    const result = await new TransactionInspector().inspectTransactionType(
-      garbage,
-    );
-
-    expect(result.transactionType).toBe(SolanaTransactionTypes.STANDARD);
-    expect(result.data).toEqual({});
+    await expect(
+      new TransactionInspector().inspectTransactionType(garbage),
+    ).rejects.toThrow();
   });
 
   it("fast path: tokenAddress override + SPL instruction, SPL and returns override", async () => {
@@ -406,5 +409,127 @@ describe("TransactionInspector", () => {
     expect(result.transactionType).toBe(SolanaTransactionTypes.SPL);
     expect(result.data.tokenAddress).toBe(tokenOverride);
     expect(result.data.createATA).toEqual(ataOverride);
+  });
+
+  it("returns correct instructionCount for multi-instruction transactions", async () => {
+    const payer = Keypair.generate();
+    const dest1 = Keypair.generate().publicKey;
+    const dest2 = Keypair.generate().publicKey;
+    const dest3 = Keypair.generate().publicKey;
+
+    const { raw } = makeSignedRawTx(
+      [
+        SystemProgram.transfer({
+          fromPubkey: payer.publicKey,
+          toPubkey: dest1,
+          lamports: 1_000,
+        }),
+        SystemProgram.transfer({
+          fromPubkey: payer.publicKey,
+          toPubkey: dest2,
+          lamports: 2_000,
+        }),
+        SystemProgram.transfer({
+          fromPubkey: payer.publicKey,
+          toPubkey: dest3,
+          lamports: 3_000,
+        }),
+      ],
+      [payer],
+      payer,
+    );
+
+    const result = await new TransactionInspector().inspectTransactionType(raw);
+
+    expect(result.instructionCount).toBe(3);
+    expect(result.programIds).toContain(SystemProgram.programId.toBase58());
+    expect(result.usesAddressLookupTables).toBe(false);
+  });
+
+  it("returns programIds for mixed program transactions", async () => {
+    const payer = Keypair.generate();
+    const dest = Keypair.generate().publicKey;
+    const source = Keypair.generate().publicKey;
+    const destination = Keypair.generate().publicKey;
+
+    const solTransfer = SystemProgram.transfer({
+      fromPubkey: payer.publicKey,
+      toPubkey: dest,
+      lamports: 1_000,
+    });
+
+    const tokenTransfer = createTransferInstruction(
+      source,
+      destination,
+      payer.publicKey,
+      42n,
+      [],
+      TOKEN_PROGRAM_ID,
+    );
+
+    const { raw } = makeSignedRawTx(
+      [solTransfer, tokenTransfer],
+      [payer],
+      payer,
+    );
+
+    const result = await new TransactionInspector().inspectTransactionType(raw);
+
+    expect(result.programIds).toContain(SystemProgram.programId.toBase58());
+    expect(result.programIds).toContain(TOKEN_PROGRAM_ID.toBase58());
+    expect(result.instructionCount).toBe(2);
+  });
+
+  it("detects unrecognized programs in programIds", async () => {
+    const payer = Keypair.generate();
+    const unknownProgram = Keypair.generate().publicKey;
+
+    const bogusIx = new TransactionInstruction({
+      programId: unknownProgram,
+      keys: [{ pubkey: payer.publicKey, isSigner: true, isWritable: false }],
+      data: Buffer.from([0x01]),
+    });
+
+    const { raw } = makeSignedRawTx([bogusIx], [payer], payer);
+
+    const result = await new TransactionInspector().inspectTransactionType(raw);
+
+    expect(result.transactionType).toBe(SolanaTransactionTypes.STANDARD);
+    expect(result.programIds).toContain(unknownProgram.toBase58());
+    expect(result.instructionCount).toBe(1);
+  });
+
+  it("throws when the payload is unparseable (state machine handles as inspection_failed)", async () => {
+    const garbage = new Uint8Array([0xab, 0xad, 0xbe, 0xef]);
+
+    await expect(
+      new TransactionInspector().inspectTransactionType(garbage),
+    ).rejects.toThrow();
+  });
+
+  describe("hasAddressLookupTables", () => {
+    it("returns false for a legacy transaction", () => {
+      const payer = Keypair.generate();
+      const dest = Keypair.generate().publicKey;
+
+      const { raw } = makeSignedRawTx(
+        [
+          SystemProgram.transfer({
+            fromPubkey: payer.publicKey,
+            toPubkey: dest,
+            lamports: 1_000,
+          }),
+        ],
+        [payer],
+        payer,
+      );
+
+      expect(TransactionInspector.hasAddressLookupTables(raw)).toBe(false);
+    });
+
+    it("returns false for garbage bytes", () => {
+      const garbage = new Uint8Array([0xab, 0xad, 0xbe, 0xef]);
+      expect(TransactionInspector.hasAddressLookupTables(garbage)).toBe(false);
+    });
   });
 });

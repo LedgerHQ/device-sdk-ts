@@ -14,7 +14,13 @@ import { type Signature } from "@api/model/Signature";
 import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import {
+  type SolanaSigningContextInfo,
+} from "@internal/app-binder/services/computeSigningContext";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
+
+export type { SolanaSigningContextInfo } from "@internal/app-binder/services/computeSigningContext";
+export { BlindSignReason } from "@internal/app-binder/services/computeSigningContext";
 
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
@@ -45,10 +51,19 @@ type SignTransactionDARequiredInteraction =
   | UserInteractionRequired
   | OpenAppDARequiredInteraction;
 
-export type SignTransactionDAIntermediateValue = {
-  requiredUserInteraction: SignTransactionDARequiredInteraction;
-  step: SignTransactionDAStateStep;
-};
+export type SignTransactionDAIntermediateValue =
+  | {
+      requiredUserInteraction: SignTransactionDARequiredInteraction;
+      step: Exclude<
+        SignTransactionDAStateStep,
+        typeof signTransactionDAStateSteps.SIGN_TRANSACTION
+      >;
+    }
+  | {
+      requiredUserInteraction: SignTransactionDARequiredInteraction;
+      step: typeof signTransactionDAStateSteps.SIGN_TRANSACTION;
+      signingContext: SolanaSigningContextInfo;
+    };
 
 export type SignTransactionDAState = DeviceActionState<
   SignTransactionDAOutput,
@@ -62,6 +77,7 @@ export type SignTransactionDAInternalState = {
   readonly appConfig: AppConfiguration | null;
   readonly solanaTransactionContext: SolanaTransactionContextResultSuccess | null;
   readonly inspectorResult: TxInspectorResult | null;
+  readonly signingContextInfo: SolanaSigningContextInfo | null;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

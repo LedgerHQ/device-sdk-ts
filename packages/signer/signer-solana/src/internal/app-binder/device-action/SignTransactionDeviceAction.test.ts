@@ -10,7 +10,7 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
-import { beforeEach, describe, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   type SignTransactionDAError,
@@ -18,6 +18,7 @@ import {
   type SignTransactionDAIntermediateValue,
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { BlindSignReason } from "@internal/app-binder/services/computeSigningContext";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import { type SolanaBuildContextResult } from "@internal/app-binder/task/BuildTransactionContextTask";
@@ -57,6 +58,28 @@ function extractDeps() {
   };
 }
 
+/** Helper to create a recognized-programs-only inspector result */
+function makeInspectorResult(
+  overrides: Partial<{
+    transactionType: SolanaTransactionTypes;
+    programIds: string[];
+    instructionCount: number;
+    usesAddressLookupTables: boolean;
+    data: Record<string, unknown>;
+  }> = {},
+) {
+  return {
+    transactionType:
+      overrides.transactionType ?? SolanaTransactionTypes.STANDARD,
+    data: overrides.data ?? {},
+    programIds: overrides.programIds ?? [
+      "11111111111111111111111111111111",
+    ],
+    instructionCount: overrides.instructionCount ?? 1,
+    usesAddressLookupTables: overrides.usesAddressLookupTables ?? false,
+  };
+}
+
 describe("SignTransactionDeviceAction (Solana)", () => {
   beforeEach(() => {
     apiMock = makeDeviceActionInternalApiMock();
@@ -64,10 +87,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
     buildContextMock = vi.fn();
     provideContextMock = vi.fn();
     signMock = vi.fn();
-    inspectTransactionMock = vi.fn().mockResolvedValue({
-      transactionType: SolanaTransactionTypes.SPL,
-      data: { tokenAddress: null, createATA: false },
-    });
+    inspectTransactionMock = vi.fn().mockResolvedValue(
+      makeInspectorResult({ transactionType: SolanaTransactionTypes.SPL }),
+    );
   });
 
   it("happy path (skip open): getAppConfig -> inspect -> build -> provide -> sign", () =>
@@ -82,9 +104,16 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
-      inspectTransactionMock.mockResolvedValue({
-        transactionType: SolanaTransactionTypes.SPL,
-      });
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.SPL,
+          programIds: [
+            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+            "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+          ],
+          instructionCount: 2,
+        }),
+      );
 
       const ctx: SolanaBuildContextResult = {
         tlvDescriptor: new Uint8Array([1]),
@@ -153,6 +182,16 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: false,
+              reason: BlindSignReason.None,
+              programIds: [
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+              ],
+              unrecognizedPrograms: [],
+              instructionCount: 2,
+            },
           },
           status: DeviceActionStatus.Pending,
         },
@@ -172,7 +211,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
-  it("inspectTransaction rejects, still signs (fallback)", () =>
+  it("inspectTransaction rejects, still signs (fallback) with isBlindSign: true", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -226,6 +265,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.InspectionFailed,
+              programIds: [],
+              unrecognizedPrograms: [],
+              instructionCount: 0,
+            },
           },
           status: DeviceActionStatus.Pending,
         },
@@ -248,7 +294,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
     }));
 
-  it("buildContext throws, still signs (fallback)", () =>
+  it("buildContext throws, still signs with isBlindSign: true (context_build_failed)", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -260,9 +306,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
-      inspectTransactionMock.mockResolvedValue({
-        transactionType: SolanaTransactionTypes.SPL,
-      });
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.SPL,
+          programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+          instructionCount: 1,
+        }),
+      );
 
       // BuildContext fails, machine transitions to SignTransaction
       buildContextMock.mockRejectedValue(new InvalidStatusWordError("bldErr"));
@@ -311,6 +361,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.ContextBuildFailed,
+              programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+              unrecognizedPrograms: [],
+              instructionCount: 1,
+            },
           },
           status: DeviceActionStatus.Pending,
         },
@@ -330,7 +387,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
-  it("provideContext rejects, still signs (fallback)", () =>
+  it("provideContext rejects, still signs with isBlindSign: true (context_provision_failed)", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -342,9 +399,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
-      inspectTransactionMock.mockResolvedValue({
-        transactionType: SolanaTransactionTypes.SPL,
-      });
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.SPL,
+          programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+          instructionCount: 1,
+        }),
+      );
 
       const ctx: SolanaBuildContextResult = {
         tlvDescriptor: new Uint8Array([0x01]),
@@ -413,6 +474,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.ContextProvisionFailed,
+              programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+              unrecognizedPrograms: [],
+              instructionCount: 1,
+            },
           },
           status: DeviceActionStatus.Pending,
         },
@@ -447,9 +515,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
-      inspectTransactionMock.mockResolvedValue({
-        transactionType: SolanaTransactionTypes.SPL,
-      });
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.SPL,
+          programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+          instructionCount: 1,
+        }),
+      );
 
       buildContextMock.mockResolvedValue({
         tlvDescriptor: new Uint8Array([2]),
@@ -505,7 +577,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           },
           status: DeviceActionStatus.Pending,
         },
-        // provideContext (returns error but continues)
+        // provideContext (returns error but continues via onDone, not onError)
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -513,11 +585,18 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           },
           status: DeviceActionStatus.Pending,
         },
-        // signTransaction
+        // signTransaction — provideContext resolved (not rejected), so no reason update
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: false,
+              reason: BlindSignReason.None,
+              programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+              unrecognizedPrograms: [],
+              instructionCount: 1,
+            },
           },
           status: DeviceActionStatus.Pending,
         },
@@ -549,9 +628,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
-      inspectTransactionMock.mockResolvedValue({
-        transactionType: SolanaTransactionTypes.SPL,
-      });
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.SPL,
+          programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+          instructionCount: 1,
+        }),
+      );
 
       buildContextMock.mockRejectedValue(new InvalidStatusWordError("bldErr"));
 
@@ -601,6 +684,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.ContextBuildFailed,
+              programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+              unrecognizedPrograms: [],
+              instructionCount: 1,
+            },
           },
           status: DeviceActionStatus.Pending,
         },
@@ -618,5 +708,471 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
+    }));
+
+  it("unrecognized program triggers isBlindSign: true", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+
+      const jupiterProgramId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.STANDARD,
+          programIds: [
+            "11111111111111111111111111111111",
+            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+            jupiterProgramId,
+          ],
+          instructionCount: 4,
+        }),
+      );
+
+      const sig = new Uint8Array([0xdd]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+        loggerFactory: mockLoggerFactory,
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.UnrecognizedProgram,
+              programIds: [
+                "11111111111111111111111111111111",
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                jupiterProgramId,
+              ],
+              unrecognizedPrograms: [jupiterProgramId],
+              instructionCount: 4,
+            },
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
+    }));
+
+  it("too many instructions (>6) triggers isBlindSign: true", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.STANDARD,
+          programIds: ["11111111111111111111111111111111"],
+          instructionCount: 7,
+        }),
+      );
+
+      const sig = new Uint8Array([0xee]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+        loggerFactory: mockLoggerFactory,
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.TooManyInstructions,
+              programIds: ["11111111111111111111111111111111"],
+              unrecognizedPrograms: [],
+              instructionCount: 7,
+            },
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
+    }));
+
+  it("descriptor-based signing: provideContext success clears isBlindSign when reason was UnrecognizedProgram", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+
+      // SPL transaction that also contains an unrecognized program (e.g. Jupiter inside a swap)
+      const jupiterProgramId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.SPL,
+          programIds: [
+            "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+            jupiterProgramId,
+          ],
+          instructionCount: 3,
+        }),
+      );
+
+      const ctx: SolanaBuildContextResult = {
+        tlvDescriptor: new Uint8Array([0x01]),
+        trustedNamePKICertificate: {
+          keyUsageNumber: 0,
+          payload: new Uint8Array([0x02]),
+        },
+        loadersResults: [],
+      };
+      buildContextMock.mockResolvedValue(ctx);
+      provideContextMock.mockResolvedValue(Nothing);
+
+      const sig = new Uint8Array([0xa1]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+        loggerFactory: mockLoggerFactory,
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        // getAppConfig
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // inspectTransaction
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // buildContext
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // provideContext
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // signTransaction — descriptors provided, so device uses process_message_body_with_descriptor()
+        // which bypasses the program whitelist → isBlindSign cleared
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: false,
+              reason: BlindSignReason.None,
+              programIds: [
+                "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+                jupiterProgramId,
+              ],
+              unrecognizedPrograms: [jupiterProgramId],
+              instructionCount: 3,
+            },
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // success
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
+    }));
+
+  it("descriptor-based signing: provideContext success does NOT clear isBlindSign when reason is AddressLookupTables", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+
+      // SPL transaction with ALTs — structural issue that descriptors don't bypass
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.SPL,
+          programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+          instructionCount: 2,
+          usesAddressLookupTables: true,
+        }),
+      );
+
+      const ctx: SolanaBuildContextResult = {
+        tlvDescriptor: new Uint8Array([0x01]),
+        trustedNamePKICertificate: {
+          keyUsageNumber: 0,
+          payload: new Uint8Array([0x02]),
+        },
+        loadersResults: [],
+      };
+      buildContextMock.mockResolvedValue(ctx);
+      provideContextMock.mockResolvedValue(Nothing);
+
+      const sig = new Uint8Array([0xb2]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+        loggerFactory: mockLoggerFactory,
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        // getAppConfig
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // inspectTransaction
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // buildContext
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // provideContext
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // signTransaction — ALTs are structural, descriptors don't bypass this → isBlindSign stays true
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.AddressLookupTables,
+              programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
+              unrecognizedPrograms: [],
+              instructionCount: 2,
+            },
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // success
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
+    }));
+
+  it("address lookup tables trigger isBlindSign: true", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      inspectTransactionMock.mockResolvedValue(
+        makeInspectorResult({
+          transactionType: SolanaTransactionTypes.STANDARD,
+          programIds: ["11111111111111111111111111111111"],
+          instructionCount: 2,
+          usesAddressLookupTables: true,
+        }),
+      );
+
+      const sig = new Uint8Array([0xff]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+        loggerFactory: mockLoggerFactory,
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+            signingContext: {
+              isBlindSign: true,
+              reason: BlindSignReason.AddressLookupTables,
+              programIds: ["11111111111111111111111111111111"],
+              unrecognizedPrograms: [],
+              instructionCount: 2,
+            },
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: resolve,
+        onError: reject,
+      });
     }));
 });

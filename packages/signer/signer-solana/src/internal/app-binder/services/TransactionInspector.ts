@@ -40,6 +40,12 @@ export type TxInspectorResult = {
     tokenAddress?: string;
     createATA?: { address: string; mintAddress: string };
   };
+  /** Base58-encoded program IDs of all instructions in the transaction. */
+  programIds: string[];
+  /** Total number of instructions in the transaction. */
+  instructionCount: number;
+  /** Whether the transaction uses address lookup tables (v0 with ALTs). */
+  usesAddressLookupTables: boolean;
 };
 
 type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
@@ -71,84 +77,129 @@ export class TransactionInspector {
         }
       | undefined,
   ): Promise<TxInspectorResult> {
-    try {
-      const message = await TransactionInspector.normaliseMessage(
-        rawTransactionBytes,
-        this.RPCURL || DEFAULT_RPC_URL,
+    // Detect ALTs before normalization (normalization resolves them away)
+    const usesAddressLookupTables =
+      TransactionInspector.hasAddressLookupTables(rawTransactionBytes);
+
+    const message = await TransactionInspector.normaliseMessage(
+      rawTransactionBytes,
+      this.RPCURL || DEFAULT_RPC_URL,
+    );
+
+    // Extract program IDs and instruction count
+    const instructionCount = message.compiledInstructions.length;
+    const programIdSet = new Set<string>();
+    for (const ix of message.compiledInstructions) {
+      const pk = message.allKeys[ix.programIdIndex];
+      if (pk) programIdSet.add(pk.toBase58());
+    }
+    const programIds = Array.from(programIdSet);
+
+    const baseFields = {
+      programIds,
+      instructionCount,
+      usesAddressLookupTables,
+    };
+
+    // fast path when transaction resolution is provided
+    if (tokenAddress || createATA) {
+      const looksSPL = message.compiledInstructions.some((instruction) =>
+        isSPLProgramId(message.allKeys[instruction.programIdIndex]),
       );
+      return {
+        transactionType: looksSPL
+          ? SolanaTransactionTypes.SPL
+          : SolanaTransactionTypes.STANDARD,
+        data: {
+          ...(tokenAddress ? { tokenAddress: tokenAddress } : {}),
+          ...(createATA ? { createATA: createATA } : {}),
+        },
+        ...baseFields,
+      };
+    }
 
-      // fast path when transaction resolution is provided
-      if (tokenAddress || createATA) {
-        const looksSPL = message.compiledInstructions.some((instruction) =>
-          isSPLProgramId(message.allKeys[instruction.programIdIndex]),
-        );
-        return {
-          transactionType: looksSPL
-            ? SolanaTransactionTypes.SPL
-            : SolanaTransactionTypes.STANDARD,
-          data: {
-            ...(tokenAddress ? { tokenAddress: tokenAddress } : {}),
-            ...(createATA ? { createATA: createATA } : {}),
-          },
-        };
-      }
+    // accumulate best data across all instructions
+    let sawSPL = false;
+    let best: TxInspectorResult["data"] = {};
 
-      // accumulate best data across all instructions
-      let sawSPL = false;
-      let best: TxInspectorResult["data"] = {};
+    for (const ixMeta of message.compiledInstructions) {
+      const programId = message.allKeys[ixMeta.programIdIndex];
+      if (!programId) continue; // unresolved index, skip
+      if (isSPLProgramId(programId)) sawSPL = true;
 
-      for (const ixMeta of message.compiledInstructions) {
-        const programId = message.allKeys[ixMeta.programIdIndex];
-        if (!programId) continue; // unresolved index, skip
-        if (isSPLProgramId(programId)) sawSPL = true;
+      const resolvedKeys = ixMeta.accountKeyIndexes
+        .map((i) => message.allKeys[i])
+        .filter((k): k is PublicKey => !!k);
 
-        const resolvedKeys = ixMeta.accountKeyIndexes
-          .map((i) => message.allKeys[i])
-          .filter((k): k is PublicKey => !!k);
+      const instruction = new TransactionInstruction({
+        programId,
+        keys: resolvedKeys.map((pk) => ({
+          pubkey: pk,
+          isSigner: false,
+          isWritable: false,
+        })),
+        data: Buffer.from(ixMeta.data),
+      });
 
-        const instruction = new TransactionInstruction({
-          programId,
-          keys: resolvedKeys.map((pk) => ({
-            pubkey: pk,
-            isSigner: false,
-            isWritable: false,
-          })),
-          data: Buffer.from(ixMeta.data),
-        });
+      const ctx: IxContext = { programId, ixMeta, message, instruction };
 
-        const ctx: IxContext = { programId, ixMeta, message, instruction };
+      for (const decoder of DECODERS) {
+        if (!decoder.when(ctx)) continue;
+        const data = decoder.decode(ctx);
+        if (!data) continue;
 
-        for (const decoder of DECODERS) {
-          if (!decoder.when(ctx)) continue;
-          const data = decoder.decode(ctx);
-          if (!data) continue;
-
-          // prefer createATA (needed when destination ATA doesn’t exist yet)
-          if (data.createATA && !best.createATA) {
-            best = { ...best, createATA: data.createATA };
-          } else if (
-            data.tokenAddress &&
-            !best.tokenAddress &&
-            !best.createATA
-          ) {
-            best = { ...best, tokenAddress: data.tokenAddress };
-          }
+        // prefer createATA (needed when destination ATA doesn't exist yet)
+        if (data.createATA && !best.createATA) {
+          best = { ...best, createATA: data.createATA };
+        } else if (
+          data.tokenAddress &&
+          !best.tokenAddress &&
+          !best.createATA
+        ) {
+          best = { ...best, tokenAddress: data.tokenAddress };
         }
       }
-
-      if (best.createATA)
-        return { transactionType: SolanaTransactionTypes.SPL, data: best };
-
-      if (best.tokenAddress)
-        return { transactionType: SolanaTransactionTypes.SPL, data: best };
-
-      if (sawSPL)
-        return { transactionType: SolanaTransactionTypes.SPL, data: {} }; // we should never reach here, in case we do tx will fall back to blind sign
-
-      return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
-    } catch {
-      return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
     }
+
+    if (best.createATA)
+      return {
+        transactionType: SolanaTransactionTypes.SPL,
+        data: best,
+        ...baseFields,
+      };
+
+    if (best.tokenAddress)
+      return {
+        transactionType: SolanaTransactionTypes.SPL,
+        data: best,
+        ...baseFields,
+      };
+
+    if (sawSPL)
+      return {
+        transactionType: SolanaTransactionTypes.SPL,
+        data: {},
+        ...baseFields,
+      }; // we should never reach here, in case we do tx will fall back to blind sign
+
+    return {
+      transactionType: SolanaTransactionTypes.STANDARD,
+      data: {},
+      ...baseFields,
+    };
+  }
+
+  /**
+   * Check whether the raw transaction bytes represent a versioned transaction
+   * that uses address lookup tables (ALTs).
+   */
+  static hasAddressLookupTables(rawBytes: Uint8Array): boolean {
+    const versionedTx =
+      TransactionInspector.tryDeserialiseVersioned(rawBytes);
+    if (!versionedTx) return false; // legacy transaction, no ALTs
+    const msg = versionedTx.message as VersionedMessage;
+    const lookups = msg.addressTableLookups ?? [];
+    return lookups.length > 0;
   }
 
   /**

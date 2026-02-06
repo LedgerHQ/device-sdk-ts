@@ -34,6 +34,10 @@ import { SignTransactionCommand } from "@internal/app-binder/command/SignTransac
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChecker";
 import {
+  BlindSignReason,
+  computeSigningContext,
+} from "@internal/app-binder/services/computeSigningContext";
+import {
   SolanaTransactionTypes,
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
@@ -184,7 +188,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EAJgCMADg4BWAGw7jAGhABPRHr3SA7Bx0BONwGYALNOPfvUz1jHQBfUOs0TFwCIjYqWgYmVnIqbl5+IRExKT15JBBlVVSMDW0EfSMzC2s7BDdvHQ5pby9ff0DgsIiQKOx8QhISxMYWeM4AeUUwDGZFRRHk8fEIKjAOVAw6CgBrdYpp2fnhUTAAWRIAC02wGXylFTUqMsQnN1MON2lzK1tEN0MJicOicTlMoM8LXe4Ui6H6sSG7EWYxKHAAwpcwMQdlMZnMFvRRil2AAlOAAVwEpCkcg0RSepQK5T0nmMRmkwR+tX+3iMgVM0mc+j0OgM3Vh0QGcWGhKWqIxWJxh3xyOJVDJsEp1MkeTpjxKLwQLLZzU5NT+CAMeg4rTcBneLN8bx8MN6cJig3GqvGHAA4mBSPi0VQAGboFZrDZbXbrGCB+bBjBhqB3PXFdRM+wGUzeVymaq-OqOMWfe0BHyeNxOPSmV19D3SpGylHsP0BoOh8NgHA4Cg4DiKASiEN9gC2HDjHaT6FTBXpBszRuzuZ0+a5Fr0Hk+HjL2YsLNMtZ69aliISzbVnH98cUieTGq1CuxNPuhX1GdA5R0nh0TRapgMJxC3sBwmgMMVwU8QC3l5Yw63dU8vQvH1ryne8KSpJ8dlyV95w-LRdB-P9AkA4CEB8a0qxzYwnE8H5jW8eDJQRJCkhbNIeFgaYyAbM8MAjDB1k2bY9ijLisVIXjxlnB502eRdRS+Dgc2+c0i2kBoODBUUDA0ytqyPCV4U9GU2MvdJxJ4xCSnEbte37QdhzHMTuMk6z2Bkt85MZT9dHtaRlN8dc6kCALvDBbwzA0jTwqApjjMbc8zJ9ZgQzEHBONcl80wZQ0fyCLSKyA7kjRZa1+UFYFQLFeKpNMokUrS7tMoknCcoXXzyNXa1aO8Txio3SFjC0jwfD8AIghCWr3KShrUVS9KWrIKQdFw995M6-KeqKsiBSaSLIUMYwvgaUFppY+q5VbAAhclUAECBEzETRqVWQSoxE9YACM7oep6wBezy8I2gjyKcbMbQMPqBqLBxPA4HxzD0RpaKhQy3WYkym2S1Fbvux6qGe6k7L7Ach1IEccHHH78f+wHaTndafNB-qId5aGyOBAK3GMQ7aM3KD9HOrHZqutIAAVewYCAwDp17I2EmMByl1AZbloGmcNPrRQRr5gpA8EOHA1daOghoDDg48EIu7G5tbSWKGl2XCYB4me1JxyKecxQVbVl36bW7ytZ-IxK1Usi90+dwaLtAWxT0YXEpoZDUQdp25YfTDMWfDWg8XcKeYR47+rIhwgOaVoxo6SbxQxhK+O9VPfedjAicz0gsLaxm886gvhtZLwYfsQVcz15HvzjoWrcxpPG9bE8baoAShOjUTVBnvjc9yxdeZ0XN-AAoejVXIxVx0vSqxrROG5T+frZF-iSYc8nKfHdf6+khnZO3zrd-3kij6gXhkFZGjhwpWhzNfVids0gLwfu3TuW8OqgxjsNNwlRAGeAcAjMUTgOQjwAryKBl12KcDgUnBB2dsI6kDj-FBbw0EYNLqufuuDpCsnATWRiroMAUBlvAAo5Cb443wsDZm5QAC0pgSpSOaIKeRCiFFOGIbbMWnAeBqEECcMQ7V8LlEaCVRwhs3heErCCSErR0ZCOgWojguIjgEhESDMRWtBSfHDiVMsrhRpmNRpYlRotSHoiofYlUt91QYVILokGzJ-zKVIiVBoAV3CmPQX46E08P4kPMqhBMnYoDRPEfYfwRhB6lyhMpH8wIALHQtpbIydVVFBNybefJlDFSFMNDoIUrhDCALAVpGsgpi6XysffWe4T1GEFco05xmsFLGBFJ8Q+5SnC5lMPlap3xBYGACcnJxnAFrNWmRJTpi4sE1kKhzQxIo3CDIFH4Lwoy9lzzSHjP6-sondzoeUHwUMjYinKV4XpDyRkGU8C8yZHA06qxbkTM5m0PC5muRuBwPUfFpIsRkhpM19kwM4DCv2rdXbtOxAi0GB0Pg7RuYeI2EEtkbLFLszJsy8W2Oscglx+c7QfFFICwxe8jAshNqubZTLIUHI4By0kkSsLkvKMYXeJhDGQnhvoY6e9FU82cGMjeNignIHJMQJgsABHf2QeUAUtKoYlxVdIUOEEPC0QuW4CV+KOAAFF3Y4HlYgK1HwbWAL3vDMwkVumRV0ofcI4QgA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EAJgCMADg4BWAGw7jAGhABPRHr3SA7Bx0BONwGYALNOPfvUz1jHQBfUOs0TFwCIjYqWgYmVnIqbl5+IRExKT15JBBlVVSMDW0EfSMzC2s7BDdvHQ5pby9ff0DgsIiQKOx8QhISxMYWeM4AeUUwDGZFRRHk8fEIKjAOVAw6CgBrdYpp2fnhUTAAWRIAC02wGXylFTUqMsQnN1MON2lzK1tEN0MJicOicTlMoM8LXe4Ui6H6sSG7EWYxKHAAwpcwMQdlMZnMFvRRil2AAlOAAVwEpCkcg0RSepQK5T0nmMRmkwR+tX+3iMgVM0mc+j0OgM3Vh0QGcWGhKWqIxWJxh3xyOJVDJsEp1MkeTpjxKLwQLLZzU5NT+CAMeg4rTcBneLN8bx8MN6cJig3GqvGHAA4mBSPi0VQAGboFZrDZbXbrGCB+bBjBhqB3PXFdRM+wGUzeVymaq-OqOMWfe0BHyeNxOPSmV19D3SpGylHsP0BoOh8NgHA4Cg4DiKASiEN9gC2HDjHaT6FTBXpBszRuzuZ0+a5Fr0Hk+HjL2YsLNMtZ69aliISzbVnH98cUieTGq1CuxNPuhX1GdA5R0nh0TRapgMJxC3sBwmgMMVwU8QC3l5Yw63dU8vQvH1ryne8KSpJ8dlyV95w-LRdB-P9AkA4CEB8a0qxzYwnE8H5jW8eDJQRJCkhbNIeFgaYyAbM8MAjDB1k2bY9ijLisVIXjxlnB502eRdRS+Dgc2+c0i2kBoODBUUDA0ytqyPCV4U9GU2MvdJxJ4xCSnEbte37QdhzHMTuMk6z2Bkt85MZT9dHtaRlN8dc6kCALvDBbwzA0jTwqApjjMbc8zJ9ZgQzEHBONcl80wZQ0fyCLIs4XwVFgjSFOr-XePkLS61vvfHuuc+5bhNsNc250AIT2 */
       id: "SignTransactionDeviceAction",
       initial: "InitialState",
       context: ({ input }) => ({
@@ -199,6 +203,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           appConfig: null,
           solanaTransactionContext: null,
           inspectorResult: null,
+          signingContextInfo: null,
         },
       }),
       states: {
@@ -305,11 +310,24 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 _internalState: ({ context, event }) => ({
                   ...context._internalState,
                   inspectorResult: event.output,
+                  signingContextInfo: computeSigningContext(event.output),
                 }),
               }),
             },
             onError: {
               target: "SignTransaction",
+              actions: assign({
+                _internalState: ({ context }) => ({
+                  ...context._internalState,
+                  signingContextInfo: {
+                    isBlindSign: true,
+                    reason: BlindSignReason.InspectionFailed,
+                    programIds: [],
+                    unrecognizedPrograms: [],
+                    instructionCount: 0,
+                  },
+                }),
+              }),
             },
           },
         },
@@ -363,6 +381,18 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             onError: {
               target: "SignTransaction",
+              actions: assign({
+                _internalState: ({ context }) => ({
+                  ...context._internalState,
+                  signingContextInfo: context._internalState.signingContextInfo
+                    ? {
+                        ...context._internalState.signingContextInfo,
+                        isBlindSign: true,
+                        reason: BlindSignReason.ContextBuildFailed,
+                      }
+                    : null,
+                }),
+              }),
             },
           },
         },
@@ -390,18 +420,63 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             onDone: {
               target: "SignTransaction",
+              actions: assign({
+                _internalState: ({ context }) => {
+                  const currentInfo =
+                    context._internalState.signingContextInfo;
+                  // When instruction descriptors are successfully provided,
+                  // the device uses process_message_body_with_descriptor()
+                  // which bypasses the program whitelist check.
+                  // Clear blind sign only if it was triggered by an
+                  // unrecognized program — ALTs and instruction-count limits
+                  // are structural and still apply.
+                  if (
+                    currentInfo?.reason ===
+                    BlindSignReason.UnrecognizedProgram
+                  ) {
+                    return {
+                      ...context._internalState,
+                      signingContextInfo: {
+                        ...currentInfo,
+                        isBlindSign: false,
+                        reason: BlindSignReason.None,
+                      },
+                    };
+                  }
+                  return context._internalState;
+                },
+              }),
             },
             onError: {
               target: "SignTransaction",
+              actions: assign({
+                _internalState: ({ context }) => ({
+                  ...context._internalState,
+                  signingContextInfo: context._internalState.signingContextInfo
+                    ? {
+                        ...context._internalState.signingContextInfo,
+                        isBlindSign: true,
+                        reason: BlindSignReason.ContextProvisionFailed,
+                      }
+                    : null,
+                }),
+              }),
             },
           },
         },
         SignTransaction: {
           entry: assign({
-            intermediateValue: {
+            intermediateValue: ({ context }) => ({
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
               step: signTransactionDAStateSteps.SIGN_TRANSACTION,
-            },
+              signingContext: context._internalState.signingContextInfo ?? {
+                isBlindSign: true,
+                reason: BlindSignReason.InspectionFailed,
+                programIds: [],
+                unrecognizedPrograms: [],
+                instructionCount: 0,
+              },
+            }),
           }),
           invoke: {
             id: "signTransaction",
@@ -437,10 +512,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     error: new UnknownDAError("No Signature available"),
                   };
                 },
-                intermediateValue: {
+                intermediateValue: ({ context }) => ({
                   requiredUserInteraction: UserInteractionRequired.None,
                   step: signTransactionDAStateSteps.SIGN_TRANSACTION,
-                },
+                  signingContext: context._internalState.signingContextInfo ?? {
+                    isBlindSign: true,
+                    reason: BlindSignReason.InspectionFailed,
+                    programIds: [],
+                    unrecognizedPrograms: [],
+                    instructionCount: 0,
+                  },
+                }),
               }),
             },
             onError: {
