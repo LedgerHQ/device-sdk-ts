@@ -4,82 +4,21 @@
  * Section of the Inspector that handles device discovery.
  * Provides buttons to start/stop passive listening and active discovery,
  * and displays the list of discovered devices.
- * Includes connect options (session refresher) that apply to all connections.
  */
 
-import React, { useCallback, useState } from "react";
+import React from "react";
 import { type DiscoveredDevice } from "@ledgerhq/device-management-kit";
-import styled from "styled-components";
 
 import { DiscoveredDeviceCard } from "./DiscoveredDeviceCard";
 import {
   Button,
   ButtonGroup,
-  CollapsibleContent,
-  CollapsibleHeader,
-  CollapsibleToggle,
   DeviceList,
   ItalicNote,
   Section,
   SectionTitle,
   SmallText,
-  SubsectionTitle,
 } from "./styles";
-
-// ============================================================================
-// Styled components for connect options
-// ============================================================================
-
-const ConnectOptionsContainer = styled.div`
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: #f5f5f5;
-  border-radius: 6px;
-  margin-bottom: 12px;
-`;
-
-const OptionRow = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #333;
-  cursor: pointer;
-`;
-
-const PollingInputRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: #333;
-`;
-
-const PollingInput = styled.input`
-  width: 80px;
-  padding: 4px 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-  font-family: monospace;
-
-  &:focus {
-    outline: none;
-    border-color: #2196f3;
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
-// ============================================================================
-// Component
-// ============================================================================
 
 type DeviceDiscoverySectionProps = {
   discoveredDevices: DiscoveredDevice[];
@@ -110,26 +49,6 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
 }) => {
   const isAnyDiscoveryActive = isListening || isActivelyDiscovering;
 
-  // === Connect options state ===
-  const [connectOptionsExpanded, setConnectOptionsExpanded] = useState(false);
-  const [isRefresherDisabled, setIsRefresherDisabled] = useState(false);
-  const [pollingInterval, setPollingInterval] = useState<string>("");
-
-  const handleConnect = useCallback(
-    (deviceId: string) => {
-      const parsedInterval = pollingInterval
-        ? parseInt(pollingInterval, 10)
-        : undefined;
-      const sessionRefresherOptions = {
-        isRefresherDisabled,
-        pollingInterval:
-          parsedInterval && !isNaN(parsedInterval) ? parsedInterval : undefined,
-      };
-      connectDevice(deviceId, sessionRefresherOptions);
-    },
-    [connectDevice, isRefresherDisabled, pollingInterval],
-  );
-
   return (
     <Section>
       <SectionTitle>Device Discovery</SectionTitle>
@@ -154,40 +73,6 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
         </Button>
       </ButtonGroup>
 
-      <ConnectOptionsContainer>
-        <CollapsibleHeader
-          onClick={() => setConnectOptionsExpanded(!connectOptionsExpanded)}
-        >
-          <CollapsibleToggle $expanded={connectOptionsExpanded}>
-            &#9654;
-          </CollapsibleToggle>
-          <SubsectionTitle style={{ margin: 0 }}>
-            Connect Options
-          </SubsectionTitle>
-        </CollapsibleHeader>
-        <CollapsibleContent $expanded={connectOptionsExpanded}>
-          <OptionRow>
-            <input
-              type="checkbox"
-              checked={isRefresherDisabled}
-              onChange={(e) => setIsRefresherDisabled(e.target.checked)}
-            />
-            Disable session refresher
-          </OptionRow>
-          <PollingInputRow>
-            <span>Polling interval (ms):</span>
-            <PollingInput
-              type="number"
-              min="1000"
-              placeholder="1000"
-              value={pollingInterval}
-              onChange={(e) => setPollingInterval(e.target.value)}
-              disabled={isRefresherDisabled}
-            />
-          </PollingInputRow>
-        </CollapsibleContent>
-      </ConnectOptionsContainer>
-
       {isListening && discoveredDevices.length === 0 && (
         <SmallText>Listening for available devices...</SmallText>
       )}
@@ -201,7 +86,7 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
             <DiscoveredDeviceCard
               key={device.id}
               device={device}
-              onConnect={() => handleConnect(device.id)}
+              onConnect={(options) => connectDevice(device.id, options)}
             />
           ))}
         </DeviceList>
