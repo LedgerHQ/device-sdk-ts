@@ -187,12 +187,30 @@ export const CenteredMessage = styled.div`
 // Status badge styles
 type BadgeVariant = "success" | "warning" | "error" | "info" | "neutral";
 
-const badgeColors: Record<BadgeVariant, { bg: string; border: string; text: string; dot: string }> = {
-  success: { bg: "#e8f5e9", border: "#c8e6c9", text: "#2e7d32", dot: "#4CAF50" },
-  warning: { bg: "#fff3e0", border: "#ffe0b2", text: "#e65100", dot: "#ff9800" },
-  error:   { bg: "#ffebee", border: "#ffcdd2", text: "#c62828", dot: "#ff4444" },
-  info:    { bg: "#e3f2fd", border: "#bbdefb", text: "#1565c0", dot: "#2196F3" },
-  neutral: { bg: "#f5f5f5", border: "#e0e0e0", text: "#616161", dot: "#9e9e9e" },
+const badgeColors: Record<
+  BadgeVariant,
+  { bg: string; border: string; text: string; dot: string }
+> = {
+  success: {
+    bg: "#e8f5e9",
+    border: "#c8e6c9",
+    text: "#2e7d32",
+    dot: "#4CAF50",
+  },
+  warning: {
+    bg: "#fff3e0",
+    border: "#ffe0b2",
+    text: "#e65100",
+    dot: "#ff9800",
+  },
+  error: { bg: "#ffebee", border: "#ffcdd2", text: "#c62828", dot: "#ff4444" },
+  info: { bg: "#e3f2fd", border: "#bbdefb", text: "#1565c0", dot: "#2196F3" },
+  neutral: {
+    bg: "#f5f5f5",
+    border: "#e0e0e0",
+    text: "#616161",
+    dot: "#9e9e9e",
+  },
 };
 
 export const StatusBadge = styled.span<{ $variant: BadgeVariant }>`
