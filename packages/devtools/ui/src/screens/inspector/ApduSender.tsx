@@ -163,19 +163,19 @@ export const ApduSender: React.FC<ApduSenderProps> = ({
           <ResponseContainer $success={lastResponse.success}>
             {lastResponse.success ? (
               <>
-                <ResponseLabel>Status: </ResponseLabel>
-                <ResponseData>
-                  {formatBytes(lastResponse.statusCode)}
-                </ResponseData>
                 {lastResponse.data && lastResponse.data.length > 0 && (
                   <>
-                    <br />
                     <ResponseLabel>Data: </ResponseLabel>
                     <ResponseData>
                       {formatBytes(lastResponse.data)}
                     </ResponseData>
+                    <br />
                   </>
                 )}
+                <ResponseLabel>Status: </ResponseLabel>
+                <ResponseData>
+                  {formatBytes(lastResponse.statusCode)}
+                </ResponseData>
               </>
             ) : (
               <>

@@ -22,10 +22,16 @@ export function createDiscoveryCommands(connector: Connector) {
       connector.sendMessage(INSPECTOR_COMMAND_TYPES.START_DISCOVERING, "{}"),
     stopDiscoveringCommand: () =>
       connector.sendMessage(INSPECTOR_COMMAND_TYPES.STOP_DISCOVERING, "{}"),
-    connectDeviceCommand: (deviceId: string) =>
+    connectDeviceCommand: (
+      deviceId: string,
+      sessionRefresherOptions?: {
+        isRefresherDisabled: boolean;
+        pollingInterval?: number;
+      },
+    ) =>
       connector.sendMessage(
         INSPECTOR_COMMAND_TYPES.CONNECT_DEVICE,
-        JSON.stringify({ deviceId }),
+        JSON.stringify({ deviceId, sessionRefresherOptions }),
       ),
   };
 }

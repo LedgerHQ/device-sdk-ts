@@ -28,7 +28,13 @@ type DeviceDiscoverySectionProps = {
   stopListening: () => void;
   startDiscovering: () => void;
   stopDiscovering: () => void;
-  connectDevice: (deviceId: string) => void;
+  connectDevice: (
+    deviceId: string,
+    sessionRefresherOptions?: {
+      isRefresherDisabled: boolean;
+      pollingInterval?: number;
+    },
+  ) => void;
 };
 
 export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
@@ -80,7 +86,7 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
             <DiscoveredDeviceCard
               key={device.id}
               device={device}
-              onConnect={() => connectDevice(device.id)}
+              onConnect={(options) => connectDevice(device.id, options)}
             />
           ))}
         </DeviceList>
@@ -94,9 +100,9 @@ export const DeviceDiscoverySection: React.FC<DeviceDiscoverySectionProps> = ({
       )}
 
       <ItalicNote>
-        Note: &quot;Start Discovery&quot; may not work in web apps due to
-        browser security restrictions. WebHID and WebBLE require a user gesture
-        (click) in the app context to trigger device discovery.
+        Note: this may not work in web apps due to browser security
+        restrictions. WebHID and WebBLE require a user gesture (click) in the
+        app context to trigger device discovery.
       </ItalicNote>
     </Section>
   );

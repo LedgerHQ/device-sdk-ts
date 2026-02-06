@@ -32,7 +32,13 @@ type InspectorProps = {
   stopListening: () => void;
   startDiscovering: () => void;
   stopDiscovering: () => void;
-  connectDevice: (deviceId: string) => void;
+  connectDevice: (
+    deviceId: string,
+    sessionRefresherOptions?: {
+      isRefresherDisabled: boolean;
+      pollingInterval?: number;
+    },
+  ) => void;
   providerValue: number | null;
   getProvider: () => void;
   setProvider: (value: number) => void;

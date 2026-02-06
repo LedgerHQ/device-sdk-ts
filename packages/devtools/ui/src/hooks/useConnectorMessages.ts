@@ -69,7 +69,13 @@ export type ConnectorMessagesState = {
   stopListening: () => void;
   startDiscovering: () => void;
   stopDiscovering: () => void;
-  connectDevice: (deviceId: string) => void;
+  connectDevice: (
+    deviceId: string,
+    sessionRefresherOptions?: {
+      isRefresherDisabled: boolean;
+      pollingInterval?: number;
+    },
+  ) => void;
   getProvider: () => void;
   setProvider: (value: number) => void;
   sendApdu: (sessionId: string, apduHex: string) => string;

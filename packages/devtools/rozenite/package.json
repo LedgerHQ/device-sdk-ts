@@ -7,6 +7,9 @@
   "main": "./dist/react-native.cjs",
   "module": "./dist/react-native.js",
   "types": "./dist/react-native.d.ts",
+  "files": [
+    "./dist"
+  ],
   "scripts": {
     "build": "rozenite build",
     "dev": "rozenite dev"
