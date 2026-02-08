@@ -25,6 +25,7 @@ export class SignMessageUseCase {
       derivationPath,
       message,
       skipOpenApp: options?.skipOpenApp ?? false,
+      appDomain: options?.appDomain,
     });
   }
 }

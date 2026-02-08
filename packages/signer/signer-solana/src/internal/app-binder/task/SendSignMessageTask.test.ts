@@ -340,4 +340,97 @@ describe("SendSignMessageTask", () => {
     const err = (res as any).error as unknown;
     expect(err).toBeInstanceOf(InvalidStatusWordError);
   });
+
+  describe("appDomain support", () => {
+    it("encodes appDomain into v0 header at offset 17 (32 bytes)", () => {
+      const msg = new Uint8Array([1, 2, 3]);
+      const task: any = new SendSignMessageTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        sendingData: msg,
+        appDomain: "supabase.com",
+      });
+
+      const v0 = task._buildFullMessage(msg, PUBKEY, false);
+
+      // app_domain starts at offset 17 (16 bytes signing domain + 1 byte version)
+      const domainBytes = v0.slice(17, 49);
+      const expected = new Uint8Array(32);
+      expected.set(new TextEncoder().encode("supabase.com"));
+      expect(domainBytes).toEqual(expected);
+    });
+
+    it("defaults to 32 zero bytes when appDomain is not provided", () => {
+      const msg = new Uint8Array([1, 2, 3]);
+      const task: any = new SendSignMessageTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        sendingData: msg,
+      });
+
+      const v0 = task._buildFullMessage(msg, PUBKEY, false);
+
+      const domainBytes = v0.slice(17, 49);
+      expect(domainBytes).toEqual(new Uint8Array(32));
+    });
+
+    it("truncates appDomain to 32 bytes if longer", () => {
+      const msg = new Uint8Array([1, 2, 3]);
+      const longDomain = "a".repeat(50);
+      const task: any = new SendSignMessageTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        sendingData: msg,
+        appDomain: longDomain,
+      });
+
+      const v0 = task._buildFullMessage(msg, PUBKEY, false);
+
+      const domainBytes = v0.slice(17, 49);
+      const expected = new Uint8Array(32);
+      expected.set(new TextEncoder().encode("a".repeat(32)));
+      expect(domainBytes).toEqual(expected);
+    });
+
+    it("does NOT include appDomain in legacy header", () => {
+      const msg = new Uint8Array([1, 2, 3]);
+      const task: any = new SendSignMessageTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        sendingData: msg,
+        appDomain: "supabase.com",
+      });
+
+      const legacy = task._buildFullMessage(msg, PUBKEY, true);
+      const v0 = task._buildFullMessage(msg, PUBKEY, false);
+
+      // legacy header is shorter: no 32-byte domain, no 1-byte signer count, no 32-byte pubkey
+      expect(legacy.length).toBe(v0.length - 32 - 1 - 32);
+    });
+
+    it("threads appDomain through to the envelope in run()", async () => {
+      const msg = new Uint8Array([0xf0, 0xca]);
+      const rawSig = new Uint8Array(64).fill(0x33);
+
+      apiMock.sendCommand
+        .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+        .mockResolvedValueOnce(CommandResultFactory({ data: rawSig }));
+
+      const task: any = new SendSignMessageTask(apiMock, {
+        derivationPath: DERIVATION_PATH,
+        sendingData: msg,
+        appDomain: "example.com",
+      });
+
+      const res = await task.run();
+      expect("data" in res).toBe(true);
+
+      // decode envelope and verify app_domain is present
+      const b58 = (res as any).data.signature as string;
+      const envelope = DefaultBs58Encoder.decode(b58);
+      // envelope = [1][sig(64)][OCM]
+      // OCM starts at offset 65
+      // app_domain is at OCM offset 17 (16 signing domain + 1 version)
+      const domainBytes = envelope.slice(65 + 17, 65 + 49);
+      const expected = new Uint8Array(32);
+      expected.set(new TextEncoder().encode("example.com"));
+      expect(domainBytes).toEqual(expected);
+    });
+  });
 });
