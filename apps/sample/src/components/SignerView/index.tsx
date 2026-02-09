@@ -31,6 +31,11 @@ const SUPPORTED_SIGNERS = [
       <CryptoIcon ledgerId="hyperliquid" ticker="HYPERLIQUID" size={size} />
     ),
   },
+  {
+    title: "Cosmos",
+    description: "Access Cosmos signer functionality",
+    icon: <CryptoIcon ledgerId="cosmos" ticker="COSMOS" size="56px" />,
+  },
 ];
 
 export const SignerView = () => {

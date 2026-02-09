@@ -507,6 +507,7 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
       tsx:
         specifier: 'catalog:'
         version: 4.19.2
@@ -880,6 +881,9 @@ importers:
       '@ledgerhq/device-signer-kit-bitcoin':
         specifier: workspace:^
         version: link:../../packages/signer/signer-btc
+      '@ledgerhq/device-signer-kit-cosmos':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-cosmos
       '@ledgerhq/device-signer-kit-ethereum':
         specifier: workspace:^
         version: link:../../packages/signer/signer-eth
@@ -1473,6 +1477,49 @@ importers:
       bitcoinjs-lib:
         specifier: 'catalog:'
         version: 6.1.6
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/signer/signer-cosmos:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
       rxjs:
         specifier: 'catalog:'
         version: 7.8.2
