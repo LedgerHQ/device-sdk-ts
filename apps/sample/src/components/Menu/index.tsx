@@ -68,7 +68,7 @@ export const Menu: React.FC = () => {
           data-testid="CTA_route-to-/signers"
           onClick={() => router.push("/signers")}
         >
-          Signers
+          Signer Kits
         </MenuTitle>
       </MenuItem>
       <MenuItem>
