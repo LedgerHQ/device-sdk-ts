@@ -26,6 +26,7 @@
     "signer-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
     "signer-sol": "pnpm --filter @ledgerhq/device-signer-kit-solana",
     "signer-utils": "pnpm --filter @ledgerhq/signer-utils",
+    "ledger-wallet": "pnpm --filter @ledgerhq/dmk-ledger-wallet",
     "mockserver-client": "pnpm --filter @ledgerhq/device-mockserver-client",
     "keyring-protocol": "pnpm --filter @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",

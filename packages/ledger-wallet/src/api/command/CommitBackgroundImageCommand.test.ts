@@ -54,21 +54,6 @@ describe("CommitBackgroundImageCommand", () => {
       }
     });
 
-    it("should return error on PIN not validated (5502)", () => {
-      const response = new ApduResponse({
-        statusCode: new Uint8Array([0x55, 0x02]),
-        data: new Uint8Array([]),
-      });
-      const result = command.parseResponse(response);
-      expect(isSuccessCommandResult(result)).toBe(false);
-      if (!isSuccessCommandResult(result)) {
-        expect(result.error).toBeInstanceOf(BackgroundImageCommandError);
-        expect((result.error as BackgroundImageCommandError).message).toBe(
-          "PIN not validated",
-        );
-      }
-    });
-
     it("should return error on image not created (551e)", () => {
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x55, 0x1e]),

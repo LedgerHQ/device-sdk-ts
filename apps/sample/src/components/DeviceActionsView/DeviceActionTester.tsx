@@ -48,6 +48,11 @@ export type DeviceActionProps<
     valueSelector?: ValueSelector<FieldType>;
     disabled?: boolean;
   }>;
+  /** Optional custom component to render the successful output */
+  OutputComponent?: React.FC<{
+    output: Output;
+    deviceModelId: DeviceModelId;
+  }>;
   validateValues?: (args: Input) => boolean;
   valueSelector?: ValueSelector<FieldType>;
   labelSelector?: Partial<Record<string, string>>;
@@ -81,6 +86,12 @@ const BoxHeader: React.FC<{ children: string; hint: string }> = ({
 };
 
 /**
+ * For perf in fast flows, we only display the last 10 responses.
+ * Impacts mainly app installs / Custom lock screen upload flows.
+ */
+const MAX_DISPLAYED_RESPONSES = 10;
+
+/**
  * Component to display an UI where a device action can be executed.
  * This UI is divided in three parts:
  * - Device Action input: where the user can input the arguments for the device action
@@ -102,6 +113,7 @@ export function DeviceActionTester<
     linkedFields,
     validateValues,
     InputValuesComponent,
+    OutputComponent,
   } = props;
 
   const nonce = useRef(-1);
@@ -115,6 +127,7 @@ export function DeviceActionTester<
   >([]);
 
   const [loading, setLoading] = useState(false);
+  const [showAllResponses, setShowAllResponses] = useState(false);
 
   const cancelDeviceActionRef = useRef(() => {});
 
@@ -283,18 +296,39 @@ export function DeviceActionTester<
             flexDirection="column"
             rowGap={4}
             overflowY="scroll"
-            height="100%"
             flex={1}
+            height="100%"
             data-testid="box_device-commands-responses"
           >
-            {responses.map((response, index, arr) => {
+            {/* only show the last MAX_DISPLAYED_RESPONSES responses unless "showAllResponses" is true */}
+            {responses.length > MAX_DISPLAYED_RESPONSES && (
+              <Button
+                variant="shade"
+                size="small"
+                flexShrink={0}
+                onClick={() => setShowAllResponses((prev) => !prev)}
+              >
+                {showAllResponses
+                  ? `Show last ${MAX_DISPLAYED_RESPONSES}`
+                  : `Show all (${responses.length})`}
+              </Button>
+            )}
+            {(showAllResponses
+              ? responses
+              : responses.slice(-MAX_DISPLAYED_RESPONSES)
+            ).map((response, index, arr) => {
               const isLatest = index === arr.length - 1;
               return (
                 <Flex
                   flexDirection="column"
                   key={`${response.date.toISOString()}-index-${index}`}
                 >
-                  <DeviceActionResponse {...response} isLatest={isLatest} />
+                  <DeviceActionResponse
+                    {...response}
+                    isLatest={isLatest}
+                    OutputComponent={OutputComponent}
+                    deviceModelId={deviceModelId}
+                  />
                   <div hidden={isLatest}>
                     {/** if I just unmount it, all dividers are glitching out */}
                     <Divider my={2} />
