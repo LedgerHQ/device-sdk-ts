@@ -60,6 +60,7 @@ import {
   type UninstallAppDAOutput,
   UninstallAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
+
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
