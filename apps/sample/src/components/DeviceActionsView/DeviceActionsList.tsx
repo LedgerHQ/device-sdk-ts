@@ -17,6 +17,7 @@ type Props = {
   title: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   deviceActions: DeviceActionProps<any, any, any, any>[];
+  noActionsMessage?: string;
 };
 
 /**
@@ -25,6 +26,7 @@ type Props = {
 export const DeviceActionsList: React.FC<Props> = ({
   title,
   deviceActions,
+  noActionsMessage,
 }) => {
   const [selectedDeviceAction, setSelectedDeviceAction] =
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,6 +65,8 @@ export const DeviceActionsList: React.FC<Props> = ({
           <DescriptionText>{selectedDeviceAction.description}</DescriptionText>
           <DeviceActionTester {...selectedDeviceAction} />
         </>
+      ) : deviceActions.length === 0 && noActionsMessage ? (
+        <Text variant="body">{noActionsMessage}</Text>
       ) : (
         <Flex flexDirection="column" overflow="scroll" pb={4} rowGap={4}>
           {deviceActions.map((deviceAction) => (

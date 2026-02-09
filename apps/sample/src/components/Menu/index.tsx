@@ -49,6 +49,15 @@ export const Menu: React.FC = () => {
           Device Actions
         </MenuTitle>
       </MenuItem>
+      <MenuItem>
+        <Icons.LedgerLogo />
+        <MenuTitle
+          data-testid="CTA_route-to-/ledger-wallet"
+          onClick={() => router.push("/ledger-wallet")}
+        >
+          Ledger Wallet
+        </MenuTitle>
+      </MenuItem>
 
       <MenuItem>
         <Icons.Signature />
