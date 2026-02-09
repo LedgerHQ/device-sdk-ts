@@ -114,11 +114,7 @@ export class TransactionClassifier {
         // prefer createATA (needed when destination ATA doesn't exist yet)
         if (data.createATA && !best.createATA) {
           best = { ...best, createATA: data.createATA };
-        } else if (
-          data.tokenAddress &&
-          !best.tokenAddress &&
-          !best.createATA
-        ) {
+        } else if (data.tokenAddress && !best.tokenAddress && !best.createATA) {
           best = { ...best, tokenAddress: data.tokenAddress };
         }
       }

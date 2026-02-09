@@ -12,6 +12,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
+import { generateSignatureId } from "@ledgerhq/signer-utils";
 import { Left, Nothing, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
@@ -47,7 +48,6 @@ import {
 import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
-
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
@@ -205,6 +205,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             typedDataContext: null,
             signature: null,
             typedDataSigningContextInfo: null,
+            signatureId: generateSignatureId(),
           },
         };
       },
@@ -430,9 +431,11 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                     ...context._internalState,
                     typedDataContext: event.output,
                     typedDataSigningContextInfo: {
-                      isBlindSign: false, 
+                      signatureId: context._internalState.signatureId,
+                      isBlindSign: false,
                       chainId: context.input.data.domain.chainId,
-                      verifyingContract: context.input.data.domain.verifyingContract,
+                      verifyingContract:
+                        context.input.data.domain.verifyingContract,
                     },
                   }),
                 }),
@@ -445,9 +448,11 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                   _internalState: ({ context }) => ({
                     ...context._internalState,
                     typedDataSigningContextInfo: {
-                      isBlindSign: true, 
+                      signatureId: context._internalState.signatureId,
+                      isBlindSign: true,
                       chainId: context.input.data.domain.chainId,
-                      verifyingContract: context.input.data.domain.verifyingContract,
+                      verifyingContract:
+                        context.input.data.domain.verifyingContract,
                     },
                   }),
                 }),
@@ -501,7 +506,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             intermediateValue: ({ context }) => ({
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
-              signingContext: context._internalState.typedDataSigningContextInfo!,
+              signingContext:
+                context._internalState.typedDataSigningContextInfo!,
             }),
           }),
           invoke: {
@@ -548,6 +554,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               ...context._internalState,
               typedDataSigningContextInfo: {
                 ...(context._internalState.typedDataSigningContextInfo ?? {
+                  signatureId: context._internalState.signatureId,
                   chainId: context.input.data.domain.chainId,
                   verifyingContract:
                     context.input.data.domain.verifyingContract,
@@ -560,6 +567,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
               signingContext: {
                 ...(context._internalState.typedDataSigningContextInfo ?? {
+                  signatureId: context._internalState.signatureId,
                   chainId: context.input.data.domain.chainId,
                   verifyingContract:
                     context.input.data.domain.verifyingContract,

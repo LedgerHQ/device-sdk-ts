@@ -35,6 +35,7 @@ export enum SignTransactionDAStep {
 }
 
 export type SigningContextInfo = {
+  readonly signatureId: string;
   readonly clearSigningType: ClearSigningType;
   readonly chainId: number;
   readonly contractAddress: string | undefined;
@@ -105,6 +106,7 @@ export type SignTransactionDAInternalState = {
   readonly signature: Signature | null;
   readonly signingContextInfo: SigningContextInfo | null;
   readonly partialContextErrors: number;
+  readonly signatureId: string;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

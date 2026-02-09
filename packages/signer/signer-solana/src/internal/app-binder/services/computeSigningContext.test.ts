@@ -10,6 +10,12 @@ import {
   MAX_DEVICE_INSTRUCTIONS,
 } from "./computeSigningContext";
 
+const TEST_SIGNATURE_ID = "test01-1234567890";
+
+/** Wrapper that injects a fixed signatureId for tests */
+const compute = (r: TxInspectorResult) =>
+  computeSigningContext(r, TEST_SIGNATURE_ID);
+
 /** Helper to build a minimal TxInspectorResult */
 function makeResult(
   overrides: Partial<TxInspectorResult> = {},
@@ -26,7 +32,7 @@ function makeResult(
 
 describe("computeSigningContext", () => {
   it("returns isBlindSign: false for a simple SOL transfer (recognized program, ≤6 ix, no ALTs)", () => {
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
         programIds: ["11111111111111111111111111111111"],
         instructionCount: 1,
@@ -39,11 +45,11 @@ describe("computeSigningContext", () => {
   });
 
   it("returns isBlindSign: false when all programs are recognized and instruction count is exactly 6", () => {
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
         programIds: [
           "11111111111111111111111111111111",
-          "Stake11111111111111111111111111111111",
+          "Stake11111111111111111111111111111111111111",
           "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
         ],
         instructionCount: 6,
@@ -56,7 +62,7 @@ describe("computeSigningContext", () => {
 
   it("returns isBlindSign: true with reason 'unrecognized_program' for an unknown program", () => {
     const jupiterId = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
         programIds: [
           "11111111111111111111111111111111",
@@ -73,7 +79,7 @@ describe("computeSigningContext", () => {
   });
 
   it("returns isBlindSign: true with reason 'too_many_instructions' when > 6 instructions", () => {
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
         programIds: ["11111111111111111111111111111111"],
         instructionCount: 7,
@@ -86,7 +92,7 @@ describe("computeSigningContext", () => {
   });
 
   it("returns isBlindSign: true with reason 'address_lookup_tables' when ALTs are present", () => {
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
         programIds: ["11111111111111111111111111111111"],
         instructionCount: 2,
@@ -99,7 +105,7 @@ describe("computeSigningContext", () => {
   });
 
   it("prioritises ALTs over too many instructions", () => {
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
         instructionCount: 10,
         usesAddressLookupTables: true,
@@ -111,7 +117,7 @@ describe("computeSigningContext", () => {
 
   it("prioritises too many instructions over unrecognized program", () => {
     const unknownId = "UnknownProgram111111111111111111111111";
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
         programIds: [unknownId],
         instructionCount: 8,
@@ -124,13 +130,9 @@ describe("computeSigningContext", () => {
   it("identifies multiple unrecognized programs", () => {
     const unknownA = "UnknownA111111111111111111111111111111";
     const unknownB = "UnknownB111111111111111111111111111111";
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({
-        programIds: [
-          "11111111111111111111111111111111",
-          unknownA,
-          unknownB,
-        ],
+        programIds: ["11111111111111111111111111111111", unknownA, unknownB],
         instructionCount: 3,
       }),
     );
@@ -145,7 +147,7 @@ describe("computeSigningContext", () => {
       "11111111111111111111111111111111",
       "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
     ];
-    const result = computeSigningContext(
+    const result = compute(
       makeResult({ programIds: ids, instructionCount: 5 }),
     );
 
@@ -154,9 +156,7 @@ describe("computeSigningContext", () => {
   });
 
   it("handles empty programIds (e.g. parse failure fallback)", () => {
-    const result = computeSigningContext(
-      makeResult({ programIds: [], instructionCount: 0 }),
-    );
+    const result = compute(makeResult({ programIds: [], instructionCount: 0 }));
 
     expect(result.isBlindSign).toBe(false);
     expect(result.reason).toBe(BlindSignReason.None);
@@ -171,15 +171,18 @@ describe("DEVICE_RECOGNIZED_PROGRAMS", () => {
 
   it.each([
     ["System", "11111111111111111111111111111111"],
-    ["Stake", "Stake11111111111111111111111111111111"],
-    ["Vote", "Vote111111111111111111111111111111111"],
+    ["Stake", "Stake11111111111111111111111111111111111111"],
+    ["Vote", "Vote111111111111111111111111111111111111111"],
     ["SPL Token", "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
     ["SPL Token 2022", "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"],
     ["ATA", "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"],
     ["SPL Memo", "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"],
-    ["Compute Budget", "ComputeBudget111111111111111111111111111"],
+    ["Compute Budget", "ComputeBudget111111111111111111111111111111"],
     ["Serum Assert Owner", "4MNPdKu9wFMvEeZBMt3Eipfs5ovVWTJb31pEXDJAAxX5"],
-    ["Serum Assert Owner (Phantom)", "DeJBGdMFa1uynnnKiwrVioatTuHmNLpyFKnmB5kaFdzQ"],
+    [
+      "Serum Assert Owner (Phantom)",
+      "DeJBGdMFa1uynnnKiwrVioatTuHmNLpyFKnmB5kaFdzQ",
+    ],
   ])("recognises %s (%s)", (_name, address) => {
     expect(DEVICE_RECOGNIZED_PROGRAMS.has(address)).toBe(true);
   });
@@ -196,5 +199,12 @@ describe("DEVICE_RECOGNIZED_PROGRAMS", () => {
 describe("MAX_DEVICE_INSTRUCTIONS", () => {
   it("equals 6", () => {
     expect(MAX_DEVICE_INSTRUCTIONS).toBe(6);
+  });
+});
+
+describe("computeSigningContext signatureId", () => {
+  it("includes the provided signatureId in the result", () => {
+    const result = computeSigningContext(makeResult(), TEST_SIGNATURE_ID);
+    expect(result.signatureId).toBe(TEST_SIGNATURE_ID);
   });
 });

@@ -31,6 +31,7 @@ export enum SignTypedDataDAStateStep {
 }
 
 export type TypedDataSigningContextInfo = {
+  readonly signatureId: string;
   readonly isBlindSign: boolean;
   readonly chainId: number | undefined;
   readonly verifyingContract: string | undefined;
@@ -97,6 +98,7 @@ export type SignTypedDataDAInternalState = {
   readonly typedDataContext: ProvideEIP712ContextTaskArgs | null;
   readonly signature: Signature | null;
   readonly typedDataSigningContextInfo: TypedDataSigningContextInfo | null;
+  readonly signatureId: string;
 };
 
 export type SignTypedDataDAReturnType = ExecuteDeviceActionReturnType<

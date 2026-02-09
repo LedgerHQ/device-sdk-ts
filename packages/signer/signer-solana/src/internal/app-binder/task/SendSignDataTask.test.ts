@@ -17,6 +17,14 @@ import { type ChunkableCommandArgs } from "./SendCommandInChunksTask";
 const DERIVATION_PATH = "44'/501'/0'/0'";
 const PATH_SIZE = 4;
 
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+
 describe("SignDataTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const signature = new Uint8Array([
@@ -55,6 +63,7 @@ describe("SignDataTask", () => {
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -116,6 +125,7 @@ describe("SignDataTask", () => {
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),
+        logger: mockLogger,
       };
       apiMock.sendCommand
         .mockResolvedValueOnce(resultNothing)
@@ -191,6 +201,7 @@ describe("SignDataTask", () => {
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),
+        logger: mockLogger,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -231,6 +242,7 @@ describe("SignDataTask", () => {
             more: chunkArgs.more,
             extend: chunkArgs.extend,
           }),
+        logger: mockLogger,
       };
       apiMock.sendCommand
         .mockResolvedValueOnce(resultNothing)

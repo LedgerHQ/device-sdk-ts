@@ -1,4 +1,8 @@
-import { Connection, type PublicKey, VersionedMessage } from "@solana/web3.js";
+import {
+  Connection,
+  type PublicKey,
+  type VersionedMessage,
+} from "@solana/web3.js";
 
 export type LoadedAddresses = { writable: PublicKey[]; readonly: PublicKey[] };
 
@@ -22,9 +26,7 @@ export class RpcAddressLookupTableResolver
     this.connection = new Connection(rpcUrl, { commitment: "confirmed" });
   }
 
-  async resolve(
-    msg: VersionedMessage,
-  ): Promise<LoadedAddresses | undefined> {
+  async resolve(msg: VersionedMessage): Promise<LoadedAddresses | undefined> {
     const lookups = msg.addressTableLookups ?? [];
     if (!lookups.length) return undefined;
 

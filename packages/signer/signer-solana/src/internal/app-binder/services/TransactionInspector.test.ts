@@ -14,7 +14,6 @@ import {
 } from "@solana/spl-token";
 import {
   Keypair,
-  PublicKey,
   SystemProgram,
   Transaction,
   TransactionInstruction,
@@ -73,9 +72,7 @@ describe("TransactionInspector", () => {
     expect(result.data).toEqual({});
     expect(result.instructionCount).toBe(1);
     expect(result.usesAddressLookupTables).toBe(false);
-    expect(result.programIds).toContain(
-      SystemProgram.programId.toBase58(),
-    );
+    expect(result.programIds).toContain(SystemProgram.programId.toBase58());
   });
 
   it("detects an SPL Transfer and returns the destination address", async () => {

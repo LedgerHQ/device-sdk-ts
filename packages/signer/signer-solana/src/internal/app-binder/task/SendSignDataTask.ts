@@ -2,6 +2,7 @@ import {
   ByteArrayBuilder,
   type CommandResult,
   type InternalApi,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 import { type Maybe } from "purify-ts";
@@ -20,18 +21,30 @@ type SignDataTaskArgs = {
   sendingData: Uint8Array;
   derivationPath: string;
   commandFactory: CommandFactory<Maybe<Signature | SolanaAppErrorCodes>>;
+  logger: LoggerPublisherService;
 };
 
 export class SignDataTask {
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     private api: InternalApi,
     private args: SignDataTaskArgs,
-  ) {}
+  ) {
+    this._logger = args.logger;
+  }
 
   async run(): Promise<
     CommandResult<Maybe<Signature | SolanaAppErrorCodes>, SolanaAppErrorCodes>
   > {
     const { sendingData, derivationPath, commandFactory } = this.args;
+
+    this._logger.debug("[run] Starting SignDataTask", {
+      data: {
+        derivationPath,
+        dataLength: sendingData.length,
+      },
+    });
 
     const paths = DerivationPathUtils.splitPath(derivationPath);
     const builder = new ByteArrayBuilder(
@@ -46,11 +59,15 @@ export class SignDataTask {
     builder.addBufferToData(sendingData);
     const buffer = builder.build();
 
-    return await new SendCommandInChunksTask<
+    const result = await new SendCommandInChunksTask<
       Maybe<Signature | SolanaAppErrorCodes>
     >(this.api, {
       data: buffer,
       commandFactory,
     }).run();
+
+    this._logger.debug("[run] Data signed successfully");
+
+    return result;
   }
 }

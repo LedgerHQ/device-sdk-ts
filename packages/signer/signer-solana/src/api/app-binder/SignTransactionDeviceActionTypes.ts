@@ -14,9 +14,7 @@ import { type Signature } from "@api/model/Signature";
 import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import {
-  type SolanaSigningContextInfo,
-} from "@internal/app-binder/services/computeSigningContext";
+import { type SolanaSigningContextInfo } from "@internal/app-binder/services/computeSigningContext";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 
 export type { SolanaSigningContextInfo } from "@internal/app-binder/services/computeSigningContext";
@@ -78,6 +76,7 @@ export type SignTransactionDAInternalState = {
   readonly solanaTransactionContext: SolanaTransactionContextResultSuccess | null;
   readonly inspectorResult: TxInspectorResult | null;
   readonly signingContextInfo: SolanaSigningContextInfo | null;
+  readonly signatureId: string;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

@@ -1,3 +1,4 @@
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   type CommandResult,
   type DeviceActionStateMachine,
@@ -11,10 +12,9 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
+import { generateSignatureId } from "@ledgerhq/signer-utils";
 import { Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
-
-import { ClearSignContextType } from "@ledgerhq/context-module";
 
 import {
   type GetAddressCommandArgs,
@@ -204,6 +204,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             signature: null,
             signingContextInfo: null,
             partialContextErrors: 0,
+            signatureId: generateSignatureId(),
           },
         };
       },
@@ -489,6 +490,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                         !hasPlugin &&
                         !hasExternalPlugin;
                       return {
+                        signatureId: context._internalState.signatureId,
                         clearSigningType: event.output.clearSigningType,
                         chainId: context._internalState.subset!.chainId,
                         contractAddress: context._internalState.subset!.to,
@@ -570,7 +572,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         ProvideContextsResultCheck: {
           always: [
             { guard: "noInternalError", target: "SignTransaction" },
-            { guard: "notRefusedByUser", target: "BlindSignTransactionFallback" },
+            {
+              guard: "notRefusedByUser",
+              target: "BlindSignTransactionFallback",
+            },
             { target: "Error" },
           ],
         },

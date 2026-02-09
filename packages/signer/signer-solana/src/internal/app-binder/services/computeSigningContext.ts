@@ -1,5 +1,7 @@
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 
+export { generateSignatureId } from "@ledgerhq/signer-utils";
+
 export enum BlindSignReason {
   None = "none",
   InspectionFailed = "inspection_failed",
@@ -11,6 +13,7 @@ export enum BlindSignReason {
 }
 
 export type SolanaSigningContextInfo = {
+  readonly signatureId: string;
   readonly isBlindSign: boolean;
   readonly reason: BlindSignReason;
   readonly programIds: string[];
@@ -28,13 +31,13 @@ export type SolanaSigningContextInfo = {
  */
 export const DEVICE_RECOGNIZED_PROGRAMS = new Set([
   "11111111111111111111111111111111", // System Program
-  "Stake11111111111111111111111111111111", // Stake Program
-  "Vote111111111111111111111111111111111", // Vote Program
+  "Stake11111111111111111111111111111111111111", // Stake Program
+  "Vote111111111111111111111111111111111111111", // Vote Program
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", // SPL Token
   "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb", // SPL Token 2022
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL", // Associated Token Account
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr", // SPL Memo
-  "ComputeBudget111111111111111111111111111", // Compute Budget
+  "ComputeBudget111111111111111111111111111111", // Compute Budget
   "4MNPdKu9wFMvEeZBMt3Eipfs5ovVWTJb31pEXDJAAxX5", // Serum Assert Owner
   "DeJBGdMFa1uynnnKiwrVioatTuHmNLpyFKnmB5kaFdzQ", // Serum Assert Owner (Phantom)
 ]);
@@ -53,6 +56,7 @@ export const MAX_DEVICE_INSTRUCTIONS = 6;
  */
 export function computeSigningContext(
   inspectorResult: TxInspectorResult,
+  signatureId: string,
 ): SolanaSigningContextInfo {
   const unrecognizedPrograms = inspectorResult.programIds.filter(
     (id) => !DEVICE_RECOGNIZED_PROGRAMS.has(id),
@@ -73,6 +77,7 @@ export function computeSigningContext(
   }
 
   return {
+    signatureId,
     isBlindSign,
     reason,
     programIds: inspectorResult.programIds,

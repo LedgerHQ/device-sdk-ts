@@ -195,7 +195,9 @@ describe("SignTransactionDeviceAction", () => {
           clearSignContexts: contexts,
           clearSigningType: ClearSigningType.EIP7730,
         });
-        provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+        provideContextsMock.mockResolvedValueOnce(
+          Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+        );
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -320,6 +322,7 @@ describe("SignTransactionDeviceAction", () => {
         const intermediateValue = getStep(steps, 7).intermediateValue;
         if ("signingContext" in intermediateValue) {
           expect(intermediateValue.signingContext).toEqual({
+            signatureId: expect.stringMatching(/^.{6}-\d+$/),
             clearSigningType: ClearSigningType.EIP7730,
             chainId: 1,
             contractAddress: "0x",
@@ -327,7 +330,9 @@ describe("SignTransactionDeviceAction", () => {
             partialContextErrors: 0,
           });
         } else {
-          throw new Error("signingContext should be present in intermediateValue");
+          throw new Error(
+            "signingContext should be present in intermediateValue",
+          );
         }
         expect(signTransactionMock).toHaveBeenCalledTimes(1);
         expect(signTransactionMock).toHaveBeenNthCalledWith(
@@ -388,7 +393,9 @@ describe("SignTransactionDeviceAction", () => {
           clearSignContextsOptional: [],
           clearSigningType: ClearSigningType.BASIC,
         });
-        provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+        provideContextsMock.mockResolvedValueOnce(
+          Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+        );
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -731,7 +738,9 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+      provideContextsMock.mockResolvedValueOnce(
+        Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+      );
       signTransactionMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("Sign transaction failed"),
@@ -793,7 +802,9 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.EIP7730,
       });
-      provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+      provideContextsMock.mockResolvedValueOnce(
+        Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+      );
       signTransactionMock.mockRejectedValueOnce(
         new Error("Sign transaction failed"),
       );
@@ -878,7 +889,9 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+      provideContextsMock.mockResolvedValueOnce(
+        Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+      );
       signTransactionMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("Sign transaction failed"),
@@ -932,7 +945,9 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+      provideContextsMock.mockResolvedValueOnce(
+        Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+      );
       signTransactionMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("Sign transaction failed"),
@@ -984,7 +999,9 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+      provideContextsMock.mockResolvedValueOnce(
+        Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+      );
 
       // Create an error with the user refusal error code
       const userRefusalError = new InvalidStatusWordError(
@@ -1044,7 +1061,9 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.EIP7730,
       });
-      provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+      provideContextsMock.mockResolvedValueOnce(
+        Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+      );
 
       // Create an error with a different error code (not user refusal)
       const otherError = new InvalidStatusWordError("Some other error");
@@ -1138,7 +1157,9 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }));
+      provideContextsMock.mockResolvedValueOnce(
+        Right({ warnings: { contextNotFound: 0, provisionFailed: 0 } }),
+      );
 
       // Create an error with a specific error code for tracking
       const contextError = new InvalidStatusWordError("Context rejected");
@@ -1186,6 +1207,7 @@ describe("SignTransactionDeviceAction", () => {
         "fallbackErrorCode" in fallbackStep.intermediateValue
       ) {
         expect(fallbackStep.intermediateValue.signingContext).toEqual({
+          signatureId: expect.stringMatching(/^.{6}-\d+$/),
           clearSigningType: ClearSigningType.BASIC,
           chainId: 1,
           contractAddress: "0x",
@@ -1268,8 +1290,7 @@ describe("SignTransactionDeviceAction", () => {
       const signStep = states.find(
         (s) =>
           s.status === DeviceActionStatus.Pending &&
-          s.intermediateValue.step ===
-            SignTransactionDAStep.SIGN_TRANSACTION,
+          s.intermediateValue.step === SignTransactionDAStep.SIGN_TRANSACTION,
       );
 
       expect(signStep).toBeDefined();
@@ -1277,8 +1298,11 @@ describe("SignTransactionDeviceAction", () => {
         signStep?.status === DeviceActionStatus.Pending &&
         "signingContext" in signStep.intermediateValue
       ) {
-        expect(signStep.intermediateValue.signingContext.partialContextErrors).toBe(3);
+        expect(
+          signStep.intermediateValue.signingContext.partialContextErrors,
+        ).toBe(3);
         expect(signStep.intermediateValue.signingContext).toEqual({
+          signatureId: expect.stringMatching(/^.{6}-\d+$/),
           clearSigningType: ClearSigningType.EIP7730,
           chainId: 1,
           contractAddress: "0x",

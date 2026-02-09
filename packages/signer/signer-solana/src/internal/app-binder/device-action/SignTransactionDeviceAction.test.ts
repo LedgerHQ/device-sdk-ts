@@ -18,8 +18,8 @@ import {
   type SignTransactionDAIntermediateValue,
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { BlindSignReason } from "@internal/app-binder/services/computeSigningContext";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
+import { BlindSignReason } from "@internal/app-binder/services/computeSigningContext";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import { type SolanaBuildContextResult } from "@internal/app-binder/task/BuildTransactionContextTask";
 
@@ -72,9 +72,7 @@ function makeInspectorResult(
     transactionType:
       overrides.transactionType ?? SolanaTransactionTypes.STANDARD,
     data: overrides.data ?? {},
-    programIds: overrides.programIds ?? [
-      "11111111111111111111111111111111",
-    ],
+    programIds: overrides.programIds ?? ["11111111111111111111111111111111"],
     instructionCount: overrides.instructionCount ?? 1,
     usesAddressLookupTables: overrides.usesAddressLookupTables ?? false,
   };
@@ -87,9 +85,11 @@ describe("SignTransactionDeviceAction (Solana)", () => {
     buildContextMock = vi.fn();
     provideContextMock = vi.fn();
     signMock = vi.fn();
-    inspectTransactionMock = vi.fn().mockResolvedValue(
-      makeInspectorResult({ transactionType: SolanaTransactionTypes.SPL }),
-    );
+    inspectTransactionMock = vi
+      .fn()
+      .mockResolvedValue(
+        makeInspectorResult({ transactionType: SolanaTransactionTypes.SPL }),
+      );
   });
 
   it("happy path (skip open): getAppConfig -> inspect -> build -> provide -> sign", () =>
@@ -183,6 +183,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: false,
               reason: BlindSignReason.None,
               programIds: [
@@ -266,6 +267,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.InspectionFailed,
               programIds: [],
@@ -362,6 +364,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.ContextBuildFailed,
               programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
@@ -475,6 +478,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.ContextProvisionFailed,
               programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
@@ -591,6 +595,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: false,
               reason: BlindSignReason.None,
               programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
@@ -685,6 +690,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.ContextBuildFailed,
               programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
@@ -770,6 +776,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.UnrecognizedProgram,
               programIds: [
@@ -850,6 +857,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.TooManyInstructions,
               programIds: ["11111111111111111111111111111111"],
@@ -963,6 +971,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: false,
               reason: BlindSignReason.None,
               programIds: [
@@ -1076,6 +1085,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.AddressLookupTables,
               programIds: ["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"],
@@ -1154,6 +1164,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signTransactionDAStateSteps.SIGN_TRANSACTION,
             signingContext: {
+              signatureId: expect.stringMatching(/^.{6}-\d+$/),
               isBlindSign: true,
               reason: BlindSignReason.AddressLookupTables,
               programIds: ["11111111111111111111111111111111"],

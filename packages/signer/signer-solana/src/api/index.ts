@@ -20,7 +20,6 @@ export type {
   SignMessageDAIntermediateValue,
   SignMessageDAOutput,
 } from "@api/app-binder/SignMessageDeviceActionTypes";
-export { BlindSignReason } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type {
   SignTransactionDAError,
   SignTransactionDAIntermediateValue,
@@ -28,6 +27,7 @@ export type {
   SignTransactionDAReturnType,
   SolanaSigningContextInfo,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export { BlindSignReason } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type { Signature } from "@api/model/Signature";
 export type { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 export type { Transaction } from "@api/model/Transaction";

@@ -272,6 +272,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: false,
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -407,6 +408,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: false,
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -524,6 +526,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: true, // Legacy signing is always blind
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -627,6 +630,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: true,
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -843,6 +847,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: false,
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -1093,6 +1098,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: false,
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -1105,6 +1111,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: true, // Legacy signing is always blind
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -1225,6 +1232,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: false,
                 chainId: undefined,
                 verifyingContract: undefined,
@@ -1237,6 +1245,7 @@ describe("SignTypedDataDeviceAction", () => {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
               signingContext: {
+                signatureId: expect.stringMatching(/^.{6}-\d+$/),
                 isBlindSign: true, // Legacy signing is always blind
                 chainId: undefined,
                 verifyingContract: undefined,

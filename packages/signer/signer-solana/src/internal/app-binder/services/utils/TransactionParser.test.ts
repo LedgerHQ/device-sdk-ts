@@ -2,8 +2,7 @@ import {
   Keypair,
   SystemProgram,
   Transaction,
-  TransactionInstruction,
-  VersionedMessage,
+  type TransactionInstruction,
 } from "@solana/web3.js";
 import { describe, expect, it, vi } from "vitest";
 

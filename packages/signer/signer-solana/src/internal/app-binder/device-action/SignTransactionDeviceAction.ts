@@ -36,6 +36,7 @@ import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChe
 import {
   BlindSignReason,
   computeSigningContext,
+  generateSignatureId,
 } from "@internal/app-binder/services/computeSigningContext";
 import {
   SolanaTransactionTypes,
@@ -204,6 +205,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           solanaTransactionContext: null,
           inspectorResult: null,
           signingContextInfo: null,
+          signatureId: generateSignatureId(),
         },
       }),
       states: {
@@ -310,7 +312,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 _internalState: ({ context, event }) => ({
                   ...context._internalState,
                   inspectorResult: event.output,
-                  signingContextInfo: computeSigningContext(event.output),
+                  signingContextInfo: computeSigningContext(
+                    event.output,
+                    context._internalState.signatureId,
+                  ),
                 }),
               }),
             },
@@ -320,6 +325,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 _internalState: ({ context }) => ({
                   ...context._internalState,
                   signingContextInfo: {
+                    signatureId: context._internalState.signatureId,
                     isBlindSign: true,
                     reason: BlindSignReason.InspectionFailed,
                     programIds: [],
@@ -422,8 +428,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               target: "SignTransaction",
               actions: assign({
                 _internalState: ({ context }) => {
-                  const currentInfo =
-                    context._internalState.signingContextInfo;
+                  const currentInfo = context._internalState.signingContextInfo;
                   // When instruction descriptors are successfully provided,
                   // the device uses process_message_body_with_descriptor()
                   // which bypasses the program whitelist check.
@@ -431,8 +436,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   // unrecognized program — ALTs and instruction-count limits
                   // are structural and still apply.
                   if (
-                    currentInfo?.reason ===
-                    BlindSignReason.UnrecognizedProgram
+                    currentInfo?.reason === BlindSignReason.UnrecognizedProgram
                   ) {
                     return {
                       ...context._internalState,
@@ -470,6 +474,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
               step: signTransactionDAStateSteps.SIGN_TRANSACTION,
               signingContext: context._internalState.signingContextInfo ?? {
+                signatureId: context._internalState.signatureId,
                 isBlindSign: true,
                 reason: BlindSignReason.InspectionFailed,
                 programIds: [],
@@ -516,6 +521,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   requiredUserInteraction: UserInteractionRequired.None,
                   step: signTransactionDAStateSteps.SIGN_TRANSACTION,
                   signingContext: context._internalState.signingContextInfo ?? {
+                    signatureId: context._internalState.signatureId,
                     isBlindSign: true,
                     reason: BlindSignReason.InspectionFailed,
                     programIds: [],
@@ -593,6 +599,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
+        logger: this._loggerFactory("SignDataTask"),
       }).run();
 
     return {

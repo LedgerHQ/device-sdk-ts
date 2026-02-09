@@ -9,7 +9,7 @@ import {
   Keypair,
   SystemProgram,
   Transaction,
-  TransactionInstruction,
+  type TransactionInstruction,
 } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 

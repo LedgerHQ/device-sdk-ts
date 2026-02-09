@@ -30,9 +30,7 @@ export type ParsedTransaction = {
  * addresses are resolved and merged into the key list.
  */
 export class TransactionParser {
-  constructor(
-    private readonly altResolver?: AddressLookupTableResolver,
-  ) {}
+  constructor(private readonly altResolver?: AddressLookupTableResolver) {}
 
   /**
    * Parse raw transaction bytes into a {@link ParsedTransaction}.
@@ -155,8 +153,7 @@ export class TransactionParser {
 
     const compiledInstructions: NormalizedCompiledIx[] =
       legacy.instructions.map((instruction) => ({
-        programIdIndex:
-          indexByB58.get(instruction.programId.toBase58()) ?? -1,
+        programIdIndex: indexByB58.get(instruction.programId.toBase58()) ?? -1,
         accountKeyIndexes: instruction.keys.map(
           (key) => indexByB58.get(key.pubkey.toBase58()) ?? -1,
         ),

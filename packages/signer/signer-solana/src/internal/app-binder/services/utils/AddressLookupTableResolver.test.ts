@@ -1,5 +1,5 @@
-import { VersionedMessage } from "@solana/web3.js";
-import { describe, expect, it, vi } from "vitest";
+import { type VersionedMessage } from "@solana/web3.js";
+import { describe, expect, it } from "vitest";
 
 import { RpcAddressLookupTableResolver } from "./AddressLookupTableResolver";
 
