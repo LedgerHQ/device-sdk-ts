@@ -19,6 +19,7 @@ import {
 } from "@api/device-action/model/DeviceActionState";
 import { type DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { noopLoggerFactory } from "@api/logger-publisher/utils/noopLoggerFactory";
 
 import { type StateMachineTypes } from "./StateMachineTypes";
 
@@ -110,12 +111,13 @@ export abstract class XStateDeviceAction<
 
   /**
    * Returns the logger factory to use for creating loggers.
-   * Prefers a prefixed loggerFactory if available, otherwise falls back to internalApi.loggerFactory.
+   * Prefers the instance loggerFactory, then internalApi.loggerFactory,
+   * and falls back to a no-op logger factory if neither is available.
    */
   protected getLoggerFactory(
     internalApi: InternalApi,
   ): (tag: string) => LoggerPublisherService {
-    return this.loggerFactory ?? internalApi.loggerFactory;
+    return this.loggerFactory ?? internalApi.loggerFactory ?? noopLoggerFactory;
   }
 
   protected abstract makeStateMachine(
@@ -136,8 +138,7 @@ export abstract class XStateDeviceAction<
     // Create logger from machine ID if not explicitly provided
     // Prefer loggerFactory (prefixed) over internalApi.loggerFactory (unprefixed)
     if (!this.logger && stateMachine.id) {
-      const factory = this.loggerFactory ?? internalApi.loggerFactory;
-      this.logger = factory(stateMachine.id);
+      this.logger = this.getLoggerFactory(internalApi)(stateMachine.id);
     }
 
     return this._subscribeToStateMachine(stateMachine);

@@ -29,7 +29,7 @@ export type InternalApi = {
   ) => DeviceSessionState;
   readonly getManagerApiService: () => ManagerApiService;
   readonly getSecureChannelService: () => SecureChannelService;
-  readonly loggerFactory: (tag: string) => LoggerPublisherService;
+  readonly loggerFactory?: (tag: string) => LoggerPublisherService;
 };
 
 export type DeviceActionIntermediateValue = {
