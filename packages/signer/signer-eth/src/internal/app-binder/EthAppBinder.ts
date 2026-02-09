@@ -64,9 +64,7 @@ export class EthAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory(
-          "SendCommandInAppDeviceAction-GetAddressCommand",
-        ),
+        logger: this.dmkLoggerFactory("GetAddressCommand"),
       }),
     });
   }
@@ -107,9 +105,7 @@ export class EthAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory(
-          "CallTaskInAppDeviceAction-SendSignPersonalMessageTask",
-        ),
+        logger: this.dmkLoggerFactory("SendSignPersonalMessageTask"),
       }),
     });
   }
@@ -181,9 +177,7 @@ export class EthAppBinder {
             UserInteractionRequired.SignDelegationAuthorization,
           skipOpenApp: false,
         },
-        logger: this.dmkLoggerFactory(
-          "CallTaskInAppDeviceAction-SendSignAuthorizationDelegationTask",
-        ),
+        logger: this.dmkLoggerFactory("SendSignAuthorizationDelegationTask"),
       }),
     });
   }

@@ -50,9 +50,7 @@ export class SolanaAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory(
-          "SendCommandInAppDeviceAction-GetPubKeyCommand",
-        ),
+        logger: this.dmkLoggerFactory("GetPubKeyCommand"),
       }),
     });
   }
@@ -111,9 +109,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory(
-          "CallTaskInAppDeviceAction-SendSignMessageTask",
-        ),
+        logger: this.dmkLoggerFactory("SendSignMessageTask"),
       }),
     });
   }
@@ -128,9 +124,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: false,
         },
-        logger: this.dmkLoggerFactory(
-          "SendCommandInAppDeviceAction-GetAppConfigurationCommand",
-        ),
+        logger: this.dmkLoggerFactory("GetAppConfigurationCommand"),
       }),
     });
   }
