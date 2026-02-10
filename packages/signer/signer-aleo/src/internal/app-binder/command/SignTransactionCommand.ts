@@ -22,7 +22,11 @@ export type SignTransactionCommandResponse = {
 
 export class SignTransactionCommand
   implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, AleoErrorCodes>
+    Command<
+      SignTransactionCommandResponse,
+      SignTransactionCommandArgs,
+      AleoErrorCodes
+    >
 {
   readonly name = "SignTransaction";
 
@@ -33,19 +37,14 @@ export class SignTransactionCommand
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    throw new Error(
+      `SignTransactionCommand.getApdu() not implemented (args: ${JSON.stringify(this.args)})`,
+    );
   }
 
   parseResponse(
     _apduResponse: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, AleoErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
     throw new Error("SignTransactionCommand.parseResponse() not implemented");
   }
 }

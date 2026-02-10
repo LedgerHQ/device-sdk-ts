@@ -28,19 +28,14 @@ export class SignMessageCommand
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    throw new Error("SignMessageCommand.getApdu() not implemented");
+    throw new Error(
+      `SignMessageCommand.getApdu() not implemented (args: ${JSON.stringify(this.args)})`,
+    );
   }
 
   parseResponse(
     _apduResponse: ApduResponse,
   ): CommandResult<SignMessageCommandResponse, AleoErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
     throw new Error("SignMessageCommand.parseResponse() not implemented");
   }
 }
