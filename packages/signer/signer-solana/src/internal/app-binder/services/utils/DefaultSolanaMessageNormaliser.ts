@@ -1,14 +1,18 @@
 import type { NormalizedMessage } from "@internal/app-binder/services/TransactionInspector";
-import { TransactionInspector } from "@internal/app-binder/services/TransactionInspector";
 
-export interface SolanaMessageNormaliserConstructor {
+import { TransactionParser } from "./TransactionParser";
+
+export interface SolanaMessageNormaliser {
   normaliseMessage(rawBytes: Uint8Array): Promise<NormalizedMessage>;
 }
 
-export class DefaultSolanaMessageNormaliser {
-  static async normaliseMessage(
-    rawBytes: Uint8Array,
-  ): Promise<NormalizedMessage> {
-    return TransactionInspector.normaliseMessage(rawBytes);
+export class DefaultSolanaMessageNormaliser implements SolanaMessageNormaliser {
+  constructor(
+    private readonly parser: TransactionParser = new TransactionParser(),
+  ) {}
+
+  async normaliseMessage(rawBytes: Uint8Array): Promise<NormalizedMessage> {
+    const { message } = await this.parser.parse(rawBytes);
+    return message;
   }
 }

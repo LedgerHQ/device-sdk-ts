@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   DefaultSolanaMessageNormaliser,
-  type SolanaMessageNormaliserConstructor,
+  type SolanaMessageNormaliser,
 } from "./DefaultSolanaMessageNormaliser";
 
 const DUMMY_BLOCKHASH = bs58.encode(new Uint8Array(32).fill(0xaa));
@@ -60,7 +60,8 @@ describe("DefaultSolanaMessageNormaliser", () => {
     const { raw } = makeSignedRawTx(instructions, [payer], payer);
 
     // when
-    const msg = await DefaultSolanaMessageNormaliser.normaliseMessage(raw);
+    const normaliser = new DefaultSolanaMessageNormaliser();
+    const msg = await normaliser.normaliseMessage(raw);
 
     // then
     // same number of compiled instructions
@@ -87,7 +88,7 @@ describe("DefaultSolanaMessageNormaliser", () => {
     }
   });
 
-  it("can be used via the SolanaMessageNormaliserConstructor interface", async () => {
+  it("can be used via the SolanaMessageNormaliser interface", async () => {
     // given
     const payer = Keypair.generate();
     const recipient = Keypair.generate();
@@ -98,10 +99,10 @@ describe("DefaultSolanaMessageNormaliser", () => {
     });
     const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
-    // when (note: using the class as a static 'constructor-like' value)
-    const Normaliser: SolanaMessageNormaliserConstructor =
-      DefaultSolanaMessageNormaliser;
-    const msg = await Normaliser.normaliseMessage(raw);
+    // when (using the instance via the interface type)
+    const normaliser: SolanaMessageNormaliser =
+      new DefaultSolanaMessageNormaliser();
+    const msg = await normaliser.normaliseMessage(raw);
 
     // then
     expect(msg.compiledInstructions).toHaveLength(1);
@@ -129,7 +130,8 @@ describe("DefaultSolanaMessageNormaliser", () => {
     const { raw } = makeSignedRawTx([instruction], [payer], payer);
 
     // when
-    const msg = await DefaultSolanaMessageNormaliser.normaliseMessage(raw);
+    const normaliser = new DefaultSolanaMessageNormaliser();
+    const msg = await normaliser.normaliseMessage(raw);
 
     // then
     expect(Array.isArray(msg.allKeys)).toBe(true);
