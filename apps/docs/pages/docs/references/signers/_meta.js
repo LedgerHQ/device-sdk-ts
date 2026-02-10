@@ -4,4 +4,5 @@ export default {
   btc: "Signer Bitcoin",
   hyperliquid: "Signer Hyperliquid",
   cosmos: "Signer Cosmos",
+  aleo: "Signer Aleo",
 };

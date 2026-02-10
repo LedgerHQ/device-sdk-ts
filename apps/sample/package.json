@@ -25,6 +25,7 @@
     "@ledgerhq/device-management-kit-devtools-websocket-common": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-websocket-connector": "workspace:^",
     "@ledgerhq/device-mockserver-client": "workspace:^",
+    "@ledgerhq/device-signer-kit-aleo": "workspace:^",
     "@ledgerhq/device-signer-kit-bitcoin": "workspace:^",
     "@ledgerhq/device-signer-kit-cosmos": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
