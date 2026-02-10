@@ -23,7 +23,7 @@ export const Menu: React.FC = () => {
   return (
     <>
       <MenuItem>
-        <Icons.WirelessCharging />
+        <Icons.TransferHorizontal />
         <MenuTitle
           data-testid="CTA_route-to-/apdu"
           onClick={() => router.push("/apdu")}
@@ -32,7 +32,10 @@ export const Menu: React.FC = () => {
         </MenuTitle>
       </MenuItem>
       <MenuItem>
-        <Icons.LedgerDevices />
+        {/* sorry for that blasphemy but the original icon is upside down and does not make logical sense */}
+        <Flex style={{ transform: "scaleY(-1)" }}>
+          <Icons.Protocol />
+        </Flex>
         <MenuTitle
           data-testid="CTA_route-to-/commands"
           onClick={() => router.push("/commands")}
@@ -49,6 +52,15 @@ export const Menu: React.FC = () => {
           Device Actions
         </MenuTitle>
       </MenuItem>
+      <MenuItem>
+        <Icons.LedgerLogo />
+        <MenuTitle
+          data-testid="CTA_route-to-/ledger-wallet"
+          onClick={() => router.push("/ledger-wallet")}
+        >
+          Ledger Wallet
+        </MenuTitle>
+      </MenuItem>
 
       <MenuItem>
         <Icons.Signature />
@@ -56,7 +68,7 @@ export const Menu: React.FC = () => {
           data-testid="CTA_route-to-/signers"
           onClick={() => router.push("/signers")}
         >
-          Signers
+          Signer Kits
         </MenuTitle>
       </MenuItem>
       <MenuItem>
