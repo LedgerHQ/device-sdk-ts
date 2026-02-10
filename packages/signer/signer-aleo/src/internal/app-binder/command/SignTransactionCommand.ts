@@ -1,0 +1,51 @@
+import {
+  type Apdu,
+  type ApduResponse,
+  type Command,
+  type CommandResult,
+} from "@ledgerhq/device-management-kit";
+
+import { type AleoErrorCodes } from "./utils/aleoApplicationErrors";
+
+export type SignTransactionCommandArgs = {
+  derivationPath: string;
+  transaction: Uint8Array;
+};
+
+export type SignTransactionCommandResponse = {
+  signature: {
+    r: string;
+    s: string;
+    v?: number;
+  };
+};
+
+export class SignTransactionCommand
+  implements
+    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, AleoErrorCodes>
+{
+  readonly name = "SignTransaction";
+
+  private readonly args: SignTransactionCommandArgs;
+
+  constructor(args: SignTransactionCommandArgs) {
+    this.args = args;
+  }
+
+  getApdu(): Apdu {
+    // TODO: Implement APDU construction based on your blockchain's protocol
+    // Example structure:
+    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
+    // Add derivation path and other data to builder
+    // return builder.build();
+    throw new Error("SignTransactionCommand.getApdu() not implemented");
+  }
+
+  parseResponse(
+    _apduResponse: ApduResponse,
+  ): CommandResult<SignTransactionCommandResponse, AleoErrorCodes> {
+    // TODO: Implement response parsing based on your blockchain's protocol
+    // return CommandResultFactory({ data: { ... } });
+    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+  }
+}
