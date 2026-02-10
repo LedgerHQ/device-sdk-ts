@@ -260,3 +260,79 @@ export const checkChangesets = (danger: DangerDSLType, message: MessageFn) => {
 
   return true;
 };
+
+const SignedCommits = (
+  danger: DangerDSLType,
+  fail: FailFn,
+  fork: boolean = false
+) => ({
+  fail(unsignedCommits: string[], totalCommitCount: number) {
+    fail(`\
+One or more commits are not signed. All commits must be signed to merge into protected branches (\`develop\` and \`main\`).
+
+**Unsigned commits**:
+${unsignedCommits.map((commit) => `• \`${commit}\``).join("\n")}
+
+To sign your commits:
+1. Set up commit signing: https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits
+2. Configure Git to sign by default: \`git config --global commit.gpgsign true\`
+3. Re-sign all commits in this PR:
+   \`\`\`bash
+   git rebase -i HEAD~${totalCommitCount} --exec "git commit --amend --no-edit -S"
+   git push --force-with-lease
+   \`\`\`
+
+See [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md#signed-commits) for more details.\
+`);
+  },
+
+  getCommitInfo: (): { unsigned: string[]; total: number } => {
+    if (danger.github) {
+      // In CI: use GitHub API to check verification status
+      const unsigned = danger.github.commits
+        .filter(({ commit }) => !commit.verification?.verified)
+        .map(({ commit }) => commit.message.split("\n")[0]);
+      return { unsigned, total: danger.github.commits.length };
+    }
+
+    // Locally: use git log to check signature status
+    // %G? returns: G (good), N (no signature), B (bad), etc.
+    // %s returns the commit subject
+    const currentBranch = Branch(danger, fail, fork).getBranch();
+    const output = execSync(
+      `git log origin/develop..${currentBranch} --pretty=format:"%G?|%s"`
+    )
+      .toString()
+      .trim();
+
+    if (!output) return { unsigned: [], total: 0 };
+
+    const lines = output.split("\n");
+    const unsigned = lines
+      .filter((line) => {
+        const [status] = line.split("|");
+        // G = good signature, U = good signature with unknown validity (acceptable locally)
+        return status !== "G" && status !== "U";
+      })
+      .map((line) => line.split("|").slice(1).join("|"));
+
+    return { unsigned, total: lines.length };
+  },
+});
+
+export const checkSignedCommits = (
+  danger: DangerDSLType,
+  fail: FailFn,
+  fork: boolean = false
+) => {
+  const config = SignedCommits(danger, fail, fork);
+  const { unsigned, total } = config.getCommitInfo();
+  console.log("Unsigned commits:", unsigned);
+
+  if (unsigned.length > 0) {
+    config.fail(unsigned, total);
+    return false;
+  }
+
+  return true;
+};

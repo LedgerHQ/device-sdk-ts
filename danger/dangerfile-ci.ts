@@ -3,6 +3,7 @@ import {
   checkBranches,
   checkCommits,
   checkChangesets,
+  checkSignedCommits,
   checkTitle,
   getAuthor,
   checkIfBot,
@@ -29,6 +30,8 @@ results.push(checkBranches(danger, fail, fork));
 results.push(checkCommits(danger, fail, fork));
 
 results.push(checkTitle(danger, fail, fork));
+
+results.push(checkSignedCommits(danger, fail, fork));
 
 results.push(checkChangesets(danger, message));
 

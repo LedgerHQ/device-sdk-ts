@@ -29,6 +29,7 @@ While you explore these projects, here are some key points to keep in mind:
 8. Make sure that the code passes the prettier checks.
 9. Make sure the code passes unit and end to end tests (`pnpm test`).
 10. Cleanup your branch - unless it contains merge commits (perform atomic commits, squash tiny commits…).
+11. **Sign your commits** (see [Signed Commits](#signed-commits) below).
 
 ### Git Conventions
 
@@ -109,6 +110,30 @@ or with an optional ticket reference (for merge commits):
 - `<Description>` - Should start with an uppercase letter
 
 Use `pnpm commit` to create commits interactively.
+
+#### Signed Commits
+
+**All commits must be signed** to be merged into protected branches (`develop` and `main`).
+
+This is enforced by GitHub branch rulesets. Even if your PR targets `develop`, your commits will eventually be merged into `main` during a release, so signing is required from the start.
+
+**To set up commit signing:**
+
+1. Follow GitHub's guide: [Signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
+2. Configure Git to sign commits by default:
+   ```bash
+   git config --global commit.gpgsign true
+   ```
+
+**If you already have unsigned commits**, you can re-sign them:
+
+```bash
+# Re-sign the last N commits (replace 3 with your number of commits)
+git rebase -i HEAD~3 --exec "git commit --amend --no-edit -S"
+git push --force-with-lease
+```
+
+Your commits should show as **"Verified"** on GitHub after signing.
 
 #### Rebase & Merge strategies
 
