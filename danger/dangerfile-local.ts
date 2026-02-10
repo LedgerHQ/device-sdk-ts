@@ -3,6 +3,7 @@ import {
   checkBranches,
   checkCommits,
   checkChangesets,
+  checkSignedCommits,
   getAuthor,
 } from "./helpers";
 
@@ -14,6 +15,8 @@ const results: boolean[] = [];
 results.push(checkBranches(danger, fail));
 
 results.push(checkCommits(danger, fail));
+
+results.push(checkSignedCommits(danger, fail));
 
 results.push(checkChangesets(danger, message));
 
