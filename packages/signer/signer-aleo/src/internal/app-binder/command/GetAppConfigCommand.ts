@@ -1,40 +1,74 @@
 import {
   type Apdu,
+  ApduBuilder,
+  type ApduBuilderArgs,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type AleoErrorCodes } from "./utils/aleoApplicationErrors";
+import {
+  ALEO_APP_ERRORS,
+  AleoAppCommandErrorFactory,
+  type AleoErrorCodes,
+} from "./utils/aleoApplicationErrors";
 
 export type GetAppConfigCommandResponse = {
-  // Define your app configuration response fields here
-  // Example:
-  // version: string;
-  // flags: number;
+  readonly version: string;
 };
 
+const EXPECTED_DATA_LENGTH = 3;
+
 export class GetAppConfigCommand
-  implements
-    Command<GetAppConfigCommandResponse, void, AleoErrorCodes>
+  implements Command<GetAppConfigCommandResponse, void, AleoErrorCodes>
 {
   readonly name = "GetAppConfig";
-
+  private readonly errorHelper = new CommandErrorHelper<
+    GetAppConfigCommandResponse,
+    AleoErrorCodes
+  >(ALEO_APP_ERRORS, AleoAppCommandErrorFactory);
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    throw new Error("GetAppConfigCommand.getApdu() not implemented");
+    const getEthConfigArgs: ApduBuilderArgs = {
+      cla: 0xe0,
+      ins: 0x03,
+      p1: 0x00,
+      p2: 0x00,
+    };
+    const builder = new ApduBuilder(getEthConfigArgs);
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    response: ApduResponse,
   ): CommandResult<GetAppConfigCommandResponse, AleoErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("GetAppConfigCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
+      const buffer = parser.extractFieldByLength(EXPECTED_DATA_LENGTH);
+      if (
+        !buffer ||
+        buffer.length !== EXPECTED_DATA_LENGTH ||
+        buffer.some((element) => element === undefined)
+      ) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("Invalid response"),
+        });
+      }
+
+      const config: GetAppConfigCommandResponse = {
+        version: `${buffer[0]}.${buffer[1]}.${buffer[2]}`,
+      };
+
+      return CommandResultFactory({
+        data: config,
+      });
+    });
   }
 }
