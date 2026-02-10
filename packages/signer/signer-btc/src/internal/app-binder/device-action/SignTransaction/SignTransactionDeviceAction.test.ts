@@ -20,14 +20,6 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 vi.mock(
   "@internal/app-binder/device-action/SignPsbt/SignPsbtDeviceAction",
   async (importOriginal) => {
@@ -77,7 +69,6 @@ describe("SignTransactionDeviceAction", () => {
             valueParser: "ValueParser" as unknown as ValueParser,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -203,7 +194,6 @@ describe("SignTransactionDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         testDeviceActionStates(
@@ -232,7 +222,6 @@ describe("SignTransactionDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -296,7 +285,6 @@ describe("SignTransactionDeviceAction", () => {
             valueParser: {} as ValueParser,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data

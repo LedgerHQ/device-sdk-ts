@@ -125,6 +125,10 @@ export { FramerUtils } from "@api/device-session/utils/FramerUtils";
 export { DeviceManagementKit } from "@api/DeviceManagementKit";
 export { DeviceManagementKitBuilder } from "@api/DeviceManagementKitBuilder";
 export * from "@api/Error";
+export {
+  noopLogger,
+  noopLoggerFactory,
+} from "@api/logger-publisher/utils/noopLoggerFactory";
 export { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 export { DefaultLogTagFormatter } from "@api/logger-subscriber/service/DefaultLogTagFormatter";

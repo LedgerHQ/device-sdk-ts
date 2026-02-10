@@ -1,4 +1,7 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  type LoggerPublisherService,
+  noopLoggerFactory,
+} from "@ledgerhq/device-management-kit";
 
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
@@ -14,14 +17,6 @@ import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataS
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
-
-const emptyLoggerFactory = (_tag: string): LoggerPublisherService => ({
-  debug: () => {},
-  info: () => {},
-  warn: () => {},
-  error: () => {},
-  subscribers: [],
-});
 
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
@@ -45,7 +40,7 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
-  loggerFactory: emptyLoggerFactory,
+  loggerFactory: noopLoggerFactory,
 };
 
 export class ContextModuleBuilder {

@@ -28,14 +28,6 @@ import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 const defaultDerivation = "44'/501'/0'/0'";
 const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
-
 const contextModuleStub: ContextModule = {
   getSolanaContext: vi.fn(),
 } as unknown as ContextModule;
@@ -111,7 +103,6 @@ describe("SignTransactionDeviceAction (Solana)", () => {
 
       const action = new SignTransactionDeviceAction({
         input,
-        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -200,7 +191,6 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         },
-        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -277,7 +267,6 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         },
-        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -371,7 +360,6 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           transactionOptions: { skipOpenApp: true },
           contextModule: contextModuleStub,
         },
-        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -476,7 +464,6 @@ describe("SignTransactionDeviceAction (Solana)", () => {
 
       const action = new SignTransactionDeviceAction({
         input,
-        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
@@ -567,7 +554,6 @@ describe("SignTransactionDeviceAction (Solana)", () => {
 
       const action = new SignTransactionDeviceAction({
         input,
-        loggerFactory: mockLoggerFactory,
       });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 

@@ -546,6 +546,7 @@ describe("DeviceSession", () => {
         setDeviceSessionState: expect.any(Function),
         getManagerApiService: expect.any(Function),
         getSecureChannelService: expect.any(Function),
+        loggerFactory: expect.any(Function),
       });
     });
 

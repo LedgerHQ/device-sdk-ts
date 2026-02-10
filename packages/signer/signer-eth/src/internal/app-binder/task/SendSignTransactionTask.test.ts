@@ -22,6 +22,8 @@ const mockLogger = {
   subscribers: [],
 };
 
+const mockLoggerFactory = (_tag: string) => mockLogger;
+
 const PATH = new Uint8Array([
   0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00, 0x3c, 0x80, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -99,7 +101,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 1,
         transactionType: 1,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -129,7 +131,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 1,
         transactionType: 1,
         clearSigningType: ClearSigningType.EIP7730,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
 
@@ -153,7 +155,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 1,
         transactionType: 1,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(resultOk);
@@ -209,7 +211,7 @@ describe("SendSignTransactionTask", () => {
           chainId,
           transactionType: 0,
           clearSigningType: ClearSigningType.BASIC,
-          logger: mockLogger,
+          loggerFactory: mockLoggerFactory,
         };
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
         apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
@@ -250,7 +252,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 1,
         transactionType: 1,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 
@@ -282,7 +284,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 1,
         transactionType: 1,
         clearSigningType: ClearSigningType.EIP7730,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
 
@@ -308,7 +310,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 1,
         transactionType: 1,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(resultNothing);
       apiMock.sendCommand.mockResolvedValueOnce(
@@ -354,7 +356,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 56,
         transactionType: 0,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -382,7 +384,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 56,
         transactionType: 0,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -410,7 +412,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 11297108109,
         transactionType: 0,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({
@@ -438,7 +440,7 @@ describe("SendSignTransactionTask", () => {
         chainId: 11297108109,
         transactionType: 0,
         clearSigningType: ClearSigningType.BASIC,
-        logger: mockLogger,
+        loggerFactory: mockLoggerFactory,
       };
       apiMock.sendCommand.mockResolvedValueOnce(
         CommandResultFactory({

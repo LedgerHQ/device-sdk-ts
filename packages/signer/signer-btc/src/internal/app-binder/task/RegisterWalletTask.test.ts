@@ -8,14 +8,6 @@ import {
 
 import { RegisteredWallet, WalletPolicy } from "@api/model/Wallet";
 import { type ContinueTask } from "@internal/app-binder/task/ContinueTask";
-
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { type Wallet } from "@internal/wallet/model/Wallet";
@@ -49,6 +41,15 @@ const WALLET_HMAC = Uint8Array.from([
 const APDU_RESPONSE_DATA = new Uint8Array([...WALLET_ID, ...WALLET_HMAC]);
 
 const SERIALIZED_WALLET = Uint8Array.from([0x01, 0x02, 0x03, 0x04]);
+
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+const mockLoggerFactory = (_tag: string) => mockLogger;
 
 describe("RegisterWalletTask", () => {
   const apiMock = {

@@ -38,9 +38,9 @@ export type ProvideTransactionContextsTaskArgs = {
    */
   serializedTransaction?: Uint8Array;
   /**
-   * Logger for debugging.
+   * Logger factory for creating loggers with custom tags.
    */
-  logger: LoggerPublisherService;
+  loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
 export type ProvideTransactionContextsTaskResult = Either<
@@ -53,6 +53,8 @@ export type ProvideTransactionContextsTaskResult = Either<
  * It will send the subcontexts callbacks in order and finish with the context.
  */
 export class ProvideTransactionContextsTask {
+  private readonly _logger: LoggerPublisherService;
+
   constructor(
     private _api: InternalApi,
     private _args: ProvideTransactionContextsTaskArgs,
@@ -64,10 +66,12 @@ export class ProvideTransactionContextsTask {
       api: InternalApi,
       args: SendCommandInChunksTaskArgs<unknown>,
     ) => new SendCommandInChunksTask(api, args),
-  ) {}
+  ) {
+    this._logger = _args.loggerFactory("ProvideTransactionContextsTask");
+  }
 
   async run(): Promise<ProvideTransactionContextsTaskResult> {
-    this._args.logger.debug("[run] Starting ProvideTransactionContextsTask", {
+    this._logger.debug("[run] Starting ProvideTransactionContextsTask", {
       data: {
         derivationPath: this._args.derivationPath,
         contextTypes: this._args.contexts.map((c) => c.context.type),
@@ -92,7 +96,7 @@ export class ProvideTransactionContextsTask {
         // Don't fail immediately on subcontext errors because the main context may still be successful
         await this._provideContextTaskFactory(this._api, {
           context: subcontext,
-          logger: this._args.logger,
+          loggerFactory: this._args.loggerFactory,
         }).run();
       }
 
@@ -133,17 +137,17 @@ export class ProvideTransactionContextsTask {
 
       const res = await this._provideContextTaskFactory(this._api, {
         context,
-        logger: this._args.logger,
+        loggerFactory: this._args.loggerFactory,
       }).run();
       if (!isSuccessCommandResult(res)) {
-        this._args.logger.error("[run] Failed to provide context", {
+        this._logger.error("[run] Failed to provide context", {
           data: { contextType: context.type, error: res.error },
         });
         return Left(res);
       }
     }
 
-    this._args.logger.debug(
+    this._logger.debug(
       "[run] ProvideTransactionContextsTask completed successfully",
     );
     return Right(void 0);
