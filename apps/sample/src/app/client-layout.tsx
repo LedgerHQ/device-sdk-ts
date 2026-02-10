@@ -24,6 +24,7 @@ import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SettingsGate } from "@/providers/SettingsGate";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
+import { SignerAleoProvider } from "@/providers/SignerAleoProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
 
@@ -73,6 +74,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <DmkProvider>
               <LedgerKeyringProtocolProvider>
                 <SignerEthProvider>
+                  <SignerAleoProvider>
                   <CalInterceptorProvider>
                     <GlobalStyle />
                     <head>
@@ -82,6 +84,7 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
                       <RootApp>{children}</RootApp>
                     </body>
                   </CalInterceptorProvider>
+                </SignerAleoProvider>
                 </SignerEthProvider>
               </LedgerKeyringProtocolProvider>
             </DmkProvider>

@@ -1,0 +1,63 @@
+{
+  "name": "@ledgerhq/device-signer-kit-aleo",
+  "version": "0.1.0",
+  "private": false,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.js"
+    },
+    "./*": {
+      "types": "./lib/types/*",
+      "import": "./lib/esm/*",
+      "require": "./lib/cjs/*"
+    }
+  },
+  "files": [
+    "./lib"
+  ],
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@ledgerhq/signer-utils": "workspace:^",
+    "inversify": "catalog:",
+    "purify-ts": "catalog:",
+    "reflect-metadata": "catalog:",
+    "xstate": "catalog:",
+    "@ledgerhq/context-module": "workspace:^"
+  },
+  "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "rxjs": "catalog:",
+    "ts-node": "catalog:",
+    "@ledgerhq/context-module": "workspace:^"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/context-module": "workspace:^"
+  }
+}
