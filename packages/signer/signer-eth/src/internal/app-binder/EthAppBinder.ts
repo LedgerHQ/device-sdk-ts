@@ -4,10 +4,7 @@ import {
   type DeviceSessionId,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
-import {
-  CallTaskInAppDeviceAction,
-  SendCommandInAppDeviceAction,
-} from "@ledgerhq/device-management-kit";
+import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
@@ -52,12 +49,18 @@ export class EthAppBinder {
     checkOnDevice: boolean;
     returnChainCode: boolean;
     skipOpenApp: boolean;
+    chainId?: number;
   }): GetAddressDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
-          command: new GetAddressCommand(args),
+          command: new GetAddressCommand({
+            derivationPath: args.derivationPath,
+            checkOnDevice: args.checkOnDevice,
+            returnChainCode: args.returnChainCode,
+            chainId: args.chainId,
+          }),
           appName: "Ethereum",
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress

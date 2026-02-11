@@ -8,4 +8,5 @@ export type GetAddressCommandArgs = {
   readonly derivationPath: string;
   readonly checkOnDevice?: boolean;
   readonly returnChainCode?: boolean;
+  readonly chainId?: number;
 };

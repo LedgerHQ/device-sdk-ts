@@ -166,13 +166,18 @@ describe("EthAppBinder", () => {
         );
         appBinder.getAddress(params);
 
-        // THEN
+        // THEN - command is built with derivationPath, checkOnDevice, returnChainCode, chainId
         expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
           expect.objectContaining({
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
               input: {
-                command: new GetAddressCommand(params),
+                command: new GetAddressCommand({
+                  derivationPath: params.derivationPath,
+                  checkOnDevice: params.checkOnDevice,
+                  returnChainCode: params.returnChainCode,
+                  chainId: params.chainId,
+                }),
                 appName: "Ethereum",
                 requiredUserInteraction: UserInteractionRequired.VerifyAddress,
                 skipOpenApp: false,
@@ -201,13 +206,18 @@ describe("EthAppBinder", () => {
         );
         appBinder.getAddress(params);
 
-        // THEN
+        // THEN - command is built with derivationPath, checkOnDevice, returnChainCode, chainId
         expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
           expect.objectContaining({
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
               input: {
-                command: new GetAddressCommand(params),
+                command: new GetAddressCommand({
+                  derivationPath: params.derivationPath,
+                  checkOnDevice: params.checkOnDevice,
+                  returnChainCode: params.returnChainCode,
+                  chainId: params.chainId,
+                }),
                 appName: "Ethereum",
                 requiredUserInteraction: UserInteractionRequired.None,
                 skipOpenApp: false,

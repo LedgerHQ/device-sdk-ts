@@ -38,6 +38,20 @@ const GET_ADDRESS_APDU_WITH_CUSTOM_DERIVATION_PATH = Uint8Array.from([
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
 ]);
 
+// Chain ID 137 (Polygon) as 64-bit big-endian: last 8 bytes of data = 00 00 00 00 00 00 00 89
+const GET_ADDRESS_APDU_WITH_CHAIN_ID_137 = Uint8Array.from([
+  0xe0, 0x02, 0x00, 0x00, 0x1d, 0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00,
+  0x3c, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x89,
+]);
+
+// Chain ID 56 (BSC) as 64-bit big-endian: last 8 bytes of data = 00 00 00 00 00 00 00 38
+const GET_ADDRESS_APDU_WITH_CHAIN_ID_56 = Uint8Array.from([
+  0xe0, 0x02, 0x00, 0x00, 0x1d, 0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00, 0x00,
+  0x3c, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x38,
+]);
+
 const LNX_RESPONSE_DATA_GOOD = Uint8Array.from([
   0x41, 0x04, 0xe3, 0x78, 0x5c, 0xa6, 0xa5, 0xaa, 0x74, 0x8c, 0x62, 0x5e, 0x3d,
   0xdd, 0xd6, 0xd9, 0x7b, 0x59, 0xb2, 0x6f, 0xd8, 0x15, 0x2f, 0xb5, 0x2e, 0xb2,
@@ -138,6 +152,48 @@ describe("GetAddressCommand", () => {
       const apdu = command.getApdu();
       expect(apdu.getRawApdu()).toStrictEqual(
         GET_ADDRESS_APDU_WITH_CUSTOM_DERIVATION_PATH,
+      );
+    });
+
+    it("should default chainId to 1 (Ethereum mainnet) when omitted", () => {
+      command = new GetAddressCommand(defaultArgs);
+      const apdu = command.getApdu();
+      expect(apdu.getRawApdu()).toStrictEqual(GET_ADDRESS_APDU);
+    });
+
+    it("should encode chainId as 64-bit big-endian in APDU data when provided", () => {
+      command = new GetAddressCommand({
+        ...defaultArgs,
+        chainId: 137,
+      });
+      const apdu = command.getApdu();
+      expect(apdu.getRawApdu()).toStrictEqual(GET_ADDRESS_APDU_WITH_CHAIN_ID_137);
+    });
+
+    it("should encode custom chainId 56 (BSC) as 64-bit big-endian", () => {
+      command = new GetAddressCommand({
+        ...defaultArgs,
+        chainId: 56,
+      });
+      const apdu = command.getApdu();
+      expect(apdu.getRawApdu()).toStrictEqual(GET_ADDRESS_APDU_WITH_CHAIN_ID_56);
+    });
+
+    it("should combine chainId with checkOnDevice and returnChainCode options", () => {
+      command = new GetAddressCommand({
+        ...defaultArgs,
+        chainId: 137,
+        checkOnDevice: true,
+        returnChainCode: true,
+      });
+      const apdu = command.getApdu();
+      const raw = apdu.getRawApdu();
+      // Header: p1=0x01 (checkOnDevice), p2=0x01 (returnChainCode)
+      expect(raw[2]).toBe(0x01);
+      expect(raw[3]).toBe(0x01);
+      // Last 8 bytes of data: chainId 137 in big-endian
+      expect(raw.slice(-8)).toStrictEqual(
+        new Uint8Array([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x89]),
       );
     });
   });
