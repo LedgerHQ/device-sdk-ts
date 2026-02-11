@@ -1,19 +1,25 @@
 // NOTE: we cannot import danger from another module,
 // so we need to pass them as arguments, only types can be imported
-import {
-  type GitHubPRDSL,
-  type DangerDSLType,
-  type MarkdownString,
-} from "danger";
+import { type GitHubPRDSL, type DangerDSLType } from "danger";
 import { execSync } from "child_process";
+import { writeFileSync, appendFileSync } from "fs";
 
-type FailFn = (message: MarkdownString, file?: string, line?: number) => void;
-type MessageFn = (
-  message: MarkdownString,
-  opts?: { file?: string; line?: number; icon?: MarkdownString }
-) => void;
+// ── Types ──────────────────────────────────────────────────────────
 
-export const BRANCH_PREFIX = [
+export type CheckResult = {
+  passed: boolean;
+  message?: string;
+  icon?: string;
+};
+
+type RunChecksOptions = {
+  fork: boolean;
+  includeTitle: boolean;
+};
+
+// ── Utility helpers ────────────────────────────────────────────────
+
+const BRANCH_PREFIX = [
   "feature",
   "feat",
   "bugfix",
@@ -40,11 +46,9 @@ export const getAuthor = (danger: DangerDSLType) => {
 
 export const isFork = (pr: GitHubPRDSL) => pr?.head?.repo?.fork ?? false;
 
-const Branch = (
-  danger: DangerDSLType,
-  fail: FailFn,
-  isFork: boolean = false
-) => ({
+// ── Internal factory helpers ───────────────────────────────────────
+
+const Branch = (danger: DangerDSLType, isFork: boolean = false) => ({
   regex: isFork
     ? new RegExp(`^(${BRANCH_PREFIX.join("|")})\/.+`, "i")
     : new RegExp(
@@ -60,9 +64,9 @@ const Branch = (
     return execSync("git rev-parse --abbrev-ref HEAD").toString().trim();
   },
 
-  fail(currentBranch: string) {
+  failMessage(currentBranch: string): string {
     return isFork
-      ? fail(`\
+      ? `\
 Please fix the PR branch name to match the convention, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 **Wrong branch name**: \`${currentBranch}\`
@@ -75,8 +79,8 @@ Please fix the PR branch name to match the convention, see [CONTRIBUTING.md](htt
   - Followed by a description
 
 ℹ️ Example: \`feat/my-feature\`\
-`)
-      : fail(`\
+`
+      : `\
 Please fix the PR branch name to match the convention, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 **Wrong branch name**: \`${currentBranch}\`
@@ -91,35 +95,15 @@ Please fix the PR branch name to match the convention, see [CONTRIBUTING.md](htt
   - Followed by a description
 
 ℹ️ Example: \`feat/dsdk-1234-my-feature\`\
-`);
+`;
   },
 });
 
-export const checkBranches = (
-  danger: DangerDSLType,
-  fail: FailFn,
-  fork: boolean = false
-) => {
-  const config = Branch(danger, fail, fork);
-  const currentBranch = config.getBranch();
-  console.log("Current branch:", currentBranch);
-  if (!config.regex.test(currentBranch)) {
-    config.fail(currentBranch);
-    return false;
-  }
-
-  return true;
-};
-
-const Commits = (
-  danger: DangerDSLType,
-  fail: FailFn,
-  fork: boolean = false
-) => ({
+const Commits = (danger: DangerDSLType, fork: boolean = false) => ({
   regex: /^.+\s\(([a-z]+\-?){1,}\)(\s\[(NO-ISSUE|([A-Z]+\-\d+))\])?: [A-Z].*/,
 
-  fail(wrongCommits: string[]) {
-    fail(`\
+  failMessage(wrongCommits: string[]): string {
+    return `\
 One or more commit message does not match the convention, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 **Wrong commit messages**:
@@ -142,7 +126,7 @@ Example: \`💚 (scope): My feature\`\
 Special case for commit messages coming from a pull request merge:
  - \`💚 (scope) [DSDK-1234]: My feature\`\
  - \`💚 (scope) [NO-ISSUE]: My title\`\
-`);
+`;
   },
 
   getCommits: () => {
@@ -150,7 +134,7 @@ Special case for commit messages coming from a pull request merge:
       return danger.github.commits.map(({ commit }) => commit.message);
     }
 
-    const currentBranch = Branch(danger, fail, fork).getBranch();
+    const currentBranch = Branch(danger, fork).getBranch();
     return execSync(
       `git log origin/develop..${currentBranch} --pretty=format:%s`
     )
@@ -159,39 +143,14 @@ Special case for commit messages coming from a pull request merge:
   },
 });
 
-export const checkCommits = (
-  danger: DangerDSLType,
-  fail: FailFn,
-  fork: boolean = false
-) => {
-  const config = Commits(danger, fail, fork);
-  const branchCommits = config.getCommits();
-  console.log("Branch commits:", branchCommits);
-
-  const wrongCommits = branchCommits.filter(
-    (commit) => !config.regex.test(commit)
-  );
-
-  if (wrongCommits.length > 0) {
-    config.fail(wrongCommits);
-    return false;
-  }
-
-  return true;
-};
-
-const Title = (
-  _danger: DangerDSLType,
-  fail: FailFn,
-  fork: boolean = false
-) => ({
+const Title = (_danger: DangerDSLType, fork: boolean = false) => ({
   regex: fork
     ? /^.+ \(([a-z]+\-?){1,}\): [A-Z].*/
     : /^.+ \(([a-z]+\-?){1,}\) \[(DSDK-[0-9]+|LIVE-[0-9]+|NO-ISSUE|ISSUE-[0-9]+)\]: [A-Z].*/,
 
-  fail(wrongTitle: string) {
+  failMessage(wrongTitle: string): string {
     if (fork) {
-      fail(`\
+      return `\
 Please fix the PR title to match the convention, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 **Wrong PR title**: \`${wrongTitle}\`
@@ -208,9 +167,9 @@ Please fix the PR title to match the convention, see [CONTRIBUTING.md](https://g
   - Followed by a <ins>C</ins>apitalized message
 
 ℹ️ Example: \`✨ (scope): My feature\`\
-`);
+`;
     } else {
-      fail(`\
+      return `\
 Please fix the PR title to match the convention, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 **Wrong PR title**: \`${wrongTitle}\`
@@ -227,47 +186,14 @@ Please fix the PR title to match the convention, see [CONTRIBUTING.md](https://g
   - Followed by a <ins>C</ins>apitalized message
 
 ℹ️ Example: \`✨ (scope) [DSDK-1234]: My feature\`\
-`);
+`;
     }
   },
 });
 
-export const checkTitle = (
-  danger: DangerDSLType,
-  fail: FailFn,
-  fork: boolean = false
-) => {
-  const config = Title(danger, fail, fork);
-  if (!config.regex.test(danger.github.pr.title)) {
-    config.fail(danger.github.pr.title);
-    return false;
-  }
-
-  return true;
-};
-
-export const checkChangesets = (danger: DangerDSLType, message: MessageFn) => {
-  const changesetFiles = danger.git.fileMatch("**/.changeset/*.md");
-  if (changesetFiles.edited === false) {
-    message(
-      `\ No changeset file found. Please make sure this is intended or add a changeset file.`,
-      {
-        icon: "⚠️",
-      }
-    );
-    return false;
-  }
-
-  return true;
-};
-
-const SignedCommits = (
-  danger: DangerDSLType,
-  fail: FailFn,
-  fork: boolean = false
-) => ({
-  fail(unsignedCommits: string[], totalCommitCount: number) {
-    fail(`\
+const SignedCommits = (danger: DangerDSLType, fork: boolean = false) => ({
+  failMessage(unsignedCommits: string[]): string {
+    return `\
 One or more commits are not signed. All commits must be signed to merge into protected branches (\`develop\` and \`main\`).
 
 **Unsigned commits**:
@@ -276,63 +202,207 @@ ${unsignedCommits.map((commit) => `• \`${commit}\``).join("\n")}
 To sign your commits:
 1. Set up commit signing: https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits
 2. Configure Git to sign by default: \`git config --global commit.gpgsign true\`
-3. Re-sign all commits in this PR:
+3. Re-sign your commits:
    \`\`\`bash
-   git rebase -i HEAD~${totalCommitCount} --exec "git commit --amend --no-edit -S"
+   git rebase -i origin/develop --exec "git commit --amend --no-edit -S"
    git push --force-with-lease
    \`\`\`
 
 See [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md#signed-commits) for more details.\
-`);
+`;
   },
 
-  getCommitInfo: (): { unsigned: string[]; total: number } => {
+  getUnsignedCommits: (): string[] => {
     if (danger.github) {
       // In CI: use GitHub API to check verification status
-      const unsigned = danger.github.commits
+      return danger.github.commits
         .filter(({ commit }) => !commit.verification?.verified)
         .map(({ commit }) => commit.message.split("\n")[0]);
-      return { unsigned, total: danger.github.commits.length };
     }
 
     // Locally: use git log to check signature status
     // %G? returns: G (good), N (no signature), B (bad), etc.
     // %s returns the commit subject
-    const currentBranch = Branch(danger, fail, fork).getBranch();
+    const currentBranch = Branch(danger, fork).getBranch();
     const output = execSync(
       `git log origin/develop..${currentBranch} --pretty=format:"%G?|%s"`
     )
       .toString()
       .trim();
 
-    if (!output) return { unsigned: [], total: 0 };
+    if (!output) return [];
 
-    const lines = output.split("\n");
-    const unsigned = lines
+    return output
+      .split("\n")
       .filter((line) => {
         const [status] = line.split("|");
         // G = good signature, U = good signature with unknown validity (acceptable locally)
         return status !== "G" && status !== "U";
       })
       .map((line) => line.split("|").slice(1).join("|"));
-
-    return { unsigned, total: lines.length };
   },
 });
 
-export const checkSignedCommits = (
-  danger: DangerDSLType,
-  fail: FailFn,
-  fork: boolean = false
-) => {
-  const config = SignedCommits(danger, fail, fork);
-  const { unsigned, total } = config.getCommitInfo();
-  console.log("Unsigned commits:", unsigned);
+// ── Check functions (pure, return data) ────────────────────────────
 
-  if (unsigned.length > 0) {
-    config.fail(unsigned, total);
-    return false;
+const checkBranches = (
+  danger: DangerDSLType,
+  fork: boolean = false
+): CheckResult => {
+  const config = Branch(danger, fork);
+  const currentBranch = config.getBranch();
+  if (!config.regex.test(currentBranch)) {
+    return { passed: false, message: config.failMessage(currentBranch) };
   }
 
-  return true;
+  return { passed: true };
 };
+
+const checkCommits = (
+  danger: DangerDSLType,
+  fork: boolean = false
+): CheckResult => {
+  const config = Commits(danger, fork);
+  const branchCommits = config.getCommits();
+
+  const wrongCommits = branchCommits.filter(
+    (commit) => !config.regex.test(commit)
+  );
+
+  if (wrongCommits.length > 0) {
+    return { passed: false, message: config.failMessage(wrongCommits) };
+  }
+
+  return { passed: true };
+};
+
+const checkTitle = (
+  danger: DangerDSLType,
+  fork: boolean = false
+): CheckResult => {
+  const config = Title(danger, fork);
+  if (!config.regex.test(danger.github.pr.title)) {
+    return {
+      passed: false,
+      message: config.failMessage(danger.github.pr.title),
+    };
+  }
+
+  return { passed: true };
+};
+
+const checkChangesets = (danger: DangerDSLType): CheckResult => {
+  const changesetFiles = danger.git.fileMatch("**/.changeset/*.md");
+  if (changesetFiles.edited === false) {
+    return {
+      passed: true,
+      message:
+        "No changeset file found. Please make sure this is intended or add a changeset file.",
+      icon: "⚠️",
+    };
+  }
+
+  return { passed: true };
+};
+
+const checkSignedCommits = (
+  danger: DangerDSLType,
+  fork: boolean = false
+): CheckResult => {
+  const config = SignedCommits(danger, fork);
+  const unsignedCommits = config.getUnsignedCommits();
+
+  if (unsignedCommits.length > 0) {
+    return { passed: false, message: config.failMessage(unsignedCommits) };
+  }
+
+  return { passed: true };
+};
+
+// ── Orchestration functions ────────────────────────────────────────
+
+export function runChecks(
+  danger: DangerDSLType,
+  opts: RunChecksOptions
+): CheckResult[] {
+  const checkResults: CheckResult[] = [
+    checkBranches(danger, opts.fork),
+    checkCommits(danger, opts.fork),
+    ...(opts.includeTitle ? [checkTitle(danger, opts.fork)] : []),
+    checkSignedCommits(danger, opts.fork),
+    checkChangesets(danger),
+  ];
+
+  const hasFailures = checkResults.some((o) => !o.passed);
+  if (!hasFailures) {
+    checkResults.push({
+      passed: true,
+      message: "Danger: All checks passed successfully! 🎉",
+    });
+  }
+
+  return checkResults;
+}
+
+function generateReport(checkResults: CheckResult[]): string {
+  const failures = checkResults.filter((o) => !o.passed && o.message);
+  const messages = checkResults.filter((o) => o.passed && o.message);
+
+  const sections: string[] = [];
+
+  if (failures.length > 0) {
+    const rows = failures
+      .map((o) => `<tr><td>🚫</td><td>\n\n${o.message}\n\n</td></tr>`)
+      .join("\n");
+    sections.push(`### Failures\n\n<table>\n${rows}\n</table>`);
+  }
+
+  if (messages.length > 0) {
+    const rows = messages
+      .map(
+        (o) =>
+          `<tr><td>${o.icon || "✅"}</td><td>\n\n${o.message}\n\n</td></tr>`
+      )
+      .join("\n");
+    sections.push(`### Messages\n\n<table>\n${rows}\n</table>`);
+  }
+
+  if (sections.length === 0) return "";
+
+  return `## Danger Check Results\n\n${sections.join("\n\n")}\n`;
+}
+
+type MarkdownFn = (message: string) => void;
+
+export function outputResults(
+  checkResults: CheckResult[],
+  markdown: MarkdownFn,
+) {
+  const report = generateReport(checkResults);
+
+  // Write report to $GITHUB_STEP_SUMMARY or /tmp/danger-report.md (best-effort)
+  const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+  try {
+    if (summaryFile) {
+      appendFileSync(summaryFile, report);
+    } else {
+      const path = "/tmp/danger-report.md";
+      writeFileSync(path, report);
+      console.log(`\nReport written to ${path}`);
+    }
+  } catch (e) {
+    console.warn("Failed to write danger report to file:", e);
+  }
+
+  // Post as PR comment / local output (best-effort)
+  try {
+    markdown(report);
+  } catch (e) {
+    console.error("Failed to post danger comment:", e);
+  }
+
+  // Exit with failure if any checks failed
+  if (checkResults.some((res) => !res.passed)) {
+    process.exit(1);
+  }
+}

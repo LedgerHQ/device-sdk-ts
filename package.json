@@ -49,7 +49,7 @@
     "commitcl": "pnpm changelog && git add .changeset && pnpm commit",
     "danger:local": "pnpm danger local --dangerfile danger/dangerfile-local.ts --base origin/develop",
     "danger:local:fork": "pnpm danger local --dangerfile danger/dangerfile-local-fork.ts --base origin/develop",
-    "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts --failOnErrors",
+    "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts",
     "cli": "pnpm --filter @ledgerhq/ldmk-cli",
     "tool": "pnpm ldmk-tool"
   },
