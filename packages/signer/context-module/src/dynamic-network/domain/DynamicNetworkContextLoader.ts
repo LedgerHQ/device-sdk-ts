@@ -26,7 +26,8 @@ export type DynamicNetworkContextInput = {
 
 const NETWORK_SIGNATURE_TAG = "15";
 
-const SUPPORTED_TYPES: ClearSignContextType[] = [
+/** Context types produced by DynamicNetworkContextLoader (used for getContexts expectedTypes). */
+export const DYNAMIC_NETWORK_CONTEXT_TYPES: ClearSignContextType[] = [
   ClearSignContextType.DYNAMIC_NETWORK,
   ClearSignContextType.DYNAMIC_NETWORK_ICON,
 ];
@@ -68,7 +69,9 @@ export class DynamicNetworkContextLoader
       input.deviceModelId !== undefined &&
       input.deviceModelId !== DeviceModelId.NANO_S &&
       typeof input.chainId === "number" &&
-      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+      DYNAMIC_NETWORK_CONTEXT_TYPES.every((type) =>
+        expectedTypes.includes(type),
+      )
     );
   }
 
