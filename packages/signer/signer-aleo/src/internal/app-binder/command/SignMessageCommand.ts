@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
+
 import { type AleoErrorCodes } from "./utils/aleoApplicationErrors";
 
 export type SignMessageCommandArgs = {

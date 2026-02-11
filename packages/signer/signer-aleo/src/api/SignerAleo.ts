@@ -1,9 +1,9 @@
-import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { type AddressOptions } from "@api/model/AddressOptions";
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type AddressOptions } from "@api/model/AddressOptions";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
 
 export interface SignerAleo {
   getAppConfig: () => GetAppConfigDAReturnType;

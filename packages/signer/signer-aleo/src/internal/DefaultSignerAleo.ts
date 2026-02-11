@@ -3,22 +3,23 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
+
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type AddressOptions } from "@api/model/AddressOptions";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerAleo } from "@api/SignerAleo";
 import { makeContainer } from "@internal/di";
-import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
-import { configTypes } from "@internal/use-cases/config/di/configTypes";
-import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";
-import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { type AddressOptions } from "@api/model/AddressOptions";
 import { addressTypes } from "@internal/use-cases/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
-import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
-import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { configTypes } from "@internal/use-cases/config/di/configTypes";
+import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";
 import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
+import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
+import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
 
 type DefaultSignerAleoConstructorArgs = {
   dmk: DeviceManagementKit;
