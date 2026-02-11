@@ -8,7 +8,7 @@ import {
   CommandResultFactory,
   DeviceModelId,
   InvalidStatusWordError,
-  TransportDeviceModel,
+  type TransportDeviceModel,
 } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";

@@ -162,7 +162,9 @@ describe("GetAddressCommand", () => {
         checkOnDevice: true,
       });
       const apdu = command.getApdu();
-      expect(apdu.getRawApdu()).toStrictEqual(GET_ADDRESS_APDU_WITH_CHECK_ON_DEVICE);
+      expect(apdu.getRawApdu()).toStrictEqual(
+        GET_ADDRESS_APDU_WITH_CHECK_ON_DEVICE,
+      );
     });
 
     it("should encode chainId as 64-bit big-endian in APDU data when checkOnDevice is true", () => {
@@ -172,7 +174,9 @@ describe("GetAddressCommand", () => {
         chainId: 137,
       });
       const apdu = command.getApdu();
-      expect(apdu.getRawApdu()).toStrictEqual(GET_ADDRESS_APDU_WITH_CHAIN_ID_137);
+      expect(apdu.getRawApdu()).toStrictEqual(
+        GET_ADDRESS_APDU_WITH_CHAIN_ID_137,
+      );
     });
 
     it("should encode custom chainId 56 (BSC) as 64-bit big-endian when checkOnDevice is true", () => {
@@ -182,7 +186,9 @@ describe("GetAddressCommand", () => {
         chainId: 56,
       });
       const apdu = command.getApdu();
-      expect(apdu.getRawApdu()).toStrictEqual(GET_ADDRESS_APDU_WITH_CHAIN_ID_56);
+      expect(apdu.getRawApdu()).toStrictEqual(
+        GET_ADDRESS_APDU_WITH_CHAIN_ID_56,
+      );
     });
 
     it("should combine chainId with checkOnDevice and returnChainCode options", () => {
