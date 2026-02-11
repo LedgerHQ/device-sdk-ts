@@ -60,9 +60,9 @@ export class GetAddressCommand
       builder.add32BitUIntToData(element);
     });
 
-    // Chain ID as 64-bit big-endian value in APDU data. Default to 1 (Ethereum mainnet) when omitted.
-    if (this.args.chainId !== undefined) {
-      const chainId = this.args.chainId;
+    // Chain ID is only sent when checkOnDevice is true; default to 1 (Ethereum mainnet) when omitted.
+    if (this.args.checkOnDevice) {
+      const chainId = this.args.chainId ?? 1;
       builder.add64BitUIntToData(chainId);
     }
 

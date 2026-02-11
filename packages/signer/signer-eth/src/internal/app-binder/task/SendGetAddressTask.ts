@@ -48,15 +48,18 @@ export class SendGetAddressTask {
       chainId,
     } = this._args;
 
-    if (chainId !== undefined) {
+    const effectiveChainId =
+      checkOnDevice && chainId !== undefined ? chainId : undefined;
+
+    if (effectiveChainId !== undefined) {
       const deviceModelId = this._api.getDeviceModel().id;
       const dynamicNetworkInput: DynamicNetworkContextInput = {
-        chainId,
+        chainId: effectiveChainId,
         deviceModelId,
       };
 
       this._logger.debug("[run] Loading dynamic network context", {
-        data: { chainId, deviceModelId },
+        data: { chainId: effectiveChainId, deviceModelId },
       });
 
       const contexts = await contextModule.getContexts(
@@ -91,7 +94,7 @@ export class SendGetAddressTask {
         derivationPath,
         checkOnDevice,
         returnChainCode,
-        chainId,
+        ...(effectiveChainId !== undefined && { chainId: effectiveChainId }),
       }),
     );
   }
