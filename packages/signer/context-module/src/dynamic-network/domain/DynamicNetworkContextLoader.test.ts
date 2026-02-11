@@ -10,7 +10,6 @@ import {
 import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
-  type LowercaseDeviceModelId,
 } from "@/dynamic-network/model/DynamicNetworkConfiguration";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
@@ -71,16 +70,14 @@ describe("DynamicNetworkContextLoader", () => {
   });
 
   const createMockDescriptors = (
-    overrides: Partial<
-      Record<LowercaseDeviceModelId, DynamicNetworkDescriptor>
-    > = {},
-  ): Record<LowercaseDeviceModelId, DynamicNetworkDescriptor> => ({
-    nanos: createMockDescriptor(),
-    nanosp: createMockDescriptor(),
-    nanox: createMockDescriptor(),
-    stax: createMockDescriptor(),
-    flex: createMockDescriptor(),
-    apexp: createMockDescriptor(),
+    overrides: Partial<Record<DeviceModelId, DynamicNetworkDescriptor>> = {},
+  ): Record<DeviceModelId, DynamicNetworkDescriptor> => ({
+    [DeviceModelId.NANO_S]: createMockDescriptor(),
+    [DeviceModelId.NANO_SP]: createMockDescriptor(),
+    [DeviceModelId.NANO_X]: createMockDescriptor(),
+    [DeviceModelId.STAX]: createMockDescriptor(),
+    [DeviceModelId.FLEX]: createMockDescriptor(),
+    [DeviceModelId.APEX]: createMockDescriptor(),
     ...overrides,
   });
 
