@@ -58,6 +58,7 @@ export const MAX_MESSAGE_LENGTH = OFFCHAINMSG_MAX_V0_LEN;
 export type SendSignMessageTaskArgs = {
   sendingData: Uint8Array;
   derivationPath: string;
+  appDomain?: string;
 };
 
 export type SendSignMessageTaskRunFunctionReturn = Promise<
@@ -214,8 +215,13 @@ export class SendSignMessageTask {
     builder.add8BitUIntToData(0);
 
     if (!isLegacy) {
-      // application domain = 32 zeros
-      builder.addBufferToData(new Uint8Array(32));
+      // application domain: encode provided domain, padded/truncated to 32 bytes
+      const domainBytes = new Uint8Array(32);
+      if (this.args.appDomain) {
+        const encoded = new TextEncoder().encode(this.args.appDomain);
+        domainBytes.set(encoded.subarray(0, 32));
+      }
+      builder.addBufferToData(domainBytes);
     }
 
     // message format

@@ -176,5 +176,49 @@ describe("SignOffChainMessageCommand", () => {
         expect(parsed.data).toEqual(new Uint8Array(0));
       }
     });
+
+    it("returns error for known APDU error status words (e.g. 0x6a81)", () => {
+      const cmd = new SignOffChainMessageCommand({
+        chunkedData: MESSAGE,
+        extend: false,
+        more: false,
+      });
+
+      const parsed = cmd.parseResponse(
+        new ApduResponse({
+          data: new Uint8Array(0),
+          statusCode: new Uint8Array([0x6a, 0x81]),
+        }),
+      );
+
+      expect(isSuccessCommandResult(parsed)).toBe(false);
+      if (!isSuccessCommandResult(parsed)) {
+        expect(parsed.error).toBeDefined();
+        const err = parsed.error as { errorCode?: string };
+        expect(err.errorCode).toBe("6a81");
+      }
+    });
+
+    it("returns error for user cancellation (0x6982)", () => {
+      const cmd = new SignOffChainMessageCommand({
+        chunkedData: MESSAGE,
+        extend: false,
+        more: false,
+      });
+
+      const parsed = cmd.parseResponse(
+        new ApduResponse({
+          data: new Uint8Array(0),
+          statusCode: new Uint8Array([0x69, 0x82]),
+        }),
+      );
+
+      expect(isSuccessCommandResult(parsed)).toBe(false);
+      if (!isSuccessCommandResult(parsed)) {
+        expect(parsed.error).toBeDefined();
+        const err = parsed.error as { errorCode?: string };
+        expect(err.errorCode).toBe("6982");
+      }
+    });
   });
 });

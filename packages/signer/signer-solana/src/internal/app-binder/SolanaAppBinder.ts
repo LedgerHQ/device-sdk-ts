@@ -95,6 +95,7 @@ export class SolanaAppBinder {
     derivationPath: string;
     message: string;
     skipOpenApp: boolean;
+    appDomain?: string;
   }): SignMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -104,6 +105,7 @@ export class SolanaAppBinder {
             new SendSignMessageTask(internalApi, {
               derivationPath: args.derivationPath,
               sendingData: new TextEncoder().encode(args.message),
+              appDomain: args.appDomain,
             }).run(),
           appName: "Solana",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
