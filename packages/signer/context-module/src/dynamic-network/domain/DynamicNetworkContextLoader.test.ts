@@ -69,6 +69,18 @@ describe("DynamicNetworkContextLoader", () => {
     ...partial,
   });
 
+  const createMockDescriptors = (
+    overrides: Partial<Record<DeviceModelId, DynamicNetworkDescriptor>> = {},
+  ): Record<DeviceModelId, DynamicNetworkDescriptor> => ({
+    [DeviceModelId.NANO_S]: createMockDescriptor(),
+    [DeviceModelId.NANO_SP]: createMockDescriptor(),
+    [DeviceModelId.NANO_X]: createMockDescriptor(),
+    [DeviceModelId.STAX]: createMockDescriptor(),
+    [DeviceModelId.FLEX]: createMockDescriptor(),
+    [DeviceModelId.APEX]: createMockDescriptor(),
+    ...overrides,
+  });
+
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
@@ -177,24 +189,22 @@ describe("DynamicNetworkContextLoader", () => {
         chainId: 1,
         deviceModelId: DeviceModelId.STAX,
       };
+      const descriptors = createMockDescriptors({
+        flex: createMockDescriptor({
+          data: "0x0101",
+          descriptorType: "network",
+          descriptorVersion: "v1",
+          signatures: {
+            prod: "prod-sig",
+            test: "test-sig",
+          },
+          icon: undefined,
+        }),
+        stax: undefined as unknown as DynamicNetworkDescriptor,
+      });
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
-        descriptors: {
-          [DeviceModelId.NANO_S]: createMockDescriptor(),
-          [DeviceModelId.NANO_SP]: createMockDescriptor(),
-          [DeviceModelId.NANO_X]: createMockDescriptor(),
-          // STAX descriptor is intentionally missing
-          [DeviceModelId.FLEX]: createMockDescriptor({
-            data: "0x0101",
-            descriptorType: "network",
-            descriptorVersion: "v1",
-            signatures: {
-              prod: "prod-sig",
-              test: "test-sig",
-            },
-            icon: undefined,
-          }),
-        } as Record<DeviceModelId, DynamicNetworkDescriptor>,
+        descriptors,
       };
       vi.spyOn(
         mockNetworkDataSource,
@@ -216,23 +226,18 @@ describe("DynamicNetworkContextLoader", () => {
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
-        descriptors: {
-          [DeviceModelId.APEX]: createMockDescriptor(),
-          [DeviceModelId.NANO_S]: createMockDescriptor(),
-          [DeviceModelId.NANO_SP]: createMockDescriptor(),
-          [DeviceModelId.NANO_X]: createMockDescriptor(),
-          [DeviceModelId.FLEX]: createMockDescriptor(),
-          [DeviceModelId.STAX]: createMockDescriptor({
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
             data: "0x0101",
             descriptorType: "network",
             descriptorVersion: "v1",
             signatures: {
+              prod: "",
               test: "test-sig",
-              // Missing prod signature - intentionally partial
-            } as { prod: string; test: string },
+            },
             icon: undefined,
           }),
-        },
+        }),
       };
       vi.spyOn(
         mockNetworkDataSource,
@@ -254,13 +259,8 @@ describe("DynamicNetworkContextLoader", () => {
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "polygon",
-        descriptors: {
-          [DeviceModelId.APEX]: createMockDescriptor(),
-          [DeviceModelId.NANO_S]: createMockDescriptor(),
-          [DeviceModelId.NANO_SP]: createMockDescriptor(),
-          [DeviceModelId.NANO_X]: createMockDescriptor(),
-          [DeviceModelId.FLEX]: createMockDescriptor(),
-          [DeviceModelId.STAX]: {
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
             data: "0x0101080201015101012308000000000000008952",
             descriptorType: "network",
             descriptorVersion: "v1",
@@ -269,8 +269,8 @@ describe("DynamicNetworkContextLoader", () => {
               test: "test-sig",
             },
             icon: undefined,
-          },
-        },
+          }),
+        }),
       };
       vi.spyOn(
         mockNetworkDataSource,
@@ -284,11 +284,14 @@ describe("DynamicNetworkContextLoader", () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
         type: ClearSignContextType.DYNAMIC_NETWORK,
-        payload: expect.stringContaining(
-          "0x0101080201015101012308000000000000008952",
-        ),
         certificate: mockCertificate,
       });
+      const context = result[0];
+      if (context && "payload" in context) {
+        expect(context.payload).toContain(
+          "0x0101080201015101012308000000000000008952",
+        );
+      }
       expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
         keyId: KeyId.CalNetwork,
         keyUsage: KeyUsage.Network,
@@ -304,13 +307,8 @@ describe("DynamicNetworkContextLoader", () => {
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
-        descriptors: {
-          [DeviceModelId.APEX]: createMockDescriptor(),
-          [DeviceModelId.NANO_S]: createMockDescriptor(),
-          [DeviceModelId.NANO_SP]: createMockDescriptor(),
-          [DeviceModelId.NANO_X]: createMockDescriptor(),
-          [DeviceModelId.FLEX]: createMockDescriptor(),
-          [DeviceModelId.STAX]: {
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
             data: "0x0101",
             descriptorType: "network",
             descriptorVersion: "v1",
@@ -319,8 +317,8 @@ describe("DynamicNetworkContextLoader", () => {
               test: "test-sig",
             },
             icon: "icon-hex-data",
-          },
-        },
+          }),
+        }),
       };
       vi.spyOn(
         mockNetworkDataSource,
@@ -334,13 +332,19 @@ describe("DynamicNetworkContextLoader", () => {
       expect(result).toHaveLength(2);
       expect(result[0]).toMatchObject({
         type: ClearSignContextType.DYNAMIC_NETWORK,
-        payload: expect.any(String),
         certificate: mockCertificate,
       });
+      const networkContext = result[0];
+      if (networkContext && "payload" in networkContext) {
+        expect(networkContext.payload).toEqual(expect.any(String));
+      }
       expect(result[1]).toMatchObject({
         type: ClearSignContextType.DYNAMIC_NETWORK_ICON,
-        payload: "icon-hex-data",
       });
+      const iconContext = result[1];
+      if (iconContext && "payload" in iconContext) {
+        expect(iconContext.payload).toBe("icon-hex-data");
+      }
     });
 
     it("should handle multiple device models correctly", async () => {
@@ -351,12 +355,8 @@ describe("DynamicNetworkContextLoader", () => {
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
-        descriptors: {
-          [DeviceModelId.APEX]: createMockDescriptor(),
-          [DeviceModelId.NANO_S]: createMockDescriptor(),
-          [DeviceModelId.NANO_SP]: createMockDescriptor(),
-          [DeviceModelId.NANO_X]: createMockDescriptor(),
-          [DeviceModelId.FLEX]: {
+        descriptors: createMockDescriptors({
+          flex: createMockDescriptor({
             data: "0xFLEX",
             descriptorType: "network",
             descriptorVersion: "v1",
@@ -365,8 +365,8 @@ describe("DynamicNetworkContextLoader", () => {
               test: "flex-test-sig",
             },
             icon: undefined,
-          },
-          [DeviceModelId.STAX]: {
+          }),
+          stax: createMockDescriptor({
             data: "0xSTAX",
             descriptorType: "network",
             descriptorVersion: "v1",
@@ -375,8 +375,8 @@ describe("DynamicNetworkContextLoader", () => {
               test: "stax-test-sig",
             },
             icon: undefined,
-          },
-        },
+          }),
+        }),
       };
       vi.spyOn(
         mockNetworkDataSource,
@@ -409,13 +409,8 @@ describe("DynamicNetworkContextLoader", () => {
       };
       const networkConfig: DynamicNetworkConfiguration = {
         id: "ethereum",
-        descriptors: {
-          [DeviceModelId.APEX]: createMockDescriptor(),
-          [DeviceModelId.NANO_S]: createMockDescriptor(),
-          [DeviceModelId.NANO_SP]: createMockDescriptor(),
-          [DeviceModelId.NANO_X]: createMockDescriptor(),
-          [DeviceModelId.FLEX]: createMockDescriptor(),
-          [DeviceModelId.STAX]: {
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
             data: "0x0101",
             descriptorType: "network",
             descriptorVersion: "v1",
@@ -424,8 +419,8 @@ describe("DynamicNetworkContextLoader", () => {
               test: "test-sig",
             },
             icon: undefined,
-          },
-        },
+          }),
+        }),
       };
       vi.spyOn(
         mockNetworkDataSource,
