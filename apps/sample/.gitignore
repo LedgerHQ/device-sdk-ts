@@ -40,3 +40,6 @@ next-env.d.ts
 
 # Playwright test results
 test-results/
+
+# pycache
+*.pyc
