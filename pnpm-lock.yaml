@@ -255,6 +255,9 @@ catalogs:
     nextra-theme-docs:
       specifier: ^3.0.15
       version: 3.2.4
+    node-hid:
+      specifier: ^3.2.0
+      version: 3.3.0
     postcss:
       specifier: ^8.5.6
       version: 8.5.6
@@ -351,6 +354,9 @@ catalogs:
     url:
       specifier: ^0.11.4
       version: 0.11.4
+    usb:
+      specifier: ^2.16.0
+      version: 2.17.0
     util:
       specifier: ^0.12.5
       version: 0.12.5
@@ -388,7 +394,7 @@ importers:
         version: 2.29.6(@types/node@22.10.1)
       '@ledgerhq/ldmk-cli':
         specifier: workspace:^
-        version: link:packages/tools/ldmk-cli
+        version: link:apps/ldmk-cli
       '@ledgerhq/ldmk-tool':
         specifier: workspace:^
         version: link:packages/tools/ldmk-tool
@@ -500,7 +506,7 @@ importers:
         version: 9.1.0
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
       tsx:
         specifier: 'catalog:'
         version: 4.19.2
@@ -638,6 +644,67 @@ importers:
       globals:
         specifier: 'catalog:'
         version: 16.0.0
+
+  apps/ldmk-cli:
+    dependencies:
+      '@inquirer/prompts':
+        specifier: 'catalog:'
+        version: 7.3.3(@types/node@22.10.1)
+      '@ledgerhq/context-module':
+        specifier: workspace:^
+        version: link:../../packages/signer/context-module
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../packages/device-management-kit
+      '@ledgerhq/device-management-kit-devtools-core':
+        specifier: workspace:^
+        version: link:../../packages/devtools/core
+      '@ledgerhq/device-management-kit-devtools-websocket-common':
+        specifier: workspace:^
+        version: link:../../packages/devtools/websocket-common
+      '@ledgerhq/device-management-kit-devtools-websocket-connector':
+        specifier: workspace:^
+        version: link:../../packages/devtools/websocket-connector
+      '@ledgerhq/device-signer-kit-ethereum':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-eth
+      '@ledgerhq/device-transport-kit-node-hid':
+        specifier: workspace:^
+        version: link:../../packages/transport/node-hid
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../packages/tools/ldmk-tool
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.19.2
+      zx:
+        specifier: 'catalog:'
+        version: 8.5.3
+    devDependencies:
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../packages/config/eslint
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../packages/config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../packages/config/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.10.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.2
 
   apps/mobile:
     dependencies:
@@ -1029,7 +1096,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/devtools/core:
     devDependencies:
@@ -1292,7 +1359,7 @@ importers:
         version: 2.0.4
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/mockserver-client:
     devDependencies:
@@ -1356,7 +1423,7 @@ importers:
         version: 4.2.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-btc:
     dependencies:
@@ -1408,7 +1475,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-eth:
     dependencies:
@@ -1463,7 +1530,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-solana:
     dependencies:
@@ -1527,7 +1594,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-utils:
     devDependencies:
@@ -1551,7 +1618,7 @@ importers:
         version: link:../../config/vitest
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/speculos-device-controller:
     dependencies:
@@ -1582,7 +1649,7 @@ importers:
         version: link:../config/vitest
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/tools/cal-interceptor:
     dependencies:
@@ -1602,28 +1669,6 @@ importers:
       '@ledgerhq/tsconfig-dsdk':
         specifier: workspace:*
         version: link:../../config/typescript
-
-  packages/tools/ldmk-cli:
-    dependencies:
-      '@inquirer/prompts':
-        specifier: 'catalog:'
-        version: 7.3.3(@types/node@24.3.0)
-      '@ledgerhq/device-management-kit':
-        specifier: workspace:^
-        version: link:../../device-management-kit
-      '@ledgerhq/ldmk-tool':
-        specifier: workspace:^
-        version: link:../ldmk-tool
-      semver:
-        specifier: 'catalog:'
-        version: 7.7.2
-    devDependencies:
-      '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:^
-        version: link:../../config/eslint
-      '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:^
-        version: link:../../config/prettier
 
   packages/tools/ldmk-tool:
     dependencies:
@@ -1682,7 +1727,53 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
+  packages/transport/node-hid:
+    dependencies:
+      node-hid:
+        specifier: 'catalog:'
+        version: 3.3.0
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      usb:
+        specifier: 'catalog:'
+        version: 2.17.0
+      uuid:
+        specifier: 'catalog:'
+        version: 11.0.3
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:*
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:*
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:*
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:*
+        version: link:../../config/vitest
+      '@types/uuid':
+        specifier: 'catalog:'
+        version: 10.0.0
+      '@types/w3c-web-hid':
+        specifier: 'catalog:'
+        version: 1.0.6
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/transport/rn-ble:
     dependencies:
@@ -1722,7 +1813,7 @@ importers:
         version: 10.0.0
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 5.0.1(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 5.0.1(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       react-native:
         specifier: 'catalog:'
         version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
@@ -1734,10 +1825,10 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
       vitest-react-native:
         specifier: 'catalog:'
-        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
 
   packages/transport/rn-hid:
     dependencies:
@@ -1814,7 +1905,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/transport/web-ble:
     dependencies:
@@ -1857,7 +1948,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/transport/web-hid:
     dependencies:
@@ -1900,7 +1991,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/trusted-apps/ledger-keyring-protocol:
     dependencies:
@@ -5779,6 +5870,9 @@ packages:
 
   '@types/w3c-web-hid@1.0.6':
     resolution: {integrity: sha512-IWyssXmRDo6K7s31dxf+U+x/XUWuVsl9qUIYbJmpUHPcTv/COfBCKw/F0smI45+gPV34brjyP30BFcIsHgYWLA==}
+
+  '@types/w3c-web-usb@1.0.13':
+    resolution: {integrity: sha512-N2nSl3Xsx8mRHZBvMSdNGtzMyeleTvtlEw+ujujgXalPqOjIA6UtrqcB6OzyUjkTbDm3J7P1RNK1lgoO7jxtsw==}
 
   '@types/web-bluetooth@0.0.20':
     resolution: {integrity: sha512-g9gZnnXVq7gM7v3tJCWV/qw7w+KeOlSHAhgF9RytFyifW6AF61hdT2ucrYhPq9hLs5JIryeupHV3qGk95dH9ow==}
@@ -9883,6 +9977,13 @@ packages:
   node-addon-api@1.7.2:
     resolution: {integrity: sha512-ibPK3iA+vaY1eEjESkQkM0BbCqFOaZMiXRTtdB0u7b4djtY6JnsjvPdUHVMg6xQt3B8fpTTWHI9A+ADjM9frzg==}
 
+  node-addon-api@3.2.1:
+    resolution: {integrity: sha512-mmcei9JghVNDYydghQmeDX8KoAm0FAiYyIcUt/N4nhyAipB17pllZQDOJD2fotxABnt4Mdz+dKTO7eftLg4d0A==}
+
+  node-addon-api@8.5.0:
+    resolution: {integrity: sha512-/bRZty2mXUIFY/xU5HLvveNHlswNJej+RnxBjOMkidWfwZzgTbPG1E3K5TOxRLOR+5hX7bSofy8yf1hZevMS8A==}
+    engines: {node: ^18 || ^20 || >= 21}
+
   node-api-version@0.2.1:
     resolution: {integrity: sha512-2xP/IGGMmmSQpI1+O/k72jF/ykvZ89JeuKX3TLJAYPDVLUalrshrLHkeVcCCZqG/eEa635cr8IBYzgnDvM2O8Q==}
 
@@ -9922,6 +10023,11 @@ packages:
   node-gyp@9.4.1:
     resolution: {integrity: sha512-OQkWKbjQKbGkMf/xqI1jjy3oCTgMKJac58G2+bjZb3fza6gW2YrCSdMQYaoTb70crvE//Gngr4f0AgVHmqHvBQ==}
     engines: {node: ^12.13 || ^14.13 || >=16}
+    hasBin: true
+
+  node-hid@3.3.0:
+    resolution: {integrity: sha512-j+dFgJLRAE0nufQKXk3IfS6T6YuHhCgMvz4TrG0sgtb6DSCdYpfJ1etcdmeCmPQjUgO+yo32ktVrRliNs/+fmg==}
+    engines: {node: '>=10.16'}
     hasBin: true
 
   node-int64@0.4.0:
@@ -10303,6 +10409,11 @@ packages:
   pkg-dir@3.0.0:
     resolution: {integrity: sha512-/E57AYkoeQ25qkxMj5PBOVgF8Kiu/h7cYS30Z5+R7WaiCCBfLq58ZI/dSeaEKb9WVJV5n/03QwrN3IeWIFllvw==}
     engines: {node: '>=6'}
+
+  pkg-prebuilds@1.0.0:
+    resolution: {integrity: sha512-D9wlkXZCmjxj2kBHTw3fGSyjoahr33breGBoJcoezpi7ouYS59DJVOHMZ+dgqacSrZiJo4qtkXxLQTE+BqXJmQ==}
+    engines: {node: '>= 14.15.0'}
+    hasBin: true
 
   pkg-types@1.3.1:
     resolution: {integrity: sha512-/Jm5M4RvtBFVkKWRu2BLUTNP8/M2a+UwuAX+ae4770q1qVGtfjG+WTCupoZixokjmHiry8uI+dlY8KXYV5HVVQ==}
@@ -12246,6 +12357,10 @@ packages:
   url@0.11.4:
     resolution: {integrity: sha512-oCwdVC7mTuWiPyjLUz/COz5TLk6wgp0RCsN+wHZ2Ekneac9w8uuV0njcbbie2ME+Vs+d6duwmYuR3HgQXs1fOg==}
     engines: {node: '>= 0.4'}
+
+  usb@2.17.0:
+    resolution: {integrity: sha512-UuFgrlglgDn5ll6d5l7kl3nDb2Yx43qLUGcDq+7UNLZLtbNug0HZBb2Xodhgx2JZB1LqvU+dOGqLEeYUeZqsHg==}
+    engines: {node: '>=12.22.0 <13.0 || >=14.17.0'}
 
   use-isomorphic-layout-effect@1.2.1:
     resolution: {integrity: sha512-tpZZ+EX0gaghDAiFR37hj5MgY6ZN55kLiPkJsKxBMZ6GZdOSPJXiOzPM984oPYZ5AnehYx5WQp1+ME8I/P/pRA==}
@@ -14493,6 +14608,16 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@inquirer/checkbox@4.1.3(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/checkbox@4.1.3(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14503,12 +14628,32 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/confirm@5.1.7(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/confirm@5.1.7(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
       '@inquirer/type': 3.0.5(@types/node@24.3.0)
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/core@10.1.8(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+      cli-width: 4.1.0
+      mute-stream: 2.0.0
+      signal-exit: 4.1.0
+      wrap-ansi: 6.2.0
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/core@10.1.8(@types/node@24.3.0)':
     dependencies:
@@ -14523,6 +14668,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/editor@4.2.8(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      external-editor: 3.1.0
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/editor@4.2.8(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14530,6 +14683,14 @@ snapshots:
       external-editor: 3.1.0
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/expand@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/expand@4.0.10(@types/node@24.3.0)':
     dependencies:
@@ -14548,12 +14709,26 @@ snapshots:
 
   '@inquirer/figures@1.0.11': {}
 
+  '@inquirer/input@4.1.7(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/input@4.1.7(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
       '@inquirer/type': 3.0.5(@types/node@24.3.0)
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/number@3.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/number@3.0.10(@types/node@24.3.0)':
     dependencies:
@@ -14562,6 +14737,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/password@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/password@4.0.10(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14569,6 +14752,21 @@ snapshots:
       ansi-escapes: 4.3.2
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/prompts@7.3.3(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/checkbox': 4.1.3(@types/node@22.10.1)
+      '@inquirer/confirm': 5.1.7(@types/node@22.10.1)
+      '@inquirer/editor': 4.2.8(@types/node@22.10.1)
+      '@inquirer/expand': 4.0.10(@types/node@22.10.1)
+      '@inquirer/input': 4.1.7(@types/node@22.10.1)
+      '@inquirer/number': 3.0.10(@types/node@22.10.1)
+      '@inquirer/password': 4.0.10(@types/node@22.10.1)
+      '@inquirer/rawlist': 4.0.10(@types/node@22.10.1)
+      '@inquirer/search': 3.0.10(@types/node@22.10.1)
+      '@inquirer/select': 4.0.10(@types/node@22.10.1)
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/prompts@7.3.3(@types/node@24.3.0)':
     dependencies:
@@ -14585,6 +14783,14 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/rawlist@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/rawlist@4.0.10(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14592,6 +14798,15 @@ snapshots:
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/search@3.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/search@3.0.10(@types/node@24.3.0)':
     dependencies:
@@ -14602,6 +14817,16 @@ snapshots:
     optionalDependencies:
       '@types/node': 24.3.0
 
+  '@inquirer/select@4.0.10(@types/node@22.10.1)':
+    dependencies:
+      '@inquirer/core': 10.1.8(@types/node@22.10.1)
+      '@inquirer/figures': 1.0.11
+      '@inquirer/type': 3.0.5(@types/node@22.10.1)
+      ansi-escapes: 4.3.2
+      yoctocolors-cjs: 2.1.2
+    optionalDependencies:
+      '@types/node': 22.10.1
+
   '@inquirer/select@4.0.10(@types/node@24.3.0)':
     dependencies:
       '@inquirer/core': 10.1.8(@types/node@24.3.0)
@@ -14611,6 +14836,10 @@ snapshots:
       yoctocolors-cjs: 2.1.2
     optionalDependencies:
       '@types/node': 24.3.0
+
+  '@inquirer/type@3.0.5(@types/node@22.10.1)':
+    optionalDependencies:
+      '@types/node': 22.10.1
 
   '@inquirer/type@3.0.5(@types/node@24.3.0)':
     optionalDependencies:
@@ -17113,6 +17342,8 @@ snapshots:
 
   '@types/w3c-web-hid@1.0.6': {}
 
+  '@types/w3c-web-usb@1.0.13': {}
+
   '@types/web-bluetooth@0.0.20': {}
 
   '@types/ws@7.4.7':
@@ -17261,6 +17492,18 @@ snapshots:
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
       vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+    transitivePeerDependencies:
+      - supports-color
+
+  '@vitejs/plugin-react@5.0.1(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
+    dependencies:
+      '@babel/core': 7.28.3
+      '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.3)
+      '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.28.3)
+      '@rolldown/pluginutils': 1.0.0-beta.32
+      '@types/babel__core': 7.20.5
+      react-refresh: 0.17.0
+      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -22587,6 +22830,10 @@ snapshots:
   node-addon-api@1.7.2:
     optional: true
 
+  node-addon-api@3.2.1: {}
+
+  node-addon-api@8.5.0: {}
+
   node-api-version@0.2.1:
     dependencies:
       semver: 7.7.3
@@ -22613,8 +22860,7 @@ snapshots:
 
   node-forge@1.3.1: {}
 
-  node-gyp-build@4.8.4:
-    optional: true
+  node-gyp-build@4.8.4: {}
 
   node-gyp@9.4.1:
     dependencies:
@@ -22632,6 +22878,11 @@ snapshots:
     transitivePeerDependencies:
       - bluebird
       - supports-color
+
+  node-hid@3.3.0:
+    dependencies:
+      node-addon-api: 3.2.1
+      pkg-prebuilds: 1.0.0
 
   node-int64@0.4.0: {}
 
@@ -23017,6 +23268,10 @@ snapshots:
   pkg-dir@3.0.0:
     dependencies:
       find-up: 3.0.0
+
+  pkg-prebuilds@1.0.0:
+    dependencies:
+      yargs: 17.7.2
 
   pkg-types@1.3.1:
     dependencies:
@@ -25136,6 +25391,25 @@ snapshots:
       typescript: 5.9.2
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    optional: true
+
+  ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.4
+      '@types/node': 24.3.0
+      acorn: 8.15.0
+      acorn-walk: 8.3.1
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 5.9.2
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
 
   tsc-alias@1.8.10:
     dependencies:
@@ -25441,6 +25715,12 @@ snapshots:
       punycode: 1.4.1
       qs: 6.14.1
 
+  usb@2.17.0:
+    dependencies:
+      '@types/w3c-web-usb': 1.0.13
+      node-addon-api: 8.5.0
+      node-gyp-build: 4.8.4
+
   use-isomorphic-layout-effect@1.2.1(@types/react@18.3.12)(react@18.3.1):
     dependencies:
       react: 18.3.1
@@ -25590,7 +25870,7 @@ snapshots:
       tsx: 4.20.3
       yaml: 2.7.0
 
-  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
+  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
     dependencies:
       '@bunchtogether/vite-plugin-flow': 1.0.2
       '@react-native/polyfills': 2.0.0
@@ -25600,7 +25880,7 @@ snapshots:
       react: 18.3.1
       react-native: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
       regenerator-runtime: 0.13.11
-      vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
 
   vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
     dependencies:

@@ -95,6 +95,7 @@ A brief overview of this project's packages:
 
 | Name                                            | Path                        | Description                                   |
 | ----------------------------------------------- | --------------------------- | --------------------------------------------- |
+| @ledgerhq/device-transport-kit-node-hid          | packages/transport/node-hid  | Node HID transport implementation              |
 | @ledgerhq/device-transport-kit-web-hid          | packages/transport/web-hid  | Web HID transport implementation              |
 | @ledgerhq/device-transport-kit-web-ble          | packages/transport/web-ble  | Web BLE transport implementation              |
 | @ledgerhq/device-transport-kit-react-native-ble | packages/transport/rn-ble   | React Native BLE transport implementation     |
@@ -320,6 +321,17 @@ To build the required dependencies and start a dev server for the sample app, pl
 
 ```bash
 pnpm dev
+```
+
+## CLI Tool
+
+The Device Management Kit provides a CLI tool for interactive device management operations in a node environment (using Node-HID Transport Kit).
+
+You can use it with the following command:
+
+```shell
+# At the root of the repository
+pnpm cli dev
 ```
 
 # Documentation

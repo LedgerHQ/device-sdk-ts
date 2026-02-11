@@ -1,0 +1,16 @@
+{
+  "extends": "@ledgerhq/tsconfig-dsdk/tsconfig.sdk",
+  "compilerOptions": {
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "outDir": "./lib",
+    "rootDir": "./",
+    "types": ["node"],
+    "skipLibCheck": true,
+    "paths": {
+      "@ldmk/*": ["./*"]
+    }
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "lib"]
+}

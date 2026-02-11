@@ -1,0 +1,59 @@
+{
+  "name": "@ledgerhq/device-transport-kit-node-hid",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "import": "./lib/cjs/index.js",
+      "require": "./lib/cjs/index.js"
+    }
+  },
+  "files": [
+    "./lib",
+    "package.json"
+  ],
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "pnpm ldmk-tool build --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform node",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints src/index.ts,src/**/*.ts --tsconfig tsconfig.prod.json --platform node",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "postpack": "find . -name '*.tgz' -exec cp {} ../../../dist/ \\; ",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "node-hid": "catalog:",
+    "purify-ts": "catalog:",
+    "uuid": "catalog:",
+    "usb": "catalog:"
+  },
+  "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/eslint-config-dsdk": "workspace:*",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:*",
+    "@ledgerhq/tsconfig-dsdk": "workspace:*",
+    "@ledgerhq/vitest-config-dmk": "workspace:*",
+    "@types/uuid": "catalog:",
+    "@types/w3c-web-hid": "catalog:",
+    "rxjs": "catalog:",
+    "ts-node": "catalog:"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:*",
+    "rxjs": "catalog:"
+  }
+}

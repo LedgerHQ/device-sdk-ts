@@ -15,6 +15,7 @@
     "prettier": "turbo run prettier",
     "prettier:fix": "turbo run prettier:fix",
     "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
     "typecheck": "turbo run typecheck",
     "health-check": "turbo run health-check --output-logs=errors-only --continue",
@@ -49,7 +50,7 @@
     "danger:local": "pnpm danger local --dangerfile danger/dangerfile-local.ts --base origin/develop",
     "danger:local:fork": "pnpm danger local --dangerfile danger/dangerfile-local-fork.ts --base origin/develop",
     "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts --failOnErrors",
-    "cli": "pnpm ldmk-cli",
+    "cli": "pnpm --filter @ledgerhq/ldmk-cli",
     "tool": "pnpm ldmk-tool"
   },
   "devDependencies": {

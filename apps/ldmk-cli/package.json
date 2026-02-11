@@ -1,0 +1,41 @@
+{
+  "name": "@ledgerhq/ldmk-cli",
+  "license": "Apache-2.0",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A collection of scripts and utilities for Ledger Device Management Kit monorepo",
+  "scripts": {
+    "dev": "pnpm --filter @ledgerhq/device-management-kit-devtools dev > /dev/null 2>&1 & DEVTOOLS_PID=$! && sleep 5 && tsx index.ts; kill $DEVTOOLS_PID 2>/dev/null",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write"
+  },
+  "files": [
+    "*.ts",
+    "!.prettierrc.cjs"
+  ],
+  "dependencies": {
+    "@inquirer/prompts": "catalog:",
+    "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-core": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-websocket-common": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-websocket-connector": "workspace:^",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
+    "@ledgerhq/device-transport-kit-node-hid": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "inversify": "catalog:",
+    "rxjs": "catalog:",
+    "semver": "catalog:",
+    "tsx": "catalog:",
+    "zx": "catalog:"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}
