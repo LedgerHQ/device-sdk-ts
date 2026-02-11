@@ -3,9 +3,6 @@ import config from "@ledgerhq/eslint-config-dsdk";
 export default [
   ...config,
   {
-    ignores: ["**/*.test.ts"],
-  },
-  {
     languageOptions: {
       parserOptions: {
         project: "./tsconfig.json",
@@ -13,7 +10,7 @@ export default [
     },
   },
   {
-    files: ["eslint.config.mjs", "vitest.config.mjs"],
+    files: ["eslint.config.mjs"],
     languageOptions: {
       parserOptions: {
         project: null,
