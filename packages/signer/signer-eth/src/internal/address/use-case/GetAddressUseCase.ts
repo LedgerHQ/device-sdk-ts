@@ -22,6 +22,8 @@ export class GetAddressUseCase {
       checkOnDevice: options?.checkOnDevice ?? false,
       returnChainCode: options?.returnChainCode ?? false,
       skipOpenApp: options?.skipOpenApp ?? false,
+      // Only used when checkOnDevice is true; leaving it undefined avoids fetching
+      // the dynamic network context when not needed.
       chainId: options?.chainId,
     });
   }
