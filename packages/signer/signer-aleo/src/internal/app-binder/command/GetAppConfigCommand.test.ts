@@ -3,6 +3,7 @@ import {
   CommandResultFactory,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+
 import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 
 const GET_APP_CONFIG_APDU = new Uint8Array([0xe0, 0x03, 0x00, 0x00, 0x00]);

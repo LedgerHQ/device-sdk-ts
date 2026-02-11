@@ -179,10 +179,7 @@ type Signature = {
 This method allows users to sign a text string that is displayed on Ledger devices.
 
 ```typescript
-const { observable, cancel } = signerAleo.signMessage(
-  derivationPath,
-  message,
-);
+const { observable, cancel } = signerAleo.signMessage(derivationPath, message);
 ```
 
 #### **Parameters**
