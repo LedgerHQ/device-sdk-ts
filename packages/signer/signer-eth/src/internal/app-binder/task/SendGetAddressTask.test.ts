@@ -8,6 +8,7 @@ import {
   CommandResultFactory,
   DeviceModelId,
   InvalidStatusWordError,
+  TransportDeviceModel,
 } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
@@ -52,7 +53,16 @@ describe("SendGetAddressTask", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    apiMock.getDeviceModel.mockReturnValue({ id: DeviceModelId.STAX });
+    apiMock.getDeviceModel.mockReturnValue({
+      id: DeviceModelId.STAX,
+      productName: "STAX",
+      usbProductId: 1,
+      bootloaderUsbProductId: 2,
+      usbOnly: false,
+      memorySize: 0,
+      getBlockSize: () => 0,
+      masks: [],
+    } as TransportDeviceModel);
     apiMock.sendCommand.mockImplementation((command: { name?: string }) => {
       if (command?.name === "getAddress") {
         return Promise.resolve(successGetAddressResult);
@@ -101,7 +111,7 @@ describe("SendGetAddressTask", () => {
       );
     });
 
-    it("should load dynamic network context and provide contexts when chainId is defined", async () => {
+    it("should load dynamic network context and provide contexts when chainId is defined and checkOnDevice is true", async () => {
       const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.DYNAMIC_NETWORK> =
         {
           type: ClearSignContextType.DYNAMIC_NETWORK,
@@ -119,6 +129,7 @@ describe("SendGetAddressTask", () => {
 
       const task = new SendGetAddressTask(apiMock, {
         ...baseArgs,
+        checkOnDevice: true,
         chainId: 137,
       });
       const result = await task.run();
@@ -150,6 +161,22 @@ describe("SendGetAddressTask", () => {
       expect(contextModuleMock.getContexts).not.toHaveBeenCalled();
     });
 
+    it("should ignore chainId when checkOnDevice is false", async () => {
+      const task = new SendGetAddressTask(apiMock, {
+        ...baseArgs,
+        checkOnDevice: false,
+        chainId: 137,
+      });
+      const result = await task.run();
+
+      expect(result).toEqual(successGetAddressResult);
+      expect(contextModuleMock.getContexts).not.toHaveBeenCalled();
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
+      expect(apiMock.sendCommand).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "getAddress" }),
+      );
+    });
+
     it("should skip ERROR contexts and only provide success contexts", async () => {
       const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.DYNAMIC_NETWORK> =
         {
@@ -163,6 +190,7 @@ describe("SendGetAddressTask", () => {
 
       const task = new SendGetAddressTask(apiMock, {
         ...baseArgs,
+        checkOnDevice: true,
         chainId: 56,
       });
       const result = await task.run();
@@ -176,6 +204,7 @@ describe("SendGetAddressTask", () => {
 
       const task = new SendGetAddressTask(apiMock, {
         ...baseArgs,
+        checkOnDevice: true,
         chainId: 1,
       });
       const result = await task.run();
@@ -217,6 +246,7 @@ describe("SendGetAddressTask", () => {
 
       const task = new SendGetAddressTask(apiMock, {
         ...baseArgs,
+        checkOnDevice: true,
         chainId: 137,
       });
       const result = await task.run();
