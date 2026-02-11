@@ -3,5 +3,4 @@ export default {
   solana: "Signer Solana",
   btc: "Signer Bitcoin",
   aleo: "Signer Aleo",
-
 };

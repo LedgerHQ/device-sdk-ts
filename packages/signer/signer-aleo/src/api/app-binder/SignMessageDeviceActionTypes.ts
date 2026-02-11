@@ -11,7 +11,8 @@ import { type SignMessageCommandResponse } from "@internal/app-binder/command/Si
 import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
 
 type SignMessageDAUserInteractionRequired =
-  | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;
+  | UserInteractionRequired.None
+  | UserInteractionRequired.SignPersonalMessage;
 
 export type SignMessageDAOutput =
   SendCommandInAppDAOutput<SignMessageCommandResponse>;

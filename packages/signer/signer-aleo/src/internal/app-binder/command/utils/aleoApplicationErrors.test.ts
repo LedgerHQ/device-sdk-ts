@@ -1,5 +1,5 @@
-import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 import { DeviceExchangeError } from "@ledgerhq/device-management-kit";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   ALEO_APP_ERRORS,
