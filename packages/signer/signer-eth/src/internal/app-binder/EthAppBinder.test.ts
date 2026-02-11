@@ -40,7 +40,6 @@ import { type TransactionMapperService } from "@internal/transaction/service/map
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
-import { GetAddressCommand } from "./command/GetAddressCommand";
 import { EthAppBinder } from "./EthAppBinder";
 
 const mockLoggerFactory = () => ({
@@ -166,22 +165,17 @@ describe("EthAppBinder", () => {
         );
         appBinder.getAddress(params);
 
-        // THEN - command is built with derivationPath, checkOnDevice, returnChainCode, chainId
+        // THEN - getAddress uses CallTaskInAppDeviceAction with a task (loads dynamic network context then sends getAddress)
         expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
           expect.objectContaining({
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
-              input: {
-                command: new GetAddressCommand({
-                  derivationPath: params.derivationPath,
-                  checkOnDevice: params.checkOnDevice,
-                  returnChainCode: params.returnChainCode,
-                  chainId: params.chainId,
-                }),
+              input: expect.objectContaining({
                 appName: "Ethereum",
                 requiredUserInteraction: UserInteractionRequired.VerifyAddress,
                 skipOpenApp: false,
-              },
+                task: expect.any(Function),
+              }),
             }),
           }),
         );
@@ -206,22 +200,17 @@ describe("EthAppBinder", () => {
         );
         appBinder.getAddress(params);
 
-        // THEN - command is built with derivationPath, checkOnDevice, returnChainCode, chainId
+        // THEN - getAddress uses CallTaskInAppDeviceAction with a task (loads dynamic network context then sends getAddress)
         expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
           expect.objectContaining({
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
-              input: {
-                command: new GetAddressCommand({
-                  derivationPath: params.derivationPath,
-                  checkOnDevice: params.checkOnDevice,
-                  returnChainCode: params.returnChainCode,
-                  chainId: params.chainId,
-                }),
+              input: expect.objectContaining({
                 appName: "Ethereum",
                 requiredUserInteraction: UserInteractionRequired.None,
                 skipOpenApp: false,
-              },
+                task: expect.any(Function),
+              }),
             }),
           }),
         );

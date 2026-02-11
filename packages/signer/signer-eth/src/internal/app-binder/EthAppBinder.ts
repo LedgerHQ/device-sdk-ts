@@ -4,7 +4,7 @@ import {
   type DeviceSessionId,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
-import { SendCommandInAppDeviceAction } from "@ledgerhq/device-management-kit";
+import { CallTaskInAppDeviceAction } from "@ledgerhq/device-management-kit";
 import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
@@ -25,9 +25,9 @@ import { type TransactionMapperService } from "@internal/transaction/service/map
 import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
-import { GetAddressCommand } from "./command/GetAddressCommand";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
+import { SendGetAddressTask } from "./task/SendGetAddressTask";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 
 @injectable()
@@ -51,23 +51,27 @@ export class EthAppBinder {
     skipOpenApp: boolean;
     chainId?: number;
   }): GetAddressDAReturnType {
+    const taskLogger = this.dmkLoggerFactory("SendGetAddressTask");
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SendCommandInAppDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          command: new GetAddressCommand({
-            derivationPath: args.derivationPath,
-            checkOnDevice: args.checkOnDevice,
-            returnChainCode: args.returnChainCode,
-            chainId: args.chainId,
-          }),
+          task: async (internalApi) =>
+            new SendGetAddressTask(internalApi, {
+              contextModule: this.contextModule,
+              derivationPath: args.derivationPath,
+              checkOnDevice: args.checkOnDevice,
+              returnChainCode: args.returnChainCode,
+              chainId: args.chainId,
+              loggerFactory: this.dmkLoggerFactory,
+            }).run(),
           appName: "Ethereum",
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("GetAddressCommand"),
+        logger: taskLogger,
       }),
     });
   }
