@@ -1,3 +1,4 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
@@ -7,13 +8,22 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
-  type LowercaseDeviceModelId,
 } from "@/dynamic-network/model/DynamicNetworkConfiguration";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
 import { type DynamicNetworkApiResponseDto } from "./dto/DynamicNetworkApiResponseDto";
 import { type DynamicNetworkDataSource } from "./DynamicNetworkDataSource";
+
+/** Maps lowercase device model keys from the API to DeviceModelId */
+const LOWERCASE_KEY_TO_DEVICE_MODEL_ID: Record<string, DeviceModelId> = {
+  nanos: DeviceModelId.NANO_S,
+  nanosp: DeviceModelId.NANO_SP,
+  nanox: DeviceModelId.NANO_X,
+  stax: DeviceModelId.STAX,
+  flex: DeviceModelId.FLEX,
+  apexp: DeviceModelId.APEX,
+};
 
 @injectable()
 export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
@@ -136,17 +146,22 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
     networkData: DynamicNetworkApiResponseDto[0],
   ): DynamicNetworkConfiguration {
     const descriptors = Object.entries(networkData.descriptors).reduce(
-      (acc, [deviceModel, descriptor]) => {
-        acc[deviceModel as LowercaseDeviceModelId] = {
+      (acc, [apiKey, descriptor]) => {
+        const deviceModelId =
+          LOWERCASE_KEY_TO_DEVICE_MODEL_ID[apiKey.toLowerCase()];
+        if (deviceModelId === undefined) {
+          return acc;
+        }
+        acc[deviceModelId] = {
           descriptorType: descriptor.descriptorType,
           descriptorVersion: descriptor.descriptorVersion,
           data: descriptor.data,
           signatures: descriptor.signatures,
-          icon: networkData.icons?.[deviceModel],
+          icon: networkData.icons?.[apiKey],
         };
         return acc;
       },
-      {} as Record<LowercaseDeviceModelId, DynamicNetworkDescriptor>,
+      {} as Record<DeviceModelId, DynamicNetworkDescriptor>,
     );
 
     return {

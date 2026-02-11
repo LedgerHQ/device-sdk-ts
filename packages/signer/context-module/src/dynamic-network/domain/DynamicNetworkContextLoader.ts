@@ -8,7 +8,6 @@ import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type DynamicNetworkDataSource } from "@/dynamic-network/data/DynamicNetworkDataSource";
 import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
-import { type LowercaseDeviceModelId } from "@/dynamic-network/model/DynamicNetworkConfiguration";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
@@ -90,10 +89,7 @@ export class DynamicNetworkContextLoader
       Left: () => [],
       Right: (configuration) => {
         const contexts: ClearSignContext[] = [];
-        const descriptor =
-          configuration.descriptors[
-            deviceModelId.toLowerCase() as LowercaseDeviceModelId
-          ];
+        const descriptor = configuration.descriptors[deviceModelId];
 
         if (!descriptor) {
           return [];
