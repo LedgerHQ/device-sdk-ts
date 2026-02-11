@@ -21,7 +21,7 @@ const address = await signer.getAddress("m/44'/0'/0'/0/0");
 // Sign transaction
 const signature = await signer.signTransaction(
   "m/44'/0'/0'/0/0",
-  transactionBytes
+  transactionBytes,
 );
 ```
 

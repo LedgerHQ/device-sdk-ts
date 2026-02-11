@@ -11,7 +11,8 @@ import { type GetAddressCommandResponse } from "@internal/app-binder/command/Get
 import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
 
 type GetAddressDAUserInteractionRequired =
-  | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;
+  | UserInteractionRequired.None
+  | UserInteractionRequired.VerifyAddress;
 
 export type GetAddressDAOutput =
   SendCommandInAppDAOutput<GetAddressCommandResponse>;

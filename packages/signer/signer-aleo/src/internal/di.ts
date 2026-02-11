@@ -3,12 +3,13 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
+
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";
-import { configModuleFactory } from "@internal/use-cases/config/di/configModule";
 import { addressModuleFactory } from "@internal/use-cases/address/di/addressModule";
-import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";
+import { configModuleFactory } from "@internal/use-cases/config/di/configModule";
 import { messageModuleFactory } from "@internal/use-cases/message/di/messageModule";
+import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";
 
 type MakeContainerProps = {
   dmk: DeviceManagementKit;

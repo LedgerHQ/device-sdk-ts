@@ -1,18 +1,16 @@
 import React, { useMemo } from "react";
 import {
-  type GetAppConfigDAError,
-  type GetAppConfigDAIntermediateValue,
-  type GetAppConfigDAOutput,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
+  type GetAppConfigDAError,
+  type GetAppConfigDAIntermediateValue,
+  type GetAppConfigDAOutput,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
-  type SignMessageDAError,
-  type SignMessageDAIntermediateValue,
-  type SignMessageDAOutput,
 } from "@ledgerhq/device-signer-kit-aleo";
+
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -51,7 +49,11 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
       {
         title: "Get Address",
         description: "Get an address from the device",
-        executeDeviceAction: ({ derivationPath, checkOnDevice, skipOpenApp }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          checkOnDevice,
+          skipOpenApp,
+        }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
@@ -89,12 +91,12 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
                 transaction
                   .slice(2)
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? []
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
               )
             : new Uint8Array(
                 transaction
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? []
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
               );
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,
@@ -115,29 +117,6 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
-      >,
-      {
-        title: "Sign Message",
-        description: "Sign a message with the device",
-        executeDeviceAction: ({ derivationPath, message }) => {
-          if (!signer) {
-            throw new Error("Signer not initialized");
-          }
-          return signer.signMessage(derivationPath, message);
-        },
-        initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
-          message: "Hello World",
-        },
-        deviceModelId,
-      } satisfies DeviceActionProps<
-        SignMessageDAOutput,
-        {
-          derivationPath: string;
-          message: string;
-        },
-        SignMessageDAError,
-        SignMessageDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],

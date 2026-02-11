@@ -12,24 +12,22 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
+import { type AppConfig } from "@api/model/AppConfig";
+
 import {
   ALEO_APP_ERRORS,
   AleoAppCommandErrorFactory,
   type AleoErrorCodes,
 } from "./utils/aleoApplicationErrors";
 
-export type GetAppConfigCommandResponse = {
-  readonly version: string;
-};
-
 const EXPECTED_DATA_LENGTH = 3;
 
 export class GetAppConfigCommand
-  implements Command<GetAppConfigCommandResponse, void, AleoErrorCodes>
+  implements Command<AppConfig, void, AleoErrorCodes>
 {
   readonly name = "GetAppConfig";
   private readonly errorHelper = new CommandErrorHelper<
-    GetAppConfigCommandResponse,
+    AppConfig,
     AleoErrorCodes
   >(ALEO_APP_ERRORS, AleoAppCommandErrorFactory);
 
@@ -46,7 +44,7 @@ export class GetAppConfigCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<GetAppConfigCommandResponse, AleoErrorCodes> {
+  ): CommandResult<AppConfig, AleoErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
@@ -62,7 +60,7 @@ export class GetAppConfigCommand
         });
       }
 
-      const config: GetAppConfigCommandResponse = {
+      const config: AppConfig = {
         version: `${buffer[0]}.${buffer[1]}.${buffer[2]}`,
       };
 
