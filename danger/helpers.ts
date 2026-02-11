@@ -380,14 +380,18 @@ export function outputResults(
 ) {
   const report = generateReport(checkResults);
 
-  // Write report to $GITHUB_STEP_SUMMARY or /tmp/danger-report.md
+  // Write report to $GITHUB_STEP_SUMMARY or /tmp/danger-report.md (best-effort)
   const summaryFile = process.env.GITHUB_STEP_SUMMARY;
-  if (summaryFile) {
-    appendFileSync(summaryFile, report);
-  } else {
-    const path = "/tmp/danger-report.md";
-    writeFileSync(path, report);
-    console.log(`\nReport written to ${path}`);
+  try {
+    if (summaryFile) {
+      appendFileSync(summaryFile, report);
+    } else {
+      const path = "/tmp/danger-report.md";
+      writeFileSync(path, report);
+      console.log(`\nReport written to ${path}`);
+    }
+  } catch (e) {
+    console.warn("Failed to write danger report to file:", e);
   }
 
   // Post as PR comment / local output (best-effort)
