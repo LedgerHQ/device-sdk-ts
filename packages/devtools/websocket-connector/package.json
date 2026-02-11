@@ -36,7 +36,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/device-management-kit-devtools-websocket-common": "workspace:^",
+    "@ledgerhq/device-management-kit-devtools-websocket-common": "^1.0.0",
     "isomorphic-ws": "catalog:",
     "rxjs": "catalog:"
   },
