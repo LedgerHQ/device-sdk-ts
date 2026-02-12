@@ -416,7 +416,7 @@ describe("ProvideEIP712ContextTask", () => {
           payload: "0x010203",
         },
       ],
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
@@ -455,7 +455,7 @@ describe("ProvideEIP712ContextTask", () => {
           payload: "0x010203",
         },
       ],
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     };
     // WHEN
     apiMock.sendCommand.mockResolvedValue(
