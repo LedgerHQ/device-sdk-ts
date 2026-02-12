@@ -1324,8 +1324,8 @@ importers:
   packages/ledger-wallet:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.1.2
-        version: 1.1.2(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer/signer-utils
       pako:
         specifier: ^2.1.0
         version: 2.1.0
@@ -1480,8 +1480,8 @@ importers:
   packages/signer/signer-eth:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.1.2
-        version: 1.1.2(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       ethers:
         specifier: 'catalog:'
         version: 6.14.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
@@ -1538,8 +1538,8 @@ importers:
         specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: ^1.1.2
-        version: 1.1.2(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       '@solana/spl-token':
         specifier: 'catalog:'
         version: 0.4.13(@solana/web3.js@1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.2)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.2)(utf-8-validate@5.0.10)
@@ -4043,11 +4043,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/signer-utils@1.1.2':
-    resolution: {integrity: sha512-3A8T7YwEn6gq4ukXrUGn7S/2KGLONK2GPg1v0D2IIhrrXYtHGpOy8eyY7ZRI7XZNZwsShVPW0TP74tih2bxhQg==}
-    peerDependencies:
-      '@ledgerhq/device-management-kit': ^1.0.0
 
   '@ledgerhq/ui-shared@0.2.2':
     resolution: {integrity: sha512-3ASYnyqnZFMRnySADZziM3IIJ2SRQ7lKrRPwpihhf+SsyP7TIo6o4UXMY8eYOupdTARlElS4Qpk4nRL/Ln62Ng==}
@@ -15068,10 +15063,6 @@ snapshots:
       - react-native
       - react-native-svg
       - supports-color
-
-  '@ledgerhq/signer-utils@1.1.2(@ledgerhq/device-management-kit@packages+device-management-kit)':
-    dependencies:
-      '@ledgerhq/device-management-kit': link:packages/device-management-kit
 
   '@ledgerhq/ui-shared@0.2.2': {}
 
