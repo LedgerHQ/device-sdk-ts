@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-core",
   "private": false,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "license": "Apache-2.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
