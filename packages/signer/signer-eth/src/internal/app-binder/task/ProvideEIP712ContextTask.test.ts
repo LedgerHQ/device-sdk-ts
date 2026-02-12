@@ -13,6 +13,10 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Nothing } from "purify-ts";
 
+import {
+  NetworkConfigurationType,
+  ProvideNetworkConfigurationCommand,
+} from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import {
@@ -249,6 +253,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
     // WHEN
@@ -368,14 +373,16 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
-      transactionChecks: {
-        type: ClearSignContextType.TRANSACTION_CHECK,
-        payload: "transactionCheck",
-        certificate: {
-          keyUsageNumber: 1,
-          payload: new Uint8Array([0x01, 0x02, 0x03]),
+      additionalContexts: [
+        {
+          type: ClearSignContextType.TRANSACTION_CHECK,
+          payload: "transactionCheck",
+          certificate: {
+            keyUsageNumber: 1,
+            payload: new Uint8Array([0x01, 0x02, 0x03]),
+          },
         },
-      },
+      ],
       loggerFactory: mockLoggerFactory,
     };
     // WHEN
@@ -393,6 +400,84 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand.mock.calls).toHaveLength(25);
   });
 
+  it("Send context with dynamic network", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Nothing,
+      calldatasContexts: {},
+      additionalContexts: [
+        {
+          type: ClearSignContextType.DYNAMIC_NETWORK,
+          payload: "0x010203",
+        },
+      ],
+      logger: mockLogger,
+    };
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new ProvideNetworkConfigurationCommand({
+        data: Uint8Array.from([0x00, 0x03, 0x01, 0x02, 0x03]),
+        isFirstChunk: true,
+        configurationType: NetworkConfigurationType.CONFIGURATION,
+      }),
+    );
+  });
+
+  it("Send context with dynamic network icon", async () => {
+    // GIVEN
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Nothing,
+      calldatasContexts: {},
+      additionalContexts: [
+        {
+          type: ClearSignContextType.DYNAMIC_NETWORK_ICON,
+          payload: "0x010203",
+        },
+      ],
+      logger: mockLogger,
+    };
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new ProvideNetworkConfigurationCommand({
+        data: Uint8Array.from([0x01, 0x02, 0x03]),
+        isFirstChunk: true,
+        configurationType: NetworkConfigurationType.ICON,
+      }),
+    );
+  });
+
   it("Send context with clear signing", async () => {
     // GIVEN
     const args: ProvideEIP712ContextTaskArgs = {
@@ -403,6 +488,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand
@@ -616,6 +702,7 @@ describe("ProvideEIP712ContextTask", () => {
         tokens: {},
       }),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
 
@@ -776,6 +863,7 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasContexts: {
         0: [],
       },
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
 
@@ -901,6 +989,7 @@ describe("ProvideEIP712ContextTask", () => {
         tokens: { 255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3" },
       }),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
 
@@ -955,6 +1044,7 @@ describe("ProvideEIP712ContextTask", () => {
         tokens: { 0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619" },
       }),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
 
@@ -1009,6 +1099,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
 
@@ -1051,6 +1142,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
 
@@ -1098,6 +1190,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT), // No certificate in this context
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
 
@@ -1131,6 +1224,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand.mockResolvedValueOnce(
@@ -1164,6 +1258,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
     apiMock.sendCommand
@@ -1199,6 +1294,7 @@ describe("ProvideEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
     // WHEN
@@ -1292,6 +1388,7 @@ describe("ProvideEIP712ContextTask", () => {
         },
       }),
       calldatasContexts: {},
+      additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
     // WHEN

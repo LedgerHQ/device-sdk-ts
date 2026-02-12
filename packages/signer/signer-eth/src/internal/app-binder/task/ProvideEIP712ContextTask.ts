@@ -27,6 +27,10 @@ import {
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import {
+  NetworkConfigurationType,
+  ProvideNetworkConfigurationCommand,
+} from "@internal/app-binder/command/ProvideNetworkConfigurationCommand";
 import { ProvideProxyInfoCommand } from "@internal/app-binder/command/ProvideProxyInfoCommand";
 import { ProvideTokenInformationCommand } from "@internal/app-binder/command/ProvideTokenInformationCommand";
 import { ProvideTrustedNameCommand } from "@internal/app-binder/command/ProvideTrustedNameCommand";
@@ -74,7 +78,7 @@ export type ProvideEIP712ContextTaskArgs = {
   message: Array<TypedDataValue>;
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
   calldatasContexts: Record<TypedDataCalldataIndex, ContextWithSubContexts[]>;
-  transactionChecks?: ClearSignContextSuccess;
+  additionalContexts: ClearSignContextSuccess[];
   loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
@@ -120,9 +124,9 @@ export class ProvideEIP712ContextTask {
   }
 
   async run(): ProvideEIP712ContextTaskReturnType {
-    // Provide the transaction checks first if any
-    if (this.args.transactionChecks) {
-      await this.provideContext(this.args.transactionChecks);
+    // Provide all additional contexts
+    for (const context of this.args.additionalContexts) {
+      await this.provideContext(context);
     }
 
     // Send proxy descriptor first if required
@@ -324,6 +328,29 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
+      case ClearSignContextType.DYNAMIC_NETWORK:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideNetworkConfigurationCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              configurationType: NetworkConfigurationType.CONFIGURATION,
+            }),
+        }).run();
+        break;
+      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideNetworkConfigurationCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+              configurationType: NetworkConfigurationType.ICON,
+            }),
+          withPayloadLength: false,
+        }).run();
+        break;
       case ClearSignContextType.PROXY_INFO:
         await new SendPayloadInChunksTask(this.api, {
           payload,
@@ -342,8 +369,6 @@ export class ProvideEIP712ContextTask {
       case ClearSignContextType.ENUM:
       case ClearSignContextType.TRANSACTION_INFO:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
-      case ClearSignContextType.DYNAMIC_NETWORK:
-      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
         throw new Error(

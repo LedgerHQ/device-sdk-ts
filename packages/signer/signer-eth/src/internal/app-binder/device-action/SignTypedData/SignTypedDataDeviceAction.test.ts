@@ -104,6 +104,7 @@ describe("SignTypedDataDeviceAction", () => {
       },
     }),
     calldatasContexts: {},
+    additionalContexts: [],
     loggerFactory: mockLoggerFactory,
   };
   const FROM = "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619";
