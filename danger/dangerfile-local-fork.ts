@@ -1,24 +1,7 @@
-import { danger, message, fail } from "danger";
-import {
-  checkBranches,
-  checkCommits,
-  checkChangesets,
-  getAuthor,
-} from "./helpers";
+import { danger, markdown } from "danger";
+import { runChecks, outputResults, getAuthor } from "./helpers";
 
-const author = getAuthor(danger);
-console.log("PR Actor:", author);
+console.log("PR Actor:", getAuthor(danger));
 
-const results: boolean[] = [];
-
-results.push(checkBranches(danger, fail, true));
-
-results.push(checkCommits(danger, fail, true));
-
-results.push(checkChangesets(danger, message));
-
-const successful = results.every((result) => result === true);
-
-if (successful) {
-  message("Danger: All checks passed successfully! 🎉", { icon: "✅" });
-}
+const checkResults = runChecks(danger, { fork: true, includeTitle: false });
+outputResults(checkResults, markdown);

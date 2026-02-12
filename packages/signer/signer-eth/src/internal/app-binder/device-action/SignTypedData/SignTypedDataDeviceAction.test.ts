@@ -36,8 +36,7 @@ const mockLogger = {
   error: vi.fn(),
   subscribers: [],
 };
-
-const mockLoggerFactory = () => mockLogger;
+const mockLoggerFactory = (_tag: string) => mockLogger;
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
@@ -105,7 +104,8 @@ describe("SignTypedDataDeviceAction", () => {
       },
     }),
     calldatasContexts: {},
-    logger: mockLogger,
+    additionalContexts: [],
+    loggerFactory: mockLoggerFactory,
   };
   const FROM = "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619";
 
@@ -201,7 +201,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -345,7 +344,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: true,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the dependencies to return some sample data
@@ -440,7 +438,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the providing error
@@ -552,7 +549,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the providing error
@@ -649,7 +645,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the providing error
@@ -753,7 +748,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock user rejection during SignTypedData step
@@ -875,7 +869,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         testDeviceActionStates(deviceAction, expectedStates, apiMock, {
@@ -904,7 +897,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock the providing error
@@ -989,7 +981,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock signing error that should fallback to legacy
@@ -1111,7 +1102,6 @@ describe("SignTypedDataDeviceAction", () => {
             transactionMapper: mockTransactionMapper,
             skipOpenApp: false,
           },
-          loggerFactory: mockLoggerFactory,
         });
 
         // Mock both signing methods to fail

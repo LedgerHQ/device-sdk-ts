@@ -3,7 +3,6 @@ import {
   type DeviceActionStateMachine,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -61,18 +60,6 @@ export class GetWalletAddressDeviceAction extends XStateDeviceAction<
   GetWalletAddressDAIntermediateValue,
   GetWalletAddressDAInternalState
 > {
-  constructor(args: {
-    input: GetWalletAddressDAInput;
-    inspect?: boolean;
-    loggerFactory: (tag: string) => LoggerPublisherService;
-  }) {
-    super({
-      input: args.input,
-      inspect: args.inspect,
-      logger: args.loggerFactory("GetWalletAddressDeviceAction"),
-    });
-  }
-
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<

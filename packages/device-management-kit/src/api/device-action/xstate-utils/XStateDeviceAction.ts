@@ -19,6 +19,7 @@ import {
 } from "@api/device-action/model/DeviceActionState";
 import { type DmkError } from "@api/Error";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { noopLoggerFactory } from "@api/logger-publisher/utils/noopLoggerFactory";
 
 import { type StateMachineTypes } from "./StateMachineTypes";
 
@@ -86,22 +87,37 @@ export abstract class XStateDeviceAction<
 {
   readonly input: Input;
   readonly inspect: boolean = false;
-  protected readonly logger?: LoggerPublisherService;
+  protected logger?: LoggerPublisherService;
+  protected loggerFactory?: (tag: string) => LoggerPublisherService;
 
   /**
    *
    * @param input The input for the DeviceAction
    * @param inspect If true, the state machine will be inspected in the browser
    * @param logger Optional logger for debugging. If provided, input and internal state will be logged on state transitions.
+   * @param loggerFactory Optional logger factory for creating loggers with prefixed tags. Takes precedence over logger.
    */
   constructor(args: {
     input: Input;
     inspect?: boolean;
     logger?: LoggerPublisherService;
+    loggerFactory?: (tag: string) => LoggerPublisherService;
   }) {
     this.input = args.input;
     this.inspect = Boolean(args.inspect);
     this.logger = args.logger;
+    this.loggerFactory = args.loggerFactory;
+  }
+
+  /**
+   * Returns the logger factory to use for creating loggers.
+   * Prefers the instance loggerFactory, then internalApi.loggerFactory,
+   * and falls back to a no-op logger factory if neither is available.
+   */
+  protected getLoggerFactory(
+    internalApi: InternalApi,
+  ): (tag: string) => LoggerPublisherService {
+    return this.loggerFactory ?? internalApi.loggerFactory ?? noopLoggerFactory;
   }
 
   protected abstract makeStateMachine(
@@ -118,6 +134,13 @@ export abstract class XStateDeviceAction<
     internalApi: InternalApi,
   ): ExecuteDeviceActionReturnType<Output, Error, IntermediateValue> {
     const stateMachine = this.makeStateMachine(internalApi);
+
+    // Create logger from machine ID if not explicitly provided
+    // Prefer loggerFactory (prefixed) over internalApi.loggerFactory (unprefixed)
+    if (!this.logger && stateMachine.id) {
+      this.logger = this.getLoggerFactory(internalApi)(stateMachine.id);
+    }
+
     return this._subscribeToStateMachine(stateMachine);
   }
 

@@ -32,6 +32,7 @@ export type CliConfig = {
   plugin?: string;
   pluginVersion?: string;
   screenshotFolderPath?: string;
+  customApp?: string;
 
   // config.signer
   skipCal?: boolean;
@@ -85,6 +86,7 @@ export class EthereumTransactionTesterCli {
         plugin: config.plugin,
         pluginVersion: config.pluginVersion,
         screenshotPath: config.screenshotFolderPath,
+        customAppPath: config.customApp,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -256,6 +258,10 @@ export class EthereumTransactionTesterCli {
       .option(
         "--screenshot-folder-path <path>",
         "Save screenshots to a folder during transaction signing",
+      )
+      .option(
+        "--custom-app <path>",
+        "Custom app file path. Relative paths resolve to COIN_APPS_PATH, absolute paths are mounted automatically. Bypasses automatic Ethereum app version resolution.",
       )
       .option(
         "--log-level <level>",

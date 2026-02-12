@@ -14,6 +14,8 @@ const mockLogger = {
   subscribers: [],
 };
 
+const mockLoggerFactory = (_tag: string) => mockLogger;
+
 describe("SignTypedDataLegacyTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
 
@@ -68,7 +70,7 @@ describe("SignTypedDataLegacyTask", () => {
       apiMock,
       TEST_DATA,
       "44'/60'/0'/0/0",
-      mockLogger,
+      mockLoggerFactory,
     );
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({
@@ -113,7 +115,7 @@ describe("SignTypedDataLegacyTask", () => {
         primaryType: "Wat?",
       },
       "44'/60'/0'/0/0",
-      mockLogger,
+      mockLoggerFactory,
     );
     apiMock.sendCommand.mockResolvedValue(
       CommandResultFactory({

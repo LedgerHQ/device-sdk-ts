@@ -55,3 +55,22 @@ Refer to these resources to help you select appropriate emojis and follow the co
 For more details or troubleshooting, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
 
 Commits that don't follow this convention will fail CI and block merging.
+
+### Signed commits
+
+**All commits must be signed** to be merged into protected branches (`develop` and `main`). This is enforced by GitHub branch rulesets.
+
+Make sure you have commit signing configured:
+
+```bash
+git config --global commit.gpgsign true
+```
+
+If you have unsigned commits, re-sign them before pushing:
+
+```bash
+git rebase -i HEAD~N --exec "git commit --amend --no-edit -S"
+git push --force-with-lease
+```
+
+See [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md#signed-commits) for setup instructions.

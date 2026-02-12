@@ -7,10 +7,16 @@ import {
   type CommandResult,
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
-import { type SolanaAppErrorCodes } from "./utils/SolanaApplicationErrors";
+import {
+  SOLANA_APP_ERRORS,
+  SolanaAppCommandErrorFactory,
+  type SolanaAppErrorCodes,
+} from "./utils/SolanaApplicationErrors";
 
 export const CLA = 0xe0;
 export const INS = 0x07;
@@ -31,6 +37,11 @@ export class SignOffChainMessageCommand
     Command<SignOffChainRawResponse, ChunkableCommandArgs, SolanaAppErrorCodes>
 {
   readonly name = "signOffChainMessage";
+  private readonly errorHelper = new CommandErrorHelper<
+    SignOffChainRawResponse,
+    SolanaAppErrorCodes
+  >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
+
   constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
@@ -51,15 +62,19 @@ export class SignOffChainMessageCommand
   parseResponse(
     response: ApduResponse,
   ): CommandResult<SignOffChainRawResponse, SolanaAppErrorCodes> {
-    const parser = new ApduParser(response);
-    const sig = parser.extractFieldByLength(SIGNATURE_LENGTH);
+    return Maybe.fromNullable(
+      this.errorHelper.getError(response),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(response);
+      const sig = parser.extractFieldByLength(SIGNATURE_LENGTH);
 
-    // for intermediate chunks, the device returns 0 bytes of data with 0x9000.
-    // only the last chunk yields the 64-byte signature.
-    if (!sig || sig.length !== SIGNATURE_LENGTH) {
-      return CommandResultFactory({ data: new Uint8Array(0) });
-    }
+      // for intermediate chunks, the device returns 0 bytes of data with 0x9000.
+      // only the last chunk yields the 64-byte signature.
+      if (!sig || sig.length !== SIGNATURE_LENGTH) {
+        return CommandResultFactory({ data: new Uint8Array(0) });
+      }
 
-    return CommandResultFactory({ data: sig });
+      return CommandResultFactory({ data: sig });
+    });
   }
 }

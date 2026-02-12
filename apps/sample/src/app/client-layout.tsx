@@ -15,7 +15,9 @@ import { Flex, StyleProvider } from "@ledgerhq/react-ui";
 import dynamic from "next/dynamic";
 import styled, { type DefaultTheme } from "styled-components";
 
+import { Notifications } from "@/components/Notifications";
 import { Sidebar } from "@/components/Sidebar";
+import { useUpdateConnectionsRefresherOptions } from "@/hooks/useUpdateConnectionsRefresherOptions";
 import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
@@ -51,11 +53,13 @@ const PageContainer = styled(Flex)`
 
 const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
   useUpdateDeviceSessions();
+  useUpdateConnectionsRefresherOptions();
   return (
     <Root>
       <Sidebar />
       <PageContainer>{children}</PageContainer>
       <FloatingIcon />
+      <Notifications />
     </Root>
   );
 };

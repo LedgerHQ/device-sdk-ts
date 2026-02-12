@@ -41,7 +41,7 @@ describe("TrustedNameContextLoader", () => {
     vi.restoreAllMocks();
     vi.spyOn(
       mockTrustedNameDataSource,
-      "getDomainNamePayload",
+      "getTrustedNamePayload",
     ).mockResolvedValue(
       Right({
         data: "payload",
@@ -54,8 +54,7 @@ describe("TrustedNameContextLoader", () => {
   describe("canHandle function", () => {
     const validInput: TrustedNameContextInput = {
       chainId: 1,
-      domain: "hello.eth",
-      challenge: "challenge",
+      to: "0x1234567890abcdef1234567890abcdef12345678",
       deviceModelId: DeviceModelId.STAX,
     };
 
@@ -85,8 +84,7 @@ describe("TrustedNameContextLoader", () => {
 
     it.each([
       [{ ...validInput, chainId: undefined }, "missing chainId"],
-      [{ ...validInput, domain: undefined }, "missing domain"],
-      [{ ...validInput, challenge: undefined }, "missing challenge"],
+      [{ ...validInput, to: undefined }, "missing to"],
       [{ ...validInput, deviceModelId: undefined }, "missing device model"],
     ])("should return false for %s", (input, _description) => {
       expect(loader.canHandle(input, [ClearSignContextType.TRUSTED_NAME])).toBe(
@@ -95,12 +93,10 @@ describe("TrustedNameContextLoader", () => {
     });
 
     it.each([
-      [{ ...validInput, domain: "" }, "empty domain"],
-      [{ ...validInput, challenge: "" }, "empty challenge"],
+      [{ ...validInput, to: "0x" }, "empty to address (0x)"],
+      [{ ...validInput, to: "not-hex" }, "non-hex to address"],
       [{ ...validInput, chainId: "1" }, "string chainId"],
       [{ ...validInput, chainId: null }, "null chainId"],
-      [{ ...validInput, domain: 123 }, "numeric domain"],
-      [{ ...validInput, challenge: 123 }, "numeric challenge"],
     ])("should return false for %s", (input, _description) => {
       expect(loader.canHandle(input, [ClearSignContextType.TRUSTED_NAME])).toBe(
         false,
@@ -109,57 +105,27 @@ describe("TrustedNameContextLoader", () => {
   });
 
   describe("load function", () => {
-    it("should return an error when domain > max length", async () => {
-      const input: TrustedNameContextInput = {
-        chainId: 1,
-        domain: "maxlength-maxlength-maxlength-maxlength-maxlength-maxlength",
-        challenge: "challenge",
-        deviceModelId: DeviceModelId.STAX,
-      };
-
-      const result = await loader.load(input);
-
-      expect(mockCertificateLoader.loadCertificate).not.toHaveBeenCalled();
-      expect(result).toEqual([
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("[ContextModule] TrustedNameLoader: invalid domain"),
-        },
-      ]);
-    });
-
-    it("should return an error when domain is not valid", async () => {
-      const input: TrustedNameContextInput = {
-        chainId: 1,
-        domain: "hello👋",
-        challenge: "challenge",
-        deviceModelId: DeviceModelId.STAX,
-      };
-
-      const result = await loader.load(input);
-
-      expect(mockCertificateLoader.loadCertificate).not.toHaveBeenCalled();
-      expect(result).toEqual([
-        {
-          type: ClearSignContextType.ERROR,
-          error: new Error("[ContextModule] TrustedNameLoader: invalid domain"),
-        },
-      ]);
-    });
-
     it("should return a payload", async () => {
       vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
         mockCertificate,
       );
       const input: TrustedNameContextInput = {
         chainId: 1,
-        domain: "hello.eth",
-        challenge: "challenge",
+        to: "0x1234567890abcdef1234567890abcdef12345678",
         deviceModelId: DeviceModelId.STAX,
       };
 
       const result = await loader.load(input);
 
+      expect(
+        mockTrustedNameDataSource.getTrustedNamePayload,
+      ).toHaveBeenCalledWith({
+        chainId: 1,
+        address: "0x1234567890abcdef1234567890abcdef12345678",
+        challenge: "",
+        types: ["eoa"],
+        sources: ["ens"],
+      });
       expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
         keyId: "testKeyId",
         keyUsage: "testKeyUsage",
@@ -178,15 +144,14 @@ describe("TrustedNameContextLoader", () => {
       // GIVEN
       const input: TrustedNameContextInput = {
         chainId: 1,
-        domain: "hello.eth",
-        challenge: "challenge",
+        to: "0x1234567890abcdef1234567890abcdef12345678",
         deviceModelId: DeviceModelId.STAX,
       };
 
       // WHEN
       vi.spyOn(
         mockTrustedNameDataSource,
-        "getDomainNamePayload",
+        "getTrustedNamePayload",
       ).mockResolvedValue(Left(new Error("error")));
       const result = await loader.load(input);
 

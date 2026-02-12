@@ -16,6 +16,7 @@ const PACKAGE_DISPLAY_NAMES = {
   "@ledgerhq/signer-utils": "Signer Utils",
   "@ledgerhq/speculos-device-controller": "Speculos Device Controller",
   "@ledgerhq/device-transport-kit-mockserver": "Transport Mockserver",
+  "@ledgerhq/device-transport-kit-node-hid": "Transport Node HID",
   "@ledgerhq/device-transport-kit-react-native-ble": "Transport RN BLE",
   "@ledgerhq/device-transport-kit-react-native-hid": "Transport RN HID",
   "@ledgerhq/device-transport-kit-speculos": "Transport Speculos",
@@ -24,6 +25,14 @@ const PACKAGE_DISPLAY_NAMES = {
   "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol":
     "Keyring Protocol",
   "@ledgerhq/device-management-kit-ui": "DMK UI",
+  "@ledgerhq/device-management-kit-devtools-core": "DevTools Core",
+  "@ledgerhq/device-management-kit-devtools-rozenite": "DevTools Rozenite",
+  "@ledgerhq/device-management-kit-devtools-ui": "DevTools UI",
+  "@ledgerhq/device-management-kit-devtools-websocket-common":
+    "DevTools Websocket Common",
+  "@ledgerhq/device-management-kit-devtools-websocket-connector":
+    "DevTools Websocket Connector",
+  "@ledgerhq/dmk-ledger-wallet": "Ledger Wallet",
 };
 
 /**

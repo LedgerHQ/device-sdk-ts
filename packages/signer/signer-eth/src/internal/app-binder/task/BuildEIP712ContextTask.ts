@@ -43,7 +43,7 @@ export class BuildEIP712ContextTask {
     private readonly derivationPath: string,
     private readonly appConfig: GetConfigCommandResponse,
     private readonly from: string,
-    private readonly logger: LoggerPublisherService,
+    private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     private readonly buildFullContextFactory = (
       api: InternalApi,
       args: BuildFullContextsTaskArgs,
@@ -61,7 +61,7 @@ export class BuildEIP712ContextTask {
 
     const deviceState = this.api.getDeviceSessionState();
     const deviceModelId = deviceState.deviceModelId;
-    const transactionChecks = await this.getTransactionChecks(deviceModelId);
+    const additionalContexts = await this.getAdditionalContexts(deviceModelId);
 
     // Get clear signing context, if any
     let clearSignContext: Maybe<TypedDataClearSignContextSuccess> = Nothing;
@@ -111,39 +111,48 @@ export class BuildEIP712ContextTask {
     // Return the args for provide context task
     const provideTaskArgs: ProvideEIP712ContextTaskArgs = {
       derivationPath: this.derivationPath,
-      transactionChecks,
+      additionalContexts,
       types,
       domain,
       message,
       clearSignContext,
       calldatasContexts,
       deviceModelId: deviceState.deviceModelId,
-      logger: this.logger,
+      loggerFactory: this.loggerFactory,
     };
     return provideTaskArgs;
   }
 
-  private async getTransactionChecks(
+  private async getAdditionalContexts(
     deviceModelId: DeviceModelId,
-  ): Promise<ClearSignContextSuccess | undefined> {
-    if (!this.appConfig.web3ChecksEnabled) {
-      return undefined;
+  ): Promise<ClearSignContextSuccess[]> {
+    // Determine context types to be fetched
+    const contextTypes: ClearSignContextType[] = [];
+    if (this.appConfig.web3ChecksEnabled) {
+      contextTypes.push(ClearSignContextType.TRANSACTION_CHECK);
     }
+    if (this.data.domain.chainId !== undefined) {
+      contextTypes.push(
+        ClearSignContextType.DYNAMIC_NETWORK,
+        ClearSignContextType.DYNAMIC_NETWORK_ICON,
+      );
+    }
+
+    // Fetch the contexts
     const contexts = await this.contextModule.getContexts(
       {
         deviceModelId,
         data: this.data,
         from: this.from,
+        chainId: this.data.domain.chainId || 0,
       },
-      [ClearSignContextType.TRANSACTION_CHECK],
+      contextTypes,
     );
-    if (
-      contexts.length > 0 &&
-      contexts[0]?.type === ClearSignContextType.TRANSACTION_CHECK
-    ) {
-      return contexts[0] as ClearSignContextSuccess;
-    }
-    return undefined;
+
+    // Filter valid contexts
+    return contexts.filter((context) =>
+      contextTypes.includes(context.type),
+    ) as ClearSignContextSuccess[];
   }
 
   private getClearSignVersion(
@@ -194,9 +203,15 @@ export class BuildEIP712ContextTask {
         derivationPath: this.derivationPath,
         subset,
         deviceModelId: deviceState.deviceModelId,
-        logger: this.logger,
+        loggerFactory: this.loggerFactory,
       }).run();
-      if (calldataContext.clearSigningType === ClearSigningType.EIP7730) {
+      if (
+        calldataContext.clearSigningType === ClearSigningType.EIP7730 ||
+        (calldataContext.clearSigningType === ClearSigningType.BASIC &&
+          calldataContext.clearSignContexts.every(
+            ({ context }) => context.type === ClearSignContextType.TRUSTED_NAME,
+          ))
+      ) {
         calldatasContexts[calldataIndex] = calldataContext.clearSignContexts;
       }
     }

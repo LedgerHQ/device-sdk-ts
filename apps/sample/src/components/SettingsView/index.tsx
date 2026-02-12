@@ -5,13 +5,16 @@ import { Block } from "@/components/Block";
 import { PageWithHeader } from "@/components/PageWithHeader";
 
 import { AppProviderSetting } from "./AppProviderSetting";
+import { BypassIntentQueueSetting } from "./BypassIntentQueueSetting";
 import { CalBranchSetting } from "./CalBranchSetting";
 import { CalModeSetting } from "./CalModeSetting";
 import { CalUrlSetting } from "./CalUrlSetting";
+import { DatasourceProxySetting } from "./DatasourceProxySetting";
 import { MetadataServiceUrlSetting } from "./MetadataServiceUrlSetting";
 import { MockServerToggleSetting } from "./MockServerToggleSetting";
 import { MockServerUrlSetting } from "./MockServerUrlSetting";
 import { OriginTokenSetting } from "./OriginTokenSetting";
+import { PollingIntervalSetting } from "./PollingIntervalSetting";
 import { SectionTitle } from "./SectionTitle";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
 import { SpeculosUrlSetting } from "./SpeculosUrlSetting";
@@ -27,6 +30,8 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Device Management Kit</SectionTitle>
           <AppProviderSetting />
+          <PollingIntervalSetting />
+          <BypassIntentQueueSetting />
         </SectionContainer>
 
         <SectionContainer>
@@ -58,6 +63,11 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Web3Checks</SectionTitle>
           <Web3ChecksUrlSetting />
+        </SectionContainer>
+
+        <SectionContainer>
+          <SectionTitle>Ethereum Signer</SectionTitle>
+          <DatasourceProxySetting />
         </SectionContainer>
       </Flex>
     </PageWithHeader>

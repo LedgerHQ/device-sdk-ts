@@ -1,4 +1,7 @@
-import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  type LoggerPublisherService,
+  noopLoggerFactory,
+} from "@ledgerhq/device-management-kit";
 
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
@@ -19,6 +22,27 @@ const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
 
+export const DEFAULT_CONFIG: ContextModuleConfig = {
+  cal: {
+    url: DEFAULT_CAL_URL,
+    mode: "prod",
+    branch: "main",
+  },
+  web3checks: {
+    url: DEFAULT_WEB3_CHECKS_URL,
+  },
+  metadataServiceDomain: {
+    url: DEFAULT_METADATA_SERVICE_DOMAIN,
+  },
+  defaultLoaders: true,
+  customLoaders: [],
+  defaultFieldLoaders: true,
+  customFieldLoaders: [],
+  customTypedDataLoader: undefined,
+  customSolanaLoader: undefined,
+  loggerFactory: noopLoggerFactory,
+};
+
 export class ContextModuleBuilder {
   private config: ContextModuleConfig;
   private originToken?: string;
@@ -27,25 +51,16 @@ export class ContextModuleBuilder {
     this.originToken = originToken;
 
     this.config = {
-      cal: {
-        url: DEFAULT_CAL_URL,
-        mode: "prod",
-        branch: "main",
-      },
-      web3checks: {
-        url: DEFAULT_WEB3_CHECKS_URL,
-      },
-      metadataServiceDomain: {
-        url: DEFAULT_METADATA_SERVICE_DOMAIN,
-      },
-      defaultLoaders: true,
-      customLoaders: [],
-      defaultFieldLoaders: true,
-      customFieldLoaders: [],
-      customTypedDataLoader: undefined,
-      customSolanaLoader: undefined,
-      loggerFactory,
+      ...DEFAULT_CONFIG,
+      cal: { ...DEFAULT_CONFIG.cal },
+      web3checks: { ...DEFAULT_CONFIG.web3checks },
+      metadataServiceDomain: { ...DEFAULT_CONFIG.metadataServiceDomain },
+      customLoaders: [...DEFAULT_CONFIG.customLoaders],
+      customFieldLoaders: [...DEFAULT_CONFIG.customFieldLoaders],
     };
+    if (loggerFactory) {
+      this.config.loggerFactory = loggerFactory;
+    }
   }
 
   /**

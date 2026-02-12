@@ -1,32 +1,30 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
-import { speculosIdentifier } from "@ledgerhq/device-transport-kit-speculos";
-import { webHidIdentifier } from "@ledgerhq/device-transport-kit-web-hid";
 import { Flex, Switch } from "@ledgerhq/react-ui";
 
-import { selectTransport } from "@/state/settings/selectors";
-import { setTransport } from "@/state/settings/slice";
+import { type TransportType } from "@/state/settings/schema";
+import { selectTransportType } from "@/state/settings/selectors";
+import { setTransportType } from "@/state/settings/slice";
 
 import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const SpeculosToggleSetting: React.FC = () => {
-  const transport = useSelector(selectTransport);
+  const transportType = useSelector(selectTransportType);
   const dispatch = useDispatch();
 
-  const speculosEnabled = transport === speculosIdentifier;
+  const speculosEnabled = transportType === "speculos";
 
-  const setTransportFn = useCallback(
-    (value: TransportIdentifier) => {
-      dispatch(setTransport({ transport: value }));
+  const setTransportTypeFn = useCallback(
+    (value: TransportType) => {
+      dispatch(setTransportType({ transportType: value }));
     },
     [dispatch],
   );
 
   const onToggle = useCallback(() => {
-    setTransportFn(speculosEnabled ? webHidIdentifier : speculosIdentifier);
-  }, [setTransportFn, speculosEnabled]);
+    setTransportTypeFn(speculosEnabled ? "default" : "speculos");
+  }, [setTransportTypeFn, speculosEnabled]);
 
   return (
     <SettingBox>
@@ -40,8 +38,8 @@ export const SpeculosToggleSetting: React.FC = () => {
         />
       </Flex>
       <ResetSettingCTA
-        stateSelector={selectTransport}
-        setStateAction={setTransportFn}
+        stateSelector={selectTransportType}
+        setStateAction={setTransportTypeFn}
       />
     </SettingBox>
   );

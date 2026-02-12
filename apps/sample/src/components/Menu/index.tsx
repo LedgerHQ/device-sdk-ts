@@ -1,11 +1,10 @@
 import React from "react";
 import { useSelector } from "react-redux";
-import { mockserverIdentifier } from "@ledgerhq/device-transport-kit-mockserver";
 import { Flex, Icons, Link } from "@ledgerhq/react-ui";
 import { useRouter } from "next/navigation";
 import styled from "styled-components";
 
-import { selectTransport } from "@/state/settings/selectors";
+import { selectTransportType } from "@/state/settings/selectors";
 
 const MenuItem = styled(Flex).attrs({ p: 3, pl: 5 })`
   align-items: center;
@@ -19,12 +18,12 @@ const MenuTitle = styled(Link).attrs({
 
 export const Menu: React.FC = () => {
   const router = useRouter();
-  const transport = useSelector(selectTransport);
+  const transportType = useSelector(selectTransportType);
 
   return (
     <>
       <MenuItem>
-        <Icons.WirelessCharging />
+        <Icons.TransferHorizontal />
         <MenuTitle
           data-testid="CTA_route-to-/apdu"
           onClick={() => router.push("/apdu")}
@@ -33,7 +32,10 @@ export const Menu: React.FC = () => {
         </MenuTitle>
       </MenuItem>
       <MenuItem>
-        <Icons.LedgerDevices />
+        {/* sorry for that blasphemy but the original icon is upside down and does not make logical sense */}
+        <Flex style={{ transform: "scaleY(-1)" }}>
+          <Icons.Protocol />
+        </Flex>
         <MenuTitle
           data-testid="CTA_route-to-/commands"
           onClick={() => router.push("/commands")}
@@ -50,6 +52,15 @@ export const Menu: React.FC = () => {
           Device Actions
         </MenuTitle>
       </MenuItem>
+      <MenuItem>
+        <Icons.LedgerLogo />
+        <MenuTitle
+          data-testid="CTA_route-to-/ledger-wallet"
+          onClick={() => router.push("/ledger-wallet")}
+        >
+          Ledger Wallet
+        </MenuTitle>
+      </MenuItem>
 
       <MenuItem>
         <Icons.Signature />
@@ -57,7 +68,7 @@ export const Menu: React.FC = () => {
           data-testid="CTA_route-to-/signers"
           onClick={() => router.push("/signers")}
         >
-          Signers
+          Signer Kits
         </MenuTitle>
       </MenuItem>
       <MenuItem>
@@ -82,7 +93,7 @@ export const Menu: React.FC = () => {
         <Icons.SettingsAlt2 />
         <MenuTitle onClick={() => router.push("/settings")}>Settings</MenuTitle>
       </MenuItem>
-      {transport === mockserverIdentifier && (
+      {transportType === "mockserver" && (
         <MenuItem>
           <Icons.Settings />
           <MenuTitle

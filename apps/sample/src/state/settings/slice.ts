@@ -1,12 +1,13 @@
 import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
-import { type TransportIdentifier } from "@ledgerhq/device-management-kit";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import {
   type CalBranch,
   type CalMode,
+  type DatasourceProxy,
   initialState,
   type SettingsState,
+  type TransportType,
 } from "./schema";
 
 export const settingsSlice = createSlice({
@@ -15,11 +16,11 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     // Transport settings
-    setTransport: (
+    setTransportType: (
       state,
-      action: PayloadAction<{ transport: TransportIdentifier }>,
+      action: PayloadAction<{ transportType: TransportType }>,
     ) => {
-      state.transport = action.payload.transport;
+      state.transportType = action.payload.transportType;
     },
     setMockServerUrl: (
       state,
@@ -40,6 +41,18 @@ export const settingsSlice = createSlice({
     // DMK settings
     setAppProvider: (state, action: PayloadAction<{ appProvider: number }>) => {
       state.appProvider = action.payload.appProvider;
+    },
+    setPollingInterval: (
+      state,
+      action: PayloadAction<{ pollingInterval: number }>,
+    ) => {
+      state.pollingInterval = action.payload.pollingInterval;
+    },
+    setBypassIntentQueue: (
+      state,
+      action: PayloadAction<{ bypassIntentQueue: boolean }>,
+    ) => {
+      state.bypassIntentQueue = action.payload.bypassIntentQueue;
     },
 
     // CAL config
@@ -87,6 +100,17 @@ export const settingsSlice = createSlice({
       };
     },
 
+    // Datasource config
+    setDatasourceProxy: (
+      state,
+      action: PayloadAction<{ datasourceProxy: DatasourceProxy }>,
+    ) => {
+      state.datasourceConfig = {
+        ...state.datasourceConfig,
+        proxy: action.payload.datasourceProxy,
+      };
+    },
+
     // Hydration action for loading persisted settings
     hydrateSettings: (_state, action: PayloadAction<SettingsState>) => {
       return action.payload;
@@ -95,11 +119,13 @@ export const settingsSlice = createSlice({
 });
 
 export const {
-  setTransport,
+  setTransportType,
   setMockServerUrl,
   setSpeculosUrl,
   setSpeculosVncUrl,
   setAppProvider,
+  setPollingInterval,
+  setBypassIntentQueue,
   setCalConfig,
   setCalUrl,
   setCalMode,
@@ -107,6 +133,7 @@ export const {
   setOriginToken,
   setWeb3ChecksUrl,
   setMetadataServiceUrl,
+  setDatasourceProxy,
   hydrateSettings,
 } = settingsSlice.actions;
 

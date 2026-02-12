@@ -4,6 +4,7 @@ import {
   type DeviceActionIntermediateValue,
   type DeviceActionState,
   DeviceActionStatus,
+  type DeviceModelId,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
@@ -16,6 +17,12 @@ export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
   args: Record<string, FieldType>;
   date: Date;
   id: number;
+  /** Optional custom component to render the successful output */
+  OutputComponent?: React.FC<{
+    output: Output;
+    deviceModelId: DeviceModelId;
+  }>;
+  deviceModelId?: DeviceModelId;
 } & (
   | {
       deviceActionState: DeviceActionState<Output, Error, IntermediateValue>;
@@ -50,7 +57,7 @@ function bufferStringifyReplacer(_key: string, value: unknown): unknown {
 /**
  * Component to display an event emitted by a device action.
  */
-export function DeviceActionResponse<
+function DeviceActionResponseInternal<
   Output,
   Error,
   IntermediateValue extends DeviceActionIntermediateValue,
@@ -59,9 +66,19 @@ export function DeviceActionResponse<
     isLatest: boolean;
   },
 ) {
-  const { args, date, isLatest, id } = props;
+  const { args, date, isLatest, id, OutputComponent, deviceModelId } = props;
 
   const isError = "error" in props;
+
+  // Check if we have a completed state with custom output component
+  const showCustomOutput =
+    !isError &&
+    "deviceActionState" in props &&
+    props.deviceActionState.status === DeviceActionStatus.Completed &&
+    OutputComponent &&
+    deviceModelId &&
+    "output" in props.deviceActionState &&
+    props.deviceActionState.output !== undefined;
 
   return (
     <Flex
@@ -87,30 +104,47 @@ export function DeviceActionResponse<
           {isError ? "Error" : ""}
         </TooltipTitle>
       </Tooltip>
-      <Text
-        variant="body"
-        fontWeight="regular"
-        color={
-          deviceActionStatusToColor[
-            isError ? DeviceActionStatus.Error : props.deviceActionState.status
-          ]
-        }
-        style={{
-          fontStyle: "normal",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-        }}
-      >
-        {isError
-          ? inspect(props.error, { depth: null })
-          : props.deviceActionState.status === DeviceActionStatus.Error
-            ? inspect(props.deviceActionState.error, { depth: null })
-            : JSON.stringify(
-                props.deviceActionState,
-                bufferStringifyReplacer,
-                2,
-              )}
-      </Text>
+      {showCustomOutput ? (
+        <Flex flexDirection="column" mt={2} width="100%">
+          <Text variant="small" color="success.c80" mb={2}>
+            Status: Completed
+          </Text>
+          <OutputComponent
+            output={
+              (props as { deviceActionState: { output: Output } })
+                .deviceActionState.output
+            }
+            deviceModelId={deviceModelId!}
+          />
+        </Flex>
+      ) : (
+        <Text
+          variant="body"
+          fontWeight="regular"
+          color={
+            deviceActionStatusToColor[
+              isError
+                ? DeviceActionStatus.Error
+                : props.deviceActionState.status
+            ]
+          }
+          style={{
+            fontStyle: "normal",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          {isError
+            ? inspect(props.error, { depth: null })
+            : props.deviceActionState.status === DeviceActionStatus.Error
+              ? inspect(props.deviceActionState.error, { depth: null })
+              : JSON.stringify(
+                  props.deviceActionState,
+                  bufferStringifyReplacer,
+                  2,
+                )}
+        </Text>
+      )}
       {!isError &&
       props.deviceActionState.status === DeviceActionStatus.Pending ? (
         props.deviceActionState.intermediateValue?.requiredUserInteraction !==
@@ -130,3 +164,7 @@ export function DeviceActionResponse<
     </Flex>
   );
 }
+
+export const DeviceActionResponse = React.memo(
+  DeviceActionResponseInternal,
+) as typeof DeviceActionResponseInternal;

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { createContext, type PropsWithChildren, useContext } from "react";
 import { useSelector } from "react-redux";
 import {
@@ -7,125 +7,61 @@ import {
   DeviceManagementKitBuilder,
   WebLogsExporterLogger,
 } from "@ledgerhq/device-management-kit";
-import { DevToolsLogger } from "@ledgerhq/device-management-kit-devtools-core";
+import {
+  DevToolsDmkInspector,
+  DevToolsLogger,
+} from "@ledgerhq/device-management-kit-devtools-core";
 import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
-import { DevtoolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
-import {
-  mockserverIdentifier,
-  mockserverTransportFactory,
-} from "@ledgerhq/device-transport-kit-mockserver";
-import {
-  speculosIdentifier,
-  speculosTransportFactory,
-} from "@ledgerhq/device-transport-kit-speculos";
-import { webBleTransportFactory } from "@ledgerhq/device-transport-kit-web-ble";
-import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
+import { DevToolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
 
-import { useHasChanged } from "@/hooks/useHasChanged";
+import { type TransportConfig } from "@/state/settings/schema";
 import {
   selectAppProvider,
-  selectMockServerUrl,
-  selectSpeculosUrl,
-  selectTransport,
+  selectTransportConfig,
 } from "@/state/settings/selectors";
+
+import { getTransportFactoriesForConfig } from "./transportConfig";
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
-function buildDevToolsLogger() {
-  const devToolsWebSocketConnector =
-    DevtoolsWebSocketConnector.getInstance().connect({
-      url: DEFAULT_CLIENT_WS_URL,
-    });
-  return new DevToolsLogger(devToolsWebSocketConnector);
-}
+// Module-level singletons (created once at module load)
+const devToolsConnector = DevToolsWebSocketConnector.getInstance().connect({
+  url: DEFAULT_CLIENT_WS_URL,
+});
+const devToolsLogger = new DevToolsLogger(devToolsConnector);
+const logsExporter = new WebLogsExporterLogger();
 
-function buildDefaultDmk(
-  logsExporter: WebLogsExporterLogger,
-  devToolsLogger: DevToolsLogger,
-) {
-  return new DeviceManagementKitBuilder()
-    .addTransport(webHidTransportFactory)
-    .addTransport(webBleTransportFactory)
+function buildDmk(transportConfig: TransportConfig) {
+  const { factories, config } = getTransportFactoriesForConfig(transportConfig);
+
+  const builder = new DeviceManagementKitBuilder()
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
-    .addLogger(devToolsLogger)
+    .addLogger(devToolsLogger);
 
-    .build();
-}
+  for (const factory of factories) {
+    builder.addTransport(factory);
+  }
 
-//TODO add speculos URL to config
-function buildSpeculosDmk(
-  logsExporter: WebLogsExporterLogger,
-  devToolsLogger: DevToolsLogger,
-  speculosUrl?: string,
-) {
-  return new DeviceManagementKitBuilder()
-    .addTransport(speculosTransportFactory(speculosUrl))
-    .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
-    .addLogger(devToolsLogger)
-    .build();
-}
+  if (config) {
+    builder.addConfig(config);
+  }
 
-function buildMockDmk(
-  url: string,
-  logsExporter: WebLogsExporterLogger,
-  devToolsLogger: DevToolsLogger,
-) {
-  return new DeviceManagementKitBuilder()
-    .addTransport(mockserverTransportFactory)
-    .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
-    .addLogger(devToolsLogger)
-    .addConfig({ mockUrl: url })
-    .build();
+  return builder.build();
 }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const transport = useSelector(selectTransport);
-  const mockServerUrl = useSelector(selectMockServerUrl);
-  const speculosUrl = useSelector(selectSpeculosUrl);
+  const transportConfig = useSelector(selectTransportConfig);
   const appProvider = useSelector(selectAppProvider);
 
-  const mockServerEnabled = transport === mockserverIdentifier;
-  const speculosEnabled = transport === speculosIdentifier;
+  const dmk = useMemo(() => buildDmk(transportConfig), [transportConfig]);
 
-  const devToolsLogger = useRef<DevToolsLogger | null>(null);
-  if (devToolsLogger.current === null) {
-    devToolsLogger.current = buildDevToolsLogger();
-  }
-
-  const [state, setState] = useState(() => {
-    const logsExporter = new WebLogsExporterLogger();
-    const dmk = speculosEnabled
-      ? buildSpeculosDmk(logsExporter, devToolsLogger.current!, speculosUrl)
-      : mockServerEnabled
-        ? buildMockDmk(mockServerUrl, logsExporter, devToolsLogger.current!)
-        : buildDefaultDmk(logsExporter, devToolsLogger.current!);
-    return { dmk, logsExporter };
-  });
-
-  const mockServerEnabledChanged = useHasChanged(mockServerEnabled);
-  const mockServerUrlChanged = useHasChanged(mockServerUrl);
-  const speculosEnabledChanged = useHasChanged(speculosEnabled);
-
-  if (
-    mockServerEnabledChanged ||
-    mockServerUrlChanged ||
-    speculosEnabledChanged
-  ) {
-    setState(({ logsExporter }) => {
-      return {
-        dmk: speculosEnabled
-          ? buildSpeculosDmk(logsExporter, devToolsLogger.current!, speculosUrl)
-          : mockServerEnabled
-            ? buildMockDmk(mockServerUrl, logsExporter, devToolsLogger.current!)
-            : buildDefaultDmk(logsExporter, devToolsLogger.current!),
-        logsExporter,
-      };
-    });
-  }
+  // Create inspector in useEffect to ensure proper lifecycle handling
+  useEffect(() => {
+    const inspector = new DevToolsDmkInspector(devToolsConnector, dmk);
+    return () => inspector.destroy();
+  }, [dmk]);
 
   // Sync appProvider to DMK when it changes
   const isFirstRender = useRef(true);
@@ -134,18 +70,17 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
       isFirstRender.current = false;
       return;
     }
-    state.dmk.setProvider(appProvider);
-  }, [appProvider, state.dmk]);
+    dmk.setProvider(appProvider);
+  }, [appProvider, dmk]);
 
+  // Cleanup on DMK change
   useEffect(() => {
-    return () => {
-      state.dmk.close();
-    };
-  }, [state.dmk]);
+    return () => dmk.close();
+  }, [dmk]);
 
   return (
-    <DmkContext.Provider value={state.dmk}>
-      <LogsExporterContext.Provider value={state.logsExporter}>
+    <DmkContext.Provider value={dmk}>
+      <LogsExporterContext.Provider value={logsExporter}>
         {children}
       </LogsExporterContext.Provider>
     </DmkContext.Provider>
@@ -160,13 +95,13 @@ export const useDmk = (): DeviceManagementKit => {
 };
 
 export function useExportLogsCallback() {
-  const logsExporter = useContext(LogsExporterContext);
-  if (logsExporter === null) {
+  const contextLogsExporter = useContext(LogsExporterContext);
+  if (contextLogsExporter === null) {
     throw new Error(
       "useExportLogsCallback must be used within LogsExporterContext.Provider",
     );
   }
   return useCallback(() => {
-    logsExporter.exportLogsToJSON();
-  }, [logsExporter]);
+    contextLogsExporter.exportLogsToJSON();
+  }, [contextLogsExporter]);
 }

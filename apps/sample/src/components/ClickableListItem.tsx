@@ -27,6 +27,7 @@ export const ClickableListItem: React.FC<
       p={6}
       backgroundColor={"background.card"}
       borderRadius={2}
+      columnGap={4}
       onClick={onClick}
       data-testid={`CTA_command-${title}`}
       {...styleProps}

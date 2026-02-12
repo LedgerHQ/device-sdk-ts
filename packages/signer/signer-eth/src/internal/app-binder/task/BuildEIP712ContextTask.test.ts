@@ -34,6 +34,8 @@ const mockLogger = {
   subscribers: [],
 };
 
+const mockLoggerFactory = (_tag: string) => mockLogger;
+
 describe("BuildEIP712ContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {
@@ -198,7 +200,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
-      mockLogger,
+      mockLoggerFactory,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -208,6 +210,7 @@ describe("BuildEIP712ContextTask", () => {
         message: TEST_MESSAGE_VALUES,
       }),
     );
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
     apiMock.getDeviceSessionState.mockReturnValueOnce({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
@@ -222,13 +225,13 @@ describe("BuildEIP712ContextTask", () => {
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.NANO_S,
       derivationPath: "44'/60'/0'/0/0",
-      transactionChecks: undefined,
+      additionalContexts: [],
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     });
   });
 
@@ -244,7 +247,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
-      mockLogger,
+      mockLoggerFactory,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -267,18 +270,19 @@ describe("BuildEIP712ContextTask", () => {
       error: new Error("no filter"),
     });
     // WHEN
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
     const builtContext = await task.run();
     // THEN
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.FLEX,
       derivationPath: "44'/60'/0'/0/0",
-      transactionChecks: undefined,
+      additionalContexts: [],
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     });
   });
 
@@ -298,7 +302,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
-      mockLogger,
+      mockLoggerFactory,
       buildFullContextFactoryMock,
     );
     contextModuleMock.getContexts.mockResolvedValueOnce([txCheckContext]);
@@ -326,13 +330,13 @@ describe("BuildEIP712ContextTask", () => {
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.FLEX,
       derivationPath: "44'/60'/0'/0/0",
-      transactionChecks: undefined,
+      additionalContexts: [],
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     });
     expect(parserMock.parse).toHaveBeenCalledWith(TEST_DATA);
     expect(contextModuleMock.getTypedDataFilters).toHaveBeenCalledWith({
@@ -371,7 +375,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(true),
       TEST_FROM,
-      mockLogger,
+      mockLoggerFactory,
       buildFullContextFactoryMock,
     );
     contextModuleMock.getContexts.mockResolvedValueOnce([txCheckContext]);
@@ -404,8 +408,8 @@ describe("BuildEIP712ContextTask", () => {
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
       calldatasContexts: {},
-      transactionChecks: txCheckContext,
-      logger: mockLogger,
+      additionalContexts: [txCheckContext],
+      loggerFactory: mockLoggerFactory,
     });
   });
 
@@ -421,7 +425,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
-      mockLogger,
+      mockLoggerFactory,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(
@@ -439,6 +443,7 @@ describe("BuildEIP712ContextTask", () => {
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
     contextModuleMock.getTypedDataFilters.mockResolvedValueOnce(
       TEST_CLEAR_SIGN_CONTEXT,
     );
@@ -477,7 +482,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
-      mockLogger,
+      mockLoggerFactory,
       buildFullContextFactoryMock,
     );
     const subset = {
@@ -523,6 +528,7 @@ describe("BuildEIP712ContextTask", () => {
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
     contextModuleMock.getTypedDataFilters.mockResolvedValueOnce(
       clearSignContext,
     );
@@ -538,7 +544,7 @@ describe("BuildEIP712ContextTask", () => {
     expect(builtContext).toStrictEqual({
       deviceModelId: DeviceModelId.FLEX,
       derivationPath: "44'/60'/0'/0/0",
-      transactionChecks: undefined,
+      additionalContexts: [],
       types: TEST_TYPES,
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
@@ -546,7 +552,7 @@ describe("BuildEIP712ContextTask", () => {
       calldatasContexts: {
         0: [],
       },
-      logger: mockLogger,
+      loggerFactory: mockLoggerFactory,
     });
   });
 
@@ -562,7 +568,7 @@ describe("BuildEIP712ContextTask", () => {
       "44'/60'/0'/0/0",
       createAppConfig(false),
       TEST_FROM,
-      mockLogger,
+      mockLoggerFactory,
       buildFullContextFactoryMock,
     );
     parserMock.parse.mockReturnValueOnce(Left(new Error("Parsing error")));

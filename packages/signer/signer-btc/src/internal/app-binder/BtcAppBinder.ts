@@ -79,7 +79,7 @@ export class BtcAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this._dmkLoggerFactory("SendCommandInAppDeviceAction"),
+        logger: this._dmkLoggerFactory("GetExtendedPublicKeyCommand"),
       }),
     });
   }
@@ -96,7 +96,7 @@ export class BtcAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this._dmkLoggerFactory("SendCommandInAppDeviceAction"),
+        logger: this._dmkLoggerFactory("GetMasterFingerprintCommand"),
       }),
     });
   }
@@ -124,7 +124,7 @@ export class BtcAppBinder {
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this._dmkLoggerFactory("CallTaskInAppDeviceAction"),
+        logger: this._dmkLoggerFactory("SendSignMessageTask"),
       }),
     });
   }
@@ -220,7 +220,7 @@ export class BtcAppBinder {
           requiredUserInteraction: UserInteractionRequired.RegisterWallet,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this._dmkLoggerFactory("CallTaskInAppDeviceAction"),
+        logger: this._dmkLoggerFactory("RegisterWalletTask"),
       }),
     });
   }

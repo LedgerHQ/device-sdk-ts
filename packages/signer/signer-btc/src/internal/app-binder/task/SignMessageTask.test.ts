@@ -11,14 +11,6 @@ import {
   SHA256_SIZE,
 } from "@internal/app-binder/command/utils/constants";
 import { type ContinueTask } from "@internal/app-binder/task/ContinueTask";
-
-const mockLoggerFactory = () => ({
-  debug: vi.fn(),
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  subscribers: [],
-});
 import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 
@@ -42,6 +34,15 @@ const SIGNATURE_APDU = new Uint8Array([
   0xc1, 0x02, 0xc1, 0x64, 0xa2, 0x25, 0x53, 0x30, 0x82, 0xca, 0xbd, 0xd8, 0x90,
   0xef, 0xc4, 0x63, 0xf6, 0x7f, 0x60, 0xce, 0xfe, 0x8c, 0x3f, 0x87, 0xcf, 0xce,
 ]);
+
+const mockLogger = {
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+};
+const mockLoggerFactory = (_tag: string) => mockLogger;
 
 describe("SignMessageTask", () => {
   const signatureResult = CommandResultFactory<ApduResponse, void>({

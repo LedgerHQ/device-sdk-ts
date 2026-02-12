@@ -15,6 +15,7 @@
     "prettier": "turbo run prettier",
     "prettier:fix": "turbo run prettier:fix",
     "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",
     "typecheck": "turbo run typecheck",
     "health-check": "turbo run health-check --output-logs=errors-only --continue",
@@ -26,6 +27,7 @@
     "signer-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
     "signer-sol": "pnpm --filter @ledgerhq/device-signer-kit-solana",
     "signer-utils": "pnpm --filter @ledgerhq/signer-utils",
+    "ledger-wallet": "pnpm --filter @ledgerhq/dmk-ledger-wallet",
     "mockserver-client": "pnpm --filter @ledgerhq/device-mockserver-client",
     "keyring-protocol": "pnpm --filter @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
     "ui": "pnpm --filter @ledgerhq/device-sdk-ui",
@@ -47,8 +49,8 @@
     "commitcl": "pnpm changelog && git add .changeset && pnpm commit",
     "danger:local": "pnpm danger local --dangerfile danger/dangerfile-local.ts --base origin/develop",
     "danger:local:fork": "pnpm danger local --dangerfile danger/dangerfile-local-fork.ts --base origin/develop",
-    "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts --failOnErrors",
-    "cli": "pnpm ldmk-cli",
+    "danger:ci": "pnpm danger ci --dangerfile danger/dangerfile-ci.ts",
+    "cli": "pnpm --filter @ledgerhq/ldmk-cli",
     "tool": "pnpm ldmk-tool"
   },
   "devDependencies": {
@@ -77,5 +79,5 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@10.28.0"
+  "packageManager": "pnpm@10.28.2"
 }

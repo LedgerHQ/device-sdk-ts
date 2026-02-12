@@ -95,6 +95,7 @@ A brief overview of this project's packages:
 
 | Name                                            | Path                        | Description                                   |
 | ----------------------------------------------- | --------------------------- | --------------------------------------------- |
+| @ledgerhq/device-transport-kit-node-hid          | packages/transport/node-hid  | Node HID transport implementation              |
 | @ledgerhq/device-transport-kit-web-hid          | packages/transport/web-hid  | Web HID transport implementation              |
 | @ledgerhq/device-transport-kit-web-ble          | packages/transport/web-ble  | Web BLE transport implementation              |
 | @ledgerhq/device-transport-kit-react-native-ble | packages/transport/rn-ble   | React Native BLE transport implementation     |
@@ -114,6 +115,25 @@ A brief overview of this project's packages:
 | Name                                                     | Path                                          | Description                            |
 | -------------------------------------------------------- | --------------------------------------------- | -------------------------------------- |
 | @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol | packages/trusted-apps/ledger-keyring-protocol | Ledger Keyring Protocol implementation |
+
+### Developer Tools
+
+| Name                                                         | Path                                  | Description                                    |
+| ------------------------------------------------------------ | ------------------------------------- | ---------------------------------------------- |
+| @ledgerhq/device-management-kit-devtools                     | apps/devtools                         | Electron app for DMK developer tools           |
+| @ledgerhq/device-management-kit-devtools-core                | packages/devtools-core                | Core types and DevToolsLogger                  |
+| @ledgerhq/device-management-kit-devtools-rozenite            | packages/devtools-rozenite            | Rozenite connector for React Native devtools   |
+| @ledgerhq/device-management-kit-devtools-ui                  | packages/devtools-ui                  | React UI components for devtools dashboard     |
+| @ledgerhq/device-management-kit-devtools-websocket-common    | packages/devtools-websocket-common    | Common types and constants for WebSocket layer |
+| @ledgerhq/device-management-kit-devtools-websocket-connector | packages/devtools-websocket-connector | WebSocket connector for client apps            |
+| @ledgerhq/device-management-kit-devtools-websocket-server    | packages/devtools-websocket-server    | WebSocket server for devtools communication    |
+
+**Getting started:**
+
+- [Web, Node.js, Electron or React Native app → WebSocket devtools](packages/device-management-kit/README.md#web-nodejs-or-electron-app)
+- [React Native app with Rozenite → Rozenite devtools](packages/device-management-kit/README.md#react-native-app-with-rozenite) _(recommended for RN — better DX, less setup)_
+
+See [devtools-core README](packages/devtools-core/README.md) for architecture details.
 
 ### Development & Testing
 
@@ -301,6 +321,17 @@ To build the required dependencies and start a dev server for the sample app, pl
 
 ```bash
 pnpm dev
+```
+
+## CLI Tool
+
+The Device Management Kit provides a CLI tool for interactive device management operations in a node environment (using Node-HID Transport Kit).
+
+You can use it with the following command:
+
+```shell
+# At the root of the repository
+pnpm cli dev
 ```
 
 # Documentation

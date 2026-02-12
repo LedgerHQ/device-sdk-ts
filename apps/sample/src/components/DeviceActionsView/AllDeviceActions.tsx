@@ -66,7 +66,7 @@ import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
 import { type DeviceActionProps } from "./DeviceActionTester";
 
-const SECURE_CHANNEL_SIGN = "🔒";
+const SECURE_CHANNEL_ICON = "🔒 ";
 
 export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -109,7 +109,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         OpenAppDAIntermediateValue
       >,
       {
-        title: `Open app with dependencies ${SECURE_CHANNEL_SIGN}`,
+        title: `${SECURE_CHANNEL_ICON} Open app with dependencies`,
         description:
           "Perform all the actions necessary to open an app on the device and install its dependencies",
         executeDeviceAction: (
@@ -267,7 +267,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GetDeviceMetadataDAIntermediateValue
       >,
       {
-        title: `Genuine Check ${SECURE_CHANNEL_SIGN}`,
+        title: `${SECURE_CHANNEL_ICON} Genuine Check`,
         description:
           "Perform all the actions necessary to check the device's genuineness",
         executeDeviceAction: ({ unlockTimeout }, inspect) => {
@@ -289,7 +289,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GenuineCheckDAIntermediateValue
       >,
       {
-        title: `List Installed App ${SECURE_CHANNEL_SIGN}`,
+        title: `${SECURE_CHANNEL_ICON} List Installed App`,
         description:
           "Perform all the actions necessary to list installed apps on the device",
         executeDeviceAction: ({ unlockTimeout }, inspect) => {
@@ -311,7 +311,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         ListInstalledAppsDAIntermediateValue
       >,
       {
-        title: `Install or update applications ${SECURE_CHANNEL_SIGN}`,
+        title: `${SECURE_CHANNEL_ICON} Install or update applications`,
         description:
           "Perform all the actions necessary to install or update a list of apps on the device by name",
         executeDeviceAction: (
@@ -349,7 +349,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         InstallOrUpdateAppsDAIntermediateValue
       >,
       {
-        title: `Install App ${SECURE_CHANNEL_SIGN}`,
+        title: `${SECURE_CHANNEL_ICON} Install App`,
         description:
           "Perform all the actions necessary to install an app on the device by name",
         executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {
@@ -371,7 +371,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         InstallAppDAIntermediateValue
       >,
       {
-        title: `Uninstall App ${SECURE_CHANNEL_SIGN}`,
+        title: `${SECURE_CHANNEL_ICON} Uninstall App`,
         description:
           "Perform all the actions necessary to uninstall an app on the device by name",
         executeDeviceAction: ({ appName, unlockTimeout }, inspect) => {

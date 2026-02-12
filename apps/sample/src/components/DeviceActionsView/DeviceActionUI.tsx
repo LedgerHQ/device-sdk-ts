@@ -1,5 +1,4 @@
 import React from "react";
-import Lottie from "react-lottie";
 import {
   type DeviceActionIntermediateValue,
   DeviceActionStatus,
@@ -14,29 +13,33 @@ import {
   Text,
   Tooltip,
 } from "@ledgerhq/react-ui";
+import dynamic from "next/dynamic";
 import styled from "styled-components";
 
-import * as PinFlexDark from "./lotties/flex/01_EUROPA_DARK_PIN.json";
-import * as PairingFlexDark from "./lotties/flex/02_EUROPA_DARK_PAIRING.json";
-import * as PairedSuccessFlexDark from "./lotties/flex/03_EUROPA_DARK_PAIRED_SUCCESS.json";
-import * as ContinueOnLedgerFlexDark from "./lotties/flex/04_EUROPA_DARK_CONTINUE_ON_LEDGER.json";
-import * as SignTransactionFlexDark from "./lotties/flex/05_EUROPA_DARK_SIGN_TRANSACTION.json";
-import * as FrontViewFlexDark from "./lotties/flex/06_STAX_DARK_FRONT_VIEW.json";
-import * as PinNanoSDark from "./lotties/nanosp/01_NANO_S_DARK_PIN.json";
-import * as ContinueOnLedgerNanoSDark from "./lotties/nanosp/02_NANO_S_DARK_CONTINUE_ON_YOUR_LEDGER.json";
-import * as PinNanoXDark from "./lotties/nanox/01_NANO_X_DARK_PIN.json";
-import * as PairingNanoXDark from "./lotties/nanox/02_NANO_X_DARK_PAIRING.json";
-import * as ContinueOnLedgerNanoXDark from "./lotties/nanox/03_NANO_X_DARK_CONTINUE_ON_YOUR_LEDGER.json";
-import * as PinStaxDark from "./lotties/stax/01_STAX_DARK_PIN.json";
-import * as PairingStaxDark from "./lotties/stax/02_STAX_DARK_PAIRING.json";
-import * as PairedSuccessStaxDark from "./lotties/stax/03_STAX_DARK_PAIRED_SUCCESS.json";
-import * as ContinueOnLedgerStaxDark from "./lotties/stax/04_STAX_DARK_CONTINUE_ON_LEDGER.json";
-import * as SignTransactionStaxDark from "./lotties/stax/05_STAX_DARK_SIGN_TRANSACTION.json";
-import * as FrontViewStaxDark from "./lotties/stax/06_STAX_DARK_FRONT_VIEW.json";
+import PinFlexDark from "./lotties/flex/01_EUROPA_DARK_PIN.json";
+import PairingFlexDark from "./lotties/flex/02_EUROPA_DARK_PAIRING.json";
+import PairedSuccessFlexDark from "./lotties/flex/03_EUROPA_DARK_PAIRED_SUCCESS.json";
+import ContinueOnLedgerFlexDark from "./lotties/flex/04_EUROPA_DARK_CONTINUE_ON_LEDGER.json";
+import SignTransactionFlexDark from "./lotties/flex/05_EUROPA_DARK_SIGN_TRANSACTION.json";
+import FrontViewFlexDark from "./lotties/flex/06_STAX_DARK_FRONT_VIEW.json";
+import PinNanoSDark from "./lotties/nanosp/01_NANO_S_DARK_PIN.json";
+import ContinueOnLedgerNanoSDark from "./lotties/nanosp/02_NANO_S_DARK_CONTINUE_ON_YOUR_LEDGER.json";
+import PinNanoXDark from "./lotties/nanox/01_NANO_X_DARK_PIN.json";
+import PairingNanoXDark from "./lotties/nanox/02_NANO_X_DARK_PAIRING.json";
+import ContinueOnLedgerNanoXDark from "./lotties/nanox/03_NANO_X_DARK_CONTINUE_ON_YOUR_LEDGER.json";
+import PinStaxDark from "./lotties/stax/01_STAX_DARK_PIN.json";
+import PairingStaxDark from "./lotties/stax/02_STAX_DARK_PAIRING.json";
+import PairedSuccessStaxDark from "./lotties/stax/03_STAX_DARK_PAIRED_SUCCESS.json";
+import ContinueOnLedgerStaxDark from "./lotties/stax/04_STAX_DARK_CONTINUE_ON_LEDGER.json";
+import SignTransactionStaxDark from "./lotties/stax/05_STAX_DARK_SIGN_TRANSACTION.json";
+import FrontViewStaxDark from "./lotties/stax/06_STAX_DARK_FRONT_VIEW.json";
 import {
   type DeviceActionResponseProps,
   deviceActionStatusToColor,
 } from "./DeviceActionResponse";
+
+// Dynamic import to avoid SSR issues (react-lottie accesses `document` at load time)
+const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 type DeviceAnimationProps = {
   userInteractionRequired: UserInteractionRequired | string;
@@ -133,9 +136,10 @@ const DeviceAnimation: React.FC<DeviceAnimationProps> = ({
     <>
       {animationData ? (
         <Lottie
-          options={{ animationData, autoplay: true, loop: true }}
-          height={200}
-          width={200}
+          animationData={animationData}
+          loop
+          autoplay
+          style={{ height: 200, width: 200 }}
         />
       ) : (
         <InfiniteLoader size={20} />

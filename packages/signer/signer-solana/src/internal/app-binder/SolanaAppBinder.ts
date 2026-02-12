@@ -50,7 +50,7 @@ export class SolanaAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("SendCommandInAppDeviceAction"),
+        logger: this.dmkLoggerFactory("GetPubKeyCommand"),
       }),
     });
   }
@@ -86,6 +86,7 @@ export class SolanaAppBinder {
           skipOpenApp: args.skipOpenApp,
           contextModule: this.contextModule,
         },
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }
@@ -94,6 +95,7 @@ export class SolanaAppBinder {
     derivationPath: string;
     message: string;
     skipOpenApp: boolean;
+    appDomain?: string;
   }): SignMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -103,12 +105,13 @@ export class SolanaAppBinder {
             new SendSignMessageTask(internalApi, {
               derivationPath: args.derivationPath,
               sendingData: new TextEncoder().encode(args.message),
+              appDomain: args.appDomain,
             }).run(),
           appName: "Solana",
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("CallTaskInAppDeviceAction"),
+        logger: this.dmkLoggerFactory("SendSignMessageTask"),
       }),
     });
   }
@@ -123,7 +126,7 @@ export class SolanaAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: false,
         },
-        logger: this.dmkLoggerFactory("SendCommandInAppDeviceAction"),
+        logger: this.dmkLoggerFactory("GetAppConfigurationCommand"),
       }),
     });
   }

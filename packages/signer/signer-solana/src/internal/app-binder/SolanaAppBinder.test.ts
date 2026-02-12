@@ -535,6 +535,7 @@ describe("SolanaAppBinder", () => {
             skipOpenApp,
             contextModule: contextModuleStub,
           },
+          loggerFactory: mockLoggerFactory,
         }),
       });
     });

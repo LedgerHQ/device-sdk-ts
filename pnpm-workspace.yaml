@@ -2,6 +2,7 @@ packages:
   - apps/*
   - packages/*
   - packages/config/*
+  - packages/devtools/*
   - packages/signer/*
   - packages/tools/*
   - packages/transport/*
@@ -18,7 +19,8 @@ catalog:
   "@eslint/js": 9.34.0
   "@inquirer/prompts": ^7.3.3
   "@ledgerhq/native-ui": ^0.27.1
-  "@ledgerhq/react-ui": ^0.17.0
+  "@ledgerhq/react-ui": ^0.45.0
+  "@ledgerhq/crypto-icons": ^1.4.0
   "@playwright/test": ^1.49.0
   "@react-native-community/cli": 15.0.1
   "@react-native-community/cli-platform-android": 15.0.1
@@ -48,7 +50,6 @@ catalog:
   "@types/node": 22.10.1
   "@types/react": 18.3.12
   "@types/react-dom": 18.3.1
-  "@types/react-lottie": ^1.2.10
   "@types/react-test-renderer": ^18.0.0
   "@types/semver": 7.7.0
   "@types/styled-components": ^5.1.25
@@ -92,12 +93,13 @@ catalog:
   next: 14.2.35
   nextra: ^3.0.13
   nextra-theme-docs: ^3.0.15
+  node-hid: ^3.2.0
   postcss: ^8.5.6
   prettier: 3.5.3
   purify-ts: 2.1.0
   react: 18.3.1
   react-dom: 18.3.1
-  react-lottie: ^1.2.10
+  lottie-react: ^2.4.0
   react-medium-image-zoom: 5.1.8
   react-native: 0.76.6
   react-native-ble-plx: 3.4.0
@@ -125,6 +127,7 @@ catalog:
   typescript-eslint: 8.41.0
   tsx: 4.19.2
   url: ^0.11.4
+  usb: ^2.16.0
   util: ^0.12.5
   uuid: 11.0.3
   vite: 7.1.6

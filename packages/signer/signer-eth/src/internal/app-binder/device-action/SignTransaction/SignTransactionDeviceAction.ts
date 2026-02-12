@@ -4,7 +4,6 @@ import {
   DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
-  type LoggerPublisherService,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -92,21 +91,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
   SignTransactionDAIntermediateValue,
   SignTransactionDAInternalState
 > {
-  private readonly _loggerFactory: (tag: string) => LoggerPublisherService;
-
-  constructor(args: {
-    input: SignTransactionDAInput;
-    inspect?: boolean;
-    loggerFactory: (tag: string) => LoggerPublisherService;
-  }) {
-    super({
-      input: args.input,
-      inspect: args.inspect,
-      logger: args.loggerFactory("SignTransactionDeviceAction"),
-    });
-    this._loggerFactory = args.loggerFactory;
-  }
-
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
@@ -450,7 +434,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               subset: context._internalState.subset!,
               transaction: context.input.transaction,
               deviceModelId: internalApi.getDeviceModel().id,
-              logger: this._loggerFactory("BuildFullContextsTask"),
+              loggerFactory: this.getLoggerFactory(internalApi),
             }),
             onDone: {
               target: "ProvideContexts",
@@ -493,7 +477,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               contexts: context._internalState.contexts,
               derivationPath: context.input.derivationPath,
               serializedTransaction: context.input.transaction,
-              logger: this._loggerFactory("ProvideTransactionContextsTask"),
+              loggerFactory: this.getLoggerFactory(internalApi),
             }),
             onDone: {
               target: "SignTransaction",
@@ -657,7 +641,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     }) =>
       new SendSignTransactionTask(internalApi, {
         ...arg0.input,
-        logger: this._loggerFactory("SendSignTransactionTask"),
+        loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 
     return {

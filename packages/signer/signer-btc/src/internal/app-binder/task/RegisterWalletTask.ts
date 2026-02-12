@@ -41,7 +41,7 @@ export class RegisterWalletTask {
       dataStore: DataStore,
     ) => new ContinueTask(api, dataStore),
   ) {
-    this._logger = _args.loggerFactory("RegisterWalletTask");
+    this._logger = this._args.loggerFactory("RegisterWalletTask");
   }
 
   async run(): Promise<RegisterWalletTaskResult> {

@@ -24,60 +24,116 @@ While you explore these projects, here are some key points to keep in mind:
 3. Follow additional installation steps depending on which package you want to contribute to.
 4. Make your changes.
 5. If you’ve fixed a bug or added code that should be tested, add tests!
-6. Add an entry to the changelog (`pnpm changeset`).
+6. If your changes affect published packages, add an entry to the changelog (`pnpm changeset`).
 7. Make sure that the code passes linter and type checks (`pnpm lint:fix` and `pnpm typecheck`).
 8. Make sure that the code passes the prettier checks.
 9. Make sure the code passes unit and end to end tests (`pnpm test`).
 10. Cleanup your branch - unless it contains merge commits (perform atomic commits, squash tiny commits…).
+11. **Sign your commits** (see [Signed Commits](#signed-commits) below).
 
 ### Git Conventions
 
 We use the following git conventions for the `Device Management Kit` monorepo.
 
+**Branch names and commit messages are validated by [Danger CI](danger/helpers.ts) on pull requests.**
+
 #### Branch naming
 
-Depending on the purpose every git branch should be prefixed.
+Branch names **MUST** follow this format and are validated by CI.
 
-- `feat/` / `feature/` Add a new feature to the application or library
-- `bugfix/` / `bug/` / `fix/` Fixing an existing bug
-- `support/` For any other changes (tests, improvements, CI…)
-  _For Ledger Employees:_
-- `chore/` / `core/`  For  maintenance work on the repo
-- `doc/` Add or modify documentation
-- `refacto/` / `refactor/` Modify the code organisation
+**Format:** `<type>/<ticket>-<description>`
 
-_For Ledger Employees only:_ Add the Jira ticket number `DSDK-<number>` _(case insensitive)_ or `NO-ISSUE` if not applicable.
+**Type** (required): Must be one of the prefixes defined in [`danger/helpers.ts`](danger/helpers.ts) (`BRANCH_PREFIX` constant). Common types include:
 
-_If resolving a Github issue (optional and not to be combined with Jira ticket number):_ add `ISSUE-<number>`
+- `feat/` / `feature/` — Add a new feature to the application or library
+- `bugfix/` / `bug/` / `fix/` / `hotfix/` — Fixing an existing bug
+- `support/` — For any other changes (tests, improvements, CI…)
+- `chore/` / `core/` — For maintenance work on the repo _(Ledger employees only)_
+- `doc/` — Add or modify documentation _(Ledger employees only)_
+- `refacto/` / `refactor/` — Modify the code organisation _(Ledger employees only)_
 
-Followed by a small description.
+> **Note:** The complete list of accepted types is enforced by CI via the regex in `danger/helpers.ts`. Refer to that file for the authoritative list.
+
+**Ticket** (required for branches on the main repository, not forks):
+
+- `DSDK-<number>` or `LIVE-<number>` — Jira ticket reference
+- `no-issue` — When no ticket exists (**default for automated/AI contributions**)
+- `issue-<number>` — GitHub issue reference
+
+**Description**: Short kebab-case description of the change.
 
 **Examples:**
 
-| User type | Ticket | Example |
-| -- | -- | -- |
-| `employee` | yes | feature/dsdk-350-add-sparkles |
-| `employee` | no | refacto/no-issue-remove-sparkles |
-| `contributor` | yes | feat/issue-37-add-new-transport |
-| `contributor` | no | fix/missing-dependencies |
+| Context                     | Example                            |
+| --------------------------- | ---------------------------------- |
+| With Jira ticket            | `feature/dsdk-350-add-sparkles`    |
+| No ticket (use when unsure) | `fix/no-issue-typo-in-readme`      |
+| GitHub issue reference      | `bugfix/issue-42-connection-error` |
 
+**Note for external contributors (forks):** The ticket requirement is relaxed by CI. A simple `feat/my-feature` format is valid.
 
 #### Changelogs
 
-We use [**changesets**](https://github.com/changesets/changesets) to handle the versioning of our libraries and apps. A detailed guide is available on the [**wiki**](https://github.com/LedgerHQ/device-sdk-ts/wiki/Changesets).
+We use [**changesets**](https://github.com/changesets/changesets) to handle the versioning of our libraries and apps.
+
+Run `pnpm changeset` to create a changeset interactively. You will be prompted to:
+
+- Select the affected package(s)
+- Choose the version bump type:
+  - **patch** - Bug fixes or minor, non-breaking modifications
+  - **minor** - New features, additions, or improvements
+  - **major** - Breaking changes (use only when explicitly required)
+- Write a summary describing the change
+
+**Guidelines:**
+
+- Prefer a single changeset per package per PR
+- Each changeset should be concise and focused on a specific purpose
+- Changesets are required for published packages, not for apps or internal tooling
 
 #### Commit message
 
-We use the standard [**Conventional Commits**](https://www.conventionalcommits.org/) specification and enforce it using [**commitlint**](https://commitlint.js.org/).
+We use [**gitmoji**](https://gitmoji.dev/) for commit messages. The format is:
 
-The format is similar to gitmoji:
+`<emoji> (<scope>): <Description>`
 
-<emoji> (<scope>): <description>
+or with an optional ticket reference (for merge commits):
 
-- scope is the module/package that is impacted by the update.
-- `<description>` should start with an uppercase.
+`<emoji> (<scope>) [<ticket>]: <Description>`
 
-You should use the `pnpm commit` prompt to ensure that your commit messages are valid, as well as the `pnpm commitlint --from <target branch>` command to check that every commit on your current branch are valid.
+- `<emoji>` - Use `pnpm gitmoji --list` to see available emojis
+- ` ` - Space
+- `(<scope>)` - The module/package impacted (lowercase, in parentheses)
+- `[<ticket>]` - Optional: `[DSDK-1234]`, `[NO-ISSUE]`, etc. (typically used for merge commits)
+- `:` - Colon
+- ` ` - Space
+- `<Description>` - Should start with an uppercase letter
+
+Use `pnpm commit` to create commits interactively.
+
+#### Signed Commits
+
+**All commits must be signed** to be merged into protected branches (`develop` and `main`).
+
+This is enforced by GitHub branch rulesets. Even if your PR targets `develop`, your commits will eventually be merged into `main` during a release, so signing is required from the start.
+
+**To set up commit signing:**
+
+1. Follow GitHub's guide: [Signing commits](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits)
+2. Configure Git to sign commits by default:
+   ```bash
+   git config --global commit.gpgsign true
+   ```
+
+**If you already have unsigned commits**, you can re-sign them:
+
+```bash
+# Re-sign the last N commits (replace 3 with your number of commits)
+git rebase -i HEAD~3 --exec "git commit --amend --no-edit -S"
+git push --force-with-lease
+```
+
+Your commits should show as **"Verified"** on GitHub after signing.
 
 #### Rebase & Merge strategies
 
@@ -90,7 +146,9 @@ For instance:
 
 ### Pull Request Conventions
 
-Follow the next step to fill the PR template
+Follow the [PR template](.github/pull_request_template.md) when creating your pull request.
+
+**PR titles are validated by [Danger CI](danger/helpers.ts) on pull requests.**
 
 #### Title
 

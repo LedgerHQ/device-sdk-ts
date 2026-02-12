@@ -1,4 +1,4 @@
-import { type DeviceModelId } from "@ledgerhq/device-management-kit";
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
@@ -14,6 +14,16 @@ import PACKAGE from "@root/package.json";
 
 import { type DynamicNetworkApiResponseDto } from "./dto/DynamicNetworkApiResponseDto";
 import { type DynamicNetworkDataSource } from "./DynamicNetworkDataSource";
+
+/** Maps lowercase device model keys from the API to DeviceModelId */
+const LOWERCASE_KEY_TO_DEVICE_MODEL_ID: Record<string, DeviceModelId> = {
+  nanos: DeviceModelId.NANO_S,
+  nanosp: DeviceModelId.NANO_SP,
+  nanox: DeviceModelId.NANO_X,
+  stax: DeviceModelId.STAX,
+  flex: DeviceModelId.FLEX,
+  apexp: DeviceModelId.APEX,
+};
 
 @injectable()
 export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
@@ -136,13 +146,18 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
     networkData: DynamicNetworkApiResponseDto[0],
   ): DynamicNetworkConfiguration {
     const descriptors = Object.entries(networkData.descriptors).reduce(
-      (acc, [deviceModel, descriptor]) => {
-        acc[deviceModel as DeviceModelId] = {
+      (acc, [apiKey, descriptor]) => {
+        const deviceModelId =
+          LOWERCASE_KEY_TO_DEVICE_MODEL_ID[apiKey.toLowerCase()];
+        if (deviceModelId === undefined) {
+          return acc;
+        }
+        acc[deviceModelId] = {
           descriptorType: descriptor.descriptorType,
           descriptorVersion: descriptor.descriptorVersion,
           data: descriptor.data,
           signatures: descriptor.signatures,
-          icon: networkData.icons?.[deviceModel],
+          icon: networkData.icons?.[apiKey],
         };
         return acc;
       },

@@ -18,6 +18,7 @@ import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 import {
   selectCalConfig,
+  selectDatasourceConfig,
   selectMetadataServiceConfig,
   selectOriginToken,
   selectWeb3ChecksConfig,
@@ -44,6 +45,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   const web3ChecksConfig = useSelector(selectWeb3ChecksConfig);
   const metadataServiceConfig = useSelector(selectMetadataServiceConfig);
   const originToken = useSelector(selectOriginToken);
+  const datasourceConfig = useSelector(selectDatasourceConfig);
 
   useEffect(() => {
     if (!sessionId || !dmk) {
@@ -59,6 +61,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
       .setMetadataServiceConfig(metadataServiceConfig)
+      .setDatasourceConfig(datasourceConfig)
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,
@@ -75,6 +78,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     web3ChecksConfig,
     metadataServiceConfig,
     originToken,
+    datasourceConfig,
   ]);
 
   return (
