@@ -63,7 +63,7 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/683'/0",
           checkOnDevice: false,
           skipOpenApp: false,
         },
@@ -103,7 +103,7 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
+          derivationPath: "44'/683'/0",
           transaction: "",
           skipOpenApp: false,
         },
