@@ -39,6 +39,8 @@ A new release is being prepared with the latest updates, improvements, and fixes
 ## 📋 Release Checklist
 
 - [ ] Create new branch from `develop`: `release`
+- [ ] Run `proto use` to install the latest toolchain
+- [ ] Run `pnpm install` to install the latest dependencies
 - [ ] Run `pnpm ldmk-tool enter-release` and select packages to release
 - [ ] Run `pnpm ldmk-tool bump` to consume changesets and generate `CHANGELOG.md` files:
   - [ ] Ensure `GITHUB_TOKEN` environment variable is set with SSO
