@@ -1,6 +1,6 @@
 # @ledgerhq/device-management-kit-devtools-core
 
-## 2.0.0
+## 1.1.0
 
 ### Minor Changes
 

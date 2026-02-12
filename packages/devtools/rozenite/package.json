@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-rozenite",
   "private": false,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Inspect and debug your integration of the Device Management Kit",
   "type": "module",
   "main": "./dist/react-native.cjs",

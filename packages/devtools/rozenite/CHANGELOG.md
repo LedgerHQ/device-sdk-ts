@@ -1,6 +1,6 @@
 # @ledgerhq/device-management-kit-devtools-rozenite
 
-## 1.0.0
+## 0.1.0
 
 ### Minor Changes
 
@@ -34,5 +34,5 @@
 - [#1289](https://github.com/LedgerHQ/device-sdk-ts/pull/1289) [`359abd7`](https://github.com/LedgerHQ/device-sdk-ts/commit/359abd78a427b93a470fa9ff56200dbc2e444111) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Devtools improvements: add status badges and collapsible components to inspector, move connect options into discovered device cards, pass session refresher options through connect flow, invert APDU response display order, and add files field to rozenite package.json.
 
 - Updated dependencies [[`a73bc9f`](https://github.com/LedgerHQ/device-sdk-ts/commit/a73bc9f661377a0a5f9c4794dc9fe13b0102d0ca), [`359abd7`](https://github.com/LedgerHQ/device-sdk-ts/commit/359abd78a427b93a470fa9ff56200dbc2e444111), [`58831d8`](https://github.com/LedgerHQ/device-sdk-ts/commit/58831d8bb67c3bed4de4cb6b43e968f76c3cbeb6)]:
-  - @ledgerhq/device-management-kit-devtools-core@2.0.0
-  - @ledgerhq/device-management-kit-devtools-ui@2.0.0
+  - @ledgerhq/device-management-kit-devtools-core@1.1.0
+  - @ledgerhq/device-management-kit-devtools-ui@1.1.0
