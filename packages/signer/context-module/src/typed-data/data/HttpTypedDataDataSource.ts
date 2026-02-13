@@ -79,8 +79,11 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
         JSON.stringify(this.sortTypes(schema)).replace(" ", ""),
       ).toString();
       address = address.toLowerCase();
-      const filtersJson =
-        response.data?.[0]?.descriptors_eip712?.[address]?.[schemaHash];
+      const dataArray = response.data ?? [];
+      const filtersJson = dataArray
+        .map((item) => item?.descriptors_eip712?.[address]?.[schemaHash])
+        .find(Boolean);
+
       if (!filtersJson) {
         return Left(
           new Error(

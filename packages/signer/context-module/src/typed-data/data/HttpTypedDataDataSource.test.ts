@@ -535,6 +535,40 @@ describe("HttpTypedDataDataSource", () => {
     );
   });
 
+  it("should find descriptor when match is not in first element of response.data", async () => {
+    const match = buildDescriptor([
+      {
+        display_name: "Permit2",
+        field_mappers_count: 0,
+        descriptor: "",
+        signatures: { prod: "sig" },
+        type: "message",
+      },
+    ]);
+    vi.spyOn(axios, "request").mockResolvedValue({
+      data: [{ descriptors_eip712: {} }, ...match],
+    });
+
+    const result = await datasource.getTypedDataFilters({
+      chainId: 1,
+      address: "0x000000000022D473030F116DDEE9F6B43AC78BA3",
+      version: "v2",
+      schema: TEST_TYPES,
+    });
+
+    expect(result).toEqual(
+      Right({
+        messageInfo: {
+          displayName: "Permit2",
+          filtersCount: 0,
+          signature: "sig",
+        },
+        calldatasInfos: {},
+        filters: [],
+      }),
+    );
+  });
+
   it("should return an error when data is empty", async () => {
     // GIVEN
     vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });

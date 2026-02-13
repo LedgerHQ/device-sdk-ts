@@ -1,5 +1,11 @@
 # @ledgerhq/device-trusted-app-kit-ledger-keyring-protocol
 
+## 0.4.1
+
+### Patch Changes
+
+- [`5ebcbdf`](https://github.com/LedgerHQ/device-sdk-ts/commit/5ebcbdfb32e4c00b1579959f347e4fac563202b7) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Set dmk as peer dependency
+
 ## 0.4.0
 
 ### Minor Changes

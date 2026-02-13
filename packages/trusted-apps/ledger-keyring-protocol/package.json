@@ -1,8 +1,8 @@
 {
   "name": "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
@@ -39,8 +39,7 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
-    "@ledgerhq/signer-utils": "workspace:^",
+    "@ledgerhq/signer-utils": "^1.1.2",
     "@noble/ciphers": "^1.3.0",
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
@@ -55,6 +54,10 @@
     "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
-    "@ledgerhq/vitest-config-dmk": "workspace:^"
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "^1.1.0"
   }
 }
