@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - develop
+      - support/no-issue-devtools-build-workflow
     paths:
       - "apps/devtools/**"
       - "packages/devtools/**"
@@ -101,6 +102,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v6
+
       - name: Download all artifacts
         uses: actions/download-artifact@v7
         with:
@@ -109,55 +112,20 @@ jobs:
           merge-multiple: true
 
       - name: Write step summary
-        run: |
-          cat >> "$GITHUB_STEP_SUMMARY" <<'SUMMARY'
-          ## Devtools Desktop App Build
+        run: cat apps/devtools/build/step-summary.md >> "$GITHUB_STEP_SUMMARY"
 
-          ### macOS — bypass Gatekeeper for unsigned builds
-
-          These builds are **not code-signed**. macOS will quarantine them on download.
-          Before opening the app, run:
-
-          ```sh
-          xattr -cr "Ledger DMK DevTools.app"
-          ```
-
-          Or if you downloaded the `.dmg`, after mounting it:
-
-          ```sh
-          xattr -cr /Volumes/Ledger\ DMK\ DevTools/Ledger\ DMK\ DevTools.app
-          ```
-          SUMMARY
+      - name: Generate release body
+        run: envsubst < apps/devtools/build/release-body.md > /tmp/release-body.md
+        env:
+          SOURCE_REF: ${{ github.event.inputs.ref || github.sha }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
       - name: Update devtools-latest GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: devtools-latest
           name: "Devtools Desktop App (latest)"
-          body: |
-            Latest build of the Devtools Desktop App.
-
-            **Source:** ${{ github.event.inputs.ref || github.sha }}
-            **Workflow run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-
-            > This release is automatically updated on every build. Download the binary for your platform below.
-
-            ---
-
-            ### macOS — bypass Gatekeeper for unsigned builds
-
-            These builds are **not code-signed**. macOS will quarantine them on download.
-            Before opening the app, run:
-
-            ```sh
-            xattr -cr "Ledger DMK DevTools.app"
-            ```
-
-            Or if you downloaded the `.dmg`, after mounting it:
-
-            ```sh
-            xattr -cr /Volumes/Ledger\ DMK\ DevTools/Ledger\ DMK\ DevTools.app
-            ```
+          body_path: /tmp/release-body.md
           prerelease: true
           make_latest: false
           files: artifacts/**/*
