@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: Ledger Device Management Kit Devtools
+productName: Ledger DMK DevTools
 directories:
   buildResources: build
 files:
@@ -11,30 +11,24 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
-win:
-  executableName: ledger-device-management-kit-devtools
+artifactName: ledger-dmk-devtools-${version}-${os}-${arch}.${ext}
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  artifactName: ledger-dmk-devtools-${version}-${os}-${arch}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   notarize: false
-dmg:
-  artifactName: ${name}-${version}.${ext}
 linux:
+  executableName: ledger-dmk-devtools
   target:
     - AppImage
     - snap
     - deb
   maintainer: electronjs.org
   category: Utility
-appImage:
-  artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
   provider: generic
   url: https://example.com/auto-updates
-electronDownload:
-  mirror: https://npmmirror.com/mirrors/electron/
