@@ -9,6 +9,7 @@ import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
 import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
+import { gatedSigningTypes } from "./gated-signing/di/gatedSigningTypes";
 import { nftTypes } from "./nft/di/nftTypes";
 import { proxyTypes } from "./proxy/di/proxyTypes";
 import { safeTypes } from "./safe/di/safeTypes";
@@ -82,6 +83,9 @@ export class DefaultContextModule implements ContextModule {
         dynamicNetworkTypes.DynamicNetworkContextLoader,
       ),
       this._container.get<ContextLoader>(safeTypes.SafeAddressLoader),
+      this._container.get<ContextLoader>(
+        gatedSigningTypes.GatedSigningContextLoader,
+      ),
       this._container.get<ContextLoader>(
         transactionCheckTypes.TransactionCheckContextLoader,
       ),

@@ -7,6 +7,7 @@ import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { dynamicNetworkModuleFactory } from "@/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
+import { gatedSigningModuleFactory } from "@/gated-signing/di/gatedSigningModuleFactory";
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
 import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { proxyModuleFactory } from "@/proxy/di/proxyModuleFactory";
@@ -40,6 +41,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     nftModuleFactory(),
     proxyModuleFactory(config),
     safeModuleFactory(),
+    gatedSigningModuleFactory(),
     tokenModuleFactory(),
     calldataModuleFactory(),
     trustedNameModuleFactory(config),
