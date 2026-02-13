@@ -56,8 +56,8 @@
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@ledgerhq/device-management-kit": "workspace:^"
-  }, 
+  },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "^1.1.0"
   }
 }

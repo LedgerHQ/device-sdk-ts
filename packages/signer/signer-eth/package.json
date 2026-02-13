@@ -61,6 +61,6 @@
   },
   "peerDependencies": {
     "@ledgerhq/context-module": "workspace:^",
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "^1.1.0"
   }
 }
