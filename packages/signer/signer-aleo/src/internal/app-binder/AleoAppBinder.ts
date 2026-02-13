@@ -9,12 +9,14 @@ import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
+import { GetViewKeyCommand } from "./command/GetViewKeyCommand";
 import { SignMessageCommand } from "./command/SignMessageCommand";
 import { SignTransactionTask } from "./task/SignTransactionTask";
 
@@ -49,6 +51,26 @@ export class AleoAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAddressCommand(args),
+          appName: "Aleo",
+          requiredUserInteraction: args.checkOnDevice
+            ? UserInteractionRequired.VerifyAddress
+            : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  getViewKey(args: {
+    derivationPath: string;
+    checkOnDevice: boolean;
+    skipOpenApp: boolean;
+  }): GetViewKeyDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetViewKeyCommand(args),
           appName: "Aleo",
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
