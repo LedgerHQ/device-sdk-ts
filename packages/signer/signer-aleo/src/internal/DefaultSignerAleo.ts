@@ -6,6 +6,7 @@ import { type Container } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
@@ -14,6 +15,7 @@ import { type SignerAleo } from "@api/SignerAleo";
 import { makeContainer } from "@internal/di";
 import { addressTypes } from "@internal/use-cases/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
+import { type GetViewKeyUseCase } from "@internal/use-cases/address/GetViewKeyUseCase";
 import { configTypes } from "@internal/use-cases/config/di/configTypes";
 import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";
 import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
@@ -45,6 +47,15 @@ export class DefaultSignerAleo implements SignerAleo {
   ): GetAddressDAReturnType {
     return this._container
       .get<GetAddressUseCase>(addressTypes.GetAddressUseCase)
+      .execute(derivationPath, options);
+  }
+
+  getViewKey(
+    derivationPath: string,
+    options?: AddressOptions,
+  ): GetViewKeyDAReturnType {
+    return this._container
+      .get<GetViewKeyUseCase>(addressTypes.GetViewKeyUseCase)
       .execute(derivationPath, options);
   }
 
