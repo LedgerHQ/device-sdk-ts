@@ -12,8 +12,14 @@ export class ERC7730InterceptorService {
   private interceptor: CalInterceptor | null = null;
   private readonly apiUrl: string;
 
-  constructor(apiUrl: string = "https://app.devicesdk.ledger-test.com") {
+  constructor(
+    apiUrl: string = process.env["ERC7730_API_URL"] ||
+      "https://app.devicesdk.ledger-test.com",
+  ) {
     this.apiUrl = apiUrl;
+    if (process.env["ERC7730_API_URL"]) {
+      console.log(`Using custom ERC7730 API URL: ${this.apiUrl}`);
+    }
   }
 
   /**

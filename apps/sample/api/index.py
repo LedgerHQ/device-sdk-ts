@@ -29,6 +29,12 @@ from erc7730.convert.resolved.convert_erc7730_input_to_resolved import (
 from erc7730.common.output import ListOutputAdder
 from erc7730.model.input.descriptor import InputERC7730Descriptor
 
+# v2 imports
+from erc7730.convert.calldata.convert_erc7730_v2_input_to_calldata import (
+    erc7730_v2_descriptor_to_calldata_descriptors,
+)
+from erc7730.model.input.v2.descriptor import InputERC7730Descriptor as InputERC7730DescriptorV2
+
 # Constants
 DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1"
 TEST_SIGNING_KEY = "b1ed47ef58f782e2bc4d5abe70ef66d9009c2957967017054470e0f3e10f5833"
@@ -42,6 +48,12 @@ CAL_CERTIFICATES_OVERRIDES = {
     "plugin_selector_key",
     "cal_trusted_name"
 }
+
+def _is_v2_descriptor(data: Dict[str, Any]) -> bool:
+    """Check if the descriptor uses the v2 schema."""
+    schema = data.get("$schema", "")
+    return "v2" in schema
+
 
 # Global state
 app = Flask(__name__)
@@ -171,7 +183,7 @@ def group_descriptors_by_chain_and_address(
 
 def process_contract_descriptor(input_descriptor: InputERC7730Descriptor) -> Dict[str, Any]:
     """
-    Process a contract-type ERC7730 descriptor.
+    Process a contract-type ERC7730 v1 descriptor.
     """
     # Convert to calldata descriptors
     calldata_descriptors = erc7730_descriptor_to_calldata_descriptors(input_descriptor)
@@ -180,6 +192,25 @@ def process_contract_descriptor(input_descriptor: InputERC7730Descriptor) -> Dic
     if not calldata_descriptors:
         raise ValueError("No calldata descriptors generated. Please check the descriptor format.")
 
+    return _group_and_sign_calldata_descriptors(calldata_descriptors)
+
+
+def process_contract_descriptor_v2(input_descriptor_v2: InputERC7730DescriptorV2) -> Dict[str, Any]:
+    """
+    Process a contract-type ERC7730 v2 descriptor.
+    """
+    calldata_descriptors = erc7730_v2_descriptor_to_calldata_descriptors(input_descriptor_v2)
+
+    if not calldata_descriptors:
+        raise ValueError("No calldata descriptors generated from v2 descriptor. Please check the descriptor format.")
+
+    return _group_and_sign_calldata_descriptors(calldata_descriptors)
+
+
+def _group_and_sign_calldata_descriptors(calldata_descriptors: List[Any]) -> Dict[str, Any]:
+    """
+    Common logic: group descriptors by chain/address, sign them, and return.
+    """
     # Group descriptors by chain and address
     grouped_descriptors = group_descriptors_by_chain_and_address(calldata_descriptors)
 
@@ -265,7 +296,7 @@ def convert_erc7730_to_eip712_descriptor(descriptor: InputEIP712DAppDescriptor) 
 
 def process_eip712_descriptor(input_descriptor: InputERC7730Descriptor) -> Dict[str, Any]:
     """
-    Process an EIP712-type ERC7730 descriptor.
+    Process an EIP712-type ERC7730 v1 descriptor.
     Converts ERC7730 input to resolved format, then to EIP712 descriptors.
     """
     output = ListOutputAdder()
@@ -298,6 +329,35 @@ def process_eip712_descriptor(input_descriptor: InputERC7730Descriptor) -> Dict[
     return processed_descriptors
 
 
+def process_eip712_descriptor_v2(input_descriptor_v2: InputERC7730DescriptorV2) -> Dict[str, Any]:
+    """
+    Process an EIP712-type ERC7730 v2 descriptor.
+    Uses the v2 converter to produce legacy EIP-712 descriptors.
+    """
+    from erc7730.convert.ledger.eip712.convert_erc7730_v2_to_eip712 import ERC7730V2toEIP712Converter
+
+    output = ListOutputAdder()
+    eip712_descriptors = ERC7730V2toEIP712Converter().convert(input_descriptor_v2, output)
+
+    if eip712_descriptors is None:
+        raise ValueError(f"Failed to convert v2 ERC7730 descriptor to EIP712: {output}")
+
+    if not eip712_descriptors:
+        raise ValueError("No eip712 descriptors generated from v2 descriptor. Please check the descriptor format.")
+
+    # Process all EIP712 descriptors and organize by chain_id:address
+    processed_descriptors = {}
+
+    for descriptor_in in eip712_descriptors.values():
+        generated_by_chain_address = convert_erc7730_to_eip712_descriptor(descriptor_in)
+        for key, generated_data in generated_by_chain_address.items():
+            processed_descriptors[key] = [{
+                "descriptors_eip712": generated_data
+            }]
+
+    return processed_descriptors
+
+
 @app.route("/api/process-erc7730-descriptor", methods=["POST"])
 def process_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
     """
@@ -312,26 +372,41 @@ def process_erc7730_descriptor() -> Tuple[Dict[str, Any], int]:
         # Normalize Etherscan URLs in the request data
         request_data = normalize_etherscan_urls(request_data)
 
-        # Validate input descriptor
-        input_descriptor = InputERC7730Descriptor.model_validate(
-            request_data,
-            strict=False
-        )
+        # Detect v2 schema and dispatch accordingly
+        is_v2 = _is_v2_descriptor(request_data)
 
-        # Determine descriptor type from context
-        context = input_descriptor.context
-        if not context:
-            return {"error": "Missing context in descriptor"}, 400
+        if is_v2:
+            # v2 descriptor pipeline
+            input_descriptor_v2 = InputERC7730DescriptorV2.model_validate(
+                request_data,
+                strict=False
+            )
+            context = input_descriptor_v2.context
+            if not context:
+                return {"error": "Missing context in v2 descriptor"}, 400
 
-        # Dispatch to appropriate processor based on type
-        if hasattr(context, 'contract') and context.contract is not None:
-            # Contract-type descriptor
-            processed_descriptors = process_contract_descriptor(input_descriptor)
-        elif hasattr(context, 'eip712') and context.eip712 is not None:
-            # EIP712-type descriptor
-            processed_descriptors = process_eip712_descriptor(input_descriptor)
+            if hasattr(context, 'contract') and context.contract is not None:
+                processed_descriptors = process_contract_descriptor_v2(input_descriptor_v2)
+            elif hasattr(context, 'eip712') and context.eip712 is not None:
+                processed_descriptors = process_eip712_descriptor_v2(input_descriptor_v2)
+            else:
+                return {"error": "Unknown v2 descriptor type: context must contain either 'contract' or 'eip712'"}, 400
         else:
-            return {"error": "Unknown descriptor type: context must contain either 'contract' or 'eip712'"}, 400
+            # v1 descriptor pipeline
+            input_descriptor = InputERC7730Descriptor.model_validate(
+                request_data,
+                strict=False
+            )
+            context = input_descriptor.context
+            if not context:
+                return {"error": "Missing context in descriptor"}, 400
+
+            if hasattr(context, 'contract') and context.contract is not None:
+                processed_descriptors = process_contract_descriptor(input_descriptor)
+            elif hasattr(context, 'eip712') and context.eip712 is not None:
+                processed_descriptors = process_eip712_descriptor(input_descriptor)
+            else:
+                return {"error": "Unknown descriptor type: context must contain either 'contract' or 'eip712'"}, 400
 
         return {
             "message": "ERC7730 descriptor processed successfully",
