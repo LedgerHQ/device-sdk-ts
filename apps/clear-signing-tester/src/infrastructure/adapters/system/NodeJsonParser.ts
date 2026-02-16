@@ -20,6 +20,7 @@ export class NodeJsonParser implements JsonParser {
     } catch (error) {
       throw new Error(
         `Invalid JSON format: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     }
   }

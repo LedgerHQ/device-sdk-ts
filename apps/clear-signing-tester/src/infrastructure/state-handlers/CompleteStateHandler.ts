@@ -53,7 +53,7 @@ export class CompleteStateHandler implements StateHandler {
         await this.deviceController.rejectTransaction();
       }
 
-      throw new Error("Home page not detected");
+      throw new Error("Home page not detected", { cause: error });
     }
 
     const analysis = await this.screenAnalyzer.analyzeAccumulatedTexts(
@@ -78,9 +78,11 @@ export class CompleteStateHandler implements StateHandler {
         WAIT_FOR_SIGN_SCREEN_MAX_ATTEMPTS,
         WAIT_FOR_SIGN_SCREEN_DELAY,
       );
-    } catch (_error) {
+    } catch (error) {
       this.logger.error("Failed to detect home page after maximum attempts");
-      throw new Error("Home page not detected after maximum attempts");
+      throw new Error("Home page not detected after maximum attempts", {
+        cause: error,
+      });
     }
   }
 }

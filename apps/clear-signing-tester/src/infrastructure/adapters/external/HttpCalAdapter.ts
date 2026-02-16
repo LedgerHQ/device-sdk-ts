@@ -73,7 +73,7 @@ export class HttpCalAdapter implements CalAdapter {
         this.logger.error(errorMessage, {
           data: { error: error.message },
         });
-        throw new Error(errorMessage);
+        throw new Error(errorMessage, { cause: error });
       }
       this.logger.error("Unexpected error fetching selectors", {
         data: { error },

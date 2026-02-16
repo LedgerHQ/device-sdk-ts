@@ -1,7 +1,7 @@
-import { DevToolsWebSocketConnector } from '@ledgerhq/device-management-kit-devtools-websocket-connector'
-import { Dashboard } from '@ledgerhq/device-management-kit-devtools-ui'
 import { useEffect, useRef, useState } from 'react'
+import { Dashboard } from '@ledgerhq/device-management-kit-devtools-ui'
 import { DEFAULT_DASHBOARD_WS_URL } from '@ledgerhq/device-management-kit-devtools-websocket-common'
+import { DevToolsWebSocketConnector } from '@ledgerhq/device-management-kit-devtools-websocket-connector'
 
 function App(): React.JSX.Element {
   const [connector, setConnector] = useState<DevToolsWebSocketConnector | null>(null)

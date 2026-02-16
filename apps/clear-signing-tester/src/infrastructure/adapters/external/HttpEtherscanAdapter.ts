@@ -165,7 +165,7 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
         this.logger.error(errorMessage, {
           data: { error: error.message },
         });
-        throw new Error(errorMessage);
+        throw new Error(errorMessage, { cause: error });
       }
       this.logger.error("Unexpected error fetching transactions", {
         data: { error },

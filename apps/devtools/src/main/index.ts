@@ -1,7 +1,11 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+
 import icon from '../../resources/icon.png?asset'
+import { setupWebsocketServer, stopWebsocketServer } from './setupWebsocketServer'
+// In this file you can include the rest of your app's specific main process
+// code. You can also put them in separate files and require them here.
 
 function createWindow(): void {
   // Create the browser window.
@@ -69,10 +73,6 @@ app.on('window-all-closed', () => {
     app.quit()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
-import { setupWebsocketServer, stopWebsocketServer } from './setupWebsocketServer'
 
 // Start the WebSocket server when the app is ready
 app.whenReady().then(() => {

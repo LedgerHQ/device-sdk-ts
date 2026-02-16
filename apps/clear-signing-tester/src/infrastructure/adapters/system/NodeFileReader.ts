@@ -20,10 +20,11 @@ export class NodeFileReader implements FileReader {
       return readFileSync(filePath, "utf-8");
     } catch (error) {
       if (error instanceof Error && error.message.includes("ENOENT")) {
-        throw new Error(`File not found: ${filePath}`);
+        throw new Error(`File not found: ${filePath}`, { cause: error });
       }
       throw new Error(
         `Error reading file ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     }
   }
