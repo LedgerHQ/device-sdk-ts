@@ -6,9 +6,10 @@ import {
   getScreenVisibleAreaDimensions,
   isCustomLockScreenSupported,
 } from "@ledgerhq/dmk-ledger-wallet";
-import { Flex, Input, Switch, Text } from "@ledgerhq/react-ui";
+import { Flex, Input, Text } from "@ledgerhq/react-ui";
 
 import { InputLabel } from "@/components/InputLabel";
+import { SimpleSwitch } from "@/components/SimpleSwitch";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import { ImageDropZone } from "./ImageDropZone";
@@ -113,7 +114,7 @@ export const PictureInput: React.FC<PictureInputProps> = ({
           />
         )}
       </PreviewContainer>
-      <Switch
+      <SimpleSwitch
         checked={compress}
         disabled={disabled}
         onChange={() => setCompress(!compress)}

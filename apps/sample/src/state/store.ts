@@ -16,7 +16,12 @@ export type RootState = ReturnType<typeof reducer>;
 export const store = configureStore({
   reducer,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(settingsPersistenceMiddleware),
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ["sessions/addSession"],
+        ignoredPaths: ["sessions.connectedDevices"],
+      },
+    }).concat(settingsPersistenceMiddleware),
   devTools: true,
 });
 

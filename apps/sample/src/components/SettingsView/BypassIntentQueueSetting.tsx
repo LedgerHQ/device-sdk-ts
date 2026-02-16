@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Switch } from "@ledgerhq/react-ui";
+import { Flex } from "@ledgerhq/react-ui";
 
+import { SimpleSwitch } from "@/components/SimpleSwitch";
 import { selectBypassIntentQueue } from "@/state/settings/selectors";
 import { setBypassIntentQueue } from "@/state/settings/slice";
 
@@ -26,12 +27,12 @@ export const BypassIntentQueueSetting: React.FC = () => {
   return (
     <SettingBox>
       <Flex flex={1} flexDirection="column" alignItems="stretch">
-        <Switch
+        <SimpleSwitch
           onChange={onToggle}
           checked={bypassIntentQueue}
           name="switch-bypass-intent-queue"
           label="Bypass Intent Queue (UNSAFE)"
-          data-testid="switch_bypass-intent-queue"
+          data-testid="switch_bypass-intentQueue"
         />
       </Flex>
       <ResetSettingCTA

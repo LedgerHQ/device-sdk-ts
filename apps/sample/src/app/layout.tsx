@@ -19,9 +19,16 @@ export const metadata = {
 
 const RootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
-    <StyledComponentsRegistry>
-      <ClientRootLayout>{children}</ClientRootLayout>
-    </StyledComponentsRegistry>
+    <html lang="en">
+      <head>
+        <link rel="shortcut icon" href="../favicon.png" />
+      </head>
+      <body>
+        <StyledComponentsRegistry>
+          <ClientRootLayout>{children}</ClientRootLayout>
+        </StyledComponentsRegistry>
+      </body>
+    </html>
   );
 };
 

@@ -5,14 +5,7 @@ import {
   DeviceModelId,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import {
-  Flex,
-  InfiniteLoader,
-  Link,
-  Tag,
-  Text,
-  Tooltip,
-} from "@ledgerhq/react-ui";
+import { Flex, InfiniteLoader, Link, Tag, Text } from "@ledgerhq/react-ui";
 import dynamic from "next/dynamic";
 import styled from "styled-components";
 
@@ -165,31 +158,48 @@ type DeviceActionUIProps<Output, Error, IntermediateValue> = {
   deviceModelId: DeviceModelId;
 };
 
+const PopoverWrapper = styled.div`
+  position: relative;
+  display: inline-flex;
+`;
+
+const PopoverContent = styled.div`
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border-radius: 4px;
+  background: ${(p) => p.theme.colors.neutral.c100};
+  max-width: 100%;
+  z-index: 10;
+`;
+
 const JSONTextPopin: React.FC<{
   label: string;
   obj: unknown;
   color: string;
 }> = ({ label, obj, color }) => {
+  const [open, setOpen] = React.useState(false);
   return (
     <Flex flexDirection="column" alignItems="center" rowGap={5}>
       <Text color={color} textAlign="center">
         {label}
       </Text>
-      <Tooltip
-        placement="top"
-        interactive
-        maxWidth={"100%"}
-        trigger="click"
-        content={
-          <Flex overflow="scroll" maxHeight="400px">
-            <Text color="neutral.c00" whiteSpace="pre-wrap">
-              {JSON.stringify(obj, null, 2)}
-            </Text>
-          </Flex>
-        }
-      >
-        <Link type="shade">{"\nClick to reveal value"}</Link>
-      </Tooltip>
+      <PopoverWrapper>
+        <Link type="shade" onClick={() => setOpen((prev) => !prev)}>
+          {open ? "\nClick to hide value" : "\nClick to reveal value"}
+        </Link>
+        {open && (
+          <PopoverContent>
+            <Flex overflow="scroll" maxHeight="400px">
+              <Text color="neutral.c00" whiteSpace="pre-wrap">
+                {JSON.stringify(obj, null, 2)}
+              </Text>
+            </Flex>
+          </PopoverContent>
+        )}
+      </PopoverWrapper>
     </Flex>
   );
 };

@@ -4,7 +4,7 @@ import globals from "globals";
 export default [
   ...baseConfig,
   {
-    ignores: [".next"],
+    ignores: [".next", "next-env.d.ts"],
   },
   {
     languageOptions: {

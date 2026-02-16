@@ -26,10 +26,15 @@ const DmkContext = createContext<DeviceManagementKit | null>(null);
 const LogsExporterContext = createContext<WebLogsExporterLogger | null>(null);
 
 // Module-level singletons (created once at module load)
-const devToolsConnector = DevToolsWebSocketConnector.getInstance().connect({
-  url: DEFAULT_CLIENT_WS_URL,
-});
-const devToolsLogger = new DevToolsLogger(devToolsConnector);
+const devToolsEnabled = process.env.NEXT_PUBLIC_DEVTOOLS_ENABLED === "true";
+const devToolsConnector = devToolsEnabled
+  ? DevToolsWebSocketConnector.getInstance().connect({
+      url: DEFAULT_CLIENT_WS_URL,
+    })
+  : null;
+const devToolsLogger = devToolsConnector
+  ? new DevToolsLogger(devToolsConnector)
+  : null;
 const logsExporter = new WebLogsExporterLogger();
 
 function buildDmk(transportConfig: TransportConfig) {
@@ -37,8 +42,11 @@ function buildDmk(transportConfig: TransportConfig) {
 
   const builder = new DeviceManagementKitBuilder()
     .addLogger(new ConsoleLogger())
-    .addLogger(logsExporter)
-    .addLogger(devToolsLogger);
+    .addLogger(logsExporter);
+
+  if (devToolsLogger) {
+    builder.addLogger(devToolsLogger);
+  }
 
   for (const factory of factories) {
     builder.addTransport(factory);
@@ -59,6 +67,7 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
 
   // Create inspector in useEffect to ensure proper lifecycle handling
   useEffect(() => {
+    if (!devToolsConnector) return;
     const inspector = new DevToolsDmkInspector(devToolsConnector, dmk);
     return () => inspector.destroy();
   }, [dmk]);

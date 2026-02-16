@@ -1,6 +1,8 @@
 import React from "react";
-import { Flex, Icons, Text, Tooltip } from "@ledgerhq/react-ui";
+import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
+
+import { SimpleTooltip } from "@/components/SimpleTooltip";
 
 const BoxTitle = styled(Text).attrs({
   variant: "h5Inter",
@@ -12,7 +14,7 @@ export const BoxHeader: React.FC<{ children: string; hint: string }> = ({
   hint,
 }) => {
   return (
-    <Tooltip content={<Text color="neutral.c00">{hint}</Text>}>
+    <SimpleTooltip content={<Text color="neutral.c00">{hint}</Text>}>
       <Flex
         alignSelf="flex-start"
         flexDirection="row"
@@ -23,6 +25,6 @@ export const BoxHeader: React.FC<{ children: string; hint: string }> = ({
         <BoxTitle>{children}</BoxTitle>
         <Icons.Information size="XS" color="neutral.c70" />
       </Flex>
-    </Tooltip>
+    </SimpleTooltip>
   );
 };

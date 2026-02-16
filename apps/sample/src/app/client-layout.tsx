@@ -66,29 +66,22 @@ const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
 
 const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
   return (
-    <html lang="en">
-      <StyleProvider selectedPalette="dark" fontsPath="/fonts">
-        <StoreProvider store={store}>
-          <SettingsGate>
-            <DmkProvider>
-              <LedgerKeyringProtocolProvider>
-                <SignerEthProvider>
-                  <CalInterceptorProvider>
-                    <GlobalStyle />
-                    <head>
-                      <link rel="shortcut icon" href="../favicon.png" />
-                    </head>
-                    <body>
-                      <RootApp>{children}</RootApp>
-                    </body>
-                  </CalInterceptorProvider>
-                </SignerEthProvider>
-              </LedgerKeyringProtocolProvider>
-            </DmkProvider>
-          </SettingsGate>
-        </StoreProvider>
-      </StyleProvider>
-    </html>
+    <StyleProvider selectedPalette="dark" fontsPath="/fonts">
+      <StoreProvider store={store}>
+        <SettingsGate>
+          <DmkProvider>
+            <LedgerKeyringProtocolProvider>
+              <SignerEthProvider>
+                <CalInterceptorProvider>
+                  <GlobalStyle />
+                  <RootApp>{children}</RootApp>
+                </CalInterceptorProvider>
+              </SignerEthProvider>
+            </LedgerKeyringProtocolProvider>
+          </DmkProvider>
+        </SettingsGate>
+      </StoreProvider>
+    </StyleProvider>
   );
 };
 

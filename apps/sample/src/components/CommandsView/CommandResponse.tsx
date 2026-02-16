@@ -3,8 +3,9 @@ import {
   type CommandResult,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { Flex, InfiniteLoader, Text, Tooltip } from "@ledgerhq/react-ui";
+import { Flex, InfiniteLoader, Text } from "@ledgerhq/react-ui";
 
+import { SimpleTooltip } from "@/components/SimpleTooltip";
 import { type FieldType } from "@/hooks/useForm";
 
 export type CommandResponseProps<Response, ErrorCodes> = {
@@ -22,8 +23,7 @@ export function CommandResponse<Response, ErrorCodes>(
   const isError = response !== null && !isSuccessCommandResult(response);
   return (
     <Flex flexDirection="column" alignItems="flex-start">
-      <Tooltip
-        placement="top"
+      <SimpleTooltip
         content={
           <Text color="neutral.c00" whiteSpace="pre-wrap">
             Arguments:{"\n"}
@@ -39,7 +39,7 @@ export function CommandResponse<Response, ErrorCodes>(
         >
           {date.toLocaleTimeString()}
         </Text>
-      </Tooltip>
+      </SimpleTooltip>
       {loading ? (
         <InfiniteLoader size={20} />
       ) : (

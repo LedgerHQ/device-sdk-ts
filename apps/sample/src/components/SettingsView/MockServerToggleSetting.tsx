@@ -1,7 +1,8 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Flex, Switch } from "@ledgerhq/react-ui";
+import { Flex } from "@ledgerhq/react-ui";
 
+import { SimpleSwitch } from "@/components/SimpleSwitch";
 import { type TransportType } from "@/state/settings/schema";
 import { selectTransportType } from "@/state/settings/selectors";
 import { setTransportType } from "@/state/settings/slice";
@@ -29,7 +30,7 @@ export const MockServerToggleSetting: React.FC = () => {
   return (
     <SettingBox>
       <Flex flex={1} flexDirection="column" alignItems="stretch">
-        <Switch
+        <SimpleSwitch
           onChange={onToggle}
           checked={mockServerEnabled}
           name="switch-mock-server"
