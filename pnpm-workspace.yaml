@@ -61,7 +61,7 @@ catalog:
   "@vitejs/plugin-react": ^5.0.0
   "@vitest/coverage-istanbul": ^3.2.4
   autoprefixer: ^10.4.17
-  axios: 1.13.2
+  axios: 1.13.5
   babel-plugin-module-resolver: ^5.0.2
   bitcoinjs-lib: ^6.1.6
   bs58: ^6.0.0
