@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-signer-kit-solana",
   "version": "1.6.2",
-  "private": true,
+  "private": false,
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@ledgerhq/context-module": "workspace:^",
-    "@ledgerhq/signer-utils": "^1.1.2",
+    "@ledgerhq/signer-utils": "workspace:^",
     "@solana/spl-token": "catalog:",
     "@solana/web3.js": "catalog:",
     "bs58": "catalog:",

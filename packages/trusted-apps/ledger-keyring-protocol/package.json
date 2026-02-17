@@ -39,7 +39,7 @@
     "test:coverage": "vitest run --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "^1.1.2",
+    "@ledgerhq/signer-utils": "workspace:^",
     "@noble/ciphers": "^1.3.0",
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
@@ -58,6 +58,6 @@
     "@ledgerhq/device-management-kit": "workspace:^"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.1.0"
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

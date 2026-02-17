@@ -2,7 +2,7 @@
   "name": "@ledgerhq/device-transport-kit-node-hid",
   "version": "1.0.0",
   "license": "Apache-2.0",
-  "private": true,
+  "private": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
@@ -53,7 +53,7 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:*",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "rxjs": "catalog:"
   }
 }

@@ -57,6 +57,6 @@
     "reflect-metadata": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.1.0"
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }
