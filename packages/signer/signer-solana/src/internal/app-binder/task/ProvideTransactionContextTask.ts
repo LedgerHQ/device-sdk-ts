@@ -17,7 +17,7 @@ import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/Provid
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
   DefaultSolanaMessageNormaliser,
-  type SolanaMessageNormaliserConstructor,
+  type SolanaMessageNormaliser,
 } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
 
 import { type SolanaBuildContextResult } from "./BuildTransactionContextTask";
@@ -28,18 +28,18 @@ export type ProvideSolanaTransactionContextTaskArgs =
   SolanaBuildContextResult & {
     readonly transactionBytes: Uint8Array;
     readonly loggerFactory: (tag: string) => LoggerPublisherService;
-    readonly normaliser?: SolanaMessageNormaliserConstructor;
+    readonly normaliser?: SolanaMessageNormaliser;
   };
 
 export class ProvideSolanaTransactionContextTask {
   private readonly _logger: LoggerPublisherService;
-  private readonly _normaliser: SolanaMessageNormaliserConstructor;
+  private readonly _normaliser: SolanaMessageNormaliser;
   constructor(
     private readonly api: InternalApi,
     private readonly args: ProvideSolanaTransactionContextTaskArgs,
   ) {
     this._logger = args.loggerFactory("ProvideSolanaTransactionContextTask");
-    this._normaliser = args.normaliser ?? DefaultSolanaMessageNormaliser;
+    this._normaliser = args.normaliser ?? new DefaultSolanaMessageNormaliser();
   }
 
   async run(): Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>> {

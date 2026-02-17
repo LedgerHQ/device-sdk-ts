@@ -853,7 +853,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
-        normaliser: DefaultSolanaMessageNormaliser,
+        normaliser: new DefaultSolanaMessageNormaliser(),
         loggerFactory: mockLoggerFactory,
       };
 
@@ -954,7 +954,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
-        normaliser: DefaultSolanaMessageNormaliser,
+        normaliser: new DefaultSolanaMessageNormaliser(),
         loggerFactory: mockLoggerFactory,
       };
 
@@ -1074,7 +1074,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
-        normaliser: DefaultSolanaMessageNormaliser,
+        normaliser: new DefaultSolanaMessageNormaliser(),
         loggerFactory: mockLoggerFactory,
       };
 

@@ -13,7 +13,7 @@ runs:
         # Get actual binary directories and add to PATH
         echo "$(dirname $(proto bin node))" >> $GITHUB_PATH
         echo "$(dirname $(proto bin pnpm))" >> $GITHUB_PATH
-        echo "/home/runner/.proto/bin" >> $GITHUB_PATH
+        echo "$HOME/.proto/bin" >> $GITHUB_PATH
 
     - name: Get pnpm store directory
       shell: bash
