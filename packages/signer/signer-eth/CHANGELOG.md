@@ -1,5 +1,11 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.11.1
+
+### Patch Changes
+
+- [`5574923`](https://github.com/LedgerHQ/device-sdk-ts/commit/55749232b5da67e5b9528f824b10eeb39e53519e) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Support eip712 clear signing when several descriptors are available
+
 ## 1.11.0
 
 ### Minor Changes
