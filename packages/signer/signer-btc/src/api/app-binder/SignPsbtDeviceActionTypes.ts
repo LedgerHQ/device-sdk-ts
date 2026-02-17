@@ -21,6 +21,16 @@ import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer
 
 export type SignPsbtDAOutput = PsbtSignature[];
 
+export const signPsbtDAStateSteps = Object.freeze({
+  OPEN_APP: "signer.btc.steps.openApp",
+  PREPARE_WALLET_POLICY: "signer.btc.steps.prepareWalletPolicy",
+  BUILD_PSBT: "signer.btc.steps.buildPsbt",
+  SIGN_PSBT: "signer.btc.steps.signPsbt",
+} as const);
+
+export type SignPsbtDAStateStep =
+  (typeof signPsbtDAStateSteps)[keyof typeof signPsbtDAStateSteps];
+
 export type SignPsbtDAInput = {
   psbt: Psbt;
   wallet: ApiWallet;
@@ -42,6 +52,7 @@ export type SignPsbtDARequiredInteraction =
 
 export type SignPsbtDAIntermediateValue = {
   requiredUserInteraction: SignPsbtDARequiredInteraction;
+  step: SignPsbtDAStateStep;
 };
 
 export type SignPsbtDAState = DeviceActionState<
