@@ -6,6 +6,7 @@ import {
   type TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  ApplicationChecker,
   DeviceModelId,
   type DeviceSessionState,
   type InternalApi,
@@ -18,13 +19,13 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TypedData } from "@api/model/TypedData";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import {
   BuildFullContextsTask,
   type BuildFullContextsTaskArgs,
   type ContextWithSubContexts,
 } from "@internal/app-binder/task/BuildFullContextsTask";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { TypedDataValueField } from "@internal/typed-data/model/Types";
@@ -159,7 +160,11 @@ export class BuildEIP712ContextTask {
     deviceState: DeviceSessionState,
   ): Maybe<"v1" | "v2"> {
     if (
-      !new ApplicationChecker(deviceState, this.appConfig)
+      !new ApplicationChecker(
+        deviceState,
+        this.appConfig,
+        new EthereumApplicationResolver(),
+      )
         .withMinVersionInclusive("1.10.0")
         .excludeDeviceModel(DeviceModelId.NANO_S)
         .check()
@@ -178,6 +183,7 @@ export class BuildEIP712ContextTask {
     const shouldUseV2Filters = new ApplicationChecker(
       deviceState,
       this.appConfig,
+      new EthereumApplicationResolver(),
     )
       .withMinVersionInclusive("1.12.0")
       .check();

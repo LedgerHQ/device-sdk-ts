@@ -6,6 +6,7 @@ import {
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
+  ApplicationChecker,
   DeviceModelId,
   type DeviceSessionState,
   type InternalApi,
@@ -16,7 +17,7 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.TRUSTED_NAME,
@@ -219,7 +220,11 @@ export class BuildBaseContexts {
     deviceState: DeviceSessionState,
     appConfig: GetConfigCommandResponse,
   ): boolean {
-    return new ApplicationChecker(deviceState, appConfig)
+    return new ApplicationChecker(
+      deviceState,
+      appConfig,
+      new EthereumApplicationResolver(),
+    )
       .withMinVersionExclusive("1.14.0")
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();

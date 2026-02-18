@@ -1,5 +1,6 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
+  ApplicationChecker,
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceModelId,
@@ -37,6 +38,7 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
@@ -44,7 +46,6 @@ import {
   type ProvideEIP712ContextTaskReturnType,
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
@@ -152,6 +153,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            new EthereumApplicationResolver(),
           )
             .withMinVersionExclusive("1.15.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
