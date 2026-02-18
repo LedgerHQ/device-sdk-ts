@@ -6,20 +6,18 @@ import {
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
+  ApplicationChecker,
   DeviceModelId,
   type DeviceSessionState,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import {
-  ApplicationChecker,
-  ApplicationCheckerSupportedAppNames,
-} from "@ledgerhq/signer-utils";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import {
   MIN_ETH_APP_VERSION_FOR_GATED_SIGNING,
   MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER,
@@ -115,7 +113,11 @@ export class BuildBaseContexts {
     );
 
     // Remove gating contexts when app does not support them
-    const supportsGatedSigning = new ApplicationChecker(deviceState, appConfig)
+    const supportsGatedSigning = new ApplicationChecker(
+      deviceState,
+      appConfig,
+      new EthereumApplicationResolver(),
+    )
       .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
@@ -240,17 +242,12 @@ export class BuildBaseContexts {
     deviceState: DeviceSessionState,
     appConfig: GetConfigCommandResponse,
   ): boolean {
-<<<<<<< HEAD
-    return new ApplicationChecker(deviceState, appConfig)
-      .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER)
-=======
     return new ApplicationChecker(
       deviceState,
       appConfig,
-      ApplicationCheckerSupportedAppNames.Ethereum,
+      new EthereumApplicationResolver(),
     )
-      .withMinVersionExclusive("1.14.0")
->>>>>>> 141123f1 (🎨 (signer-utils): Moved ApplicationChecker into SignerUtils)
+      .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER)
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
   }

@@ -1,4 +1,5 @@
 import {
+  ApplicationChecker,
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceModelId,
@@ -10,10 +11,6 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import {
-  ApplicationChecker,
-  ApplicationCheckerSupportedAppNames,
-} from "@ledgerhq/signer-utils";
 import { Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
@@ -40,6 +37,7 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import {
   BuildFullContextsTask,
   type BuildFullContextsTaskArgs,
@@ -150,7 +148,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
-            ApplicationCheckerSupportedAppNames.Ethereum,
+            new EthereumApplicationResolver(),
           )
             .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS)
             .excludeDeviceModel(DeviceModelId.NANO_S)

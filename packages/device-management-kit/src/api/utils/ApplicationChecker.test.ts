@@ -1,13 +1,8 @@
-import {
-  DeviceModelId,
-  DeviceSessionStateType,
-  DeviceStatus,
-} from "@ledgerhq/device-management-kit";
+import { DeviceModelId } from "@api/device/DeviceModel";
+import { DeviceStatus } from "@api/device/DeviceStatus";
+import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 
-import {
-  ApplicationChecker,
-  ApplicationCheckerSupportedAppNames,
-} from "./ApplicationChecker";
+import { ApplicationChecker } from "./ApplicationChecker";
 import {
   type ApplicationResolver,
   type ResolvedApp,
@@ -19,7 +14,7 @@ describe("ApplicationChecker", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.0.0" },
+      currentApp: { name: "TestApp", version: "1.0.0" },
       deviceModelId: modelId,
       isSecureConnectionAllowed: false,
     };
@@ -32,7 +27,6 @@ describe("ApplicationChecker", () => {
   }
 
   const appConfig = { version: "1.0.0" };
-  const expectedApp = ApplicationCheckerSupportedAppNames.Ethereum;
 
   it("should pass check when resolved as compatible", () => {
     const resolver = createMockResolver({
@@ -42,7 +36,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     ).check();
     expect(result).toStrictEqual(true);
@@ -56,7 +49,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     ).check();
     expect(result).toStrictEqual(false);
@@ -70,7 +62,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     )
       .withMinVersionInclusive("1.12.0")
@@ -86,7 +77,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     )
       .withMinVersionInclusive("1.12.0")
@@ -102,7 +92,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     )
       .withMinVersionExclusive("1.12.0")
@@ -118,7 +107,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     )
       .withMinVersionExclusive("1.12.0")
@@ -134,7 +122,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(DeviceModelId.FLEX),
       appConfig,
-      expectedApp,
       resolver,
     )
       .excludeDeviceModel(DeviceModelId.NANO_S)
@@ -150,7 +137,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(DeviceModelId.FLEX),
       appConfig,
-      expectedApp,
       resolver,
     )
       .excludeDeviceModel(DeviceModelId.FLEX)
@@ -166,7 +152,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     )
       .withMinVersionInclusive("1.11.0")
@@ -183,7 +168,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     )
       .withMinVersionInclusive("1.11.0")
@@ -200,7 +184,6 @@ describe("ApplicationChecker", () => {
     const result = new ApplicationChecker(
       createReadyState(),
       appConfig,
-      expectedApp,
       resolver,
     )
       .withMinVersionInclusive("1.12.0")
