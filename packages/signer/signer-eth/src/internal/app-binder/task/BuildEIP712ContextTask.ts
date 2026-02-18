@@ -6,22 +6,20 @@ import {
   type TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  ApplicationChecker,
   DeviceModelId,
   type DeviceSessionState,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
-import {
-  ApplicationChecker,
-  ApplicationCheckerSupportedAppNames,
-} from "@ledgerhq/signer-utils";
 import { Just, type Maybe, Nothing } from "purify-ts";
 
 import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandTypes";
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TypedData } from "@api/model/TypedData";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import {
   BuildFullContextsTask,
   type BuildFullContextsTaskArgs,
@@ -165,7 +163,7 @@ export class BuildEIP712ContextTask {
       !new ApplicationChecker(
         deviceState,
         this.appConfig,
-        ApplicationCheckerSupportedAppNames.Ethereum,
+        new EthereumApplicationResolver(),
       )
         .withMinVersionInclusive("1.10.0")
         .excludeDeviceModel(DeviceModelId.NANO_S)
@@ -185,7 +183,7 @@ export class BuildEIP712ContextTask {
     const shouldUseV2Filters = new ApplicationChecker(
       deviceState,
       this.appConfig,
-      ApplicationCheckerSupportedAppNames.Ethereum,
+      new EthereumApplicationResolver(),
     )
       .withMinVersionInclusive("1.12.0")
       .check();

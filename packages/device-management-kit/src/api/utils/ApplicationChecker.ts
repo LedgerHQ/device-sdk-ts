@@ -1,25 +1,12 @@
-import {
-  type DeviceModelId,
-  type DeviceSessionState,
-} from "@ledgerhq/device-management-kit";
 import { gt, gte } from "semver";
 
+import { type DeviceModelId } from "@api/device/DeviceModel";
+import { type DeviceSessionState } from "@api/device-session/DeviceSessionState";
+
 import {
+  type AppConfig,
   type ApplicationResolver,
-  DefaultApplicationResolver,
 } from "./ApplicationResolver";
-
-export type AppConfig = Record<string, unknown> & {
-  readonly version: string;
-};
-
-export enum ApplicationCheckerSupportedAppNames {
-  Solana = "Solana",
-  Ethereum = "Ethereum",
-}
-export enum ApplicationCheckerInternalAppNames {
-  Exchange = "Exchange",
-}
 
 export class ApplicationChecker {
   private isCompatible: boolean;
@@ -29,11 +16,10 @@ export class ApplicationChecker {
   constructor(
     deviceState: DeviceSessionState,
     appConfig: AppConfig,
-    expectedApp: ApplicationCheckerSupportedAppNames,
-    resolver: ApplicationResolver = new DefaultApplicationResolver(),
+    resolver: ApplicationResolver,
   ) {
     this.modelId = deviceState.deviceModelId;
-    const resolved = resolver.resolve(deviceState, appConfig, expectedApp);
+    const resolved = resolver.resolve(deviceState, appConfig);
     this.isCompatible = resolved.isCompatible;
     this.version = resolved.version;
   }
