@@ -8,14 +8,16 @@ import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
+import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
+import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import PACKAGE from "@root/package.json";
 
+import { type GatedDappsDto } from "./dto/GatedDappsDto";
 import {
+  type GatedDescriptorDataSource,
   type GetGatedDescriptorParams,
   type GetGatedDescriptorResponse,
-  type GatedDescriptorDataSource,
 } from "./GatedDescriptorDataSource";
-import { type GatedDappsDto } from "./dto/GatedDappsDto";
 
 @injectable()
 export class HttpGatedDescriptorDataSource
@@ -80,7 +82,13 @@ export class HttpGatedDescriptorDataSource
         byContract[selectorWith0x] ??
         byContract[selector];
       if (entry?.descriptor) {
-        return Right({ descriptor: entry.descriptor });
+        return Right({
+          signedDescriptor: HexStringUtils.appendSignatureToPayload(
+            entry.descriptor,
+            entry.signatures![this.config.cal.mode]!,
+            SIGNATURE_TAG,
+          ),
+        });
       }
     }
 
