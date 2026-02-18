@@ -28,7 +28,7 @@ export class SendPayloadInChunksTask<T> {
   async run(): Promise<CommandResult<T, EthErrorCodes>> {
     const { payload, withPayloadLength = true } = this.args;
 
-    let data: Uint8Array | null = null;
+    let data: Uint8Array | null;
     if (withPayloadLength) {
       data = PayloadUtils.getBufferFromPayload(payload);
     } else {

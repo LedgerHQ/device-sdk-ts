@@ -138,12 +138,20 @@ export default [
   {
     files: ["**/*.tsx"],
     plugins: {
-      react: eslintPluginReact,
+      react: fixupPluginRules(eslintPluginReact),
       "react-hooks": fixupPluginRules(eslintPluginReactHooks),
     },
     rules: {
       ...eslintPluginReact.configs.flat.recommended.rules,
       ...eslintPluginReactHooks.configs.recommended.rules,
+      // New rules from react-hooks v7+ (React Compiler era) — downgrade to
+      // warnings until the codebase is updated to follow the new patterns.
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/refs": "warn",
+      "react-hooks/static-components": "warn",
+      "react-hooks/incompatible-library": "warn",
+      "react-hooks/preserve-manual-memoization": "warn",
     },
     settings: {
       react: {

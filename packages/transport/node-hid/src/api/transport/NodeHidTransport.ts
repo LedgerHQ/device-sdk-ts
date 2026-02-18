@@ -246,7 +246,7 @@ export class NodeHidTransport implements Transport {
   > {
     return EitherAsync.liftEither(this.hidApi)
       .map(async (hidApi) => {
-        let hidDevices: NodeHIDDevice[] = [];
+        let hidDevices: NodeHIDDevice[];
 
         try {
           const allDevices = await hidApi.devicesAsync();

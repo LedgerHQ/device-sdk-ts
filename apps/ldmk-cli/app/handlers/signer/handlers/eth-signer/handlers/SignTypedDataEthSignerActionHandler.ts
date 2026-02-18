@@ -99,6 +99,7 @@ export class SignTypedDataEthSignerActionHandler extends BaseEthSignerActionHand
     } catch (e) {
       throw new Error(
         `Invalid JSON: ${e instanceof Error ? e.message : String(e)}`,
+        { cause: e },
       );
     }
 

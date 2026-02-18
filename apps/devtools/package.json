@@ -32,9 +32,8 @@
     "electron-updater": "^6.3.9"
   },
   "devDependencies": {
-    "@electron-toolkit/eslint-config-prettier": "^3.0.0",
-    "@electron-toolkit/eslint-config-ts": "^3.1.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -43,8 +42,6 @@
     "electron-builder": "catalog:",
     "electron-vite": "catalog:",
     "eslint": "catalog:",
-    "eslint-plugin-react": "catalog:",
-    "eslint-plugin-react-hooks": "catalog:",
     "eslint-plugin-react-refresh": "catalog:",
     "prettier": "catalog:",
     "react": "catalog:",

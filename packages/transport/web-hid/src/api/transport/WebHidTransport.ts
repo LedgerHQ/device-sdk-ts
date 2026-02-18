@@ -233,7 +233,7 @@ export class WebHidTransport implements Transport {
     return EitherAsync.liftEither(this.hidApi)
       .map(async (hidApi) => {
         // `requestDevice` returns an array. but normally the user can select only one device at a time.
-        let hidDevices: HIDDevice[] = [];
+        let hidDevices: HIDDevice[];
 
         try {
           hidDevices = await hidApi.requestDevice({

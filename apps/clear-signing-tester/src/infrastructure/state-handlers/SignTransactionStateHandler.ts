@@ -81,9 +81,11 @@ export class SignTransactionStateHandler implements StateHandler {
         WAIT_FOR_TX_PAGE_ATTEMPTS,
         WAIT_FOR_TX_PAGE_DELAY,
       );
-    } catch (_error) {
+    } catch (error) {
       this.logger.error("Failed to detect tx page after maximum attempts");
-      throw new Error("Tx page not detected after maximum attempts");
+      throw new Error("Tx page not detected after maximum attempts", {
+        cause: error,
+      });
     }
   }
 

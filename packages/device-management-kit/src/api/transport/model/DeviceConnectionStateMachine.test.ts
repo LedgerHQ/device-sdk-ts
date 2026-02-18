@@ -331,14 +331,13 @@ describe("DeviceConnectionStateMachine", () => {
       mockApduSender.sendApdu.mockResolvedValue(Right(apduResponse));
 
       // WHEN
-      let promise: Promise<SendApduResult> | undefined = undefined;
       const promise1 = machine.sendApdu(apdu, true);
       await Promise.resolve(); // Allow the first APDU promise to resolve before triggering disconnection
       machine.eventDeviceDisconnected();
       const result1 = await promise1;
-      promise = machine.sendApdu(apdu2);
+      const promise = machine.sendApdu(apdu2);
       machine.closeConnection();
-      const result2 = await promise!;
+      const result2 = await promise;
 
       // THEN
       // expect(mockApduSender.sendApdu).toHaveBeenCalledTimes(2);

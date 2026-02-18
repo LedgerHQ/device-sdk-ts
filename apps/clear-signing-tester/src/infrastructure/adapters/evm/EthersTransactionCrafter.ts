@@ -64,6 +64,7 @@ export class EthersTransactionCrafter implements TransactionCrafter {
     } catch (error) {
       throw new Error(
         `Failed to craft raw transaction: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
       );
     }
   }

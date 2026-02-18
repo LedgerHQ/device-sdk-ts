@@ -488,7 +488,7 @@ export class RNBleTransport implements Transport {
     return EitherAsync<ConnectError, TransportConnectedDevice>(
       async ({ throwE }) => {
         let device: Device;
-        let servicesUUIDs: string[] = [];
+        let servicesUUIDs: string[];
         try {
           await this._manager.connectToDevice(params.deviceId, {
             requestMTU: DEFAULT_MTU,
