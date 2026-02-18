@@ -41,3 +41,7 @@ export class CosmosAppCommandError extends DeviceExchangeError<CosmosErrorCodes>
     super({ tag: "CosmosAppCommandError", ...args });
   }
 }
+
+export const CosmosAppCommandErrorFactory = (
+  args: CommandErrorArgs<CosmosErrorCodes>,
+) => new CosmosAppCommandError(args);

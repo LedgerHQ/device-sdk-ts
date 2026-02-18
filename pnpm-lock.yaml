@@ -507,7 +507,6 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
       tsx:
         specifier: 'catalog:'
         version: 4.19.2

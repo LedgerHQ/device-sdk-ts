@@ -5,6 +5,7 @@ import {
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import {
@@ -24,20 +25,38 @@ export class SignTransactionTask {
   constructor(
     private api: InternalApi,
     private args: SignTransactionTaskArgs,
+    private logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<
     CommandResult<SignTransactionCommandResponse, CosmosErrorCodes>
   > {
+    this.logger.debug("[run] Starting SignTransactionTask", {
+      data: {
+        derivationPath: this.args.derivationPath,
+        hrp: this.args.hrp,
+        transactionLength: this.args.transaction.length,
+      },
+    });
+
     const { derivationPath, hrp, transaction } = this.args;
 
-    await this.api.sendCommand(
+    const result = await this.api.sendCommand(
       new SignTransactionCommand({
         phase: SignPhase.INIT,
         derivationPath,
         hrp,
       }),
     );
+
+    if (!isSuccessCommandResult(result)) {
+      this.logger.debug("[run] Failed to sign transaction", {
+        data: { error: result.error },
+      });
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Failed to sign transaction"),
+      });
+    }
 
     for (
       let offset = 0;
@@ -59,10 +78,21 @@ export class SignTransactionTask {
       );
 
       if (!isSuccessCommandResult(result)) {
+        this.logger.debug("[run] Failed to sign transaction", {
+          data: {
+            chunkIndex: offset,
+            error: result.error,
+          },
+        });
         return result;
       }
 
       if (isLastChunk) {
+        this.logger.debug("[run] Transaction signed successfully", {
+          data: {
+            signature: result.data,
+          },
+        });
         return CommandResultFactory({
           data: result.data,
         });

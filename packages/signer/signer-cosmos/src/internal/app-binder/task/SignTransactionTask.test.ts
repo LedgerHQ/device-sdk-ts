@@ -1,8 +1,10 @@
 import {
   CommandResultFactory,
+  CommandResultStatus,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -15,12 +17,16 @@ import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTa
 describe("SignTransactionTask", () => {
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
+  let loggerMock: LoggerPublisherService;
 
   beforeEach(() => {
     sendCommandMock = vi.fn();
     apiMock = {
       sendCommand: sendCommandMock,
     } as unknown as InternalApi;
+    loggerMock = {
+      debug: vi.fn(),
+    } as unknown as LoggerPublisherService;
   });
 
   describe("run", () => {
@@ -29,17 +35,21 @@ describe("SignTransactionTask", () => {
       const signature = new Uint8Array(64).fill(0xcd);
       const transaction = new Uint8Array(300).fill(0x02);
       sendCommandMock
-        .mockResolvedValueOnce(undefined) // INIT
+        .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(
           CommandResultFactory({ data: new Uint8Array(0) }),
         ) // ADD
         .mockResolvedValueOnce(CommandResultFactory({ data: signature })); // LAST
 
-      const task = new SignTransactionTask(apiMock, {
-        derivationPath: "44'/118'/0'/0/0",
-        hrp: "cosmos",
-        transaction,
-      });
+      const task = new SignTransactionTask(
+        apiMock,
+        {
+          derivationPath: "44'/118'/0'/0/0",
+          hrp: "cosmos",
+          transaction,
+        },
+        loggerMock,
+      );
 
       // ACT
       const result = await task.run();
@@ -62,14 +72,18 @@ describe("SignTransactionTask", () => {
       });
 
       sendCommandMock
-        .mockResolvedValueOnce(undefined) // INIT
+        .mockResolvedValueOnce({ status: CommandResultStatus.Success }) // INIT
         .mockResolvedValueOnce(commandError); // LAST
 
-      const task = new SignTransactionTask(apiMock, {
-        derivationPath: "44'/118'/0'/0/0",
-        hrp: "cosmos",
-        transaction,
-      });
+      const task = new SignTransactionTask(
+        apiMock,
+        {
+          derivationPath: "44'/118'/0'/0/0",
+          hrp: "cosmos",
+          transaction,
+        },
+        loggerMock,
+      );
 
       // ACT
       const result = await task.run();
@@ -84,14 +98,47 @@ describe("SignTransactionTask", () => {
       }
     });
 
-    it("should return InvalidStatusWordError apdu response does not contain signature", async () => {
+    it("should return InvalidStatusWordError when wrong derivation path or hrp is provided", async () => {
       // ARRANGE
-      sendCommandMock.mockResolvedValue(undefined);
-      const task = new SignTransactionTask(apiMock, {
-        derivationPath: "44'/118'/0'/0/0",
-        hrp: "cosmos",
-        transaction: new Uint8Array(0),
+      sendCommandMock.mockResolvedValue({
+        status: CommandResultStatus.Error,
       });
+      const task = new SignTransactionTask(
+        apiMock,
+        {
+          derivationPath: "44'/118'/0'/0",
+          hrp: "cosmos",
+          transaction: new Uint8Array(0),
+        },
+        loggerMock,
+      );
+
+      // ACT
+      const result = await task.run();
+
+      // ASSERT
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        const err = result.error as InvalidStatusWordError;
+        expect(err).toBeInstanceOf(InvalidStatusWordError);
+        expect(err.originalError?.message).toBe("Failed to sign transaction");
+      }
+    });
+
+    it("should return InvalidStatusWordError when apdu response does not contain signature", async () => {
+      // ARRANGE
+      sendCommandMock.mockResolvedValue({
+        status: CommandResultStatus.Success,
+      });
+      const task = new SignTransactionTask(
+        apiMock,
+        {
+          derivationPath: "44'/118'/0'/0/0",
+          hrp: "cosmos",
+          transaction: new Uint8Array(0),
+        },
+        loggerMock,
+      );
 
       // ACT
       const result = await task.run();

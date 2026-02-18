@@ -4,7 +4,6 @@ This module provides the implementation of the Ledger Cosmos signer of the Devic
 
 - Retrieving the Cosmos address using a given derivation path
 - Signing a Cosmos transaction
-- Signing a message displayed on a Ledger device
 - Retrieving the app configuration
 
 ## 🔹 Index
@@ -16,7 +15,6 @@ This module provides the implementation of the Ledger Cosmos signer of the Devic
    - [Get App Configuration](#use-case-1-get-app-configuration)
    - [Get Address](#use-case-2-get-address)
    - [Sign Transaction](#use-case-3-sign-transaction)
-   - [Sign Message](#use-case-4-sign-message)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -44,7 +42,7 @@ const signerCosmos = new SignerCosmosBuilder({ dmk, sessionId }).build();
 
 ## 🔹 Use Cases
 
-The `SignerCosmosBuilder.build()` method will return a `SignerCosmos` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerCosmosBuilder.build()` method will return a `SignerCosmos` instance that exposes 3 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
@@ -61,8 +59,10 @@ const { observable, cancel } = signerCosmos.getAppConfig();
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type GetAppConfigCommandResponse = {
-  version: string;
+type AppConfig = {
+  major: number;
+  minor: number;
+  patch: number;
 };
 ```
 
@@ -72,10 +72,14 @@ type GetAppConfigCommandResponse = {
 
 ### Use Case 2: Get Address
 
-This method allows users to retrieve the Cosmos address based on a given `derivationPath`.
+This method allows users to retrieve the Cosmos address based on a given `derivationPath` and `hrp` (Human-Readable Part).
 
 ```typescript
-const { observable, cancel } = signerCosmos.getAddress(derivationPath, options);
+const { observable, cancel } = signerCosmos.getAddress(
+  derivationPath,
+  hrp,
+  options,
+);
 ```
 
 #### **Parameters**
@@ -83,8 +87,14 @@ const { observable, cancel } = signerCosmos.getAddress(derivationPath, options);
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g., `"m/44'/118'/0'/0/0"`)
+  - **Type:** `string` (e.g., `"44'/118'/0'/0/0"`)
   - The derivation path used for the Cosmos address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- `hrp`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"cosmos"`)
+  - The Human-Readable Part that identifies the Cosmos chain (e.g. `"cosmos"`, `"osmosis"`).
 
 - `options`
 
@@ -106,9 +116,9 @@ const { observable, cancel } = signerCosmos.getAddress(derivationPath, options);
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type GetAddressCommandResponse = {
+type PubKey = {
   publicKey: Uint8Array;
-  chainCode?: Uint8Array;
+  address: string; // Bech32 address
 };
 ```
 
@@ -123,6 +133,7 @@ This method allows users to sign a Cosmos transaction.
 ```typescript
 const { observable, cancel } = signerCosmos.signTransaction(
   derivationPath,
+  hrp,
   transaction,
   options,
 );
@@ -133,8 +144,14 @@ const { observable, cancel } = signerCosmos.signTransaction(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g., `"m/44'/118'/0'/0/0"`)
+  - **Type:** `string` (e.g., `"44'/118'/0'/0/0"`)
   - The derivation path used for the Cosmos transaction. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- `hrp`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"cosmos"`)
+  - The Human-Readable Part that identifies the Cosmos chain (e.g. `"cosmos"`, `"osmosis"`).
 
 - `transaction`
 
@@ -160,50 +177,7 @@ const { observable, cancel } = signerCosmos.signTransaction(
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = {
-  r: string;
-  s: string;
-};
-```
-
-- `cancel` A function to cancel the action on the Ledger device.
-
----
-
-### Use Case 4: Sign Message
-
-This method allows users to sign a text string that is displayed on Ledger devices.
-
-```typescript
-const { observable, cancel } = signerCosmos.signMessage(
-  derivationPath,
-  message,
-);
-```
-
-#### **Parameters**
-
-- `derivationPath`
-
-  - **Required**
-  - **Type:** `string` (e.g., `"m/44'/118'/0'/0/0"`)
-  - The derivation path used for the Cosmos message. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
-
-- `message`
-
-  - **Required**
-  - **Type:** `string | Uint8Array`
-  - The message to be signed, which will be displayed on the Ledger device.
-
-#### **Returns**
-
-- `observable` Emits DeviceActionState updates, including the following details:
-
-```typescript
-type Signature = {
-  r: string;
-  s: string;
-};
+type Signature = Uint8Array;
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
@@ -278,11 +252,6 @@ switch (requiredUserInteraction) {
   case UserInteractionRequired.SignTransaction: {
     // User needs to sign the transaction displayed on the device
     console.log("User needs to sign the transaction displayed on the device.");
-    break;
-  }
-  case UserInteractionRequired.SignPersonalMessage: {
-    // User needs to sign the message displayed on the device
-    console.log("User needs to sign the message displayed on the device.");
     break;
   }
   case UserInteractionRequired.None: {
