@@ -138,6 +138,22 @@ export class EthereumTransactionTesterCli {
       try {
         await this.interceptorService.setupFromFiles(this.config.erc7730Files);
       } catch (error) {
+        // If a custom ERC7730_API_URL was explicitly set, the user expects the
+        // local server to be running.  Silently continuing would fall through to
+        // the production CAL with mismatched test certificates, producing
+        // misleading blind-signing results.  Abort loudly instead.
+        if (process.env["ERC7730_API_URL"]) {
+          console.error(
+            `\n❌ ERC7730_API_URL is set to ${process.env["ERC7730_API_URL"]} but the server is unreachable.`,
+          );
+          console.error(
+            "   Start the local API first:  cd tools/tester && ./run-local-api.sh",
+          );
+          console.error(
+            "   Or unset ERC7730_API_URL to use the remote service.\n",
+          );
+          throw error;
+        }
         console.error("Failed to setup ERC7730 interceptor:", error);
       }
     }
