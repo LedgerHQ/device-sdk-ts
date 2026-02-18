@@ -54,6 +54,7 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.NFT:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.GATED_SIGNING:
         return {
           subcontextCallbacks: [],
         };

@@ -27,6 +27,7 @@ import {
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
 import {
   NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
@@ -356,6 +357,16 @@ export class ProvideEIP712ContextTask {
           payload,
           commandFactory: (args) =>
             new ProvideProxyInfoCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+        break;
+      case ClearSignContextType.GATED_SIGNING:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideGatedSigningCommand({
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
             }),

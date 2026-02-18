@@ -39,6 +39,7 @@ export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.NFT,
   ClearSignContextType.PLUGIN,
   ClearSignContextType.EXTERNAL_PLUGIN,
+  ClearSignContextType.GATED_SIGNING,
 ];
 
 export type BuildBaseContextsResult = {
@@ -163,6 +164,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.TRUSTED_NAME:
       case ClearSignContextType.TOKEN:
       case ClearSignContextType.NFT:
+      case ClearSignContextType.GATED_SIGNING:
         return true;
       case ClearSignContextType.TRANSACTION_INFO:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
@@ -188,6 +190,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.TRANSACTION_CHECK:
+      case ClearSignContextType.GATED_SIGNING:
         return true;
       case ClearSignContextType.ENUM: // enum is needed but as optional
       case ClearSignContextType.TRUSTED_NAME:
@@ -234,6 +237,8 @@ export class BuildBaseContexts {
    */
   private _getContextPriority({ type }: ClearSignContextSuccess): number {
     switch (type) {
+      case ClearSignContextType.GATED_SIGNING:
+        return 5;
       case ClearSignContextType.TRANSACTION_CHECK:
         return 10;
       case ClearSignContextType.DYNAMIC_NETWORK:

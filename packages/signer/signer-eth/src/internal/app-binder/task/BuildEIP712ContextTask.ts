@@ -128,6 +128,7 @@ export class BuildEIP712ContextTask {
   ): Promise<ClearSignContextSuccess[]> {
     // Determine context types to be fetched
     const contextTypes: ClearSignContextType[] = [];
+    contextTypes.push(ClearSignContextType.GATED_SIGNING);
     if (this.appConfig.web3ChecksEnabled) {
       contextTypes.push(ClearSignContextType.TRANSACTION_CHECK);
     }
