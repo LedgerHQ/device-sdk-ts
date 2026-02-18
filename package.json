@@ -23,6 +23,7 @@
     "devtools": "pnpm --filter @ledgerhq/device-management-kit-devtools",
     "speculos-device-controller": "pnpm --filter @ledgerhq/speculos-device-controller",
     "context-module": "pnpm --filter @ledgerhq/context-module",
+    "signer-aleo": "pnpm --filter @ledgerhq/device-signer-kit-aleo",
     "signer-btc": "pnpm --filter @ledgerhq/device-signer-kit-bitcoin",
     "signer-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
     "signer-sol": "pnpm --filter @ledgerhq/device-signer-kit-solana",

@@ -877,6 +877,9 @@ importers:
       '@ledgerhq/device-mockserver-client':
         specifier: workspace:^
         version: link:../../packages/mockserver-client
+      '@ledgerhq/device-signer-kit-aleo':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-aleo
       '@ledgerhq/device-signer-kit-bitcoin':
         specifier: workspace:^
         version: link:../../packages/signer/signer-btc
@@ -1424,6 +1427,52 @@ importers:
       ts-node:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
+
+  packages/signer/signer-aleo:
+    dependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:^
+        version: link:../context-module
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/signer/signer-btc:
     dependencies:
