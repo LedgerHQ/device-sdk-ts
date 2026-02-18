@@ -21,6 +21,7 @@ import {
   type OpenAppWithDependenciesDAInput,
   type OpenAppWithDependenciesDAIntermediateValue,
   type OpenAppWithDependenciesDAOutput,
+  openAppWithDependenciesDAStateStep,
 } from "./types";
 
 type OpenAppWithDependenciesMachineInternalState = {
@@ -115,6 +116,7 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: openAppWithDependenciesDAStateStep.GET_DEVICE_METADATA,
             installPlan: null,
           },
           _internalState: {

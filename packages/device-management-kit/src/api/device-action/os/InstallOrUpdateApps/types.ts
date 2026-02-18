@@ -10,11 +10,24 @@ import type {
   GetDeviceMetadataDAError,
   GetDeviceMetadataDARequiredInteraction,
 } from "@api/device-action/os/GetDeviceMetadata/types";
-import type { GoToDashboardDARequiredInteraction } from "@api/device-action/os/GoToDashboard/types";
+import type {
+  GoToDashboardDARequiredInteraction,
+  GoToDashboardDAStateStep,
+} from "@api/device-action/os/GoToDashboard/types";
 import type { GoToDashboardDAInput } from "@api/device-action/os/GoToDashboard/types";
 import type { InstallAppDAError } from "@api/secure-channel/device-action/InstallApp/types";
 import type { Application } from "@internal/manager-api/model/Application";
 import type { SecureChannelInstallDAErrors } from "@internal/secure-channel/model/Errors";
+
+export const installOrUpdateAppsDAStateStep = Object.freeze({
+  UPDATE_DEVICE_METADATA: "os.installOrUpdateApps.steps.updateDeviceMetadata",
+  BUILD_INSTALL_PLAN: "os.installOrUpdateApps.steps.buildInstallPlan",
+  CHECK_IF_ENOUGH_MEMORY: "os.installOrUpdateApps.steps.checkIfEnoughMemory",
+  INSTALL_APPLICATION: "os.installOrUpdateApps.steps.installApplication",
+} as const);
+
+export type InstallOrUpdateAppsDAStateStep =
+  (typeof installOrUpdateAppsDAStateStep)[keyof typeof installOrUpdateAppsDAStateStep];
 
 /**
  * An application version used as application constraint should either be a valid semantic versioning formatted
@@ -94,6 +107,7 @@ export type InstallOrUpdateAppsDAIntermediateValue = {
   requiredUserInteraction: InstallOrUpdateAppsDARequiredInteraction;
   installPlan: InstallPlan | null;
   deviceId?: Uint8Array;
+  step: InstallOrUpdateAppsDAStateStep | GoToDashboardDAStateStep;
 };
 
 export type InstallOrUpdateAppsDAState = DeviceActionState<
