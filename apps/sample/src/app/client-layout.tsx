@@ -23,6 +23,7 @@ import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SettingsGate } from "@/providers/SettingsGate";
+import { SignerAleoProvider } from "@/providers/SignerAleoProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
@@ -73,15 +74,17 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <DmkProvider>
               <LedgerKeyringProtocolProvider>
                 <SignerEthProvider>
-                  <CalInterceptorProvider>
-                    <GlobalStyle />
-                    <head>
-                      <link rel="shortcut icon" href="../favicon.png" />
-                    </head>
-                    <body>
-                      <RootApp>{children}</RootApp>
-                    </body>
-                  </CalInterceptorProvider>
+                  <SignerAleoProvider>
+                    <CalInterceptorProvider>
+                      <GlobalStyle />
+                      <head>
+                        <link rel="shortcut icon" href="../favicon.png" />
+                      </head>
+                      <body>
+                        <RootApp>{children}</RootApp>
+                      </body>
+                    </CalInterceptorProvider>
+                  </SignerAleoProvider>
                 </SignerEthProvider>
               </LedgerKeyringProtocolProvider>
             </DmkProvider>
