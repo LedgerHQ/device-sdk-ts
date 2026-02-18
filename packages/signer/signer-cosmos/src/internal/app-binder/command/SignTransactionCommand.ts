@@ -7,14 +7,29 @@ import {
   type CommandResult,
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 import {
   COSMOS_APP_ERRORS,
-  CosmosAppCommandError,
+  CosmosAppCommandErrorFactory,
   type CosmosErrorCodes,
 } from "@internal/app-binder/command/utils/CosmosApplicationErrors";
+
+export const COSMOS_SIGN_TRANSACTION_APDU_HEADER = (p1: number) => ({
+  cla: 0x55,
+  ins: 0x02,
+  p1: p1,
+  p2: 0x00,
+});
+
+export const P1_INIT = 0x00;
+export const P1_ADD = 0x01;
+export const P1_LAST = 0x02;
 
 export enum SignPhase {
   INIT = "init",
@@ -45,14 +60,16 @@ export class SignTransactionCommand
 
   private readonly apduBuilder: ApduBuilder;
 
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    CosmosErrorCodes
+  >(COSMOS_APP_ERRORS, CosmosAppCommandErrorFactory);
+
   constructor(args: SignTransactionCommandArgs) {
     this.args = args;
-    this.apduBuilder = new ApduBuilder({
-      cla: 0x55,
-      ins: 0x02,
-      p1: this.p1(),
-      p2: 0x00,
-    });
+    this.apduBuilder = new ApduBuilder(
+      COSMOS_SIGN_TRANSACTION_APDU_HEADER(this.p1()),
+    );
   }
 
   public getApdu(): Apdu {
@@ -62,38 +79,28 @@ export class SignTransactionCommand
   public parseResponse(
     apduResponse: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, CosmosErrorCodes> {
-    const apduParser = new ApduParser(apduResponse);
-    const statusCode = apduParser.encodeToHexaString(
-      apduResponse.statusCode,
-      true,
-    );
+    return Maybe.fromNullable(
+      this.errorHelper.getError(apduResponse),
+    ).orDefaultLazy(() => {
+      const apduParser = new ApduParser(apduResponse);
 
-    if (statusCode in COSMOS_APP_ERRORS) {
-      const errorStatusCode = statusCode as CosmosErrorCodes;
+      const remaining = apduParser.getUnparsedRemainingLength();
+      const signature = apduParser.extractFieldByLength(remaining);
+
       return CommandResultFactory({
-        error: new CosmosAppCommandError({
-          ...COSMOS_APP_ERRORS[errorStatusCode],
-          errorCode: errorStatusCode,
-        }),
+        data: signature as Signature,
       });
-    }
-
-    const remaining = apduParser.getUnparsedRemainingLength();
-    const signature = apduParser.extractFieldByLength(remaining);
-
-    return CommandResultFactory({
-      data: signature as Signature,
     });
   }
 
   private p1(): number {
     switch (this.args.phase) {
       case SignPhase.INIT:
-        return 0x00;
+        return P1_INIT;
       case SignPhase.ADD:
-        return 0x01;
+        return P1_ADD;
       case SignPhase.LAST:
-        return 0x02;
+        return P1_LAST;
     }
   }
 

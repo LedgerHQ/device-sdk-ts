@@ -2,12 +2,16 @@ import {
   ApduBuilder,
   ApduResponse,
   CommandResultFactory,
+  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import {
-  CosmosAppCommandError,
+  COSMOS_GET_APP_CONFIG_APDU_HEADER,
+  GetAppConfigCommand,
+} from "@internal/app-binder/command/GetAppConfigCommand";
+import {
+  type CosmosAppCommandError,
   CosmosErrorCodes,
 } from "@internal/app-binder/command/utils/CosmosApplicationErrors";
 
@@ -28,12 +32,9 @@ describe("GetAppConfigCommand", () => {
   describe("getApdu", () => {
     it("should return APDU with CLA=0x55, INS=0x00, P1=0x00, P2=0x00 and no data", () => {
       // ARRANGE: command is created in beforeEach
-      const expected = new ApduBuilder({
-        cla: 0x55,
-        ins: 0x00,
-        p1: 0x00,
-        p2: 0x00,
-      }).build();
+      const expected = new ApduBuilder(
+        COSMOS_GET_APP_CONFIG_APDU_HEADER,
+      ).build();
       // ACT
       const apdu = command.getApdu();
       // ASSERT
@@ -69,13 +70,13 @@ describe("GetAppConfigCommand", () => {
       expect(isSuccessCommandResult(result)).toBe(false);
       if (!isSuccessCommandResult(result)) {
         const err = result.error as CosmosAppCommandError;
-        expect(err).toBeInstanceOf(CosmosAppCommandError);
-        expect(err.errorCode).toBe(CosmosErrorCodes.DATA_INVALID);
-        expect(err.message).toBe("Data Invalid");
+        expect((err.originalError as { errorCode: string }).errorCode).toBe(
+          CosmosErrorCodes.DATA_INVALID.slice(2),
+        );
       }
     });
 
-    it("should return CosmosAppCommandError with DATA_INVALID when data is too short (major, minor or patch undefined)", () => {
+    it("should return InvalidStatusWordError when version is missing", () => {
       // ARRANGE
       const response = new ApduResponse({
         statusCode: new Uint8Array([0x90, 0x00]),
@@ -86,10 +87,11 @@ describe("GetAppConfigCommand", () => {
       // ASSERT
       expect(isSuccessCommandResult(result)).toBe(false);
       if (!isSuccessCommandResult(result)) {
-        const err = result.error as CosmosAppCommandError;
-        expect(err).toBeInstanceOf(CosmosAppCommandError);
-        expect(err.errorCode).toBe(CosmosErrorCodes.DATA_INVALID);
-        expect(err.message).toBe("Data Invalid");
+        const err = result.error as InvalidStatusWordError;
+        expect(err).toBeInstanceOf(InvalidStatusWordError);
+        expect((err.originalError as { message: string }).message).toBe(
+          "Cannot extract version",
+        );
       }
     });
   });

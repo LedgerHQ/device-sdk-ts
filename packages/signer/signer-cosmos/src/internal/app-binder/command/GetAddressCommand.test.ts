@@ -1,16 +1,21 @@
 import {
   ApduBuilder,
   ApduResponse,
+  type InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import {
-  CosmosAppCommandError,
+  COSMOS_GET_ADDRESS_APDU_HEADER,
+  GetAddressCommand,
+  P1_CHECK_ON_DEVICE,
+  P1_NO_CHECK_ON_DEVICE,
+} from "@internal/app-binder/command/GetAddressCommand";
+import {
+  type CosmosAppCommandError,
   CosmosErrorCodes,
 } from "@internal/app-binder/command/utils/CosmosApplicationErrors";
-
-import { GetAddressCommand } from "./GetAddressCommand";
 
 describe("GetAddressCommand", () => {
   describe("name", () => {
@@ -47,12 +52,9 @@ describe("GetAddressCommand", () => {
         checkOnDevice: false,
         skipOpenApp: false,
       });
-      const expected = new ApduBuilder({
-        cla: 0x55,
-        ins: 0x04,
-        p1: 0x00,
-        p2: 0x00,
-      })
+      const expected = new ApduBuilder(
+        COSMOS_GET_ADDRESS_APDU_HEADER(P1_NO_CHECK_ON_DEVICE),
+      )
         .encodeInLVFromAscii("cosmos")
         .addBufferToData(pathToBuffer("44'/118'/0'/0/0"));
       // ACT
@@ -69,18 +71,31 @@ describe("GetAddressCommand", () => {
         checkOnDevice: true,
         skipOpenApp: false,
       });
-      const expected = new ApduBuilder({
-        cla: 0x55,
-        ins: 0x04,
-        p1: 0x01,
-        p2: 0x00,
-      })
+      const expected = new ApduBuilder(
+        COSMOS_GET_ADDRESS_APDU_HEADER(P1_CHECK_ON_DEVICE),
+      )
         .encodeInLVFromAscii("cosmos")
         .addBufferToData(pathToBuffer("44'/118'/0'/0/0"));
       // ACT
       const apdu = command.getApdu();
       // ASSERT
       expect(apdu.getRawApdu()).toStrictEqual(expected.build().getRawApdu());
+    });
+
+    it("should throw error when wrong derivation path is provided", () => {
+      // ARRANGE
+      const command = new GetAddressCommand({
+        derivationPath: "44'/118'/0'/0",
+        hrp: "cosmos",
+        checkOnDevice: false,
+        skipOpenApp: false,
+      });
+      // ACT & ASSERT
+      expect(() => {
+        command.getApdu();
+      }).toThrow(
+        "GetAddressCommand: expected cosmos style number of path elements, got 4",
+      );
     });
   });
 
@@ -136,9 +151,33 @@ describe("GetAddressCommand", () => {
       expect(isSuccessCommandResult(result)).toBe(false);
       if (!isSuccessCommandResult(result)) {
         const err = result.error as CosmosAppCommandError;
-        expect(err).toBeInstanceOf(CosmosAppCommandError);
-        expect(err.errorCode).toBe(CosmosErrorCodes.DATA_INVALID);
-        expect(err.message).toBe("Data Invalid");
+        expect((err.originalError as { errorCode: string }).errorCode).toBe(
+          CosmosErrorCodes.DATA_INVALID.slice(2),
+        );
+      }
+    });
+
+    it("should return InvalidStatusWordError when public key is missing", () => {
+      // ARRANGE
+      const response = new ApduResponse({
+        statusCode: new Uint8Array([0x90, 0x00]),
+        data: new Uint8Array(0),
+      });
+      const command = new GetAddressCommand({
+        derivationPath: "44'/118'/0'/0/0",
+        hrp: "cosmos",
+        checkOnDevice: false,
+        skipOpenApp: false,
+      });
+      // ACT
+      const result = command.parseResponse(response);
+      // ASSERT
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        const err = result.error as InvalidStatusWordError;
+        expect((err.originalError as { message: string }).message).toBe(
+          "Public key is missing",
+        );
       }
     });
   });

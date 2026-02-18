@@ -2,6 +2,7 @@ import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
+  LoggerPublisherService,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -23,6 +24,8 @@ export class CosmosAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @inject(externalTypes.DmkLoggerFactory)
+    private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
 
   getAppConfig(args: { skipOpenApp: boolean }): GetAppConfigDAReturnType {
@@ -35,6 +38,7 @@ export class CosmosAppBinder {
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("GetAppConfigCommand"),
       }),
     });
   }
@@ -51,6 +55,7 @@ export class CosmosAppBinder {
             : UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
+        logger: this.dmkLoggerFactory("GetAddressCommand"),
       }),
     });
   }
@@ -66,11 +71,16 @@ export class CosmosAppBinder {
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SignTransactionTask(internalApi, args).run(),
+            new SignTransactionTask(
+              internalApi,
+              args,
+              this.dmkLoggerFactory("SignTransactionTask"),
+            ).run(),
           appName: "Cosmos",
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
+        logger: this.dmkLoggerFactory("SignTransactionCommand"),
       }),
     });
   }

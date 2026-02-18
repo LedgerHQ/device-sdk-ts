@@ -7,11 +7,15 @@ import {
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
 import {
+  COSMOS_SIGN_TRANSACTION_APDU_HEADER,
+  P1_ADD,
+  P1_INIT,
+  P1_LAST,
   SignPhase,
   SignTransactionCommand,
 } from "@internal/app-binder/command/SignTransactionCommand";
 import {
-  CosmosAppCommandError,
+  type CosmosAppCommandError,
   CosmosErrorCodes,
 } from "@internal/app-binder/command/utils/CosmosApplicationErrors";
 
@@ -48,12 +52,9 @@ describe("SignTransactionCommand", () => {
         derivationPath: "44'/118'/0'/0/0",
         hrp: "cosmos",
       });
-      const expected = new ApduBuilder({
-        cla: 0x55,
-        ins: 0x02,
-        p1: 0x00,
-        p2: 0x00,
-      })
+      const expected = new ApduBuilder(
+        COSMOS_SIGN_TRANSACTION_APDU_HEADER(P1_INIT),
+      )
         .addBufferToData(pathToBuffer("44'/118'/0'/0/0"))
         .encodeInLVFromAscii("cosmos");
       // ACT
@@ -69,12 +70,9 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.ADD,
         transactionChunk: chunk,
       });
-      const expected = new ApduBuilder({
-        cla: 0x55,
-        ins: 0x02,
-        p1: 0x01,
-        p2: 0x00,
-      }).addBufferToData(chunk);
+      const expected = new ApduBuilder(
+        COSMOS_SIGN_TRANSACTION_APDU_HEADER(P1_ADD),
+      ).addBufferToData(chunk);
       // ACT
       const apdu = command.getApdu();
       // ASSERT
@@ -88,12 +86,9 @@ describe("SignTransactionCommand", () => {
         phase: SignPhase.LAST,
         transactionChunk: chunk,
       });
-      const expected = new ApduBuilder({
-        cla: 0x55,
-        ins: 0x02,
-        p1: 0x02,
-        p2: 0x00,
-      }).addBufferToData(chunk);
+      const expected = new ApduBuilder(
+        COSMOS_SIGN_TRANSACTION_APDU_HEADER(P1_LAST),
+      ).addBufferToData(chunk);
       // ACT
       const apdu = command.getApdu();
       // ASSERT
@@ -195,9 +190,9 @@ describe("SignTransactionCommand", () => {
       expect(isSuccessCommandResult(result)).toBe(false);
       if (!isSuccessCommandResult(result)) {
         const err = result.error as CosmosAppCommandError;
-        expect(err).toBeInstanceOf(CosmosAppCommandError);
-        expect(err.errorCode).toBe(CosmosErrorCodes.DATA_INVALID);
-        expect(err.message).toBe("Data Invalid");
+        expect((err.originalError as { errorCode: string }).errorCode).toBe(
+          CosmosErrorCodes.DATA_INVALID.slice(2),
+        );
       }
     });
   });

@@ -94,7 +94,7 @@ const { observable, cancel } = signerCosmos.getAddress(
 ```typescript
 type PubKey = {
   publicKey: Uint8Array;
-  address: string; // Bech32 address for the given HRP
+  address: string; // Bech32 address
 };
 ```
 
@@ -117,27 +117,34 @@ const { observable, cancel } = signerCosmos.signTransaction(
 
 #### **Parameters**
 
-**Required**
+- `derivationPath`
 
-- **derivationPath** `string`  
-  The derivation path used in the transaction.  
-  See [Ledger's guide](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/118'/0'/0/0"`)
+  - The derivation path used for the Cosmos address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
-- **hrp** `string`  
-  The Human-Readable Part that identifies the Cosmos chain (e.g. `"cosmos"`, `"osmosis"`).
+- `hrp`
 
-- **transaction** `Uint8Array`  
-  The serialized transaction bytes to sign.
+  - **Required**
+  - **Type:** `string` (e.g., `"cosmos"`, `"osmosis"`)
+  - The Human-Readable Part that identifies the Cosmos chain (used for bech32 encoding of the address).
 
-**Optional**
+- `transaction`
 
-- **options** `TransactionOptions`
+  - **Required**
+  - **Type:** `Uint8Array`
+  - The serialized transaction bytes to sign.
 
-  ```typescript
-  type TransactionOptions = {
-    skipOpenApp?: boolean;
-  };
-  ```
+- `options`
+
+  - Optional
+  - Type: `TransactionOptions`
+
+    ```typescript
+    type TransactionOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
 
   - `skipOpenApp`: An optional boolean indicating whether to skip opening the Cosmos app on the device (`true`) or not (`false`). Use when the app is already open.
 
@@ -146,9 +153,7 @@ const { observable, cancel } = signerCosmos.signTransaction(
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type SignTransactionCommandResponse = {
-  signature: Uint8Array; // Signed transaction bytes
-};
+type Signature = Uint8Array;
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
@@ -203,7 +208,7 @@ const { observable, cancel } = signerCosmos.getAppConfig();
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type GetAppConfigCommandResponse = {
+type AppConfig = {
   major: number;
   minor: number;
   patch: number;
