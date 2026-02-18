@@ -45,9 +45,9 @@ export class BuildEIP712ContextTask {
     private readonly from: string,
     private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     private readonly buildFullContextFactory = (
-      api: InternalApi,
+      internalApi: InternalApi,
       args: BuildFullContextsTaskArgs,
-    ) => new BuildFullContextsTask(api, args),
+    ) => new BuildFullContextsTask(internalApi, args),
   ) {}
 
   async run(): Promise<ProvideEIP712ContextTaskArgs> {
@@ -61,7 +61,19 @@ export class BuildEIP712ContextTask {
 
     const deviceState = this.api.getDeviceSessionState();
     const deviceModelId = deviceState.deviceModelId;
-    const additionalContexts = await this.getAdditionalContexts(deviceModelId);
+
+    // get challenge, needed for the proxy info context,
+    // needed by typed data loader (clear signed) or gated typed data loader (blind signed)
+    let challenge: string | undefined = undefined;
+    const challengeRes = await this.api.sendCommand(new GetChallengeCommand());
+    if (isSuccessCommandResult(challengeRes)) {
+      challenge = challengeRes.data.challenge;
+    }
+
+    const additionalContexts = await this.getAdditionalContexts(
+      deviceModelId,
+      challenge,
+    );
 
     // Get clear signing context, if any
     let clearSignContext: Maybe<TypedDataClearSignContextSuccess> = Nothing;
@@ -71,15 +83,6 @@ export class BuildEIP712ContextTask {
     > = {};
     const version = this.getClearSignVersion(deviceState);
     if (version.isJust()) {
-      // Get challenge
-      let challenge: string | undefined = undefined;
-      const challengeRes = await this.api.sendCommand(
-        new GetChallengeCommand(),
-      );
-      if (isSuccessCommandResult(challengeRes)) {
-        challenge = challengeRes.data.challenge;
-      }
-
       // Get filters
       const verifyingContract =
         this.data.domain.verifyingContract?.toLowerCase() || ZERO_ADDRESS;
@@ -125,9 +128,14 @@ export class BuildEIP712ContextTask {
 
   private async getAdditionalContexts(
     deviceModelId: DeviceModelId,
+    challenge: string | undefined,
   ): Promise<ClearSignContextSuccess[]> {
     // Determine context types to be fetched
     const contextTypes: ClearSignContextType[] = [];
+    contextTypes.push(ClearSignContextType.GATED_SIGNING);
+    if (challenge !== undefined) {
+      contextTypes.push(ClearSignContextType.PROXY_INFO);
+    }
     if (this.appConfig.web3ChecksEnabled) {
       contextTypes.push(ClearSignContextType.TRANSACTION_CHECK);
     }
@@ -145,9 +153,12 @@ export class BuildEIP712ContextTask {
         data: this.data,
         from: this.from,
         chainId: this.data.domain.chainId || 0,
+        challenge,
       },
       contextTypes,
     );
+
+    console.log("LAU: contexts", contexts);
 
     // Filter valid contexts
     return contexts.filter((context) =>
