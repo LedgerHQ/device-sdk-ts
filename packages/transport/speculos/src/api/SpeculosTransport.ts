@@ -22,6 +22,7 @@ import {
 import { type Either, Left, Right } from "purify-ts";
 import { from, type Observable } from "rxjs";
 
+import { FetchSpeculosDatasource } from "@internal/datasource/FetchSpeculosDatasource";
 import { HttpSpeculosDatasource } from "@internal/datasource/HttpSpeculosDatasource";
 import { type SpeculosDatasource } from "@internal/datasource/SpeculosDatasource";
 
@@ -33,7 +34,7 @@ export class SpeculosTransport implements Transport {
   private readonly identifier: TransportIdentifier = speculosIdentifier;
   private readonly _speculosDataSource: SpeculosDatasource;
   private connectedDevice: TransportConnectedDevice | null = null;
-  private disconnectInterval: NodeJS.Timeout | null = null;
+  private disconnectInterval: ReturnType<typeof setInterval> | null = null;
   private readonly _isE2E: boolean;
   private readonly speculosDevice: TransportDiscoveredDevice = {
     id: "SpeculosID", //TODO make it dynamic at creation
@@ -57,10 +58,12 @@ export class SpeculosTransport implements Transport {
     _config: DmkConfig,
     speculosUrl: string,
     isE2E?: boolean,
+    datasource?: SpeculosDatasource,
   ) {
     this._isE2E = isE2E ?? false;
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl); // See how to pass properly speculos config.
+    this._speculosDataSource =
+      datasource ?? new HttpSpeculosDatasource(speculosUrl);
   }
 
   isSupported(): boolean {
@@ -225,7 +228,18 @@ export class SpeculosTransport implements Transport {
 export const speculosTransportFactory: (
   speculosUrl?: string,
   isE2E?: boolean,
+  options?: { useFetch?: boolean },
 ) => TransportFactory =
-  (speculosUrl = "http://127.0.0.1:5000", isE2E = false) =>
-  ({ config, loggerServiceFactory }) =>
-    new SpeculosTransport(loggerServiceFactory, config, speculosUrl, isE2E);
+  (speculosUrl = "http://127.0.0.1:5000", isE2E = false, options) =>
+  ({ config, loggerServiceFactory }) => {
+    const datasource = options?.useFetch
+      ? new FetchSpeculosDatasource(speculosUrl)
+      : undefined;
+    return new SpeculosTransport(
+      loggerServiceFactory,
+      config,
+      speculosUrl,
+      isE2E,
+      datasource,
+    );
+  };

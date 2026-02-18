@@ -4,5 +4,5 @@ export interface SpeculosDatasource {
   openEventStream(
     onEvent: (json: Record<string, unknown>) => void,
     onClose?: () => void,
-  ): Promise<ReadableStream<Uint8Array>>;
+  ): Promise<ReadableStream<Uint8Array> | { cancel: () => void }>;
 }

@@ -1,69 +1,67 @@
-import axios, { type AxiosInstance } from "axios";
-
 import { type SpeculosDatasource } from "./SpeculosDatasource";
 
 const DEFAULT_CLIENT_HEADER = "ldmk-transport-speculos";
-
-const TIMEOUT = 2000; // 2 second timeout for availability check
+const AVAILABILITY_TIMEOUT_MS = 2000;
+const POLL_INTERVAL_MS = 500;
 
 const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
 
-export function axiosClientFactory(
-  baseUrl: string,
-  clientHeader: string,
-): AxiosInstance {
-  return axios.create({
-    baseURL: removeTrailingSlashes(baseUrl),
-    timeout: 0,
-    headers: {
-      "X-Ledger-Client-Version": clientHeader,
-    },
-    transitional: { clarifyTimeoutError: true },
-  });
-}
-
-export class HttpSpeculosDatasource implements SpeculosDatasource {
-  private readonly speculosAxiosClient: AxiosInstance;
+/**
+ * SpeculosDatasource implementation using native `fetch()`.
+ *
+ * Works in all JS runtimes: Node.js 18+, browsers, React Native.
+ * Replaces the axios-based HttpSpeculosDatasource for environments
+ * where axios's Node.js HTTP adapter is unavailable (e.g. React Native).
+ */
+export class FetchSpeculosDatasource implements SpeculosDatasource {
+  private readonly baseUrl: string;
+  private readonly clientHeader: string;
 
   constructor(
-    private readonly baseUrl: string,
+    baseUrl: string,
     clientHeader: string = DEFAULT_CLIENT_HEADER,
   ) {
-    this.speculosAxiosClient = axiosClientFactory(baseUrl, clientHeader);
+    this.baseUrl = removeTrailingSlashes(baseUrl);
+    this.clientHeader = clientHeader;
   }
 
   async postApdu(apdu: string): Promise<string> {
-    const { data } = await this.speculosAxiosClient.post<SpeculosApduDTO>(
-      "/apdu",
-      {
-        data: apdu,
+    const response = await fetch(`${this.baseUrl}/apdu`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Ledger-Client-Version": this.clientHeader,
       },
-    );
-    return data.data;
+      body: JSON.stringify({ data: apdu }),
+    });
+    if (!response.ok) {
+      throw new Error(
+        `Speculos APDU POST failed: HTTP ${response.status} ${response.statusText}`,
+      );
+    }
+    const json = (await response.json()) as SpeculosApduDTO;
+    return json.data;
   }
 
   async isServerAvailable(): Promise<boolean> {
     try {
-      await this.speculosAxiosClient.request<SpeculosEventsDTO>({
+      const controller = new AbortController();
+      const timer = setTimeout(
+        () => controller.abort(),
+        AVAILABILITY_TIMEOUT_MS,
+      );
+      const response = await fetch(`${this.baseUrl}/events`, {
         method: "GET",
-        url: "/events",
-        timeout: TIMEOUT,
+        headers: { "X-Ledger-Client-Version": this.clientHeader },
+        signal: controller.signal,
       });
-      return true;
+      clearTimeout(timer);
+      return response.ok;
     } catch {
       return false;
     }
   }
 
-  /**
-   * Open an event stream from Speculos.
-   *
-   * On platforms with Web Streams API (Node 18+, browsers) this uses
-   * fetch + ReadableStream for real SSE streaming.
-   *
-   * On platforms without ReadableStream (React Native) this falls back
-   * to polling GET /events so the same interface works everywhere.
-   */
   async openEventStream(
     onEvent: (json: Record<string, unknown>) => void,
     onClose?: () => void,
@@ -71,7 +69,6 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
     if (typeof ReadableStream === "undefined") {
       return this._openEventStreamPolling(onEvent, onClose);
     }
-
     return this._openEventStreamSSE(onEvent, onClose);
   }
 
@@ -84,18 +81,22 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
     const poll = async () => {
       while (!cancelled) {
         try {
-          const { data } = await this.speculosAxiosClient.get<SpeculosEventsDTO>(
-            "/events",
-          );
-          if (data?.events) {
-            for (const event of data.events) {
-              onEvent(event as Record<string, unknown>);
+          const response = await fetch(`${this.baseUrl}/events`, {
+            method: "GET",
+            headers: { "X-Ledger-Client-Version": this.clientHeader },
+          });
+          if (response.ok) {
+            const data = (await response.json()) as SpeculosEventsDTO;
+            if (data?.events) {
+              for (const event of data.events) {
+                onEvent(event as Record<string, unknown>);
+              }
             }
           }
         } catch {
           // ignore polling errors
         }
-        await new Promise((r) => setTimeout(r, 500));
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
       }
       try {
         onClose?.();
@@ -116,22 +117,13 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
     onEvent: (json: Record<string, unknown>) => void,
     onClose?: () => void,
   ): Promise<ReadableStream<Uint8Array>> {
-    if (typeof fetch === "undefined") {
-      throw new Error("global fetch is not available in Node < 18");
-    }
-
-    const urlBase = this.speculosAxiosClient.defaults.baseURL ?? this.baseUrl;
-    const url = `${removeTrailingSlashes(urlBase)}/events?stream=true`;
-
+    const url = `${this.baseUrl}/events?stream=true`;
     const controller = new AbortController();
 
     const headers: HeadersInit = {
       Accept: "text/event-stream",
       "Cache-Control": "no-cache",
-      "X-Ledger-Client-Version":
-        (this.speculosAxiosClient.defaults.headers?.common?.[
-          "X-Ledger-Client-Version"
-        ] as string) ?? DEFAULT_CLIENT_HEADER,
+      "X-Ledger-Client-Version": this.clientHeader,
     };
 
     const response = await fetch(url, {
