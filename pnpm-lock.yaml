@@ -1578,58 +1578,6 @@ importers:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
-  packages/signer/signer-hyperliquid-bis:
-    dependencies:
-      '@ledgerhq/signer-utils':
-        specifier: workspace:*
-        version: link:../signer-utils
-      inversify:
-        specifier: 'catalog:'
-        version: 7.5.1(reflect-metadata@0.2.2)
-      purify-ts:
-        specifier: 'catalog:'
-        version: 2.1.0
-      reflect-metadata:
-        specifier: 'catalog:'
-        version: 0.2.2
-      xstate:
-        specifier: 'catalog:'
-        version: 5.19.2
-    devDependencies:
-      '@ledgerhq/device-management-kit':
-        specifier: workspace:*
-        version: link:../../device-management-kit
-      '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
-        version: link:../../config/eslint
-      '@ledgerhq/ldmk-tool':
-        specifier: workspace:*
-        version: link:../../tools/ldmk-tool
-      '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
-        version: link:../../config/prettier
-      '@ledgerhq/tsconfig-dsdk':
-        specifier: workspace:*
-        version: link:../../config/typescript
-      '@ledgerhq/vitest-config-dmk':
-        specifier: workspace:*
-        version: link:../../config/vitest
-      '@types/node':
-        specifier: 'catalog:'
-        version: 22.10.1
-      rxjs:
-        specifier: 'catalog:'
-        version: 7.8.2
-      ts-node:
-        specifier: 'catalog:'
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.2
-      vitest:
-        specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
-
   packages/signer/signer-solana:
     dependencies:
       '@ledgerhq/context-module':
@@ -25492,6 +25440,7 @@ snapshots:
       typescript: 5.9.2
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    optional: true
 
   ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2):
     dependencies:
