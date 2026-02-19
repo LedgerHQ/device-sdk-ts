@@ -2,8 +2,7 @@
 
 This module provides the implementation of the Ledger hyperliquid signer of the Device Management Kit. It enables interaction with the hyperliquid application on a Ledger device including:
 
-- Signing a hyperliquid transaction
-- Signing a message displayed on a Ledger device
+- Signing a hyperliquid actions
 
 ## 🔹 Index
 
@@ -11,14 +10,16 @@ This module provides the implementation of the Ledger hyperliquid signer of the 
 2. [Installation](#-installation)
 3. [Initialisation](#-initialisation)
 4. [Use Cases](#-use-cases)
-   - [Sign Transaction](#use-case-1-sign-transaction)
-   - [Sign Message](#use-case-2-sign-message)
+   - [Sign Actions](#use-case-1-sign-actions)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
 ## 🔹 How it works
 
-The Ledger Hyperliquid Signer utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device Management Kit to establish communication with the Ledger device and execute various operations. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the `Command` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within `DeviceAction` objects to handle different real-world scenarios. Finally, the Signer exposes dedicated and independent use cases that can be directly utilized by end users.
+The Ledger Hyperliquid Signer utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device Management Kit to establish communication with the Ledger device and execute various operations.
+The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units),
+which are encapsulated within the `Command` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs.
+The tasks are further encapsulated within `DeviceAction` objects to handle different real-world scenarios. Finally, the Signer exposes dedicated and independent use cases that can be directly utilized by end users.
 
 ## 🔹 Installation
 
@@ -44,12 +45,12 @@ The `SignerHyperliquidBuilder.build()` method will return a `SignerHyperliquid` 
 
 ---
 
-### Use Case 1: Sign Transaction
+### Use Case 1: Sign Actions
 
-This method allows users to sign a hyperliquid transaction.
+This method allows users to sign hyperliquid actions.
 
 ```typescript
-const { observable, cancel } = signerHyperliquid.signTransaction(
+const { observable, cancel } = signerHyperliquid.signActions(
   derivationPath,
   transaction,
   options,
@@ -82,47 +83,6 @@ const { observable, cancel } = signerHyperliquid.signTransaction(
     ```
 
   - `skipOpenApp`: An optional boolean indicating whether to skip opening the hyperliquid app automatically (`true`) or not (`false`).
-
-#### **Returns**
-
-- `observable` Emits DeviceActionState updates, including the following details:
-
-```typescript
-type Signature = {
-  r: string;
-  s: string;
-  v?: number;
-};
-```
-
-- `cancel` A function to cancel the action on the Ledger device.
-
----
-
-### Use Case 2: Sign Message
-
-This method allows users to sign a text string that is displayed on Ledger devices.
-
-```typescript
-const { observable, cancel } = signerHyperliquid.signMessage(
-  derivationPath,
-  message,
-);
-```
-
-#### **Parameters**
-
-- `derivationPath`
-
-  - **Required**
-  - **Type:** `string` (e.g., `"m/44'/0'/0'/0/0"`)
-  - The derivation path used for the hyperliquid message. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
-
-- `message`
-
-  - **Required**
-  - **Type:** `string | Uint8Array`
-  - The message to be signed, which will be displayed on the Ledger device.
 
 #### **Returns**
 
@@ -200,11 +160,6 @@ When the status is DeviceActionStatus.Pending, the state will include an `interm
 const { requiredUserInteraction } = intermediateValue;
 
 switch (requiredUserInteraction) {
-  case UserInteractionRequired.VerifyAddress: {
-    // User needs to verify the address displayed on the device
-    console.log("User needs to verify the address displayed on the device.");
-    break;
-  }
   case UserInteractionRequired.SignTransaction: {
     // User needs to sign the transaction displayed on the device
     console.log("User needs to sign the transaction displayed on the device.");
