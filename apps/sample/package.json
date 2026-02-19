@@ -26,6 +26,7 @@
     "@ledgerhq/device-management-kit-devtools-websocket-connector": "workspace:^",
     "@ledgerhq/device-signer-kit-bitcoin": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
+    "@ledgerhq/device-signer-kit-hyperliquid": "workspace:^",
     "@ledgerhq/device-signer-kit-solana": "workspace:^",
     "@ledgerhq/dmk-ledger-wallet": "workspace:^",
     "@ledgerhq/device-transport-kit-mockserver": "workspace:^",
