@@ -4,6 +4,7 @@ import type {
   SignActionsDAIntermediateValue,
   SignActionsDAOutput,
 } from "@ledgerhq/device-signer-kit-hyperliquid";
+
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
@@ -34,7 +35,7 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
             ? new Uint8Array(
                 Actions.slice(2)
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? []
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
               )
             : new Uint8Array(
                 Actions.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) ??

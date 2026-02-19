@@ -26,7 +26,7 @@ export class SignActionCommand
   implements
     Command<SignActionsCommandResponse, SignActionsCommandArgs, HyperliquidErrorCodes>
 {
-  readonly name = "SignActions";
+  readonly name = "SignAction";
 
   private readonly args: SignActionsCommandArgs;
 

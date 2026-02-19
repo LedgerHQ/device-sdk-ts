@@ -24,7 +24,8 @@ const initialState: SignerHyperliquidContextType = {
   signer: null,
 };
 
-const SignerHyperliquidContext = createContext<SignerHyperliquidContextType>(initialState);
+const SignerHyperliquidContext =
+  createContext<SignerHyperliquidContextType>(initialState);
 
 export const SignerHyperliquidProvider: React.FC<PropsWithChildren> = ({
   children,
