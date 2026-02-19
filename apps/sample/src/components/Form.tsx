@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Flex, Input, SelectInput, Switch } from "@ledgerhq/react-ui";
+import { Flex, Input, SelectInput } from "@ledgerhq/react-ui";
 
 import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
+import { SimpleSwitch } from "@/components/SimpleSwitch";
 import { type FieldType, useForm } from "@/hooks/useForm";
 
 export type ValueSelector<T extends FieldType> = Record<
@@ -69,7 +70,7 @@ const FormField: React.FC<FormFieldProps> = ({
   if (typeof value === "boolean") {
     return (
       <div data-testid={`input-switch_${fieldKey}`}>
-        <Switch
+        <SimpleSwitch
           name={fieldKey}
           checked={value}
           onChange={() => onChange(fieldKey, !value)}

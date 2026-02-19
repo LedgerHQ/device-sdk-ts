@@ -1,10 +1,11 @@
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { Flex, Text, Tooltip } from "@ledgerhq/react-ui";
+import { Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { Block } from "@/components/Block";
 import { PageWithHeader } from "@/components/PageWithHeader";
+import { SimpleTooltip } from "@/components/SimpleTooltip";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
 
@@ -88,13 +89,12 @@ export const ApduView: React.FC = () => {
             mb={4}
             flexWrap="wrap"
           >
-            <Tooltip
+            <SimpleTooltip
               content={
                 <Text color="neutral.c00">
                   Build APDU commands using form fields and presets
                 </Text>
               }
-              placement="top"
             >
               <ModeChip
                 $active={inputMode === "builder"}
@@ -102,14 +102,13 @@ export const ApduView: React.FC = () => {
               >
                 APDU Builder
               </ModeChip>
-            </Tooltip>
-            <Tooltip
+            </SimpleTooltip>
+            <SimpleTooltip
               content={
                 <Text color="neutral.c00">
                   Send a raw hexadecimal APDU directly
                 </Text>
               }
-              placement="top"
             >
               <ModeChip
                 $active={inputMode === "raw"}
@@ -117,12 +116,11 @@ export const ApduView: React.FC = () => {
               >
                 Raw APDU
               </ModeChip>
-            </Tooltip>
-            <Tooltip
+            </SimpleTooltip>
+            <SimpleTooltip
               content={
                 <Text color="neutral.c00">Send multiple APDUs in sequence</Text>
               }
-              placement="top"
             >
               <ModeChip
                 $active={inputMode === "bulk"}
@@ -130,14 +128,13 @@ export const ApduView: React.FC = () => {
               >
                 Bulk Exchange APDUs
               </ModeChip>
-            </Tooltip>
-            <Tooltip
+            </SimpleTooltip>
+            <SimpleTooltip
               content={
                 <Text color="neutral.c00">
                   Parse and extract fields from APDU responses
                 </Text>
               }
-              placement="top"
             >
               <ModeChip
                 $active={inputMode === "parser"}
@@ -145,7 +142,7 @@ export const ApduView: React.FC = () => {
               >
                 APDU Response Parser
               </ModeChip>
-            </Tooltip>
+            </SimpleTooltip>
           </Flex>
 
           {/* Mode components */}

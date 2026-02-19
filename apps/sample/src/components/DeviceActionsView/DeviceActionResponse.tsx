@@ -7,10 +7,11 @@ import {
   type DeviceModelId,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
+import { Flex, Icons, Tag, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 import { inspect } from "util";
 
+import { SimpleTooltip } from "@/components/SimpleTooltip";
 import { type FieldType } from "@/hooks/useForm";
 
 export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
@@ -90,8 +91,7 @@ function DeviceActionResponseInternal<
       flex={1}
       overflow="scroll"
     >
-      <Tooltip
-        placement="top"
+      <SimpleTooltip
         content={
           <Text color="neutral.c00" whiteSpace="pre-wrap">
             Arguments:{"\n"}
@@ -103,7 +103,7 @@ function DeviceActionResponseInternal<
           (execution ID: {id}) {date.toLocaleTimeString()}{" "}
           {isError ? "Error" : ""}
         </TooltipTitle>
-      </Tooltip>
+      </SimpleTooltip>
       {showCustomOutput ? (
         <Flex flexDirection="column" mt={2} width="100%">
           <Text variant="small" color="success.c80" mb={2}>

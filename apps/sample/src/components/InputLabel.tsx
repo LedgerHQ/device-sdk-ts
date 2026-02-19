@@ -1,6 +1,8 @@
 import React from "react";
-import { Flex, Icons, Text, Tooltip } from "@ledgerhq/react-ui";
+import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
+
+import { SimpleTooltip } from "@/components/SimpleTooltip";
 
 export const InputLabel = styled(Text).attrs({
   fontSize: "13px",
@@ -23,7 +25,7 @@ export const InputLabelWithTooltip: React.FC<{
   hint: string;
 }> = ({ children, hint }) => {
   return (
-    <Tooltip content={<Text color="neutral.c00">{hint}</Text>} placement="top">
+    <SimpleTooltip content={<Text color="neutral.c00">{hint}</Text>}>
       <Flex
         flexDirection="row"
         alignItems="center"
@@ -33,6 +35,6 @@ export const InputLabelWithTooltip: React.FC<{
         <InputLabel>{children}</InputLabel>
         <Icons.Information size="XS" color="neutral.c70" />
       </Flex>
-    </Tooltip>
+    </SimpleTooltip>
   );
 };

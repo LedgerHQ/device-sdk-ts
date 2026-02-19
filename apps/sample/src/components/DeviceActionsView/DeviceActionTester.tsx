@@ -12,15 +12,15 @@ import {
   Flex,
   Icons,
   InfiniteLoader,
-  Switch,
   Text,
-  Tooltip,
 } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { Block } from "@/components/Block";
 import { ClickableListItem } from "@/components/ClickableListItem";
 import { Form, type LinkedFields, type ValueSelector } from "@/components/Form";
+import { SimpleSwitch } from "@/components/SimpleSwitch";
+import { SimpleTooltip } from "@/components/SimpleTooltip";
 import { type FieldType } from "@/hooks/useForm";
 
 import {
@@ -71,7 +71,7 @@ const BoxHeader: React.FC<{ children: string; hint: string }> = ({
   hint,
 }) => {
   return (
-    <Tooltip content={<Text color="neutral.c00">{hint}</Text>}>
+    <SimpleTooltip content={<Text color="neutral.c00">{hint}</Text>}>
       <Flex
         alignSelf="flex-start"
         flexDirection="row"
@@ -81,7 +81,7 @@ const BoxHeader: React.FC<{ children: string; hint: string }> = ({
         <BoxTitle>{children}</BoxTitle>
         <Icons.Information size="XS" color="neutral.c70" />
       </Flex>
-    </Tooltip>
+    </SimpleTooltip>
   );
 };
 
@@ -238,7 +238,7 @@ export function DeviceActionTester<
             />
           )}
           <Divider />
-          <Switch
+          <SimpleSwitch
             checked={inspect}
             disabled={loading}
             onChange={() => setInspect((d) => !d)}
