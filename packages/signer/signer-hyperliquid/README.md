@@ -18,7 +18,7 @@ const signer = new SignerHyperliquidBuilder({ dmk, sessionId }).build();
 // Sign transaction
 const signature = await signer.signTransaction(
   "m/44'/0'/0'/0/0",
-  transactionBytes
+  transactionBytes,
 );
 ```
 

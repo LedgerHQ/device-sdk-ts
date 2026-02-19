@@ -36,7 +36,10 @@ npm install @ledgerhq/device-signer-kit-hyperliquid
 To initialise a Hyperliquid signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerHyperliquidBuilder`:
 
 ```typescript
-const signerHyperliquid = new SignerHyperliquidBuilder({ dmk, sessionId }).build();
+const signerHyperliquid = new SignerHyperliquidBuilder({
+  dmk,
+  sessionId,
+}).build();
 ```
 
 ## 🔹 Use Cases

@@ -1,7 +1,7 @@
 import {
-  ApduBuilder,
-  ApduBuilderArgs,
   type Apdu,
+  ApduBuilder,
+  type ApduBuilderArgs,
   type ApduResponse,
   type Command,
   type CommandResult,
@@ -24,7 +24,11 @@ export type SignActionsCommandResponse = {
 
 export class SignActionCommand
   implements
-    Command<SignActionsCommandResponse, SignActionsCommandArgs, HyperliquidErrorCodes>
+    Command<
+      SignActionsCommandResponse,
+      SignActionsCommandArgs,
+      HyperliquidErrorCodes
+    >
 {
   readonly name = "SignAction";
 

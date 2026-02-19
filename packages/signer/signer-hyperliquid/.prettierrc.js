@@ -1,1 +1,3 @@
-module.exports = require("@ledgerhq/prettier-config-dsdk");
+module.exports = {
+  ...require("@ledgerhq/prettier-config-dsdk"),
+};

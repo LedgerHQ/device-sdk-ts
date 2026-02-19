@@ -1,12 +1,13 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
-  CallTaskInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
-import { externalTypes } from "@internal/externalTypes";
+
 import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
+import { externalTypes } from "@internal/externalTypes";
 
 import { SignActionsTask } from "./task/SignActionsTask";
 

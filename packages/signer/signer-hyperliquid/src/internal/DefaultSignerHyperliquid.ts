@@ -3,10 +3,11 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
-import { type SignerHyperliquid } from "@api/SignerHyperliquid";
-import { makeContainer } from "@internal/di";
+
 import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
 import { type ActionsOptions } from "@api/model/ActionsOptions";
+import { type SignerHyperliquid } from "@api/SignerHyperliquid";
+import { makeContainer } from "@internal/di";
 import { actionsTypes } from "@internal/use-cases/actions/di/actionsTypes";
 import { type SignActionsUseCase } from "@internal/use-cases/actions/SignActionsUseCase";
 

@@ -3,6 +3,7 @@ import {
   type DeviceSessionId,
 } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
+
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";
 import { actionsModuleFactory } from "@internal/use-cases/actions/di/actionsModule";
@@ -20,10 +21,7 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
 
-  container.loadSync(
-    appBindingModuleFactory(),
-    actionsModuleFactory(),
-  );
+  container.loadSync(appBindingModuleFactory(), actionsModuleFactory());
 
   return container;
 };
