@@ -1,11 +1,11 @@
 import React, { useMemo } from "react";
-import {
-  type SignTransactionDAError,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAOutput,
-  type SignMessageDAError,
-  type SignMessageDAIntermediateValue,
-  type SignMessageDAOutput,
+import type {
+  SignActionsDAError,
+  SignActionsDAIntermediateValue,
+  SignActionsDAOutput,
+  SignMessageDAError,
+  SignMessageDAIntermediateValue,
+  SignMessageDAOutput,
 } from "@ledgerhq/device-signer-kit-hyperliquid";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -26,44 +26,44 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
   const deviceActions: DeviceActionProps<any, any, any, any>[] = useMemo(
     () => [
       {
-        title: "Sign Transaction",
-        description: "Sign a transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+        title: "Sign Actions",
+        description: "Sign a Actions with the device",
+        executeDeviceAction: ({ derivationPath, Actions, skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
           // Convert hex string to Uint8Array
-          const txBytes = transaction.startsWith("0x")
+          const txBytes = Actions.startsWith("0x")
             ? new Uint8Array(
-                transaction
+                Actions
                   .slice(2)
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? []
               )
             : new Uint8Array(
-                transaction
+                Actions
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? []
               );
-          return signer.signTransaction(derivationPath, txBytes, {
+          return signer.signActions(derivationPath, txBytes, {
             skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: "44'/0'/0'/0/0",
-          transaction: "",
+          Actions: "",
           skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
-        SignTransactionDAOutput,
+        SignActionsDAOutput,
         {
           derivationPath: string;
-          transaction: string;
+          Actions: string;
           skipOpenApp?: boolean;
         },
-        SignTransactionDAError,
-        SignTransactionDAIntermediateValue
+        SignActionsDAError,
+        SignActionsDAIntermediateValue
       >,
       {
         title: "Sign Message",
