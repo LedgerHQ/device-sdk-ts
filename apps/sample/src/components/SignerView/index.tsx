@@ -24,6 +24,13 @@ const SUPPORTED_SIGNERS = [
     description: "Access Solana signer functionality",
     icon: <CryptoIcon ledgerId="solana" ticker="SOL" size={size} />,
   },
+  {
+    title: "Hyperliquid",
+    description: "Access Hyperliquid signer functionality",
+    icon: (
+      <CryptoIcon ledgerId="hyperliquid" ticker="HYPERLIQUID" size={size} />
+    ),
+  },
 ];
 
 export const SignerView = () => {
