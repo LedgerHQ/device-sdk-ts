@@ -104,11 +104,12 @@ A brief overview of this project's packages:
 
 ### Signer Packages
 
-| Name                                 | Path                          | Description                                  |
-| ------------------------------------ | ----------------------------- | -------------------------------------------- |
-| @ledgerhq/device-signer-kit-bitcoin  | packages/signer/signer-btc    | Bitcoin coin application dedicated handlers  |
-| @ledgerhq/device-signer-kit-ethereum | packages/signer/signer-eth    | Ethereum coin application dedicated handlers |
-| @ledgerhq/device-signer-kit-solana   | packages/signer/signer-solana | Solana coin application dedicated handlers   |
+| Name                                    | Path                                  | Description                                  |
+| --------------------------------------- | ------------------------------------- | -------------------------------------------- |
+| @ledgerhq/device-signer-kit-bitcoin     | packages/signer/signer-btc            | Bitcoin coin application dedicated handlers  |
+| @ledgerhq/device-signer-kit-ethereum    | packages/signer/signer-eth            | Ethereum coin application dedicated handlers |
+| @ledgerhq/device-signer-kit-hyperliquid | packages/signer/signer-hyperliquid    | HyperLiquid application dedicated handlers   |
+| @ledgerhq/device-signer-kit-solana      | packages/signer/signer-solana         | Solana coin application dedicated handlers   |
 
 ### Trusted Apps
 
@@ -277,9 +278,10 @@ The `_templates` folder contains the basic generators to create new ones.
 
 ### Available templates
 
-| workspace | script          | description                           |
-| --------- | --------------- | ------------------------------------- |
-| 📦 dmk    | `module:create` | scaffolds a new _src/internal_ module |
+| workspace    | script                      | description                                                             |
+| ------------ | --------------------------- | ----------------------------------------------------------------------- |
+| 📦 dmk       | `module:create`             | scaffolds a new _src/internal_ module                                   |
+| 📦 signer    | `ldmk-tool generate-signer` | scaffolds a new signer package ([more info](./how-to-create-signer.md)) |
 
 ### Process for adding a new generator
 
