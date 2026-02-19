@@ -6,7 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { SignActionsCommand } from "@internal/app-binder/command/SignActionsCommand";
+import { SignActionCommand } from "@internal/app-binder/command/SignActionCommand";
 import { type HyperliquidErrorCodes } from "@internal/app-binder/command/utils/hyperliquidApplicationErrors";
 
 type SignActionsTaskArgs = {
@@ -28,7 +28,7 @@ export class SignActionsTask {
     // 3. Collect the final signature from the last response
 
     const result = await this.api.sendCommand(
-      new SignActionsCommand({
+      new SignActionCommand({
         derivationPath: this.args.derivationPath,
         Actions: this.args.Actions,
       }),

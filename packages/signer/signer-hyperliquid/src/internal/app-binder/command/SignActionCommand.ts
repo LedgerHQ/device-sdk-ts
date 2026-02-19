@@ -1,4 +1,6 @@
 import {
+  ApduBuilder,
+  ApduBuilderArgs,
   type Apdu,
   type ApduResponse,
   type Command,
@@ -20,7 +22,7 @@ export type SignActionsCommandResponse = {
   };
 };
 
-export class SignActionsCommand
+export class SignActionCommand
   implements
     Command<SignActionsCommandResponse, SignActionsCommandArgs, HyperliquidErrorCodes>
 {
@@ -39,8 +41,18 @@ export class SignActionsCommand
     // Add derivation path and other data to builder
     // return builder.build();
 
-    console.log("To avoid errors:", this.args.derivationPath);
-    throw new Error("SignActionsCommand.getApdu() not implemented");
+    const { derivationPath } = this.args;
+
+    const signActionArgs: ApduBuilderArgs = {
+      cla: 0xe0,
+      ins: 0x03,
+      p1: 0x00,
+      p2: 0x00,
+    };
+
+    return new ApduBuilder(signActionArgs)
+      .addAsciiStringToData(derivationPath)
+      .build();
   }
 
   parseResponse(

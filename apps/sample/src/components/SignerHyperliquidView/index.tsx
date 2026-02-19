@@ -3,9 +3,6 @@ import type {
   SignActionsDAError,
   SignActionsDAIntermediateValue,
   SignActionsDAOutput,
-  SignMessageDAError,
-  SignMessageDAIntermediateValue,
-  SignMessageDAOutput,
 } from "@ledgerhq/device-signer-kit-hyperliquid";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -35,15 +32,13 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
           // Convert hex string to Uint8Array
           const txBytes = Actions.startsWith("0x")
             ? new Uint8Array(
-                Actions
-                  .slice(2)
+                Actions.slice(2)
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? []
               )
             : new Uint8Array(
-                Actions
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? []
+                Actions.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) ??
+                  [],
               );
           return signer.signActions(derivationPath, txBytes, {
             skipOpenApp,
@@ -65,34 +60,14 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
         SignActionsDAError,
         SignActionsDAIntermediateValue
       >,
-      {
-        title: "Sign Message",
-        description: "Sign a message with the device",
-        executeDeviceAction: ({ derivationPath, message }) => {
-          if (!signer) {
-            throw new Error("Signer not initialized");
-          }
-          return signer.signMessage(derivationPath, message);
-        },
-        initialValues: {
-          derivationPath: "44'/0'/0'/0/0",
-          message: "Hello World",
-        },
-        deviceModelId,
-      } satisfies DeviceActionProps<
-        SignMessageDAOutput,
-        {
-          derivationPath: string;
-          message: string;
-        },
-        SignMessageDAError,
-        SignMessageDAIntermediateValue
-      >,
     ],
     [deviceModelId, signer],
   );
 
   return (
-    <DeviceActionsList title="Signer Hyperliquid" deviceActions={deviceActions} />
+    <DeviceActionsList
+      title="Signer Hyperliquid"
+      deviceActions={deviceActions}
+    />
   );
 };
