@@ -274,7 +274,7 @@ We use `hygen` to quickly scaffold code and accelerate our development process.
 Each project can have its own `_templates` folder, making **generators** scoped to their respective projects.
 The `_templates` folder contains the basic generators to create new ones.
 
-[Hygen documentation](https://www.hygen.io/docs/quick-start/)
+[Hygen documentation](https://github.com/jondot/hygen)
 
 ### Available templates
 
