@@ -28,7 +28,7 @@ const SUPPORTED_SIGNERS = [
     title: "Hyperliquid",
     description: "Access Hyperliquid signer functionality",
     icon: (
-      <CryptoIcon ledgerId="hyperliquid" ticker="HYPERLIQUID" size="56px" />
+      <CryptoIcon ledgerId="hyperliquid" ticker="HYPERLIQUID" size={size} />
     ),
   },
 ];
