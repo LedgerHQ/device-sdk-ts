@@ -1,6 +1,4 @@
 export enum HyperliquidErrorCodes {
-  // Define your error codes here
-  // Example:
-  // INVALID_DERIVATION_PATH = 0x6a80,
-  // TRANSACTION_PARSING_ERROR = 0x6a81,
+  INVALID_DERIVATION_PATH = 0x6a80,
+  ACTION_PARSING_ERROR = 0x6a81,
 }

@@ -5,13 +5,10 @@ import {
 import { type Container } from "inversify";
 import { type SignerHyperliquid } from "@api/SignerHyperliquid";
 import { makeContainer } from "@internal/di";
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
-import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
-import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
-import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
-import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
+import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
+import { type ActionsOptions } from "@api/model/ActionsOptions";
+import { actionsTypes } from "@internal/use-cases/actions/di/actionsTypes";
+import { type SignActionsUseCase } from "@internal/use-cases/actions/SignActionsUseCase";
 
 type DefaultSignerHyperliquidConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -25,22 +22,13 @@ export class DefaultSignerHyperliquid implements SignerHyperliquid {
     this._container = makeContainer({ dmk, sessionId });
   }
 
-  signTransaction(
+  signActions(
     derivationPath: string,
-    transaction: Uint8Array,
-    options?: TransactionOptions,
-  ): SignTransactionDAReturnType {
+    Actions: Uint8Array,
+    options?: ActionsOptions,
+  ): SignActionsDAReturnType {
     return this._container
-      .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
-      .execute(derivationPath, transaction, options);
-  }
-
-  signMessage(
-    derivationPath: string,
-    message: string | Uint8Array,
-  ): SignMessageDAReturnType {
-    return this._container
-      .get<SignMessageUseCase>(messageTypes.SignMessageUseCase)
-      .execute(derivationPath, message);
+      .get<SignActionsUseCase>(actionsTypes.SignActionsUseCase)
+      .execute(derivationPath, Actions, options);
   }
 }

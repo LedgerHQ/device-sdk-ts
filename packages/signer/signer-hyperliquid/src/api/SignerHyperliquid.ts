@@ -1,16 +1,10 @@
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
+import { type ActionsOptions } from "@api/model/ActionsOptions";
 
 export interface SignerHyperliquid {
-  signTransaction: (
+  signActions: (
     derivationPath: string,
     transaction: Uint8Array,
-    options?: TransactionOptions,
-  ) => SignTransactionDAReturnType;
-
-  signMessage: (
-    derivationPath: string,
-    message: string | Uint8Array,
-  ) => SignMessageDAReturnType;
+    options?: ActionsOptions,
+  ) => SignActionsDAReturnType;
 }

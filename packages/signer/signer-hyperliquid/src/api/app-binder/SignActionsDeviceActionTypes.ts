@@ -9,22 +9,22 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { type HyperliquidErrorCodes } from "@internal/app-binder/command/utils/hyperliquidApplicationErrors";
 
-export type SignTransactionDAOutput = Signature;
+export type SignActionsDAOutput = Signature;
 
-export type SignTransactionDAError =
+export type SignActionsDAError =
   | OpenAppDAError
   | CommandErrorResult<HyperliquidErrorCodes>["error"];
 
-type SignTransactionDARequiredInteraction =
+type SignActionsDARequiredInteraction =
   | OpenAppDARequiredInteraction
   | UserInteractionRequired.SignTransaction;
 
-export type SignTransactionDAIntermediateValue = {
-  requiredUserInteraction: SignTransactionDARequiredInteraction;
+export type SignActionsDAIntermediateValue = {
+  requiredUserInteraction: SignActionsDARequiredInteraction;
 };
 
-export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
-  SignTransactionDAOutput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue
+export type SignActionsDAReturnType = ExecuteDeviceActionReturnType<
+  SignActionsDAOutput,
+  SignActionsDAError,
+  SignActionsDAIntermediateValue
 >;

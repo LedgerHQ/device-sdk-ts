@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
+import { type ActionsOptions } from "@api/model/ActionsOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { HyperliquidAppBinder } from "@internal/app-binder/HyperliquidAppBinder";
 
 @injectable()
-export class SignTransactionUseCase {
+export class SignActionsUseCase {
   private readonly _appBinder: HyperliquidAppBinder;
 
   constructor(
@@ -17,12 +17,12 @@ export class SignTransactionUseCase {
 
   execute(
     derivationPath: string,
-    transaction: Uint8Array,
-    options?: TransactionOptions,
-  ): SignTransactionDAReturnType {
-    return this._appBinder.signTransaction({
+    Actions: Uint8Array,
+    options?: ActionsOptions,
+  ): SignActionsDAReturnType {
+    return this._appBinder.signActions({
       derivationPath,
-      transaction,
+      Actions,
       skipOpenApp: options?.skipOpenApp,
     });
   }

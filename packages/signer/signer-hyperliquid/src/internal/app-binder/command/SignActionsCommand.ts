@@ -7,12 +7,12 @@ import {
 
 import { type HyperliquidErrorCodes } from "./utils/hyperliquidApplicationErrors";
 
-export type SignTransactionCommandArgs = {
+export type SignActionsCommandArgs = {
   derivationPath: string;
-  transaction: Uint8Array;
+  Actions: Uint8Array;
 };
 
-export type SignTransactionCommandResponse = {
+export type SignActionsCommandResponse = {
   signature: {
     r: string;
     s: string;
@@ -20,15 +20,15 @@ export type SignTransactionCommandResponse = {
   };
 };
 
-export class SignTransactionCommand
+export class SignActionsCommand
   implements
-    Command<SignTransactionCommandResponse, SignTransactionCommandArgs, HyperliquidErrorCodes>
+    Command<SignActionsCommandResponse, SignActionsCommandArgs, HyperliquidErrorCodes>
 {
-  readonly name = "SignTransaction";
+  readonly name = "SignActions";
 
-  private readonly args: SignTransactionCommandArgs;
+  private readonly args: SignActionsCommandArgs;
 
-  constructor(args: SignTransactionCommandArgs) {
+  constructor(args: SignActionsCommandArgs) {
     this.args = args;
   }
 
@@ -40,14 +40,14 @@ export class SignTransactionCommand
     // return builder.build();
 
     console.log("To avoid errors:", this.args.derivationPath);
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    throw new Error("SignActionsCommand.getApdu() not implemented");
   }
 
   parseResponse(
     _apduResponse: ApduResponse,
-  ): CommandResult<SignTransactionCommandResponse, HyperliquidErrorCodes> {
+  ): CommandResult<SignActionsCommandResponse, HyperliquidErrorCodes> {
     // TODO: Implement response parsing based on your blockchain's protocol
     // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+    throw new Error("SignActionsCommand.parseResponse() not implemented");
   }
 }

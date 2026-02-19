@@ -1,17 +1,14 @@
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
-  SendCommandInAppDeviceAction,
   CallTaskInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { externalTypes } from "@internal/externalTypes";
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
 
-import { SignTransactionTask } from "./task/SignTransactionTask";
-import { SignMessageCommand } from "./command/SignMessageCommand";
+import { SignActionsTask } from "./task/SignActionsTask";
 
 @injectable()
 export class HyperliquidAppBinder {
@@ -20,38 +17,20 @@ export class HyperliquidAppBinder {
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
   ) {}
 
-  signTransaction(args: {
+  signActions(args: {
     derivationPath: string;
-    transaction: Uint8Array;
+    Actions: Uint8Array;
     skipOpenApp?: boolean;
-  }): SignTransactionDAReturnType {
+  }): SignActionsDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SignTransactionTask(internalApi, args).run(),
+            new SignActionsTask(internalApi, args).run(),
           appName: "Hyperliquid",
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
-        },
-      }),
-    });
-  }
-
-  signMessage(args: {
-    derivationPath: string;
-    message: string | Uint8Array;
-    skipOpenApp: boolean;
-  }): SignMessageDAReturnType {
-    return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
-      deviceAction: new SendCommandInAppDeviceAction({
-        input: {
-          command: new SignMessageCommand(args),
-          appName: "Hyperliquid",
-          requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
-          skipOpenApp: args.skipOpenApp,
         },
       }),
     });
