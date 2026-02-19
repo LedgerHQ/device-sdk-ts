@@ -12,7 +12,11 @@ import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import PACKAGE from "@root/package.json";
 
-import { type GatedDappsDto } from "./dto/GatedDappsDto";
+import {
+  type GatedDappsDto,
+  type GatedDappsResponseItemDto,
+  type GatedDescriptorEntryDto,
+} from "./dto/GatedDappsDto";
 import {
   type GatedDescriptorDataSource,
   type GetGatedDescriptorParams,
@@ -59,10 +63,10 @@ export class HttpGatedDescriptorDataSource
       );
     }
 
-    if (!Array.isArray(dto) || dto.length === 0) {
+    if (!this.isGatedDappsDto(dto)) {
       return Left(
         new Error(
-          `[ContextModule] HttpGatedDescriptorDataSource: Response is not a non-empty array`,
+          `[ContextModule] HttpGatedDescriptorDataSource: Invalid gated descriptors response`,
         ),
       );
     }
@@ -97,5 +101,77 @@ export class HttpGatedDescriptorDataSource
         `[ContextModule] HttpGatedDescriptorDataSource: No gated descriptor for contract ${contractAddress} and selector ${selector}`,
       ),
     );
+  }
+
+  private isGatedDappsDto(data: unknown): data is GatedDappsDto {
+    if (!Array.isArray(data) || data.length === 0) {
+      return false;
+    }
+    for (const item of data) {
+      if (!this.isGatedDappsResponseItemDto(item)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private isGatedDappsResponseItemDto(
+    item: unknown,
+  ): item is GatedDappsResponseItemDto {
+    if (!item || typeof item !== "object") {
+      return false;
+    }
+    const obj = item as Record<string, unknown>;
+    if (
+      !obj["gated_descriptors"] ||
+      typeof obj["gated_descriptors"] !== "object"
+    ) {
+      return false;
+    }
+    const byContract = obj["gated_descriptors"] as Record<string, unknown>;
+    for (const selectorsMap of Object.values(byContract)) {
+      if (typeof selectorsMap !== "object" || selectorsMap === null) {
+        return false;
+      }
+      for (const entry of Object.values(
+        selectorsMap as Record<string, unknown>,
+      )) {
+        if (!this.isGatedDescriptorEntryDto(entry)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private isGatedDescriptorEntryDto(
+    entry: unknown,
+  ): entry is GatedDescriptorEntryDto {
+    if (!entry || typeof entry !== "object") {
+      return false;
+    }
+    const e = entry as Record<string, unknown>;
+    if (
+      typeof e["network"] !== "string" ||
+      typeof e["chain_id"] !== "number" ||
+      typeof e["address"] !== "string" ||
+      typeof e["selector"] !== "string" ||
+      typeof e["version"] !== "string" ||
+      typeof e["descriptor"] !== "string"
+    ) {
+      return false;
+    }
+    if (e["signatures"] !== undefined) {
+      if (typeof e["signatures"] !== "object" || e["signatures"] === null) {
+        return false;
+      }
+      const sigs = e["signatures"] as Record<string, unknown>;
+      for (const v of Object.values(sigs)) {
+        if (typeof v !== "string") {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

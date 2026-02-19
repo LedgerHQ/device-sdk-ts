@@ -25,6 +25,8 @@ describe("HttpGatedDescriptorDataSource", () => {
   const selector = "0xa1251d75";
   const chainId = 1;
 
+  const descriptorPayload =
+    "010122020101222a30783131313131313235346662366334346261633062656432383534653736663930363433303937642308000000000000000140086131323531643735";
   const validGatedDappsResponse = [
     {
       gated_descriptors: {
@@ -35,12 +37,15 @@ describe("HttpGatedDescriptorDataSource", () => {
             address: "0x1111111254fb6c44bac0bed2854e76f90643097d",
             selector: "a1251d75",
             version: "v1",
-            descriptor: "010122020101222a30783131313131313235346662366334346261633062656432383534653736663930363433303937642308000000000000000140086131323531643735",
+            descriptor: descriptorPayload,
+            signatures: { prod: "00", test: "00" },
           },
         },
       },
     },
   ];
+  // signedDescriptor = payload + SIGNATURE_TAG("15") + length(01) + signature("00")
+  const expectedSignedDescriptor = `${descriptorPayload}150100`;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -77,8 +82,7 @@ describe("HttpGatedDescriptorDataSource", () => {
       });
       expect(result).toEqual(
         Right({
-          descriptor:
-            "010122020101222a30783131313131313235346662366334346261633062656432383534653736663930363433303937642308000000000000000140086131323531643735",
+          signedDescriptor: expectedSignedDescriptor,
         }),
       );
     });
@@ -99,8 +103,7 @@ describe("HttpGatedDescriptorDataSource", () => {
 
       expect(result).toEqual(
         Right({
-          descriptor:
-            "010122020101222a30783131313131313235346662366334346261633062656432383534653736663930363433303937642308000000000000000140086131323531643735",
+          signedDescriptor: expectedSignedDescriptor,
         }),
       );
     });
@@ -122,7 +125,7 @@ describe("HttpGatedDescriptorDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpGatedDescriptorDataSource: Response is not a non-empty array",
+            "[ContextModule] HttpGatedDescriptorDataSource: Invalid gated descriptors response",
           ),
         ),
       );
@@ -145,7 +148,7 @@ describe("HttpGatedDescriptorDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpGatedDescriptorDataSource: Response is not a non-empty array",
+            "[ContextModule] HttpGatedDescriptorDataSource: Invalid gated descriptors response",
           ),
         ),
       );
@@ -232,6 +235,184 @@ describe("HttpGatedDescriptorDataSource", () => {
           }),
         }),
       );
+    });
+
+    describe("when response fails DTO validation", () => {
+      const invalidResponseError = new Error(
+        "[ContextModule] HttpGatedDescriptorDataSource: Invalid gated descriptors response",
+      );
+
+      it("should return Left when array item has no gated_descriptors", async () => {
+        vi.spyOn(axios, "request").mockResolvedValue({
+          status: 200,
+          data: [{}],
+        });
+
+        const result = await new HttpGatedDescriptorDataSource(
+          config,
+        ).getGatedDescriptor({
+          contractAddress,
+          selector,
+          chainId,
+        });
+
+        expect(result).toEqual(Left(invalidResponseError));
+      });
+
+      it("should return Left when gated_descriptors is not an object", async () => {
+        vi.spyOn(axios, "request").mockResolvedValue({
+          status: 200,
+          data: [{ gated_descriptors: "not-an-object" }],
+        });
+
+        const result = await new HttpGatedDescriptorDataSource(
+          config,
+        ).getGatedDescriptor({
+          contractAddress,
+          selector,
+          chainId,
+        });
+
+        expect(result).toEqual(Left(invalidResponseError));
+      });
+
+      it("should return Left when entry is missing required field (descriptor)", async () => {
+        vi.spyOn(axios, "request").mockResolvedValue({
+          status: 200,
+          data: [
+            {
+              gated_descriptors: {
+                [contractAddress]: {
+                  a1251d75: {
+                    network: "ethereum",
+                    chain_id: 1,
+                    address: contractAddress,
+                    selector: "a1251d75",
+                    version: "v1",
+                    // descriptor missing
+                  },
+                },
+              },
+            },
+          ],
+        });
+
+        const result = await new HttpGatedDescriptorDataSource(
+          config,
+        ).getGatedDescriptor({
+          contractAddress,
+          selector,
+          chainId,
+        });
+
+        expect(result).toEqual(Left(invalidResponseError));
+      });
+
+      it("should return Left when entry has wrong type for chain_id", async () => {
+        vi.spyOn(axios, "request").mockResolvedValue({
+          status: 200,
+          data: [
+            {
+              gated_descriptors: {
+                [contractAddress]: {
+                  a1251d75: {
+                    network: "ethereum",
+                    chain_id: "1", // string instead of number
+                    address: contractAddress,
+                    selector: "a1251d75",
+                    version: "v1",
+                    descriptor: descriptorPayload,
+                    signatures: { prod: "00", test: "00" },
+                  },
+                },
+              },
+            },
+          ],
+        });
+
+        const result = await new HttpGatedDescriptorDataSource(
+          config,
+        ).getGatedDescriptor({
+          contractAddress,
+          selector,
+          chainId,
+        });
+
+        expect(result).toEqual(Left(invalidResponseError));
+      });
+
+      it("should return Left when entry signatures contains non-string value", async () => {
+        vi.spyOn(axios, "request").mockResolvedValue({
+          status: 200,
+          data: [
+            {
+              gated_descriptors: {
+                [contractAddress]: {
+                  a1251d75: {
+                    network: "ethereum",
+                    chain_id: 1,
+                    address: contractAddress,
+                    selector: "a1251d75",
+                    version: "v1",
+                    descriptor: descriptorPayload,
+                    signatures: { prod: 123 }, // number instead of string
+                  },
+                },
+              },
+            },
+          ],
+        });
+
+        const result = await new HttpGatedDescriptorDataSource(
+          config,
+        ).getGatedDescriptor({
+          contractAddress,
+          selector,
+          chainId,
+        });
+
+        expect(result).toEqual(Left(invalidResponseError));
+      });
+
+      it("should return Left when array item is null", async () => {
+        vi.spyOn(axios, "request").mockResolvedValue({
+          status: 200,
+          data: [null],
+        });
+
+        const result = await new HttpGatedDescriptorDataSource(
+          config,
+        ).getGatedDescriptor({
+          contractAddress,
+          selector,
+          chainId,
+        });
+
+        expect(result).toEqual(Left(invalidResponseError));
+      });
+
+      it("should return Left when selectors map value is not an object", async () => {
+        vi.spyOn(axios, "request").mockResolvedValue({
+          status: 200,
+          data: [
+            {
+              gated_descriptors: {
+                [contractAddress]: "not-a-selectors-map",
+              },
+            },
+          ],
+        });
+
+        const result = await new HttpGatedDescriptorDataSource(
+          config,
+        ).getGatedDescriptor({
+          contractAddress,
+          selector,
+          chainId,
+        });
+
+        expect(result).toEqual(Left(invalidResponseError));
+      });
     });
   });
 });
