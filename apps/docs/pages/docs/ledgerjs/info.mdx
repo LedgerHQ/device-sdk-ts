@@ -1,5 +1,6 @@
 import { Callout } from "nextra/components";
 import Image from "next/image";
+import KeyTakeaway from "/components/features/key-takeaway";
 
 # Info note
 
@@ -12,6 +13,12 @@ For any new project, we recommend you use the Device Management Kit.
 For existing projects, you can still access the LedgerJS documentation but we recommend that you consider updating your integration.
 
 </Callout>
+
+<KeyTakeaway>
+   ☞   The renaming of "Ledger Live" to "Ledger Wallet" and      "wallet" (in
+  the hardware sense) to "signer" is still in progress.      This page may
+  contain legacy references that will be updated.
+</KeyTakeaway>
 
 ## Languages
 
@@ -28,7 +35,7 @@ For existing projects, you can still access the LedgerJS documentation but we re
 To connect your app you will need to install:
 
 - [Node (for Desktop apps) and NPM](#node-and-npm)
-- [Ledger Live](#ledger-live-installation)
+- [Ledger Wallet](#ledger-live-installation)
 - [The Ledger Embedded App](#embedded-app-installation) of the coin that you are going to use (to use this documentation you will need Bitcoin, Ethereum and Solana)
 - At least [one account](#account-creation) for each coin (except for Solana).
 
@@ -48,13 +55,13 @@ The commands should print the versions of Node.js and npm accordingly. Ensure No
 
 ---
 
-### Ledger Live Installation
+### Ledger Wallet Installation
 
-Now that node and npm are installed, you have to install the [Ledger Live](https://www.ledger.com/ledger-live) desktop application to connect your Ledger device.
-After the installation, open Ledger Live and go to the **Manager** tab.
+Now that node and npm are installed, you have to install the [Ledger Wallet](https://www.ledger.com/ledger-live) desktop application to connect your Ledger device.
+After the installation, open Ledger Wallet and go to the **Manager** tab.
 
-![Ledger Live Prerequisites](/device-interaction/ledgerlivetabs.png)
-_Fig. 1: Ledger Live Prerequisites_
+![Ledger Wallet Prerequisites](/device-interaction/ledgerlivetabs.png)
+_Fig. 1: Ledger Wallet Prerequisites_
 
 Then connect your Ledger Nano to your computer and unlock it.
 
@@ -70,16 +77,16 @@ Then connect your Ledger Nano to your computer and unlock it.
   </figure>
 </div>
 
-Then Ledger Live will ask you to allow the Ledger device, just press the two buttons simultaneously to allow it.
+Then Ledger Wallet will ask you to allow the Ledger device, just press the two buttons simultaneously to allow it.
 
 <div className="center">
   <figure>
     <img
       src="/device-interaction/ledgerConnect.png"
-      alt="Ledger Live Animation"
+      alt="Ledger Wallet Animation"
     />
     <figcaption>
-      <i>Fig. 3: Ledger Live Animation</i>
+      <i>Fig. 3: Ledger Wallet Animation</i>
     </figcaption>
   </figure>
 </div>
@@ -88,10 +95,10 @@ Then Ledger Live will ask you to allow the Ledger device, just press the two but
   <figure>
     <img
       src="/device-interaction/ledgerAllow.jpg"
-      alt="Ledger Live Notification on Ledger Device"
+      alt="Ledger Wallet Notification on Ledger Device"
     />
     <figcaption>
-      <i>Fig. 4: Ledger Live Notification on Ledger Device</i>
+      <i>Fig. 4: Ledger Wallet Notification on Ledger Device</i>
     </figcaption>
   </figure>
 </div>
@@ -106,7 +113,7 @@ _Fig. 5: Ethereum App Installation_
 ### Account Creation
 
 To use the Bitcoin/Ethereum Embedded Apps you have to create a Bitcoin/Ethereum account.
-We will present there the creation of a bitcoin account but it is the same for any application supported by Ledger Live.
+We will present there the creation of a bitcoin account but it is the same for any application supported by Ledger Wallet.
 
 To create your Bitcoin account:
 
