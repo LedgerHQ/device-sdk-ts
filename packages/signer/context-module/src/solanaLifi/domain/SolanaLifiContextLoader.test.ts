@@ -5,6 +5,7 @@
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import {
   SolanaContextTypes,
   type SolanaTransactionDescriptor,
@@ -25,8 +26,14 @@ const mockLoggerFactory = () => ({
   subscribers: [],
 });
 
+const mockCertificate = {
+  keyUsageNumber: 13,
+  payload: new Uint8Array([0x01, 0x02]),
+};
+
 describe("SolanaLifiContextLoader", () => {
   let mockDataSource: SolanaLifiDataSource;
+  let mockCertificateLoader: PkiCertificateLoader;
 
   const makeDescriptor = (data: string): SolanaTransactionDescriptor => ({
     data,
@@ -79,10 +86,17 @@ describe("SolanaLifiContextLoader", () => {
     mockDataSource = {
       getTransactionDescriptorsPayload: vi.fn(),
     } as unknown as SolanaLifiDataSource;
+    mockCertificateLoader = {
+      loadCertificate: vi.fn().mockResolvedValue(mockCertificate),
+    } as unknown as PkiCertificateLoader;
   });
 
   const makeLoader = () =>
-    new SolanaLifiContextLoader(mockDataSource, mockLoggerFactory);
+    new SolanaLifiContextLoader(
+      mockDataSource,
+      mockCertificateLoader,
+      mockLoggerFactory,
+    );
 
   describe("canHandle", () => {
     it("returns true when templateId is provided", () => {
@@ -145,7 +159,7 @@ describe("SolanaLifiContextLoader", () => {
       });
     });
 
-    it("returns SOLANA_LIFI with plucked descriptors when datasource returns Right(value)", async () => {
+    it("returns SOLANA_LIFI with plucked descriptors and certificate when datasource returns Right(value)", async () => {
       const loader = makeLoader();
 
       vi.spyOn(
@@ -162,6 +176,12 @@ describe("SolanaLifiContextLoader", () => {
         templateId: "tpl-ok",
       });
 
+      expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: "swap_template_key",
+        keyUsage: "swap_template",
+        targetDevice: "nanoS",
+      });
+
       expect(result).toEqual({
         type: SolanaContextTypes.SOLANA_LIFI,
         payload: {
@@ -171,6 +191,7 @@ describe("SolanaLifiContextLoader", () => {
             { program_id: "AnotherProgram" },
           ],
         },
+        certificate: mockCertificate,
       });
     });
   });

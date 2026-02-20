@@ -1,7 +1,14 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  type DeviceModelId,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
+import { pkiTypes } from "@/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyUsage } from "@/pki/model/KeyUsage";
+import { type PkiCertificate } from "@/pki/model/PkiCertificate";
 import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   SolanaContextTypes,
@@ -18,6 +25,7 @@ import {
 import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
 
 type SolanaLifiFieldInput = SolanaTransactionContext & {
+  deviceModelId: DeviceModelId;
   templateId: string;
 };
 
@@ -35,6 +43,8 @@ export class SolanaLifiContextLoader
   constructor(
     @inject(lifiTypes.SolanaLifiDataSource)
     private readonly dataSource: SolanaLifiDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private readonly _certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -68,16 +78,23 @@ export class SolanaLifiContextLoader
   }
 
   public async loadField(
-    solanaTokenContextInput: SolanaLifiFieldInput,
+    solanaLifiContextInput: SolanaLifiFieldInput,
   ): Promise<SolanaLifiContextResult> {
     this.logger.debug("[loadField] Loading solana Lifi context", {
-      data: { input: solanaTokenContextInput },
+      data: { input: solanaLifiContextInput },
     });
-    const { templateId } = solanaTokenContextInput;
+    const { templateId, deviceModelId } = solanaLifiContextInput;
 
     const payload = await this.dataSource.getTransactionDescriptorsPayload({
       templateId,
     });
+
+    const certificate: PkiCertificate | undefined =
+      await this._certificateLoader.loadCertificate({
+        keyId: "swap_template_key",
+        keyUsage: KeyUsage.SwapTemplate,
+        targetDevice: deviceModelId,
+      });
 
     return payload.caseOf({
       Left: (error): SolanaLifiContextResult => {
@@ -91,20 +108,22 @@ export class SolanaLifiContextLoader
         };
       },
       Right: (value): SolanaLifiContextResult => {
-        const payload = this.buildPayload(value);
+        const lifiPayload = this.buildPayload(value);
         this.logger.debug(
           "[loadField] Successfully loaded solana Lifi context",
           {
             data: {
-              descriptors: payload.descriptors,
-              instructionsCount: payload.instructions.length,
+              descriptors: lifiPayload.descriptors,
+              instructionsCount: lifiPayload.instructions.length,
+              certificate,
             },
           },
         );
 
         return {
           type: SolanaContextTypes.SOLANA_LIFI,
-          payload,
+          payload: lifiPayload,
+          certificate,
         };
       },
     });

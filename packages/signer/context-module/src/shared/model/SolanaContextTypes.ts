@@ -68,6 +68,7 @@ type SolanaContextSuccessPayloads = {
   };
   [SolanaContextTypes.SOLANA_LIFI]: {
     payload: SolanaLifiPayload;
+    certificate?: PkiCertificate;
   };
 };
 
