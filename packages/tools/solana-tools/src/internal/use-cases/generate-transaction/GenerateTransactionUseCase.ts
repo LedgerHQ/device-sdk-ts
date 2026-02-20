@@ -1,24 +1,23 @@
 import { inject, injectable } from "inversify";
 
-import { GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
+import { type GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
-import { SolanaAppBinder } from "@internal/app-binder/SolanaAppBinder";
+import { type SolanaToolsAppBinder } from "@internal/app-binder/SolanaToolsAppBinder";
 
 @injectable()
 export class GenerateTransactionUseCase {
   constructor(
-    @inject(appBinderTypes.AppBinder) private appBinder: SolanaAppBinder,
+    @inject(appBinderTypes.AppBinder)
+    private appBinder: SolanaToolsAppBinder,
   ) {}
 
   execute(
     derivationPath: string,
-    options?: {
-      skipOpenApp?: boolean;
-    },
+    skipOpenApp: boolean,
   ): GenerateTransactionDAReturnType {
     return this.appBinder.generateTransaction({
       derivationPath,
-      skipOpenApp: options?.skipOpenApp ?? false,
+      skipOpenApp,
     });
   }
 }

@@ -5,12 +5,6 @@ import {
   isBase64String,
 } from "@ledgerhq/device-management-kit";
 import {
-  type CraftTransactionDAError,
-  type CraftTransactionDAIntermediateValue,
-  type CraftTransactionDAOutput,
-  type GenerateTransactionDAError,
-  type GenerateTransactionDAIntermediateValue,
-  type GenerateTransactionDAOutput,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -24,8 +18,16 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
-  SolanaToolsBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
+import {
+  type CraftTransactionDAError,
+  type CraftTransactionDAIntermediateValue,
+  type CraftTransactionDAOutput,
+  type GenerateTransactionDAError,
+  type GenerateTransactionDAIntermediateValue,
+  type GenerateTransactionDAOutput,
+  SolanaToolsBuilder,
+} from "@ledgerhq/solana-tools";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -45,7 +47,6 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   const solanaTools = new SolanaToolsBuilder({
     dmk,
     sessionId,
-    originToken: "Solana",
   }).build();
 
   const deviceModelId = dmk.getConnectedDevice({

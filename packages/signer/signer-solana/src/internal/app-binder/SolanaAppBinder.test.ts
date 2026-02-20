@@ -11,11 +11,6 @@ import {
 import { from } from "rxjs";
 
 import {
-  type GenerateTransactionDAError,
-  type GenerateTransactionDAIntermediateValue,
-  type GenerateTransactionDAOutput,
-} from "@api/app-binder/GenerateTransactionDeviceActionTypes";
-import {
   type GetAppConfigurationDAError,
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
@@ -32,8 +27,6 @@ import {
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
-import { CraftTransactionDeviceAction } from "./device-action/CraftTransactionDeviceAction";
-import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 const mockLoggerFactory = () => ({
@@ -456,181 +449,6 @@ describe("SolanaAppBinder", () => {
           }),
         }),
       );
-    });
-  });
-
-  describe("generateTransaction", () => {
-    it("should return the serialized transaction", () =>
-      new Promise<void>((resolve, reject) => {
-        // GIVEN
-        const serializedTx = "BASE64_OR_HEX_TX";
-
-        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-          observable: from([
-            {
-              status: DeviceActionStatus.Completed,
-              output: serializedTx,
-            } as DeviceActionState<
-              GenerateTransactionDAOutput,
-              GenerateTransactionDAError,
-              GenerateTransactionDAIntermediateValue
-            >,
-          ]),
-          cancel: vi.fn(),
-        });
-
-        // WHEN
-        const appBinder = new SolanaAppBinder(
-          mockedDmk,
-          "sessionId",
-          contextModuleStub,
-          mockLoggerFactory,
-        );
-        const { observable } = appBinder.generateTransaction({
-          derivationPath: "44'/501'/0'/0'",
-          skipOpenApp: false,
-        });
-
-        // THEN
-        const states: DeviceActionState<
-          GenerateTransactionDAOutput,
-          GenerateTransactionDAError,
-          GenerateTransactionDAIntermediateValue
-        >[] = [];
-        observable.subscribe({
-          next: (state) => states.push(state),
-          error: (err) => reject(err),
-          complete: () => {
-            try {
-              expect(states).toEqual([
-                { status: DeviceActionStatus.Completed, output: serializedTx },
-              ]);
-              resolve();
-            } catch (err) {
-              reject(err as Error);
-            }
-          },
-        });
-      }));
-
-    it("should call executeDeviceAction with the correct params", () => {
-      // GIVEN
-      const derivationPath = "44'/501'/0'/0'";
-      const skipOpenApp = true;
-
-      // WHEN
-      const appBinder = new SolanaAppBinder(
-        mockedDmk,
-        "sessionId",
-        contextModuleStub,
-        mockLoggerFactory,
-      );
-      appBinder.generateTransaction({ derivationPath, skipOpenApp });
-
-      // THEN
-      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-        sessionId: "sessionId",
-        deviceAction: new GenerateTransactionDeviceAction({
-          input: {
-            derivationPath,
-            skipOpenApp,
-            contextModule: contextModuleStub,
-          },
-          loggerFactory: mockLoggerFactory,
-        }),
-      });
-    });
-  });
-
-  describe("craftTransaction", () => {
-    it("should return the crafted serialized transaction", () =>
-      new Promise<void>((resolve, reject) => {
-        // given
-        const craftedSerializedTx = "CRAFTED_BASE64";
-
-        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
-          observable: from([
-            {
-              status: DeviceActionStatus.Completed,
-              output: craftedSerializedTx,
-            } as DeviceActionState<
-              unknown,
-              DmkError,
-              DeviceActionIntermediateValue
-            >,
-          ]),
-          cancel: vi.fn(),
-        });
-
-        // when
-        const appBinder = new SolanaAppBinder(
-          mockedDmk,
-          "sessionId",
-          contextModuleStub,
-          mockLoggerFactory,
-        );
-        const { observable } = appBinder.craftTransaction({
-          derivationPath: "44'/501'/0'/0'",
-          serialisedTransaction: "INPUT_BASE64",
-          skipOpenApp: false,
-        });
-
-        // then
-        const states: DeviceActionState<
-          unknown,
-          DmkError,
-          DeviceActionIntermediateValue
-        >[] = [];
-        observable.subscribe({
-          next: (state) => states.push(state),
-          error: (err) => reject(err),
-          complete: () => {
-            try {
-              expect(states).toEqual([
-                {
-                  status: DeviceActionStatus.Completed,
-                  output: craftedSerializedTx,
-                },
-              ]);
-              resolve();
-            } catch (err) {
-              reject(err as Error);
-            }
-          },
-        });
-      }));
-
-    it("should call executeDeviceAction with the correct params", () => {
-      // given
-      const derivationPath = "44'/501'/0'/0'";
-      const serialisedTransaction = "INPUT_BASE64";
-      const skipOpenApp = true;
-
-      // when
-      const appBinder = new SolanaAppBinder(
-        mockedDmk,
-        "sessionId",
-        contextModuleStub,
-        mockLoggerFactory,
-      );
-      appBinder.craftTransaction({
-        derivationPath,
-        serialisedTransaction,
-        skipOpenApp,
-      });
-
-      // then
-      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith({
-        sessionId: "sessionId",
-        deviceAction: new CraftTransactionDeviceAction({
-          input: {
-            derivationPath,
-            serialisedTransaction,
-            skipOpenApp,
-            contextModule: contextModuleStub,
-          },
-        }),
-      });
     });
   });
 });

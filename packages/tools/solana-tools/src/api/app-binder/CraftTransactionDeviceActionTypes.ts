@@ -1,4 +1,3 @@
-import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,
@@ -7,9 +6,7 @@ import {
   type SendCommandInAppDAError,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-
-import { type PublicKey } from "@api/model/PublicKey";
-import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import { type SolanaAppErrorCodes } from "@ledgerhq/device-signer-kit-solana";
 
 export type CraftTransactionDAOutput = string;
 
@@ -17,7 +14,6 @@ export type CraftTransactionDAInput = {
   readonly derivationPath: string;
   readonly serialisedTransaction: string;
   readonly skipOpenApp: boolean;
-  readonly contextModule: ContextModule;
 };
 
 export type CraftTransactionDAError =
@@ -40,7 +36,7 @@ export type CraftTransactionDAState = DeviceActionState<
 
 export type CraftTransactionDAInternalState = {
   readonly error: CraftTransactionDAError | null;
-  readonly publicKey: PublicKey | null;
+  readonly publicKey: string | null;
   readonly serialisedTransaction: string | null;
 };
 

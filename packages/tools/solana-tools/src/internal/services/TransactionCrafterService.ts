@@ -177,7 +177,6 @@ export class TransactionCrafterService {
     return true;
   }
 
-  // Solana shortvec decode (variable-length unsigned integer)
   decodeShortVec(
     bytes: Uint8Array,
     offset: number,
@@ -209,7 +208,6 @@ export class TransactionCrafterService {
     return { length: value, size };
   }
 
-  // decodeShortVec wrapper that treats any decoding error as "not a valid message/transaction" rather than throwing
   private tryDecodeShortVec(
     bytes: Uint8Array,
     offset: number,
@@ -221,7 +219,6 @@ export class TransactionCrafterService {
     }
   }
 
-  // Shared logic for both legacy and v0 messages
   private locatePayerInMessage(
     bytes: Uint8Array,
     messageOffset: number,
@@ -231,23 +228,19 @@ export class TransactionCrafterService {
 
     if (opts.versioned) {
       const versionByte = bytes[cursor];
-      // require versioned (high bit set)
       if (versionByte === undefined || (versionByte & 0x80) === 0) return null;
 
       const version = versionByte & 0x7f;
-      // only support v0, reject future versions so we don't mis-parse
       if (version !== 0) return null;
 
-      cursor += 1; // skip version byte
+      cursor += 1;
     } else {
       const first = bytes[cursor];
       if (first === undefined) return null;
 
-      // legacy messages must NOT have high bit set on first byte (that's v0)
       if ((first & 0x80) !== 0) return null;
     }
 
-    // header: required_signatures, num_readonly_signed, num_readonly_unsigned
     if (cursor + 3 > bytes.length) return null;
 
     const requiredSignatures = bytes[cursor];
@@ -256,10 +249,9 @@ export class TransactionCrafterService {
 
     if (requiredSignatures === undefined) return null;
 
-    // strict: require at least one signer
     if (requiredSignatures < 1) return null;
 
-    cursor += 3; // move past header
+    cursor += 3;
 
     const accountCountInfo = this.tryDecodeShortVec(bytes, cursor);
     if (!accountCountInfo) return null;
@@ -268,7 +260,6 @@ export class TransactionCrafterService {
 
     if (accountCount < 1 || accountCount > MAX_ACCOUNTS) return null;
 
-    // required signatures cannot exceed total accounts
     if (requiredSignatures > accountCount) return null;
 
     cursor += accountLenSize;
@@ -276,7 +267,6 @@ export class TransactionCrafterService {
     const accountKeysStart = cursor;
     const accountKeysBytes = accountCount * PUBLIC_KEY_LENGTH;
 
-    // ensure space for all account keys plus recent blockhash (32 bytes)
     if (
       accountKeysStart + accountKeysBytes + PUBLIC_KEY_LENGTH >
       bytes.length
@@ -284,7 +274,6 @@ export class TransactionCrafterService {
       return null;
     }
 
-    // payer is always the first account key (index 0)
     return {
       payerOffset: accountKeysStart,
       requiredSignatures,
