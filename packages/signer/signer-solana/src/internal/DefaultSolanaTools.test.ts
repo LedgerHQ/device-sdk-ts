@@ -71,4 +71,18 @@ describe("DefaultSolanaTools", () => {
     solanaTools.generateTransaction("derivationPath");
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
+
+  it("should call craftTransaction", () => {
+    const dmk = {
+      executeDeviceAction: vi.fn(),
+    } as unknown as DeviceManagementKit;
+    const sessionId = {} as DeviceSessionId;
+    const solanaTools = new DefaultSolanaTools({
+      dmk,
+      sessionId,
+      contextModule: contextModuleStub,
+    });
+    solanaTools.craftTransaction("derivationPath", "serialisedTransaction");
+    expect(dmk.executeDeviceAction).toHaveBeenCalled();
+  });
 });

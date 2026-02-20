@@ -42,5 +42,11 @@ describe("useCasesModuleFactory", () => {
         container.isBound(useCasesTypes.GenerateTransactionUseCase),
       ).toBeTruthy();
     });
+
+    it("should bind craftTransactionUseCase", () => {
+      expect(
+        container.isBound(useCasesTypes.CraftTransactionUseCase),
+      ).toBeTruthy();
+    });
   });
 });

@@ -9,6 +9,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { CraftTransactionDAReturnType } from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
@@ -21,6 +22,7 @@ import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { CraftTransactionDeviceAction } from "./device-action/CraftTransactionDeviceAction";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
@@ -87,6 +89,24 @@ export class SolanaAppBinder {
           contextModule: this.contextModule,
         },
         loggerFactory: this.dmkLoggerFactory,
+      }),
+    });
+  }
+
+  craftTransaction(args: {
+    derivationPath: string;
+    serialisedTransaction: string;
+    skipOpenApp: boolean;
+  }): CraftTransactionDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CraftTransactionDeviceAction({
+        input: {
+          derivationPath: args.derivationPath,
+          serialisedTransaction: args.serialisedTransaction,
+          skipOpenApp: args.skipOpenApp,
+          contextModule: this.contextModule,
+        },
       }),
     });
   }

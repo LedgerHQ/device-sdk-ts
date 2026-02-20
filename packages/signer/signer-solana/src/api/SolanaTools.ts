@@ -1,3 +1,4 @@
+import { type CraftTransactionDAReturnType } from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { type GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
@@ -14,4 +15,9 @@ export interface SolanaTools {
   ) => GetAddressDAReturnType;
 
   getAppConfiguration: () => GetAppConfigurationDAReturnType;
+
+  craftTransaction: (
+    derivationPath: string,
+    serialisedTransaction: string,
+  ) => CraftTransactionDAReturnType;
 }

@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
+import { type CraftTransactionDAReturnType } from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { type GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
@@ -13,6 +14,7 @@ import { type SolanaTools } from "@api/SolanaTools";
 
 import { type GetAddressUseCase } from "./use-cases/address/GetAddressUseCase";
 import { type GetAppConfigurationUseCase } from "./use-cases/app-configuration/GetAppConfigurationUseCase";
+import { type CraftTransactionUseCase } from "./use-cases/craft-transaction/CraftTransactionUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 import { type GenerateTransactionUseCase } from "./use-cases/generateTransaction/GenerateTransactionUseCase";
 import { makeContainer } from "./di";
@@ -38,6 +40,15 @@ export class DefaultSolanaTools implements SolanaTools {
     return this._container
       .get<GenerateTransactionUseCase>(useCasesTypes.GenerateTransactionUseCase)
       .execute(derivationPath);
+  }
+
+  craftTransaction(
+    derivationPath: string,
+    serialisedTransaction: string,
+  ): CraftTransactionDAReturnType {
+    return this._container
+      .get<CraftTransactionUseCase>(useCasesTypes.CraftTransactionUseCase)
+      .execute(derivationPath, serialisedTransaction);
   }
 
   getAddress(
