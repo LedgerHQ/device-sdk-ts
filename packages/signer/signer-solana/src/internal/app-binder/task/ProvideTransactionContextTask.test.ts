@@ -114,6 +114,11 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
     signature: "01020304",
   } as const;
 
+  const swapCert = {
+    payload: new Uint8Array([0x01, 0x02, 0x03]),
+    keyUsageNumber: 13,
+  } as const;
+
   const SIG = "f0cacc1a";
 
   beforeEach(() => {
@@ -446,13 +451,14 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
   // basic context + token + lifi (swap)
   describe("basic context + token + lifi", () => {
-    it("sends one APDU per instruction in order (descriptor/empty/descriptor) after base + token are sent", async () => {
+    it("sends swap template certificate then one APDU per instruction in order (descriptor/empty/descriptor) after base + token are sent", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
         .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
+        .mockResolvedValueOnce(success) // swap template cert
         .mockResolvedValue(success); // swap APDUs
 
       const message = {
@@ -484,6 +490,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
               { program_id: "C_PID", discriminator_hex: "3" },
             ],
           },
+          certificate: swapCert,
         },
       ];
 
@@ -506,11 +513,17 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       // then
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 3 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+      // 2 base + 2 token + 1 swap cert + 3 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(8);
 
-      // swap calls start at index 4
-      const c0 = api.sendCommand.mock.calls[4]![0]!;
+      // swap cert at index 4
+      const certCmd = api.sendCommand.mock.calls[4]![0]!;
+      expect(certCmd).toBeInstanceOf(LoadCertificateCommand);
+      expect(certCmd.args.certificate).toStrictEqual(swapCert.payload);
+      expect(certCmd.args.keyUsage).toBe(swapCert.keyUsageNumber);
+
+      // swap descriptor calls start at index 5
+      const c0 = api.sendCommand.mock.calls[5]![0]!;
       expect(c0).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
@@ -520,7 +533,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(c0.args.isFirstMessage).toBe(true);
       expect(c0.args.swapSignatureTag).toBe(true);
 
-      const c1 = api.sendCommand.mock.calls[5]![0]!;
+      const c1 = api.sendCommand.mock.calls[6]![0]!;
       expect(c1).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
@@ -528,7 +541,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(c1.args.isFirstMessage).toBe(false);
       expect(c1.args.swapSignatureTag).toBe(true);
 
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
+      const c2 = api.sendCommand.mock.calls[7]![0]!;
       expect(c2).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
@@ -539,6 +552,66 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(c2.args.swapSignatureTag).toBe(true);
 
       expect((normaliser as any).normaliseMessage).toHaveBeenCalledOnce();
+    });
+
+    it("throws when sending swap template certificate returns a CommandErrorResult", async () => {
+      const errorResult = CommandResultFactory({
+        error: { _tag: "SomeError", errorCode: 0x6a80, message: "bad" },
+      });
+
+      api.sendCommand
+        .mockResolvedValueOnce(success) // base PKI
+        .mockResolvedValueOnce(success) // TLV
+        .mockResolvedValueOnce(success) // token cert
+        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
+        .mockResolvedValueOnce(errorResult); // swap template cert -> error
+
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
+        allKeys: [makeKey("A_PID")],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_TOKEN,
+          payload: { solanaTokenDescriptor: tokenDescriptor },
+          certificate: tokenCert,
+        },
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              "A_PID:1": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            },
+            instructions: [{ program_id: "A_PID", discriminator_hex: "1" }],
+          },
+          certificate: swapCert,
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      await expect(task.run()).rejects.toThrow(
+        "[SignerSolana] ProvideSolanaTransactionContextTask: Failed to send swapTemplateCertificate to device",
+      );
+
+      // 2 base + 2 token + 1 swap cert (failed)
+      expect(api.sendCommand).toHaveBeenCalledTimes(5);
     });
 
     it("sends empty when descriptor exists but signatures[SWAP_MODE] is missing", async () => {

@@ -17,6 +17,7 @@ describe("KeyUsageMapper", () => {
       [KeyUsage.Calldata, 11],
       [KeyUsage.Network, 12],
       [KeyUsage.LESMultisig, 14],
+      [KeyUsage.SwapTemplate, 13],
     ])(`should map key usage %s to %i`, (keyUsage, expected) => {
       // WHEN
       const result = KeyUsageMapper.mapKeyUsageForFirmware(keyUsage);

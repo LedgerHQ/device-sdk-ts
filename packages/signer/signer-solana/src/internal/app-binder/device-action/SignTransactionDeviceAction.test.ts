@@ -524,6 +524,114 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
+  it("swap path: SWAP type routes through build -> provide -> sign", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      inspectTransactionMock.mockResolvedValue({
+        transactionType: SolanaTransactionTypes.SWAP,
+        data: {},
+      });
+
+      const ctx: SolanaBuildContextResult = {
+        tlvDescriptor: new Uint8Array([1]),
+        trustedNamePKICertificate: {
+          keyUsageNumber: 0,
+          payload: new Uint8Array([0x01]),
+        },
+        loadersResults: [],
+      };
+      buildContextMock.mockResolvedValue(ctx);
+      provideContextMock.mockResolvedValue(Nothing);
+
+      const signature = new Uint8Array([0xaa, 0xbb]);
+      signMock.mockResolvedValue(
+        CommandResultFactory({ data: Just(signature) }),
+      );
+
+      const input: SignTransactionDAInput = {
+        derivationPath: defaultDerivation,
+        transaction: exampleTx,
+        transactionOptions: {
+          skipOpenApp: true,
+          transactionResolutionContext: {
+            templateId: "swap-template-id",
+          },
+        },
+        contextModule: contextModuleStub,
+      };
+
+      const action = new SignTransactionDeviceAction({
+        input,
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: signature, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates<
+        Uint8Array,
+        SignTransactionDAInput,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >(action, expected, apiMock, {
+        onDone: () => {
+          expect(buildContextMock).toHaveBeenCalledTimes(1);
+          expect(provideContextMock).toHaveBeenCalledTimes(1);
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
+
   it("buildContext throws → error", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue({

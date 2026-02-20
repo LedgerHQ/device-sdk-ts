@@ -88,7 +88,11 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         executeDeviceAction: ({ derivationPath, transaction }) => {
           const serializedTransaction =
             base64StringToBuffer(transaction) ?? new Uint8Array();
-          return signer.signTransaction(derivationPath, serializedTransaction);
+          return signer.signTransaction(derivationPath, serializedTransaction, {
+            transactionResolutionContext: {
+              templateId: "4c694669",
+            },
+          });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,

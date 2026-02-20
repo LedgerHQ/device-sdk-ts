@@ -12,4 +12,5 @@ export enum KeyUsage {
   Calldata = "calldata",
   Network = "network",
   LESMultisig = "les_multisig",
+  SwapTemplate = "swap_template",
 }

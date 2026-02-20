@@ -150,7 +150,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             .check(),
         isAnSPLTransaction: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
-          SolanaTransactionTypes.SPL,
+            SolanaTransactionTypes.SPL ||
+          context._internalState.inspectorResult?.transactionType ===
+            SolanaTransactionTypes.SWAP,
         shouldSkipInspection: ({ context }) =>
           context._internalState.error === null &&
           !!context.input.transactionOptions?.transactionResolutionContext &&
@@ -477,6 +479,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           arg0.serializedTransaction,
           arg0.resolutionContext?.tokenAddress,
           arg0.resolutionContext?.createATA,
+          arg0.resolutionContext?.templateId,
         ),
       );
 

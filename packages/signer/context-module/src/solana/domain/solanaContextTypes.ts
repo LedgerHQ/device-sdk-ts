@@ -31,8 +31,8 @@ export type SolanaContextLoaderResults = Array<
 >;
 
 export type SolanaTransactionContextResultSuccess = {
-  trustedNamePKICertificate: PkiCertificate;
-  tlvDescriptor: Uint8Array;
+  trustedNamePKICertificate?: PkiCertificate;
+  tlvDescriptor?: Uint8Array;
   loadersResults: SolanaContextLoaderResults;
 };
 

@@ -55,20 +55,21 @@ export class ProvideSolanaTransactionContextTask {
     } = this.args;
 
     // --------------------------------------------------------------------
-    // providing default solana context
+    // providing default solana context (trusted name cert + TLV descriptor)
+    // only needed when owner info was resolved (SPL token flows)
 
-    // send PKI certificate + signature
-    await this.api.sendCommand(
-      new LoadCertificateCommand({
-        certificate: trustedNamePKICertificate.payload,
-        keyUsage: trustedNamePKICertificate.keyUsageNumber,
-      }),
-    );
+    if (trustedNamePKICertificate && tlvDescriptor) {
+      await this.api.sendCommand(
+        new LoadCertificateCommand({
+          certificate: trustedNamePKICertificate.payload,
+          keyUsage: trustedNamePKICertificate.keyUsageNumber,
+        }),
+      );
 
-    // send signed descriptor
-    await this.api.sendCommand(
-      new ProvideTLVDescriptorCommand({ payload: tlvDescriptor }),
-    );
+      await this.api.sendCommand(
+        new ProvideTLVDescriptorCommand({ payload: tlvDescriptor }),
+      );
+    }
 
     // --------------------------------------------------------------------
     // providing optional solana context via context module loaders results
@@ -168,8 +169,22 @@ export class ProvideSolanaTransactionContextTask {
   ): Promise<void> {
     const { descriptors: lifiDescriptors, instructions: instructionsMeta } =
       lifiDescriptorListResult.payload;
+    const { certificate: swapTemplateCertificate } = lifiDescriptorListResult;
 
     if (lifiDescriptors) {
+      if (swapTemplateCertificate) {
+        const swapCertResult = await this.api.sendCommand(
+          new LoadCertificateCommand({
+            certificate: swapTemplateCertificate.payload,
+            keyUsage: swapTemplateCertificate.keyUsageNumber,
+          }),
+        );
+        if (!isSuccessCommandResult(swapCertResult)) {
+          throw new Error(
+            "[SignerSolana] ProvideSolanaTransactionContextTask: Failed to send swapTemplateCertificate to device",
+          );
+        }
+      }
       const message = await this._normaliser.normaliseMessage(transactionBytes);
 
       this._logger.debug(
