@@ -2,15 +2,23 @@ import {
   base64StringToBuffer,
   bufferToBase64String,
 } from "@ledgerhq/device-management-kit";
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 
 type MessageDetection = {
-  payerOffset: number;
+  accountKeysStart: number;
+  accountCount: number;
   kind: "legacyMessage" | "v0Message";
 } | null;
 
 type TransactionDetection = {
-  payerOffset: number;
+  accountKeysStart: number;
+  accountCount: number;
   signatureSectionStart: number;
   signatureCount: number;
   kind: "legacyTx" | "v0Tx";
@@ -49,7 +57,13 @@ export class TransactionCrafterService {
 
     const transactionInfo = this.detectTransaction(rawInput);
     if (transactionInfo) {
-      output.set(newPayer, transactionInfo.payerOffset);
+      this.applyReplacements(
+        output,
+        rawInput,
+        transactionInfo.accountKeysStart,
+        transactionInfo.accountCount,
+        newPayer,
+      );
       output.fill(
         0,
         transactionInfo.signatureSectionStart,
@@ -61,13 +75,106 @@ export class TransactionCrafterService {
 
     const msgInfo = this.detectMessage(rawInput);
     if (msgInfo) {
-      output.set(newPayer, msgInfo.payerOffset);
+      this.applyReplacements(
+        output,
+        rawInput,
+        msgInfo.accountKeysStart,
+        msgInfo.accountCount,
+        newPayer,
+      );
       return bufferToBase64String(output);
     }
 
     throw new Error(
       "Input is neither a valid legacy/v0 message nor a legacy/v0 transaction.",
     );
+  }
+
+  private applyReplacements(
+    output: Uint8Array,
+    rawInput: Uint8Array,
+    accountKeysStart: number,
+    accountCount: number,
+    newPayer: Uint8Array,
+  ): void {
+    const accountKeys: Uint8Array[] = [];
+    for (let i = 0; i < accountCount; i++) {
+      const start = accountKeysStart + i * PUBLIC_KEY_LENGTH;
+      accountKeys.push(rawInput.slice(start, start + PUBLIC_KEY_LENGTH));
+    }
+
+    const oldPayerBytes = accountKeys[0]!;
+    const oldPayerPK = new PublicKey(oldPayerBytes);
+    const newPayerPK = new PublicKey(newPayer);
+
+    const replacements: Map<number, Uint8Array> = new Map();
+
+    for (let i = 0; i < accountCount; i++) {
+      const offset = accountKeysStart + i * PUBLIC_KEY_LENGTH;
+      const key = accountKeys[i]!;
+
+      if (this.bytesEqual(key, oldPayerBytes)) {
+        replacements.set(offset, newPayer);
+        continue;
+      }
+
+      this.detectAndReplaceATA(
+        key,
+        offset,
+        accountKeys,
+        oldPayerPK,
+        newPayerPK,
+        replacements,
+      );
+    }
+
+    for (const [offset, bytes] of replacements) {
+      output.set(bytes, offset);
+    }
+  }
+
+  private detectAndReplaceATA(
+    key: Uint8Array,
+    offset: number,
+    accountKeys: Uint8Array[],
+    oldPayer: PublicKey,
+    newPayer: PublicKey,
+    replacements: Map<number, Uint8Array>,
+  ): void {
+    const keyPK = new PublicKey(key);
+    for (const candidateMintBytes of accountKeys) {
+      const candidateMint = new PublicKey(candidateMintBytes);
+      for (const tokenProgram of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
+        try {
+          const expectedATA = getAssociatedTokenAddressSync(
+            candidateMint,
+            oldPayer,
+            true,
+            tokenProgram,
+          );
+          if (expectedATA.equals(keyPK)) {
+            const newATA = getAssociatedTokenAddressSync(
+              candidateMint,
+              newPayer,
+              true,
+              tokenProgram,
+            );
+            replacements.set(offset, newATA.toBytes());
+            return;
+          }
+        } catch {
+          /* not a valid derivation for this combo */
+        }
+      }
+    }
+  }
+
+  private bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) return false;
+    }
+    return true;
   }
 
   // Solana shortvec decode (variable-length unsigned integer)
@@ -187,39 +294,43 @@ export class TransactionCrafterService {
     };
   }
 
-  // legacy message starting at messageOffset
-  private locatePayerInLegacyMessage(bytes: Uint8Array, messageOffset: number) {
-    const result = this.locatePayerInMessage(bytes, messageOffset, {
-      versioned: false,
-    });
-    if (!result) return null;
-    return { payerOffset: result.payerOffset };
-  }
-
-  // v0 message starting at messageOffset
-  private locatePayerInV0Message(bytes: Uint8Array, messageOffset: number) {
-    const result = this.locatePayerInMessage(bytes, messageOffset, {
+  private locateMessageInfo(bytes: Uint8Array, messageOffset: number) {
+    const v0 = this.locatePayerInMessage(bytes, messageOffset, {
       versioned: true,
     });
-    if (!result) return null;
-    return { payerOffset: result.payerOffset };
-  }
+    if (v0) {
+      return {
+        accountKeysStart: v0.payerOffset,
+        accountCount: v0.accountCount,
+        kind: "v0" as const,
+      };
+    }
 
-  private detectMessage(bytes: Uint8Array): MessageDetection {
-    // prefer v0 first to avoid accidental legacy parse
-    const v0 = this.locatePayerInV0Message(bytes, 0);
-    if (v0) return { payerOffset: v0.payerOffset, kind: "v0Message" };
-
-    const legacy = this.locatePayerInLegacyMessage(bytes, 0);
+    const legacy = this.locatePayerInMessage(bytes, messageOffset, {
+      versioned: false,
+    });
     if (legacy) {
-      return { payerOffset: legacy.payerOffset, kind: "legacyMessage" };
+      return {
+        accountKeysStart: legacy.payerOffset,
+        accountCount: legacy.accountCount,
+        kind: "legacy" as const,
+      };
     }
 
     return null;
   }
 
+  private detectMessage(bytes: Uint8Array): MessageDetection {
+    const info = this.locateMessageInfo(bytes, 0);
+    if (!info) return null;
+    return {
+      accountKeysStart: info.accountKeysStart,
+      accountCount: info.accountCount,
+      kind: info.kind === "v0" ? "v0Message" : "legacyMessage",
+    };
+  }
+
   private detectTransaction(bytes: Uint8Array): TransactionDetection {
-    // prefer v0 first after signatures, then legacy
     let cursor = 0;
 
     const signatureInfo = this.tryDecodeShortVec(bytes, cursor);
@@ -239,26 +350,15 @@ export class TransactionCrafterService {
 
     if (messageOffset > bytes.length) return null;
 
-    const v0 = this.locatePayerInV0Message(bytes, messageOffset);
-    if (v0) {
-      return {
-        payerOffset: v0.payerOffset,
-        signatureSectionStart: signaturesStart,
-        signatureCount,
-        kind: "v0Tx",
-      };
-    }
+    const info = this.locateMessageInfo(bytes, messageOffset);
+    if (!info) return null;
 
-    const legacy = this.locatePayerInLegacyMessage(bytes, messageOffset);
-    if (legacy) {
-      return {
-        payerOffset: legacy.payerOffset,
-        signatureSectionStart: signaturesStart,
-        signatureCount,
-        kind: "legacyTx",
-      };
-    }
-
-    return null;
+    return {
+      accountKeysStart: info.accountKeysStart,
+      accountCount: info.accountCount,
+      signatureSectionStart: signaturesStart,
+      signatureCount,
+      kind: info.kind === "v0" ? "v0Tx" : "legacyTx",
+    };
   }
 }

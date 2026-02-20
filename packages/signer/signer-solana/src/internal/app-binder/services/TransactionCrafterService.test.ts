@@ -1,4 +1,10 @@
 import {
+  createTransferCheckedInstruction,
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import {
   Keypair,
   Message,
   PublicKey,
@@ -741,6 +747,447 @@ describe("TransactionCrafterServiceInstance", () => {
           newPayer.publicKey.toBase58(),
         ),
       ).toThrowError(GENERIC_ERR);
+    });
+  });
+
+  describe("ATA replacement for SPL transfers", () => {
+    it("replaces payer's source ATA in a legacy SPL transfer message", () => {
+      const mint = Keypair.generate().publicKey;
+      const sourceATA = getAssociatedTokenAddressSync(
+        mint,
+        payer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const destATA = getAssociatedTokenAddressSync(
+        mint,
+        recipient.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const expectedNewSourceATA = getAssociatedTokenAddressSync(
+        mint,
+        newPayer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+
+      const ix = createTransferCheckedInstruction(
+        sourceATA,
+        mint,
+        destATA,
+        payer.publicKey,
+        1_000_000,
+        6,
+      );
+
+      const transaction = new Transaction({
+        recentBlockhash: RECENT_BLOCKHASH,
+        feePayer: payer.publicKey,
+      }).add(ix);
+
+      const msgB64 = Buffer.from(transaction.serializeMessage()).toString(
+        "base64",
+      );
+
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
+        msgB64,
+        newPayer.publicKey.toBase58(),
+      );
+
+      const outputBytes = base64ToBytes(outputB64);
+      const layout = parseMessageAccountsAndBlockhash(outputBytes, 0, {
+        versioned: false,
+      });
+      const outputKeys = layout.accounts.map((a) => new PublicKey(a));
+
+      expect(outputKeys[0]!.equals(newPayer.publicKey)).toBe(true);
+      expect(outputKeys.some((k) => k.equals(sourceATA))).toBe(false);
+      expect(outputKeys.some((k) => k.equals(expectedNewSourceATA))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(destATA))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(mint))).toBe(true);
+    });
+
+    it("replaces payer's source ATA in a v0 SPL transfer message", () => {
+      const mint = Keypair.generate().publicKey;
+      const sourceATA = getAssociatedTokenAddressSync(
+        mint,
+        payer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const destATA = getAssociatedTokenAddressSync(
+        mint,
+        recipient.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const expectedNewSourceATA = getAssociatedTokenAddressSync(
+        mint,
+        newPayer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+
+      const ix = createTransferCheckedInstruction(
+        sourceATA,
+        mint,
+        destATA,
+        payer.publicKey,
+        1_000_000,
+        6,
+      );
+
+      const v0msg = new TransactionMessage({
+        payerKey: payer.publicKey,
+        recentBlockhash: RECENT_BLOCKHASH,
+        instructions: [ix],
+      }).compileToV0Message();
+
+      const msgB64 = Buffer.from(v0msg.serialize()).toString("base64");
+
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
+        msgB64,
+        newPayer.publicKey.toBase58(),
+      );
+
+      const outputBytes = base64ToBytes(outputB64);
+      const layout = parseMessageAccountsAndBlockhashAuto(outputBytes, 0);
+      const outputKeys = layout.accounts.map((a) => new PublicKey(a));
+
+      expect(outputKeys[0]!.equals(newPayer.publicKey)).toBe(true);
+      expect(outputKeys.some((k) => k.equals(sourceATA))).toBe(false);
+      expect(outputKeys.some((k) => k.equals(expectedNewSourceATA))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(destATA))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(mint))).toBe(true);
+    });
+
+    it("replaces payer's source ATA and zeroes signatures in a legacy SPL transfer transaction", () => {
+      const mint = Keypair.generate().publicKey;
+      const sourceATA = getAssociatedTokenAddressSync(
+        mint,
+        payer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const destATA = getAssociatedTokenAddressSync(
+        mint,
+        recipient.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const expectedNewSourceATA = getAssociatedTokenAddressSync(
+        mint,
+        newPayer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+
+      const ix = createTransferCheckedInstruction(
+        sourceATA,
+        mint,
+        destATA,
+        payer.publicKey,
+        1_000_000,
+        6,
+      );
+
+      const transaction = new Transaction({
+        recentBlockhash: RECENT_BLOCKHASH,
+        feePayer: payer.publicKey,
+      }).add(ix);
+      transaction.sign(payer);
+
+      const txB64 = Buffer.from(transaction.serialize()).toString("base64");
+
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
+        txB64,
+        newPayer.publicKey.toBase58(),
+      );
+
+      const outputBytes = base64ToBytes(outputB64);
+
+      let cursor = 0;
+      const { length: sigCount, size: sigLen } =
+        new TransactionCrafterService().decodeShortVec(outputBytes, cursor);
+      cursor += sigLen;
+
+      for (let i = 0; i < sigCount; i++) {
+        const start = cursor + i * 64;
+        expectAllZero(outputBytes, start, start + 64);
+      }
+
+      const msgOffset = cursor + sigCount * 64;
+      const layout = parseMessageAccountsAndBlockhash(outputBytes, msgOffset, {
+        versioned: false,
+      });
+      const outputKeys = layout.accounts.map((a) => new PublicKey(a));
+
+      expect(outputKeys[0]!.equals(newPayer.publicKey)).toBe(true);
+      expect(outputKeys.some((k) => k.equals(sourceATA))).toBe(false);
+      expect(outputKeys.some((k) => k.equals(expectedNewSourceATA))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(destATA))).toBe(true);
+    });
+
+    it("replaces payer's source ATA and zeroes signatures in a v0 SPL transfer transaction", () => {
+      const mint = Keypair.generate().publicKey;
+      const sourceATA = getAssociatedTokenAddressSync(
+        mint,
+        payer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const destATA = getAssociatedTokenAddressSync(
+        mint,
+        recipient.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const expectedNewSourceATA = getAssociatedTokenAddressSync(
+        mint,
+        newPayer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+
+      const ix = createTransferCheckedInstruction(
+        sourceATA,
+        mint,
+        destATA,
+        payer.publicKey,
+        1_000_000,
+        6,
+      );
+
+      const v0msg = new TransactionMessage({
+        payerKey: payer.publicKey,
+        recentBlockhash: RECENT_BLOCKHASH,
+        instructions: [ix],
+      }).compileToV0Message();
+
+      const vt = new VersionedTransaction(v0msg);
+      vt.sign([payer]);
+
+      const txB64 = Buffer.from(vt.serialize()).toString("base64");
+
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
+        txB64,
+        newPayer.publicKey.toBase58(),
+      );
+
+      const outputBytes = base64ToBytes(outputB64);
+
+      let cursor = 0;
+      const { length: sigCount, size: sigLen } =
+        new TransactionCrafterService().decodeShortVec(outputBytes, cursor);
+      cursor += sigLen;
+
+      for (let i = 0; i < sigCount; i++) {
+        const start = cursor + i * 64;
+        expectAllZero(outputBytes, start, start + 64);
+      }
+
+      const msgOffset = cursor + sigCount * 64;
+      const layout = parseMessageAccountsAndBlockhashAuto(
+        outputBytes,
+        msgOffset,
+      );
+      const outputKeys = layout.accounts.map((a) => new PublicKey(a));
+
+      expect(outputKeys[0]!.equals(newPayer.publicKey)).toBe(true);
+      expect(outputKeys.some((k) => k.equals(sourceATA))).toBe(false);
+      expect(outputKeys.some((k) => k.equals(expectedNewSourceATA))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(destATA))).toBe(true);
+    });
+
+    it("replaces multiple ATAs from different mints", () => {
+      const mint1 = Keypair.generate().publicKey;
+      const mint2 = Keypair.generate().publicKey;
+
+      const sourceATA1 = getAssociatedTokenAddressSync(
+        mint1,
+        payer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const destATA1 = getAssociatedTokenAddressSync(
+        mint1,
+        recipient.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const sourceATA2 = getAssociatedTokenAddressSync(
+        mint2,
+        payer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const destATA2 = getAssociatedTokenAddressSync(
+        mint2,
+        recipient.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+
+      const expectedNew1 = getAssociatedTokenAddressSync(
+        mint1,
+        newPayer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const expectedNew2 = getAssociatedTokenAddressSync(
+        mint2,
+        newPayer.publicKey,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+
+      const ix1 = createTransferCheckedInstruction(
+        sourceATA1,
+        mint1,
+        destATA1,
+        payer.publicKey,
+        1_000_000,
+        6,
+      );
+      const ix2 = createTransferCheckedInstruction(
+        sourceATA2,
+        mint2,
+        destATA2,
+        payer.publicKey,
+        2_000_000,
+        9,
+      );
+
+      const transaction = new Transaction({
+        recentBlockhash: RECENT_BLOCKHASH,
+        feePayer: payer.publicKey,
+      })
+        .add(ix1)
+        .add(ix2);
+
+      const msgB64 = Buffer.from(transaction.serializeMessage()).toString(
+        "base64",
+      );
+
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
+        msgB64,
+        newPayer.publicKey.toBase58(),
+      );
+
+      const outputBytes = base64ToBytes(outputB64);
+      const layout = parseMessageAccountsAndBlockhash(outputBytes, 0, {
+        versioned: false,
+      });
+      const outputKeys = layout.accounts.map((a) => new PublicKey(a));
+
+      expect(outputKeys[0]!.equals(newPayer.publicKey)).toBe(true);
+      expect(outputKeys.some((k) => k.equals(sourceATA1))).toBe(false);
+      expect(outputKeys.some((k) => k.equals(sourceATA2))).toBe(false);
+      expect(outputKeys.some((k) => k.equals(expectedNew1))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(expectedNew2))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(destATA1))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(destATA2))).toBe(true);
+    });
+
+    it("handles Token-2022 ATAs", () => {
+      const mint = Keypair.generate().publicKey;
+      const sourceATA = getAssociatedTokenAddressSync(
+        mint,
+        payer.publicKey,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      );
+      const destATA = getAssociatedTokenAddressSync(
+        mint,
+        recipient.publicKey,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      );
+      const expectedNewSourceATA = getAssociatedTokenAddressSync(
+        mint,
+        newPayer.publicKey,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      );
+
+      const ix = createTransferCheckedInstruction(
+        sourceATA,
+        mint,
+        destATA,
+        payer.publicKey,
+        500_000,
+        6,
+        [],
+        TOKEN_2022_PROGRAM_ID,
+      );
+
+      const transaction = new Transaction({
+        recentBlockhash: RECENT_BLOCKHASH,
+        feePayer: payer.publicKey,
+      }).add(ix);
+
+      const msgB64 = Buffer.from(transaction.serializeMessage()).toString(
+        "base64",
+      );
+
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
+        msgB64,
+        newPayer.publicKey.toBase58(),
+      );
+
+      const outputBytes = base64ToBytes(outputB64);
+      const layout = parseMessageAccountsAndBlockhash(outputBytes, 0, {
+        versioned: false,
+      });
+      const outputKeys = layout.accounts.map((a) => new PublicKey(a));
+
+      expect(outputKeys[0]!.equals(newPayer.publicKey)).toBe(true);
+      expect(outputKeys.some((k) => k.equals(sourceATA))).toBe(false);
+      expect(outputKeys.some((k) => k.equals(expectedNewSourceATA))).toBe(true);
+      expect(outputKeys.some((k) => k.equals(destATA))).toBe(true);
+    });
+
+    it("does not modify accounts in a plain SOL transfer (no ATAs)", () => {
+      const instructions = SystemProgram.transfer({
+        fromPubkey: payer.publicKey,
+        toPubkey: recipient.publicKey,
+        lamports: 999,
+      });
+
+      const transaction = new Transaction({
+        recentBlockhash: RECENT_BLOCKHASH,
+        feePayer: payer.publicKey,
+      }).add(instructions);
+
+      const originalMsgBytes = transaction.serializeMessage();
+      const originalLayout = parseMessageAccountsAndBlockhash(
+        originalMsgBytes,
+        0,
+        { versioned: false },
+      );
+
+      const msgB64 = bytesToBase64(originalMsgBytes);
+
+      const outputB64 = new TransactionCrafterService().getCraftedTransaction(
+        msgB64,
+        newPayer.publicKey.toBase58(),
+      );
+
+      const outputBytes = base64ToBytes(outputB64);
+      const craftedLayout = parseMessageAccountsAndBlockhash(outputBytes, 0, {
+        versioned: false,
+      });
+
+      expect(
+        new PublicKey(craftedLayout.accounts[0]!).equals(newPayer.publicKey),
+      ).toBe(true);
+
+      for (let i = 1; i < originalLayout.accounts.length; i++) {
+        expect(bytesToHex(craftedLayout.accounts[i]!)).toBe(
+          bytesToHex(originalLayout.accounts[i]!),
+        );
+      }
     });
   });
 
