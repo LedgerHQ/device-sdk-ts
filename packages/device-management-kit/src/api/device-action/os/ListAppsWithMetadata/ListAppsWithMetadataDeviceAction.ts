@@ -27,6 +27,7 @@ import {
   type ListAppsWithMetadataDAInput,
   type ListAppsWithMetadataDAIntermediateValue,
   type ListAppsWithMetadataDAOutput,
+  listAppsWithMetadataDAStateStep,
 } from "./types";
 
 type ListAppsWithMetadataMachineInternalState = {
@@ -148,6 +149,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: listAppsWithMetadataDAStateStep.LIST_APPS,
           },
         };
       },
@@ -175,6 +177,7 @@ export class ListAppsWithMetadataDeviceAction extends XStateDeviceAction<
               actions: assign({
                 intermediateValue: (_) => ({
                   requiredUserInteraction: UserInteractionRequired.None,
+                  step: listAppsWithMetadataDAStateStep.LIST_APPS,
                 }),
                 _internalState: (_) => {
                   return _.event.output.caseOf({
