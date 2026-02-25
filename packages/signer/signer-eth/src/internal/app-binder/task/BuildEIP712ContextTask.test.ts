@@ -634,6 +634,57 @@ describe("BuildEIP712ContextTask", () => {
     expect(builtContext.additionalContexts).toEqual([]);
   });
 
+  it("should not request GATED_SIGNING or PROXY_INFO on Nano S even when app version supports it", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextModuleMock as unknown as ContextModule,
+      parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
+      TEST_DATA,
+      "44'/60'/0'/0/0",
+      createAppConfig(false),
+      TEST_FROM,
+      mockLoggerFactory,
+      buildFullContextFactoryMock,
+    );
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.22.0" },
+      deviceModelId: DeviceModelId.NANO_S,
+      isSecureConnectionAllowed: false,
+    });
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
+    contextModuleMock.getTypedDataFilters.mockResolvedValueOnce({
+      type: ClearSignContextType.ERROR,
+      error: new Error("no filter"),
+    });
+    // WHEN
+    const builtContext = await task.run();
+    // THEN
+    expect(contextModuleMock.getContexts).toHaveBeenCalled();
+    const contextTypesRequested =
+      contextModuleMock.getContexts.mock.calls[0]?.[1];
+    expect(contextTypesRequested).toBeDefined();
+    expect(contextTypesRequested).not.toContain(
+      ClearSignContextType.GATED_SIGNING,
+    );
+    expect(contextTypesRequested).not.toContain(
+      ClearSignContextType.PROXY_INFO,
+    );
+    expect(builtContext.additionalContexts).toEqual([]);
+  });
+
   it("should request GATED_SIGNING and PROXY_INFO when app version is 1.22.0 or newer", async () => {
     // GIVEN
     const gatedSigningContext = {

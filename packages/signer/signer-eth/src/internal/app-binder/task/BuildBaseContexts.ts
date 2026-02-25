@@ -114,6 +114,7 @@ export class BuildBaseContexts {
     // Remove gating contexts when app does not support them
     const supportsGatedSigning = new ApplicationChecker(deviceState, appConfig)
       .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
+      .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
     const contextsForSigning = supportsGatedSigning
       ? contextsSuccess

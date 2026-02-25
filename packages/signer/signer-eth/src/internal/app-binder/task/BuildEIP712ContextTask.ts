@@ -135,6 +135,7 @@ export class BuildEIP712ContextTask {
       this.appConfig,
     )
       .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
+      .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
 
     // Determine context types to be fetched

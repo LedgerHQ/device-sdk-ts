@@ -820,6 +820,44 @@ describe("BuildBaseContexts", () => {
     expect(result.clearSigningType).toBe(ClearSigningType.BASIC);
   });
 
+  it("should exclude GATED_SIGNING on Nano S even when app version supports it", async () => {
+    // GIVEN
+    const proxyInfoContext = {
+      type: ClearSignContextType.PROXY_INFO,
+      payload: "proxy-info",
+    } as ClearSignContext;
+    const gatedSigningContext = {
+      type: ClearSignContextType.GATED_SIGNING,
+      payload: "gated-signing",
+    } as ClearSignContext;
+    const tokenContext = {
+      type: ClearSignContextType.TOKEN,
+      payload: "token",
+    } as ClearSignContext;
+    const clearSignContexts: ClearSignContext[] = [
+      proxyInfoContext,
+      gatedSigningContext,
+      tokenContext,
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValue({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.22.0" },
+      deviceModelId: DeviceModelId.NANO_S,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+    // THEN
+    expect(result.clearSignContexts).not.toContainEqual(gatedSigningContext);
+    expect(result.clearSignContexts).toEqual([proxyInfoContext, tokenContext]);
+    expect(result.clearSigningType).toBe(ClearSigningType.BASIC);
+  });
+
   it("should include PROXY_INFO and GATED_SIGNING when app version is 1.22.0 or newer", async () => {
     // GIVEN
     const proxyInfoContext = {
