@@ -30,6 +30,11 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.GATED_SIGNING,
 ];
 
+function normalizeAddress(address: string): HexaString {
+  const lower = address.toLowerCase();
+  return (lower.startsWith("0x") ? lower : `0x${lower}`) as HexaString;
+}
+
 @injectable()
 export class GatedSigningContextLoader
   implements ContextLoader<GatedSigningContextInput>
@@ -77,11 +82,7 @@ export class GatedSigningContextLoader
 
     if (directResult.isRight()) {
       const { signedDescriptor } = directResult.unsafeCoerce();
-      const certificate = await this._certificateLoader.loadCertificate({
-        keyId: KeyId.CalGatedSigning,
-        keyUsage: KeyUsage.GatedSigning,
-        targetDevice: deviceModelId,
-      });
+      const certificate = await this._loadGatedCertificate(deviceModelId);
       return [
         {
           type: ClearSignContextType.GATED_SIGNING,
@@ -91,10 +92,10 @@ export class GatedSigningContextLoader
       ];
     }
 
-    const firstError: Error = directResult.caseOf({
-      Left: (error) => error,
-      Right: () => new Error("unreachable"),
-    });
+    const errorContext: ClearSignContext = {
+      type: ClearSignContextType.ERROR,
+      error: directResult.extract() as Error,
+    };
 
     const proxyResult =
       await this._proxyDataSource.getProxyImplementationAddress({
@@ -105,19 +106,13 @@ export class GatedSigningContextLoader
       });
 
     if (proxyResult.isLeft()) {
-      return [
-        {
-          type: ClearSignContextType.ERROR,
-          error: firstError,
-        },
-      ];
+      return [errorContext];
     }
 
     const proxyData = proxyResult.unsafeCoerce();
-    const implRaw = proxyData.implementationAddress.toLowerCase();
-    const implementationAddress: HexaString = implRaw.startsWith("0x")
-      ? (implRaw as HexaString)
-      : (`0x${implRaw}` as HexaString);
+    const implementationAddress = normalizeAddress(
+      proxyData.implementationAddress,
+    );
 
     const implGatedResult = await this._dataSource.getGatedDescriptor({
       contractAddress: implementationAddress,
@@ -126,12 +121,7 @@ export class GatedSigningContextLoader
     });
 
     if (implGatedResult.isLeft()) {
-      return [
-        {
-          type: ClearSignContextType.ERROR,
-          error: firstError,
-        },
-      ];
+      return [errorContext];
     }
 
     const { signedDescriptor } = implGatedResult.unsafeCoerce();
@@ -141,11 +131,7 @@ export class GatedSigningContextLoader
         keyUsage: proxyData.keyUsage,
         targetDevice: deviceModelId,
       }),
-      this._certificateLoader.loadCertificate({
-        keyId: KeyId.CalGatedSigning,
-        keyUsage: KeyUsage.GatedSigning,
-        targetDevice: deviceModelId,
-      }),
+      this._loadGatedCertificate(deviceModelId),
     ]);
 
     return [
@@ -160,5 +146,13 @@ export class GatedSigningContextLoader
         certificate: gatedCertificate,
       },
     ];
+  }
+
+  private _loadGatedCertificate(deviceModelId: DeviceModelId) {
+    return this._certificateLoader.loadCertificate({
+      keyId: KeyId.CalGatedSigning,
+      keyUsage: KeyUsage.GatedSigning,
+      targetDevice: deviceModelId,
+    });
   }
 }
