@@ -29,11 +29,7 @@ export type ProvideInstructionDescriptorCommandArgs = {
 
 export class ProvideInstructionDescriptorCommand
   implements
-    Command<
-      void,
-      ProvideInstructionDescriptorCommandArgs,
-      SolanaAppErrorCodes
-    >
+    Command<void, ProvideInstructionDescriptorCommandArgs, SolanaAppErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<
     void,
