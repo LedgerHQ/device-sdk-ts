@@ -52,6 +52,7 @@ import {
   type ProvideTransactionContextsTaskResult,
 } from "@internal/app-binder/task/ProvideTransactionContextsTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
+import { MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS } from "@internal/shared/EthAppVersions";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export type MachineDependencies = {
@@ -147,7 +148,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
           )
-            .withMinVersionExclusive("1.15.0")
+            .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS)
             .excludeDeviceModel(DeviceModelId.NANO_S)
             .excludeDeviceModel(DeviceModelId.NANO_SP)
             .excludeDeviceModel(DeviceModelId.NANO_X)

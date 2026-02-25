@@ -24,6 +24,7 @@ import {
   type ContextWithSubContexts,
 } from "@internal/app-binder/task/BuildFullContextsTask";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { MIN_ETH_APP_VERSION_FOR_GATED_SIGNING } from "@internal/shared/EthAppVersions";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
@@ -60,7 +61,6 @@ export class BuildEIP712ContextTask {
     const { types, domain, message } = parsed.unsafeCoerce();
 
     const deviceState = this.api.getDeviceSessionState();
-    const deviceModelId = deviceState.deviceModelId;
 
     // get challenge, needed for the proxy info context,
     // needed by typed data loader (clear signed) or gated typed data loader (blind signed)
@@ -71,7 +71,7 @@ export class BuildEIP712ContextTask {
     }
 
     const additionalContexts = await this.getAdditionalContexts(
-      deviceModelId,
+      deviceState,
       challenge,
     );
 
@@ -127,14 +127,23 @@ export class BuildEIP712ContextTask {
   }
 
   private async getAdditionalContexts(
-    deviceModelId: DeviceModelId,
+    deviceState: DeviceSessionState,
     challenge: string | undefined,
   ): Promise<ClearSignContextSuccess[]> {
+    const supportsGatedSigning = new ApplicationChecker(
+      deviceState,
+      this.appConfig,
+    )
+      .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
+      .check();
+
     // Determine context types to be fetched
     const contextTypes: ClearSignContextType[] = [];
-    contextTypes.push(ClearSignContextType.GATED_SIGNING);
-    if (challenge !== undefined) {
-      contextTypes.push(ClearSignContextType.PROXY_INFO);
+    if (supportsGatedSigning) {
+      contextTypes.push(ClearSignContextType.GATED_SIGNING);
+      if (challenge !== undefined) {
+        contextTypes.push(ClearSignContextType.PROXY_INFO);
+      }
     }
     if (this.appConfig.web3ChecksEnabled) {
       contextTypes.push(ClearSignContextType.TRANSACTION_CHECK);
@@ -149,7 +158,7 @@ export class BuildEIP712ContextTask {
     // Fetch the contexts
     const contexts = await this.contextModule.getContexts(
       {
-        deviceModelId,
+        deviceModelId: deviceState.deviceModelId,
         data: this.data,
         from: this.from,
         chainId: this.data.domain.chainId || 0,
@@ -157,8 +166,6 @@ export class BuildEIP712ContextTask {
       },
       contextTypes,
     );
-
-    console.log("LAU: contexts", contexts);
 
     // Filter valid contexts
     return contexts.filter((context) =>

@@ -16,6 +16,10 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import {
+  MIN_ETH_APP_VERSION_FOR_GATED_SIGNING,
+  MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER,
+} from "@internal/shared/EthAppVersions";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
@@ -107,13 +111,23 @@ export class BuildBaseContexts {
       (context) => context.type !== ClearSignContextType.ERROR,
     );
 
+    // Remove gating contexts when app does not support them
+    const supportsGatedSigning = new ApplicationChecker(deviceState, appConfig)
+      .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
+      .check();
+    const contextsForSigning = supportsGatedSigning
+      ? contextsSuccess
+      : contextsSuccess.filter(
+          (context) => context.type !== ClearSignContextType.GATED_SIGNING,
+        );
+
     if (
       this._supportsGenericParser(deviceState, appConfig) &&
-      this._hasValidTransactionInfo(contextsSuccess)
+      this._hasValidTransactionInfo(contextsForSigning)
     ) {
-      return this._getERC7730Contexts(contextsSuccess);
+      return this._getERC7730Contexts(contextsForSigning);
     } else {
-      return this._getBasicContexts(contextsSuccess);
+      return this._getBasicContexts(contextsForSigning);
     }
   }
 
@@ -223,7 +237,7 @@ export class BuildBaseContexts {
     appConfig: GetConfigCommandResponse,
   ): boolean {
     return new ApplicationChecker(deviceState, appConfig)
-      .withMinVersionExclusive("1.14.0")
+      .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER)
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
   }
