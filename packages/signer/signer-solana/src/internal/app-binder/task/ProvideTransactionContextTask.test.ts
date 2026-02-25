@@ -31,6 +31,7 @@ import { Nothing } from "purify-ts";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
+import { ProvideInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideInstructionDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
 
@@ -451,7 +452,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
   // basic context + token + lifi (swap)
   describe("basic context + token + lifi", () => {
-    it("sends swap template certificate then one APDU per instruction in order (descriptor/empty/descriptor) after base + token are sent", async () => {
+    it("sends swap template certificate then one APDU per matched instruction (skipping unmatched) after base + token are sent", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -482,7 +483,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
           payload: {
             descriptors: {
               "A_PID:1": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-              // B missing -> empty
+              // B missing -> skipped
               "C_PID:3": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
             },
             instructions: [
@@ -513,8 +514,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       // then
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 1 swap cert + 3 swap descriptors
-      expect(api.sendCommand).toHaveBeenCalledTimes(8);
+      // 2 base + 2 token + 1 swap cert + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(7);
 
       // swap cert at index 4
       const certCmd = api.sendCommand.mock.calls[4]![0]!;
@@ -524,32 +525,14 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       // swap descriptor calls start at index 5
       const c0 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor");
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
       expect(c0.args.dataHex).toBe(SIG);
       expect(c0.args.signatureHex).toBe(SIG);
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
 
       const c1 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("empty");
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
-
-      const c2 = api.sendCommand.mock.calls[7]![0]!;
-      expect(c2).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c2.args.kind).toBe("descriptor");
-      expect(c2.args.dataHex).toBe(SIG);
-      expect(c2.args.signatureHex).toBe(SIG);
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
 
       expect((normaliser as any).normaliseMessage).toHaveBeenCalledOnce();
     });
@@ -614,14 +597,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(5);
     });
 
-    it("sends empty when descriptor exists but signatures[SWAP_MODE] is missing", async () => {
+    it("sends no swap APDU when signatures[SWAP_MODE] is missing", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
-        .mockResolvedValue(success);
+        .mockResolvedValueOnce(success); // token TLVTransactionInstructionDescriptor
 
       const message = {
         compiledInstructions: [
@@ -670,26 +652,17 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const result = await task.run();
 
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 1 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(5);
-
-      const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("empty");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      // 2 base + 2 token (no swap APDUs since no SWAP_MODE signature)
+      expect(api.sendCommand).toHaveBeenCalledTimes(4);
     });
 
-    it("sends empty when programId is missing for an instruction", async () => {
+    it("sends no swap APDU when programId is missing for an instruction", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
-        .mockResolvedValue(success);
+        .mockResolvedValueOnce(success); // token TLVTransactionInstructionDescriptor
 
       const message = {
         compiledInstructions: [{ programIdIndex: 5, data: new Uint8Array() }], // out-of-range
@@ -726,16 +699,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const result = await task.run();
 
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 1 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(5);
-
-      const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("empty");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      // 2 base + 2 token (no swap APDUs since programId is missing)
+      expect(api.sendCommand).toHaveBeenCalledTimes(4);
     });
 
     it("propagates a rejection thrown by InternalApi.sendCommand on the second swap APDU (after base + token succeed)", async () => {
@@ -750,9 +715,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       const message = {
         compiledInstructions: [
-          { programIdIndex: 0, data: new Uint8Array([0x01]) }, // descriptor
-          { programIdIndex: 1, data: new Uint8Array([0x02]) }, // empty -> rejects
-          { programIdIndex: 2, data: new Uint8Array([0x03]) }, // not reached
+          { programIdIndex: 0, data: new Uint8Array([0x01]) }, // descriptor A
+          { programIdIndex: 1, data: new Uint8Array([0x02]) }, // no match -> skipped
+          { programIdIndex: 2, data: new Uint8Array([0x03]) }, // descriptor C -> rejects
         ],
         allKeys: [makeKey("A_PID"), makeKey("B_PID"), makeKey("C_PID")],
       };
@@ -769,7 +734,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
           payload: {
             descriptors: {
               "A_PID:1": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-              // B missing -> empty
+              // B missing -> skipped
               "C_PID:3": { data: SIG, signatures: { [SWAP_MODE]: SIG } },
             },
             instructions: [
@@ -799,20 +764,14 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("empty");
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
     });
 
     it("uses signatures[SWAP_MODE] specifically when present", async () => {
@@ -873,17 +832,12 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(5);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor");
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
       expect(c0.args.dataHex).toBe(SIG);
       expect(c0.args.signatureHex).toBe(SIG);
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
     });
 
-    it("parses a real *legacy* tx via DefaultSolanaMessageNormaliser and preserves APDU order (descriptor, empty, descriptor) after base + token", async () => {
+    it("parses a real *legacy* tx via DefaultSolanaMessageNormaliser and sends matched descriptors (skipping unmatched) after base + token", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -944,7 +898,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
                 data: SIG,
                 signatures: { [SWAP_MODE]: SIG },
               },
-              // Tokenkeg missing -> empty
+              // Tokenkeg missing -> skipped
               [`${MEMO_PID}:0`]: {
                 data: SIG,
                 signatures: { [SWAP_MODE]: SIG },
@@ -975,26 +929,21 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const result = await task.run();
 
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 3 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+      // 2 base + 2 token + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0.args.kind).toBe("descriptor");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1.args.kind).toBe("empty");
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
-
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c2.args.kind).toBe("descriptor");
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
     });
 
-    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser (no ALTs) and preserves APDU order (descriptor, descriptor, empty) after base + token", async () => {
+    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser (no ALTs) and sends matched descriptors (skipping unmatched) after base + token", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -1062,7 +1011,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
                 data: SIG,
                 signatures: { [SWAP_MODE]: SIG },
               },
-              // Memo intentionally missing -> empty
+              // Memo intentionally missing -> skipped
             },
             instructions: [{ program_id: SYSTEM_PID }, { program_id: ATA_PID }],
           },
@@ -1085,35 +1034,21 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const res = await task.run();
 
       expect(res).toEqual(Nothing);
-      // 2 base + 2 token + 3 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+      // 2 base + 2 token + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor"); // System
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("descriptor"); // ATA
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
-
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c2).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c2.args.kind).toBe("empty"); // Memo missing
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
     });
 
-    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser and preserves APDU order System, createATA, token transfer (descriptor, descriptor, empty) after base + token", async () => {
+    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser: System, createATA, token transfer (sends matched, skips unmatched) after base + token", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -1190,7 +1125,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
                 data: SIG,
                 signatures: { [SWAP_MODE]: SIG },
               },
-              // Token Program intentionally missing -> "empty"
+              // Token Program intentionally missing -> skipped
             },
             instructions: [{ program_id: SYSTEM_PID }, { program_id: ATA_PID }],
           },
@@ -1216,33 +1151,19 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       // then
       expect(res).toEqual(Nothing);
-      // 2 base + 2 token + 3 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+      // 2 base + 2 token + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       // swap calls start at index 4
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor"); // System
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("descriptor"); // ATA
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
-
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c2).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c2.args.kind).toBe("empty"); // Token Program missing
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
     });
   });
 
@@ -1408,13 +1329,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       ];
 
       swapCalls.forEach(([cmd]: any, i: number) => {
-        expect(cmd).toBeInstanceOf(
-          ProvideTLVTransactionInstructionDescriptorCommand,
-        );
-        expect(cmd.args.kind).toBe("descriptor");
+        expect(cmd).toBeInstanceOf(ProvideInstructionDescriptorCommand);
         expect(cmd.args.dataHex).toBe(expectedData[i]);
-        expect(cmd.args.isFirstMessage).toBe(i === 0);
-        expect(cmd.args.swapSignatureTag).toBe(true);
       });
     });
   });

@@ -15,6 +15,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Maybe, Nothing } from "purify-ts";
 
+import { ProvideInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideInstructionDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder//command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
@@ -234,20 +235,9 @@ export class ProvideSolanaTransactionContextTask {
 
         if (descriptor && sigHex) {
           await this.api.sendCommand(
-            new ProvideTLVTransactionInstructionDescriptorCommand({
-              kind: "descriptor",
+            new ProvideInstructionDescriptorCommand({
               dataHex: descriptor.data,
               signatureHex: sigHex,
-              isFirstMessage: index === 0,
-              swapSignatureTag: true,
-            }),
-          );
-        } else {
-          await this.api.sendCommand(
-            new ProvideTLVTransactionInstructionDescriptorCommand({
-              kind: "empty",
-              isFirstMessage: index === 0,
-              swapSignatureTag: true,
             }),
           );
         }
