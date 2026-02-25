@@ -24,6 +24,7 @@
     "speculos-device-controller": "pnpm --filter @ledgerhq/speculos-device-controller",
     "context-module": "pnpm --filter @ledgerhq/context-module",
     "signer-btc": "pnpm --filter @ledgerhq/device-signer-kit-bitcoin",
+    "signer-cosmos": "pnpm --filter @ledgerhq/device-signer-kit-cosmos",
     "signer-eth": "pnpm --filter @ledgerhq/device-signer-kit-ethereum",
     "signer-hyperliquid": "pnpm --filter @ledgerhq/device-signer-kit-hyperliquid",
     "signer-sol": "pnpm --filter @ledgerhq/device-signer-kit-solana",
