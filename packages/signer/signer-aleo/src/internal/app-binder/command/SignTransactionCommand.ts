@@ -28,7 +28,7 @@ export class SignTransactionCommand
       AleoErrorCodes
     >
 {
-  readonly name = "SignTransaction";
+  readonly name = "signTransaction";
 
   private readonly args: SignTransactionCommandArgs;
 

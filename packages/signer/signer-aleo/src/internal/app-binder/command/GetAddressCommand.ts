@@ -83,14 +83,14 @@ export class GetAddressCommand
 
       if (parser.testMinimalLength(addressLength) === false) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("Public key is missing"),
+          error: new InvalidStatusWordError("Address is missing"),
         });
       }
 
       const buffer = parser.extractFieldByLength(addressLength);
       if (buffer === undefined) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("Unable to extract public key"),
+          error: new InvalidStatusWordError("Unable to extract address"),
         });
       }
 

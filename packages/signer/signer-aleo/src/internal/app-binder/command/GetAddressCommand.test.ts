@@ -170,7 +170,7 @@ describe("GetAddressCommand", () => {
         expect(isSuccessCommandResult(result)).toBe(false);
       });
 
-      it("when public key is missing (response too short)", () => {
+      it("when address is missing (response too short)", () => {
         // GIVEN
         const command = new GetAddressCommand({ derivationPath });
         const response = new ApduResponse({
@@ -187,7 +187,7 @@ describe("GetAddressCommand", () => {
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
-            new Error("Public key is missing"),
+            new Error("Address is missing"),
           );
         }
       });
@@ -231,12 +231,12 @@ describe("GetAddressCommand", () => {
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
-            new Error("Public key is missing"),
+            new Error("Address is missing"),
           );
         }
       });
 
-      it("when unable to extract public key", () => {
+      it("when unable to extract address", () => {
         // GIVEN
         const command = new GetAddressCommand({ derivationPath });
         const response = new ApduResponse({
@@ -253,7 +253,7 @@ describe("GetAddressCommand", () => {
         } else {
           expect(result.error).toBeInstanceOf(InvalidStatusWordError);
           expect(result.error.originalError).toEqual(
-            new Error("Public key is missing"),
+            new Error("Address is missing"),
           );
         }
       });
