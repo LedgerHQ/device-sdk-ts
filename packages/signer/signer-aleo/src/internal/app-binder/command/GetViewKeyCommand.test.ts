@@ -35,9 +35,9 @@ describe("GetViewKeyCommand", () => {
   const derivationPath = "44'/683'/0";
 
   describe("name", () => {
-    it("should be 'GetViewKey'", () => {
+    it("should be 'getViewKey'", () => {
       const command = new GetViewKeyCommand({ derivationPath });
-      expect(command.name).toBe("GetViewKey");
+      expect(command.name).toBe("getViewKey");
     });
   });
 

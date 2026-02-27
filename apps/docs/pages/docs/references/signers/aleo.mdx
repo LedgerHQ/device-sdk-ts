@@ -3,6 +3,7 @@
 This module provides the implementation of the Ledger aleo signer of the Device Management Kit. It enables interaction with the aleo application on a Ledger device including:
 
 - Retrieving the aleo address using a given derivation path
+- Retrieving the aleo view key using a given derivation path
 - Signing a aleo transaction
 - Signing a message displayed on a Ledger device
 - Retrieving the app configuration
@@ -15,8 +16,9 @@ This module provides the implementation of the Ledger aleo signer of the Device 
 4. [Use Cases](#-use-cases)
    - [Get App Configuration](#use-case-1-get-app-configuration)
    - [Get Address](#use-case-2-get-address)
-   - [Sign Transaction](#use-case-3-sign-transaction)
-   - [Sign Message](#use-case-4-sign-message)
+   - [Get View Key](#use-case-3-get-view-key)
+   - [Sign Transaction](#use-case-4-sign-transaction)
+   - [Sign Message](#use-case-5-sign-message)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -44,7 +46,7 @@ const signerAleo = new SignerAleoBuilder({ dmk, sessionId }).build();
 
 ## 🔹 Use Cases
 
-The `SignerAleoBuilder.build()` method will return a `SignerAleo` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerAleoBuilder.build()` method will return a `SignerAleo` instance that exposes 5 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
@@ -83,7 +85,7 @@ const { observable, cancel } = signerAleo.getAddress(derivationPath, options);
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g., `"m/44'/0'/0'/0/0"`)
+  - **Type:** `string` (e.g., `"m/44'/683'/0"`)
   - The derivation path used for the aleo address. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `options`
@@ -115,7 +117,52 @@ type GetAddressCommandResponse = {
 
 ---
 
-### Use Case 3: Sign Transaction
+### Use Case 3: Get View Key
+
+This method allows users to retrieve the aleo view key based on a given `derivationPath`.
+
+```typescript
+const { observable, cancel } = signerAleo.getViewKey(derivationPath, options);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"m/44'/683'/0"`)
+  - The derivation path used for the aleo view key. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
+
+- `options`
+
+  - Optional
+  - Type: `AddressOptions`
+
+    ```typescript
+    type AddressOptions = {
+      checkOnDevice?: boolean;
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`).
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the aleo app automatically (`true`) or not (`false`).
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type GetViewKeyCommandResponse = {
+  viewKey: string;
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 4: Sign Transaction
 
 This method allows users to sign a aleo transaction.
 
@@ -132,7 +179,7 @@ const { observable, cancel } = signerAleo.signTransaction(
 - `derivationPath`
 
   - **Required**
-  - **Type:** `string` (e.g., `"m/44'/0'/0'/0/0"`)
+  - **Type:** `string` (e.g., `"m/44'/683'/0"`)
   - The derivation path used for the aleo transaction. See [here](https://www.ledger.com/blog/understanding-crypto-addresses-and-derivation-paths) for more information.
 
 - `transaction`
@@ -170,7 +217,7 @@ type Signature = {
 
 ---
 
-### Use Case 4: Sign Message
+### Use Case 5: Sign Message
 
 This method allows users to sign a text string that is displayed on Ledger devices.
 

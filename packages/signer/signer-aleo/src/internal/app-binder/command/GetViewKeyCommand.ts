@@ -34,7 +34,7 @@ export class GetViewKeyCommand
   implements
     Command<GetViewKeyCommandResponse, GetViewKeyCommandArgs, AleoErrorCodes>
 {
-  readonly name = "GetViewKey";
+  readonly name = "getViewKey";
   private readonly errorHelper = new CommandErrorHelper<
     GetViewKeyCommandResponse,
     AleoErrorCodes
