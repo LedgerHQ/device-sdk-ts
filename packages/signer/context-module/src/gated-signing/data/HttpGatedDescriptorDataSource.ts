@@ -46,7 +46,7 @@ export class HttpGatedDescriptorDataSource
         url: `${this.config.cal.url}/gated_dapps`,
         params: {
           ref: `branch:${this.config.cal.branch}`,
-          output: "gated_descriptors",
+          output: "gated_descriptors,app,category",
           contracts: contractAddress,
           chain_id: chainId,
         },

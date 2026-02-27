@@ -71,7 +71,7 @@ describe("HttpGatedDescriptorDataSource", () => {
         url: "https://crypto-assets-service.api.ledger.com/v1/gated_dapps",
         params: {
           ref: "branch:next",
-          output: "gated_descriptors",
+          output: "gated_descriptors,app,category",
           contracts: contractAddress,
           chain_id: chainId,
         },

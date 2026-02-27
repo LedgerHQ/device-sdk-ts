@@ -91,8 +91,6 @@ export class GatedSigningTypedDataContextLoader
       "data" in input &&
       hasTypedDataShape((input as GatedSigningTypedDataContextInput).data) &&
       "chainId" in input &&
-      typeof (input as GatedSigningTypedDataContextInput).chainId ===
-        "number" &&
       "deviceModelId" in input &&
       (input as GatedSigningTypedDataContextInput).deviceModelId !==
         undefined &&
