@@ -12,6 +12,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
+import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
 import {
   NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
@@ -206,6 +207,15 @@ export class ProvideContextTask {
               data: args.chunkedData,
               isFirstChunk: args.isFirstChunk,
               type: ProvideSafeAccountCommandType.SIGNER_DESCRIPTOR,
+            }),
+        }).run();
+      case ClearSignContextType.GATED_SIGNING:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideGatedSigningCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
             }),
         }).run();
       default: {

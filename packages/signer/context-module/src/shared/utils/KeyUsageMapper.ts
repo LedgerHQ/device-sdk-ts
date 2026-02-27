@@ -15,6 +15,7 @@ export class KeyUsageMapper {
     [KeyUsage.Calldata, 11],
     [KeyUsage.Network, 12],
     [KeyUsage.LESMultisig, 14],
+    [KeyUsage.GatedSigning, 15],
   ]);
 
   static mapKeyUsageForFirmware(keyUsage: string): number {

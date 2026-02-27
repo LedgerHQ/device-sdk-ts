@@ -1,5 +1,4 @@
 import axios from "axios";
-import SHA224 from "crypto-js/sha224";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -19,7 +18,7 @@ import type {
   TypedDataMessageInfo,
 } from "@/shared/model/TypedDataClearSignContext";
 import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
-import type { TypedDataSchema } from "@/shared/model/TypedDataContext";
+import { getSchemaHash } from "@/typed-data/utils/getSchemaHash";
 import PACKAGE from "@root/package.json";
 
 import type {
@@ -75,9 +74,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
       });
 
       // Try to get the filters JSON descriptor, from address and schema hash
-      const schemaHash = SHA224(
-        JSON.stringify(this.sortTypes(schema)).replace(" ", ""),
-      ).toString();
+      const schemaHash = getSchemaHash(schema);
       address = address.toLowerCase();
       const dataArray = response.data ?? [];
       const filtersJson = dataArray
@@ -388,17 +385,6 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
         "calldata-spender",
       ].includes(data.format) &&
       typeof data.calldata_index === "number"
-    );
-  }
-
-  private sortTypes(types: TypedDataSchema): TypedDataSchema {
-    return Object.fromEntries(
-      Object.entries(types)
-        .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
-        .map(([key, value]) => [
-          key,
-          value.map((v) => ({ name: v.name, type: v.type })),
-        ]),
     );
   }
 }

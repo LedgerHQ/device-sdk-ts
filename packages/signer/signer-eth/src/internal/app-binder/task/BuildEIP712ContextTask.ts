@@ -24,6 +24,7 @@ import {
   type ContextWithSubContexts,
 } from "@internal/app-binder/task/BuildFullContextsTask";
 import { type ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import { MIN_ETH_APP_VERSION_FOR_GATED_SIGNING } from "@internal/shared/EthAppVersions";
 import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
@@ -45,9 +46,9 @@ export class BuildEIP712ContextTask {
     private readonly from: string,
     private readonly loggerFactory: (tag: string) => LoggerPublisherService,
     private readonly buildFullContextFactory = (
-      api: InternalApi,
+      internalApi: InternalApi,
       args: BuildFullContextsTaskArgs,
-    ) => new BuildFullContextsTask(api, args),
+    ) => new BuildFullContextsTask(internalApi, args),
   ) {}
 
   async run(): Promise<ProvideEIP712ContextTaskArgs> {
@@ -60,8 +61,19 @@ export class BuildEIP712ContextTask {
     const { types, domain, message } = parsed.unsafeCoerce();
 
     const deviceState = this.api.getDeviceSessionState();
-    const deviceModelId = deviceState.deviceModelId;
-    const additionalContexts = await this.getAdditionalContexts(deviceModelId);
+
+    // get challenge, needed for the proxy info context,
+    // needed by typed data loader (clear signed) or gated typed data loader (blind signed)
+    let challenge: string | undefined = undefined;
+    const challengeRes = await this.api.sendCommand(new GetChallengeCommand());
+    if (isSuccessCommandResult(challengeRes)) {
+      challenge = challengeRes.data.challenge;
+    }
+
+    const additionalContexts = await this.getAdditionalContexts(
+      deviceState,
+      challenge,
+    );
 
     // Get clear signing context, if any
     let clearSignContext: Maybe<TypedDataClearSignContextSuccess> = Nothing;
@@ -71,15 +83,6 @@ export class BuildEIP712ContextTask {
     > = {};
     const version = this.getClearSignVersion(deviceState);
     if (version.isJust()) {
-      // Get challenge
-      let challenge: string | undefined = undefined;
-      const challengeRes = await this.api.sendCommand(
-        new GetChallengeCommand(),
-      );
-      if (isSuccessCommandResult(challengeRes)) {
-        challenge = challengeRes.data.challenge;
-      }
-
       // Get filters
       const verifyingContract =
         this.data.domain.verifyingContract?.toLowerCase() || ZERO_ADDRESS;
@@ -124,10 +127,25 @@ export class BuildEIP712ContextTask {
   }
 
   private async getAdditionalContexts(
-    deviceModelId: DeviceModelId,
+    deviceState: DeviceSessionState,
+    challenge: string | undefined,
   ): Promise<ClearSignContextSuccess[]> {
+    const supportsGatedSigning = new ApplicationChecker(
+      deviceState,
+      this.appConfig,
+    )
+      .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
+      .excludeDeviceModel(DeviceModelId.NANO_S)
+      .check();
+
     // Determine context types to be fetched
     const contextTypes: ClearSignContextType[] = [];
+    if (supportsGatedSigning) {
+      contextTypes.push(ClearSignContextType.GATED_SIGNING);
+      if (challenge !== undefined) {
+        contextTypes.push(ClearSignContextType.PROXY_INFO);
+      }
+    }
     if (this.appConfig.web3ChecksEnabled) {
       contextTypes.push(ClearSignContextType.TRANSACTION_CHECK);
     }
@@ -141,10 +159,11 @@ export class BuildEIP712ContextTask {
     // Fetch the contexts
     const contexts = await this.contextModule.getContexts(
       {
-        deviceModelId,
+        deviceModelId: deviceState.deviceModelId,
         data: this.data,
         from: this.from,
         chainId: this.data.domain.chainId || 0,
+        challenge,
       },
       contextTypes,
     );
