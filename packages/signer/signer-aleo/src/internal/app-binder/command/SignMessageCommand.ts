@@ -20,7 +20,7 @@ export class SignMessageCommand
   implements
     Command<SignMessageCommandResponse, SignMessageCommandArgs, AleoErrorCodes>
 {
-  readonly name = "SignMessage";
+  readonly name = "signMessage";
 
   private readonly args: SignMessageCommandArgs;
 

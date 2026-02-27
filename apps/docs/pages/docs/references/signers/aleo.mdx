@@ -107,8 +107,7 @@ const { observable, cancel } = signerAleo.getAddress(derivationPath, options);
 
 ```typescript
 type GetAddressCommandResponse = {
-  publicKey: Uint8Array;
-  chainCode?: Uint8Array;
+  address: string;
 };
 ```
 
