@@ -25,7 +25,7 @@ describe("GetAppConfigurationCommand", () => {
   });
 
   describe("name", () => {
-    it("should be 'getAppConfiguration'", () => {
+    it("should be 'GetAppConfig'", () => {
       expect(command.name).toBe("GetAppConfig");
     });
   });

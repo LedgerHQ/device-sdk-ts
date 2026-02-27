@@ -32,13 +32,13 @@ export class GetAppConfigCommand
   >(ALEO_APP_ERRORS, AleoAppCommandErrorFactory);
 
   getApdu(): Apdu {
-    const getEthConfigArgs: ApduBuilderArgs = {
+    const getConfigArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x03,
       p1: 0x00,
       p2: 0x00,
     };
-    const builder = new ApduBuilder(getEthConfigArgs);
+    const builder = new ApduBuilder(getConfigArgs);
     return builder.build();
   }
 
