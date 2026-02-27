@@ -14,6 +14,9 @@ export default defineConfig({
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.stub.ts", "src/index.ts", "src/api/index.ts"],
     },
+    silent: false,
+    verbose: true,
+    disableConsoleIntercept: true,
   },
   resolve: {
     alias: {

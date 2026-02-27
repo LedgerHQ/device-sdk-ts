@@ -5,7 +5,6 @@ import {
 import { type Container } from "inversify";
 
 import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
-import { type ActionsOptions } from "@api/model/ActionsOptions";
 import { type SignerHyperliquid } from "@api/SignerHyperliquid";
 import { makeContainer } from "@internal/di";
 import { actionsTypes } from "@internal/use-cases/actions/di/actionsTypes";
@@ -24,12 +23,10 @@ export class DefaultSignerHyperliquid implements SignerHyperliquid {
   }
 
   signActions(
-    derivationPath: string,
-    Actions: Uint8Array,
-    options?: ActionsOptions,
+    params: Parameters<SignerHyperliquid["signActions"]>[0],
   ): SignActionsDAReturnType {
     return this._container
       .get<SignActionsUseCase>(actionsTypes.SignActionsUseCase)
-      .execute(derivationPath, Actions, options);
+      .execute(params);
   }
 }

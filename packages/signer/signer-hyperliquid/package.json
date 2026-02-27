@@ -35,6 +35,7 @@
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:file": "vitest ",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
