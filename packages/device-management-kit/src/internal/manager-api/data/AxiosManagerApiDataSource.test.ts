@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import {
@@ -14,21 +13,23 @@ import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
 import { type ManagerApiDataSource } from "./ManagerApiDataSource";
 
-vi.mock("axios");
-
 describe("AxiosManagerApiDataSource", () => {
   describe("getAppList", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return a list of applications", async () => {
       // given
       const apps = [BTC_APP_METADATA, ETH_APP_METADATA];
-      vi.spyOn(axios, "get").mockResolvedValue({ data: apps });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(apps)),
+      );
 
       // when
       const response = await api.getAppList({
@@ -43,7 +44,9 @@ describe("AxiosManagerApiDataSource", () => {
       // given
       const { versionId, ...rest } = BTC_APP_METADATA;
       const apps = [{ versionId: "invalidVersion", ...rest }];
-      vi.spyOn(axios, "get").mockResolvedValue({ data: apps });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(apps)),
+      );
 
       // when
       const response = await api.getAppList({
@@ -57,7 +60,7 @@ describe("AxiosManagerApiDataSource", () => {
     it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
-      vi.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
 
       // when
       const response = await api.getAppList({
@@ -73,15 +76,17 @@ describe("AxiosManagerApiDataSource", () => {
     describe("success cases", () => {
       let api: ManagerApiDataSource;
       beforeEach(() => {
-        api = new AxiosManagerApiDataSource({} as DmkConfig);
+        api = new AxiosManagerApiDataSource({
+          managerApiUrl: "http://localhost",
+        } as DmkConfig);
       });
       afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
       });
       it("with BTC app, should return the metadata", async () => {
-        vi.spyOn(axios, "post").mockResolvedValue({
-          data: [BTC_APP_METADATA],
-        });
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(JSON.stringify([BTC_APP_METADATA])),
+        );
 
         const hashes = [BTC_APP.appFullHash];
 
@@ -91,9 +96,9 @@ describe("AxiosManagerApiDataSource", () => {
       });
 
       it("with no apps, should return an empty list", async () => {
-        vi.spyOn(axios, "post").mockResolvedValue({
-          data: [],
-        });
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(JSON.stringify([])),
+        );
 
         const hashes: string[] = [];
 
@@ -103,9 +108,14 @@ describe("AxiosManagerApiDataSource", () => {
       });
 
       it("with BTC app and custom lock screen, should return the metadata", async () => {
-        vi.spyOn(axios, "post").mockResolvedValue({
-          data: [BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA],
-        });
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(
+            JSON.stringify([
+              BTC_APP_METADATA,
+              CUSTOM_LOCK_SCREEN_APP_METADATA,
+            ]),
+          ),
+        );
 
         const hashes = [
           BTC_APP.appFullHash,
@@ -123,16 +133,20 @@ describe("AxiosManagerApiDataSource", () => {
     describe("error cases", () => {
       let api: ManagerApiDataSource;
       beforeEach(() => {
-        api = new AxiosManagerApiDataSource({} as DmkConfig);
+        api = new AxiosManagerApiDataSource({
+          managerApiUrl: "http://localhost",
+        } as DmkConfig);
       });
       afterEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
       });
       it("with BTC app, should fail if payload don't match the dto", async () => {
         const { versionId, ...rest } = BTC_APP_METADATA;
-        vi.spyOn(axios, "post").mockResolvedValue({
-          data: [{ versionId: "invalidVersion", ...rest }],
-        });
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(
+            JSON.stringify([{ versionId: "invalidVersion", ...rest }]),
+          ),
+        );
 
         const hashes = [BTC_APP.appFullHash];
 
@@ -143,10 +157,12 @@ describe("AxiosManagerApiDataSource", () => {
 
       it("should throw an error if the request fails", async () => {
         // given
-        const api = new AxiosManagerApiDataSource({} as DmkConfig);
+        const api = new AxiosManagerApiDataSource({
+          managerApiUrl: "http://localhost",
+        } as DmkConfig);
 
         const err = new Error("fetch error");
-        vi.spyOn(axios, "post").mockRejectedValue(err);
+        vi.spyOn(globalThis, "fetch").mockRejectedValue(err);
 
         const hashes = [BTC_APP.appFullHash];
 
@@ -162,19 +178,23 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getDeviceVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return a complete device version", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          id: 17,
-          target_id: "857735172",
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: 17,
+            target_id: "857735172",
+          }),
+        ),
+      );
 
       // when
       const response = await api.getDeviceVersion({
@@ -187,11 +207,13 @@ describe("AxiosManagerApiDataSource", () => {
 
     it("should return an error if payload don't match dto", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          target_id: "857735172",
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            target_id: "857735172",
+          }),
+        ),
+      );
 
       // when
       const response = await api.getDeviceVersion({
@@ -206,7 +228,7 @@ describe("AxiosManagerApiDataSource", () => {
       // given
 
       const error = new Error("fetch error");
-      vi.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
 
       // when
       const response = await api.getDeviceVersion({
@@ -221,25 +243,29 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return a complete firmware version", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          id: 361,
-          version: "1.6.0",
-          perso: "perso_11",
-          firmware: null,
-          firmware_key: "testKey",
-          hash: "hash",
-          bytes: 194,
-          mcu_versions: [1, 5, 7],
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: 361,
+            version: "1.6.0",
+            perso: "perso_11",
+            firmware: null,
+            firmware_key: "testKey",
+            hash: "hash",
+            bytes: 194,
+            mcu_versions: [1, 5, 7],
+          }),
+        ),
+      );
 
       // when
       const response = await api.getFirmwareVersion({
@@ -263,18 +289,20 @@ describe("AxiosManagerApiDataSource", () => {
     });
     it("should return an error if payload don't match the dto", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          id: "invalidId",
-          version: "1.6.0",
-          perso: "perso_11",
-          firmware: null,
-          firmware_key: "testKey",
-          hash: "hash",
-          bytes: 194,
-          mcu_versions: [1, 5, 7],
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: "invalidId",
+            version: "1.6.0",
+            perso: "perso_11",
+            firmware: null,
+            firmware_key: "testKey",
+            hash: "hash",
+            bytes: 194,
+            mcu_versions: [1, 5, 7],
+          }),
+        ),
+      );
 
       // when
       const response = await api.getFirmwareVersion({
@@ -288,7 +316,7 @@ describe("AxiosManagerApiDataSource", () => {
     it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
-      vi.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
 
       // when
       const response = await api.getFirmwareVersion({
@@ -356,25 +384,29 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getFirmwareVersionById", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return a complete firmware version", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          id: 361,
-          version: "1.6.0",
-          perso: "perso_11",
-          firmware: null,
-          firmware_key: "testKey",
-          hash: "hash",
-          bytes: 194,
-          mcu_versions: [1, 5, 7],
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: 361,
+            version: "1.6.0",
+            perso: "perso_11",
+            firmware: null,
+            firmware_key: "testKey",
+            hash: "hash",
+            bytes: 194,
+            mcu_versions: [1, 5, 7],
+          }),
+        ),
+      );
 
       // when
       const response = await api.getFirmwareVersionById(42);
@@ -398,26 +430,30 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getLatestFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return the latest firmware version", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          result: "success",
-          se_firmware_osu_version: {
-            id: 361,
-            perso: "perso_11",
-            firmware: "test",
-            firmware_key: "testKey",
-            hash: "hash",
-            next_se_firmware_final_version: 567,
-          },
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            result: "success",
+            se_firmware_osu_version: {
+              id: 361,
+              perso: "perso_11",
+              firmware: "test",
+              firmware_key: "testKey",
+              hash: "hash",
+              next_se_firmware_final_version: 567,
+            },
+          }),
+        ),
+      );
 
       // when
       const response = await api.getLatestFirmwareVersion({
@@ -439,12 +475,14 @@ describe("AxiosManagerApiDataSource", () => {
     });
     it("should return an error if result is not success", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          result: "failed",
-          se_firmware_osu_version: null,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            result: "failed",
+            se_firmware_osu_version: null,
+          }),
+        ),
+      );
 
       // when
       const response = await api.getLatestFirmwareVersion({
@@ -457,19 +495,21 @@ describe("AxiosManagerApiDataSource", () => {
     });
     it("should return an error if payload don't match the dto", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          result: "success",
-          se_firmware_osu_version: {
-            id: "InvalidId",
-            perso: "perso_11",
-            firmware: "test",
-            firmware_key: "testKey",
-            hash: "hash",
-            next_se_firmware_final_version: 567,
-          },
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            result: "success",
+            se_firmware_osu_version: {
+              id: "InvalidId",
+              perso: "perso_11",
+              firmware: "test",
+              firmware_key: "testKey",
+              hash: "hash",
+              next_se_firmware_final_version: 567,
+            },
+          }),
+        ),
+      );
 
       // when
       const response = await api.getLatestFirmwareVersion({
@@ -483,7 +523,7 @@ describe("AxiosManagerApiDataSource", () => {
     it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
-      vi.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
 
       // when
       const response = await api.getLatestFirmwareVersion({
@@ -499,23 +539,27 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getOsuFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return a complete OSU firmware version", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          id: 361,
-          perso: "perso_11",
-          firmware: "test",
-          firmware_key: "testKey",
-          hash: "hash",
-          next_se_firmware_final_version: 567,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: 361,
+            perso: "perso_11",
+            firmware: "test",
+            firmware_key: "testKey",
+            hash: "hash",
+            next_se_firmware_final_version: 567,
+          }),
+        ),
+      );
 
       // when
       const response = await api.getOsuFirmwareVersion({
@@ -537,16 +581,18 @@ describe("AxiosManagerApiDataSource", () => {
     });
     it("should return an error if payload don't match the dto", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: {
-          id: "invalidId",
-          perso: "perso_11",
-          firmware: "test",
-          firmware_key: "testKey",
-          hash: "hash",
-          next_se_firmware_final_version: 567,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            id: "invalidId",
+            perso: "perso_11",
+            firmware: "test",
+            firmware_key: "testKey",
+            hash: "hash",
+            next_se_firmware_final_version: 567,
+          }),
+        ),
+      );
 
       // when
       const response = await api.getOsuFirmwareVersion({
@@ -560,7 +606,7 @@ describe("AxiosManagerApiDataSource", () => {
     it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
-      vi.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
 
       // when
       const response = await api.getOsuFirmwareVersion({
@@ -576,47 +622,51 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getLanguagePackages", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return the langage packages version", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: [
-          {
-            language: "turkish",
-            languagePackageVersionId: 474,
-            version: "0.0.4",
-            language_package_id: 57,
-            apdu_install_url:
-              "https://download.languages.ledger.com/stax/turkish/bolos_1.6.2_pack_0.0.4_tr.apdu",
-            apdu_uninstall_url:
-              "https://download.languages.ledger.com/stax/turkish/bolos_1.6.2_pack_0.0.4_tr_del.apdu",
-            device_versions: [17],
-            se_firmware_final_versions: [432],
-            bytes: 20800,
-            date_creation: "2025-03-04T10:48:27.910630Z",
-            date_last_modified: "2025-03-04T10:48:27.910630Z",
-          },
-          {
-            language: "russian",
-            languagePackageVersionId: 470,
-            version: "0.0.4",
-            language_package_id: 56,
-            apdu_install_url:
-              "https://download.languages.ledger.com/stax/russian/bolos_1.6.2_pack_0.0.4_ru.apdu",
-            apdu_uninstall_url:
-              "https://download.languages.ledger.com/stax/russian/bolos_1.6.2_pack_0.0.4_ru_del.apdu",
-            device_versions: [17],
-            se_firmware_final_versions: [432],
-            bytes: 46592,
-            date_creation: "2025-03-04T10:48:26.218729Z",
-            date_last_modified: "2025-03-04T10:48:26.218729Z",
-          },
-        ],
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              language: "turkish",
+              languagePackageVersionId: 474,
+              version: "0.0.4",
+              language_package_id: 57,
+              apdu_install_url:
+                "https://download.languages.ledger.com/stax/turkish/bolos_1.6.2_pack_0.0.4_tr.apdu",
+              apdu_uninstall_url:
+                "https://download.languages.ledger.com/stax/turkish/bolos_1.6.2_pack_0.0.4_tr_del.apdu",
+              device_versions: [17],
+              se_firmware_final_versions: [432],
+              bytes: 20800,
+              date_creation: "2025-03-04T10:48:27.910630Z",
+              date_last_modified: "2025-03-04T10:48:27.910630Z",
+            },
+            {
+              language: "russian",
+              languagePackageVersionId: 470,
+              version: "0.0.4",
+              language_package_id: 56,
+              apdu_install_url:
+                "https://download.languages.ledger.com/stax/russian/bolos_1.6.2_pack_0.0.4_ru.apdu",
+              apdu_uninstall_url:
+                "https://download.languages.ledger.com/stax/russian/bolos_1.6.2_pack_0.0.4_ru_del.apdu",
+              device_versions: [17],
+              se_firmware_final_versions: [432],
+              bytes: 46592,
+              date_creation: "2025-03-04T10:48:26.218729Z",
+              date_last_modified: "2025-03-04T10:48:26.218729Z",
+            },
+          ]),
+        ),
+      );
 
       // when
       const response = await api.getLanguagePackages({
@@ -658,15 +708,17 @@ describe("AxiosManagerApiDataSource", () => {
     });
     it("should return an error if payload don't match the dto", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: [
-          {
-            language: "turkish",
-            version: "0.0.4",
-            language_package_id: "invalid",
-          },
-        ],
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              language: "turkish",
+              version: "0.0.4",
+              language_package_id: "invalid",
+            },
+          ]),
+        ),
+      );
 
       // when
       const response = await api.getLanguagePackages({
@@ -680,7 +732,7 @@ describe("AxiosManagerApiDataSource", () => {
     it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
-      vi.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
 
       // when
       const response = await api.getLanguagePackages({
@@ -696,43 +748,47 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getMcuList", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({} as DmkConfig);
+      api = new AxiosManagerApiDataSource({
+        managerApiUrl: "http://localhost",
+      } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
     it("should return a the list of MCUs", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: [
-          {
-            id: 1,
-            mcu: 1,
-            name: "1.0",
-            description: null,
-            providers: [],
-            device_versions: [1, 2],
-            from_bootloader_version: "",
-            from_bootloader_version_id: 2,
-            se_firmware_final_versions: [7, 12, 13, 14, 15],
-            date_creation: "2018-09-20T13:30:50.156394Z",
-            date_last_modified: "2018-09-20T13:30:50.156453Z",
-          },
-          {
-            id: 2,
-            mcu: 1,
-            name: "1.1",
-            description: null,
-            providers: [],
-            device_versions: [1, 2],
-            from_bootloader_version: "",
-            from_bootloader_version_id: 2,
-            se_firmware_final_versions: [7, 12, 13, 14, 15],
-            date_creation: "2018-09-20T13:30:50.339966Z",
-            date_last_modified: "2018-09-20T13:30:50.340031Z",
-          },
-        ],
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              id: 1,
+              mcu: 1,
+              name: "1.0",
+              description: null,
+              providers: [],
+              device_versions: [1, 2],
+              from_bootloader_version: "",
+              from_bootloader_version_id: 2,
+              se_firmware_final_versions: [7, 12, 13, 14, 15],
+              date_creation: "2018-09-20T13:30:50.156394Z",
+              date_last_modified: "2018-09-20T13:30:50.156453Z",
+            },
+            {
+              id: 2,
+              mcu: 1,
+              name: "1.1",
+              description: null,
+              providers: [],
+              device_versions: [1, 2],
+              from_bootloader_version: "",
+              from_bootloader_version_id: 2,
+              se_firmware_final_versions: [7, 12, 13, 14, 15],
+              date_creation: "2018-09-20T13:30:50.339966Z",
+              date_last_modified: "2018-09-20T13:30:50.340031Z",
+            },
+          ]),
+        ),
+      );
 
       // when
       const response = await api.getMcuList();
@@ -754,20 +810,22 @@ describe("AxiosManagerApiDataSource", () => {
 
     it("should return an error when the payload don't match the dto", async () => {
       // given
-      vi.spyOn(axios, "get").mockResolvedValue({
-        data: [
-          {
-            id: "invalid id",
-            mcu: 1,
-            name: "1.0",
-            description: null,
-            providers: [],
-            se_firmware_final_versions: [7, 12, 13, 14, 15],
-            date_creation: "2018-09-20T13:30:50.156394Z",
-            date_last_modified: "2018-09-20T13:30:50.156453Z",
-          },
-        ],
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              id: "invalid id",
+              mcu: 1,
+              name: "1.0",
+              description: null,
+              providers: [],
+              se_firmware_final_versions: [7, 12, 13, 14, 15],
+              date_creation: "2018-09-20T13:30:50.156394Z",
+              date_last_modified: "2018-09-20T13:30:50.156453Z",
+            },
+          ]),
+        ),
+      );
 
       // when
       const response = await api.getMcuList();
@@ -779,7 +837,7 @@ describe("AxiosManagerApiDataSource", () => {
     it("should return an error if the request fails", async () => {
       // given
       const error = new Error("fetch error");
-      vi.spyOn(axios, "get").mockRejectedValue(error);
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
 
       // when
       const response = await api.getMcuList();
@@ -797,7 +855,7 @@ describe("AxiosManagerApiDataSource", () => {
       } as DmkConfig);
     });
     afterEach(() => {
-      vi.clearAllMocks();
+      vi.restoreAllMocks();
     });
 
     it("should return the initial provider", () => {
