@@ -1,5 +1,4 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -32,30 +31,33 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
   }: GetTransactionDescriptorsParams): Promise<
     Either<Error, GetTransactionDescriptorsResponse>
   > {
-    const url = `${this.config.cal.url}/swap_templates`;
-    const params = {
-      id: templateId,
-      output: "id,chain_id,instructions,descriptors",
-    };
-
     this.logger.debug(
       "[getTransactionDescriptorsPayload] Fetching transaction descriptors",
       {
-        data: { templateId, url, params },
+        data: { templateId },
       },
     );
 
     try {
-      const { data } = await axios.request<GetTransactionDescriptorsResponse[]>(
-        {
-          method: "GET",
-          url,
-          params,
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          },
-        },
+      const url = new URL(`${this.config.cal.url}/swap_templates`);
+      url.searchParams.set("template_id", templateId);
+      url.searchParams.set("output", "id,chain_id,instructions,descriptors");
+      // TODO LIFI
+      // REVERT WHEN CAL SUPPORTS IT
+      url.searchParams.set(
+        "ref",
+        "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
       );
+      const response = await fetch(url, {
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data =
+        (await response.json()) as GetTransactionDescriptorsResponse[];
 
       this.logger.debug(
         "[getTransactionDescriptorsPayload] Received response",
@@ -99,7 +101,6 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
         {
           data: {
             templateId,
-            url,
             error: error instanceof Error ? error.message : String(error),
           },
         },

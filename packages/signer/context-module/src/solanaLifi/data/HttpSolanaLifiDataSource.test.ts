@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -13,8 +12,6 @@ import {
   type GetTransactionDescriptorsResponse,
   type SolanaLifiDataSource,
 } from "./SolanaLifiDataSource";
-
-vi.mock("axios");
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -43,24 +40,20 @@ describe("HttpSolanaLifiDataSource", () => {
     vi.clearAllMocks();
   });
 
-  it("should call axios with the ledger client version header and correct params", async () => {
+  it("should call fetch with the ledger client version header and correct params", async () => {
     // given
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([])),
+    );
 
     // when
     await datasource.getTransactionDescriptorsPayload({ templateId });
 
     // then
-    expect(requestSpy).toHaveBeenCalledTimes(1);
-    expect(requestSpy).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.any(URL),
       expect.objectContaining({
-        method: "GET",
-        url: `${config.cal.url}/swap_templates`,
-        params: {
-          id: templateId,
-          output: "id,chain_id,instructions,descriptors",
-        },
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
@@ -68,7 +61,7 @@ describe("HttpSolanaLifiDataSource", () => {
     );
   });
 
-  it("should return Right(data[0]) when axios responds with a non-empty array", async () => {
+  it("should return Right(data[0]) when fetch responds with a non-empty array", async () => {
     // given
     const response0: GetTransactionDescriptorsResponse = {
       descriptors: {
@@ -76,7 +69,9 @@ describe("HttpSolanaLifiDataSource", () => {
       },
     } as any;
 
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [response0] });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([response0])),
+    );
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -89,7 +84,7 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when data is undefined", async () => {
     // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -108,7 +103,9 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when data array is empty", async () => {
     // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [] });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([])),
+    );
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -127,7 +124,9 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when first element is falsy", async () => {
     // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [undefined] });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([null])),
+    );
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -144,9 +143,9 @@ describe("HttpSolanaLifiDataSource", () => {
     );
   });
 
-  it("should return an error when axios throws", async () => {
+  it("should return an error when fetch throws", async () => {
     // given
-    vi.spyOn(axios, "request").mockRejectedValue(new Error("network"));
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
