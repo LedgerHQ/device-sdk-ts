@@ -45,3 +45,18 @@ export const secondaryButton =
   <K extends string>(touch: TouchController<K>, deviceKey: K) =>
   async () =>
     await tapQuick(touch, deviceKey)({ x: 50, y: 90 });
+
+export const enterMenu =
+  <K extends string>(touch: TouchController<K>, deviceKey: K) =>
+  async () =>
+    await tapQuick(touch, deviceKey)({ x: 85, y: 8 });
+
+export const exitMenu =
+  <K extends string>(touch: TouchController<K>, deviceKey: K) =>
+  async () =>
+    await tapQuick(touch, deviceKey)({ x: 10, y: 4 });
+
+export const enableBlindSigningSettings =
+  <K extends string>(touch: TouchController<K>, deviceKey: K) =>
+  async () =>
+    await tapQuick(touch, deviceKey)({ x: 88, y: 51 });

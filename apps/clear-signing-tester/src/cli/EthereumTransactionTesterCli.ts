@@ -41,6 +41,8 @@ export type CliConfig = {
   // config.signer
   skipCal?: boolean;
   erc7730Files?: string[];
+  blindSigningEnabled?: boolean;
+  skipOriginToken?: boolean;
 
   // config.logger
   logLevel: CliLogLevel;
@@ -96,8 +98,10 @@ export class EthereumTransactionTesterCli {
         externalSpeculos: config.externalSpeculos,
       },
       signer: {
-        originToken: process.env["GATING_TOKEN"] || "test-origin-token",
-        gated: true,
+        originToken: config.skipOriginToken
+          ? ""
+          : process.env["GATING_TOKEN"] || "test-origin-token",
+        blindSigningEnabled: config.blindSigningEnabled ?? false,
       },
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
@@ -324,6 +328,16 @@ export class EthereumTransactionTesterCli {
           }
           return value as CliLogLevel;
         },
+      )
+      .option(
+        "--blind-signing-enabled",
+        "Enable blind signing in device settings before test",
+        false,
+      )
+      .option(
+        "--skip-origin-token",
+        "Do not pass origin token to signer (forces blind signing path)",
+        false,
       );
 
     // Set up signal handlers that work with the CLI instance
