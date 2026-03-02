@@ -1,4 +1,7 @@
-export { AxiosInterceptor } from "./AxiosInterceptor";
+export {
+  FetchInterceptor,
+  FetchInterceptor as AxiosInterceptor,
+} from "./AxiosInterceptor";
 export { CalInterceptor } from "./CalInterceptor";
 export type {
   ERC7730ClientConfig,

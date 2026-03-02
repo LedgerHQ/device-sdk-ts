@@ -1,19 +1,21 @@
 import { MemoryStorage } from "./storage/MemoryStorage";
 import type { StorageInterface } from "./storage/StorageInterface";
-import { AxiosInterceptor } from "./AxiosInterceptor";
+import { FetchInterceptor } from "./AxiosInterceptor";
 
 /**
  * CAL Interceptor - intercepts CAL (Crypto Assets List) API calls
  * and returns locally stored descriptors when available
  */
 export class CalInterceptor {
-  private readonly interceptor: AxiosInterceptor;
+  private readonly interceptor: FetchInterceptor;
   private readonly storage: StorageInterface;
 
   constructor(storage?: StorageInterface) {
     // Default to in-memory storage for environment-agnostic behavior
     this.storage = storage ?? new MemoryStorage();
-    this.interceptor = new AxiosInterceptor(this.modifyCalResponse.bind(this));
+    this.interceptor = new FetchInterceptor(
+      this.modifyCalResponse.bind(this),
+    );
   }
 
   /**
