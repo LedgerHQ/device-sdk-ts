@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { EitherAsync } from "purify-ts";
 
@@ -70,31 +69,27 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     params: GetAppListParams,
   ): EitherAsync<HttpFetchApiError, Array<Application>> {
     const { targetId, firmwareVersionName } = params;
-    return EitherAsync(() =>
-      axios.get<Array<ApplicationDto>>(
-        `${this._managerApiBaseUrl}/v2/apps/by-target`,
-        {
-          params: {
-            target_id: targetId,
-            provider: this._provider,
-            firmware_version_name: firmwareVersionName,
-          },
-        },
-      ),
-    )
-      .map((res) => res.data)
+    return EitherAsync(async () => {
+      const url = new URL(`${this._managerApiBaseUrl}/v2/apps/by-target`);
+      url.searchParams.set("target_id", String(targetId));
+      url.searchParams.set("provider", String(this._provider));
+      url.searchParams.set("firmware_version_name", firmwareVersionName);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as Array<ApplicationDto>;
+    })
       .chain((apps) => this.mapApplicationDtoToApplication(apps))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
 
   getMcuList(): EitherAsync<HttpFetchApiError, Array<McuFirmware>> {
-    return EitherAsync(() =>
-      axios.get<Array<McuVersionDto>>(
+    return EitherAsync(async () => {
+      const response = await fetch(
         `${this._managerApiBaseUrl}/mcu_versions`,
-        {},
-      ),
-    )
-      .map((res) => res.data)
+      );
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as Array<McuVersionDto>;
+    })
       .chain((mcus) => this.mapMcuDtoToMcu(mcus))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
@@ -103,18 +98,14 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     params: GetDeviceVersionParams,
   ): EitherAsync<HttpFetchApiError, DeviceVersion> {
     const { targetId } = params;
-    return EitherAsync(() =>
-      axios.get<DeviceVersionDto>(
-        `${this._managerApiBaseUrl}/get_device_version`,
-        {
-          params: {
-            target_id: targetId,
-            provider: this._provider,
-          },
-        },
-      ),
-    )
-      .map((res) => res.data)
+    return EitherAsync(async () => {
+      const url = new URL(`${this._managerApiBaseUrl}/get_device_version`);
+      url.searchParams.set("target_id", String(targetId));
+      url.searchParams.set("provider", String(this._provider));
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as DeviceVersionDto;
+    })
       .chain((deviceVersion) => this.mapDeviceVersionDto(deviceVersion))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
@@ -123,19 +114,17 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     params: GetFirmwareVersionParams,
   ): EitherAsync<HttpFetchApiError, FinalFirmware> {
     const { deviceId, version } = params;
-    return EitherAsync(() =>
-      axios.get<FirmwareFinalVersionDto>(
+    return EitherAsync(async () => {
+      const url = new URL(
         `${this._managerApiBaseUrl}/get_firmware_version`,
-        {
-          params: {
-            device_version: deviceId,
-            version_name: version,
-            provider: this._provider,
-          },
-        },
-      ),
-    )
-      .map((res) => res.data)
+      );
+      url.searchParams.set("device_version", String(deviceId));
+      url.searchParams.set("version_name", version);
+      url.searchParams.set("provider", String(this._provider));
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as FirmwareFinalVersionDto;
+    })
       .chain((finalFirmware) => this.mapFinalFirmwareDto(finalFirmware))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
@@ -143,13 +132,13 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   getFirmwareVersionById(
     finalFirmwareId: number,
   ): EitherAsync<HttpFetchApiError, FinalFirmware> {
-    return EitherAsync(() =>
-      axios.get<FirmwareFinalVersionDto>(
+    return EitherAsync(async () => {
+      const response = await fetch(
         `${this._managerApiBaseUrl}/firmware_final_versions/${finalFirmwareId}`,
-        {},
-      ),
-    )
-      .map((res) => res.data)
+      );
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as FirmwareFinalVersionDto;
+    })
       .chain((finalFirmware) => this.mapFinalFirmwareDto(finalFirmware))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
@@ -158,19 +147,15 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     params: GetFirmwareVersionParams,
   ): EitherAsync<HttpFetchApiError, OsuFirmware> {
     const { deviceId, version } = params;
-    return EitherAsync(() =>
-      axios.get<FirmwareOsuVersionDto>(
-        `${this._managerApiBaseUrl}/get_osu_version`,
-        {
-          params: {
-            device_version: deviceId,
-            version_name: version,
-            provider: this._provider,
-          },
-        },
-      ),
-    )
-      .map((res) => res.data)
+    return EitherAsync(async () => {
+      const url = new URL(`${this._managerApiBaseUrl}/get_osu_version`);
+      url.searchParams.set("device_version", String(deviceId));
+      url.searchParams.set("version_name", version);
+      url.searchParams.set("provider", String(this._provider));
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as FirmwareOsuVersionDto;
+    })
       .chain((osuFirmware) => this.mapOsuFirmwareDto(osuFirmware))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
@@ -180,21 +165,22 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   ): EitherAsync<HttpFetchApiError, OsuFirmware> {
     const livecommonversion = "34.27.0"; // Legacy parameter that should just be a too old
     const { currentFinalFirmwareId, deviceId } = params;
-    return EitherAsync(() =>
-      axios.get<LatestFirmwareOsuVersionResponseDto>(
+    return EitherAsync(async () => {
+      const url = new URL(
         `${this._managerApiBaseUrl}/get_latest_firmware`,
-        {
-          params: {
-            current_se_firmware_final_version: currentFinalFirmwareId,
-            device_version: deviceId,
-            provider: this._provider,
-            salt: this._firmwareDistributionSalt,
-            livecommonversion,
-          },
-        },
-      ),
-    )
-      .map((res) => res.data)
+      );
+      url.searchParams.set(
+        "current_se_firmware_final_version",
+        String(currentFinalFirmwareId),
+      );
+      url.searchParams.set("device_version", String(deviceId));
+      url.searchParams.set("provider", String(this._provider));
+      url.searchParams.set("salt", this._firmwareDistributionSalt);
+      url.searchParams.set("livecommonversion", livecommonversion);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as LatestFirmwareOsuVersionResponseDto;
+    })
       .chain((latestFirmware) => this.mapLatestFirmwareDto(latestFirmware))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
@@ -203,13 +189,18 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     params: GetAppByHashParams,
   ): EitherAsync<HttpFetchApiError, Array<Application | null>> {
     const { hashes } = params;
-    return EitherAsync(() =>
-      axios.post<Array<ApplicationDto | null>>(
+    return EitherAsync(async () => {
+      const response = await fetch(
         `${this._managerApiBaseUrl}/v2/apps/hash`,
-        hashes,
-      ),
-    )
-      .map((res) => res.data)
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(hashes),
+        },
+      );
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as Array<ApplicationDto | null>;
+    })
       .chain((apps) => this.mapNullableApplicationDtoToApplication(apps))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
@@ -218,18 +209,17 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     params: GetLanguagePackagesParams,
   ): EitherAsync<HttpFetchApiError, Array<LanguagePackage>> {
     const { deviceId, currentFinalFirmwareId } = params;
-    return EitherAsync(() =>
-      axios.get<Array<LanguagePackageVersionDto>>(
-        `${this._managerApiBaseUrl}/language-packages`,
-        {
-          params: {
-            device_version: deviceId,
-            current_se_firmware_final_version: currentFinalFirmwareId,
-          },
-        },
-      ),
-    )
-      .map((res) => res.data)
+    return EitherAsync(async () => {
+      const url = new URL(`${this._managerApiBaseUrl}/language-packages`);
+      url.searchParams.set("device_version", String(deviceId));
+      url.searchParams.set(
+        "current_se_firmware_final_version",
+        String(currentFinalFirmwareId),
+      );
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      return (await response.json()) as Array<LanguagePackageVersionDto>;
+    })
       .chain((apps) => this.mapLanguagesDtoToLanguages(apps))
       .mapLeft((error) => new HttpFetchApiError(error));
   }
