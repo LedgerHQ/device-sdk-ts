@@ -3,5 +3,5 @@
  */
 export type SignerConfig = {
   originToken: string;
-  gated: boolean;
+  blindSigningEnabled: boolean;
 };

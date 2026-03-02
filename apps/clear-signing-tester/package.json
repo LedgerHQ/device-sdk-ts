@@ -22,6 +22,7 @@
     "test:raw:complete": "pnpm cli raw-file ./ressources/core/raw-complete.json",
     "test:raw:multisig": "pnpm cli raw-file ./ressources/core/raw-multisig.json",
     "test:typed-data:multisig": "pnpm cli typed-data-file ./ressources/core/typed-data-multisig.json",
+    "test:gating-screen": "pnpm cli raw-file ./ressources/gating/raw-gating-screen.json --blind-signing-enabled --skip-origin-token",
     "test:erc7730": "./scripts/test-erc7730.sh"
   },
   "dependencies": {

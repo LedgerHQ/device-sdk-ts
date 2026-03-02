@@ -21,9 +21,24 @@ export interface DeviceController {
   rejectTransactionCheck(): Promise<void>;
 
   /**
-   * Acknowledge blind signing on the device
+   * Acknowledge blind signing on the device (go back to safety)
    */
   acknowledgeBlindSigning(): Promise<void>;
+
+  /**
+   * Accept the blind signing warning and proceed with the transaction review
+   */
+  acceptBlindSigning(): Promise<void>;
+
+  /**
+   * Tap "Continue to blind signing" on the "safer way to sign" screen
+   */
+  continueToBlindSigning(): Promise<void>;
+
+  /**
+   * Navigate to the Ethereum app settings and enable the blind signing toggle
+   */
+  enableBlindSigningInSettings(): Promise<void>;
 
   /**
    * Navigate to the next screen

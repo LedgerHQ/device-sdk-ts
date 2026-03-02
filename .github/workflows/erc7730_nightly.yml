@@ -33,6 +33,82 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
+  gating-tests:
+    name: Gating Screen Tests (${{ matrix.device }})
+    needs: [build-libraries]
+    runs-on: ledgerhq-device-sdk
+    strategy:
+      fail-fast: false
+      matrix:
+        device:
+          - stax
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Generate token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: LedgerHQ
+          repositories: coin-apps
+
+      - name: Retrieving coin apps
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          repository: LedgerHQ/coin-apps
+          token: ${{ steps.generate-token.outputs.token }}
+          path: coin-apps
+          sparse-checkout: |
+            ${{ matrix.device }}/*/Ethereum/*.elf
+          sparse-checkout-cone-mode: false
+
+      - name: Pull Speculos Docker image
+        run: docker pull ghcr.io/ledgerhq/speculos
+
+      - name: Run Gating Screen Test
+        id: gating-test
+        env:
+          FORCE_COLOR: "0"
+          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/logs/screenshots
+          pnpm cs-tester test:gating-screen \
+            --device ${{ matrix.device }} \
+            --log-level error \
+            --log-file "/tmp/logs/gating-screen.log" \
+            --file-log-level debug \
+            --screenshot-folder-path "/tmp/logs/screenshots" \
+            2>&1 | tee /tmp/cs-tester-output.log
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Gating Screen Test Results (${{ matrix.device }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/cs-tester-output.log ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            sed -n '/📋/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            sed -n '/📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No test output available" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: gating-logs-${{ matrix.device }}
+          path: /tmp/logs/
+          retention-days: 7
+
   erc7730-tests:
     name: ERC7730 Tests (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})
     needs: [build-libraries]
