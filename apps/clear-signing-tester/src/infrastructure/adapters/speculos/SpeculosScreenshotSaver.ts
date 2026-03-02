@@ -1,5 +1,4 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import * as fs from "fs";
 import { inject, injectable } from "inversify";
 import * as path from "path";
@@ -44,12 +43,13 @@ export class SpeculosScreenshotSaver implements ScreenshotSaver {
       const filename = `screenshot_${this.counter}.png`;
       const filePath = path.join(this.screenshotPath, filename);
 
-      const response = await axios.get(`${this.speculosUrl}/screenshot`, {
+      const response = await fetch(`${this.speculosUrl}/screenshot`, {
         headers: { accept: "image/png" },
-        responseType: "arraybuffer",
       });
+      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+      const buffer = Buffer.from(await response.arrayBuffer());
 
-      fs.writeFileSync(filePath, response.data);
+      fs.writeFileSync(filePath, buffer);
       this.logger.info(`Saved screenshot: ${filePath}`);
 
       return filePath;
