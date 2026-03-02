@@ -1,5 +1,3 @@
-import axios, { type AxiosInstance } from "axios";
-
 import PACKAGE from "@root/package.json";
 
 import { type SpeculosDatasource } from "./SpeculosDatasource";
@@ -8,48 +6,45 @@ const TIMEOUT = 2000; // 2 second timeout for availability check
 
 const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
 
-export function axiosClientFactory(
-  baseUrl: string,
-  clientHeader: string,
-): AxiosInstance {
-  return axios.create({
-    baseURL: removeTrailingSlashes(baseUrl),
-    timeout: 0,
-    headers: {
-      "X-Ledger-Client-Version": clientHeader,
-    },
-    transitional: { clarifyTimeoutError: true },
-  });
-}
-
 export class HttpSpeculosDatasource implements SpeculosDatasource {
-  private readonly speculosAxiosClient: AxiosInstance;
+  private readonly baseUrl: string;
+  private readonly clientHeader: string;
 
   constructor(
-    private readonly baseUrl: string,
+    baseUrl: string,
     clientHeader: string = `ldmk-transport-speculos/${PACKAGE.version}`,
   ) {
-    this.speculosAxiosClient = axiosClientFactory(baseUrl, clientHeader);
+    this.baseUrl = removeTrailingSlashes(baseUrl);
+    this.clientHeader = clientHeader;
   }
 
   async postApdu(apdu: string): Promise<string> {
-    const { data } = await this.speculosAxiosClient.post<SpeculosApduDTO>(
-      "/apdu",
-      {
-        data: apdu,
+    const response = await fetch(`${this.baseUrl}/apdu`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Ledger-Client-Version": this.clientHeader,
       },
-    );
+      body: JSON.stringify({ data: apdu }),
+    });
+    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
+    const data = (await response.json()) as SpeculosApduDTO;
     return data.data;
   }
 
   async isServerAvailable(): Promise<boolean> {
     try {
-      await this.speculosAxiosClient.request<SpeculosEventsDTO>({
-        method: "GET",
-        url: "/events",
-        timeout: TIMEOUT,
-      });
-      return true;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+      try {
+        await fetch(`${this.baseUrl}/events`, {
+          headers: { "X-Ledger-Client-Version": this.clientHeader },
+          signal: controller.signal,
+        });
+        return true;
+      } finally {
+        clearTimeout(timeoutId);
+      }
     } catch {
       return false;
     }
@@ -69,18 +64,14 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
       throw new Error("global fetch is not available in Node < 18");
     }
 
-    const urlBase = this.speculosAxiosClient.defaults.baseURL ?? this.baseUrl;
-    const url = `${removeTrailingSlashes(urlBase)}/events?stream=true`;
+    const url = `${this.baseUrl}/events?stream=true`;
 
     const controller = new AbortController();
 
     const headers: HeadersInit = {
       Accept: "text/event-stream",
       "Cache-Control": "no-cache",
-      "X-Ledger-Client-Version":
-        (this.speculosAxiosClient.defaults.headers?.common?.[
-          "X-Ledger-Client-Version"
-        ] as string) ?? "ldmk-transport-speculos",
+      "X-Ledger-Client-Version": this.clientHeader,
     };
 
     const response = await fetch(url, {
@@ -166,10 +157,3 @@ type SpeculosApduDTO = {
   data: string;
 };
 
-type SpeculosEventsDTO = {
-  events: Array<{
-    text?: string;
-    x?: number;
-    y?: number;
-  }>;
-};
