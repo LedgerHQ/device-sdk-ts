@@ -1,6 +1,4 @@
-import type { AxiosInstance } from "axios";
-
-import { type PercentCoordinates, SpeculosActions } from "@internal/core/types";
+import { type HttpClient, type PercentCoordinates, SpeculosActions } from "@internal/core/types";
 import type { AxisMap } from "@internal/utils/axisClamp";
 import type { TouchController } from "@root/src/internal/core/TouchController";
 
@@ -8,7 +6,7 @@ export class DefaultTouchController<K extends string>
   implements TouchController<K>
 {
   constructor(
-    private readonly client: AxiosInstance,
+    private readonly client: HttpClient,
     private readonly axes: AxisMap<K>,
   ) {}
 
