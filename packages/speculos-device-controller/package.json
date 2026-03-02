@@ -40,8 +40,7 @@
   },
   "dependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
-    "@sentry/minimal": "catalog:",
-    "axios": "catalog:"
+    "@sentry/minimal": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:^",

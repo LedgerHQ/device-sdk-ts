@@ -159,9 +159,6 @@ catalogs:
     autoprefixer:
       specifier: ^10.4.17
       version: 10.4.20
-    axios:
-      specifier: 1.13.5
-      version: 1.13.5
     babel-plugin-module-resolver:
       specifier: ^5.0.2
       version: 5.0.2
@@ -470,9 +467,6 @@ importers:
       '@ledgerhq/speculos-device-controller':
         specifier: workspace:^
         version: link:../../packages/speculos-device-controller
-      axios:
-        specifier: 'catalog:'
-        version: 1.13.5
       commander:
         specifier: 'catalog:'
         version: 14.0.1
@@ -1039,9 +1033,6 @@ importers:
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7
-      axios:
-        specifier: 'catalog:'
-        version: 1.13.5
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -1387,9 +1378,6 @@ importers:
 
   packages/signer/context-module:
     dependencies:
-      axios:
-        specifier: 'catalog:'
-        version: 1.13.5
       crypto-js:
         specifier: 'catalog:'
         version: 4.2.0
@@ -1720,9 +1708,6 @@ importers:
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7
-      axios:
-        specifier: 'catalog:'
-        version: 1.13.5
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:^
@@ -1744,10 +1729,6 @@ importers:
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   packages/tools/cal-interceptor:
-    dependencies:
-      axios:
-        specifier: 'catalog:'
-        version: 1.13.5
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:*
@@ -1967,9 +1948,6 @@ importers:
       '@sentry/minimal':
         specifier: 'catalog:'
         version: 6.19.7
-      axios:
-        specifier: 'catalog:'
-        version: 1.13.5
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -6496,9 +6474,6 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.13.5:
-    resolution: {integrity: sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==}
-
   babel-core@7.0.0-bridge.0:
     resolution: {integrity: sha512-poPX9mZH/5CSanm50Q+1toVci6pv5KSRv/5TWCwtzQS5XEwn40BcCrgIeMFWP9CKKIniKXNxoIOnOq4VVlGXhg==}
     peerDependencies:
@@ -8199,15 +8174,6 @@ packages:
     resolution: {integrity: sha512-+aMGE8hxvz0d8jeju8V7+JGlDDrtaJHbVqOQQLBwXykZx9Gs15QOoXoAO+HeVEjfXtZci2VmdbKPIRWeSZTyMg==}
     engines: {node: '>=4'}
     hasBin: true
-
-  follow-redirects@1.15.11:
-    resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
 
   for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -18207,14 +18173,6 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  axios@1.13.5:
-    dependencies:
-      follow-redirects: 1.15.11
-      form-data: 4.0.5
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
   babel-core@7.0.0-bridge.0(@babel/core@7.28.3):
     dependencies:
       '@babel/core': 7.28.3
@@ -20409,8 +20367,6 @@ snapshots:
       hermes-parser: 0.32.0
       pirates: 3.0.2
       vlq: 0.2.3
-
-  follow-redirects@1.15.11: {}
 
   for-each@0.3.3:
     dependencies:

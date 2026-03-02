@@ -31,7 +31,6 @@
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
     "@ledgerhq/device-transport-kit-speculos": "workspace:^",
     "@ledgerhq/speculos-device-controller": "workspace:^",
-    "axios": "catalog:",
     "commander": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",

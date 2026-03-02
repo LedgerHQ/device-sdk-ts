@@ -40,8 +40,7 @@
   },
   "dependencies": {
     "@sentry/minimal": "catalog:",
-    "purify-ts": "catalog:",
-    "axios": "catalog:"
+    "purify-ts": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
