@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
@@ -12,8 +11,6 @@ import { type TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource"
 import PACKAGE from "@root/package.json";
 
 import { type FiltersDto, type InstructionField } from "./FiltersDto";
-
-vi.mock("axios");
 
 export const buildDescriptor = (
   instructions: InstructionField[],
@@ -110,11 +107,12 @@ describe("HttpTypedDataDataSource", () => {
     vi.clearAllMocks();
   });
 
-  it("should call axios with the ledger client version header", async () => {
+  it("should call fetch with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([])),
+    );
 
     // WHEN
     await datasource.getTypedDataFilters({
@@ -125,7 +123,8 @@ describe("HttpTypedDataDataSource", () => {
     });
 
     // THEN
-    expect(requestSpy).toHaveBeenCalledWith(
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.any(URL),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: version,
@@ -135,7 +134,7 @@ describe("HttpTypedDataDataSource", () => {
     );
   });
 
-  it("should return V2 filters when axios response is correct", async () => {
+  it("should return V2 filters when fetch response is correct", async () => {
     // GIVEN
     const filtersDTO = buildDescriptor([
       {
@@ -208,7 +207,9 @@ describe("HttpTypedDataDataSource", () => {
         type: "field",
       },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -274,7 +275,7 @@ describe("HttpTypedDataDataSource", () => {
     );
   });
 
-  it("should return V2 filters with calldatas when axios response is correct", async () => {
+  it("should return V2 filters with calldatas when fetch response is correct", async () => {
     // GIVEN
     const filtersDTO = buildDescriptorCalldata([
       {
@@ -351,7 +352,9 @@ describe("HttpTypedDataDataSource", () => {
         type: "field",
       },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -421,7 +424,7 @@ describe("HttpTypedDataDataSource", () => {
     );
   });
 
-  it("should return V1 filters when axios response is correct", async () => {
+  it("should return V1 filters when fetch response is correct", async () => {
     // GIVEN
     const filtersDTO = buildDescriptor([
       {
@@ -481,7 +484,9 @@ describe("HttpTypedDataDataSource", () => {
         type: "field",
       },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -545,9 +550,11 @@ describe("HttpTypedDataDataSource", () => {
         type: "message",
       },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue({
-      data: [{ descriptors_eip712: {} }, ...match],
-    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify([{ descriptors_eip712: {} }, ...match]),
+      ),
+    );
 
     const result = await datasource.getTypedDataFilters({
       chainId: 1,
@@ -571,7 +578,9 @@ describe("HttpTypedDataDataSource", () => {
 
   it("should return an error when data is empty", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response("null"),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -593,7 +602,9 @@ describe("HttpTypedDataDataSource", () => {
   it("should return an error when schema is not found", async () => {
     const filtersDTO = buildDescriptor([]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -617,7 +628,9 @@ describe("HttpTypedDataDataSource", () => {
       undefined as unknown as InstructionField[],
     );
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -652,7 +665,9 @@ describe("HttpTypedDataDataSource", () => {
       },
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -685,7 +700,9 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -720,7 +737,9 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -755,7 +774,9 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -790,7 +811,9 @@ describe("HttpTypedDataDataSource", () => {
       } as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -825,7 +848,9 @@ describe("HttpTypedDataDataSource", () => {
       } as unknown as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -859,7 +884,9 @@ describe("HttpTypedDataDataSource", () => {
       } as unknown as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -896,7 +923,9 @@ describe("HttpTypedDataDataSource", () => {
       } as unknown as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -930,7 +959,9 @@ describe("HttpTypedDataDataSource", () => {
       } as unknown as InstructionField,
     ]);
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: filtersDTO });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(filtersDTO)),
+    );
 
     // WHEN
     const result = await datasource.getTypedDataFilters({
@@ -949,9 +980,9 @@ describe("HttpTypedDataDataSource", () => {
     );
   });
 
-  it("should return an error when axios throws an error", async () => {
+  it("should return an error when fetch throws an error", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
 
     // WHEN
     const result = await datasource.getTypedDataFilters({

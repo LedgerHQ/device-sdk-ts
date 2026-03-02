@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -35,20 +34,28 @@ export class HttpProxyDataSource implements ProxyDataSource {
   > {
     let dto: ProxyDelegateCallDto | undefined;
     try {
-      const response = await axios.request<ProxyDelegateCallDto>({
-        method: "POST",
-        url: `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/delegate`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      const response = await fetch(
+        `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/delegate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            ...(this.config.originToken && {
+              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+            }),
+          },
+          body: JSON.stringify({
+            proxy: proxyAddress,
+            data: calldata,
+            challenge,
+          }),
         },
-        data: {
-          proxy: proxyAddress,
-          data: calldata,
-          challenge,
-        },
-      });
-      dto = response.data;
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      dto = (await response.json()) as ProxyDelegateCallDto;
     } catch (_error) {
       return Left(
         new Error(

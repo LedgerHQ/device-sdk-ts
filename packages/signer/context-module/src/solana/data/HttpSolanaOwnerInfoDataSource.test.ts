@@ -3,7 +3,6 @@ import {
   DeviceModelId,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import { Left } from "purify-ts";
 
 import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
@@ -11,8 +10,6 @@ import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpSolanaOwnerInfoDataSource } from "@/solana/data/HttpSolanaOwnerInfoDataSource";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 function stringToHex(str: string): string {
   const encoder = new TextEncoder();
@@ -47,7 +44,9 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       challenge: "random",
       createATA: undefined,
     };
-    vi.spyOn(axios, "request").mockResolvedValueOnce({ data: responseData });
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify(responseData)),
+    );
 
     const dataSource = new HttpSolanaOwnerInfoDataSource(config);
     const result = await dataSource.getOwnerInfo(context);
@@ -99,9 +98,14 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
   });
 
   it("should return an error if the descriptor is not valid base64", async () => {
-    vi.spyOn(axios, "request").mockResolvedValueOnce({
-      data: { ...responseData, signedDescriptor: "!!!not-valid-base64!!!" },
-    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          ...responseData,
+          signedDescriptor: "!!!not-valid-base64!!!",
+        }),
+      ),
+    );
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: "some-token",
@@ -122,7 +126,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
   });
 
   it("should return an error if the metadata request fails", async () => {
-    vi.spyOn(axios, "request").mockRejectedValueOnce(
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
       new Error("Network error"),
     );
     const context: SolanaTransactionContext = {
@@ -144,10 +148,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     );
   });
 
-  it("should return an error if axios request return wrong shape for fetchAddressMetadata", async () => {
-    vi.spyOn(axios, "request").mockResolvedValueOnce({
-      data: { wrong: "field" },
-    });
+  it("should return an error if fetch request return wrong shape for fetchAddressMetadata", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ wrong: "field" })),
+    );
 
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
@@ -168,10 +172,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     );
   });
 
-  it("should return an error if axios request return wrong shape for computeAddressMetadata", async () => {
-    vi.spyOn(axios, "request").mockResolvedValueOnce({
-      data: { wrong: "field" },
-    });
+  it("should return an error if fetch request return wrong shape for computeAddressMetadata", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ wrong: "field" })),
+    );
 
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
@@ -206,21 +210,22 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     );
   });
 
-  it("should call axios with correct headers", async () => {
+  it("should call fetch with correct headers", async () => {
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: "some-token",
       challenge: "random",
       createATA: undefined,
     };
-    const spy = vi
-      .spyOn(axios, "request")
-      .mockResolvedValueOnce({ data: responseData });
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(new Response(JSON.stringify(responseData)));
 
     const dataSource = new HttpSolanaOwnerInfoDataSource(config);
     await dataSource.getOwnerInfo(context);
 
-    expect(spy).toHaveBeenCalledWith(
+    expect(fetchSpy).toHaveBeenCalledWith(
+      expect.any(String),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,

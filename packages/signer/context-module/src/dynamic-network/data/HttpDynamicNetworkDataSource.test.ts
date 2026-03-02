@@ -1,12 +1,9 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 
 import { HttpDynamicNetworkDataSource } from "./HttpDynamicNetworkDataSource";
-
-vi.mock("axios");
 
 describe("HttpNetworkDataSource", () => {
   let datasource: HttpDynamicNetworkDataSource;
@@ -18,33 +15,31 @@ describe("HttpNetworkDataSource", () => {
     },
   } as ContextModuleConfig;
 
-  const mockNetworkResponse = {
-    data: [
-      {
-        id: "ethereum",
-        descriptors: {
-          flex: {
-            data: "0x010108020101510101230800000000000000895207506f6c79676f6e2403504f4c",
-            descriptorType: "network",
-            descriptorVersion: "v1",
-            signatures: {
-              prod: "3045022100c116b5470c266c2947b92aa9eadbe3da03305efc6b8fee041e04e8484a9834af022041d5b82b359614ea8dd94a542dfd87b0ae6f3b4a075aad9a53a030064ab42cd0",
-              test: "3045022100f78bac5c9c3f2ceeea26680aaea17be61fce84ae7ec983a8194e68275f4fe5900220231afbe39fcec63edfea2b4e787a72d79ce53d6a4c408f24b5a116905a9082d3",
-            },
+  const mockNetworkData = [
+    {
+      id: "ethereum",
+      descriptors: {
+        flex: {
+          data: "0x010108020101510101230800000000000000895207506f6c79676f6e2403504f4c",
+          descriptorType: "network",
+          descriptorVersion: "v1",
+          signatures: {
+            prod: "3045022100c116b5470c266c2947b92aa9eadbe3da03305efc6b8fee041e04e8484a9834af022041d5b82b359614ea8dd94a542dfd87b0ae6f3b4a075aad9a53a030064ab42cd0",
+            test: "3045022100f78bac5c9c3f2ceeea26680aaea17be61fce84ae7ec983a8194e68275f4fe5900220231afbe39fcec63edfea2b4e787a72d79ce53d6a4c408f24b5a116905a9082d3",
           },
-          stax: {
-            data: "0x010108020101510101230800000000000000895207506f6c79676f6e2403504f4c53204aa5034d2fd4c46647d382aa64d0a03d06b185512bb7942390318bda18d0423a",
-            descriptorType: "network",
-            descriptorVersion: "v1",
-            signatures: {
-              prod: "3045022100cf42c039c16fc95dc97c09f15cdd93bed0e63ee45cf5c38c2b30bb8a3bc17f8d022053a96c9e51695c3c1c1a31f5cbf84bd6febadc97f4bb02bdc67cf3e24ad0c32d",
-              test: "304402207e1e1b8f99b45c95b0cf1e90f46cf07e6a90f82c49ccdb6e2e95ab0c1e2f5a370220784e1fac16bb01c5d096733e1cbf067d616e4de659fda2c388f8c3502e7f7f80",
-            },
+        },
+        stax: {
+          data: "0x010108020101510101230800000000000000895207506f6c79676f6e2403504f4c53204aa5034d2fd4c46647d382aa64d0a03d06b185512bb7942390318bda18d0423a",
+          descriptorType: "network",
+          descriptorVersion: "v1",
+          signatures: {
+            prod: "3045022100cf42c039c16fc95dc97c09f15cdd93bed0e63ee45cf5c38c2b30bb8a3bc17f8d022053a96c9e51695c3c1c1a31f5cbf84bd6febadc97f4bb02bdc67cf3e24ad0c32d",
+            test: "304402207e1e1b8f99b45c95b0cf1e90f46cf07e6a90f82c49ccdb6e2e95ab0c1e2f5a370220784e1fac16bb01c5d096733e1cbf067d616e4de659fda2c388f8c3502e7f7f80",
           },
         },
       },
-    ],
-  };
+    },
+  ];
 
   beforeAll(() => {
     datasource = new HttpDynamicNetworkDataSource(mockConfig);
@@ -56,11 +51,13 @@ describe("HttpNetworkDataSource", () => {
 
   describe("getNetworkConfiguration", () => {
     it("should return network configuration successfully", async () => {
-      vi.mocked(axios.get).mockResolvedValue(mockNetworkResponse);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(mockNetworkData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
-      expect(axios.get).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         "https://crypto-assets-service.api.ledger.com/networks?output=id,descriptors,icons&chain_id=1",
         expect.objectContaining({
           headers: expect.any(Object) as Record<string, string>,
@@ -97,7 +94,9 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should return error when network data is not found", async () => {
-      vi.mocked(axios.get).mockResolvedValue({ data: [] });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify([])),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -107,7 +106,7 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should return error when network data is undefined", async () => {
-      vi.mocked(axios.get).mockResolvedValue({ data: undefined });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -116,16 +115,18 @@ describe("HttpNetworkDataSource", () => {
       );
     });
 
-    it("should return error when axios throws an error", async () => {
-      vi.mocked(axios.get).mockRejectedValue(new Error("Network error"));
+    it("should return error when fetch throws an error", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(
+        new Error("Network error"),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(Left(new Error("Network error")));
     });
 
-    it("should return generic error when axios throws non-Error", async () => {
-      vi.mocked(axios.get).mockRejectedValue("String error");
+    it("should return generic error when fetch throws non-Error", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValue("String error");
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -135,15 +136,15 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid data - missing id", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            // Missing id
-            descriptors: {},
-          },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+      const invalidData = [
+        {
+          // Missing id
+          descriptors: {},
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -155,15 +156,15 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid data - missing descriptors", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            // Missing descriptors
-          },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+      const invalidData = [
+        {
+          id: "ethereum",
+          // Missing descriptors
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -175,22 +176,22 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid descriptor - missing data field", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: {
-                // Missing data
-                descriptorType: "network",
-                descriptorVersion: "v1",
-                signatures: { prod: "sig1", test: "sig2" },
-              },
+      const invalidData = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: {
+              // Missing data
+              descriptorType: "network",
+              descriptorVersion: "v1",
+              signatures: { prod: "sig1", test: "sig2" },
             },
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -202,22 +203,22 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid descriptor - missing signatures", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: {
-                data: "0x0101",
-                descriptorType: "network",
-                descriptorVersion: "v1",
-                // Missing signatures
-              },
+      const invalidData = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: {
+              data: "0x0101",
+              descriptorType: "network",
+              descriptorVersion: "v1",
+              // Missing signatures
             },
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -229,25 +230,25 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid signatures - missing prod", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: {
-                data: "0x0101",
-                descriptorType: "network",
-                descriptorVersion: "v1",
-                signatures: {
-                  // Missing prod
-                  test: "sig2",
-                },
+      const invalidData = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: {
+              data: "0x0101",
+              descriptorType: "network",
+              descriptorVersion: "v1",
+              signatures: {
+                // Missing prod
+                test: "sig2",
               },
             },
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -259,38 +260,38 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should include icons when available", async () => {
-      const responseWithIcons = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: {
-                data: "0x0101",
-                descriptorType: "network",
-                descriptorVersion: "v1",
-                signatures: {
-                  prod: "sig1",
-                  test: "sig2",
-                },
-              },
-              stax: {
-                data: "0x0102",
-                descriptorType: "network",
-                descriptorVersion: "v1",
-                signatures: {
-                  prod: "sig3",
-                  test: "sig4",
-                },
+      const dataWithIcons = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: {
+              data: "0x0101",
+              descriptorType: "network",
+              descriptorVersion: "v1",
+              signatures: {
+                prod: "sig1",
+                test: "sig2",
               },
             },
-            icons: {
-              flex: "icon1",
-              stax: "icon2",
+            stax: {
+              data: "0x0102",
+              descriptorType: "network",
+              descriptorVersion: "v1",
+              signatures: {
+                prod: "sig3",
+                test: "sig4",
+              },
             },
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(responseWithIcons);
+          icons: {
+            flex: "icon1",
+            stax: "icon2",
+          },
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dataWithIcons)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -301,11 +302,13 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should transform data correctly for Polygon chain ID", async () => {
-      vi.mocked(axios.get).mockResolvedValue(mockNetworkResponse);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(mockNetworkData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(137);
 
-      expect(axios.get).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
         "https://crypto-assets-service.api.ledger.com/networks?output=id,descriptors,icons&chain_id=137",
         expect.objectContaining({
           headers: expect.any(Object) as Record<string, string>,
@@ -318,10 +321,10 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid data - null data", async () => {
-      const invalidResponse = {
-        data: [null],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+      const invalidData = [null];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -331,10 +334,10 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid data - non-object data", async () => {
-      const invalidResponse = {
-        data: ["string_instead_of_object"],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+      const invalidData = ["string_instead_of_object"];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -346,26 +349,26 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid data - icons as string instead of object", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: {
-                data: "0x0101",
-                descriptorType: "network",
-                descriptorVersion: "v1",
-                signatures: {
-                  prod: "sig1",
-                  test: "sig2",
-                },
+      const invalidData = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: {
+              data: "0x0101",
+              descriptorType: "network",
+              descriptorVersion: "v1",
+              signatures: {
+                prod: "sig1",
+                test: "sig2",
               },
             },
-            icons: "should_be_object_not_string",
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+          icons: "should_be_object_not_string",
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -377,26 +380,26 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid data - icons as number instead of object (line 93)", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: {
-                data: "0x0101",
-                descriptorType: "network",
-                descriptorVersion: "v1",
-                signatures: {
-                  prod: "sig1",
-                  test: "sig2",
-                },
+      const invalidData = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: {
+              data: "0x0101",
+              descriptorType: "network",
+              descriptorVersion: "v1",
+              signatures: {
+                prod: "sig1",
+                test: "sig2",
               },
             },
-            icons: 123,
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+          icons: 123,
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -408,17 +411,17 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid descriptor - null descriptor (line 103)", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: null,
-            },
+      const invalidData = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: null,
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -430,17 +433,17 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should handle invalid descriptor - non-object descriptor (line 103)", async () => {
-      const invalidResponse = {
-        data: [
-          {
-            id: "ethereum",
-            descriptors: {
-              flex: "should_be_object_not_string",
-            },
+      const invalidData = [
+        {
+          id: "ethereum",
+          descriptors: {
+            flex: "should_be_object_not_string",
           },
-        ],
-      };
-      vi.mocked(axios.get).mockResolvedValue(invalidResponse);
+        },
+      ];
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(invalidData)),
+      );
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 

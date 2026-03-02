@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
@@ -7,8 +6,6 @@ import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { type TokenDto } from "@/token/data/TokenDto";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpTokenDataSource", () => {
   let datasource: TokenDataSource;
@@ -25,24 +22,26 @@ describe("HttpTokenDataSource", () => {
     vi.clearAllMocks();
   });
 
-  it("should call axios with the ledger client version header", async () => {
+  it("should call fetch with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([])),
+    );
 
     // WHEN
     await datasource.getTokenInfosPayload({ address: "0x00", chainId: 1 });
 
     // THEN
-    expect(requestSpy).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.any(URL),
       expect.objectContaining({
         headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
       }),
     );
   });
 
-  it("should return a string when axios response is correct", async () => {
+  it("should return a string when response is correct", async () => {
     // GIVEN
     const tokenDTO: TokenDto = {
       ticker: "USDC",
@@ -53,7 +52,9 @@ describe("HttpTokenDataSource", () => {
         },
       },
     };
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([tokenDTO])),
+    );
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -67,7 +68,7 @@ describe("HttpTokenDataSource", () => {
     );
   });
 
-  it("should return a string when axios response is correct with a prefixed ticker", async () => {
+  it("should return a string when response is correct with a prefixed ticker", async () => {
     // GIVEN
     const tokenDTO: TokenDto = {
       ticker: "tUSDC",
@@ -78,7 +79,9 @@ describe("HttpTokenDataSource", () => {
         },
       },
     };
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([tokenDTO])),
+    );
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -94,7 +97,7 @@ describe("HttpTokenDataSource", () => {
 
   it("should return an error when data is empty", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -114,7 +117,9 @@ describe("HttpTokenDataSource", () => {
 
   it("should return undefined when no signature", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [{}] });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([{}])),
+    );
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -134,9 +139,11 @@ describe("HttpTokenDataSource", () => {
 
   it("should return undefined when no decimals", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({
-      data: [{ live_signature: "0x0", ticker: "USDC" }],
-    });
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify([{ live_signature: "0x0", ticker: "USDC" }]),
+      ),
+    );
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -154,9 +161,9 @@ describe("HttpTokenDataSource", () => {
     );
   });
 
-  it("should return an error when axios throws an error", async () => {
+  it("should return an error when fetch throws an error", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockRejectedValue(new Error());
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error());
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({

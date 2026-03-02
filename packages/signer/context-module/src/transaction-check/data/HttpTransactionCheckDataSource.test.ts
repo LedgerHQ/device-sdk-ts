@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
@@ -10,8 +9,6 @@ import { type TransactionCheckDto } from "@/transaction-check/data/dto/Transacti
 import { HttpTransactionCheckDataSource } from "@/transaction-check/data/HttpTransactionCheckDataSource";
 import { type GetTransactionCheckParams } from "@/transaction-check/data/TransactionCheckDataSource";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpTransactionCheckDataSource", () => {
   const config = {
@@ -37,7 +34,9 @@ describe("HttpTransactionCheckDataSource", () => {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
@@ -59,7 +58,7 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
@@ -83,7 +82,9 @@ describe("HttpTransactionCheckDataSource", () => {
         chainId: 1,
       };
       const dto = {};
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
@@ -109,7 +110,9 @@ describe("HttpTransactionCheckDataSource", () => {
       const dto = {
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
@@ -135,7 +138,9 @@ describe("HttpTransactionCheckDataSource", () => {
       const dto = {
         public_key_id: "test-key-id",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
@@ -151,75 +156,83 @@ describe("HttpTransactionCheckDataSource", () => {
       );
     });
 
-    it("should call axios with the correct headers", async () => {
+    it("should call fetch with the correct headers", async () => {
       // GIVEN
       const params: GetTransactionCheckParams = {
         from: "0x1234567890123456789012345678901234567890",
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({})),
+      );
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
       await dataSource.getTransactionCheck(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.any(String),
         expect.objectContaining({
-          headers: {
+          headers: expect.objectContaining({
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
             [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-          },
+          }),
         }),
       );
     });
 
-    it("should call axios with the correct URL and method", async () => {
+    it("should call fetch with the correct URL and method", async () => {
       // GIVEN
       const params: GetTransactionCheckParams = {
         from: "0x1234567890123456789012345678901234567890",
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({})),
+      );
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
       await dataSource.getTransactionCheck(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${config.web3checks.url}/ethereum/scan/tx`,
         expect.objectContaining({
           method: "POST",
-          url: `${config.web3checks.url}/ethereum/scan/tx`,
         }),
       );
     });
 
-    it("should call axios with the correct request data", async () => {
+    it("should call fetch with the correct request body", async () => {
       // GIVEN
       const params: GetTransactionCheckParams = {
         from: "0x1234567890123456789012345678901234567890",
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify({})),
+      );
 
       // WHEN
       const dataSource = new HttpTransactionCheckDataSource(config);
       await dataSource.getTransactionCheck(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.any(String),
         expect.objectContaining({
-          data: {
+          body: JSON.stringify({
             tx: {
               from: "0x1234567890123456789012345678901234567890",
               raw: "0xabcdef",
             },
             chain: 1,
-          },
+          }),
         }),
       );
     });

@@ -1,5 +1,4 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -37,7 +36,7 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
     let response: DynamicNetworkApiResponseDto;
 
     try {
-      const axiosResponse = await axios.get<DynamicNetworkApiResponseDto>(
+      const fetchResponse = await fetch(
         `${this.config.cal.url}/networks?output=id,descriptors,icons&chain_id=${chainId}`,
         {
           headers: {
@@ -45,7 +44,10 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
           },
         },
       );
-      response = axiosResponse.data;
+      if (!fetchResponse.ok) {
+        throw new Error(`HTTP error ${fetchResponse.status}`);
+      }
+      response = (await fetchResponse.json()) as DynamicNetworkApiResponseDto;
     } catch (error) {
       return Left(
         error instanceof Error

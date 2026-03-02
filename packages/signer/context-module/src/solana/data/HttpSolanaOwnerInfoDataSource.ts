@@ -1,5 +1,4 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -51,31 +50,34 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     tokenAddress: string,
     challenge: string,
   ): Promise<Either<Error, SolanaSPLOwnerInfo>> {
-    return await axios
-      .request<SolanaSPLOwnerInfo>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/solana/owner/${tokenAddress}?challenge=${challenge}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+    try {
+      const response = await fetch(
+        `${this.config.metadataServiceDomain.url}/v2/solana/owner/${tokenAddress}?challenge=${challenge}`,
+        {
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+          },
         },
-      })
-      .then((res) => {
-        if (!this.isSolanaSPLOwnerInfo(res.data))
-          return Left(
-            new Error(
-              "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
-            ),
-          );
-        return Right(res.data);
-      })
-      .catch(() =>
-        Left(
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = (await response.json()) as SolanaSPLOwnerInfo;
+      if (!this.isSolanaSPLOwnerInfo(data))
+        return Left(
           new Error(
-            "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to fetch address metadata",
+            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
           ),
+        );
+      return Right(data);
+    } catch {
+      return Left(
+        new Error(
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to fetch address metadata",
         ),
       );
+    }
   }
 
   async computeAddressMetadata(
@@ -83,31 +85,34 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     mintAddress: string,
     challenge: string,
   ): Promise<Either<Error, SolanaSPLOwnerInfo>> {
-    return await axios
-      .request<SolanaSPLOwnerInfo>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          "X-Ledger-Client-Origin": this.config.originToken,
+    try {
+      const response = await fetch(
+        `${this.config.metadataServiceDomain.url}/v2/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
+        {
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            ...(this.config.originToken && { "X-Ledger-Client-Origin": this.config.originToken }),
+          },
         },
-      })
-      .then((res) => {
-        if (!this.isSolanaSPLOwnerInfo(res.data))
-          return Left(
-            new Error(
-              "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid computeAddressMetadata response shape",
-            ),
-          );
-        return Right(res.data);
-      })
-      .catch(() =>
-        Left(
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = (await response.json()) as SolanaSPLOwnerInfo;
+      if (!this.isSolanaSPLOwnerInfo(data))
+        return Left(
           new Error(
-            "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to compute address metadata",
+            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid computeAddressMetadata response shape",
           ),
+        );
+      return Right(data);
+    } catch {
+      return Left(
+        new Error(
+          "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to compute address metadata",
         ),
       );
+    }
   }
 
   async getOwnerInfo(

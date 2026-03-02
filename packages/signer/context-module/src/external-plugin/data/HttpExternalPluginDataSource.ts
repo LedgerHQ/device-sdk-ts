@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -29,21 +28,22 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
     selector,
   }: GetDappInfos): Promise<Either<Error, DappInfos | undefined>> {
     try {
-      const dappInfos = await axios.request<DAppDto[]>({
-        method: "GET",
-        url: `${this.config.cal.url}/dapps`,
-        params: {
-          output: "b2c,b2c_signatures,abis",
-          chain_id: chainId,
-          contracts: address,
-        },
+      const url = new URL(`${this.config.cal.url}/dapps`);
+      url.searchParams.set("output", "b2c,b2c_signatures,abis");
+      url.searchParams.set("chain_id", String(chainId));
+      url.searchParams.set("contracts", address);
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+          ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
         },
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const dappInfos = (await response.json()) as DAppDto[];
 
-      if (!dappInfos.data[0]) {
+      if (!dappInfos[0]) {
         return Right(undefined);
       }
 
@@ -52,10 +52,10 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
       selector = `0x${selector.slice(2).toLowerCase()}`;
 
       const { erc20OfInterest, method, plugin } =
-        dappInfos.data[0].b2c?.contracts?.find((c) => c.address === address)
+        dappInfos[0].b2c?.contracts?.find((c) => c.address === address)
           ?.selectors?.[selector] || {};
       const { signature, serialized_data: serializedData } =
-        dappInfos.data[0].b2c_signatures?.[address]?.[selector] || {};
+        dappInfos[0].b2c_signatures?.[address]?.[selector] || {};
 
       if (
         !erc20OfInterest ||
@@ -67,7 +67,7 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
         return Right(undefined);
       }
 
-      const abi = dappInfos.data[0].abis?.[address];
+      const abi = dappInfos[0].abis?.[address];
 
       if (!abi) {
         return Right(undefined);

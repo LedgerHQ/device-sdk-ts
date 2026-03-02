@@ -1,5 +1,3 @@
-import axios from "axios";
-
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import ABI from "@/external-plugin/__tests__/abi.json";
 import {
@@ -16,10 +14,8 @@ import {
 } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
-vi.mock("axios");
-
-const axiosResponseBuilder = (dto: Partial<DAppDto>[]) => {
-  return { data: dto };
+const fetchResponseBuilder = (dto: Partial<DAppDto>[]) => {
+  return new Response(JSON.stringify(dto));
 };
 
 const config = {
@@ -86,11 +82,12 @@ describe("HttpExternalPuginDataSource", () => {
     vi.clearAllMocks();
   });
 
-  it("should call axios with the ledger client version header", async () => {
+  it("should call fetch with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([])),
+    );
 
     // WHEN
     await datasource.getDappInfos({
@@ -100,7 +97,8 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(requestSpy).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      expect.any(URL),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: version,
@@ -112,10 +110,10 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no abis is undefined", async () => {
     // GIVEN
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -130,10 +128,10 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no selectors", async () => {
     // GIVEN
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -148,10 +146,10 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no abis data", async () => {
     // GIVEN
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -166,10 +164,10 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no abis data", async () => {
     // GIVEN
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -185,10 +183,10 @@ describe("HttpExternalPuginDataSource", () => {
   it("should return undefined when no abis data for the contract address", async () => {
     // GIVEN
     const abis: Abis = { "0x1": ABI };
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { abis, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -203,10 +201,10 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no b2c signature", async () => {
     // GIVEN
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c: exampleB2c, abis: exampleAbis },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -235,10 +233,10 @@ describe("HttpExternalPuginDataSource", () => {
       ],
       name: "test",
     } as unknown as B2c;
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -267,10 +265,10 @@ describe("HttpExternalPuginDataSource", () => {
       ],
       name: "test",
     } as unknown as B2c;
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -299,10 +297,10 @@ describe("HttpExternalPuginDataSource", () => {
       ],
       name: "test",
     } as unknown as B2c;
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -331,10 +329,10 @@ describe("HttpExternalPuginDataSource", () => {
       ],
       name: "test",
     } as unknown as B2c;
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -354,10 +352,10 @@ describe("HttpExternalPuginDataSource", () => {
     } as unknown as B2cSignatures;
 
     // FIXME
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -377,10 +375,10 @@ describe("HttpExternalPuginDataSource", () => {
     } as unknown as B2cSignatures;
 
     // FIXME
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -395,14 +393,14 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return a correct response", async () => {
     // GIVEN
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       {
         b2c: exampleB2c,
         abis: exampleAbis,
         b2c_signatures: exampleB2cSignatures,
       },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -426,14 +424,14 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should normalize the address and selector", async () => {
     // GIVEN
-    const response = axiosResponseBuilder([
+    const response = fetchResponseBuilder([
       {
         b2c: exampleB2c,
         abis: exampleAbis,
         b2c_signatures: exampleB2cSignatures,
       },
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -455,9 +453,9 @@ describe("HttpExternalPuginDataSource", () => {
     });
   });
 
-  it("should return an error when axios throws an error", async () => {
+  it("should return an error when fetch throws an error", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
 
     // WHEN
     const result = await datasource.getDappInfos({

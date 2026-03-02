@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
@@ -13,8 +12,6 @@ import {
   type TypedData,
 } from "@/transaction-check/data/TypedDataCheckDataSource";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpTypedDataCheckDataSource", () => {
   const config = {
@@ -66,7 +63,9 @@ describe("HttpTypedDataCheckDataSource", () => {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
@@ -83,7 +82,7 @@ describe("HttpTypedDataCheckDataSource", () => {
 
     it("should return an error if the request fails", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
@@ -102,7 +101,9 @@ describe("HttpTypedDataCheckDataSource", () => {
     it("should return an error if the response is invalid", async () => {
       // GIVEN
       const dto = {};
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
@@ -123,7 +124,9 @@ describe("HttpTypedDataCheckDataSource", () => {
       const dto = {
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
@@ -144,7 +147,9 @@ describe("HttpTypedDataCheckDataSource", () => {
       const dto = {
         public_key_id: "test-key-id",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
@@ -166,7 +171,9 @@ describe("HttpTypedDataCheckDataSource", () => {
         public_key_id: null,
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
@@ -188,7 +195,9 @@ describe("HttpTypedDataCheckDataSource", () => {
         public_key_id: "test-key-id",
         descriptor: null,
       };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
@@ -204,71 +213,79 @@ describe("HttpTypedDataCheckDataSource", () => {
       );
     });
 
-    it("should call axios with the correct headers", async () => {
+    it("should call fetch with the correct headers", async () => {
       // GIVEN
       const dto: TypedDataCheckDto = {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
       await dataSource.getTypedDataCheck(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.any(String),
         expect.objectContaining({
-          headers: {
+          headers: expect.objectContaining({
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
             [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-          },
+          }),
         }),
       );
     });
 
-    it("should call axios with the correct URL and method", async () => {
+    it("should call fetch with the correct URL and method", async () => {
       // GIVEN
       const dto: TypedDataCheckDto = {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
       await dataSource.getTypedDataCheck(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${config.web3checks.url}/ethereum/scan/eip-712`,
         expect.objectContaining({
           method: "POST",
-          url: `${config.web3checks.url}/ethereum/scan/eip-712`,
         }),
       );
     });
 
-    it("should call axios with the correct request data", async () => {
+    it("should call fetch with the correct request body", async () => {
       // GIVEN
       const dto: TypedDataCheckDto = {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);
       await dataSource.getTypedDataCheck(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        expect.any(String),
         expect.objectContaining({
-          data: {
+          body: JSON.stringify({
             msg: {
               from: params.from,
               data: params.data,
             },
-          },
+          }),
         }),
       );
     });
@@ -289,7 +306,9 @@ describe("HttpTypedDataCheckDataSource", () => {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(JSON.stringify(dto)),
+      );
 
       // WHEN
       const dataSource = new HttpTypedDataCheckDataSource(config);

@@ -1,5 +1,3 @@
-import axios from "axios";
-
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
@@ -9,8 +7,6 @@ import PACKAGE from "@root/package.json";
 
 import { HttpNftDataSource } from "./HttpNftDataSource";
 import { type NftDataSource } from "./NftDataSource";
-
-vi.mock("axios");
 
 const config = {
   web3checks: {
@@ -29,11 +25,12 @@ describe("HttpNftDataSource", () => {
     vi.clearAllMocks();
   });
 
-  it("should call axios with the ledger client version and origin Token header", async () => {
+  it("should call fetch with the ledger client version and origin Token header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([])),
+    );
 
     // WHEN
     await datasource.getNftInfosPayload({ address: "0x00", chainId: 1 });
@@ -44,8 +41,9 @@ describe("HttpNftDataSource", () => {
     });
 
     // THEN
-    expect(requestSpy).toHaveBeenNthCalledWith(
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
       1,
+      expect.any(String),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: version,
@@ -53,8 +51,9 @@ describe("HttpNftDataSource", () => {
         },
       }),
     );
-    expect(requestSpy).toHaveBeenNthCalledWith(
+    expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2,
+      expect.any(String),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: version,
@@ -65,9 +64,9 @@ describe("HttpNftDataSource", () => {
   });
 
   describe("getNftInfosPayload", () => {
-    it("should return an error when axios throws an error", async () => {
+    it("should return an error when fetch throws an error", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
 
       // WHEN
       const result = await datasource.getNftInfosPayload({
@@ -85,8 +84,9 @@ describe("HttpNftDataSource", () => {
 
     it("should return an error when the response is empty", async () => {
       // GIVEN
-      const response = { data: {} };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({})),
+      );
 
       // WHEN
       const result = await datasource.getNftInfosPayload({
@@ -102,8 +102,9 @@ describe("HttpNftDataSource", () => {
 
     it("should return the payload", async () => {
       // GIVEN
-      const response = { data: { payload: "payload" } };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ payload: "payload" })),
+      );
 
       // WHEN
       const result = await datasource.getNftInfosPayload({
@@ -117,9 +118,9 @@ describe("HttpNftDataSource", () => {
   });
 
   describe("getSetPluginPayload", () => {
-    it("should return an error when axios throws an error", async () => {
+    it("should return an error when fetch throws an error", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
 
       // WHEN
       const result = await datasource.getSetPluginPayload({
@@ -138,8 +139,9 @@ describe("HttpNftDataSource", () => {
 
     it("should return an error when the response is empty", async () => {
       // GIVEN
-      const response = { data: {} };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({})),
+      );
 
       // WHEN
       const result = await datasource.getSetPluginPayload({
@@ -158,8 +160,9 @@ describe("HttpNftDataSource", () => {
 
     it("should return the payload", async () => {
       // GIVEN
-      const response = { data: { payload: "payload" } };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ payload: "payload" })),
+      );
 
       // WHEN
       const result = await datasource.getSetPluginPayload({

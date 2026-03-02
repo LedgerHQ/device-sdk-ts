@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -33,15 +32,19 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
     try {
       const type = "eoa"; // Externally owned account
       const source = "ens"; // Ethereum name service
-      const response = await axios.request<TrustedNameDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      const response = await fetch(
+        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
+        {
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+          },
         },
-      });
-      dto = response.data;
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      dto = (await response.json()) as TrustedNameDto;
     } catch (_error) {
       return Left(
         new Error(
@@ -88,15 +91,19 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
       sources = sources.filter(
         (source) => source === "ens" || source === "crypto_asset_list",
       );
-      const response = await axios.request<TrustedNameDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      const response = await fetch(
+        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
+        {
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+          },
         },
-      });
-      dto = response.data;
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      dto = (await response.json()) as TrustedNameDto;
     } catch (_error) {
       return Left(
         new Error(

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -37,16 +36,24 @@ export class HttpTransactionCheckDataSource {
     };
 
     try {
-      const response = await axios.request<TransactionCheckDto>({
-        method: "POST",
-        url: `${this.config.web3checks.url}/ethereum/scan/tx`,
-        data: requestDto,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      const response = await fetch(
+        `${this.config.web3checks.url}/ethereum/scan/tx`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            ...(this.config.originToken && {
+              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+            }),
+          },
+          body: JSON.stringify(requestDto),
         },
-      });
-      transactionCheckDto = response.data;
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      transactionCheckDto = (await response.json()) as TransactionCheckDto;
     } catch (_error) {
       return Left(
         new Error(

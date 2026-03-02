@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -32,19 +31,21 @@ export class HttpSafeProxyDataSource implements ProxyDataSource {
   > {
     let dto: SafeProxyImplementationAddressDto | undefined;
     try {
-      const response = await axios.request<SafeProxyImplementationAddressDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
+      const url = new URL(
+        `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
+      );
+      url.searchParams.set("challenge", challenge);
+      url.searchParams.set("resolver", "SAFE_GATEWAY");
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-        params: {
-          challenge,
-          resolver: "SAFE_GATEWAY",
+          ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
         },
       });
-      dto = response.data;
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      dto = (await response.json()) as SafeProxyImplementationAddressDto;
     } catch (_error) {
       return Left(
         new Error(

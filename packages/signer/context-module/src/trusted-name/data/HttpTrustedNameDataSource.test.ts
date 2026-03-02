@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
@@ -9,8 +8,6 @@ import {
 import { HttpTrustedNameDataSource } from "@/trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 const config = {
   cal: {
@@ -32,11 +29,12 @@ describe("HttpTrustedNameDataSource", () => {
   });
 
   describe("getDomainNamePayload", () => {
-    it("should call axios with the correct url and ledger client version header", async () => {
+    it("should call fetch with the correct url and ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
-      const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-      vi.spyOn(axios, "request").mockImplementation(requestSpy);
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify([])),
+      );
 
       // WHEN
       await datasource.getDomainNamePayload({
@@ -46,9 +44,9 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(requestSpy).toHaveBeenCalledWith(
+      expect(fetchSpy).toHaveBeenCalledWith(
+        `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
         expect.objectContaining({
-          url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: version,
             [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
@@ -57,9 +55,9 @@ describe("HttpTrustedNameDataSource", () => {
       );
     });
 
-    it("should throw an error when axios throws an error", async () => {
+    it("should throw an error when fetch throws an error", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockRejectedValue(new Error());
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error());
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -80,8 +78,9 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return an error when no payload is returned", async () => {
       // GIVEN
-      const response = { data: { test: "" } };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ test: "" })),
+      );
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -102,14 +101,14 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return a payload", async () => {
       // GIVEN
-      const response = {
-        data: {
-          signedDescriptor: { data: "payload", signatures: {} },
-          keyId: "testKeyId",
-          keyUsage: "testKeyUsage",
-        },
+      const responseData = {
+        signedDescriptor: { data: "payload", signatures: {} },
+        keyId: "testKeyId",
+        keyUsage: "testKeyUsage",
       };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(responseData)),
+      );
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -130,11 +129,12 @@ describe("HttpTrustedNameDataSource", () => {
   });
 
   describe("getTrustedNamePayload", () => {
-    it("should call axios with the correct url and ledger client version header", async () => {
+    it("should call fetch with the correct url and ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
-      const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-      vi.spyOn(axios, "request").mockImplementation(requestSpy);
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify([])),
+      );
 
       // WHEN
       await datasource.getTrustedNamePayload({
@@ -146,9 +146,9 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(requestSpy).toHaveBeenCalledWith(
+      expect(fetchSpy).toHaveBeenCalledWith(
+        `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
         expect.objectContaining({
-          url: `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: version,
             [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
@@ -157,9 +157,9 @@ describe("HttpTrustedNameDataSource", () => {
       );
     });
 
-    it("should throw an error when axios throws an error", async () => {
+    it("should throw an error when fetch throws an error", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockRejectedValue(new Error());
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error());
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -182,8 +182,9 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return an error when no payload is returned", async () => {
       // GIVEN
-      const response = { data: { test: "" } };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ test: "" })),
+      );
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -206,12 +207,12 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return an error when no keys are returned", async () => {
       // GIVEN
-      const response = {
-        data: {
-          signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
-        },
+      const responseData = {
+        signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
       };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(responseData)),
+      );
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -234,14 +235,14 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return a payload", async () => {
       // GIVEN
-      const response = {
-        data: {
-          signedDescriptor: { data: "payload", signatures: {} },
-          keyId: "testKeyId",
-          keyUsage: "testKeyUsage",
-        },
+      const responseData = {
+        signedDescriptor: { data: "payload", signatures: {} },
+        keyId: "testKeyId",
+        keyUsage: "testKeyUsage",
       };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(responseData)),
+      );
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -264,14 +265,14 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return a payload with a signature", async () => {
       // GIVEN
-      const response = {
-        data: {
-          signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
-          keyId: "testKeyId",
-          keyUsage: "testKeyUsage",
-        },
+      const responseData = {
+        signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
+        keyId: "testKeyId",
+        keyUsage: "testKeyUsage",
       };
-      vi.spyOn(axios, "request").mockResolvedValue(response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(responseData)),
+      );
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({

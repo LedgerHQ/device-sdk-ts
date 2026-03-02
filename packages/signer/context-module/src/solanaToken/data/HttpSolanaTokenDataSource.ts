@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -22,19 +21,22 @@ export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
     tokenInternalId,
   }: GetSolanaTokenInfosParams): Promise<Either<Error, TokenDataResponse>> {
     try {
-      const { data } = await axios.request<TokenDataResponse[]>({
-        method: "GET",
-        url: `${this.config.cal.url}/tokens`,
-        params: {
-          id: tokenInternalId,
-          output:
-            "id,name,network,network_family,network_type,exchange_app_config_serialized,live_signature,ticker,decimals,blockchain_name,chain_id,contract_address,descriptor,descriptor_exchange_app,units,symbol",
-          ref: `branch:${this.config.cal.branch}`,
-        },
+      const url = new URL(`${this.config.cal.url}/tokens`);
+      url.searchParams.set("id", tokenInternalId);
+      url.searchParams.set(
+        "output",
+        "id,name,network,network_family,network_type,exchange_app_config_serialized,live_signature,ticker,decimals,blockchain_name,chain_id,contract_address,descriptor,descriptor_exchange_app,units,symbol",
+      );
+      url.searchParams.set("ref", `branch:${this.config.cal.branch}`);
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = (await response.json()) as TokenDataResponse[];
 
       if (!data || data.length === 0 || !data[0]) {
         return Left(

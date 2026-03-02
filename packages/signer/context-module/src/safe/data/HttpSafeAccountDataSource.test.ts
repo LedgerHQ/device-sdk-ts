@@ -1,5 +1,4 @@
 import { type HexaString } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
@@ -9,8 +8,6 @@ import {
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpSafeAccountDataSource", () => {
   const config: ContextModuleConfig = {
@@ -48,10 +45,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(validSafeAccountDto)),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -59,12 +55,12 @@ describe("HttpSafeAccountDataSource", () => {
       );
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith({
-        method: "GET",
-        url: "https://metadata.ledger.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890",
-        params: {
-          challenge: "0xabcdef",
-        },
+      expect(fetchSpy).toHaveBeenCalled();
+      const calledUrl = fetchSpy.mock.calls[0]![0]!.toString();
+      expect(calledUrl).toBe(
+        "https://metadata.ledger.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890?challenge=0xabcdef",
+      );
+      expect(fetchSpy.mock.calls[0]![1]).toEqual({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
@@ -93,19 +89,17 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 137, // Polygon
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(validSafeAccountDto)),
+      );
 
       // WHEN
       await new HttpSafeAccountDataSource(config).getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: "https://metadata.ledger.com/v2/ethereum/137/safe/account/0x1234567890123456789012345678901234567890",
-        }),
+      const calledUrl = fetchSpy.mock.calls[0]![0]!.toString();
+      expect(calledUrl).toContain(
+        "/v2/ethereum/137/safe/account/0x1234567890123456789012345678901234567890",
       );
     });
 
@@ -117,19 +111,17 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(validSafeAccountDto)),
+      );
 
       // WHEN
       await new HttpSafeAccountDataSource(config).getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: "https://metadata.ledger.com/v2/ethereum/1/safe/account/0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-        }),
+      const calledUrl = fetchSpy.mock.calls[0]![0]!.toString();
+      expect(calledUrl).toContain(
+        "/v2/ethereum/1/safe/account/0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
       );
     });
 
@@ -140,22 +132,16 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0x123456789",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(validSafeAccountDto)),
+      );
 
       // WHEN
       await new HttpSafeAccountDataSource(config).getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          params: {
-            challenge: "0x123456789",
-          },
-        }),
-      );
+      const calledUrl = new URL(fetchSpy.mock.calls[0]![0]!.toString());
+      expect(calledUrl.searchParams.get("challenge")).toBe("0x123456789");
     });
 
     it("should return error when response data is empty", async () => {
@@ -165,10 +151,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: null,
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response("null"),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -192,10 +177,10 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: undefined,
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(undefined),
+      } as Response);
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -219,12 +204,13 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            signersDescriptor: validSafeAccountDto.signersDescriptor,
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -248,12 +234,13 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: validSafeAccountDto.accountDescriptor,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: validSafeAccountDto.accountDescriptor,
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -277,16 +264,17 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            keyId: "account-key-id",
-            keyUsage: "account-key-usage",
-          },
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: {
+              keyId: "account-key-id",
+              keyUsage: "account-key-usage",
+            },
+            signersDescriptor: validSafeAccountDto.signersDescriptor,
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -310,16 +298,17 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: "account-signed-descriptor-data",
-            keyUsage: "account-key-usage",
-          },
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: {
+              signedDescriptor: "account-signed-descriptor-data",
+              keyUsage: "account-key-usage",
+            },
+            signersDescriptor: validSafeAccountDto.signersDescriptor,
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -343,16 +332,17 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: "account-signed-descriptor-data",
-            keyId: "account-key-id",
-          },
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: {
+              signedDescriptor: "account-signed-descriptor-data",
+              keyId: "account-key-id",
+            },
+            signersDescriptor: validSafeAccountDto.signersDescriptor,
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -376,17 +366,18 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: validSafeAccountDto.accountDescriptor,
-          signersDescriptor: {
-            signedDescriptor: "signers-signed-descriptor-data",
-            keyId: 123, // wrong type
-            keyUsage: "signers-key-usage",
-          },
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: validSafeAccountDto.accountDescriptor,
+            signersDescriptor: {
+              signedDescriptor: "signers-signed-descriptor-data",
+              keyId: 123, // wrong type
+              keyUsage: "signers-key-usage",
+            },
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -410,13 +401,14 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: "invalid-string",
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: "invalid-string",
+            signersDescriptor: validSafeAccountDto.signersDescriptor,
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -440,13 +432,14 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: validSafeAccountDto.accountDescriptor,
-          signersDescriptor: null,
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: validSafeAccountDto.accountDescriptor,
+            signersDescriptor: null,
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -463,14 +456,16 @@ describe("HttpSafeAccountDataSource", () => {
       );
     });
 
-    it("should return error when axios request fails", async () => {
+    it("should return error when fetch request fails", async () => {
       // GIVEN
       const params = {
         safeContractAddress: validsafeContractAddress,
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("Network error"));
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(
+        new Error("Network error"),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -487,14 +482,14 @@ describe("HttpSafeAccountDataSource", () => {
       );
     });
 
-    it("should return error when axios throws an exception", async () => {
+    it("should return error when fetch throws an exception", async () => {
       // GIVEN
       const params = {
         safeContractAddress: validsafeContractAddress,
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("timeout"));
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("timeout"));
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -518,21 +513,22 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: "",
-            keyId: "",
-            keyUsage: "",
-          },
-          signersDescriptor: {
-            signedDescriptor: "",
-            keyId: "",
-            keyUsage: "",
-          },
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: {
+              signedDescriptor: "",
+              keyId: "",
+              keyUsage: "",
+            },
+            signersDescriptor: {
+              signedDescriptor: "",
+              keyId: "",
+              keyUsage: "",
+            },
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -564,21 +560,22 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: longValue,
-            keyId: "account-key-id",
-            keyUsage: "account-key-usage",
-          },
-          signersDescriptor: {
-            signedDescriptor: longValue,
-            keyId: "signers-key-id",
-            keyUsage: "signers-key-usage",
-          },
-        },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            accountDescriptor: {
+              signedDescriptor: longValue,
+              keyId: "account-key-id",
+              keyUsage: "account-key-usage",
+            },
+            signersDescriptor: {
+              signedDescriptor: longValue,
+              keyId: "signers-key-id",
+              keyUsage: "signers-key-usage",
+            },
+          }),
+        ),
+      );
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -615,16 +612,16 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(validSafeAccountDto)),
+      );
 
       // WHEN
       await new HttpSafeAccountDataSource(customConfig).getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.anything(),
         expect.objectContaining({
           headers: expect.objectContaining({
             [LEDGER_ORIGIN_TOKEN_HEADER]: "custom-origin-token",
@@ -646,19 +643,17 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(validSafeAccountDto)),
+      );
 
       // WHEN
       await new HttpSafeAccountDataSource(customConfig).getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: "https://custom-metadata.example.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890",
-        }),
+      const calledUrl = fetchSpy.mock.calls[0]![0]!.toString();
+      expect(calledUrl).toContain(
+        "https://custom-metadata.example.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890",
       );
     });
   });

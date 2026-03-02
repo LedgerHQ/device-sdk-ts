@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -28,19 +27,22 @@ export class HttpSafeAccountDataSource implements SafeAccountDataSource {
     challenge,
   }: GetSafeAccountParams): Promise<Either<Error, GetSafeAccountResponse>> {
     try {
-      const response = await axios.request<SafeAccountDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/safe/account/${safeContractAddress}`,
-        params: {
-          challenge,
-        },
+      const url = new URL(
+        `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/safe/account/${safeContractAddress}`,
+      );
+      url.searchParams.set("challenge", challenge);
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+          ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
         },
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = (await response.json()) as SafeAccountDto;
 
-      if (!response.data) {
+      if (!data) {
         return Left(
           new Error(
             "[ContextModule] HttpSafeAccountDataSource: unexpected empty response",
@@ -48,7 +50,7 @@ export class HttpSafeAccountDataSource implements SafeAccountDataSource {
         );
       }
 
-      if (!this.isSafeAccountDto(response.data)) {
+      if (!this.isSafeAccountDto(data)) {
         return Left(
           new Error(
             "[ContextModule] HttpSafeAccountDataSource: invalid safe account response format",
@@ -58,14 +60,14 @@ export class HttpSafeAccountDataSource implements SafeAccountDataSource {
 
       return Right({
         account: {
-          signedDescriptor: response.data.accountDescriptor.signedDescriptor,
-          keyId: response.data.accountDescriptor.keyId,
-          keyUsage: response.data.accountDescriptor.keyUsage,
+          signedDescriptor: data.accountDescriptor.signedDescriptor,
+          keyId: data.accountDescriptor.keyId,
+          keyUsage: data.accountDescriptor.keyUsage,
         },
         signers: {
-          signedDescriptor: response.data.signersDescriptor.signedDescriptor,
-          keyId: response.data.signersDescriptor.keyId,
-          keyUsage: response.data.signersDescriptor.keyUsage,
+          signedDescriptor: data.signersDescriptor.signedDescriptor,
+          keyId: data.signersDescriptor.keyId,
+          keyUsage: data.signersDescriptor.keyUsage,
         },
       });
     } catch (_error) {

@@ -1,5 +1,4 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -40,32 +39,31 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
     };
 
     try {
-      const pkiCertificateResponse = await axios.request<
-        PkiCertificateResponseDto[]
-      >({
-        method: "GET",
-        url: `${this.config.cal.url}/certificates`,
-        params: requestDto,
+      const url = new URL(`${this.config.cal.url}/certificates`);
+      url.searchParams.set("output", requestDto.output);
+      url.searchParams.set("target_device", requestDto.target_device);
+      url.searchParams.set("latest", String(requestDto.latest));
+      url.searchParams.set("public_key_id", String(requestDto.public_key_id));
+      url.searchParams.set("public_key_usage", requestDto.public_key_usage);
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = (await response.json()) as PkiCertificateResponseDto[];
 
       if (
-        pkiCertificateResponse.status == 200 &&
-        pkiCertificateResponse.data !== undefined &&
-        pkiCertificateResponse.data.length > 0 &&
-        this.isValidPkiCertificateResponse(
-          pkiCertificateResponse.data[0],
-          this.config.cal.mode,
-        )
+        data !== undefined &&
+        data.length > 0 &&
+        this.isValidPkiCertificateResponse(data[0], this.config.cal.mode)
       ) {
         const payload = hexaStringToBuffer(
           HexStringUtils.appendSignatureToPayload(
-            pkiCertificateResponse.data[0].descriptor.data,
-            pkiCertificateResponse.data[0].descriptor.signatures[
-              this.config.cal.mode
-            ],
+            data[0].descriptor.data,
+            data[0].descriptor.signatures[this.config.cal.mode],
             SIGNATURE_TAG,
           ),
         );

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -24,22 +23,25 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
     Either<Error, GetTransactionDescriptorsResponse>
   > {
     try {
-      const { data } = await axios.request<GetTransactionDescriptorsResponse[]>(
-        {
-          method: "GET",
-          url: `${this.config.cal.url}/swap_templates`,
-          params: {
-            template_id: templateId,
-            output: "id,chain_id,instructions,descriptors",
-            // TODO LIFI
-            // REVERT WHEN CAL SUPPORTS IT
-            ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
-          },
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          },
-        },
+      const url = new URL(`${this.config.cal.url}/swap_templates`);
+      url.searchParams.set("template_id", templateId);
+      url.searchParams.set("output", "id,chain_id,instructions,descriptors");
+      // TODO LIFI
+      // REVERT WHEN CAL SUPPORTS IT
+      url.searchParams.set(
+        "ref",
+        "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
       );
+      const response = await fetch(url, {
+        headers: {
+          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data =
+        (await response.json()) as GetTransactionDescriptorsResponse[];
 
       if (!data || data.length === 0 || !data[0]) {
         return Left(

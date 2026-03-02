@@ -1,4 +1,3 @@
-import axios from "axios";
 import SHA224 from "crypto-js/sha224";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
@@ -57,29 +56,29 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     let messageInfo: TypedDataMessageInfo | undefined = undefined;
 
     try {
-      const response = await axios.request<FiltersDto[]>({
-        method: "GET",
-        url: `${this.config.cal.url}/dapps`,
-        params: {
-          contracts: address,
-          chain_id: chainId,
-          output: "descriptors_eip712",
-          descriptors_eip712_version: version,
-          descriptors_eip712: "<set>",
-          ref: `branch:${this.config.cal.branch}`,
-        },
+      const url = new URL(`${this.config.cal.url}/dapps`);
+      url.searchParams.set("contracts", address);
+      url.searchParams.set("chain_id", String(chainId));
+      url.searchParams.set("output", "descriptors_eip712");
+      url.searchParams.set("descriptors_eip712_version", version);
+      url.searchParams.set("descriptors_eip712", "<set>");
+      url.searchParams.set("ref", `branch:${this.config.cal.branch}`);
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+          ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
         },
       });
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = (await response.json()) as FiltersDto[];
 
-      // Try to get the filters JSON descriptor, from address and schema hash
       const schemaHash = SHA224(
         JSON.stringify(this.sortTypes(schema)).replace(" ", ""),
       ).toString();
       address = address.toLowerCase();
-      const dataArray = response.data ?? [];
+      const dataArray = data ?? [];
       const filtersJson = dataArray
         .map((item) => item?.descriptors_eip712?.[address]?.[schemaHash])
         .find(Boolean);

@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -20,20 +19,21 @@ export class HttpTokenDataSource implements TokenDataSource {
     address,
   }: GetTokenInfosParams): Promise<Either<Error, string>> {
     try {
-      const response = await axios.request<TokenDto[]>({
-        method: "GET",
-        url: `${this.config.cal.url}/tokens`,
-        params: {
-          contract_address: address,
-          chain_id: chainId,
-          output: "descriptor",
-          ref: `branch:${this.config.cal.branch}`,
-        },
+      const url = new URL(`${this.config.cal.url}/tokens`);
+      url.searchParams.set("contract_address", address);
+      url.searchParams.set("chain_id", String(chainId));
+      url.searchParams.set("output", "descriptor");
+      url.searchParams.set("ref", `branch:${this.config.cal.branch}`);
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
         },
       });
-      const tokenInfos = response.data?.[0];
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+      const data = (await response.json()) as TokenDto[];
+      const tokenInfos = data?.[0];
 
       if (
         !tokenInfos ||
