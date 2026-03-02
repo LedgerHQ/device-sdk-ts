@@ -111,9 +111,7 @@ export class SignTransactionStateHandler implements StateHandler {
           await this.screenshotSaver.save();
 
           if (await this.screenAnalyzer.isBlindSigningBlocked()) {
-            this.logger.error(
-              "Blind signing is not enabled -- cannot proceed",
-            );
+            this.logger.error("Blind signing is not enabled -- cannot proceed");
             await this.deviceController.rejectTransaction();
             throw new Error("Blind signing is not enabled on the device");
           }
