@@ -20,6 +20,10 @@ export type DeviceControllerOptions<K extends string = string> = {
   clientHeader?: string;
 };
 
+export interface HttpClient {
+  post(url: string, data?: unknown): Promise<unknown>;
+}
+
 export enum SpeculosActions {
   PRESS = "press",
   RELEASE = "release",

@@ -2,14 +2,12 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import type { AxiosInstance } from "axios";
-
-import type { PercentCoordinates } from "../core/types";
+import type { HttpClient, PercentCoordinates } from "../core/types";
 import { DefaultTouchController } from "./DefaultTouchController";
 
 describe("DefaultTouchController", () => {
   let postMock: ReturnType<typeof vi.fn>;
-  let axiosFake: AxiosInstance;
+  let httpClient: HttpClient;
 
   const axisA = {
     xy: vi.fn((xPct: number, yPct: number) => ({
@@ -31,14 +29,14 @@ describe("DefaultTouchController", () => {
   let controller: DefaultTouchController<string>;
 
   beforeEach(() => {
-    postMock = vi.fn().mockResolvedValue({ status: 200, data: {} });
-    axiosFake = { post: postMock } as unknown as AxiosInstance;
+    postMock = vi.fn().mockResolvedValue(undefined);
+    httpClient = { post: postMock };
 
     axisA.xy.mockClear();
     axisB.xy.mockClear();
 
     axesFake = { devA: axisA, devB: axisB };
-    controller = new DefaultTouchController(axiosFake, axesFake as any);
+    controller = new DefaultTouchController(httpClient, axesFake as any);
   });
 
   const point: PercentCoordinates = { x: 12, y: 45 };
@@ -86,7 +84,7 @@ describe("DefaultTouchController", () => {
     expect(postMock).not.toHaveBeenCalled();
   });
 
-  it("propagates HTTP errors from axios client", async () => {
+  it("propagates HTTP errors", async () => {
     const boom = new Error("backend down");
     postMock.mockRejectedValueOnce(boom);
 
@@ -97,7 +95,7 @@ describe("DefaultTouchController", () => {
 describe("percent validation", () => {
   let controller: DefaultTouchController<string>;
   let postMock: ReturnType<typeof vi.fn>;
-  let axiosFake: AxiosInstance;
+  let httpClient: HttpClient;
 
   const axis = {
     xy: vi.fn((xPct: number, yPct: number) => ({ x: xPct, y: yPct })),
@@ -105,10 +103,10 @@ describe("percent validation", () => {
   const axesFake = { devA: axis };
 
   beforeEach(() => {
-    postMock = vi.fn().mockResolvedValue({ status: 200, data: {} });
-    axiosFake = { post: postMock } as unknown as AxiosInstance;
+    postMock = vi.fn().mockResolvedValue(undefined);
+    httpClient = { post: postMock };
     axis.xy.mockClear();
-    controller = new DefaultTouchController(axiosFake, axesFake as any);
+    controller = new DefaultTouchController(httpClient, axesFake as any);
   });
 
   it("accepts boundary values 0 and 100", async () => {

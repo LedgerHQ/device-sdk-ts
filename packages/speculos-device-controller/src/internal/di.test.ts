@@ -1,10 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-import axios from "axios";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DefaultButtonController } from "@internal/adapters/DefaultButtonController";
@@ -21,65 +15,67 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("createDefaultControllers - axios configuration", () => {
-  it("configures axios with normalised baseURL, custom timeout and header", () => {
-    const createSpy = vi
-      .spyOn(axios, "create")
-      .mockImplementation((cfg: any) => {
-        return { post: vi.fn(), defaults: { ...cfg } } as any;
-      });
+describe("createDefaultControllers - fetch configuration", () => {
+  it("configures with custom timeout and header", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
 
-    createDefaultControllers("http://example.com/api", {
+    const { buttons } = createDefaultControllers("http://example.com/api", {
       screens: SCREENS,
       timeoutMs: 2345,
       clientHeader: "test-client",
     });
 
-    expect(createSpy).toHaveBeenCalledTimes(1);
-    const cfg = createSpy.mock.calls[0]![0] as any;
-    expect(cfg.baseURL).toBe("http://example.com/api");
-    expect(cfg.timeout).toBe(2345);
-    expect(cfg.headers?.["X-Ledger-Client-Version"]).toBe("test-client");
-    expect(cfg.transitional?.clarifyTimeoutError).toBe(true);
+    await buttons.press("left");
+
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://example.com/api/button/left",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          "X-Ledger-Client-Version": "test-client",
+        }),
+      }),
+    );
   });
 
-  it("applies default timeout and client header when not provided", () => {
-    const createSpy = vi
-      .spyOn(axios, "create")
-      .mockImplementation((cfg: any) => {
-        return { post: vi.fn(), defaults: { ...cfg } } as any;
-      });
+  it("applies default timeout and client header when not provided", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
 
-    createDefaultControllers("http://localhost:1234", { screens: SCREENS });
+    const { buttons } = createDefaultControllers("http://localhost:1234", {
+      screens: SCREENS,
+    });
 
-    const cfg = createSpy.mock.calls[0]![0] as any;
-    expect(cfg.baseURL).toBe("http://localhost:1234");
-    expect(cfg.timeout).toBe(1500);
-    expect(cfg.headers?.["X-Ledger-Client-Version"]).toBe(
-      "ldmk-transport-speculos",
+    await buttons.press("left");
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://localhost:1234/button/left",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          "X-Ledger-Client-Version": "ldmk-transport-speculos",
+        }),
+      }),
     );
   });
 });
 
 describe("createDefaultControllers - wiring", () => {
-  it("returns axios implementations wired by the factory", () => {
-    const http = { post: vi.fn() } as any;
-    vi.spyOn(axios, "create").mockReturnValue(http);
-
+  it("returns correct controller implementations", () => {
     const { buttons, touch } = createDefaultControllers("http://x", {
       screens: SCREENS,
     });
 
     expect(buttons).toBeInstanceOf(DefaultButtonController);
     expect(touch).toBeInstanceOf(DefaultTouchController);
-    expect(typeof (buttons as any).press).toBe("function");
+    expect(typeof buttons.press).toBe("function");
   });
 
   it("creates fresh instances per invocation", () => {
-    vi.spyOn(axios, "create")
-      .mockReturnValueOnce({ post: vi.fn() } as any)
-      .mockReturnValueOnce({ post: vi.fn() } as any);
-
     const a = createDefaultControllers("http://x", { screens: SCREENS });
     const b = createDefaultControllers("http://x", { screens: SCREENS });
 
@@ -88,22 +84,29 @@ describe("createDefaultControllers - wiring", () => {
   });
 
   it("button.press posts the correct payload", async () => {
-    const post = vi.fn().mockResolvedValue(undefined);
-    vi.spyOn(axios, "create").mockReturnValue({ post } as any);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
 
     const { buttons } = createDefaultControllers("http://x", {
       screens: SCREENS,
     });
 
     await buttons.press("left");
-    expect(post).toHaveBeenCalledWith("/button/left", {
-      action: "press-and-release",
-    });
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://x/button/left",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ action: "press-and-release" }),
+      }),
+    );
   });
 
   it("touch.tapAndRelease maps percent to absolute coords", async () => {
-    const post = vi.fn().mockResolvedValue(undefined);
-    vi.spyOn(axios, "create").mockReturnValue({ post } as any);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("{}"));
 
     const { touch } = createDefaultControllers("http://x", {
       screens: SCREENS,
@@ -112,10 +115,16 @@ describe("createDefaultControllers - wiring", () => {
     // 50% of 128x64 → (64, 32)
     await touch.tapAndRelease("flex", { x: 50 as any, y: 50 as any });
 
-    expect(post).toHaveBeenCalledWith("/finger", {
-      action: "press-and-release",
-      x: 64,
-      y: 32,
-    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "http://x/finger",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          action: "press-and-release",
+          x: 64,
+          y: 32,
+        }),
+      }),
+    );
   });
 });
