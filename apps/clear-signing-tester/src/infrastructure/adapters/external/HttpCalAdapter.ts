@@ -1,5 +1,4 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios, { AxiosError } from "axios";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -47,29 +46,33 @@ export class HttpCalAdapter implements CalAdapter {
     );
 
     try {
-      const response = await axios.request<CalldataDto[]>({
+      const url = new URL(`${CAL_BASE_URL}/dapps`);
+      url.searchParams.set("output", "descriptors_calldata");
+      url.searchParams.set("chain_id", String(chainId));
+      url.searchParams.set("contracts", contractAddress);
+      url.searchParams.set("ref", "branch:next");
+
+      const fetchResponse = await fetch(url, {
         method: "GET",
-        url: `${CAL_BASE_URL}/dapps`,
-        params: {
-          output: "descriptors_calldata",
-          chain_id: chainId,
-          contracts: contractAddress,
-          ref: "branch:next",
-        },
         headers: {
           "X-Ledger-Client-Origin": this.signerConfig.originToken,
         },
       });
 
+      if (!fetchResponse.ok)
+        throw new Error(`HTTP error ${fetchResponse.status}`);
+
+      const data = (await fetchResponse.json()) as CalldataDto[];
+
       const selectors = this.extractSelectorsFromResponse(
-        response.data,
+        data,
         contractAddress,
       );
 
       return selectors;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const errorMessage = `${error.status || "Unknown status"}: Failed to fetch selectors from ${CAL_BASE_URL}/dapps for contract ${contractAddress} on chain ${chainId}`;
+      if (error instanceof Error) {
+        const errorMessage = `Failed to fetch selectors from ${CAL_BASE_URL}/dapps for contract ${contractAddress} on chain ${chainId}: ${error.message}`;
         this.logger.error(errorMessage, {
           data: { error: error.message },
         });

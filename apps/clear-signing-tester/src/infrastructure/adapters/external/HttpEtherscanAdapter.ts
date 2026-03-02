@@ -1,5 +1,4 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios, { AxiosError } from "axios";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -160,8 +159,8 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
 
       return selectedTransactions;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const errorMessage = `${error.status || "Unknown status"}: Failed to fetch transactions from Etherscan`;
+      if (error instanceof Error) {
+        const errorMessage = `Failed to fetch transactions from Etherscan: ${error.message}`;
         this.logger.error(errorMessage, {
           data: { error: error.message },
         });
@@ -199,45 +198,53 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
       data: { params },
     });
 
-    const response = await axios.get<EtherscanApiResponse>(baseUrl, {
-      params,
-      timeout: this.etherscanConfig.timeout || 30000,
+    const url = new URL(baseUrl);
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, String(value));
     });
+    const controller = new AbortController();
+    const timeoutMs = this.etherscanConfig.timeout || 30000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const fetchResponse = await fetch(url, { signal: controller.signal });
+      if (!fetchResponse.ok)
+        throw new Error(`HTTP error ${fetchResponse.status}`);
+      const data = (await fetchResponse.json()) as EtherscanApiResponse;
 
-    this.logger.debug("Etherscan API response", {
-      data: {
-        status: response.data.status,
-        message: response.data.message,
-        result: JSON.stringify(response.data.result),
-        resultCount: Array.isArray(response.data.result)
-          ? response.data.result.length
-          : 0,
-      },
-    });
+      this.logger.debug("Etherscan API response", {
+        data: {
+          status: data.status,
+          message: data.message,
+          result: JSON.stringify(data.result),
+          resultCount: Array.isArray(data.result) ? data.result.length : 0,
+        },
+      });
 
-    if (response.data.status !== "1") {
-      // Status "0" with "No transactions found" or "NOTOK" is not an error, just means no data
-      if (
-        response.data.status === "0" &&
-        (response.data.message === "No transactions found" ||
-          response.data.message === "NOTOK")
-      ) {
-        this.logger.info(
-          `No transactions found for address: ${response.data.message}`,
+      if (data.status !== "1") {
+        if (
+          data.status === "0" &&
+          (data.message === "No transactions found" ||
+            data.message === "NOTOK")
+        ) {
+          this.logger.info(
+            `No transactions found for address: ${data.message}`,
+          );
+          return [];
+        }
+        throw new Error(
+          `Etherscan API error: ${data.message || "Unknown error"}`,
         );
+      }
+
+      if (!Array.isArray(data.result)) {
+        this.logger.warn("No transactions found");
         return [];
       }
-      throw new Error(
-        `Etherscan API error: ${response.data.message || "Unknown error"}`,
-      );
-    }
 
-    if (!Array.isArray(response.data.result)) {
-      this.logger.warn("No transactions found");
-      return [];
+      return data.result;
+    } finally {
+      clearTimeout(timeoutId);
     }
-
-    return response.data.result;
   }
 
   /**
