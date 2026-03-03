@@ -16,7 +16,7 @@ const DEFAULT_CONTAINER_NAMES: Partial<
 };
 
 const SPECULOS_DOCKER_IMAGE_BASE =
-  "ghcr.io/ledgerhq/speculos";
+  "ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools";
 const SPECULOS_API_PORT = 5000;
 const SPECULOS_VNC_PORT = 5900;
 
@@ -142,19 +142,19 @@ export class SpeculosServiceController implements ServiceController {
       }
     }
 
-    // Build command arguments for ghcr.io/ledgerhq/speculos image
-    // The image entrypoint is already speculos, so we just pass arguments
+    // Build command arguments for ledger-app-dev-tools image.
     const command = [
-      "--model",
-      this.model === "nanos+" ? "nanosp" : this.model,
+      "speculos",
+      appPath,
+      ...pluginArgs,
       "--display",
       "headless",
       "--api-port",
       SPECULOS_API_PORT.toString(),
       "--vnc-port",
       SPECULOS_VNC_PORT.toString(),
-      appPath,
-      ...pluginArgs,
+      "--user",
+      `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
     ];
 
     // Add "-p" flag for prod signatures only when CAL mode is "prod"
