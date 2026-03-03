@@ -147,7 +147,7 @@ export class EthereumTransactionTesterCli {
             `\n❌ ERC7730_API_URL is set to ${process.env["ERC7730_API_URL"]} but the server is unreachable.`,
           );
           console.error(
-            "   Start the local API first:  cd tools/tester && ./run-local-api.sh",
+            "   Start the local API first:  cd apps/sample && pnpm flask-dev",
           );
           console.error(
             "   Or unset ERC7730_API_URL to use the remote service.\n",
