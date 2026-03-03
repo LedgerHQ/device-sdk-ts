@@ -17,9 +17,9 @@ import {
 } from "./utils/hyperliquidApplicationErrors";
 
 /** Set action to sign — APDU CLA/INS per specs.md */
-const CLA = 0x0e;
+const CLA = 0xe0;
 const INS = 0x03;
-const P1 = 0x00;
+const P1 = 0x01;
 const P2 = 0x00;
 
 export type SendActionCommandArgs = {
@@ -55,7 +55,8 @@ export class SendActionCommand
     };
 
     return new ApduBuilder(sendActionArgs)
-      .addBufferToData(this.args.serializedAction)
+      .add8BitUIntToData(0x00)
+      .encodeInLVFromBuffer(this.args.serializedAction)
       .build();
   }
 

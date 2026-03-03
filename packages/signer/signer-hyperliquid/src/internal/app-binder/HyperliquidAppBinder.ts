@@ -18,6 +18,7 @@ export class HyperliquidAppBinder {
   ) {}
 
   signActions(args: {
+    derivationPath: string;
     certificate: Uint8Array;
     signedMetadata: Uint8Array;
     actions: HyperliquidAction[];
@@ -27,6 +28,7 @@ export class HyperliquidAppBinder {
       sessionId: this.sessionId,
       deviceAction: new SignActionsDeviceAction({
         input: {
+          derivationPath: args.derivationPath,
           certificate: args.certificate,
           signedMetadata: args.signedMetadata,
           actions: args.actions,

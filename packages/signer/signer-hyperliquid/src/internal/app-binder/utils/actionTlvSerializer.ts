@@ -3,14 +3,19 @@ import {
   type HexaString,
 } from "@ledgerhq/device-management-kit";
 
+const LONG_NUMBER_MAX_BYTES = 0x81 << 8;
+
 /**
  * TLV tags for "Set action to sign" (specs.md § Set action to sign).
  */
 export const TLV_TAG = {
   STRUCTURE_TYPE: 0x01,
   VERSION: 0x02,
+  CHAIN_ID: 0x23,
+  MAX_FEE: 0xb0,
   ACTION_TYPE: 0xd0,
   ASSET_ID: 0xd1,
+  APPROVE_BUILDER_ADDRESS: 0xd3,
   NONCE: 0xda,
   ACTION_STRUCTURE: 0xdb,
   ORDER_ID: 0xdc,
@@ -116,7 +121,7 @@ export type HyperliquidAction =
     }
   | {
       type: "approveBuilderFee";
-      hyperLiquidChain: "Mainnet" | "Testnet";
+      hyperliquidChain: "Mainnet" | "Testnet";
       signatureChainId: string; // chainId in hex format. Ex: 0xa4b1 for Arbitrum
       maxFeeRate: string;
       builder: HexaString;
@@ -219,10 +224,69 @@ function encodeTlvVarNumber(
   value: number,
   maxBytes: number = 8,
 ): void {
+  if (tag > 0x7f) {
+    builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
+  } else {
+    builder.add8BitUIntToData(tag);
+  }
   const bytes = numberToVarBytes(value, maxBytes);
-  builder.add8BitUIntToData(tag);
   builder.add8BitUIntToData(bytes.length);
   builder.addBufferToData(bytes);
+}
+
+function encodeInTlvFromUInt8(
+  builder: ByteArrayBuilder,
+  tag: number,
+  value: number,
+): void {
+  if (tag > 0x7f) {
+    builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
+  } else {
+    builder.add8BitUIntToData(tag);
+  }
+  builder.add8BitUIntToData(1);
+  builder.add8BitUIntToData(value);
+}
+
+function encodeInTlvFromUInt64(
+  builder: ByteArrayBuilder,
+  tag: number,
+  value: number,
+  bigEndian: boolean = true,
+): void {
+  if (tag > 0x7f) {
+    builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
+  } else {
+    builder.add8BitUIntToData(tag);
+  }
+  builder.add8BitUIntToData(8);
+  builder.add64BitUIntToData(value, bigEndian);
+}
+
+function encodeInTlvFromAscii(
+  builder: ByteArrayBuilder,
+  tag: number,
+  value: string,
+): void {
+  if (tag > 0x7f) {
+    builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
+  } else {
+    builder.add8BitUIntToData(tag);
+  }
+  builder.encodeInLVFromAscii(value);
+}
+
+function encodeInTlvFromBuffer(
+  builder: ByteArrayBuilder,
+  tag: number,
+  value: Uint8Array,
+): void {
+  if (tag > 0x7f) {
+    builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
+  } else {
+    builder.add8BitUIntToData(tag);
+  }
+  builder.encodeInLVFromBuffer(value);
 }
 
 /** Serialize a single Order to TLV (specs Order structure: 0xe0–0xe9). */
@@ -232,35 +296,51 @@ function serializeOrderToTlv(order: Order): Uint8Array {
   const orderType = order.t;
 
   // 0xe0 ORDER_TYPE: limit 0x00, trigger 0x01
-  b.encodeInTLVFromUInt8(
+  encodeInTlvFromUInt8(
+    b,
     TLV_TAG.ORDER_TYPE,
     isLimit ? ORDER_TYPE.LIMIT : ORDER_TYPE.TRIGGER,
   );
   // 0xe1 ASSET_ID (var number: 1–8 bytes)
   encodeTlvVarNumber(b, TLV_TAG.ORDER_ASSET_ID, order.a);
   // 0xe2 BUY_OR_NOT: 1 byte boolean
-  b.encodeInTLVFromUInt8(TLV_TAG.BUY_OR_NOT, order.b ? 1 : 0);
+  encodeInTlvFromUInt8(b, TLV_TAG.BUY_OR_NOT, order.b ? 1 : 0);
   // 0xe3 PRICE, 0xe4 SIZE
-  b.encodeInTLVFromAscii(TLV_TAG.PRICE, order.p);
-  b.encodeInTLVFromAscii(TLV_TAG.SIZE, order.s);
+  encodeInTlvFromAscii(b, TLV_TAG.PRICE, order.p);
+  encodeInTlvFromAscii(b, TLV_TAG.SIZE, order.s);
   // 0xe5 REDUCE_ONLY
-  b.encodeInTLVFromUInt8(TLV_TAG.REDUCE_ONLY, order.r ? 1 : 0);
+  encodeInTlvFromUInt8(b, TLV_TAG.REDUCE_ONLY, order.r ? 1 : 0);
 
   if (isLimit && "limit" in orderType) {
-    b.encodeInTLVFromUInt8(TLV_TAG.TIF, tifToByte(orderType.limit.tif));
+    encodeInTlvFromUInt8(b, TLV_TAG.TIF, tifToByte(orderType.limit.tif));
   } else if ("trigger" in orderType) {
-    b.encodeInTLVFromUInt8(
+    encodeInTlvFromUInt8(
+      b,
       TLV_TAG.TRIGGER_MARKET,
       orderType.trigger.isMarket ? 1 : 0,
     );
-    b.encodeInTLVFromAscii(TLV_TAG.TRIGGER_PRICE, orderType.trigger.triggerPx);
-    b.encodeInTLVFromUInt8(
+    encodeInTlvFromAscii(b, TLV_TAG.TRIGGER_PRICE, orderType.trigger.triggerPx);
+    encodeInTlvFromUInt8(
+      b,
       TLV_TAG.TRIGGER_TYPE,
       orderType.trigger.tpsl === "tp" ? TRIGGER_TYPE.TP : TRIGGER_TYPE.SL,
     );
   }
 
   return b.build();
+}
+
+function encodeInTlvFromHexa(
+  builder: ByteArrayBuilder,
+  tag: number,
+  value: string,
+): void {
+  if (tag > 0x7f) {
+    builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
+  } else {
+    builder.add8BitUIntToData(tag);
+  }
+  builder.encodeInLVFromHexa(value);
 }
 
 /** Build action_structure (value for tag 0xdb) per specs create_order / update_order / cancel_order / leverage. */
@@ -273,10 +353,14 @@ function buildActionStructure(action: HyperliquidAction): Uint8Array {
       const order = action.orders[0];
       if (!order) throw new Error("order action must have at least one order");
       const orderPayload = serializeOrderToTlv(order);
-      b.encodeInTLVFromBuffer(TLV_TAG.ORDER, orderPayload);
-      b.encodeInTLVFromUInt8(TLV_TAG.GROUPING, groupingToByte(action.grouping));
+      encodeInTlvFromBuffer(b, TLV_TAG.ORDER, orderPayload);
+      encodeInTlvFromUInt8(
+        b,
+        TLV_TAG.GROUPING,
+        groupingToByte(action.grouping),
+      );
       if (action.builder !== undefined) {
-        b.encodeInTLVFromHexa(TLV_TAG.BUILDER_ADDRESS, action.builder.b);
+        encodeInTlvFromHexa(b, TLV_TAG.BUILDER_ADDRESS, action.builder.b);
         encodeTlvVarNumber(b, TLV_TAG.BUILDER_FEE, action.builder.f);
       }
       break;
@@ -285,8 +369,8 @@ function buildActionStructure(action: HyperliquidAction): Uint8Array {
       // update_order: order (0xdd), oid (0xdc)
       const mod = action.modifies[0];
       if (!mod) throw new Error("modify action must have at least one modify");
-      b.encodeInTLVFromBuffer(TLV_TAG.ORDER, serializeOrderToTlv(mod.order));
-      b.encodeInTLVFromUInt64(TLV_TAG.ORDER_ID, mod.oid, true);
+      encodeInTlvFromBuffer(b, TLV_TAG.ORDER, serializeOrderToTlv(mod.order));
+      encodeInTlvFromUInt64(b, TLV_TAG.ORDER_ID, mod.oid, true);
       break;
     }
     case "cancel": {
@@ -294,19 +378,21 @@ function buildActionStructure(action: HyperliquidAction): Uint8Array {
       const cancel = action.cancels[0];
       if (!cancel)
         throw new Error("cancel action must have at least one cancel");
-      b.encodeInTLVFromUInt64(TLV_TAG.ASSET_ID, cancel.asset, true);
-      b.encodeInTLVFromUInt64(TLV_TAG.ORDER_ID, cancel.oid, true);
+      encodeInTlvFromUInt64(b, TLV_TAG.ASSET_ID, cancel.asset, true);
+      encodeInTlvFromUInt64(b, TLV_TAG.ORDER_ID, cancel.oid, true);
       break;
     }
     case "updateLeverage": {
       // leverage: asset_id (0xd1), is_cross (0xde), leverage (0xed)
-      b.encodeInTLVFromUInt64(TLV_TAG.ASSET_ID, action.asset, true);
-      b.encodeInTLVFromUInt8(TLV_TAG.IS_CROSS, action.isCross ? 1 : 0);
-      b.encodeInTLVFromUInt64(TLV_TAG.LEVERAGE, action.leverage, true);
+      encodeInTlvFromUInt64(b, TLV_TAG.ASSET_ID, action.asset, true);
+      encodeInTlvFromUInt8(b, TLV_TAG.IS_CROSS, action.isCross ? 1 : 0);
+      encodeInTlvFromUInt64(b, TLV_TAG.LEVERAGE, action.leverage, true);
       break;
     }
     case "approveBuilderFee":
-      // Specs do not define action_structure for approveBuilderFee; use empty.
+      encodeInTlvFromHexa(b, TLV_TAG.CHAIN_ID, action.signatureChainId);
+      encodeInTlvFromAscii(b, TLV_TAG.MAX_FEE, action.maxFeeRate);
+      encodeInTlvFromHexa(b, TLV_TAG.APPROVE_BUILDER_ADDRESS, action.builder);
       break;
     default:
       break;
@@ -338,7 +424,7 @@ export function serializeActionToTlv(action: HyperliquidAction): Uint8Array {
 
   // action_type (0xd0): 1 byte, required u8
   builder
-    .add8BitUIntToData(TLV_TAG.ACTION_TYPE)
+    .add16BitUIntToData(LONG_NUMBER_MAX_BYTES + TLV_TAG.ACTION_TYPE)
     .add8BitUIntToData(1)
     .add8BitUIntToData(actionTypeByte);
 
@@ -346,7 +432,7 @@ export function serializeActionToTlv(action: HyperliquidAction): Uint8Array {
   encodeTlvVarNumber(builder, TLV_TAG.NONCE, action.nonce);
 
   // action_structure (0xdb): var
-  builder.encodeInTLVFromBuffer(TLV_TAG.ACTION_STRUCTURE, actionStructure);
+  encodeInTlvFromBuffer(builder, TLV_TAG.ACTION_STRUCTURE, actionStructure);
 
   return builder.build();
 }

@@ -10,7 +10,7 @@ describe("SignActionsCommand", () => {
   let command: SignActionsCommand;
 
   beforeEach(() => {
-    command = new SignActionsCommand();
+    command = new SignActionsCommand({ derivationPath: "44'/637'/0'/0'" });
   });
 
   describe("name", () => {

@@ -18,6 +18,7 @@ function hexToUint8Array(hex: string): Uint8Array {
 }
 
 type SignActionsFormInput = {
+  derivationPath: string;
   certificate: string;
   signedMetadata: string;
   skipOpenApp: boolean;
@@ -49,6 +50,7 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
         title: "Sign Actions",
         description: "Sign a Actions with the device",
         executeDeviceAction: ({
+          derivationPath,
           certificate,
           signedMetadata,
           actions,
@@ -58,6 +60,7 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
             throw new Error("Signer not initialized");
           }
           return signer.signActions({
+            derivationPath,
             certificate: hexToUint8Array(certificate),
             signedMetadata: hexToUint8Array(signedMetadata),
             actions: JSON.parse(actions) as SignActionsActionItem[],
@@ -65,10 +68,13 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          certificate: "31323334353637383930", // hex for "1234567890"
-          signedMetadata: "0x1234567890",
+          derivationPath: "44'/60'/0'/0'",
+          certificate:
+            "0101010201023501053601011004010700001302000214010120055969656c643002001231011132012134010133210387a7ddee90538aec5a7ecaf1661f78f3fe38850a0bb55a8369ce9046b800620415473045022100a101cd3f31c8322b08082de2515d58a1e169ff589451a9785113236c414fc7090220281faf69fb957bb358fee2f29f0451535c93a88fcd426790ae72faa0a69c47bc", // hex for "1234567890"
+          signedMetadata:
+            "01012b02010181d0010081d10400000001240345544881d20100154730450220346b19f3cdae6aea7eb88c1afe416274f635dd494cf5a8add57856d2429a9f7d022100f4202dc04ed2ca3ab65b6518aa7dae1899191278cc7f97e28a2fd0a1aaf18d45",
           actions:
-            '{"domain":{"name":"USD Coin","verifyingContract":"0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48","chainId":1,"version":"2"},"primaryType":"Permit","message":{"deadline":1718992051,"nonce":0,"spender":"0x111111125421ca6dc452d289314280a0f8842a65","owner":"0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d","value":"115792089237316195423570985008687907853269984665640564039457584007913129639935"},"types":{"EIP712Domain":[{"name":"name","type":"string"},{"name":"version","type":"string"},{"name":"chainId","type":"uint256"},{"name":"verifyingContract","type":"address"}],"Permit":[{"name":"owner","type":"address"},{"name":"spender","type":"address"},{"name":"value","type":"uint256"},{"name":"nonce","type":"uint256"},{"name":"deadline","type":"uint256"}]}}',
+            '[{"type":"order","orders":[{"a":1,"b":true,"p":"1978.8","s":"0.5154","r":false,"t":{"limit":{"tif":"Ioc"}}}],"grouping":"na","builder":{"b":"0xc0708cdd6cd166d51da264e3f49a0422be26e35b","f":100},"nonce":1772440978177}]',
           skipOpenApp: false,
         },
         deviceModelId,

@@ -26,11 +26,13 @@ describe("SendActionCommand", () => {
 
       const apdu = command.getApdu();
 
-      expect(apdu.cla).toBe(0x0e);
+      expect(apdu.cla).toBe(0xe0);
       expect(apdu.ins).toBe(0x03);
-      expect(apdu.p1).toBe(0x00);
+      expect(apdu.p1).toBe(0x01);
       expect(apdu.p2).toBe(0x00);
-      expect(apdu.data).toStrictEqual(serializedAction);
+      expect(apdu.data).toStrictEqual(
+        new Uint8Array([0x00, 0x18, ...serializedAction]),
+      );
     });
 
     it("should use serializedAction as APDU data", () => {
@@ -41,7 +43,9 @@ describe("SendActionCommand", () => {
 
       const apdu = command.getApdu();
 
-      expect(apdu.data).toStrictEqual(customTlv);
+      expect(apdu.data).toStrictEqual(
+        new Uint8Array([0x00, 0x03, ...customTlv]),
+      );
     });
   });
 });

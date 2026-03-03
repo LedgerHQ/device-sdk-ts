@@ -8,13 +8,20 @@ import {
   CommandResultFactory,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
 
 import {
   HYPERLIQUID_ERRORS,
   HyperliquidCommandErrorFactory,
   type HyperliquidErrorCodes,
 } from "./utils/hyperliquidApplicationErrors";
+
+export type SignActionsCommandArgs = {
+  derivationPath: string;
+};
 
 export type SignActionsCommandResponse = {
   signature: {
@@ -25,7 +32,12 @@ export type SignActionsCommandResponse = {
 };
 
 export class SignActionsCommand
-  implements Command<SignActionsCommandResponse, void, HyperliquidErrorCodes>
+  implements
+    Command<
+      SignActionsCommandResponse,
+      SignActionsCommandArgs,
+      HyperliquidErrorCodes
+    >
 {
   readonly name = "SignActions";
   private readonly errorHelper = new CommandErrorHelper<
@@ -33,7 +45,9 @@ export class SignActionsCommand
     HyperliquidErrorCodes
   >(HYPERLIQUID_ERRORS, HyperliquidCommandErrorFactory);
 
-  constructor() {}
+  constructor(readonly args: SignActionsCommandArgs) {
+    this.args = args;
+  }
 
   getApdu(): Apdu {
     const signActionsArgs: ApduBuilderArgs = {
@@ -43,7 +57,15 @@ export class SignActionsCommand
       p2: 0x00,
     };
 
-    return new ApduBuilder(signActionsArgs).build();
+    const builder = new ApduBuilder(signActionsArgs);
+
+    const path = DerivationPathUtils.splitPath(this.args.derivationPath);
+    builder.add8BitUIntToData(path.length);
+    path.forEach((element) => {
+      builder.add32BitUIntToData(element);
+    });
+
+    return builder.build();
   }
 
   parseResponse(

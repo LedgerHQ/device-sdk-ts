@@ -13,7 +13,7 @@ import {
   type SignActionsDAError,
   type SignActionsDAInput,
   type SignActionsDAIntermediateValue,
-  SignActionsDAOutput,
+  type SignActionsDAOutput,
   signActionsDAStateSteps,
 } from "@api/app-binder/SignActionsDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
@@ -77,6 +77,7 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
       );
 
       const input: SignActionsDAInput = {
+        derivationPath: "44'/637'/0'/0'",
         certificate: exampleCertificate,
         signedMetadata: exampleMetadata,
         actions: [],
@@ -196,6 +197,7 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
         },
       ];
       const input: SignActionsDAInput = {
+        derivationPath: "44'/637'/0'/0'",
         certificate: exampleCertificate,
         signedMetadata: exampleMetadata,
         actions,
@@ -318,6 +320,7 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
       });
 
       const input: SignActionsDAInput = {
+        derivationPath: "44'/637'/0'/0'",
         certificate: exampleCertificate,
         signedMetadata: exampleMetadata,
         actions: [],

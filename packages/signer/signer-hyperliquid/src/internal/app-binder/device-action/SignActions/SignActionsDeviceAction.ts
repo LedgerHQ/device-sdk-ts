@@ -1,8 +1,11 @@
+import { type PkiCertificate } from "@ledgerhq/context-module";
 import {
   type CommandResult,
   type DeviceActionStateMachine,
   type InternalApi,
   isSuccessCommandResult,
+  LoadCertificateCommand,
+  type LoadCertificateErrorCodes,
   OpenAppDeviceAction,
   type StateMachineTypes,
   UnknownDAError,
@@ -21,7 +24,6 @@ import {
   signActionsDAStateSteps,
 } from "@api/app-binder/SignActionsDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
-import { SendCertificateCommand } from "@internal/app-binder/command/SendCertificateCommand";
 import { SendMetadataCommand } from "@internal/app-binder/command/SendMetadataCommand";
 import { type HyperliquidErrorCodes } from "@internal/app-binder/command/utils/hyperliquidApplicationErrors";
 import { SendActionsTask } from "@internal/app-binder/task/SendActionsTask";
@@ -29,20 +31,21 @@ import { SignActionsTask } from "@internal/app-binder/task/SignActionsTask";
 import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
 
 const APP_NAME = "HyperLiquid";
+const PERPS_DATA_KEY_USAGE = 0x11;
 
 export type SignActionsMachineDependencies = {
   readonly setCertificate: (
-    certificate: Uint8Array,
-  ) => Promise<CommandResult<void, HyperliquidErrorCodes>>;
+    certificate: PkiCertificate,
+  ) => Promise<CommandResult<void, LoadCertificateErrorCodes>>;
   readonly sendMetadata: (
     signedMetadata: Uint8Array,
   ) => Promise<CommandResult<void, HyperliquidErrorCodes>>;
   readonly sendActions: (
     actions: HyperliquidAction[],
   ) => Promise<CommandResult<void, HyperliquidErrorCodes>>;
-  readonly signActions: () => Promise<
-    CommandResult<Signature[], HyperliquidErrorCodes>
-  >;
+  readonly signActions: (
+    derivationPath: string,
+  ) => Promise<CommandResult<Signature[], HyperliquidErrorCodes>>;
 };
 
 export class SignActionsDeviceAction extends XStateDeviceAction<
@@ -82,7 +85,7 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
         openAppStateMachine: new OpenAppDeviceAction({
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
-        setCertificate: fromPromise(({ input }: { input: Uint8Array }) =>
+        setCertificate: fromPromise(({ input }: { input: PkiCertificate }) =>
           setCertificate(input),
         ),
         sendMetadata: fromPromise(({ input }: { input: Uint8Array }) =>
@@ -91,7 +94,7 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
         sendActions: fromPromise(({ input }: { input: HyperliquidAction[] }) =>
           sendActions(input),
         ),
-        signActions: fromPromise(() => signActions()),
+        signActions: fromPromise(({ input }: { input: string }) => signActions(input)),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -184,7 +187,10 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "setCertificate",
             src: "setCertificate",
-            input: ({ context }) => context.input.certificate,
+            input: ({ context }) => ({
+              payload: context.input.certificate,
+              keyUsageNumber: PERPS_DATA_KEY_USAGE,
+            }),
             onDone: {
               target: "SetCertificateResultCheck",
               actions: assign({
@@ -240,17 +246,8 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
         },
         SendMetadataResultCheck: {
           always: [
-            { target: "SendActionsLoop", guard: "noInternalError" },
+            { target: "SendActions", guard: "noInternalError" },
             { target: "Error" },
-          ],
-        },
-        SendActionsLoop: {
-          always: [
-            {
-              target: "SendActions",
-              guard: "hasMoreActions",
-            },
-            { target: "SignActions" },
           ],
         },
         SendActions: {
@@ -284,7 +281,7 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
         },
         SendActionsResultCheck: {
           always: [
-            { target: "SendActionsLoop", guard: "noInternalError" },
+            { target: "SignActions", guard: "noInternalError" },
             { target: "Error" },
           ],
         },
@@ -298,6 +295,7 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "signActions",
             src: "signActions",
+            input: ({ context }) => context.input.derivationPath,
             onDone: {
               target: "SignActionsResultCheck",
               actions: assign({
@@ -341,8 +339,13 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
   extractDependencies(
     internalApi: InternalApi,
   ): SignActionsMachineDependencies {
-    const setCertificate = (certificate: Uint8Array) =>
-      internalApi.sendCommand(new SendCertificateCommand({ certificate }));
+    const setCertificate = (certificate: PkiCertificate) =>
+      internalApi.sendCommand(
+        new LoadCertificateCommand({
+          certificate: certificate.payload,
+          keyUsage: certificate.keyUsageNumber,
+        }),
+      );
 
     const sendMetadata = (signedMetadata: Uint8Array) =>
       internalApi.sendCommand(new SendMetadataCommand({ signedMetadata }));
@@ -350,7 +353,10 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
     const sendActions = (actions: HyperliquidAction[]) =>
       new SendActionsTask(internalApi, { actions }).run();
 
-    const signActions = () => new SignActionsTask(internalApi).run();
+    const signActions = (derivationPath: string) =>
+      new SignActionsTask(internalApi, {
+        derivationPath,
+      }).run();
 
     return {
       setCertificate,

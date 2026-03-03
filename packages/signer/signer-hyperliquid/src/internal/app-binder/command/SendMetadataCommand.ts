@@ -18,7 +18,7 @@ import {
 
 const CLA = 0xe0;
 const INS = 0x02;
-const P1 = 0x00;
+const P1 = 0x01;
 const P2 = 0x00;
 
 export type SendMetadataCommandArgs = {
@@ -45,7 +45,8 @@ export class SendMetadataCommand
     };
 
     return new ApduBuilder(sendMetadataArgs)
-      .addBufferToData(this.args.signedMetadata)
+      .add8BitUIntToData(0x00)
+      .encodeInLVFromBuffer(this.args.signedMetadata)
       .build();
   }
 

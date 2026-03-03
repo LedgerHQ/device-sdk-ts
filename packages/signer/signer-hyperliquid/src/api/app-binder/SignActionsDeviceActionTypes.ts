@@ -28,6 +28,7 @@ export type SignActionsDAOutput = Signature[];
 export type SignActionsActionItem = HyperliquidAction;
 
 export type SignActionsDAInput = {
+  readonly derivationPath: string;
   readonly certificate: Uint8Array;
   readonly signedMetadata: Uint8Array;
   readonly actions: SignActionsActionItem[];
