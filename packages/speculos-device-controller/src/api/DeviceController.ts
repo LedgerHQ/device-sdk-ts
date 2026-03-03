@@ -12,12 +12,16 @@ import {
   pressSequence,
 } from "@root/src/internal/use-cases/buttonUseCases";
 import {
+  acceptBlindSigning,
+  closeMenu,
+  continueToBlindSigning,
   enableBlindSigningSettings,
   enterMenu,
   exitMenu,
   mainButton,
   navigateNext,
   navigatePrevious,
+  openMenu,
   reject,
   secondaryButton,
   sign,
@@ -44,6 +48,10 @@ export type TapFactory = (deviceKey: string) => {
   enterMenu: () => Promise<void>;
   exitMenu: () => Promise<void>;
   enableBlindSigningSettings: () => Promise<void>;
+  continueToBlindSigning: () => Promise<void>;
+  acceptBlindSigning: () => Promise<void>;
+  openMenu: () => Promise<void>;
+  closeMenu: () => Promise<void>;
 };
 
 export type DeviceControllerClientFactory = (
@@ -93,6 +101,10 @@ export const deviceControllerClientFactory: DeviceControllerClientFactory = (
       enterMenu: enterMenu(touch, key),
       exitMenu: exitMenu(touch, key),
       enableBlindSigningSettings: enableBlindSigningSettings(touch, key),
+      continueToBlindSigning: continueToBlindSigning(touch, key),
+      acceptBlindSigning: acceptBlindSigning(touch, key),
+      openMenu: openMenu(touch, key),
+      closeMenu: closeMenu(touch, key),
     }),
   };
 };
