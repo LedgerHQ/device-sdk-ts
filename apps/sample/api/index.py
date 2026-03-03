@@ -1,6 +1,6 @@
 import hashlib
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import ecdsa
 import requests
@@ -22,6 +22,9 @@ from erc7730.convert.calldata.convert_erc7730_input_to_calldata import (
 )
 from erc7730.convert.ledger.eip712.convert_erc7730_to_eip712 import (
     ERC7730toEIP712Converter,
+)
+from erc7730.convert.ledger.eip712.convert_erc7730_v2_to_eip712 import (
+    ERC7730V2toEIP712Converter,
 )
 from erc7730.convert.resolved.convert_erc7730_input_to_resolved import (
     ERC7730InputToResolved,
@@ -299,34 +302,11 @@ def process_eip712_descriptor(input_descriptor: InputERC7730Descriptor) -> Dict[
     Process an EIP712-type ERC7730 v1 descriptor.
     Converts ERC7730 input to resolved format, then to EIP712 descriptors.
     """
-    output = ListOutputAdder()
-
-    # Convert input descriptor to resolved format
-    resolved_descriptor = ERC7730InputToResolved().convert(input_descriptor, output)
-
-    if resolved_descriptor is None:
-        raise ValueError(f"Failed to resolve ERC7730 descriptor: {output}")
-
-    # Convert resolved descriptor to EIP712 format
-    eip712_descriptors = ERC7730toEIP712Converter().convert(resolved_descriptor, output)
-
-    if eip712_descriptors is None:
-        raise ValueError(f"Failed to convert ERC7730 descriptor to EIP712: {output}")
-
-    if not eip712_descriptors:
-        raise ValueError("No eip712 descriptors generated. Please check the descriptor format.")
-
-    # Process all EIP712 descriptors and organize by chain_id:address
-    processed_descriptors = {}
-
-    for descriptor_in in eip712_descriptors.values():
-        generated_by_chain_address = convert_erc7730_to_eip712_descriptor(descriptor_in)
-        for key, generated_data in generated_by_chain_address.items():
-            processed_descriptors[key] = [{
-                "descriptors_eip712": generated_data
-            }]
-
-    return processed_descriptors
+    return _convert_and_format_eip712_descriptors(
+        convert_to_eip712=lambda output: _convert_v1_erc7730_to_eip712_descriptors(input_descriptor, output),
+        conversion_error_message="Failed to convert ERC7730 descriptor to EIP712",
+        empty_error_message="No eip712 descriptors generated. Please check the descriptor format.",
+    )
 
 
 def process_eip712_descriptor_v2(input_descriptor_v2: InputERC7730DescriptorV2) -> Dict[str, Any]:
@@ -334,18 +314,63 @@ def process_eip712_descriptor_v2(input_descriptor_v2: InputERC7730DescriptorV2) 
     Process an EIP712-type ERC7730 v2 descriptor.
     Uses the v2 converter to produce legacy EIP-712 descriptors.
     """
-    from erc7730.convert.ledger.eip712.convert_erc7730_v2_to_eip712 import ERC7730V2toEIP712Converter
+    return _convert_and_format_eip712_descriptors(
+        convert_to_eip712=lambda output: _convert_v2_erc7730_to_eip712_descriptors(input_descriptor_v2, output),
+        conversion_error_message="Failed to convert v2 ERC7730 descriptor to EIP712",
+        empty_error_message="No eip712 descriptors generated from v2 descriptor. Please check the descriptor format.",
+    )
 
+
+def _convert_v1_erc7730_to_eip712_descriptors(
+    input_descriptor: InputERC7730Descriptor,
+    output: ListOutputAdder,
+) -> Optional[Dict[str, InputEIP712DAppDescriptor]]:
+    """
+    v1 pipeline: input -> resolved -> EIP712 descriptors.
+    """
+    resolved_descriptor = ERC7730InputToResolved().convert(input_descriptor, output)
+    if resolved_descriptor is None:
+        raise ValueError(f"Failed to resolve ERC7730 descriptor: {output}")
+
+    return ERC7730toEIP712Converter().convert(resolved_descriptor, output)
+
+
+def _convert_v2_erc7730_to_eip712_descriptors(
+    input_descriptor_v2: InputERC7730DescriptorV2,
+    output: ListOutputAdder,
+) -> Optional[Dict[str, InputEIP712DAppDescriptor]]:
+    """
+    v2 pipeline currently relies on the dedicated v2 -> EIP712 converter.
+    """
+    return ERC7730V2toEIP712Converter().convert(input_descriptor_v2, output)
+
+
+def _convert_and_format_eip712_descriptors(
+    convert_to_eip712: Callable[[ListOutputAdder], Optional[Dict[str, InputEIP712DAppDescriptor]]],
+    conversion_error_message: str,
+    empty_error_message: str,
+) -> Dict[str, Any]:
+    """
+    Common logic for v1/v2 EIP712 conversion: run converter, validate result and format response.
+    """
     output = ListOutputAdder()
-    eip712_descriptors = ERC7730V2toEIP712Converter().convert(input_descriptor_v2, output)
+    eip712_descriptors = convert_to_eip712(output)
 
     if eip712_descriptors is None:
-        raise ValueError(f"Failed to convert v2 ERC7730 descriptor to EIP712: {output}")
-
+        raise ValueError(f"{conversion_error_message}: {output}")
     if not eip712_descriptors:
-        raise ValueError("No eip712 descriptors generated from v2 descriptor. Please check the descriptor format.")
+        raise ValueError(empty_error_message)
 
-    # Process all EIP712 descriptors and organize by chain_id:address
+    return _format_eip712_descriptors_for_response(eip712_descriptors)
+
+
+def _format_eip712_descriptors_for_response(
+    eip712_descriptors: Dict[str, InputEIP712DAppDescriptor],
+) -> Dict[str, Any]:
+    """
+    Common post-conversion logic for both v1 and v2 EIP712 descriptor flows.
+    Organize generated descriptors by chain_id:address for client storage.
+    """
     processed_descriptors = {}
 
     for descriptor_in in eip712_descriptors.values():
