@@ -54,7 +54,7 @@ CAL_CERTIFICATES_OVERRIDES = {
 
 def _is_v2_descriptor(data: Dict[str, Any]) -> bool:
     """Check if the descriptor uses the v2 schema."""
-    schema = data.get("$schema", "")
+    schema = data.get("$schema") or ""
     return "v2" in schema
 
 

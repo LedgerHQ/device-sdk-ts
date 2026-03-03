@@ -41,8 +41,8 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     const missing: string[] = [];
 
     // Strip all whitespace for comparison to ignore formatting differences
-    const stripWhitespace = (text: string) => 
-      text.toLowerCase().replace(/\s+/g, '');
+    const stripWhitespace = (text: string) =>
+      text.toLowerCase().replace(/\s+/g, "");
 
     for (const expectedText of expectedTexts) {
       const strippedExpected = stripWhitespace(expectedText);
@@ -66,12 +66,16 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
       console.log(`  ${status} [${i + 1}] "${text}"`);
     });
     console.log("");
-    console.log(`Summary: ${found.length}/${expectedTexts.length} expected texts found`);
+    console.log(
+      `Summary: ${found.length}/${expectedTexts.length} expected texts found`,
+    );
     if (missing.length > 0) {
-      console.log(`Missing texts: ${missing.map(t => `"${t}"`).join(", ")}`);
+      console.log(`Missing texts: ${missing.map((t) => `"${t}"`).join(", ")}`);
     }
     console.log("");
-    console.log(`Result: ${containsAll ? "✅ All expected texts found (clear signed)" : "⚠️ Some texts missing (partially clear signed)"}`);
+    console.log(
+      `Result: ${containsAll ? "✅ All expected texts found (clear signed)" : "⚠️ Some texts missing (partially clear signed)"}`,
+    );
     console.log("========================\n");
 
     this.logger.debug("Analyzed accumulated screen texts", {
