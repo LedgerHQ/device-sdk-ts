@@ -6,6 +6,9 @@ import {
   type GetAppConfigDAError,
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
+  type GetViewKeyDAError,
+  type GetViewKeyDAIntermediateValue,
+  type GetViewKeyDAOutput,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -77,6 +80,38 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Get View Key",
+        description: "Get the view key from the device",
+        executeDeviceAction: ({
+          derivationPath,
+          checkOnDevice,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.getViewKey(derivationPath, {
+            checkOnDevice,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/683'/0",
+          checkOnDevice: false,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetViewKeyDAOutput,
+        {
+          derivationPath: string;
+          checkOnDevice?: boolean;
+          skipOpenApp?: boolean;
+        },
+        GetViewKeyDAError,
+        GetViewKeyDAIntermediateValue
       >,
       {
         title: "Sign Transaction",

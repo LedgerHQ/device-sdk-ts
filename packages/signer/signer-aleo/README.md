@@ -18,6 +18,9 @@ const signer = new SignerAleoBuilder({ dmk, sessionId }).build();
 // Get address
 const address = await signer.getAddress("m/44'/683'/0");
 
+// Get view key
+const viewKey = await signer.getViewKey("m/44'/683'/0");
+
 // Sign transaction
 const signature = await signer.signTransaction(
   "m/44'/683'/0",

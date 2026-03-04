@@ -155,7 +155,7 @@ describe("GetAddressCommand", () => {
     });
 
     describe("should return an error", () => {
-      it("when the response is not successfull", () => {
+      it("when the response is not successful", () => {
         // GIVEN
         const command = new GetAddressCommand({ derivationPath });
         const response = new ApduResponse({
