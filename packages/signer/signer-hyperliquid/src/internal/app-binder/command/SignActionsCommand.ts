@@ -3,6 +3,7 @@ import {
   ApduBuilder,
   type ApduBuilderArgs,
   type ApduResponse,
+  bufferToHexaString,
   type Command,
   type CommandResult,
   CommandResultFactory,
@@ -24,6 +25,7 @@ export type SignActionsCommandArgs = {
 };
 
 export type SignActionsCommandResponse = {
+  signaturesLeft: number;
   signature: {
     r: string;
     s: string;
@@ -76,7 +78,7 @@ export class SignActionsCommand
       return error;
     }
 
-    if (response.data.length === 0) {
+    if (response.data.length === 0 || response.data.length !== 66) {
       return CommandResultFactory({
         error: new InvalidStatusWordError("Unexpected data in response"),
       });
@@ -84,10 +86,11 @@ export class SignActionsCommand
 
     return CommandResultFactory({
       data: {
+        signaturesLeft: response.data[0]!,
         signature: {
-          r: response.data.slice(0, 32).toString(),
-          s: response.data.slice(32, 64).toString(),
-          v: response.data[64] ?? 0,
+          v: response.data[1]!,
+          r: bufferToHexaString(response.data.slice(2, 34), false),
+          s: bufferToHexaString(response.data.slice(34, 66), false),
         },
       },
     });

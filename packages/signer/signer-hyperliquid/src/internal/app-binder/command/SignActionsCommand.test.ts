@@ -1,5 +1,6 @@
 import {
   CommandResultFactory,
+  hexaStringToBuffer,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -29,7 +30,7 @@ describe("SignActionsCommand", () => {
       expect(apdu.ins).toBe(0x04);
       expect(apdu.p1).toBe(0x00);
       expect(apdu.p2).toBe(0x00);
-      expect(apdu.data.length).toBe(0x00);
+      expect(apdu.data.length).toBe(0x11);
     });
   });
 
@@ -37,17 +38,20 @@ describe("SignActionsCommand", () => {
     it("should parse the response", () => {
       const LNX_RESPONSE_GOOD = {
         statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
+        data: hexaStringToBuffer(
+          "021c1a7718eede70393bbc640a649ee65401748953a1b671ffa15fea9cb7e209289837e2621d96135f05f54fe891bb5850a94003717dfe228c270fba5d8e7f35b590",
+        )!,
       };
 
       const parsedResponse = command.parseResponse(LNX_RESPONSE_GOOD);
       expect(parsedResponse).toStrictEqual(
         CommandResultFactory({
           data: {
+            signaturesLeft: 2,
             signature: {
-              r: "01020304",
-              s: "01020304",
-              v: 0x04,
+              r: "1a7718eede70393bbc640a649ee65401748953a1b671ffa15fea9cb7e2092898",
+              s: "37e2621d96135f05f54fe891bb5850a94003717dfe228c270fba5d8e7f35b590",
+              v: 0x1c,
             },
           },
         }),

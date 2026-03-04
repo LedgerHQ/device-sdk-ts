@@ -20,12 +20,18 @@ export class SignActionsTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature[], HyperliquidErrorCodes>> {
-    // TODO: Adapt this implementation to your blockchain's signing protocol
-    // For Actionss larger than a single APDU, you may need to:
-    // 1. Split the Actions into chunks
-    // 2. Send each chunk with appropriate first/continue flags
-    // 3. Collect the final signature from the last response
+    const result = await this.signAction();
 
+    // if (!isSuccessCommandResult(result)) {
+    //   return result;
+    // }
+
+    return result;
+  }
+
+  private async signAction(
+    signatures?: Signature[],
+  ): Promise<CommandResult<Signature[], HyperliquidErrorCodes>> {
     const result = await this.api.sendCommand(
       new SignActionsCommand(this.args),
     );
@@ -34,8 +40,16 @@ export class SignActionsTask {
       return result;
     }
 
-    return CommandResultFactory({
-      data: [result.data.signature],
-    });
+    const nextSignatures = signatures
+      ? [...signatures, result.data.signature]
+      : [result.data.signature];
+
+    if (result.data.signaturesLeft !== 0) {
+      return await this.signAction(nextSignatures);
+    } else {
+      return CommandResultFactory({
+        data: nextSignatures,
+      });
+    }
   }
 }
