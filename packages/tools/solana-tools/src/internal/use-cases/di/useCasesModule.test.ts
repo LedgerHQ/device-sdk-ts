@@ -13,28 +13,20 @@ describe("useCasesModuleFactory", () => {
       container.loadSync(mod);
     });
 
-    it("should return the address module", () => {
+    it("should return the use cases module", () => {
       expect(mod).toBeDefined();
     });
 
-    it("should bind GetAddressUseCase", () => {
-      expect(container.isBound(useCasesTypes.GetAddressUseCase)).toBeTruthy();
-    });
-
-    it("should bind GetAppConfigurationUseCase", () => {
+    it("should bind GenerateTransactionUseCase", () => {
       expect(
-        container.isBound(useCasesTypes.GetAppConfigurationUseCase),
+        container.isBound(useCasesTypes.GenerateTransactionUseCase),
       ).toBeTruthy();
     });
 
-    it("should bind SignTransactionUseCase", () => {
+    it("should bind CraftTransactionUseCase", () => {
       expect(
-        container.isBound(useCasesTypes.SignTransactionUseCase),
+        container.isBound(useCasesTypes.CraftTransactionUseCase),
       ).toBeTruthy();
-    });
-
-    it("should bind SignMessageUseCase", () => {
-      expect(container.isBound(useCasesTypes.SignMessageUseCase)).toBeTruthy();
     });
   });
 });

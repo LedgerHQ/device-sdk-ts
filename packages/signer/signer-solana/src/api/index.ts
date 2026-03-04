@@ -1,10 +1,4 @@
 export type {
-  GenerateTransactionDAError,
-  GenerateTransactionDAIntermediateValue,
-  GenerateTransactionDAOutput,
-  GenerateTransactionDAReturnType,
-} from "@api/app-binder/GenerateTransactionDeviceActionTypes";
-export type {
   GetAddressDAError,
   GetAddressDAIntermediateValue,
   GetAddressDAOutput,
@@ -35,5 +29,9 @@ export type {
 } from "@api/model/TransactionResolutionContext";
 export type { SignerSolana } from "@api/SignerSolana";
 export { SignerSolanaBuilder } from "@api/SignerSolanaBuilder";
-export type { SolanaTools } from "@api/SolanaTools";
-export { SolanaToolsBuilder } from "@api/SolanaToolsBuilder";
+export {
+  GetPubKeyCommand,
+  type GetPubKeyCommandArgs,
+  type GetPubKeyCommandResponse,
+} from "@internal/app-binder/command/GetPubKeyCommand";
+export type { SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";

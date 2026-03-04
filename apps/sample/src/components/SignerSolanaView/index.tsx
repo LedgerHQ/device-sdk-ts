@@ -5,9 +5,6 @@ import {
   isBase64String,
 } from "@ledgerhq/device-management-kit";
 import {
-  type GenerateTransactionDAError,
-  type GenerateTransactionDAIntermediateValue,
-  type GenerateTransactionDAOutput,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
@@ -21,8 +18,16 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
-  SolanaToolsBuilder,
 } from "@ledgerhq/device-signer-kit-solana";
+import {
+  type CraftTransactionDAError,
+  type CraftTransactionDAIntermediateValue,
+  type CraftTransactionDAOutput,
+  type GenerateTransactionDAError,
+  type GenerateTransactionDAIntermediateValue,
+  type GenerateTransactionDAOutput,
+  SolanaToolsBuilder,
+} from "@ledgerhq/solana-tools";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -42,7 +47,6 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   const solanaTools = new SolanaToolsBuilder({
     dmk,
     sessionId,
-    originToken: "Solana",
   }).build();
 
   const deviceModelId = dmk.getConnectedDevice({
@@ -82,7 +86,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAddressDAIntermediateValue
       >,
       {
-        title: "Sign Transaction",
+        title: "Sign transaction",
         description:
           "Perform all the actions necessary to sign a Solana transaction with the device",
         executeDeviceAction: ({ derivationPath, transaction }) => {
@@ -146,7 +150,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         GetAppConfigurationDAIntermediateValue
       >,
       {
-        title: "Generate Transaction",
+        title: "Generate transaction",
         description:
           "Perform all the actions necessary to generate a transaction to test the Solana signer",
         executeDeviceAction: ({ derivationPath }) => {
@@ -154,17 +158,39 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
-          skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
         GenerateTransactionDAOutput,
         {
           derivationPath: string;
-          skipOpenApp: boolean;
         },
         GenerateTransactionDAError,
         GenerateTransactionDAIntermediateValue
+      >,
+      {
+        title: "Craft a Solana transaction",
+        description:
+          "Perform all the actions necessary to craft a Solana transaction with your public key as the fee payer",
+        executeDeviceAction: ({ derivationPath, serialisedTransaction }) => {
+          return solanaTools.craftTransaction(
+            derivationPath,
+            serialisedTransaction,
+          );
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          serialisedTransaction: "",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        CraftTransactionDAOutput,
+        {
+          derivationPath: string;
+          serialisedTransaction: string;
+        },
+        CraftTransactionDAError,
+        CraftTransactionDAIntermediateValue
       >,
     ],
     [deviceModelId, solanaTools, signer],
