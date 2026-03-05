@@ -1,5 +1,6 @@
 import {
   CommandResultFactory,
+  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 

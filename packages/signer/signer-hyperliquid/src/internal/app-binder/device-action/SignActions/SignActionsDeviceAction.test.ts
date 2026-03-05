@@ -127,7 +127,7 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
     }));
 
-  it("happy path: SetCertificate -> SendMetadata -> SendAction (x2) -> SignActions", () =>
+  it("happy path: SetCertificate -> SendMetadata -> SendAction -> SignActions", () =>
     new Promise<void>((resolve, reject) => {
       // GIVEN
       apiMock.getDeviceSessionState.mockReturnValue({
@@ -233,13 +233,6 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
         },
         {
           intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-            step: signActionsDAStateSteps.SEND_ACTION,
-          },
-          status: DeviceActionStatus.Pending,
-        },
-        {
-          intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signActionsDAStateSteps.SIGN_ACTIONS,
           },
@@ -263,28 +256,14 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
       >(action, expected, apiMock, {
         onDone: () => {
           expect(setCertificateMock).toHaveBeenCalledTimes(1);
-          expect(setCertificateMock).toHaveBeenCalledWith(exampleCertificate);
+          expect(setCertificateMock).toHaveBeenCalledWith({
+            payload: exampleCertificate,
+            keyUsageNumber: 0x11,
+          });
           expect(sendMetadataMock).toHaveBeenCalledTimes(1);
           expect(sendMetadataMock).toHaveBeenCalledWith(exampleMetadata);
-          expect(sendActionsMock).toHaveBeenCalledTimes(2);
-          expect(sendActionsMock).toHaveBeenNthCalledWith(
-            1,
-            expect.objectContaining({
-              type: "order",
-              nonce: 1,
-              orders: expect.any(Array),
-            }),
-          );
-          expect(sendActionsMock).toHaveBeenNthCalledWith(
-            2,
-            expect.objectContaining({
-              type: "updateLeverage",
-              nonce: 2,
-              asset: 0,
-              isCross: false,
-              leverage: 10,
-            }),
-          );
+          expect(sendActionsMock).toHaveBeenCalledTimes(1);
+          expect(sendActionsMock).toHaveBeenCalledWith(actions);
           expect(signActionsMock).toHaveBeenCalledTimes(1);
           resolve();
         },
