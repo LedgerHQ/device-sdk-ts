@@ -6,6 +6,13 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+
 import { SignRootIntentCommand } from "./SignRootIntentCommand";
 
 describe("SignRootIntentCommand", () => {
@@ -34,10 +41,10 @@ describe("SignRootIntentCommand", () => {
       const apdu: Apdu = command.getApdu();
 
       // Then
-      expect(apdu.cla).toBe(0xe0);
-      expect(apdu.ins).toBe(0x06);
-      expect(apdu.p1).toBe(0x00);
-      expect(apdu.p2).toBe(0x00);
+      expect(apdu.cla).toBe(ALEO_CLA);
+      expect(apdu.ins).toBe(INS.SIGN_INTENT);
+      expect(apdu.p1).toBe(P1.SIGN_MODE_ROOT);
+      expect(apdu.p2).toBe(P2_DEFAULT);
 
       // Should contain derivation path (3 path elements) + root intent length (2 bytes) + root intent data
       const expectedPathLength = 1 + 3 * 4; // 1 byte for count + 3 elements * 4 bytes each

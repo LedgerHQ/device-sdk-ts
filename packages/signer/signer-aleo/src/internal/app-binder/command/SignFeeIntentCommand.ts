@@ -13,6 +13,13 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+
+import {
   ALEO_APP_ERRORS,
   AleoAppCommandErrorFactory,
   type AleoErrorCodes,
@@ -54,10 +61,10 @@ export class SignFeeIntentCommand
 
   getApdu(): Apdu {
     const signFeeIntentArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x06,
-      p1: 0x02, // Second chunk / fee intent
-      p2: 0x00,
+      cla: ALEO_CLA,
+      ins: INS.SIGN_INTENT,
+      p1: P1.SIGN_MODE_FEE, // Second chunk / fee intent
+      p2: P2_DEFAULT,
     };
 
     const builder = new ApduBuilder(signFeeIntentArgs);

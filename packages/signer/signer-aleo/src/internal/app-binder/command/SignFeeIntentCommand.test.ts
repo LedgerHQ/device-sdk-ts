@@ -6,6 +6,13 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+
 import { SignFeeIntentCommand } from "./SignFeeIntentCommand";
 
 describe("SignFeeIntentCommand", () => {
@@ -31,10 +38,10 @@ describe("SignFeeIntentCommand", () => {
       const apdu: Apdu = command.getApdu();
 
       // Then
-      expect(apdu.cla).toBe(0xe0);
-      expect(apdu.ins).toBe(0x06);
-      expect(apdu.p1).toBe(0x02);
-      expect(apdu.p2).toBe(0x00);
+      expect(apdu.cla).toBe(ALEO_CLA);
+      expect(apdu.ins).toBe(INS.SIGN_INTENT);
+      expect(apdu.p1).toBe(P1.SIGN_MODE_FEE);
+      expect(apdu.p2).toBe(P2_DEFAULT);
 
       // Should only contain length (2 bytes) + fee intent data (no derivation path)
       expect(apdu.data.length).toBe(2 + mockFeeIntent.length);

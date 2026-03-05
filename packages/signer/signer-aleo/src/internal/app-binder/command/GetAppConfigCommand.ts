@@ -13,6 +13,12 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import { type AppConfig } from "@api/model/AppConfig";
+import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import {
   ALEO_APP_ERRORS,
@@ -33,10 +39,10 @@ export class GetAppConfigCommand
 
   getApdu(): Apdu {
     const getConfigArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x03,
-      p1: 0x00,
-      p2: 0x00,
+      cla: ALEO_CLA,
+      ins: INS.GET_APP_VERSION,
+      p1: P1.NO_CHECK,
+      p2: P2_DEFAULT,
     };
     const builder = new ApduBuilder(getConfigArgs);
     return builder.build();

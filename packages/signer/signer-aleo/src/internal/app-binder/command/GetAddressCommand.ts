@@ -16,6 +16,13 @@ import {
 import { Maybe } from "purify-ts";
 
 import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+
+import {
   ALEO_APP_ERRORS,
   AleoAppCommandErrorFactory,
   type AleoErrorCodes,
@@ -34,7 +41,7 @@ export class GetAddressCommand
   implements
     Command<GetAddressCommandResponse, GetAddressCommandArgs, AleoErrorCodes>
 {
-  readonly name = "GetAddress";
+  readonly name = "getAddress";
   private readonly errorHelper = new CommandErrorHelper<
     GetAddressCommandResponse,
     AleoErrorCodes
@@ -48,10 +55,10 @@ export class GetAddressCommand
 
   getApdu(): Apdu {
     const getAddressCommandArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x05,
-      p1: this.args.checkOnDevice ? 0x01 : 0x00,
-      p2: 0x00,
+      cla: ALEO_CLA,
+      ins: INS.GET_ADDRESS,
+      p1: this.args.checkOnDevice ? P1.CHECK_ON_DEVICE : P1.NO_CHECK,
+      p2: P2_DEFAULT,
     };
 
     const builder = new ApduBuilder(getAddressCommandArgs);

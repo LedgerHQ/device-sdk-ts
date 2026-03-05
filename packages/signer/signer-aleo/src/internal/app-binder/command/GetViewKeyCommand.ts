@@ -16,6 +16,13 @@ import {
 import { Maybe } from "purify-ts";
 
 import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+
+import {
   ALEO_APP_ERRORS,
   AleoAppCommandErrorFactory,
   type AleoErrorCodes,
@@ -47,10 +54,10 @@ export class GetViewKeyCommand
 
   getApdu(): Apdu {
     const getViewKeyCommandArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x07,
-      p1: 0x01,
-      p2: 0x00,
+      cla: ALEO_CLA,
+      ins: INS.GET_VIEW_KEY,
+      p1: P1.CHECK_ON_DEVICE,
+      p2: P2_DEFAULT,
     };
 
     const builder = new ApduBuilder(getViewKeyCommandArgs);

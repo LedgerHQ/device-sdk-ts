@@ -16,6 +16,13 @@ import {
 import { Maybe } from "purify-ts";
 
 import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+
+import {
   ALEO_APP_ERRORS,
   AleoAppCommandErrorFactory,
   type AleoErrorCodes,
@@ -58,10 +65,10 @@ export class SignRootIntentCommand
 
   getApdu(): Apdu {
     const signRootIntentArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x06,
-      p1: 0x00, // First chunk
-      p2: 0x00,
+      cla: ALEO_CLA,
+      ins: INS.SIGN_INTENT,
+      p1: P1.SIGN_MODE_ROOT, // First chunk
+      p2: P2_DEFAULT,
     };
 
     const builder = new ApduBuilder(signRootIntentArgs);

@@ -39,14 +39,14 @@ describe("GetAddressCommand", () => {
   const derivationPath = "44'/683'/0";
 
   describe("name", () => {
-    it("should be 'GetAddress'", () => {
+    it("should be 'getAddress'", () => {
       const command = new GetAddressCommand({ derivationPath });
-      expect(command.name).toBe("GetAddress");
+      expect(command.name).toBe("getAddress");
     });
   });
 
   describe("getApdu", () => {
-    it("should return the GetAddress apdu with checkOnDevice set to true", () => {
+    it("should return the getAddress apdu with checkOnDevice set to true", () => {
       const command = new GetAddressCommand({
         derivationPath,
         checkOnDevice: true,
@@ -57,7 +57,7 @@ describe("GetAddressCommand", () => {
       );
     });
 
-    it("should return the GetAddress apdu with checkOnDevice set to true and custom derivation path", () => {
+    it("should return the getAddress apdu with checkOnDevice set to true and custom derivation path", () => {
       const command = new GetAddressCommand({
         derivationPath: "44'/60'/1'/2/3",
         checkOnDevice: true,
@@ -68,7 +68,7 @@ describe("GetAddressCommand", () => {
       );
     });
 
-    it("should return the GetAddress apdu with checkOnDevice set to false", () => {
+    it("should return the getAddress apdu with checkOnDevice set to false", () => {
       const command = new GetAddressCommand({
         derivationPath,
         checkOnDevice: false,
