@@ -11,8 +11,7 @@ import { type GetViewKeyCommandResponse } from "@internal/app-binder/command/Get
 import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
 
 type GetViewKeyDAUserInteractionRequired =
-  | UserInteractionRequired.None
-  | UserInteractionRequired.VerifyAddress;
+  UserInteractionRequired.VerifyAddress;
 
 export type GetViewKeyDAOutput =
   SendCommandInAppDAOutput<GetViewKeyCommandResponse>;

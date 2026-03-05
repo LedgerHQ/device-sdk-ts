@@ -23,7 +23,6 @@ import {
 
 export type GetViewKeyCommandArgs = {
   readonly derivationPath: string;
-  readonly checkOnDevice?: boolean;
 };
 
 export type GetViewKeyCommandResponse = {
@@ -50,7 +49,7 @@ export class GetViewKeyCommand
     const getViewKeyCommandArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x07,
-      p1: this.args.checkOnDevice ? 0x01 : 0x00,
+      p1: 0x01,
       p2: 0x00,
     };
 

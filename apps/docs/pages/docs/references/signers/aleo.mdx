@@ -140,12 +140,10 @@ const { observable, cancel } = signerAleo.getViewKey(derivationPath, options);
 
     ```typescript
     type AddressOptions = {
-      checkOnDevice?: boolean;
       skipOpenApp?: boolean;
     };
     ```
 
-  - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`).
   - `skipOpenApp`: An optional boolean indicating whether to skip opening the aleo app automatically (`true`) or not (`false`).
 
 #### **Returns**
