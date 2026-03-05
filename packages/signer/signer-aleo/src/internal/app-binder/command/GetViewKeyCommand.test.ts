@@ -11,11 +11,11 @@ const VIEW_KEY = "AViewKey1q7Q7AA6bRb4ipW2Qe7aDS7qaobZSH2qPqZ6FueUR72wL";
 
 const GET_VIEW_KEY_APDU_WITH_CHECK_ON_DEVICE_AND_LONG_DERIVATION_PATH =
   Uint8Array.from(
-    Buffer.from("e007000015058000002c8000003c800000010000000200000003", "hex"),
+    Buffer.from("e007010015058000002c8000003c800000010000000200000003", "hex"),
   );
 
-const GET_VIEW_KEY_APDU_WITHOUT_CHECK_ON_DEVICE = Uint8Array.from(
-  Buffer.from("e00700000d038000002c800002ab00000000", "hex"),
+const GET_VIEW_KEY_APDU_WIT_CHECK_ON_DEVICE = Uint8Array.from(
+  Buffer.from("e00701000d038000002c800002ab00000000", "hex"),
 );
 
 const RESPONSE_DATA = Uint8Array.from(
@@ -44,7 +44,7 @@ describe("GetViewKeyCommand", () => {
       });
       const apdu = command.getApdu();
       expect(apdu.getRawApdu()).toStrictEqual(
-        GET_VIEW_KEY_APDU_WITHOUT_CHECK_ON_DEVICE,
+        GET_VIEW_KEY_APDU_WIT_CHECK_ON_DEVICE,
       );
     });
 
