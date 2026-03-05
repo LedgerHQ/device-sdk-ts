@@ -15,9 +15,6 @@ import {
   type SignRootIntentDAError,
   type SignRootIntentDAIntermediateValue,
   type SignRootIntentDAOutput,
-  type SignTransactionDAError,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-aleo";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -111,46 +108,6 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
         },
         GetViewKeyDAError,
         GetViewKeyDAIntermediateValue
-      >,
-      {
-        title: "Sign Transaction",
-        description: "Sign a transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
-          if (!signer) {
-            throw new Error("Signer not initialized");
-          }
-          // Convert hex string to Uint8Array
-          const txBytes = transaction.startsWith("0x")
-            ? new Uint8Array(
-                transaction
-                  .slice(2)
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              )
-            : new Uint8Array(
-                transaction
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              );
-          return signer.signTransaction(derivationPath, txBytes, {
-            skipOpenApp,
-          });
-        },
-        initialValues: {
-          derivationPath: "44'/683'/0",
-          transaction: "",
-          skipOpenApp: false,
-        },
-        deviceModelId,
-      } satisfies DeviceActionProps<
-        SignTransactionDAOutput,
-        {
-          derivationPath: string;
-          transaction: string;
-          skipOpenApp?: boolean;
-        },
-        SignTransactionDAError,
-        SignTransactionDAIntermediateValue
       >,
       {
         title: "Sign Root Intent",

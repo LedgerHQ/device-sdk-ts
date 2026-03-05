@@ -13,7 +13,7 @@ describe("SignRootIntentCommand", () => {
   const mockRootIntent = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
 
   describe("getApdu", () => {
-    it("should create APDU with P1=0x00", () => {
+    it("should create correct APDU", () => {
       // Given
       const command = new SignRootIntentCommand({
         derivationPath: "44'/683'/0'",
@@ -30,7 +30,6 @@ describe("SignRootIntentCommand", () => {
       expect(apdu.p2).toBe(0x00);
 
       // Should contain derivation path (3 path elements) + root intent length (2 bytes) + root intent data
-      // Format: [path_count, path[0], path[1], path[2], len_high, len_low, ...root_intent]
       const expectedPathLength = 1 + 3 * 4; // 1 byte for count + 3 elements * 4 bytes each
       expect(apdu.data.length).toBe(
         expectedPathLength + 2 + mockRootIntent.length,
@@ -42,7 +41,7 @@ describe("SignRootIntentCommand", () => {
 
     it("should handle custom derivation path", () => {
       // Given
-      const customPath = "44'/683'/1'";
+      const customPath = "44'/683'/122'";
       const command = new SignRootIntentCommand({
         derivationPath: customPath,
         rootIntent: mockRootIntent,
@@ -129,6 +128,15 @@ describe("SignRootIntentCommand", () => {
 
       // Then
       expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toEqual(
+          expect.objectContaining({
+            _tag: "AleoAppCommandError",
+            errorCode: "6985",
+            message: "Denied by user",
+          }),
+        );
+      }
     });
 
     it("should handle device error codes", () => {
@@ -149,6 +157,15 @@ describe("SignRootIntentCommand", () => {
 
       // Then
       expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toEqual(
+          expect.objectContaining({
+            _tag: "AleoAppCommandError",
+            errorCode: "b004",
+            message: "Wrong transaction length",
+          }),
+        );
+      }
     });
   });
 });

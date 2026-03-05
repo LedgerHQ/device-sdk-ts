@@ -103,6 +103,15 @@ describe("SignFeeIntentCommand", () => {
 
       // Then
       expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toEqual(
+          expect.objectContaining({
+            _tag: "AleoAppCommandError",
+            errorCode: "6985",
+            message: "Denied by user",
+          }),
+        );
+      }
     });
 
     it("should handle device error codes", () => {
@@ -122,6 +131,15 @@ describe("SignFeeIntentCommand", () => {
 
       // Then
       expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toEqual(
+          expect.objectContaining({
+            _tag: "AleoAppCommandError",
+            errorCode: "b008",
+            message: "Signature fail",
+          }),
+        );
+      }
     });
   });
 });
