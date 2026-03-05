@@ -49,7 +49,7 @@ export class GetViewKeyCommand
     const getViewKeyCommandArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x07,
-      p1: 0x00,
+      p1: 0x01,
       p2: 0x00,
     };
 

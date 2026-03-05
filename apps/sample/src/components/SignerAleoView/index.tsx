@@ -84,22 +84,16 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
       {
         title: "Get View Key",
         description: "Get the view key from the device",
-        executeDeviceAction: ({
-          derivationPath,
-          checkOnDevice,
-          skipOpenApp,
-        }) => {
+        executeDeviceAction: ({ derivationPath, skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
           return signer.getViewKey(derivationPath, {
-            checkOnDevice,
             skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: "44'/683'/0",
-          checkOnDevice: false,
           skipOpenApp: false,
         },
         deviceModelId,
@@ -107,7 +101,6 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
         GetViewKeyDAOutput,
         {
           derivationPath: string;
-          checkOnDevice?: boolean;
           skipOpenApp?: boolean;
         },
         GetViewKeyDAError,
