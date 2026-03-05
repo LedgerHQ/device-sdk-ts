@@ -11,8 +11,17 @@ import { SignFeeIntentCommand } from "./SignFeeIntentCommand";
 describe("SignFeeIntentCommand", () => {
   const mockFeeIntent = new Uint8Array([0x05, 0x06, 0x07, 0x08]);
 
+  describe("name", () => {
+    it("should be 'signFeeIntent'", () => {
+      const command = new SignFeeIntentCommand({
+        feeIntent: mockFeeIntent,
+      });
+      expect(command.name).toBe("signFeeIntent");
+    });
+  });
+
   describe("getApdu", () => {
-    it("should create APDU with P1=0x02", () => {
+    it("should create correct APDU with P1=0x02", () => {
       // Given
       const command = new SignFeeIntentCommand({
         feeIntent: mockFeeIntent,

@@ -33,7 +33,7 @@ export type SignRootIntentCommandResponse = {
 /**
  * Command to sign the root intent (first part) of an Aleo public transfer transaction.
  * This command sends the derivation path and root intent data to the device.
- * The device will respond with 0x9000 status code if successful.
+ * On success, the device responds with TLV-encoded signature data and a 0x9000 status code.
  * After this, SignFeeIntentCommand should be called to complete the transaction.
  */
 export class SignRootIntentCommand
@@ -44,7 +44,7 @@ export class SignRootIntentCommand
       AleoErrorCodes
     >
 {
-  readonly name = "SignRootIntent";
+  readonly name = "signRootIntent";
   private readonly errorHelper = new CommandErrorHelper<
     SignRootIntentCommandResponse,
     AleoErrorCodes

@@ -1,6 +1,6 @@
 import {
   type Apdu,
-  ApduResponse,
+  type ApduResponse,
   CommandResultFactory,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -11,6 +11,16 @@ import { SignRootIntentCommand } from "./SignRootIntentCommand";
 describe("SignRootIntentCommand", () => {
   const mockDerivationPath = "m/44'/1'/0'/0/0";
   const mockRootIntent = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+
+  describe("name", () => {
+    it("should be 'signRootIntent'", () => {
+      const command = new SignRootIntentCommand({
+        derivationPath: "44'/683'/0'",
+        rootIntent: mockRootIntent,
+      });
+      expect(command.name).toBe("signRootIntent");
+    });
+  });
 
   describe("getApdu", () => {
     it("should create correct APDU", () => {
