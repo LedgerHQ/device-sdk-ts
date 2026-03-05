@@ -5,8 +5,20 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
+import {
+  ALEO_CLA,
+  INS,
+  P1,
+  P2_DEFAULT,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
 
-const GET_APP_CONFIG_APDU = new Uint8Array([0xe0, 0x03, 0x00, 0x00, 0x00]);
+const GET_APP_CONFIG_APDU = new Uint8Array([
+  ALEO_CLA,
+  INS.GET_APP_VERSION,
+  P1.NO_CHECK,
+  P2_DEFAULT,
+  0x00,
+]);
 
 const GET_APP_CONFIG_RESPONSE_DATA = new Uint8Array([0x00, 0x01, 0x02]);
 

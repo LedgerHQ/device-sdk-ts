@@ -1,3 +1,4 @@
 export const transactionTypes = {
-  SignTransactionUseCase: Symbol.for("SignTransactionUseCase"),
+  SignRootIntentUseCase: Symbol.for("SignRootIntentUseCase"),
+  SignFeeIntentUseCase: Symbol.for("SignFeeIntentUseCase"),
 } as const;

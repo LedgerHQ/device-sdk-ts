@@ -7,8 +7,9 @@ import { type Container } from "inversify";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
+import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignRootIntentDAReturnType } from "@api/app-binder/SignRootIntentDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerAleo } from "@api/SignerAleo";
@@ -21,7 +22,8 @@ import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfi
 import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
-import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
+import { type SignFeeIntentUseCase } from "@internal/use-cases/transaction/SignFeeIntentUseCase";
+import { type SignRootIntentUseCase } from "@internal/use-cases/transaction/SignRootIntentUseCase";
 
 type DefaultSignerAleoConstructorArgs = {
   dmk: DeviceManagementKit;
@@ -59,16 +61,6 @@ export class DefaultSignerAleo implements SignerAleo {
       .execute(derivationPath, options);
   }
 
-  signTransaction(
-    derivationPath: string,
-    transaction: Uint8Array,
-    options?: TransactionOptions,
-  ): SignTransactionDAReturnType {
-    return this._container
-      .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
-      .execute(derivationPath, transaction, options);
-  }
-
   signMessage(
     derivationPath: string,
     message: string | Uint8Array,
@@ -76,5 +68,24 @@ export class DefaultSignerAleo implements SignerAleo {
     return this._container
       .get<SignMessageUseCase>(messageTypes.SignMessageUseCase)
       .execute(derivationPath, message);
+  }
+
+  signRootIntent(
+    derivationPath: string,
+    rootIntent: Uint8Array,
+    options?: TransactionOptions,
+  ): SignRootIntentDAReturnType {
+    return this._container
+      .get<SignRootIntentUseCase>(transactionTypes.SignRootIntentUseCase)
+      .execute(derivationPath, rootIntent, options);
+  }
+
+  signFeeIntent(
+    feeIntent: Uint8Array,
+    options?: TransactionOptions,
+  ): SignFeeIntentDAReturnType {
+    return this._container
+      .get<SignFeeIntentUseCase>(transactionTypes.SignFeeIntentUseCase)
+      .execute(feeIntent, options);
   }
 }

@@ -9,9 +9,12 @@ import {
   type GetViewKeyDAError,
   type GetViewKeyDAIntermediateValue,
   type GetViewKeyDAOutput,
-  type SignTransactionDAError,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAOutput,
+  type SignFeeIntentDAError,
+  type SignFeeIntentDAIntermediateValue,
+  type SignFeeIntentDAOutput,
+  type SignRootIntentDAError,
+  type SignRootIntentDAIntermediateValue,
+  type SignRootIntentDAOutput,
 } from "@ledgerhq/device-signer-kit-aleo";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -107,44 +110,81 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
         GetViewKeyDAIntermediateValue
       >,
       {
-        title: "Sign Transaction",
-        description: "Sign a transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+        title: "Sign Root Intent",
+        description: "Sign a root intent with the device",
+        executeDeviceAction: ({ derivationPath, rootIntent, skipOpenApp }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
           // Convert hex string to Uint8Array
-          const txBytes = transaction.startsWith("0x")
+          const rootIntentBytes = rootIntent.startsWith("0x")
             ? new Uint8Array(
-                transaction
+                rootIntent
                   .slice(2)
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? [],
               )
             : new Uint8Array(
-                transaction
+                rootIntent
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? [],
               );
-          return signer.signTransaction(derivationPath, txBytes, {
+          return signer.signRootIntent(derivationPath, rootIntentBytes, {
             skipOpenApp,
           });
         },
         initialValues: {
           derivationPath: "44'/683'/0",
-          transaction: "",
+          rootIntent: "",
           skipOpenApp: false,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
-        SignTransactionDAOutput,
+        SignRootIntentDAOutput,
         {
           derivationPath: string;
-          transaction: string;
+          rootIntent: string;
           skipOpenApp?: boolean;
         },
-        SignTransactionDAError,
-        SignTransactionDAIntermediateValue
+        SignRootIntentDAError,
+        SignRootIntentDAIntermediateValue
+      >,
+      {
+        title: "Sign Fee Intent",
+        description: "Sign a fee intent with the device",
+        executeDeviceAction: ({ feeIntent, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          // Convert hex string to Uint8Array
+          const feeIntentBytes = feeIntent.startsWith("0x")
+            ? new Uint8Array(
+                feeIntent
+                  .slice(2)
+                  .match(/.{1,2}/g)
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
+              )
+            : new Uint8Array(
+                feeIntent.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) ??
+                  [],
+              );
+          return signer.signFeeIntent(feeIntentBytes, {
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          feeIntent: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignFeeIntentDAOutput,
+        {
+          feeIntent: string;
+          skipOpenApp?: boolean;
+        },
+        SignFeeIntentDAError,
+        SignFeeIntentDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
