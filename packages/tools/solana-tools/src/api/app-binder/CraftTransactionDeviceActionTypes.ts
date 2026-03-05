@@ -8,12 +8,17 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type SolanaAppErrorCodes } from "@ledgerhq/device-signer-kit-solana";
 
+import { type TransactionFetcherService } from "@internal/services/TransactionFetcherService";
+
 export type CraftTransactionDAOutput = string;
 
 export type CraftTransactionDAInput = {
   readonly derivationPath: string;
-  readonly serialisedTransaction: string;
-  readonly skipOpenApp: boolean;
+  readonly serialisedTransaction?: string;
+  readonly transactionSignature?: string;
+  readonly rpcUrl?: string;
+  readonly skipOpenApp?: boolean;
+  readonly transactionFetcherService: TransactionFetcherService;
 };
 
 export type CraftTransactionDAError =
@@ -37,6 +42,7 @@ export type CraftTransactionDAState = DeviceActionState<
 export type CraftTransactionDAInternalState = {
   readonly error: CraftTransactionDAError | null;
   readonly publicKey: string | null;
+  readonly fetchedTransaction: string | null;
   readonly serialisedTransaction: string | null;
 };
 

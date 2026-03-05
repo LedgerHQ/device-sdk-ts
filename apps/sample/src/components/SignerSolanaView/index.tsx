@@ -171,16 +171,25 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
       {
         title: "Craft a Solana transaction",
         description:
-          "Perform all the actions necessary to craft a Solana transaction with your public key as the fee payer",
-        executeDeviceAction: ({ derivationPath, serialisedTransaction }) => {
-          return solanaTools.craftTransaction(
+          "Craft a Solana transaction with your public key as the fee payer. Provide either a serialised transaction (base64) or a transaction signature to fetch from the network.",
+        executeDeviceAction: ({
+          derivationPath,
+          serialisedTransaction,
+          transactionSignature,
+          rpcUrl,
+        }) => {
+          return solanaTools.craftTransaction({
             derivationPath,
-            serialisedTransaction,
-          );
+            serialisedTransaction: serialisedTransaction || undefined,
+            transactionSignature: transactionSignature || undefined,
+            rpcUrl: rpcUrl || undefined,
+          });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           serialisedTransaction: "",
+          transactionSignature: "",
+          rpcUrl: "",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -188,6 +197,8 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         {
           derivationPath: string;
           serialisedTransaction: string;
+          transactionSignature: string;
+          rpcUrl: string;
         },
         CraftTransactionDAError,
         CraftTransactionDAIntermediateValue
