@@ -14,10 +14,15 @@ export type {
   GetViewKeyDAOutput,
 } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 export type {
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue,
-  SignTransactionDAOutput,
-} from "@api/app-binder/SignTransactionDeviceActionTypes";
+  SignFeeIntentDAError,
+  SignFeeIntentDAIntermediateValue,
+  SignFeeIntentDAOutput,
+} from "@api/app-binder/SignFeeIntentDeviceActionTypes";
+export type {
+  SignRootIntentDAError,
+  SignRootIntentDAIntermediateValue,
+  SignRootIntentDAOutput,
+} from "@api/app-binder/SignRootIntentDeviceActionTypes";
 export * from "@api/SignerAleo";
 export * from "@api/SignerAleoBuilder";
 // Export other types as needed

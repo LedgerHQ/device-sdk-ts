@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { AleoAppBinder } from "@internal/app-binder/AleoAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 
 @injectable()
-export class SignTransactionUseCase {
+export class SignFeeIntentUseCase {
   private readonly _appBinder: AleoAppBinder;
 
   constructor(@inject(appBinderTypes.AppBinding) appBinder: AleoAppBinder) {
@@ -14,14 +14,12 @@ export class SignTransactionUseCase {
   }
 
   execute(
-    derivationPath: string,
-    transaction: Uint8Array,
+    feeIntent: Uint8Array,
     options?: TransactionOptions,
-  ): SignTransactionDAReturnType {
-    return this._appBinder.signTransaction({
-      derivationPath,
-      transaction,
-      skipOpenApp: options?.skipOpenApp,
+  ): SignFeeIntentDAReturnType {
+    return this._appBinder.signFeeIntent({
+      feeIntent,
+      skipOpenApp: options?.skipOpenApp ?? false,
     });
   }
 }
