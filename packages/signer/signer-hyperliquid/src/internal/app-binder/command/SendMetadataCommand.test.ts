@@ -42,7 +42,9 @@ describe("SendMetadataCommand", () => {
       expect(apdu.p1).toBe(0x01);
       expect(apdu.p2).toBe(0x00);
       expect(apdu.getRawApdu()).toStrictEqual(
-        hexaStringToBuffer("e002010065006301012b02010181d0010081d10400000001240345544881d20100154730450220346b19f3cdae6aea7eb88c1afe416274f635dd494cf5a8add57856d2429a9f7d022100f4202dc04ed2ca3ab65b6518aa7dae1899191278cc7f97e28a2fd0a1aaf18d45")!,
+        hexaStringToBuffer(
+          "e002010065006301012b02010181d0010081d10400000001240345544881d20100154730450220346b19f3cdae6aea7eb88c1afe416274f635dd494cf5a8add57856d2429a9f7d022100f4202dc04ed2ca3ab65b6518aa7dae1899191278cc7f97e28a2fd0a1aaf18d45",
+        )!,
       );
     });
   });

@@ -94,7 +94,9 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
         sendActions: fromPromise(({ input }: { input: HyperliquidAction[] }) =>
           sendActions(input),
         ),
-        signActions: fromPromise(({ input }: { input: string }) => signActions(input)),
+        signActions: fromPromise(({ input }: { input: string }) =>
+          signActions(input),
+        ),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
