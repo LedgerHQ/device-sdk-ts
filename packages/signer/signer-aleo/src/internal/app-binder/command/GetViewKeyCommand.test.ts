@@ -9,13 +9,9 @@ import { GetViewKeyCommand } from "./GetViewKeyCommand";
 
 const VIEW_KEY = "AViewKey1q7Q7AA6bRb4ipW2Qe7aDS7qaobZSH2qPqZ6FueUR72wL";
 
-const GET_VIEW_KEY_APDU_WITH_CHECK_ON_DEVICE = Uint8Array.from(
-  Buffer.from("e00701000d038000002c800002ab00000000", "hex"),
-);
-
 const GET_VIEW_KEY_APDU_WITH_CHECK_ON_DEVICE_AND_LONG_DERIVATION_PATH =
   Uint8Array.from(
-    Buffer.from("e007010015058000002c8000003c800000010000000200000003", "hex"),
+    Buffer.from("e007000015058000002c8000003c800000010000000200000003", "hex"),
   );
 
 const GET_VIEW_KEY_APDU_WITHOUT_CHECK_ON_DEVICE = Uint8Array.from(
@@ -42,36 +38,23 @@ describe("GetViewKeyCommand", () => {
   });
 
   describe("getApdu", () => {
-    it("should return the GetViewKey apdu with checkOnDevice set to true", () => {
+    it("should return the GetViewKey apdu", () => {
       const command = new GetViewKeyCommand({
         derivationPath,
-        checkOnDevice: true,
-      });
-      const apdu = command.getApdu();
-      expect(apdu.getRawApdu()).toStrictEqual(
-        GET_VIEW_KEY_APDU_WITH_CHECK_ON_DEVICE,
-      );
-    });
-
-    it("should return the GetViewKey apdu with checkOnDevice set to true and custom derivation path", () => {
-      const command = new GetViewKeyCommand({
-        derivationPath: "44'/60'/1'/2/3",
-        checkOnDevice: true,
-      });
-      const apdu = command.getApdu();
-      expect(apdu.getRawApdu()).toStrictEqual(
-        GET_VIEW_KEY_APDU_WITH_CHECK_ON_DEVICE_AND_LONG_DERIVATION_PATH,
-      );
-    });
-
-    it("should return the GetViewKey apdu with checkOnDevice set to false", () => {
-      const command = new GetViewKeyCommand({
-        derivationPath,
-        checkOnDevice: false,
       });
       const apdu = command.getApdu();
       expect(apdu.getRawApdu()).toStrictEqual(
         GET_VIEW_KEY_APDU_WITHOUT_CHECK_ON_DEVICE,
+      );
+    });
+
+    it("should return the GetViewKey apdu with custom derivation path", () => {
+      const command = new GetViewKeyCommand({
+        derivationPath: "44'/60'/1'/2/3",
+      });
+      const apdu = command.getApdu();
+      expect(apdu.getRawApdu()).toStrictEqual(
+        GET_VIEW_KEY_APDU_WITH_CHECK_ON_DEVICE_AND_LONG_DERIVATION_PATH,
       );
     });
   });

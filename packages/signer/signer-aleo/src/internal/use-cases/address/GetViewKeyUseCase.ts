@@ -19,7 +19,6 @@ export class GetViewKeyUseCase {
   ): GetViewKeyDAReturnType {
     return this._appBinder.getViewKey({
       derivationPath,
-      checkOnDevice: options?.checkOnDevice ?? false,
       skipOpenApp: options?.skipOpenApp ?? false,
     });
   }

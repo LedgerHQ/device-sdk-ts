@@ -63,7 +63,6 @@ export class AleoAppBinder {
 
   getViewKey(args: {
     derivationPath: string;
-    checkOnDevice: boolean;
     skipOpenApp: boolean;
   }): GetViewKeyDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -72,9 +71,7 @@ export class AleoAppBinder {
         input: {
           command: new GetViewKeyCommand(args),
           appName: "Aleo",
-          requiredUserInteraction: args.checkOnDevice
-            ? UserInteractionRequired.VerifyAddress
-            : UserInteractionRequired.None,
+          requiredUserInteraction: UserInteractionRequired.VerifyAddress,
           skipOpenApp: args.skipOpenApp,
         },
       }),
