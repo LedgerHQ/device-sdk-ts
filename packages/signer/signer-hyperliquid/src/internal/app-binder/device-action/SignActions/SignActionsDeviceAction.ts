@@ -30,7 +30,7 @@ import { SendActionsTask } from "@internal/app-binder/task/SendActionsTask";
 import { SignActionsTask } from "@internal/app-binder/task/SignActionsTask";
 import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
 
-const APP_NAME = "HyperLiquid";
+const APP_NAME = "Hyperliquid";
 const PERPS_DATA_KEY_USAGE = 0x11;
 
 export type SignActionsMachineDependencies = {
