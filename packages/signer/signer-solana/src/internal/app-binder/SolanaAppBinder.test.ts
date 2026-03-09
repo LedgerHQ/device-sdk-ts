@@ -358,6 +358,64 @@ describe("SolanaAppBinder", () => {
           },
         });
       }));
+
+    it("should accept a Uint8Array message for Raw pass-through", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const signedMessage = { signature: "rawSig" };
+        const binaryPayload = new Uint8Array([0xff, 0x01, 0x02]);
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output: signedMessage,
+            } as DeviceActionState<
+              SignMessageDAOutput,
+              DmkError,
+              DeviceActionIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const appBinder = new SolanaAppBinder(
+          mockedDmk,
+          "sessionId",
+          contextModuleStub,
+          mockLoggerFactory,
+        );
+        const { observable } = appBinder.signMessage({
+          derivationPath: "44'/501'/0'/0'",
+          message: binaryPayload,
+          skipOpenApp: false,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignMessageDAOutput,
+          unknown,
+          unknown
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: (err) => reject(err),
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                {
+                  status: DeviceActionStatus.Completed,
+                  output: signedMessage,
+                },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
   });
 
   describe("getAppConfiguration", () => {

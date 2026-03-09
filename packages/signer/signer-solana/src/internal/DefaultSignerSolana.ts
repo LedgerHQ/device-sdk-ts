@@ -151,7 +151,14 @@ export class DefaultSignerSolana implements SignerSolana {
 
   /**
    * ## signMessage
-   * #### Securely sign an arbitrary message on Ledger devices.
+   * #### Sign a Solana off-chain message on Ledger devices.
+   *
+   * Supports multiple signing modes via `SignMessageVersion`:
+   * - **V0** (default) — original header with `appDomain`, up to 65 515 bytes. Falls back to Legacy on `6a81`.
+   * - **V1** — simplified header, up to 65 535 bytes. Falls back to V0 -> Legacy on `6a81`. Not yet supported by released firmware.
+   * - **Legacy** — compact header for backward compatibility with old Solana app firmware.
+   * - **Raw** — pass-through: sends a caller-formatted `Uint8Array` payload as-is, no header wrapping.
+   *
    * ---
    * ### Parameters
    *
@@ -159,13 +166,20 @@ export class DefaultSignerSolana implements SignerSolana {
    * - **derivationPath** `string`
    *   The derivation path used for signing.
    *
-   * - **message** `string (hex-encoded)`
-   *   The message to sign, provided as a hex string.
+   * - **message** `string | Uint8Array`
+   *   The message to sign. Pass a `string` for V0/V1/Legacy (UTF-8 encoded
+   *   automatically). Pass a `Uint8Array` for Raw mode when you have an
+   *   already-formatted binary payload.
    *
    * **Optional**
    * - **options** `MessageOptions`
    *   - **skipOpenApp** `boolean`
    *     If `true`, skips opening the Solana app on the device.
+   *   - **version** `SignMessageVersion`
+   *     Off-chain message signing mode. Defaults to `SignMessageVersion.V0`.
+   *   - **appDomain** `string`
+   *     V0 only: application domain included in the header (padded/truncated to 32 bytes).
+   *     Ignored for V1, Legacy, and Raw.
    *
    * ---
    * ### Returns
@@ -177,7 +191,7 @@ export class DefaultSignerSolana implements SignerSolana {
    * ### Internal Flow
    *
    * Under the hood, this method subscribes to an
-   * `Observable<DeviceActionState<Uint8Array, SignMessageDAError, IntermediateValue>>`.
+   * `Observable<DeviceActionState<{ signature: string }, SignMessageDAError, IntermediateValue>>`.
    *
    * #### DeviceActionState
    * Represents the lifecycle of a device action:
@@ -203,16 +217,20 @@ export class DefaultSignerSolana implements SignerSolana {
    * - **Pending** → Waiting for user confirmation on the device.
    *   Includes an `intermediateValue` of type `IntermediateValue`.
    * - **Stopped** → Action was cancelled before completion.
-   * - **Completed** → Provides the signed message bytes (`Uint8Array`).
+   * - **Completed** → Provides `{ signature: string }` — a base58 envelope
+   *   (V1/V0/Legacy) or a raw base58 signature (Raw).
    * - **Error** → The device or signing operation failed (`SignMessageDAError`).
    *
    * ---
    * ### Example
    *
    * ```ts
+   * import { SignMessageVersion } from "@ledgerhq/device-signer-kit-solana";
+   *
    * const { observable } = signerSolana.signMessage(
    *   "m/44'/501'/0'/0'",
-   *   "48656c6c6f20576f726c64" // hex string
+   *   "Hello World",
+   *   { version: SignMessageVersion.V0 },
    * );
    * observable.subscribe({
    *   next: state => {
@@ -220,7 +238,7 @@ export class DefaultSignerSolana implements SignerSolana {
    *       console.log("Waiting for user action...", state.intermediateValue);
    *     }
    *     if (state.status === DeviceActionStatus.Completed) {
-   *       console.log("Signature:", state.output);
+   *       console.log("Signature:", state.output.signature);
    *     }
    *   },
    *   error: err => console.error("Error:", err),
@@ -229,7 +247,7 @@ export class DefaultSignerSolana implements SignerSolana {
    */
   signMessage(
     derivationPath: string,
-    message: string,
+    message: string | Uint8Array,
     options?: MessageOptions,
   ): SignMessageDAReturnType {
     return this._container

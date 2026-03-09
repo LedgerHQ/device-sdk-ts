@@ -234,12 +234,13 @@ const subscription = observable.subscribe({
 
 ### Use Case 3: Sign Message
 
-This method allows users to sign a text string that is displayed on Ledger devices.
+This method allows users to sign an off-chain message displayed on Ledger devices, following the [Solana off-chain message signing specification](https://docs.anza.xyz/proposals/off-chain-message-signing).
 
 ```typescript
 const { observable, cancel } = signerSolana.signMessage(
   derivationPath,
   message,
+  options,
 );
 ```
 
@@ -254,15 +255,47 @@ const { observable, cancel } = signerSolana.signMessage(
 - `message`
 
   - **Required**
-  - **Type:** `string`
-  - The message to be signed, which will be displayed on the Ledger device.
+  - **Type:** `string | Uint8Array`
+  - The message to sign. Pass a `string` for V0/V1/Legacy (UTF-8 encoded automatically). Pass a `Uint8Array` for Raw mode when you have an already-formatted binary payload.
+
+- `options`
+
+  - Optional
+  - Type: `MessageOptions`
+
+    ```typescript
+    import { SignMessageVersion } from "@ledgerhq/device-signer-kit-solana";
+
+    enum SignMessageVersion {
+      Raw = "raw",
+      Legacy = "legacy",
+      V0 = "v0",
+      V1 = "v1",
+    }
+
+    type MessageOptions = {
+      skipOpenApp?: boolean;
+      version?: SignMessageVersion; // defaults to V0
+      appDomain?: string; // V0 only
+    };
+    ```
+
+  - `skipOpenApp`: Skip the automatic open-app step.
+  - `version`: The off-chain message signing mode. Defaults to `SignMessageVersion.V0`.
+    - **V0** (default) — original off-chain message header with `appDomain`, format detection, and up to 65 515 bytes. Falls back to Legacy on `6a81`.
+    - **V1** — simplified header: no `appDomain`, no format byte. Up to 65 535 bytes. Falls back to V0 -> Legacy on `6a81`. Not yet supported by released firmware.
+    - **Legacy** — compact header for backward compatibility with old Solana app firmware. Current firmware will reject it with `6a81`.
+    - **Raw** — pass-through mode: sends the caller-provided `Uint8Array` payload directly with no header wrapping. Use when you have already built a valid off-chain message. Returns a plain base58 signature (no envelope).
+  - `appDomain`: Application domain string for V0 headers. Encoded as UTF-8 and padded/truncated to 32 bytes. Ignored for V1, Legacy, and Raw.
 
 #### **Returns**
 
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = Uint8Array; // Signed message bytes
+type SignMessageOutput = {
+  signature: string; // base58 envelope (V1/V0/Legacy) or raw base58 signature (Raw)
+};
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.

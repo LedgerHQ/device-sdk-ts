@@ -18,7 +18,7 @@ export const SOLANA_APP_ERRORS: CommandErrors<SolanaAppErrorCodes> = {
   "6a80": { message: "Invalid data" },
   "6a81": { message: "Invalid off-chain message header" },
   "6a82": { message: "Invalid off-chain message format" },
-  "6b00": { message: "Incorrect parameter P1 or P2" },
+  "6b00": { message: "Invalid instruction descriptor" },
 };
 
 export class SolanaAppCommandError extends DeviceExchangeError<SolanaAppErrorCodes> {
