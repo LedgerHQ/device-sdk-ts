@@ -7,6 +7,7 @@ import {
   type SecureChannelEvent,
   SecureChannelEventType,
 } from "@api/secure-channel/task/types";
+import { WEBSOCKET_PING_INTERVAL_MS } from "@internal/secure-channel/model/Const";
 import {
   SecureChannelError,
   SecureChannelErrorType,
@@ -21,11 +22,15 @@ vi.mock("isomorphic-ws", () => ({
   ...vi.importActual("isomorphic-ws"),
   __esModule: true,
   default: class {
+    static readonly OPEN = 1;
     onopen: (() => void) | null = null;
+    onclose: (() => void) | null = null;
+    onerror: ((error: { message: string }) => void) | null = null;
     onmessage: ((event: { data: string }) => void) | null = null;
     send = vi.fn();
     close = vi.fn();
     url: string;
+    readyState: number = 1;
     constructor(url: string) {
       this.url = url;
     }
@@ -48,7 +53,7 @@ describe("ConnectToSecureChannelTask", () => {
   };
 
   beforeEach(() => {
-    // vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers({ shouldAdvanceTime: true });
 
     mockWebSocket = new WebSocket("wss://test-host.com");
     mockInternalApi = {
@@ -60,6 +65,7 @@ describe("ConnectToSecureChannelTask", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.resetAllMocks();
   });
 
@@ -488,5 +494,92 @@ describe("ConnectToSecureChannelTask", () => {
         }),
       },
     ]);
+  });
+
+  it("should send ping messages periodically after open", () => {
+    const sendSpy = vi.spyOn(mockWebSocket, "send");
+    task.run().subscribe(() => {});
+
+    mockWebSocket.onopen!({
+      type: "open",
+      target: {} as WebSocket,
+    });
+
+    expect(sendSpy).not.toHaveBeenCalledWith("ping");
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS);
+    expect(sendSpy).toHaveBeenCalledWith("ping");
+    expect(sendSpy).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS);
+    expect(sendSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it("should stop sending pings on close", () => {
+    const sendSpy = vi.spyOn(mockWebSocket, "send");
+    task.run().subscribe(() => {});
+
+    mockWebSocket.onopen!({
+      type: "open",
+      target: {} as WebSocket,
+    });
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS);
+    expect(sendSpy).toHaveBeenCalledWith("ping");
+    sendSpy.mockClear();
+
+    mockWebSocket.onclose!({
+      code: 1000,
+      reason: "",
+      wasClean: true,
+      type: "close",
+      target: {} as WebSocket,
+    });
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS * 3);
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  it("should stop sending pings on error", () => {
+    const sendSpy = vi.spyOn(mockWebSocket, "send");
+    task.run().subscribe(() => {});
+
+    mockWebSocket.onopen!({
+      type: "open",
+      target: {} as WebSocket,
+    });
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS);
+    expect(sendSpy).toHaveBeenCalledWith("ping");
+    sendSpy.mockClear();
+
+    mockWebSocket.onerror!({
+      message: "connection failed",
+      type: "error",
+      error: undefined,
+      target: {} as WebSocket,
+    });
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS * 3);
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  it("should stop sending pings on unsubscribe", () => {
+    const sendSpy = vi.spyOn(mockWebSocket, "send");
+    const subscription = task.run().subscribe(() => {});
+
+    mockWebSocket.onopen!({
+      type: "open",
+      target: {} as WebSocket,
+    });
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS);
+    expect(sendSpy).toHaveBeenCalledWith("ping");
+    sendSpy.mockClear();
+
+    subscription.unsubscribe();
+
+    vi.advanceTimersByTime(WEBSOCKET_PING_INTERVAL_MS * 3);
+    expect(sendSpy).not.toHaveBeenCalled();
   });
 });

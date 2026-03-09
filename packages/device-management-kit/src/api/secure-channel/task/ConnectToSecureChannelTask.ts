@@ -21,6 +21,7 @@ import {
 import { bufferToHexaString, hexaStringToBuffer } from "@api/utils/HexaString";
 import { type CryptoService } from "@internal/crypto/CryptoService";
 import { NobleCryptoService } from "@internal/crypto/NobleCryptoService";
+import { WEBSOCKET_PING_INTERVAL_MS } from "@internal/secure-channel/model/Const";
 import {
   SecureChannelError,
   SecureChannelErrorType,
@@ -55,8 +56,17 @@ export class ConnectToSecureChannelTask {
       let unsubscribed: boolean = false;
       let ignoreNetworkEvents = false;
       let communicationFinished = false;
+      let pingInterval: ReturnType<typeof setInterval> | null = null;
+
+      const clearPing = () => {
+        if (pingInterval !== null) {
+          clearInterval(pingInterval);
+          pingInterval = null;
+        }
+      };
 
       const notifyError = (error: SecureChannelError) => {
+        clearPing();
         subscriber.next({
           type: SecureChannelEventType.Error,
           error,
@@ -68,6 +78,12 @@ export class ConnectToSecureChannelTask {
       };
 
       this._connection.onopen = () => {
+        pingInterval = setInterval(() => {
+          if (this._connection.readyState === WebSocket.OPEN) {
+            this._connection.send("ping");
+          }
+        }, WEBSOCKET_PING_INTERVAL_MS);
+
         subscriber.next({
           type: SecureChannelEventType.Opened,
         });
@@ -78,6 +94,7 @@ export class ConnectToSecureChannelTask {
           return;
         }
 
+        clearPing();
         subscriber.next({
           type: SecureChannelEventType.Error,
           error: new SecureChannelError({
@@ -93,6 +110,7 @@ export class ConnectToSecureChannelTask {
           return;
         }
 
+        clearPing();
         if (communicationFinished) {
           subscriber.next({
             type: SecureChannelEventType.Closed,
@@ -240,6 +258,7 @@ export class ConnectToSecureChannelTask {
           }
           case InMessageQueryEnum.BULK: {
             // Network not needed anymore during bulk APDUs sending
+            clearPing();
             ignoreNetworkEvents = true;
             this._connection.close();
 
@@ -301,6 +320,7 @@ export class ConnectToSecureChannelTask {
             if (ignoreNetworkEvents) {
               break;
             }
+            clearPing();
             // Emit the result if there is any
             const payload = input.result ?? input.data;
             if (payload) {
@@ -339,7 +359,7 @@ export class ConnectToSecureChannelTask {
 
       return () => {
         unsubscribed = true;
-        // Close the connection if it is open when unsubscribing
+        clearPing();
         if (this._connection.readyState === WebSocket.OPEN) {
           this._connection.close();
         }
