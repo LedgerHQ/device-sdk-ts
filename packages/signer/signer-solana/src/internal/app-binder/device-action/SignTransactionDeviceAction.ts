@@ -1,4 +1,5 @@
 import {
+  ApplicationChecker,
   type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
@@ -31,12 +32,12 @@ import {
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChecker";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
+import { SolanaApplicationResolver } from "@internal/app-binder/SolanaApplicationResolver";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -144,6 +145,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            new SolanaApplicationResolver(),
           )
             .withMinVersionExclusive("1.4.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)

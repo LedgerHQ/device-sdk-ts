@@ -1,4 +1,5 @@
 import {
+  ApplicationChecker,
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceModelId,
@@ -36,6 +37,7 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import {
   BuildFullContextsTask,
   type BuildFullContextsTaskArgs,
@@ -53,7 +55,6 @@ import {
 } from "@internal/app-binder/task/ProvideTransactionContextsTask";
 import { SendSignTransactionTask } from "@internal/app-binder/task/SendSignTransactionTask";
 import { MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS } from "@internal/shared/EthAppVersions";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export type MachineDependencies = {
   readonly getAddress: (arg0: {
@@ -147,6 +148,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            new EthereumApplicationResolver(),
           )
             .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS)
             .excludeDeviceModel(DeviceModelId.NANO_S)

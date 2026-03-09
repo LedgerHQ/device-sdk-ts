@@ -6,6 +6,7 @@ import {
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
+  ApplicationChecker,
   DeviceModelId,
   type DeviceSessionState,
   type InternalApi,
@@ -16,11 +17,11 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import {
   MIN_ETH_APP_VERSION_FOR_GATED_SIGNING,
   MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER,
 } from "@internal/shared/EthAppVersions";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.TRUSTED_NAME,
@@ -112,7 +113,11 @@ export class BuildBaseContexts {
     );
 
     // Remove gating contexts when app does not support them
-    const supportsGatedSigning = new ApplicationChecker(deviceState, appConfig)
+    const supportsGatedSigning = new ApplicationChecker(
+      deviceState,
+      appConfig,
+      new EthereumApplicationResolver(),
+    )
       .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
@@ -237,7 +242,11 @@ export class BuildBaseContexts {
     deviceState: DeviceSessionState,
     appConfig: GetConfigCommandResponse,
   ): boolean {
-    return new ApplicationChecker(deviceState, appConfig)
+    return new ApplicationChecker(
+      deviceState,
+      appConfig,
+      new EthereumApplicationResolver(),
+    )
       .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER)
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
