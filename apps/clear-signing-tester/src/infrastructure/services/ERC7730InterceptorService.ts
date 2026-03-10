@@ -3,6 +3,7 @@ import {
   CalInterceptor,
   ERC7730Client,
 } from "@ledgerhq/cal-interceptor";
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { readFileSync } from "fs";
 
 /**
@@ -12,8 +13,15 @@ export class ERC7730InterceptorService {
   private interceptor: CalInterceptor | null = null;
   private readonly apiUrl: string;
 
-  constructor(apiUrl: string = "https://app.devicesdk.ledger-test.com") {
+  constructor(
+    private readonly logger: LoggerPublisherService,
+    apiUrl: string = process.env["ERC7730_API_URL"] ||
+      "https://app.devicesdk.ledger-test.com",
+  ) {
     this.apiUrl = apiUrl;
+    if (process.env["ERC7730_API_URL"]) {
+      this.logger.info(`Using custom ERC7730 API URL: ${this.apiUrl}`);
+    }
   }
 
   /**
@@ -22,8 +30,8 @@ export class ERC7730InterceptorService {
    * @returns The configured interceptor instance
    */
   async setupFromFiles(filePaths: string[]): Promise<CalInterceptor> {
-    console.log(
-      `\n🔧 Setting up CAL interceptor with ${filePaths.length} ERC7730 file(s)...\n`,
+    this.logger.info(
+      `Setting up CAL interceptor with ${filePaths.length} ERC7730 file(s)`,
     );
 
     // Create interceptor
@@ -33,14 +41,13 @@ export class ERC7730InterceptorService {
     // Process each file using the helper
     for (const filePath of filePaths) {
       try {
-        console.log(`📄 Processing: ${filePath}`);
+        this.logger.info(`Processing: ${filePath}`);
 
         // Read and parse the file
         const fileContent = readFileSync(filePath, "utf-8");
         const descriptor = JSON.parse(fileContent);
 
-        // Use the helper to process and store the descriptor
-        console.log(`   ⚙️  Generating CAL descriptors...`);
+        this.logger.debug(`Generating CAL descriptors for ${filePath}`);
         const result = await addERC7730Descriptor({
           descriptor,
           interceptor: this.interceptor,
@@ -49,17 +56,19 @@ export class ERC7730InterceptorService {
         });
 
         result.keys.forEach((key: unknown) => {
-          console.log(`   ✓ Stored descriptor for ${key}`);
+          this.logger.debug(`Stored descriptor for ${key}`);
         });
       } catch (error) {
-        console.error(`   ❌ Failed to process ${filePath}:`, error);
+        this.logger.error(`Failed to process ${filePath}`, {
+          data: { error },
+        });
         throw error;
       }
     }
 
     const descriptorCount = this.interceptor.getStoredDescriptorCount();
-    console.log(
-      `\n🚀 Interceptor active with ${descriptorCount} descriptor(s)\n`,
+    this.logger.info(
+      `Interceptor active with ${descriptorCount} descriptor(s)`,
     );
 
     return this.interceptor;
@@ -71,7 +80,7 @@ export class ERC7730InterceptorService {
   stop(): void {
     if (this.interceptor && this.interceptor.isActive()) {
       this.interceptor.stop();
-      console.log("CAL interceptor stopped");
+      this.logger.info("CAL interceptor stopped");
     }
   }
 }
