@@ -439,7 +439,8 @@ export class EthereumTransactionTesterCli {
       { derivationPath: this.config.derivationPath },
     );
 
-    this.logger.info(result.title, { data: result.data });
+    console.log(`\n${result.title}`);
+    console.table([result.data]);
 
     return result.exitCode;
   }
@@ -457,10 +458,10 @@ export class EthereumTransactionTesterCli {
       defaultDerivationPath: this.config.derivationPath,
     });
 
-    this.logger.info(result.title, { data: { results: result.resultsTable } });
-    this.logger.info(result.summaryTitle, {
-      data: { summary: result.summaryTable },
-    });
+    console.log(`\n${result.title}`);
+    console.table(result.resultsTable);
+    console.log(`\n${result.summaryTitle}`);
+    console.table(result.summaryTable);
 
     return result.exitCode;
   }
@@ -478,7 +479,8 @@ export class EthereumTransactionTesterCli {
       { derivationPath: this.config.derivationPath },
     );
 
-    this.logger.info(result.title, { data: result.data });
+    console.log(`\n${result.title}`);
+    console.table([result.data]);
 
     return result.exitCode;
   }
@@ -496,10 +498,10 @@ export class EthereumTransactionTesterCli {
       defaultDerivationPath: this.config.derivationPath,
     });
 
-    this.logger.info(result.title, { data: { results: result.resultsTable } });
-    this.logger.info(result.summaryTitle, {
-      data: { summary: result.summaryTable },
-    });
+    console.log(`\n${result.title}`);
+    console.table(result.resultsTable);
+    console.log(`\n${result.summaryTitle}`);
+    console.table(result.summaryTable);
 
     return result.exitCode;
   }
@@ -523,10 +525,10 @@ export class EthereumTransactionTesterCli {
       skipCal,
     });
 
-    this.logger.info(result.title, { data: { results: result.resultsTable } });
-    this.logger.info(result.summaryTitle, {
-      data: { summary: result.summaryTable },
-    });
+    console.log(`\n${result.title}`);
+    console.table(result.resultsTable);
+    console.log(`\n${result.summaryTitle}`);
+    console.table(result.summaryTable);
 
     return result.exitCode;
   }
@@ -549,10 +551,10 @@ export class EthereumTransactionTesterCli {
       plugin: this.config.plugin,
     });
 
-    this.logger.info(result.title, { data: { results: result.resultsTable } });
-    this.logger.info(result.summaryTitle, {
-      data: { summary: result.summaryTable },
-    });
+    console.log(`\n${result.title}`);
+    console.table(result.resultsTable);
+    console.log(`\n${result.summaryTitle}`);
+    console.table(result.summaryTable);
 
     return result.exitCode;
   }
