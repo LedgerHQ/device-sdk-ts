@@ -268,11 +268,6 @@ export class NodeDockerContainer implements DockerContainer {
   ): string[] {
     const args = ["run"];
 
-    // Add detached mode
-    if (options.detached) {
-      args.push("-d");
-    }
-
     // Add container name
     args.push("--name", options.name);
 

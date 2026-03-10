@@ -33,6 +33,7 @@ export type CliConfig = {
   pluginVersion?: string;
   screenshotFolderPath?: string;
   customApp?: string;
+  forcePull?: boolean;
 
   // config.signer
   skipCal?: boolean;
@@ -87,6 +88,7 @@ export class EthereumTransactionTesterCli {
         pluginVersion: config.pluginVersion,
         screenshotPath: config.screenshotFolderPath,
         customAppPath: config.customApp,
+        forcePull: config.forcePull,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -278,6 +280,11 @@ export class EthereumTransactionTesterCli {
       .option(
         "--custom-app <path>",
         "Custom app file path. Relative paths resolve to COIN_APPS_PATH, absolute paths are mounted automatically. Bypasses automatic Ethereum app version resolution.",
+      )
+      .option(
+        "--force-pull",
+        "Force pulling the Docker image even if it already exists locally",
+        false,
       )
       .option(
         "--log-level <level>",
