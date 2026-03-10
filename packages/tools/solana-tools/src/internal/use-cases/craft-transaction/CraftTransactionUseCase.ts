@@ -11,15 +11,13 @@ export class CraftTransactionUseCase {
     private appBinder: SolanaToolsAppBinder,
   ) {}
 
-  execute(
-    derivationPath: string,
-    serialisedTransaction: string,
-    skipOpenApp: boolean,
-  ): CraftTransactionDAReturnType {
-    return this.appBinder.craftTransaction({
-      derivationPath,
-      serialisedTransaction,
-      skipOpenApp,
-    });
+  execute(args: {
+    derivationPath: string;
+    serialisedTransaction?: string;
+    transactionSignature?: string;
+    rpcUrl?: string;
+    skipOpenApp?: boolean;
+  }): CraftTransactionDAReturnType {
+    return this.appBinder.craftTransaction(args);
   }
 }

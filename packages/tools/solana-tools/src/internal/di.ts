@@ -5,6 +5,7 @@ import {
 import { Container } from "inversify";
 
 import { appBinderModuleFactory } from "./app-binder/di/appBinderModule";
+import { servicesModuleFactory } from "./services/di/servicesModule";
 import { useCasesModuleFactory } from "./use-cases/di/useCasesModule";
 import { externalTypes } from "./externalTypes";
 
@@ -21,7 +22,11 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
 
-  container.loadSync(appBinderModuleFactory(), useCasesModuleFactory());
+  container.loadSync(
+    servicesModuleFactory(),
+    appBinderModuleFactory(),
+    useCasesModuleFactory(),
+  );
 
   return container;
 };

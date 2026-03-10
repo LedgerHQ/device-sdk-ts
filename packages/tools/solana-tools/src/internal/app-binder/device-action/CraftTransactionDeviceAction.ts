@@ -30,6 +30,9 @@ export type MachineDependencies = {
   readonly getPublicKey: (arg0: {
     input: { derivationPath: string; checkOnDevice: boolean };
   }) => Promise<CommandResult<GetPubKeyCommandResponse, SolanaAppErrorCodes>>;
+  readonly fetchTransaction: (arg0: {
+    input: { transactionSignature: string; rpcUrl?: string };
+  }) => Promise<string>;
   readonly craftTransaction: (arg0: {
     input: { publicKey: string; serialisedTransaction: string };
   }) => Promise<string>;
@@ -59,7 +62,7 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
       CraftTransactionDAInternalState
     >;
 
-    const { getPublicKey, craftTransaction } =
+    const { getPublicKey, fetchTransaction, craftTransaction } =
       this.extractDependencies(internalApi);
 
     return setup({
@@ -73,11 +76,16 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
           input: { appName: "Solana" },
         }).makeStateMachine(internalApi),
         getPublicKey: fromPromise(getPublicKey),
+        fetchTransaction: fromPromise(fetchTransaction),
         craftTransaction: fromPromise(craftTransaction),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
-        skipOpenApp: ({ context }) => context.input.skipOpenApp,
+        skipOpenApp: ({ context }) => !!context.input.skipOpenApp,
+        hasTransactionSignature: ({ context }) =>
+          !!context.input.transactionSignature,
+        hasSerialisedTransaction: ({ context }) =>
+          !!context.input.serialisedTransaction,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -102,14 +110,83 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
         _internalState: {
           error: null,
           publicKey: null,
+          fetchedTransaction: null,
           serialisedTransaction: null,
         },
       }),
       states: {
         InitialState: {
           always: [
-            { target: "GetPublicKey", guard: "skipOpenApp" },
-            { target: "OpenAppDeviceAction" },
+            { target: "FetchTransaction", guard: "hasTransactionSignature" },
+            {
+              target: "GetPublicKey",
+              guard: ({ context }) =>
+                !!context.input.serialisedTransaction &&
+                !!context.input.skipOpenApp,
+            },
+            {
+              target: "OpenAppDeviceAction",
+              guard: "hasSerialisedTransaction",
+            },
+            {
+              target: "Error",
+              actions: assign({
+                _internalState: ({ context }) => ({
+                  ...context._internalState,
+                  error: new UnknownDAError(
+                    "Either serialisedTransaction or transactionSignature must be provided",
+                  ),
+                }),
+              }),
+            },
+          ],
+        },
+        FetchTransaction: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+            }),
+          }),
+          invoke: {
+            id: "fetchTransaction",
+            src: "fetchTransaction",
+            input: (context) => ({
+              transactionSignature: context.context.input.transactionSignature!,
+              rpcUrl: context.context.input.rpcUrl,
+            }),
+            onDone: {
+              target: "FetchTransactionResultCheck",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  event.output
+                    ? {
+                        ...context._internalState,
+                        fetchedTransaction: event.output,
+                      }
+                    : {
+                        ...context._internalState,
+                        error: new UnknownDAError(
+                          "Failed to fetch transaction",
+                        ),
+                      },
+              }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        FetchTransactionResultCheck: {
+          always: [
+            {
+              target: "GetPublicKey",
+              guard: ({ context }) =>
+                context._internalState.error === null &&
+                !!context.input.skipOpenApp,
+            },
+            { target: "OpenAppDeviceAction", guard: "noInternalError" },
+            { target: "Error" },
           ],
         },
         OpenAppDeviceAction: {
@@ -198,7 +275,9 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
             input: (context) => ({
               publicKey: context.context._internalState.publicKey!,
               serialisedTransaction:
-                context.context.input.serialisedTransaction,
+                context.context._internalState.fetchedTransaction ??
+                context.context.input.serialisedTransaction ??
+                "",
             }),
             onDone: {
               target: "CraftTransactionResultCheck",
@@ -247,6 +326,15 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
       input: { derivationPath: string; checkOnDevice: boolean };
     }) => internalApi.sendCommand(new GetPubKeyCommand(arg0.input));
 
+    const fetchTransaction = async (arg0: {
+      input: { transactionSignature: string; rpcUrl?: string };
+    }) => {
+      return this.input.transactionFetcherService.fetchTransaction(
+        arg0.input.transactionSignature,
+        arg0.input.rpcUrl,
+      );
+    };
+
     const craftTransaction = async (arg0: {
       input: { publicKey: string; serialisedTransaction: string };
     }) => {
@@ -259,6 +347,7 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
 
     return {
       getPublicKey,
+      fetchTransaction,
       craftTransaction,
     };
   }

@@ -34,13 +34,15 @@ export class DefaultSolanaTools implements SolanaTools {
       .execute(derivationPath, skipOpenApp);
   }
 
-  craftTransaction(
-    derivationPath: string,
-    serialisedTransaction: string,
-    skipOpenApp: boolean = false,
-  ): CraftTransactionDAReturnType {
+  craftTransaction(args: {
+    derivationPath: string;
+    serialisedTransaction?: string;
+    transactionSignature?: string;
+    rpcUrl?: string;
+    skipOpenApp?: boolean;
+  }): CraftTransactionDAReturnType {
     return this._container
       .get<CraftTransactionUseCase>(useCasesTypes.CraftTransactionUseCase)
-      .execute(derivationPath, serialisedTransaction, skipOpenApp);
+      .execute(args);
   }
 }

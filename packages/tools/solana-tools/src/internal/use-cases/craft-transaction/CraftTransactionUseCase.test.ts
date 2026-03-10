@@ -19,16 +19,14 @@ describe("CraftTransactionUseCase", () => {
     const serialisedTransaction = "serialised-tx-input";
     craftTransactionMock.mockReturnValue("crafted-tx");
 
-    const result = useCase.execute(
+    const result = useCase.execute({
       derivationPath,
       serialisedTransaction,
-      false,
-    );
+    });
 
     expect(craftTransactionMock).toHaveBeenCalledWith({
       derivationPath,
       serialisedTransaction,
-      skipOpenApp: false,
     });
     expect(result).toEqual("crafted-tx");
   });

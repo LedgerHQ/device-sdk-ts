@@ -80,7 +80,10 @@ describe("DefaultSolanaTools", () => {
       const dmk = makeDmkMock({ observable, cancel });
       const tools = new DefaultSolanaTools({ dmk, sessionId });
 
-      const result = tools.craftTransaction("44'/501'/0'/0'", "serialised-tx");
+      const result = tools.craftTransaction({
+        derivationPath: "44'/501'/0'/0'",
+        serialisedTransaction: "serialised-tx",
+      });
       expect(result).toBeDefined();
       expect(result.observable).toBeDefined();
       expect(result.cancel).toBeDefined();
@@ -99,7 +102,10 @@ describe("DefaultSolanaTools", () => {
 
       const dmk = makeDmkMock({ observable, cancel });
       const tools = new DefaultSolanaTools({ dmk, sessionId });
-      const result = tools.craftTransaction("44'/501'/0'/0'", "serialised-tx");
+      const result = tools.craftTransaction({
+        derivationPath: "44'/501'/0'/0'",
+        serialisedTransaction: "serialised-tx",
+      });
 
       const states = await lastValueFrom(result.observable.pipe(toArray()));
 

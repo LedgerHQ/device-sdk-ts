@@ -7,9 +7,11 @@ export interface SolanaTools {
     skipOpenApp?: boolean,
   ): GenerateTransactionDAReturnType;
 
-  craftTransaction(
-    derivationPath: string,
-    serialisedTransaction: string,
-    skipOpenApp?: boolean,
-  ): CraftTransactionDAReturnType;
+  craftTransaction(args: {
+    derivationPath: string;
+    serialisedTransaction?: string;
+    transactionSignature?: string;
+    rpcUrl?: string;
+    skipOpenApp?: boolean;
+  }): CraftTransactionDAReturnType;
 }
