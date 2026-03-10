@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
@@ -61,6 +62,7 @@ export type CliConfig = {
 export class EthereumTransactionTesterCli {
   private container: Container;
   private controller: ServiceController;
+  private logger: LoggerPublisherService;
   private config: CliConfig;
   private interceptorService?: ERC7730InterceptorService;
 
@@ -125,6 +127,11 @@ export class EthereumTransactionTesterCli {
       },
     });
 
+    const loggerFactory = this.container.get<
+      (tag: string) => LoggerPublisherService
+    >(TYPES.LoggerPublisherServiceFactory);
+    this.logger = loggerFactory("cli");
+
     this.controller = this.container.get<ServiceController>(
       TYPES.MainServiceController,
     );
@@ -136,7 +143,7 @@ export class EthereumTransactionTesterCli {
   async initialize(): Promise<void> {
     // Set up ERC7730 interceptor if files are provided
     if (this.config.erc7730Files && this.config.erc7730Files.length > 0) {
-      this.interceptorService = new ERC7730InterceptorService();
+      this.interceptorService = new ERC7730InterceptorService(this.logger);
       try {
         await this.interceptorService.setupFromFiles(this.config.erc7730Files);
       } catch (error) {
@@ -145,18 +152,16 @@ export class EthereumTransactionTesterCli {
         // the production CAL with mismatched test certificates, producing
         // misleading blind-signing results.  Abort loudly instead.
         if (process.env["ERC7730_API_URL"]) {
-          console.error(
-            `\n❌ ERC7730_API_URL is set to ${process.env["ERC7730_API_URL"]} but the server is unreachable.`,
-          );
-          console.error(
-            "   Start the local API first:  cd apps/sample && pnpm flask-dev",
-          );
-          console.error(
-            "   Or unset ERC7730_API_URL to use the remote service.\n",
+          this.logger.error(
+            `ERC7730_API_URL is set to ${process.env["ERC7730_API_URL"]} but the server is unreachable. ` +
+              "Start the local API first: cd apps/sample && pnpm flask-dev, " +
+              "or unset ERC7730_API_URL to use the remote service.",
           );
           throw error;
         }
-        console.error("Failed to setup ERC7730 interceptor:", error);
+        this.logger.error("Failed to setup ERC7730 interceptor", {
+          data: { error },
+        });
       }
     }
 
@@ -315,7 +320,7 @@ export class EthereumTransactionTesterCli {
 
     // Set up signal handlers that work with the CLI instance
     const handleShutdown = async (signal: string) => {
-      console.error(`Received ${signal}, cleaning up...`);
+      cli?.logger.info(`Received ${signal}, cleaning up...`);
       await cli?.cleanup();
       process.exit(0);
     };
@@ -434,8 +439,7 @@ export class EthereumTransactionTesterCli {
       { derivationPath: this.config.derivationPath },
     );
 
-    console.log(`\n${result.title}`);
-    console.table([result.data]);
+    this.logger.info(result.title, { data: result.data });
 
     return result.exitCode;
   }
@@ -453,10 +457,10 @@ export class EthereumTransactionTesterCli {
       defaultDerivationPath: this.config.derivationPath,
     });
 
-    console.log(`\n${result.title}`);
-    console.table(result.resultsTable);
-    console.log(`\n${result.summaryTitle}`);
-    console.table(result.summaryTable);
+    this.logger.info(result.title, { data: { results: result.resultsTable } });
+    this.logger.info(result.summaryTitle, {
+      data: { summary: result.summaryTable },
+    });
 
     return result.exitCode;
   }
@@ -474,8 +478,7 @@ export class EthereumTransactionTesterCli {
       { derivationPath: this.config.derivationPath },
     );
 
-    console.log(`\n${result.title}`);
-    console.table([result.data]);
+    this.logger.info(result.title, { data: result.data });
 
     return result.exitCode;
   }
@@ -493,10 +496,10 @@ export class EthereumTransactionTesterCli {
       defaultDerivationPath: this.config.derivationPath,
     });
 
-    console.log(`\n${result.title}`);
-    console.table(result.resultsTable);
-    console.log(`\n${result.summaryTitle}`);
-    console.table(result.summaryTable);
+    this.logger.info(result.title, { data: { results: result.resultsTable } });
+    this.logger.info(result.summaryTitle, {
+      data: { summary: result.summaryTable },
+    });
 
     return result.exitCode;
   }
@@ -520,10 +523,10 @@ export class EthereumTransactionTesterCli {
       skipCal,
     });
 
-    console.log(`\n${result.title}`);
-    console.table(result.resultsTable);
-    console.log(`\n${result.summaryTitle}`);
-    console.table(result.summaryTable);
+    this.logger.info(result.title, { data: { results: result.resultsTable } });
+    this.logger.info(result.summaryTitle, {
+      data: { summary: result.summaryTable },
+    });
 
     return result.exitCode;
   }
@@ -546,10 +549,10 @@ export class EthereumTransactionTesterCli {
       plugin: this.config.plugin,
     });
 
-    console.log(`\n${result.title}`);
-    console.table(result.resultsTable);
-    console.log(`\n${result.summaryTitle}`);
-    console.table(result.summaryTable);
+    this.logger.info(result.title, { data: { results: result.resultsTable } });
+    this.logger.info(result.summaryTitle, {
+      data: { summary: result.summaryTable },
+    });
 
     return result.exitCode;
   }
@@ -559,8 +562,7 @@ export class EthereumTransactionTesterCli {
    * Starts Speculos and keeps it running until interrupted
    */
   async handleStartSpeculos(): Promise<void> {
-    console.log("\nSpeculos is running.");
-    console.log("Press Ctrl+C to stop.\n");
+    this.logger.info("Speculos is running. Press Ctrl+C to stop.");
 
     // Wait indefinitely until interrupted
     await new Promise<void>(() => {});

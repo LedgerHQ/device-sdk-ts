@@ -28,14 +28,10 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     });
     const accumulatedTexts = await this.getAndClearAccumulatedTexts();
 
-    // Log all accumulated texts for debugging
-    console.log("\n📝 SCREEN TEXT ANALYSIS");
-    console.log("========================");
-    console.log("Accumulated screen texts from device:");
-    accumulatedTexts.forEach((text, i) => {
-      console.log(`  [${i + 1}] "${text}"`);
+    this.logger.info("SCREEN TEXT ANALYSIS");
+    this.logger.info("Accumulated screen texts from device:", {
+      data: { accumulatedTexts },
     });
-    console.log("");
 
     const found: string[] = [];
     const missing: string[] = [];
@@ -59,24 +55,17 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
 
     const containsAll = missing.length === 0;
 
-    // Log detailed results
-    console.log("Expected texts from test file:");
-    expectedTexts.forEach((text, i) => {
-      const status = found.includes(text) ? "✅" : "❌";
-      console.log(`  ${status} [${i + 1}] "${text}"`);
-    });
-    console.log("");
-    console.log(
+    this.logger.info(
       `Summary: ${found.length}/${expectedTexts.length} expected texts found`,
     );
     if (missing.length > 0) {
-      console.log(`Missing texts: ${missing.map((t) => `"${t}"`).join(", ")}`);
+      this.logger.info(
+        `Missing texts: ${missing.map((t) => `"${t}"`).join(", ")}`,
+      );
     }
-    console.log("");
-    console.log(
-      `Result: ${containsAll ? "✅ All expected texts found (clear signed)" : "⚠️ Some texts missing (partially clear signed)"}`,
+    this.logger.info(
+      `Result: ${containsAll ? "All expected texts found (clear signed)" : "Some texts missing (partially clear signed)"}`,
     );
-    console.log("========================\n");
 
     this.logger.debug("Analyzed accumulated screen texts", {
       data: {
