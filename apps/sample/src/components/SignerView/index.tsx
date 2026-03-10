@@ -41,6 +41,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Aleo signer functionality",
     icon: <CryptoIcon ledgerId="aleo" ticker="ALEO" size="56px" />,
   },
+  {
+    title: "Celo",
+    description: "Access Celo signer functionality",
+    icon: <CryptoIcon ledgerId="celo" ticker="CELO" size="56px" />,
+  },
 ];
 
 export const SignerView = () => {
