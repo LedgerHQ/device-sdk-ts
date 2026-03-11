@@ -167,7 +167,7 @@ describe("buildActionStructure", () => {
       name: "action type cancel",
       action: {
         type: "cancel",
-        cancels: [{ asset: 0, oid: 340574409238 }],
+        cancels: [{ a: 0, o: 340574409238 }],
         nonce: 1772813983827, // Not serialized with this fuction call
       } satisfies HyperliquidAction,
       expectedHex:

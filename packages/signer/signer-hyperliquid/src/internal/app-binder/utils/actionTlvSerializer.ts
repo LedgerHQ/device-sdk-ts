@@ -354,8 +354,8 @@ export function buildActionStructure(action: HyperliquidAction): Uint8Array {
       }
       const payloadBuilder = new ByteArrayBuilder();
       for (const cancel of action.cancels) {
-        encodeTlvVarNumber(payloadBuilder, TLV_TAG.ASSET_ID, cancel.asset);
-        encodeInTlvFromUInt64(payloadBuilder, TLV_TAG.ORDER_ID, cancel.oid);
+        encodeTlvVarNumber(payloadBuilder, TLV_TAG.ASSET_ID, cancel.a);
+        encodeInTlvFromUInt64(payloadBuilder, TLV_TAG.ORDER_ID, cancel.o);
       }
       const updateOrderPayload = payloadBuilder.build();
       encodeInTlvFromBuffer(b, TLV_TAG.CANCEL_ORDERS, updateOrderPayload);

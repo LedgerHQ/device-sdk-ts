@@ -61,8 +61,8 @@ export type HyperliquidAction =
   | {
       type: "cancel";
       cancels: {
-        asset: number; // asset id
-        oid: number; // oid
+        a: number; // asset id
+        o: number; // oid
       }[];
       nonce: number;
     }

@@ -119,8 +119,8 @@ describe("SendActionsTask", () => {
         type: "cancel",
         cancels: [
           {
-            asset: 0,
-            oid: 340574409238,
+            a: 0,
+            o: 340574409238,
           },
         ],
         nonce: 1772813983827,
@@ -182,7 +182,7 @@ describe("SendActionsTask", () => {
         },
         {
           type: "cancel",
-          cancels: [{ asset: 0, oid: 42 }],
+          cancels: [{ a: 0, o: 42 }],
           nonce: 2,
         },
         {
@@ -266,7 +266,7 @@ describe("SendActionsTask", () => {
       },
       {
         type: "cancel",
-        cancels: [{ asset: 0, oid: 1 }],
+        cancels: [{ a: 0, o: 1 }],
         nonce: 2,
       },
     ];
