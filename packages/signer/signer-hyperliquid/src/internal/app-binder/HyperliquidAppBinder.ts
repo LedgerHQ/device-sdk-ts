@@ -8,7 +8,7 @@ import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceA
 import { externalTypes } from "@internal/externalTypes";
 
 import { SignActionsDeviceAction } from "./device-action/SignActions/SignActionsDeviceAction";
-import { HyperliquidAction } from "./utils/actionTlvSerializer";
+import type { HyperliquidAction } from "./di/appBinderTypes";
 
 @injectable()
 export class HyperliquidAppBinder {

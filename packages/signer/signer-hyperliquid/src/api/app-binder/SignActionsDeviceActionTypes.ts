@@ -9,7 +9,7 @@ import {
 
 import { type Signature } from "@api/model/Signature";
 import { type HyperliquidErrorCodes } from "@internal/app-binder/command/utils/hyperliquidApplicationErrors";
-import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
+import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
 
 export const signActionsDAStateSteps = Object.freeze({
   OPEN_APP: "signer.hl.steps.openApp",

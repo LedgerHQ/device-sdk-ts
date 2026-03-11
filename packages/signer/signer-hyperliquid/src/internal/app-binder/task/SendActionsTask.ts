@@ -7,7 +7,7 @@ import {
 
 import { SendActionCommand } from "@internal/app-binder/command/SendActionCommand";
 import { type HyperliquidErrorCodes } from "@internal/app-binder/command/utils/hyperliquidApplicationErrors";
-import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
+import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
 import { serializeActionToTlv } from "@internal/app-binder/utils/actionTlvSerializer";
 
 export type SendActionsTaskArgs = {

@@ -1,9 +1,10 @@
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import { describe, expect, it } from "vitest";
 
+import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
+
 import {
   buildActionStructure,
-  type HyperliquidAction,
   serializeOrderToTlv,
 } from "./actionTlvSerializer";
 

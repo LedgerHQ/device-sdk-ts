@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, type vi } from "vitest";
 
 import { SendActionCommand } from "@internal/app-binder/command/SendActionCommand";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
-import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
+import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
 
 import { SendActionsTask } from "./SendActionsTask";
 

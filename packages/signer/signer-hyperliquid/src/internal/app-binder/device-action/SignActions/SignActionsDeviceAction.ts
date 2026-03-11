@@ -26,9 +26,9 @@ import {
 import { type Signature } from "@api/model/Signature";
 import { SendMetadataCommand } from "@internal/app-binder/command/SendMetadataCommand";
 import { type HyperliquidErrorCodes } from "@internal/app-binder/command/utils/hyperliquidApplicationErrors";
+import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
 import { SendActionsTask } from "@internal/app-binder/task/SendActionsTask";
 import { SignActionsTask } from "@internal/app-binder/task/SignActionsTask";
-import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
 
 const APP_NAME = "Hyperliquid";
 const PERPS_DATA_KEY_USAGE = 0x11;

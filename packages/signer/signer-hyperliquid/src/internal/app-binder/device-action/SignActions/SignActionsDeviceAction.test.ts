@@ -19,7 +19,7 @@ import {
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
-import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
+import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
 
 import { SignActionsDeviceAction } from "./SignActionsDeviceAction";
 
