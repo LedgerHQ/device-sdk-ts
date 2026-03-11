@@ -252,7 +252,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -372,7 +373,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [
         {
           type: ClearSignContextType.TRANSACTION_CHECK,
@@ -409,7 +411,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [
         {
           type: ClearSignContextType.DYNAMIC_NETWORK,
@@ -448,7 +451,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [
         {
           type: ClearSignContextType.DYNAMIC_NETWORK_ICON,
@@ -487,7 +491,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -701,7 +706,8 @@ describe("ProvideEIP712ContextTask", () => {
         proxy: undefined,
         tokens: {},
       }),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -860,7 +866,10 @@ describe("ProvideEIP712ContextTask", () => {
         proxy: undefined,
         tokens: {},
       }),
-      calldatasContexts: {
+      calldatasPreContexts: {
+        0: [],
+      },
+      calldatasPostContexts: {
         0: [],
       },
       additionalContexts: [],
@@ -879,12 +888,7 @@ describe("ProvideEIP712ContextTask", () => {
     ).run();
 
     // THEN
-    expect(provideContextFactoryMock).toHaveBeenCalledTimes(1);
-    expect(provideContextFactoryMock).toHaveBeenCalledWith({
-      contexts: [],
-      derivationPath: "44'/60'/0'/0/0",
-      loggerFactory: mockLoggerFactory,
-    });
+    expect(provideContextFactoryMock).not.toHaveBeenCalled();
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new SendEIP712FilteringCommand({
         type: Eip712FilterType.CalldataInfo,
@@ -988,7 +992,8 @@ describe("ProvideEIP712ContextTask", () => {
         proxy: undefined,
         tokens: { 255: "payload-0x000000000022d473030f116ddee9f6b43ac78ba3" },
       }),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1043,7 +1048,8 @@ describe("ProvideEIP712ContextTask", () => {
         proxy: undefined,
         tokens: { 0: "payload-0x7ceb23fd6bc0add59e62ac25578270cff1b9f619" },
       }),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1098,7 +1104,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1141,7 +1148,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1189,7 +1197,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT), // No certificate in this context
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1223,7 +1232,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1257,7 +1267,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1293,7 +1304,8 @@ describe("ProvideEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1387,7 +1399,8 @@ describe("ProvideEIP712ContextTask", () => {
           },
         },
       }),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [],
       loggerFactory: mockLoggerFactory,
     };
@@ -1454,5 +1467,348 @@ describe("ProvideEIP712ContextTask", () => {
         signature: "sig",
       }),
     );
+  });
+
+  it("Provide preContexts (native send TRUSTED_NAME) before CalldataInfo filter", async () => {
+    // GIVEN
+    const trustedNameContext = {
+      context: {
+        type: ClearSignContextType.TRUSTED_NAME as const,
+        payload: "trusted-name-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: {
+          "details.token": {
+            displayName: "Value",
+            path: "details.token",
+            signature: "sig-value",
+            calldataIndex: 0,
+            type: "calldata-value",
+          },
+          "details.amount": {
+            displayName: "Callee",
+            path: "details.amount",
+            signature: "sig-callee",
+            calldataIndex: 0,
+            type: "calldata-callee",
+          },
+        },
+        trustedNamesAddresses: {},
+        calldatas: {
+          0: {
+            filter: {
+              calldataIndex: 0,
+              displayName: "Transaction",
+              valueFlag: true,
+              calleeFlag: TypedDataCalldataParamPresence.Present,
+              chainIdFlag: false,
+              selectorFlag: false,
+              amountFlag: false,
+              spenderFlag: TypedDataCalldataParamPresence.None,
+              signature: "sig-info",
+            },
+            subset: {
+              chainId: 0x1234,
+              data: "0x",
+              from: "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              selector: "0x",
+              to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              value: 4200000000000000n,
+            },
+          },
+        },
+        proxy: undefined,
+        tokens: {},
+      }),
+      calldatasPreContexts: {
+        0: [trustedNameContext],
+      },
+      calldatasPostContexts: {
+        0: [],
+      },
+      additionalContexts: [],
+      loggerFactory: mockLoggerFactory,
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    const provideContextRunMock = vi.fn().mockResolvedValue(undefined);
+    provideContextFactoryMock.mockReturnValue({
+      run: provideContextRunMock,
+    });
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN - preContexts should be provided exactly once (before CalldataInfo)
+    expect(provideContextFactoryMock).toHaveBeenCalledTimes(1);
+    expect(provideContextFactoryMock).toHaveBeenCalledWith({
+      contexts: [trustedNameContext],
+      derivationPath: "44'/60'/0'/0/0",
+      loggerFactory: mockLoggerFactory,
+    });
+
+    // Verify CalldataInfo was sent
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new SendEIP712FilteringCommand({
+        type: Eip712FilterType.CalldataInfo,
+        discarded: false,
+        calldataIndex: 0,
+        valueFlag: true,
+        calleeFlag: CalldataParamPresence.Present,
+        chainIdFlag: false,
+        selectorFlag: false,
+        amountFlag: false,
+        spenderFlag: CalldataParamPresence.None,
+        signature: "sig-info",
+      }),
+    );
+
+    // Verify the preContexts factory was called before the CalldataInfo APDU
+    const expectedCalldataInfoCmd = new SendEIP712FilteringCommand({
+      type: Eip712FilterType.CalldataInfo,
+      discarded: false,
+      calldataIndex: 0,
+      valueFlag: true,
+      calleeFlag: CalldataParamPresence.Present,
+      chainIdFlag: false,
+      selectorFlag: false,
+      amountFlag: false,
+      spenderFlag: CalldataParamPresence.None,
+      signature: "sig-info",
+    });
+    const calldataInfoCallIndex = apiMock.sendCommand.mock.calls.findIndex(
+      (call) => {
+        try {
+          expect(call[0]).toStrictEqual(expectedCalldataInfoCmd);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    );
+    expect(calldataInfoCallIndex).toBeGreaterThan(-1);
+    const factoryCallOrder =
+      provideContextFactoryMock.mock.invocationCallOrder[0]!;
+    const calldataInfoCallOrder =
+      apiMock.sendCommand.mock.invocationCallOrder[calldataInfoCallIndex]!;
+    expect(factoryCallOrder).toBeLessThan(calldataInfoCallOrder);
+  });
+
+  it("Provide postContexts after all calldata filters are sent", async () => {
+    // GIVEN
+    const txInfoContext = {
+      context: {
+        type: ClearSignContextType.TRANSACTION_INFO as const,
+        payload: "tx-info-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    const txFieldContext = {
+      context: {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION as const,
+        payload: "tx-field-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: {
+          "details.token": {
+            displayName: "Value",
+            path: "details.token",
+            signature: "sig-value",
+            calldataIndex: 0,
+            type: "calldata-value",
+          },
+          "details.amount": {
+            displayName: "Callee",
+            path: "details.amount",
+            signature: "sig-callee",
+            calldataIndex: 0,
+            type: "calldata-callee",
+          },
+        },
+        trustedNamesAddresses: {},
+        calldatas: {
+          0: {
+            filter: {
+              calldataIndex: 0,
+              displayName: "Transaction",
+              valueFlag: true,
+              calleeFlag: TypedDataCalldataParamPresence.Present,
+              chainIdFlag: false,
+              selectorFlag: false,
+              amountFlag: false,
+              spenderFlag: TypedDataCalldataParamPresence.None,
+              signature: "sig-info",
+            },
+            subset: {
+              chainId: 0x1234,
+              data: "0x6a761202",
+              from: "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              selector: "0x6a761202",
+              to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              value: 0n,
+            },
+          },
+        },
+        proxy: undefined,
+        tokens: {},
+      }),
+      calldatasPreContexts: {
+        0: [],
+      },
+      calldatasPostContexts: {
+        0: [txInfoContext, txFieldContext],
+      },
+      additionalContexts: [],
+      loggerFactory: mockLoggerFactory,
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    const provideContextRunMock = vi.fn().mockResolvedValue(undefined);
+    provideContextFactoryMock.mockReturnValue({
+      run: provideContextRunMock,
+    });
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN - postContexts should be provided after all filters complete
+    expect(provideContextFactoryMock).toHaveBeenCalledTimes(1);
+    expect(provideContextFactoryMock).toHaveBeenCalledWith({
+      contexts: [txInfoContext, txFieldContext],
+      derivationPath: "44'/60'/0'/0/0",
+      loggerFactory: mockLoggerFactory,
+    });
+  });
+
+  it("Provide both preContexts and postContexts for mixed calldata scenario", async () => {
+    // GIVEN
+    const trustedNameContext = {
+      context: {
+        type: ClearSignContextType.TRUSTED_NAME as const,
+        payload: "trusted-name-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    const txInfoContext = {
+      context: {
+        type: ClearSignContextType.TRANSACTION_INFO as const,
+        payload: "tx-info-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just({
+        type: "success",
+        messageInfo: TEST_CLEAR_SIGN_CONTEXT.messageInfo,
+        filters: {
+          "details.token": {
+            displayName: "Value",
+            path: "details.token",
+            signature: "sig-value",
+            calldataIndex: 0,
+            type: "calldata-value",
+          },
+        },
+        trustedNamesAddresses: {},
+        calldatas: {
+          0: {
+            filter: {
+              calldataIndex: 0,
+              displayName: "Transaction",
+              valueFlag: true,
+              calleeFlag: TypedDataCalldataParamPresence.None,
+              chainIdFlag: false,
+              selectorFlag: false,
+              amountFlag: false,
+              spenderFlag: TypedDataCalldataParamPresence.None,
+              signature: "sig-info",
+            },
+            subset: {
+              chainId: 0x1234,
+              data: "0x",
+              from: "0x8ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              selector: "0x",
+              to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+              value: 4200000000000000n,
+            },
+          },
+        },
+        proxy: undefined,
+        tokens: {},
+      }),
+      calldatasPreContexts: {
+        0: [trustedNameContext],
+      },
+      calldatasPostContexts: {
+        0: [txInfoContext],
+      },
+      additionalContexts: [],
+      loggerFactory: mockLoggerFactory,
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: undefined }),
+    );
+    const provideContextRunMock = vi.fn().mockResolvedValue(undefined);
+    provideContextFactoryMock.mockReturnValue({
+      run: provideContextRunMock,
+    });
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN - both preContexts and postContexts should be provided
+    expect(provideContextFactoryMock).toHaveBeenCalledTimes(2);
+    expect(provideContextFactoryMock).toHaveBeenNthCalledWith(1, {
+      contexts: [trustedNameContext],
+      derivationPath: "44'/60'/0'/0/0",
+      loggerFactory: mockLoggerFactory,
+    });
+    expect(provideContextFactoryMock).toHaveBeenNthCalledWith(2, {
+      contexts: [txInfoContext],
+      derivationPath: "44'/60'/0'/0/0",
+      loggerFactory: mockLoggerFactory,
+    });
   });
 });

@@ -103,7 +103,8 @@ describe("SignTypedDataDeviceAction", () => {
         },
       },
     }),
-    calldatasContexts: {},
+    calldatasPreContexts: {},
+    calldatasPostContexts: {},
     additionalContexts: [],
     loggerFactory: mockLoggerFactory,
   };

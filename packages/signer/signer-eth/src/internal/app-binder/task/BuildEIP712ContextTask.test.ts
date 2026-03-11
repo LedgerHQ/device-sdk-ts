@@ -230,7 +230,8 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       loggerFactory: mockLoggerFactory,
     });
   });
@@ -281,7 +282,8 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Nothing,
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       loggerFactory: mockLoggerFactory,
     });
   });
@@ -335,7 +337,8 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       loggerFactory: mockLoggerFactory,
     });
     expect(parserMock.parse).toHaveBeenCalledWith(TEST_DATA);
@@ -407,7 +410,8 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(TEST_CLEAR_SIGN_CONTEXT),
-      calldatasContexts: {},
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
       additionalContexts: [txCheckContext],
       loggerFactory: mockLoggerFactory,
     });
@@ -549,10 +553,204 @@ describe("BuildEIP712ContextTask", () => {
       domain: TEST_DOMAIN_VALUES,
       message: TEST_MESSAGE_VALUES,
       clearSignContext: Just(clearSignContext),
-      calldatasContexts: {
+      calldatasPreContexts: {
+        0: [],
+      },
+      calldatasPostContexts: {
         0: [],
       },
       loggerFactory: mockLoggerFactory,
+    });
+  });
+
+  it("Build context with native send calldata (all TRUSTED_NAME, BASIC type)", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextModuleMock as unknown as ContextModule,
+      parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
+      TEST_DATA,
+      "44'/60'/0'/0/0",
+      createAppConfig(false),
+      TEST_FROM,
+      mockLoggerFactory,
+      buildFullContextFactoryMock,
+    );
+    const subset = {
+      chainId: 0x1234,
+      data: "0x",
+      from: TEST_FROM,
+      selector: "0x",
+      to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+      value: 4200000000000000n,
+    };
+    const clearSignContext = {
+      ...TEST_CLEAR_SIGN_CONTEXT,
+      calldatas: {
+        0: {
+          filter: {
+            calldataIndex: 0,
+            displayName: "Transaction",
+            valueFlag: true,
+            calleeFlag: TypedDataCalldataParamPresence.Present,
+            chainIdFlag: false,
+            selectorFlag: false,
+            amountFlag: false,
+            spenderFlag: TypedDataCalldataParamPresence.None,
+            signature: "sig",
+          },
+          subset,
+        },
+      },
+    };
+    const trustedNameContext1 = {
+      context: {
+        type: ClearSignContextType.TRUSTED_NAME as const,
+        payload: "trusted-name-payload-1",
+      },
+      subcontextCallbacks: [],
+    };
+    const trustedNameContext2 = {
+      context: {
+        type: ClearSignContextType.TRUSTED_NAME as const,
+        payload: "trusted-name-payload-2",
+      },
+      subcontextCallbacks: [],
+    };
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
+    contextModuleMock.getTypedDataFilters.mockResolvedValueOnce(
+      clearSignContext,
+    );
+    buildFullContextFactoryMock.mockReturnValue({
+      run: async () => ({
+        clearSignContexts: [trustedNameContext1, trustedNameContext2],
+        clearSigningType: ClearSigningType.BASIC,
+      }),
+    });
+    // WHEN
+    const builtContext = await task.run();
+    // THEN - all TRUSTED_NAME should be in preContexts, postContexts empty
+    expect(builtContext.calldatasPreContexts).toStrictEqual({
+      0: [trustedNameContext1, trustedNameContext2],
+    });
+    expect(builtContext.calldatasPostContexts).toStrictEqual({
+      0: [],
+    });
+  });
+
+  it("Build context with EIP7730 calldata splitting mixed contexts", async () => {
+    // GIVEN
+    const task = new BuildEIP712ContextTask(
+      apiMock,
+      contextModuleMock as unknown as ContextModule,
+      parserMock,
+      mockTransactionParser,
+      mockTransactionMapper,
+      TEST_DATA,
+      "44'/60'/0'/0/0",
+      createAppConfig(false),
+      TEST_FROM,
+      mockLoggerFactory,
+      buildFullContextFactoryMock,
+    );
+    const subset = {
+      chainId: 0x1234,
+      data: "0x6a761202",
+      from: TEST_FROM,
+      selector: "0x6a761202",
+      to: "0x7ceb23fd6bc0add59e62ac25578270cff1b9f619",
+      value: 0n,
+    };
+    const clearSignContext = {
+      ...TEST_CLEAR_SIGN_CONTEXT,
+      calldatas: {
+        0: {
+          filter: {
+            calldataIndex: 0,
+            displayName: "Transaction",
+            valueFlag: true,
+            calleeFlag: TypedDataCalldataParamPresence.Present,
+            chainIdFlag: false,
+            selectorFlag: true,
+            amountFlag: true,
+            spenderFlag: TypedDataCalldataParamPresence.Present,
+            signature: "sig",
+          },
+          subset,
+        },
+      },
+    };
+    const trustedNameContext = {
+      context: {
+        type: ClearSignContextType.TRUSTED_NAME as const,
+        payload: "trusted-name-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    const txInfoContext = {
+      context: {
+        type: ClearSignContextType.TRANSACTION_INFO as const,
+        payload: "tx-info-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    const txFieldContext = {
+      context: {
+        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION as const,
+        payload: "tx-field-payload",
+      },
+      subcontextCallbacks: [],
+    };
+    parserMock.parse.mockReturnValueOnce(
+      Right({
+        types: TEST_TYPES,
+        domain: TEST_DOMAIN_VALUES,
+        message: TEST_MESSAGE_VALUES,
+      }),
+    );
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.12.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    contextModuleMock.getContexts.mockResolvedValueOnce([]);
+    contextModuleMock.getTypedDataFilters.mockResolvedValueOnce(
+      clearSignContext,
+    );
+    buildFullContextFactoryMock.mockReturnValue({
+      run: async () => ({
+        clearSignContexts: [trustedNameContext, txInfoContext, txFieldContext],
+        clearSigningType: ClearSigningType.EIP7730,
+      }),
+    });
+    // WHEN
+    const builtContext = await task.run();
+    // THEN - TRUSTED_NAME in preContexts, TX_INFO and TX_FIELD in postContexts
+    expect(builtContext.calldatasPreContexts).toStrictEqual({
+      0: [trustedNameContext],
+    });
+    expect(builtContext.calldatasPostContexts).toStrictEqual({
+      0: [txInfoContext, txFieldContext],
     });
   });
 
