@@ -208,7 +208,7 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
           grouping: "na",
           builder: {
             b: "0x1234567890123456789012345678901234567890",
-            f: 0.01,
+            f: 1,
           },
           nonce: 1,
         },

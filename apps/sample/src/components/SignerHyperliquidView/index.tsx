@@ -28,10 +28,14 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
   const dmk = useDmk();
-  const signer = new SignerHyperliquidBuilder({
-    dmk,
-    sessionId,
-  }).build();
+  const signer = useMemo(
+    () =>
+      new SignerHyperliquidBuilder({
+        dmk,
+        sessionId,
+      }).build(),
+    [dmk, sessionId],
+  );
 
   const deviceModelId = dmk.getConnectedDevice({
     sessionId,

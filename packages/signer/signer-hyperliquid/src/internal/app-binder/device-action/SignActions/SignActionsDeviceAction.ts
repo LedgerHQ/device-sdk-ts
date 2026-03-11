@@ -101,8 +101,6 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) => context.input.skipOpenApp === true,
-        hasMoreActions: ({ context }) =>
-          context._internalState.actionIndex < context.input.actions.length,
       },
       actions: {
         assignErrorFromEvent: assign({

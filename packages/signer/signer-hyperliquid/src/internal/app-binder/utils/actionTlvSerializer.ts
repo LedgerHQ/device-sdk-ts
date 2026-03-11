@@ -99,6 +99,8 @@ function getActionTypeByte(action: HyperliquidAction): number {
       return ACTION_TYPE.UPDATE_LEVERAGE;
     case "approveBuilderFee":
       return ACTION_TYPE.APPROVAL_BUILDER_FEE;
+    case "updateIsolatedMargin":
+      return ACTION_TYPE.UPDATE_ISOLATED_MARGIN;
     default:
       throw new Error(
         `Unknown action type: ${(action as HyperliquidAction).type}`,
@@ -139,6 +141,9 @@ function groupingToByte(g: "na" | "normalTpsl" | "positionTpsl"): number {
 function numberToVarBytes(value: number, maxBytes: number = 8): Uint8Array {
   if (value < 0 || !Number.isInteger(value)) {
     throw new Error(`Expected non-negative integer, got ${value}`);
+  }
+  if (!Number.isSafeInteger(value)) {
+    throw new Error(`Value ${value} is not a safe integer`);
   }
   const big = BigInt(value);
   if (big > 0xffffffffffffffffn) {
