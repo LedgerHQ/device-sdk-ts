@@ -25,6 +25,7 @@ import { SignActionsDeviceAction } from "./SignActionsDeviceAction";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
+    // eslint-disable-next-line @typescript-eslint/consistent-type-imports
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
   return {
     ...original,

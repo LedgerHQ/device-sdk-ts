@@ -108,6 +108,7 @@ describe("buildActionStructure", () => {
         nonce: 1, // Not serialized with this fuction call
       } satisfies HyperliquidAction,
       expectedHex:
+        // prettier-ignore
         /* eslint-disable prettier/prettier */
         "81dd1f" + // ORDER
           "81e00100" + // ORDER_TYPE
@@ -119,7 +120,7 @@ describe("buildActionStructure", () => {
           "81d704" + // ORDER_DETAIL
           "81e60102" + // TIF
         "81ea0100", // GROUPING
-        /* eslint-enable prettier/prettier */
+      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type batchModify (update_order)",
@@ -147,6 +148,7 @@ describe("buildActionStructure", () => {
         nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
       } satisfies HyperliquidAction,
       expectedHex:
+        // prettier-ignore
         /* eslint-disable prettier/prettier */
         "81d842" + // UPDATE_ORDERS
           "81dd34" + // ORDER
@@ -161,7 +163,7 @@ describe("buildActionStructure", () => {
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
           "81dc080000004FDF6BBE6F", // ORDER_ID
-        /* eslint-enable prettier/prettier */
+      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type cancel",
@@ -171,11 +173,12 @@ describe("buildActionStructure", () => {
         nonce: 1772813983827, // Not serialized with this fuction call
       } satisfies HyperliquidAction,
       expectedHex:
+        // prettier-ignore
         /* eslint-disable prettier/prettier */
         "81d90f" + // CANCEL_ORDERS
           "81d10100" + // ASSET_ID
           "81dc080000004F4BD11216", // ORDER_ID
-        /* eslint-enable prettier/prettier */
+      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type updateLeverage",
@@ -191,7 +194,7 @@ describe("buildActionStructure", () => {
         "81d10100" + // ASSET_ID
         "81de0100" + // IS_CROSS
         "81ed08000000000000000a", // LEVERAGE,
-        /* eslint-enable prettier/prettier */
+      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type approveBuilderFee",
