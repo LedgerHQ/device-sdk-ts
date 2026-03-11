@@ -1,4 +1,10 @@
 import {
+  CommandResultFactory,
+  InvalidStatusWordError,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
+
+import {
   SendActionCommand,
   type SendActionCommandArgs,
 } from "./SendActionCommand";
@@ -14,9 +20,9 @@ describe("SendActionCommand", () => {
   };
 
   describe("name", () => {
-    it("should be 'SendAction'", () => {
+    it("should be 'sendAction'", () => {
       const command = new SendActionCommand(defaultArgs);
-      expect(command.name).toBe("SendAction");
+      expect(command.name).toBe("sendAction");
     });
   });
 
@@ -45,6 +51,42 @@ describe("SendActionCommand", () => {
 
       expect(apdu.data).toStrictEqual(
         new Uint8Array([0x00, 0x03, ...customTlv]),
+      );
+    });
+  });
+
+  describe("parseResponse", () => {
+    it("should return success when status is 0x9000 and no data", () => {
+      const response = {
+        statusCode: Uint8Array.from([0x90, 0x00]),
+        data: new Uint8Array(),
+      };
+
+      const parsed = new SendActionCommand(defaultArgs).parseResponse(response);
+      expect(parsed).toStrictEqual(CommandResultFactory({ data: undefined }));
+      expect(isSuccessCommandResult(parsed)).toBe(true);
+    });
+
+    it("should return an error if the status code is not 0x9000", () => {
+      const response = {
+        statusCode: Uint8Array.from([0x6a, 0x80]),
+        data: new Uint8Array(),
+      };
+
+      const result = new SendActionCommand(defaultArgs).parseResponse(response);
+      expect(isSuccessCommandResult(result)).toBe(false);
+    });
+
+    it("should return an error if response contains unexpected data", () => {
+      const response = {
+        statusCode: Uint8Array.from([0x90, 0x00]),
+        data: Uint8Array.from([0x01]),
+      };
+
+      const result = new SendActionCommand(defaultArgs).parseResponse(response);
+      expect(isSuccessCommandResult(result)).toBe(false);
+      expect((result as { error: unknown }).error).toBeInstanceOf(
+        InvalidStatusWordError,
       );
     });
   });

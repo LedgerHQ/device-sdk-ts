@@ -20,8 +20,8 @@ describe("SendCertificateCommand", () => {
   });
 
   describe("name", () => {
-    it("should be 'SendCertificate'", () => {
-      expect(command.name).toBe("SendCertificate");
+    it("should be 'sendCertificate'", () => {
+      expect(command.name).toBe("sendCertificate");
     });
   });
 

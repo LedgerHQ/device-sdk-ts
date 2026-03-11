@@ -15,14 +15,13 @@ export const TLV_TAG = {
   MAX_FEE: 0xb0,
   ACTION_TYPE: 0xd0,
   ASSET_ID: 0xd1,
-  APPROVE_BUILDER_ADDRESS: 0xd3,
+  BUILDER_ADDRESS: 0xd3,
   NONCE: 0xda,
   ACTION_STRUCTURE: 0xdb,
   ORDER_ID: 0xdc,
   ORDER: 0xdd,
   IS_CROSS: 0xde,
   ORDER_TYPE: 0xe0,
-  ORDER_ASSET_ID: 0xe1,
   BUY_OR_NOT: 0xe2,
   PRICE: 0xe3,
   SIZE: 0xe4,
@@ -32,9 +31,13 @@ export const TLV_TAG = {
   TRIGGER_PRICE: 0xe8,
   TRIGGER_TYPE: 0xe9,
   GROUPING: 0xea,
-  BUILDER_ADDRESS: 0xeb,
+  BUILDER_INFO: 0xeb,
   BUILDER_FEE: 0xec,
   LEVERAGE: 0xed,
+  UPDATE_ORDERS: 0xd8,
+  CANCEL_ORDERS: 0xd9,
+  ORDER_DETAIL: 0xd7,
+  NTLI: 0xd6,
 } as const;
 
 /** Required structure_type value per specs */
@@ -50,6 +53,7 @@ export const ACTION_TYPE = {
   CANCEL: 0x02,
   UPDATE_LEVERAGE: 0x03,
   APPROVAL_BUILDER_FEE: 0x04,
+  UPDATE_ISOLATED_MARGIN: 0x05,
 } as const;
 
 /** order_type: limit, trigger (specs Order structure) */
@@ -105,6 +109,14 @@ export type HyperliquidAction =
       nonce: number;
     }
   | {
+      type: "batchModify";
+      modifies: {
+        oid: number;
+        order: Order;
+      }[];
+      nonce: number;
+    }
+  | {
       type: "cancel";
       cancels: {
         asset: number; // asset id
@@ -125,6 +137,13 @@ export type HyperliquidAction =
       signatureChainId: string; // chainId in hex format. Ex: 0xa4b1 for Arbitrum
       maxFeeRate: string;
       builder: HexaString;
+      nonce: number;
+    }
+  | {
+      type: "updateIsolatedMargin";
+      asset: number; // index of coin
+      isBuy: boolean; // cross-leverage
+      ntli: number;
       nonce: number;
     };
 type Order = {
@@ -153,6 +172,7 @@ function getActionTypeByte(action: HyperliquidAction): number {
     case "order":
       return ACTION_TYPE.ORDER;
     case "modify":
+    case "batchModify":
       return ACTION_TYPE.MODIFY;
     case "cancel":
       return ACTION_TYPE.CANCEL;
@@ -252,7 +272,6 @@ function encodeInTlvFromUInt64(
   builder: ByteArrayBuilder,
   tag: number,
   value: number,
-  bigEndian: boolean = true,
 ): void {
   if (tag > 0x7f) {
     builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
@@ -260,7 +279,7 @@ function encodeInTlvFromUInt64(
     builder.add8BitUIntToData(tag);
   }
   builder.add8BitUIntToData(8);
-  builder.add64BitUIntToData(value, bigEndian);
+  builder.add64BitUIntToData(value);
 }
 
 function encodeInTlvFromAscii(
@@ -290,7 +309,7 @@ function encodeInTlvFromBuffer(
 }
 
 /** Serialize a single Order to TLV (specs Order structure: 0xe0–0xe9). */
-function serializeOrderToTlv(order: Order): Uint8Array {
+export function serializeOrderToTlv(order: Order): Uint8Array {
   const b = new ByteArrayBuilder();
   const isLimit = "limit" in order.t;
   const orderType = order.t;
@@ -302,7 +321,7 @@ function serializeOrderToTlv(order: Order): Uint8Array {
     isLimit ? ORDER_TYPE.LIMIT : ORDER_TYPE.TRIGGER,
   );
   // 0xe1 ASSET_ID (var number: 1–8 bytes)
-  encodeTlvVarNumber(b, TLV_TAG.ORDER_ASSET_ID, order.a);
+  encodeTlvVarNumber(b, TLV_TAG.ASSET_ID, order.a);
   // 0xe2 BUY_OR_NOT: 1 byte boolean
   encodeInTlvFromUInt8(b, TLV_TAG.BUY_OR_NOT, order.b ? 1 : 0);
   // 0xe3 PRICE, 0xe4 SIZE
@@ -311,21 +330,31 @@ function serializeOrderToTlv(order: Order): Uint8Array {
   // 0xe5 REDUCE_ONLY
   encodeInTlvFromUInt8(b, TLV_TAG.REDUCE_ONLY, order.r ? 1 : 0);
 
+  const payloadBuilder = new ByteArrayBuilder();
   if (isLimit && "limit" in orderType) {
-    encodeInTlvFromUInt8(b, TLV_TAG.TIF, tifToByte(orderType.limit.tif));
+    encodeInTlvFromUInt8(
+      payloadBuilder,
+      TLV_TAG.TIF,
+      tifToByte(orderType.limit.tif),
+    );
   } else if ("trigger" in orderType) {
     encodeInTlvFromUInt8(
-      b,
+      payloadBuilder,
       TLV_TAG.TRIGGER_MARKET,
       orderType.trigger.isMarket ? 1 : 0,
     );
-    encodeInTlvFromAscii(b, TLV_TAG.TRIGGER_PRICE, orderType.trigger.triggerPx);
+    encodeInTlvFromAscii(
+      payloadBuilder,
+      TLV_TAG.TRIGGER_PRICE,
+      orderType.trigger.triggerPx,
+    );
     encodeInTlvFromUInt8(
-      b,
+      payloadBuilder,
       TLV_TAG.TRIGGER_TYPE,
       orderType.trigger.tpsl === "tp" ? TRIGGER_TYPE.TP : TRIGGER_TYPE.SL,
     );
   }
+  encodeInTlvFromBuffer(b, TLV_TAG.ORDER_DETAIL, payloadBuilder.build());
 
   return b.build();
 }
@@ -344,7 +373,7 @@ function encodeInTlvFromHexa(
 }
 
 /** Build action_structure (value for tag 0xdb) per specs create_order / update_order / cancel_order / leverage. */
-function buildActionStructure(action: HyperliquidAction): Uint8Array {
+export function buildActionStructure(action: HyperliquidAction): Uint8Array {
   const b = new ByteArrayBuilder();
 
   switch (action.type) {
@@ -360,39 +389,76 @@ function buildActionStructure(action: HyperliquidAction): Uint8Array {
         groupingToByte(action.grouping),
       );
       if (action.builder !== undefined) {
-        encodeInTlvFromHexa(b, TLV_TAG.BUILDER_ADDRESS, action.builder.b);
-        encodeTlvVarNumber(b, TLV_TAG.BUILDER_FEE, action.builder.f);
+        const builderInfoBuilder = new ByteArrayBuilder();
+        encodeInTlvFromHexa(
+          builderInfoBuilder,
+          TLV_TAG.BUILDER_ADDRESS,
+          action.builder.b,
+        );
+        encodeTlvVarNumber(
+          builderInfoBuilder,
+          TLV_TAG.BUILDER_FEE,
+          action.builder.f,
+        );
+
+        encodeInTlvFromBuffer(
+          b,
+          TLV_TAG.BUILDER_INFO,
+          builderInfoBuilder.build(),
+        );
       }
       break;
     }
-    case "modify": {
-      // update_order: order (0xdd), oid (0xdc)
-      const mod = action.modifies[0];
-      if (!mod) throw new Error("modify action must have at least one modify");
-      encodeInTlvFromBuffer(b, TLV_TAG.ORDER, serializeOrderToTlv(mod.order));
-      encodeInTlvFromUInt64(b, TLV_TAG.ORDER_ID, mod.oid, true);
+    case "modify":
+    case "batchModify": {
+      // update_order: tag UPDATE_ORDER (0xd8) once, then length of buffer, then buffer of [order (0xdd), oid (0xdc)] per modify
+      if (!action.modifies.length) {
+        throw new Error("modify action must have at least one modify");
+      }
+      const payloadBuilder = new ByteArrayBuilder();
+      for (const mod of action.modifies) {
+        encodeInTlvFromBuffer(
+          payloadBuilder,
+          TLV_TAG.ORDER,
+          serializeOrderToTlv(mod.order),
+        );
+        encodeInTlvFromUInt64(payloadBuilder, TLV_TAG.ORDER_ID, mod.oid);
+      }
+      const updateOrderPayload = payloadBuilder.build();
+      encodeInTlvFromBuffer(b, TLV_TAG.UPDATE_ORDERS, updateOrderPayload);
       break;
     }
     case "cancel": {
       // cancel_order: asset_id (0xd1), oid (0xdc)
-      const cancel = action.cancels[0];
-      if (!cancel)
+      if (!action.cancels.length) {
         throw new Error("cancel action must have at least one cancel");
-      encodeInTlvFromUInt64(b, TLV_TAG.ASSET_ID, cancel.asset, true);
-      encodeInTlvFromUInt64(b, TLV_TAG.ORDER_ID, cancel.oid, true);
+      }
+      const payloadBuilder = new ByteArrayBuilder();
+      for (const cancel of action.cancels) {
+        encodeTlvVarNumber(payloadBuilder, TLV_TAG.ASSET_ID, cancel.asset);
+        encodeInTlvFromUInt64(payloadBuilder, TLV_TAG.ORDER_ID, cancel.oid);
+      }
+      const updateOrderPayload = payloadBuilder.build();
+      encodeInTlvFromBuffer(b, TLV_TAG.CANCEL_ORDERS, updateOrderPayload);
+
       break;
     }
     case "updateLeverage": {
       // leverage: asset_id (0xd1), is_cross (0xde), leverage (0xed)
-      encodeInTlvFromUInt64(b, TLV_TAG.ASSET_ID, action.asset, true);
+      encodeTlvVarNumber(b, TLV_TAG.ASSET_ID, action.asset);
       encodeInTlvFromUInt8(b, TLV_TAG.IS_CROSS, action.isCross ? 1 : 0);
-      encodeInTlvFromUInt64(b, TLV_TAG.LEVERAGE, action.leverage, true);
+      encodeInTlvFromUInt64(b, TLV_TAG.LEVERAGE, action.leverage);
       break;
     }
     case "approveBuilderFee":
       encodeInTlvFromHexa(b, TLV_TAG.CHAIN_ID, action.signatureChainId);
       encodeInTlvFromAscii(b, TLV_TAG.MAX_FEE, action.maxFeeRate);
-      encodeInTlvFromHexa(b, TLV_TAG.APPROVE_BUILDER_ADDRESS, action.builder);
+      encodeInTlvFromHexa(b, TLV_TAG.BUILDER_ADDRESS, action.builder);
+      break;
+    case "updateIsolatedMargin":
+      encodeTlvVarNumber(b, TLV_TAG.ASSET_ID, action.asset);
+      encodeInTlvFromUInt8(b, TLV_TAG.BUY_OR_NOT, action.isBuy ? 1 : 0);
+      encodeInTlvFromUInt64(b, TLV_TAG.NTLI, action.ntli);
       break;
     default:
       break;

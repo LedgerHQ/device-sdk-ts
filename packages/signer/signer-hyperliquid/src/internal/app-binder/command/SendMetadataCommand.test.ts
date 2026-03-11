@@ -23,8 +23,8 @@ describe("SendMetadataCommand", () => {
   });
 
   describe("name", () => {
-    it("should be 'SendMetadata'", () => {
-      expect(command.name).toBe("SendMetadata");
+    it("should be 'sendMetadata'", () => {
+      expect(command.name).toBe("sendMetadata");
     });
   });
 

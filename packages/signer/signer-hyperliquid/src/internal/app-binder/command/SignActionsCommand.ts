@@ -41,7 +41,7 @@ export class SignActionsCommand
       HyperliquidErrorCodes
     >
 {
-  readonly name = "SignActions";
+  readonly name = "signActions";
   private readonly errorHelper = new CommandErrorHelper<
     SignActionsCommandResponse,
     HyperliquidErrorCodes

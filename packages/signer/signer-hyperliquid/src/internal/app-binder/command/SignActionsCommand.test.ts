@@ -15,8 +15,8 @@ describe("SignActionsCommand", () => {
   });
 
   describe("name", () => {
-    it("should be 'SignActions'", () => {
-      expect(command.name).toBe("SignActions");
+    it("should be 'signActions'", () => {
+      expect(command.name).toBe("signActions");
     });
   });
 

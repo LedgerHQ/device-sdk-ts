@@ -47,28 +47,105 @@ describe("SendActionsTask", () => {
         nonce: 1770816625873,
       } satisfies HyperliquidAction,
       expectedSerialization:
-        "01012c02010181d0010081da06019c4ce55cd181db4581dd2381e0010081e1012a81e2010181e3043139393281e405302e35313281e5010081e6010181ea010081eb14c0708cdd6cd166d51da264e3f49a0422be26e35b81ec0164",
+        /* eslint-disable prettier/prettier */
+        "01012c" +
+        "020101" +
+        "81d00100" +
+        "81da06019c4ce55cd1" +
+        "81db4b" +
+          "81dd26" +
+          "81e00100" +
+          "81d1012a" +
+          "81e20101" +
+          "81e30431393932" +
+          "81e405302e353132" +
+          "81e50100" +
+          "81d704" + // ORDER_DETAIL
+            "81e60101" + // TIF
+          "81ea0100" + // GROUPING
+          "81eb1b" + //BUILDER
+            "81d314c0708cdd6cd166d51da264e3f49a0422be26e35b" + // BUILDER_ADDRESS
+            "81ec0164", // BUILDER_FEE
+          /* eslint-enable prettier/prettier */
     },
     {
       action: {
-        type: "approveBuilderFee",
-        hyperliquidChain: "Mainnet",
-        signatureChainId: "0xa4b1",
-        maxFeeRate: "0.1000%",
-        builder: "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
-        nonce: 1772440978175,
+        type: "batchModify",
+        modifies: [
+          {
+            oid: 343050796655,
+            order: {
+              a: 0,
+              b: false,
+              p: "85169",
+              s: "0.0005",
+              r: true,
+              t: {
+                trigger: {
+                  isMarket: true,
+                  triggerPx: "85169",
+                  tpsl: "tp",
+                },
+              },
+            },
+          },
+        ],
+        nonce: 1773050015814,
       } satisfies HyperliquidAction,
-      // 01012c 020101 81d00104 81da06019CADB702FF 81db27 23040000a4b1 81b007302E3130303025 81d314c0708cdd6cd166d51da264e3f49a0422be26e35b
-      // 01012c 020101 81d00104 81da06019CADB702FF 81db25 2302a4b1 81b007302E3130303025 81d314c0708cdd6cd166d51da264e3f49a0422be26e35b
       expectedSerialization:
-        "01012c02010181d0010481da06019CADB702FF81db252302a4b181b007302E313030302581d314c0708cdd6cd166d51da264e3f49a0422be26e35b",
+        /* eslint-disable prettier/prettier */
+        "01012c" + // STRUCTURE_TYPE
+        "020101" + // VERSION
+        "81d00101" + // ACTION_TYPE
+        "81da06019CD2043046" + // NONCE
+        "81db45" + // ACTION_STRUCTURE
+          "81d842" + // UPDATE_ORDERS
+          "81dd34" + // ORDER
+            "81e00101" + // ORDER_TYPE
+            "81d10100" + // ASSET_ID
+            "81e20100" + // BUY_OR_NOT
+            "81e3053835313639" + // PRICE
+            "81e406302E30303035" + // SIZE
+            "81e50101" + // REDUCE_ONLY
+            "81d710" + // ORDER_DETAIL
+              "81e70101" + // TRIGGER_MARKET
+              "81e8053835313639" + // TRIGGER_PRICE
+              "81e90100" + // TRIGGER_TYPE
+          "81dc080000004FDF6BBE6F", // ORDER_ID
+        /* eslint-enable prettier/prettier */
+    },
+    {
+      action: {
+        type: "cancel",
+        cancels: [
+          {
+            asset: 0,
+            oid: 340574409238,
+          },
+        ],
+        nonce: 1772813983827,
+      } satisfies HyperliquidAction,
+      expectedSerialization:
+        /* eslint-disable prettier/prettier */
+        "01012c" + // STRUCTURE_TYPE
+        "020101" + // VERSION
+        "81d00102" + // ACTION_TYPE
+        "81da06019CC3F2A053" + // NONCE
+        "81db12" + // ACTION_STRUCTURE
+          "81d90f" + // CANCEL_ORDERS
+            "81d10100" + // ASSET_ID
+            "81dc080000004F4BD11216", // ORDER_ID
+        /* eslint-enable prettier/prettier */
     },
   ])(
     "calls SendActionCommand once when actions has one item",
     async ({ action, expectedSerialization }) => {
+      // GIVEN one action
+      // WHEN
       const task = new SendActionsTask(apiMock, { actions: [action] });
       const result = await task.run();
 
+      // THEN
       expect(result).toEqual(
         CommandResultFactory({
           data: undefined,
@@ -76,38 +153,7 @@ describe("SendActionsTask", () => {
       );
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
 
-      // e0 03 01 00
-      // 18 0016
-      // 01012c 020101 81d00104 81da06019cadb702ff81db00
-
-      // e0030100
-      // 5d 005b
-      // 01012c 020101 81d00100 81da06019c4ce55cd1
-      // 81db45 81dd23 81e00100 81e1012a 81e20101 81e30431393932 81e405302e353132 81e50100 81e60101
-      // 81ea0100 81eb14c0708cdd6cd166d51da264e3f49a0422be26e35b
-      // 81ec0164
-
-      /* eslint-disable prettier/prettier */
       const expectedBytes = hexaStringToBuffer(expectedSerialization)!;
-      // const expectedBytes = new Uint8Array([
-      //   0x01, 0x01, 0x2c, // STRUCTURE_TYPE
-      //   0x02, 0x01, 0x01, // VERSION
-      //   0xd0, 0x01, 0x00, // ACTION_TYPE
-      //   0xda, 0x01, 0x01, // NONCE
-      //   0xdb, 0x37, // ACTION_STRUCTURE
-      //     0xdd, 0x19, // ORDER
-      //       0xe0, 0x01, 0x00,
-      //       0xe1, 0x01, 0x00, // ORDER_ASSET_ID
-      //       0xe2, 0x01, 0x01, // BUY_OR_NOT
-      //       0xe3, 0x03, 0x31, 0x30, 0x30, // PRICE
-      //       0xe4, 0x03, 0x31, 0x30, 0x30, // SIZE
-      //       0xe5, 0x01, 0x00, // REDUCE_ONLY
-      //       0xe6, 0x01, 0x02, // TIF
-      //   0xea, 0x01, 0x00, // GROUPING
-      //   0xeb, 0x14, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12, 0x34, 0x56, 0x78, 0x90, // BUILDER_ADDRESS
-      //   0xec, 0x01, 0x64, // BUILDER_FEE
-      // ]);
-      /* eslint-enable prettier/prettier */
       expect(apiMock.sendCommand).toHaveBeenCalledWith(
         new SendActionCommand({
           serializedAction: expectedBytes,
@@ -116,208 +162,85 @@ describe("SendActionsTask", () => {
     },
   );
 
-  it("calls SendActionCommand multiple times in order when actions has several items", async () => {
-    const actions: HyperliquidAction[] = [
-      {
-        type: "order",
-        orders: [
-          {
-            a: 0,
-            b: true,
-            p: "1",
-            s: "1",
-            t: { limit: { tif: "Gtc" } },
-            r: false,
-          },
-        ],
-        grouping: "na",
-        nonce: 1,
-      },
-      {
-        type: "cancel",
-        cancels: [{ asset: 0, oid: 42 }],
-        nonce: 2,
-      },
-      {
-        type: "updateLeverage",
-        asset: 0,
-        isCross: false,
-        leverage: 10,
-        nonce: 3,
-      },
-    ];
+  it.each([
+    {
+      actions: [
+        {
+          type: "order",
+          orders: [
+            {
+              a: 0,
+              b: true,
+              p: "1",
+              s: "1",
+              t: { limit: { tif: "Gtc" } },
+              r: false,
+            },
+          ],
+          grouping: "na",
+          nonce: 1,
+        },
+        {
+          type: "cancel",
+          cancels: [{ asset: 0, oid: 42 }],
+          nonce: 2,
+        },
+        {
+          type: "updateLeverage",
+          asset: 0,
+          isCross: false,
+          leverage: 10,
+          nonce: 3,
+        },
+      ] satisfies HyperliquidAction[],
+      expectedSerializations: [
+        hexaStringToBuffer(
+          "01012c02010181d0010081da010181db2681dd1f81e0010081d1010081e2010181e3013181e4013181e5010081d70481e6010281ea0100",
+        )!,
+        hexaStringToBuffer(
+          "01012c02010181d0010281da010281db1281d90f81d1010081dc08000000000000002a",
+        )!,
+        hexaStringToBuffer(
+          "01012c02010181d0010381da010381db1381d1010081de010081ed08000000000000000a",
+        )!,
+      ],
+    },
+  ])(
+    "calls SendActionCommand multiple times in order when actions has several items",
+    async ({ actions, expectedSerializations }) => {
+      // GIVEN several actions
+      // WHEN
+      const task = new SendActionsTask(apiMock, { actions });
+      await task.run();
 
-    const task = new SendActionsTask(apiMock, { actions });
-    await task.run();
+      // THEN
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(3);
 
-    expect(apiMock.sendCommand).toHaveBeenCalledTimes(3);
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        1,
+        new SendActionCommand({
+          serializedAction: expectedSerializations[0]!,
+        }),
+      );
 
-    /* eslint-disable prettier/prettier */
-    const expectedPlacingOrder = new Uint8Array([
-      0x01,
-      0x01,
-      0x2c, // STRUCTURE_TYPE
-      0x02,
-      0x01,
-      0x01, // VERSION
-      0x81,
-      0xd0,
-      0x01,
-      0x00, // ACTION_TYPE order
-      0x81,
-      0xda,
-      0x01,
-      0x01, // NONCE
-      0x81,
-      0xdb,
-      0x23, // ACTION_STRUCTURE
-      0x81,
-      0xdd,
-      0x1c, // ORDER
-      0x81,
-      0xe0,
-      0x01,
-      0x00,
-      0x81,
-      0xe1,
-      0x01,
-      0x00, // ORDER_ASSET_ID
-      0x81,
-      0xe2,
-      0x01,
-      0x01,
-      0x81,
-      0xe3,
-      0x01,
-      0x31, // PRICE "1"
-      0x81,
-      0xe4,
-      0x01,
-      0x31, // SIZE "1"
-      0x81,
-      0xe5,
-      0x01,
-      0x00,
-      0x81,
-      0xe6,
-      0x01,
-      0x02, // TIF Gtc
-      0x81,
-      0xea,
-      0x01,
-      0x00, // GROUPING na
-    ]);
-    const expectedCancelOrder = new Uint8Array([
-      0x01,
-      0x01,
-      0x2c,
-      0x02,
-      0x01,
-      0x01,
-      0x81,
-      0xd0,
-      0x01,
-      0x02, // ACTION_TYPE cancel
-      0x81,
-      0xda,
-      0x01,
-      0x02, // NONCE
-      0x81,
-      0xdb,
-      0x16, // ACTION_STRUCTURE
-      0x81,
-      0xd1,
-      0x08,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00, // ASSET_ID
-      0x81,
-      0xdc,
-      0x08,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x2a, // ORDER_ID 42
-    ]);
-    const expectedUpdateLeverage = new Uint8Array([
-      0x01,
-      0x01,
-      0x2c,
-      0x02,
-      0x01,
-      0x01,
-      0x81,
-      0xd0,
-      0x01,
-      0x03, // ACTION_TYPE updateLeverage
-      0x81,
-      0xda,
-      0x01,
-      0x03, // NONCE
-      0x81,
-      0xdb,
-      0x1a, // ACTION_STRUCTURE
-      0x81,
-      0xd1,
-      0x08,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00, // ASSET_ID
-      0x81,
-      0xde,
-      0x01,
-      0x00, // IS_CROSS
-      0x81,
-      0xed,
-      0x08,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x00,
-      0x0a, // LEVERAGE 10
-    ]);
-    /* eslint-enable prettier/prettier */
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        2,
+        new SendActionCommand({
+          serializedAction: expectedSerializations[1]!,
+        }),
+      );
 
-    expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-      1,
-      new SendActionCommand({
-        serializedAction: expectedPlacingOrder,
-      }),
-    );
-
-    expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-      2,
-      new SendActionCommand({
-        serializedAction: expectedCancelOrder,
-      }),
-    );
-
-    expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-      3,
-      new SendActionCommand({
-        serializedAction: expectedUpdateLeverage,
-      }),
-    );
-  });
+      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+        3,
+        new SendActionCommand({
+          serializedAction: expectedSerializations[2]!,
+        }),
+      );
+    },
+  );
 
   it("returns error result and stops on first SendActionCommand failure", async () => {
+    // GIVEN api returns success for first command then error for second
     const errorResult = CommandResultFactory({
       error: new UnknownDeviceExchangeError(),
     });
@@ -348,17 +271,22 @@ describe("SendActionsTask", () => {
       },
     ];
 
+    // WHEN
     const task = new SendActionsTask(apiMock, { actions });
     const result = await task.run();
 
+    // THEN
     expect(result).toStrictEqual(errorResult);
     expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
   });
 
   it("returns success when actions is empty", async () => {
+    // GIVEN empty actions
+    // WHEN
     const task = new SendActionsTask(apiMock, { actions: [] });
     const result = await task.run();
 
+    // THEN
     expect(result).toEqual(
       CommandResultFactory({
         data: undefined,

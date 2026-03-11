@@ -37,7 +37,7 @@ export class SendActionCommand
       HyperliquidErrorCodes
     >
 {
-  readonly name = "SendAction";
+  readonly name = "sendAction";
 
   private readonly errorHelper = new CommandErrorHelper<
     SendActionCommandResponse,

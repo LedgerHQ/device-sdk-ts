@@ -28,7 +28,7 @@ export type SendCertificateCommandArgs = {
 export class SendCertificateCommand
   implements Command<void, SendCertificateCommandArgs, HyperliquidErrorCodes>
 {
-  readonly name = "SendCertificate";
+  readonly name = "sendCertificate";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     HyperliquidErrorCodes

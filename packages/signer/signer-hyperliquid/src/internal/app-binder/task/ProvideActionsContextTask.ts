@@ -15,17 +15,22 @@ export type ProvideActionsContextArgs = {
   readonly tlvDescriptor: Uint8Array;
 };
 
-export class ProvideActionsContext {
+export class ProvideActionsContextTask {
   constructor(
     private readonly api: InternalApi,
     private readonly args: ProvideActionsContextArgs,
   ) {}
 
+  /**
+   * Runs the context provision (certificate + metadata). On success returns Nothing.
+   * On failure returns Just(error). Unlike other tasks that return CommandResult,
+   * this task uses Maybe to indicate "no value on success" (context provision has no data output).
+   */
   async run(): Promise<Maybe<CommandErrorResult<LoadCertificateErrorCodes>>> {
     const { tlvDescriptor, certificate } = this.args;
 
     // --------------------------------------------------------------------
-    // providing default solana context
+    // providing default hyperliquid context
 
     // send PKI certificate + signature
     await this.api.sendCommand(

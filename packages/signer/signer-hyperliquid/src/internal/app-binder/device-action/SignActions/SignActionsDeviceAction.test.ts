@@ -17,10 +17,22 @@ import {
   signActionsDAStateSteps,
 } from "@api/app-binder/SignActionsDeviceActionTypes";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
+import { setupOpenAppDAMock } from "@internal/app-binder/device-action/__test-utils__/setupOpenAppDAMock";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import type { HyperliquidAction } from "@internal/app-binder/utils/actionTlvSerializer";
 
 import { SignActionsDeviceAction } from "./SignActionsDeviceAction";
+
+vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
+  const original =
+    await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
+  return {
+    ...original,
+    OpenAppDeviceAction: vi.fn(() => ({
+      makeStateMachine: vi.fn(),
+    })),
+  };
+});
 
 const exampleCertificate = new Uint8Array([0x01, 0x02, 0x03]);
 const exampleMetadata = new Uint8Array([0x04, 0x05, 0x06]);
@@ -55,8 +67,9 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
     signActionsMock = vi.fn();
   });
 
-  it.skip("happy path (skip open): SetCertificate -> SendMetadata -> SignActions (no actions)", () =>
+  it("happy path (skip open): SetCertificate -> SendMetadata -> SignActions (no actions)", () =>
     new Promise<void>((resolve, reject) => {
+      setupOpenAppDAMock();
       apiMock.getDeviceSessionState.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
@@ -72,8 +85,11 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
       sendMetadataMock.mockResolvedValue(
         CommandResultFactory({ data: undefined }),
       );
+      sendActionsMock.mockResolvedValue(
+        CommandResultFactory({ data: undefined }),
+      );
       signActionsMock.mockResolvedValue(
-        CommandResultFactory({ data: exampleSignature }),
+        CommandResultFactory({ data: [exampleSignature] }),
       );
 
       const input: SignActionsDAInput = {
@@ -99,6 +115,13 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             step: signActionsDAStateSteps.SEND_METADATA,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signActionsDAStateSteps.SEND_ACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -271,8 +294,9 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
       });
     }));
 
-  it.skip("calls SetCertificate then SendMetadata then SignActions in order (no SendAction)", () =>
+  it("calls SetCertificate then SendMetadata then SendActions then SignActions in order (no actions)", () =>
     new Promise<void>((resolve, reject) => {
+      setupOpenAppDAMock();
       apiMock.getDeviceSessionState.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
@@ -291,10 +315,14 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
         callOrder.push("sendMetadata");
         return Promise.resolve(CommandResultFactory({ data: undefined }));
       });
+      sendActionsMock.mockImplementation(() => {
+        callOrder.push("sendActions");
+        return Promise.resolve(CommandResultFactory({ data: undefined }));
+      });
       signActionsMock.mockImplementation(() => {
         callOrder.push("signActions");
         return Promise.resolve(
-          CommandResultFactory({ data: exampleSignature }),
+          CommandResultFactory({ data: [exampleSignature] }),
         );
       });
 
@@ -326,6 +354,13 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
         },
         {
           intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signActionsDAStateSteps.SEND_ACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
             step: signActionsDAStateSteps.SIGN_ACTIONS,
           },
@@ -351,6 +386,7 @@ describe("SignActionsDeviceAction (Hyperliquid)", () => {
           expect(callOrder).toEqual([
             "setCertificate",
             "sendMetadata",
+            "sendActions",
             "signActions",
           ]);
           resolve();

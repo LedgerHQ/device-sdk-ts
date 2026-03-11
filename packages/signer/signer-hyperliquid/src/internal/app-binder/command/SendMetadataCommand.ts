@@ -28,7 +28,7 @@ export type SendMetadataCommandArgs = {
 export class SendMetadataCommand
   implements Command<void, SendMetadataCommandArgs, HyperliquidErrorCodes>
 {
-  readonly name = "SendMetadata";
+  readonly name = "sendMetadata";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     HyperliquidErrorCodes
