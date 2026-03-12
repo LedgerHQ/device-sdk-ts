@@ -108,7 +108,7 @@ describe("SignFeeIntentCommand", () => {
         feeIntent: mockFeeIntent,
       });
 
-      // User denied (0x6985)
+      // User denied
       const response: ApduResponse = {
         statusCode: new Uint8Array([0x69, 0xf0]),
         data: new Uint8Array([]),
