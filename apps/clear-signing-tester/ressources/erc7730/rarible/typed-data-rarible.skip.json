@@ -1,0 +1,188 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "Rarible",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0xc9154424b823b10579895ccbe442d41b9abd96ed"
+      },
+      "primaryType": "Mint721",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Mint721": [
+          { "name": "tokenId", "type": "uint256" },
+          { "name": "tokenURI", "type": "string" },
+          { "name": "creators", "type": "Part[]" },
+          { "name": "royalties", "type": "Part[]" }
+        ],
+        "Part": [
+          { "name": "account", "type": "address" },
+          { "name": "value", "type": "uint96" }
+        ]
+      },
+      "message": {
+        "tokenId": "123456789",
+        "tokenURI": "ipfs://QmTzQ1Nj5CFbGXUBuoZvEphAE1rKMQR7FxGZFkJu3QLNSG",
+        "creators": [
+          {
+            "account": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+            "value": "10000"
+          }
+        ],
+        "royalties": [
+          {
+            "account": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+            "value": "1000"
+          }
+        ]
+      }
+    },
+    "description": "Rarible: Lazy Mint ERC-721"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "Rarible",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0xb66a603f4cfe17e3d27b87a8bfcad319856518b8"
+      },
+      "primaryType": "Mint1155",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Mint1155": [
+          { "name": "tokenId", "type": "uint256" },
+          { "name": "supply", "type": "uint256" },
+          { "name": "tokenURI", "type": "string" },
+          { "name": "creators", "type": "Part[]" },
+          { "name": "royalties", "type": "Part[]" }
+        ],
+        "Part": [
+          { "name": "account", "type": "address" },
+          { "name": "value", "type": "uint96" }
+        ]
+      },
+      "message": {
+        "tokenId": "987654321",
+        "supply": "100",
+        "tokenURI": "ipfs://QmV9tYnJFqdDBKCPrHxjYGPcMZgTCBb9CDAAx9sPreNsvF",
+        "creators": [
+          {
+            "account": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+            "value": "10000"
+          }
+        ],
+        "royalties": [
+          {
+            "account": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+            "value": "500"
+          }
+        ]
+      }
+    },
+    "description": "Rarible: Lazy Mint ERC-1155"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "Rarible",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0x9757f2d2b135150bbeb65308d4a91804107cd8d6"
+      },
+      "primaryType": "Order",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Asset": [
+          { "name": "assetType", "type": "AssetType" },
+          { "name": "value", "type": "uint256" }
+        ],
+        "AssetType": [
+          { "name": "assetClass", "type": "bytes4" },
+          { "name": "data", "type": "bytes" }
+        ],
+        "Order": [
+          { "name": "maker", "type": "address" },
+          { "name": "makeAsset", "type": "Asset" },
+          { "name": "taker", "type": "address" },
+          { "name": "takeAsset", "type": "Asset" },
+          { "name": "salt", "type": "uint256" },
+          { "name": "start", "type": "uint256" },
+          { "name": "end", "type": "uint256" },
+          { "name": "dataType", "type": "bytes4" },
+          { "name": "data", "type": "bytes" }
+        ]
+      },
+      "message": {
+        "maker": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "makeAsset": {
+          "assetType": {
+            "assetClass": "0x73ad2146",
+            "data": "0x"
+          },
+          "value": "1"
+        },
+        "taker": "0x0000000000000000000000000000000000000000",
+        "takeAsset": {
+          "assetType": {
+            "assetClass": "0xaaaebeba",
+            "data": "0x"
+          },
+          "value": "750000000000000000"
+        },
+        "salt": "12345",
+        "start": "1700000000",
+        "end": "1735689600",
+        "dataType": "0x00000001",
+        "data": "0x"
+      }
+    },
+    "description": "Rarible: ExchangeV2 Order"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "Rarible",
+        "version": "1",
+        "verifyingContract": "0x7f19564c35c681099c0c857a7141836cf7edaa53",
+        "salt": "0x0000000000000000000000000000000000000000000000000000000000000089"
+      },
+      "primaryType": "MetaTransaction",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "verifyingContract", "type": "address" },
+          { "name": "salt", "type": "bytes32" }
+        ],
+        "MetaTransaction": [
+          { "name": "nonce", "type": "uint256" },
+          { "name": "from", "type": "address" },
+          { "name": "functionSignature", "type": "bytes" }
+        ]
+      },
+      "message": {
+        "nonce": 0,
+        "from": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "functionSignature": "0xa22cb465000000000000000000000000f42aa99f011a1fa7cda90e5e98b277e306bca83e0000000000000000000000000000000000000000000000000000000000000001"
+      }
+    },
+    "description": "Rarible: ExchangeV2 MetaTransaction (Polygon)"
+  }
+]
