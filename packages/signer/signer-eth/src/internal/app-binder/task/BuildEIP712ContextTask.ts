@@ -78,7 +78,11 @@ export class BuildEIP712ContextTask {
 
     // Get clear signing context, if any
     let clearSignContext: Maybe<TypedDataClearSignContextSuccess> = Nothing;
-    let calldatasContexts: Record<
+    let calldatasPreContexts: Record<
+      TypedDataCalldataIndex,
+      ContextWithSubContexts[]
+    > = {};
+    let calldatasPostContexts: Record<
       TypedDataCalldataIndex,
       ContextWithSubContexts[]
     > = {};
@@ -105,10 +109,8 @@ export class BuildEIP712ContextTask {
       });
       if (filters.type === "success") {
         clearSignContext = Just(filters);
-        calldatasContexts = await this.getCalldatasContexts(
-          deviceState,
-          filters,
-        );
+        ({ calldatasPreContexts, calldatasPostContexts } =
+          await this.getCalldatasContexts(deviceState, filters));
       }
     }
 
@@ -120,7 +122,8 @@ export class BuildEIP712ContextTask {
       domain,
       message,
       clearSignContext,
-      calldatasContexts,
+      calldatasPreContexts,
+      calldatasPostContexts,
       deviceModelId: deviceState.deviceModelId,
       loggerFactory: this.loggerFactory,
     };
@@ -213,8 +216,21 @@ export class BuildEIP712ContextTask {
   private async getCalldatasContexts(
     deviceState: DeviceSessionState,
     filters: TypedDataClearSignContextSuccess,
-  ): Promise<Record<TypedDataCalldataIndex, ContextWithSubContexts[]>> {
-    const calldatasContexts: Record<
+  ): Promise<{
+    calldatasPreContexts: Record<
+      TypedDataCalldataIndex,
+      ContextWithSubContexts[]
+    >;
+    calldatasPostContexts: Record<
+      TypedDataCalldataIndex,
+      ContextWithSubContexts[]
+    >;
+  }> {
+    const calldatasPreContexts: Record<
+      TypedDataCalldataIndex,
+      ContextWithSubContexts[]
+    > = {};
+    const calldatasPostContexts: Record<
       TypedDataCalldataIndex,
       ContextWithSubContexts[]
     > = {};
@@ -238,9 +254,15 @@ export class BuildEIP712ContextTask {
             ({ context }) => context.type === ClearSignContextType.TRUSTED_NAME,
           ))
       ) {
-        calldatasContexts[calldataIndex] = calldataContext.clearSignContexts;
+        const allContexts = calldataContext.clearSignContexts;
+        calldatasPreContexts[calldataIndex] = allContexts.filter(
+          (c) => c.context.type === ClearSignContextType.TRUSTED_NAME,
+        );
+        calldatasPostContexts[calldataIndex] = allContexts.filter(
+          (c) => c.context.type !== ClearSignContextType.TRUSTED_NAME,
+        );
       }
     }
-    return calldatasContexts;
+    return { calldatasPreContexts, calldatasPostContexts };
   }
 }
