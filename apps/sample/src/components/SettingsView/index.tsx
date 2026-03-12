@@ -16,6 +16,7 @@ import { MockServerUrlSetting } from "./MockServerUrlSetting";
 import { OriginTokenSetting } from "./OriginTokenSetting";
 import { PollingIntervalSetting } from "./PollingIntervalSetting";
 import { SectionTitle } from "./SectionTitle";
+import { SpeculosDeviceModelSetting } from "./SpeculosDeviceModelSetting";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
 import { SpeculosUrlSetting } from "./SpeculosUrlSetting";
 import { SpeculosVncUrlSetting } from "./SpeculosVncUrlSetting";
@@ -39,6 +40,7 @@ export const SettingsView: React.FC = () => {
           <SpeculosToggleSetting />
           <SpeculosUrlSetting />
           <SpeculosVncUrlSetting />
+          <SpeculosDeviceModelSetting />
         </SectionContainer>
 
         <SectionContainer>
