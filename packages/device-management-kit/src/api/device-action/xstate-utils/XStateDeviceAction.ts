@@ -185,13 +185,16 @@ export abstract class XStateDeviceAction<
       }
 
       // Log internal state on each state transition
-      if (this.logger && status === "active") {
+      if (this.logger && (status === "active" || status === "done")) {
         const stateValue =
           typeof snapshot.value === "string"
             ? snapshot.value
             : JSON.stringify(snapshot.value);
         this.logger.debug(`[XStateDeviceAction] State: ${stateValue}`, {
-          data: { internalState: context._internalState },
+          data: {
+            internalState: context._internalState,
+            intermediateValue: context.intermediateValue,
+          },
         });
       }
 

@@ -26,6 +26,7 @@ export type DefaultSignerSolanaConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
+  solanaRPCURL?: string;
 };
 
 export class DefaultSignerSolana implements SignerSolana {
@@ -35,8 +36,14 @@ export class DefaultSignerSolana implements SignerSolana {
     dmk,
     sessionId,
     contextModule,
+    solanaRPCURL,
   }: DefaultSignerSolanaConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId, contextModule });
+    this._container = makeContainer({
+      dmk,
+      sessionId,
+      contextModule,
+      solanaRPCURL,
+    });
   }
 
   /**
@@ -60,10 +67,23 @@ export class DefaultSignerSolana implements SignerSolana {
    *   and ensures accurate clear-signing details on the device.
    *
    *   - **solanaRPCURL** `string`
-   *     Solana RPC endpoint used when resolving address-lookup tables for
-   *     versioned (v0) transactions. Defaults to
-   *     `https://api.mainnet-beta.solana.com/`. Override this if you use a
-   *     private RPC or need to avoid CORS issues in browser environments.
+   *     Solana RPC endpoint for transaction inspection (including SPL
+   *     resolution) and for fetching a blockhash when `delayed: true`. If the
+   *     signer was built with `SignerSolanaBuilder({ solanaRPCURL })`, the
+   *     value here overrides that default for this call only.
+   *
+   *   - **delayed** `boolean`
+   *     When `true`, uses the device’s two-step signing flow (preview then
+   *     delayed sign) so review time does not race the blockhash. Requires a
+   *     Solana app version that supports delayed signing, and either a
+   *     resolved RPC URL (builder and/or **solanaRPCURL** above) or
+   *     **fetchBlockhash**. Otherwise the signer falls back to legacy signing.
+   *
+   *   - **fetchBlockhash** `() => Promise<Uint8Array>`
+   *     Optional. When `delayed: true`, use this instead of the default RPC
+   *     `getLatestBlockhash` (e.g. custom commitment or RPC). Must return the
+   *     32-byte recent blockhash. If provided, an RPC URL is not required for
+   *     the delayed path.
    *
    *   - **transactionResolutionContext** `object`
    *     Lets you explicitly pass `tokenAddress` and ATA details, bypassing

@@ -39,8 +39,14 @@ npm install @ledgerhq/device-signer-kit-solana
 To initialise a Solana signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerSolanaBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
-const signerSolana = new SignerSolanaBuilder({ dmk, sessionId }).build();
+const signerSolana = new SignerSolanaBuilder({
+  dmk,
+  sessionId,
+  solanaRPCURL: "https://api.mainnet-beta.solana.com/",
+}).build();
 ```
+
+- **solanaRPCURL** _(optional)_ — Default Solana RPC endpoint for transaction inspection (SPL token resolution) and fetching a fresh `recentBlockhash` during delayed signing. You can override it per `signTransaction` call via `SolanaTransactionOptionalConfig.solanaRPCURL`. In browser environments, use a CORS-enabled RPC URL.
 
 ## 🔹 Use Cases
 
@@ -119,6 +125,9 @@ const { observable, cancel } = signerSolana.signTransaction(
 - **transactionOptions** `SolanaTransactionOptionalConfig`  
   Provides additional context for transaction signing.
 
+  - **solanaRPCURL** `string` _(optional)_  
+    Overrides the RPC URL from `SignerSolanaBuilder` for this call (inspection and delayed signing).
+
   - **transactionResolutionContext** `object`  
     Lets you explicitly pass `tokenAddress` and ATA details, bypassing extraction from the transaction itself.
 
@@ -134,13 +143,8 @@ const { observable, cancel } = signerSolana.signTransaction(
     - **tokenInternalId** `string`
       Ledger internal token ID
 
-  - **solanaRPCURL** `string`  
-    RPC endpoint used for address-lookup table resolution in versioned (v0) transactions.
-    Defaults to `https://api.mainnet-beta.solana.com/`. Override this to use a private RPC
-    or to avoid CORS issues in browser environments.
-
-  - **skipOpenApp** `boolean`  
-    If `true`, skips opening the Solana app on the device.
+- **skipOpenApp** `boolean`  
+  If `true`, skips opening the Solana app on the device.
 
 ---
 
