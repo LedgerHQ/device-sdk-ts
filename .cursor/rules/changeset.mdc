@@ -9,7 +9,7 @@ To create an effective changeset in this repo, follow these guidelines:
 
 1. Run `pnpm changeset add --empty` to generate an empty changeset file.
 2. In the newly created file:
-   - Specify the affected package name(s).
+   - Specify the affected package name (one package per changeset).
    - Choose the correct version bump type:
      - **Major:** Breaking changes (use only when explicitly required).
      - **Minor:** New features, additions, or improvements.
@@ -18,7 +18,7 @@ To create an effective changeset in this repo, follow these guidelines:
 
 ## Additional Rules:
 
-- Prefer a single changeset per package per PR, unless there are distinct, unrelated changes.
+- Each changeset must affect only one package. Do not include multiple packages in the same changeset.
 - It is acceptable to use multiple changesets for a single package when necessary (e.g., logically separate changes).
 - Each changeset should be concise and focused on a specific purpose.
 - Avoid creating unnecessary or duplicate changesets.
