@@ -2,6 +2,7 @@ import {
   type CommandErrorResult,
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,
+  type LoadCertificateErrorCodes,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
   type UserInteractionRequired,
@@ -37,7 +38,8 @@ export type SignActionsDAInput = {
 
 export type SignActionsDAError =
   | OpenAppDAError
-  | CommandErrorResult<HyperliquidErrorCodes>["error"];
+  | CommandErrorResult<HyperliquidErrorCodes>["error"]
+  | CommandErrorResult<LoadCertificateErrorCodes>["error"];
 
 type SignActionsDARequiredInteraction =
   | OpenAppDARequiredInteraction

@@ -1,6 +1,6 @@
 import {
   CommandResultFactory,
-  InvalidStatusWordError,
+  InvalidResponseFormatError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -86,7 +86,7 @@ describe("SendActionCommand", () => {
       const result = new SendActionCommand(defaultArgs).parseResponse(response);
       expect(isSuccessCommandResult(result)).toBe(false);
       expect((result as { error: unknown }).error).toBeInstanceOf(
-        InvalidStatusWordError,
+        InvalidResponseFormatError,
       );
     });
   });

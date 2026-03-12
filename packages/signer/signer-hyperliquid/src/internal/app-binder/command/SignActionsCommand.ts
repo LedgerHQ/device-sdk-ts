@@ -33,6 +33,8 @@ export type SignActionsCommandResponse = {
   };
 };
 
+const SIGNATURE_LENGTH = 66;
+
 export class SignActionsCommand
   implements
     Command<
@@ -78,7 +80,10 @@ export class SignActionsCommand
       return error;
     }
 
-    if (response.data.length === 0 || response.data.length !== 66) {
+    if (
+      response.data.length === 0 ||
+      response.data.length !== SIGNATURE_LENGTH
+    ) {
       return CommandResultFactory({
         error: new InvalidStatusWordError("Unexpected data in response"),
       });
@@ -90,7 +95,10 @@ export class SignActionsCommand
         signature: {
           v: response.data[1]!,
           r: bufferToHexaString(response.data.slice(2, 34), false),
-          s: bufferToHexaString(response.data.slice(34, 66), false),
+          s: bufferToHexaString(
+            response.data.slice(34, SIGNATURE_LENGTH),
+            false,
+          ),
         },
       },
     });

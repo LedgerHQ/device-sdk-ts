@@ -7,15 +7,10 @@ import {
 } from "@ledgerhq/device-signer-kit-hyperliquid";
 import { type SignActionsActionItem } from "@ledgerhq/device-signer-kit-hyperliquid/api/app-binder/SignActionsDeviceActionTypes.js";
 
+import { hexStringToUint8Array } from "@/components/ApduView/hexUtils";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-
-function hexToUint8Array(hex: string): Uint8Array {
-  const s = hex.startsWith("0x") ? hex.slice(2) : hex;
-  const bytes = s.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) ?? [];
-  return new Uint8Array(bytes);
-}
 
 type SignActionsFormInput = {
   derivationPath: string;
@@ -65,8 +60,8 @@ export const SignerHyperliquidView: React.FC<{ sessionId: string }> = ({
           }
           return signer.signActions({
             derivationPath,
-            certificate: hexToUint8Array(certificate),
-            signedMetadata: hexToUint8Array(signedMetadata),
+            certificate: hexStringToUint8Array(certificate),
+            signedMetadata: hexStringToUint8Array(signedMetadata),
             actions: JSON.parse(actions) as SignActionsActionItem[],
             skipOpenApp,
           });

@@ -9,6 +9,7 @@ export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
 export { type Command } from "@api/command/Command";
 export {
   InvalidGetFirmwareMetadataResponseError,
+  InvalidResponseFormatError,
   InvalidStatusWordError,
 } from "@api/command/Errors";
 export {

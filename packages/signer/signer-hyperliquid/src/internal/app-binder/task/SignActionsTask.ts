@@ -22,10 +22,6 @@ export class SignActionsTask {
   async run(): Promise<CommandResult<Signature[], HyperliquidErrorCodes>> {
     const result = await this.signAction();
 
-    // if (!isSuccessCommandResult(result)) {
-    //   return result;
-    // }
-
     return result;
   }
 

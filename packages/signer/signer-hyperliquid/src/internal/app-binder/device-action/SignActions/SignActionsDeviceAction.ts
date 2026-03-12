@@ -150,8 +150,8 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
             input: () => ({ appName: APP_NAME }),
             onSnapshot: {
               actions: assign({
-                intermediateValue: () => ({
-                  requiredUserInteraction: UserInteractionRequired.None,
+                intermediateValue: ({ event }) => ({
+                  ...event.snapshot.context.intermediateValue,
                   step: signActionsDAStateSteps.OPEN_APP,
                 }),
               }),
@@ -164,7 +164,7 @@ export class SignActionsDeviceAction extends XStateDeviceAction<
                     Right: () => context._internalState,
                     Left: (error) => ({
                       ...context._internalState,
-                      error: error as SignActionsDAError,
+                      error,
                     }),
                   }),
               }),

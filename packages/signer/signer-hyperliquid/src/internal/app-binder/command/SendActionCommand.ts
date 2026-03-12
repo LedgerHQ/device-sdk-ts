@@ -6,7 +6,7 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
+  InvalidResponseFormatError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 
@@ -70,7 +70,7 @@ export class SendActionCommand
 
     if (response.data.length !== 0) {
       return CommandResultFactory({
-        error: new InvalidStatusWordError("Unexpected data in response"),
+        error: new InvalidResponseFormatError("Unexpected data in response"),
       });
     }
 

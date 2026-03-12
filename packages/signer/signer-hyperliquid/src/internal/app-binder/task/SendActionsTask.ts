@@ -16,8 +16,7 @@ export type SendActionsTaskArgs = {
 
 /**
  * Sends a list of actions to the device by serializing each action to TLV
- * (specs.md "Set action to sign") and calling SendActionCommand in sequence.
- * No derivation path: only the action list is sent.
+ * and calling SendActionCommand in sequence.
  */
 export class SendActionsTask {
   constructor(
