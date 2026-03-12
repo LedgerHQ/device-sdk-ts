@@ -1,6 +1,5 @@
-import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
-
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
+import { OffchainMessageBuildError } from "@internal/app-binder/services/Errors";
 import {
   MessageFormat,
   OffchainMessageBuilder,
@@ -252,7 +251,7 @@ describe("OffchainMessageBuilder", () => {
 
       expect(() =>
         new OffchainMessageBuilder().buildEnvelopeBase58(badSig, ocm),
-      ).toThrow(InvalidStatusWordError);
+      ).toThrow(OffchainMessageBuildError);
     });
   });
 
@@ -288,14 +287,14 @@ describe("OffchainMessageBuilder", () => {
     it("throws on non-ASCII non-UTF8 content", () => {
       const bad = new Uint8Array([0xff, 0xfe]);
       expect(() => builder.findMessageFormat(bad, false)).toThrow(
-        InvalidStatusWordError,
+        OffchainMessageBuildError,
       );
     });
 
     it("throws on oversized message", () => {
       const big = new Uint8Array(65516).fill(0x41);
       expect(() => builder.findMessageFormat(big, false)).toThrow(
-        InvalidStatusWordError,
+        OffchainMessageBuildError,
       );
     });
   });

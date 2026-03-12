@@ -1,12 +1,8 @@
-import {
-  ByteArrayBuilder,
-  InvalidStatusWordError,
-} from "@ledgerhq/device-management-kit";
+import { ByteArrayBuilder } from "@ledgerhq/device-management-kit";
 
-import {
-  type Bs58Encoder,
-  DefaultBs58Encoder,
-} from "@internal/app-binder/services/bs58Encoder";
+import { OffchainMessageBuildError } from "@internal/app-binder/services/Errors";
+
+import { type Bs58Encoder, DefaultBs58Encoder } from "./bs58Encoder";
 
 const DEVICE_V0_PAYLOAD_CEILING = 15 * 1024;
 const DEVICE_LEGACY_PAYLOAD_CEILING = 1280;
@@ -24,6 +20,11 @@ export const LEGACY_OFFCHAINMSG_MAX_LEN =
 export const OFFCHAINMSG_MAX_V0_LEN = 65515;
 
 export const OFFCHAINMSG_MAX_V1_LEN = 65535; // 2-byte LE uint16 max
+
+const ED25519_SIGNATURE_LEN = 64;
+const SOLANA_PUBKEY_LEN = 32;
+const APP_DOMAIN_LEN = 32;
+const BYTES_PER_PATH_INDEX = 4;
 
 const MAX_PRINTABLE_ASCII = 0x7e;
 const MIN_PRINTABLE_ASCII = 0x20;
@@ -56,10 +57,10 @@ export class OffchainMessageBuilder {
     this._writeSigningDomain(builder);
     builder.add8BitUIntToData(0);
 
-    const domainBytes = new Uint8Array(32);
+    const domainBytes = new Uint8Array(APP_DOMAIN_LEN);
     if (this.appDomain) {
       const encoded = new TextEncoder().encode(this.appDomain);
-      domainBytes.set(encoded.subarray(0, 32));
+      domainBytes.set(encoded.subarray(0, APP_DOMAIN_LEN));
     }
     builder.addBufferToData(domainBytes);
 
@@ -121,7 +122,9 @@ export class OffchainMessageBuilder {
   }
 
   buildApduPayload(ocm: Uint8Array, paths: number[]): Uint8Array {
-    const builder = new ByteArrayBuilder(1 + 1 + paths.length * 4 + ocm.length);
+    const builder = new ByteArrayBuilder(
+      1 + 1 + paths.length * BYTES_PER_PATH_INDEX + ocm.length,
+    );
 
     builder.add8BitUIntToData(1);
     builder.add8BitUIntToData(paths.length);
@@ -136,9 +139,9 @@ export class OffchainMessageBuilder {
     serializedOCM: Uint8Array,
     encoder: Bs58Encoder = DefaultBs58Encoder,
   ): string {
-    if (rawSignature.length !== 64) {
-      throw new InvalidStatusWordError(
-        `Invalid signature length: ${rawSignature.length} (expected 64)`,
+    if (rawSignature.length !== ED25519_SIGNATURE_LEN) {
+      throw new OffchainMessageBuildError(
+        `Invalid signature length: ${rawSignature.length} (expected ${ED25519_SIGNATURE_LEN})`,
       );
     }
     const sigCount = Uint8Array.of(1);
@@ -153,7 +156,7 @@ export class OffchainMessageBuilder {
 
   sortAndDedupeSigners(signers: Uint8Array[]): Uint8Array[] {
     const sorted = [...signers].sort((a, b) => {
-      for (let i = 0; i < 32; i++) {
+      for (let i = 0; i < SOLANA_PUBKEY_LEN; i++) {
         const diff = (a[i] ?? 0) - (b[i] ?? 0);
         if (diff !== 0) return diff;
       }
@@ -177,11 +180,11 @@ export class OffchainMessageBuilder {
     } else if (message.length <= OFFCHAINMSG_MAX_V0_LEN) {
       if (this._isUTF8(message)) return MessageFormat.Utf8LongV0;
     } else {
-      throw new InvalidStatusWordError(
+      throw new OffchainMessageBuildError(
         `Message too long: ${message.length} bytes (max is ${OFFCHAINMSG_MAX_V0_LEN})`,
       );
     }
-    throw new InvalidStatusWordError(
+    throw new OffchainMessageBuildError(
       "Message is not valid printable ASCII or UTF-8",
     );
   }
