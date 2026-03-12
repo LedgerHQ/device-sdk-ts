@@ -21,6 +21,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
+  type SignTransactionDAStateStep,
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
@@ -37,7 +38,11 @@ import {
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
-import { SolanaApplicationResolver } from "@internal/app-binder/SolanaApplicationResolver";
+import {
+  SOLANA_MIN_DELAYED_SIGNING_VERSION,
+  SOLANA_MIN_SPL_VERSION,
+  SolanaApplicationResolver,
+} from "@internal/app-binder/SolanaApplicationResolver";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -48,6 +53,8 @@ import {
   type ProvideSolanaTransactionContextTaskArgs,
 } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
+
+import { DelayedSignTransactionDeviceAction } from "./DelayedSignTransactionDeviceAction";
 
 export type MachineDependencies = {
   readonly getAppConfig: () => Promise<
@@ -106,6 +113,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       inspectTransaction,
     } = this.extractDependencies(internalApi);
 
+    const childLogger = this.getLoggerFactory(internalApi)(
+      "DelayedSignTransactionDeviceAction",
+    );
+
     return setup({
       types: {
         input: {} as types["input"],
@@ -136,6 +147,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
         signTransaction: fromPromise(signTransaction),
+        delayedSignStateMachine: new DelayedSignTransactionDeviceAction({
+          input: {
+            derivationPath: "",
+            transaction: new Uint8Array(),
+          },
+        }).makeStateMachine(internalApi),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -147,19 +164,29 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             context._internalState.appConfig!,
             new SolanaApplicationResolver(),
           )
-            .withMinVersionExclusive("1.4.0")
+            .withMinVersionExclusive(SOLANA_MIN_SPL_VERSION)
             .excludeDeviceModel(DeviceModelId.NANO_S)
             .check(),
-        isAnSPLTransaction: ({ context }) =>
+        shouldBuildContext: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
             SolanaTransactionTypes.SPL ||
           context._internalState.inspectorResult?.transactionType ===
             SolanaTransactionTypes.SWAP,
-        shouldSkipInspection: ({ context }) =>
-          context._internalState.error === null &&
-          !!context.input.transactionOptions?.transactionResolutionContext &&
-          !context.input.transactionOptions?.transactionResolutionContext
-            ?.templateId,
+        isDelayedWithConfigAndSupported: ({ context }) =>
+          context.input.transactionOptions?.delayed === true &&
+          !!(
+            context.input.transactionOptions?.solanaRPCURL ||
+            context.input.transactionOptions?.fetchBlockhash
+          ) &&
+          new ApplicationChecker(
+            internalApi.getDeviceSessionState(),
+            context._internalState.appConfig!,
+            new SolanaApplicationResolver(),
+          )
+            .withMinVersionInclusive(SOLANA_MIN_DELAYED_SIGNING_VERSION)
+            .check(),
+        hasSignature: ({ context }) =>
+          context._internalState.signature !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -268,8 +295,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
-            { target: "InspectTransaction", guard: "noInternalError" },
+            { target: "CheckSPLSupported", guard: "noInternalError" },
             { target: "Error" },
+          ],
+        },
+        CheckSPLSupported: {
+          always: [
+            { target: "InspectTransaction", guard: "isSPLSupported" },
+            { target: "CheckDelayed" },
           ],
         },
         InspectTransaction: {
@@ -299,14 +332,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onError: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
           },
         },
         AfterInspect: {
           always: [
-            { target: "BuildContext", guard: "isAnSPLTransaction" },
-            { target: "SignTransaction" },
+            { target: "BuildContext", guard: "shouldBuildContext" },
+            { target: "CheckDelayed" },
           ],
         },
         BuildContext: {
@@ -352,7 +385,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onError: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
           },
         },
@@ -379,12 +412,99 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               };
             },
             onDone: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
             onError: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
           },
+        },
+        CheckDelayed: {
+          always: [
+            {
+              target: "InvokeDelayedSign",
+              guard: "isDelayedWithConfigAndSupported",
+            },
+            { target: "SignTransaction" },
+          ],
+        },
+        InvokeDelayedSign: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.DELAYED_SIGN,
+            }),
+          }),
+          invoke: {
+            id: "delayedSignStateMachine",
+            src: "delayedSignStateMachine",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              transaction: context.input.transaction,
+              rpcUrl: context.input.transactionOptions?.solanaRPCURL,
+              fetchBlockhash: context.input.transactionOptions?.fetchBlockhash,
+              userInputType:
+                context.input.transactionOptions?.transactionResolutionContext
+                  ?.userInputType,
+            }),
+            onSnapshot: {
+              actions: [
+                assign({
+                  intermediateValue: ({ event }) => ({
+                    requiredUserInteraction:
+                      event.snapshot.context.intermediateValue
+                        .requiredUserInteraction,
+                    step: event.snapshot.context.intermediateValue
+                      .step as SignTransactionDAStateStep,
+                  }),
+                }),
+                ({ event }) => {
+                  const stateValue =
+                    typeof event.snapshot.value === "string"
+                      ? event.snapshot.value
+                      : JSON.stringify(event.snapshot.value);
+                  childLogger.debug(
+                    `[XStateDeviceAction] State: ${stateValue}`,
+                    {
+                      data: {
+                        internalState: event.snapshot.context._internalState,
+                        intermediateValue:
+                          event.snapshot.context.intermediateValue,
+                      },
+                    },
+                  );
+                },
+              ],
+            },
+            onDone: {
+              target: "CheckDelayedResult",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  event.output.caseOf({
+                    Right: (signature: Uint8Array) => ({
+                      ...context._internalState,
+                      signature,
+                    }),
+                    Left: (error) => {
+                      if (error instanceof UnknownDAError) {
+                        return context._internalState;
+                      }
+                      return {
+                        ...context._internalState,
+                        error,
+                      };
+                    },
+                  }),
+              }),
+            },
+          },
+        },
+        CheckDelayedResult: {
+          always: [
+            { target: "SignTransactionResultCheck", guard: "hasSignature" },
+            { target: "SignTransaction", guard: "noInternalError" },
+            { target: "Error" },
+          ],
         },
         SignTransaction: {
           entry: assign({

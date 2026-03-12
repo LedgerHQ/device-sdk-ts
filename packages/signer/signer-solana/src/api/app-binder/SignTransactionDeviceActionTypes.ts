@@ -16,6 +16,8 @@ import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 
+import { type DelayedSignDAStateStep } from "./DelayedSignTransactionDeviceActionTypes";
+
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
   GET_APP_CONFIG: "signer.sol.steps.getAppConfig",
@@ -23,10 +25,12 @@ export const signTransactionDAStateSteps = Object.freeze({
   BUILD_TRANSACTION_CONTEXT: "signer.sol.steps.buildTransactionContext",
   PROVIDE_TRANSACTION_CONTEXT: "signer.sol.steps.provideTransactionContext",
   SIGN_TRANSACTION: "signer.sol.steps.signTransaction",
+  DELAYED_SIGN: "signer.sol.steps.delayedSign",
 } as const);
 
 export type SignTransactionDAStateStep =
-  (typeof signTransactionDAStateSteps)[keyof typeof signTransactionDAStateSteps];
+  | (typeof signTransactionDAStateSteps)[keyof typeof signTransactionDAStateSteps]
+  | DelayedSignDAStateStep;
 
 export type SignTransactionDAOutput = Signature;
 
