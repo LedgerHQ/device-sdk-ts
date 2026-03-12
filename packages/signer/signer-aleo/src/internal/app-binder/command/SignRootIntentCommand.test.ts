@@ -136,7 +136,7 @@ describe("SignRootIntentCommand", () => {
 
       // User denied
       const response: ApduResponse = {
-        statusCode: new Uint8Array([0x69, 0x85]),
+        statusCode: new Uint8Array([0x69, 0xf0]),
         data: new Uint8Array([]),
       };
 
@@ -149,7 +149,7 @@ describe("SignRootIntentCommand", () => {
         expect(result.error).toEqual(
           expect.objectContaining({
             _tag: "AleoAppCommandError",
-            errorCode: "6985",
+            errorCode: "69f0",
             message: "Denied by user",
           }),
         );
