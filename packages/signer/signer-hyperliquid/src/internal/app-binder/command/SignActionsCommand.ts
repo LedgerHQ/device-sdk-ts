@@ -7,7 +7,7 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
+  InvalidResponseFormatError,
 } from "@ledgerhq/device-management-kit";
 import {
   CommandErrorHelper,
@@ -85,7 +85,7 @@ export class SignActionsCommand
       response.data.length !== SIGNATURE_LENGTH
     ) {
       return CommandResultFactory({
-        error: new InvalidStatusWordError("Unexpected data in response"),
+        error: new InvalidResponseFormatError("Unexpected data in response"),
       });
     }
 

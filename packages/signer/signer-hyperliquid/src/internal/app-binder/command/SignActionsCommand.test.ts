@@ -1,7 +1,7 @@
 import {
   CommandResultFactory,
   hexaStringToBuffer,
-  InvalidStatusWordError,
+  InvalidResponseFormatError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -77,7 +77,7 @@ describe("SignActionsCommand", () => {
       const result = command.parseResponse(LNX_RESPONSE_EXTRA);
       expect(isSuccessCommandResult(result)).toBe(false);
       // @ts-expect-error response is not typed
-      expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+      expect(result.error).toBeInstanceOf(InvalidResponseFormatError);
     });
   });
 });
