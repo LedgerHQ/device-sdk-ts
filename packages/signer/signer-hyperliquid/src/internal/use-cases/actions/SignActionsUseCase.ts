@@ -1,9 +1,10 @@
 import { inject, injectable } from "inversify";
 
 import { type SignActionsDAReturnType } from "@api/app-binder/SignActionsDeviceActionTypes";
-import { type ActionsOptions } from "@api/model/ActionsOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { HyperliquidAppBinder } from "@internal/app-binder/HyperliquidAppBinder";
+
+type SignActionsParams = Parameters<HyperliquidAppBinder["signActions"]>[0];
 
 @injectable()
 export class SignActionsUseCase {
@@ -15,15 +16,7 @@ export class SignActionsUseCase {
     this._appBinder = appBinder;
   }
 
-  execute(
-    derivationPath: string,
-    Actions: Uint8Array,
-    options?: ActionsOptions,
-  ): SignActionsDAReturnType {
-    return this._appBinder.signActions({
-      derivationPath,
-      Actions,
-      skipOpenApp: options?.skipOpenApp,
-    });
+  execute(params: SignActionsParams): SignActionsDAReturnType {
+    return this._appBinder.signActions(params);
   }
 }

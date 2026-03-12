@@ -68,7 +68,7 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
       input: {
         unlockTimeout,
         applications: [...this.input.dependencies, this.input.application],
-        allowMissingApplication: false,
+        allowMissingApplication: this.input.allowMissingApplication ?? false,
       },
     }).makeStateMachine(internalApi);
 
@@ -227,7 +227,8 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
                 ..._.context.input.dependencies,
                 _.context.input.application,
               ],
-              allowMissingApplication: false,
+              allowMissingApplication:
+                this.input.allowMissingApplication ?? false,
             }),
             onSnapshot: {
               actions: assign({

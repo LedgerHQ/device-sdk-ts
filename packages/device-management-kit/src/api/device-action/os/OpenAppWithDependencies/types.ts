@@ -40,6 +40,7 @@ export type OpenAppWithDependenciesDAInput = GetDeviceStatusDAInput & {
   readonly application: ApplicationDependency;
   readonly dependencies: ApplicationDependency[];
   readonly requireLatestFirmware?: boolean;
+  readonly allowMissingApplication?: boolean;
 };
 
 export type OpenAppWithDependenciesDAError =

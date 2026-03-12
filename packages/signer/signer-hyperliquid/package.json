@@ -35,10 +35,12 @@
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:file": "vitest run --",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/signer-utils": "workspace:^",
     "inversify": "catalog:",
     "purify-ts": "catalog:",

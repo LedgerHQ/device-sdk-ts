@@ -6,12 +6,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { SignActionCommand } from "@internal/app-binder/command/SignActionCommand";
+import { SignActionsCommand } from "@internal/app-binder/command/SignActionsCommand";
 import { type HyperliquidErrorCodes } from "@internal/app-binder/command/utils/hyperliquidApplicationErrors";
 
-type SignActionsTaskArgs = {
+export type SignActionsTaskArgs = {
   derivationPath: string;
-  Actions: Uint8Array;
 };
 
 export class SignActionsTask {
@@ -20,26 +19,33 @@ export class SignActionsTask {
     private args: SignActionsTaskArgs,
   ) {}
 
-  async run(): Promise<CommandResult<Signature, HyperliquidErrorCodes>> {
-    // TODO: Adapt this implementation to your blockchain's signing protocol
-    // For Actionss larger than a single APDU, you may need to:
-    // 1. Split the Actions into chunks
-    // 2. Send each chunk with appropriate first/continue flags
-    // 3. Collect the final signature from the last response
+  async run(): Promise<CommandResult<Signature[], HyperliquidErrorCodes>> {
+    const result = await this.signAction();
 
+    return result;
+  }
+
+  private async signAction(
+    signatures?: Signature[],
+  ): Promise<CommandResult<Signature[], HyperliquidErrorCodes>> {
     const result = await this.api.sendCommand(
-      new SignActionCommand({
-        derivationPath: this.args.derivationPath,
-        Actions: this.args.Actions,
-      }),
+      new SignActionsCommand(this.args),
     );
 
     if (!isSuccessCommandResult(result)) {
       return result;
     }
 
-    return CommandResultFactory({
-      data: result.data.signature,
-    });
+    const nextSignatures = signatures
+      ? [...signatures, result.data.signature]
+      : [result.data.signature];
+
+    if (result.data.signaturesLeft !== 0) {
+      return await this.signAction(nextSignatures);
+    } else {
+      return CommandResultFactory({
+        data: nextSignatures,
+      });
+    }
   }
 }
