@@ -19,6 +19,11 @@ else
 fi
 
 if [ ! -f "$TEST_FILE" ]; then
+  SKIP_FILE="${TEST_FILE%.json}.skip.json"
+  if [ -f "$SKIP_FILE" ]; then
+    echo "Skipping $SKIP_FILE (.skip file)"
+    exit 0
+  fi
   echo "Test file not found: $TEST_FILE"
   exit 1
 fi
