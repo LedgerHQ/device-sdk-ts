@@ -16,6 +16,7 @@ import {
   GetAddressCommandArgs,
 } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
+import { APP_NAME } from "@internal/app-binder/constants";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -34,7 +35,7 @@ export class CosmosAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAppConfigCommand(),
-          appName: "Cosmos",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
@@ -49,7 +50,7 @@ export class CosmosAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAddressCommand(args),
-          appName: "Cosmos",
+          appName: APP_NAME,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
@@ -76,7 +77,7 @@ export class CosmosAppBinder {
               args,
               this.dmkLoggerFactory("SignTransactionTask"),
             ).run(),
-          appName: "Cosmos",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },

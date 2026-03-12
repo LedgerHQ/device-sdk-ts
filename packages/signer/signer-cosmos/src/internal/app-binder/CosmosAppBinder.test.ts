@@ -27,6 +27,7 @@ import {
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
+import { APP_NAME } from "@internal/app-binder/constants";
 import { CosmosAppBinder } from "@internal/app-binder/CosmosAppBinder";
 
 describe("CosmosAppBinder", () => {
@@ -70,7 +71,7 @@ describe("CosmosAppBinder", () => {
     const args = executeDeviceActionMock.mock.calls[0]![0];
     expect(args.deviceAction).toBeInstanceOf(SendCommandInAppDeviceAction);
     expect(args.deviceAction.input.command).toBeInstanceOf(GetAppConfigCommand);
-    expect(args.deviceAction.input.appName).toBe("Cosmos");
+    expect(args.deviceAction.input.appName).toBe(APP_NAME);
     expect(args.deviceAction.input.requiredUserInteraction).toBe(
       UserInteractionRequired.None,
     );
@@ -117,7 +118,7 @@ describe("CosmosAppBinder", () => {
     const args = executeDeviceActionMock.mock.calls[0]![0];
     expect(args.deviceAction).toBeInstanceOf(SendCommandInAppDeviceAction);
     expect(args.deviceAction.input.command).toBeInstanceOf(GetAddressCommand);
-    expect(args.deviceAction.input.appName).toBe("Cosmos");
+    expect(args.deviceAction.input.appName).toBe(APP_NAME);
     expect(args.deviceAction.input.requiredUserInteraction).toBe(
       UserInteractionRequired.None,
     );
@@ -160,7 +161,7 @@ describe("CosmosAppBinder", () => {
     expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
     const args = executeDeviceActionMock.mock.calls[0]![0];
     expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
-    expect(args.deviceAction.input.appName).toBe("Cosmos");
+    expect(args.deviceAction.input.appName).toBe(APP_NAME);
     expect(args.deviceAction.input.requiredUserInteraction).toBe(
       UserInteractionRequired.SignTransaction,
     );

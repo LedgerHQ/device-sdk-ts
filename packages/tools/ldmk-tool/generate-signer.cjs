@@ -1308,6 +1308,7 @@ export const appBindingModuleFactory = () =>
   ${appBinderDmkImports.join(",\n  ")},
 } from "@ledgerhq/device-management-kit";`,
       `import { inject, injectable } from "inversify";`,
+      `import { APP_NAME } from "@internal/app-binder/constants";`,
       `import { externalTypes } from "@internal/externalTypes";`,
     ];
     const appBinderCommandImports = [];
@@ -1324,7 +1325,7 @@ export const appBindingModuleFactory = () =>
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAppConfigCommand(),
-          appName: "${pascalCase}",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
@@ -1346,7 +1347,7 @@ export const appBindingModuleFactory = () =>
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAddressCommand(args),
-          appName: "${pascalCase}",
+          appName: APP_NAME,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
@@ -1371,7 +1372,7 @@ export const appBindingModuleFactory = () =>
         input: {
           task: async (internalApi) =>
             new SignTransactionTask(internalApi, args).run(),
-          appName: "${pascalCase}",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
@@ -1393,7 +1394,7 @@ export const appBindingModuleFactory = () =>
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new SignMessageCommand(args),
-          appName: "${pascalCase}",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
@@ -1401,6 +1402,8 @@ export const appBindingModuleFactory = () =>
     });
   }`);
     }
+
+    writeFile(`${baseDir}/src/internal/app-binder/constants.ts`, `export const APP_NAME = "${pascalCase}";\n`);
 
     writeFile(`${baseDir}/src/internal/app-binder/${pascalCase}AppBinder.ts`, `${appBinderImports.join("\n")}
 

@@ -24,6 +24,7 @@ import { type Psbt as ApiPsbt } from "@api/model/Psbt";
 import { type PsbtSignature } from "@api/model/Signature";
 import { type Wallet as ApiWallet } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { APP_NAME } from "@internal/app-binder/constants";
 import {
   BuildPsbtTask,
   type BuildPsbtTaskResult,
@@ -102,7 +103,7 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
 
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Bitcoin" },
+          input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         prepareWalletPolicy: fromPromise(prepareWalletPolicy),
         buildPsbt: fromPromise(buildPsbt),
@@ -157,7 +158,7 @@ export class SignPsbtDeviceAction extends XStateDeviceAction<
           }),
           invoke: {
             id: "openAppStateMachine",
-            input: { appName: "Bitcoin" },
+            input: { appName: APP_NAME },
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({

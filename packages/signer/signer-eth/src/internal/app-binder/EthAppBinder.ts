@@ -29,6 +29,7 @@ import { SignTransactionDeviceAction } from "./device-action/SignTransaction/Sig
 import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendGetAddressTask } from "./task/SendGetAddressTask";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
+import { APP_NAME } from "./constants";
 
 @injectable()
 export class EthAppBinder {
@@ -65,7 +66,7 @@ export class EthAppBinder {
               chainId: args.chainId,
               loggerFactory: this.dmkLoggerFactory,
             }).run(),
-          appName: "Ethereum",
+          appName: APP_NAME,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
@@ -108,7 +109,7 @@ export class EthAppBinder {
               ...args,
               logger: taskLogger,
             }).run(),
-          appName: "Ethereum",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
@@ -179,7 +180,7 @@ export class EthAppBinder {
               ...args,
               logger: taskLogger,
             }).run(),
-          appName: "Ethereum",
+          appName: APP_NAME,
           requiredUserInteraction:
             UserInteractionRequired.SignDelegationAuthorization,
           skipOpenApp: false,

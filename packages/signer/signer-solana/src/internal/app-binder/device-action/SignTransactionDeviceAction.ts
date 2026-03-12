@@ -32,6 +32,7 @@ import {
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import { APP_NAME } from "@internal/app-binder/constants";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
@@ -114,7 +115,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Solana" },
+          input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
         inspectTransaction: fromPromise(
@@ -204,7 +205,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "openAppStateMachine",
             src: "openAppStateMachine",
-            input: () => ({ appName: "Solana" }),
+            input: () => ({ appName: APP_NAME }),
             onSnapshot: {
               actions: assign({
                 intermediateValue: ({ event }) => ({
