@@ -35,32 +35,34 @@ export class SpeculosTransport implements Transport {
   private connectedDevice: TransportConnectedDevice | null = null;
   private disconnectInterval: NodeJS.Timeout | null = null;
   private readonly _isE2E: boolean;
-  private readonly speculosDevice: TransportDiscoveredDevice = {
-    id: "SpeculosID", //TODO make it dynamic at creation
-    deviceModel: {
-      id: DeviceModelId.STAX,
-      productName: "Speculos - App Name - version",
-      usbProductId: 0x10,
-      bootloaderUsbProductId: 0x0001,
-      getBlockSize() {
-        return 32;
-      },
-      usbOnly: true,
-      memorySize: 320 * 1024,
-      masks: [0x31100000],
-    },
-    transport: this.identifier,
-  };
+  private readonly speculosDevice: TransportDiscoveredDevice;
 
   constructor(
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
     _config: DmkConfig,
     speculosUrl: string,
     isE2E?: boolean,
+    deviceModelId: DeviceModelId = DeviceModelId.STAX,
   ) {
     this._isE2E = isE2E ?? false;
     this.logger = loggerServiceFactory("SpeculosTransport");
-    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl); // See how to pass properly speculos config.
+    this._speculosDataSource = new HttpSpeculosDatasource(speculosUrl);
+    this.speculosDevice = {
+      id: "SpeculosID",
+      deviceModel: {
+        id: deviceModelId,
+        productName: "Speculos - App Name - version",
+        usbProductId: 0x10,
+        bootloaderUsbProductId: 0x0001,
+        getBlockSize() {
+          return 32;
+        },
+        usbOnly: true,
+        memorySize: 320 * 1024,
+        masks: [0x31100000],
+      },
+      transport: this.identifier,
+    };
   }
 
   isSupported(): boolean {
@@ -225,7 +227,14 @@ export class SpeculosTransport implements Transport {
 export const speculosTransportFactory: (
   speculosUrl?: string,
   isE2E?: boolean,
+  deviceModelId?: DeviceModelId,
 ) => TransportFactory =
-  (speculosUrl = "http://127.0.0.1:5000", isE2E = false) =>
+  (speculosUrl = "http://127.0.0.1:5000", isE2E = false, deviceModelId?) =>
   ({ config, loggerServiceFactory }) =>
-    new SpeculosTransport(loggerServiceFactory, config, speculosUrl, isE2E);
+    new SpeculosTransport(
+      loggerServiceFactory,
+      config,
+      speculosUrl,
+      isE2E,
+      deviceModelId,
+    );

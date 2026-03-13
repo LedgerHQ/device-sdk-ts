@@ -6,6 +6,7 @@ import {
   type ContextModuleMetadataServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "@ledgerhq/context-module";
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
 
 import { DEFAULT_SPECULOS_URL, DEFAULT_SPECULOS_VNC_URL } from "@/utils/const";
 
@@ -19,7 +20,7 @@ export type TransportType = "default" | "speculos" | "mockserver";
 
 export type TransportConfig =
   | { type: "default" }
-  | { type: "speculos"; url: string }
+  | { type: "speculos"; url: string; deviceModelId: DeviceModelId }
   | { type: "mockserver"; url: string };
 
 function getInitialTransportType(): TransportType {
@@ -36,6 +37,7 @@ export type SettingsState = {
   mockServerUrl: string;
   speculosUrl: string;
   speculosVncUrl: string;
+  speculosDeviceModel: DeviceModelId;
 
   // DMK settings
   appProvider: number;
@@ -56,6 +58,7 @@ export const initialState: SettingsState = {
   mockServerUrl: "http://127.0.0.1:8080/",
   speculosUrl: DEFAULT_SPECULOS_URL,
   speculosVncUrl: DEFAULT_SPECULOS_VNC_URL,
+  speculosDeviceModel: DeviceModelId.STAX,
 
   // DMK settings
   appProvider: 1,
