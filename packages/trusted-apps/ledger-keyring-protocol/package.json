@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol",
-  "version": "1.0.0",
+  "version": "0.5.0",
   "license": "Apache-2.0",
   "private": false,
   "repository": {
