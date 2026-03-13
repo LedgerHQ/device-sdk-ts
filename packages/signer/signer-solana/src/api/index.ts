@@ -20,6 +20,8 @@ export type {
   SignTransactionDAOutput,
   SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export type { MessageOptions } from "@api/model/MessageOptions";
+export { SignMessageVersion } from "@api/model/MessageOptions";
 export type { Signature } from "@api/model/Signature";
 export type { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 export type { Transaction } from "@api/model/Transaction";

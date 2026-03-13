@@ -17,7 +17,7 @@ export interface SignerSolana {
 
   signMessage: (
     derivationPath: string,
-    message: string,
+    message: string | Uint8Array,
     options?: MessageOptions,
   ) => SignMessageDAReturnType;
 

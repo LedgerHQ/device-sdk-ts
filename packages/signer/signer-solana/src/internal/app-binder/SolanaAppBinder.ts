@@ -13,6 +13,7 @@ import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTy
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignMessageVersion } from "@api/model/MessageOptions";
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
@@ -74,8 +75,9 @@ export class SolanaAppBinder {
 
   signMessage(args: {
     derivationPath: string;
-    message: string;
+    message: string | Uint8Array;
     skipOpenApp: boolean;
+    version?: SignMessageVersion;
     appDomain?: string;
   }): SignMessageDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -85,7 +87,8 @@ export class SolanaAppBinder {
           task: async (internalApi) =>
             new SendSignMessageTask(internalApi, {
               derivationPath: args.derivationPath,
-              sendingData: new TextEncoder().encode(args.message),
+              sendingData: args.message,
+              version: args.version,
               appDomain: args.appDomain,
             }).run(),
           appName: "Solana",

@@ -15,6 +15,7 @@ import {
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
+  SignMessageVersion,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -120,6 +121,13 @@ const SignTransactionForm: React.FC<{
     </Flex>
   );
 };
+
+const signMessageVersionOptions = Object.values(SignMessageVersion).map(
+  (value) => ({
+    label: value,
+    value,
+  }),
+);
 
 export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -234,21 +242,56 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         title: "Sign off chain message",
         description:
           "Perform all the actions necessary to sign a solana off-chain message from the device",
-        executeDeviceAction: ({ derivationPath, message, skipOpenApp }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          message,
+          version,
+          skipOpenApp,
+        }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          return signer.signMessage(derivationPath, message, { skipOpenApp });
+          let payload: string | Uint8Array = message;
+          if (version === SignMessageVersion.Raw) {
+            const hex = message.replace(/\s/g, "");
+            if (!/^([0-9a-fA-F]{2})*$/.test(hex)) {
+              throw new Error(
+                "Raw mode requires a valid hex string (pairs of hex digits)",
+              );
+            }
+            payload = Uint8Array.from(
+              hex.match(/.{1,2}/g)?.map((b) => parseInt(b, 16)) ?? [],
+            );
+          }
+          return signer.signMessage(derivationPath, payload, {
+            version,
+            skipOpenApp,
+          });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           message: "Hello World",
+          version: SignMessageVersion.V0,
           skipOpenApp: false,
+        },
+        valueSelector: {
+          version: signMessageVersionOptions,
+        },
+        labelSelector: {
+          derivationPath: "Derivation path",
+          message: "Message (hex bytes for Raw mode)",
+          version: "Signing mode",
+          skipOpenApp: "Skip open app",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
         SignMessageDAOutput,
-        { derivationPath: string; message: string; skipOpenApp: boolean },
+        {
+          derivationPath: string;
+          message: string;
+          version: SignMessageVersion;
+          skipOpenApp: boolean;
+        },
         SignMessageDAError,
         SignMessageDAIntermediateValue
       >,
