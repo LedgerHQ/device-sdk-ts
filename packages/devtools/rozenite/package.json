@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-rozenite",
-  "private": false,
+  "private": true,
   "version": "0.1.0",
   "description": "Inspect and debug your integration of the Device Management Kit",
   "type": "module",
