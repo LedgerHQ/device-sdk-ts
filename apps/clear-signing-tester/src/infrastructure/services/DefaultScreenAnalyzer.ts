@@ -28,12 +28,22 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     });
     const accumulatedTexts = await this.getAndClearAccumulatedTexts();
 
+    this.logger.info("SCREEN TEXT ANALYSIS");
+    this.logger.info("Accumulated screen texts from device:", {
+      data: { accumulatedTexts },
+    });
+
     const found: string[] = [];
     const missing: string[] = [];
 
+    // Strip all whitespace for comparison to ignore formatting differences
+    const stripWhitespace = (text: string) =>
+      text.toLowerCase().replace(/\s+/g, "");
+
     for (const expectedText of expectedTexts) {
+      const strippedExpected = stripWhitespace(expectedText);
       const isFound = accumulatedTexts.some((screenText) =>
-        screenText.toLowerCase().includes(expectedText.toLowerCase()),
+        stripWhitespace(screenText).includes(strippedExpected),
       );
 
       if (isFound) {
@@ -44,6 +54,18 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     }
 
     const containsAll = missing.length === 0;
+
+    this.logger.info(
+      `Summary: ${found.length}/${expectedTexts.length} expected texts found`,
+    );
+    if (missing.length > 0) {
+      this.logger.info(
+        `Missing texts: ${missing.map((t) => `"${t}"`).join(", ")}`,
+      );
+    }
+    this.logger.info(
+      `Result: ${containsAll ? "All expected texts found (clear signed)" : "Some texts missing (partially clear signed)"}`,
+    );
 
     this.logger.debug("Analyzed accumulated screen texts", {
       data: {
@@ -142,10 +164,11 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
       const events = await this.screenReader.readRawScreenEvents();
 
       // Business logic: Extract and process text from events
+      // Join with space to keep words separate between screen elements
       const screenText = events
         .filter((event) => event.text && event.text.trim())
         .map((event) => event.text.trim())
-        .join("");
+        .join(" ");
 
       // Business logic: Accumulate meaningful screen text
       if (screenText.trim()) {

@@ -150,9 +150,11 @@ export class AuthenticateWithDeviceDeviceAction extends XStateDeviceAction<
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({
-                intermediateValue: ({ event }) => ({
-                  step: AuthenticateDAStep.OpenApp,
+                intermediateValue: ({
+                  event,
+                }): AuthenticateDAIntermediateValue => ({
                   ...event.snapshot.context.intermediateValue,
+                  step: AuthenticateDAStep.OpenApp,
                 }),
               }),
             },

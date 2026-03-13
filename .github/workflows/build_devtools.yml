@@ -1,0 +1,131 @@
+name: "[Build] Devtools Desktop App"
+on:
+  push:
+    branches:
+      - develop
+      - support/no-issue-devtools-build-workflow
+    paths:
+      - "apps/devtools/**"
+      - "packages/devtools/**"
+      - ".github/workflows/build_devtools.yml"
+      - ".github/actions/setup-with-cache-composite/**"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to build from (branch, tag, or SHA)"
+        required: false
+        default: "develop"
+
+concurrency:
+  group: build-devtools-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  build-macos:
+    name: Build macOS (arm64)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.ref || github.sha }}
+
+      - uses: ./.github/actions/setup-with-cache-composite
+
+      - name: Build workspace libraries
+        run: pnpm build:libs
+
+      - name: Build Devtools app code
+        run: pnpm --filter @ledgerhq/device-management-kit-devtools run build
+
+      - name: Deploy for packaging (flatten workspace symlinks)
+        run: |
+          pnpm --filter @ledgerhq/device-management-kit-devtools deploy --legacy apps/devtools-deploy
+          cp -r apps/devtools/out apps/devtools-deploy/out
+
+      - name: Package Devtools macOS app
+        working-directory: apps/devtools-deploy
+        run: npx electron-builder --mac --arm64
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: devtools-macos
+          path: apps/devtools-deploy/dist/ledger-dmk-devtools-*.dmg
+          if-no-files-found: error
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.ref || github.sha }}
+
+      - uses: ./.github/actions/setup-with-cache-composite
+
+      - name: Build workspace libraries
+        run: pnpm build:libs
+
+      - name: Build Devtools app code
+        run: pnpm --filter @ledgerhq/device-management-kit-devtools run build
+
+      - name: Deploy for packaging (flatten workspace symlinks)
+        run: |
+          pnpm --filter @ledgerhq/device-management-kit-devtools deploy --legacy apps/devtools-deploy
+          cp -r apps/devtools/out apps/devtools-deploy/out
+
+      - name: Package Devtools Linux app
+        working-directory: apps/devtools-deploy
+        run: npx electron-builder --linux
+
+      - name: Upload Linux artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: devtools-linux
+          path: |
+            apps/devtools-deploy/dist/ledger-dmk-devtools-*.AppImage
+            apps/devtools-deploy/dist/ledger-dmk-devtools-*.deb
+            apps/devtools-deploy/dist/ledger-dmk-devtools-*.snap
+          if-no-files-found: error
+
+  publish-to-release:
+    name: Publish to GitHub Release
+    if: github.event_name == 'push'
+    needs: [build-macos, build-linux]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts
+          pattern: devtools-*
+          merge-multiple: true
+
+      - name: Write step summary
+        run: cat apps/devtools/build/step-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Generate release body
+        run: envsubst < apps/devtools/build/release-body.md > /tmp/release-body.md
+        env:
+          SOURCE_REF: ${{ github.event.inputs.ref || github.sha }}
+          WORKFLOW_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Update devtools-latest GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: devtools-latest
+          name: "Devtools Desktop App (latest)"
+          body_path: /tmp/release-body.md
+          prerelease: true
+          make_latest: false
+          files: artifacts/**/*

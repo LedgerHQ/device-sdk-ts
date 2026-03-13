@@ -6,7 +6,10 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type SignTransactionDAState } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import {
+  type SignTransactionDAState,
+  signTransactionDAStateSteps,
+} from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type RegisteredWallet } from "@api/model/Wallet";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { setupSignPsbtDAMock } from "@internal/app-binder/device-action/__test-utils__/setupSignPsbtDAMock";
@@ -91,24 +94,28 @@ describe("SignTransactionDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.UPDATE_PSBT,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.EXTRACT_TRANSACTION,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -169,12 +176,14 @@ describe("SignTransactionDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
           },
           {
@@ -239,18 +248,21 @@ describe("SignTransactionDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.UPDATE_PSBT,
             },
           },
           {
@@ -307,24 +319,28 @@ describe("SignTransactionDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.UPDATE_PSBT,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.EXTRACT_TRANSACTION,
             },
           },
           {

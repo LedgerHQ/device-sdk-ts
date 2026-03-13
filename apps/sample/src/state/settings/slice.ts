@@ -1,4 +1,5 @@
 import { type ContextModuleCalConfig } from "@ledgerhq/context-module";
+import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 import {
@@ -36,6 +37,12 @@ export const settingsSlice = createSlice({
       action: PayloadAction<{ speculosVncUrl: string }>,
     ) => {
       state.speculosVncUrl = action.payload.speculosVncUrl;
+    },
+    setSpeculosDeviceModel: (
+      state,
+      action: PayloadAction<{ speculosDeviceModel: DeviceModelId }>,
+    ) => {
+      state.speculosDeviceModel = action.payload.speculosDeviceModel;
     },
 
     // DMK settings
@@ -123,6 +130,7 @@ export const {
   setMockServerUrl,
   setSpeculosUrl,
   setSpeculosVncUrl,
+  setSpeculosDeviceModel,
   setAppProvider,
   setPollingInterval,
   setBypassIntentQueue,

@@ -18,4 +18,8 @@ export type SpeculosConfig = {
    * - Absolute paths (e.g., "/home/user/builds/my_app.elf") are mounted into the container automatically
    */
   customAppPath?: string;
+  /**
+   * When true, always pull the Docker image even if it already exists locally.
+   */
+  forcePull?: boolean;
 };

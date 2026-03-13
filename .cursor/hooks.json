@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "node .cursor/hooks/format.cjs"
+      }
+    ],
+    "stop": [
+      {
+        "command": "node .cursor/hooks/post-task-checks.cjs",
+        "timeout": 180,
+        "loop_limit": 3
+      }
+    ]
+  }
+}

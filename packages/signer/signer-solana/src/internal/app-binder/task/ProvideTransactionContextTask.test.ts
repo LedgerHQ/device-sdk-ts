@@ -30,6 +30,7 @@ import { Buffer } from "buffer";
 import { Nothing } from "purify-ts";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
+import { ProvideInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideInstructionDescriptorCommand";
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
@@ -42,10 +43,7 @@ const mockLoggerFactory = () => ({
   subscribers: [],
 });
 
-import {
-  ProvideSolanaTransactionContextTask,
-  SWAP_MODE,
-} from "./ProvideTransactionContextTask";
+import { ProvideSolanaTransactionContextTask } from "./ProvideTransactionContextTask";
 
 const DUMMY_BLOCKHASH = bs58.encode(new Uint8Array(32).fill(0xaa));
 
@@ -94,7 +92,7 @@ const buildNormaliser = (message: any) =>
     normaliseMessage: vi.fn(async () => message),
   }) as const;
 
-describe("ProvideSolanaTransactionContextTask (merged)", () => {
+describe("ProvideSolanaTransactionContextTask", () => {
   let api: { sendCommand: Mock };
   const success = CommandResultFactory({ data: undefined });
 
@@ -112,6 +110,11 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
   const tokenDescriptor = {
     data: "f0cacc1a",
     signature: "01020304",
+  } as const;
+
+  const swapCert = {
+    payload: new Uint8Array([0x01, 0x02, 0x03]),
+    keyUsageNumber: 13,
   } as const;
 
   const SIG = "f0cacc1a";
@@ -268,11 +271,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(fourth).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
-      expect(fourth.args.kind).toBe("descriptor");
       expect(fourth.args.dataHex).toBe(tokenDescriptor.data);
       expect(fourth.args.signatureHex).toBe(tokenDescriptor.signature);
-      expect(fourth.args.isFirstMessage).toBe(true);
-      expect(fourth.args.swapSignatureTag).toBe(false);
 
       expect(result).toStrictEqual(Nothing);
     });
@@ -439,27 +439,26 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(tokenCmd).toBeInstanceOf(
         ProvideTLVTransactionInstructionDescriptorCommand,
       );
-      expect(tokenCmd.args.swapSignatureTag).toBe(false);
-      expect(tokenCmd.args.isFirstMessage).toBe(true);
     });
   });
 
   // basic context + token + lifi (swap)
   describe("basic context + token + lifi", () => {
-    it("sends one APDU per instruction in order (descriptor/empty/descriptor) after base + token are sent", async () => {
+    it("sends swap template certificate then one APDU per matched instruction (skipping unmatched) after base + token are sent", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
         .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
+        .mockResolvedValueOnce(success) // swap template cert
         .mockResolvedValue(success); // swap APDUs
 
       const message = {
         compiledInstructions: [
-          { programIdIndex: 0 },
-          { programIdIndex: 1 },
-          { programIdIndex: 2 },
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+          { programIdIndex: 1, data: new Uint8Array([0x02]) },
+          { programIdIndex: 2, data: new Uint8Array([0x03]) },
         ],
         allKeys: [makeKey("A_PID"), makeKey("B_PID"), makeKey("C_PID")],
       };
@@ -474,10 +473,17 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            A_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // B missing -> empty
-            C_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            descriptors: {
+              "A_PID:1": { data: SIG, signature: SIG },
+              // B missing -> skipped
+              "C_PID:3": { data: SIG, signature: SIG },
+            },
+            instructions: [
+              { program_id: "A_PID", discriminator_hex: "1" },
+              { program_id: "C_PID", discriminator_hex: "3" },
+            ],
           },
+          certificate: swapCert,
         },
       ];
 
@@ -500,52 +506,101 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       // then
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 3 swap
+      // 2 base + 2 token + 1 swap cert + 2 swap descriptors
       expect(api.sendCommand).toHaveBeenCalledTimes(7);
 
-      // swap calls start at index 4
-      const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor");
+      // swap cert at index 4
+      const certCmd = api.sendCommand.mock.calls[4]![0]!;
+      expect(certCmd).toBeInstanceOf(LoadCertificateCommand);
+      expect(certCmd.args.certificate).toStrictEqual(swapCert.payload);
+      expect(certCmd.args.keyUsage).toBe(swapCert.keyUsageNumber);
+
+      // swap descriptor calls start at index 5
+      const c0 = api.sendCommand.mock.calls[5]![0]!;
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
       expect(c0.args.dataHex).toBe(SIG);
       expect(c0.args.signatureHex).toBe(SIG);
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
 
-      const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("empty");
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
-
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c2).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c2.args.kind).toBe("descriptor");
-      expect(c2.args.dataHex).toBe(SIG);
-      expect(c2.args.signatureHex).toBe(SIG);
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+      const c1 = api.sendCommand.mock.calls[6]![0]!;
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
 
       expect((normaliser as any).normaliseMessage).toHaveBeenCalledOnce();
     });
 
-    it("sends empty when descriptor exists but signatures[SWAP_MODE] is missing", async () => {
-      // given
+    it("throws when sending swap template certificate returns a CommandErrorResult", async () => {
+      const errorResult = CommandResultFactory({
+        error: { _tag: "SomeError", errorCode: 0x6a80, message: "bad" },
+      });
+
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
         .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
-        .mockResolvedValue(success);
+        .mockResolvedValueOnce(errorResult); // swap template cert -> error
 
       const message = {
-        compiledInstructions: [{ programIdIndex: 0 }],
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
+        allKeys: [makeKey("A_PID")],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_TOKEN,
+          payload: { solanaTokenDescriptor: tokenDescriptor },
+          certificate: tokenCert,
+        },
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              "A_PID:1": { data: SIG, signature: SIG },
+            },
+            instructions: [{ program_id: "A_PID", discriminator_hex: "1" }],
+          },
+          certificate: swapCert,
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      await expect(task.run()).rejects.toThrow(
+        "[SignerSolana] ProvideSolanaTransactionContextTask: Failed to send swapTemplateCertificate to device",
+      );
+
+      // 2 base + 2 token + 1 swap cert (failed)
+      expect(api.sendCommand).toHaveBeenCalledTimes(5);
+    });
+
+    it("sends no swap APDU when signature is an empty string", async () => {
+      // given
+      api.sendCommand
+        .mockResolvedValueOnce(success) // base PKI
+        .mockResolvedValueOnce(success) // TLV
+        .mockResolvedValueOnce(success) // token cert
+        .mockResolvedValueOnce(success); // token TLVTransactionInstructionDescriptor
+
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
         allKeys: [makeKey("ONLY_PID")],
       };
       const normaliser = buildNormaliser(message);
@@ -559,12 +614,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            ONLY_PID: {
-              data: SIG,
-              signatures: {
-                // no [SWAP_MODE] key
+            descriptors: {
+              "ONLY_PID:": {
+                data: SIG,
+                signature: "",
               },
             },
+            instructions: [{ program_id: "ONLY_PID" }],
           },
         },
       ];
@@ -586,29 +642,20 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const result = await task.run();
 
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 1 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(5);
-
-      const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("empty");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      // 2 base + 2 token (no swap APDUs since signature is empty)
+      expect(api.sendCommand).toHaveBeenCalledTimes(4);
     });
 
-    it("sends empty when programId is missing for an instruction", async () => {
+    it("sends no swap APDU when programId is missing for an instruction", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
         .mockResolvedValueOnce(success) // TLV
         .mockResolvedValueOnce(success) // token cert
-        .mockResolvedValueOnce(success) // token TLVTransactionInstructionDescriptor
-        .mockResolvedValue(success);
+        .mockResolvedValueOnce(success); // token TLVTransactionInstructionDescriptor
 
       const message = {
-        compiledInstructions: [{ programIdIndex: 5 }], // out-of-range
+        compiledInstructions: [{ programIdIndex: 5, data: new Uint8Array() }], // out-of-range
         allKeys: [makeKey("X")],
       };
       const normaliser = buildNormaliser(message);
@@ -619,7 +666,10 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
-        { type: SolanaContextTypes.SOLANA_LIFI, payload: {} },
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: { descriptors: {}, instructions: [] },
+        },
       ];
 
       const context = {
@@ -639,16 +689,8 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const result = await task.run();
 
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 1 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(5);
-
-      const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("empty");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      // 2 base + 2 token (no swap APDUs since programId is missing)
+      expect(api.sendCommand).toHaveBeenCalledTimes(4);
     });
 
     it("propagates a rejection thrown by InternalApi.sendCommand on the second swap APDU (after base + token succeed)", async () => {
@@ -663,9 +705,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       const message = {
         compiledInstructions: [
-          { programIdIndex: 0 }, // descriptor
-          { programIdIndex: 1 }, // empty -> rejects
-          { programIdIndex: 2 }, // not reached
+          { programIdIndex: 0, data: new Uint8Array([0x01]) }, // descriptor A
+          { programIdIndex: 1, data: new Uint8Array([0x02]) }, // no match -> skipped
+          { programIdIndex: 2, data: new Uint8Array([0x03]) }, // descriptor C -> rejects
         ],
         allKeys: [makeKey("A_PID"), makeKey("B_PID"), makeKey("C_PID")],
       };
@@ -680,9 +722,15 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            A_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // B missing -> empty
-            C_PID: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            descriptors: {
+              "A_PID:1": { data: SIG, signature: SIG },
+              // B missing -> skipped
+              "C_PID:3": { data: SIG, signature: SIG },
+            },
+            instructions: [
+              { program_id: "A_PID", discriminator_hex: "1" },
+              { program_id: "C_PID", discriminator_hex: "3" },
+            ],
           },
         },
       ];
@@ -706,23 +754,17 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("empty");
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
     });
 
-    it("uses signatures[SWAP_MODE] specifically when present", async () => {
+    it("uses the pre-resolved signature field from the descriptor", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -732,7 +774,9 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         .mockResolvedValue(success);
 
       const message = {
-        compiledInstructions: [{ programIdIndex: 0 }],
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
         allKeys: [makeKey("SIG_PID")],
       };
       const normaliser = buildNormaliser(message);
@@ -746,10 +790,13 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            SIG_PID: {
-              data: SIG,
-              signatures: { prod: "deadbeef", [SWAP_MODE]: SIG },
+            descriptors: {
+              "SIG_PID:1": {
+                data: SIG,
+                signature: SIG,
+              },
             },
+            instructions: [{ program_id: "SIG_PID", discriminator_hex: "1" }],
           },
         },
       ];
@@ -775,17 +822,12 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(5);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor");
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
       expect(c0.args.dataHex).toBe(SIG);
       expect(c0.args.signatureHex).toBe(SIG);
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
     });
 
-    it("parses a real *legacy* tx via DefaultSolanaMessageNormaliser and preserves APDU order (descriptor, empty, descriptor) after base + token", async () => {
+    it("parses a real *legacy* tx via DefaultSolanaMessageNormaliser and sends matched descriptors (skipping unmatched) after base + token", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -841,9 +883,21 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // Tokenkeg missing -> empty
-            [MEMO_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
+            descriptors: {
+              [`${SYSTEM_PID}:`]: {
+                data: SIG,
+                signature: SIG,
+              },
+              // Tokenkeg missing -> skipped
+              [`${MEMO_PID}:`]: {
+                data: SIG,
+                signature: SIG,
+              },
+            },
+            instructions: [
+              { program_id: SYSTEM_PID },
+              { program_id: MEMO_PID },
+            ],
           },
         },
       ];
@@ -853,7 +907,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
-        normaliser: DefaultSolanaMessageNormaliser,
+        normaliser: new DefaultSolanaMessageNormaliser(),
         loggerFactory: mockLoggerFactory,
       };
 
@@ -865,26 +919,21 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const result = await task.run();
 
       expect(result).toStrictEqual(Nothing);
-      // 2 base + 2 token + 3 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+      // 2 base + 2 token + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0.args.kind).toBe("descriptor");
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1.args.kind).toBe("empty");
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
-
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c2.args.kind).toBe("descriptor");
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
     });
 
-    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser (no ALTs) and preserves APDU order (descriptor, descriptor, empty) after base + token", async () => {
+    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser (no ALTs) and sends matched descriptors (skipping unmatched) after base + token", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -943,9 +992,18 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            [ATA_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // Memo intentionally missing -> empty
+            descriptors: {
+              [`${SYSTEM_PID}:`]: {
+                data: SIG,
+                signature: SIG,
+              },
+              [`${ATA_PID}:`]: {
+                data: SIG,
+                signature: SIG,
+              },
+              // Memo intentionally missing -> skipped
+            },
+            instructions: [{ program_id: SYSTEM_PID }, { program_id: ATA_PID }],
           },
         },
       ];
@@ -954,7 +1012,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
-        normaliser: DefaultSolanaMessageNormaliser,
+        normaliser: new DefaultSolanaMessageNormaliser(),
         loggerFactory: mockLoggerFactory,
       };
 
@@ -966,35 +1024,21 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
       const res = await task.run();
 
       expect(res).toEqual(Nothing);
-      // 2 base + 2 token + 3 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+      // 2 base + 2 token + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor"); // System
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("descriptor"); // ATA
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
-
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c2).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c2.args.kind).toBe("empty"); // Memo missing
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
     });
 
-    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser and preserves APDU order System, createATA, token transfer (descriptor, descriptor, empty) after base + token", async () => {
+    it("parses a real *v0* tx via DefaultSolanaMessageNormaliser: System, createATA, token transfer (sends matched, skips unmatched) after base + token", async () => {
       // given
       api.sendCommand
         .mockResolvedValueOnce(success) // base PKI
@@ -1062,9 +1106,18 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         {
           type: SolanaContextTypes.SOLANA_LIFI,
           payload: {
-            [SYSTEM_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            [ATA_PID]: { data: SIG, signatures: { [SWAP_MODE]: SIG } },
-            // Token Program intentionally missing -> "empty"
+            descriptors: {
+              [`${SYSTEM_PID}:`]: {
+                data: SIG,
+                signature: SIG,
+              },
+              [`${ATA_PID}:`]: {
+                data: SIG,
+                signature: SIG,
+              },
+              // Token Program intentionally missing -> skipped
+            },
+            instructions: [{ program_id: SYSTEM_PID }, { program_id: ATA_PID }],
           },
         },
       ];
@@ -1074,7 +1127,7 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
         tlvDescriptor,
         loadersResults,
         transactionBytes: raw,
-        normaliser: DefaultSolanaMessageNormaliser,
+        normaliser: new DefaultSolanaMessageNormaliser(),
         loggerFactory: mockLoggerFactory,
       };
 
@@ -1088,33 +1141,381 @@ describe("ProvideSolanaTransactionContextTask (merged)", () => {
 
       // then
       expect(res).toEqual(Nothing);
-      // 2 base + 2 token + 3 swap
-      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+      // 2 base + 2 token + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(6);
 
       // swap calls start at index 4
       const c0 = api.sendCommand.mock.calls[4]![0]!;
-      expect(c0).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c0.args.kind).toBe("descriptor"); // System
-      expect(c0.args.isFirstMessage).toBe(true);
-      expect(c0.args.swapSignatureTag).toBe(true);
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe(SIG);
+      expect(c0.args.signatureHex).toBe(SIG);
 
       const c1 = api.sendCommand.mock.calls[5]![0]!;
-      expect(c1).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
-      );
-      expect(c1.args.kind).toBe("descriptor"); // ATA
-      expect(c1.args.isFirstMessage).toBe(false);
-      expect(c1.args.swapSignatureTag).toBe(true);
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe(SIG);
+      expect(c1.args.signatureHex).toBe(SIG);
+    });
 
-      const c2 = api.sendCommand.mock.calls[6]![0]!;
-      expect(c2).toBeInstanceOf(
-        ProvideTLVTransactionInstructionDescriptorCommand,
+    it("selects the correct descriptor when a program_id has multiple discriminator candidates", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success) // base PKI
+        .mockResolvedValueOnce(success) // TLV
+        .mockResolvedValueOnce(success) // token cert
+        .mockResolvedValueOnce(success) // token descriptor
+        .mockResolvedValue(success); // swap APDUs
+
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0xbb, 0xcc, 0x00]) },
+          { programIdIndex: 0, data: new Uint8Array([0xaa, 0xff, 0x00]) },
+        ],
+        allKeys: [makeKey("MULTI")],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_TOKEN,
+          payload: { solanaTokenDescriptor: tokenDescriptor },
+          certificate: tokenCert,
+        },
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              "MULTI:aaff": {
+                data: "data_aa",
+                signature: SIG,
+              },
+              "MULTI:bbcc": {
+                data: "data_bb",
+                signature: SIG,
+              },
+            },
+            instructions: [
+              { program_id: "MULTI", discriminator_hex: "aaff" },
+              { program_id: "MULTI", discriminator_hex: "bbcc" },
+            ],
+          },
+          certificate: swapCert,
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
       );
-      expect(c2.args.kind).toBe("empty"); // Token Program missing
-      expect(c2.args.isFirstMessage).toBe(false);
-      expect(c2.args.swapSignatureTag).toBe(true);
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      // 2 base + 2 token + 1 swap cert + 2 swap descriptors
+      expect(api.sendCommand).toHaveBeenCalledTimes(7);
+
+      const c0 = api.sendCommand.mock.calls[5]![0]!;
+      expect(c0).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c0.args.dataHex).toBe("data_bb");
+
+      const c1 = api.sendCommand.mock.calls[6]![0]!;
+      expect(c1).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(c1.args.dataHex).toBe("data_aa");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("skips base context when trustedNamePKICertificate is missing", async () => {
+      api.sendCommand.mockResolvedValue(success);
+
+      const context = {
+        trustedNamePKICertificate: undefined,
+        tlvDescriptor: undefined,
+        loadersResults: [],
+        transactionBytes: new Uint8Array([0xf0]),
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      expect(api.sendCommand).toHaveBeenCalledTimes(0);
+    });
+
+    it("skips unknown loader types via the default case", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success)
+        .mockResolvedValueOnce(success);
+
+      const loadersResults = [{ type: "SOME_FUTURE_TYPE" as any, payload: {} }];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      // only 2 base context commands, unknown loader type was skipped
+      expect(api.sendCommand).toHaveBeenCalledTimes(2);
+    });
+
+    it("skips swap flow entirely when lifiDescriptors is falsy", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success)
+        .mockResolvedValueOnce(success);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: undefined as any,
+            instructions: [],
+          },
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: { normaliseMessage: vi.fn() } as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      // only 2 base context commands, swap was skipped
+      expect(api.sendCommand).toHaveBeenCalledTimes(2);
+      expect(context.normaliser.normaliseMessage).not.toHaveBeenCalled();
+    });
+
+    it("skips certificate loading but still processes instructions when swapTemplateCertificate is missing", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success)
+        .mockResolvedValueOnce(success)
+        .mockResolvedValue(success);
+
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
+        allKeys: [makeKey("P1")],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              "P1:1": { data: SIG, signature: SIG },
+            },
+            instructions: [{ program_id: "P1", discriminator_hex: "1" }],
+          },
+          certificate: undefined,
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      // 2 base + 1 swap descriptor (no swap cert)
+      expect(api.sendCommand).toHaveBeenCalledTimes(3);
+
+      const swapCmd = api.sendCommand.mock.calls[2]![0]!;
+      expect(swapCmd).toBeInstanceOf(ProvideInstructionDescriptorCommand);
+      expect(swapCmd.args.dataHex).toBe(SIG);
+    });
+
+    it("returns undefined when discriminator matches but descriptor key is not in the map", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success)
+        .mockResolvedValueOnce(success);
+
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x01]) },
+        ],
+        allKeys: [makeKey("PROG")],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              // key "PROG:1" deliberately absent despite the instruction meta listing it
+            },
+            instructions: [{ program_id: "PROG", discriminator_hex: "1" }],
+          },
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      // 2 base only, no swap APDU because descriptor map entry is missing
+      expect(api.sendCommand).toHaveBeenCalledTimes(2);
+    });
+
+    it("skips instruction when its data is shorter than the discriminator", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success)
+        .mockResolvedValueOnce(success);
+
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0x2a]) }, // 1 byte, but disc is 4 bytes
+        ],
+        allKeys: [makeKey("SHORT")],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              "SHORT:2aade37a": {
+                data: SIG,
+                signature: SIG,
+              },
+            },
+            instructions: [
+              { program_id: "SHORT", discriminator_hex: "2aade37a" },
+            ],
+          },
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      // 2 base only, no swap APDU because instruction data is too short for the discriminator
+      expect(api.sendCommand).toHaveBeenCalledTimes(2);
+    });
+
+    it("skips instruction when discriminator bytes do not match the instruction data prefix", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success)
+        .mockResolvedValueOnce(success);
+
+      const message = {
+        compiledInstructions: [
+          { programIdIndex: 0, data: new Uint8Array([0xff, 0xee, 0xdd, 0xcc]) },
+        ],
+        allKeys: [makeKey("MISMATCH")],
+      };
+      const normaliser = buildNormaliser(message);
+
+      const loadersResults = [
+        {
+          type: SolanaContextTypes.SOLANA_LIFI,
+          payload: {
+            descriptors: {
+              "MISMATCH:aabbccdd": {
+                data: SIG,
+                signature: SIG,
+              },
+            },
+            instructions: [
+              { program_id: "MISMATCH", discriminator_hex: "aabbccdd" },
+            ],
+          },
+        },
+      ];
+
+      const context = {
+        trustedNamePKICertificate: baseCert,
+        tlvDescriptor,
+        loadersResults,
+        transactionBytes: new Uint8Array([0xf0]),
+        normaliser: normaliser as any,
+        loggerFactory: mockLoggerFactory,
+      };
+
+      const task = new ProvideSolanaTransactionContextTask(
+        api as unknown as any,
+        context as any,
+      );
+
+      const result = await task.run();
+
+      expect(result).toStrictEqual(Nothing);
+      // 2 base only, no swap APDU because discriminator 0xaabbccdd != data prefix 0xffeeddcc
+      expect(api.sendCommand).toHaveBeenCalledTimes(2);
     });
   });
 });

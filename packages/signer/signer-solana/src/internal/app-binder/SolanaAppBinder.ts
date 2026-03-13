@@ -9,11 +9,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignMessageVersion } from "@api/model/MessageOptions";
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
 import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
@@ -21,7 +21,6 @@ import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
-import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 
 @injectable()
@@ -74,27 +73,11 @@ export class SolanaAppBinder {
     });
   }
 
-  generateTransaction(args: {
-    derivationPath: string;
-    skipOpenApp: boolean;
-  }): GenerateTransactionDAReturnType {
-    return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
-      deviceAction: new GenerateTransactionDeviceAction({
-        input: {
-          derivationPath: args.derivationPath,
-          skipOpenApp: args.skipOpenApp,
-          contextModule: this.contextModule,
-        },
-        loggerFactory: this.dmkLoggerFactory,
-      }),
-    });
-  }
-
   signMessage(args: {
     derivationPath: string;
-    message: string;
+    message: string | Uint8Array;
     skipOpenApp: boolean;
+    version?: SignMessageVersion;
     appDomain?: string;
   }): SignMessageDAReturnType {
     return this.dmk.executeDeviceAction({
@@ -104,7 +87,8 @@ export class SolanaAppBinder {
           task: async (internalApi) =>
             new SendSignMessageTask(internalApi, {
               derivationPath: args.derivationPath,
-              sendingData: new TextEncoder().encode(args.message),
+              sendingData: args.message,
+              version: args.version,
               appDomain: args.appDomain,
             }).run(),
           appName: "Solana",

@@ -92,11 +92,13 @@ const { observable, cancel } = signerEth.getAddress(derivationPath, options);
     type AddressOptions = {
       checkOnDevice?: boolean;
       returnChainCode?: boolean;
+      chainId?: number;
     };
     ```
 
   - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`).
   - `returnChainCode`: An optional boolean indicating whether the chain code should be returned (`true`) or not (`false`).
+  - `chainId`: An optional number for the Ethereum chain ID (e.g., `1` for mainnet, `137` for Polygon). **Only used when `checkOnDevice` is `true`.** When enabled, it is sent to the device for address verification and is used to load dynamic network context (e.g. network name and icon). When `checkOnDevice` is `false`, `chainId` is ignored.
 
 #### **Returns**
 

@@ -61,7 +61,7 @@ catalog:
   "@vitejs/plugin-react": ^5.0.0
   "@vitest/coverage-istanbul": ^3.2.4
   autoprefixer: ^10.4.17
-  axios: 1.13.2
+  axios: 1.13.5
   babel-plugin-module-resolver: ^5.0.2
   bitcoinjs-lib: ^6.1.6
   bs58: ^6.0.0
@@ -122,10 +122,10 @@ catalog:
   tailwindcss: 3.4.16
   ts-node: 10.9.2
   tsc-alias: ^1.8.10
+  tsx: 4.19.2
   turbo: ^2.3.3
   typescript: 5.9.2
   typescript-eslint: 8.41.0
-  tsx: 4.19.2
   url: ^0.11.4
   usb: ^2.16.0
   util: ^0.12.5

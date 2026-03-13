@@ -13,8 +13,8 @@ import { type TransactionResolutionContext } from "@api/model/TransactionResolut
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
 export type SolanaBuildContextResult = {
-  trustedNamePKICertificate: PkiCertificate;
-  tlvDescriptor: Uint8Array;
+  trustedNamePKICertificate?: PkiCertificate;
+  tlvDescriptor?: Uint8Array;
   loadersResults: SolanaContextLoaderResults;
 };
 

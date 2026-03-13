@@ -16,27 +16,18 @@ import {
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
 
-export const CLA = 0xe0;
-export const INS = 0x22;
-export const P1_FIRST = 0x00;
-export const P1_NEXT = 0x80;
-export const P2 = 0x00;
-export const TRANSACTION_SIGNATURE_TAG = 0x08;
-export const SWAP_SIGNATURE_TAG = 0x15;
+const CLA = 0xe0;
+const INS = 0x22;
+const P1 = 0x00;
+const P2 = 0x00;
+const SIGNATURE_TAG = 0x08;
+const DER_SIG_MIN_BYTES = 70;
+const DER_SIG_MAX_BYTES = 72;
 
-export type ProvideTLVTransactionInstructionDescriptorCommandArgs =
-  | {
-      kind: "descriptor";
-      dataHex: string;
-      signatureHex: string;
-      isFirstMessage: boolean;
-      swapSignatureTag: boolean;
-    }
-  | {
-      kind: "empty"; // send empty payload to keep instruction index alignment
-      isFirstMessage: boolean;
-      swapSignatureTag: boolean;
-    };
+export type ProvideTLVTransactionInstructionDescriptorCommandArgs = {
+  dataHex: string;
+  signatureHex: string;
+};
 
 export class ProvideTLVTransactionInstructionDescriptorCommand
   implements
@@ -57,50 +48,35 @@ export class ProvideTLVTransactionInstructionDescriptorCommand
   readonly name = "ProvideTLVTransactionInstructionDescriptor";
 
   getApdu(): Apdu {
-    if (this.args.kind === "empty") {
-      // just header + Lc=0
-      return new ApduBuilder({
-        cla: CLA,
-        ins: INS,
-        p1: this.args.isFirstMessage ? P1_FIRST : P1_NEXT,
-        p2: P2,
-      }).build();
-    }
+    const { dataHex, signatureHex } = this.args;
 
-    const { dataHex, signatureHex, isFirstMessage } = this.args;
-
-    const apduBuilderArgs: ApduBuilderArgs = {
+    const builder = new ApduBuilder({
       cla: CLA,
       ins: INS,
-      p1: isFirstMessage ? P1_FIRST : P1_NEXT,
+      p1: P1,
       p2: P2,
-    };
+    } as ApduBuilderArgs);
 
-    const builder = new ApduBuilder(apduBuilderArgs);
-
-    // validate signature size (as spec 70–72 bytes)
     const sigLen = signatureHex.length / 2;
-    if (sigLen < 70 || sigLen > 72 || signatureHex.length % 2 !== 0) {
+    if (
+      sigLen < DER_SIG_MIN_BYTES ||
+      sigLen > DER_SIG_MAX_BYTES ||
+      signatureHex.length % 2 !== 0
+    ) {
       throw new Error(`Invalid signature length: ${sigLen} bytes`);
     }
 
-    // check short APDU limit (255)
     const dataLen = dataHex.length / 2;
-    const total = dataLen + 1 /*tag*/ + 1 /*len*/ + sigLen;
+    const total = dataLen + 1 + 1 + sigLen;
     if (total > 255) {
       throw new Error(
         `Descriptor payload too large for short APDU: ${total} > 255`,
       );
     }
 
-    // build payload: data | SIGNATURE_TAG | <len> | <signature>
     builder
       .addHexaStringToData(dataHex)
-      .add8BitUIntToData(
-        this.args.swapSignatureTag
-          ? SWAP_SIGNATURE_TAG
-          : TRANSACTION_SIGNATURE_TAG,
-      )
+      .add8BitUIntToData(SIGNATURE_TAG)
       .add8BitUIntToData(sigLen)
       .addHexaStringToData(signatureHex);
 

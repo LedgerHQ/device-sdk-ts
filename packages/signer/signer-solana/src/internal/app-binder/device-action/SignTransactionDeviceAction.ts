@@ -1,4 +1,5 @@
 import {
+  ApplicationChecker,
   type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
@@ -31,12 +32,12 @@ import {
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChecker";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
+import { SolanaApplicationResolver } from "@internal/app-binder/SolanaApplicationResolver";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -144,16 +145,21 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            new SolanaApplicationResolver(),
           )
             .withMinVersionExclusive("1.4.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
             .check(),
         isAnSPLTransaction: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
-          SolanaTransactionTypes.SPL,
+            SolanaTransactionTypes.SPL ||
+          context._internalState.inspectorResult?.transactionType ===
+            SolanaTransactionTypes.SWAP,
         shouldSkipInspection: ({ context }) =>
           context._internalState.error === null &&
-          !!context.input.transactionOptions?.transactionResolutionContext,
+          !!context.input.transactionOptions?.transactionResolutionContext &&
+          !context.input.transactionOptions?.transactionResolutionContext
+            ?.templateId,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -475,6 +481,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           arg0.serializedTransaction,
           arg0.resolutionContext?.tokenAddress,
           arg0.resolutionContext?.createATA,
+          arg0.resolutionContext?.templateId,
         ),
       );
 

@@ -164,7 +164,10 @@ export class SpeculosServiceController implements ServiceController {
 
     const dockerImage = `${SPECULOS_DOCKER_IMAGE_BASE}:${this.config.dockerImageTag}`;
 
-    if ((await this.dockerContainer.getImageId(dockerImage)) === null) {
+    if (
+      this.config.forcePull ||
+      (await this.dockerContainer.getImageId(dockerImage)) === null
+    ) {
       await this.dockerContainer.pull(dockerImage);
     }
 

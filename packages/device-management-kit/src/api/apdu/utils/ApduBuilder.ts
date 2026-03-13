@@ -87,6 +87,20 @@ export class ApduBuilder {
   };
 
   /**
+   * Add a 64-bit unsigned integer to the data field in big-endian (max value 0xffffffffffffffff)
+   * @param value: number | bigint - The value to add to the data
+   * @param bigEndian: boolean - True for big-endian (default), false for little-endian
+   * @returns {ApduBuilder} - Returns the current instance of ApduBuilder
+   */
+  add64BitUIntToData = (
+    value: number | bigint,
+    bigEndian: boolean = true,
+  ): ApduBuilder => {
+    this.data.add64BitUIntToData(value, bigEndian);
+    return this;
+  };
+
+  /**
    * Add a Uint8Array to the data field if it has enough remaining space
    * @param value: Uint8Array - The value to add to the data
    * @returns {ApduBuilder} - Returns the current instance of ApduBuilder

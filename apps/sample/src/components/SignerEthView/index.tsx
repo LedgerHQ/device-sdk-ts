@@ -68,6 +68,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
           "Perform all the actions necessary to get an ethereum address from the device",
         executeDeviceAction: ({
           derivationPath,
+          chainId,
           checkOnDevice,
           returnChainCode,
           skipOpenApp,
@@ -76,6 +77,10 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
             throw new Error("Signer not initialized");
           }
           return signer.getAddress(derivationPath, {
+            ...(checkOnDevice &&
+              chainId !== undefined &&
+              chainId !== "" &&
+              !Number.isNaN(Number(chainId)) && { chainId: Number(chainId) }),
             checkOnDevice,
             returnChainCode,
             skipOpenApp,
@@ -83,6 +88,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         },
         initialValues: {
           derivationPath: "44'/60'/0'/0/0",
+          chainId: "",
           checkOnDevice: false,
           returnChainCode: false,
           skipOpenApp: false,
@@ -92,6 +98,7 @@ export const SignerEthView: React.FC<{ sessionId: string }> = ({
         GetAddressDAOutput,
         {
           derivationPath: string;
+          chainId?: number | string;
           checkOnDevice?: boolean;
           returnChainCode?: boolean;
           skipOpenApp?: boolean;

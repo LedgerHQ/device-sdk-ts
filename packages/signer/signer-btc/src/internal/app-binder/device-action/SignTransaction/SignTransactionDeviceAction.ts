@@ -18,6 +18,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
+  signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type Psbt as ApiPsbt } from "@api/model/Psbt";
 import { type PsbtSignature } from "@api/model/Signature";
@@ -101,28 +102,34 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AFMAnWA9hgIYA2AsnLMTACJgBuqAxmAILMAuqRAdAPIAHMBjaDB9Jqw7ciAYghEwvVBgYEA1soLDR45J2Kcw5YswAWqsAG0ADAF1EoQQVipZGJyAAeiACwAzADsvACcABwAjKGRtuG2AGyRSX4ANCAAnoiRAEwArLy2uX6RQUGRpeHhfgC+NelomDj4RGSUsNR0jCzsXDwYvADC5mDMGkIiYhLd0n1EAEpwAK6knHJ2jkggLm4eXr4IoRG8eTlFOaWhQX45QaHpWQiRN4UBfu8JeaE3obY5OXUGuhsHhCCQKFQaGBJD0ZP0hiMxhM9NMpL0PItYCs1tZIptnK53P19ogjuETmdcpdrrd7pl-M8wnkgvkgvFbH48n4EkFASBGiCWuD2p1oTN0fCBc0wW1ITAFEoVGpNMo3E1Qa0IR0oRsvDsiUQSU88tVeOEktEEuE8m8cjcHqScicgokTXk8rZygFQgD6vzgdLNSKoTDZh5eFKNcK5WA5HhcARcLxBKQjAAzRMAW14asFMq1ot1W31ey2B0iJr8ZotoStNpu9vpCDtoTNHr8PoizyKvL9kaFsu1XTRcL4-fzwZgmOxw1GGnWDj1hNLoAOFwCBWC5u5RySEQdT1sra+OSt1wCAQuzICfPHQZjoYlY4DUcHounq1nY3WeKXu2JZaIOum5sgkO61tE4QHhWBS2HkCT-G8R5wc8N58hgBAQHAXh3tGQ5iiOcyeMWy4AauiAALQJAeVGFLY9EMYxDG9kC6oDgWIbiqOAzIlMj7cX+BrEeRCCNo8sS2CcRz-B6zIsnBaGsXm974fxREInOvHiGpGLLKsgkrj4iBnrwFwVgkCHfEeCQBNB3K8IEpxBO6ySep8in+mxE4Plx6m4W+UIGWRRlPJEVRmncOTmhyLI2QeUS8GFQRvPBXZRLWt4vuxk4EbCflZd5+EfpwX4aEFhqAU84RRYUpyXmBATJBeQTQZEARhKEG5Ne69GUplXkqaKOmSkszCsB05XCSFOSXgUyVshUdoJLYF7QYkvAXkUER3H45q1qE-XKXhQ2+eGACiuAJrgk1GjN+S8PNUTFMtq1Nrckl-O6wTct6KF5HUdRAA */
-      id: "SignPsbtDeviceAction",
+      id: "SignTransactionDeviceAction",
       initial: "SignPsbtDeviceAction",
-      context: ({ input }) => {
-        return {
-          input,
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.None,
-          },
-          _internalState: {
-            error: null,
-            signatures: null,
-            signedPsbt: null,
-            transaction: null,
-          },
-        };
-      },
+      context: ({ input }) => ({
+        input,
+        intermediateValue: {
+          requiredUserInteraction: UserInteractionRequired.None,
+          step: signTransactionDAStateSteps.SIGN_PSBT,
+        },
+        _internalState: {
+          error: null,
+          signatures: null,
+          signedPsbt: null,
+          transaction: null,
+        },
+      }),
       states: {
         SignPsbtDeviceAction: {
-          exit: assign({
-            intermediateValue: {
+          entry: assign({
+            intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-            },
+              step: signTransactionDAStateSteps.SIGN_PSBT,
+            }),
+          }),
+          exit: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.SIGN_PSBT,
+            }),
           }),
           invoke: {
             id: "signPsbtStateMachine",
@@ -130,8 +137,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             input: ({ context }) => context.input,
             onSnapshot: {
               actions: assign({
-                intermediateValue: (_) =>
-                  _.event.snapshot.context.intermediateValue,
+                intermediateValue: ({ event }) => ({
+                  ...event.snapshot.context.intermediateValue,
+                  step: signTransactionDAStateSteps.SIGN_PSBT,
+                }),
               }),
             },
             onDone: {
@@ -164,6 +173,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         UpdatePsbt: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.UPDATE_PSBT,
+            }),
+          }),
           invoke: {
             id: "updatePsbt",
             src: "updatePsbt",
@@ -204,6 +219,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           ],
         },
         ExtractTransaction: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.EXTRACT_TRANSACTION,
+            }),
+          }),
           invoke: {
             id: "extractTransaction",
             src: "extractTransaction",

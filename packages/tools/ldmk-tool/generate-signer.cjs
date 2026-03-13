@@ -2109,7 +2109,7 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
         const newSignerEntry = `  {
     title: "${pascalCase}",
     description: "Access ${pascalCase} signer functionality",
-    icon: <CryptoIcon ledgerId="${kebabCase}" ticker="${ticker}" size="56px" />,
+    icon: <CryptoIcon ledgerId="${kebabCase}" ticker="${ticker}" size={size} />,
   },`;
         
         // Find the closing of SUPPORTED_SIGNERS array and insert before it

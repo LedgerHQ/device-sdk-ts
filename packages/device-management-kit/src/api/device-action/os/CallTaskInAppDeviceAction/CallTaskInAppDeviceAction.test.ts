@@ -15,6 +15,7 @@ import {
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
+import { openAppDAStateStep } from "@api/device-action/os/OpenAppDeviceAction/types";
 import { type Command } from "@api/types";
 import { UnknownDeviceExchangeError } from "@root/src";
 
@@ -23,6 +24,7 @@ import {
   type CallTaskInAppDAError,
   type CallTaskInAppDAIntermediateValue,
   type CallTaskInAppDAOutput,
+  callTaskInAppDAStateStep,
 } from "./CallTaskInAppDeviceActionTypes";
 
 vi.mock(
@@ -52,6 +54,7 @@ const setupOpenAppDAMock = (error?: unknown) => {
             entry: assign({
               intermediateValue: {
                 requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+                step: openAppDAStateStep.GET_DEVICE_STATUS,
               },
             }),
             after: {
@@ -131,12 +134,14 @@ describe("CallTaskInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: callTaskInAppDAStateStep.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
@@ -193,18 +198,21 @@ describe("CallTaskInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: callTaskInAppDAStateStep.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: callTaskInAppDAStateStep.CALL_TASK,
             },
           },
           {
@@ -253,18 +261,21 @@ describe("CallTaskInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: callTaskInAppDAStateStep.OPEN_APP,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.ConfirmOpenApp,
+              step: openAppDAStateStep.GET_DEVICE_STATUS,
             },
           },
           {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: callTaskInAppDAStateStep.CALL_TASK,
             },
           },
           {
@@ -311,6 +322,7 @@ describe("CallTaskInAppDeviceAction", () => {
             status: DeviceActionStatus.Pending,
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+              step: callTaskInAppDAStateStep.CALL_TASK,
             },
           },
           {

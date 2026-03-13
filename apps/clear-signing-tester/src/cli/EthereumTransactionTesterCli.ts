@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
@@ -33,6 +34,7 @@ export type CliConfig = {
   pluginVersion?: string;
   screenshotFolderPath?: string;
   customApp?: string;
+  forcePull?: boolean;
 
   // config.signer
   skipCal?: boolean;
@@ -60,6 +62,7 @@ export type CliConfig = {
 export class EthereumTransactionTesterCli {
   private container: Container;
   private controller: ServiceController;
+  private logger: LoggerPublisherService;
   private config: CliConfig;
   private interceptorService?: ERC7730InterceptorService;
 
@@ -87,6 +90,7 @@ export class EthereumTransactionTesterCli {
         pluginVersion: config.pluginVersion,
         screenshotPath: config.screenshotFolderPath,
         customAppPath: config.customApp,
+        forcePull: config.forcePull,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -123,6 +127,11 @@ export class EthereumTransactionTesterCli {
       },
     });
 
+    const loggerFactory = this.container.get<
+      (tag: string) => LoggerPublisherService
+    >(TYPES.LoggerPublisherServiceFactory);
+    this.logger = loggerFactory("cli");
+
     this.controller = this.container.get<ServiceController>(
       TYPES.MainServiceController,
     );
@@ -134,11 +143,25 @@ export class EthereumTransactionTesterCli {
   async initialize(): Promise<void> {
     // Set up ERC7730 interceptor if files are provided
     if (this.config.erc7730Files && this.config.erc7730Files.length > 0) {
-      this.interceptorService = new ERC7730InterceptorService();
+      this.interceptorService = new ERC7730InterceptorService(this.logger);
       try {
         await this.interceptorService.setupFromFiles(this.config.erc7730Files);
       } catch (error) {
-        console.error("Failed to setup ERC7730 interceptor:", error);
+        // If a custom ERC7730_API_URL was explicitly set, the user expects the
+        // local server to be running.  Silently continuing would fall through to
+        // the production CAL with mismatched test certificates, producing
+        // misleading blind-signing results.  Abort loudly instead.
+        if (process.env["ERC7730_API_URL"]) {
+          this.logger.error(
+            `ERC7730_API_URL is set to ${process.env["ERC7730_API_URL"]} but the server is unreachable. ` +
+              "Start the local API first: cd apps/sample && pnpm flask-dev, " +
+              "or unset ERC7730_API_URL to use the remote service.",
+          );
+          throw error;
+        }
+        this.logger.error("Failed to setup ERC7730 interceptor", {
+          data: { error },
+        });
       }
     }
 
@@ -264,6 +287,11 @@ export class EthereumTransactionTesterCli {
         "Custom app file path. Relative paths resolve to COIN_APPS_PATH, absolute paths are mounted automatically. Bypasses automatic Ethereum app version resolution.",
       )
       .option(
+        "--force-pull",
+        "Force pulling the Docker image even if it already exists locally",
+        false,
+      )
+      .option(
         "--log-level <level>",
         `Console log level: ${CLI_LOG_LEVELS.join(", ")} (default: info)`,
         (value: string) => {
@@ -292,7 +320,7 @@ export class EthereumTransactionTesterCli {
 
     // Set up signal handlers that work with the CLI instance
     const handleShutdown = async (signal: string) => {
-      console.error(`Received ${signal}, cleaning up...`);
+      cli?.logger.info(`Received ${signal}, cleaning up...`);
       await cli?.cleanup();
       process.exit(0);
     };
@@ -536,8 +564,7 @@ export class EthereumTransactionTesterCli {
    * Starts Speculos and keeps it running until interrupted
    */
   async handleStartSpeculos(): Promise<void> {
-    console.log("\nSpeculos is running.");
-    console.log("Press Ctrl+C to stop.\n");
+    this.logger.info("Speculos is running. Press Ctrl+C to stop.");
 
     // Wait indefinitely until interrupted
     await new Promise<void>(() => {});
