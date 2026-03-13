@@ -16,36 +16,30 @@ import {
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
 
-const CLA = 0xe0;
-const INS = 0x22;
-const P1 = 0x00;
-const P2 = 0x00;
-const SIGNATURE_TAG = 0x08;
-const DER_SIG_MIN_BYTES = 70;
-const DER_SIG_MAX_BYTES = 72;
+export const CLA = 0xe0;
+export const INS = 0x16;
+export const P1 = 0x00;
+export const P2 = 0x00;
+export const SIGNATURE_TAG = 0x15;
+export const DER_SIG_MIN_BYTES = 70;
+export const DER_SIG_MAX_BYTES = 72;
 
-export type ProvideTLVTransactionInstructionDescriptorCommandArgs = {
+export type ProvideInstructionDescriptorCommandArgs = {
   dataHex: string;
   signatureHex: string;
 };
 
-export class ProvideTLVTransactionInstructionDescriptorCommand
+export class ProvideInstructionDescriptorCommand
   implements
-    Command<
-      void,
-      ProvideTLVTransactionInstructionDescriptorCommandArgs,
-      SolanaAppErrorCodes
-    >
+    Command<void, ProvideInstructionDescriptorCommandArgs, SolanaAppErrorCodes>
 {
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(
-    readonly args: ProvideTLVTransactionInstructionDescriptorCommandArgs,
-  ) {}
-  readonly name = "ProvideTLVTransactionInstructionDescriptor";
+  constructor(readonly args: ProvideInstructionDescriptorCommandArgs) {}
+  readonly name = "ProvideInstructionDescriptor";
 
   getApdu(): Apdu {
     const { dataHex, signatureHex } = this.args;

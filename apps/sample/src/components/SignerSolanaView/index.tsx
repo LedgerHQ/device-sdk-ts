@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   base64StringToBuffer,
   isBase64String,
@@ -19,6 +19,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-solana";
+import { Flex, Icons, Text } from "@ledgerhq/react-ui";
 import {
   type CraftTransactionDAError,
   type CraftTransactionDAIntermediateValue,
@@ -31,9 +32,94 @@ import {
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { Form } from "@/components/Form";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 
 const DEFAULT_DERIVATION_PATH = "44'/501'/0'/0'";
+
+type SignTransactionInput = {
+  derivationPath: string;
+  transaction: string;
+  skipOpenApp: boolean;
+  templateId: string;
+  tokenAddress: string;
+  tokenInternalId: string;
+  createATAAddress: string;
+  createATAMintAddress: string;
+};
+
+const MAIN_KEYS: (keyof SignTransactionInput)[] = [
+  "derivationPath",
+  "transaction",
+  "skipOpenApp",
+];
+
+const CONTEXT_KEYS: (keyof SignTransactionInput)[] = [
+  "templateId",
+  "tokenAddress",
+  "tokenInternalId",
+  "createATAAddress",
+  "createATAMintAddress",
+];
+
+const SignTransactionForm: React.FC<{
+  initialValues: SignTransactionInput;
+  onChange: (values: SignTransactionInput) => void;
+  disabled?: boolean;
+}> = ({ initialValues, onChange, disabled }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const mainValues = Object.fromEntries(
+    MAIN_KEYS.map((k) => [k, initialValues[k]]),
+  ) as Pick<SignTransactionInput, (typeof MAIN_KEYS)[number]>;
+
+  const contextValues = Object.fromEntries(
+    CONTEXT_KEYS.map((k) => [k, initialValues[k]]),
+  ) as Pick<SignTransactionInput, (typeof CONTEXT_KEYS)[number]>;
+
+  const handleMainChange = useCallback(
+    (vals: typeof mainValues) => onChange({ ...initialValues, ...vals }),
+    [initialValues, onChange],
+  );
+
+  const handleContextChange = useCallback(
+    (vals: typeof contextValues) => onChange({ ...initialValues, ...vals }),
+    [initialValues, onChange],
+  );
+
+  return (
+    <Flex flexDirection="column" rowGap={5}>
+      <Form
+        initialValues={mainValues}
+        onChange={handleMainChange}
+        disabled={disabled}
+      />
+      <Flex
+        flexDirection="row"
+        alignItems="center"
+        style={{ cursor: "pointer", userSelect: "none" }}
+        onClick={() => setExpanded((v) => !v)}
+        columnGap={2}
+      >
+        {expanded ? (
+          <Icons.ChevronDown size="XS" />
+        ) : (
+          <Icons.ChevronRight size="XS" />
+        )}
+        <Text variant="small" color="neutral.c70">
+          Transaction Resolution Context
+        </Text>
+      </Flex>
+      {expanded && (
+        <Form
+          initialValues={contextValues}
+          onChange={handleContextChange}
+          disabled={disabled}
+        />
+      )}
+    </Flex>
+  );
+};
 
 export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -89,26 +175,58 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         title: "Sign transaction",
         description:
           "Perform all the actions necessary to sign a Solana transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          transaction,
+          templateId,
+          tokenAddress,
+          tokenInternalId,
+          createATAAddress,
+          createATAMintAddress,
+        }) => {
           const serializedTransaction =
             base64StringToBuffer(transaction) ?? new Uint8Array();
-          return signer.signTransaction(derivationPath, serializedTransaction);
+
+          const createATA =
+            createATAAddress && createATAMintAddress
+              ? { address: createATAAddress, mintAddress: createATAMintAddress }
+              : undefined;
+
+          const hasResolutionContext =
+            templateId || tokenAddress || tokenInternalId || createATA;
+
+          return signer.signTransaction(
+            derivationPath,
+            serializedTransaction,
+            hasResolutionContext
+              ? {
+                  transactionResolutionContext: {
+                    templateId: templateId || undefined,
+                    tokenAddress: tokenAddress || undefined,
+                    tokenInternalId: tokenInternalId || undefined,
+                    createATA,
+                  },
+                }
+              : undefined,
+          );
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           transaction: "",
           skipOpenApp: false,
+          templateId: "",
+          tokenAddress: "",
+          tokenInternalId: "",
+          createATAAddress: "",
+          createATAMintAddress: "",
         },
+        InputValuesComponent: SignTransactionForm,
         validateValues: ({ transaction }) =>
           isBase64String(transaction) && transaction.length > 0,
         deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
-        {
-          derivationPath: string;
-          transaction: string;
-          skipOpenApp: boolean;
-        },
+        SignTransactionInput,
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
       >,

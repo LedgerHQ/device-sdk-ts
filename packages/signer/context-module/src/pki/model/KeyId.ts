@@ -11,4 +11,5 @@ export enum KeyId {
   CalTrustedNameKey = "cal_trusted_name_key",
   CalNetwork = "cal_network",
   CalGatedSigning = "cal_gated_signing",
+  SwapTemplateKey = "swap_template_key",
 }
