@@ -1,5 +1,31 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 2.0.0
+
+### Minor Changes
+
+- [#1326](https://github.com/LedgerHQ/device-sdk-ts/pull/1326) [`f42443c`](https://github.com/LedgerHQ/device-sdk-ts/commit/f42443c2fbbcef0d5a563a8ed3bee29e7579885d) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add gated signing support: gate context provision in app-binder tasks, and send PROXY_INFO/GATED_SIGNING only when Ethereum app is 1.22.0 or newer. Add EthAppVersions constants for version thresholds.
+
+- [#1313](https://github.com/LedgerHQ/device-sdk-ts/pull/1313) [`247ef51`](https://github.com/LedgerHQ/device-sdk-ts/commit/247ef51101dc049210d95e6fc193152d6bca6bb5) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add ProvideGatedSigningCommand to send the gating descriptor to the device in TLV mode (CLA=E0, INS=38).
+
+### Patch Changes
+
+- [#1327](https://github.com/LedgerHQ/device-sdk-ts/pull/1327) [`0ffd62d`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ffd62da50e41a6725cde92dd67ff73448a3ecb7) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix GetAddress device action return type to use CallTaskInAppDA types instead of SendCommandInAppDA types
+
+- [#1193](https://github.com/LedgerHQ/device-sdk-ts/pull/1193) [`7db6392`](https://github.com/LedgerHQ/device-sdk-ts/commit/7db639274cc57366f2172a7a2b37a3341b7d9654) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Moved ApplicationChecker into SignerUtils
+
+- [#1348](https://github.com/LedgerHQ/device-sdk-ts/pull/1348) [`fe952dd`](https://github.com/LedgerHQ/device-sdk-ts/commit/fe952dd34671c7387a3f0ff95a75588e04179e33) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Trusted name should be provided before EIP712 filter for native sends
+
+- [#1298](https://github.com/LedgerHQ/device-sdk-ts/pull/1298) [`026a706`](https://github.com/LedgerHQ/device-sdk-ts/commit/026a706a6b4b0d001fea365f5b8aa9436a899e91) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Use chainId only when checkOnDevice is enabled for getAddress
+
+  - getAddress: `chainId` option is ignored when `checkOnDevice` is false; when true, it is sent to the device and used for dynamic network context (e.g. network name and icon).
+  - GetAddressCommand: chain ID is included in the APDU only when `checkOnDevice` is true (defaults to 1 when omitted).
+
+- Updated dependencies [[`a2fb7f8`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fb7f83bc45e6c4c3fdacbd91f67d962960a595), [`f42443c`](https://github.com/LedgerHQ/device-sdk-ts/commit/f42443c2fbbcef0d5a563a8ed3bee29e7579885d), [`0ffd62d`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ffd62da50e41a6725cde92dd67ff73448a3ecb7), [`7db6392`](https://github.com/LedgerHQ/device-sdk-ts/commit/7db639274cc57366f2172a7a2b37a3341b7d9654), [`5f5a61f`](https://github.com/LedgerHQ/device-sdk-ts/commit/5f5a61f06a13540fb013bf748fcc1a25ad16474d), [`09b2291`](https://github.com/LedgerHQ/device-sdk-ts/commit/09b2291bd8883697788606465f0fe41929671b94), [`4dab467`](https://github.com/LedgerHQ/device-sdk-ts/commit/4dab467e3db460c4b47cf5ec38f72e65dcf86b49)]:
+  - @ledgerhq/device-management-kit@1.2.0
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/signer-utils@2.0.0
+
 ## 1.11.1
 
 ### Patch Changes

@@ -1,5 +1,19 @@
 # @ledgerhq/device-management-kit
 
+## 1.2.0
+
+### Minor Changes
+
+- [#1338](https://github.com/LedgerHQ/device-sdk-ts/pull/1338) [`09b2291`](https://github.com/LedgerHQ/device-sdk-ts/commit/09b2291bd8883697788606465f0fe41929671b94) Thanks [@sprohaszka-ledger](https://github.com/sprohaszka-ledger)! - Add allowMissingApplication parameters for OpenAppDA (for test purpose)
+
+- [#1160](https://github.com/LedgerHQ/device-sdk-ts/pull/1160) [`4dab467`](https://github.com/LedgerHQ/device-sdk-ts/commit/4dab467e3db460c4b47cf5ec38f72e65dcf86b49) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add OS device actions intermediate steps
+
+### Patch Changes
+
+- [#1165](https://github.com/LedgerHQ/device-sdk-ts/pull/1165) [`a2fb7f8`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fb7f83bc45e6c4c3fdacbd91f67d962960a595) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add bufferToBase64String util
+
+- [#1327](https://github.com/LedgerHQ/device-sdk-ts/pull/1327) [`0ffd62d`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ffd62da50e41a6725cde92dd67ff73448a3ecb7) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix GetAddress device action return type to use CallTaskInAppDA types instead of SendCommandInAppDA types
+
 ## 1.1.0
 
 ### Minor Changes
