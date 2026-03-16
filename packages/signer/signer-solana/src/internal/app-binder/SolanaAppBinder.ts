@@ -22,6 +22,7 @@ import { externalTypes } from "@internal/externalTypes";
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
+import { APP_NAME } from "./constants";
 
 @injectable()
 export class SolanaAppBinder {
@@ -43,7 +44,7 @@ export class SolanaAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetPubKeyCommand(args),
-          appName: "Solana",
+          appName: APP_NAME,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
@@ -91,7 +92,7 @@ export class SolanaAppBinder {
               version: args.version,
               appDomain: args.appDomain,
             }).run(),
-          appName: "Solana",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
@@ -106,7 +107,7 @@ export class SolanaAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAppConfigurationCommand(),
-          appName: "Solana",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: false,
         },

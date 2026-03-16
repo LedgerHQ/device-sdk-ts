@@ -6,6 +6,8 @@ import {
   type ResolvedApp,
 } from "@ledgerhq/device-management-kit";
 
+import { APP_NAME } from "./constants";
+
 const DEFAULT_VERSION = "0.0.1";
 
 export class EthereumApplicationResolver implements ApplicationResolver {
@@ -26,7 +28,7 @@ export class EthereumApplicationResolver implements ApplicationResolver {
     }
 
     const version =
-      appName === "Ethereum" ? currentApp.version : appConfig.version;
+      appName === APP_NAME ? currentApp.version : appConfig.version;
 
     return { isCompatible: true, version };
   }

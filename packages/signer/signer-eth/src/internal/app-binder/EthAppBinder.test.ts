@@ -40,6 +40,7 @@ import { type TransactionMapperService } from "@internal/transaction/service/map
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
+import { APP_NAME } from "./constants";
 import { EthAppBinder } from "./EthAppBinder";
 
 const mockLoggerFactory = () => ({
@@ -171,7 +172,7 @@ describe("EthAppBinder", () => {
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
               input: expect.objectContaining({
-                appName: "Ethereum",
+                appName: APP_NAME,
                 requiredUserInteraction: UserInteractionRequired.VerifyAddress,
                 skipOpenApp: false,
                 task: expect.any(Function),
@@ -206,7 +207,7 @@ describe("EthAppBinder", () => {
             sessionId: "sessionId",
             deviceAction: expect.objectContaining({
               input: expect.objectContaining({
-                appName: "Ethereum",
+                appName: APP_NAME,
                 requiredUserInteraction: UserInteractionRequired.None,
                 skipOpenApp: false,
                 task: expect.any(Function),
