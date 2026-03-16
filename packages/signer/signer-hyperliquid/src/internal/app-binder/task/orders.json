@@ -1,0 +1,46 @@
+[
+  {
+    "type": "updateLeverage",
+    "asset": 1,
+    "isCross": false,
+    "leverage": 3,
+    "nonce": 1773655934208
+  },
+  {
+    "type": "order",
+    "orders": [
+      {
+        "a": 1,
+        "b": true,
+        "p": "95.302",
+        "s": "0.16",
+        "r": false,
+        "t": {
+          "limit": {
+            "tif": "Ioc"
+          }
+        }
+      },
+      {
+        "a": 1,
+        "b": false,
+        "p": "102.78",
+        "s": "0.16",
+        "r": true,
+        "t": {
+          "trigger": {
+            "isMarket": true,
+            "triggerPx": "102.78",
+            "tpsl": "tp"
+          }
+        }
+      }
+    ],
+    "grouping": "normalTpsl",
+    "builder": {
+      "b": "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
+      "f": 100
+    },
+    "nonce": 1773655934209
+  }
+]

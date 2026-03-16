@@ -123,6 +123,76 @@ describe("buildActionStructure", () => {
       /* eslint-enable prettier/prettier */
     },
     {
+      name: "action type with multiple orders",
+      action: {
+        type: "order",
+        orders: [
+          {
+            a: 5,
+            b: true,
+            p: "95.302",
+            s: "0.16",
+            r: false,
+            t: {
+              limit: {
+                tif: "Ioc",
+              },
+            },
+          },
+          {
+            a: 5,
+            b: false,
+            p: "102.78",
+            s: "0.16",
+            r: true,
+            t: {
+              trigger: {
+                isMarket: true,
+                triggerPx: "102.78",
+                tpsl: "tp",
+              },
+            },
+          },
+        ],
+        grouping: "normalTpsl",
+        builder: {
+          b: "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
+          f: 100,
+        },
+        nonce: 1773655934209,
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+        /* eslint-disable prettier/prettier */
+        "81dd27" + // ORDER
+          "81e00100" + // ORDER_TYPE
+          "81d10105" + // ASSET_ID
+          "81e20101" + // BUY_OR_NOT
+          "81e30639352E333032" + // PRICE
+          "81e404302E3136" + // SIZE
+          "81e50100" + // REDUCE_ONLY
+          "81d704" + // ORDER_DETAIL
+          "81e60101" + // TIF
+
+        "81dd34" + // ORDER
+          "81e00101" + // ORDER_TYPE
+          "81d10105" + // ASSET_ID
+          "81e20100" + // BUY_OR_NOT
+          "81e3063130322E3738" + // PRICE
+          "81e404302E3136" + // SIZE
+          "81e50101" + // REDUCE_ONLY
+          "81d711" + // ORDER_DETAIL
+            "81e70101" + // TRIGGER_MARKET
+            "81e8063130322E3738" + // TRIGGER_PRICE
+            "81e90100" + // TRIGGER_TYPE
+
+        "81ea0101" + // GROUPING
+        "81eb1b" + // BUILDER_INFO
+          "81d314c0708cdd6cd166d51da264e3f49a0422be26e35b" + // BUILDER_ADDRESS
+          "81ec0164", // BUILDER_FEE
+      /* eslint-enable prettier/prettier */
+    },
+    {
       name: "action type batchModify (update_order)",
       action: {
         type: "batchModify",
