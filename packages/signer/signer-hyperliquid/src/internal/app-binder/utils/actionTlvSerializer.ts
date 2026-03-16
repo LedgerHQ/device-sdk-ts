@@ -166,6 +166,15 @@ function numberToVarBytes(value: number, maxBytes: number = 8): Uint8Array {
  * Matches the Ledger SDK's lib_tlv expectations.
  */
 function encodeDerLength(builder: ByteArrayBuilder, length: number): void {
+  if (!Number.isInteger(length) || length < 0) {
+    throw new Error(
+      `Invalid DER length ${length}: expected non-negative integer`,
+    );
+  }
+  if (!Number.isSafeInteger(length)) {
+    throw new Error(`Invalid DER length ${length}: not a safe integer`);
+  }
+
   if (length < 0x80) {
     builder.add8BitUIntToData(length);
   } else if (length <= 0xff) {
