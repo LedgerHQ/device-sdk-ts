@@ -1,0 +1,208 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "LensHub",
+        "version": "2",
+        "chainId": 137,
+        "verifyingContract": "0xdb46d1dc155634fbc732f92e853b10b288ad5a1d"
+      },
+      "primaryType": "Post",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Post": [
+          { "name": "profileId", "type": "uint256" },
+          { "name": "contentURI", "type": "string" },
+          { "name": "actionModules", "type": "address[]" },
+          { "name": "actionModulesInitDatas", "type": "bytes[]" },
+          { "name": "referenceModule", "type": "address" },
+          { "name": "referenceModuleInitData", "type": "bytes" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "profileId": "42",
+        "contentURI": "ipfs://QmTzQ1Nj5CFbGXUBuoZvEphAE1rKMQR7FxGZFkJu3QLNSG",
+        "actionModules": [],
+        "actionModulesInitDatas": [],
+        "referenceModule": "0x0000000000000000000000000000000000000000",
+        "referenceModuleInitData": "0x",
+        "nonce": 5,
+        "deadline": 1735689600
+      }
+    },
+    "description": "Lens: Post"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "LensHub",
+        "version": "2",
+        "chainId": 137,
+        "verifyingContract": "0xdb46d1dc155634fbc732f92e853b10b288ad5a1d"
+      },
+      "primaryType": "Follow",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Follow": [
+          { "name": "followerProfileId", "type": "uint256" },
+          { "name": "idsOfProfilesToFollow", "type": "uint256[]" },
+          { "name": "followTokenIds", "type": "uint256[]" },
+          { "name": "datas", "type": "bytes[]" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "followerProfileId": "42",
+        "idsOfProfilesToFollow": ["100", "200"],
+        "followTokenIds": ["0", "0"],
+        "datas": ["0x", "0x"],
+        "nonce": 3,
+        "deadline": 1735689600
+      }
+    },
+    "description": "Lens: Follow"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "LensHub",
+        "version": "2",
+        "chainId": 137,
+        "verifyingContract": "0xdb46d1dc155634fbc732f92e853b10b288ad5a1d"
+      },
+      "primaryType": "Comment",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Comment": [
+          { "name": "profileId", "type": "uint256" },
+          { "name": "contentURI", "type": "string" },
+          { "name": "pointedProfileId", "type": "uint256" },
+          { "name": "pointedPubId", "type": "uint256" },
+          { "name": "referrerProfileIds", "type": "uint256[]" },
+          { "name": "referrerPubIds", "type": "uint256[]" },
+          { "name": "referenceModuleData", "type": "bytes" },
+          { "name": "actionModules", "type": "address[]" },
+          { "name": "actionModulesInitDatas", "type": "bytes[]" },
+          { "name": "referenceModule", "type": "address" },
+          { "name": "referenceModuleInitData", "type": "bytes" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "profileId": "42",
+        "contentURI": "ipfs://QmV9tYnJFqdDBKCPrHxjYGPcMZgTCBb9CDAAx9sPreNsvF",
+        "pointedProfileId": "100",
+        "pointedPubId": "7",
+        "referrerProfileIds": [],
+        "referrerPubIds": [],
+        "referenceModuleData": "0x",
+        "actionModules": [],
+        "actionModulesInitDatas": [],
+        "referenceModule": "0x0000000000000000000000000000000000000000",
+        "referenceModuleInitData": "0x",
+        "nonce": 6,
+        "deadline": 1735689600
+      }
+    },
+    "description": "Lens: Comment"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "LensHub",
+        "version": "2",
+        "chainId": 137,
+        "verifyingContract": "0xdb46d1dc155634fbc732f92e853b10b288ad5a1d"
+      },
+      "primaryType": "Mirror",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Mirror": [
+          { "name": "profileId", "type": "uint256" },
+          { "name": "metadataURI", "type": "string" },
+          { "name": "pointedProfileId", "type": "uint256" },
+          { "name": "pointedPubId", "type": "uint256" },
+          { "name": "referrerProfileIds", "type": "uint256[]" },
+          { "name": "referrerPubIds", "type": "uint256[]" },
+          { "name": "referenceModuleData", "type": "bytes" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "profileId": "42",
+        "metadataURI": "ipfs://QmTzQ1Nj5CFbGXUBuoZvEphAE1rKMQR7FxGZFkJu3QLNSG",
+        "pointedProfileId": "100",
+        "pointedPubId": "12",
+        "referrerProfileIds": [],
+        "referrerPubIds": [],
+        "referenceModuleData": "0x",
+        "nonce": 7,
+        "deadline": 1735689600
+      }
+    },
+    "description": "Lens: Mirror"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "LensHub",
+        "version": "2",
+        "chainId": 137,
+        "verifyingContract": "0xdb46d1dc155634fbc732f92e853b10b288ad5a1d"
+      },
+      "primaryType": "ChangeDelegatedExecutorsConfig",
+      "types": {
+        "ChangeDelegatedExecutorsConfig": [
+          { "name": "delegatorProfileId", "type": "uint256" },
+          { "name": "delegatedExecutors", "type": "address[]" },
+          { "name": "approvals", "type": "bool[]" },
+          { "name": "configNumber", "type": "uint64" },
+          { "name": "switchToGivenConfig", "type": "bool" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "deadline", "type": "uint256" }
+        ],
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ]
+      },
+      "message": {
+        "delegatorProfileId": "42",
+        "delegatedExecutors": ["0x1111111254eeb25477b68fb85ed929f73a960582"],
+        "approvals": [true],
+        "configNumber": 1,
+        "switchToGivenConfig": true,
+        "nonce": 8,
+        "deadline": 1735689600
+      }
+    },
+    "description": "Lens: ChangeDelegatedExecutorsConfig"
+  }
+]
