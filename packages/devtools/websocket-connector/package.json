@@ -54,7 +54,7 @@
     "@ledgerhq/vitest-config-dmk": "workspace:^"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.2.0",
+    "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^"
   }
 }
