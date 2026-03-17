@@ -326,9 +326,12 @@ export class SpeculosServiceController implements ServiceController {
   }
 
   private getDockerPlatformKey(): string {
-    const platform = process.platform;
+    // Docker platform keys for these images always use "linux" as the OS
+    // component, regardless of the host OS. We normalize the architecture
+    // to match Docker naming (e.g. "amd64" instead of Node's "x64").
+    const dockerOs = "linux";
     const arch = process.arch === "x64" ? "amd64" : process.arch;
-    return `${platform}/${arch}`;
+    return `${dockerOs}/${arch}`;
   }
 
   private runCommand(command: string, args: string[]): Promise<string> {
