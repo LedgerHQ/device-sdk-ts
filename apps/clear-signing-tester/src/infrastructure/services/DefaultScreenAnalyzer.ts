@@ -135,6 +135,54 @@ export class DefaultScreenAnalyzer implements ScreenAnalyzerService {
     return canAcknowledge;
   }
 
+  async isBlindSigningWarning(): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const warningTexts = ["blind signing ahead"];
+    const isWarning = warningTexts.some((text) =>
+      data.text.toLowerCase().includes(text.toLowerCase()),
+    );
+
+    if (isWarning) {
+      this.logger.debug("Current screen is blind signing warning");
+    } else {
+      this.logger.debug("Current screen is not blind signing warning");
+    }
+
+    return isWarning;
+  }
+
+  async isContinueToBlindSigningScreen(): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const markers = ["continue to blind signing"];
+    const isScreen = markers.some((text) =>
+      data.text.toLowerCase().includes(text),
+    );
+
+    if (isScreen) {
+      this.logger.debug(
+        "Current screen is 'safer way to sign' with continue to blind signing",
+      );
+    }
+
+    return isScreen;
+  }
+
+  async isBlindSigningBlocked(): Promise<boolean> {
+    const data = await this.readScreenContent();
+    const markers = ["go to settings"];
+    const isBlocked = markers.some((text) =>
+      data.text.toLowerCase().includes(text),
+    );
+
+    if (isBlocked) {
+      this.logger.debug(
+        "Current screen indicates blind signing is not enabled",
+      );
+    }
+
+    return isBlocked;
+  }
+
   async isHomePage(): Promise<boolean> {
     const data = await this.readScreenContent();
     const homePageTexts = [

@@ -28,6 +28,26 @@ export interface ScreenAnalyzerService {
   canAcknowledgeBlindSigning(): Promise<boolean>;
 
   /**
+   * Check if the current screen is a blind signing warning
+   * @returns Promise<boolean> - True if the screen shows "Blind signing ahead" or similar
+   */
+  isBlindSigningWarning(): Promise<boolean>;
+
+  /**
+   * Check if the current screen is the "safer way to sign" prompt
+   * with a "Continue to blind signing" button
+   * @returns Promise<boolean> - True if the screen shows "Continue to blind signing"
+   */
+  isContinueToBlindSigningScreen(): Promise<boolean>;
+
+  /**
+   * Check if the current screen indicates blind signing is not enabled,
+   * blocking the signing flow (e.g. "Go to settings" / "Reject transaction")
+   * @returns Promise<boolean> - True if blind signing is blocked
+   */
+  isBlindSigningBlocked(): Promise<boolean>;
+
+  /**
    * Analyze all accumulated screen texts for expected texts
    * @param expectedTexts - Array of texts to look for
    * @returns Promise<{ containsAll: boolean; found: string[]; missing: string[] }> - Result of the analysis
