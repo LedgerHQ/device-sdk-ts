@@ -3,6 +3,10 @@
   "private": false,
   "version": "0.1.0",
   "description": "Inspect and debug your integration of the Device Management Kit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "type": "module",
   "main": "./dist/react-native.cjs",
   "module": "./dist/react-native.js",
