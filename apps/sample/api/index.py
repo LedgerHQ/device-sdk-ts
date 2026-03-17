@@ -273,25 +273,23 @@ def convert_erc7730_to_eip712_descriptor(descriptor: InputEIP712DAppDescriptor) 
     # instructions structure: {address: {schema_hash: [instruction_list]}}
     result = {}
     for (address, instruction_dict) in instructions.items():
-        # For each schema_hash, extract chain_id from instructions
         for (schema_hash, instructions_list) in instruction_dict.items():
             if not instructions_list:
                 continue
 
-            # Extract chain_id from first instruction (all instructions with same schema_hash have same chain_id)
             first_instruction = instructions_list[0]
             chain_id = first_instruction.chain_id
 
             key = f"{chain_id}:{address}"
-            result[key] = {
-                address: {
-                    schema_hash: {
-                        "instructions": [
-                            format_and_sign_eip712_instruction(instruction)
-                            for instruction in instructions_list
-                        ]
-                    }
-                }
+            if key not in result:
+                result[key] = {}
+            if address not in result[key]:
+                result[key][address] = {}
+            result[key][address][schema_hash] = {
+                "instructions": [
+                    format_and_sign_eip712_instruction(instruction)
+                    for instruction in instructions_list
+                ]
             }
 
     return result
