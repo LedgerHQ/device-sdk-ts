@@ -75,6 +75,7 @@ export function register(deps: ToolDeps): void {
                   status: "started",
                   device: result.device,
                   api_url: result.apiUrl,
+                  vnc_url: result.vncUrl,
                 },
                 null,
                 2,

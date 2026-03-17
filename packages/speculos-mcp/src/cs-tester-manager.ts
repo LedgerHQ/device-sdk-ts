@@ -20,6 +20,7 @@ type SpeculosStatus = {
   running: boolean;
   device?: string;
   apiUrl?: string;
+  vncUrl?: string;
 };
 
 const POLL_INTERVAL_MS = 2000;
@@ -46,12 +47,13 @@ export class CsTesterManager {
   private childProcess: ChildProcess | null = null;
   private currentDevice: string | null = null;
   private currentApiUrl: string | null = null;
+  private currentVncUrl: string | null = null;
   private processOutput: string[] = [];
 
   async start(
     baseURL: string,
     options: StartSpeculosOptions = {},
-  ): Promise<{ apiUrl: string; device: string }> {
+  ): Promise<{ apiUrl: string; device: string; vncUrl: string }> {
     if (this.childProcess) {
       throw new Error(
         "A Speculos instance is already managed by this server. Call stop_speculos first.",
@@ -142,6 +144,7 @@ export class CsTesterManager {
       this.childProcess = null;
       this.currentDevice = null;
       this.currentApiUrl = null;
+      this.currentVncUrl = null;
     });
 
     child.once("exit", (code) => {
@@ -149,11 +152,13 @@ export class CsTesterManager {
       this.childProcess = null;
       this.currentDevice = null;
       this.currentApiUrl = null;
+      this.currentVncUrl = null;
     });
 
     this.childProcess = child;
     this.currentDevice = device;
     this.currentApiUrl = apiUrl;
+    this.currentVncUrl = `vnc://localhost:${vncPort}`;
 
     try {
       await this.waitForSpeculosOrExit(apiUrl, STARTUP_TIMEOUT_MS);
@@ -169,9 +174,9 @@ export class CsTesterManager {
     log(
       "info",
       "docker",
-      `Speculos is running at ${apiUrl} (device: ${device})`,
+      `Speculos is running at ${apiUrl} (device: ${device}, vnc: ${this.currentVncUrl})`,
     );
-    return { apiUrl, device };
+    return { apiUrl, device, vncUrl: this.currentVncUrl! };
   }
 
   private async waitForSpeculosOrExit(
@@ -204,6 +209,7 @@ export class CsTesterManager {
     if (!this.childProcess) {
       this.currentDevice = null;
       this.currentApiUrl = null;
+      this.currentVncUrl = null;
       return;
     }
     try {
@@ -212,6 +218,7 @@ export class CsTesterManager {
       this.childProcess = null;
       this.currentDevice = null;
       this.currentApiUrl = null;
+      this.currentVncUrl = null;
     }
   }
 
@@ -244,6 +251,7 @@ export class CsTesterManager {
         this.childProcess = null;
         this.currentDevice = null;
         this.currentApiUrl = null;
+        this.currentVncUrl = null;
         log("info", "docker", "Speculos stopped.");
         res();
       });
@@ -253,6 +261,7 @@ export class CsTesterManager {
         this.childProcess = null;
         this.currentDevice = null;
         this.currentApiUrl = null;
+        this.currentVncUrl = null;
         rej(new Error(`Failed to stop cs-tester: ${err.message}`));
       });
 
@@ -268,6 +277,7 @@ export class CsTesterManager {
       running: true,
       device: this.currentDevice ?? undefined,
       apiUrl: this.currentApiUrl ?? undefined,
+      vncUrl: this.currentVncUrl ?? undefined,
     };
   }
 }
