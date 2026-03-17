@@ -1,4 +1,5 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import { spawn } from "child_process";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -163,6 +164,7 @@ export class SpeculosServiceController implements ServiceController {
     }
 
     const dockerImage = `${SPECULOS_DOCKER_IMAGE_BASE}:${this.config.dockerImageTag}`;
+    await this.warnIfLatestImageIsStale(dockerImage);
 
     if (
       this.config.forcePull ||
@@ -190,10 +192,180 @@ export class SpeculosServiceController implements ServiceController {
     });
 
     // Wait for the container to fully initialize before proceeding
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 3000));
   }
 
   async stop(): Promise<void> {
     await this.dockerContainer.stop();
+  }
+
+  private async warnIfLatestImageIsStale(dockerImage: string): Promise<void> {
+    if (this.config.dockerImageTag !== "latest") {
+      return;
+    }
+
+    const [localDigest, remoteDigest, localVersion, remoteVersion] =
+      await Promise.all([
+        this.getLocalManifestDigest(dockerImage),
+        this.getRemoteManifestDigest(dockerImage),
+        this.getLocalImageVersion(dockerImage),
+        this.getRemoteImageVersion(dockerImage),
+      ]);
+
+    if (!localDigest || !remoteDigest || localDigest === remoteDigest) {
+      return;
+    }
+
+    const localVersionLabel = localVersion ?? "unknown";
+    const remoteVersionLabel = remoteVersion ?? "unknown";
+
+    this.logger.warn(
+      `Docker image "${dockerImage}" is stale locally (localDigest=${localDigest}, remoteDigest=${remoteDigest}, localVersion=${localVersionLabel}, remoteVersion=${remoteVersionLabel}). Run "docker pull ${dockerImage}" to update.`,
+    );
+  }
+
+  private async getLocalManifestDigest(
+    dockerImage: string,
+  ): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "image",
+        "inspect",
+        "--format",
+        "{{index .RepoDigests 0}}",
+        dockerImage,
+      ]);
+      const repoDigest = output.trim();
+      const digest = repoDigest.split("@")[1]?.trim();
+      return digest ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getRemoteManifestDigest(
+    dockerImage: string,
+  ): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "buildx",
+        "imagetools",
+        "inspect",
+        dockerImage,
+        "--format",
+        "{{json .Manifest.Digest}}",
+      ]);
+      const rawDigest = output.trim();
+      // Output is JSON encoded, e.g. "sha256:..."
+      const digest = JSON.parse(rawDigest) as string;
+      return digest || null;
+    } catch (error) {
+      this.logger.debug(
+        `Unable to resolve remote digest for "${dockerImage}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return null;
+    }
+  }
+
+  private async getLocalImageVersion(
+    dockerImage: string,
+  ): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "image",
+        "inspect",
+        "--format",
+        '{{index .Config.Labels "org.opencontainers.image.version"}}',
+        dockerImage,
+      ]);
+      const version = output.trim();
+      return version.length > 0 ? version : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getRemoteImageVersion(
+    dockerImage: string,
+  ): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "buildx",
+        "imagetools",
+        "inspect",
+        dockerImage,
+        "--format",
+        "{{json .Image}}",
+      ]);
+      const imageData = JSON.parse(output) as Record<
+        string,
+        { config?: { Labels?: Record<string, string> } }
+      >;
+
+      const preferredPlatform = this.getDockerPlatformKey();
+      const platformData =
+        imageData[preferredPlatform] ??
+        imageData["linux/amd64"] ??
+        imageData["linux/arm64"] ??
+        Object.values(imageData)[0];
+
+      return (
+        platformData?.config?.Labels?.["org.opencontainers.image.version"] ??
+        null
+      );
+    } catch (error) {
+      this.logger.debug(
+        `Unable to resolve remote image version for "${dockerImage}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return null;
+    }
+  }
+
+  private getDockerPlatformKey(): string {
+    // Docker platform keys for these images always use "linux" as the OS
+    // component, regardless of the host OS. We normalize the architecture
+    // to match Docker naming (e.g. "amd64" instead of Node's "x64").
+    const dockerOs = "linux";
+    const arch = process.arch === "x64" ? "amd64" : process.arch;
+    return `${dockerOs}/${arch}`;
+  }
+
+  private runCommand(command: string, args: string[]): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const childProcess = spawn(command, args, {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      childProcess.stdout.on("data", (data: Buffer) => {
+        stdout += data.toString();
+      });
+
+      childProcess.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      childProcess.on("close", (code) => {
+        if (code === 0) {
+          resolve(stdout);
+        } else {
+          reject(
+            new Error(
+              `Command failed (${command} ${args.join(" ")}): ${stderr.trim()}`,
+            ),
+          );
+        }
+      });
+
+      childProcess.on("error", (error) => {
+        reject(error);
+      });
+    });
   }
 }
