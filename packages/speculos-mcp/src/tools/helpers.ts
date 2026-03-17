@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-import { getLastSigningState } from "../dmk-session";
+import type { CsTesterManager } from "../cs-tester-manager";
+import type { DmkSession } from "../dmk-session";
 import { formatEvents } from "../screen-events";
 import type { SpeculosClient } from "../speculos-client";
 
@@ -8,16 +9,18 @@ export type ToolDeps = {
   server: McpServer;
   client: SpeculosClient;
   baseURL: string;
+  session: DmkSession;
+  csTester: CsTesterManager;
 };
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export async function toolResponse(
-  client: SpeculosClient,
+  deps: ToolDeps,
   extra?: Record<string, unknown>,
 ) {
-  const events = await client.fetchEvents();
-  const state = getLastSigningState();
+  const events = await deps.client.fetchEvents();
+  const state = deps.session.getSigningState();
   return {
     content: [
       {

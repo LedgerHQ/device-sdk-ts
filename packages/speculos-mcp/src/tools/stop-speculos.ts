@@ -1,8 +1,7 @@
-import { stopSpeculos } from "../cs-tester-manager";
 import type { ToolDeps } from "./helpers";
 
-export function register({ server }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "stop_speculos",
     {
       description:
@@ -10,7 +9,7 @@ export function register({ server }: ToolDeps): void {
     },
     async () => {
       try {
-        await stopSpeculos();
+        await deps.csTester.stop();
         return {
           content: [
             {

@@ -13,6 +13,11 @@ export function formatEvents(events: ScreenEvent[]): string {
   return events.map((e) => e.text).join("\n");
 }
 
+export function eventsEqual(a: ScreenEvent[], b: ScreenEvent[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((ev, i) => ev.text === b[i]!.text);
+}
+
 export function findEvent(
   events: ScreenEvent[],
   pattern: RegExp,

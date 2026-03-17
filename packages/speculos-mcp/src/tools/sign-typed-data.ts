@@ -1,16 +1,11 @@
 import { z } from "zod";
 
 import { waitForDeviceScreen } from "../actions";
-import {
-  newSession,
-  startSignTypedData,
-  waitForSigningReady,
-} from "../dmk-session";
 import type { ToolDeps } from "./helpers";
 import { toolResponse } from "./helpers";
 
-export function register({ server, client, baseURL }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "sign_typed_data",
     {
       description:
@@ -30,12 +25,16 @@ export function register({ server, client, baseURL }: ToolDeps): void {
       },
     },
     async ({ typedData, derivationPath }) => {
-      const session = await newSession(baseURL);
-      startSignTypedData(session.signer, derivationPath, typedData);
+      const session = await deps.session.newSession(deps.baseURL);
+      deps.session.startSignTypedData(
+        session.signer,
+        derivationPath,
+        typedData,
+      );
 
-      await waitForSigningReady();
-      await waitForDeviceScreen(client);
-      return toolResponse(client, { status: "signing_started" });
+      await deps.session.waitForSigningReady();
+      await waitForDeviceScreen(deps.client);
+      return toolResponse(deps, { status: "signing_started" });
     },
   );
 }

@@ -1,7 +1,7 @@
 import type { ToolDeps } from "./helpers";
 
-export function register({ server, client }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "screenshot",
     {
       description:
@@ -9,7 +9,7 @@ export function register({ server, client }: ToolDeps): void {
         "Debug-only — use this to inspect the device display when developing new actions or tools.",
     },
     async () => {
-      const data = await client.fetchScreenshot();
+      const data = await deps.client.fetchScreenshot();
       return {
         content: [
           {

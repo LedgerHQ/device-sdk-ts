@@ -1,5 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
+import type { CsTesterManager } from "../cs-tester-manager";
+import type { DmkSession } from "../dmk-session";
 import type { SpeculosClient } from "../speculos-client";
 import { register as acceptBlindSigning } from "./accept-blind-signing";
 import { register as approve } from "./approve";
@@ -38,8 +40,10 @@ export function registerTools(
   server: McpServer,
   client: SpeculosClient,
   baseURL: string,
+  session: DmkSession,
+  csTester: CsTesterManager,
 ): void {
-  const deps: ToolDeps = { server, client, baseURL };
+  const deps: ToolDeps = { server, client, baseURL, session, csTester };
   for (const register of allTools) {
     register(deps);
   }

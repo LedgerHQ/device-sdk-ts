@@ -1,10 +1,9 @@
 import { z } from "zod";
 
-import { startSpeculos } from "../cs-tester-manager";
 import type { ToolDeps } from "./helpers";
 
-export function register({ server, client, baseURL }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "start_speculos",
     {
       description:
@@ -58,7 +57,7 @@ export function register({ server, client, baseURL }: ToolDeps): void {
       vncPort,
     }) => {
       try {
-        const result = await startSpeculos(baseURL, {
+        const result = await deps.csTester.start(deps.baseURL, {
           device,
           appEthVersion,
           osVersion,
@@ -66,7 +65,7 @@ export function register({ server, client, baseURL }: ToolDeps): void {
           customAppPath,
           vncPort,
         });
-        client.setDevice(result.device);
+        deps.client.setDevice(result.device);
         return {
           content: [
             {

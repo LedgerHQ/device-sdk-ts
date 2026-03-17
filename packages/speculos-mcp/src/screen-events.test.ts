@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ScreenEvent } from "./screen-events";
 import {
+  eventsEqual,
   findConfirmRejectButton,
   findRejectButton,
   findSignButton,
@@ -21,6 +22,34 @@ describe("screen-events", () => {
     it("joins event texts with newlines", () => {
       const events = [event("Review transaction"), event("Hold to sign")];
       expect(formatEvents(events)).toBe("Review transaction\nHold to sign");
+    });
+  });
+
+  describe("eventsEqual", () => {
+    it("returns true for two empty arrays", () => {
+      expect(eventsEqual([], [])).toBe(true);
+    });
+
+    it("returns true for identical event texts", () => {
+      const a = [event("Review"), event("Hold to sign")];
+      const b = [event("Review", 10, 20), event("Hold to sign", 30, 40)];
+      expect(eventsEqual(a, b)).toBe(true);
+    });
+
+    it("returns false for different lengths", () => {
+      const a = [event("Review")];
+      const b = [event("Review"), event("Hold to sign")];
+      expect(eventsEqual(a, b)).toBe(false);
+    });
+
+    it("returns false for different text content", () => {
+      const a = [event("Review"), event("Hold to sign")];
+      const b = [event("Review"), event("Reject")];
+      expect(eventsEqual(a, b)).toBe(false);
+    });
+
+    it("returns false when first is empty and second is not", () => {
+      expect(eventsEqual([], [event("Hello")])).toBe(false);
     });
   });
 

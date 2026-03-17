@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
+import { CsTesterManager } from "./cs-tester-manager";
+import { DmkSession } from "./dmk-session";
 import { bindServer, log } from "./logger";
 import { registerPrompts } from "./prompts";
 import { createSpeculosClient } from "./speculos-client";
@@ -66,10 +68,13 @@ export async function createSpeculosServer(
     { instructions: readResource("workflow.md") },
   );
 
+  const session = new DmkSession();
+  const csTester = new CsTesterManager();
+
   bindServer(server);
   registerResources(server);
   registerPrompts(server);
-  registerTools(server, client, baseURL);
+  registerTools(server, client, baseURL, session, csTester);
 
   return server;
 }

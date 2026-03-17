@@ -42,206 +42,232 @@ function findWorkspaceRoot(): string {
   );
 }
 
-let childProcess: ChildProcess | null = null;
-let currentDevice: string | null = null;
-let currentApiUrl: string | null = null;
-let processOutput: string[] = [];
+export class CsTesterManager {
+  private childProcess: ChildProcess | null = null;
+  private currentDevice: string | null = null;
+  private currentApiUrl: string | null = null;
+  private processOutput: string[] = [];
 
-async function waitForSpeculos(
-  apiUrl: string,
-  timeoutMs: number,
-): Promise<void> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    try {
-      await axios.get(`${apiUrl}/events`, {
-        params: { currentscreenonly: true },
-        timeout: 3000,
-      });
-      return;
-    } catch {
-      await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-    }
-  }
-  throw new Error(
-    `Speculos did not become reachable at ${apiUrl} within ${timeoutMs / 1000}s`,
-  );
-}
-
-export async function startSpeculos(
-  baseURL: string,
-  options: StartSpeculosOptions = {},
-): Promise<{ apiUrl: string; device: string }> {
-  if (childProcess) {
-    throw new Error(
-      "A Speculos instance is already managed by this server. Call stop_speculos first.",
-    );
-  }
-
-  if (!process.env["COIN_APPS_PATH"]) {
-    throw new Error(
-      "COIN_APPS_PATH environment variable is not set. " +
-        "It must point to the directory containing Ledger app binaries.",
-    );
-  }
-
-  const url = new URL(baseURL);
-  const port = url.port || "5000";
-  const host = url.hostname;
-  const device = options.device ?? "stax";
-  const apiUrl = `http://${host}:${port}`;
-
-  const workspaceRoot = findWorkspaceRoot();
-
-  const vncPort = options.vncPort ?? 3337;
-
-  const args = [
-    "cs-tester",
-    "cli",
-    "start-speculos",
-    "--speculos-url",
-    `http://${host}`,
-    "--speculos-port",
-    port,
-    "--speculos-vnc-port",
-    vncPort.toString(),
-    "--device",
-    device,
-  ];
-
-  if (options.dockerImageTag) {
-    args.push("--docker-image-tag", options.dockerImageTag);
-  }
-  if (options.appEthVersion) {
-    args.push("--app-eth-version", options.appEthVersion);
-  }
-  if (options.osVersion) {
-    args.push("--os-version", options.osVersion);
-  }
-  if (options.customAppPath) {
-    args.push("--custom-app", options.customAppPath);
-  }
-
-  processOutput = [];
-  log(
-    "info",
-    "docker",
-    `Starting Speculos via cs-tester: pnpm ${args.join(" ")}`,
-  );
-
-  const child = spawn("pnpm", args, {
-    cwd: workspaceRoot,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env },
-  });
-
-  child.stdout?.on("data", (data: Buffer) => {
-    const line = data.toString().trim();
-    if (line) {
-      if (processOutput.length >= MAX_OUTPUT_LINES) {
-        processOutput.shift();
-      }
-      processOutput.push(line);
-      log("debug", "docker", `[cs-tester stdout] ${line}`);
-    }
-  });
-
-  child.stderr?.on("data", (data: Buffer) => {
-    const line = data.toString().trim();
-    if (line) {
-      if (processOutput.length >= MAX_OUTPUT_LINES) {
-        processOutput.shift();
-      }
-      processOutput.push(line);
-      log("debug", "docker", `[cs-tester stderr] ${line}`);
-    }
-  });
-
-  child.once("error", (err) => {
-    log("error", "docker", `cs-tester process error: ${err.message}`);
-    childProcess = null;
-    currentDevice = null;
-    currentApiUrl = null;
-  });
-
-  child.once("exit", (code) => {
-    log("info", "docker", `cs-tester process exited with code ${code}`);
-    childProcess = null;
-    currentDevice = null;
-    currentApiUrl = null;
-  });
-
-  childProcess = child;
-  currentDevice = device;
-  currentApiUrl = apiUrl;
-
-  try {
-    await waitForSpeculos(apiUrl, STARTUP_TIMEOUT_MS);
-  } catch (err) {
-    await stopSpeculos();
-    const recentOutput = processOutput.slice(-20).join("\n");
-    throw new Error(
-      `Failed to start Speculos: ${err instanceof Error ? err.message : String(err)}\n` +
-        `Recent cs-tester output:\n${recentOutput}`,
-    );
-  }
-
-  log("info", "docker", `Speculos is running at ${apiUrl} (device: ${device})`);
-  return { apiUrl, device };
-}
-
-export async function stopSpeculos(): Promise<void> {
-  if (!childProcess) {
-    throw new Error(
-      "No Speculos instance is currently managed by this server.",
-    );
-  }
-
-  const pid = childProcess.pid;
-  log("info", "docker", `Stopping Speculos (pid: ${pid})...`);
-
-  return new Promise((res, rej) => {
-    const child = childProcess!;
-    child.removeAllListeners("exit");
-    child.removeAllListeners("error");
-
-    const timeout = setTimeout(() => {
-      log(
-        "warning",
-        "docker",
-        "cs-tester did not exit gracefully, sending SIGKILL",
+  async start(
+    baseURL: string,
+    options: StartSpeculosOptions = {},
+  ): Promise<{ apiUrl: string; device: string }> {
+    if (this.childProcess) {
+      throw new Error(
+        "A Speculos instance is already managed by this server. Call stop_speculos first.",
       );
-      child.kill("SIGKILL");
-    }, 10_000);
+    }
 
-    child.once("exit", () => {
-      clearTimeout(timeout);
-      childProcess = null;
-      currentDevice = null;
-      currentApiUrl = null;
-      log("info", "docker", "Speculos stopped.");
-      res();
+    if (!process.env["COIN_APPS_PATH"]) {
+      throw new Error(
+        "COIN_APPS_PATH environment variable is not set. " +
+          "It must point to the directory containing Ledger app binaries.",
+      );
+    }
+
+    const url = new URL(baseURL);
+    const port = url.port || "5000";
+    const host = url.hostname;
+    const device = options.device ?? "stax";
+    const apiUrl = `http://${host}:${port}`;
+
+    const workspaceRoot = findWorkspaceRoot();
+
+    const vncPort = options.vncPort ?? 3337;
+
+    const args = [
+      "cs-tester",
+      "cli",
+      "start-speculos",
+      "--speculos-url",
+      `http://${host}`,
+      "--speculos-port",
+      port,
+      "--speculos-vnc-port",
+      vncPort.toString(),
+      "--device",
+      device,
+    ];
+
+    if (options.dockerImageTag) {
+      args.push("--docker-image-tag", options.dockerImageTag);
+    }
+    if (options.appEthVersion) {
+      args.push("--app-eth-version", options.appEthVersion);
+    }
+    if (options.osVersion) {
+      args.push("--os-version", options.osVersion);
+    }
+    if (options.customAppPath) {
+      args.push("--custom-app", options.customAppPath);
+    }
+
+    this.processOutput = [];
+    log(
+      "info",
+      "docker",
+      `Starting Speculos via cs-tester: pnpm ${args.join(" ")}`,
+    );
+
+    const child = spawn("pnpm", args, {
+      cwd: workspaceRoot,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env },
+    });
+
+    child.stdout?.on("data", (data: Buffer) => {
+      const line = data.toString().trim();
+      if (line) {
+        if (this.processOutput.length >= MAX_OUTPUT_LINES) {
+          this.processOutput.shift();
+        }
+        this.processOutput.push(line);
+        log("debug", "docker", `[cs-tester stdout] ${line}`);
+      }
+    });
+
+    child.stderr?.on("data", (data: Buffer) => {
+      const line = data.toString().trim();
+      if (line) {
+        if (this.processOutput.length >= MAX_OUTPUT_LINES) {
+          this.processOutput.shift();
+        }
+        this.processOutput.push(line);
+        log("debug", "docker", `[cs-tester stderr] ${line}`);
+      }
     });
 
     child.once("error", (err) => {
-      clearTimeout(timeout);
-      childProcess = null;
-      currentDevice = null;
-      currentApiUrl = null;
-      rej(new Error(`Failed to stop cs-tester: ${err.message}`));
+      log("error", "docker", `cs-tester process error: ${err.message}`);
+      this.childProcess = null;
+      this.currentDevice = null;
+      this.currentApiUrl = null;
     });
 
-    child.kill("SIGTERM");
-  });
-}
+    child.once("exit", (code) => {
+      log("info", "docker", `cs-tester process exited with code ${code}`);
+      this.childProcess = null;
+      this.currentDevice = null;
+      this.currentApiUrl = null;
+    });
 
-export function getStatus(): SpeculosStatus {
-  if (!childProcess || childProcess.exitCode !== null) {
-    return { running: false };
+    this.childProcess = child;
+    this.currentDevice = device;
+    this.currentApiUrl = apiUrl;
+
+    try {
+      await this.waitForSpeculosOrExit(apiUrl, STARTUP_TIMEOUT_MS);
+    } catch (err) {
+      await this.cleanup();
+      const recentOutput = this.processOutput.slice(-20).join("\n");
+      throw new Error(
+        `Failed to start Speculos: ${err instanceof Error ? err.message : String(err)}\n` +
+          `Recent cs-tester output:\n${recentOutput}`,
+      );
+    }
+
+    log(
+      "info",
+      "docker",
+      `Speculos is running at ${apiUrl} (device: ${device})`,
+    );
+    return { apiUrl, device };
   }
-  return {
-    running: true,
-    device: currentDevice ?? undefined,
-    apiUrl: currentApiUrl ?? undefined,
-  };
+
+  private async waitForSpeculosOrExit(
+    apiUrl: string,
+    timeoutMs: number,
+  ): Promise<void> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      if (!this.childProcess || this.childProcess.exitCode !== null) {
+        throw new Error(
+          "cs-tester process exited before Speculos became reachable",
+        );
+      }
+      try {
+        await axios.get(`${apiUrl}/events`, {
+          params: { currentscreenonly: true },
+          timeout: 3000,
+        });
+        return;
+      } catch {
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      }
+    }
+    throw new Error(
+      `Speculos did not become reachable at ${apiUrl} within ${timeoutMs / 1000}s`,
+    );
+  }
+
+  private async cleanup(): Promise<void> {
+    if (!this.childProcess) {
+      this.currentDevice = null;
+      this.currentApiUrl = null;
+      return;
+    }
+    try {
+      await this.stop();
+    } catch {
+      this.childProcess = null;
+      this.currentDevice = null;
+      this.currentApiUrl = null;
+    }
+  }
+
+  async stop(): Promise<void> {
+    if (!this.childProcess) {
+      throw new Error(
+        "No Speculos instance is currently managed by this server.",
+      );
+    }
+
+    const pid = this.childProcess.pid;
+    log("info", "docker", `Stopping Speculos (pid: ${pid})...`);
+
+    return new Promise((res, rej) => {
+      const child = this.childProcess!;
+      child.removeAllListeners("exit");
+      child.removeAllListeners("error");
+
+      const timeout = setTimeout(() => {
+        log(
+          "warning",
+          "docker",
+          "cs-tester did not exit gracefully, sending SIGKILL",
+        );
+        child.kill("SIGKILL");
+      }, 10_000);
+
+      child.once("exit", () => {
+        clearTimeout(timeout);
+        this.childProcess = null;
+        this.currentDevice = null;
+        this.currentApiUrl = null;
+        log("info", "docker", "Speculos stopped.");
+        res();
+      });
+
+      child.once("error", (err) => {
+        clearTimeout(timeout);
+        this.childProcess = null;
+        this.currentDevice = null;
+        this.currentApiUrl = null;
+        rej(new Error(`Failed to stop cs-tester: ${err.message}`));
+      });
+
+      child.kill("SIGTERM");
+    });
+  }
+
+  getStatus(): SpeculosStatus {
+    if (!this.childProcess || this.childProcess.exitCode !== null) {
+      return { running: false };
+    }
+    return {
+      running: true,
+      device: this.currentDevice ?? undefined,
+      apiUrl: this.currentApiUrl ?? undefined,
+    };
+  }
 }

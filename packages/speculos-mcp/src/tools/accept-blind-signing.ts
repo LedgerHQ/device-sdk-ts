@@ -4,8 +4,8 @@ import { handleBlindSigningWarning } from "../actions";
 import type { ToolDeps } from "./helpers";
 import { toolResponse } from "./helpers";
 
-export function register({ server, client }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "accept_blind_signing",
     {
       description:
@@ -21,9 +21,13 @@ export function register({ server, client }: ToolDeps): void {
       },
     },
     async ({ accept }) => {
-      const events = await client.fetchEvents();
-      const result = await handleBlindSigningWarning(client, events, accept);
-      return toolResponse(client, {
+      const events = await deps.client.fetchEvents();
+      const result = await handleBlindSigningWarning(
+        deps.client,
+        events,
+        accept,
+      );
+      return toolResponse(deps, {
         dismissed: result.dismissed,
         accepted: result.accepted,
       });

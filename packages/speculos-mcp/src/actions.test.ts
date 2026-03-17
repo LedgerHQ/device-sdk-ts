@@ -76,6 +76,9 @@ describe("actions", () => {
         fetchEvents: vi
           .fn()
           .mockResolvedValueOnce([event("Hold to sign"), event("Reject")])
+          // waitForScreenChange poll returns changed screen
+          .mockResolvedValueOnce([event("Signing...")])
+          // final fetchEvents after pollForSigningComplete
           .mockResolvedValueOnce([event("Signed")]),
         sign: vi.fn().mockResolvedValue(undefined),
       });
@@ -94,6 +97,9 @@ describe("actions", () => {
         fetchEvents: vi
           .fn()
           .mockResolvedValueOnce([event("Hold to sign")])
+          // waitForScreenChange poll returns changed screen
+          .mockResolvedValueOnce([event("Processing")])
+          // final fetchEvents
           .mockResolvedValueOnce([event("Processing")]),
         sign: vi.fn().mockResolvedValue(undefined),
       });
@@ -115,6 +121,9 @@ describe("actions", () => {
         fetchEvents: vi
           .fn()
           .mockResolvedValueOnce([event("Yes, reject transaction")])
+          // waitForScreenChange poll returns changed screen
+          .mockResolvedValueOnce([event("Transaction cancelled")])
+          // final fetchEvents
           .mockResolvedValueOnce([event("Transaction cancelled")]),
         confirm: vi.fn().mockResolvedValue(undefined),
       });
@@ -132,11 +141,16 @@ describe("actions", () => {
       const client = mockClient({
         fetchEvents: vi
           .fn()
+          // initial read
           .mockResolvedValueOnce([event("Hold to sign"), event("Reject")])
+          // waitForScreenChange after reject
           .mockResolvedValueOnce([
             event("Reject transaction?"),
             event("Yes, reject"),
           ])
+          // waitForScreenChange after confirm
+          .mockResolvedValueOnce([event("Transaction cancelled")])
+          // final fetchEvents
           .mockResolvedValueOnce([event("Transaction cancelled")]),
         reject: vi.fn().mockResolvedValue(undefined),
         confirm: vi.fn().mockResolvedValue(undefined),
@@ -167,8 +181,11 @@ describe("actions", () => {
       const client = mockClient({
         fetchEvents: vi
           .fn()
+          // initial read
           .mockResolvedValueOnce([event("Hold to sign"), event("Reject")])
+          // waitForScreenChange after reject
           .mockResolvedValueOnce([event("Rejecting...")])
+          // final fetchEvents
           .mockResolvedValueOnce([event("Rejecting...")]),
         reject: vi.fn().mockResolvedValue(undefined),
       });
@@ -320,10 +337,12 @@ describe("actions", () => {
       const client = mockClient({
         fetchEvents: vi
           .fn()
+          // initial fetchEvents
           .mockResolvedValueOnce([
             event("Go to settings"),
             event("Reject transaction"),
           ])
+          // waitForScreenChange after reject
           .mockResolvedValueOnce(freshEvents),
         reject: vi.fn().mockResolvedValue(undefined),
       });
@@ -354,11 +373,16 @@ describe("actions", () => {
       const client = mockClient({
         fetchEvents: vi
           .fn()
+          // initial fetchEvents
           .mockResolvedValueOnce([
             event("Go to settings"),
             event("Reject transaction"),
           ])
+          // waitForScreenChange after confirm (go to settings)
           .mockResolvedValueOnce([event("Blind signing")])
+          // waitForScreenChange after confirm (toggle)
+          .mockResolvedValueOnce([event("Confirmation dialog")])
+          // waitForScreenChange after dismissSecondary
           .mockResolvedValueOnce(finalEvents),
         confirm: vi.fn().mockResolvedValue(undefined),
         dismissSecondary: vi.fn().mockResolvedValue(undefined),
@@ -391,7 +415,9 @@ describe("actions", () => {
       const client = mockClient({
         fetchEvents: vi
           .fn()
+          // initial fetchEvents
           .mockResolvedValueOnce([event("Go to settings")])
+          // waitForScreenChange after confirm
           .mockResolvedValueOnce(settingsEvents),
         confirm: vi.fn().mockResolvedValue(undefined),
       });

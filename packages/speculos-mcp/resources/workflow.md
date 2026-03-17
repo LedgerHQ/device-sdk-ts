@@ -13,6 +13,14 @@ Before starting any signing flow, call `read` to inspect the current screen and 
 
 If no speculos is running, call `start_speculos` to launch one automatically in Docker. You can check with `speculos_status`. When done, call `stop_speculos` to clean up.
 
+If `start_speculos` fails, check the following before retrying:
+
+- **Docker not running**: Verify Docker is available by running `docker info` in a shell. If it fails, ask the user to start Docker Desktop or the Docker daemon.
+- **`COIN_APPS_PATH` not set**: The environment variable must point to the directory containing Ledger app binaries.
+- **Port conflict**: Another process may already be using the Speculos port (default 5000). Check with `get_logs` for details.
+
+Use `get_logs` to inspect the cs-tester output for additional diagnostics.
+
 ### 1. Start signing
 
 Call `sign_transaction` or `sign_typed_data`.

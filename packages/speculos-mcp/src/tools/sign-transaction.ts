@@ -1,16 +1,11 @@
 import { z } from "zod";
 
 import { waitForDeviceScreen } from "../actions";
-import {
-  newSession,
-  startSignTransaction,
-  waitForSigningReady,
-} from "../dmk-session";
 import type { ToolDeps } from "./helpers";
 import { toolResponse } from "./helpers";
 
-export function register({ server, client, baseURL }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "sign_transaction",
     {
       description:
@@ -28,12 +23,12 @@ export function register({ server, client, baseURL }: ToolDeps): void {
       },
     },
     async ({ rawTx, derivationPath }) => {
-      const session = await newSession(baseURL);
-      startSignTransaction(session.signer, derivationPath, rawTx);
+      const session = await deps.session.newSession(deps.baseURL);
+      deps.session.startSignTransaction(session.signer, derivationPath, rawTx);
 
-      await waitForSigningReady();
-      await waitForDeviceScreen(client);
-      return toolResponse(client, { status: "signing_started" });
+      await deps.session.waitForSigningReady();
+      await waitForDeviceScreen(deps.client);
+      return toolResponse(deps, { status: "signing_started" });
     },
   );
 }

@@ -1,12 +1,11 @@
 import { z } from "zod";
 
-import { performNavigate } from "../actions";
-import { DELAY } from "../constants";
+import { performNavigate, waitForScreenChange } from "../actions";
 import type { ToolDeps } from "./helpers";
-import { sleep, toolResponse } from "./helpers";
+import { toolResponse } from "./helpers";
 
-export function register({ server, client }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "swipe",
     {
       description:
@@ -26,10 +25,11 @@ export function register({ server, client }: ToolDeps): void {
     },
     async ({ direction, count }) => {
       for (let i = 0; i < count; i++) {
-        await performNavigate(client, direction);
-        await sleep(DELAY.swipeBetween);
+        const before = await deps.client.fetchEvents();
+        await performNavigate(deps.client, direction);
+        await waitForScreenChange(deps.client, before);
       }
-      return toolResponse(client);
+      return toolResponse(deps);
     },
   );
 }

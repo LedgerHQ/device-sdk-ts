@@ -4,8 +4,8 @@ import { handleTransactionCheckOptIn } from "../actions";
 import type { ToolDeps } from "./helpers";
 import { toolResponse } from "./helpers";
 
-export function register({ server, client }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "dismiss_transaction_check",
     {
       description:
@@ -20,9 +20,13 @@ export function register({ server, client }: ToolDeps): void {
       },
     },
     async ({ enable }) => {
-      const events = await client.fetchEvents();
-      const result = await handleTransactionCheckOptIn(client, events, enable);
-      return toolResponse(client, { dismissed: result.dismissed });
+      const events = await deps.client.fetchEvents();
+      const result = await handleTransactionCheckOptIn(
+        deps.client,
+        events,
+        enable,
+      );
+      return toolResponse(deps, { dismissed: result.dismissed });
     },
   );
 }

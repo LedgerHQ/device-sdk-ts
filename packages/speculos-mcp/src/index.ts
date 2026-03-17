@@ -1,2 +1,2 @@
-export type { SigningState } from "./dmk-session";
+export { DmkSession, type SigningState } from "./dmk-session";
 export { createSpeculosServer } from "./server";

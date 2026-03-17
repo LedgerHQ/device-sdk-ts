@@ -55,179 +55,193 @@ export type Session = {
   signer: SignerEth;
 };
 
-let currentSession: Session | null = null;
-let lastSigningState: SigningState = { status: "idle" };
-
 const GATING_TOKEN = process.env["GATING_TOKEN"] ?? "0".repeat(64);
 
-export async function newSession(speculosUrl: string): Promise<Session> {
-  if (currentSession) {
-    currentSession.dmk.close();
-  }
-  clearLogs();
-  lastSigningState = { status: "idle" };
+export class DmkSession {
+  private currentSession: Session | null = null;
+  private lastSigningState: SigningState = { status: "idle" };
 
-  const dmk = new DeviceManagementKitBuilder()
-    .addTransport(speculosTransportFactory(speculosUrl))
-    .addLogger(new McpDmkLogger())
-    .build();
-
-  const device = await firstValueFrom(
-    dmk.startDiscovering({ transport: speculosIdentifier }),
-  );
-
-  const sessionId = await dmk.connect({
-    device: device as DiscoveredDevice,
-    sessionRefresherOptions: { isRefresherDisabled: true },
-  });
-
-  const contextModule = new ContextModuleBuilder({
-    originToken: GATING_TOKEN,
-  }).build();
-
-  const signer = new SignerEthBuilder({
-    dmk,
-    sessionId,
-    originToken: GATING_TOKEN,
-  })
-    .withContextModule(contextModule)
-    .build();
-
-  currentSession = { dmk, signer };
-  return currentSession;
-}
-
-export function getLastSigningState(): SigningState {
-  return lastSigningState;
-}
-
-export async function waitForSigningReady(
-  timeoutMs = 15000,
-  pollMs = 200,
-): Promise<SigningState> {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    const state = lastSigningState;
-
-    if (
-      state.status === "completed" ||
-      state.status === "error" ||
-      state.status === "stopped"
-    ) {
-      return state;
+  async newSession(speculosUrl: string): Promise<Session> {
+    if (this.currentSession) {
+      this.currentSession.dmk.close();
     }
+    clearLogs();
+    this.lastSigningState = { status: "idle" };
 
-    if (
-      state.status === "pending" &&
-      state.requiredUserInteraction.toLowerCase() !== "none"
-    ) {
-      return state;
-    }
+    const dmk = new DeviceManagementKitBuilder()
+      .addTransport(speculosTransportFactory(speculosUrl))
+      .addLogger(new McpDmkLogger())
+      .build();
 
-    await new Promise((r) => setTimeout(r, pollMs));
+    const device = await firstValueFrom(
+      dmk.startDiscovering({ transport: speculosIdentifier }),
+    );
+
+    const sessionId = await dmk.connect({
+      device: device as DiscoveredDevice,
+      sessionRefresherOptions: { isRefresherDisabled: true },
+    });
+
+    const contextModule = new ContextModuleBuilder({
+      originToken: GATING_TOKEN,
+    }).build();
+
+    const signer = new SignerEthBuilder({
+      dmk,
+      sessionId,
+      originToken: GATING_TOKEN,
+    })
+      .withContextModule(contextModule)
+      .build();
+
+    this.currentSession = { dmk, signer };
+    return this.currentSession;
   }
 
-  return lastSigningState;
-}
+  getSigningState(): SigningState {
+    return this.lastSigningState;
+  }
 
-function trackDeviceAction<Output extends Signature>(action: {
-  observable: Observable<
-    DeviceActionState<Output, unknown, { requiredUserInteraction: string }>
-  >;
-}): void {
-  lastSigningState = {
-    status: "pending",
-    step: "starting",
-    requiredUserInteraction: "None",
-  };
+  async waitForSigningReady(
+    timeoutMs = 15000,
+    pollMs = 200,
+  ): Promise<SigningState> {
+    const deadline = Date.now() + timeoutMs;
 
-  action.observable.subscribe({
-    next: (state) => {
-      switch (state.status) {
-        case DeviceActionStatus.Pending:
-          lastSigningState = {
-            status: "pending",
-            step:
-              "step" in state.intermediateValue
-                ? String(state.intermediateValue.step)
-                : "unknown",
-            requiredUserInteraction: String(
-              state.intermediateValue.requiredUserInteraction,
-            ),
-          };
-          break;
-        case DeviceActionStatus.Completed:
-          lastSigningState = { status: "completed", signature: state.output };
-          break;
-        case DeviceActionStatus.Error:
-          lastSigningState = { status: "error", error: String(state.error) };
-          break;
-        case DeviceActionStatus.Stopped:
-          lastSigningState = { status: "stopped" };
-          break;
+    while (Date.now() < deadline) {
+      const state = this.lastSigningState;
+
+      if (
+        state.status === "completed" ||
+        state.status === "error" ||
+        state.status === "stopped"
+      ) {
+        return state;
       }
-    },
-    error: (err: unknown) => {
-      lastSigningState = { status: "error", error: String(err) };
-    },
-  });
-}
 
-export function startSignTransaction(
-  signer: SignerEth,
-  derivationPath: string,
-  rawTxHex: string,
-): void {
-  const rawTx = hexaStringToBuffer(
-    rawTxHex.startsWith("0x") ? rawTxHex : `0x${rawTxHex}`,
-  );
-  if (!rawTx) {
-    lastSigningState = { status: "error", error: "Invalid hex transaction" };
-    return;
+      if (
+        state.status === "pending" &&
+        state.requiredUserInteraction.toLowerCase() !== "none"
+      ) {
+        return state;
+      }
+
+      await new Promise((r) => setTimeout(r, pollMs));
+    }
+
+    return this.lastSigningState;
   }
 
-  const action = signer.signTransaction(derivationPath, rawTx, {
-    skipOpenApp: true,
-  });
-  trackDeviceAction(
-    action as {
-      observable: Observable<
-        DeviceActionState<
-          Signature,
-          unknown,
-          { requiredUserInteraction: string }
-        >
-      >;
-    },
-  );
-}
+  private trackDeviceAction<Output extends Signature>(action: {
+    observable: Observable<
+      DeviceActionState<Output, unknown, { requiredUserInteraction: string }>
+    >;
+  }): void {
+    this.lastSigningState = {
+      status: "pending",
+      step: "starting",
+      requiredUserInteraction: "None",
+    };
 
-export function startSignTypedData(
-  signer: SignerEth,
-  derivationPath: string,
-  typedDataJson: string,
-): void {
-  let typedData: TypedData;
-  try {
-    typedData = JSON.parse(typedDataJson) as TypedData;
-  } catch {
-    lastSigningState = { status: "error", error: "Invalid JSON typed data" };
-    return;
+    action.observable.subscribe({
+      next: (state) => {
+        switch (state.status) {
+          case DeviceActionStatus.Pending:
+            this.lastSigningState = {
+              status: "pending",
+              step:
+                "step" in state.intermediateValue
+                  ? String(state.intermediateValue.step)
+                  : "unknown",
+              requiredUserInteraction: String(
+                state.intermediateValue.requiredUserInteraction,
+              ),
+            };
+            break;
+          case DeviceActionStatus.Completed:
+            this.lastSigningState = {
+              status: "completed",
+              signature: state.output,
+            };
+            break;
+          case DeviceActionStatus.Error:
+            this.lastSigningState = {
+              status: "error",
+              error: String(state.error),
+            };
+            break;
+          case DeviceActionStatus.Stopped:
+            this.lastSigningState = { status: "stopped" };
+            break;
+        }
+      },
+      error: (err: unknown) => {
+        this.lastSigningState = { status: "error", error: String(err) };
+      },
+    });
   }
 
-  const action = signer.signTypedData(derivationPath, typedData, {
-    skipOpenApp: true,
-  });
-  trackDeviceAction(
-    action as {
-      observable: Observable<
-        DeviceActionState<
-          Signature,
-          unknown,
-          { requiredUserInteraction: string }
-        >
-      >;
-    },
-  );
+  startSignTransaction(
+    signer: SignerEth,
+    derivationPath: string,
+    rawTxHex: string,
+  ): void {
+    const rawTx = hexaStringToBuffer(
+      rawTxHex.startsWith("0x") ? rawTxHex : `0x${rawTxHex}`,
+    );
+    if (!rawTx) {
+      this.lastSigningState = {
+        status: "error",
+        error: "Invalid hex transaction",
+      };
+      return;
+    }
+
+    const action = signer.signTransaction(derivationPath, rawTx, {
+      skipOpenApp: true,
+    });
+    this.trackDeviceAction(
+      action as {
+        observable: Observable<
+          DeviceActionState<
+            Signature,
+            unknown,
+            { requiredUserInteraction: string }
+          >
+        >;
+      },
+    );
+  }
+
+  startSignTypedData(
+    signer: SignerEth,
+    derivationPath: string,
+    typedDataJson: string,
+  ): void {
+    let typedData: TypedData;
+    try {
+      typedData = JSON.parse(typedDataJson) as TypedData;
+    } catch {
+      this.lastSigningState = {
+        status: "error",
+        error: "Invalid JSON typed data",
+      };
+      return;
+    }
+
+    const action = signer.signTypedData(derivationPath, typedData, {
+      skipOpenApp: true,
+    });
+    this.trackDeviceAction(
+      action as {
+        observable: Observable<
+          DeviceActionState<
+            Signature,
+            unknown,
+            { requiredUserInteraction: string }
+          >
+        >;
+      },
+    );
+  }
 }

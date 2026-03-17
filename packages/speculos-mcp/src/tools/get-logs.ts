@@ -3,8 +3,8 @@ import { z } from "zod";
 import { getLogs } from "../logger";
 import type { ToolDeps } from "./helpers";
 
-export function register({ server }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "get_logs",
     {
       description:

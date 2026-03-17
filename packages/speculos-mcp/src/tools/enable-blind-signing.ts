@@ -4,8 +4,8 @@ import { enableBlindSigning } from "../actions";
 import type { ToolDeps } from "./helpers";
 import { toolResponse } from "./helpers";
 
-export function register({ server, client }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "enable_blind_signing",
     {
       description:
@@ -22,8 +22,8 @@ export function register({ server, client }: ToolDeps): void {
       },
     },
     async ({ enable }) => {
-      const result = await enableBlindSigning(client, enable);
-      return toolResponse(client, { success: result.success });
+      const result = await enableBlindSigning(deps.client, enable);
+      return toolResponse(deps, { success: result.success });
     },
   );
 }

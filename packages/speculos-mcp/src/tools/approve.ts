@@ -1,12 +1,11 @@
 import { z } from "zod";
 
 import { approveFlow } from "../actions";
-import { getLastSigningState } from "../dmk-session";
 import type { ToolDeps } from "./helpers";
 import { toolResponse } from "./helpers";
 
-export function register({ server, client }: ToolDeps): void {
-  server.registerTool(
+export function register(deps: ToolDeps): void {
+  deps.server.registerTool(
     "approve",
     {
       description:
@@ -20,11 +19,11 @@ export function register({ server, client }: ToolDeps): void {
     },
     async ({ holdSeconds }) => {
       const result = await approveFlow(
-        client,
-        getLastSigningState,
+        deps.client,
+        () => deps.session.getSigningState(),
         holdSeconds,
       );
-      return toolResponse(client, { action: result.screen });
+      return toolResponse(deps, { action: result.screen });
     },
   );
 }

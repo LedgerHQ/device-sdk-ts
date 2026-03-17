@@ -2,8 +2,9 @@ export const DELAY = {
   swipeStep: 200,
   swipeBetween: 1200,
   signInit: 4000,
-  postTap: 1000,
   pollInterval: 500,
+  screenChangePollMs: 200,
+  screenChangeTimeoutMs: 3000,
 } as const;
 
 export const REJECT_BUTTON_PATTERNS = [
