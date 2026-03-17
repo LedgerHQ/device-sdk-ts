@@ -164,13 +164,13 @@ export class SpeculosServiceController implements ServiceController {
     }
 
     const dockerImage = `${SPECULOS_DOCKER_IMAGE_BASE}:${this.config.dockerImageTag}`;
-    await this.warnIfLatestImageIsStale(dockerImage);
 
-    if (
-      this.config.forcePull ||
-      (await this.dockerContainer.getImageId(dockerImage)) === null
-    ) {
+    if (this.config.forcePull) {
       await this.dockerContainer.pull(dockerImage);
+    } else if ((await this.dockerContainer.getImageId(dockerImage)) === null) {
+      await this.dockerContainer.pull(dockerImage);
+    } else {
+      await this.warnIfLatestImageIsStale(dockerImage);
     }
 
     // Build volumes array
