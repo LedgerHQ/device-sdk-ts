@@ -208,6 +208,64 @@ describe("SendActionsTask", () => {
         )!,
       ],
     },
+    {
+      actions: [
+        {
+          type: "updateLeverage",
+          asset: 5,
+          isCross: false,
+          leverage: 3,
+          nonce: 1773655934208,
+        },
+        {
+          type: "order",
+          orders: [
+            {
+              a: 5,
+              b: true,
+              p: "95.302",
+              s: "0.16",
+              r: false,
+              t: {
+                limit: {
+                  tif: "Ioc",
+                },
+              },
+            },
+            {
+              a: 5,
+              b: false,
+              p: "102.78",
+              s: "0.16",
+              r: true,
+              t: {
+                trigger: {
+                  isMarket: true,
+                  triggerPx: "102.78",
+                  tpsl: "tp",
+                },
+              },
+            },
+          ],
+          grouping: "normalTpsl",
+          builder: {
+            b: "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
+            f: 100,
+          },
+          nonce: 1773655934209,
+        },
+      ] satisfies HyperliquidAction[],
+      expectedSerializations: [
+        hexaStringToBuffer(
+          "01012c02010181d0010381da06019cf621c50081db1381d1010581de010081ed080000000000000003",
+        )!,
+        hexaStringToBuffer(
+          "01012c02010181d0010081da06019cf621c50181db8183" +
+            "81dd2781e0010081d1010581e2010181e30639352e33303281e404302e313681e5010081d70481e60101" +
+            "81dd3481e0010181d1010581e2010081e3063130322e373881e404302e313681e5010181d71181e7010181e8063130322e373881e9010081ea010181eb1b81d314c0708cdd6cd166d51da264e3f49a0422be26e35b81ec0164",
+        )!,
+      ],
+    },
   ])(
     "calls SendActionCommand multiple times in order when actions has several items",
     async ({ actions, expectedSerializations }) => {
@@ -217,7 +275,7 @@ describe("SendActionsTask", () => {
       await task.run();
 
       // THEN
-      expect(apiMock.sendCommand).toHaveBeenCalledTimes(3);
+      expect(apiMock.sendCommand).toHaveBeenCalledTimes(actions.length);
 
       expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
         1,
@@ -233,12 +291,14 @@ describe("SendActionsTask", () => {
         }),
       );
 
-      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-        3,
-        new SendActionCommand({
-          serializedAction: expectedSerializations[2]!,
-        }),
-      );
+      if (expectedSerializations[2]) {
+        expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
+          3,
+          new SendActionCommand({
+            serializedAction: expectedSerializations[2]!,
+          }),
+        );
+      }
     },
   );
 

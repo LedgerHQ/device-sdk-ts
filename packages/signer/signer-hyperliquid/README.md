@@ -16,10 +16,12 @@ import { SignerHyperliquidBuilder } from "@ledgerhq/device-signer-kit-hyperliqui
 const signer = new SignerHyperliquidBuilder({ dmk, sessionId }).build();
 
 // Sign transaction
-const signature = await signer.signTransaction(
-  "m/44'/0'/0'/0/0",
-  transactionBytes,
-);
+const signature = await signer.signActions({
+  derivationPath: "m/44'/0'/0'/0/0",
+  certificate,
+  signedMetadata,
+  actions,
+});
 ```
 
 ## Development

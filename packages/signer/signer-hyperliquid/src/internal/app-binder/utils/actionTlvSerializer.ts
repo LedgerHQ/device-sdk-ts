@@ -161,6 +161,31 @@ function numberToVarBytes(value: number, maxBytes: number = 8): Uint8Array {
   return new Uint8Array(bytes);
 }
 
+/**
+ * DER-encode a length value: short form for < 0x80, long form otherwise.
+ * Matches the Ledger SDK's lib_tlv expectations.
+ */
+function encodeDerLength(builder: ByteArrayBuilder, length: number): void {
+  if (!Number.isInteger(length) || length < 0) {
+    throw new Error(
+      `Invalid DER length ${length}: expected non-negative integer`,
+    );
+  }
+  if (!Number.isSafeInteger(length)) {
+    throw new Error(`Invalid DER length ${length}: not a safe integer`);
+  }
+
+  if (length < 0x80) {
+    builder.add8BitUIntToData(length);
+  } else if (length <= 0xff) {
+    builder.add8BitUIntToData(0x81);
+    builder.add8BitUIntToData(length);
+  } else {
+    builder.add8BitUIntToData(0x82);
+    builder.add16BitUIntToData(length);
+  }
+}
+
 /** Append a TLV field with variable-length number (tag + length 1..8 + value bytes). */
 function encodeTlvVarNumber(
   builder: ByteArrayBuilder,
@@ -216,7 +241,9 @@ function encodeInTlvFromAscii(
   } else {
     builder.add8BitUIntToData(tag);
   }
-  builder.encodeInLVFromAscii(value);
+  const bytes = new TextEncoder().encode(value);
+  encodeDerLength(builder, bytes.length);
+  builder.addBufferToData(bytes);
 }
 
 function encodeInTlvFromBuffer(
@@ -229,7 +256,8 @@ function encodeInTlvFromBuffer(
   } else {
     builder.add8BitUIntToData(tag);
   }
-  builder.encodeInLVFromBuffer(value);
+  encodeDerLength(builder, value.length);
+  builder.addBufferToData(value);
 }
 
 /** Serialize a single Order to TLV (specs Order structure: 0xe0–0xe9). */
@@ -302,11 +330,13 @@ export function buildActionStructure(action: HyperliquidAction): Uint8Array {
 
   switch (action.type) {
     case "order": {
-      // create_order: order (0xdd), grouping (0xea), optional builder_address (0xeb), builder_fee (0xec)
-      const order = action.orders[0];
-      if (!order) throw new Error("order action must have at least one order");
-      const orderPayload = serializeOrderToTlv(order);
-      encodeInTlvFromBuffer(b, TLV_TAG.ORDER, orderPayload);
+      if (action.orders.length === 0) {
+        throw new Error("order action must have at least one order");
+      }
+      for (const order of action.orders) {
+        const orderPayload = serializeOrderToTlv(order);
+        encodeInTlvFromBuffer(b, TLV_TAG.ORDER, orderPayload);
+      }
       encodeInTlvFromUInt8(
         b,
         TLV_TAG.GROUPING,
