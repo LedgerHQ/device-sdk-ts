@@ -18,6 +18,7 @@ import { register as speculosStatus } from "./speculos-status";
 import { register as startSpeculos } from "./start-speculos";
 import { register as stopSpeculos } from "./stop-speculos";
 import { register as swipe } from "./swipe";
+import { register as touch } from "./touch";
 
 const allTools: Array<(deps: ToolDeps) => void> = [
   signTransaction,
@@ -34,6 +35,7 @@ const allTools: Array<(deps: ToolDeps) => void> = [
   stopSpeculos,
   speculosStatus,
   getLogs,
+  touch,
 ];
 
 export function registerTools(
