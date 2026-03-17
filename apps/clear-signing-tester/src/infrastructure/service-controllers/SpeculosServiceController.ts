@@ -336,22 +336,22 @@ export class SpeculosServiceController implements ServiceController {
 
   private runCommand(command: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
-      const process = spawn(command, args, {
+      const childProcess = spawn(command, args, {
         stdio: ["ignore", "pipe", "pipe"],
       });
 
       let stdout = "";
       let stderr = "";
 
-      process.stdout.on("data", (data: Buffer) => {
+      childProcess.stdout.on("data", (data: Buffer) => {
         stdout += data.toString();
       });
 
-      process.stderr.on("data", (data: Buffer) => {
+      childProcess.stderr.on("data", (data: Buffer) => {
         stderr += data.toString();
       });
 
-      process.on("close", (code) => {
+      childProcess.on("close", (code) => {
         if (code === 0) {
           resolve(stdout);
         } else {
@@ -363,7 +363,7 @@ export class SpeculosServiceController implements ServiceController {
         }
       });
 
-      process.on("error", (error) => {
+      childProcess.on("error", (error) => {
         reject(error);
       });
     });
