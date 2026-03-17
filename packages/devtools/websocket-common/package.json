@@ -1,8 +1,12 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-websocket-common",
-  "private": true,
-  "version": "1.0.1",
+  "private": false,
+  "version": "1.0.2",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {

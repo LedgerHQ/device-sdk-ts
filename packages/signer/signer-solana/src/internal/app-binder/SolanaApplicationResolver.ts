@@ -6,6 +6,8 @@ import {
   type ResolvedApp,
 } from "@ledgerhq/device-management-kit";
 
+import { APP_NAME } from "./constants";
+
 const DEFAULT_VERSION = "0.0.1";
 
 export class SolanaApplicationResolver implements ApplicationResolver {
@@ -17,7 +19,7 @@ export class SolanaApplicationResolver implements ApplicationResolver {
     const currentApp = deviceState.currentApp;
     const appName = currentApp?.name;
 
-    if (!appName || appName !== "Solana") {
+    if (!appName || appName !== APP_NAME) {
       return { isCompatible: false, version: DEFAULT_VERSION };
     }
 

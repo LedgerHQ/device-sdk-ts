@@ -38,6 +38,7 @@ import {
   Web3CheckOptInCommand,
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
+import { APP_NAME } from "@internal/app-binder/constants";
 import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
 import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
@@ -134,7 +135,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Ethereum" },
+          input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         getAddress: fromPromise(getAddress),
         getAppConfig: fromPromise(getAppConfig),
@@ -207,7 +208,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "openAppStateMachine",
             input: {
-              appName: "Ethereum",
+              appName: APP_NAME,
             },
             src: "openAppStateMachine",
             onSnapshot: {

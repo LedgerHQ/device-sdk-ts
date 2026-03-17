@@ -27,6 +27,7 @@ import {
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { APP_NAME } from "./constants";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
 const mockLoggerFactory = () => ({
@@ -152,7 +153,7 @@ describe("SolanaAppBinder", () => {
             deviceAction: expect.objectContaining({
               input: {
                 command: new GetPubKeyCommand(params),
-                appName: "Solana",
+                appName: APP_NAME,
                 requiredUserInteraction: UserInteractionRequired.VerifyAddress,
                 skipOpenApp: false,
               },
@@ -185,7 +186,7 @@ describe("SolanaAppBinder", () => {
             deviceAction: expect.objectContaining({
               input: {
                 command: new GetPubKeyCommand(params),
-                appName: "Solana",
+                appName: APP_NAME,
                 requiredUserInteraction: UserInteractionRequired.None,
                 skipOpenApp: false,
               },
@@ -500,7 +501,7 @@ describe("SolanaAppBinder", () => {
           deviceAction: expect.objectContaining({
             input: {
               command: new GetAppConfigurationCommand(),
-              appName: "Solana",
+              appName: APP_NAME,
               requiredUserInteraction: UserInteractionRequired.None,
               skipOpenApp: false,
             },

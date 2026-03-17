@@ -12,6 +12,7 @@ import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceAct
 import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignRootIntentDAReturnType } from "@api/app-binder/SignRootIntentDeviceActionTypes";
+import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
@@ -34,7 +35,7 @@ export class AleoAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAppConfigCommand(),
-          appName: "Aleo",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
@@ -52,7 +53,7 @@ export class AleoAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetAddressCommand(args),
-          appName: "Aleo",
+          appName: APP_NAME,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
@@ -71,7 +72,7 @@ export class AleoAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetViewKeyCommand(args),
-          appName: "Aleo",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.VerifyAddress,
           skipOpenApp: args.skipOpenApp,
         },
@@ -89,7 +90,7 @@ export class AleoAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new SignMessageCommand(args),
-          appName: "Aleo",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
@@ -107,7 +108,7 @@ export class AleoAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new SignRootIntentCommand(args),
-          appName: "Aleo",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp,
         },
@@ -124,7 +125,7 @@ export class AleoAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new SignFeeIntentCommand(args),
-          appName: "Aleo",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp,
         },

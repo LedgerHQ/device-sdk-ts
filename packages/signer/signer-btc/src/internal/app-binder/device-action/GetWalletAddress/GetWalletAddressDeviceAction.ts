@@ -23,6 +23,7 @@ import {
 import { type WalletAddress } from "@api/model/Wallet";
 import { type Wallet as ApiWallet } from "@api/model/Wallet";
 import { type BtcErrorCodes } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { APP_NAME } from "@internal/app-binder/constants";
 import { GetWalletAddressTask } from "@internal/app-binder/task/GetWalletAddressTask";
 import { PrepareWalletPolicyTask } from "@internal/app-binder/task/PrepareWalletPolicyTask";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
@@ -90,7 +91,7 @@ export class GetWalletAddressDeviceAction extends XStateDeviceAction<
 
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Bitcoin" },
+          input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         prepareWalletPolicy: fromPromise(prepareWalletPolicy),
         getWalletAddress: fromPromise(getWalletAddress),
@@ -142,7 +143,7 @@ export class GetWalletAddressDeviceAction extends XStateDeviceAction<
           }),
           invoke: {
             id: "openAppStateMachine",
-            input: { appName: "Bitcoin" },
+            input: { appName: APP_NAME },
             src: "openAppStateMachine",
             onSnapshot: {
               actions: assign({

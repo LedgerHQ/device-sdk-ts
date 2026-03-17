@@ -19,6 +19,7 @@ import {
   type VerifySafeAddressDAOutput,
   VerifySafeAddressDAStep,
 } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
+import { APP_NAME } from "@internal/app-binder/constants";
 import {
   BuildSafeAddressContextTask,
   type BuildSafeAddressContextTaskArgs,
@@ -72,7 +73,7 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Ethereum" },
+          input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         buildSafeAddressContexts: fromPromise(buildSafeAddressContexts),
         provideContexts: fromPromise(provideContexts),
@@ -120,7 +121,7 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "openAppStateMachine",
             input: {
-              appName: "Ethereum",
+              appName: APP_NAME,
             },
             src: "openAppStateMachine",
             onSnapshot: {

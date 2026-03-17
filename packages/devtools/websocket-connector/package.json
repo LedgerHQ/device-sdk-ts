@@ -1,8 +1,12 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-websocket-connector",
-  "private": true,
-  "version": "1.1.0",
+  "private": false,
+  "version": "1.1.1",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
@@ -50,7 +54,7 @@
     "@ledgerhq/vitest-config-dmk": "workspace:^"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit": "^1.2.0",
     "@ledgerhq/device-management-kit-devtools-core": "workspace:^"
   }
 }

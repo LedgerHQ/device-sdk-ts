@@ -1,8 +1,12 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-core",
-  "private": true,
-  "version": "1.1.0",
+  "private": false,
+  "version": "1.1.1",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
@@ -46,7 +50,7 @@
     "rxjs": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit": "^1.2.0",
     "rxjs": "catalog:"
   }
 }
