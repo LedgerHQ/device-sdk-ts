@@ -202,8 +202,14 @@ export class AppVersionResolverService implements AppVersionResolver {
     appName: string,
     osVersions: string[],
   ): { os: string; version: string } | null {
-    // Sort OS versions in descending order
-    const sortedOsVersions = this.sortVersionsDescending(osVersions);
+    // Prefer stable releases over pre-releases (e.g. rc, alpha, beta) to
+    // avoid picking firmware versions that the current Speculos may not support.
+    const stableVersions = osVersions.filter(
+      (v) => semver.valid(v) !== null && semver.prerelease(v) === null,
+    );
+    const sortedOsVersions = this.sortVersionsDescending(
+      stableVersions.length > 0 ? stableVersions : osVersions,
+    );
 
     // For each OS version (starting with the latest), find the latest app version
     for (const osVersion of sortedOsVersions) {
