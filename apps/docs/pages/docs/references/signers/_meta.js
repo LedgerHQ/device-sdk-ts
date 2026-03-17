@@ -5,4 +5,6 @@ export default {
   hyperliquid: "Signer Hyperliquid",
   cosmos: "Signer Cosmos",
   aleo: "Signer Aleo",
+  zcash: "Signer Zcash",
+
 };
