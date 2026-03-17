@@ -32,6 +32,8 @@ const PACKAGE_DISPLAY_NAMES = {
     "DevTools Websocket Common",
   "@ledgerhq/device-management-kit-devtools-websocket-connector":
     "DevTools Websocket Connector",
+  "@ledgerhq/device-management-kit-devtools-websocket-server":
+    "DevTools Websocket Server",
   "@ledgerhq/dmk-ledger-wallet": "Ledger Wallet",
   "@ledgerhq/device-signer-kit-hyperliquid": "Signer Hyperliquid",
   "@ledgerhq/device-signer-kit-cosmos": "Signer Cosmos",
