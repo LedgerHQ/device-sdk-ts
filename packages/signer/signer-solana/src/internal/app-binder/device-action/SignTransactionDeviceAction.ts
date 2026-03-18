@@ -145,12 +145,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) =>
           context.input.transactionOptions?.skipOpenApp || false,
-        isAppVersionSupported: ({ context }) =>
+        isSplSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
             new SolanaApplicationResolver(),
           )
+            .excludeDeviceModel(DeviceModelId.NANO_S)
             .withMinVersionInclusive(SOLANA_APP_SPL_MIN_VERSION)
             .check(),
         isAnSPLTransaction: ({ context }) =>
@@ -158,9 +159,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             SolanaTransactionTypes.SPL ||
           context._internalState.inspectorResult?.transactionType ===
             SolanaTransactionTypes.SWAP,
-        isNanoS: () =>
-          internalApi.getDeviceSessionState().deviceModelId ===
-          DeviceModelId.NANO_S,
         shouldSkipInspection: ({ context }) =>
           context._internalState.error === null &&
           !!context.input.transactionOptions?.transactionResolutionContext &&
@@ -275,12 +273,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         GetAppConfigResultCheck: {
           always: [
             {
-              target: "SignTransaction",
-              guard: and(["noInternalError", "isNanoS"]),
-            },
-            {
               target: "InspectTransaction",
-              guard: and(["noInternalError", "isAppVersionSupported"]),
+              guard: and(["noInternalError", "isSplSupported"]),
             },
             { target: "SignTransaction", guard: "noInternalError" },
             { target: "Error" },
