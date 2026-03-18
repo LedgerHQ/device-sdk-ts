@@ -19,7 +19,9 @@ import {
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
+import { SolanaAppVersionOutdated } from "@internal/app-binder/services/Errors";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
+import { SOLANA_APP_SPL_MIN_VERSION } from "@internal/app-binder/SolanaApplicationResolver";
 import { type SolanaBuildContextResult } from "@internal/app-binder/task/BuildTransactionContextTask";
 
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
@@ -68,7 +70,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
-        currentApp: { name: "Solana", version: "1.4.1" },
+        currentApp: { name: "Solana", version: SOLANA_APP_SPL_MIN_VERSION },
         deviceModelId: DeviceModelId.NANO_X,
         isSecureConnectionAllowed: true,
       });
@@ -169,7 +171,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
-        currentApp: { name: "Solana", version: "1.4.1" },
+        currentApp: { name: "Solana", version: SOLANA_APP_SPL_MIN_VERSION },
         deviceModelId: DeviceModelId.NANO_X,
         isSecureConnectionAllowed: true,
       });
@@ -244,7 +246,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
-        currentApp: { name: "Solana", version: "1.4.1" },
+        currentApp: { name: "Solana", version: SOLANA_APP_SPL_MIN_VERSION },
         deviceModelId: DeviceModelId.NANO_X,
         isSecureConnectionAllowed: true,
       });
@@ -325,7 +327,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
-        currentApp: { name: "Solana", version: "1.4.1" },
+        currentApp: { name: "Solana", version: SOLANA_APP_SPL_MIN_VERSION },
         deviceModelId: DeviceModelId.NANO_X,
         isSecureConnectionAllowed: true,
       });
@@ -429,7 +431,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
-        currentApp: { name: "Solana", version: "1.4.1" },
+        currentApp: { name: "Solana", version: SOLANA_APP_SPL_MIN_VERSION },
         deviceModelId: DeviceModelId.NANO_X,
         isSecureConnectionAllowed: true,
       });
@@ -530,7 +532,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
-        currentApp: { name: "Solana", version: "1.4.1" },
+        currentApp: { name: "Solana", version: SOLANA_APP_SPL_MIN_VERSION },
         deviceModelId: DeviceModelId.NANO_X,
         isSecureConnectionAllowed: true,
       });
@@ -638,7 +640,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
         deviceStatus: DeviceStatus.CONNECTED,
         installedApps: [],
-        currentApp: { name: "Solana", version: "1.4.1" },
+        currentApp: { name: "Solana", version: SOLANA_APP_SPL_MIN_VERSION },
         deviceModelId: DeviceModelId.NANO_X,
         isSecureConnectionAllowed: true,
       });
@@ -712,5 +714,117 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
       >(action, expected, apiMock, { onDone: resolve, onError: reject });
+    }));
+
+  it("Nano S: skips resolution, signs directly", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.3.0" },
+        deviceModelId: DeviceModelId.NANO_S,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+
+      const sig = new Uint8Array([0xaa, 0xbb]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: () => {
+          expect(inspectTransactionMock).not.toHaveBeenCalled();
+          expect(buildContextMock).not.toHaveBeenCalled();
+          expect(provideContextMock).not.toHaveBeenCalled();
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
+
+  it("non-Nano S with outdated version: errors with SolanaAppVersionOutdated", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "1.4.1" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new SolanaAppVersionOutdated(),
+          status: DeviceActionStatus.Error,
+        },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: () => {
+          expect(inspectTransactionMock).not.toHaveBeenCalled();
+          expect(buildContextMock).not.toHaveBeenCalled();
+          expect(provideContextMock).not.toHaveBeenCalled();
+          expect(signMock).not.toHaveBeenCalled();
+          resolve();
+        },
+        onError: reject,
+      });
     }));
 });

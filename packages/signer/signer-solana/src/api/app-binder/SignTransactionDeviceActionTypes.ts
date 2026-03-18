@@ -14,6 +14,7 @@ import { type Signature } from "@api/model/Signature";
 import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import { type SolanaAppVersionOutdated } from "@internal/app-binder/services/Errors";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 
 export const signTransactionDAStateSteps = Object.freeze({
@@ -39,7 +40,8 @@ export type SignTransactionDAInput = {
 
 export type SignTransactionDAError =
   | OpenAppDAError
-  | SendCommandInAppDAError<SolanaAppErrorCodes>;
+  | SendCommandInAppDAError<SolanaAppErrorCodes>
+  | SolanaAppVersionOutdated;
 
 type SignTransactionDARequiredInteraction =
   | UserInteractionRequired

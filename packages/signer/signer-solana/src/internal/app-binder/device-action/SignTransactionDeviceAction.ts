@@ -13,7 +13,7 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Left, type Maybe, Right } from "purify-ts";
-import { assign, fromPromise, setup } from "xstate";
+import { and, assign, fromPromise, setup } from "xstate";
 
 import {
   type SignTransactionDAError,
@@ -33,12 +33,16 @@ import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppC
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { SolanaAppVersionOutdated } from "@internal/app-binder/services/Errors";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
-import { SolanaApplicationResolver } from "@internal/app-binder/SolanaApplicationResolver";
+import {
+  SOLANA_APP_SPL_MIN_VERSION,
+  SolanaApplicationResolver,
+} from "@internal/app-binder/SolanaApplicationResolver";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -148,14 +152,16 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             context._internalState.appConfig!,
             new SolanaApplicationResolver(),
           )
-            .withMinVersionExclusive("1.4.0")
-            .excludeDeviceModel(DeviceModelId.NANO_S)
+            .withMinVersionInclusive(SOLANA_APP_SPL_MIN_VERSION)
             .check(),
         isAnSPLTransaction: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
             SolanaTransactionTypes.SPL ||
           context._internalState.inspectorResult?.transactionType ===
             SolanaTransactionTypes.SWAP,
+        isNanoS: () =>
+          internalApi.getDeviceSessionState().deviceModelId ===
+          DeviceModelId.NANO_S,
         shouldSkipInspection: ({ context }) =>
           context._internalState.error === null &&
           !!context.input.transactionOptions?.transactionResolutionContext &&
@@ -163,6 +169,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             ?.templateId,
       },
       actions: {
+        assignVersionOutdatedError: assign({
+          _internalState: ({ context }) => ({
+            ...context._internalState,
+            error: new SolanaAppVersionOutdated(),
+          }),
+        }),
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
@@ -269,7 +281,19 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
-            { target: "InspectTransaction", guard: "noInternalError" },
+            {
+              target: "SignTransaction",
+              guard: and(["noInternalError", "isNanoS"]),
+            },
+            {
+              target: "InspectTransaction",
+              guard: and(["noInternalError", "isSPLSupported"]),
+            },
+            {
+              target: "Error",
+              guard: "noInternalError",
+              actions: "assignVersionOutdatedError",
+            },
             { target: "Error" },
           ],
         },

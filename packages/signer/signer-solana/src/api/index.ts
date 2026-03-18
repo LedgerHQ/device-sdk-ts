@@ -37,3 +37,4 @@ export {
   type GetPubKeyCommandResponse,
 } from "@internal/app-binder/command/GetPubKeyCommand";
 export type { SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+export { SolanaAppVersionOutdated } from "@internal/app-binder/services/Errors";

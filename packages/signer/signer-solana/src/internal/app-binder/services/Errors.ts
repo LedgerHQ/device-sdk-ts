@@ -8,3 +8,14 @@ export class OffchainMessageBuildError implements DmkError {
     this.originalError = new Error(message);
   }
 }
+
+export class SolanaAppVersionOutdated implements DmkError {
+  readonly _tag = "SolanaAppVersionOutdated";
+  readonly originalError: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(
+      message ?? "Solana app version is outdated. Please update your app.",
+    );
+  }
+}
