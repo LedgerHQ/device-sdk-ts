@@ -1,6 +1,9 @@
 import type { DeviceScreens, Percent } from "@internal/core/types";
 
-const clamp = (pct: number) => Math.max(0, Math.min(100, pct)) / 100;
+const MAX_PERCENT = 100;
+
+const clamp = (pct: number) =>
+  Math.max(0, Math.min(MAX_PERCENT, pct)) / MAX_PERCENT;
 
 export const clampValue = (value: number) => (pct: Percent) =>
   Math.floor(value * clamp(pct));

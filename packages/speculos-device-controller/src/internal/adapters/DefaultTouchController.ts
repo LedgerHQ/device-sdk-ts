@@ -4,6 +4,8 @@ import { type PercentCoordinates, SpeculosActions } from "@internal/core/types";
 import type { AxisMap } from "@internal/utils/axisClamp";
 import type { TouchController } from "@root/src/internal/core/TouchController";
 
+const MAX_PERCENT = 100;
+
 export class DefaultTouchController<K extends string>
   implements TouchController<K>
 {
@@ -13,7 +15,8 @@ export class DefaultTouchController<K extends string>
   ) {}
 
   private assertPercentPoint({ x, y }: PercentCoordinates): void {
-    const inRange = (v: number) => Number.isFinite(v) && v >= 0 && v <= 100;
+    const inRange = (v: number) =>
+      Number.isFinite(v) && v >= 0 && v <= MAX_PERCENT;
     if (!inRange(x) || !inRange(y)) {
       throw new Error(
         `[Touch] percent values must be within 0–100. Received x=${x}, y=${y}`,

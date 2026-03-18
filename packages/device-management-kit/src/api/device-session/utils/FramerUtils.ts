@@ -1,3 +1,7 @@
+const BYTE_BASE = 0x100;
+const BITS_PER_BYTE = 8;
+const BYTE_MASK = 0xff;
+
 export const FramerUtils = {
   /*
    * Get last bytes of Uint8Array
@@ -25,7 +29,7 @@ export const FramerUtils = {
   bytesToNumber(array: Uint8Array): number {
     return array.reduce(
       (acc, val, index) =>
-        acc + val * Math.pow(0x100, array.length - 1 - index),
+        acc + val * Math.pow(BYTE_BASE, array.length - 1 - index),
       0,
     );
   },
@@ -38,7 +42,7 @@ export const FramerUtils = {
    */
   numberToByteArray(number: number, size: number): Uint8Array {
     return new Uint8Array(size).map((_el, index) => {
-      return (number >> (8 * (size - 1 - index))) & 0xff;
+      return (number >> (BITS_PER_BYTE * (size - 1 - index))) & BYTE_MASK;
     });
   },
 };

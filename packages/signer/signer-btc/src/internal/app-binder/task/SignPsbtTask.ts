@@ -39,6 +39,7 @@ const PUBKEY_LENGTH_COMPRESSED = 33;
 const PUBKEY_LENGTH_TAPLEAF = 64;
 const PARTIAL_SIGNATURE_LENGTH = 32;
 const PUBNONCE_LENGTH = 66;
+const AGGREGATED_PUBKEY_INDEX = 2;
 
 export class SignPsbtTask {
   constructor(
@@ -186,7 +187,7 @@ export class SignPsbtTask {
         inputIndex,
         pubnonce: values[0]!,
         participantPubkey: values[1]!,
-        aggregatedPubkey: values[2]!,
+        aggregatedPubkey: values[AGGREGATED_PUBKEY_INDEX]!,
         tapleafHash,
       })),
     );
@@ -229,7 +230,7 @@ export class SignPsbtTask {
         inputIndex,
         partialSignature: values[0]!,
         participantPubkey: values[1]!,
-        aggregatedPubkey: values[2]!,
+        aggregatedPubkey: values[AGGREGATED_PUBKEY_INDEX]!,
         tapleafHash,
       }));
     });

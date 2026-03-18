@@ -1,5 +1,8 @@
 import { type LogData } from "./types";
 
+const REGEX_PATTERN_GROUP = 2;
+const KEYWORD_GROUP = 3;
+
 /**
  * Represents a parsed filter token.
  * - keyword: case-insensitive text match
@@ -36,10 +39,9 @@ export function parseFilterQuery(query: string): FilterToken[] {
   let match: RegExpExecArray | null;
 
   while ((match = tokenRegex.exec(trimmed)) !== null) {
-    if (match[2] !== undefined) {
-      // Regex pattern: match[1] is the optional "-", match[2] is the pattern
+    if (match[REGEX_PATTERN_GROUP] !== undefined) {
       const exclude = match[1] === "-";
-      const patternStr = match[2];
+      const patternStr = match[REGEX_PATTERN_GROUP];
 
       try {
         const pattern = new RegExp(patternStr, "i");
@@ -57,9 +59,8 @@ export function parseFilterQuery(query: string): FilterToken[] {
           });
         }
       }
-    } else if (match[3] !== undefined) {
-      // Keyword: match[3] is the full token
-      const token = match[3];
+    } else if (match[KEYWORD_GROUP] !== undefined) {
+      const token = match[KEYWORD_GROUP];
       const exclude = token.startsWith("-");
       const value = exclude ? token.slice(1) : token;
 

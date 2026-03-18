@@ -16,6 +16,15 @@ import {
 
 import { encodeTypedDataValue } from "./TypedDataEncoder";
 
+const BITS_PER_BYTE = 8;
+const MAX_INT_SIZE_BITS = 256;
+const MAX_BYTES_SIZE = 32;
+const INT_REGEX_SIZE_GROUP = 4;
+const INT_REGEX_UNSIGNED_PREFIX_GROUP = 3;
+const BYTES_REGEX_SIZE_GROUP = 3;
+const ARRAY_REGEX_LEVELS_GROUP = 2;
+const ARRAY_REGEX_ROW_TYPE_GROUP = 3;
+
 /**
  * A parser for EIP-712 typed data messages.
  *
@@ -151,15 +160,19 @@ export class TypedDataParser {
     {
       const match = type.match(/^(((u?)int)(\d+))$/);
       if (match) {
-        const size = parseInt(match[4]!);
-        if (size % 8 !== 0 || size === 0 || size > 256) {
+        const size = parseInt(match[INT_REGEX_SIZE_GROUP]!);
+        if (
+          size % BITS_PER_BYTE !== 0 ||
+          size === 0 ||
+          size > MAX_INT_SIZE_BITS
+        ) {
           return Nothing; // Unsupported number
         }
         return Just(
           new PrimitiveType(
             match[1]!, // typeName such as uint64
-            match[3] ? "uint" : "int", // name such as uint
-            Just(size / 8), // size in bytes such as 8 for an uint64
+            match[INT_REGEX_UNSIGNED_PREFIX_GROUP] ? "uint" : "int",
+            Just(size / BITS_PER_BYTE),
           ),
         );
       }
@@ -169,8 +182,10 @@ export class TypedDataParser {
     {
       const match = type.match(/^((bytes)(\d*))$/);
       if (match) {
-        const size = match[3] ? parseInt(match[3]) : null;
-        if (size !== null && (size === 0 || size > 32)) {
+        const size = match[BYTES_REGEX_SIZE_GROUP]
+          ? parseInt(match[BYTES_REGEX_SIZE_GROUP])
+          : null;
+        if (size !== null && (size === 0 || size > MAX_BYTES_SIZE)) {
           return Nothing; // Unsupported  byte array
         }
         return Just(
@@ -202,7 +217,9 @@ export class TypedDataParser {
     // Try to match an array such as: foo[2][][3]
     const match = type.match(/^([^[[]*)(((\[\d*\])*)\[\d*\])$/);
     if (match) {
-      const matchLevels = [...match[2]!.matchAll(/\[(\d*)\]/g)];
+      const matchLevels = [
+        ...match[ARRAY_REGEX_LEVELS_GROUP]!.matchAll(/\[(\d*)\]/g),
+      ];
       if (matchLevels && matchLevels.length > 0) {
         const levels = matchLevels.map(([, size]) =>
           size ? Just(parseInt(size)) : Nothing,
@@ -215,7 +232,7 @@ export class TypedDataParser {
           new ArrayType(
             type, // typeName such as: foo[2][][3]
             rootType, // rootType such as: foo
-            match[1]! + match[3], // rowType such as: foo[2][]
+            match[1]! + match[ARRAY_REGEX_ROW_TYPE_GROUP],
             levels[levels.length - 1]!, // rows count such as: 3
             levels, // All levels for that array (null for dynamic size), such as: [2, null, 3]
           ),

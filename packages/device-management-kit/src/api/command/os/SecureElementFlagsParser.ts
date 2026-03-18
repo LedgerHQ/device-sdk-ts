@@ -5,6 +5,16 @@ import {
   type WordsInformation,
 } from "@api/device/SecureElementFlags";
 
+const SE_FLAGS_LENGTH = 4;
+const BIT_MCU_SERIAL_NUMBER = 2;
+const BIT_VALID_CERTIFICATE = 3;
+const BIT_CUSTOM_AUTHORITY = 4;
+const BIT_SECURE_CONNECTION = 5;
+const BIT_ONBOARDED = 6;
+const BIT_MCU_CODE_SIGNED = 7;
+const BIT_RECOVERY_MODE = 8;
+const BITS_PER_BYTE = 8;
+
 /**
  * Secure element flags parser class.
  */
@@ -14,7 +24,7 @@ export class SecureElementFlagsParser {
    * @param seFlags - The secure element flags as an Uint8Array, it comes from the response of the GetOsVersionCommand.
    */
   constructor(private readonly seFlags: Uint8Array) {
-    if (this.seFlags.length !== 4) {
+    if (this.seFlags.length !== SE_FLAGS_LENGTH) {
       throw new Error("Invalid secure element flags length");
     }
   }
@@ -28,13 +38,25 @@ export class SecureElementFlagsParser {
 
     return {
       isPinValidated: this._checkNthBitInByte(firstByte, 1),
-      hasMcuSerialNumber: this._checkNthBitInByte(firstByte, 2),
-      hasValidCertificate: this._checkNthBitInByte(firstByte, 3),
-      isCustomAuthorityConnectionAllowed: this._checkNthBitInByte(firstByte, 4),
-      isSecureConnectionAllowed: this._checkNthBitInByte(firstByte, 5),
-      isOnboarded: this._checkNthBitInByte(firstByte, 6),
-      isMcuCodeSigned: this._checkNthBitInByte(firstByte, 7),
-      isInRecoveryMode: this._checkNthBitInByte(firstByte, 8),
+      hasMcuSerialNumber: this._checkNthBitInByte(
+        firstByte,
+        BIT_MCU_SERIAL_NUMBER,
+      ),
+      hasValidCertificate: this._checkNthBitInByte(
+        firstByte,
+        BIT_VALID_CERTIFICATE,
+      ),
+      isCustomAuthorityConnectionAllowed: this._checkNthBitInByte(
+        firstByte,
+        BIT_CUSTOM_AUTHORITY,
+      ),
+      isSecureConnectionAllowed: this._checkNthBitInByte(
+        firstByte,
+        BIT_SECURE_CONNECTION,
+      ),
+      isOnboarded: this._checkNthBitInByte(firstByte, BIT_ONBOARDED),
+      isMcuCodeSigned: this._checkNthBitInByte(firstByte, BIT_MCU_CODE_SIGNED),
+      isInRecoveryMode: this._checkNthBitInByte(firstByte, BIT_RECOVERY_MODE),
     };
   }
 
@@ -72,6 +94,6 @@ export class SecureElementFlagsParser {
    * @returns {boolean} - True if the bit is set, false otherwise.
    */
   _checkNthBitInByte(byte: number, n: number): boolean {
-    return ((byte >> (8 - n)) & 1) === 1;
+    return ((byte >> (BITS_PER_BYTE - n)) & 1) === 1;
   }
 }

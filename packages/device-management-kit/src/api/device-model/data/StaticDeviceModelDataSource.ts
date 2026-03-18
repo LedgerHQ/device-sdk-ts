@@ -6,6 +6,35 @@ import { DeviceModelDataSource } from "@api/device-model/data/DeviceModelDataSou
 import { BleDeviceInfos } from "@api/device-model/model/BleDeviceInfos";
 import { TransportDeviceModel } from "@api/device-model/model/DeviceModel";
 
+const KB = 1024;
+const NANO_S_MEMORY_SIZE_KB = 320;
+const LARGE_DEVICE_MEMORY_SIZE_KB = 1533;
+const NANO_X_MEMORY_SIZE_MB = 2;
+const BLOCK_2K_MULTIPLIER = 2;
+const BLOCK_4K_MULTIPLIER = 4;
+const DEFAULT_BLOCK_SIZE = 32;
+
+const NANO_S_MEMORY_SIZE = NANO_S_MEMORY_SIZE_KB * KB;
+const NANO_S_BLOCK_SIZE_OLD_FW = BLOCK_4K_MULTIPLIER * KB;
+const NANO_S_BLOCK_SIZE_NEW_FW = BLOCK_2K_MULTIPLIER * KB;
+const NANO_S_MASK = 0x31100000;
+
+const NANO_SP_MEMORY_SIZE = LARGE_DEVICE_MEMORY_SIZE_KB * KB;
+const NANO_SP_MASK = 0x33100000;
+
+const NANO_X_MEMORY_SIZE = NANO_X_MEMORY_SIZE_MB * KB * KB;
+const NANO_X_BLOCK_SIZE = BLOCK_4K_MULTIPLIER * KB;
+const NANO_X_MASK = 0x33000000;
+
+const STAX_MEMORY_SIZE = LARGE_DEVICE_MEMORY_SIZE_KB * KB;
+const STAX_MASK = 0x33200000;
+
+const FLEX_MEMORY_SIZE = LARGE_DEVICE_MEMORY_SIZE_KB * KB;
+const FLEX_MASK = 0x33300000;
+
+const APEX_MEMORY_SIZE = LARGE_DEVICE_MEMORY_SIZE_KB * KB;
+const APEX_MASK = 0x33400000;
+
 /**
  * Static/in memory implementation of the device model data source
  */
@@ -20,12 +49,12 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       usbProductId: 0x10,
       bootloaderUsbProductId: 0x0001,
       usbOnly: true,
-      memorySize: 320 * 1024,
+      memorySize: NANO_S_MEMORY_SIZE,
       getBlockSize: (p: { firmwareVersion: string }) =>
         semver.lt(semver.coerce(p.firmwareVersion) ?? "", "2.0.0")
-          ? 4 * 1024
-          : 2 * 1024,
-      masks: [0x31100000],
+          ? NANO_S_BLOCK_SIZE_OLD_FW
+          : NANO_S_BLOCK_SIZE_NEW_FW,
+      masks: [NANO_S_MASK],
     }),
     [DeviceModelId.NANO_SP]: new TransportDeviceModel({
       id: DeviceModelId.NANO_SP,
@@ -33,9 +62,9 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       usbProductId: 0x50,
       bootloaderUsbProductId: 0x0005,
       usbOnly: true,
-      memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
-      masks: [0x33100000],
+      memorySize: NANO_SP_MEMORY_SIZE,
+      getBlockSize: () => DEFAULT_BLOCK_SIZE,
+      masks: [NANO_SP_MASK],
     }),
     [DeviceModelId.NANO_X]: new TransportDeviceModel({
       id: DeviceModelId.NANO_X,
@@ -43,9 +72,9 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       usbProductId: 0x40,
       bootloaderUsbProductId: 0x0004,
       usbOnly: false,
-      memorySize: 2 * 1024 * 1024,
-      getBlockSize: () => 4 * 1024,
-      masks: [0x33000000],
+      memorySize: NANO_X_MEMORY_SIZE,
+      getBlockSize: () => NANO_X_BLOCK_SIZE,
+      masks: [NANO_X_MASK],
       bluetoothSpec: [
         {
           serviceUuid: "13d63400-2c97-0004-0000-4c6564676572",
@@ -61,9 +90,9 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       usbProductId: 0x60,
       bootloaderUsbProductId: 0x0006,
       usbOnly: false,
-      memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
-      masks: [0x33200000],
+      memorySize: STAX_MEMORY_SIZE,
+      getBlockSize: () => DEFAULT_BLOCK_SIZE,
+      masks: [STAX_MASK],
       bluetoothSpec: [
         {
           serviceUuid: "13d63400-2c97-6004-0000-4c6564676572",
@@ -79,9 +108,9 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       usbProductId: 0x70,
       bootloaderUsbProductId: 0x0007,
       usbOnly: false,
-      memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
-      masks: [0x33300000],
+      memorySize: FLEX_MEMORY_SIZE,
+      getBlockSize: () => DEFAULT_BLOCK_SIZE,
+      masks: [FLEX_MASK],
       bluetoothSpec: [
         {
           serviceUuid: "13d63400-2c97-3004-0000-4c6564676572",
@@ -97,9 +126,9 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       usbProductId: 0x80,
       bootloaderUsbProductId: 0x0008,
       usbOnly: false,
-      memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
-      masks: [0x33400000],
+      memorySize: APEX_MEMORY_SIZE,
+      getBlockSize: () => DEFAULT_BLOCK_SIZE,
+      masks: [APEX_MASK],
       bluetoothSpec: [
         {
           serviceUuid: "13d63400-2c97-8004-0000-4c6564676572",

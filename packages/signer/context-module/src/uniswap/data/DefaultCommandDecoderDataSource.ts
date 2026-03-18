@@ -11,8 +11,13 @@ import { uniswapTypes } from "@/uniswap/di/uniswapTypes";
 
 import { type AbiDecoderDataSource } from "./AbiDecoderDataSource";
 
-const ADDRESS_LENGTH = 20 * 2;
-const FEE_LENGTH = 3 * 2;
+const ADDRESS_BYTE_SIZE = 20;
+const HEX_CHARS_PER_BYTE = 2;
+const FEE_BYTE_SIZE = 3;
+const ADDRESS_LENGTH = ADDRESS_BYTE_SIZE * HEX_CHARS_PER_BYTE;
+const FEE_LENGTH = FEE_BYTE_SIZE * HEX_CHARS_PER_BYTE;
+const HEX_PREFIX_LENGTH = 2;
+const MIN_ADDRESS_COUNT = 2;
 
 @injectable()
 export class DefaultCommandDecoderDataSource {
@@ -77,14 +82,19 @@ export class DefaultCommandDecoderDataSource {
     if (
       typeof path !== "string" ||
       !isHexaString(path) ||
-      path.length < 2 + ADDRESS_LENGTH * 2 + FEE_LENGTH
+      path.length <
+        HEX_PREFIX_LENGTH + ADDRESS_LENGTH * MIN_ADDRESS_COUNT + FEE_LENGTH
     ) {
       return [];
     }
 
     // Get all the addresses, skip the 0x prefix
     const tokens: string[] = [];
-    for (let i = 2; i < path.length; i += ADDRESS_LENGTH + FEE_LENGTH) {
+    for (
+      let i = HEX_PREFIX_LENGTH;
+      i < path.length;
+      i += ADDRESS_LENGTH + FEE_LENGTH
+    ) {
       tokens.push(path.slice(i, i + ADDRESS_LENGTH));
     }
 

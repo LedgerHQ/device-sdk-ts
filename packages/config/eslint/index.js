@@ -132,6 +132,27 @@ export default [
           ignoreRestSiblings: true,
         },
       ],
+      "no-magic-numbers": "off",
+      "@typescript-eslint/no-magic-numbers": [
+        "error",
+        {
+          ignore: [-1, 0, 1],
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+          ignoreDefaultValues: true,
+          ignoreClassFieldInitialValues: true,
+          enforceConst: true,
+        },
+      ],
+    },
+  },
+
+  {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+    rules: {
+      "@typescript-eslint/no-magic-numbers": "off",
     },
   },
 

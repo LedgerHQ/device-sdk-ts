@@ -8,6 +8,19 @@ import {
 } from "./AppBuilderError";
 
 const MAX_32_BIT_UINT = 0xffffffff;
+const BITS_8 = 8n;
+const BITS_16 = 16n;
+const BITS_32 = 32n;
+const BITS_64 = 64n;
+const BITS_128 = 128n;
+const BITS_256 = 256n;
+const BIGINT_0 = 0n;
+const BIGINT_1 = 1n;
+const BYTE_MASK_BIGINT = 0xffn;
+const BITS_PER_BYTE = 8;
+const UINT16_BYTE_SIZE = 2;
+const UINT32_BYTE_SIZE = 4;
+const UINT64_BYTE_SIZE = 8;
 
 /**
  * ByteArrayBuilder is a utility class to help build APDU payloads.
@@ -57,7 +70,7 @@ export class ByteArrayBuilder {
    * @returns {ByteArrayBuilder} - Returns the current instance of ByteArrayBuilder
    */
   add8BitUIntToData = (value: number | bigint): ByteArrayBuilder => {
-    return this.addNumberToData(value, 8n, false, false);
+    return this.addNumberToData(value, BITS_8, false, false);
   };
 
   /**
@@ -70,7 +83,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 16n, false, bigEndian);
+    return this.addNumberToData(value, BITS_16, false, bigEndian);
   };
 
   /**
@@ -83,7 +96,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 32n, false, bigEndian);
+    return this.addNumberToData(value, BITS_32, false, bigEndian);
   };
 
   /**
@@ -96,7 +109,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 64n, false, bigEndian);
+    return this.addNumberToData(value, BITS_64, false, bigEndian);
   };
 
   /**
@@ -109,7 +122,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 128n, false, bigEndian);
+    return this.addNumberToData(value, BITS_128, false, bigEndian);
   };
 
   /**
@@ -122,7 +135,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 256n, false, bigEndian);
+    return this.addNumberToData(value, BITS_256, false, bigEndian);
   };
 
   /**
@@ -135,7 +148,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 16n, true, bigEndian);
+    return this.addNumberToData(value, BITS_16, true, bigEndian);
   };
 
   /**
@@ -148,7 +161,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 32n, true, bigEndian);
+    return this.addNumberToData(value, BITS_32, true, bigEndian);
   };
 
   /**
@@ -161,7 +174,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 64n, true, bigEndian);
+    return this.addNumberToData(value, BITS_64, true, bigEndian);
   };
 
   /**
@@ -174,7 +187,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 128n, true, bigEndian);
+    return this.addNumberToData(value, BITS_128, true, bigEndian);
   };
 
   /**
@@ -187,7 +200,7 @@ export class ByteArrayBuilder {
     value: number | bigint,
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
-    return this.addNumberToData(value, 256n, true, bigEndian);
+    return this.addNumberToData(value, BITS_256, true, bigEndian);
   };
 
   /**
@@ -364,7 +377,7 @@ export class ByteArrayBuilder {
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
     this.add8BitUIntToData(tag);
-    this.add8BitUIntToData(2);
+    this.add8BitUIntToData(UINT16_BYTE_SIZE);
     return this.add16BitUIntToData(value, bigEndian);
   };
 
@@ -383,7 +396,7 @@ export class ByteArrayBuilder {
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
     this.add8BitUIntToData(tag);
-    this.add8BitUIntToData(4);
+    this.add8BitUIntToData(UINT32_BYTE_SIZE);
     return this.add32BitUIntToData(value, bigEndian);
   };
 
@@ -402,7 +415,7 @@ export class ByteArrayBuilder {
     bigEndian: boolean = true,
   ): ByteArrayBuilder => {
     this.add8BitUIntToData(tag);
-    this.add8BitUIntToData(8);
+    this.add8BitUIntToData(UINT64_BYTE_SIZE);
     return this.add64BitUIntToData(value, bigEndian);
   };
 
@@ -466,17 +479,17 @@ export class ByteArrayBuilder {
     }
 
     // Compute the buffer
-    const sizeInBytes = Number(sizeInBits) / 8;
+    const sizeInBytes = Number(sizeInBits) / BITS_PER_BYTE;
     const buffer = new Uint8Array(sizeInBytes);
     if (bigEndian) {
       for (let i = sizeInBytes - 1; i >= 0; i--) {
-        buffer[i] = Number(converted & 0xffn);
-        converted >>= 8n;
+        buffer[i] = Number(converted & BYTE_MASK_BIGINT);
+        converted >>= BITS_8;
       }
     } else {
       for (let i = 0; i < sizeInBytes; i++) {
-        buffer[i] = Number(converted & 0xffn);
-        converted >>= 8n;
+        buffer[i] = Number(converted & BYTE_MASK_BIGINT);
+        converted >>= BITS_8;
       }
     }
     return this.addBufferToData(buffer);
@@ -505,25 +518,29 @@ export class ByteArrayBuilder {
 
     if (!signed) {
       // Check if the value is within the bounds of an unsigned integer
-      const limit = 1n << sizeInBits;
+      const limit = BIGINT_1 << sizeInBits;
       if (value < 0 || value >= limit) {
-        this.errors.push(new ValueOverflowError(value.toString(), limit - 1n));
+        this.errors.push(
+          new ValueOverflowError(value.toString(), limit - BIGINT_1),
+        );
         return;
       }
     } else {
       // Check if the value is within the bounds of a signed integer
-      const limit = 1n << (sizeInBits - 1n);
+      const limit = BIGINT_1 << (sizeInBits - BIGINT_1);
       if (value >= limit || value < -limit) {
-        this.errors.push(new ValueOverflowError(value.toString(), limit - 1n));
+        this.errors.push(
+          new ValueOverflowError(value.toString(), limit - BIGINT_1),
+        );
         return;
       }
 
       // Convert the value to two's complement if it is negative
       // https://en.wikipedia.org/wiki/Two%27s_complement
-      if (value < 0n) {
-        const mask = (1n << sizeInBits) - 1n;
+      if (value < BIGINT_0) {
+        const mask = (BIGINT_1 << sizeInBits) - BIGINT_1;
         value = -value;
-        value = (~value & mask) + 1n;
+        value = (~value & mask) + BIGINT_1;
       }
     }
     return value;

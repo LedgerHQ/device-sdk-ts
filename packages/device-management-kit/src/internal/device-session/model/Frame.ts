@@ -1,6 +1,8 @@
 import { bufferToHexaString } from "@api/index";
 import { type FrameHeader } from "@internal/device-session/model/FrameHeader";
 
+const JSON_INDENT_SPACES = 2;
+
 type FrameConstructorArgs = {
   header: FrameHeader;
   data: Uint8Array;
@@ -22,7 +24,7 @@ export class Frame {
         data: bufferToHexaString(this._data),
       },
       null,
-      2,
+      JSON_INDENT_SPACES,
     );
   }
 

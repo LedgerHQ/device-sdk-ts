@@ -3,6 +3,9 @@ import styled from "styled-components";
 
 import { type ApduResponse } from "../../hooks/useConnectorMessages";
 
+const HEX_CHARS_PER_BYTE = 2;
+const HEX_RADIX = 16;
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -121,7 +124,10 @@ export const ApduSender: React.FC<ApduSenderProps> = ({
     if (!apduInput.trim()) return;
     // Remove spaces and validate hex
     const cleanHex = apduInput.replace(/\s/g, "").toUpperCase();
-    if (!/^[0-9A-F]*$/.test(cleanHex) || cleanHex.length % 2 !== 0) {
+    if (
+      !/^[0-9A-F]*$/.test(cleanHex) ||
+      cleanHex.length % HEX_CHARS_PER_BYTE !== 0
+    ) {
       alert(
         "Invalid hex string. Please enter a valid APDU in hex format (e.g., E0C4000000)",
       );
@@ -136,7 +142,9 @@ export const ApduSender: React.FC<ApduSenderProps> = ({
   const formatBytes = (bytes: number[] | undefined): string => {
     if (!bytes || !Array.isArray(bytes)) return "";
     return bytes
-      .map((b) => b.toString(16).padStart(2, "0").toUpperCase())
+      .map((b) =>
+        b.toString(HEX_RADIX).padStart(HEX_CHARS_PER_BYTE, "0").toUpperCase(),
+      )
       .join(" ");
   };
 

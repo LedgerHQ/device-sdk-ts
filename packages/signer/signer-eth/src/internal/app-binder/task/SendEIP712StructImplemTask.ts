@@ -13,6 +13,8 @@ import {
 } from "@internal/app-binder/command/SendEIP712StructImplemCommand";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
+const UINT16_BYTE_SIZE = 2;
+
 export type SendEIP712StructImplemTaskArgs =
   | {
       type: StructImplemType.ROOT;
@@ -48,7 +50,9 @@ export class SendEIP712StructImplemTask {
       EthErrorCodes
     >({ data: undefined });
     // Prepend the length to the array, in uint16 big endian encoding
-    const buffer = new ByteArrayBuilder(this.args.value.length + 2)
+    const buffer = new ByteArrayBuilder(
+      this.args.value.length + UINT16_BYTE_SIZE,
+    )
       .add16BitUIntToData(this.args.value.length)
       .addBufferToData(this.args.value)
       .build();

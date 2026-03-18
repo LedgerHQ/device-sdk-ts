@@ -36,6 +36,9 @@ import {
   type WebHidApduSenderDependencies,
 } from "./WebHidApduSender";
 
+const HEX_RADIX = 16;
+const PRODUCT_ID_SHIFT = 8;
+
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
   | WebHidTransportNotSupportedError;
@@ -184,10 +187,10 @@ export class WebHidTransport implements Transport {
       Nothing: () => {
         // [ASK] Or we just ignore the not recognized device ? And log them
         this._logger.warn(
-          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
+          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(HEX_RADIX)}`,
         );
         throw new DeviceNotRecognizedError(
-          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
+          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(HEX_RADIX)}`,
         );
       },
     });
@@ -446,7 +449,7 @@ export class WebHidTransport implements Transport {
     const matchingModel = this._deviceModelDataSource.getAllDeviceModels().find(
       (deviceModel) =>
         // outside of bootloader mode, the value that we need to identify a device model is the first byte of the actual hidDevice.productId
-        deviceModel.usbProductId === productId >> 8 ||
+        deviceModel.usbProductId === productId >> PRODUCT_ID_SHIFT ||
         deviceModel.bootloaderUsbProductId === productId,
     );
     return matchingModel ? Maybe.of(matchingModel) : Maybe.zero();
@@ -455,7 +458,7 @@ export class WebHidTransport implements Transport {
   private getHidUsbProductId(hidDevice: HIDDevice): number {
     return this.getDeviceModel(hidDevice).caseOf({
       Just: (deviceModel) => deviceModel.usbProductId,
-      Nothing: () => hidDevice.productId >> 8,
+      Nothing: () => hidDevice.productId >> PRODUCT_ID_SHIFT,
     });
   }
 

@@ -20,6 +20,9 @@ import {
   type HyperliquidErrorCodes,
 } from "./utils/hyperliquidApplicationErrors";
 
+const SIGNATURE_R_OFFSET = 2;
+const SIGNATURE_S_OFFSET = 34;
+
 export type SignActionsCommandArgs = {
   derivationPath: string;
 };
@@ -94,9 +97,12 @@ export class SignActionsCommand
         signaturesLeft: response.data[0]!,
         signature: {
           v: response.data[1]!,
-          r: bufferToHexaString(response.data.slice(2, 34), false),
+          r: bufferToHexaString(
+            response.data.slice(SIGNATURE_R_OFFSET, SIGNATURE_S_OFFSET),
+            false,
+          ),
           s: bufferToHexaString(
-            response.data.slice(34, SIGNATURE_LENGTH),
+            response.data.slice(SIGNATURE_S_OFFSET, SIGNATURE_LENGTH),
             false,
           ),
         },

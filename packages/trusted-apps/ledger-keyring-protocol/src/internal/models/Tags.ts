@@ -1,3 +1,7 @@
+const TP_ENCRYPT_BIT = 7;
+const XPRIV_BASE_TAG = 0x02;
+const NEW_MEMBER_BASE_TAG = 0x06;
+
 export enum GeneralTags {
   Null = 0x00,
   Int = 0x01,
@@ -17,14 +21,14 @@ export enum CommandTags {
   Derive = 0x15,
 }
 
-const TP_ENCRYPT = 1 << 7;
+const TP_ENCRYPT = 1 << TP_ENCRYPT_BIT;
 
 export enum TPTags {
   IV = 0x00,
   ISSUER = 0x01 | TP_ENCRYPT,
-  XPRIV = 0x02 | TP_ENCRYPT,
+  XPRIV = XPRIV_BASE_TAG | TP_ENCRYPT,
   EPHEMERAL_PUBLIC_KEY = 0x03,
   COMMAND_IV = 0x04,
   GROUPKEY = 0x05,
-  NEW_MEMBER = 0x06 | TP_ENCRYPT,
+  NEW_MEMBER = NEW_MEMBER_BASE_TAG | TP_ENCRYPT,
 }

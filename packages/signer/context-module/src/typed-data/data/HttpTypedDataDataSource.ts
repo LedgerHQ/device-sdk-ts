@@ -39,6 +39,10 @@ import {
   TypedDataDataSource,
 } from "./TypedDataDataSource";
 
+const HEX_CHARS_PER_BYTE = 2;
+const HEX_RADIX = 16;
+const MIN_HEX_LENGTH = 2;
+
 @injectable()
 export class HttpTypedDataDataSource implements TypedDataDataSource {
   constructor(
@@ -227,22 +231,24 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
   private formatTrustedNameTypesAndSources(
     field: InstructionFieldV2WithName,
   ): string {
-    // Get number of types and sources
     const typesCount = field.name_types.length;
     const sourcesCount = field.name_sources.length;
 
-    // Extract types and sources from the descriptor
     const types = field.descriptor.slice(
-      (typesCount + sourcesCount) * 2 * -1,
-      sourcesCount * 2 * -1,
+      (typesCount + sourcesCount) * HEX_CHARS_PER_BYTE * -1,
+      sourcesCount * HEX_CHARS_PER_BYTE * -1,
     );
-    const sources = field.descriptor.slice(sourcesCount * 2 * -1);
+    const sources = field.descriptor.slice(
+      sourcesCount * HEX_CHARS_PER_BYTE * -1,
+    );
 
-    // Convert counts into hex strings
-    const typesCountHex = typesCount.toString(16).padStart(2, "0");
-    const sourcesCountHex = sourcesCount.toString(16).padStart(2, "0");
+    const typesCountHex = typesCount
+      .toString(HEX_RADIX)
+      .padStart(MIN_HEX_LENGTH, "0");
+    const sourcesCountHex = sourcesCount
+      .toString(HEX_RADIX)
+      .padStart(MIN_HEX_LENGTH, "0");
 
-    // Return the payload
     return typesCountHex + types + sourcesCountHex + sources;
   }
 

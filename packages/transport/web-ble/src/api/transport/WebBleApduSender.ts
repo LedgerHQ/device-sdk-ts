@@ -23,6 +23,13 @@ export type WebBleApduSenderDependencies = {
 
 export const MTU_OP = 0x08;
 
+const MIN_WAIT_BUDGET_MS = 1800;
+const NOTIFICATION_SETTLE_DELAY_MS = 120;
+const MTU_NEGOTIATION_TIMEOUT_MS = 2000;
+const MTU_FALLBACK_TIMEOUT_MS = 2300;
+const MTU_RESPONSE_MIN_LENGTH = 6;
+const MTU_RESPONSE_MTU_INDEX = 5;
+
 export class WebBleApduSender
   implements DeviceApduSender<WebBleApduSenderDependencies>
 {
@@ -64,7 +71,7 @@ export class WebBleApduSender
     abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
-      const waitBudget = Math.max(1800, abortTimeout ?? 0);
+      const waitBudget = Math.max(MIN_WAIT_BUDGET_MS, abortTimeout ?? 0);
       await this._waitUntilMtuNegotiated(waitBudget);
     } catch (e) {
       return Left(e as DmkError);
@@ -208,7 +215,7 @@ export class WebBleApduSender
     }
 
     // Avoids possible drops on the very first notification if we write immediately
-    await this._sleep(120);
+    await this._sleep(NOTIFICATION_SETTLE_DELAY_MS);
 
     this._mtuRequestInProgress = true;
     this._mtuNegotiated$.next(false);
@@ -223,7 +230,7 @@ export class WebBleApduSender
         new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(
             () => reject(new Error("MTU negotiation timeout")),
-            2000,
+            MTU_NEGOTIATION_TIMEOUT_MS,
           );
           const sub = this._mtuNegotiated$.subscribe((ready) => {
             if (ready) {
@@ -233,7 +240,7 @@ export class WebBleApduSender
             }
           });
         }),
-        this._sleep(2300).then(() => {
+        this._sleep(MTU_FALLBACK_TIMEOUT_MS).then(() => {
           if (!this._isGattConnected()) {
             throw new DeviceDisconnectedWhileSendingError(
               "Link dropped during MTU",
@@ -326,7 +333,7 @@ export class WebBleApduSender
         this._logger.debug("Dropping pre-handshake frame", { data: { data } });
         return;
       }
-      if (data.length < 6 || data[0] !== MTU_OP) {
+      if (data.length < MTU_RESPONSE_MIN_LENGTH || data[0] !== MTU_OP) {
         this._logger.debug("Non-MTU frame during handshake; dropping", {
           data: { data },
         });
@@ -340,7 +347,7 @@ export class WebBleApduSender
   };
 
   private _handleMtuNegotiationFrame(mtuResponseBuffer: Uint8Array) {
-    const ledgerMtu = mtuResponseBuffer[5];
+    const ledgerMtu = mtuResponseBuffer[MTU_RESPONSE_MTU_INDEX];
     if (
       ledgerMtu === undefined ||
       !Number.isFinite(ledgerMtu) ||

@@ -11,6 +11,8 @@ import { removeSession } from "@/state/sessions/slice";
 
 import { useThrottle } from "./useThrottle";
 
+const THROTTLE_DELAY_MS = 500;
+
 export function useDeviceSessionState(sessionId: DeviceSessionId) {
   const dmk = useDmk();
   const [deviceSessionState, setDeviceSessionState] =
@@ -40,5 +42,5 @@ export function useDeviceSessionState(sessionId: DeviceSessionId) {
     }
   }, [sessionId, dmk, dispatch]);
 
-  return useThrottle(deviceSessionState, 500);
+  return useThrottle(deviceSessionState, THROTTLE_DELAY_MS);
 }

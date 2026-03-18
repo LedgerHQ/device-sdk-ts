@@ -8,6 +8,9 @@ import {
   type ScreenSpecs,
 } from "@ledgerhq/dmk-ledger-wallet";
 
+const HEX_RADIX = 16;
+const HEX_CHARS_PER_BYTE = 2;
+
 export type ImageProcessingParams = {
   selectedFile: File | null;
   screenSpecs: ScreenSpecs | null;
@@ -125,7 +128,9 @@ export function useImageProcessing(
                 if (cancelled) return;
                 // Convert Uint8Array to hex string for storage
                 const formattedHex = Array.from(formattedImageData)
-                  .map((b) => b.toString(16).padStart(2, "0"))
+                  .map((b) =>
+                    b.toString(HEX_RADIX).padStart(HEX_CHARS_PER_BYTE, "0"),
+                  )
                   .join("");
 
                 setImageDataHex(formattedHex);

@@ -14,6 +14,20 @@ import {
 } from "@internal/lkrp-datasource/data/LKRPDataSource";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
+const TAG_ATTESTATION = 0x02;
+const EXPECTED_FIELD_COUNT = 10;
+const CURVE_ID = 33;
+const TAG_PAYLOAD_TYPE = 0x01;
+const TAG_VERSION = 0x02;
+const TAG_CHALLENGE_DATA = 0x12;
+const TAG_SIGN_ALGORITHM = 0x14;
+const TAG_RP_SIGNATURE = 0x15;
+const TAG_CHALLENGE_EXPIRY = 0x16;
+const TAG_HOST = 0x20;
+const TAG_CURVE_ID = 0x32;
+const TAG_PUBLIC_KEY = 0x33;
+const TAG_PROTOCOL_VERSION = 0x60;
+
 export class SignChallengeWithKeypairTask {
   constructor(
     private readonly cryptoService: CryptoService,
@@ -48,12 +62,16 @@ export class SignChallengeWithKeypairTask {
   // Spec https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4335960138/ARCH+LedgerLive+Auth+specifications
   private getAttestation() {
     const bytes = new TextEncoder().encode(this.trustchainId);
-    const attestation = Uint8Array.from([0x02, bytes.length, ...bytes]);
+    const attestation = Uint8Array.from([
+      TAG_ATTESTATION,
+      bytes.length,
+      ...bytes,
+    ]);
     return bufferToHexaString(attestation, false);
   }
 
   private getCredential(publicKey: string) {
-    return { version: 0, curveId: 33, signAlgorithm: 1, publicKey };
+    return { version: 0, curveId: CURVE_ID, signAlgorithm: 1, publicKey };
   }
 
   private getUnsignedChallengeTLV(
@@ -73,7 +91,7 @@ export class SignChallengeWithKeypairTask {
     );
 
     // We expect 10 fields in the TLV
-    if (parsed.size > 10) {
+    if (parsed.size > EXPECTED_FIELD_COUNT) {
       return Left(
         new LKRPMissingDataError("Challenge TLV contains unexpected data"),
       );
@@ -86,27 +104,39 @@ export class SignChallengeWithKeypairTask {
 
     return eitherSeqRecord({
       // Unsigned fields
-      payloadType: () => getField(0x01, "Payload type"),
-      version: () => getField(0x02, "Version"),
-      challengeExpiry: () => getField(0x16, "Challenge expiry"),
-      host: () => getField(0x20, "Host"),
-      protocolVersion: () => getField(0x60, "Protocol version"),
+      payloadType: () => getField(TAG_PAYLOAD_TYPE, "Payload type"),
+      version: () => getField(TAG_VERSION, "Version"),
+      challengeExpiry: () => getField(TAG_CHALLENGE_EXPIRY, "Challenge expiry"),
+      host: () => getField(TAG_HOST, "Host"),
+      protocolVersion: () => getField(TAG_PROTOCOL_VERSION, "Protocol version"),
 
       // Signed fields
-      curveId: () => getField(0x32, "Curve ID"),
-      publicKey: () => getField(0x33, "Public key"),
-      challengeData: () => getField(0x12, "Challenge data"),
-      signAlgorithm: () => getField(0x14, "Sign algorithm"),
-      rpSignatureField: () => getField(0x15, "RP signature field"),
+      curveId: () => getField(TAG_CURVE_ID, "Curve ID"),
+      publicKey: () => getField(TAG_PUBLIC_KEY, "Public key"),
+      challengeData: () => getField(TAG_CHALLENGE_DATA, "Challenge data"),
+      signAlgorithm: () => getField(TAG_SIGN_ALGORITHM, "Sign algorithm"),
+      rpSignatureField: () => getField(TAG_RP_SIGNATURE, "RP signature field"),
     }).map((fields) =>
       Uint8Array.from(
         [
-          [0x01, fields.payloadType.length, ...fields.payloadType],
-          [0x02, fields.version.length, ...fields.version],
-          [0x12, fields.challengeData.length, ...fields.challengeData],
-          [0x16, fields.challengeExpiry.length, ...fields.challengeExpiry],
-          [0x20, fields.host.length, ...fields.host],
-          [0x60, fields.protocolVersion.length, ...fields.protocolVersion],
+          [TAG_PAYLOAD_TYPE, fields.payloadType.length, ...fields.payloadType],
+          [TAG_VERSION, fields.version.length, ...fields.version],
+          [
+            TAG_CHALLENGE_DATA,
+            fields.challengeData.length,
+            ...fields.challengeData,
+          ],
+          [
+            TAG_CHALLENGE_EXPIRY,
+            fields.challengeExpiry.length,
+            ...fields.challengeExpiry,
+          ],
+          [TAG_HOST, fields.host.length, ...fields.host],
+          [
+            TAG_PROTOCOL_VERSION,
+            fields.protocolVersion.length,
+            ...fields.protocolVersion,
+          ],
         ].flat(),
       ),
     );

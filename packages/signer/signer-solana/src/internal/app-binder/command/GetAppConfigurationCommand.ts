@@ -14,6 +14,11 @@ import { Maybe } from "purify-ts";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 
+const APP_CONFIG_RESPONSE_LENGTH = 5;
+const VERSION_MAJOR_INDEX = 2;
+const VERSION_MINOR_INDEX = 3;
+const VERSION_PATCH_INDEX = 4;
+
 import {
   SOLANA_APP_ERRORS,
   SolanaAppCommandErrorFactory,
@@ -58,10 +63,10 @@ export class GetAppConfigurationCommand
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
       const parser = new ApduParser(response);
-      const buffer = parser.extractFieldByLength(5);
+      const buffer = parser.extractFieldByLength(APP_CONFIG_RESPONSE_LENGTH);
       if (
         !buffer ||
-        buffer.length !== 5 ||
+        buffer.length !== APP_CONFIG_RESPONSE_LENGTH ||
         buffer.some((element) => element === undefined)
       ) {
         return CommandResultFactory({
@@ -75,7 +80,7 @@ export class GetAppConfigurationCommand
           buffer[1] === 0
             ? PublicKeyDisplayMode.LONG
             : PublicKeyDisplayMode.SHORT,
-        version: `${buffer[2]}.${buffer[3]}.${buffer[4]}`,
+        version: `${buffer[VERSION_MAJOR_INDEX]}.${buffer[VERSION_MINOR_INDEX]}.${buffer[VERSION_PATCH_INDEX]}`,
       };
 
       return CommandResultFactory({

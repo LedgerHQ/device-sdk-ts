@@ -4,6 +4,10 @@ import { DeviceSession } from "@internal/device-session/model/DeviceSession";
 
 import { type LoggerSubscriberService } from "./LoggerSubscriberService";
 
+const HEX_RADIX = 16;
+const HEX_PAD_LENGTH = 2;
+const JSON_INDENT = 2;
+
 /**
  * This function is used to format the logs to JSON format,
  * remove circular dependencies and do some extra formatting.
@@ -17,7 +21,7 @@ export function getJSONStringifyReplacer(): (
     // format Uint8Array values to more readable format
     if (value instanceof Uint8Array) {
       const bytesHex = Array.from(value).map((x) =>
-        x.toString(16).padStart(2, "0"),
+        x.toString(HEX_RADIX).padStart(HEX_PAD_LENGTH, "0"),
       );
       return {
         hex: "0x" + bytesHex.join(""),
@@ -82,7 +86,11 @@ export class WebLogsExporterLogger implements LoggerSubscriberService {
       };
     });
 
-    return JSON.stringify(remappedLogs, getJSONStringifyReplacer(), 2);
+    return JSON.stringify(
+      remappedLogs,
+      getJSONStringifyReplacer(),
+      JSON_INDENT,
+    );
   }
 
   /**

@@ -28,6 +28,12 @@ const PUBLIC_KEY_LENGTH = 32;
 const SIGNATURE_LENGTH = 64;
 const MAX_SIGNATURES = 64;
 const MAX_ACCOUNTS = 256;
+const LOW_BITS_MASK = 0x7f;
+const HIGH_BIT_MASK = 0x80;
+const SHORTVEC_SHIFT_INCREMENT = 7;
+const SHORTVEC_MAX_SHIFT = 35;
+const MESSAGE_HEADER_SIZE = 3;
+const READONLY_UNSIGNED_OFFSET = 2;
 
 export class TransactionCrafterService {
   public getCraftedTransaction(
@@ -191,16 +197,16 @@ export class TransactionCrafterService {
         throw new Error("shortvec decode overflow");
       }
 
-      value |= (byte & 0x7f) << shift;
+      value |= (byte & LOW_BITS_MASK) << shift;
       size += 1;
 
-      if ((byte & 0x80) === 0) {
+      if ((byte & HIGH_BIT_MASK) === 0) {
         break;
       }
 
-      shift += 7;
+      shift += SHORTVEC_SHIFT_INCREMENT;
 
-      if (shift >= 35) {
+      if (shift >= SHORTVEC_MAX_SHIFT) {
         throw new Error("shortvec too long");
       }
     }
@@ -228,9 +234,10 @@ export class TransactionCrafterService {
 
     if (opts.versioned) {
       const versionByte = bytes[cursor];
-      if (versionByte === undefined || (versionByte & 0x80) === 0) return null;
+      if (versionByte === undefined || (versionByte & HIGH_BIT_MASK) === 0)
+        return null;
 
-      const version = versionByte & 0x7f;
+      const version = versionByte & LOW_BITS_MASK;
       if (version !== 0) return null;
 
       cursor += 1;
@@ -238,20 +245,20 @@ export class TransactionCrafterService {
       const first = bytes[cursor];
       if (first === undefined) return null;
 
-      if ((first & 0x80) !== 0) return null;
+      if ((first & HIGH_BIT_MASK) !== 0) return null;
     }
 
-    if (cursor + 3 > bytes.length) return null;
+    if (cursor + MESSAGE_HEADER_SIZE > bytes.length) return null;
 
     const requiredSignatures = bytes[cursor];
     const numReadonlySigned = bytes[cursor + 1];
-    const numReadonlyUnsigned = bytes[cursor + 2];
+    const numReadonlyUnsigned = bytes[cursor + READONLY_UNSIGNED_OFFSET];
 
     if (requiredSignatures === undefined) return null;
 
     if (requiredSignatures < 1) return null;
 
-    cursor += 3;
+    cursor += MESSAGE_HEADER_SIZE;
 
     const accountCountInfo = this.tryDecodeShortVec(bytes, cursor);
     if (!accountCountInfo) return null;

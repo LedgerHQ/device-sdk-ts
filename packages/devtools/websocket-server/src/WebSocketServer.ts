@@ -8,6 +8,8 @@ import {
 import { ReplaySubject, type Subscription } from "rxjs";
 import { WebSocket, WebSocketServer } from "ws";
 
+const TOTAL_SERVERS = 2;
+
 export type ServerConfig = {
   clientPort?: number;
   dashboardPort?: number;
@@ -281,7 +283,7 @@ export class DevToolsWebSocketServer {
       let closedCount = 0;
       const checkClosed = () => {
         closedCount++;
-        if (closedCount === 2) {
+        if (closedCount === TOTAL_SERVERS) {
           this.log("Servers stopped");
           resolve();
         }

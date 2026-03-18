@@ -10,6 +10,13 @@ import PACKAGE from "@root/package.json";
 import { GetTokenInfosParams, TokenDataSource } from "./TokenDataSource";
 import { TokenDto } from "./TokenDto";
 
+const HEX_CHARS_PER_BYTE = 2;
+const ADDRESS_BYTE_LENGTH = 20;
+const DECIMALS_BYTE_LENGTH = 4;
+const CHAIN_ID_BYTE_LENGTH = 4;
+const HEX_RADIX = 16;
+const MIN_HEX_LENGTH = 2;
+
 @injectable()
 export class HttpTokenDataSource implements TokenDataSource {
   constructor(
@@ -55,13 +62,13 @@ export class HttpTokenDataSource implements TokenDataSource {
       // Signed descriptor is composed of:
       // ticker || address (20 bytes) || number of decimals (4 bytes) || chainId (4 bytes)
       const tickerLengthBuff = (
-        tokenInfos.descriptor.data.length / 2 -
-        20 -
-        4 -
-        4
+        tokenInfos.descriptor.data.length / HEX_CHARS_PER_BYTE -
+        ADDRESS_BYTE_LENGTH -
+        DECIMALS_BYTE_LENGTH -
+        CHAIN_ID_BYTE_LENGTH
       )
-        .toString(16)
-        .padStart(2, "0");
+        .toString(HEX_RADIX)
+        .padStart(MIN_HEX_LENGTH, "0");
 
       return Right(
         [

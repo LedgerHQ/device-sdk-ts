@@ -22,6 +22,8 @@ import {
 } from "./utils/SolanaApplicationErrors";
 
 const SIGNATURE_LENGTH = 64;
+const P2_MORE_FLAG = 0x02;
+const P2_ATA_FLAG = 0x08;
 
 export type SignTransactionCommandResponse = Maybe<Signature>;
 export type SignTransactionCommandArgs = {
@@ -57,11 +59,10 @@ export class SignTransactionCommand
   getApdu(): Apdu {
     const { more, extend, serializedTransaction, userInputType } = this.args;
     let p2 = 0x00;
-    if (more) p2 |= 0x02;
+    if (more) p2 |= P2_MORE_FLAG;
     if (extend) p2 |= 0x01;
     if (userInputType === UserInputType.ATA) {
-      // `ata` requires the 0x08 flag, `sol` uses the default (no extra flag).
-      p2 |= 0x08;
+      p2 |= P2_ATA_FLAG;
     }
 
     const signTransactionArgs: ApduBuilderArgs = {

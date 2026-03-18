@@ -3,6 +3,9 @@ import type { Permission } from "react-native";
 import type { PermissionsAndroidNarrowedType } from "./PermissionsAndroidNarrowedType";
 import { type PermissionsService } from "./PermissionsService";
 
+const API_LEVEL_COARSE_LOCATION = 28;
+const API_LEVEL_FINE_LOCATION = 30;
+
 export class AndroidPermissionsService implements PermissionsService {
   constructor(
     private readonly _permissionsAndroid: PermissionsAndroidNarrowedType,
@@ -10,11 +13,11 @@ export class AndroidPermissionsService implements PermissionsService {
   ) {}
 
   getRequiredPermissions(): Permission[] {
-    if (this._apiLevel <= 28) {
+    if (this._apiLevel <= API_LEVEL_COARSE_LOCATION) {
       return [this._permissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION];
     }
 
-    if (this._apiLevel <= 30) {
+    if (this._apiLevel <= API_LEVEL_FINE_LOCATION) {
       return [this._permissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION];
     }
 

@@ -16,6 +16,8 @@ import {
 import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
 import { encodeVarint } from "@internal/utils/Varint";
 
+const BIGINT_ZERO = 0n;
+
 type ExtractTransactionTaskArgs = {
   psbt: Psbt;
 };
@@ -88,7 +90,7 @@ export class ExtractTransactionTask {
       const amount = psbt
         .getOutputValue(o, PsbtOut.AMOUNT)
         .chain((value) => this._valueParser.getInt64LE(value.data))
-        .orDefault(0n);
+        .orDefault(BIGINT_ZERO);
       const script = psbt
         .getOutputValue(o, PsbtOut.SCRIPT)
         .mapOrDefault((v) => v.data, Buffer.from([]));

@@ -16,6 +16,10 @@ import { type EncryptedPublishedKey } from "@internal/models/Types";
 import { derivationPathAsBytes } from "./derivationPath";
 import { TLVParser } from "./TLVParser";
 
+const UINT32_BYTE_LENGTH = 4;
+const HEX_RADIX = 16;
+const HEX_BYTE_LENGTH = 2;
+
 export class LKRPCommand {
   private data: Maybe<Either<LKRPParsingError, LKRPCommandData>>;
 
@@ -47,7 +51,7 @@ export class LKRPCommand {
         break;
 
       case CommandTags.AddMember: {
-        const permissions = new ArrayBuffer(4);
+        const permissions = new ArrayBuffer(UINT32_BYTE_LENGTH);
         new DataView(permissions).setUint32(0, data.permissions);
         tlv
           .encodeInTLVFromAscii(GeneralTags.String, data.name)
@@ -97,7 +101,7 @@ export class LKRPCommand {
         // NOTE: encode the permission bytes array with DataView because
         // ByteArrayBuilder.encodeInTLVFromUInt32 doesn't seem to work with negative numbers
         // ByteArrayBuilder.add32BitIntToData doesn't seem to work with number > 0x7fffffff
-        const permissions = new ArrayBuffer(4);
+        const permissions = new ArrayBuffer(UINT32_BYTE_LENGTH);
         new DataView(permissions).setUint32(0, data.permissions);
         tlv
           .encodeInTLVFromAscii(GeneralTags.String, data.name)
@@ -147,7 +151,7 @@ export class LKRPCommand {
       Object.entries(data)
         .map(([key, value]) => {
           if (key === "type") {
-            return `${CommandTags[value as CommandTags]}(0x${value?.toString(16).padStart(2, "0")}):`;
+            return `${CommandTags[value as CommandTags]}(0x${value?.toString(HEX_RADIX).padStart(HEX_BYTE_LENGTH, "0")}):`;
           }
           return `  ${key}: ${value instanceof Uint8Array ? bufferToHexaString(value, false) : value}`;
         })

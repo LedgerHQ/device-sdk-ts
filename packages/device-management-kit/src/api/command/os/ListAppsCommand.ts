@@ -15,6 +15,10 @@ import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
+const INS_LIST_APPS_CONTINUE = 0xdf;
+const INS_LIST_APPS = 0xde;
+const HASH_LENGTH = 0x20;
+
 export type AppResponse = {
   readonly appEntryLength: number;
   readonly appSizeInBlocks: number;
@@ -59,7 +63,7 @@ export class ListAppsCommand
   getApdu(): Apdu {
     const listAppApduArgs: ApduBuilderArgs = {
       cla: 0xe0,
-      ins: this.args.isContinue ? 0xdf : 0xde,
+      ins: this.args.isContinue ? INS_LIST_APPS_CONTINUE : INS_LIST_APPS,
       p1: 0x00,
       p2: 0x00,
     };
@@ -99,10 +103,10 @@ export class ListAppsCommand
       const appSizeInBlocks = parser.extract16BitUInt()!;
       parser.extract16BitUInt()!; // Skip 2 bytes (flags, missing in doc for now)
       const appCodeHash = parser.encodeToHexaString(
-        parser.extractFieldByLength(0x20), // 32 bytes
+        parser.extractFieldByLength(HASH_LENGTH),
       );
       const appFullHash = parser.encodeToHexaString(
-        parser.extractFieldByLength(0x20), // 32 bytes
+        parser.extractFieldByLength(HASH_LENGTH),
       );
 
       const appName = parser.encodeToString(parser.extractFieldLVEncoded());

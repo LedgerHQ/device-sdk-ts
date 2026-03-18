@@ -23,6 +23,13 @@ import {
   MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER,
 } from "@internal/shared/EthAppVersions";
 
+const PRIORITY_PROXY_INFO = 5;
+const PRIORITY_TRANSACTION_CHECK = 10;
+const PRIORITY_DYNAMIC_NETWORK = 30;
+const PRIORITY_TRANSACTION_INFO = 50;
+const PRIORITY_FIELD_DESCRIPTION = 70;
+const PRIORITY_UNUSED = 90;
+
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.TRUSTED_NAME,
   ClearSignContextType.TRANSACTION_INFO,
@@ -262,15 +269,15 @@ export class BuildBaseContexts {
   private _getContextPriority({ type }: ClearSignContextSuccess): number {
     switch (type) {
       case ClearSignContextType.PROXY_INFO:
-        return 5;
+        return PRIORITY_PROXY_INFO;
       case ClearSignContextType.TRANSACTION_CHECK:
       case ClearSignContextType.GATED_SIGNING:
-        return 10;
+        return PRIORITY_TRANSACTION_CHECK;
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
-        return 30;
+        return PRIORITY_DYNAMIC_NETWORK;
       case ClearSignContextType.TRANSACTION_INFO:
-        return 50;
+        return PRIORITY_TRANSACTION_INFO;
       case ClearSignContextType.PLUGIN:
       case ClearSignContextType.EXTERNAL_PLUGIN:
       case ClearSignContextType.TOKEN:
@@ -278,12 +285,12 @@ export class BuildBaseContexts {
       case ClearSignContextType.TRUSTED_NAME:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ENUM:
-        return 70;
+        return PRIORITY_FIELD_DESCRIPTION;
 
       /* not used here */
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
-        return 90;
+        return PRIORITY_UNUSED;
 
       default: {
         const uncoveredType: never = type;

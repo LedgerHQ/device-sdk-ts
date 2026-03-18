@@ -19,6 +19,9 @@ import { type Either, Left, Maybe, Nothing, Right } from "purify-ts";
 import { FRAME_SIZE } from "@api/data/WebHidConfig";
 import { WebHidSendReportError } from "@api/model/Errors";
 
+const MAX_CHANNEL_VALUE = 0xffff;
+const CHANNEL_BYTE_LENGTH = 2;
+
 export type WebHidApduSenderConstructorArgs = {
   dependencies: WebHidApduSenderDependencies;
   apduSenderFactory: ApduSenderServiceFactory;
@@ -49,7 +52,10 @@ export class WebHidApduSender
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
   ) {
     const channel = Maybe.of(
-      FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
+      FramerUtils.numberToByteArray(
+        Math.floor(Math.random() * MAX_CHANNEL_VALUE),
+        CHANNEL_BYTE_LENGTH,
+      ),
     );
     this.logger = loggerServiceFactory("WebHidApduSender");
     this.apduSender = apduSenderFactory({

@@ -23,6 +23,9 @@ import { Observable } from "rxjs";
 import { BaseEthSignerActionHandler } from "./BaseEthSignerActionHandler";
 
 const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0";
+const HEX_PREFIX_LENGTH = 2;
+const HEX_CHARS_PER_BYTE = 2;
+const HEX_RADIX = 16;
 
 @injectable()
 export class SignTransactionEthSignerActionHandler extends BaseEthSignerActionHandler<
@@ -106,13 +109,16 @@ export class SignTransactionEthSignerActionHandler extends BaseEthSignerActionHa
   }
 
   private hexStringToUint8Array(hex: string): Uint8Array {
-    const cleanHex = hex.startsWith("0x") ? hex.slice(2) : hex;
+    const cleanHex = hex.startsWith("0x") ? hex.slice(HEX_PREFIX_LENGTH) : hex;
     if (cleanHex.length === 0) {
       return new Uint8Array(0);
     }
-    const bytes = new Uint8Array(cleanHex.length / 2);
-    for (let i = 0; i < cleanHex.length; i += 2) {
-      bytes[i / 2] = parseInt(cleanHex.substring(i, i + 2), 16);
+    const bytes = new Uint8Array(cleanHex.length / HEX_CHARS_PER_BYTE);
+    for (let i = 0; i < cleanHex.length; i += HEX_CHARS_PER_BYTE) {
+      bytes[i / HEX_CHARS_PER_BYTE] = parseInt(
+        cleanHex.substring(i, i + HEX_CHARS_PER_BYTE),
+        HEX_RADIX,
+      );
     }
     return bytes;
   }

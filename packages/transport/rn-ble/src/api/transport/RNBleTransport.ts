@@ -64,6 +64,10 @@ import {
   type RNBleInternalDevice,
 } from "@api/transport/RNBleApduSender";
 
+const SCAN_EMIT_INTERVAL_MS = 1000;
+const IOS_PAIRING_RESET_ERROR_CODE = 14;
+const RECONNECTION_RETRY_COUNT = 5;
+
 export const rnBleTransportIdentifier = "RN_BLE";
 
 type InternalScannedDevice = {
@@ -279,7 +283,7 @@ export class RNBleTransport implements Transport {
            */
           const interval = setInterval(() => {
             subject.next(Array.from(devicesById.values()));
-          }, 1000);
+          }, SCAN_EMIT_INTERVAL_MS);
 
           return subject.pipe(
             finalize(() => {
@@ -503,7 +507,7 @@ export class RNBleTransport implements Transport {
         } catch (error) {
           if (
             error instanceof BleError &&
-            (error.iosErrorCode as number) === 14
+            (error.iosErrorCode as number) === IOS_PAIRING_RESET_ERROR_CODE
           ) {
             /**
              * This happens when the Ledger device reset its pairing, but the
@@ -768,7 +772,7 @@ export class RNBleTransport implements Transport {
         await this._safeCancel(deviceId);
         throw e;
       }
-    }).pipe(retry(5));
+    }).pipe(retry(RECONNECTION_RETRY_COUNT));
 
     this._reconnectionSubscription = Maybe.of(
       reconnect$.subscribe({

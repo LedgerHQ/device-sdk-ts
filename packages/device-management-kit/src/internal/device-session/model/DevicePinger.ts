@@ -20,6 +20,9 @@ import {
   SessionEvents,
 } from "@internal/device-session/model/DeviceSessionEventDispatcher";
 
+const NANO_S_POLLING_MULTIPLIER = 2;
+const TIMEOUT_BUFFER_MS = 100;
+
 type SendCommandFunction = <Response, Args, ErrorStatusCodes>(
   command: Command<Response, Args, ErrorStatusCodes>,
   abortTimeout?: number,
@@ -86,7 +89,9 @@ export class DevicePinger {
         const timeoutPromise: Promise<null> = new Promise((resolve) => {
           setTimeout(
             () => resolve(null),
-            DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 2 + 100,
+            DEVICE_SESSION_REFRESHER_POLLING_INTERVAL *
+              NANO_S_POLLING_MULTIPLIER +
+              TIMEOUT_BUFFER_MS,
           );
         });
 

@@ -16,6 +16,8 @@ import {
   TestContractUseCase,
 } from "./TestContractUseCase";
 
+const DELAY_BETWEEN_TESTS_MS = 2000;
+
 export type BatchContractTestConfig = {
   readonly defaultDerivationPath: string;
   readonly skipCal?: boolean;
@@ -135,7 +137,9 @@ export class TestBatchContractFromFileUseCase {
         }
 
         // Add delay between contract tests
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await new Promise((resolve) =>
+          setTimeout(resolve, DELAY_BETWEEN_TESTS_MS),
+        );
       }
     }
 

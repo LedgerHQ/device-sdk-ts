@@ -1,5 +1,7 @@
 import { isValidHexString } from "@/components/ApduView/hexUtils";
 
+const MIN_RESPONSE_HEX_LENGTH = 4;
+
 export type ValidationResult = {
   isValid: boolean;
   error: string | null;
@@ -21,7 +23,7 @@ export function validateHexInput(hexInput: string): ValidationResult {
   }
 
   const cleaned = hexInput.replace(/\s/g, "");
-  if (cleaned.length < 4) {
+  if (cleaned.length < MIN_RESPONSE_HEX_LENGTH) {
     return {
       isValid: false,
       error: "Response must be at least 2 bytes (status code)",
