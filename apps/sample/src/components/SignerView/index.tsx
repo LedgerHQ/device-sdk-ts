@@ -41,6 +41,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Aleo signer functionality",
     icon: <CryptoIcon ledgerId="aleo" ticker="ALEO" size="56px" />,
   },
+  {
+    title: "Zcash",
+    description: "Access Zcash signer functionality",
+    icon: <CryptoIcon ledgerId="zcash" ticker="ZCASH" size={size} />,
+  },
 ];
 
 export const SignerView = () => {
