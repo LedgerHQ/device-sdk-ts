@@ -1,0 +1,58 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "Tally",
+        "chainId": 1,
+        "verifyingContract": "0x408ed6354d4973f66138c91495f2f2fcbd8724c3"
+      },
+      "primaryType": "Ballot",
+      "types": {
+        "EIP712Domain": [
+          { "name": "chainId", "type": "uint256" },
+          { "name": "name", "type": "string" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Ballot": [
+          { "name": "proposalId", "type": "uint256" },
+          { "name": "support", "type": "uint8" }
+        ]
+      },
+      "message": {
+        "proposalId": "42",
+        "support": 1
+      }
+    },
+    "description": "Tally: Governor Bravo Ballot (vote for)"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "Tally",
+        "version": "1",
+        "chainId": 42161,
+        "verifyingContract": "0x912ce59144191c1204e64559fe8253a0e49e6548"
+      },
+      "primaryType": "Delegation",
+      "types": {
+        "EIP712Domain": [
+          { "name": "chainId", "type": "uint256" },
+          { "name": "name", "type": "string" },
+          { "name": "verifyingContract", "type": "address" },
+          { "name": "version", "type": "string" }
+        ],
+        "Delegation": [
+          { "name": "delegatee", "type": "address" },
+          { "name": "nonce", "type": "uint256" },
+          { "name": "expiry", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "delegatee": "0x1111111254eeb25477b68fb85ed929f73a960582",
+        "nonce": 0,
+        "expiry": 1735689600
+      }
+    },
+    "description": "Tally: ARB Token Delegation (Arbitrum)"
+  }
+]

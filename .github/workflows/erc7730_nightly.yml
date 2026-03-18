@@ -33,8 +33,8 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
-  erc7730-tests:
-    name: ERC7730 Tests (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})
+  erc7730-calldata-tests:
+    name: ERC7730 Calldata Tests (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})
     needs: [build-libraries]
     runs-on: ledgerhq-device-sdk
     strategy:
@@ -95,7 +95,7 @@ jobs:
       - name: Pull Speculos Docker image
         run: docker pull ghcr.io/ledgerhq/speculos
 
-      - name: Run ERC7730 Test
+      - name: Run ERC7730 Calldata Test
         id: erc7730-test
         env:
           FORCE_COLOR: "0"
@@ -115,7 +115,7 @@ jobs:
       - name: Write job summary
         if: always()
         run: |
-          echo "## 🧪 ERC7730 Test Results (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})" >> $GITHUB_STEP_SUMMARY
+          echo "## ERC7730 Calldata Test Results (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ -f /tmp/cs-tester-output.log ]; then
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -124,13 +124,115 @@ jobs:
             sed -n '/📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
           else
-            echo "⚠️ No test output available" >> $GITHUB_STEP_SUMMARY
+            echo "No test output available" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: erc7730-logs-${{ matrix.device }}-${{ matrix.include_dapp.dapp }}
+          name: erc7730-calldata-logs-${{ matrix.device }}-${{ matrix.include_dapp.dapp }}
+          path: /tmp/logs/
+          retention-days: 7
+
+  erc7730-eip712-tests:
+    name: ERC7730 EIP712 Tests (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})
+    needs: [build-libraries]
+    runs-on: ledgerhq-device-sdk
+    strategy:
+      fail-fast: false
+      matrix:
+        device:
+          - stax
+          - nanox
+          - flex
+        include_dapp:
+          - dapp: "1inch"
+            chain: ""
+          - dapp: "degate"
+            chain: ""
+          - dapp: "ledgerquest"
+            chain: ""
+          - dapp: "lens"
+            chain: ""
+          - dapp: "lombard"
+            chain: ""
+          - dapp: "opensea"
+            chain: ""
+          - dapp: "permit"
+            chain: ""
+          - dapp: "smartcredit"
+            chain: ""
+          - dapp: "tally"
+            chain: ""
+          - dapp: "uniswap"
+            chain: ""
+          - dapp: "velora"
+            chain: ""
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Generate token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: LedgerHQ
+          repositories: coin-apps
+
+      - name: Retrieving coin apps
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          repository: LedgerHQ/coin-apps
+          token: ${{ steps.generate-token.outputs.token }}
+          path: coin-apps
+          sparse-checkout: |
+            ${{ matrix.device }}/*/Ethereum/*.elf
+          sparse-checkout-cone-mode: false
+
+      - name: Pull Speculos Docker image
+        run: docker pull ghcr.io/ledgerhq/speculos
+
+      - name: Run ERC7730 EIP712 Test
+        id: erc7730-eip712-test
+        env:
+          FORCE_COLOR: "0"
+          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/logs/screenshots
+          pnpm cs-tester test:erc7730:typed-data ${{ matrix.include_dapp.dapp }} ${{ matrix.include_dapp.chain }} \
+            --device ${{ matrix.device }} \
+            --log-level error \
+            --log-file "/tmp/logs/erc7730-eip712-${{ matrix.include_dapp.dapp }}.log" \
+            --file-log-level debug \
+            --screenshot-folder-path "/tmp/logs/screenshots" \
+            2>&1 | tee /tmp/cs-tester-output.log
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## ERC7730 EIP712 Test Results (${{ matrix.device }} - ${{ matrix.include_dapp.dapp }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/cs-tester-output.log ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            sed -n '/📋/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            sed -n '/📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No test output available" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: erc7730-eip712-logs-${{ matrix.device }}-${{ matrix.include_dapp.dapp }}
           path: /tmp/logs/
           retention-days: 7

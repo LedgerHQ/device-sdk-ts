@@ -1,0 +1,86 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "Velora",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0xe92b586627cca7a83dc919cc7127196d70f55a06"
+      },
+      "primaryType": "Order",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Order": [
+          { "name": "nonceAndMeta", "type": "uint256" },
+          { "name": "expiry", "type": "uint128" },
+          { "name": "makerAsset", "type": "address" },
+          { "name": "takerAsset", "type": "address" },
+          { "name": "maker", "type": "address" },
+          { "name": "taker", "type": "address" },
+          { "name": "makerAmount", "type": "uint256" },
+          { "name": "takerAmount", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "nonceAndMeta": "1000000000000000000000000000000001",
+        "expiry": "1735689600",
+        "makerAsset": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "takerAsset": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "maker": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "taker": "0x0000000000000000000000000000000000000000",
+        "makerAmount": "1000000000",
+        "takerAmount": "400000000000000000"
+      }
+    },
+    "description": "Velora (ParaSwap): AugustusRFQ ERC20 Order"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "Velora",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0xe92b586627cca7a83dc919cc7127196d70f55a06"
+      },
+      "primaryType": "OrderNFT",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "OrderNFT": [
+          { "name": "nonceAndMeta", "type": "uint256" },
+          { "name": "expiry", "type": "uint128" },
+          { "name": "makerAsset", "type": "uint256" },
+          { "name": "makerAssetId", "type": "uint256" },
+          { "name": "takerAsset", "type": "uint256" },
+          { "name": "takerAssetId", "type": "uint256" },
+          { "name": "maker", "type": "address" },
+          { "name": "taker", "type": "address" },
+          { "name": "makerAmount", "type": "uint256" },
+          { "name": "takerAmount", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "nonceAndMeta": "2000000000000000000000000000000001",
+        "expiry": "1735689600",
+        "makerAsset": "1",
+        "makerAssetId": "42",
+        "takerAsset": "2",
+        "takerAssetId": "0",
+        "maker": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "taker": "0x0000000000000000000000000000000000000000",
+        "makerAmount": "1",
+        "takerAmount": "500000000000000000"
+      }
+    },
+    "description": "Velora (ParaSwap): AugustusRFQ NFT Order"
+  }
+]

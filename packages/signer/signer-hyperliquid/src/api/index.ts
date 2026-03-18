@@ -1,4 +1,5 @@
 export {
+  type SignActionsActionItem,
   type SignActionsDAError,
   type SignActionsDAInput,
   type SignActionsDAIntermediateValue,

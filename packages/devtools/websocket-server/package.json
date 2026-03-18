@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-management-kit-devtools-websocket-server",
-  "private": false,
+  "private": true,
   "version": "1.0.1",
   "license": "Apache-2.0",
   "repository": {
@@ -56,6 +56,6 @@
     "tsx": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.2.0"
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

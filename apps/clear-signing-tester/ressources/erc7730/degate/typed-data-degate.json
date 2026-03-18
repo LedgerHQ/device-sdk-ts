@@ -1,0 +1,126 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "DeGate",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0xe63602a9b3dfe983187525ac985fec4f57b24ed5"
+      },
+      "primaryType": "AccountUpdate",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "AccountUpdate": [
+          { "name": "owner", "type": "address" },
+          { "name": "accountID", "type": "uint32" },
+          { "name": "feeTokenID", "type": "uint32" },
+          { "name": "maxFee", "type": "uint96" },
+          { "name": "publicKey", "type": "uint256" },
+          { "name": "validUntil", "type": "uint32" },
+          { "name": "nonce", "type": "uint32" }
+        ]
+      },
+      "message": {
+        "owner": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "accountID": 12345,
+        "feeTokenID": 0,
+        "maxFee": "100000000000000",
+        "publicKey": "1234567890123456789012345678901234567890",
+        "validUntil": 1735689600,
+        "nonce": 1
+      }
+    },
+    "description": "DeGate: AccountUpdate"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "DeGate",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0xe63602a9b3dfe983187525ac985fec4f57b24ed5"
+      },
+      "primaryType": "Withdrawal",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Withdrawal": [
+          { "name": "owner", "type": "address" },
+          { "name": "accountID", "type": "uint32" },
+          { "name": "tokenID", "type": "uint32" },
+          { "name": "amount", "type": "uint248" },
+          { "name": "feeTokenID", "type": "uint32" },
+          { "name": "maxFee", "type": "uint96" },
+          { "name": "to", "type": "address" },
+          { "name": "minGas", "type": "uint248" },
+          { "name": "validUntil", "type": "uint32" },
+          { "name": "storageID", "type": "uint32" }
+        ]
+      },
+      "message": {
+        "owner": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "accountID": 12345,
+        "tokenID": 1,
+        "amount": "5000000000000000000",
+        "feeTokenID": 0,
+        "maxFee": "50000000000000",
+        "to": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "minGas": "100000",
+        "validUntil": 1735689600,
+        "storageID": 42
+      }
+    },
+    "description": "DeGate: Withdrawal"
+  },
+  {
+    "data": {
+      "domain": {
+        "name": "DeGate",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0xe63602a9b3dfe983187525ac985fec4f57b24ed5"
+      },
+      "primaryType": "Transfer",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Transfer": [
+          { "name": "owner", "type": "address" },
+          { "name": "accountID", "type": "uint32" },
+          { "name": "tokenID", "type": "uint32" },
+          { "name": "amount", "type": "uint248" },
+          { "name": "feeTokenID", "type": "uint32" },
+          { "name": "maxFee", "type": "uint96" },
+          { "name": "to", "type": "address" },
+          { "name": "validUntil", "type": "uint32" },
+          { "name": "storageID", "type": "uint32" }
+        ]
+      },
+      "message": {
+        "owner": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "accountID": 12345,
+        "tokenID": 0,
+        "amount": "1000000000000000000",
+        "feeTokenID": 0,
+        "maxFee": "30000000000000",
+        "to": "0x1111111254eeb25477b68fb85ed929f73a960582",
+        "validUntil": 1735689600,
+        "storageID": 43
+      }
+    },
+    "description": "DeGate: Transfer"
+  }
+]
