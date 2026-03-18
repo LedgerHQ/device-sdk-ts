@@ -15,11 +15,9 @@ export type GetAppConfigCommandResponse = {
 };
 
 export class GetAppConfigCommand
-  implements
-    Command<GetAppConfigCommandResponse, void, ZcashErrorCodes>
+  implements Command<GetAppConfigCommandResponse, void, ZcashErrorCodes>
 {
   readonly name = "GetAppConfig";
-
 
   getApdu(): Apdu {
     // TODO: Implement APDU construction based on your blockchain's protocol

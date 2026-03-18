@@ -77,20 +77,20 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
               <LedgerKeyringProtocolProvider>
                 <SignerEthProvider>
                   <SignerZcashProvider>
-                  <SignerAleoProvider>
-                    <SignerCosmosProvider>
-                      <CalInterceptorProvider>
-                        <GlobalStyle />
-                        <head>
-                          <link rel="shortcut icon" href="../favicon.png" />
-                        </head>
-                        <body>
-                          <RootApp>{children}</RootApp>
-                        </body>
-                      </CalInterceptorProvider>
-                    </SignerCosmosProvider>
-                  </SignerAleoProvider>
-                </SignerZcashProvider>
+                    <SignerAleoProvider>
+                      <SignerCosmosProvider>
+                        <CalInterceptorProvider>
+                          <GlobalStyle />
+                          <head>
+                            <link rel="shortcut icon" href="../favicon.png" />
+                          </head>
+                          <body>
+                            <RootApp>{children}</RootApp>
+                          </body>
+                        </CalInterceptorProvider>
+                      </SignerCosmosProvider>
+                    </SignerAleoProvider>
+                  </SignerZcashProvider>
                 </SignerEthProvider>
               </LedgerKeyringProtocolProvider>
             </DmkProvider>

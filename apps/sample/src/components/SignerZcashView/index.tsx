@@ -51,7 +51,11 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
       {
         title: "Get Address",
         description: "Get an address from the device",
-        executeDeviceAction: ({ derivationPath, checkOnDevice, skipOpenApp }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          checkOnDevice,
+          skipOpenApp,
+        }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
@@ -89,12 +93,12 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
                 transaction
                   .slice(2)
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? []
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
               )
             : new Uint8Array(
                 transaction
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? []
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
               );
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,

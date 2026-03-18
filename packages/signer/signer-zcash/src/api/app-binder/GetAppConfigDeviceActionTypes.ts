@@ -10,8 +10,7 @@ import {
 import { type GetAppConfigCommandResponse } from "@internal/app-binder/command/GetAppConfigCommand";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 
-type GetAppConfigDAUserInteractionRequired =
-  | UserInteractionRequired.None;
+type GetAppConfigDAUserInteractionRequired = UserInteractionRequired.None;
 
 export type GetAppConfigDAOutput =
   SendCommandInAppDAOutput<GetAppConfigCommandResponse>;

@@ -11,7 +11,8 @@ import { type GetAddressCommandResponse } from "@internal/app-binder/command/Get
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 
 type GetAddressDAUserInteractionRequired =
-  | UserInteractionRequired.None | UserInteractionRequired.VerifyAddress;
+  | UserInteractionRequired.None
+  | UserInteractionRequired.VerifyAddress;
 
 export type GetAddressDAOutput =
   SendCommandInAppDAOutput<GetAddressCommandResponse>;

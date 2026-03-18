@@ -9,9 +9,7 @@ import { ZcashAppBinder } from "@internal/app-binder/ZcashAppBinder";
 export class GetAddressUseCase {
   private readonly _appBinder: ZcashAppBinder;
 
-  constructor(
-    @inject(appBinderTypes.AppBinding) appBinder: ZcashAppBinder,
-  ) {
+  constructor(@inject(appBinderTypes.AppBinding) appBinder: ZcashAppBinder) {
     this._appBinder = appBinder;
   }
 

@@ -11,7 +11,8 @@ import { type SignMessageCommandResponse } from "@internal/app-binder/command/Si
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 
 type SignMessageDAUserInteractionRequired =
-  | UserInteractionRequired.None | UserInteractionRequired.SignPersonalMessage;
+  | UserInteractionRequired.None
+  | UserInteractionRequired.SignPersonalMessage;
 
 export type SignMessageDAOutput =
   SendCommandInAppDAOutput<SignMessageCommandResponse>;

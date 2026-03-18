@@ -6,5 +6,4 @@ export default {
   cosmos: "Signer Cosmos",
   aleo: "Signer Aleo",
   zcash: "Signer Zcash",
-
 };
