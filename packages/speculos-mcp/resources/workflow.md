@@ -9,11 +9,12 @@ Signing a transaction or typed data follows a strict review-then-approve lifecyc
 
 ## Workflow Steps
 
-### 0. Check device state
+### 1. Check if Speculos is running
 
-Before starting any signing flow, call `read` to inspect the current screen and verify the device is ready (e.g. the Ethereum app home screen is displayed and no prior flow is pending).
+**First**, call `speculos_status` to check whether a Speculos instance is already running.
 
-If no speculos is running, call `start_speculos` to launch one automatically in Docker. You can check with `speculos_status`. When done, call `stop_speculos` to clean up.
+- **If running**: call `read` to inspect the current screen and verify the device is ready (e.g. the Ethereum app home screen is displayed and no prior flow is pending).
+- **If not running**: call `start_speculos` to launch one in Docker. Then call `read` to confirm it started correctly.
 
 If `start_speculos` fails, check the following before retrying:
 
@@ -23,14 +24,16 @@ If `start_speculos` fails, check the following before retrying:
 
 Use `get_logs` to inspect the cs-tester output for additional diagnostics.
 
-### 1. Start signing
+When done with the entire workflow, call `stop_speculos` to clean up.
+
+### 2. Start signing
 
 Call `sign_transaction` or `sign_typed_data`.
 This sends the payload to the device and the first review screen appears.
 
 **Tool selection**: Follow the user's exact wording. If they say "transaction", "TX", or provide a raw hex payload, use `sign_transaction`. Only use `sign_typed_data` when the user explicitly says "typed data", "EIP-712", or provides a JSON object with `types`/`primaryType`/`domain`/`message`. Do not guess based on protocol names.
 
-### 1b. Dismiss dialogs before review
+### 2b. Dismiss dialogs before review
 
 After starting the signing flow, the device may show one or more dialogs before the review screens:
 
@@ -40,7 +43,7 @@ After starting the signing flow, the device may show one or more dialogs before 
 
 Use `read` to inspect the screen if you are unsure which dialog is shown. These dialogs may appear in sequence (opt-in first, then blind signing warning).
 
-### 2. Review fields
+### 3. Review fields
 
 Use `swipe` with direction `next` to advance through the review screens one by one.
 Each screen displays one or multiple fields of the transaction:
@@ -51,19 +54,19 @@ Each screen displays one or multiple fields of the transaction:
 Use `read` at any time to re-read the current screen without changing it.
 Use `swipe` with direction `previous` to go back to a prior field.
 
-### 3. Approve or Reject
+### 4. Approve or Reject
 
 The last review screen shows **"Hold to sign"**.
 
 - To approve: call `approve` (long-press the sign button). The device returns a cryptographic signature.
 - To reject: call `reject` at any point. The device cancels the signing flow.
 
-### 4. Check result
+### 5. Check result
 
 After approval, the `signing_status` field in the response contains the signature (`status: "completed"`).
 If something went wrong, `signing_status` shows `status: "error"` with details.
 
-### 5. Summary table
+### 6. Summary table
 
 After the flow is complete (approved, rejected, or aborted), present a summary table with all reviewed fields (Field | Value). Below the table, indicate the signing mode: **Clear signed** or **Blind signed**. Keep it simple.
 
