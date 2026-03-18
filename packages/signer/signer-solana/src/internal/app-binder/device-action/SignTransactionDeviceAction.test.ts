@@ -19,7 +19,6 @@ import {
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
-import { SolanaAppVersionOutdated } from "@internal/app-binder/services/Errors";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import { SOLANA_APP_SPL_MIN_VERSION } from "@internal/app-binder/SolanaApplicationResolver";
 import { type SolanaBuildContextResult } from "@internal/app-binder/task/BuildTransactionContextTask";
@@ -775,7 +774,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
     }));
 
-  it("non-Nano S with outdated version: errors with SolanaAppVersionOutdated", () =>
+  it("non-Nano S with outdated version: skips resolution, falls back to blind sign", () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -787,6 +786,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+
+      const sig = new Uint8Array([0xcc, 0xdd]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
 
       const action = new SignTransactionDeviceAction({
         input: {
@@ -807,9 +809,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           status: DeviceActionStatus.Pending,
         },
         {
-          error: new SolanaAppVersionOutdated(),
-          status: DeviceActionStatus.Error,
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
         },
+        { output: sig, status: DeviceActionStatus.Completed },
       ] as DeviceActionState<
         Uint8Array,
         SignTransactionDAError,
@@ -821,7 +827,6 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           expect(inspectTransactionMock).not.toHaveBeenCalled();
           expect(buildContextMock).not.toHaveBeenCalled();
           expect(provideContextMock).not.toHaveBeenCalled();
-          expect(signMock).not.toHaveBeenCalled();
           resolve();
         },
         onError: reject,

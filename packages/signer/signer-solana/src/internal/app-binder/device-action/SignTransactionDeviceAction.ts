@@ -33,7 +33,6 @@ import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppC
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
-import { SolanaAppVersionOutdated } from "@internal/app-binder/services/Errors";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
@@ -146,7 +145,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) =>
           context.input.transactionOptions?.skipOpenApp || false,
-        isSPLSupported: ({ context }) =>
+        isAppVersionSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
@@ -169,12 +168,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             ?.templateId,
       },
       actions: {
-        assignVersionOutdatedError: assign({
-          _internalState: ({ context }) => ({
-            ...context._internalState,
-            error: new SolanaAppVersionOutdated(),
-          }),
-        }),
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
@@ -287,13 +280,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             {
               target: "InspectTransaction",
-              guard: and(["noInternalError", "isSPLSupported"]),
+              guard: and(["noInternalError", "isAppVersionSupported"]),
             },
-            {
-              target: "Error",
-              guard: "noInternalError",
-              actions: "assignVersionOutdatedError",
-            },
+            { target: "SignTransaction", guard: "noInternalError" },
             { target: "Error" },
           ],
         },
