@@ -5,6 +5,8 @@
 Speculos emulates a Ledger device App.
 Signing a transaction or typed data follows a strict review-then-approve lifecycle.
 
+**Every step below is MANDATORY. Follow them in order. Never skip a step.**
+
 ## Workflow Steps
 
 ### 0. Check device state
