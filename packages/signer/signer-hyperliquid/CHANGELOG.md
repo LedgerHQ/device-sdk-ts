@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- [#1347](https://github.com/LedgerHQ/device-sdk-ts/pull/1347) [`ae31fcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ae31fcc504186452ed86c18dc6f656ac356998a3) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
+- [#1359](https://github.com/LedgerHQ/device-sdk-ts/pull/1359) [`0ae1e66`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ae1e66c31c1457f2f8e8ff4e7a25b1440162747) Thanks [@sprohaszka-ledger](https://github.com/sprohaszka-ledger)! - Fix multi-orders management
+
 ## 1.0.0
 
 ### Major Changes
