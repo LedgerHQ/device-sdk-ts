@@ -85,29 +85,31 @@ export class AppVersionResolverService implements AppVersionResolver {
       resolvedOs = requestedOs;
       resolvedVersion = this.getLatestVersion(versions);
     } else if (requestedVersion) {
-      // Only version specified: find latest OS with this app version
+      // Only version specified: find latest stable OS with this app version
       const compatibleOs = this.findOsWithAppVersion(
         device,
         appName,
-        availableOsVersions,
+        this.getStableOsVersions(availableOsVersions),
         requestedVersion,
       );
       if (!compatibleOs) {
         throw new Error(
-          `No OS version found with ${appName} app version ${requestedVersion} for device ${device}`,
+          `No stable OS version found with ${appName} app version ${requestedVersion} for device ${device}. Use --os-version to target a specific OS including RC versions.`,
         );
       }
       resolvedOs = compatibleOs;
       resolvedVersion = requestedVersion;
     } else {
-      // Neither specified: find latest OS and latest app version
+      // Neither specified: find latest stable OS and latest app version
       const result = this.findLatestOsAndAppVersion(
         devicePath,
         appName,
-        availableOsVersions,
+        this.getStableOsVersions(availableOsVersions),
       );
       if (!result) {
-        throw new Error(`No ${appName} app found for device ${device}`);
+        throw new Error(
+          `No ${appName} app found for device ${device} on a stable OS version. Use --os-version to target a specific OS including RC versions.`,
+        );
       }
       resolvedOs = result.os;
       resolvedVersion = result.version;
@@ -222,6 +224,10 @@ export class AppVersionResolverService implements AppVersionResolver {
     }
 
     return null;
+  }
+
+  private getStableOsVersions(osVersions: string[]): string[] {
+    return osVersions.filter((v) => semver.prerelease(v) === null);
   }
 
   private getLatestVersion(versions: string[]): string {
