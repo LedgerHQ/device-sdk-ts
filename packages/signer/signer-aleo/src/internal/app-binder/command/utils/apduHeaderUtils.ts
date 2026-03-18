@@ -1,4 +1,4 @@
-export const ALEO_CLA = 0xe0 as const;
+export const ALEO_CLA = 0xe0;
 export const P2_DEFAULT = 0x00 as const;
 
 export const INS = {

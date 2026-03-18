@@ -25,6 +25,9 @@ import {
   type EthErrorCodes,
 } from "./utils/ethAppErrors";
 
+const IS_ARRAY_BIT_POSITION = 7;
+const HAS_TYPE_SIZE_BIT_POSITION = 6;
+
 export enum StructDefinitionCommand {
   Name = 0,
   Field = 255,
@@ -129,7 +132,10 @@ export class SendEIP712StructDefinitionCommand
     const typeBits = this.getType(type);
 
     // Combine the bits using bitwise operations
-    const combinedBits = (isArrayBit << 7) | (hasTypeSize << 6) | typeBits;
+    const combinedBits =
+      (isArrayBit << IS_ARRAY_BIT_POSITION) |
+      (hasTypeSize << HAS_TYPE_SIZE_BIT_POSITION) |
+      typeBits;
     return combinedBits;
   }
 

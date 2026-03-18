@@ -23,6 +23,8 @@ import {
 
 import { encodeDerivationPath } from "./utils/EncodeDerivationPath";
 
+const PUBLIC_KEY_LENGTH = 33;
+
 export type GetAddressCommandArgs = {
   readonly derivationPath: string;
   readonly hrp: string;
@@ -92,7 +94,7 @@ export class GetAddressCommand
       this.errorHelper.getError(apduResponse),
     ).orDefaultLazy(() => {
       const apduParser = new ApduParser(apduResponse);
-      const publicKey = apduParser.extractFieldByLength(33);
+      const publicKey = apduParser.extractFieldByLength(PUBLIC_KEY_LENGTH);
       const remaining = apduParser.getUnparsedRemainingLength();
       const address = apduParser.extractFieldByLength(remaining);
 

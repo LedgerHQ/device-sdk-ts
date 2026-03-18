@@ -61,6 +61,9 @@ const DISC = {
 
 // Token-2022 TransferCheckedWithFee sub-instruction within the fee extension.
 const SUB_TRANSFER_CHECKED_WITH_FEE = 1;
+const ATA_OWNER_KEY_INDEX = 2;
+const ATA_MINT_KEY_INDEX = 3;
+const TRANSFER_CHECKED_DEST_KEY_INDEX = 2;
 
 const toTokenAddr = (
   pk: PublicKey | undefined,
@@ -201,8 +204,8 @@ export function extractValidatedATA(
   key: (idx: number) => PublicKey | undefined,
 ): TxInspectorResult["data"] | null {
   const ata = key(1);
-  const owner = key(2);
-  const mint = key(3);
+  const owner = key(ATA_OWNER_KEY_INDEX);
+  const mint = key(ATA_MINT_KEY_INDEX);
   if (!ata || !owner || !mint) return null;
 
   // Derive with both token programs — the instruction may reference either.
@@ -277,7 +280,7 @@ export function extractSPLData(
 
     // TransferChecked: [source, mint, destination, owner]
     case DISC.TRANSFER_CHECKED:
-      return toTokenAddr(key(2));
+      return toTokenAddr(key(TRANSFER_CHECKED_DEST_KEY_INDEX));
 
     // InitializeAccount (1/2/3): [account, mint, ...]
     case DISC.INITIALIZE_ACCOUNT:
@@ -299,7 +302,7 @@ export function extractSPLData(
     // Data: [26, sub_instruction, ...]; accounts same as TransferChecked
     case DISC.TRANSFER_FEE_EXTENSION:
       if (data.length > 1 && data[1] === SUB_TRANSFER_CHECKED_WITH_FEE) {
-        return toTokenAddr(key(2));
+        return toTokenAddr(key(TRANSFER_CHECKED_DEST_KEY_INDEX));
       }
       return null;
 

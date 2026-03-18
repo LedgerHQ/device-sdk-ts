@@ -8,6 +8,8 @@ import { TYPES } from "@root/src/di/types";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
+const SCREENSHOT_DELAY_MS = 500;
+
 @injectable()
 export class SpeculosScreenshotSaver implements ScreenshotSaver {
   private readonly speculosUrl: string;
@@ -37,7 +39,7 @@ export class SpeculosScreenshotSaver implements ScreenshotSaver {
     }
 
     // wait a little bit to let speculos update the screen
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, SCREENSHOT_DELAY_MS));
 
     try {
       this.counter++;

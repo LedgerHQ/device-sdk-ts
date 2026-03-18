@@ -25,6 +25,8 @@ import {
 import { type CommandDecoderDataSource } from "@/uniswap/data/CommandDecoderDataSource";
 import { uniswapTypes } from "@/uniswap/di/uniswapTypes";
 
+const HEX_PREFIX_LENGTH = 2;
+
 export type UniswapContextInput = {
   data: HexaString;
   selector: HexaString;
@@ -182,7 +184,7 @@ export class UniswapContextLoader
    * // Returns: Nothing
    */
   private _extractCommands(hex: HexaString): Maybe<UniswapSupportedCommand[]> {
-    return Maybe.fromNullable(hex.slice(2).match(/../g))
+    return Maybe.fromNullable(hex.slice(HEX_PREFIX_LENGTH).match(/../g))
       .map((bytes) => bytes.map((b) => `0x${b}` as HexaString))
       .map((hexBytes) => hexBytes.map((b) => UNISWAP_COMMANDS[b]))
       .chain((commands) =>
@@ -235,7 +237,7 @@ export class UniswapContextLoader
     for (const [command, addresses] of data) {
       if (!UNISWAP_SWAP_COMMANDS.includes(command)) continue; // Ignore non-swap commands
 
-      const poolVersion = command.slice(0, 2);
+      const poolVersion = command.slice(0, HEX_PREFIX_LENGTH);
 
       if (
         lastAsset &&

@@ -11,7 +11,9 @@ import {
   DeviceActionTester,
 } from "./DeviceActionTester";
 
-export const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
+const SECONDS_PER_MINUTE = 60;
+const MS_PER_SECOND = 1000;
+export const UNLOCK_TIMEOUT = SECONDS_PER_MINUTE * MS_PER_SECOND;
 
 type Props = {
   title: string;

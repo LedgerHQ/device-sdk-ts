@@ -25,6 +25,8 @@ import {
   listAppsDAStateStep,
 } from "./types";
 
+const MIN_APPS_FOR_CONTINUATION = 2;
+
 type ListAppsMachineInternalState = {
   readonly error: ListAppsDAError | null;
   readonly apps: AppResponse[];
@@ -206,7 +208,8 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
                       apps: _.context._internalState.apps.concat(
                         _.event.output.data,
                       ),
-                      shouldContinue: _.event.output.data.length >= 2,
+                      shouldContinue:
+                        _.event.output.data.length >= MIN_APPS_FOR_CONTINUATION,
                     };
                   }
                   return {
@@ -249,7 +252,8 @@ export class ListAppsDeviceAction extends XStateDeviceAction<
                       apps: _.context._internalState.apps.concat(
                         _.event.output.data,
                       ),
-                      shouldContinue: _.event.output.data.length >= 2,
+                      shouldContinue:
+                        _.event.output.data.length >= MIN_APPS_FOR_CONTINUATION,
                     };
                   }
                   return {

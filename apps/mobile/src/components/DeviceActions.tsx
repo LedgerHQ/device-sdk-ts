@@ -41,7 +41,9 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Flex, LegendInput } from "@ledgerhq/native-ui";
 
-const UNLOCK_TIMEOUT = 60 * 1000; // 1 minute
+const SECONDS_PER_MINUTE = 60;
+const MS_PER_SECOND = 1000;
+const UNLOCK_TIMEOUT = SECONDS_PER_MINUTE * MS_PER_SECOND;
 
 export const getDeviceActions = (
   dmk: DeviceManagementKit,

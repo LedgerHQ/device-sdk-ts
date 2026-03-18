@@ -22,6 +22,8 @@ import {
   type PkiCertificateResponseDto,
 } from "./pkiDataSourceTypes";
 
+const HTTP_OK = 200;
+
 @injectable()
 export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
   constructor(
@@ -52,7 +54,7 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
       });
 
       if (
-        pkiCertificateResponse.status == 200 &&
+        pkiCertificateResponse.status == HTTP_OK &&
         pkiCertificateResponse.data !== undefined &&
         pkiCertificateResponse.data.length > 0 &&
         this.isValidPkiCertificateResponse(

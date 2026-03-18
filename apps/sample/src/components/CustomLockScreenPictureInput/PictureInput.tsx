@@ -19,6 +19,8 @@ import { type PictureInputProps } from "./types";
 import { useFileDragDrop } from "./useFileDragDrop";
 import { useImageProcessing } from "./useImageProcessing";
 
+const CONTRAST_DEBOUNCE_DELAY_MS = 300;
+
 export const PictureInput: React.FC<PictureInputProps> = ({
   initialValues,
   onChange,
@@ -29,7 +31,7 @@ export const PictureInput: React.FC<PictureInputProps> = ({
   const [ditheringAlgorithm, setDitheringAlgorithm] =
     useState<DitheringAlgorithm>("floyd-steinberg");
   const [contrast, setContrast] = useState(1);
-  const debouncedContrast = useDebounce(contrast, 300);
+  const debouncedContrast = useDebounce(contrast, CONTRAST_DEBOUNCE_DELAY_MS);
   const [compress, setCompress] = useState(true);
   const [unlockTimeout, setUnlockTimeout] = useState(
     initialValues.unlockTimeout,

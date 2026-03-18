@@ -17,6 +17,8 @@ import {
 } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
+const HEX_PREFIX_LENGTH = 2;
+
 @injectable()
 export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
   constructor(
@@ -49,7 +51,7 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
 
       // Normalize the address and selector
       address = address.toLowerCase();
-      selector = `0x${selector.slice(2).toLowerCase()}`;
+      selector = `0x${selector.slice(HEX_PREFIX_LENGTH).toLowerCase()}`;
 
       const { erc20OfInterest, method, plugin } =
         dappInfos.data[0].b2c?.contracts?.find((c) => c.address === address)

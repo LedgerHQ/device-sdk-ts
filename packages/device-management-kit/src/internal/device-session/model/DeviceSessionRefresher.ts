@@ -21,6 +21,8 @@ import {
   SessionEvents,
 } from "@internal/device-session/model/DeviceSessionEventDispatcher";
 
+const POLLING_INTERVAL_MULTIPLIER = 2;
+
 export interface DeviceSessionRefresherOptions {
   isRefresherDisabled: boolean;
   pollingInterval?: number;
@@ -48,7 +50,8 @@ export class DeviceSessionRefresher {
     if (this._refresherSubscription) return;
 
     const pollingInterval =
-      this.getValidPollingInterval(this._refresherOptions, this._logger) * 2;
+      this.getValidPollingInterval(this._refresherOptions, this._logger) *
+      POLLING_INTERVAL_MULTIPLIER;
 
     const isBusy$ = this._sessionEventDispatcher.listen().pipe(
       filter(
@@ -105,7 +108,8 @@ export class DeviceSessionRefresher {
     switch (this._connectedDeviceID) {
       case DeviceModelId.NANO_S: {
         const defaultNanoPollingInterval =
-          DEVICE_SESSION_REFRESHER_POLLING_INTERVAL * 2;
+          DEVICE_SESSION_REFRESHER_POLLING_INTERVAL *
+          POLLING_INTERVAL_MULTIPLIER;
         if (
           pollingInterval !== undefined &&
           pollingInterval < defaultNanoPollingInterval

@@ -32,6 +32,8 @@ import {
 
 export { MessageFormat } from "@internal/app-binder/services/OffchainMessageBuilder";
 
+const SIGNATURE_LENGTH = 64;
+
 const MESSAGE_SIZE_LIMITS: Partial<Record<SignMessageVersion, number>> = {
   [SignMessageVersion.V1]: OFFCHAINMSG_MAX_V1_LEN,
   [SignMessageVersion.V0]: OFFCHAINMSG_MAX_V0_LEN,
@@ -133,7 +135,7 @@ export class SendSignMessageTask {
     const res = await this._sendInChunks(payload);
 
     if (isSuccessCommandResult(res)) {
-      if (res.data.length !== 64) {
+      if (res.data.length !== SIGNATURE_LENGTH) {
         return CommandResultFactory({
           error: new InvalidStatusWordError(
             `Invalid signature length: ${res.data.length} (expected 64)`,

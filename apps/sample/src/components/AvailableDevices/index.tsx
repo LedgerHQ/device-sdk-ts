@@ -17,6 +17,8 @@ import { selectPollingInterval } from "@/state/settings/selectors";
 import { setDisplayedError } from "@/state/ui/slice";
 import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
 
+const UNFOLDED_MARGIN_TOP = 5;
+
 const Title = styled(Text)<{ disabled: boolean }>`
   :hover {
     user-select: none;
@@ -57,7 +59,7 @@ export const AvailableDevices: React.FC<Record<never, unknown>> = () => {
         flexDirection="column"
         rowGap={4}
         alignSelf="stretch"
-        mt={unfolded ? 5 : 0}
+        mt={unfolded ? UNFOLDED_MARGIN_TOP : 0}
       >
         {unfolded
           ? discoveredDevices.map((device) => (

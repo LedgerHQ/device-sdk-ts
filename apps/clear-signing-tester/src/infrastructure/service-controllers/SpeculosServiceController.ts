@@ -9,6 +9,9 @@ import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConf
 import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
+const DEFAULT_UID_GID = 1000;
+const CONTAINER_INIT_DELAY_MS = 1000;
+
 const DEFAULT_CONTAINER_NAMES: Partial<
   Record<SpeculosConfig["device"], string>
 > = {
@@ -154,7 +157,7 @@ export class SpeculosServiceController implements ServiceController {
       "--vnc-port",
       SPECULOS_VNC_PORT.toString(),
       "--user",
-      `${process.getuid?.() ?? 1000}:${process.getgid?.() ?? 1000}`,
+      `${process.getuid?.() ?? DEFAULT_UID_GID}:${process.getgid?.() ?? DEFAULT_UID_GID}`,
     ];
 
     // Add "-p" flag for prod signatures only when CAL mode is "prod"
@@ -190,7 +193,9 @@ export class SpeculosServiceController implements ServiceController {
     });
 
     // Wait for the container to fully initialize before proceeding
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) =>
+      setTimeout(resolve, CONTAINER_INIT_DELAY_MS),
+    );
   }
 
   async stop(): Promise<void> {

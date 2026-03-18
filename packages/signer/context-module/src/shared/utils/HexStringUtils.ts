@@ -1,9 +1,12 @@
+const HEX_RADIX = 16;
+const HEX_BYTE_LENGTH = 2;
+
 export class HexStringUtils {
   static stringToHex(str: string): string {
     let hexString = "";
     for (let i = 0; i < str.length; i++) {
-      const hex = str.charCodeAt(i).toString(16);
-      hexString += hex.padStart(2, "0"); // Ensure each hex code is at least 2 characters long
+      const hex = str.charCodeAt(i).toString(HEX_RADIX);
+      hexString += hex.padStart(HEX_BYTE_LENGTH, "0");
     }
     return hexString;
   }
@@ -13,13 +16,13 @@ export class HexStringUtils {
     signature: string,
     tag: string,
   ): string {
-    // Ensure correct padding
-    if (signature.length % 2 !== 0) {
+    if (signature.length % HEX_BYTE_LENGTH !== 0) {
       signature = "0" + signature;
     }
-    // TLV encoding as according to trusted name documentation
-    let signatureLength = (signature.length / 2).toString(16);
-    if (signatureLength.length % 2 !== 0) {
+    let signatureLength = (signature.length / HEX_BYTE_LENGTH).toString(
+      HEX_RADIX,
+    );
+    if (signatureLength.length % HEX_BYTE_LENGTH !== 0) {
       signatureLength = "0" + signatureLength;
     }
 

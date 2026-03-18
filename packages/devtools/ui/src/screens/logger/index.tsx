@@ -2,6 +2,10 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { Divider, Flex } from "@ledgerhq/react-ui";
 
 import { NotConnectedMessage } from "../../shared/NotConnectedMessage";
+
+const SIGNIFICANT_SHRINK_RATIO = 0.5;
+const SMALL_DATASET_THRESHOLD = 100;
+const JSON_INDENT = 2;
 import { LoggerToolbar } from "./LoggerToolbar";
 import { LogsTable } from "./logsTable";
 import { type LogData } from "./types";
@@ -44,8 +48,8 @@ export const Logger: React.FC<Props> = ({
     // If data shrunk significantly, increment nonce to force LogsTable remount
     // This resets the virtualizer state which can get corrupted when filtering
     if (
-      currentLength < prevLength * 0.5 ||
-      (currentLength < 100 && currentLength < prevLength)
+      currentLength < prevLength * SIGNIFICANT_SHRINK_RATIO ||
+      (currentLength < SMALL_DATASET_THRESHOLD && currentLength < prevLength)
     ) {
       setNonce((prev) => prev + 1);
     }
@@ -107,7 +111,7 @@ export const Logger: React.FC<Props> = ({
       const { payload, ...rest } = log;
       return rest;
     });
-    const blob = new Blob([JSON.stringify(logsToExport, null, 2)], {
+    const blob = new Blob([JSON.stringify(logsToExport, null, JSON_INDENT)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);

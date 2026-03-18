@@ -8,6 +8,9 @@ import { MockService } from "./service/MockService";
 import { SendService } from "./service/SendService";
 import { DefaultHttpClient } from "./DefaultHttpClient";
 
+const HEX_RADIX = 16;
+const HEX_PAD_LENGTH = 2;
+
 export class MockClient {
   // Services
   connectivityService: ConnectivityService;
@@ -69,7 +72,9 @@ export class MockClient {
 
   //TODO: Move to Helper ?
   toHexString(arr: Uint8Array): string {
-    return Array.from(arr, (i) => i.toString(16).padStart(2, "0")).join("");
+    return Array.from(arr, (i) =>
+      i.toString(HEX_RADIX).padStart(HEX_PAD_LENGTH, "0"),
+    ).join("");
   }
 
   fromHexString(hexString: string): Uint8Array {
@@ -77,7 +82,7 @@ export class MockClient {
       return Uint8Array.from([]);
     }
     return new Uint8Array(
-      hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16)),
+      hexString.match(/.{1,2}/g)!.map((byte) => parseInt(byte, HEX_RADIX)),
     );
   }
 }

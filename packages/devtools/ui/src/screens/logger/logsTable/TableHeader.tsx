@@ -5,6 +5,8 @@ import styled from "styled-components";
 import { type LogData } from "../types";
 import { TABLE_STYLES } from "./constants";
 
+const DEFAULT_MIN_COLUMN_SIZE = 50;
+
 const StyledThead = styled.thead`
   display: grid;
   position: sticky;
@@ -65,7 +67,8 @@ export const TableHeader: React.FC<TableHeaderProps> = ({ headerGroups }) => {
               (header.column.columnDef.meta as { flexible?: boolean })
                 ?.flexible ?? false;
             const size = header.getSize();
-            const minSize = header.column.columnDef.minSize ?? 50;
+            const minSize =
+              header.column.columnDef.minSize ?? DEFAULT_MIN_COLUMN_SIZE;
             return (
               <StyledTh
                 key={header.id}

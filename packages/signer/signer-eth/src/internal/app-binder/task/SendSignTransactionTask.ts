@@ -24,6 +24,10 @@ import { StartTransactionCommand } from "@internal/app-binder/command/StartTrans
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 const PATH_SIZE = 4;
+const VRS_ELEMENT_COUNT = 3;
+const BITS_PER_BYTE = 8;
+const EIP155_V_MULTIPLIER = 2;
+const EIP155_V_OFFSET = 35;
 
 type SendSignTransactionTaskArgs = {
   derivationPath: string;
@@ -152,7 +156,7 @@ export class SendSignTransactionTask {
         // Decode the RLP of the transaction and keep only the last 3 elements (v, r, s)
         const decodedRlp = decodeRlp(serializedTransaction);
         if (Array.isArray(decodedRlp)) {
-          const decodedVrs = decodedRlp.slice(-3);
+          const decodedVrs = decodedRlp.slice(-VRS_ELEMENT_COUNT);
           // Encode those values back to RLP in order to get the length of this serialized list
           // Result should be something like [0xc0 + list payload length, list.map(rlp)]
           // since only v can be used to store the chainId in legacy transactions
@@ -220,16 +224,18 @@ export class SendSignTransactionTask {
       const MAX_UINT32 = 0xffffffff;
       let truncatedChainId = this.args.chainId;
       while (truncatedChainId > MAX_UINT32) {
-        truncatedChainId = truncatedChainId >> 8;
+        truncatedChainId = truncatedChainId >> BITS_PER_BYTE;
       }
 
       // Then truncate the parity encoding
       const MAX_UINT8 = 0xff;
-      const v0 = (truncatedChainId * 2 + 35) & MAX_UINT8;
+      const v0 =
+        (truncatedChainId * EIP155_V_MULTIPLIER + EIP155_V_OFFSET) & MAX_UINT8;
 
       // Now reconstruct the full V
       const parity = v == v0 ? 0 : 1;
-      const fullV = parity + this.args.chainId * 2 + 35;
+      const fullV =
+        parity + this.args.chainId * EIP155_V_MULTIPLIER + EIP155_V_OFFSET;
       return { v: fullV, r, s };
     });
   }

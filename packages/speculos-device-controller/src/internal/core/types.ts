@@ -10,7 +10,8 @@ export type Range<
   N extends number,
   Acc extends number[] = [],
 > = Acc["length"] extends N ? Acc[number] : Range<N, [...Acc, Acc["length"]]>;
-export type Percent = Range<101>;
+type PercentRangeSize = 101;
+export type Percent = Range<PercentRangeSize>;
 
 export type PercentCoordinates = { x: Percent; y: Percent };
 

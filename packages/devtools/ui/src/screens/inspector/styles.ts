@@ -1,5 +1,7 @@
 import styled, { css } from "styled-components";
 
+const DISCONNECTED_OPACITY = 0.6;
+
 // Shared button styles
 const buttonBase = css`
   color: white;
@@ -69,7 +71,8 @@ export const Card = styled.div<{
         return "#fafafa";
     }
   }};
-  opacity: ${({ $variant }) => ($variant === "disconnected" ? 0.6 : 1)};
+  opacity: ${({ $variant }) =>
+    $variant === "disconnected" ? DISCONNECTED_OPACITY : 1};
 `;
 
 export const CardHeader = styled.div`

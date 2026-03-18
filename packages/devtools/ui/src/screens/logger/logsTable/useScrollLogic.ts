@@ -8,6 +8,9 @@ import React, {
 import { SCROLL_THRESHOLD } from "./constants";
 import { useResizeObserver } from "./useResizeObserver";
 
+const SIGNIFICANT_SHRINK_RATIO = 0.5;
+const NEAR_EMPTY_THRESHOLD = 3;
+
 export const useScrollLogic = ({ data }: { data: unknown[] }) => {
   const scrollContainerRef = React.useRef<HTMLDivElement>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
@@ -54,7 +57,10 @@ export const useScrollLogic = ({ data }: { data: unknown[] }) => {
     prevDataLengthRef.current = currentLength;
 
     // If data shrunk significantly (more than 50% reduction or to near-empty)
-    if (currentLength < prevLength * 0.5 || currentLength <= 3) {
+    if (
+      currentLength < prevLength * SIGNIFICANT_SHRINK_RATIO ||
+      currentLength <= NEAR_EMPTY_THRESHOLD
+    ) {
       scrollContainerRef.current?.scrollTo({ top: 0, behavior: "instant" });
       setAutoScrollEnabled(true);
     }

@@ -27,6 +27,7 @@ import {
 } from "./utils/aleoApplicationErrors";
 
 const EXPECTED_DATA_LENGTH = 3;
+const VERSION_PATCH_INDEX = 2;
 
 export class GetAppConfigCommand
   implements Command<AppConfig, void, AleoErrorCodes>
@@ -67,7 +68,7 @@ export class GetAppConfigCommand
       }
 
       const config: AppConfig = {
-        version: `${buffer[0]}.${buffer[1]}.${buffer[2]}`,
+        version: `${buffer[0]}.${buffer[1]}.${buffer[VERSION_PATCH_INDEX]}`,
       };
 
       return CommandResultFactory({

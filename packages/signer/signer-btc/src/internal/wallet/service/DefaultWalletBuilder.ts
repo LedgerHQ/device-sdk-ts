@@ -11,6 +11,8 @@ import type { MerkleTreeBuilder } from "@internal/merkle-tree/service/MerkleTree
 import { Wallet } from "@internal/wallet/model/Wallet";
 import type { WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 
+const HMAC_SIZE = 32;
+
 @injectable()
 export class DefaultWalletBuilder implements WalletBuilder {
   constructor(
@@ -49,7 +51,7 @@ export class DefaultWalletBuilder implements WalletBuilder {
     const name = "";
     // Default wallets hmac should be exactly 32 zeros as described here:
     // https://github.com/LedgerHQ/app-bitcoin-new/blob/master/doc/bitcoin.md#get_wallet_address
-    const hmac = new Uint8Array(32).fill(0);
+    const hmac = new Uint8Array(HMAC_SIZE).fill(0);
 
     return this.fromRegisteredWallet(
       new RegisteredWallet(name, wallet.template, [key], hmac),
@@ -63,7 +65,7 @@ export class DefaultWalletBuilder implements WalletBuilder {
     const descriptorBuffer = encoder.encode(walletPolicy.descriptorTemplate);
     // For wallet registration, we use an empty hmac initially.
     // The real hmac will be returned by the device after registration.
-    const hmac = new Uint8Array(32).fill(0);
+    const hmac = new Uint8Array(HMAC_SIZE).fill(0);
     return new Wallet({
       name: walletPolicy.name,
       descriptorTemplate: walletPolicy.descriptorTemplate,

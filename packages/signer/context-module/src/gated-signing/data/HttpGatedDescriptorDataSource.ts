@@ -24,6 +24,8 @@ import {
   type GetGatedDescriptorResponse,
 } from "./GatedDescriptorDataSource";
 
+const HEX_PREFIX_LENGTH = 2;
+
 @injectable()
 export class HttpGatedDescriptorDataSource
   implements GatedDescriptorDataSource
@@ -74,7 +76,7 @@ export class HttpGatedDescriptorDataSource
 
     const normalizedAddress = contractAddress.toLowerCase();
     const selectorWithout0x = selector.startsWith("0x")
-      ? selector.slice(2).toLowerCase()
+      ? selector.slice(HEX_PREFIX_LENGTH).toLowerCase()
       : selector.toLowerCase();
     const selectorWith0x = `0x${selectorWithout0x}`;
 

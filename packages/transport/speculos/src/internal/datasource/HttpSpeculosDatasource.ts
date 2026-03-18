@@ -4,7 +4,8 @@ import PACKAGE from "@root/package.json";
 
 import { type SpeculosDatasource } from "./SpeculosDatasource";
 
-const TIMEOUT = 2000; // 2 second timeout for availability check
+const TIMEOUT = 2000;
+const SSE_DATA_PREFIX_LENGTH = 6;
 
 const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
 
@@ -118,7 +119,7 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
 
     const emitParsedEvent = (line: string) => {
       if (line.startsWith("data: ")) {
-        const payload = line.slice(6);
+        const payload = line.slice(SSE_DATA_PREFIX_LENGTH);
         try {
           onEvent(JSON.parse(payload));
         } catch {

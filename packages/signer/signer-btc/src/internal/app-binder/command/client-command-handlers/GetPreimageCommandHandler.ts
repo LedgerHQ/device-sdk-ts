@@ -13,11 +13,14 @@ import {
 } from "./ClientCommandHandlersTypes";
 import { ClientCommandHandlerError } from "./Errors";
 
+const HASH_OFFSET = 2;
+const HASH_END = 34;
+
 export const GetPreimageCommandHandler: CommandHandler = (
   request: Uint8Array,
   commandHandlerContext: CommandHandlerContext,
 ): Either<DmkError, Uint8Array> => {
-  const hashFromRequest = request.slice(2, 34);
+  const hashFromRequest = request.slice(HASH_OFFSET, HASH_END);
   const maybePreimage =
     commandHandlerContext.dataStore.getPreimage(hashFromRequest);
 

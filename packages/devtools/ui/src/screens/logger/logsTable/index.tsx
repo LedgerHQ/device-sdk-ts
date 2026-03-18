@@ -9,6 +9,8 @@ import styled from "styled-components";
 
 import { type LogData } from "../types";
 import { TABLE_CONFIG } from "./constants";
+
+const SMALL_ROW_COUNT_THRESHOLD = 100;
 import { ScrollDownButton } from "./ScrollDownButton";
 import { TableBody } from "./TableBody";
 import { createColumns } from "./TableColumns";
@@ -143,7 +145,7 @@ export const LogsTable: React.FC<ScrollableLogTableProps> = ({
   // Scroll to top first to avoid invalid scroll position, then recalculate
   // Use useLayoutEffect to run synchronously before browser paints
   useLayoutEffect(() => {
-    if (rows.length < 100 && rows.length > 0) {
+    if (rows.length < SMALL_ROW_COUNT_THRESHOLD && rows.length > 0) {
       rowVirtualizer.scrollToOffset(0);
       rowVirtualizer.measure();
     }

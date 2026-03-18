@@ -1,5 +1,7 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 
+import type { BitsPerPixel } from "@api/customLockScreenUtils/types";
+
 /**
  * Device model IDs that support custom lock screen functionality.
  */
@@ -32,7 +34,7 @@ export type ScreenSpecs = {
   /** Number of pixels at the right of the screen which are not visible */
   readonly paddingRight: number;
   /** Number of bits per pixel (1 for black/white, 4 for 16 gray levels) */
-  readonly bitsPerPixel: 1 | 4;
+  readonly bitsPerPixel: BitsPerPixel;
 };
 
 const NO_PADDING = {

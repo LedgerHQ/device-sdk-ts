@@ -50,6 +50,8 @@ import {
   GetCalldataDescriptorsParams,
 } from "./CalldataDescriptorDataSource";
 
+const HEX_PREFIX_LENGTH = 2;
+
 @injectable()
 export class HttpCalldataDescriptorDataSource
   implements CalldataDescriptorDataSource
@@ -114,7 +116,7 @@ export class HttpCalldataDescriptorDataSource
     for (const calldata of dto) {
       // Normalize the address and selector
       address = address.toLowerCase();
-      selector = `0x${selector.slice(2).toLowerCase()}`;
+      selector = `0x${selector.slice(HEX_PREFIX_LENGTH).toLowerCase()}`;
       const calldataDescriptor =
         calldata.descriptors_calldata?.[address]?.[selector];
 

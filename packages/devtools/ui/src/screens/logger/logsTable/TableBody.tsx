@@ -6,6 +6,9 @@ import styled from "styled-components";
 import { type LogData } from "../types";
 import { TABLE_STYLES } from "./constants";
 
+const DEFAULT_MIN_COLUMN_SIZE = 50;
+const EVEN_ROW_DIVISOR = 2;
+
 const StyledTbody = styled.tbody<{ totalSize: number }>`
   display: grid;
   height: ${({ totalSize }) => totalSize}px;
@@ -88,14 +91,15 @@ export const TableBody: React.FC<TableBodyProps> = ({
                 (cell.column.columnDef.meta as { flexible?: boolean })
                   ?.flexible ?? false;
               const size = cell.column.getSize();
-              const minSize = cell.column.columnDef.minSize ?? 50;
+              const minSize =
+                cell.column.columnDef.minSize ?? DEFAULT_MIN_COLUMN_SIZE;
               return (
                 <StyledTd
                   key={cell.id}
                   size={size}
                   minSize={minSize}
                   flexible={flexible}
-                  isEven={rowIndex % 2 === 0}
+                  isEven={rowIndex % EVEN_ROW_DIVISOR === 0}
                   isHighlighted={isHighlighted}
                   isCurrentMatch={isCurrentMatch}
                 >

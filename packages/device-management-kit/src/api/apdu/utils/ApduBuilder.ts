@@ -5,7 +5,9 @@ import { ByteArrayBuilder } from "./ByteArrayBuilder";
 
 export const HEADER_LENGTH = 5;
 export const APDU_MAX_PAYLOAD = 255;
-export const APDU_MAX_SIZE = APDU_MAX_PAYLOAD + 5;
+export const APDU_MAX_SIZE = APDU_MAX_PAYLOAD + HEADER_LENGTH;
+
+const BYTE_MASK = 0xff;
 
 export type ApduBuilderArgs = {
   readonly ins: number;
@@ -39,10 +41,10 @@ export class ApduBuilder {
   private data: ByteArrayBuilder = new ByteArrayBuilder(APDU_MAX_PAYLOAD);
 
   constructor({ ins, cla, p1, p2 }: ApduBuilderArgs) {
-    this._cla = cla & 0xff;
-    this._ins = ins & 0xff;
-    this._p1 = p1 & 0xff;
-    this.p2 = p2 & 0xff;
+    this._cla = cla & BYTE_MASK;
+    this._ins = ins & BYTE_MASK;
+    this._p1 = p1 & BYTE_MASK;
+    this.p2 = p2 & BYTE_MASK;
   }
 
   // ==========

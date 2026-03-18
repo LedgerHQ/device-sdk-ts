@@ -13,6 +13,8 @@ import { inspect } from "util";
 
 import { type FieldType } from "@/hooks/useForm";
 
+const JSON_INDENT = 2;
+
 export type DeviceActionResponseProps<Output, Error, IntermediateValue> = {
   args: Record<string, FieldType>;
   date: Date;
@@ -95,7 +97,7 @@ function DeviceActionResponseInternal<
         content={
           <Text color="neutral.c00" whiteSpace="pre-wrap">
             Arguments:{"\n"}
-            {JSON.stringify(args, bufferStringifyReplacer, 2)}
+            {JSON.stringify(args, bufferStringifyReplacer, JSON_INDENT)}
           </Text>
         }
       >
@@ -141,7 +143,7 @@ function DeviceActionResponseInternal<
               : JSON.stringify(
                   props.deviceActionState,
                   bufferStringifyReplacer,
-                  2,
+                  JSON_INDENT,
                 )}
         </Text>
       )}
