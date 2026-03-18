@@ -5,14 +5,11 @@ import {
   type CommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type AppConfig } from "@api/model/AppConfig";
+
 import { type ZcashErrorCodes } from "./utils/zcashApplicationErrors";
 
-export type GetAppConfigCommandResponse = {
-  // Define your app configuration response fields here
-  // Example:
-  // version: string;
-  // flags: number;
-};
+export type GetAppConfigCommandResponse = AppConfig;
 
 export class GetAppConfigCommand
   implements Command<GetAppConfigCommandResponse, void, ZcashErrorCodes>

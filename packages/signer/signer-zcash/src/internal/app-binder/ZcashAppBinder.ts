@@ -1,23 +1,24 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
   type InternalApi,
   SendCommandInAppDeviceAction,
-  CallTaskInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
+
+import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
-import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
-import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 
-import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { GetAddressCommand } from "./command/GetAddressCommand";
-import { SignTransactionTask } from "./task/SignTransactionTask";
+import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { SignMessageCommand } from "./command/SignMessageCommand";
+import { SignTransactionTask } from "./task/SignTransactionTask";
 
 @injectable()
 export class ZcashAppBinder {

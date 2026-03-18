@@ -6,6 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
+
 import { type ZcashErrorCodes } from "./utils/zcashApplicationErrors";
 
 export type SignMessageCommandArgs = {

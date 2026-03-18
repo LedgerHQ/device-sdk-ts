@@ -1,18 +1,19 @@
 import React, { useMemo } from "react";
 import {
-  type GetAppConfigDAError,
-  type GetAppConfigDAIntermediateValue,
-  type GetAppConfigDAOutput,
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
-  type SignTransactionDAError,
-  type SignTransactionDAIntermediateValue,
-  type SignTransactionDAOutput,
+  type GetAppConfigDAError,
+  type GetAppConfigDAIntermediateValue,
+  type GetAppConfigDAOutput,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-zcash";
+
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
