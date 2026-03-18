@@ -170,6 +170,7 @@ export abstract class XStateDeviceAction<
     >();
 
     let hasLoggedInput = false;
+    let lastLoggedState = "";
 
     const handleActorSnapshot = (
       snapshot: SnapshotFrom<typeof stateMachine>,
@@ -184,15 +185,21 @@ export abstract class XStateDeviceAction<
         });
       }
 
-      // Log internal state on each state transition
-      if (this.logger && status === "active") {
+      // Log internal state on each state transition (deduplicate repeated states)
+      if (this.logger && (status === "active" || status === "done")) {
         const stateValue =
           typeof snapshot.value === "string"
             ? snapshot.value
             : JSON.stringify(snapshot.value);
-        this.logger.debug(`[XStateDeviceAction] State: ${stateValue}`, {
-          data: { internalState: context._internalState },
-        });
+        if (stateValue !== lastLoggedState || status === "done") {
+          lastLoggedState = stateValue;
+          this.logger.debug(`[XStateDeviceAction] State: ${stateValue}`, {
+            data: {
+              internalState: context._internalState,
+              intermediateValue: context.intermediateValue,
+            },
+          });
+        }
       }
 
       switch (status) {

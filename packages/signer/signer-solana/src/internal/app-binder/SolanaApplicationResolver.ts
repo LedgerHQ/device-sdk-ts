@@ -9,6 +9,8 @@ import {
 import { APP_NAME } from "./constants";
 
 const DEFAULT_VERSION = "0.0.1";
+export const SOLANA_MIN_SPL_VERSION = "1.9.2";
+export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 
 export class SolanaApplicationResolver implements ApplicationResolver {
   resolve(deviceState: DeviceSessionState, _appConfig: AppConfig): ResolvedApp {
