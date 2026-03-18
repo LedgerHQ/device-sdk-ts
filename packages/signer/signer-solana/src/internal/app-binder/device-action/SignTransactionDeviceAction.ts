@@ -13,7 +13,7 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Left, type Maybe, Right } from "purify-ts";
-import { assign, fromPromise, setup } from "xstate";
+import { and, assign, fromPromise, setup } from "xstate";
 
 import {
   type SignTransactionDAError,
@@ -38,7 +38,10 @@ import {
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
-import { SolanaApplicationResolver } from "@internal/app-binder/SolanaApplicationResolver";
+import {
+  SOLANA_APP_SPL_MIN_VERSION,
+  SolanaApplicationResolver,
+} from "@internal/app-binder/SolanaApplicationResolver";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -142,14 +145,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) =>
           context.input.transactionOptions?.skipOpenApp || false,
-        isSPLSupported: ({ context }) =>
+        isSplSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
             new SolanaApplicationResolver(),
           )
-            .withMinVersionExclusive("1.4.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
+            .withMinVersionInclusive(SOLANA_APP_SPL_MIN_VERSION)
             .check(),
         isAnSPLTransaction: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
@@ -269,7 +272,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
-            { target: "InspectTransaction", guard: "noInternalError" },
+            {
+              target: "InspectTransaction",
+              guard: and(["noInternalError", "isSplSupported"]),
+            },
+            { target: "SignTransaction", guard: "noInternalError" },
             { target: "Error" },
           ],
         },

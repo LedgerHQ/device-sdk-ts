@@ -1,5 +1,13 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.7.1
+
+### Patch Changes
+
+- [`98af6cf`](https://github.com/LedgerHQ/device-sdk-ts/commit/98af6cf4d1b25dcf2940b5607524c7552ea886e9) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patch solana app version gating for sign transaction
+
+- [#1347](https://github.com/LedgerHQ/device-sdk-ts/pull/1347) [`ae31fcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ae31fcc504186452ed86c18dc6f656ac356998a3) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
 ## 1.7.0
 
 ### Minor Changes
