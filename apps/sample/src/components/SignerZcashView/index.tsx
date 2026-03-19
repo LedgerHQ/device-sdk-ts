@@ -19,6 +19,9 @@ import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceAct
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useSignerZcash } from "@/providers/SignerZcashProvider";
 
+const HEX_PREFIX_LENGTH = 2;
+const HEX_RADIX = 16;
+
 export const SignerZcashView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
@@ -92,14 +95,14 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
           const txBytes = transaction.startsWith("0x")
             ? new Uint8Array(
                 transaction
-                  .slice(2)
+                  .slice(HEX_PREFIX_LENGTH)
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
+                  ?.map((byte) => parseInt(byte, HEX_RADIX)) ?? [],
               )
             : new Uint8Array(
                 transaction
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
+                  ?.map((byte) => parseInt(byte, HEX_RADIX)) ?? [],
               );
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,
