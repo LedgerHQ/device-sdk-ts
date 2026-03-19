@@ -1,15 +1,25 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { inject, injectable } from "inversify";
+import { inject, injectable, optional } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
+import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
-import { type SigningService } from "@root/src/domain/services/SigningService";
+import {
+  type SigningServiceResult,
+  type TransactionSigningService,
+} from "@root/src/domain/services/TransactionSigningService";
+import { type TypedDataSigningService } from "@root/src/domain/services/TypedDataSigningService";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 
+/**
+ * Device repository backed by a Speculos emulator.
+ *
+ * Dispatches signing to the correct service based on the {@link SignableInput}
+ * discriminant (`kind`), keeping the repository itself chain-agnostic.
+ */
 @injectable()
 export class SpeculosDeviceRepository implements DeviceRepository {
   private readonly logger: LoggerPublisherService;
@@ -17,8 +27,11 @@ export class SpeculosDeviceRepository implements DeviceRepository {
   constructor(
     @inject(TYPES.SigningFlowOrchestrator)
     private readonly orchestrator: FlowOrchestrator,
-    @inject(TYPES.SigningService)
-    private readonly signingService: SigningService,
+    @inject(TYPES.TransactionSigningService)
+    private readonly transactionSigningService: TransactionSigningService,
+    @inject(TYPES.TypedDataSigningService)
+    @optional()
+    private readonly typedDataSigningService: TypedDataSigningService | null,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.ScreenshotSaver)
@@ -27,45 +40,47 @@ export class SpeculosDeviceRepository implements DeviceRepository {
     this.logger = loggerFactory("device-repository");
   }
 
-  async performSignTransaction(
-    transaction: TransactionInput,
+  /** {@inheritDoc DeviceRepository.performSign} */
+  async performSign(
+    input: SignableInput,
     derivationPath: string,
   ): Promise<TestResult> {
-    this.logger.debug("Performing sign transaction", {
-      data: { derivationPath, transaction },
+    this.logger.debug("Performing sign", {
+      data: { derivationPath, kind: input.kind },
     });
 
     await this.screenshotSaver.save();
 
-    const signTransactionDA = this.signingService.signTransaction(
-      derivationPath,
-      transaction.rawTx,
-    );
+    let signingResult: SigningServiceResult;
 
-    return await this.orchestrator.orchestrateSigningFlow(
-      signTransactionDA,
-      transaction,
-    );
-  }
+    switch (input.kind) {
+      case SignableInputKind.Transaction: {
+        signingResult = this.transactionSigningService.signTransaction(
+          derivationPath,
+          input.rawTx,
+        );
+        break;
+      }
+      case SignableInputKind.TypedData: {
+        if (!this.typedDataSigningService) {
+          throw new Error(
+            "TypedDataSigningService is not available in this configuration",
+          );
+        }
+        signingResult = this.typedDataSigningService.signTypedData(
+          derivationPath,
+          input.data,
+        );
+        break;
+      }
+      default: {
+        const _exhaustive: never = input;
+        throw new Error(
+          `Unsupported input kind: ${(_exhaustive as SignableInput).kind}`,
+        );
+      }
+    }
 
-  async performSignTypedData(
-    typedData: TypedDataInput,
-    derivationPath: string,
-  ): Promise<TestResult> {
-    this.logger.debug("Performing sign typed data", {
-      data: { derivationPath, typedData },
-    });
-
-    await this.screenshotSaver.save();
-
-    const signTypedDataDA = this.signingService.signTypedData(
-      derivationPath,
-      typedData.data,
-    );
-
-    return await this.orchestrator.orchestrateSigningFlow(
-      signTypedDataDA,
-      typedData,
-    );
+    return await this.orchestrator.orchestrateSigningFlow(signingResult, input);
   }
 }

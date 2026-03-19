@@ -19,6 +19,12 @@ import { type StateHandlerResult } from "@root/src/infrastructure/state-handlers
 
 const DEBOUNCE_TIME = 1500;
 
+/**
+ * Default orchestrator for device signing flows.
+ *
+ * Which {@link UserInteractionRequired} values are considered "signable" is
+ * injected via DI (`SignableInteractions`)
+ */
 @injectable()
 export class DefaultFlowOrchestrator implements FlowOrchestrator {
   private readonly logger: LoggerPublisherService;
@@ -34,6 +40,8 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
     private readonly optOutStateHandler: OptOutStateHandler,
     @inject(TYPES.SignTransactionStateHandler)
     private readonly signTransactionStateHandler: SignTransactionStateHandler,
+    @inject(TYPES.SignableInteractions)
+    private readonly signableInteractions: Set<UserInteractionRequired>,
   ) {
     this.logger = loggerFactory("signing-flow-orchestrator");
   }
@@ -109,10 +117,7 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
         return await this.completeStateHandler.handle({ input });
       case DeviceActionStatus.Pending: {
         const { requiredUserInteraction } = state.intermediateValue;
-        if (
-          requiredUserInteraction === UserInteractionRequired.SignTransaction ||
-          requiredUserInteraction === UserInteractionRequired.SignTypedData
-        ) {
+        if (this.signableInteractions.has(requiredUserInteraction)) {
           const result = await this.signTransactionStateHandler.handle({
             input,
           });

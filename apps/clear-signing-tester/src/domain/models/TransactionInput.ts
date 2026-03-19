@@ -1,5 +1,6 @@
 import { type SignableInputKind } from "./SignableInputKind";
 
+/** Domain model representing a serialised transaction to be signed on the device. */
 export type TransactionInput = {
   readonly kind: SignableInputKind.Transaction;
   readonly rawTx: string;

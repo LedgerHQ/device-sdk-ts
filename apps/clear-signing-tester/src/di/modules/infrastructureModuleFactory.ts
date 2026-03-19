@@ -1,3 +1,4 @@
+import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
@@ -22,7 +23,8 @@ import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrato
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
-import { type SigningService } from "@root/src/domain/services/SigningService";
+import { type TransactionSigningService } from "@root/src/domain/services/TransactionSigningService";
+import { type TypedDataSigningService } from "@root/src/domain/services/TypedDataSigningService";
 import { SpeculosNanoController } from "@root/src/infrastructure/adapters/device-controllers/SpeculosNanoController";
 import { SpeculosTouchscreenController } from "@root/src/infrastructure/adapters/device-controllers/SpeculosTouchscreenController";
 import { EthersTransactionCrafter } from "@root/src/infrastructure/adapters/evm/EthersTransactionCrafter";
@@ -75,9 +77,29 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     bind<ScreenAnalyzerService>(TYPES.ScreenAnalyzerService)
       .to(DefaultScreenAnalyzer)
       .inSingletonScope();
-    bind<SigningService>(TYPES.SigningService)
-      .to(DefaultSigningService)
+
+    // Ethereum signing: DefaultSigningService implements both interfaces.
+    // Bound to itself as a singleton, then aliased so both DI tokens resolve
+    // to the same instance. DMKServiceController injects the concrete class
+    // directly to call setSigner().
+    bind(DefaultSigningService).toSelf().inSingletonScope();
+    bind<TransactionSigningService>(TYPES.TransactionSigningService)
+      .toDynamicValue((ctx) => ctx.get(DefaultSigningService))
       .inSingletonScope();
+    bind<TypedDataSigningService>(TYPES.TypedDataSigningService)
+      .toDynamicValue((ctx) => ctx.get(DefaultSigningService))
+      .inSingletonScope();
+
+    // Ethereum supports both transaction and typed-data signing interactions
+    bind<Set<UserInteractionRequired>>(
+      TYPES.SignableInteractions,
+    ).toConstantValue(
+      new Set<UserInteractionRequired>([
+        UserInteractionRequired.SignTransaction,
+        UserInteractionRequired.SignTypedData,
+      ]),
+    );
+
     bind<FlowOrchestrator>(TYPES.SigningFlowOrchestrator)
       .to(DefaultFlowOrchestrator)
       .inSingletonScope();

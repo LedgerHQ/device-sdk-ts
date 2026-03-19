@@ -60,7 +60,7 @@ export class TestContractUseCase {
       this.logger.info(`Testing transaction ${index + 1}/${txs.length}`);
 
       try {
-        const result = await this.deviceRepository.performSignTransaction(
+        const result = await this.deviceRepository.performSign(
           transaction,
           config.derivationPath,
         );

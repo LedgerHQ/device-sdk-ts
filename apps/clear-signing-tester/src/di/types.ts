@@ -10,8 +10,10 @@ export const TYPES = {
   EtherscanAdapter: Symbol.for("EtherscanAdapter"),
   TransactionCrafter: Symbol.for("TransactionCrafter"),
   ScreenAnalyzerService: Symbol.for("ScreenAnalyzerService"),
-  SigningService: Symbol.for("SigningService"),
+  TransactionSigningService: Symbol.for("TransactionSigningService"),
+  TypedDataSigningService: Symbol.for("TypedDataSigningService"),
   SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
+  SignableInteractions: Symbol.for("SignableInteractions"),
   RetryService: Symbol.for("RetryService"),
   AppVersionResolver: Symbol.for("AppVersionResolver"),
 
