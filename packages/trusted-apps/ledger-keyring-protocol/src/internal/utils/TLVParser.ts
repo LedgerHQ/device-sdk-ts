@@ -14,6 +14,7 @@ const COMMAND_TAG_MIN = 0x10;
 const COMMAND_TAG_MAX = 0x3f;
 const HEX_RADIX = 16;
 const HEX_BYTE_LENGTH = 2;
+const TLV_HEADER_LENGTH = 2;
 const INT_LENGTH_UINT16 = 2;
 const INT_LENGTH_UINT32 = 4;
 
@@ -143,7 +144,7 @@ export class TLVParser {
     return bytes
       .chain<LKRPParsingError, LKRPCommandData>((value) => {
         const type = value[0];
-        this.offset -= value.length - HEX_BYTE_LENGTH; // Adjust offset to the start of the command
+        this.offset -= value.length - TLV_HEADER_LENGTH; // Adjust offset to the start of the command
         switch (type) {
           // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Seed-(0x10)
           case CommandTags.Seed:
