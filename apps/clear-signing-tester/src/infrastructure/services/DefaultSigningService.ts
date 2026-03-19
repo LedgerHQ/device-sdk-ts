@@ -6,12 +6,15 @@ import {
 import { injectable } from "inversify";
 
 import {
-  type SigningService,
   type SigningServiceResult,
-} from "@root/src/domain/services/SigningService";
+  type TransactionSigningService,
+} from "@root/src/domain/services/TransactionSigningService";
+import { type TypedDataSigningService } from "@root/src/domain/services/TypedDataSigningService";
 
 @injectable()
-export class DefaultSigningService implements SigningService {
+export class DefaultSigningService
+  implements TransactionSigningService, TypedDataSigningService
+{
   private signer: SignerEth | null = null;
 
   constructor() {}
@@ -27,12 +30,10 @@ export class DefaultSigningService implements SigningService {
     if (!this.signer) {
       throw new Error("Signer not initialized. Call initialize() first.");
     }
-
     const rawTx = hexaStringToBuffer(transaction);
     if (!rawTx) {
       throw new Error("Invalid transaction format");
     }
-
     return this.signer.signTransaction(derivationPath, rawTx, {
       skipOpenApp: true,
     }) as SigningServiceResult;
@@ -45,13 +46,10 @@ export class DefaultSigningService implements SigningService {
     if (!this.signer) {
       throw new Error("Signer not initialized. Call initialize() first.");
     }
-
     const rawTypedData = JSON.parse(typedData) as TypedData;
-
     if (!rawTypedData) {
       throw new Error("Invalid typed data format");
     }
-
     return this.signer.signTypedData(derivationPath, rawTypedData, {
       skipOpenApp: true,
     }) as SigningServiceResult;

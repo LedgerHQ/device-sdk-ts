@@ -7,10 +7,9 @@ import { inject, injectable } from "inversify";
 import { debounceTime, distinctUntilChanged, tap } from "rxjs";
 
 import { TYPES } from "@root/src/di/types";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
-import { type SigningServiceResult } from "@root/src/domain/services/SigningService";
+import { type SigningServiceResult } from "@root/src/domain/services/TransactionSigningService";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
 import { ErrorStateHandler } from "@root/src/infrastructure/state-handlers/ErrorStateHandler";
@@ -41,7 +40,7 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
 
   async orchestrateSigningFlow(
     { observable }: SigningServiceResult,
-    input: TransactionInput | TypedDataInput,
+    input: SignableInput,
   ): Promise<TestResult> {
     return await new Promise<TestResult>((resolve) => {
       observable
@@ -97,7 +96,7 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
   private async handleState(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Device state type is complex and varies
     state: any,
-    input: TransactionInput | TypedDataInput,
+    input: SignableInput,
   ) {
     const ongoingResult: StateHandlerResult = {
       status: "ongoing",

@@ -7,6 +7,8 @@ export type SpeculosConfig = {
   vncPort: number;
   device: "stax" | "nanox" | "nanos" | "nanos+" | "flex" | "apex";
   dockerImageTag: string;
+  // Ledger app to load (e.g. "Ethereum", "Solana"). Defaults to "Ethereum"
+  appName?: string;
   os?: string;
   version?: string;
   plugin?: string;
