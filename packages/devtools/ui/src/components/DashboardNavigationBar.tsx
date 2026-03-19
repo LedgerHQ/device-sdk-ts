@@ -1,6 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 
+const DISABLED_OPACITY = 0.5;
+
 export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
@@ -45,7 +47,8 @@ const NavButton = styled.button<{
   font-weight: ${({ $isActive }) => ($isActive ? "600" : "normal")};
   font-size: 13px;
   cursor: pointer;
-  opacity: ${({ $isConnected }) => ($isConnected === false ? 0.5 : 1)};
+  opacity: ${({ $isConnected }) =>
+    $isConnected === false ? DISABLED_OPACITY : 1};
   transition: all 0.15s ease;
 
   &:hover {

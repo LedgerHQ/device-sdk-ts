@@ -25,6 +25,14 @@ import { from, type Observable } from "rxjs";
 import { HttpSpeculosDatasource } from "@internal/datasource/HttpSpeculosDatasource";
 import { type SpeculosDatasource } from "@internal/datasource/SpeculosDatasource";
 
+const DEVICE_BLOCK_SIZE = 32;
+const MEMORY_SIZE_KB = 320;
+const BYTES_PER_KB = 1024;
+const DEVICE_MASK = 0x31100000;
+const HEX_PREFIX_LENGTH = 2;
+const STATUS_CODE_HEX_LENGTH = 4;
+const DISCONNECT_CHECK_INTERVAL_MS = 2000;
+
 export const speculosIdentifier: TransportIdentifier =
   "SPECULOS_HTTP_TRANSPORT";
 
@@ -55,11 +63,11 @@ export class SpeculosTransport implements Transport {
         usbProductId: 0x10,
         bootloaderUsbProductId: 0x0001,
         getBlockSize() {
-          return 32;
+          return DEVICE_BLOCK_SIZE;
         },
         usbOnly: true,
-        memorySize: 320 * 1024,
-        masks: [0x31100000],
+        memorySize: MEMORY_SIZE_KB * BYTES_PER_KB,
+        masks: [DEVICE_MASK],
       },
       transport: this.identifier,
     };
@@ -120,7 +128,7 @@ export class SpeculosTransport implements Transport {
           ...this.speculosDevice.deviceModel,
           productName: `Speculos - ${appName} - ${appVersion}`,
           getBlockSize() {
-            return 32;
+            return DEVICE_BLOCK_SIZE;
           },
         },
         transport: this.identifier,
@@ -153,7 +161,7 @@ export class SpeculosTransport implements Transport {
     apdu: Uint8Array,
   ): Promise<Either<DmkError, ApduResponse>> {
     try {
-      const hexApdu = bufferToHexaString(apdu).substring(2);
+      const hexApdu = bufferToHexaString(apdu).substring(HEX_PREFIX_LENGTH);
       const hexResponse: string =
         await this._speculosDataSource.postApdu(hexApdu);
       this.logger.debug(formatApduSentLog(apdu));
@@ -179,9 +187,14 @@ export class SpeculosTransport implements Transport {
   private createApduResponse(hexApdu: string): ApduResponse {
     const apduResponse = {
       statusCode: this.fromHexString(
-        hexApdu.substring(hexApdu.length - 4, hexApdu.length),
+        hexApdu.substring(
+          hexApdu.length - STATUS_CODE_HEX_LENGTH,
+          hexApdu.length,
+        ),
       ),
-      data: this.fromHexString(hexApdu.substring(0, hexApdu.length - 4)),
+      data: this.fromHexString(
+        hexApdu.substring(0, hexApdu.length - STATUS_CODE_HEX_LENGTH),
+      ),
     };
     return apduResponse;
   }
@@ -220,7 +233,7 @@ export class SpeculosTransport implements Transport {
           clearInterval(this.disconnectInterval);
         }
       }
-    }, 2000);
+    }, DISCONNECT_CHECK_INTERVAL_MS);
   }
 }
 

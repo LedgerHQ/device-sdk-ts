@@ -26,6 +26,9 @@ import {
 
 import { type SolanaBuildContextResult } from "./BuildTransactionContextTask";
 
+const HEX_CHARS_PER_BYTE = 2;
+const HEX_RADIX = 16;
+
 export type ProvideSolanaTransactionContextTaskArgs =
   SolanaBuildContextResult & {
     readonly transactionBytes: Uint8Array;
@@ -306,17 +309,19 @@ export class ProvideSolanaTransactionContextTask {
     if (discriminatorHex === "") return true;
 
     const padded =
-      discriminatorHex.length % 2 !== 0
+      discriminatorHex.length % HEX_CHARS_PER_BYTE !== 0
         ? "0" + discriminatorHex
         : discriminatorHex;
-    const discriminatorBytes = new Uint8Array(padded.length / 2);
-    for (let i = 0; i < padded.length; i += 2) {
-      const byteStr = padded.substring(i, i + 2);
-      const parsed = parseInt(byteStr, 16);
+    const discriminatorBytes = new Uint8Array(
+      padded.length / HEX_CHARS_PER_BYTE,
+    );
+    for (let i = 0; i < padded.length; i += HEX_CHARS_PER_BYTE) {
+      const byteStr = padded.substring(i, i + HEX_CHARS_PER_BYTE);
+      const parsed = parseInt(byteStr, HEX_RADIX);
       if (Number.isNaN(parsed)) {
         return false;
       }
-      discriminatorBytes[i / 2] = parsed;
+      discriminatorBytes[i / HEX_CHARS_PER_BYTE] = parsed;
     }
 
     if (instructionData.length < discriminatorBytes.length) return false;

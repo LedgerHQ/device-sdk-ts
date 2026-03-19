@@ -1,5 +1,17 @@
 import { bufferToHexaString, type HexaString } from "@api/utils/HexaString";
 
+const BITS_8 = 8n;
+const BITS_16 = 16n;
+const BITS_32 = 32n;
+const BITS_64 = 64n;
+const BITS_128 = 128n;
+const BITS_256 = 256n;
+const BIGINT_0 = 0n;
+const BIGINT_1 = 1n;
+const BITS_PER_BYTE = 8;
+const TLV_MIN_LENGTH = 2;
+const HEX_PREFIX_LENGTH = 2;
+
 export type TaggedField = {
   readonly tag: number;
   readonly value: Uint8Array;
@@ -51,7 +63,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 16-bit unsigned integer extracted from the response
    */
   extract16BitUInt(bigEndian: boolean = true): number | undefined {
-    const value = this.extractNumber(16n, false, bigEndian);
+    const value = this.extractNumber(BITS_16, false, bigEndian);
     return value === undefined ? undefined : Number(value);
   }
 
@@ -61,7 +73,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 16-bit signed integer extracted from the response
    */
   extract16BitInt(bigEndian: boolean = true): number | undefined {
-    const value = this.extractNumber(16n, true, bigEndian);
+    const value = this.extractNumber(BITS_16, true, bigEndian);
     return value === undefined ? undefined : Number(value);
   }
 
@@ -71,7 +83,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 32-bit unsigned integer extracted from the response
    */
   extract32BitUInt(bigEndian: boolean = true): number | undefined {
-    const value = this.extractNumber(32n, false, bigEndian);
+    const value = this.extractNumber(BITS_32, false, bigEndian);
     return value === undefined ? undefined : Number(value);
   }
 
@@ -81,7 +93,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 32-bit signed integer extracted from the response
    */
   extract32BitInt(bigEndian: boolean = true): number | undefined {
-    const value = this.extractNumber(32n, true, bigEndian);
+    const value = this.extractNumber(BITS_32, true, bigEndian);
     return value === undefined ? undefined : Number(value);
   }
 
@@ -91,7 +103,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 64-bit unsigned integer extracted from the response
    */
   extract64BitUInt(bigEndian: boolean = true): bigint | undefined {
-    return this.extractNumber(64n, false, bigEndian);
+    return this.extractNumber(BITS_64, false, bigEndian);
   }
 
   /**
@@ -100,7 +112,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 64-bit signed integer extracted from the response
    */
   extract64BitInt(bigEndian: boolean = true): bigint | undefined {
-    return this.extractNumber(64n, true, bigEndian);
+    return this.extractNumber(BITS_64, true, bigEndian);
   }
 
   /**
@@ -109,7 +121,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 128-bit unsigned integer extracted from the response
    */
   extract128BitUInt(bigEndian: boolean = true): bigint | undefined {
-    return this.extractNumber(128n, false, bigEndian);
+    return this.extractNumber(BITS_128, false, bigEndian);
   }
 
   /**
@@ -118,7 +130,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 128-bit signed integer extracted from the response
    */
   extract128BitInt(bigEndian: boolean = true): bigint | undefined {
-    return this.extractNumber(128n, true, bigEndian);
+    return this.extractNumber(BITS_128, true, bigEndian);
   }
 
   /**
@@ -127,7 +139,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 256-bit unsigned integer extracted from the response
    */
   extract256BitUInt(bigEndian: boolean = true): bigint | undefined {
-    return this.extractNumber(256n, false, bigEndian);
+    return this.extractNumber(BITS_256, false, bigEndian);
   }
 
   /**
@@ -136,7 +148,7 @@ export class ByteArrayParser {
    * @returns {number | undefined} - Returns the 256-bit signed integer extracted from the response
    */
   extract256BitInt(bigEndian: boolean = true): bigint | undefined {
-    return this.extractNumber(256n, true, bigEndian);
+    return this.extractNumber(BITS_256, true, bigEndian);
   }
 
   /**
@@ -172,7 +184,7 @@ export class ByteArrayParser {
    * @returns {TaggedField | undefined} - Returns the field extracted from the response
    */
   extractFieldTLVEncoded(): TaggedField | undefined {
-    if (this.outOfRange(2)) return;
+    if (this.outOfRange(TLV_MIN_LENGTH)) return;
 
     const startIndex = this.index;
     const tag = this.extract8BitUInt();
@@ -200,7 +212,7 @@ export class ByteArrayParser {
   ): HexaString | string {
     if (value === undefined || value.length === 0) return "";
     const result = bufferToHexaString(value);
-    return prefix ? result : result.slice(2);
+    return prefix ? result : result.slice(HEX_PREFIX_LENGTH);
   }
 
   /**
@@ -272,27 +284,27 @@ export class ByteArrayParser {
     bigEndian: boolean,
   ): bigint | undefined {
     // Check the range
-    const sizeInBytes: number = Number(sizeInBits) / 8;
+    const sizeInBytes: number = Number(sizeInBits) / BITS_PER_BYTE;
     if (this.outOfRange(sizeInBytes)) return;
 
     // Compute the number
-    let value: bigint = 0n;
+    let value: bigint = BIGINT_0;
     if (bigEndian) {
       for (let i = 0; i < sizeInBytes; i++) {
-        value = (value << 8n) | BigInt(this.buffer[i + this.index]!);
+        value = (value << BITS_8) | BigInt(this.buffer[i + this.index]!);
       }
     } else {
       for (let i = sizeInBytes - 1; i >= 0; i--) {
-        value = (value << 8n) | BigInt(this.buffer[i + this.index]!);
+        value = (value << BITS_8) | BigInt(this.buffer[i + this.index]!);
       }
     }
 
     // Convert the value to two's complement if it is negative
     // https://en.wikipedia.org/wiki/Two%27s_complement
     if (signed) {
-      const limit = 1n << (sizeInBits - 1n);
+      const limit = BIGINT_1 << (sizeInBits - BIGINT_1);
       if (value & limit) {
-        value -= limit << 1n;
+        value -= limit << BIGINT_1;
       }
     }
 

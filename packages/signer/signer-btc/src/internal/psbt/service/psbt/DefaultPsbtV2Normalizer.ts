@@ -11,6 +11,8 @@ import { Value } from "@internal/psbt/model/Value";
 import { type ValueFactory } from "@internal/psbt/service/value/ValueFactory";
 import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
 
+const PSBT_VERSION_V2 = 2;
+
 /**
  * Normalize a PSBTv2 from any input PSBT, according to specification:
  * https://github.com/bitcoin/bips/blob/master/bip-0370.mediawiki
@@ -28,7 +30,7 @@ export class DefaultPsbtV2Normalizer {
       .getGlobalValue(PsbtGlobal.VERSION)
       .chain((value) => this.valueParser.getInt32LE(value.data))
       .orDefault(0);
-    if (version === 2) {
+    if (version === PSBT_VERSION_V2) {
       return Right(psbt);
     } else if (version !== 0) {
       return Left(new Error("PSBT normalizer: unsupported PSBT version"));
@@ -57,7 +59,7 @@ export class DefaultPsbtV2Normalizer {
 
     // Update global map with transaction metadata
     const globalMetadata: [PsbtGlobal, Maybe<Value>][] = [
-      [PsbtGlobal.VERSION, this.valueFactory.fromInt32LE(2)],
+      [PsbtGlobal.VERSION, this.valueFactory.fromInt32LE(PSBT_VERSION_V2)],
       [PsbtGlobal.TX_VERSION, this.valueFactory.fromInt32LE(tx.version)],
       [
         PsbtGlobal.FALLBACK_LOCKTIME,

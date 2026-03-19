@@ -6,6 +6,12 @@ import {
   type PrimitiveTypeName,
 } from "@internal/typed-data/model/Types";
 
+const BITS_PER_BYTE = 8;
+const ADDRESS_SIZE = 20;
+const HEX_RADIX = 16;
+const BIGINT_0 = 0n;
+const BIGINT_1 = 1n;
+
 /**
  * Encodes a typed data value according to its type.
  * @param type The type of the value to encode.
@@ -42,7 +48,7 @@ export function encodeTypedDataValue(
         ? Nothing
         : encodeTypedDataNumber(
             type.name,
-            type.size.mapOrDefault((s) => s * 8, 1), // Size in bits
+            type.size.mapOrDefault((s) => s * BITS_PER_BYTE, 1),
             value,
           );
   }
@@ -52,7 +58,7 @@ function encodeTypedDataBytes(
   type: PrimitiveType,
   value: string,
 ): Maybe<Uint8Array> {
-  const maxSize = type.name === "address" ? Just(20) : type.size;
+  const maxSize = type.name === "address" ? Just(ADDRESS_SIZE) : type.size;
   const buffer = Maybe.fromNullable(hexaStringToBuffer(value));
   return buffer.filter((b) => maxSize.mapOrDefault((s) => b.length <= s, true));
 }
@@ -89,7 +95,7 @@ function encodeTypedDataNumber(
   const signed = type === "int";
   return checkBoundsAndConvert(bigintValue, BigInt(sizeInBits), signed).chain(
     (converted) =>
-      Maybe.fromNullable(hexaStringToBuffer(converted.toString(16))),
+      Maybe.fromNullable(hexaStringToBuffer(converted.toString(HEX_RADIX))),
   );
 }
 
@@ -107,21 +113,23 @@ function checkBoundsAndConvert(
 ): Maybe<bigint> {
   if (!signed) {
     // Check if the value is within the bounds of an unsigned integer
-    return value >= 0n && value < 1n << sizeInBits ? Just(value) : Nothing;
+    return value >= BIGINT_0 && value < BIGINT_1 << sizeInBits
+      ? Just(value)
+      : Nothing;
   }
 
   // Check if the value is within the bounds of a signed integer
-  const limit = 1n << (sizeInBits - 1n);
+  const limit = BIGINT_1 << (sizeInBits - BIGINT_1);
   if (value >= limit || value < -limit) {
     return Nothing;
   }
 
   // Convert the value to two's complement if it is negative
   // https://en.wikipedia.org/wiki/Two%27s_complement
-  if (value < 0n) {
-    const mask = (1n << sizeInBits) - 1n;
+  if (value < BIGINT_0) {
+    const mask = (BIGINT_1 << sizeInBits) - BIGINT_1;
     value = -value;
-    value = (~value & mask) + 1n;
+    value = (~value & mask) + BIGINT_1;
   }
 
   return Just(value);

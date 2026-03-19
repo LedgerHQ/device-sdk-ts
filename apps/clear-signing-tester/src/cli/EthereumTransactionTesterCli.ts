@@ -21,6 +21,11 @@ import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConf
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 
+const RANDOM_PORT_RANGE = 10000;
+const RANDOM_PORT_OFFSET = 10000;
+const RANDOM_VNC_PORT_OFFSET = 20000;
+const MAX_PORT_NUMBER = 65535;
+
 export type CliConfig = {
   // config.speculos
   speculosUrl: string;
@@ -69,8 +74,10 @@ export class EthereumTransactionTesterCli {
   constructor(config: CliConfig) {
     this.config = config;
 
-    const randomPort = Math.floor(Math.random() * 10000) + 10000;
-    const randomVncPort = Math.floor(Math.random() * 10000) + 20000;
+    const randomPort =
+      Math.floor(Math.random() * RANDOM_PORT_RANGE) + RANDOM_PORT_OFFSET;
+    const randomVncPort =
+      Math.floor(Math.random() * RANDOM_PORT_RANGE) + RANDOM_VNC_PORT_OFFSET;
 
     // Use test signatures when custom ERC7730 files are provided
     const calMode =
@@ -213,7 +220,7 @@ export class EthereumTransactionTesterCli {
         "Speculos server port (random port if not provided)",
         (value: string) => {
           const port = parseInt(value);
-          if (isNaN(port) || port < 1 || port > 65535) {
+          if (isNaN(port) || port < 1 || port > MAX_PORT_NUMBER) {
             throw new Error("Invalid port number");
           }
           return port;
@@ -224,7 +231,7 @@ export class EthereumTransactionTesterCli {
         "Speculos VNC port (random port if not provided)",
         (value: string) => {
           const port = parseInt(value);
-          if (isNaN(port) || port < 1 || port > 65535) {
+          if (isNaN(port) || port < 1 || port > MAX_PORT_NUMBER) {
             throw new Error("Invalid port number");
           }
           return port;

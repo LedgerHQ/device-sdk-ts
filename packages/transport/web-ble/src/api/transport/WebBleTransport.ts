@@ -34,6 +34,11 @@ import {
   type WebBleApduSenderDependencies,
 } from "./WebBleApduSender";
 
+const GATT_CONNECT_TIMEOUT_MS = 6000;
+const POST_CONNECT_SETTLE_DELAY_MS = 150;
+const SAFE_CANCEL_SETTLE_DELAY_MS = 100;
+const POST_IDENTIFY_SETTLE_DELAY_MS = 200;
+
 export const webBleIdentifier: TransportIdentifier = "WEB-BLE-RN-STYLE";
 
 type DeviceRegistryEntry = {
@@ -150,10 +155,10 @@ export class WebBleTransport implements Transport {
       if (!bluetoothDevice.gatt.connected) {
         await this._withTimeout(
           bluetoothDevice.gatt.connect(),
-          6000,
+          GATT_CONNECT_TIMEOUT_MS,
           "GATT connect timed out",
         );
-        await this._sleep(150);
+        await this._sleep(POST_CONNECT_SETTLE_DELAY_MS);
       }
 
       const { service: ledgerService, ledgerServiceInfo } =
@@ -450,7 +455,7 @@ export class WebBleTransport implements Transport {
     if (!registryEntry) return;
     if (registryEntry.device.gatt?.connected)
       registryEntry.device.gatt.disconnect();
-    await this._sleep(100);
+    await this._sleep(SAFE_CANCEL_SETTLE_DELAY_MS);
   }
 
   private async _identifyLedgerGattService(device: BluetoothDevice): Promise<{
@@ -461,13 +466,17 @@ export class WebBleTransport implements Transport {
       throw new OpeningConnectionError("No GATT server available on device");
     }
     try {
-      await this._withTimeout(device.gatt.connect(), 6000, "connect timeout");
+      await this._withTimeout(
+        device.gatt.connect(),
+        GATT_CONNECT_TIMEOUT_MS,
+        "connect timeout",
+      );
       const { service, ledgerServiceInfo } =
         await this._getPrimaryLedgerGattService(device);
       return { serviceUuid: service.uuid, ledgerServiceInfo };
     } finally {
       device.gatt?.disconnect();
-      await this._sleep(200);
+      await this._sleep(POST_IDENTIFY_SETTLE_DELAY_MS);
     }
   }
 

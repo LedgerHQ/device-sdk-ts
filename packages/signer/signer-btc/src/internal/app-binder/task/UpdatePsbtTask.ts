@@ -31,6 +31,7 @@ type UpdatePsbtTaskArgs = {
 
 const SCHORR_SIG_LENGTH = 64;
 const SCHORR_SIG_LENGTH_WITH_EXTRA_BYTE = 65;
+const WITNESS_STACK_COUNT = 2;
 
 export class UpdatePsbtTask {
   constructor(
@@ -269,7 +270,10 @@ export class UpdatePsbtTask {
     if (isSegwitV0) {
       const buffer = new ByteArrayBuilder();
       buffer.addBufferToData(
-        encodeVarint(2).mapOrDefault((v) => v, Uint8Array.from([2])),
+        encodeVarint(WITNESS_STACK_COUNT).mapOrDefault(
+          (v) => v,
+          Uint8Array.from([WITNESS_STACK_COUNT]),
+        ),
       );
       buffer.addBufferToData(
         encodeVarint(sig.length).orDefault(Uint8Array.from([0])),

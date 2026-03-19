@@ -19,6 +19,8 @@ import {
   type Descriptor,
 } from "./CalNetworkDataSource";
 
+const LOADING_OPACITY = 0.5;
+
 export type CalCheckDappDrawerProps<
   _,
   Input extends Record<string, FieldType> | void,
@@ -108,7 +110,11 @@ export function CalCheckDappDrawer<
   return (
     <>
       <Block>
-        <Flex flexDirection="column" opacity={loading ? 0.5 : 1} rowGap={3}>
+        <Flex
+          flexDirection="column"
+          opacity={loading ? LOADING_OPACITY : 1}
+          rowGap={3}
+        >
           <Form
             initialValues={values}
             onChange={setValues}

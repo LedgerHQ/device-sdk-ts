@@ -8,6 +8,8 @@ import {
 
 import { canvasToDataUri, loadImage } from "./canvasUtils";
 
+const HALF_DIVISOR = 2;
+
 /**
  * Returns the dimensions of an image that has been resized to fully cover a box,
  * while keeping its aspect ratio.
@@ -91,10 +93,12 @@ export function getCenteredCropParams(
     width: cropDimensions.width,
     height: cropDimensions.height,
     originX: Math.abs(
-      Math.floor((cropDimensions.width - imageDimensions.width) / 2),
+      Math.floor((cropDimensions.width - imageDimensions.width) / HALF_DIVISOR),
     ),
     originY: Math.abs(
-      Math.floor((cropDimensions.height - imageDimensions.height) / 2),
+      Math.floor(
+        (cropDimensions.height - imageDimensions.height) / HALF_DIVISOR,
+      ),
     ),
   };
 }

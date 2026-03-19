@@ -18,6 +18,9 @@ import PACKAGE from "@root/package.json";
 
 import { TrustedNameDto } from "./TrustedNameDto";
 
+const HEX_CHARS_PER_BYTE = 2;
+const HEX_RADIX = 16;
+
 @injectable()
 export class HttpTrustedNameDataSource implements TrustedNameDataSource {
   constructor(
@@ -142,13 +145,13 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
   }
 
   private formatTrustedName(payload: string, signature: string): string {
-    // Ensure correct padding
-    if (signature.length % 2 !== 0) {
+    if (signature.length % HEX_CHARS_PER_BYTE !== 0) {
       signature = "0" + signature;
     }
-    // TLV encoding as according to trusted name documentation
     const signatureTag = "15";
-    const signatureLength = (signature.length / 2).toString(16);
+    const signatureLength = (signature.length / HEX_CHARS_PER_BYTE).toString(
+      HEX_RADIX,
+    );
     return `${payload}${signatureTag}${signatureLength}${signature}`;
   }
   /**

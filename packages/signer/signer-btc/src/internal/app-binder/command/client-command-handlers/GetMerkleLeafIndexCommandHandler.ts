@@ -9,12 +9,17 @@ import {
   type CommandHandlerContext,
 } from "./ClientCommandHandlersTypes";
 
+const HASH_COUNT = 2;
+
 export const GetMerkleLeafIndexCommandHandler: CommandHandler = (
   request: Uint8Array,
   commandHandlerContext: CommandHandlerContext,
 ): Either<DmkError, Uint8Array> => {
   const merkleRootHash = request.slice(1, SHA256_SIZE + 1); // extract the Merkle root hash
-  const leafNodeHash = request.slice(SHA256_SIZE + 1, SHA256_SIZE * 2 + 1); // extract the leaf hash
+  const leafNodeHash = request.slice(
+    SHA256_SIZE + 1,
+    SHA256_SIZE * HASH_COUNT + 1,
+  ); // extract the leaf hash
 
   const maybeMerkleIndex = commandHandlerContext.dataStore.getMerkleLeafIndex(
     merkleRootHash,

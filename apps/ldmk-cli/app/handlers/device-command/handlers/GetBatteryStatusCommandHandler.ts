@@ -1,6 +1,9 @@
 import "zx/globals";
 
 import { appTypes } from "@ldmk/app/di/app.types";
+
+const HIGH_BATTERY_THRESHOLD = 50;
+const LOW_BATTERY_THRESHOLD = 20;
 import { DeviceCommandHandler } from "@ldmk/app/handlers/device-command/handlers/DeviceCommandHandler";
 import {
   DeviceCommandType,
@@ -55,9 +58,9 @@ export class GetBatteryStatusCommandHandler implements DeviceCommandHandler {
       const percentage = typeof result.data === "number" ? result.data : -1;
 
       const color =
-        percentage > 50
+        percentage > HIGH_BATTERY_THRESHOLD
           ? chalk.green
-          : percentage > 20
+          : percentage > LOW_BATTERY_THRESHOLD
             ? chalk.yellow
             : chalk.red;
 

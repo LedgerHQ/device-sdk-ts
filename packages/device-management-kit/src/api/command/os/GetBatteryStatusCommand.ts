@@ -12,6 +12,9 @@ import {
 } from "@api/command/model/CommandResult";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 
+const MAX_BATTERY_PERCENTAGE = 100;
+const SIGN_EXTENSION_SHIFT = 24;
+
 /**
  * The type of battery information to retrieve.
  */
@@ -113,7 +116,7 @@ export class GetBatteryStatusCommand
           });
         }
         return CommandResultFactory({
-          data: percentage > 100 ? -1 : percentage,
+          data: percentage > MAX_BATTERY_PERCENTAGE ? -1 : percentage,
         });
       }
       case BatteryStatusType.BATTERY_VOLTAGE: {
@@ -136,7 +139,7 @@ export class GetBatteryStatusCommand
           });
         }
         return CommandResultFactory({
-          data: (data << 24) >> 24,
+          data: (data << SIGN_EXTENSION_SHIFT) >> SIGN_EXTENSION_SHIFT,
         });
       }
       case BatteryStatusType.BATTERY_FLAGS: {

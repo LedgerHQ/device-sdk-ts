@@ -1,5 +1,8 @@
 import { GeneralDmkError } from "@ledgerhq/device-management-kit";
 
+const HEX_RADIX = 16;
+const HEX_BYTE_LENGTH = 2;
+
 export type LKRPDataSourceErrorStatus =
   | "UNAUTHORIZED"
   | "BAD_REQUEST"
@@ -71,7 +74,7 @@ export class LKRPUnsupportedCommandError extends GeneralDmkError {
       typeof command === "object" &&
       "type" in command &&
       typeof command.type === "number" &&
-      `0x${command.type.toString(16).padStart(2, "0")}`;
+      `0x${command.type.toString(HEX_RADIX).padStart(HEX_BYTE_LENGTH, "0")}`;
     let message = `Unsupported command`;
     if (commandType) message += `: ${commandType}`;
 

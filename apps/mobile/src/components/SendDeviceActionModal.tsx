@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { type DeviceActionProps } from "_common/types.ts";
+
+const JSON_INDENT = 2;
 import { useForm } from "_hooks/useForm";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
@@ -49,7 +51,7 @@ export const SendDeviceActionModal: React.FC<SendDeviceActionModalProps> = ({
           if (response.status === DeviceActionStatus.Error) {
             setOutput(inspect(response, { depth: null }));
           } else {
-            setOutput(JSON.stringify(response, null, 2));
+            setOutput(JSON.stringify(response, null, JSON_INDENT));
           }
         },
         complete: () => {

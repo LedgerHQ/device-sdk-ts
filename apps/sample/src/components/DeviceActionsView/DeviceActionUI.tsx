@@ -38,6 +38,8 @@ import {
   deviceActionStatusToColor,
 } from "./DeviceActionResponse";
 
+const JSON_INDENT = 2;
+
 // Dynamic import to avoid SSR issues (react-lottie accesses `document` at load time)
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
@@ -183,7 +185,7 @@ const JSONTextPopin: React.FC<{
         content={
           <Flex overflow="scroll" maxHeight="400px">
             <Text color="neutral.c00" whiteSpace="pre-wrap">
-              {JSON.stringify(obj, null, 2)}
+              {JSON.stringify(obj, null, JSON_INDENT)}
             </Text>
           </Flex>
         }

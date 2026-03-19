@@ -1,6 +1,8 @@
 import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { DeviceModelId } from "@api/device/DeviceModel";
 
+const SE_FLAGS_DEFAULT = 0xe6;
+
 export const getOsVersionCommandResponseMockBuilder = (
   deviceModelId: DeviceModelId = DeviceModelId.NANO_SP,
   props: Partial<GetOsVersionResponse> = {},
@@ -12,7 +14,7 @@ export const getOsVersionCommandResponseMockBuilder = (
       targetId: 856686596,
       seTargetId: 856686596,
       seVersion: "1.1.1",
-      seFlags: new Uint8Array([0xe6, 0x00, 0x00, 0x00]),
+      seFlags: new Uint8Array([SE_FLAGS_DEFAULT, 0x00, 0x00, 0x00]),
       mcuTargetId: undefined,
       mcuSephVersion: "4.03",
       mcuBootloaderVersion: "3.12",
@@ -37,7 +39,7 @@ export const getOsVersionCommandResponseMockBuilder = (
       targetId: 858783748,
       seTargetId: 858783748,
       seVersion: "1.1.1",
-      seFlags: new Uint8Array([0xe6, 0x00, 0x00, 0x00]),
+      seFlags: new Uint8Array([SE_FLAGS_DEFAULT, 0x00, 0x00, 0x00]),
       mcuTargetId: undefined,
       mcuSephVersion: "6.4.0",
       mcuBootloaderVersion: "5.4.0",
@@ -62,7 +64,7 @@ export const getOsVersionCommandResponseMockBuilder = (
       targetId: 855638020,
       seTargetId: 855638020,
       seVersion: "2.2.3",
-      seFlags: new Uint8Array([0xe6, 0x00, 0x00, 0x00]),
+      seFlags: new Uint8Array([SE_FLAGS_DEFAULT, 0x00, 0x00, 0x00]),
       mcuTargetId: undefined,
       mcuSephVersion: "2.30",
       mcuBootloaderVersion: "1.16",
@@ -86,7 +88,7 @@ export const getOsVersionCommandResponseMockBuilder = (
       targetId: 857735172,
       seTargetId: 857735172,
       seVersion: "1.3.0",
-      seFlags: new Uint8Array([0xe6, 0x00, 0x00, 0x00]),
+      seFlags: new Uint8Array([SE_FLAGS_DEFAULT, 0x00, 0x00, 0x00]),
       mcuTargetId: undefined,
       mcuSephVersion: "5.24",
       mcuBootloaderVersion: "0.48",
@@ -111,7 +113,7 @@ export const getOsVersionCommandResponseMockBuilder = (
       targetId: 858783748,
       seTargetId: 858783748,
       seVersion: "1.1.1",
-      seFlags: new Uint8Array([0xe6, 0x00, 0x00, 0x00]),
+      seFlags: new Uint8Array([SE_FLAGS_DEFAULT, 0x00, 0x00, 0x00]),
       mcuTargetId: undefined,
       mcuSephVersion: "6.4.0",
       mcuBootloaderVersion: "5.4.0",
@@ -136,7 +138,7 @@ export const getOsVersionCommandResponseMockBuilder = (
       targetId: 858783748,
       seTargetId: 858783748,
       seVersion: "1.1.1",
-      seFlags: new Uint8Array([0xe6, 0x00, 0x00, 0x00]),
+      seFlags: new Uint8Array([SE_FLAGS_DEFAULT, 0x00, 0x00, 0x00]),
       mcuTargetId: undefined,
       mcuSephVersion: "6.4.0",
       mcuBootloaderVersion: "5.4.0",

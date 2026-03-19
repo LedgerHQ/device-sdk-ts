@@ -56,8 +56,9 @@ export class SpeculosTouchscreenController implements DeviceController {
   async rejectTransaction(): Promise<void> {
     this.logger.debug("☝️ (touch) : Performing transaction rejection");
 
+    const REJECT_CONFIRMATION_DELAY_MS = 1000;
     await this.tap.reject();
-    await this.delay(1000);
+    await this.delay(REJECT_CONFIRMATION_DELAY_MS);
     await this.tap.mainButton();
   }
 

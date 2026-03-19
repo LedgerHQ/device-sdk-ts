@@ -4,6 +4,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Just, Maybe, Nothing } from "purify-ts";
 
+const VARINT_MAX_SINGLE_BYTE = 0xfc;
+const VARINT_PREFIX_16BIT = 0xfd;
+const VARINT_PREFIX_32BIT = 0xfe;
+const VARINT_PREFIX_64BIT = 0xff;
+const VARINT_MAX_16BIT = 0xffff;
+const VARINT_MAX_32BIT = 0xffffffff;
+
 /**
  * As described here: https://wiki.bitcoinsv.io/index.php/VarInt
  *
@@ -21,14 +28,14 @@ export function extractVarint(parser: ByteArrayParser): Maybe<Varint> {
   const prefix = parser.extract8BitUInt();
   if (prefix === undefined) {
     return Nothing;
-  } else if (prefix <= 0xfc) {
+  } else if (prefix <= VARINT_MAX_SINGLE_BYTE) {
     return Just({ value: prefix, sizeInBytes: 1 });
-  } else if (prefix === 0xfd) {
+  } else if (prefix === VARINT_PREFIX_16BIT) {
     return Maybe.fromNullable(parser.extract16BitUInt(false)).map((value) => ({
       value,
       sizeInBytes: 3,
     }));
-  } else if (prefix === 0xfe) {
+  } else if (prefix === VARINT_PREFIX_32BIT) {
     return Maybe.fromNullable(parser.extract32BitUInt(false)).map((value) => ({
       value,
       sizeInBytes: 5,
@@ -46,16 +53,16 @@ export function extractVarint(parser: ByteArrayParser): Maybe<Varint> {
 
 export function encodeVarint(value: number | bigint): Maybe<Uint8Array> {
   const builder = new ByteArrayBuilder();
-  if (value <= 0xfc) {
+  if (value <= VARINT_MAX_SINGLE_BYTE) {
     builder.add8BitUIntToData(value);
-  } else if (value <= 0xffff) {
-    builder.add8BitUIntToData(0xfd);
+  } else if (value <= VARINT_MAX_16BIT) {
+    builder.add8BitUIntToData(VARINT_PREFIX_16BIT);
     builder.add16BitUIntToData(value, false);
-  } else if (value <= 0xffffffff) {
-    builder.add8BitUIntToData(0xfe);
+  } else if (value <= VARINT_MAX_32BIT) {
+    builder.add8BitUIntToData(VARINT_PREFIX_32BIT);
     builder.add32BitUIntToData(value, false);
   } else {
-    builder.add8BitUIntToData(0xff);
+    builder.add8BitUIntToData(VARINT_PREFIX_64BIT);
     builder.add64BitUIntToData(value, false);
   }
   return Maybe.fromNullable(builder.tryBuild());

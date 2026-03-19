@@ -3,6 +3,8 @@ import {
   type TestStatus,
 } from "@root/src/domain/types/TestStatus";
 
+const PERCENTAGE_MULTIPLIER = 100;
+
 /**
  * Common type for batch test results
  */
@@ -104,22 +106,22 @@ export class ResultFormatter {
       {
         Status: "✅ Clear Signed",
         Count: statusCounts.clearSigned,
-        Percentage: `${((statusCounts.clearSigned / totalItems) * 100).toFixed(1)}%`,
+        Percentage: `${((statusCounts.clearSigned / totalItems) * PERCENTAGE_MULTIPLIER).toFixed(1)}%`,
       },
       {
         Status: "⚠️ Partially Clear Signed",
         Count: statusCounts.partiallyClearSigned,
-        Percentage: `${((statusCounts.partiallyClearSigned / totalItems) * 100).toFixed(1)}%`,
+        Percentage: `${((statusCounts.partiallyClearSigned / totalItems) * PERCENTAGE_MULTIPLIER).toFixed(1)}%`,
       },
       {
         Status: "🙈 Blind Signed",
         Count: statusCounts.blindSigned,
-        Percentage: `${((statusCounts.blindSigned / totalItems) * 100).toFixed(1)}%`,
+        Percentage: `${((statusCounts.blindSigned / totalItems) * PERCENTAGE_MULTIPLIER).toFixed(1)}%`,
       },
       {
         Status: "❌ Errors",
         Count: statusCounts.error,
-        Percentage: `${((statusCounts.error / totalItems) * 100).toFixed(1)}%`,
+        Percentage: `${((statusCounts.error / totalItems) * PERCENTAGE_MULTIPLIER).toFixed(1)}%`,
       },
     ];
 

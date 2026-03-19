@@ -16,6 +16,10 @@ import {
   LKRPDataSource,
 } from "./LKRPDataSource";
 
+const HTTP_NO_CONTENT = 204;
+const HTTP_BAD_REQUEST = 400;
+const HTTP_UNAUTHORIZED = 401;
+
 @injectable()
 export class HttpLKRPDataSource implements LKRPDataSource {
   constructor(
@@ -83,7 +87,7 @@ export class HttpLKRPDataSource implements LKRPDataSource {
       }))
       .chain(async (response) => {
         switch (response.status) {
-          case 204:
+          case HTTP_NO_CONTENT:
             return Right(undefined as Res);
 
           default:
@@ -110,8 +114,8 @@ export class HttpLKRPDataSource implements LKRPDataSource {
 }
 
 const statusMap = new Map<unknown, LKRPDataSourceErrorStatus>([
-  [400, "BAD_REQUEST"],
-  [401, "UNAUTHORIZED"],
+  [HTTP_BAD_REQUEST, "BAD_REQUEST"],
+  [HTTP_UNAUTHORIZED, "UNAUTHORIZED"],
 ]);
 
 function errToString(error: unknown): string | void {

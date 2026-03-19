@@ -24,6 +24,9 @@ import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SigningService } from "@root/src/domain/services/SigningService";
 
+const MAX_RETRY_ATTEMPTS = 5;
+const RETRY_DELAY_MS = 10000;
+
 export class DMKServiceController implements ServiceController {
   private logger: LoggerPublisherService;
   private dmk: DeviceManagementKit;
@@ -122,8 +125,8 @@ export class DMKServiceController implements ServiceController {
             });
         });
       },
-      5, // Max 5 attempts
-      10000, // Wait 10 seconds between attempts
+      MAX_RETRY_ATTEMPTS,
+      RETRY_DELAY_MS,
     );
 
     this.logger.info("DMK started successfully");

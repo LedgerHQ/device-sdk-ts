@@ -23,6 +23,8 @@ export const P2 = 0x00;
 export const SIGNATURE_TAG = 0x15;
 export const DER_SIG_MIN_BYTES = 70;
 export const DER_SIG_MAX_BYTES = 72;
+const HEX_CHARS_PER_BYTE = 2;
+const MAX_SHORT_APDU_PAYLOAD = 255;
 
 export type ProvideInstructionDescriptorCommandArgs = {
   dataHex: string;
@@ -51,20 +53,20 @@ export class ProvideInstructionDescriptorCommand
       p2: P2,
     } as ApduBuilderArgs);
 
-    const sigLen = signatureHex.length / 2;
+    const sigLen = signatureHex.length / HEX_CHARS_PER_BYTE;
     if (
       sigLen < DER_SIG_MIN_BYTES ||
       sigLen > DER_SIG_MAX_BYTES ||
-      signatureHex.length % 2 !== 0
+      signatureHex.length % HEX_CHARS_PER_BYTE !== 0
     ) {
       throw new Error(`Invalid signature length: ${sigLen} bytes`);
     }
 
-    const dataLen = dataHex.length / 2;
+    const dataLen = dataHex.length / HEX_CHARS_PER_BYTE;
     const total = dataLen + 1 + 1 + sigLen;
-    if (total > 255) {
+    if (total > MAX_SHORT_APDU_PAYLOAD) {
       throw new Error(
-        `Descriptor payload too large for short APDU: ${total} > 255`,
+        `Descriptor payload too large for short APDU: ${total} > ${MAX_SHORT_APDU_PAYLOAD}`,
       );
     }
 

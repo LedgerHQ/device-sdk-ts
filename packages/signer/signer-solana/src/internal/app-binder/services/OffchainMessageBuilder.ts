@@ -4,7 +4,9 @@ import { OffchainMessageBuildError } from "@internal/app-binder/services/Errors"
 
 import { type Bs58Encoder, DefaultBs58Encoder } from "./bs58Encoder";
 
-const DEVICE_V0_PAYLOAD_CEILING = 15 * 1024;
+const DEVICE_V0_PAYLOAD_KB = 15;
+const BYTES_PER_KB = 1024;
+const DEVICE_V0_PAYLOAD_CEILING = DEVICE_V0_PAYLOAD_KB * BYTES_PER_KB;
 const DEVICE_LEGACY_PAYLOAD_CEILING = 1280;
 const RESERVED_HEADER_BYTES = 40;
 const RESERVED_TRANSPORT_BYTES = 8;
@@ -29,6 +31,8 @@ const BYTES_PER_PATH_INDEX = 4;
 const MAX_PRINTABLE_ASCII = 0x7e;
 const MIN_PRINTABLE_ASCII = 0x20;
 const LINE_FEED_ASCII = 0x0a;
+const BYTE_MASK = 0xff;
+const BITS_PER_BYTE = 8;
 
 export enum MessageFormat {
   Ascii = 0,
@@ -208,11 +212,13 @@ export class OffchainMessageBuilder {
   }
 
   private _writeSigningDomain(builder: ByteArrayBuilder): void {
-    builder.add8BitUIntToData(0xff).addAsciiStringToData("solana offchain");
+    builder
+      .add8BitUIntToData(BYTE_MASK)
+      .addAsciiStringToData("solana offchain");
   }
 
   private _writeLeU16(builder: ByteArrayBuilder, value: number): void {
-    builder.add8BitUIntToData(value & 0xff);
-    builder.add8BitUIntToData((value >> 8) & 0xff);
+    builder.add8BitUIntToData(value & BYTE_MASK);
+    builder.add8BitUIntToData((value >> BITS_PER_BYTE) & BYTE_MASK);
   }
 }

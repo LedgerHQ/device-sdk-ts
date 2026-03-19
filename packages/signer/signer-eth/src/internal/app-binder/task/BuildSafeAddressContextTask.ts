@@ -13,6 +13,8 @@ import {
 import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
+const EXPECTED_CONTEXT_COUNT = 2;
+
 export type BuildSafeAddressContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly safeContractAddress: string;
@@ -72,7 +74,7 @@ export class BuildSafeAddressContextTask {
 
     // should contain one SAFE and one SIGNER context
     if (
-      contexts.length !== 2 ||
+      contexts.length !== EXPECTED_CONTEXT_COUNT ||
       contexts.find((context) => context.type === ClearSignContextType.SAFE) ===
         undefined ||
       contexts.find(

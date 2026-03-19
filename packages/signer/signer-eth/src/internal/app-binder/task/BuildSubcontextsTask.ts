@@ -17,6 +17,8 @@ import {
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
+const ADDRESS_BYTE_LENGTH = 20;
+
 export type BuildSubcontextsTaskArgs = {
   readonly context: ClearSignContextSuccess;
   readonly contextOptional: ClearSignContextSuccess[];
@@ -142,7 +144,7 @@ export class BuildSubcontextsTask {
 
       for (const value of referenceValues) {
         const address = bufferToHexaString(
-          value.slice(Math.max(0, value.length - 20)),
+          value.slice(Math.max(0, value.length - ADDRESS_BYTE_LENGTH)),
         );
 
         const expectedType =
@@ -218,7 +220,7 @@ export class BuildSubcontextsTask {
       {
         subcontextCallbacks.push(async () => {
           const address = bufferToHexaString(
-            value.slice(Math.max(0, value.length - 20)),
+            value.slice(Math.max(0, value.length - ADDRESS_BYTE_LENGTH)),
           );
 
           const getChallengeResult = await this.api.sendCommand(

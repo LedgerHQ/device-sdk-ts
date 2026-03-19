@@ -12,6 +12,10 @@ import { LKRPParsingError } from "@api/model/Errors";
 import { externalTypes } from "@internal/externalTypes";
 import { eitherSeqRecord } from "@internal/utils/eitherSeqRecord";
 
+const EPHEMERAL_PUBLIC_KEY_LENGTH = 33;
+const IV_LENGTH = 16;
+const TAG_LENGTH = 16;
+
 @injectable()
 export class DecryptDataUseCase {
   constructor(
@@ -35,9 +39,12 @@ export class DecryptDataUseCase {
 
     return eitherSeqRecord({
       ephemeralPublicKey: () =>
-        required(parser.extractFieldByLength(33), "ephemeral public key"),
-      iv: () => required(parser.extractFieldByLength(16), "IV"),
-      tag: () => required(parser.extractFieldByLength(16), "tag"),
+        required(
+          parser.extractFieldByLength(EPHEMERAL_PUBLIC_KEY_LENGTH),
+          "ephemeral public key",
+        ),
+      iv: () => required(parser.extractFieldByLength(IV_LENGTH), "IV"),
+      tag: () => required(parser.extractFieldByLength(TAG_LENGTH), "tag"),
       encryptedData: () =>
         required(
           parser.extractFieldByLength(parser.getUnparsedRemainingLength()),

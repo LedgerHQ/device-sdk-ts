@@ -2,6 +2,9 @@ import "zx/globals";
 
 import { input } from "@inquirer/prompts";
 import { appTypes } from "@ldmk/app/di/app.types";
+
+const HEX_RADIX = 16;
+const HEX_CHARS_PER_BYTE = 2;
 import {
   ActionHandler,
   ConnectionMode,
@@ -76,7 +79,7 @@ export class SendApduActionHandler implements ActionHandler {
       });
       const toHex = (arr: Uint8Array) =>
         Array.from(arr)
-          .map((b) => b.toString(16).padStart(2, "0"))
+          .map((b) => b.toString(HEX_RADIX).padStart(HEX_CHARS_PER_BYTE, "0"))
           .join("");
       console.log(chalk.green("APDU sent successfully!"));
       console.log(

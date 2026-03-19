@@ -22,6 +22,8 @@ import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceAct
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useSignerAleo } from "@/providers/SignerAleoProvider";
 
+const HEX_PREFIX_LENGTH = 2;
+
 export const SignerAleoView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
@@ -120,7 +122,7 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
           const rootIntentBytes = rootIntent.startsWith("0x")
             ? new Uint8Array(
                 rootIntent
-                  .slice(2)
+                  .slice(HEX_PREFIX_LENGTH)
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? [],
               )
@@ -160,7 +162,7 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
           const feeIntentBytes = feeIntent.startsWith("0x")
             ? new Uint8Array(
                 feeIntent
-                  .slice(2)
+                  .slice(HEX_PREFIX_LENGTH)
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? [],
               )

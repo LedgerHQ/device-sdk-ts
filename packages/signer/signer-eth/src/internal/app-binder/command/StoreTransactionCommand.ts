@@ -18,6 +18,8 @@ import {
   type EthErrorCodes,
 } from "./utils/ethAppErrors";
 
+const P1_CONTINUATION = 0x80;
+
 export type StoreTransactionCommandArgs = {
   /**
    * The transaction to sign in max 150 bytes chunks
@@ -51,7 +53,7 @@ export class StoreTransactionCommand
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x04,
-      p1: isFirstChunk ? 0x00 : 0x80,
+      p1: isFirstChunk ? 0x00 : P1_CONTINUATION,
       p2: 0x01,
     };
     const builder = new ApduBuilder(signEthTransactionArgs);

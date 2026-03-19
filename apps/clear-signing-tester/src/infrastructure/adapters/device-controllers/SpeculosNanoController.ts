@@ -9,6 +9,8 @@ import { TYPES } from "@root/src/di/types";
 import { DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
+const REJECT_NAVIGATION_STEPS = 20;
+
 /**
  * Speculos Nano Device Controller
  *
@@ -49,7 +51,9 @@ export class SpeculosNanoController implements DeviceController {
   async rejectTransaction(): Promise<void> {
     this.logger.debug("🔘 (buttons) : Performing transaction rejection");
     // Navigate to the reject screen at the end of the transaction flow
-    const navigationKeys = Array(20).fill("right") as Array<"right">;
+    const navigationKeys = Array(REJECT_NAVIGATION_STEPS).fill(
+      "right",
+    ) as Array<"right">;
     await this.buttons.pressSequence(navigationKeys);
     // Confirm rejection by pressing both buttons simultaneously
     await this.buttons.both();

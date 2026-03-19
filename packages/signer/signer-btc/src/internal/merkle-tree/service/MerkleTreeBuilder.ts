@@ -10,6 +10,8 @@ import { type HasherService } from "./HasherService";
 
 const HASH_LEAF_PREFIX = 0;
 const HASH_NODE_PREFIX = 1;
+const HASH_SIZE = 32;
+const BINARY_BASE = 2;
 
 @injectable()
 export class MerkleTreeBuilder {
@@ -42,7 +44,10 @@ export class MerkleTreeBuilder {
     if (leaves.length == 0) {
       // Empty tree only should have a hash full of zeros
       return {
-        root: new Leaf(new Uint8Array(), Uint8Array.from(Array(32).fill(0))),
+        root: new Leaf(
+          new Uint8Array(),
+          Uint8Array.from(Array(HASH_SIZE).fill(0)),
+        ),
         leaves: [],
       };
     } else if (leaves.length == 1) {
@@ -73,12 +78,12 @@ export class MerkleTreeBuilder {
   }
 
   private highestPowerOf2LessThan(n: number): number {
-    if (n < 2) {
+    if (n < BINARY_BASE) {
       // Should not be possible
       throw Error("Expected n >= 2");
     }
     if (this.isPowerOf2(n)) {
-      return n / 2;
+      return n / BINARY_BASE;
     }
     return 1 << Math.floor(Math.log2(n));
   }

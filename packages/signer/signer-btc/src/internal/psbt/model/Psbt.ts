@@ -3,6 +3,8 @@ import { Maybe } from "purify-ts";
 import { Key } from "./Key";
 import { type Value } from "./Value";
 
+const KEY_TYPE_PREFIX_LENGTH = 2;
+
 // Global map keyTypes as specified here:
 // https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki#specification
 // Un-needed keys are not present
@@ -100,7 +102,7 @@ export class Psbt {
     return Maybe.fromNullable(this.inputMaps[inputIndex]).map((input) => {
       return Array.from(input.keys())
         .filter((k) => k.startsWith(key))
-        .map((k) => k.slice(2));
+        .map((k) => k.slice(KEY_TYPE_PREFIX_LENGTH));
     });
   }
 

@@ -27,6 +27,8 @@ import { BehaviorSubject, type Subscription } from "rxjs";
 import { PairingRefusedError, UnknownBleError } from "@api/model/Errors";
 
 const FRAME_HEADER_SIZE = 3;
+const MTU_RESPONSE_INDEX = 5;
+const MTU_REQUEST_OP = 0x08;
 
 export type RNBleInternalDevice = {
   id: DeviceId;
@@ -84,7 +86,7 @@ export class RNBleApduSender
     const mtuResponse = new Uint8Array(value);
     const { device } = this._dependencies;
     // ledger mtu is the 5th byte of the response
-    const [ledgerMtu] = mtuResponse.slice(5);
+    const [ledgerMtu] = mtuResponse.slice(MTU_RESPONSE_INDEX);
     let frameSize = device.mtu - FRAME_HEADER_SIZE;
     if (ledgerMtu && ledgerMtu !== frameSize) {
       // should never happen since ble mtu is negotiated on device connect with 156 bytes and ledger should return mtu size minus header size
@@ -203,7 +205,13 @@ export class RNBleApduSender
       }
     }
 
-    const requestMtuFrame = Uint8Array.from([0x08, 0x00, 0x00, 0x00, 0x00]);
+    const requestMtuFrame = Uint8Array.from([
+      MTU_REQUEST_OP,
+      0x00,
+      0x00,
+      0x00,
+      0x00,
+    ]);
     await this.write(Base64.fromUint8Array(requestMtuFrame)).catch((error) => {
       // Android pairing refused error
       this._logger.error("Pairing failed", {

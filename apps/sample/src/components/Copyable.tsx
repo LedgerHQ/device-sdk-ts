@@ -33,6 +33,8 @@ const CopyableContainer = styled.span`
   }
 `;
 
+const COPY_FEEDBACK_TIMEOUT_MS = 1500;
+
 const CopyableText = styled(Text).attrs({
   variant: "body",
   color: "neutral.c100",
@@ -59,7 +61,7 @@ export const Copyable: React.FC<{
   const copyToClipboard = useCallback(() => {
     void navigator.clipboard.writeText(copyValue);
     setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    setTimeout(() => setCopied(false), COPY_FEEDBACK_TIMEOUT_MS);
   }, [copyValue]);
 
   return (

@@ -1,6 +1,8 @@
 import { type CalInterceptor } from "./CalInterceptor";
 import { type ERC7730Client } from "./ERC7730Client";
 
+const KEY_PARTS_COUNT = 2;
+
 /**
  * Helper functions for working with ERC7730 descriptors and CAL interceptor
  */
@@ -55,7 +57,7 @@ export async function addERC7730Descriptor(
   const keys: string[] = [];
   Object.entries(descriptors).forEach(([key, descriptorData]) => {
     const parts = key.split(":");
-    if (parts.length === 2 && parts[0] && parts[1]) {
+    if (parts.length === KEY_PARTS_COUNT && parts[0] && parts[1]) {
       const chainId = parts[0];
       const address = parts[1];
       interceptor.storeDescriptor(parseInt(chainId), address, descriptorData);

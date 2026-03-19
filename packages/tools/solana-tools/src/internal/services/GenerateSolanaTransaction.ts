@@ -6,6 +6,8 @@ import {
 } from "@solana/spl-token";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 
+const DECIMAL_BASE = 10;
+
 export const COIN_DATA = {
   USDC: {
     mint: new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
@@ -57,7 +59,9 @@ export class GenerateSolanaTransaction {
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
 
-    const amount = BigInt(Math.round(amountInTokens * 10 ** decimals));
+    const amount = BigInt(
+      Math.round(amountInTokens * DECIMAL_BASE ** decimals),
+    );
 
     const tx = new Transaction({
       // hardcoded as transaction won't be broadcasted but only used for testing

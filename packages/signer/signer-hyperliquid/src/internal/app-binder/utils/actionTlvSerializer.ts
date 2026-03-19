@@ -5,7 +5,19 @@ import type {
   Order,
 } from "@internal/app-binder/di/appBinderTypes";
 
-const LONG_NUMBER_MAX_BYTES = 0x81 << 8;
+const DER_LONG_FORM_1_BYTE = 0x81;
+const DER_LONG_FORM_2_BYTES = 0x82;
+const DER_SHORT_FORM_LIMIT = 0x80;
+const MAX_BYTE_VALUE = 0xff;
+const LONG_TAG_THRESHOLD = 0x7f;
+const BYTE_SHIFT = 8;
+const UINT64_BYTE_SIZE = 8;
+const MAX_U64 = 0xffffffffffffffffn;
+const BIGINT_ZERO = 0n;
+const BYTE_MASK_BIGINT = 0xffn;
+const BITS_PER_BYTE_BIGINT = 8n;
+
+const LONG_NUMBER_MAX_BYTES = DER_LONG_FORM_1_BYTE << BYTE_SHIFT;
 
 /**
  * TLV tags for "Set action to sign" (specs.md § Set action to sign).
@@ -146,17 +158,17 @@ function numberToVarBytes(value: number, maxBytes: number = 8): Uint8Array {
     throw new Error(`Value ${value} is not a safe integer`);
   }
   const big = BigInt(value);
-  if (big > 0xffffffffffffffffn) {
+  if (big > MAX_U64) {
     throw new Error(`Value ${value} exceeds u64 range`);
   }
-  if (big === 0n) {
+  if (big === BIGINT_ZERO) {
     return new Uint8Array([0]);
   }
   const bytes: number[] = [];
   let n = big;
-  while (n > 0n && bytes.length < maxBytes) {
-    bytes.unshift(Number(n & 0xffn));
-    n >>= 8n;
+  while (n > BIGINT_ZERO && bytes.length < maxBytes) {
+    bytes.unshift(Number(n & BYTE_MASK_BIGINT));
+    n >>= BITS_PER_BYTE_BIGINT;
   }
   return new Uint8Array(bytes);
 }
@@ -175,13 +187,13 @@ function encodeDerLength(builder: ByteArrayBuilder, length: number): void {
     throw new Error(`Invalid DER length ${length}: not a safe integer`);
   }
 
-  if (length < 0x80) {
+  if (length < DER_SHORT_FORM_LIMIT) {
     builder.add8BitUIntToData(length);
-  } else if (length <= 0xff) {
-    builder.add8BitUIntToData(0x81);
+  } else if (length <= MAX_BYTE_VALUE) {
+    builder.add8BitUIntToData(DER_LONG_FORM_1_BYTE);
     builder.add8BitUIntToData(length);
   } else {
-    builder.add8BitUIntToData(0x82);
+    builder.add8BitUIntToData(DER_LONG_FORM_2_BYTES);
     builder.add16BitUIntToData(length);
   }
 }
@@ -193,7 +205,7 @@ function encodeTlvVarNumber(
   value: number,
   maxBytes: number = 8,
 ): void {
-  if (tag > 0x7f) {
+  if (tag > LONG_TAG_THRESHOLD) {
     builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
   } else {
     builder.add8BitUIntToData(tag);
@@ -208,7 +220,7 @@ function encodeInTlvFromUInt8(
   tag: number,
   value: number,
 ): void {
-  if (tag > 0x7f) {
+  if (tag > LONG_TAG_THRESHOLD) {
     builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
   } else {
     builder.add8BitUIntToData(tag);
@@ -222,12 +234,12 @@ function encodeInTlvFromUInt64(
   tag: number,
   value: number,
 ): void {
-  if (tag > 0x7f) {
+  if (tag > LONG_TAG_THRESHOLD) {
     builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
   } else {
     builder.add8BitUIntToData(tag);
   }
-  builder.add8BitUIntToData(8);
+  builder.add8BitUIntToData(UINT64_BYTE_SIZE);
   builder.add64BitUIntToData(value);
 }
 
@@ -236,7 +248,7 @@ function encodeInTlvFromAscii(
   tag: number,
   value: string,
 ): void {
-  if (tag > 0x7f) {
+  if (tag > LONG_TAG_THRESHOLD) {
     builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
   } else {
     builder.add8BitUIntToData(tag);
@@ -251,7 +263,7 @@ function encodeInTlvFromBuffer(
   tag: number,
   value: Uint8Array,
 ): void {
-  if (tag > 0x7f) {
+  if (tag > LONG_TAG_THRESHOLD) {
     builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
   } else {
     builder.add8BitUIntToData(tag);
@@ -316,7 +328,7 @@ function encodeInTlvFromHexa(
   tag: number,
   value: string,
 ): void {
-  if (tag > 0x7f) {
+  if (tag > LONG_TAG_THRESHOLD) {
     builder.add16BitUIntToData(LONG_NUMBER_MAX_BYTES + tag);
   } else {
     builder.add8BitUIntToData(tag);

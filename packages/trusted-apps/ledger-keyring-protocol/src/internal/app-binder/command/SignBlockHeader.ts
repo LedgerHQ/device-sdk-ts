@@ -13,6 +13,8 @@ import { Maybe } from "purify-ts";
 
 import { GeneralTags } from "@internal/models/Tags";
 
+const COMPRESSED_KEY_PREFIX = 3;
+
 import {
   LEDGER_SYNC_ERRORS,
   type LedgerKeyringProtocolErrorCodes,
@@ -27,8 +29,39 @@ export interface SignBlockHeaderCommandArgs {
 export type SignBlockHeaderCommandResponse = Uint8Array;
 
 const ISSUER_PLACEHOLDER = [
-  3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 0, 0, 0, 0, 0,
+  COMPRESSED_KEY_PREFIX,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
 ];
 export const ISSUER_PLACEHOLDER_TLV = Uint8Array.from([
   GeneralTags.PublicKey,

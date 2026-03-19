@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { type CommandProps } from "_common/types.ts";
+
+const JSON_INDENT = 2;
 import { useForm } from "_hooks/useForm";
 import { CommandResultStatus } from "@ledgerhq/device-management-kit";
 import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
@@ -46,7 +48,7 @@ export const SendCommandModal: React.FC<SendCommandModalProps> = ({
       if (response.status === CommandResultStatus.Error) {
         setOutput(inspect(response, { depth: null })); // Same output as console.log plus it works as well for objects with many nested properties.
       } else {
-        setOutput(JSON.stringify(response, null, 2));
+        setOutput(JSON.stringify(response, null, JSON_INDENT));
       }
     }
   }, [command, formValues]);

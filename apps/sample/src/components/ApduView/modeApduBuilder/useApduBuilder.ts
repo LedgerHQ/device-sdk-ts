@@ -9,6 +9,10 @@ import {
   type DataSegmentMethod,
 } from "./types";
 
+const RANDOM_STRING_RADIX = 36;
+const RANDOM_SUBSTRING_START = 2;
+const RANDOM_SUBSTRING_END = 9;
+
 /**
  * Hook to manage APDU builder state
  */
@@ -24,7 +28,7 @@ export function useApduBuilder() {
 
   // Generate unique ID for segments
   const generateId = useCallback(() => {
-    return `segment-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    return `segment-${Date.now()}-${Math.random().toString(RANDOM_STRING_RADIX).substring(RANDOM_SUBSTRING_START, RANDOM_SUBSTRING_END)}`;
   }, []);
 
   // Set a header field
