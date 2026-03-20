@@ -6,6 +6,9 @@ import {
   type GetAppConfigDAError,
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
+  type GetTrustedInputDAError,
+  type GetTrustedInputDAIntermediateValue,
+  type GetTrustedInputDAOutput,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
@@ -18,6 +21,27 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useSignerZcash } from "@/providers/SignerZcashProvider";
+
+const hexToBytes = (hex: string) => {
+  const normalizedHex = hex.startsWith("0x") ? hex.slice(2) : hex;
+
+  if (normalizedHex.length % 2 !== 0) {
+    throw new Error(
+      "Invalid hex string: expected an even number of characters",
+    );
+  }
+
+  if (!/^[0-9a-fA-F]*$/.test(normalizedHex)) {
+    throw new Error("Invalid hex string: expected only hexadecimal characters");
+  }
+
+  const bytes = new Uint8Array(normalizedHex.length / 2);
+  for (let i = 0; i < normalizedHex.length; i += 2) {
+    bytes[i / 2] = parseInt(normalizedHex.slice(i, i + 2), 16);
+  }
+
+  return bytes;
+};
 
 export const SignerZcashView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -88,19 +112,7 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          // Convert hex string to Uint8Array
-          const txBytes = transaction.startsWith("0x")
-            ? new Uint8Array(
-                transaction
-                  .slice(2)
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              )
-            : new Uint8Array(
-                transaction
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              );
+          const txBytes = hexToBytes(transaction);
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,
           });
@@ -120,6 +132,42 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >,
+      {
+        title: "Get Trusted Input",
+        description: "Call GET_TRUSTED_INPUT command on the device",
+        executeDeviceAction: ({
+          transaction,
+          useIndexLookup,
+          indexLookup,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+
+          return signer.getTrustedInput(hexToBytes(transaction), {
+            indexLookup: useIndexLookup ? indexLookup : undefined,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          transaction: "",
+          useIndexLookup: true,
+          indexLookup: 0,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetTrustedInputDAOutput,
+        {
+          transaction: string;
+          useIndexLookup: boolean;
+          indexLookup: number;
+          skipOpenApp?: boolean;
+        },
+        GetTrustedInputDAError,
+        GetTrustedInputDAIntermediateValue
       >,
       {
         title: "Sign Message",
