@@ -193,7 +193,7 @@ describe("buildActionStructure", () => {
       /* eslint-enable prettier/prettier */
     },
     {
-      name: "action type batchModify (update_order)",
+      name: "action type batchModify update_order",
       action: {
         type: "batchModify",
         modifies: [
@@ -236,6 +236,79 @@ describe("buildActionStructure", () => {
       /* eslint-enable prettier/prettier */
     },
     {
+      name: "action type batchModify 2 update_orders",
+      action: {
+        type: "batchModify",
+        modifies: [
+          {
+            oid: 343050796655,
+            order: {
+              a: 0,
+              b: false,
+              p: "85169",
+              s: "0.0005",
+              r: true,
+              t: {
+                trigger: {
+                  isMarket: true,
+                  triggerPx: "85169",
+                  tpsl: "tp" as const,
+                },
+              },
+            },
+          },
+          {
+            oid: 343050796655,
+            order: {
+              a: 0,
+              b: false,
+              p: "85169",
+              s: "0.0005",
+              r: true,
+              t: {
+                trigger: {
+                  isMarket: true,
+                  triggerPx: "85169",
+                  tpsl: "tp" as const,
+                },
+              },
+            },
+          },
+        ],
+        nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+        /* eslint-disable prettier/prettier */
+        "81d842" + // UPDATE_ORDER
+          "81dd34" + // ORDER
+            "81e00101" + // ORDER_TYPE
+            "81d10100" + // ASSET_ID
+            "81e20100" + // BUY_OR_NOT
+            "81e3053835313639" + // PRICE
+            "81e406302E30303035" + // SIZE
+            "81e50101" + // REDUCE_ONLY
+            "81d710" + // ORDER_DETAIL
+              "81e70101" + // TRIGGER_MARKET
+              "81e8053835313639" + // TRIGGER_PRICE
+              "81e90100" + // TRIGGER_TYPE
+          "81dc080000004FDF6BBE6F" + // ORDER_ID
+        "81d842" + // UPDATE_ORDER 2
+          "81dd34" + // ORDER
+            "81e00101" + // ORDER_TYPE
+            "81d10100" + // ASSET_ID
+            "81e20100" + // BUY_OR_NOT
+            "81e3053835313639" + // PRICE
+            "81e406302E30303035" + // SIZE
+            "81e50101" + // REDUCE_ONLY
+            "81d710" + // ORDER_DETAIL
+              "81e70101" + // TRIGGER_MARKET
+              "81e8053835313639" + // TRIGGER_PRICE
+              "81e90100" + // TRIGGER_TYPE
+          "81dc080000004FDF6BBE6F", // ORDER_ID
+      /* eslint-enable prettier/prettier */
+    },
+    {
       name: "action type cancel",
       action: {
         type: "cancel",
@@ -246,6 +319,27 @@ describe("buildActionStructure", () => {
         // prettier-ignore
         /* eslint-disable prettier/prettier */
         "81d90f" + // CANCEL_ORDERS
+          "81d10100" + // ASSET_ID
+          "81dc080000004F4BD11216", // ORDER_ID
+      /* eslint-enable prettier/prettier */
+    },
+    {
+      name: "action type with 2 cancels",
+      action: {
+        type: "cancel",
+        cancels: [
+          { a: 0, o: 340574409238 },
+          { a: 0, o: 340574409238 },
+        ],
+        nonce: 1772813983827, // Not serialized with this fuction call
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+        /* eslint-disable prettier/prettier */
+        "81d90f" + // CANCEL_ORDERS
+          "81d10100" + // ASSET_ID
+          "81dc080000004F4BD11216" + // ORDER_ID
+        "81d90f" + // CANCEL_ORDERS 2
           "81d10100" + // ASSET_ID
           "81dc080000004F4BD11216", // ORDER_ID
       /* eslint-enable prettier/prettier */
