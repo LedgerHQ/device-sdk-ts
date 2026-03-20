@@ -1,24 +1,19 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { inject, injectable, optional } from "inversify";
+import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
-import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
-import {
-  type SigningServiceResult,
-  type TransactionSigningService,
-} from "@root/src/domain/services/TransactionSigningService";
-import { type TypedDataSigningService } from "@root/src/domain/services/TypedDataSigningService";
+import { type SigningService } from "@root/src/domain/services/SigningService";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 
 /**
  * Device repository backed by a Speculos emulator.
  *
- * Dispatches signing to the correct service based on the {@link SignableInput}
- * discriminant (`kind`), keeping the repository itself chain-agnostic.
+ * Delegates signing to the injected {@link SigningService}, keeping the
+ * repository itself chain-agnostic.
  */
 @injectable()
 export class SpeculosDeviceRepository implements DeviceRepository {
@@ -27,11 +22,8 @@ export class SpeculosDeviceRepository implements DeviceRepository {
   constructor(
     @inject(TYPES.SigningFlowOrchestrator)
     private readonly orchestrator: FlowOrchestrator,
-    @inject(TYPES.TransactionSigningService)
-    private readonly transactionSigningService: TransactionSigningService,
-    @inject(TYPES.TypedDataSigningService)
-    @optional()
-    private readonly typedDataSigningService: TypedDataSigningService | null,
+    @inject(TYPES.SigningService)
+    private readonly signingService: SigningService,
     @inject(TYPES.LoggerPublisherServiceFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(TYPES.ScreenshotSaver)
@@ -51,35 +43,7 @@ export class SpeculosDeviceRepository implements DeviceRepository {
 
     await this.screenshotSaver.save();
 
-    let signingResult: SigningServiceResult;
-
-    switch (input.kind) {
-      case SignableInputKind.Transaction: {
-        signingResult = this.transactionSigningService.signTransaction(
-          derivationPath,
-          input.rawTx,
-        );
-        break;
-      }
-      case SignableInputKind.TypedData: {
-        if (!this.typedDataSigningService) {
-          throw new Error(
-            "TypedDataSigningService is not available in this configuration",
-          );
-        }
-        signingResult = this.typedDataSigningService.signTypedData(
-          derivationPath,
-          input.data,
-        );
-        break;
-      }
-      default: {
-        const _exhaustive: never = input;
-        throw new Error(
-          `Unsupported input kind: ${(_exhaustive as SignableInput).kind}`,
-        );
-      }
-    }
+    const signingResult = this.signingService.sign(input, derivationPath);
 
     return await this.orchestrator.orchestrateSigningFlow(signingResult, input);
   }

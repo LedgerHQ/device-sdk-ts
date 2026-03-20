@@ -32,7 +32,7 @@ export class DMKServiceController implements ServiceController {
   private signer: SignerEth | null = null;
 
   constructor(
-    @inject(DefaultSigningService)
+    @inject(TYPES.SigningService)
     private readonly signingService: DefaultSigningService,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
