@@ -23,8 +23,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export async function waitForScreenChange(
   client: SpeculosClient,
   previousEvents: ScreenEvent[],
-  timeoutMs = DELAY.screenChangeTimeoutMs,
-  pollMs = DELAY.screenChangePollMs,
+  timeoutMs: number = DELAY.screenChangeTimeoutMs,
+  pollMs: number = DELAY.screenChangePollMs,
 ): Promise<ScreenEvent[]> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
