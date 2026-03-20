@@ -8,6 +8,12 @@ export default defineConfig({
     ...baseConfig.test,
     include: ["src/**/*.test.ts"],
     setupFiles: ["./vitest.setup.mjs"],
+    coverage: {
+      provider: "istanbul",
+      reporter: ["lcov", "text"],
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.stub.ts", "src/index.ts", "src/api/index.ts"],
+    },
   },
   resolve: {
     alias: {
