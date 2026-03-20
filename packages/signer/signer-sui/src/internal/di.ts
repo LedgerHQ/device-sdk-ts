@@ -1,0 +1,36 @@
+import {
+  type DeviceManagementKit,
+  type DeviceSessionId,
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+import { Container } from "inversify";
+
+import { appBinderModuleFactory } from "./app-binder/di/appBinderModule";
+import { externalTypes } from "./externalTypes";
+import { useCasesModuleFactory } from "./use-cases/di/useCasesModule";
+
+export type MakeContainerProps = {
+  dmk: DeviceManagementKit;
+  sessionId: DeviceSessionId;
+};
+
+export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
+  const container = new Container();
+
+  container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
+  container
+    .bind<DeviceSessionId>(externalTypes.SessionId)
+    .toConstantValue(sessionId);
+
+  container
+    .bind<
+      (tag: string) => LoggerPublisherService
+    >(externalTypes.DmkLoggerFactory)
+    .toConstantValue((tag: string) =>
+      dmk.getLoggerFactory()(["SignerSui", tag]),
+    );
+
+  container.loadSync(appBinderModuleFactory(), useCasesModuleFactory());
+
+  return container;
+};
