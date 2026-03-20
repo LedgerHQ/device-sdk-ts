@@ -20,6 +20,7 @@ export class SignTransactionUseCase {
       derivationPath,
       transaction,
       objectData: options?.objectData,
+      descriptor: options?.descriptor,
       skipOpenApp: options?.skipOpenApp ?? false,
     });
   }

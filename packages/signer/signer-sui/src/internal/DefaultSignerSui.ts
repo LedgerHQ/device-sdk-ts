@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -23,13 +24,18 @@ import { type GetVersionUseCase } from "./use-cases/version/GetVersionUseCase";
 export type DefaultSignerSuiConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  contextModule: ContextModule;
 };
 
 export class DefaultSignerSui implements SignerSui {
   private _container: Container;
 
-  constructor({ dmk, sessionId }: DefaultSignerSuiConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId });
+  constructor({
+    dmk,
+    sessionId,
+    contextModule,
+  }: DefaultSignerSuiConstructorArgs) {
+    this._container = makeContainer({ dmk, sessionId, contextModule });
   }
 
   getVersion(): GetVersionDAReturnType {

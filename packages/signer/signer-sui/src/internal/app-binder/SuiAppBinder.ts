@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CallTaskInAppDeviceAction,
   DeviceManagementKit,
@@ -14,20 +15,19 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { externalTypes } from "@internal/externalTypes";
 
 import { APP_NAME } from "./constants";
-import {
-  type DescriptorInput,
-  ProvideTrustedDynamicDescriptorTask,
-} from "./task/ProvideTrustedDynamicDescriptorTask";
+import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { GetAddressTask } from "./task/GetAddressTask";
 import { GetVersionTask } from "./task/GetVersionTask";
+import { type DescriptorInput } from "./task/ProvideTrustedDynamicDescriptorTask";
 import { SignPersonalMessageTask } from "./task/SignPersonalMessageTask";
-import { SignTransactionTask } from "./task/SignTransactionTask";
 
 @injectable()
 export class SuiAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @inject(externalTypes.ContextModule)
+    private contextModule: ContextModule,
     @inject(externalTypes.DmkLoggerFactory)
     private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
@@ -82,31 +82,16 @@ export class SuiAppBinder {
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
+      deviceAction: new SignTransactionDeviceAction({
         input: {
-          task: async (internalApi) => {
-            // Provide trusted dynamic descriptor for clear signing if available
-            if (args.descriptor) {
-              const descriptorResult =
-                await new ProvideTrustedDynamicDescriptorTask(internalApi, {
-                  descriptor: args.descriptor,
-                }).run();
-              if ("error" in descriptorResult) {
-                return descriptorResult;
-              }
-            }
-
-            return new SignTransactionTask(internalApi, {
-              derivationPath: args.derivationPath,
-              transaction: args.transaction,
-              objectData: args.objectData,
-            }).run();
-          },
-          appName: APP_NAME,
-          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          derivationPath: args.derivationPath,
+          transaction: args.transaction,
+          objectData: args.objectData,
+          descriptor: args.descriptor,
+          contextModule: this.contextModule,
           skipOpenApp: args.skipOpenApp,
         },
-        logger: this.dmkLoggerFactory("SignTransactionTask"),
+        loggerFactory: this.dmkLoggerFactory,
       }),
     });
   }

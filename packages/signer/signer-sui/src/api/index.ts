@@ -21,7 +21,10 @@ export type {
   SignTransactionDAIntermediateValue,
   SignTransactionDAOutput,
   SignTransactionDAReturnType,
+  SignTransactionDAState,
+  SignTransactionDAStateStep,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export { signTransactionDAStateSteps } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type { AddressOptions } from "@api/model/AddressOptions";
 export type { MessageOptions } from "@api/model/MessageOptions";
 export type { SuiAddress } from "@api/model/SuiAddress";
@@ -31,3 +34,4 @@ export type { TransactionOptions } from "@api/model/TransactionOptions";
 export type { SignerSui } from "@api/SignerSui";
 export { SignerSuiBuilder } from "@api/SignerSuiBuilder";
 export type { SuiAppErrorCodes } from "@internal/app-binder/command/utils/SuiAppErrors";
+export type { DescriptorInput } from "@internal/app-binder/task/ProvideTrustedDynamicDescriptorTask";
