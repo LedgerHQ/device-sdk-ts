@@ -88,6 +88,13 @@ const flushPromises = async () => {
   return new Promise(timers.setImmediate);
 };
 
+const setProcessPlatform = (platform: NodeJS.Platform) => {
+  Object.defineProperty(process, "platform", {
+    value: platform,
+    configurable: true,
+  });
+};
+
 /**
  * Helper to create a USB device event object matching the usb module's Device type
  */
@@ -115,6 +122,7 @@ const emitUsbDetachEvent = (vendorId: number, productId: number) => {
 };
 
 describe("NodeHidTransport", () => {
+  const originalPlatform = process.platform;
   let transport: NodeHidTransport;
   let apduReceiverServiceFactoryStub: ApduReceiverServiceFactory;
   let apduSenderServiceFactoryStub: ApduSenderServiceFactory;
@@ -195,6 +203,7 @@ describe("NodeHidTransport", () => {
   });
 
   afterEach(() => {
+    setProcessPlatform(originalPlatform);
     vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.useRealTimers();
@@ -327,6 +336,37 @@ describe("NodeHidTransport", () => {
           },
         );
       }));
+
+    it("should ignore non-APDU ledger interfaces on darwin", async () => {
+      setProcessPlatform("darwin");
+
+      const genericInterface = nodeHidDeviceStubBuilder({
+        path: "/dev/hidraw0",
+        interface: 2,
+        usagePage: 0xf1d0,
+      });
+      const apduInterface = nodeHidDeviceStubBuilder({
+        path: "/dev/hidraw1",
+        interface: 0,
+        usagePage: 0xffa0,
+      });
+
+      mockDevicesAsync.mockResolvedValueOnce([genericInterface, apduInterface]);
+      mockDevicesAsync.mockResolvedValue([genericInterface, apduInterface]);
+
+      const discoveredDevices = await lastValueFrom(
+        transport.startDiscovering().pipe(toArray()),
+      );
+
+      expect(discoveredDevices).toHaveLength(1);
+      expect(
+        (
+          discoveredDevices[0] as TransportDiscoveredDevice & {
+            hidDevice: NodeHIDDevice;
+          }
+        ).hidDevice.path,
+      ).toBe("/dev/hidraw1");
+    });
 
     it("should throw DeviceNotRecognizedError if the device is not recognized", () =>
       new Promise<void>((resolve, reject) => {
