@@ -15,6 +15,7 @@ export const TYPES = {
   SignableInteractions: Symbol.for("SignableInteractions"),
   RetryService: Symbol.for("RetryService"),
   AppVersionResolver: Symbol.for("AppVersionResolver"),
+  TransactionCraftingService: Symbol.for("TransactionCraftingService"),
 
   // State Handlers
   CompleteStateHandler: Symbol.for("CompleteStateHandler"),

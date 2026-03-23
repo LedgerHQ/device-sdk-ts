@@ -470,6 +470,9 @@ importers:
       '@ledgerhq/device-transport-kit-speculos':
         specifier: workspace:^
         version: link:../../packages/transport/speculos
+      '@ledgerhq/solana-tools':
+        specifier: workspace:^
+        version: link:../../packages/tools/solana-tools
       '@ledgerhq/speculos-device-controller':
         specifier: workspace:^
         version: link:../../packages/speculos-device-controller

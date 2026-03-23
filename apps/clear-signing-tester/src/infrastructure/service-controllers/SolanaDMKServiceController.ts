@@ -14,6 +14,7 @@ import {
   speculosIdentifier,
   speculosTransportFactory,
 } from "@ledgerhq/device-transport-kit-speculos";
+import { SolanaToolsBuilder } from "@ledgerhq/solana-tools";
 import { inject } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -23,6 +24,7 @@ import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConf
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { SolanaSigningService } from "@root/src/infrastructure/services/SolanaSigningService";
+import { TransactionCraftingService } from "@root/src/infrastructure/services/TransactionCraftingService";
 
 export class SolanaDMKServiceController implements ServiceController {
   private logger: LoggerPublisherService;
@@ -34,6 +36,8 @@ export class SolanaDMKServiceController implements ServiceController {
   constructor(
     @inject(TYPES.SigningService)
     private readonly signingService: SolanaSigningService,
+    @inject(TYPES.TransactionCraftingService)
+    private readonly transactionCraftingService: TransactionCraftingService,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
     @inject(TYPES.SpeculosConfig)
@@ -102,6 +106,12 @@ export class SolanaDMKServiceController implements ServiceController {
                       .build();
 
                     this.signingService.setSigner(this.signer);
+
+                    const solanaTools = new SolanaToolsBuilder({
+                      dmk: this.dmk,
+                      sessionId: sessionId,
+                    }).build();
+                    this.transactionCraftingService.setSolanaTools(solanaTools);
 
                     resolve();
                   })
