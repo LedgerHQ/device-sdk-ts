@@ -11,14 +11,14 @@ export default defineConfig({
       provider: "istanbul",
       reporter: ["lcov", "text"],
       include: ["src/**/*.ts"],
-      exclude: ["src/index.ts"],
+      exclude: ["src/index.ts", "src/**/*.test.ts"],
     },
   },
   resolve: {
     alias: {
-      "@root": path.resolve(import.meta.dirname),
-      "@api": path.resolve(import.meta.dirname, "src/api"),
-      "@internal": path.resolve(import.meta.dirname, "src/internal"),
+      "@root": path.resolve(__dirname),
+      "@api": path.resolve(__dirname, "src/api"),
+      "@internal": path.resolve(__dirname, "src/internal"),
     },
   },
 });
