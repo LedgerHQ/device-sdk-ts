@@ -16,14 +16,13 @@ import {
   INS,
   P1,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { type AleoChunkableCommandArgs } from "@internal/app-binder/task/AleoChunkableCommandArgs";
 
 import {
   ALEO_APP_ERRORS,
   AleoAppCommandErrorFactory,
   type AleoErrorCodes,
 } from "./utils/aleoApplicationErrors";
-
-import { type AleoChunkableCommandArgs } from "@internal/app-binder/task/AleoChunkableCommandArgs";
 
 export type SignRootIntentCommandArgs = AleoChunkableCommandArgs;
 

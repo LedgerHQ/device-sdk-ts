@@ -5,12 +5,12 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { DerivationPathUtils } from "@ledgerhq/signer-utils";
 
-import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
-
 import {
   SignRootIntentCommand,
   type SignRootIntentCommandResponse,
-} from "../command/SignRootIntentCommand";
+} from "@internal/app-binder/command/SignRootIntentCommand";
+import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
+
 import { SendAleoCommandInChunksTask } from "./SendAleoCommandInChunksTask";
 
 export type SignRootIntentTaskArgs = {

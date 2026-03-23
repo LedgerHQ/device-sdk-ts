@@ -4,12 +4,12 @@ import {
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
 
-import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
-
 import {
   SignFeeIntentCommand,
   type SignFeeIntentCommandResponse,
-} from "../command/SignFeeIntentCommand";
+} from "@internal/app-binder/command/SignFeeIntentCommand";
+import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
+
 import { SendAleoCommandInChunksTask } from "./SendAleoCommandInChunksTask";
 
 export type SignFeeIntentTaskArgs = {
