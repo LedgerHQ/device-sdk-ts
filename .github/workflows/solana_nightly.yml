@@ -46,16 +46,9 @@ jobs:
           - flex
         test:
           - test:solana:system-transfers
-          - test:solana:spl-token-transfers
-          - test:solana:spl-token-approvals
-          - test:solana:spl-token-burn-close
-          - test:solana:spl-ata
-          - test:solana:stake-delegate
-          - test:solana:stake-deactivate
-          - test:solana:stake-withdraw
-          - test:solana:stake-split-merge
-          - test:solana:stake-authorize
-          - test:solana:combined
+          - test:solana:spl-legacy
+          - test:solana:spl-token2022
+          - test:solana:stake
     steps:
       - uses: actions/checkout@v6
 
