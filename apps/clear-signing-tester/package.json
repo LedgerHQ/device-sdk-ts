@@ -13,6 +13,7 @@
   },
   "scripts": {
     "cli": "tsx src/cli/EthereumTransactionTesterCli.ts",
+    "cli:solana": "tsx src/cli/SolanaTransactionTesterCli.ts",
     "build": "tsc",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
