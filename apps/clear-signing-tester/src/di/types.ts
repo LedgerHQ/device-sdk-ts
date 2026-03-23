@@ -26,6 +26,7 @@ export const TYPES = {
   // Service Controllers
   MainServiceController: Symbol.for("MainServiceController"),
   DMKServiceController: Symbol.for("DMKServiceController"),
+  SolanaDMKServiceController: Symbol.for("SolanaDMKServiceController"),
   SpeculosServiceController: Symbol.for("SpeculosServiceController"),
   ServiceControllers: Symbol.for("ServiceControllers"),
 
@@ -52,6 +53,10 @@ export const TYPES = {
   TestContractUseCase: Symbol.for("TestContractUseCase"),
   TestBatchContractFromFileUseCase: Symbol.for(
     "TestBatchContractFromFileUseCase",
+  ),
+  TestSolanaTransactionUseCase: Symbol.for("TestSolanaTransactionUseCase"),
+  TestBatchSolanaTransactionFromFileUseCase: Symbol.for(
+    "TestBatchSolanaTransactionFromFileUseCase",
   ),
 
   // Config
