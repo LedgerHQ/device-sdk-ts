@@ -7,6 +7,7 @@ import { type CalAdapter } from "@root/src/domain/adapters/CalAdapter";
 import { type EtherscanAdapter } from "@root/src/domain/adapters/EtherscanAdapter";
 import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
 import { type ContractInput } from "@root/src/domain/models/ContractInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type TransactionContractRepository } from "@root/src/domain/repositories/TransactionContractRepository";
@@ -17,6 +18,7 @@ import { HttpCalAdapter } from "@root/src/infrastructure/adapters/external/HttpC
 import { HttpEtherscanAdapter } from "@root/src/infrastructure/adapters/external/HttpEtherscanAdapter";
 import { ContractFileRepository } from "@root/src/infrastructure/repositories/ContractFileRepository";
 import { DefaultTransactionContractRepository } from "@root/src/infrastructure/repositories/DefaultTransactionContractRepository";
+import { TransactionFileRepository } from "@root/src/infrastructure/repositories/TransactionFileRepository";
 import { TypedDataFileRepository } from "@root/src/infrastructure/repositories/TypedDataFileRepository";
 import { DMKServiceController } from "@root/src/infrastructure/service-controllers/DMKServiceController";
 import { DefaultSigningService } from "@root/src/infrastructure/services/DefaultSigningService";
@@ -30,6 +32,9 @@ export const ethereumInfrastructureModuleFactory = (
 ) =>
   new ContainerModule(({ bind }) => {
     // Repositories
+    bind<DataFileRepository<TransactionInput>>(TYPES.TransactionFileRepository)
+      .to(TransactionFileRepository)
+      .inSingletonScope();
     bind<DataFileRepository<TypedDataInput>>(TYPES.TypedDataFileRepository)
       .to(TypedDataFileRepository)
       .inSingletonScope();

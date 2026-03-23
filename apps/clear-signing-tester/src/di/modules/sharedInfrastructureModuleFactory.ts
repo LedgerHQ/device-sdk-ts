@@ -8,8 +8,6 @@ import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
@@ -24,7 +22,6 @@ import { NodeDockerContainer } from "@root/src/infrastructure/adapters/system/No
 import { NodeFileReader } from "@root/src/infrastructure/adapters/system/NodeFileReader";
 import { NodeJsonParser } from "@root/src/infrastructure/adapters/system/NodeJsonParser";
 import { SpeculosDeviceRepository } from "@root/src/infrastructure/repositories/SpeculosDeviceRepository";
-import { TransactionFileRepository } from "@root/src/infrastructure/repositories/TransactionFileRepository";
 import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
 import { SpeculosServiceController } from "@root/src/infrastructure/service-controllers/SpeculosServiceController";
 import { AppVersionResolverService } from "@root/src/infrastructure/services/AppVersionResolverService";
@@ -48,9 +45,6 @@ export const sharedInfrastructureModuleFactory = (
     // Repositories
     bind<DeviceRepository>(TYPES.DeviceRepository)
       .to(SpeculosDeviceRepository)
-      .inSingletonScope();
-    bind<DataFileRepository<TransactionInput>>(TYPES.TransactionFileRepository)
-      .to(TransactionFileRepository)
       .inSingletonScope();
 
     // Services

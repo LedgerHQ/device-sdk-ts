@@ -3,8 +3,11 @@ import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SigningService } from "@root/src/domain/services/SigningService";
+import { SolanaTransactionFileRepository } from "@root/src/infrastructure/repositories/SolanaTransactionFileRepository";
 import { SolanaDMKServiceController } from "@root/src/infrastructure/service-controllers/SolanaDMKServiceController";
 import { SolanaSigningService } from "@root/src/infrastructure/services/SolanaSigningService";
 import { TransactionCraftingService } from "@root/src/infrastructure/services/TransactionCraftingService";
@@ -17,6 +20,11 @@ export const solanaInfrastructureModuleFactory = (
   config: ClearSigningTesterConfig,
 ) =>
   new ContainerModule(({ bind }) => {
+    // Repositories
+    bind<DataFileRepository<TransactionInput>>(TYPES.TransactionFileRepository)
+      .to(SolanaTransactionFileRepository)
+      .inSingletonScope();
+
     // Signing
     bind<TransactionCraftingService>(TYPES.TransactionCraftingService)
       .to(TransactionCraftingService)
