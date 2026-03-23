@@ -1,5 +1,5 @@
-name: "Run Clear Signing Tester"
-description: "Execute Clear Signing Tester with specified device and test"
+name: "Run Ethereum Clear Signing Tester"
+description: "Execute Ethereum Clear Signing Tester with specified device and test"
 author: "Ledger"
 
 inputs:
@@ -27,7 +27,7 @@ runs:
       shell: bash
       run: docker pull ghcr.io/ledgerhq/ledger-app-builder/ledger-app-dev-tools:latest
 
-    - name: Run Clear Signing Tester
+    - name: Run Ethereum Clear Signing Tester
       shell: bash
       env:
         GATING_TOKEN: ${{ inputs.gating-token }}

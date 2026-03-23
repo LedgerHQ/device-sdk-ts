@@ -138,7 +138,7 @@ jobs:
           SONAR_HOST_URL: ${{ vars.PUBLIC_SONAR_HOST_URL }}
 
   cs-tester:
-    name: Run Clear Signing Tester (${{ matrix.device }} - ${{ matrix.test }})
+    name: Run Ethereum Clear Signing Tester (${{ matrix.device }} - ${{ matrix.test }})
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-ethereum-cs-tester == 'true'
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
@@ -175,7 +175,7 @@ jobs:
       - name: Pull Speculos Docker image
         run: docker pull ghcr.io/ledgerhq/speculos
 
-      - name: Run Clear Signing Tester
+      - name: Run Ethereum Clear Signing Tester
         id: cs-tester
         env:
           FORCE_COLOR: "0"
