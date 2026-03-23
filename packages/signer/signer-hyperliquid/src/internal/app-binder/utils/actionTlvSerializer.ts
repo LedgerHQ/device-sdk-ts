@@ -365,36 +365,33 @@ export function buildActionStructure(action: HyperliquidAction): Uint8Array {
     }
     case "modify":
     case "batchModify": {
-      // update_order: tag UPDATE_ORDER (0xd8) once, then length of buffer, then buffer of [order (0xdd), oid (0xdc)] per modify
+      // update_order: one UPDATE_ORDERS (0xd8) TLV per modify, each containing order (0xdd) + order_id (0xdc)
       if (!action.modifies.length) {
         throw new Error("modify action must have at least one modify");
       }
-      const payloadBuilder = new ByteArrayBuilder();
       for (const mod of action.modifies) {
+        const updatePair = new ByteArrayBuilder();
         encodeInTlvFromBuffer(
-          payloadBuilder,
+          updatePair,
           TLV_TAG.ORDER,
           serializeOrderToTlv(mod.order),
         );
-        encodeInTlvFromUInt64(payloadBuilder, TLV_TAG.ORDER_ID, mod.oid);
+        encodeInTlvFromUInt64(updatePair, TLV_TAG.ORDER_ID, mod.oid);
+        encodeInTlvFromBuffer(b, TLV_TAG.UPDATE_ORDERS, updatePair.build());
       }
-      const updateOrderPayload = payloadBuilder.build();
-      encodeInTlvFromBuffer(b, TLV_TAG.UPDATE_ORDERS, updateOrderPayload);
       break;
     }
     case "cancel": {
-      // cancel_order: asset_id (0xd1), oid (0xdc)
+      // cancel_order: one CANCEL_ORDERS (0xd9) TLV per cancel, each containing asset_id (0xd1) + oid (0xdc)
       if (!action.cancels.length) {
         throw new Error("cancel action must have at least one cancel");
       }
-      const payloadBuilder = new ByteArrayBuilder();
       for (const cancel of action.cancels) {
-        encodeTlvVarNumber(payloadBuilder, TLV_TAG.ASSET_ID, cancel.a);
-        encodeInTlvFromUInt64(payloadBuilder, TLV_TAG.ORDER_ID, cancel.o);
+        const cancelPair = new ByteArrayBuilder();
+        encodeTlvVarNumber(cancelPair, TLV_TAG.ASSET_ID, cancel.a);
+        encodeInTlvFromUInt64(cancelPair, TLV_TAG.ORDER_ID, cancel.o);
+        encodeInTlvFromBuffer(b, TLV_TAG.CANCEL_ORDERS, cancelPair.build());
       }
-      const updateOrderPayload = payloadBuilder.build();
-      encodeInTlvFromBuffer(b, TLV_TAG.CANCEL_ORDERS, updateOrderPayload);
-
       break;
     }
     case "updateLeverage": {
