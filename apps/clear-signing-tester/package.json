@@ -24,6 +24,7 @@
     "test:raw:multisig": "pnpm cli raw-file ./ressources/core/raw-multisig.json",
     "test:typed-data:multisig": "pnpm cli typed-data-file ./ressources/core/typed-data-multisig.json",
     "test": "vitest run",
+    "test:solana:raw": "pnpm cli:solana raw-file ./ressources/solana/raw-transaction.json",
     "test:erc7730": "./scripts/test-erc7730-calldata.sh",
     "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh"
   },
