@@ -1,0 +1,10 @@
+[
+  {
+    "rawTx": "AQABBKavmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfIaNv504SNMNeYr/XAP0ke5LE1ODlOEAaxR9cSul2V6cGp9UXGMd0yShWY5hpHV62i164o5tLbVxzVVshAAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAAxJrndgN4IFTxep3tFDlPc0xA9gXLzTK0NoEDPkNN+goBAwMBAgAoAQAAAJQCaKxMN+oLyWycQO8zrOB6MDTWUMQ3N/6pVouMkdpUAAAAAA==",
+    "description": "Stake: authorize new staker"
+  },
+  {
+    "rawTx": "AQABBKavmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfIaNv504SNMNeYr/XAP0ke5LE1ODlOEAaxR9cSul2V6cGp9UXGMd0yShWY5hpHV62i164o5tLbVxzVVshAAAAAAah2BeRN1QqmDQ3vf4qerJVf1NcinhyK2ikncAAAAAAxJrndgN4IFTxep3tFDlPc0xA9gXLzTK0NoEDPkNN+goBAwMBAgAoAQAAAJQCaKxMN+oLyWycQO8zrOB6MDTWUMQ3N/6pVouMkdpUAQAAAA==",
+    "description": "Stake: authorize new withdrawer"
+  }
+]

@@ -1,0 +1,14 @@
+[
+  {
+    "rawTx": "AQABBKavmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfIaNv504SNMNeYr/XAP0ke5LE1ODlOEAaxR9cSul2V6fG+nrzvtutOj1l82qryXQxsbvkwtL24OR8pgIDRS9dYQbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpxJrndgN4IFTxep3tFDlPc0xA9gXLzTK0NoEDPkNN+goBAwMBAgAKD0B4fQEAAAAABg==",
+    "description": "SPL Token: burn 25 USDC"
+  },
+  {
+    "rawTx": "AQABBKavmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfEFlIWfo77LdB6tg+Bk09WcGgp5cH/TsDAIWZ5Kk8xJEEednHzBA13nIR+Z60jAnXCyvfW9+eLla4ofu1ouozJwbd9uHXZaGT2cvhRs7reawctIXtX1s3kTqM9YV+/wCpxJrndgN4IFTxep3tFDlPc0xA9gXLzTK0NoEDPkNN+goBAwMBAgAKDwDh9QUAAAAABg==",
+    "description": "SPL Token: burn 100 JUP"
+  },
+  {
+    "rawTx": "AQABA6avmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfIaNv504SNMNeYr/XAP0ke5LE1ODlOEAaxR9cSul2V6cG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqcSa53YDeCBU8Xqd7RQ5T3NMQPYFy80ytDaBAz5DTfoKAQIDAQAAAQk=",
+    "description": "SPL Token: close USDC account (reclaim rent)"
+  }
+]

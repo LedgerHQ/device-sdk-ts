@@ -1,7 +1,7 @@
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import { type SolanaTools } from "@ledgerhq/solana-tools";
 import { injectable } from "inversify";
-import { firstValueFrom, filter, map } from "rxjs";
+import { filter, firstValueFrom, map } from "rxjs";
 
 /**
  * Wraps {@link SolanaTools.craftTransaction} to replace the payer public key

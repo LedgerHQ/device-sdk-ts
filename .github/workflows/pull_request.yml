@@ -209,7 +209,18 @@ jobs:
       fail-fast: false
       matrix:
         device: [stax, nanox]
-        test: [test:solana:raw]
+        test:
+          - test:solana:system-transfers
+          - test:solana:spl-token-transfers
+          - test:solana:spl-token-approvals
+          - test:solana:spl-token-burn-close
+          - test:solana:spl-ata
+          - test:solana:stake-delegate
+          - test:solana:stake-deactivate
+          - test:solana:stake-withdraw
+          - test:solana:stake-split-merge
+          - test:solana:stake-authorize
+          - test:solana:combined
     steps:
       - uses: actions/checkout@v6
 

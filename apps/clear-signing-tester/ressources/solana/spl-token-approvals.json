@@ -1,0 +1,14 @@
+[
+  {
+    "rawTx": "AQADBaavmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfIaNv504SNMNeYr/XAP0ke5LE1ODlOEAaxR9cSul2V6eUAmisTDfqC8lsnEDvM6zgejA01lDENzf+qVaLjJHaVMb6evO+2606PWXzaqvJdDGxu+TC0vbg5HymAgNFL11hBt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKnEmud2A3ggVPF6ne0UOU9zTED2BcvNMrQ2gQM+Q036CgEEBAEDAgAKDQDh9QUAAAAABg==",
+    "description": "SPL Token: approve 100 USDC delegation"
+  },
+  {
+    "rawTx": "AQADBaavmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfEFlIWfo77LdB6tg+Bk09WcGgp5cH/TsDAIWZ5Kk8xJGUAmisTDfqC8lsnEDvM6zgejA01lDENzf+qVaLjJHaVAR52cfMEDXechH5nrSMCdcLK99b354uVrih+7Wi6jMnBt324ddloZPZy+FGzut5rBy0he1fWzeROoz1hX7/AKnEmud2A3ggVPF6ne0UOU9zTED2BcvNMrQ2gQM+Q036CgEEBAEDAgAKDQBlzR0AAAAABg==",
+    "description": "SPL Token: approve 500 JUP delegation"
+  },
+  {
+    "rawTx": "AQABA6avmzDazhBjiPobI251V3CH7ioXjhtknOm3J33t8UGfIaNv504SNMNeYr/XAP0ke5LE1ODlOEAaxR9cSul2V6cG3fbh12Whk9nL4UbO63msHLSF7V9bN5E6jPWFfv8AqcSa53YDeCBU8Xqd7RQ5T3NMQPYFy80ytDaBAz5DTfoKAQICAQABBQ==",
+    "description": "SPL Token: revoke USDC delegation"
+  }
+]

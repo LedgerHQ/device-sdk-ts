@@ -109,7 +109,7 @@ describe("buildActionStructure", () => {
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "81dd1f" + // ORDER
           "81e00100" + // ORDER_TYPE
           "81d10100" + // ASSET_ID
@@ -120,7 +120,6 @@ describe("buildActionStructure", () => {
           "81d704" + // ORDER_DETAIL
           "81e60102" + // TIF
         "81ea0100", // GROUPING
-      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type with multiple orders",
@@ -163,7 +162,7 @@ describe("buildActionStructure", () => {
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "81dd27" + // ORDER
           "81e00100" + // ORDER_TYPE
           "81d10105" + // ASSET_ID
@@ -190,7 +189,6 @@ describe("buildActionStructure", () => {
         "81eb1b" + // BUILDER_INFO
           "81d314c0708cdd6cd166d51da264e3f49a0422be26e35b" + // BUILDER_ADDRESS
           "81ec0164", // BUILDER_FEE
-      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type batchModify update_order",
@@ -219,7 +217,7 @@ describe("buildActionStructure", () => {
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "81d842" + // UPDATE_ORDERS
           "81dd34" + // ORDER
             "81e00101" + // ORDER_TYPE
@@ -233,7 +231,6 @@ describe("buildActionStructure", () => {
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
           "81dc080000004FDF6BBE6F", // ORDER_ID
-      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type batchModify 2 update_orders",
@@ -317,11 +314,10 @@ describe("buildActionStructure", () => {
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "81d90f" + // CANCEL_ORDERS
           "81d10100" + // ASSET_ID
           "81dc080000004F4BD11216", // ORDER_ID
-      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type with 2 cancels",
@@ -354,11 +350,9 @@ describe("buildActionStructure", () => {
         nonce: 3, // Not serialized with this fuction call
       } satisfies HyperliquidAction,
       expectedHex:
-        /* eslint-disable prettier/prettier */
         "81d10100" + // ASSET_ID
         "81de0100" + // IS_CROSS
         "81ed08000000000000000a", // LEVERAGE,
-      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type approveBuilderFee",
