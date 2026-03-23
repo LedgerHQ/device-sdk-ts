@@ -22,7 +22,7 @@ import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
-import { type SigningService } from "@root/src/domain/services/SigningService";
+import { DefaultSigningService } from "@root/src/infrastructure/services/DefaultSigningService";
 
 export class DMKServiceController implements ServiceController {
   private logger: LoggerPublisherService;
@@ -33,7 +33,7 @@ export class DMKServiceController implements ServiceController {
 
   constructor(
     @inject(TYPES.SigningService)
-    private readonly signingService: SigningService,
+    private readonly signingService: DefaultSigningService,
     @inject(TYPES.RetryService)
     private readonly retryService: RetryService,
     @inject(TYPES.SpeculosConfig)
