@@ -47,13 +47,16 @@ import {
 type NodeHIDAPI = typeof NodeHIDAPI;
 const NodeHIDAPI = { devicesAsync, HIDAsync } as const;
 
+// HID usage page used by Ledger devices for the APDU channel on macOS and Windows.
+const LEDGER_APDU_USAGE_PAGE = 0xffa0;
+
 const isLedgerApduInterface = (hidDevice: NodeHIDDevice) => {
   if (hidDevice.vendorId !== LEDGER_VENDOR_ID) {
     return false;
   }
 
   if (process.platform === "darwin" || process.platform === "win32") {
-    return hidDevice.usagePage === 0xffa0;
+    return hidDevice.usagePage === LEDGER_APDU_USAGE_PAGE;
   }
 
   return true;

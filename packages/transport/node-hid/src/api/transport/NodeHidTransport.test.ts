@@ -368,6 +368,37 @@ describe("NodeHidTransport", () => {
       ).toBe("/dev/hidraw1");
     });
 
+    it("should ignore non-APDU ledger interfaces on win32", async () => {
+      setProcessPlatform("win32");
+
+      const genericInterface = nodeHidDeviceStubBuilder({
+        path: "\\\\?\\hid#vid_2c97&pid_0001&mi_01#generic",
+        interface: 2,
+        usagePage: 0xf1d0,
+      });
+      const apduInterface = nodeHidDeviceStubBuilder({
+        path: "\\\\?\\hid#vid_2c97&pid_0001&mi_00#apdu",
+        interface: 0,
+        usagePage: 0xffa0,
+      });
+
+      mockDevicesAsync.mockResolvedValueOnce([genericInterface, apduInterface]);
+      mockDevicesAsync.mockResolvedValue([genericInterface, apduInterface]);
+
+      const discoveredDevices = await lastValueFrom(
+        transport.startDiscovering().pipe(toArray()),
+      );
+
+      expect(discoveredDevices).toHaveLength(1);
+      expect(
+        (
+          discoveredDevices[0] as TransportDiscoveredDevice & {
+            hidDevice: NodeHIDDevice;
+          }
+        ).hidDevice.path,
+      ).toBe("\\\\?\\hid#vid_2c97&pid_0001&mi_00#apdu");
+    });
+
     it("should throw DeviceNotRecognizedError if the device is not recognized", () =>
       new Promise<void>((resolve, reject) => {
         mockDevicesAsync.mockResolvedValueOnce([
