@@ -3,18 +3,13 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type SignableInput } from "@root/src/domain/models/SignableInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 import { type SigningService } from "@root/src/domain/services/SigningService";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 
-/**
- * Device repository backed by a Speculos emulator.
- *
- * Delegates signing to the injected {@link SigningService}, keeping the
- * repository itself chain-agnostic.
- */
 @injectable()
 export class SpeculosDeviceRepository implements DeviceRepository {
   private readonly logger: LoggerPublisherService;
@@ -32,19 +27,45 @@ export class SpeculosDeviceRepository implements DeviceRepository {
     this.logger = loggerFactory("device-repository");
   }
 
-  /** {@inheritDoc DeviceRepository.performSign} */
-  async performSign(
-    input: SignableInput,
+  async performSignTransaction(
+    transaction: TransactionInput,
     derivationPath: string,
   ): Promise<TestResult> {
-    this.logger.debug("Performing sign", {
-      data: { derivationPath, kind: input.kind },
+    this.logger.debug("Performing sign transaction", {
+      data: { derivationPath, transaction },
     });
 
     await this.screenshotSaver.save();
 
-    const signingResult = this.signingService.sign(input, derivationPath);
+    const signTransactionDA = this.signingService.signTransaction(
+      derivationPath,
+      transaction.rawTx,
+    );
 
-    return await this.orchestrator.orchestrateSigningFlow(signingResult, input);
+    return await this.orchestrator.orchestrateSigningFlow(
+      signTransactionDA,
+      transaction,
+    );
+  }
+
+  async performSignTypedData(
+    typedData: TypedDataInput,
+    derivationPath: string,
+  ): Promise<TestResult> {
+    this.logger.debug("Performing sign typed data", {
+      data: { derivationPath, typedData },
+    });
+
+    await this.screenshotSaver.save();
+
+    const signTypedDataDA = this.signingService.signTypedData(
+      derivationPath,
+      typedData.data,
+    );
+
+    return await this.orchestrator.orchestrateSigningFlow(
+      signTypedDataDA,
+      typedData,
+    );
   }
 }

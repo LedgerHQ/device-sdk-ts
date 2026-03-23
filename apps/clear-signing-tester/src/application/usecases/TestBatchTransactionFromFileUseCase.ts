@@ -32,7 +32,7 @@ export class TestBatchTransactionFromFileUseCase extends TestBatchFromFileUseCas
       transactionFileRepository,
       deviceRepository,
       (deviceRepo, input, derivationPath) =>
-        deviceRepo.performSign(input, derivationPath),
+        deviceRepo.performSignTransaction(input, derivationPath),
       {
         title: "📋 TRANSACTION TEST RESULTS",
         summaryTitle: "📊 TRANSACTION BATCH SUMMARY",

@@ -2,8 +2,6 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
-import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type TransactionContractRepository } from "@root/src/domain/repositories/TransactionContractRepository";
 import { TestResult } from "@root/src/domain/types/TestStatus";
@@ -51,8 +49,7 @@ export class TestContractUseCase {
     // Test each transaction
     for (const [index, tx] of txs.entries()) {
       const { selector, hash } = tx.transactionData;
-      const transaction: TransactionInput = {
-        kind: SignableInputKind.Transaction,
+      const transaction = {
         rawTx: tx.rawTx!,
         description: selector,
       };
@@ -60,7 +57,7 @@ export class TestContractUseCase {
       this.logger.info(`Testing transaction ${index + 1}/${txs.length}`);
 
       try {
-        const result = await this.deviceRepository.performSign(
+        const result = await this.deviceRepository.performSignTransaction(
           transaction,
           config.derivationPath,
         );

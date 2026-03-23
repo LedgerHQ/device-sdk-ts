@@ -32,7 +32,7 @@ export class TestBatchTypedDataFromFileUseCase extends TestBatchFromFileUseCase<
       typedDataFileRepository,
       deviceRepository,
       (deviceRepo, input, derivationPath) =>
-        deviceRepo.performSign(input, derivationPath),
+        deviceRepo.performSignTypedData(input, derivationPath),
       {
         title: "📋 TYPED DATA TEST RESULTS",
         summaryTitle: "📊 TYPED DATA BATCH SUMMARY",

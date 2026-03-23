@@ -12,7 +12,6 @@ export const TYPES = {
   ScreenAnalyzerService: Symbol.for("ScreenAnalyzerService"),
   SigningService: Symbol.for("SigningService"),
   SigningFlowOrchestrator: Symbol.for("SigningFlowOrchestrator"),
-  SignableInteractions: Symbol.for("SignableInteractions"),
   RetryService: Symbol.for("RetryService"),
   AppVersionResolver: Symbol.for("AppVersionResolver"),
 

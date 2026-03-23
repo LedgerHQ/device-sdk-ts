@@ -1,4 +1,3 @@
-import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
@@ -76,21 +75,9 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     bind<ScreenAnalyzerService>(TYPES.ScreenAnalyzerService)
       .to(DefaultScreenAnalyzer)
       .inSingletonScope();
-
     bind<SigningService>(TYPES.SigningService)
       .to(DefaultSigningService)
       .inSingletonScope();
-
-    // Ethereum supports both transaction and typed-data signing interactions
-    bind<Set<UserInteractionRequired>>(
-      TYPES.SignableInteractions,
-    ).toConstantValue(
-      new Set<UserInteractionRequired>([
-        UserInteractionRequired.SignTransaction,
-        UserInteractionRequired.SignTypedData,
-      ]),
-    );
-
     bind<FlowOrchestrator>(TYPES.SigningFlowOrchestrator)
       .to(DefaultFlowOrchestrator)
       .inSingletonScope();

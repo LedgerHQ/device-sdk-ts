@@ -93,23 +93,22 @@ export class SpeculosServiceController implements ServiceController {
         this.logger.info(`Custom app volume: ${customAppVolume}`);
       }
     } else {
-      const appName = this.config.appName ?? "Ethereum";
-
-      const resolvedApp = this.appVersionResolver.resolve(
+      // Resolve the Ethereum app version and OS using the resolver
+      const resolvedEthereum = this.appVersionResolver.resolve(
         this.model,
-        appName,
+        "Ethereum",
         this.config.os,
         this.config.version,
       );
 
-      appPath = `/apps/${this.model}/${resolvedApp.os}/${appName}/app_${resolvedApp.version}.elf`;
+      appPath = `/apps/${this.model}/${resolvedEthereum.os}/Ethereum/app_${resolvedEthereum.version}.elf`;
 
       // Optionally resolve plugin
       const resolvedPlugin = this.config.plugin
         ? this.appVersionResolver.resolve(
             this.model,
             this.config.plugin,
-            resolvedApp.os,
+            resolvedEthereum.os,
             this.config.pluginVersion,
           )
         : null;
@@ -117,7 +116,7 @@ export class SpeculosServiceController implements ServiceController {
       pluginArgs = resolvedPlugin
         ? [
             "-l",
-            `/apps/${this.model}/${resolvedApp.os}/${this.config.plugin}/app_${resolvedPlugin.version}.elf`,
+            `/apps/${this.model}/${resolvedEthereum.os}/${this.config.plugin}/app_${resolvedPlugin.version}.elf`,
           ]
         : [];
 
@@ -129,13 +128,13 @@ export class SpeculosServiceController implements ServiceController {
       this.logger.info(
         `VNC url: ${this.config.url.replace("http://", "vnc://")}:${this.config.vncPort}`,
       );
-      this.logger.debug(`Using app: ${resolvedApp.path}`);
+      this.logger.debug(`Using app: ${resolvedEthereum.path}`);
       if (resolvedPlugin) {
         this.logger.debug(`Using plugin: ${resolvedPlugin.path}`);
       }
       this.logger.info(`device=${this.model}`);
-      this.logger.info(`os=${resolvedApp.os}`);
-      this.logger.info(`${appName.toLowerCase()}=${resolvedApp.version}`);
+      this.logger.info(`os=${resolvedEthereum.os}`);
+      this.logger.info(`ethereum=${resolvedEthereum.version}`);
       if (resolvedPlugin) {
         this.logger.info(
           `plugin=${this.config.plugin}@${resolvedPlugin.version}`,

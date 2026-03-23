@@ -7,7 +7,6 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
@@ -16,7 +15,6 @@ import {
   ALEO_CLA,
   INS,
   P1,
-  P2_DEFAULT,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import {
@@ -25,9 +23,9 @@ import {
   type AleoErrorCodes,
 } from "./utils/aleoApplicationErrors";
 
-export type SignFeeIntentCommandArgs = {
-  readonly feeIntent: Uint8Array;
-};
+import { type AleoChunkableCommandArgs } from "@internal/app-binder/task/AleoChunkableCommandArgs";
+
+export type SignFeeIntentCommandArgs = AleoChunkableCommandArgs;
 
 export type SignFeeIntentCommandResponse = {
   readonly tlvSignature: string;
@@ -53,26 +51,20 @@ export class SignFeeIntentCommand
     AleoErrorCodes
   >(ALEO_APP_ERRORS, AleoAppCommandErrorFactory);
 
-  private readonly args: SignFeeIntentCommandArgs;
-
-  constructor(args: SignFeeIntentCommandArgs) {
-    this.args = args;
-  }
+  constructor(private readonly args: SignFeeIntentCommandArgs) {}
 
   getApdu(): Apdu {
     const signFeeIntentArgs: ApduBuilderArgs = {
       cla: ALEO_CLA,
       ins: INS.SIGN_INTENT,
       p1: P1.SIGN_MODE_FEE, // Second chunk / fee intent
-      p2: P2_DEFAULT,
+      p2: this.args.isFirst ? 0x00 : 0x01,
     };
 
     const builder = new ApduBuilder(signFeeIntentArgs);
 
-    builder.add16BitUIntToData(this.args.feeIntent.byteLength);
-
-    // Add the fee intent data (no derivation path for the second chunk)
-    builder.addBufferToData(this.args.feeIntent);
+    // Add the chunked data
+    builder.addBufferToData(this.args.chunkedData);
 
     return builder.build();
   }
@@ -100,10 +92,11 @@ export class SignFeeIntentCommand
         });
       }
 
+      // for intermediate chunks, the device returns 0 bytes of data with 0x9000.
       return CommandResultFactory({
-        error: new InvalidStatusWordError(
-          "Failed to extract data from response",
-        ),
+        data: {
+          tlvSignature: "",
+        },
       });
     });
   }

@@ -4,7 +4,8 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type SignableInput } from "@root/src/domain/models/SignableInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 
 import { type StateHandler, type StateHandlerResult } from "./StateHandler";
 
@@ -23,7 +24,9 @@ export class OptOutStateHandler implements StateHandler {
     this.logger = this.loggerFactory("opt-out-state-handler");
   }
 
-  async handle(ctx: { input: SignableInput }): Promise<StateHandlerResult> {
+  async handle(ctx: {
+    input: TransactionInput | TypedDataInput;
+  }): Promise<StateHandlerResult> {
     this.logger.debug("Opt out state handler", {
       data: { ctx },
     });

@@ -43,7 +43,7 @@ export class TestTransactionUseCase {
       data: { description: transaction.description },
     });
 
-    const result = await this.deviceRepository.performSign(
+    const result = await this.deviceRepository.performSignTransaction(
       transaction,
       config.derivationPath,
     );

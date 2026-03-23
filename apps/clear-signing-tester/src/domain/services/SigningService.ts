@@ -1,15 +1,47 @@
-import { type SignableInput } from "@root/src/domain/models/SignableInput";
+import {
+  type DeviceActionStatus,
+  type UserInteractionRequired,
+} from "@ledgerhq/device-management-kit";
+import { type SignerEth } from "@ledgerhq/device-signer-kit-ethereum";
+import { type Observable } from "rxjs";
 
-import { type SigningServiceResult } from "./TransactionSigningService";
+export type SigningServiceResult = {
+  observable: Observable<{
+    status: DeviceActionStatus;
+    intermediateValue: { requiredUserInteraction: UserInteractionRequired };
+  }>;
+};
 
-export type { SigningServiceResult };
-
-/** Unified signing service. Each chain provides its own implementation. */
+/**
+ * Signing service interface for transaction and typed data signing
+ * Provides abstraction for signing operations with different signers
+ */
 export interface SigningService {
   /**
-   * Sign the given input on the connected device.
-   * @param input - Discriminated {@link SignableInput} carrying the payload.
-   * @param derivationPath - BIP-44 derivation path for the target account.
+   * Set the signer instance
+   * @param signer - The signer instance to use
    */
-  sign(input: SignableInput, derivationPath: string): SigningServiceResult;
+  setSigner(signer: SignerEth): void;
+
+  /**
+   * Sign a transaction
+   * @param derivationPath - The derivation path for signing
+   * @param transaction - The raw transaction to sign
+   * @returns Device action for signing the transaction
+   */
+  signTransaction(
+    derivationPath: string,
+    transaction: string,
+  ): SigningServiceResult;
+
+  /**
+   * Sign typed data
+   * @param derivationPath - The derivation path for signing
+   * @param typedData - The typed data to sign
+   * @returns Device action for signing the typed data
+   */
+  signTypedData(
+    derivationPath: string,
+    typedData: string,
+  ): SigningServiceResult;
 }

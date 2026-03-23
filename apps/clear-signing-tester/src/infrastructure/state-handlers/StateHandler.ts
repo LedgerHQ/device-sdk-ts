@@ -1,4 +1,5 @@
-import { type SignableInput } from "@root/src/domain/models/SignableInput";
+import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
+import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 
 export type StateHandlerResult = {
   status:
@@ -11,5 +12,7 @@ export type StateHandlerResult = {
 };
 
 export interface StateHandler {
-  handle(ctx: { input: SignableInput }): Promise<StateHandlerResult>;
+  handle(ctx: {
+    input: TransactionInput | TypedDataInput;
+  }): Promise<StateHandlerResult>;
 }

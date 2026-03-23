@@ -4,7 +4,6 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
-import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 
@@ -73,7 +72,6 @@ export class TypedDataFileRepository
     }
 
     return {
-      kind: SignableInputKind.TypedData,
       data: JSON.stringify(rawTypedData.data),
       description: rawTypedData.description || `Typed data ${index + 1}`,
       expectedTexts: rawTypedData.expectedTexts,
