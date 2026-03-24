@@ -63,8 +63,35 @@ describe("SolanaApplicationResolver", () => {
     });
   });
 
-  it("should resolve as incompatible when app is not Solana", () => {
-    const state = createReadyState("Ethereum", "1.0.0");
+  it("should resolve as compatible with appConfig.version when app is Exchange", () => {
+    const state = createReadyState("Exchange", "4.4.3");
+    const config = createAppConfig("1.14.0");
+    const result = resolver.resolve(state, config);
+    expect(result).toStrictEqual({
+      isCompatible: true,
+      version: "1.14.0",
+    });
+  });
+
+  it("should resolve as compatible with appConfig.version when app is not Solana", () => {
+    const state = createReadyState("Ethereum", "2.0.0");
+    const config = createAppConfig("1.9.2");
+    const result = resolver.resolve(state, config);
+    expect(result).toStrictEqual({
+      isCompatible: true,
+      version: "1.9.2",
+    });
+  });
+
+  it("should resolve as incompatible when app name is missing", () => {
+    const state = {
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "", version: "1.0.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    };
     const config = createAppConfig("1.0.0");
     const result = resolver.resolve(state, config);
     expect(result).toStrictEqual({

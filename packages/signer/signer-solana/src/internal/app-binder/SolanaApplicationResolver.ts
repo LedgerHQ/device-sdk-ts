@@ -13,7 +13,7 @@ const DEFAULT_VERSION = "0.0.1";
 export const SOLANA_APP_SPL_MIN_VERSION = "1.9.2";
 
 export class SolanaApplicationResolver implements ApplicationResolver {
-  resolve(deviceState: DeviceSessionState, _appConfig: AppConfig): ResolvedApp {
+  resolve(deviceState: DeviceSessionState, appConfig: AppConfig): ResolvedApp {
     if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
       return { isCompatible: false, version: DEFAULT_VERSION };
     }
@@ -21,10 +21,13 @@ export class SolanaApplicationResolver implements ApplicationResolver {
     const currentApp = deviceState.currentApp;
     const appName = currentApp?.name;
 
-    if (!appName || appName !== APP_NAME) {
+    if (!appName) {
       return { isCompatible: false, version: DEFAULT_VERSION };
     }
 
-    return { isCompatible: true, version: currentApp.version };
+    const version =
+      appName === APP_NAME ? currentApp.version : appConfig.version;
+
+    return { isCompatible: true, version };
   }
 }
