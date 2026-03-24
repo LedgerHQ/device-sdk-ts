@@ -36,6 +36,7 @@ export type CliConfig = {
   screenshotFolderPath?: string;
   customApp?: string;
   forcePull?: boolean;
+  externalSpeculos?: boolean;
 
   // config.signer
   skipCal?: boolean;
@@ -70,8 +71,15 @@ export class EthereumTransactionTesterCli {
   constructor(config: CliConfig) {
     this.config = config;
 
+    const SPECULOS_DEFAULT_API_PORT = 5000;
+    const SPECULOS_DEFAULT_VNC_PORT = 8000;
     const randomPort = Math.floor(Math.random() * 10000) + 10000;
     const randomVncPort = Math.floor(Math.random() * 10000) + 20000;
+
+    const speculosPort = config.speculosPort
+      || (config.externalSpeculos ? SPECULOS_DEFAULT_API_PORT : randomPort);
+    const speculosVncPort = config.speculosVncPort
+      || (config.externalSpeculos ? SPECULOS_DEFAULT_VNC_PORT : randomVncPort);
 
     // Use test signatures when custom ERC7730 files are provided
     const calMode =
@@ -81,8 +89,8 @@ export class EthereumTransactionTesterCli {
     const diConfig: ClearSigningTesterConfig = {
       speculos: {
         url: config.speculosUrl || `http://localhost`,
-        port: config.speculosPort || randomPort,
-        vncPort: config.speculosVncPort || randomVncPort,
+        port: speculosPort,
+        vncPort: speculosVncPort,
         dockerImageTag: config.dockerImageTag || "latest",
         device: config.device,
         os: config.osVersion,
@@ -92,6 +100,7 @@ export class EthereumTransactionTesterCli {
         screenshotPath: config.screenshotFolderPath,
         customAppPath: config.customApp,
         forcePull: config.forcePull,
+        externalSpeculos: config.externalSpeculos,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -290,6 +299,13 @@ export class EthereumTransactionTesterCli {
       .option(
         "--force-pull",
         "Force pulling the Docker image even if it already exists locally",
+        false,
+      )
+      .option(
+        "--external-speculos",
+        "Skip Docker Speculos lifecycle and connect to an already-running Speculos instance. " +
+        "Defaults to port 5000 (API) and 8000 (VNC) matching native Speculos; " +
+        "override with --speculos-port / --speculos-vnc-port if needed.",
         false,
       )
       .option(

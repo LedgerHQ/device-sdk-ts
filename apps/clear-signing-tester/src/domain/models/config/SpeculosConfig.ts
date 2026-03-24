@@ -24,4 +24,11 @@ export type SpeculosConfig = {
    * When true, always pull the Docker image even if it already exists locally.
    */
   forcePull?: boolean;
+  /**
+   * When true, skip Docker container lifecycle entirely and assume Speculos
+   * is already running externally on the configured port.  Useful when a
+   * long-lived Speculos instance is managed outside cs-tester (e.g. native
+   * install on CI, sidecar container).
+   */
+  externalSpeculos?: boolean;
 };
