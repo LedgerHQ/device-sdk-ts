@@ -36,6 +36,7 @@ export type CliConfig = {
   screenshotFolderPath?: string;
   customApp?: string;
   forcePull?: boolean;
+  externalSpeculos?: boolean;
 
   // config.signer
   skipCal?: boolean;
@@ -92,6 +93,7 @@ export class EthereumTransactionTesterCli {
         screenshotPath: config.screenshotFolderPath,
         customAppPath: config.customApp,
         forcePull: config.forcePull,
+        externalSpeculos: config.externalSpeculos,
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
@@ -293,6 +295,11 @@ export class EthereumTransactionTesterCli {
         false,
       )
       .option(
+        "--external-speculos",
+        "Skip Docker Speculos lifecycle and connect to an already-running Speculos instance on the configured --speculos-port.",
+        false,
+      )
+      .option(
         "--log-level <level>",
         `Console log level: ${CLI_LOG_LEVELS.join(", ")} (default: info)`,
         (value: string) => {
@@ -331,8 +338,16 @@ export class EthereumTransactionTesterCli {
 
     program.hook("preAction", async (_, command) => {
       const config = command.parent!.opts() as CliConfig;
-      // Set onlySpeculos flag when running start-speculos command
       config.onlySpeculos = command.name() === "start-speculos";
+
+      if (config.onlySpeculos && config.externalSpeculos) {
+        throw new Error(
+          "--external-speculos cannot be used with start-speculos. " +
+            "Use start-speculos to let cs-tester manage Speculos, " +
+            "or use other commands with --external-speculos to connect to an already-running instance.",
+        );
+      }
+
       cli = new EthereumTransactionTesterCli(config);
       await cli.initialize();
     });
