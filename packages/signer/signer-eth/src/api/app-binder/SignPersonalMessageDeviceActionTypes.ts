@@ -15,7 +15,7 @@ export type SignPersonalMessageDAError =
   | OpenAppDAError
   | CommandErrorResult<EthErrorCodes>["error"];
 
-type SignPersonalMessageDARequiredInteraction =
+export type SignPersonalMessageDARequiredInteraction =
   | OpenAppDARequiredInteraction
   | UserInteractionRequired.SignPersonalMessage;
 

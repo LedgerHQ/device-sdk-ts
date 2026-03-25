@@ -1,3 +1,4 @@
+export { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
 export {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
@@ -12,6 +13,7 @@ export {
   type SignDelegationAuthorizationDAReturnType,
   type SignDelegationAuthorizationDAState,
 } from "@api/app-binder/SignDelegationAuthorizationTypes";
+export { SignPersonalMessageDeviceActionFactory } from "@api/app-binder/SignPersonalMessageDeviceActionFactory";
 export {
   type SignPersonalMessageDAError,
   type SignPersonalMessageDAIntermediateValue,

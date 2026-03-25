@@ -93,22 +93,23 @@ export class SpeculosServiceController implements ServiceController {
         this.logger.info(`Custom app volume: ${customAppVolume}`);
       }
     } else {
-      // Resolve the Ethereum app version and OS using the resolver
-      const resolvedEthereum = this.appVersionResolver.resolve(
+      const appName = this.config.appName ?? "Ethereum";
+
+      const resolvedApp = this.appVersionResolver.resolve(
         this.model,
-        "Ethereum",
+        appName,
         this.config.os,
         this.config.version,
       );
 
-      appPath = `/apps/${this.model}/${resolvedEthereum.os}/Ethereum/app_${resolvedEthereum.version}.elf`;
+      appPath = `/apps/${this.model}/${resolvedApp.os}/${appName}/app_${resolvedApp.version}.elf`;
 
       // Optionally resolve plugin
       const resolvedPlugin = this.config.plugin
         ? this.appVersionResolver.resolve(
             this.model,
             this.config.plugin,
-            resolvedEthereum.os,
+            resolvedApp.os,
             this.config.pluginVersion,
           )
         : null;
@@ -116,7 +117,7 @@ export class SpeculosServiceController implements ServiceController {
       pluginArgs = resolvedPlugin
         ? [
             "-l",
-            `/apps/${this.model}/${resolvedEthereum.os}/${this.config.plugin}/app_${resolvedPlugin.version}.elf`,
+            `/apps/${this.model}/${resolvedApp.os}/${this.config.plugin}/app_${resolvedPlugin.version}.elf`,
           ]
         : [];
 
@@ -128,13 +129,13 @@ export class SpeculosServiceController implements ServiceController {
       this.logger.info(
         `VNC url: ${this.config.url.replace("http://", "vnc://")}:${this.config.vncPort}`,
       );
-      this.logger.debug(`Using app: ${resolvedEthereum.path}`);
+      this.logger.debug(`Using app: ${resolvedApp.path}`);
       if (resolvedPlugin) {
         this.logger.debug(`Using plugin: ${resolvedPlugin.path}`);
       }
       this.logger.info(`device=${this.model}`);
-      this.logger.info(`os=${resolvedEthereum.os}`);
-      this.logger.info(`ethereum=${resolvedEthereum.version}`);
+      this.logger.info(`os=${resolvedApp.os}`);
+      this.logger.info(`${appName.toLowerCase()}=${resolvedApp.version}`);
       if (resolvedPlugin) {
         this.logger.info(
           `plugin=${this.config.plugin}@${resolvedPlugin.version}`,
@@ -164,11 +165,12 @@ export class SpeculosServiceController implements ServiceController {
 
     const dockerImage = `${SPECULOS_DOCKER_IMAGE_BASE}:${this.config.dockerImageTag}`;
 
-    if (
-      this.config.forcePull ||
-      (await this.dockerContainer.getImageId(dockerImage)) === null
-    ) {
+    if (this.config.forcePull) {
       await this.dockerContainer.pull(dockerImage);
+    } else if ((await this.dockerContainer.getImageId(dockerImage)) === null) {
+      await this.dockerContainer.pull(dockerImage);
+    } else {
+      await this.warnIfLatestImageIsStale(dockerImage);
     }
 
     // Build volumes array
@@ -190,10 +192,43 @@ export class SpeculosServiceController implements ServiceController {
     });
 
     // Wait for the container to fully initialize before proceeding
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
   }
 
   async stop(): Promise<void> {
     await this.dockerContainer.stop();
+  }
+
+  private static readonly VERSION_LABEL = "org.opencontainers.image.version";
+
+  private async warnIfLatestImageIsStale(dockerImage: string): Promise<void> {
+    if (this.config.dockerImageTag !== "latest") {
+      return;
+    }
+
+    const [localDigest, remoteDigest, localVersion, remoteVersion] =
+      await Promise.all([
+        this.dockerContainer.getLocalImageRepoDigest(dockerImage),
+        this.dockerContainer.getRemoteImageManifestDigest(dockerImage),
+        this.dockerContainer.getLocalImageLabel(
+          dockerImage,
+          SpeculosServiceController.VERSION_LABEL,
+        ),
+        this.dockerContainer.getRemoteImageLabel(
+          dockerImage,
+          SpeculosServiceController.VERSION_LABEL,
+        ),
+      ]);
+
+    if (!localDigest || !remoteDigest || localDigest === remoteDigest) {
+      return;
+    }
+
+    const localVersionLabel = localVersion ?? "unknown";
+    const remoteVersionLabel = remoteVersion ?? "unknown";
+
+    this.logger.warn(
+      `Docker image "${dockerImage}" is stale locally (localDigest=${localDigest}, remoteDigest=${remoteDigest}, localVersion=${localVersionLabel}, remoteVersion=${remoteVersionLabel}). Run "docker pull ${dockerImage}" to update.`,
+    );
   }
 }

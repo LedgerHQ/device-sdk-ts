@@ -1,8 +1,9 @@
-/**
- * Domain model representing a typed data input
- */
+import { type SignableInputKind } from "./SignableInputKind";
+
+/** Domain model representing EIP-712 typed data to be signed on the device. */
 export type TypedDataInput = {
-  data: string;
-  description?: string;
-  expectedTexts?: string[];
+  readonly kind: SignableInputKind.TypedData;
+  readonly data: string;
+  readonly description?: string;
+  readonly expectedTexts?: string[];
 };

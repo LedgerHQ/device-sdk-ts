@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.2
+
+### Patch Changes
+
+- [#1375](https://github.com/LedgerHQ/device-sdk-ts/pull/1375) [`f1aa49b`](https://github.com/LedgerHQ/device-sdk-ts/commit/f1aa49b475d54f5636d7598a8daaefcda6c38c12) Thanks [@sprohaszka-ledger](https://github.com/sprohaszka-ledger)! - Fix cancel and update batch order
+
+- [#1336](https://github.com/LedgerHQ/device-sdk-ts/pull/1336) [`ee21448`](https://github.com/LedgerHQ/device-sdk-ts/commit/ee21448eaabe25dbb9713f432a7b2b9725e75ac7) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
 ## 1.0.1
 
 ### Patch Changes

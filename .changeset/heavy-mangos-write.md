@@ -1,5 +1,5 @@
 ---
-"@ledgerhq/device-signer-kit-ethereum": patch
+"@ledgerhq/device-signer-kit-solana": patch
 ---
 
 Extract hardcoded appName string literals into shared APP_NAME constants
