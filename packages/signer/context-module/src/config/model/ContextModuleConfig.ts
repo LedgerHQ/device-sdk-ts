@@ -1,5 +1,6 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
+import { type BlindSigningReporter } from "@/reporter/domain/BlindSigningReporter";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
@@ -35,7 +36,6 @@ export type ContextModuleConfig = {
   cal: ContextModuleCalConfig;
   web3checks: ContextModuleWeb3ChecksConfig;
   metadataServiceDomain: ContextModuleMetadataServiceConfig;
-  reporter: ContextModuleReporterConfig;
   defaultLoaders: boolean;
   defaultFieldLoaders: boolean;
   customFieldLoaders: ContextFieldLoader[];
@@ -43,7 +43,9 @@ export type ContextModuleConfig = {
   loggerFactory: (tag: string) => LoggerPublisherService;
   customTypedDataLoader?: TypedDataContextLoader;
   customSolanaLoader?: SolanaContextLoader;
+  customBlindSigningReporter?: BlindSigningReporter;
   customTrustedNameDataSource?: TrustedNameDataSource;
   originToken?: string;
   datasource?: ContextModuleDatasourceConfig;
+  reporter?: ContextModuleReporterConfig;
 };
