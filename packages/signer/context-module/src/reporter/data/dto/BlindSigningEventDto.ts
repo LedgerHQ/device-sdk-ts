@@ -1,21 +1,29 @@
+import {
+  type BlindSigningMethod,
+  type BlindSigningPlatform,
+  type BlindSignReason,
+  type ClearSigningType,
+} from "@/reporter/model/BlindSigningEvent";
+import { type BlindSigningModelId } from "@/reporter/model/BlindSigningModelId";
+
 export type BlindSigningEventEthContextDto = {
-  clearSigningType: "basic" | "eip7730";
+  clearSigningType: ClearSigningType;
   partialContextErrors: number;
 };
 
 export type BlindSigningEventDto = {
   signatureId: string;
-  signingMethod: "eth_signTransaction" | "eth_signTypedData";
+  signingMethod: BlindSigningMethod;
   source: string;
   isBlindSign?: boolean;
   chainId: number | null;
   targetAddress: string | null;
-  blindSignReason: "no_clear_signing_context" | "device_rejected_context";
-  modelId: "nanoS" | "nanoSP" | "nanoX" | "stax" | "flex" | "europa" | "apexP";
+  blindSignReason: BlindSignReason;
+  modelId: BlindSigningModelId;
   signerAppVersion: string;
   deviceVersion: string | null;
   ethContext: BlindSigningEventEthContextDto | null;
-  platform?: "desktop" | "mobile";
+  platform?: BlindSigningPlatform;
   appVersion?: string;
   platformOS?: string;
   platformVersion?: string;

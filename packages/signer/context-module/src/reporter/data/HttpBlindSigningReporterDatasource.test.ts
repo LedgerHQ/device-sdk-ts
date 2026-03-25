@@ -5,6 +5,12 @@ import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningReporterDatasource";
 import { HttpBlindSigningReporterDatasource } from "@/reporter/data/HttpBlindSigningReporterDatasource";
 import {
+  BlindSigningMethod,
+  BlindSignReason,
+  ClearSigningType,
+} from "@/reporter/model/BlindSigningEvent";
+import { BlindSigningModelId } from "@/reporter/model/BlindSigningModelId";
+import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
@@ -22,17 +28,17 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
   const params: BlindSigningReportParams = {
     signatureId: "a3f8Kb-1738850400000",
-    signingMethod: "eth_signTransaction",
+    signingMethod: BlindSigningMethod.ETH_SIGN_TRANSACTION,
     source: "ledger_wallet",
     isBlindSign: true,
     chainId: 1,
     targetAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
-    blindSignReason: "no_clear_signing_context",
-    modelId: "nanoX",
+    blindSignReason: BlindSignReason.NO_CLEAR_SIGNING_CONTEXT,
+    modelId: BlindSigningModelId.NANO_X,
     signerAppVersion: "1.12.1",
     deviceVersion: "2.2.3",
     ethContext: {
-      clearSigningType: "eip7730",
+      clearSigningType: ClearSigningType.EIP7730,
       partialContextErrors: 0,
     },
   };
