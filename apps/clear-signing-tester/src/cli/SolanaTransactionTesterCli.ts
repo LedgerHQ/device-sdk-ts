@@ -5,6 +5,10 @@ import { Command } from "commander";
 import { type Container } from "inversify";
 
 import { type TestBatchTransactionFromFileUseCase } from "@root/src/application/usecases/TestBatchTransactionFromFileUseCase";
+import {
+  type TestSolanaProgramConfig,
+  type TestSolanaProgramUseCase,
+} from "@root/src/application/usecases/TestSolanaProgramUseCase";
 import { type TestSolanaTransactionUseCase } from "@root/src/application/usecases/TestSolanaTransactionUseCase";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { makeSolanaContainer } from "@root/src/di/solanaContainer";
@@ -15,6 +19,11 @@ import {
 } from "@root/src/domain/models/config/LoggerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
+import {
+  SOLANA_PROGRAM_NAMES,
+  SOLANA_SUPPORTED_PROGRAMS,
+  type SolanaProgramName,
+} from "@root/src/domain/models/SolanaProgramMap";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 
 export type SolanaCliConfig = {
@@ -34,6 +43,11 @@ export type SolanaCliConfig = {
   logLevel: CliLogLevel;
   logFile?: string;
   fileLogLevel?: CliLogLevel;
+
+  // Solana RPC
+  rpcUrl?: string;
+  scanLimit?: number;
+  samplesPerInstruction?: number;
 
   // extras
   derivationPath: string;
@@ -85,6 +99,7 @@ export class SolanaTransactionTesterCli {
       etherscan: {
         apiKey: "",
       },
+      solanaRpc: config.rpcUrl ? { url: config.rpcUrl } : undefined,
       apps: {
         path: process.env["COIN_APPS_PATH"] || "",
       },
@@ -217,6 +232,34 @@ export class SolanaTransactionTesterCli {
         "Custom app file path. Relative paths resolve to COIN_APPS_PATH, absolute paths are mounted automatically.",
       )
       .option(
+        "--rpc-url <url>",
+        "Solana RPC endpoint URL (required for program commands, e.g. https://api.mainnet-beta.solana.com)",
+      )
+      .option(
+        "--scan-limit <n>",
+        "Number of recent signatures to scan when searching for clear-signable transactions (default: 500)",
+        (value: string) => {
+          const n = parseInt(value);
+          if (isNaN(n) || n < 1) {
+            throw new Error("scan-limit must be a positive integer");
+          }
+          return n;
+        },
+      )
+      .option(
+        "--samples-per-instruction <n>",
+        "Number of transactions to test per instruction type (default: 1)",
+        (value: string) => {
+          const n = parseInt(value);
+          if (isNaN(n) || n < 1) {
+            throw new Error(
+              "samples-per-instruction must be a positive integer",
+            );
+          }
+          return n;
+        },
+      )
+      .option(
         "--force-pull",
         "Force pulling the Docker image even if it already exists locally",
         false,
@@ -286,6 +329,24 @@ export class SolanaTransactionTesterCli {
       });
 
     program
+      .command("program <name>")
+      .description(
+        `Fetch clear-signable transactions for a Solana program and test them (requires --rpc-url). Supported: ${SOLANA_PROGRAM_NAMES.join(", ")}`,
+      )
+      .action(async (name) => {
+        exitCode = await cli!.handleProgram(name);
+      });
+
+    program
+      .command("program-all")
+      .description(
+        "Fetch clear-signable transactions for ALL supported Solana programs and test them (requires --rpc-url)",
+      )
+      .action(async () => {
+        exitCode = await cli!.handleProgramAll();
+      });
+
+    program
       .command("start-speculos")
       .description(
         "Start Speculos emulator without running any signing tests. Press Ctrl+C to stop.",
@@ -336,9 +397,97 @@ export class SolanaTransactionTesterCli {
     return result.exitCode;
   }
 
+  async handleProgram(name: string): Promise<number> {
+    this.requireRpcUrl("program");
+
+    const programName = name as SolanaProgramName;
+    const programId = SOLANA_SUPPORTED_PROGRAMS[programName];
+
+    if (!programId) {
+      throw new Error(
+        `Unknown program "${name}". Supported: ${SOLANA_PROGRAM_NAMES.join(", ")}`,
+      );
+    }
+
+    const testUseCase = this.container.get<TestSolanaProgramUseCase>(
+      TYPES.TestSolanaProgramUseCase,
+    );
+
+    const config: TestSolanaProgramConfig = {
+      programId,
+      programName,
+      derivationPath: this.config.derivationPath,
+      skipCraft: this.config.skipCraft,
+      scanLimit: this.config.scanLimit,
+      samplesPerInstruction: this.config.samplesPerInstruction,
+    };
+
+    const result = await testUseCase.execute(config);
+
+    console.log(`\n${result.title}`);
+    console.table(result.resultsTable);
+    console.log(`\n${result.summaryTitle}`);
+    console.table(result.summaryTable);
+
+    return result.exitCode;
+  }
+
+  async handleProgramAll(): Promise<number> {
+    this.requireRpcUrl("program-all");
+
+    const testUseCase = this.container.get<TestSolanaProgramUseCase>(
+      TYPES.TestSolanaProgramUseCase,
+    );
+
+    let worstExitCode = 0;
+
+    for (const programName of SOLANA_PROGRAM_NAMES) {
+      const programId = SOLANA_SUPPORTED_PROGRAMS[programName];
+
+      this.logger.info(`\n--- Testing program: ${programName} ---`);
+
+      try {
+        const config: TestSolanaProgramConfig = {
+          programId,
+          programName,
+          derivationPath: this.config.derivationPath,
+          skipCraft: this.config.skipCraft,
+          scanLimit: this.config.scanLimit,
+          samplesPerInstruction: this.config.samplesPerInstruction,
+        };
+
+        const result = await testUseCase.execute(config);
+
+        console.log(`\n${result.title}`);
+        console.table(result.resultsTable);
+        console.log(`\n${result.summaryTitle}`);
+        console.table(result.summaryTable);
+
+        if (result.exitCode > worstExitCode) {
+          worstExitCode = result.exitCode;
+        }
+      } catch (error) {
+        this.logger.error(`Program "${programName}" failed`, {
+          data: { error },
+        });
+        worstExitCode = 1;
+      }
+    }
+
+    return worstExitCode;
+  }
+
   async handleStartSpeculos(): Promise<void> {
     this.logger.info("Speculos is running. Press Ctrl+C to stop.");
     await new Promise<void>(() => {});
+  }
+
+  private requireRpcUrl(command: string): void {
+    if (!this.config.rpcUrl) {
+      throw new Error(
+        `The ${command} command requires --rpc-url (e.g. https://api.mainnet-beta.solana.com)`,
+      );
+    }
   }
 }
 

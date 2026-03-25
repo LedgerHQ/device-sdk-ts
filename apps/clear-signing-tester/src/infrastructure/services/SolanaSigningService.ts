@@ -1,7 +1,8 @@
 import { type SignerSolana } from "@ledgerhq/device-signer-kit-solana";
-import { inject, injectable } from "inversify";
+import { inject, injectable, optional } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
+import { type SolanaRpcConfig } from "@root/src/domain/models/config/SolanaRpcConfig";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import {
@@ -18,6 +19,9 @@ export class SolanaSigningService implements SigningService {
   constructor(
     @inject(TYPES.TransactionCraftingService)
     private readonly transactionCraftingService: TransactionCraftingService,
+    @inject(TYPES.SolanaRpcConfig)
+    @optional()
+    private readonly solanaRpcConfig?: SolanaRpcConfig,
   ) {}
 
   setSigner(signer: SignerSolana): void {
@@ -43,6 +47,7 @@ export class SolanaSigningService implements SigningService {
         const txBytes = base64ToUint8Array(rawTx);
         return this.signer.signTransaction(derivationPath, txBytes, {
           skipOpenApp: true,
+          solanaRPCURL: this.solanaRpcConfig?.url,
         }) as SigningServiceResult;
       }
       case SignableInputKind.TypedData:

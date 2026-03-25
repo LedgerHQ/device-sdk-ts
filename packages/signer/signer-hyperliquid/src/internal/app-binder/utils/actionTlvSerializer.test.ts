@@ -276,7 +276,7 @@ describe("buildActionStructure", () => {
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "81d842" + // UPDATE_ORDER
           "81dd34" + // ORDER
             "81e00101" + // ORDER_TYPE
@@ -303,7 +303,6 @@ describe("buildActionStructure", () => {
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
           "81dc080000004FDF6BBE6F", // ORDER_ID
-      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type cancel",
@@ -331,14 +330,13 @@ describe("buildActionStructure", () => {
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "81d90f" + // CANCEL_ORDERS
           "81d10100" + // ASSET_ID
           "81dc080000004F4BD11216" + // ORDER_ID
         "81d90f" + // CANCEL_ORDERS 2
           "81d10100" + // ASSET_ID
           "81dc080000004F4BD11216", // ORDER_ID
-      /* eslint-enable prettier/prettier */
     },
     {
       name: "action type updateLeverage",

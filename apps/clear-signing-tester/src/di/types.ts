@@ -59,10 +59,18 @@ export const TYPES = {
     "TestBatchSolanaTransactionFromFileUseCase",
   ),
 
+  // Solana program-level testing (fetches transactions by program ID via RPC)
+  SolanaRpcAdapter: Symbol.for("SolanaRpcAdapter"),
+  SolanaTransactionProgramRepository: Symbol.for(
+    "SolanaTransactionProgramRepository",
+  ),
+  TestSolanaProgramUseCase: Symbol.for("TestSolanaProgramUseCase"),
+
   // Config
   SpeculosConfig: Symbol.for("SpeculosConfig"),
   SignerConfig: Symbol.for("SignerConfig"),
   EtherscanConfig: Symbol.for("EtherscanConfig"),
+  SolanaRpcConfig: Symbol.for("SolanaRpcConfig"),
   AppsConfig: Symbol.for("AppsConfig"),
   CalConfig: Symbol.for("CalConfig"),
 

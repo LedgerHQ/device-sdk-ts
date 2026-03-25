@@ -5,6 +5,7 @@ import { type AppsConfig } from "@root/src/domain/models/config/AppsConfig";
 import { type CalConfig } from "@root/src/domain/models/config/CalConfig";
 import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanConfig";
 import { type SignerConfig } from "@root/src/domain/models/config/SignerConfig";
+import { type SolanaRpcConfig } from "@root/src/domain/models/config/SolanaRpcConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 export type ClearSigningTesterConfig = {
@@ -13,6 +14,7 @@ export type ClearSigningTesterConfig = {
   cal: CalConfig;
   etherscan: EtherscanConfig;
   apps: AppsConfig;
+  solanaRpc?: SolanaRpcConfig;
   onlySpeculos?: boolean;
 };
 
@@ -25,4 +27,9 @@ export const configModuleFactory = (config: ClearSigningTesterConfig) =>
     );
     bind<AppsConfig>(TYPES.AppsConfig).toConstantValue(config.apps);
     bind<CalConfig>(TYPES.CalConfig).toConstantValue(config.cal);
+    if (config.solanaRpc) {
+      bind<SolanaRpcConfig>(TYPES.SolanaRpcConfig).toConstantValue(
+        config.solanaRpc,
+      );
+    }
   });

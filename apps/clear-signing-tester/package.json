@@ -28,6 +28,11 @@
     "test:solana:spl-legacy": "pnpm cli:solana raw-file ./ressources/solana/spl-legacy.json",
     "test:solana:spl-token2022": "pnpm cli:solana raw-file ./ressources/solana/spl-token2022.json",
     "test:solana:stake": "pnpm cli:solana raw-file ./ressources/solana/stake.json",
+    "test:solana:program:system": "pnpm cli:solana program system",
+    "test:solana:program:stake": "pnpm cli:solana program stake",
+    "test:solana:program:spl-token": "pnpm cli:solana program spl-token",
+    "test:solana:program:token-2022": "pnpm cli:solana program token-2022",
+    "test:solana:program:all": "pnpm cli:solana program-all",
     "test:erc7730": "./scripts/test-erc7730-calldata.sh",
     "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh"
   },

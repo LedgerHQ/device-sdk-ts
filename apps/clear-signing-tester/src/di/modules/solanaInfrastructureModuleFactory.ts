@@ -3,10 +3,14 @@ import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
+import { type SolanaRpcAdapter } from "@root/src/domain/adapters/SolanaRpcAdapter";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
+import { type SolanaTransactionProgramRepository } from "@root/src/domain/repositories/SolanaTransactionProgramRepository";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { type SigningService } from "@root/src/domain/services/SigningService";
+import { HttpSolanaRpcAdapter } from "@root/src/infrastructure/adapters/external/HttpSolanaRpcAdapter";
+import { DefaultSolanaTransactionProgramRepository } from "@root/src/infrastructure/repositories/DefaultSolanaTransactionProgramRepository";
 import { SolanaTransactionFileRepository } from "@root/src/infrastructure/repositories/SolanaTransactionFileRepository";
 import { SolanaDMKServiceController } from "@root/src/infrastructure/service-controllers/SolanaDMKServiceController";
 import { SolanaSigningService } from "@root/src/infrastructure/services/SolanaSigningService";
@@ -40,6 +44,18 @@ export const solanaInfrastructureModuleFactory = (
         UserInteractionRequired.SignTransaction,
       ]),
     );
+
+    // Program-level transaction fetching (via Solana RPC)
+    if (config.solanaRpc) {
+      bind<SolanaRpcAdapter>(TYPES.SolanaRpcAdapter)
+        .to(HttpSolanaRpcAdapter)
+        .inSingletonScope();
+      bind<SolanaTransactionProgramRepository>(
+        TYPES.SolanaTransactionProgramRepository,
+      )
+        .to(DefaultSolanaTransactionProgramRepository)
+        .inSingletonScope();
+    }
 
     // DMK controller
     bind<ServiceController>(TYPES.SolanaDMKServiceController)
