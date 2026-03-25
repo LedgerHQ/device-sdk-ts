@@ -31,6 +31,8 @@ export * from "./pki/model/PkiCertificateInfo";
 export * from "./proxy/data/HttpProxyDataSource";
 export * from "./reporter/data/BlindSigningReporterDatasource";
 export * from "./reporter/data/HttpBlindSigningReporterDatasource";
+export * from "./reporter/domain/BlindSigningReporter";
+export * from "./reporter/domain/DefaultBlindSigningReporter";
 export * from "./reporter/model/BlindSigningEvent";
 export * from "./reporter/model/BlindSigningModelId";
 export * from "./proxy/data/HttpSafeProxyDataSource";
