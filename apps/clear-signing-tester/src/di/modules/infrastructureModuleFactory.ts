@@ -1,3 +1,4 @@
+import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { ContainerModule } from "inversify";
 
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
@@ -75,9 +76,21 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     bind<ScreenAnalyzerService>(TYPES.ScreenAnalyzerService)
       .to(DefaultScreenAnalyzer)
       .inSingletonScope();
+
     bind<SigningService>(TYPES.SigningService)
       .to(DefaultSigningService)
       .inSingletonScope();
+
+    // Ethereum supports both transaction and typed-data signing interactions
+    bind<Set<UserInteractionRequired>>(
+      TYPES.SignableInteractions,
+    ).toConstantValue(
+      new Set<UserInteractionRequired>([
+        UserInteractionRequired.SignTransaction,
+        UserInteractionRequired.SignTypedData,
+      ]),
+    );
+
     bind<FlowOrchestrator>(TYPES.SigningFlowOrchestrator)
       .to(DefaultFlowOrchestrator)
       .inSingletonScope();
@@ -116,10 +129,12 @@ export const infrastructureModuleFactory = (config: ClearSigningTesterConfig) =>
     // Service Controllers Array (ordered for startup/shutdown)
     bind<ServiceController[]>(TYPES.ServiceControllers)
       .toDynamicValue((context) => {
-        const controllers: ServiceController[] = [
-          context.get<ServiceController>(TYPES.SpeculosServiceController),
-        ];
-        // Only add DMK controller if not in onlySpeculos mode
+        const controllers: ServiceController[] = [];
+        if (!config.speculos.externalSpeculos) {
+          controllers.push(
+            context.get<ServiceController>(TYPES.SpeculosServiceController),
+          );
+        }
         if (!config.onlySpeculos) {
           controllers.push(
             context.get<ServiceController>(TYPES.DMKServiceController),

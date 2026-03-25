@@ -4,6 +4,7 @@ import { TYPES } from "@root/src/di/types";
 import { type FileReader } from "@root/src/domain/adapters/FileReader";
 import { type JsonParser } from "@root/src/domain/adapters/JsonParser";
 import { type TransactionCrafter } from "@root/src/domain/adapters/TransactionCrafter";
+import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 
@@ -79,6 +80,7 @@ export class TransactionFileRepository
     );
 
     return {
+      kind: SignableInputKind.Transaction,
       rawTx: unsignedRawTx,
       description: rawTx.description || `Transaction ${index + 1}`,
       txHash: rawTx.txHash,

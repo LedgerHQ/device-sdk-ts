@@ -7,10 +7,9 @@ import { inject, injectable } from "inversify";
 import { debounceTime, distinctUntilChanged, tap } from "rxjs";
 
 import { TYPES } from "@root/src/di/types";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
-import { type SigningServiceResult } from "@root/src/domain/services/SigningService";
+import { type SigningServiceResult } from "@root/src/domain/services/TransactionSigningService";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 import { CompleteStateHandler } from "@root/src/infrastructure/state-handlers/CompleteStateHandler";
 import { ErrorStateHandler } from "@root/src/infrastructure/state-handlers/ErrorStateHandler";
@@ -20,6 +19,12 @@ import { type StateHandlerResult } from "@root/src/infrastructure/state-handlers
 
 const DEBOUNCE_TIME = 1500;
 
+/**
+ * Default orchestrator for device signing flows.
+ *
+ * Which {@link UserInteractionRequired} values are considered "signable" is
+ * injected via DI (`SignableInteractions`)
+ */
 @injectable()
 export class DefaultFlowOrchestrator implements FlowOrchestrator {
   private readonly logger: LoggerPublisherService;
@@ -35,13 +40,15 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
     private readonly optOutStateHandler: OptOutStateHandler,
     @inject(TYPES.SignTransactionStateHandler)
     private readonly signTransactionStateHandler: SignTransactionStateHandler,
+    @inject(TYPES.SignableInteractions)
+    private readonly signableInteractions: Set<UserInteractionRequired>,
   ) {
     this.logger = loggerFactory("signing-flow-orchestrator");
   }
 
   async orchestrateSigningFlow(
     { observable }: SigningServiceResult,
-    input: TransactionInput | TypedDataInput,
+    input: SignableInput,
   ): Promise<TestResult> {
     return await new Promise<TestResult>((resolve) => {
       observable
@@ -97,7 +104,7 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
   private async handleState(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Device state type is complex and varies
     state: any,
-    input: TransactionInput | TypedDataInput,
+    input: SignableInput,
   ) {
     const ongoingResult: StateHandlerResult = {
       status: "ongoing",
@@ -110,10 +117,7 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
         return await this.completeStateHandler.handle({ input });
       case DeviceActionStatus.Pending: {
         const { requiredUserInteraction } = state.intermediateValue;
-        if (
-          requiredUserInteraction === UserInteractionRequired.SignTransaction ||
-          requiredUserInteraction === UserInteractionRequired.SignTypedData
-        ) {
+        if (this.signableInteractions.has(requiredUserInteraction)) {
           const result = await this.signTransactionStateHandler.handle({
             input,
           });

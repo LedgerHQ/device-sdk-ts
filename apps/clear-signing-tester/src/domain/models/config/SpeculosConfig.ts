@@ -7,6 +7,8 @@ export type SpeculosConfig = {
   vncPort: number;
   device: "stax" | "nanox" | "nanos" | "nanos+" | "flex" | "apex";
   dockerImageTag: string;
+  // Ledger app to load (e.g. "Ethereum", "Solana"). Defaults to "Ethereum"
+  appName?: string;
   os?: string;
   version?: string;
   plugin?: string;
@@ -22,4 +24,12 @@ export type SpeculosConfig = {
    * When true, always pull the Docker image even if it already exists locally.
    */
   forcePull?: boolean;
+  /**
+   * When true, skip Docker container lifecycle entirely and assume Speculos
+   * is already running externally and reachable on the configured API `port`
+   * (and, if used, VNC `vncPort`).  Useful when a long-lived Speculos
+   * instance is managed outside cs-tester (e.g. native install on CI,
+   * sidecar container).
+   */
+  externalSpeculos?: boolean;
 };
