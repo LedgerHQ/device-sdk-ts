@@ -29,6 +29,8 @@ export * from "./pki/model/KeyUsage";
 export * from "./pki/model/PkiCertificate";
 export * from "./pki/model/PkiCertificateInfo";
 export * from "./proxy/data/HttpProxyDataSource";
+export * from "./reporter/data/BlindSigningReporterDatasource";
+export * from "./reporter/data/HttpBlindSigningReporterDatasource";
 export * from "./proxy/data/HttpSafeProxyDataSource";
 export * from "./proxy/data/ProxyDataSource";
 export * from "./proxy/domain/ProxyContextFieldLoader";

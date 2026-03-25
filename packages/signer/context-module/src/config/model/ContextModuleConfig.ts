@@ -23,6 +23,10 @@ export type ContextModuleMetadataServiceConfig = {
   url: string;
 };
 
+export type ContextModuleReporterConfig = {
+  url: string;
+};
+
 export type ContextModuleDatasourceConfig = {
   proxy?: "safe" | "default";
 };
@@ -31,6 +35,7 @@ export type ContextModuleConfig = {
   cal: ContextModuleCalConfig;
   web3checks: ContextModuleWeb3ChecksConfig;
   metadataServiceDomain: ContextModuleMetadataServiceConfig;
+  reporter: ContextModuleReporterConfig;
   defaultLoaders: boolean;
   defaultFieldLoaders: boolean;
   customFieldLoaders: ContextFieldLoader[];
