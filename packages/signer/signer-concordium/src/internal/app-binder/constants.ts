@@ -1,0 +1,30 @@
+export const APP_NAME = "Concordium";
+
+export const LEDGER_CLA = 0xe0;
+
+export const INS = {
+  VERIFY_ADDRESS: 0x00,
+  GET_PUBLIC_KEY: 0x01,
+  SIGN_TRANSFER: 0x02,
+  SIGN_TRANSFER_WITH_SCHEDULE: 0x03,
+  SIGN_CREDENTIAL_DEPLOYMENT: 0x04,
+  SIGN_TRANSFER_WITH_MEMO: 0x32,
+  SIGN_TRANSFER_WITH_SCHEDULE_AND_MEMO: 0x34,
+  REGISTER_DATA: 0x35,
+} as const;
+
+export const P1 = {
+  NON_CONFIRM: 0x01,
+  CONFIRM: 0x00,
+  FIRST_CHUNK: 0x00,
+  INITIAL: 0x00,
+  INITIAL_WITH_MEMO: 0x01,
+  MEMO: 0x02,
+  AMOUNT: 0x03,
+} as const;
+
+export const P2 = {
+  NONE: 0x00,
+  MORE: 0x80,
+  LAST: 0x00,
+} as const;
