@@ -13,10 +13,10 @@ import {
   ListAppsCommand,
   type ListAppsErrorCodes,
   type ListAppsResponse,
-  ListLanguageCommand,
-  type ListLanguageCommandArgs,
-  type ListLanguageErrorCodes,
-  type ListLanguageResponse,
+  ListLanguagePackCommand,
+  type ListLanguagePackCommandArgs,
+  type ListLanguagePackErrorCodes,
+  type ListLanguagePackResponse,
   type OpenAppArgs,
   OpenAppCommand,
   type OpenAppErrorCodes,
@@ -124,7 +124,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         description:
           "List installed language packages (first chunk or continue)",
         sendCommand: ({ firstChunk }) => {
-          const command = new ListLanguageCommand({ firstChunk });
+          const command = new ListLanguagePackCommand({ firstChunk });
           return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
@@ -132,9 +132,9 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         },
         initialValues: { firstChunk: true },
       } satisfies CommandProps<
-        ListLanguageCommandArgs,
-        ListLanguageResponse,
-        ListLanguageErrorCodes
+        ListLanguagePackCommandArgs,
+        ListLanguagePackResponse,
+        ListLanguagePackErrorCodes
       >,
     ],
     [selectedSessionId, dmk],
