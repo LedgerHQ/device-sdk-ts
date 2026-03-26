@@ -25,6 +25,13 @@ export {
 } from "@api/command/os/BackupStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
+  DeleteLanguagePackCommand,
+  type DeleteLanguagePackCommandArgs,
+  DeleteLanguagePackCommandError,
+  type DeleteLanguagePackCommandResult,
+  type DeleteLanguagePackErrorCodes,
+} from "@api/command/os/DeleteLanguagePackCommand";
+export {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
