@@ -59,6 +59,14 @@ export {
   type ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
 export {
+  ListLanguagePackCommand,
+  type ListLanguagePackCommandArgs,
+  ListLanguagePackCommandError,
+  type ListLanguagePackCommandResult,
+  type ListLanguagePackErrorCodes,
+  type ListLanguagePackResponse,
+} from "@api/command/os/ListLanguagePackCommand";
+export {
   type LoadCertificateArgs,
   LoadCertificateCommand,
   type LoadCertificateErrorCodes,
