@@ -1,6 +1,11 @@
 export const ALEO_CLA = 0xe0 as const;
 export const P2_DEFAULT = 0x00 as const;
 
+export const P2 = {
+  FIRST_CHUNK: 0x00,
+  NEXT_CHUNK: 0x01,
+} as const;
+
 export const INS = {
   GET_APP_VERSION: 0x03,
   GET_ADDRESS: 0x05,
