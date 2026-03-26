@@ -5,6 +5,9 @@ import {
   type BackupStorageCommandResponse,
   BatteryStatusType,
   CloseAppCommand,
+  DeleteLanguagePackCommand,
+  type DeleteLanguagePackCommandArgs,
+  type DeleteLanguagePackErrorCodes,
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
   GetAppStorageInfoCommand,
@@ -174,6 +177,23 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         ListLanguagePackCommandArgs,
         ListLanguagePackResponse,
         ListLanguagePackErrorCodes
+      >,
+      {
+        title: "Delete language pack",
+        description:
+          "Delete an installed language pack by id (use 255 / 0xFF to remove all)",
+        sendCommand: ({ languagePackageId }) => {
+          const command = new DeleteLanguagePackCommand({ languagePackageId });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { languagePackageId: 1 },
+      } satisfies CommandProps<
+        DeleteLanguagePackCommandArgs,
+        void,
+        DeleteLanguagePackErrorCodes
       >,
     ],
     [selectedSessionId, dmk],
