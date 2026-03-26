@@ -25,6 +25,7 @@ import {
 describe("BuildSubcontextsTask", () => {
   const contextModuleMock = {
     getFieldContext: vi.fn(),
+    report: vi.fn(),
   };
   const transactionParserMock = {
     extractValue: vi.fn(),

@@ -61,6 +61,7 @@ describe("SignTransactionDeviceAction", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    report: vi.fn(),
   };
   const mapperMock: TransactionMapperService = {
     mapTransactionToSubset: vi.fn(),
