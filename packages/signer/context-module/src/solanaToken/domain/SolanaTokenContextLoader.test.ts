@@ -6,7 +6,7 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { SolanaContextTypes } from "@/shared/model/SolanaContextTypes";
@@ -61,7 +61,7 @@ describe("SolanaTokenContextLoader", () => {
   });
 
   const makeLoader = (mode?: string) => {
-    const config = { cal: { mode } } as unknown as ContextModuleConfig;
+    const config = { cal: { mode } } as unknown as ResolvedContextModuleConfig;
     return new SolanaTokenContextLoader(
       mockDataSource,
       config,

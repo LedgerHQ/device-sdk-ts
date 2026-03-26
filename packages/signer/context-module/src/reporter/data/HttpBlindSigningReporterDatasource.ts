@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -20,14 +20,15 @@ export class HttpBlindSigningReporterDatasource
   implements BlindSigningReporterDatasource
 {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ResolvedContextModuleConfig,
   ) {}
 
   async report(params: BlindSigningReportParams): Promise<Either<Error, void>> {
     try {
       await axios.request({
         method: "POST",
-        url: `${this.config.reporter!.url}/v1/blind-signing-events`,
+        url: `${this.config.reporter.url}/v1/blind-signing-events`,
         data: params,
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,

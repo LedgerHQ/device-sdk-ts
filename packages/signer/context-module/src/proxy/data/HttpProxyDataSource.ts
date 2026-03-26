@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import {
@@ -22,7 +22,8 @@ import {
 @injectable()
 export class HttpProxyDataSource implements ProxyDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ResolvedContextModuleConfig,
   ) {}
 
   async getProxyImplementationAddress({

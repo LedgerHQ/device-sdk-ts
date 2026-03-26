@@ -4,7 +4,7 @@ import { Container } from "inversify";
 import { calldataModuleFactory } from "@/calldata/di/calldataModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { dynamicNetworkModuleFactory } from "@/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
 import { gatedSigningModuleFactory } from "@/gated-signing/di/gatedSigningModuleFactory";
@@ -23,7 +23,7 @@ import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/uniswap/di/uniswapModuleFactory";
 
 type MakeContainerArgs = {
-  config: ContextModuleConfig;
+  config: ResolvedContextModuleConfig;
 };
 
 export const makeContainer = ({ config }: MakeContainerArgs) => {

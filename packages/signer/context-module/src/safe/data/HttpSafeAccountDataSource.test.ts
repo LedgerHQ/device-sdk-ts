@@ -2,7 +2,7 @@ import { type HexaString } from "@ledgerhq/device-management-kit";
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { HttpSafeAccountDataSource } from "@/safe/data/HttpSafeAccountDataSource";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
@@ -13,12 +13,12 @@ import PACKAGE from "@root/package.json";
 vi.mock("axios");
 
 describe("HttpSafeAccountDataSource", () => {
-  const config: ContextModuleConfig = {
+  const config: ResolvedContextModuleConfig = {
     metadataServiceDomain: {
       url: "https://metadata.ledger.com",
     },
     originToken: "test-origin-token",
-  } as ContextModuleConfig;
+  } as ResolvedContextModuleConfig;
 
   const validSafeAccountDto = {
     accountDescriptor: {
@@ -604,12 +604,12 @@ describe("HttpSafeAccountDataSource", () => {
 
     it("should use correct origin token from config", async () => {
       // GIVEN
-      const customConfig: ContextModuleConfig = {
+      const customConfig: ResolvedContextModuleConfig = {
         metadataServiceDomain: {
           url: "https://metadata.ledger.com",
         },
         originToken: "custom-origin-token",
-      } as ContextModuleConfig;
+      } as ResolvedContextModuleConfig;
       const params = {
         safeContractAddress: validsafeContractAddress,
         chainId: 1,
@@ -635,12 +635,12 @@ describe("HttpSafeAccountDataSource", () => {
 
     it("should use correct metadata service URL from config", async () => {
       // GIVEN
-      const customConfig: ContextModuleConfig = {
+      const customConfig: ResolvedContextModuleConfig = {
         metadataServiceDomain: {
           url: "https://custom-metadata.example.com",
         },
         originToken: "test-token",
-      } as ContextModuleConfig;
+      } as ResolvedContextModuleConfig;
       const params = {
         safeContractAddress: validsafeContractAddress,
         chainId: 1,

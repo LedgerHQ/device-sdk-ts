@@ -6,7 +6,7 @@ import { Either, Left, Right } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import type {
   ContextModuleCalMode,
-  ContextModuleConfig,
+  ResolvedContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
@@ -25,7 +25,8 @@ import {
 @injectable()
 export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ResolvedContextModuleConfig,
   ) {}
 
   async fetchCertificate(

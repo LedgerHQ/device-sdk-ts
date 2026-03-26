@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -19,7 +19,7 @@ describe("HttpTransactionCheckDataSource", () => {
       url: "web3checksUrl",
     },
     originToken: "originToken",
-  } as ContextModuleConfig;
+  } as ResolvedContextModuleConfig;
 
   beforeEach(() => {
     vi.resetAllMocks();

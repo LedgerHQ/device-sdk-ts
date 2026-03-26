@@ -1,13 +1,12 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import { type Container } from "inversify";
 
 import { configTypes } from "./config/di/configTypes";
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
   type ContextModuleCalConfig,
-  type ContextModuleConfig,
   type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
+  type ResolvedContextModuleConfig,
 } from "./config/model/ContextModuleConfig";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { HttpTrustedNameDataSource } from "./trusted-name/data/HttpTrustedNameDataSource";
@@ -86,10 +85,9 @@ describe("ContextModuleBuilder", () => {
       .setCalConfig(defaultCalConfig)
       .setWeb3ChecksConfig(defaultWeb3ChecksConfig)
       .build();
-    // @ts-expect-error _container is private
-    const config = (res["_container"] as Container).get<ContextModuleConfig>(
-      configTypes.Config,
-    );
+    const config = (res as DefaultContextModule)[
+      "_container"
+    ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
     expect(res).toBeInstanceOf(DefaultContextModule);
     expect(config.cal).toEqual(defaultCalConfig);
@@ -114,7 +112,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.metadataServiceDomain).toEqual(customMetadataConfig);
@@ -131,7 +129,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(config.metadataServiceDomain.url).toBe(customMetadataConfig.url);
       expect(config.metadataServiceDomain.url).not.toBe(
@@ -152,7 +150,7 @@ describe("ContextModuleBuilder", () => {
       const res = contextModuleBuilder.setCalConfig(customCalConfig).build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.cal).toEqual(customCalConfig);
@@ -169,7 +167,7 @@ describe("ContextModuleBuilder", () => {
       const res = contextModuleBuilder.setCalConfig(customCalConfig).build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(config.cal.url).toBe(customCalConfig.url);
       expect(config.cal.mode).toBe(customCalConfig.mode);
@@ -192,7 +190,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.web3checks).toEqual(customWeb3ChecksConfig);
@@ -209,7 +207,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(config.web3checks.url).toBe(customWeb3ChecksConfig.url);
       expect(config.web3checks.url).not.toBe(
@@ -230,7 +228,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.datasource).toEqual(customDatasourceConfig);
@@ -248,7 +246,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.datasource).toEqual(customDatasourceConfig);
@@ -266,7 +264,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(config.datasource?.proxy).toBe("safe");
       expect(config.datasource).not.toBeUndefined();
@@ -281,7 +279,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.datasource).toEqual(customDatasourceConfig);
@@ -298,7 +296,7 @@ describe("ContextModuleBuilder", () => {
       const res = contextModuleBuilder.build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.loggerFactory).toBeDefined();
@@ -329,7 +327,7 @@ describe("ContextModuleBuilder", () => {
       const res = contextModuleBuilder.build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.loggerFactory).toBe(loggerFactory);
@@ -343,7 +341,7 @@ describe("ContextModuleBuilder", () => {
       const res = contextModuleBuilder.setLoggerFactory(loggerFactory).build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.loggerFactory).toBe(loggerFactory);
@@ -365,7 +363,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(config.loggerFactory).toBe(overrideLoggerFactory);
       expect(config.loggerFactory).not.toBe(constructorLoggerFactory);
@@ -385,7 +383,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
-      ].get<ContextModuleConfig>(configTypes.Config);
+      ].get<ResolvedContextModuleConfig>(configTypes.Config);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(config.customTrustedNameDataSource).toBe(customDataSource);

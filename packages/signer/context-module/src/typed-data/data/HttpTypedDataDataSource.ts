@@ -5,7 +5,7 @@ import { Either, Left, Right } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import type {
   ContextModuleCalMode,
-  ContextModuleConfig,
+  ResolvedContextModuleConfig,
 } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
@@ -42,7 +42,8 @@ import {
 @injectable()
 export class HttpTypedDataDataSource implements TypedDataDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ResolvedContextModuleConfig,
   ) {}
 
   public async getTypedDataFilters({

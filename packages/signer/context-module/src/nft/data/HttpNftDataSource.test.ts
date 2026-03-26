@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -20,7 +20,7 @@ const config = {
     url: "https://nft.api.live.ledger.com",
   },
   originToken: "originToken",
-} as ContextModuleConfig;
+} as ResolvedContextModuleConfig;
 describe("HttpNftDataSource", () => {
   let datasource: NftDataSource;
 

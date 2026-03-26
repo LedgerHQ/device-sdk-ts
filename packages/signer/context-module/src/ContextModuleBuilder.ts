@@ -11,6 +11,7 @@ import {
   type ContextModuleMetadataServiceConfig,
   type ContextModuleReporterConfig,
   type ContextModuleWeb3ChecksConfig,
+  type ResolvedContextModuleConfig,
 } from "./config/model/ContextModuleConfig";
 import { type BlindSigningReporter } from "./reporter/domain/BlindSigningReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
@@ -49,25 +50,23 @@ export const DEFAULT_CONFIG = {
   loggerFactory: noopLoggerFactory,
 };
 
+const resolveConfig = (
+  config: ContextModuleConfig,
+): ResolvedContextModuleConfig => ({
+  ...DEFAULT_CONFIG,
+  ...config,
+  reporter: config.reporter ?? DEFAULT_CONFIG.reporter,
+});
+
 export class ContextModuleBuilder {
   private config: ContextModuleConfig;
-  private originToken?: string;
 
   constructor({ originToken, loggerFactory }: ContextModuleConstructorArgs) {
-    this.originToken = originToken;
-
     this.config = {
       ...DEFAULT_CONFIG,
-      cal: { ...DEFAULT_CONFIG.cal },
-      web3checks: { ...DEFAULT_CONFIG.web3checks },
-      metadataServiceDomain: { ...DEFAULT_CONFIG.metadataServiceDomain },
-      reporter: { ...DEFAULT_CONFIG.reporter },
-      customLoaders: [...DEFAULT_CONFIG.customLoaders],
-      customFieldLoaders: [...DEFAULT_CONFIG.customFieldLoaders],
+      ...(loggerFactory && { loggerFactory }),
+      ...(originToken && { originToken }),
     };
-    if (loggerFactory) {
-      this.config.loggerFactory = loggerFactory;
-    }
   }
 
   /**
@@ -209,7 +208,6 @@ export class ContextModuleBuilder {
    * @returns the context module
    */
   build(): ContextModule {
-    const config = { ...this.config, originToken: this.originToken };
-    return new DefaultContextModule(config);
+    return new DefaultContextModule(resolveConfig(this.config));
   }
 }

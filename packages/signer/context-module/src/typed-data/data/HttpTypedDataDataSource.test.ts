@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -52,7 +52,7 @@ const config = {
     mode: "prod",
   },
   originToken: "originToken",
-} as ContextModuleConfig;
+} as ResolvedContextModuleConfig;
 describe("HttpTypedDataDataSource", () => {
   let datasource: TypedDataDataSource;
 

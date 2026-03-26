@@ -1,4 +1,4 @@
-import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
@@ -35,7 +35,7 @@ const fieldLoaderStubBuilder = (): ContextFieldLoader => {
 
 describe("DefaultContextModule", () => {
   const typedDataLoader: TypedDataContextLoader = { load: vi.fn() };
-  const defaultContextModuleConfig: ContextModuleConfig = {
+  const defaultContextModuleConfig: ResolvedContextModuleConfig = {
     customLoaders: [],
     defaultLoaders: false,
     defaultFieldLoaders: false,
@@ -54,6 +54,9 @@ describe("DefaultContextModule", () => {
     },
     originToken: "originToken",
     loggerFactory: mockLoggerFactory,
+    reporter: {
+      url: "https://reporter.example",
+    },
   };
 
   beforeEach(() => {

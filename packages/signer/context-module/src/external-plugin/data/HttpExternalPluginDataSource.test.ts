@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import ABI from "@/external-plugin/__tests__/abi.json";
 import {
   type Abis,
@@ -30,7 +30,7 @@ const config = {
     url: "https://crypto-assets-service.api.ledger.com/v1",
   },
   originToken: "originToken",
-} as ContextModuleConfig;
+} as ResolvedContextModuleConfig;
 
 describe("HttpExternalPuginDataSource", () => {
   let datasource: ExternalPluginDataSource;

@@ -10,7 +10,7 @@ import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSig
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
-import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
 import { gatedSigningTypes } from "./gated-signing/di/gatedSigningTypes";
 import { nftTypes } from "./nft/di/nftTypes";
@@ -41,7 +41,7 @@ export class DefaultContextModule implements ContextModule {
   private _fieldLoaders: ContextFieldLoader<unknown>[];
   private _blindSigningReporter: BlindSigningReporter;
 
-  constructor(args: ContextModuleConfig) {
+  constructor(args: ResolvedContextModuleConfig) {
     this._container = makeContainer({ config: args });
 
     this._loaders = args.defaultLoaders ? this._getDefaultLoaders() : [];

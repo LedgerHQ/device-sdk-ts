@@ -49,3 +49,7 @@ export type ContextModuleConfig = {
   datasource?: ContextModuleDatasourceConfig;
   reporter?: ContextModuleReporterConfig;
 };
+
+export type ResolvedContextModuleConfig = ContextModuleConfig & {
+  reporter: ContextModuleReporterConfig;
+};

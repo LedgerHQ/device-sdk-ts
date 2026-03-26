@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type { ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
@@ -13,7 +13,8 @@ import { TokenDto } from "./TokenDto";
 @injectable()
 export class HttpTokenDataSource implements TokenDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ResolvedContextModuleConfig,
   ) {}
   public async getTokenInfosPayload({
     chainId,

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Left } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
@@ -20,7 +20,7 @@ describe("HttpTokenDataSource", () => {
         mode: "prod",
         branch: "main",
       },
-    } as ContextModuleConfig;
+    } as ResolvedContextModuleConfig;
     datasource = new HttpTokenDataSource(config);
     vi.clearAllMocks();
   });

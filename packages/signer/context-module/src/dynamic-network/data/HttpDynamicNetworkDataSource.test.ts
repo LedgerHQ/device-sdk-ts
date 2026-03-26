@@ -2,7 +2,7 @@ import axios from "axios";
 import { Left, Right } from "purify-ts";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 
 import { HttpDynamicNetworkDataSource } from "./HttpDynamicNetworkDataSource";
 
@@ -10,13 +10,13 @@ vi.mock("axios");
 
 describe("HttpNetworkDataSource", () => {
   let datasource: HttpDynamicNetworkDataSource;
-  const mockConfig: ContextModuleConfig = {
+  const mockConfig: ResolvedContextModuleConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com",
       mode: "prod",
       branch: "main",
     },
-  } as ContextModuleConfig;
+  } as ResolvedContextModuleConfig;
 
   const mockNetworkResponse = {
     data: [

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ResolvedContextModuleConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -18,7 +18,7 @@ const config = {
     url: "https://metadata.api.live.ledger.com",
   },
   originToken: "test-origin-token",
-} as ContextModuleConfig;
+} as ResolvedContextModuleConfig;
 
 describe("HttpSafeProxyDataSource", () => {
   let datasource: ProxyDataSource;
