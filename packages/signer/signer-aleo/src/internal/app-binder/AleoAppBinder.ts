@@ -1,4 +1,5 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
   SendCommandInAppDeviceAction,
@@ -10,7 +11,6 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignRootIntentDAReturnType } from "@api/app-binder/SignRootIntentDeviceActionTypes";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
@@ -18,9 +18,8 @@ import { externalTypes } from "@internal/externalTypes";
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { GetViewKeyCommand } from "./command/GetViewKeyCommand";
-import { SignFeeIntentCommand } from "./command/SignFeeIntentCommand";
-import { SignMessageCommand } from "./command/SignMessageCommand";
-import { SignRootIntentCommand } from "./command/SignRootIntentCommand";
+import { SignFeeIntentTask } from "./task/SignFeeIntentTask";
+import { SignRootIntentTask } from "./task/SignRootIntentTask";
 
 @injectable()
 export class AleoAppBinder {
@@ -80,24 +79,6 @@ export class AleoAppBinder {
     });
   }
 
-  signMessage(args: {
-    derivationPath: string;
-    message: string | Uint8Array;
-    skipOpenApp: boolean;
-  }): SignMessageDAReturnType {
-    return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
-      deviceAction: new SendCommandInAppDeviceAction({
-        input: {
-          command: new SignMessageCommand(args),
-          appName: APP_NAME,
-          requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
-          skipOpenApp: args.skipOpenApp,
-        },
-      }),
-    });
-  }
-
   signRootIntent(args: {
     derivationPath: string;
     rootIntent: Uint8Array;
@@ -105,9 +86,13 @@ export class AleoAppBinder {
   }): SignRootIntentDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SendCommandInAppDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          command: new SignRootIntentCommand(args),
+          task: (internalApi) =>
+            new SignRootIntentTask(internalApi, {
+              derivationPath: args.derivationPath,
+              rootIntent: args.rootIntent,
+            }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp,
@@ -122,9 +107,12 @@ export class AleoAppBinder {
   }): SignFeeIntentDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SendCommandInAppDeviceAction({
+      deviceAction: new CallTaskInAppDeviceAction({
         input: {
-          command: new SignFeeIntentCommand(args),
+          task: (internalApi) =>
+            new SignFeeIntentTask(internalApi, {
+              feeIntent: args.feeIntent,
+            }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp,
