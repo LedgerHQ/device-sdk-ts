@@ -174,7 +174,7 @@ jobs:
             --device ${{ matrix.device }} \
             --rpc-url "${{ secrets.SOLANA_LEDGER_RPC_URL }}" \
             --scan-limit 1000 \
-            --samples-per-instruction 10 \
+            --samples-per-instruction 20 \
             --log-level error \
             --log-file "/tmp/logs/solana-program-${{ matrix.program }}.log" \
             --file-log-level debug \

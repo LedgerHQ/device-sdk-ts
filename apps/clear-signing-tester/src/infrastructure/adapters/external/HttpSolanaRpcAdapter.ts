@@ -9,6 +9,7 @@ import { type SolanaTransactionData } from "@root/src/domain/models/SolanaTransa
 
 const DEFAULT_SCAN_LIMIT = 500;
 const BATCH_SIZE = 20;
+const METADATA_SERVICE_URL = "https://nft.api.live.ledger.com";
 
 type InstructionInfo = {
   programId: string;
@@ -185,6 +186,21 @@ const INSTRUCTION_NAMES: Record<string, Record<string, string>> = {
   },
 };
 
+// Token instructions that require metadata from the context module to
+// clear-sign.  For these, we probe the metadata service during filtering
+// and skip transactions where the token is unknown.
+const TOKEN_PROGRAMS_NEEDING_METADATA = new Set([
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+]);
+const INSTRUCTIONS_NEEDING_METADATA = new Set([
+  "0c", // TransferChecked
+  "0d", // ApproveChecked
+  "0e", // MintToChecked
+  "0f", // BurnChecked
+  "1a01", // TransferCheckedWithFee (Token-2022)
+]);
+
 function resolveInstructionName(
   programId: string,
   dataHex: string,
@@ -327,6 +343,13 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
         this.logger.debug(
           `Skipping tx ${signature.slice(0, 12)}: distillation failed`,
         );
+        return null;
+      }
+
+      // For token instructions that need metadata (TransferChecked, etc.),
+      // probe the metadata service to check the token is known.
+      // Unknown tokens would be blind-signed by the firmware.
+      if (await this.isUnsupportedTokenInstruction(distilled, signature)) {
         return null;
       }
 
@@ -499,6 +522,47 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     return selected;
   }
 
+  /**
+   * Returns true if this is a token instruction that needs metadata but
+   * the metadata service doesn't support the token.  The first instruction
+   * account (source token account) is probed against the metadata service.
+   */
+  private async isUnsupportedTokenInstruction(
+    distilled: {
+      programId: string;
+      dataHex: string;
+      accountKeys: string[];
+    },
+    signature: string,
+  ): Promise<boolean> {
+    if (!TOKEN_PROGRAMS_NEEDING_METADATA.has(distilled.programId)) return false;
+
+    const needsMetadata = [...INSTRUCTIONS_NEEDING_METADATA].some((prefix) =>
+      distilled.dataHex.startsWith(prefix),
+    );
+    if (!needsMetadata) return false;
+
+    const sourceTokenAccount = distilled.accountKeys[0];
+    if (!sourceTokenAccount) return true;
+
+    try {
+      const response = await axios.head(
+        `${METADATA_SERVICE_URL}/v2/solana/owner/${sourceTokenAccount}`,
+        { timeout: 5000, validateStatus: () => true },
+      );
+      if (response.status === 200) return false;
+      this.logger.debug(
+        `Skipping tx ${signature.slice(0, 12)}: token account ${sourceTokenAccount.slice(0, 12)}... not in metadata service (${response.status})`,
+      );
+      return true;
+    } catch {
+      this.logger.debug(
+        `Skipping tx ${signature.slice(0, 12)}: metadata service probe failed`,
+      );
+      return true;
+    }
+  }
+
   // --- Transaction distillation ---
 
   /**
@@ -510,7 +574,12 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   private distillPrimaryInstruction(
     rawBytes: Buffer,
     targetProgramId: string,
-  ): { buffer: Buffer; programId: string; dataHex: string } | null {
+  ): {
+    buffer: Buffer;
+    programId: string;
+    dataHex: string;
+    accountKeys: string[];
+  } | null {
     try {
       let cursor = 0;
 
@@ -705,6 +774,11 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
       o += primaryIx.data.length;
 
       const primaryPid = this.toBase58(keys[primaryIx.programIdIndex]!);
+      const ixAccountKeys = primaryIx.accounts.map((a) => {
+        const remapped = signerRemapToPayer.get(a);
+        const effective = remapped !== undefined ? remapped : a;
+        return this.toBase58(keys[effective]!);
+      });
       this.logger.info(
         `Distilled tx: ${ixCount}→1 instructions, ${keyCount}→${totalKeys} keys, ` +
           `header=[${newNRS},${newNRoS},${newNRoU}], ` +
@@ -715,6 +789,7 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
         buffer: out.slice(0, o),
         programId: primaryPid,
         dataHex: primaryIx.data.toString("hex"),
+        accountKeys: ixAccountKeys,
       };
     } catch (error) {
       this.logger.debug("Distillation failed", { data: { error } });
