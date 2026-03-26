@@ -19,6 +19,13 @@ export {
 } from "@api/command/model/CommandResult";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
+  DeleteLanguagePackCommand,
+  type DeleteLanguagePackCommandArgs,
+  DeleteLanguagePackCommandError,
+  type DeleteLanguagePackCommandResult,
+  type DeleteLanguagePackErrorCodes,
+} from "@api/command/os/DeleteLanguagePackCommand";
+export {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
@@ -45,6 +52,14 @@ export {
   type ListAppsErrorCodes,
   type ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
+export {
+  ListLanguagePackCommand,
+  type ListLanguagePackCommandArgs,
+  ListLanguagePackCommandError,
+  type ListLanguagePackCommandResult,
+  type ListLanguagePackErrorCodes,
+  type ListLanguagePackResponse,
+} from "@api/command/os/ListLanguagePackCommand";
 export {
   type LoadCertificateArgs,
   LoadCertificateCommand,

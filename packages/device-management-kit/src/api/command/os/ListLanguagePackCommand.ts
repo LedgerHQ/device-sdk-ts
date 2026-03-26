@@ -61,7 +61,7 @@ export class ListLanguagePackCommand
 {
   readonly name = "listLanguagePack";
 
-  constructor(private args: ListLanguagePackCommandArgs) {}
+  constructor(private readonly args: ListLanguagePackCommandArgs) {}
 
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {

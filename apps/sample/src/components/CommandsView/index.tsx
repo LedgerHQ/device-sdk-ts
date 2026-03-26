@@ -2,6 +2,9 @@ import React, { useMemo } from "react";
 import {
   BatteryStatusType,
   CloseAppCommand,
+  DeleteLanguagePackCommand,
+  type DeleteLanguagePackCommandArgs,
+  type DeleteLanguagePackErrorCodes,
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
   type GetBatteryStatusArgs,
@@ -13,6 +16,10 @@ import {
   ListAppsCommand,
   type ListAppsErrorCodes,
   type ListAppsResponse,
+  ListLanguagePackCommand,
+  type ListLanguagePackCommandArgs,
+  type ListLanguagePackErrorCodes,
+  type ListLanguagePackResponse,
   type OpenAppArgs,
   OpenAppCommand,
   type OpenAppErrorCodes,
@@ -115,6 +122,40 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           statusType: BatteryStatusType.BATTERY_CURRENT,
         },
       } satisfies CommandProps<GetBatteryStatusArgs, GetBatteryStatusResponse>,
+      {
+        title: "List language",
+        description:
+          "List installed language packages (first chunk or continue)",
+        sendCommand: ({ firstChunk }) => {
+          const command = new ListLanguagePackCommand({ firstChunk });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { firstChunk: true },
+      } satisfies CommandProps<
+        ListLanguagePackCommandArgs,
+        ListLanguagePackResponse,
+        ListLanguagePackErrorCodes
+      >,
+      {
+        title: "Delete language pack",
+        description:
+          "Delete an installed language pack by id (use 255 / 0xFF to remove all)",
+        sendCommand: ({ languagePackageId }) => {
+          const command = new DeleteLanguagePackCommand({ languagePackageId });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { languagePackageId: 1 },
+      } satisfies CommandProps<
+        DeleteLanguagePackCommandArgs,
+        void,
+        DeleteLanguagePackErrorCodes
+      >,
     ],
     [selectedSessionId, dmk],
   );
