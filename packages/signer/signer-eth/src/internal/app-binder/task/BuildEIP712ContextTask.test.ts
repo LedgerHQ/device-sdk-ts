@@ -42,6 +42,7 @@ describe("BuildEIP712ContextTask", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    report: vi.fn(),
   };
   const parserMock = {
     parse: vi.fn(),

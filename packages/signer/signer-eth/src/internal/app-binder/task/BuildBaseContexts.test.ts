@@ -28,6 +28,7 @@ describe("BuildBaseContexts", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getSolanaContext: vi.fn(),
+    report: vi.fn(),
   };
   const defaultOptions = {};
   const defaultTransaction: Uint8Array = hexaStringToBuffer(

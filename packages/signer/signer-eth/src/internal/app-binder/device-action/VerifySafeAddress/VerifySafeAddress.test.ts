@@ -49,6 +49,7 @@ describe("VerifySafeAddressDeviceAction", () => {
   >;
   const contextModuleMock = {
     getContexts: vi.fn(),
+    report: vi.fn(),
   };
   const buildSafeAddressContextsMock = vi.fn();
   const provideContextsMock = vi.fn();

@@ -123,6 +123,7 @@ describe("SignTypedDataDeviceAction", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    report: vi.fn(),
   };
   const apiMock = makeDeviceActionInternalApiMock();
   const getAppConfigMock = vi.fn();

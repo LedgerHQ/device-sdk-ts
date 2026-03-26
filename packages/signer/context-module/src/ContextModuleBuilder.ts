@@ -9,8 +9,10 @@ import {
   type ContextModuleConfig,
   type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
+  type ContextModuleReporterConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
+import { type BlindSigningReporter } from "./reporter/domain/BlindSigningReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
@@ -21,13 +23,14 @@ import { DefaultContextModule } from "./DefaultContextModule";
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
+const DEFAULT_REPORTER_URL = "https://blind-signing-reporting.api.ledger.com";
 
-export const DEFAULT_CONFIG: ContextModuleConfig = {
+export const DEFAULT_CONFIG = {
   cal: {
     url: DEFAULT_CAL_URL,
     mode: "prod",
     branch: "main",
-  },
+  } as ContextModuleCalConfig,
   web3checks: {
     url: DEFAULT_WEB3_CHECKS_URL,
   },
@@ -40,6 +43,9 @@ export const DEFAULT_CONFIG: ContextModuleConfig = {
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
+  reporter: {
+    url: DEFAULT_REPORTER_URL,
+  },
   loggerFactory: noopLoggerFactory,
 };
 
@@ -55,6 +61,7 @@ export class ContextModuleBuilder {
       cal: { ...DEFAULT_CONFIG.cal },
       web3checks: { ...DEFAULT_CONFIG.web3checks },
       metadataServiceDomain: { ...DEFAULT_CONFIG.metadataServiceDomain },
+      reporter: { ...DEFAULT_CONFIG.reporter },
       customLoaders: [...DEFAULT_CONFIG.customLoaders],
       customFieldLoaders: [...DEFAULT_CONFIG.customFieldLoaders],
     };
@@ -149,6 +156,28 @@ export class ContextModuleBuilder {
    */
   setDatasourceConfig(datasourceConfig: ContextModuleDatasourceConfig) {
     this.config.datasource = datasourceConfig;
+    return this;
+  }
+
+  /**
+   * Set a custom reporter configuration
+   *
+   * @param reporterConfig
+   * @returns this
+   */
+  setReporterConfig(reporterConfig: ContextModuleReporterConfig) {
+    this.config.reporter = reporterConfig;
+    return this;
+  }
+
+  /**
+   * Set a custom blind signing reporter
+   *
+   * @param reporter reporter to use for blind signing events
+   * @returns this
+   */
+  setBlindSigningReporter(reporter: BlindSigningReporter) {
+    this.config.customBlindSigningReporter = reporter;
     return this;
   }
 
