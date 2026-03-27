@@ -39,7 +39,7 @@ npm install @ledgerhq/device-signer-kit-solana
 To initialise a Solana signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerSolanaBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
-const signerSolana = new SignerSolanaBuilder({ sdk, sessionId }).build();
+const signerSolana = new SignerSolanaBuilder({ dmk, sessionId }).build();
 ```
 
 ## 🔹 Use Cases
@@ -136,12 +136,6 @@ const { observable, cancel } = signerSolana.signTransaction(
     - **tokenInternalId** `string`
       Ledger internal token ID
 
-  - **solanaRPCURL** `string`  
-    RPC endpoint to use if `transactionResolutionContext` is not provided  
-    and parsing requires network lookups.  
-    In browser environments, use a CORS-enabled RPC URL.  
-    Defaults to: `"https://api.mainnet-beta.solana.com/"`.
-
 ---
 
 ### Returns
@@ -149,9 +143,7 @@ const { observable, cancel } = signerSolana.signTransaction(
 - `observable` That emits DeviceActionState updates, including the following details:
 
 ```ts
-type SolanaSignature = {
-  signature: Uint8Array; // Signed transaction bytes
-};
+type SignTransactionDAOutput = Uint8Array; // raw signature (64 bytes)
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
@@ -238,7 +230,7 @@ Sign a Solana off-chain message on Ledger devices. Supports multiple signing
 modes via `SignMessageVersion`:
 
 - **V0** (default) — original [off-chain message](https://docs.anza.xyz/proposals/off-chain-message-signing) header with `appDomain` and signer fields. Supported on all firmware with off-chain signing. Falls back to Legacy on `6a81`.
-- **V1** — simplified header without `appDomain`; supports lexicographically sorted multi-signer payloads. Falls back to V0 then Legacy on `6a81`.
+- **V1** — simplified header without `appDomain`; supports lexicographically sorted multi-signer payloads. Requires Solana device app version 1.14+. Falls back to V0 then Legacy on `6a81`.
 - **Legacy** — compact header for backward compatibility with very old Solana app firmware. Current firmware will reject it.
 - **Raw** — pass-through: the caller provides the fully formatted payload as a `Uint8Array` and the SDK sends it as-is with no header wrapping.
 
