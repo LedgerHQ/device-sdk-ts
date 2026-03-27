@@ -8,8 +8,10 @@ import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
   type ContextModuleDatasourceConfig,
+  type ContextModuleLoaderConfig,
   type ContextModuleMetadataServiceConfig,
   type ContextModuleReporterConfig,
+  type ContextModuleServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
 import { type BlindSigningReporter } from "./reporter/domain/BlindSigningReporter";
@@ -25,49 +27,58 @@ const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
 const DEFAULT_REPORTER_URL = "https://blind-signing-reporting.api.ledger.com";
 
-export const DEFAULT_CONFIG = {
-  cal: {
+/**
+ * Default configuration for the context module
+ *
+ * @note This configuration is frozen to prevent modifications after construction
+ * and can be used by external packages to get a default configuration.
+ */
+export const DEFAULT_CONFIG: Readonly<ContextModuleConfig> = Object.freeze({
+  cal: Object.freeze({
     url: DEFAULT_CAL_URL,
     mode: "prod",
     branch: "main",
-  } as ContextModuleCalConfig,
-  web3checks: {
+  }),
+  web3checks: Object.freeze({
     url: DEFAULT_WEB3_CHECKS_URL,
-  },
-  metadataServiceDomain: {
+  }),
+  metadataServiceDomain: Object.freeze({
     url: DEFAULT_METADATA_SERVICE_DOMAIN,
-  },
+  }),
+  reporter: Object.freeze({
+    url: DEFAULT_REPORTER_URL,
+  }),
+  datasource: Object.freeze({ proxy: "default" }),
+});
+
+/**
+ * Default loader configuration for the context module
+ *
+ * @note This configuration is internal and will be the default configuration for the context module.
+ */
+const DEFAULT_LOADER_CONFIG: ContextModuleLoaderConfig = {
   defaultLoaders: true,
-  customLoaders: [],
   defaultFieldLoaders: true,
+  customLoaders: [],
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
-  reporter: {
-    url: DEFAULT_REPORTER_URL,
-  },
-  loggerFactory: noopLoggerFactory,
+  customBlindSigningReporter: undefined,
+  customTrustedNameDataSource: undefined,
 };
 
 export class ContextModuleBuilder {
-  private config: ContextModuleConfig;
-  private originToken?: string;
+  private config: ContextModuleServiceConfig & ContextModuleLoaderConfig;
 
   constructor({ originToken, loggerFactory }: ContextModuleConstructorArgs) {
-    this.originToken = originToken;
-
     this.config = {
       ...DEFAULT_CONFIG,
-      cal: { ...DEFAULT_CONFIG.cal },
-      web3checks: { ...DEFAULT_CONFIG.web3checks },
-      metadataServiceDomain: { ...DEFAULT_CONFIG.metadataServiceDomain },
-      reporter: { ...DEFAULT_CONFIG.reporter },
-      customLoaders: [...DEFAULT_CONFIG.customLoaders],
-      customFieldLoaders: [...DEFAULT_CONFIG.customFieldLoaders],
-    };
-    if (loggerFactory) {
-      this.config.loggerFactory = loggerFactory;
-    }
+      ...DEFAULT_LOADER_CONFIG,
+      customLoaders: [],
+      customFieldLoaders: [],
+      originToken: originToken ?? "",
+      loggerFactory: loggerFactory ?? noopLoggerFactory,
+    } as ContextModuleServiceConfig & ContextModuleLoaderConfig;
   }
 
   /**
@@ -209,7 +220,6 @@ export class ContextModuleBuilder {
    * @returns the context module
    */
   build(): ContextModule {
-    const config = { ...this.config, originToken: this.originToken };
-    return new DefaultContextModule(config);
+    return new DefaultContextModule(this.config);
   }
 }

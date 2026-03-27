@@ -1,7 +1,16 @@
 export * from "./calldata/data/CalldataDescriptorDataSource";
 export * from "./calldata/data/HttpCalldataDescriptorDataSource";
 export * from "./calldata/domain/CalldataContextLoader";
-export * from "./config/model/ContextModuleConfig";
+export type {
+  ContextModuleCalBranch,
+  ContextModuleCalConfig,
+  ContextModuleCalMode,
+  ContextModuleConfig,
+  ContextModuleDatasourceConfig,
+  ContextModuleMetadataServiceConfig,
+  ContextModuleReporterConfig,
+  ContextModuleWeb3ChecksConfig,
+} from "./config/model/ContextModuleConfig";
 export * from "./ContextModule";
 export * from "./ContextModuleBuilder";
 export * from "./DefaultContextModule";

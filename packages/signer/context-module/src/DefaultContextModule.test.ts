@@ -1,4 +1,7 @@
-import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
+import {
+  type ContextModuleLoaderConfig,
+  type ContextModuleServiceConfig,
+} from "./config/model/ContextModuleConfig";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
@@ -35,7 +38,8 @@ const fieldLoaderStubBuilder = (): ContextFieldLoader => {
 
 describe("DefaultContextModule", () => {
   const typedDataLoader: TypedDataContextLoader = { load: vi.fn() };
-  const defaultContextModuleConfig: ContextModuleConfig = {
+  const defaultContextModuleConfig: ContextModuleServiceConfig &
+    ContextModuleLoaderConfig = {
     customLoaders: [],
     defaultLoaders: false,
     defaultFieldLoaders: false,
@@ -51,6 +55,12 @@ describe("DefaultContextModule", () => {
     },
     metadataServiceDomain: {
       url: "https://metadata.com",
+    },
+    reporter: {
+      url: "https://reporter.com",
+    },
+    datasource: {
+      proxy: "default",
     },
     originToken: "originToken",
     loggerFactory: mockLoggerFactory,

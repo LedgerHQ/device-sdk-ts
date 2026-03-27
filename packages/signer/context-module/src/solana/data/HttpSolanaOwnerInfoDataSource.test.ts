@@ -6,7 +6,7 @@ import {
 import axios from "axios";
 import { Left } from "purify-ts";
 
-import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpSolanaOwnerInfoDataSource } from "@/solana/data/HttpSolanaOwnerInfoDataSource";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
@@ -26,7 +26,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
   const config = {
     metadataServiceDomain: { url: "https://some.doma.in" },
     originToken: "mock-origin-token",
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
 
   const signedDescriptorHex = stringToHex("mock-descriptor");
   const responseData = {

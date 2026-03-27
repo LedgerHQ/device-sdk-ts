@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { HttpGatedDescriptorDataSource } from "@/gated-signing/data/HttpGatedDescriptorDataSource";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
@@ -12,14 +12,14 @@ import PACKAGE from "@root/package.json";
 vi.mock("axios");
 
 describe("HttpGatedDescriptorDataSource", () => {
-  const config: ContextModuleConfig = {
+  const config: ContextModuleServiceConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com/v1",
       branch: "next",
       mode: "prod",
     },
     originToken: "test-origin-token",
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
 
   const contractAddress = "0x1111111254fb6c44bac0bed2854e76f90643097d";
   const selector = "0xa1251d75";
@@ -213,10 +213,10 @@ describe("HttpGatedDescriptorDataSource", () => {
     });
 
     it("should use config.cal.branch in ref param", async () => {
-      const configMain: ContextModuleConfig = {
+      const configMain: ContextModuleServiceConfig = {
         ...config,
         cal: { ...config.cal!, branch: "main" },
-      } as ContextModuleConfig;
+      } as ContextModuleServiceConfig;
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: validGatedDappsResponse,

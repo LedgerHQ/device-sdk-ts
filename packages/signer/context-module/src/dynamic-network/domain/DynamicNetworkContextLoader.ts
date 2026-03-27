@@ -5,7 +5,7 @@ import {
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type DynamicNetworkDataSource } from "@/dynamic-network/data/DynamicNetworkDataSource";
 import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
@@ -37,7 +37,7 @@ export class DynamicNetworkContextLoader
   implements ContextLoader<DynamicNetworkContextInput>
 {
   private readonly _networkDataSource: DynamicNetworkDataSource;
-  private readonly _config: ContextModuleConfig;
+  private readonly _config: ContextModuleServiceConfig;
   private readonly _certificateLoader: PkiCertificateLoader;
   private logger: LoggerPublisherService;
 
@@ -45,7 +45,7 @@ export class DynamicNetworkContextLoader
     @inject(dynamicNetworkTypes.DynamicNetworkDataSource)
     networkDataSource: DynamicNetworkDataSource,
     @inject(configTypes.Config)
-    config: ContextModuleConfig,
+    config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)

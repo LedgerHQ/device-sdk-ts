@@ -4,7 +4,10 @@ import { Container } from "inversify";
 import { calldataModuleFactory } from "@/calldata/di/calldataModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import {
+  type ContextModuleLoaderConfig,
+  type ContextModuleServiceConfig,
+} from "@/config/model/ContextModuleConfig";
 import { dynamicNetworkModuleFactory } from "@/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
 import { gatedSigningModuleFactory } from "@/gated-signing/di/gatedSigningModuleFactory";
@@ -23,7 +26,7 @@ import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/uniswap/di/uniswapModuleFactory";
 
 type MakeContainerArgs = {
-  config: ContextModuleConfig;
+  config: ContextModuleServiceConfig & ContextModuleLoaderConfig;
 };
 
 export const makeContainer = ({ config }: MakeContainerArgs) => {
@@ -40,12 +43,12 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     externalPluginModuleFactory(),
     dynamicNetworkModuleFactory(),
     nftModuleFactory(),
-    proxyModuleFactory(config),
+    proxyModuleFactory(config.datasource),
     safeModuleFactory(),
     gatedSigningModuleFactory(),
     tokenModuleFactory(),
     calldataModuleFactory(),
-    trustedNameModuleFactory(config),
+    trustedNameModuleFactory(config.customTrustedNameDataSource),
     typedDataModuleFactory(),
     nanoPkiModuleFactory(),
     uniswapModuleFactory(),
