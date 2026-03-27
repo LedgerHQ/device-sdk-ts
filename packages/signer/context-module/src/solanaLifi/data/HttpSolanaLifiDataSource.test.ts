@@ -4,7 +4,7 @@ import axios from "axios";
 import { Left, Right } from "purify-ts";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
@@ -27,13 +27,13 @@ const mockLoggerFactory = () => ({
 describe("HttpSolanaLifiDataSource", () => {
   let datasource: SolanaLifiDataSource;
   const templateId = "tpl-123";
-  const config: ContextModuleConfig = {
+  const config: ContextModuleServiceConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com/v1",
       mode: "prod",
       branch: "main",
     },
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
 
   beforeAll(() => {
     datasource = new HttpSolanaLifiDataSource(config, mockLoggerFactory);

@@ -36,16 +36,22 @@ export type ContextModuleConfig = {
   cal: ContextModuleCalConfig;
   web3checks: ContextModuleWeb3ChecksConfig;
   metadataServiceDomain: ContextModuleMetadataServiceConfig;
+  reporter: ContextModuleReporterConfig;
+  datasource: ContextModuleDatasourceConfig;
+};
+
+export type ContextModuleServiceConfig = ContextModuleConfig & {
+  originToken: string;
+  loggerFactory: (tag: string) => LoggerPublisherService;
+};
+
+export type ContextModuleLoaderConfig = {
   defaultLoaders: boolean;
   defaultFieldLoaders: boolean;
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
-  loggerFactory: (tag: string) => LoggerPublisherService;
   customTypedDataLoader?: TypedDataContextLoader;
   customSolanaLoader?: SolanaContextLoader;
   customBlindSigningReporter?: BlindSigningReporter;
   customTrustedNameDataSource?: TrustedNameDataSource;
-  originToken?: string;
-  datasource?: ContextModuleDatasourceConfig;
-  reporter?: ContextModuleReporterConfig;
 };

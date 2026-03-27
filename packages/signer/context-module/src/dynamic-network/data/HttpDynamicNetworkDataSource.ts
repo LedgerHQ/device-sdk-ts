@@ -4,7 +4,7 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
@@ -28,7 +28,8 @@ const LOWERCASE_KEY_TO_DEVICE_MODEL_ID: Record<string, DeviceModelId> = {
 @injectable()
 export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
   ) {}
 
   async getDynamicNetworkConfiguration(
