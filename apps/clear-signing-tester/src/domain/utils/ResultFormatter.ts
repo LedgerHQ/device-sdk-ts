@@ -100,26 +100,29 @@ export class ResultFormatter {
       return row;
     });
 
+    const pct = (n: number) =>
+      totalItems > 0 ? `${((n / totalItems) * 100).toFixed(1)}%` : "N/A";
+
     const summaryTable = [
       {
         Status: "✅ Clear Signed",
         Count: statusCounts.clearSigned,
-        Percentage: `${((statusCounts.clearSigned / totalItems) * 100).toFixed(1)}%`,
+        Percentage: pct(statusCounts.clearSigned),
       },
       {
         Status: "⚠️ Partially Clear Signed",
         Count: statusCounts.partiallyClearSigned,
-        Percentage: `${((statusCounts.partiallyClearSigned / totalItems) * 100).toFixed(1)}%`,
+        Percentage: pct(statusCounts.partiallyClearSigned),
       },
       {
         Status: "🙈 Blind Signed",
         Count: statusCounts.blindSigned,
-        Percentage: `${((statusCounts.blindSigned / totalItems) * 100).toFixed(1)}%`,
+        Percentage: pct(statusCounts.blindSigned),
       },
       {
         Status: "❌ Errors",
         Count: statusCounts.error,
-        Percentage: `${((statusCounts.error / totalItems) * 100).toFixed(1)}%`,
+        Percentage: pct(statusCounts.error),
       },
     ];
 

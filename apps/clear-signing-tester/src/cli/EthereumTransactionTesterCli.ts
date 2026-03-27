@@ -10,7 +10,7 @@ import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/us
 import { type TestContractUseCase } from "@root/src/application/usecases/TestContractUseCase";
 import { type TestTransactionUseCase } from "@root/src/application/usecases/TestTransactionUseCase";
 import { type TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
-import { makeContainer } from "@root/src/di/container";
+import { makeEthereumContainer } from "@root/src/di/ethereumContainer";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
 import {
@@ -114,7 +114,7 @@ export class EthereumTransactionTesterCli {
     };
 
     // Create DI container and resolve tester
-    this.container = makeContainer({
+    this.container = makeEthereumContainer({
       config: diConfig,
       logger: {
         cli: {
@@ -193,7 +193,7 @@ export class EthereumTransactionTesterCli {
     let exitCode = 0;
 
     program
-      .name("ethereum-clear-signing-tester")
+      .name("clear-signing-tester")
       .description(
         "Ethereum Transaction Tester CLI - Clean Architecture Edition",
       )

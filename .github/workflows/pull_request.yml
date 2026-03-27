@@ -32,8 +32,12 @@ jobs:
     outputs:
       context-module: ${{ steps.filter.outputs.context-module }}
       signer-eth: ${{ steps.filter.outputs.signer-eth }}
+      signer-solana: ${{ steps.filter.outputs.signer-solana }}
+      signer-utils: ${{ steps.filter.outputs.signer-utils }}
+      solana-tools: ${{ steps.filter.outputs.solana-tools }}
       cs-tester: ${{ steps.filter.outputs.cs-tester }}
-      should-run-cs-tester: ${{ steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.cs-tester == 'true' }}
+      should-run-ethereum-cs-tester: ${{ steps.filter.outputs.signer-eth == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' }}
+      should-run-solana-cs-tester: ${{ steps.filter.outputs.signer-solana == 'true' || steps.filter.outputs.context-module == 'true' || steps.filter.outputs.signer-utils == 'true' || steps.filter.outputs.cs-tester == 'true' || steps.filter.outputs.solana-tools == 'true' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -45,6 +49,12 @@ jobs:
               - 'packages/signer/context-module/**'
             signer-eth:
               - 'packages/signer/signer-eth/**'
+            signer-solana:
+              - 'packages/signer/signer-solana/**'
+            signer-utils:
+              - 'packages/signer/signer-utils/**'
+            solana-tools:
+              - 'packages/tools/solana-tools/**'
             cs-tester:
               - 'apps/clear-signing-tester/**'
               - '.github/**'
@@ -128,64 +138,46 @@ jobs:
           SONAR_HOST_URL: ${{ vars.PUBLIC_SONAR_HOST_URL }}
 
   cs-tester:
-    name: Run Clear Signing Tester (${{ matrix.device }} - ${{ matrix.test }})
     needs: [build-libraries, detect-changes]
-    if: needs.detect-changes.outputs.should-run-cs-tester == 'true'
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax, nanox]
-        test: [test:raw:complete, test:raw:multisig, test:typed-data:multisig]
-    steps:
-      - uses: actions/checkout@v6
+    if: needs.detect-changes.outputs.should-run-ethereum-cs-tester == 'true'
+    uses: ./.github/workflows/cs-tester-reusable.yml
+    with:
+      runner: cs-tester
+      tests: '["test:raw:complete", "test:raw:multisig", "test:typed-data:multisig"]'
+      devices: '["stax", "nanox"]'
+      coin-app: Ethereum
+      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+      artifact-prefix: eth-cs-tester-logs
+      summary-prefix: "Ethereum Clear Signing Test"
+    secrets: inherit
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+  solana-cs-tester:
+    needs: [build-libraries, detect-changes]
+    if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
+    uses: ./.github/workflows/cs-tester-reusable.yml
+    with:
+      runner: cs-tester:solana
+      tests: '["test:solana:system-transfers", "test:solana:spl-legacy", "test:solana:spl-token2022", "test:solana:stake"]'
+      devices: '["stax", "nanox"]'
+      coin-app: Solana
+      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+      artifact-prefix: solana-cs-tester-logs
+      summary-prefix: "Solana Fixture Test"
+    secrets: inherit
 
-      - name: Generate token
-        id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.GH_BOT_APP_ID }}
-          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-          owner: LedgerHQ
-          repositories: coin-apps
-
-      - name: Retrieving coin apps
-        uses: actions/checkout@v6
-        with:
-          ref: master
-          repository: LedgerHQ/coin-apps
-          token: ${{ steps.generate-token.outputs.token }}
-          path: coin-apps
-          sparse-checkout: |
-            ${{ matrix.device }}/*/Ethereum/*.elf
-          sparse-checkout-cone-mode: false
-
-      - name: Pull Speculos Docker image
-        run: docker pull ghcr.io/ledgerhq/speculos
-
-      - name: Run Clear Signing Tester
-        id: cs-tester
-        env:
-          FORCE_COLOR: "0"
-          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
-        run: |
-          set -o pipefail
-          pnpm cs-tester ${{ matrix.test }} --device ${{ matrix.device }} 2>&1 | tee /tmp/cs-tester-output.log
-
-      - name: Write job summary
-        if: always()
-        run: |
-          echo "## 🧪 Clear Signing Tester Results (${{ matrix.device }} - ${{ matrix.test }})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f /tmp/cs-tester-output.log ]; then
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            sed -n '/📋/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            sed -n '/📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ No test output available" >> $GITHUB_STEP_SUMMARY
-          fi
+  # Temporary: program-level tests for validation before nightly merge
+  solana-program-cs-tester:
+    needs: [build-libraries, detect-changes]
+    if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
+    uses: ./.github/workflows/cs-tester-reusable.yml
+    with:
+      runner: cs-tester:solana
+      tests: '["test:solana:program:system", "test:solana:program:stake", "test:solana:program:spl-token", "test:solana:program:token-2022"]'
+      devices: '["stax"]'
+      coin-app: Solana
+      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+      use-rpc: true
+      log-level: error
+      artifact-prefix: solana-program-cs-tester-logs
+      summary-prefix: "Solana Program Test"
+    secrets: inherit

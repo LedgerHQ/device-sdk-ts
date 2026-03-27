@@ -112,6 +112,16 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
 
     switch (state.status) {
       case DeviceActionStatus.Error:
+        this.logger.warn("Device action error", {
+          data: {
+            error: state.error,
+            errorMessage:
+              typeof state.error === "object" && state.error !== null
+                ? ((state.error as Record<string, unknown>)["message"] ??
+                  JSON.stringify(state.error))
+                : String(state.error),
+          },
+        });
         return await this.errorStateHandler.handle({ input });
       case DeviceActionStatus.Completed:
         return await this.completeStateHandler.handle({ input });
