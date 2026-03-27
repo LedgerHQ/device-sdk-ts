@@ -1,0 +1,284 @@
+# Migration from @ledgerhq/hw-app-solana to @ledgerhq/device-signer-kit-solana
+
+This guide walks you through migrating from the legacy LedgerJS Solana package (`@ledgerhq/hw-app-solana`) to the new Device Management Kit (DMK) Solana Signer (`@ledgerhq/device-signer-kit-solana`).
+
+## Why migrate?
+
+| Feature                  | `hw-app-solana` (legacy)                                                                       | `device-signer-kit-solana` (DMK)                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **API style**            | Promise-based, imperative                                                                      | Observable-based, reactive                                          |
+| **Transport management** | Manual — you create and manage the `Transport`                                                 | Automatic — DMK handles discovery, connection, reconnection         |
+| **App lifecycle**        | Manual — you must open the Solana app yourself                                                 | Automatic — the signer opens the Solana app for you                 |
+| **Clear signing**        | Not built-in — you must call `provideTrustedName` / `provideTrustedDynamicDescriptor` manually | Built-in — the context module resolves token metadata automatically |
+| **Device state**         | No visibility                                                                                  | Full observable state machine (pending, user interaction, etc.)     |
+| **Cancellation**         | Not supported                                                                                  | Built-in `cancel()` on every operation                              |
+| **Off-chain messages**   | Single method (`signOffchainMessage`)                                                          | Unified `signMessage` with version support (V0, V1, Legacy, Raw)    |
+| **Multi-device**         | One transport = one device                                                                     | Session-based — multiple devices on a single DMK instance           |
+| **Error handling**       | Raw status codes / thrown errors                                                               | Typed error states per operation                                    |
+
+## Step 1: Update your dependencies
+
+```diff
+- npm install @ledgerhq/hw-app-solana @ledgerhq/hw-transport-webhid
++ npm install @ledgerhq/device-management-kit @ledgerhq/device-signer-kit-solana @ledgerhq/device-transport-kit-web-hid
+```
+
+## Step 2: Update initialisation
+
+The DMK replaces manual transport creation with a builder pattern that manages device discovery and connection for you.
+
+### Before (hw-app-solana)
+
+```typescript
+import TransportWebHID from "@ledgerhq/hw-transport-webhid";
+import Solana from "@ledgerhq/hw-app-solana";
+
+const transport = await TransportWebHID.create();
+const solana = new Solana(transport);
+```
+
+### After (DMK Solana Signer)
+
+```typescript
+import { DeviceManagementKitBuilder } from "@ledgerhq/device-management-kit";
+import { webHidTransportFactory } from "@ledgerhq/device-transport-kit-web-hid";
+import { SignerSolanaBuilder } from "@ledgerhq/device-signer-kit-solana";
+
+// 1. Build the DMK (once, at app startup)
+const dmk = new DeviceManagementKitBuilder()
+  .addTransport(webHidTransportFactory)
+  .build();
+
+// 2. Discover and connect (replaces Transport.create())
+const sessionId = await new Promise<string>((resolve) => {
+  const sub = dmk.startDiscovering({}).subscribe({
+    next: async (device) => {
+      const id = await dmk.connect({ device });
+      sub.unsubscribe();
+      resolve(id);
+    },
+  });
+});
+
+// 3. Create the signer (replaces `new Solana(transport)`)
+const signer = new SignerSolanaBuilder({ dmk, sessionId }).build();
+```
+
+## Step 3: Migrate API calls
+
+Each method now returns `{ observable, cancel }` instead of a `Promise`. Subscribe to the `observable` to receive `DeviceActionState` updates.
+
+```typescript
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+```
+
+### `getAddress`
+
+#### Before
+
+```typescript
+const { address } = await solana.getAddress("44'/501'/0'", true);
+// address is a Buffer
+const hexAddress = address.toString("hex");
+// or encode as base58: const base58Address = bs58.encode(address);
+```
+
+#### After
+
+```typescript
+const { observable } = signer.getAddress("44'/501'/0'", {
+  checkOnDevice: true,
+});
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const base58Address = state.output; // already base58
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- The `display: boolean` parameter becomes `{ checkOnDevice: boolean }`.
+- The address is returned as a **base58 `string`** directly.
+- The signer automatically opens the Solana app if needed.
+
+### `signTransaction`
+
+#### Before
+
+```typescript
+const { signature } = await solana.signTransaction("44'/501'/0'", txBuffer);
+// signature is a Buffer
+```
+
+#### After
+
+```typescript
+const { observable } = signer.signTransaction("44'/501'/0'", txBytes, {
+  // optional clear-signing context
+  transactionResolutionContext: {
+    tokenAddress: "EPjFWdd5...",
+  },
+});
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const signature = state.output; // Uint8Array
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- Input is `Uint8Array` instead of `Buffer` (though `Buffer` extends `Uint8Array`, so existing buffers work).
+- The `userInputType` parameter (`"ata" | "sol"`) is replaced by the richer `transactionResolutionContext` in the options object.
+- Clear-signing metadata (trusted names, descriptors) is resolved **automatically** by the built-in context module — you no longer need to call `provideTrustedName` or `provideTrustedDynamicDescriptor` manually.
+
+### `signOffchainMessage` → `signMessage`
+
+#### Before
+
+```typescript
+const { signature } = await solana.signOffchainMessage(
+  "44'/501'/0'",
+  msgBuffer,
+);
+// signature is a Buffer
+```
+
+#### After
+
+```typescript
+import { SignMessageVersion } from "@ledgerhq/device-signer-kit-solana";
+
+const { observable } = signer.signMessage(
+  "44'/501'/0'",
+  "Hello World", // string or Uint8Array
+  {
+    version: SignMessageVersion.V0,
+    appDomain: "myapp.xyz",
+  },
+);
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const signature = state.output.signature; // base58 string
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- Method renamed from `signOffchainMessage` to `signMessage`.
+- Accepts a `string` (auto-encoded as UTF-8) or `Uint8Array`.
+- Supports multiple signing versions (V0, V1, Legacy, Raw) with automatic fallback.
+- Signature is returned as a **base58 string**, not a `Buffer`.
+
+### `getAppConfiguration`
+
+#### Before
+
+```typescript
+const config = await solana.getAppConfiguration();
+// { blindSigningEnabled: boolean, pubKeyDisplayMode: number, version: string }
+```
+
+#### After
+
+```typescript
+const { observable } = signer.getAppConfiguration();
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const { blindSigningEnabled, pubKeyDisplayMode, version } = state.output;
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- Same data shape; only the invocation pattern changes from promise to observable.
+
+### `getChallenge` / `provideTrustedName` / `provideTrustedDynamicDescriptor`
+
+These low-level methods **do not have direct equivalents** in the DMK signer. Their functionality is handled automatically by the **context module** during `signTransaction`. The context module resolves token metadata, trusted names, and descriptors transparently.
+
+If you need to send raw APDUs for advanced use cases, the DMK provides `dmk.sendCommand()` and `dmk.sendApdu()` on the core `DeviceManagementKit` instance.
+
+## Step 4: Converting from Promises to Observables
+
+If your existing codebase is heavily promise-based, you can create a helper to convert the observable pattern back to promises:
+
+```typescript
+import { type Observable } from "rxjs";
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+
+function toPromise<Output>(action: {
+  observable: Observable<{
+    status: string;
+    output?: Output;
+    error?: unknown;
+  }>;
+}): Promise<Output> {
+  return new Promise((resolve, reject) => {
+    const subscription = action.observable.subscribe({
+      next: (state: any) => {
+        if (state.status === DeviceActionStatus.Completed) {
+          subscription.unsubscribe();
+          resolve(state.output);
+        } else if (state.status === DeviceActionStatus.Error) {
+          subscription.unsubscribe();
+          reject(state.error);
+        } else if (state.status === DeviceActionStatus.Stopped) {
+          subscription.unsubscribe();
+          reject(new Error("Action cancelled"));
+        }
+      },
+      error: (err: unknown) => {
+        subscription.unsubscribe();
+        reject(err);
+      },
+    });
+  });
+}
+
+// Usage — feels like the old API:
+const publicKey = await toPromise<string>(signer.getAddress("44'/501'/0'"));
+const signature = await toPromise(
+  signer.signTransaction("44'/501'/0'", txBytes),
+);
+```
+
+> **Note:** While this helper works for simple integrations, subscribing to the full observable gives you access to pending states and `requiredUserInteraction` values, which are essential for building responsive wallet UIs.
+
+## Quick reference: API mapping
+
+| `hw-app-solana`                              | `device-signer-kit-solana`                            | Notes                                          |
+| -------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------- |
+| `new Solana(transport)`                      | `new SignerSolanaBuilder({ dmk, sessionId }).build()` | DMK manages the transport                      |
+| `getAddress(path, display)`                  | `getAddress(path, { checkOnDevice })`                 | Returns base58 string, not Buffer              |
+| `signTransaction(path, buf, userInputType?)` | `signTransaction(path, bytes, options?)`              | Clear-signing context replaces `userInputType` |
+| `signOffchainMessage(path, buf)`             | `signMessage(path, msg, options?)`                    | Supports string input and version selection    |
+| `getAppConfiguration()`                      | `getAppConfiguration()`                               | Same output, observable wrapper                |
+| `getChallenge()`                             | _Handled by context module_                           | No direct equivalent needed                    |
+| `provideTrustedName(data)`                   | _Handled by context module_                           | Automatic during `signTransaction`             |
+| `provideTrustedDynamicDescriptor(data)`      | _Handled by context module_                           | Automatic during `signTransaction`             |
+
+## Troubleshooting
+
+| Issue                       | Solution                                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------------------- |
+| `6808` error during signing | Enable blind signing in the Solana app settings on the device                                      |
+| Observable never completes  | Ensure the device is unlocked and the Solana app is accessible                                     |
+| `Buffer` type errors        | Replace `Buffer` with `Uint8Array` — or use `Buffer.from(...)` since `Buffer` extends `Uint8Array` |
+| Missing `rxjs`              | Install it: `npm install rxjs` (it is a peer dependency of the DMK)                                |
+| Discovery finds no devices  | Check that the browser supports WebHID and the device is connected via USB                         |
