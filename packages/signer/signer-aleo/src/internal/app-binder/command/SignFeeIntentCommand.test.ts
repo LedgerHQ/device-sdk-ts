@@ -2,7 +2,6 @@ import {
   type Apdu,
   type ApduResponse,
   CommandResultFactory,
-  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -10,28 +9,31 @@ import {
   ALEO_CLA,
   INS,
   P1,
-  P2_DEFAULT,
+  P2,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import { SignFeeIntentCommand } from "./SignFeeIntentCommand";
 
 describe("SignFeeIntentCommand", () => {
-  const mockFeeIntent = new Uint8Array([0x05, 0x06, 0x07, 0x08]);
+  const mockChunkedData = new Uint8Array([0x05, 0x06, 0x07, 0x08]);
+  const mockLongChunkedData = new Uint8Array(255).fill(0x24);
 
   describe("name", () => {
     it("should be 'signFeeIntent'", () => {
       const command = new SignFeeIntentCommand({
-        feeIntent: mockFeeIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
       expect(command.name).toBe("signFeeIntent");
     });
   });
 
   describe("getApdu", () => {
-    it("should create correct APDU with P1=0x02", () => {
+    it("should create correct APDU for the first chunk", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        feeIntent: mockFeeIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       // When
@@ -41,15 +43,52 @@ describe("SignFeeIntentCommand", () => {
       expect(apdu.cla).toBe(ALEO_CLA);
       expect(apdu.ins).toBe(INS.SIGN_INTENT);
       expect(apdu.p1).toBe(P1.SIGN_MODE_FEE);
-      expect(apdu.p2).toBe(P2_DEFAULT);
+      expect(apdu.p2).toBe(P2.FIRST_CHUNK);
 
-      // Should only contain length (2 bytes) + fee intent data (no derivation path)
-      expect(apdu.data.length).toBe(2 + mockFeeIntent.length);
-      const expectedData = new Uint8Array(2 + mockFeeIntent.length);
-      expectedData[0] = 0x00;
-      expectedData[1] = mockFeeIntent.length;
-      expectedData.set(mockFeeIntent, 2);
-      expect(apdu.data).toEqual(expectedData);
+      // Should ONLY contain chunked data
+      expect(apdu.data.length).toBe(mockChunkedData.length);
+      expect(apdu.data).toEqual(mockChunkedData);
+    });
+
+    it("should create correct APDU for subsequent chunks", () => {
+      // Given
+      const command = new SignFeeIntentCommand({
+        chunkedData: mockChunkedData,
+        isFirst: false,
+      });
+
+      // When
+      const apdu: Apdu = command.getApdu();
+
+      // Then
+      expect(apdu.cla).toBe(ALEO_CLA);
+      expect(apdu.ins).toBe(INS.SIGN_INTENT);
+      expect(apdu.p1).toBe(P1.SIGN_MODE_FEE);
+      expect(apdu.p2).toBe(P2.NEXT_CHUNK);
+
+      // Should ONLY contain chunked data
+      expect(apdu.data.length).toBe(mockChunkedData.length);
+      expect(apdu.data).toEqual(mockChunkedData);
+    });
+
+    it("should create correct APDU for a long chunk (255 bytes)", () => {
+      // Given
+      const command = new SignFeeIntentCommand({
+        chunkedData: mockLongChunkedData,
+        isFirst: false,
+      });
+
+      // When
+      const apdu: Apdu = command.getApdu();
+
+      // Then
+      expect(apdu.cla).toBe(ALEO_CLA);
+      expect(apdu.ins).toBe(INS.SIGN_INTENT);
+      expect(apdu.p1).toBe(P1.SIGN_MODE_FEE);
+      expect(apdu.p2).toBe(P2.NEXT_CHUNK);
+
+      expect(apdu.data.length).toBe(255);
+      expect(apdu.data).toEqual(mockLongChunkedData);
     });
   });
 
@@ -57,7 +96,8 @@ describe("SignFeeIntentCommand", () => {
     it("should return hexadecimal string for successful response", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        feeIntent: mockFeeIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       const response: ApduResponse = {
@@ -78,15 +118,16 @@ describe("SignFeeIntentCommand", () => {
       );
     });
 
-    it("should return error if extraction fails", () => {
+    it("should return empty signature for successful response without data (intermediate chunks)", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        feeIntent: mockFeeIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       const response: ApduResponse = {
         statusCode: new Uint8Array([0x90, 0x00]),
-        data: new Uint8Array([]), // Empty data when extraction is expected
+        data: new Uint8Array([]),
       };
 
       // When
@@ -95,9 +136,9 @@ describe("SignFeeIntentCommand", () => {
       // Then
       expect(result).toEqual(
         CommandResultFactory({
-          error: new InvalidStatusWordError(
-            "Failed to extract data from response",
-          ),
+          data: {
+            tlvSignature: "",
+          },
         }),
       );
     });
@@ -105,7 +146,8 @@ describe("SignFeeIntentCommand", () => {
     it("should handle user rejection", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        feeIntent: mockFeeIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       // User denied
@@ -133,7 +175,8 @@ describe("SignFeeIntentCommand", () => {
     it("should handle device error codes", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        feeIntent: mockFeeIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       // Signature fail (0xb008)

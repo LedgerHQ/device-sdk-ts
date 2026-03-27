@@ -2,7 +2,6 @@ import {
   type Apdu,
   type ApduResponse,
   CommandResultFactory,
-  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -10,31 +9,31 @@ import {
   ALEO_CLA,
   INS,
   P1,
-  P2_DEFAULT,
+  P2,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import { SignRootIntentCommand } from "./SignRootIntentCommand";
 
 describe("SignRootIntentCommand", () => {
-  const mockDerivationPath = "m/44'/1'/0'/0/0";
-  const mockRootIntent = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+  const mockChunkedData = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
+  const mockLongChunkedData = new Uint8Array(255).fill(0x42);
 
   describe("name", () => {
     it("should be 'signRootIntent'", () => {
       const command = new SignRootIntentCommand({
-        derivationPath: "44'/683'/0'",
-        rootIntent: mockRootIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
       expect(command.name).toBe("signRootIntent");
     });
   });
 
   describe("getApdu", () => {
-    it("should create correct APDU", () => {
+    it("should create correct APDU for the first chunk", () => {
       // Given
       const command = new SignRootIntentCommand({
-        derivationPath: "44'/683'/0'",
-        rootIntent: mockRootIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       // When
@@ -44,44 +43,76 @@ describe("SignRootIntentCommand", () => {
       expect(apdu.cla).toBe(ALEO_CLA);
       expect(apdu.ins).toBe(INS.SIGN_INTENT);
       expect(apdu.p1).toBe(P1.SIGN_MODE_ROOT);
-      expect(apdu.p2).toBe(P2_DEFAULT);
+      expect(apdu.p2).toBe(P2.FIRST_CHUNK);
 
-      // Should contain derivation path (3 path elements) + root intent length (2 bytes) + root intent data
-      const expectedPathLength = 1 + 3 * 4; // 1 byte for count + 3 elements * 4 bytes each
-      expect(apdu.data.length).toBe(
-        expectedPathLength + 2 + mockRootIntent.length,
-      );
-
-      // Verify path count is 3
-      expect(apdu.data[0]).toBe(3);
+      // Should ONLY contain chunked data
+      expect(apdu.data.length).toBe(mockChunkedData.length);
+      expect(apdu.data).toEqual(mockChunkedData);
     });
 
-    it("should handle custom derivation path", () => {
+    it("should create correct APDU for subsequent chunks", () => {
       // Given
-      const customPath = "44'/683'/122'";
       const command = new SignRootIntentCommand({
-        derivationPath: customPath,
-        rootIntent: mockRootIntent,
+        chunkedData: mockChunkedData,
+        isFirst: false,
       });
 
       // When
       const apdu: Apdu = command.getApdu();
 
       // Then
-      expect(apdu.data[0]).toBe(3); // 3 elements
-      const expectedPathLength = 1 + 3 * 4;
-      expect(apdu.data.length).toBe(
-        expectedPathLength + 2 + mockRootIntent.length,
-      );
+      expect(apdu.cla).toBe(ALEO_CLA);
+      expect(apdu.ins).toBe(INS.SIGN_INTENT);
+      expect(apdu.p1).toBe(P1.SIGN_MODE_ROOT);
+      expect(apdu.p2).toBe(P2.NEXT_CHUNK);
+
+      // Should ONLY contain chunked data
+      expect(apdu.data.length).toBe(mockChunkedData.length);
+      expect(apdu.data).toEqual(mockChunkedData);
+    });
+
+    it("should create correct APDU for any chunk", () => {
+      // Given
+      const command = new SignRootIntentCommand({
+        chunkedData: mockChunkedData,
+        isFirst: true,
+      });
+
+      // When
+      const apdu: Apdu = command.getApdu();
+
+      // Then
+      expect(apdu.data.length).toBe(mockChunkedData.length);
+      expect(apdu.data).toEqual(mockChunkedData);
+    });
+
+    it("should create correct APDU for a long chunk (255 bytes)", () => {
+      // Given
+      const command = new SignRootIntentCommand({
+        chunkedData: mockLongChunkedData,
+        isFirst: false,
+      });
+
+      // When
+      const apdu: Apdu = command.getApdu();
+
+      // Then
+      expect(apdu.cla).toBe(ALEO_CLA);
+      expect(apdu.ins).toBe(INS.SIGN_INTENT);
+      expect(apdu.p1).toBe(P1.SIGN_MODE_ROOT);
+      expect(apdu.p2).toBe(P2.NEXT_CHUNK);
+
+      expect(apdu.data.length).toBe(255);
+      expect(apdu.data).toEqual(mockLongChunkedData);
     });
   });
 
   describe("parseResponse", () => {
-    it("should return hexadecimal string for successful response", () => {
+    it("should return hexadecimal string for successful response with data", () => {
       // Given
       const command = new SignRootIntentCommand({
-        derivationPath: mockDerivationPath,
-        rootIntent: mockRootIntent,
+        chunkedData: mockChunkedData,
+        isFirst: false,
       });
 
       const response: ApduResponse = {
@@ -102,16 +133,16 @@ describe("SignRootIntentCommand", () => {
       );
     });
 
-    it("should return error if extraction fails", () => {
+    it("should return empty signature for successful response without data (intermediate chunks)", () => {
       // Given
       const command = new SignRootIntentCommand({
-        derivationPath: mockDerivationPath,
-        rootIntent: mockRootIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       const response: ApduResponse = {
         statusCode: new Uint8Array([0x90, 0x00]),
-        data: new Uint8Array([]), // Empty data when extraction is expected
+        data: new Uint8Array([]),
       };
 
       // When
@@ -120,9 +151,9 @@ describe("SignRootIntentCommand", () => {
       // Then
       expect(result).toEqual(
         CommandResultFactory({
-          error: new InvalidStatusWordError(
-            "Failed to extract data from response",
-          ),
+          data: {
+            tlvSignature: "",
+          },
         }),
       );
     });
@@ -130,8 +161,8 @@ describe("SignRootIntentCommand", () => {
     it("should handle error response codes", () => {
       // Given
       const command = new SignRootIntentCommand({
-        derivationPath: mockDerivationPath,
-        rootIntent: mockRootIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       // User denied
@@ -159,8 +190,8 @@ describe("SignRootIntentCommand", () => {
     it("should handle device error codes", () => {
       // Given
       const command = new SignRootIntentCommand({
-        derivationPath: mockDerivationPath,
-        rootIntent: mockRootIntent,
+        chunkedData: mockChunkedData,
+        isFirst: true,
       });
 
       // Wrong transaction length
