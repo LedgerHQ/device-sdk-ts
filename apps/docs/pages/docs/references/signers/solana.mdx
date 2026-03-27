@@ -1,3 +1,8 @@
+---
+title: "Solana Signer Kit"
+category: reference
+---
+
 # Solana Signer Kit
 
 This module provides the implementation of the Ledger Solana signer of the Device Management Kit. It enables interaction with the Solana application on a Ledger device including:
@@ -93,7 +98,7 @@ type GetAddressCommandResponse = {
 
 ### Use Case 2: Sign Transaction
 
-Securely sign a Solana or SPL transaction using **clear signing** on Ledger devices.
+Securely sign a Solana or SPL transaction using **Clear Signing** on Ledger devices.
 
 ```ts
 const { observable, cancel } = signerSolana.signTransaction(
@@ -228,7 +233,7 @@ const subscription = observable.subscribe({
 
 #### **Notes**
 
-- Clear signing only supports simple instructions like a single `transfer` or combos like `createAccound + fundAccount` or `createAccount + transfer`. If you are receiving `6808` error from device, most likely the instructions are not supported and blind signing is required.
+- Clear Signing only supports simple instructions like a single `transfer` or combos like `createAccound + fundAccount` or `createAccount + transfer`. If you are receiving `6808` error from device, most likely the instructions are not supported and blind signing is required.
 
 ---
 
