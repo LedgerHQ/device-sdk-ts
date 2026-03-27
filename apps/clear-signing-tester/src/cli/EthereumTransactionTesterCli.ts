@@ -102,7 +102,7 @@ export class EthereumTransactionTesterCli {
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
         mode: calMode,
-        branch: "main",
+        branch: "staging-v2",
       },
       etherscan: {
         apiKey: process.env["ETHERSCAN_API_KEY"] || "default-key",
