@@ -9,17 +9,18 @@ import {
   ALEO_CLA,
   INS,
   P1,
+  P2,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import { SignFeeIntentCommand } from "./SignFeeIntentCommand";
 
 describe("SignFeeIntentCommand", () => {
   const mockChunkedData = new Uint8Array([0x05, 0x06, 0x07, 0x08]);
+  const mockLongChunkedData = new Uint8Array(255).fill(0x24);
 
   describe("name", () => {
     it("should be 'signFeeIntent'", () => {
       const command = new SignFeeIntentCommand({
-        dataLength: mockChunkedData.length,
         chunkedData: mockChunkedData,
         isFirst: true,
       });
@@ -31,7 +32,6 @@ describe("SignFeeIntentCommand", () => {
     it("should create correct APDU for the first chunk", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        dataLength: mockChunkedData.length,
         chunkedData: mockChunkedData,
         isFirst: true,
       });
@@ -43,7 +43,7 @@ describe("SignFeeIntentCommand", () => {
       expect(apdu.cla).toBe(ALEO_CLA);
       expect(apdu.ins).toBe(INS.SIGN_INTENT);
       expect(apdu.p1).toBe(P1.SIGN_MODE_FEE);
-      expect(apdu.p2).toBe(0x00);
+      expect(apdu.p2).toBe(P2.FIRST_CHUNK);
 
       // Should ONLY contain chunked data
       expect(apdu.data.length).toBe(mockChunkedData.length);
@@ -53,7 +53,6 @@ describe("SignFeeIntentCommand", () => {
     it("should create correct APDU for subsequent chunks", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        dataLength: mockChunkedData.length,
         chunkedData: mockChunkedData,
         isFirst: false,
       });
@@ -65,11 +64,31 @@ describe("SignFeeIntentCommand", () => {
       expect(apdu.cla).toBe(ALEO_CLA);
       expect(apdu.ins).toBe(INS.SIGN_INTENT);
       expect(apdu.p1).toBe(P1.SIGN_MODE_FEE);
-      expect(apdu.p2).toBe(0x01);
+      expect(apdu.p2).toBe(P2.NEXT_CHUNK);
 
       // Should ONLY contain chunked data
       expect(apdu.data.length).toBe(mockChunkedData.length);
       expect(apdu.data).toEqual(mockChunkedData);
+    });
+
+    it("should create correct APDU for a long chunk (255 bytes)", () => {
+      // Given
+      const command = new SignFeeIntentCommand({
+        chunkedData: mockLongChunkedData,
+        isFirst: false,
+      });
+
+      // When
+      const apdu: Apdu = command.getApdu();
+
+      // Then
+      expect(apdu.cla).toBe(ALEO_CLA);
+      expect(apdu.ins).toBe(INS.SIGN_INTENT);
+      expect(apdu.p1).toBe(P1.SIGN_MODE_FEE);
+      expect(apdu.p2).toBe(P2.NEXT_CHUNK);
+
+      expect(apdu.data.length).toBe(255);
+      expect(apdu.data).toEqual(mockLongChunkedData);
     });
   });
 
@@ -77,7 +96,6 @@ describe("SignFeeIntentCommand", () => {
     it("should return hexadecimal string for successful response", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        dataLength: mockChunkedData.length,
         chunkedData: mockChunkedData,
         isFirst: true,
       });
@@ -103,7 +121,6 @@ describe("SignFeeIntentCommand", () => {
     it("should return empty signature for successful response without data (intermediate chunks)", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        dataLength: mockChunkedData.length,
         chunkedData: mockChunkedData,
         isFirst: true,
       });
@@ -129,7 +146,6 @@ describe("SignFeeIntentCommand", () => {
     it("should handle user rejection", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        dataLength: mockChunkedData.length,
         chunkedData: mockChunkedData,
         isFirst: true,
       });
@@ -159,7 +175,6 @@ describe("SignFeeIntentCommand", () => {
     it("should handle device error codes", () => {
       // Given
       const command = new SignFeeIntentCommand({
-        dataLength: mockChunkedData.length,
         chunkedData: mockChunkedData,
         isFirst: true,
       });
