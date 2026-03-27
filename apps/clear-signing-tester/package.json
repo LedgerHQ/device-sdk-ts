@@ -1,8 +1,8 @@
 {
-  "name": "@ledgerhq/ethereum-clear-signing-tester",
+  "name": "@ledgerhq/clear-signing-tester",
   "version": "1.0.0",
   "private": true,
-  "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
+  "description": "TypeScript tool for testing clear-signing transactions using Ledger Device Management Kit",
   "main": "test-ethereum-transactions.ts",
   "exports": {
     ".": {

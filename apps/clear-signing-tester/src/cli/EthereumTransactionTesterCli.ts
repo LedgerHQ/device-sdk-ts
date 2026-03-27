@@ -193,7 +193,7 @@ export class EthereumTransactionTesterCli {
     let exitCode = 0;
 
     program
-      .name("ethereum-clear-signing-tester")
+      .name("clear-signing-tester")
       .description(
         "Ethereum Transaction Tester CLI - Clean Architecture Edition",
       )

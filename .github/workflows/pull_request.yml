@@ -138,205 +138,46 @@ jobs:
           SONAR_HOST_URL: ${{ vars.PUBLIC_SONAR_HOST_URL }}
 
   cs-tester:
-    name: Run Ethereum Clear Signing Tester (${{ matrix.device }} - ${{ matrix.test }})
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-ethereum-cs-tester == 'true'
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax, nanox]
-        test: [test:raw:complete, test:raw:multisig, test:typed-data:multisig]
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
-
-      - name: Generate token
-        id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.GH_BOT_APP_ID }}
-          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-          owner: LedgerHQ
-          repositories: coin-apps
-
-      - name: Retrieving coin apps
-        uses: actions/checkout@v6
-        with:
-          ref: master
-          repository: LedgerHQ/coin-apps
-          token: ${{ steps.generate-token.outputs.token }}
-          path: coin-apps
-          sparse-checkout: |
-            ${{ matrix.device }}/*/Ethereum/*.elf
-          sparse-checkout-cone-mode: false
-
-      - name: Pull Speculos Docker image
-        run: docker pull ghcr.io/ledgerhq/speculos
-
-      - name: Run Ethereum Clear Signing Tester
-        id: cs-tester
-        env:
-          FORCE_COLOR: "0"
-          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
-        run: |
-          set -o pipefail
-          pnpm cs-tester ${{ matrix.test }} --device ${{ matrix.device }} 2>&1 | tee /tmp/cs-tester-output.log
-
-      - name: Write job summary
-        if: always()
-        run: |
-          echo "## 🧪 Clear Signing Tester Results (${{ matrix.device }} - ${{ matrix.test }})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f /tmp/cs-tester-output.log ]; then
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            sed -n '/📋/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            sed -n '/📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ No test output available" >> $GITHUB_STEP_SUMMARY
-          fi
+    uses: ./.github/workflows/cs-tester-reusable.yml
+    with:
+      runner: cs-tester
+      tests: '["test:raw:complete", "test:raw:multisig", "test:typed-data:multisig"]'
+      devices: '["stax", "nanox"]'
+      coin-app: Ethereum
+      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+      artifact-prefix: eth-cs-tester-logs
+      summary-prefix: "Ethereum Clear Signing Test"
+    secrets: inherit
 
   solana-cs-tester:
-    name: Run Solana Clear Signing Tester (${{ matrix.device }} - ${{ matrix.test }})
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax, nanox]
-        test:
-          - test:solana:system-transfers
-          - test:solana:spl-legacy
-          - test:solana:spl-token2022
-          - test:solana:stake
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
-
-      - name: Generate token
-        id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.GH_BOT_APP_ID }}
-          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-          owner: LedgerHQ
-          repositories: coin-apps
-
-      - name: Retrieving coin apps
-        uses: actions/checkout@v6
-        with:
-          ref: master
-          repository: LedgerHQ/coin-apps
-          token: ${{ steps.generate-token.outputs.token }}
-          path: coin-apps
-          sparse-checkout: |
-            ${{ matrix.device }}/*/Solana/*.elf
-          sparse-checkout-cone-mode: false
-
-      - name: Pull Speculos Docker image
-        run: docker pull ghcr.io/ledgerhq/speculos
-
-      - name: Run Solana Clear Signing Tester
-        id: solana-cs-tester
-        env:
-          FORCE_COLOR: "0"
-          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
-        run: |
-          set -o pipefail
-          pnpm cs-tester:solana ${{ matrix.test }} --device ${{ matrix.device }} 2>&1 | tee /tmp/solana-cs-tester-output.log
-
-      - name: Write job summary
-        if: always()
-        run: |
-          echo "## 🧪 Solana Clear Signing Tester Results (${{ matrix.device }} - ${{ matrix.test }})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f /tmp/solana-cs-tester-output.log ]; then
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            sed -n '/📋/,/^└/p' /tmp/solana-cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            sed -n '/📊/,/^└/p' /tmp/solana-cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ No test output available" >> $GITHUB_STEP_SUMMARY
-          fi
+    uses: ./.github/workflows/cs-tester-reusable.yml
+    with:
+      runner: cs-tester:solana
+      tests: '["test:solana:system-transfers", "test:solana:spl-legacy", "test:solana:spl-token2022", "test:solana:stake"]'
+      devices: '["stax", "nanox"]'
+      coin-app: Solana
+      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+      artifact-prefix: solana-cs-tester-logs
+      summary-prefix: "Solana Fixture Test"
+    secrets: inherit
 
   # Temporary: program-level tests for validation before nightly merge
   solana-program-cs-tester:
-    name: Run Solana Program Tester (${{ matrix.device }} - ${{ matrix.program }})
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    strategy:
-      fail-fast: false
-      matrix:
-        device: [stax]
-        program:
-          - system
-          - stake
-          - spl-token
-          - token-2022
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
-
-      - name: Generate token
-        id: generate-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.GH_BOT_APP_ID }}
-          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-          owner: LedgerHQ
-          repositories: coin-apps
-
-      - name: Retrieving coin apps
-        uses: actions/checkout@v6
-        with:
-          ref: master
-          repository: LedgerHQ/coin-apps
-          token: ${{ steps.generate-token.outputs.token }}
-          path: coin-apps
-          sparse-checkout: |
-            ${{ matrix.device }}/*/Solana/*.elf
-          sparse-checkout-cone-mode: false
-
-      - name: Pull Speculos Docker image
-        run: docker pull ghcr.io/ledgerhq/speculos
-
-      - name: Run Solana Program Clear Signing Test
-        id: solana-program-cs-test
-        env:
-          FORCE_COLOR: "0"
-          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
-        run: |
-          set -o pipefail
-          pnpm cs-tester:solana test:solana:program:${{ matrix.program }} \
-            --device ${{ matrix.device }} \
-            --rpc-url "${{ secrets.SOLANA_LEDGER_RPC_URL }}" \
-            --scan-limit 1000 \
-            --samples-per-instruction 20 \
-            --log-level error \
-            2>&1 | tee /tmp/solana-program-cs-tester-output.log
-
-      - name: Write job summary
-        if: always()
-        run: |
-          echo "## Solana Program Test Results (${{ matrix.device }} - ${{ matrix.program }})" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ -f /tmp/solana-program-cs-tester-output.log ]; then
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            sed -n '/SOLANA PROGRAM TEST/,/^└/p' /tmp/solana-program-cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            sed -n '/SOLANA PROGRAM SUMMARY/,/^└/p' /tmp/solana-program-cs-tester-output.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-          else
-            echo "No test output available" >> $GITHUB_STEP_SUMMARY
-          fi
+    uses: ./.github/workflows/cs-tester-reusable.yml
+    with:
+      runner: cs-tester:solana
+      tests: '["test:solana:program:system", "test:solana:program:stake", "test:solana:program:spl-token", "test:solana:program:token-2022"]'
+      devices: '["stax"]'
+      coin-app: Solana
+      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+      use-rpc: true
+      log-level: error
+      artifact-prefix: solana-program-cs-tester-logs
+      summary-prefix: "Solana Program Test"
+    secrets: inherit

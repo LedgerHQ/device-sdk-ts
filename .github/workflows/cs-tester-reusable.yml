@@ -1,0 +1,156 @@
+name: "Clear Signing Tester"
+
+on:
+  workflow_call:
+    inputs:
+      runner:
+        description: "pnpm script (cs-tester for ETH, cs-tester:solana for Solana)"
+        type: string
+        required: true
+      tests:
+        description: 'JSON array of test commands (e.g. ["test:raw:complete", "test:solana:program:system"])'
+        type: string
+        required: true
+      devices:
+        description: 'JSON array of device types (e.g. ["stax", "nanox", "flex"])'
+        type: string
+        required: true
+      coin-app:
+        description: "Coin app name for ELF sparse checkout (Ethereum or Solana)"
+        type: string
+        required: true
+      artifact-prefix:
+        description: "Prefix for uploaded artifact names"
+        type: string
+        required: true
+      summary-prefix:
+        description: "Prefix for GitHub step summary titles"
+        type: string
+        required: true
+      runs-on:
+        description: "Runner label"
+        type: string
+        default: "ledgerhq-device-sdk"
+      use-rpc:
+        description: "Include Solana RPC flags (--rpc-url, --scan-limit, --samples-per-instruction)"
+        type: boolean
+        default: false
+      scan-limit:
+        description: "Number of signatures to scan (only when use-rpc is true)"
+        type: string
+        default: "1000"
+      samples-per-instruction:
+        description: "Samples per instruction type (only when use-rpc is true)"
+        type: string
+        default: "20"
+      log-level:
+        description: "Console log level (omit to use app default)"
+        type: string
+        default: ""
+      enable-file-logging:
+        description: "Enable file logging and screenshots"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ inputs.summary-prefix }} (${{ matrix.device }} - ${{ matrix.test }})
+    runs-on: ${{ inputs.runs-on }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: ${{ fromJSON(inputs.devices) }}
+        test: ${{ fromJSON(inputs.tests) }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Generate token
+        id: generate-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.GH_BOT_APP_ID }}
+          private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          owner: LedgerHQ
+          repositories: coin-apps
+
+      - name: Retrieving coin apps
+        uses: actions/checkout@v6
+        with:
+          ref: master
+          repository: LedgerHQ/coin-apps
+          token: ${{ steps.generate-token.outputs.token }}
+          path: coin-apps
+          sparse-checkout: |
+            ${{ matrix.device }}/*/${{ inputs.coin-app }}/*.elf
+          sparse-checkout-cone-mode: false
+
+      - name: Pull Speculos Docker image
+        run: docker pull ghcr.io/ledgerhq/speculos
+
+      - name: Run Clear Signing Test
+        env:
+          FORCE_COLOR: "0"
+          GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+          COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/logs/screenshots
+
+          ARGS=(
+            "--device" "${{ matrix.device }}"
+          )
+
+          if [ -n "${{ inputs.log-level }}" ]; then
+            ARGS+=("--log-level" "${{ inputs.log-level }}")
+          fi
+
+          if [ "${{ inputs.use-rpc }}" = "true" ]; then
+            ARGS+=("--rpc-url" "${SOLANA_RPC_URL}")
+            ARGS+=("--scan-limit" "${{ inputs.scan-limit }}")
+            ARGS+=("--samples-per-instruction" "${{ inputs.samples-per-instruction }}")
+          fi
+
+          if [ "${{ inputs.enable-file-logging }}" = "true" ]; then
+            SAFE_NAME=$(echo "${{ matrix.test }}" | tr ':/ ' '-')
+            ARGS+=("--log-file" "/tmp/logs/${SAFE_NAME}.log")
+            ARGS+=("--file-log-level" "debug")
+            ARGS+=("--screenshot-folder-path" "/tmp/logs/screenshots")
+          fi
+
+          pnpm ${{ inputs.runner }} ${{ matrix.test }} "${ARGS[@]}" 2>&1 | tee /tmp/cs-tester-output.log
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## ${{ inputs.summary-prefix }} (${{ matrix.device }} - ${{ matrix.test }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/cs-tester-output.log ]; then
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            sed -n '/TEST RESULTS\|PROGRAM TEST\|📋/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            sed -n '/SUMMARY\|PROGRAM SUMMARY\|📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No test output available" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Sanitise artifact name
+        if: always()
+        id: artifact
+        run: echo "name=$(echo '${{ inputs.artifact-prefix }}-${{ matrix.device }}-${{ matrix.test }}' | tr ':/ ' '-')" >> "$GITHUB_OUTPUT"
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.artifact.outputs.name }}
+          path: /tmp/logs/
+          retention-days: 7
