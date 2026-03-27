@@ -23,7 +23,7 @@ export class SendAleoCommandInChunksTask<T> {
   ) {}
 
   async run(): Promise<CommandResult<T, AleoErrorCodes>> {
-    const { dataLength, data, derivationPath, commandFactory } = this.args;
+    const { data, commandFactory } = this.args;
     let result: CommandResult<T, AleoErrorCodes> | undefined;
 
     for (let i = 0; i < data.length; i += APDU_MAX_PAYLOAD) {
@@ -32,10 +32,8 @@ export class SendAleoCommandInChunksTask<T> {
 
       result = await this.api.sendCommand(
         commandFactory({
-          dataLength,
           chunkedData: chunk,
           isFirst,
-          derivationPath: isFirst ? derivationPath : undefined,
         }),
       );
 
