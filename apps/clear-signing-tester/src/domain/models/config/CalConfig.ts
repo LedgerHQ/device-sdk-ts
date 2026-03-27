@@ -4,5 +4,5 @@
 export type CalConfig = {
   url: string;
   mode: "prod" | "test";
-  branch: "main" | "next" | "demo";
+  branch: "main" | "next" | "demo" | "staging-v2";
 };

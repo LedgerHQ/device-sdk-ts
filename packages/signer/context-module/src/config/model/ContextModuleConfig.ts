@@ -8,7 +8,7 @@ import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataS
 import { type TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
 
 export type ContextModuleCalMode = "prod" | "test";
-export type ContextModuleCalBranch = "next" | "main" | "demo";
+export type ContextModuleCalBranch = "next" | "main" | "demo" | "staging-v2";
 
 export type ContextModuleCalConfig = {
   url: string;
