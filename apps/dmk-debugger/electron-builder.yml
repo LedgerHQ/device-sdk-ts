@@ -1,0 +1,22 @@
+appId: com.ledger.dmk-debugger
+productName: DMK Debugger
+directories:
+  buildResources: build
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+asarUnpack:
+  - resources/**
+artifactName: dmk-debugger-${version}-${os}-${arch}.${ext}
+mac:
+  notarize: false
+linux:
+  executableName: dmk-debugger
+  target:
+    - AppImage
+  category: Utility
+npmRebuild: false

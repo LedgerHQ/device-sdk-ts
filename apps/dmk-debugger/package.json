@@ -1,0 +1,42 @@
+{
+  "name": "@ledgerhq/dmk-debugger-app",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Standalone DMK Debugger — log viewer, APDU analysis, and AI diagnostics via Claude Code",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "build": "electron-vite build",
+    "build:unpack": "pnpm run build && electron-builder --dir",
+    "build:mac": "pnpm run build && electron-builder --mac",
+    "build:linux": "pnpm run build && electron-builder --linux",
+    "build:win": "pnpm run build && electron-builder --win",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "pnpm run typecheck:node && pnpm run typecheck:web"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "latest",
+    "@electron-toolkit/preload": "^3.0.2",
+    "@electron-toolkit/utils": "^4.0.0",
+    "express": "^5.1.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@electron-toolkit/tsconfig": "^2.0.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "electron": "catalog:",
+    "electron-builder": "catalog:",
+    "electron-vite": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

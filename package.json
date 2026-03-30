@@ -21,6 +21,7 @@
     "health-check": "turbo run health-check --output-logs=errors-only --continue",
     "dmk": "pnpm --filter @ledgerhq/device-management-kit",
     "devtools": "pnpm --filter @ledgerhq/device-management-kit-devtools",
+    "debugger": "pnpm --filter @ledgerhq/dmk-debugger-app",
     "speculos-device-controller": "pnpm --filter @ledgerhq/speculos-device-controller",
     "context-module": "pnpm --filter @ledgerhq/context-module",
     "signer-aleo": "pnpm --filter @ledgerhq/device-signer-kit-aleo",

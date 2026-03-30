@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "dmk-debugger": {
+      "url": "http://localhost:8432/sse"
+    }
+  }
+}
