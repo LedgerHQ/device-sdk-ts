@@ -486,10 +486,11 @@ Use the following resources as your source of truth when decoding APDU commands 
 
 | Resource | URL | Use for |
 |----------|-----|---------|
-| Device Management Kit monorepo | https://github.com/LedgerHQ/device-sdk-ts/ | DMK architecture, device actions, transport layer, session lifecycle |
-| Ethereum app APDU specification | https://github.com/LedgerHQ/app-ethereum/blob/develop/doc/ethapp.adoc | Decoding Ethereum APDU commands (CLA=E0), INS codes, parameters, data formats |
-| Ethereum device app source | https://github.com/LedgerHQ/app-ethereum/ | Device-side implementation details and error codes |
-| Ethereum DMK signer | https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/signer-eth | Host-side signer implementation, device actions, tasks |
+| Device Management Kit monorepo | /Users/francesco.anselmi/projects/device-sdk-ts/apps/dmk-debugger/resources/apps/device-sdk-ts | DMK architecture, device actions, transport layer, session lifecycle |
+| Ethereum app APDU specification | /Users/francesco.anselmi/projects/device-sdk-ts/apps/dmk-debugger/resources/apps/app-ethereum/doc | Decoding Ethereum APDU commands (CLA=E0), INS codes, parameters, data formats |
+| Ethereum device app source | /Users/francesco.anselmi/projects/device-sdk-ts/apps/dmk-debugger/resources/apps/app-ethereum | Device-side implementation details and error codes |
+| Ethereum DMK signer | /Users/francesco.anselmi/projects/device-sdk-ts/apps/dmk-debugger/resources/apps/device-sdk-ts/packages/signer/signer-eth | Host-side signer implementation, device actions, tasks |
+| Ethereum Context Module | /Users/francesco.anselmi/projects/device-sdk-ts/apps/dmk-debugger/resources/apps/device-sdk-ts/packages/signer/context-module | Context module for backend/CAL/and token data |
 
 ## APDU command reference (CLA=E0, Ethereum app)
 
