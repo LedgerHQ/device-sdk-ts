@@ -6,16 +6,20 @@ export interface ModelOption {
   description: string;
 }
 
-const EPHEMERAL_OPTIONS = {
-  allowedTools: [] as string[],
-  persistSession: false,
-};
+let sessionId: string | undefined;
+
+export function resetSession(): void {
+  sessionId = undefined;
+  console.log(
+    "[claude] Session reset — next analysis starts a fresh conversation",
+  );
+}
 
 export async function fetchSupportedModels(): Promise<ModelOption[]> {
   try {
     const q = query({
       prompt: "",
-      options: { ...EPHEMERAL_OPTIONS, maxTurns: 0 },
+      options: { allowedTools: [], maxTurns: 0, persistSession: false },
     });
     const models = await q.supportedModels();
     q.return(undefined as never).catch(() => {});
@@ -44,11 +48,22 @@ export async function streamAnalysis(
     const stream = query({
       prompt,
       options: {
-        ...EPHEMERAL_OPTIONS,
+        allowedTools: [],
         maxTurns: 1,
+        ...(sessionId ? { resume: sessionId } : {}),
         ...(model ? { model } : {}),
       },
     });
+
+    const initResult = await stream.initializationResult().catch(() => null);
+    if (
+      initResult &&
+      typeof initResult === "object" &&
+      "sessionId" in initResult
+    ) {
+      sessionId = (initResult as { sessionId: string }).sessionId;
+      console.log(`[claude] Session ID: ${sessionId}`);
+    }
 
     for await (const message of stream) {
       if (signal.aborted) break;

@@ -664,8 +664,8 @@ data: ${messageEndpoint}
     });
   });
   app.post("/mcp/message", (req, res) => {
-    const sessionId = req.query["sessionId"];
-    const client = clients.get(sessionId);
+    const sessionId2 = req.query["sessionId"];
+    const client = clients.get(sessionId2);
     if (!client) {
       res.status(404).json({ error: "Session not found" });
       return;
@@ -905,15 +905,18 @@ function createLogServer(options) {
   }
   return { app, start, stop };
 }
-const EPHEMERAL_OPTIONS = {
-  allowedTools: [],
-  persistSession: false
-};
+let sessionId;
+function resetSession() {
+  sessionId = void 0;
+  console.log(
+    "[claude] Session reset — next analysis starts a fresh conversation"
+  );
+}
 async function fetchSupportedModels() {
   try {
     const q = claudeAgentSdk.query({
       prompt: "",
-      options: { ...EPHEMERAL_OPTIONS, maxTurns: 0 }
+      options: { allowedTools: [], maxTurns: 0, persistSession: false }
     });
     const models = await q.supportedModels();
     q.return(void 0).catch(() => {
@@ -934,11 +937,17 @@ async function streamAnalysis(prompt, onChunk, onDone, onError, signal, model) {
     const stream = claudeAgentSdk.query({
       prompt,
       options: {
-        ...EPHEMERAL_OPTIONS,
+        allowedTools: [],
         maxTurns: 1,
+        ...sessionId ? { resume: sessionId } : {},
         ...model ? { model } : {}
       }
     });
+    const initResult = await stream.initializationResult().catch(() => null);
+    if (initResult && typeof initResult === "object" && "sessionId" in initResult) {
+      sessionId = initResult.sessionId;
+      console.log(`[claude] Session ID: ${sessionId}`);
+    }
     for await (const message of stream) {
       if (signal.aborted) break;
       const m = message;
@@ -1061,6 +1070,10 @@ function registerIpcHandlers() {
     console.log(`[ipc] logs:clear → store size after clear: ${store.size}`);
     mainWindow?.webContents.send("logs:cleared");
   });
+  electron.ipcMain.handle("session:reset", () => {
+    resetSession();
+    console.log("[ipc] session:reset → Claude session dropped");
+  });
   electron.ipcMain.handle("logs:export", async () => {
     const result = await electron.dialog.showSaveDialog({
       title: "Export DMK Logs",
@@ -1098,7 +1111,15 @@ function registerIpcHandlers() {
     };
     const systemPrompt = systemPrompts[command] ?? systemPrompts["analyze"];
     const instruction = instructions[command] ?? instructions["analyze"];
+    const analysisId = `analysis-${Date.now()}`;
     const prompt = [
+      `# NEW ANALYSIS REQUEST [${analysisId}]`,
+      "",
+      "**IMPORTANT**: This is an independent analysis request. Analyze ONLY the logs provided below.",
+      "Disregard any logs or analysis from previous messages in this conversation — they belong to a different session.",
+      "",
+      "---",
+      "",
       systemPrompt,
       "",
       "---",

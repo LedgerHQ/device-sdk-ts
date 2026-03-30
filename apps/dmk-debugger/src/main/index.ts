@@ -10,7 +10,7 @@ import {
   SYSTEM_PROMPT_DIAGRAM,
   SYSTEM_PROMPT_CLEAR_SIGNING,
 } from "./prompts";
-import { streamAnalysis, fetchSupportedModels } from "./claude";
+import { streamAnalysis, fetchSupportedModels, resetSession } from "./claude";
 import { writeFile } from "fs/promises";
 import type { LogEntry } from "./store";
 
@@ -100,6 +100,11 @@ function registerIpcHandlers(): void {
     mainWindow?.webContents.send("logs:cleared");
   });
 
+  ipcMain.handle("session:reset", () => {
+    resetSession();
+    console.log("[ipc] session:reset → Claude session dropped");
+  });
+
   ipcMain.handle("logs:export", async () => {
     const result = await dialog.showSaveDialog({
       title: "Export DMK Logs",
@@ -149,7 +154,15 @@ function registerIpcHandlers(): void {
     const systemPrompt = systemPrompts[command] ?? systemPrompts["analyze"]!;
     const instruction = instructions[command] ?? instructions["analyze"]!;
 
+    const analysisId = `analysis-${Date.now()}`;
     const prompt = [
+      `# NEW ANALYSIS REQUEST [${analysisId}]`,
+      "",
+      "**IMPORTANT**: This is an independent analysis request. Analyze ONLY the logs provided below.",
+      "Disregard any logs or analysis from previous messages in this conversation — they belong to a different session.",
+      "",
+      "---",
+      "",
       systemPrompt,
       "",
       "---",

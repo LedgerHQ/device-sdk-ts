@@ -109,6 +109,12 @@ export default function AiPanel(): JSX.Element {
     setLoading(false);
   };
 
+  const newSession = (): void => {
+    window.dmk.resetSession();
+    setText("");
+    setError(null);
+  };
+
   return (
     <div style={styles.container}>
       <style>{`
@@ -149,9 +155,20 @@ export default function AiPanel(): JSX.Element {
               </button>
             </>
           ) : (
-            <button style={styles.btnRun} onClick={run}>
-              Analyze
-            </button>
+            <>
+              <button style={styles.btnRun} onClick={run}>
+                Analyze
+              </button>
+              {text && (
+                <button
+                  style={styles.btnNewSession}
+                  onClick={newSession}
+                  title="Start a fresh AI conversation (clears cached context)"
+                >
+                  New Session
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -499,6 +516,16 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 4,
     background: "transparent",
     color: "#f87171",
+    cursor: "pointer",
+    fontSize: 11,
+    fontWeight: 500,
+  },
+  btnNewSession: {
+    padding: "4px 10px",
+    border: "1px solid #334155",
+    borderRadius: 4,
+    background: "transparent",
+    color: "#94a3b8",
     cursor: "pointer",
     fontSize: 11,
     fontWeight: 500,
