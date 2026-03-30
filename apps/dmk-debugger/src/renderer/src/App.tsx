@@ -19,7 +19,9 @@ const CONTENT_MIN_AI = 500;
 
 export default function App(): JSX.Element {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [serverStatus, setServerStatus] = useState<"starting" | "running" | "error">("starting");
+  const [serverStatus, setServerStatus] = useState<
+    "starting" | "running" | "error"
+  >("starting");
   const [serverPort, setServerPort] = useState(0);
   const [dividerX, setDividerX] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -39,7 +41,10 @@ export default function App(): JSX.Element {
     const offError = window.dmk.onServerError(() => {
       setServerStatus("error");
     });
-    return () => { offReady(); offError(); };
+    return () => {
+      offReady();
+      offError();
+    };
   }, []);
 
   useEffect(() => {
@@ -106,10 +111,17 @@ export default function App(): JSX.Element {
           <span style={styles.logo}>DMK</span>
           <span style={styles.title}>Debugger</span>
           <div style={styles.divider} />
-          <span style={{
-            ...styles.statusDot,
-            background: serverStatus === "running" ? "#4ade80" : serverStatus === "error" ? "#f87171" : "#facc15",
-          }} />
+          <span
+            style={{
+              ...styles.statusDot,
+              background:
+                serverStatus === "running"
+                  ? "#4ade80"
+                  : serverStatus === "error"
+                    ? "#f87171"
+                    : "#facc15",
+            }}
+          />
           <span style={styles.statusText}>
             {serverStatus === "running"
               ? `Port ${serverPort}`
@@ -124,15 +136,39 @@ export default function App(): JSX.Element {
           )}
         </div>
         <div style={styles.headerRight}>
-          <button style={styles.btnGhost} onClick={handleExport}>Export</button>
-          <button style={styles.btnDanger} onClick={handleClear}>Clear</button>
+          <button style={styles.btnGhost} onClick={() => {}}>
+            Import
+          </button>
+          <button style={styles.btnGhost} onClick={handleExport}>
+            Export
+          </button>
+          <button style={styles.btnDanger} onClick={handleClear}>
+            Clear
+          </button>
         </div>
       </header>
 
       <div ref={panelsRef} style={styles.panels}>
         {/* Logs panel: outer wrapper takes exact divider width, scrolls when content clips */}
-        <div style={{ width: leftW, flexShrink: 0, overflowX: "auto", overflowY: "hidden", display: "flex", flexDirection: "column" as const }}>
-          <div style={{ minWidth: CONTENT_MIN_LOGS, flex: 1, display: "flex", flexDirection: "column" as const, overflow: "hidden" }}>
+        <div
+          style={{
+            width: leftW,
+            flexShrink: 0,
+            overflowX: "auto",
+            overflowY: "hidden",
+            display: "flex",
+            flexDirection: "column" as const,
+          }}
+        >
+          <div
+            style={{
+              minWidth: CONTENT_MIN_LOGS,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column" as const,
+              overflow: "hidden",
+            }}
+          >
             <LogViewer logs={logs} />
           </div>
         </div>
@@ -146,8 +182,25 @@ export default function App(): JSX.Element {
         />
 
         {/* AI panel: outer wrapper takes remaining width, scrolls when content clips */}
-        <div style={{ width: rightW, flexShrink: 0, overflowX: "auto", overflowY: "hidden", display: "flex", flexDirection: "column" as const }}>
-          <div style={{ minWidth: CONTENT_MIN_AI, flex: 1, display: "flex", flexDirection: "column" as const, overflow: "hidden" }}>
+        <div
+          style={{
+            width: rightW,
+            flexShrink: 0,
+            overflowX: "auto",
+            overflowY: "hidden",
+            display: "flex",
+            flexDirection: "column" as const,
+          }}
+        >
+          <div
+            style={{
+              minWidth: CONTENT_MIN_AI,
+              flex: 1,
+              display: "flex",
+              flexDirection: "column" as const,
+              overflow: "hidden",
+            }}
+          >
             <AiPanel />
           </div>
         </div>
@@ -164,7 +217,8 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     height: "100vh",
     width: "100vw",
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     fontSize: 13,
     color: "#e0e0e0",
     background: "#0f172a",
