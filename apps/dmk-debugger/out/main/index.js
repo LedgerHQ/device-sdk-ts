@@ -58,6 +58,8 @@ class LogStore extends events.EventEmitter {
     this.entries = [];
     this.apduExchanges = [];
     this.pendingApdu = null;
+    this.nextId = 1;
+    this.nextApduId = 1;
     this.emit("cleared");
   }
   get size() {
@@ -903,20 +905,46 @@ function createLogServer(options) {
   }
   return { app, start, stop };
 }
-async function streamAnalysis(prompt, onChunk, onDone, onError, signal) {
+const EPHEMERAL_OPTIONS = {
+  allowedTools: [],
+  persistSession: false
+};
+async function fetchSupportedModels() {
+  try {
+    const q = claudeAgentSdk.query({
+      prompt: "",
+      options: { ...EPHEMERAL_OPTIONS, maxTurns: 0 }
+    });
+    const models = await q.supportedModels();
+    q.return(void 0).catch(() => {
+    });
+    return models.map((m) => ({
+      value: m.value,
+      displayName: m.displayName,
+      description: m.description
+    }));
+  } catch (err) {
+    console.error("[claude] Failed to fetch models:", err);
+    return [];
+  }
+}
+async function streamAnalysis(prompt, onChunk, onDone, onError, signal, model) {
   let fullText = "";
   try {
     const stream = claudeAgentSdk.query({
       prompt,
       options: {
-        allowedTools: [],
-        maxTurns: 1
+        ...EPHEMERAL_OPTIONS,
+        maxTurns: 1,
+        ...model ? { model } : {}
       }
     });
     for await (const message of stream) {
       if (signal.aborted) break;
       const m = message;
-      console.log(`[claude] message type=${m.type} subtype=${m.subtype ?? ""}`);
+      console.log(
+        `[claude] message type=${m.type} subtype=${m.subtype ?? ""}`
+      );
       if (m.type === "stream_event") {
         const event = m.event;
         if (event?.type === "content_block_delta") {
@@ -975,9 +1003,7 @@ function isActionLog(entry) {
 function filterRelevantLogs(entries) {
   const actionTimestamps = entries.filter(isActionLog).map((e) => e.receivedAt);
   function nearAction(ts) {
-    return actionTimestamps.some(
-      (at) => Math.abs(ts - at) <= ACTION_WINDOW_MS
-    );
+    return actionTimestamps.some((at) => Math.abs(ts - at) <= ACTION_WINDOW_MS);
   }
   return entries.filter((entry) => {
     if (isActionLog(entry)) return true;
@@ -1031,6 +1057,8 @@ function registerIpcHandlers() {
   });
   electron.ipcMain.handle("logs:clear", () => {
     store.clear();
+    lastActionAt = 0;
+    console.log(`[ipc] logs:clear → store size after clear: ${store.size}`);
     mainWindow?.webContents.send("logs:cleared");
   });
   electron.ipcMain.handle("logs:export", async () => {
@@ -1048,7 +1076,7 @@ function registerIpcHandlers() {
   electron.ipcMain.handle("analyze:local", (_event, command) => {
     return analyzer.analyze(store, command);
   });
-  electron.ipcMain.handle("analyze:ai", (event, command) => {
+  electron.ipcMain.handle("analyze:ai", (event, command, model) => {
     if (activeAiAbort) activeAiAbort.abort();
     const ac = new AbortController();
     activeAiAbort = ac;
@@ -1096,7 +1124,8 @@ function registerIpcHandlers() {
         activeAiAbort = null;
         event.sender.send("ai:error", msg);
       },
-      ac.signal
+      ac.signal,
+      model
     );
   });
   electron.ipcMain.handle("analyze:ai:cancel", () => {
@@ -1105,6 +1134,7 @@ function registerIpcHandlers() {
       activeAiAbort = null;
     }
   });
+  electron.ipcMain.handle("models:list", () => fetchSupportedModels());
   electron.ipcMain.handle("server:status", () => {
     return { running: serverRunning, port: actualPort, logCount: store.size };
   });
@@ -1112,7 +1142,9 @@ function registerIpcHandlers() {
 function wireStoreToRenderer() {
   store.on("entry", (entry) => {
     if (!isRelevantRealtime(entry)) return;
-    console.log(`[ipc] Forwarding log #${entry.id} to renderer (window=${!!mainWindow})`);
+    console.log(
+      `[ipc] Forwarding log #${entry.id} to renderer (window=${!!mainWindow})`
+    );
     mainWindow?.webContents.send("logs:entry", entry);
   });
   store.on("cleared", () => {

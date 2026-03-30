@@ -2,6 +2,7 @@
 const electron = require("electron");
 const preload = require("@electron-toolkit/preload");
 const dmk = {
+  listModels: () => electron.ipcRenderer.invoke("models:list"),
   onLogEntry: (cb) => {
     const handler = (_, entry) => cb(entry);
     electron.ipcRenderer.on("logs:entry", handler);
@@ -16,8 +17,8 @@ const dmk = {
   clearLogs: () => electron.ipcRenderer.invoke("logs:clear"),
   exportLogs: () => electron.ipcRenderer.invoke("logs:export"),
   analyzeLocal: (command) => electron.ipcRenderer.invoke("analyze:local", command),
-  analyzeAi: (command) => {
-    electron.ipcRenderer.invoke("analyze:ai", command);
+  analyzeAi: (command, model) => {
+    electron.ipcRenderer.invoke("analyze:ai", command, model);
   },
   cancelAi: () => {
     electron.ipcRenderer.invoke("analyze:ai:cancel");

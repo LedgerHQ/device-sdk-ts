@@ -77,10 +77,17 @@ export default function AiPanel(): JSX.Element {
       setError(msg);
       setLoading(false);
     });
+    const offCleared = window.dmk.onCleared(() => {
+      setText("");
+      setError(null);
+      setLoading(false);
+      window.dmk.cancelAi();
+    });
     return () => {
       offChunk();
       offDone();
       offError();
+      offCleared();
     };
   }, []);
 

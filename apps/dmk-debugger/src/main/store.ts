@@ -98,6 +98,8 @@ export class LogStore extends EventEmitter<LogStoreEvents> {
     this.entries = [];
     this.apduExchanges = [];
     this.pendingApdu = null;
+    this.nextId = 1;
+    this.nextApduId = 1;
     this.emit("cleared");
   }
 
@@ -134,7 +136,9 @@ export class LogStore extends EventEmitter<LogStoreEvents> {
         };
       }
     } else if (
-      (msg.includes("received") || msg.includes("receive") || msg.includes("<=")) &&
+      (msg.includes("received") ||
+        msg.includes("receive") ||
+        msg.includes("<=")) &&
       this.pendingApdu
     ) {
       const hex = this.extractHex(entry.message);

@@ -6,11 +6,18 @@ export interface ModelOption {
   description: string;
 }
 
+const EPHEMERAL_OPTIONS = {
+  allowedTools: [] as string[],
+  persistSession: false,
+};
+
 export async function fetchSupportedModels(): Promise<ModelOption[]> {
   try {
-    const q = query({ prompt: "", options: { allowedTools: [], maxTurns: 0 } });
+    const q = query({
+      prompt: "",
+      options: { ...EPHEMERAL_OPTIONS, maxTurns: 0 },
+    });
     const models = await q.supportedModels();
-    // Immediately abort — we only needed the model list
     q.return(undefined as never).catch(() => {});
     return models.map((m) => ({
       value: m.value,
@@ -37,7 +44,7 @@ export async function streamAnalysis(
     const stream = query({
       prompt,
       options: {
-        allowedTools: [],
+        ...EPHEMERAL_OPTIONS,
         maxTurns: 1,
         ...(model ? { model } : {}),
       },

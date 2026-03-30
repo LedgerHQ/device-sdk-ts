@@ -96,6 +96,7 @@ function registerIpcHandlers(): void {
   ipcMain.handle("logs:clear", () => {
     store.clear();
     lastActionAt = 0;
+    console.log(`[ipc] logs:clear → store size after clear: ${store.size}`);
     mainWindow?.webContents.send("logs:cleared");
   });
 
