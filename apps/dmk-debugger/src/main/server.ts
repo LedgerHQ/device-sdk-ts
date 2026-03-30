@@ -21,7 +21,14 @@ export function createLogServer(options: ServerOptions): {
 
   app.use(express.json({ limit: "10mb" }));
 
-  app.use((_req, _res, next) => {
+  app.use((_req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+    if (_req.method === "OPTIONS") {
+      res.sendStatus(204);
+      return;
+    }
     console.log(`[server] ${_req.method} ${_req.url}`);
     next();
   });

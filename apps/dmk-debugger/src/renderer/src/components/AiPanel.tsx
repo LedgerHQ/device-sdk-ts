@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type CSSProperties } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import MermaidBlock from "./MermaidBlock";
 
 export default function AiPanel(): JSX.Element {
   const [text, setText] = useState("");
@@ -107,7 +108,12 @@ export default function AiPanel(): JSX.Element {
                   blockquote: ({ children }) => <blockquote style={md.blockquote}>{children}</blockquote>,
                   hr: () => <hr style={md.hr} />,
                   code: ({ className, children }) => {
+                    const isMermaid = className === "language-mermaid";
                     const isBlock = className?.startsWith("language-");
+                    if (isMermaid) {
+                      const raw = String(children).replace(/\n$/, "");
+                      return <MermaidBlock code={raw} />;
+                    }
                     return isBlock ? (
                       <pre style={md.pre}>
                         <code style={md.codeBlock}>{children}</code>

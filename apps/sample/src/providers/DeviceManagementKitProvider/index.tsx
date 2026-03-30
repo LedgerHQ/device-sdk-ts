@@ -3,6 +3,7 @@ import { createContext, type PropsWithChildren, useContext } from "react";
 import { useSelector } from "react-redux";
 import {
   ConsoleLogger,
+  DebuggerLogger,
   type DeviceManagementKit,
   DeviceManagementKitBuilder,
   WebLogsExporterLogger,
@@ -38,7 +39,8 @@ function buildDmk(transportConfig: TransportConfig) {
   const builder = new DeviceManagementKitBuilder()
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
-    .addLogger(devToolsLogger);
+    .addLogger(devToolsLogger)
+    .addLogger(new DebuggerLogger(8432));
 
   for (const factory of factories) {
     builder.addTransport(factory);

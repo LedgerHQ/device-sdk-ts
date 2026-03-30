@@ -132,6 +132,7 @@ export {
 } from "@api/logger-publisher/utils/noopLoggerFactory";
 export { LogLevel } from "@api/logger-subscriber/model/LogLevel";
 export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
+export { DebuggerLogger } from "@api/logger-subscriber/service/DebuggerLogger";
 export { DefaultLogTagFormatter } from "@api/logger-subscriber/service/DefaultLogTagFormatter";
 export { type LogTagFormatter } from "@api/logger-subscriber/service/LogTagFormatter";
 export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";

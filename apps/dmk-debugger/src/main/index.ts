@@ -7,8 +7,47 @@ import { createLogServer } from "./server";
 import { buildLogContext, SYSTEM_PROMPT_ANALYZE, SYSTEM_PROMPT_DIAGRAM, SYSTEM_PROMPT_CLEAR_SIGNING } from "./prompts";
 import { streamAnalysis } from "./claude";
 import { writeFile } from "fs/promises";
+import type { LogEntry } from "./store";
 
 const LOG_SERVER_PORTS = [8432, 8433, 8434];
+
+const ACTION_WINDOW_MS = 5_000;
+
+function hasTag(entry: LogEntry, pattern: string): boolean {
+  const tags = Array.isArray(entry.tag) ? entry.tag : [entry.tag];
+  return tags.some((t) => t.toLowerCase().includes(pattern));
+}
+
+function isActionLog(entry: LogEntry): boolean {
+  return hasTag(entry, "XStateDeviceAction") || hasTag(entry, "signer");
+}
+
+function filterRelevantLogs(entries: LogEntry[]): LogEntry[] {
+  const actionTimestamps = entries
+    .filter(isActionLog)
+    .map((e) => e.receivedAt);
+
+  function nearAction(ts: number): boolean {
+    return actionTimestamps.some(
+      (at) => Math.abs(ts - at) <= ACTION_WINDOW_MS,
+    );
+  }
+
+  return entries.filter((entry) => {
+    if (isActionLog(entry)) return true;
+    return nearAction(entry.receivedAt);
+  });
+}
+
+let lastActionAt = 0;
+
+function isRelevantRealtime(entry: LogEntry): boolean {
+  if (isActionLog(entry)) {
+    lastActionAt = Date.now();
+    return true;
+  }
+  return Date.now() - lastActionAt <= ACTION_WINDOW_MS;
+}
 
 const store = new LogStore();
 const analyzer = new AnalyzerService();
@@ -48,7 +87,7 @@ function createWindow(): void {
 
 function registerIpcHandlers(): void {
   ipcMain.handle("logs:getAll", () => {
-    const all = store.getAll();
+    const all = filterRelevantLogs(store.getAll());
     console.log(`[ipc] logs:getAll → returning ${all.length} entries`);
     return all;
   });
@@ -81,7 +120,7 @@ function registerIpcHandlers(): void {
     const ac = new AbortController();
     activeAiAbort = ac;
 
-    const logs = store.getAll();
+    const logs = filterRelevantLogs(store.getAll());
     if (logs.length === 0) {
       event.sender.send("ai:error", "No DMK logs collected yet.");
       return;
@@ -152,6 +191,7 @@ function registerIpcHandlers(): void {
 
 function wireStoreToRenderer(): void {
   store.on("entry", (entry) => {
+    if (!isRelevantRealtime(entry)) return;
     console.log(`[ipc] Forwarding log #${entry.id} to renderer (window=${!!mainWindow})`);
     mainWindow?.webContents.send("logs:entry", entry);
   });

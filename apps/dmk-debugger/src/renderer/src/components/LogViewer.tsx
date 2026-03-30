@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 interface LogEntry {
   id: number;
@@ -23,7 +23,17 @@ export default function LogViewer({ logs }: { logs: LogEntry[] }): JSX.Element {
   const [levelFilter, setLevelFilter] = useState<LevelFilter>("all");
   const [search, setSearch] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
   const listRef = useRef<HTMLDivElement>(null);
+
+  const toggleExpand = useCallback((id: number) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
 
   const filtered = logs.filter((log) => {
     if (levelFilter !== "all" && log.level !== levelFilter) return false;
@@ -85,31 +95,53 @@ export default function LogViewer({ logs }: { logs: LogEntry[] }): JSX.Element {
               : "No logs match the current filters."}
           </div>
         ) : (
-          filtered.map((log) => (
-            <div key={log.id} style={styles.row}>
-              <span style={styles.time}>
-                {new Date(log.timestamp).toLocaleTimeString("en-US", {
-                  hour12: false,
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  fractionalSecondDigits: 3,
-                } as Intl.DateTimeFormatOptions)}
-              </span>
-              <span
-                style={{
-                  ...styles.level,
-                  color: LEVEL_COLORS[log.level],
-                }}
-              >
-                {log.level.toUpperCase().padEnd(5)}
-              </span>
-              <span style={styles.tag}>
-                {Array.isArray(log.tag) ? log.tag.join(":") : log.tag}
-              </span>
-              <span style={styles.message}>{log.message}</span>
-            </div>
-          ))
+          filtered.map((log) => {
+            const hasData = log.data != null && (typeof log.data !== "object" || Object.keys(log.data as object).length > 0);
+            const expanded = expandedIds.has(log.id);
+            return (
+              <div key={log.id}>
+                <div
+                  style={{
+                    ...styles.row,
+                    cursor: hasData ? "pointer" : "default",
+                  }}
+                  onClick={hasData ? () => toggleExpand(log.id) : undefined}
+                >
+                  <span style={styles.time}>
+                    {new Date(log.timestamp).toLocaleTimeString("en-US", {
+                      hour12: false,
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      fractionalSecondDigits: 3,
+                    } as Intl.DateTimeFormatOptions)}
+                  </span>
+                  <span
+                    style={{
+                      ...styles.level,
+                      color: LEVEL_COLORS[log.level],
+                    }}
+                  >
+                    {log.level.toUpperCase().padEnd(5)}
+                  </span>
+                  <span style={styles.tag}>
+                    {Array.isArray(log.tag) ? log.tag.join(":") : log.tag}
+                  </span>
+                  <span style={styles.message}>
+                    {hasData && (
+                      <span style={styles.expandIcon}>{expanded ? "\u25BC" : "\u25B6"}</span>
+                    )}
+                    {log.message}
+                  </span>
+                </div>
+                {hasData && expanded && (
+                  <pre style={styles.dataBlock}>
+                    {JSON.stringify(log.data, null, 2)}
+                  </pre>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
     </div>
@@ -201,5 +233,23 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#d0d0d0",
     overflow: "hidden",
     textOverflow: "ellipsis",
+  },
+  expandIcon: {
+    marginRight: 4,
+    fontSize: 10,
+    color: "#8090a0",
+  },
+  dataBlock: {
+    margin: "0 12px 0 52px",
+    padding: "6px 10px",
+    background: "#0d1b2a",
+    borderLeft: "2px solid #0f3460",
+    borderRadius: "0 0 4px 4px",
+    color: "#a0c4ff",
+    fontSize: 11,
+    lineHeight: "16px",
+    overflowX: "auto",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-all",
   },
 };
