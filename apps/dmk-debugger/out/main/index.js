@@ -931,6 +931,69 @@ async function fetchSupportedModels() {
     return [];
   }
 }
+async function streamChat(message, onChunk, onDone, onError, signal) {
+  if (!sessionId) {
+    onError("No active session. Run an analysis first.");
+    return;
+  }
+  let fullText = "";
+  try {
+    const stream = claudeAgentSdk.query({
+      prompt: message,
+      options: {
+        allowedTools: [],
+        maxTurns: 1,
+        resume: sessionId
+      }
+    });
+    for await (const msg of stream) {
+      if (signal.aborted) break;
+      const m = msg;
+      if (m.type === "stream_event") {
+        const event = m.event;
+        if (event?.type === "content_block_delta") {
+          const delta = event.delta;
+          if (delta?.type === "text_delta" && typeof delta.text === "string") {
+            fullText += delta.text;
+            onChunk(delta.text);
+          }
+        }
+      }
+      if (m.type === "assistant") {
+        const betaMessage = m.message;
+        if (betaMessage && Array.isArray(betaMessage.content)) {
+          let assistantText = "";
+          for (const block of betaMessage.content) {
+            if (block.type === "text" && typeof block.text === "string") {
+              assistantText += block.text;
+            }
+          }
+          if (assistantText && assistantText.length > fullText.length) {
+            const newText = assistantText.slice(fullText.length);
+            fullText = assistantText;
+            onChunk(newText);
+          }
+        }
+      }
+      if (m.type === "result" && typeof m.result === "string") {
+        if (m.result.length > fullText.length) {
+          const newText = m.result.slice(fullText.length);
+          fullText = m.result;
+          onChunk(newText);
+        }
+      }
+    }
+    onDone(fullText);
+  } catch (err) {
+    if (signal.aborted) {
+      onDone(fullText);
+      return;
+    }
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[claude] Chat error:", errMsg);
+    onError(errMsg);
+  }
+}
 async function streamAnalysis(prompt, onChunk, onDone, onError, signal, model) {
   let fullText = "";
   try {
@@ -943,14 +1006,13 @@ async function streamAnalysis(prompt, onChunk, onDone, onError, signal, model) {
         ...model ? { model } : {}
       }
     });
-    const initResult = await stream.initializationResult().catch(() => null);
-    if (initResult && typeof initResult === "object" && "sessionId" in initResult) {
-      sessionId = initResult.sessionId;
-      console.log(`[claude] Session ID: ${sessionId}`);
-    }
     for await (const message of stream) {
       if (signal.aborted) break;
       const m = message;
+      if (!sessionId && typeof m.session_id === "string") {
+        sessionId = m.session_id;
+        console.log(`[claude] Captured session ID: ${sessionId}`);
+      }
       console.log(
         `[claude] message type=${m.type} subtype=${m.subtype ?? ""}`
       );
@@ -1154,6 +1216,26 @@ function registerIpcHandlers() {
       activeAiAbort.abort();
       activeAiAbort = null;
     }
+  });
+  electron.ipcMain.handle("chat:send", (event, message) => {
+    if (activeAiAbort) activeAiAbort.abort();
+    const ac = new AbortController();
+    activeAiAbort = ac;
+    void streamChat(
+      message,
+      (chunk) => {
+        if (!ac.signal.aborted) event.sender.send("chat:chunk", chunk);
+      },
+      (fullText) => {
+        activeAiAbort = null;
+        event.sender.send("chat:done", fullText);
+      },
+      (msg) => {
+        activeAiAbort = null;
+        event.sender.send("chat:error", msg);
+      },
+      ac.signal
+    );
   });
   electron.ipcMain.handle("models:list", () => fetchSupportedModels());
   electron.ipcMain.handle("server:status", () => {

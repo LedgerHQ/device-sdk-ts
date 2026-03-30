@@ -34,6 +34,86 @@ export async function fetchSupportedModels(): Promise<ModelOption[]> {
   }
 }
 
+export async function streamChat(
+  message: string,
+  onChunk: (text: string) => void,
+  onDone: (fullText: string) => void,
+  onError: (msg: string) => void,
+  signal: AbortSignal,
+): Promise<void> {
+  if (!sessionId) {
+    onError("No active session. Run an analysis first.");
+    return;
+  }
+
+  let fullText = "";
+
+  try {
+    const stream = query({
+      prompt: message,
+      options: {
+        allowedTools: [],
+        maxTurns: 1,
+        resume: sessionId,
+      },
+    });
+
+    for await (const msg of stream) {
+      if (signal.aborted) break;
+
+      const m = msg as Record<string, unknown>;
+
+      if (m.type === "stream_event") {
+        const event = m.event as Record<string, unknown> | undefined;
+        if (event?.type === "content_block_delta") {
+          const delta = event.delta as Record<string, unknown> | undefined;
+          if (delta?.type === "text_delta" && typeof delta.text === "string") {
+            fullText += delta.text;
+            onChunk(delta.text);
+          }
+        }
+      }
+
+      if (m.type === "assistant") {
+        const betaMessage = m.message as Record<string, unknown> | undefined;
+        if (betaMessage && Array.isArray(betaMessage.content)) {
+          let assistantText = "";
+          for (const block of betaMessage.content as Array<
+            Record<string, unknown>
+          >) {
+            if (block.type === "text" && typeof block.text === "string") {
+              assistantText += block.text;
+            }
+          }
+          if (assistantText && assistantText.length > fullText.length) {
+            const newText = assistantText.slice(fullText.length);
+            fullText = assistantText;
+            onChunk(newText);
+          }
+        }
+      }
+
+      if (m.type === "result" && typeof m.result === "string") {
+        if (m.result.length > fullText.length) {
+          const newText = m.result.slice(fullText.length);
+          fullText = m.result;
+          onChunk(newText);
+        }
+      }
+    }
+
+    onDone(fullText);
+  } catch (err) {
+    if (signal.aborted) {
+      onDone(fullText);
+      return;
+    }
+    const errMsg = err instanceof Error ? err.message : String(err);
+    console.error("[claude] Chat error:", errMsg);
+    onError(errMsg);
+  }
+}
+
 export async function streamAnalysis(
   prompt: string,
   onChunk: (text: string) => void,
@@ -55,20 +135,16 @@ export async function streamAnalysis(
       },
     });
 
-    const initResult = await stream.initializationResult().catch(() => null);
-    if (
-      initResult &&
-      typeof initResult === "object" &&
-      "sessionId" in initResult
-    ) {
-      sessionId = (initResult as { sessionId: string }).sessionId;
-      console.log(`[claude] Session ID: ${sessionId}`);
-    }
-
     for await (const message of stream) {
       if (signal.aborted) break;
 
       const m = message as Record<string, unknown>;
+
+      if (!sessionId && typeof m.session_id === "string") {
+        sessionId = m.session_id;
+        console.log(`[claude] Captured session ID: ${sessionId}`);
+      }
+
       console.log(
         `[claude] message type=${m.type} subtype=${(m as Record<string, unknown>).subtype ?? ""}`,
       );

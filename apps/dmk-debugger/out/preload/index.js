@@ -39,6 +39,24 @@ const dmk = {
     electron.ipcRenderer.on("ai:error", handler);
     return () => electron.ipcRenderer.removeListener("ai:error", handler);
   },
+  sendChat: (message) => {
+    electron.ipcRenderer.invoke("chat:send", message);
+  },
+  onChatChunk: (cb) => {
+    const handler = (_, chunk) => cb(chunk);
+    electron.ipcRenderer.on("chat:chunk", handler);
+    return () => electron.ipcRenderer.removeListener("chat:chunk", handler);
+  },
+  onChatDone: (cb) => {
+    const handler = (_, fullText) => cb(fullText);
+    electron.ipcRenderer.on("chat:done", handler);
+    return () => electron.ipcRenderer.removeListener("chat:done", handler);
+  },
+  onChatError: (cb) => {
+    const handler = (_, msg) => cb(msg);
+    electron.ipcRenderer.on("chat:error", handler);
+    return () => electron.ipcRenderer.removeListener("chat:error", handler);
+  },
   getServerStatus: () => electron.ipcRenderer.invoke("server:status"),
   onServerReady: (cb) => {
     const handler = (_, port) => cb(port);

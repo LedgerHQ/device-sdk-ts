@@ -1,4 +1,10 @@
-import { useState, useEffect, useRef, type CSSProperties } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type CSSProperties,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidBlock from "./MermaidBlock";
@@ -50,13 +56,113 @@ interface ModelOption {
   description: string;
 }
 
+interface ChatMessage {
+  role: "user" | "assistant";
+  text: string;
+}
+
+function BouncingDots(): JSX.Element {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        gap: 3,
+        alignItems: "center",
+        height: 20,
+      }}
+    >
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          style={{
+            width: 5,
+            height: 5,
+            borderRadius: "50%",
+            background: "#a78bfa",
+            animation: `bounce-dot 1.2s ease-in-out ${i * 0.15}s infinite`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function MarkdownRenderer({ text }: { text: string }): JSX.Element {
+  return (
+    <div className="markdown-body">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => <h1 style={md.h1}>{children}</h1>,
+          h2: ({ children }) => <h2 style={md.h2}>{children}</h2>,
+          h3: ({ children }) => <h3 style={md.h3}>{children}</h3>,
+          h4: ({ children }) => <h4 style={md.h4}>{children}</h4>,
+          p: ({ children }) => <p style={md.p}>{children}</p>,
+          ul: ({ children }) => <ul style={md.ul}>{children}</ul>,
+          ol: ({ children }) => <ol style={md.ol}>{children}</ol>,
+          li: ({ children }) => <li style={md.li}>{children}</li>,
+          strong: ({ children }) => (
+            <strong style={md.strong}>{children}</strong>
+          ),
+          em: ({ children }) => <em style={md.em}>{children}</em>,
+          a: ({ href, children }) => (
+            <a href={href} style={md.a} target="_blank" rel="noreferrer">
+              {children}
+            </a>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote style={md.blockquote}>{children}</blockquote>
+          ),
+          hr: () => <hr style={md.hr} />,
+          code: ({ className, children }) => {
+            const isMermaid = className === "language-mermaid";
+            const isBlock = className?.startsWith("language-");
+            if (isMermaid) {
+              const raw = String(children).replace(/\n$/, "");
+              return <MermaidBlock code={raw} />;
+            }
+            return isBlock ? (
+              <pre style={md.pre}>
+                <code style={md.codeBlock}>{children}</code>
+              </pre>
+            ) : (
+              <code style={md.codeInline}>{children}</code>
+            );
+          },
+          pre: ({ children }) => <>{children}</>,
+          table: ({ children }) => (
+            <div style={md.tableWrapper}>
+              <table style={md.table}>{children}</table>
+            </div>
+          ),
+          thead: ({ children }) => <thead style={md.thead}>{children}</thead>,
+          th: ({ children }) => <th style={md.th}>{children}</th>,
+          td: ({ children }) => <td style={md.td}>{children}</td>,
+        }}
+      >
+        {text}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
 export default function AiPanel(): JSX.Element {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState("");
   const [models, setModels] = useState<ModelOption[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatStreaming, setChatStreaming] = useState(false);
+  const [showChatBtn, setShowChatBtn] = useState(false);
+  const [chatHeight, setChatHeight] = useState(280);
+  const [chatDragging, setChatDragging] = useState(false);
   const outputRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const phase = useLoadingPhase(loading, text.length > 0);
 
   useEffect(() => {
@@ -72,6 +178,7 @@ export default function AiPanel(): JSX.Element {
     });
     const offDone = window.dmk.onAiDone(() => {
       setLoading(false);
+      setTimeout(() => setShowChatBtn(true), 300);
     });
     const offError = window.dmk.onAiError((msg) => {
       setError(msg);
@@ -81,6 +188,9 @@ export default function AiPanel(): JSX.Element {
       setText("");
       setError(null);
       setLoading(false);
+      setChatOpen(false);
+      setChatMessages([]);
+      setShowChatBtn(false);
       window.dmk.cancelAi();
     });
     return () => {
@@ -92,15 +202,54 @@ export default function AiPanel(): JSX.Element {
   }, []);
 
   useEffect(() => {
-    if (outputRef.current) {
+    const offChunk = window.dmk.onChatChunk((chunk) => {
+      setChatMessages((prev) => {
+        const copy = [...prev];
+        const last = copy[copy.length - 1];
+        if (last && last.role === "assistant") {
+          copy[copy.length - 1] = { ...last, text: last.text + chunk };
+        }
+        return copy;
+      });
+    });
+    const offDone = window.dmk.onChatDone(() => {
+      setChatStreaming(false);
+    });
+    const offError = window.dmk.onChatError((msg) => {
+      setChatMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: `**Error:** ${msg}` },
+      ]);
+      setChatStreaming(false);
+    });
+    return () => {
+      offChunk();
+      offDone();
+      offError();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (outputRef.current && !chatOpen) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [text]);
+  }, [text, chatOpen]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  useEffect(() => {
+    if (chatOpen) chatInputRef.current?.focus();
+  }, [chatOpen]);
 
   const run = (): void => {
     setText("");
     setError(null);
     setLoading(true);
+    setShowChatBtn(false);
+    setChatOpen(false);
+    setChatMessages([]);
     window.dmk.analyzeAi("analyze", model || undefined);
   };
 
@@ -113,10 +262,48 @@ export default function AiPanel(): JSX.Element {
     window.dmk.resetSession();
     setText("");
     setError(null);
+    setChatOpen(false);
+    setChatMessages([]);
+    setShowChatBtn(false);
   };
 
+  const sendChat = (): void => {
+    const msg = chatInput.trim();
+    if (!msg || chatStreaming) return;
+    setChatInput("");
+    setChatMessages((prev) => [
+      ...prev,
+      { role: "user", text: msg },
+      { role: "assistant", text: "" },
+    ]);
+    setChatStreaming(true);
+    window.dmk.sendChat(msg);
+  };
+
+  const onChatDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setChatDragging(true);
+  }, []);
+
+  useEffect(() => {
+    if (!chatDragging) return;
+    const onMove = (e: MouseEvent): void => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const newH = rect.bottom - e.clientY;
+      setChatHeight(Math.min(rect.height - 80, Math.max(120, newH)));
+    };
+    const onUp = (): void => setChatDragging(false);
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    return () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+  }, [chatDragging]);
+
   return (
-    <div style={styles.container}>
+    <div ref={containerRef} style={styles.container}>
       <style>{`
         @keyframes shimmer {
           0% { background-position: -200% 0; }
@@ -125,6 +312,18 @@ export default function AiPanel(): JSX.Element {
         @keyframes pulse-dot {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.3; }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes bounce-dot {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-6px); }
         }
       `}</style>
       <div style={styles.toolbar}>
@@ -173,7 +372,7 @@ export default function AiPanel(): JSX.Element {
         </div>
       </div>
 
-      <div style={styles.content}>
+      <div style={styles.analysisArea}>
         {!text && !loading && !error && (
           <div style={styles.empty}>
             <div style={styles.emptyIcon}>AI</div>
@@ -271,71 +470,91 @@ export default function AiPanel(): JSX.Element {
 
         {text && (
           <div ref={outputRef} style={styles.output}>
-            <div className="markdown-body">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  h1: ({ children }) => <h1 style={md.h1}>{children}</h1>,
-                  h2: ({ children }) => <h2 style={md.h2}>{children}</h2>,
-                  h3: ({ children }) => <h3 style={md.h3}>{children}</h3>,
-                  h4: ({ children }) => <h4 style={md.h4}>{children}</h4>,
-                  p: ({ children }) => <p style={md.p}>{children}</p>,
-                  ul: ({ children }) => <ul style={md.ul}>{children}</ul>,
-                  ol: ({ children }) => <ol style={md.ol}>{children}</ol>,
-                  li: ({ children }) => <li style={md.li}>{children}</li>,
-                  strong: ({ children }) => (
-                    <strong style={md.strong}>{children}</strong>
-                  ),
-                  em: ({ children }) => <em style={md.em}>{children}</em>,
-                  a: ({ href, children }) => (
-                    <a
-                      href={href}
-                      style={md.a}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {children}
-                    </a>
-                  ),
-                  blockquote: ({ children }) => (
-                    <blockquote style={md.blockquote}>{children}</blockquote>
-                  ),
-                  hr: () => <hr style={md.hr} />,
-                  code: ({ className, children }) => {
-                    const isMermaid = className === "language-mermaid";
-                    const isBlock = className?.startsWith("language-");
-                    if (isMermaid) {
-                      const raw = String(children).replace(/\n$/, "");
-                      return <MermaidBlock code={raw} />;
-                    }
-                    return isBlock ? (
-                      <pre style={md.pre}>
-                        <code style={md.codeBlock}>{children}</code>
-                      </pre>
-                    ) : (
-                      <code style={md.codeInline}>{children}</code>
-                    );
-                  },
-                  pre: ({ children }) => <>{children}</>,
-                  table: ({ children }) => (
-                    <div style={md.tableWrapper}>
-                      <table style={md.table}>{children}</table>
-                    </div>
-                  ),
-                  thead: ({ children }) => (
-                    <thead style={md.thead}>{children}</thead>
-                  ),
-                  th: ({ children }) => <th style={md.th}>{children}</th>,
-                  td: ({ children }) => <td style={md.td}>{children}</td>,
-                }}
-              >
-                {text}
-              </ReactMarkdown>
-            </div>
+            <MarkdownRenderer text={text} />
             {loading && <span style={styles.cursor}>|</span>}
+
+            {showChatBtn && !chatOpen && !loading && (
+              <div style={styles.chatBtnWrap}>
+                <button
+                  style={styles.chatBtn}
+                  onClick={() => setChatOpen(true)}
+                >
+                  Chat about this analysis
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {chatOpen && (
+        <div style={{ ...styles.chatOverlay, height: chatHeight }}>
+          <div
+            style={{
+              ...styles.chatDragHandle,
+              background: chatDragging ? "#6366f1" : "#334155",
+            }}
+            onMouseDown={onChatDragStart}
+          >
+            <div style={styles.chatDragGrip} />
+          </div>
+          <div style={styles.chatHeader}>
+            <span style={styles.chatTitle}>Chat</span>
+            <button style={styles.chatClose} onClick={() => setChatOpen(false)}>
+              Minimize
+            </button>
+          </div>
+          <div style={styles.chatMessages}>
+            {chatMessages.length === 0 && (
+              <p style={styles.chatHint}>
+                Ask a follow-up question about the analysis...
+              </p>
+            )}
+            {chatMessages.map((m, i) => (
+              <div
+                key={i}
+                style={
+                  m.role === "user"
+                    ? styles.chatBubbleUser
+                    : styles.chatBubbleAssistant
+                }
+              >
+                {m.role === "user" ? (
+                  <span>{m.text}</span>
+                ) : !m.text &&
+                  chatStreaming &&
+                  i === chatMessages.length - 1 ? (
+                  <BouncingDots />
+                ) : (
+                  <MarkdownRenderer text={m.text} />
+                )}
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+          <div style={styles.chatInputRow}>
+            <input
+              ref={chatInputRef}
+              style={styles.chatInput}
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") sendChat();
+              }}
+              placeholder="Ask a question..."
+              disabled={chatStreaming}
+            />
+            <button
+              style={{ ...styles.btnRun, opacity: chatStreaming ? 0.5 : 1 }}
+              onClick={sendChat}
+              disabled={chatStreaming}
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+      {chatDragging && <div style={styles.chatDragOverlay} />}
     </div>
   );
 }
@@ -530,9 +749,10 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 11,
     fontWeight: 500,
   },
-  content: {
+  analysisArea: {
     flex: 1,
     overflowY: "auto",
+    minHeight: 0,
   },
   empty: {
     display: "flex",
@@ -596,5 +816,130 @@ const styles: Record<string, CSSProperties> = {
     background: "linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%)",
     backgroundSize: "200% 100%",
     animation: "shimmer 1.8s ease-in-out infinite",
+  },
+  chatBtnWrap: {
+    display: "flex",
+    justifyContent: "center",
+    padding: "24px 0 8px",
+    animation: "fadeInUp 0.4s ease-out",
+  },
+  chatBtn: {
+    padding: "8px 20px",
+    border: "1px solid rgba(99, 102, 241, 0.4)",
+    borderRadius: 20,
+    background: "rgba(99, 102, 241, 0.1)",
+    color: "#a78bfa",
+    cursor: "pointer",
+    fontSize: 12,
+    fontWeight: 600,
+    transition: "all 0.15s",
+  },
+  chatOverlay: {
+    display: "flex",
+    flexDirection: "column",
+    background: "#0f172a",
+    animation: "slideUp 0.25s ease-out",
+    flexShrink: 0,
+    overflow: "hidden",
+  },
+  chatDragHandle: {
+    height: 6,
+    cursor: "row-resize",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    transition: "background 0.1s",
+  },
+  chatDragGrip: {
+    width: 32,
+    height: 2,
+    borderRadius: 1,
+    background: "#64748b",
+  },
+  chatDragOverlay: {
+    position: "fixed",
+    inset: 0,
+    cursor: "row-resize",
+    zIndex: 9999,
+  },
+  chatHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0 12px",
+    height: 32,
+    background: "#1e293b",
+    borderBottom: "1px solid #334155",
+    flexShrink: 0,
+  },
+  chatTitle: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "#a78bfa",
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+  },
+  chatClose: {
+    padding: "2px 8px",
+    border: "1px solid #334155",
+    borderRadius: 4,
+    background: "transparent",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 10,
+    fontWeight: 500,
+  },
+  chatMessages: {
+    flex: 1,
+    overflowY: "auto",
+    padding: "10px 14px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  chatHint: {
+    color: "#475569",
+    fontSize: 12,
+    textAlign: "center",
+    margin: "auto 0",
+  },
+  chatBubbleUser: {
+    alignSelf: "flex-end",
+    maxWidth: "80%",
+    padding: "6px 12px",
+    borderRadius: "12px 12px 2px 12px",
+    background: "#6366f1",
+    color: "#fff",
+    fontSize: 13,
+    lineHeight: "20px",
+  },
+  chatBubbleAssistant: {
+    alignSelf: "flex-start",
+    maxWidth: "90%",
+    padding: "6px 12px",
+    borderRadius: "12px 12px 12px 2px",
+    background: "#1e293b",
+    color: "#e2e8f0",
+    fontSize: 13,
+    lineHeight: "20px",
+  },
+  chatInputRow: {
+    display: "flex",
+    gap: 6,
+    padding: "8px 12px",
+    borderTop: "1px solid #334155",
+    background: "#0f172a",
+    flexShrink: 0,
+  },
+  chatInput: {
+    flex: 1,
+    padding: "6px 10px",
+    border: "1px solid #334155",
+    borderRadius: 6,
+    background: "#1e293b",
+    color: "#e2e8f0",
+    fontSize: 12,
+    outline: "none",
   },
 };

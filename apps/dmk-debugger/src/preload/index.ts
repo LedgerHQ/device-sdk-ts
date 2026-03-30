@@ -19,6 +19,10 @@ export interface DmkApi {
   onAiChunk: (cb: (chunk: string) => void) => () => void;
   onAiDone: (cb: (fullText: string) => void) => () => void;
   onAiError: (cb: (msg: string) => void) => () => void;
+  sendChat: (message: string) => void;
+  onChatChunk: (cb: (chunk: string) => void) => () => void;
+  onChatDone: (cb: (fullText: string) => void) => () => void;
+  onChatError: (cb: (msg: string) => void) => () => void;
   getServerStatus: () => Promise<{
     running: boolean;
     port: number;
@@ -72,6 +76,25 @@ const dmk: DmkApi = {
     const handler = (_: unknown, msg: string): void => cb(msg);
     ipcRenderer.on("ai:error", handler);
     return () => ipcRenderer.removeListener("ai:error", handler);
+  },
+
+  sendChat: (message) => {
+    ipcRenderer.invoke("chat:send", message);
+  },
+  onChatChunk: (cb) => {
+    const handler = (_: unknown, chunk: string): void => cb(chunk);
+    ipcRenderer.on("chat:chunk", handler);
+    return () => ipcRenderer.removeListener("chat:chunk", handler);
+  },
+  onChatDone: (cb) => {
+    const handler = (_: unknown, fullText: string): void => cb(fullText);
+    ipcRenderer.on("chat:done", handler);
+    return () => ipcRenderer.removeListener("chat:done", handler);
+  },
+  onChatError: (cb) => {
+    const handler = (_: unknown, msg: string): void => cb(msg);
+    ipcRenderer.on("chat:error", handler);
+    return () => ipcRenderer.removeListener("chat:error", handler);
   },
 
   getServerStatus: () => ipcRenderer.invoke("server:status"),

@@ -10,7 +10,12 @@ import {
   SYSTEM_PROMPT_DIAGRAM,
   SYSTEM_PROMPT_CLEAR_SIGNING,
 } from "./prompts";
-import { streamAnalysis, fetchSupportedModels, resetSession } from "./claude";
+import {
+  streamAnalysis,
+  streamChat,
+  fetchSupportedModels,
+  resetSession,
+} from "./claude";
 import { writeFile } from "fs/promises";
 import type { LogEntry } from "./store";
 
@@ -199,6 +204,29 @@ function registerIpcHandlers(): void {
       activeAiAbort.abort();
       activeAiAbort = null;
     }
+  });
+
+  ipcMain.handle("chat:send", (event, message: string) => {
+    if (activeAiAbort) activeAiAbort.abort();
+
+    const ac = new AbortController();
+    activeAiAbort = ac;
+
+    void streamChat(
+      message,
+      (chunk) => {
+        if (!ac.signal.aborted) event.sender.send("chat:chunk", chunk);
+      },
+      (fullText) => {
+        activeAiAbort = null;
+        event.sender.send("chat:done", fullText);
+      },
+      (msg) => {
+        activeAiAbort = null;
+        event.sender.send("chat:error", msg);
+      },
+      ac.signal,
+    );
   });
 
   ipcMain.handle("models:list", () => fetchSupportedModels());
