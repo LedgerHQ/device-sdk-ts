@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import {
@@ -20,7 +20,7 @@ const config = {
     url: "https://metadata.api.live.ledger.com",
   },
   originToken: "test-origin-token",
-} as ContextModuleConfig;
+} as ContextModuleServiceConfig;
 
 describe("HttpProxyDataSource", () => {
   let datasource: ProxyDataSource;

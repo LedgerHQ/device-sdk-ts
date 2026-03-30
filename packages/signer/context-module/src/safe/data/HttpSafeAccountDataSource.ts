@@ -3,7 +3,7 @@ import { inject } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -19,7 +19,8 @@ import {
 
 export class HttpSafeAccountDataSource implements SafeAccountDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
   ) {}
 
   async getDescriptors({

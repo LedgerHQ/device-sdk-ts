@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningReporterDatasource";
 import { HttpBlindSigningReporterDatasource } from "@/reporter/data/HttpBlindSigningReporterDatasource";
 import {
@@ -24,7 +24,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
       url: "https://reporter.test",
     },
     originToken: "originToken",
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
 
   const params: BlindSigningReportParams = {
     signatureId: "a3f8Kb-1738850400000",

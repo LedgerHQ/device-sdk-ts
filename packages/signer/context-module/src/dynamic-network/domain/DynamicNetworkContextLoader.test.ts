@@ -1,7 +1,7 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type DynamicNetworkDataSource } from "@/dynamic-network/data/DynamicNetworkDataSource";
 import {
   type DynamicNetworkContextInput,
@@ -36,7 +36,7 @@ describe("DynamicNetworkContextLoader", () => {
       mode: "prod",
       branch: "main",
     },
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
 
   const mockCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
