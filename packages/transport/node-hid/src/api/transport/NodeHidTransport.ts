@@ -47,6 +47,21 @@ import {
 type NodeHIDAPI = typeof NodeHIDAPI;
 const NodeHIDAPI = { devicesAsync, HIDAsync } as const;
 
+// HID usage page used by Ledger devices for the APDU channel on macOS and Windows.
+const LEDGER_APDU_USAGE_PAGE = 0xffa0;
+
+const isLedgerApduInterface = (hidDevice: NodeHIDDevice) => {
+  if (hidDevice.vendorId !== LEDGER_VENDOR_ID) {
+    return false;
+  }
+
+  if (process.platform === "darwin" || process.platform === "win32") {
+    return hidDevice.usagePage === LEDGER_APDU_USAGE_PAGE;
+  }
+
+  return true;
+};
+
 type PromptDeviceAccessError =
   | NoAccessibleDeviceError
   | NodeHidTransportNotSupportedError;
@@ -136,9 +151,7 @@ export class NodeHidTransport implements Transport {
       try {
         const allDevices = await hidApi.devicesAsync();
 
-        const ledgerDevices = allDevices.filter(
-          (hidDevice) => hidDevice.vendorId === LEDGER_VENDOR_ID,
-        );
+        const ledgerDevices = allDevices.filter(isLedgerApduInterface);
 
         // Remove duplicates from same device with different interfaces by keeping only one device per vendorId:productId combination
         const uniqueDevices = Array.from(
@@ -251,9 +264,7 @@ export class NodeHidTransport implements Transport {
         try {
           const allDevices = await hidApi.devicesAsync();
 
-          hidDevices = allDevices.filter(
-            (d) => d.vendorId === LEDGER_VENDOR_ID,
-          );
+          hidDevices = allDevices.filter(isLedgerApduInterface);
           await this.updateTransportDiscoveredDevices();
         } catch (error) {
           const deviceError = new NoAccessibleDeviceError(error);
