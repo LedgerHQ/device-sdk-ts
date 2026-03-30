@@ -44,12 +44,27 @@ function useLoadingPhase(loading: boolean, hasText: boolean): string {
   return phase;
 }
 
+interface ModelOption {
+  value: string;
+  displayName: string;
+  description: string;
+}
+
 export default function AiPanel(): JSX.Element {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [model, setModel] = useState("");
+  const [models, setModels] = useState<ModelOption[]>([]);
   const outputRef = useRef<HTMLDivElement>(null);
   const phase = useLoadingPhase(loading, text.length > 0);
+
+  useEffect(() => {
+    window.dmk
+      .listModels()
+      .then(setModels)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const offChunk = window.dmk.onAiChunk((chunk) => {
@@ -79,7 +94,7 @@ export default function AiPanel(): JSX.Element {
     setText("");
     setError(null);
     setLoading(true);
-    window.dmk.analyzeAi("analyze");
+    window.dmk.analyzeAi("analyze", model || undefined);
   };
 
   const cancel = (): void => {
@@ -102,16 +117,34 @@ export default function AiPanel(): JSX.Element {
       <div style={styles.toolbar}>
         <span style={styles.toolbarTitle}>AI Analysis</span>
         <div style={styles.toolbarRight}>
+          <select
+            style={styles.modelSelect}
+            value={model}
+            onChange={(e) => setModel(e.target.value)}
+            disabled={loading}
+            title={models.find((m) => m.value === model)?.description ?? ""}
+          >
+            <option value="">Default</option>
+            {models.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.displayName}
+              </option>
+            ))}
+          </select>
           {loading ? (
             <>
               <span style={styles.streaming}>
                 <span style={styles.streamDot} />
                 {phase}
               </span>
-              <button style={styles.btnCancel} onClick={cancel}>Stop</button>
+              <button style={styles.btnCancel} onClick={cancel}>
+                Stop
+              </button>
             </>
           ) : (
-            <button style={styles.btnRun} onClick={run}>Analyze</button>
+            <button style={styles.btnRun} onClick={run}>
+              Analyze
+            </button>
           )}
         </div>
       </div>
@@ -125,7 +158,9 @@ export default function AiPanel(): JSX.Element {
               <br />
               APDU decoding, sequence diagrams, and diagnostics.
             </p>
-            <button style={styles.btnRunLarge} onClick={run}>Analyze Logs</button>
+            <button style={styles.btnRunLarge} onClick={run}>
+              Analyze Logs
+            </button>
           </div>
         )}
 
@@ -138,16 +173,75 @@ export default function AiPanel(): JSX.Element {
         {loading && !text && (
           <div style={styles.skeletonWrap}>
             <div style={styles.skeletonHeader}>
-              <div style={{ ...styles.skeletonPulse, width: 24, height: 24, borderRadius: 6 }} />
-              <div style={{ ...styles.skeletonPulse, width: 180, height: 16 }} />
+              <div
+                style={{
+                  ...styles.skeletonPulse,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                }}
+              />
+              <div
+                style={{ ...styles.skeletonPulse, width: 180, height: 16 }}
+              />
             </div>
-            <div style={{ ...styles.skeletonPulse, width: "90%", height: 12, marginTop: 20 }} />
-            <div style={{ ...styles.skeletonPulse, width: "75%", height: 12, marginTop: 10 }} />
-            <div style={{ ...styles.skeletonPulse, width: "85%", height: 12, marginTop: 10 }} />
-            <div style={{ ...styles.skeletonPulse, width: "60%", height: 12, marginTop: 10 }} />
-            <div style={{ ...styles.skeletonPulse, width: "95%", height: 80, marginTop: 20, borderRadius: 6 }} />
-            <div style={{ ...styles.skeletonPulse, width: "70%", height: 12, marginTop: 20 }} />
-            <div style={{ ...styles.skeletonPulse, width: "80%", height: 12, marginTop: 10 }} />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "90%",
+                height: 12,
+                marginTop: 20,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "75%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "85%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "60%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "95%",
+                height: 80,
+                marginTop: 20,
+                borderRadius: 6,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "70%",
+                height: 12,
+                marginTop: 20,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "80%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
           </div>
         )}
 
@@ -165,14 +259,23 @@ export default function AiPanel(): JSX.Element {
                   ul: ({ children }) => <ul style={md.ul}>{children}</ul>,
                   ol: ({ children }) => <ol style={md.ol}>{children}</ol>,
                   li: ({ children }) => <li style={md.li}>{children}</li>,
-                  strong: ({ children }) => <strong style={md.strong}>{children}</strong>,
+                  strong: ({ children }) => (
+                    <strong style={md.strong}>{children}</strong>
+                  ),
                   em: ({ children }) => <em style={md.em}>{children}</em>,
                   a: ({ href, children }) => (
-                    <a href={href} style={md.a} target="_blank" rel="noreferrer">
+                    <a
+                      href={href}
+                      style={md.a}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
                       {children}
                     </a>
                   ),
-                  blockquote: ({ children }) => <blockquote style={md.blockquote}>{children}</blockquote>,
+                  blockquote: ({ children }) => (
+                    <blockquote style={md.blockquote}>{children}</blockquote>
+                  ),
                   hr: () => <hr style={md.hr} />,
                   code: ({ className, children }) => {
                     const isMermaid = className === "language-mermaid";
@@ -195,7 +298,9 @@ export default function AiPanel(): JSX.Element {
                       <table style={md.table}>{children}</table>
                     </div>
                   ),
-                  thead: ({ children }) => <thead style={md.thead}>{children}</thead>,
+                  thead: ({ children }) => (
+                    <thead style={md.thead}>{children}</thead>
+                  ),
                   th: ({ children }) => <th style={md.th}>{children}</th>,
                   td: ({ children }) => <td style={md.td}>{children}</td>,
                 }}
@@ -335,6 +440,16 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 8,
+  },
+  modelSelect: {
+    padding: "3px 6px",
+    border: "1px solid #334155",
+    borderRadius: 4,
+    background: "#0f172a",
+    color: "#cbd5e1",
+    fontSize: 11,
+    outline: "none",
+    cursor: "pointer",
   },
   streaming: {
     display: "flex",

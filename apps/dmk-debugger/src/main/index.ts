@@ -4,8 +4,13 @@ import { LogStore } from "./store";
 import { AnalyzerService } from "./analyzer";
 import type { AnalysisCommand } from "./analyzer";
 import { createLogServer } from "./server";
-import { buildLogContext, SYSTEM_PROMPT_ANALYZE, SYSTEM_PROMPT_DIAGRAM, SYSTEM_PROMPT_CLEAR_SIGNING } from "./prompts";
-import { streamAnalysis } from "./claude";
+import {
+  buildLogContext,
+  SYSTEM_PROMPT_ANALYZE,
+  SYSTEM_PROMPT_DIAGRAM,
+  SYSTEM_PROMPT_CLEAR_SIGNING,
+} from "./prompts";
+import { streamAnalysis, fetchSupportedModels } from "./claude";
 import { writeFile } from "fs/promises";
 import type { LogEntry } from "./store";
 
@@ -23,14 +28,10 @@ function isActionLog(entry: LogEntry): boolean {
 }
 
 function filterRelevantLogs(entries: LogEntry[]): LogEntry[] {
-  const actionTimestamps = entries
-    .filter(isActionLog)
-    .map((e) => e.receivedAt);
+  const actionTimestamps = entries.filter(isActionLog).map((e) => e.receivedAt);
 
   function nearAction(ts: number): boolean {
-    return actionTimestamps.some(
-      (at) => Math.abs(ts - at) <= ACTION_WINDOW_MS,
-    );
+    return actionTimestamps.some((at) => Math.abs(ts - at) <= ACTION_WINDOW_MS);
   }
 
   return entries.filter((entry) => {
@@ -94,6 +95,7 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle("logs:clear", () => {
     store.clear();
+    lastActionAt = 0;
     mainWindow?.webContents.send("logs:cleared");
   });
 
@@ -114,7 +116,7 @@ function registerIpcHandlers(): void {
     return analyzer.analyze(store, command);
   });
 
-  ipcMain.handle("analyze:ai", (event, command: string) => {
+  ipcMain.handle("analyze:ai", (event, command: string, model?: string) => {
     if (activeAiAbort) activeAiAbort.abort();
 
     const ac = new AbortController();
@@ -174,6 +176,7 @@ function registerIpcHandlers(): void {
         event.sender.send("ai:error", msg);
       },
       ac.signal,
+      model,
     );
   });
 
@@ -184,6 +187,8 @@ function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle("models:list", () => fetchSupportedModels());
+
   ipcMain.handle("server:status", () => {
     return { running: serverRunning, port: actualPort, logCount: store.size };
   });
@@ -192,7 +197,9 @@ function registerIpcHandlers(): void {
 function wireStoreToRenderer(): void {
   store.on("entry", (entry) => {
     if (!isRelevantRealtime(entry)) return;
-    console.log(`[ipc] Forwarding log #${entry.id} to renderer (window=${!!mainWindow})`);
+    console.log(
+      `[ipc] Forwarding log #${entry.id} to renderer (window=${!!mainWindow})`,
+    );
     mainWindow?.webContents.send("logs:entry", entry);
   });
 

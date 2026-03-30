@@ -1,11 +1,35 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 
+export interface ModelOption {
+  value: string;
+  displayName: string;
+  description: string;
+}
+
+export async function fetchSupportedModels(): Promise<ModelOption[]> {
+  try {
+    const q = query({ prompt: "", options: { allowedTools: [], maxTurns: 0 } });
+    const models = await q.supportedModels();
+    // Immediately abort — we only needed the model list
+    q.return(undefined as never).catch(() => {});
+    return models.map((m) => ({
+      value: m.value,
+      displayName: m.displayName,
+      description: m.description,
+    }));
+  } catch (err) {
+    console.error("[claude] Failed to fetch models:", err);
+    return [];
+  }
+}
+
 export async function streamAnalysis(
   prompt: string,
   onChunk: (text: string) => void,
   onDone: (fullText: string) => void,
   onError: (msg: string) => void,
   signal: AbortSignal,
+  model?: string,
 ): Promise<void> {
   let fullText = "";
 
@@ -15,6 +39,7 @@ export async function streamAnalysis(
       options: {
         allowedTools: [],
         maxTurns: 1,
+        ...(model ? { model } : {}),
       },
     });
 
@@ -22,7 +47,9 @@ export async function streamAnalysis(
       if (signal.aborted) break;
 
       const m = message as Record<string, unknown>;
-      console.log(`[claude] message type=${m.type} subtype=${(m as Record<string, unknown>).subtype ?? ""}`);
+      console.log(
+        `[claude] message type=${m.type} subtype=${(m as Record<string, unknown>).subtype ?? ""}`,
+      );
 
       // SDKPartialAssistantMessage: streaming text deltas
       if (m.type === "stream_event") {
@@ -41,7 +68,9 @@ export async function streamAnalysis(
         const betaMessage = m.message as Record<string, unknown> | undefined;
         if (betaMessage && Array.isArray(betaMessage.content)) {
           let assistantText = "";
-          for (const block of betaMessage.content as Array<Record<string, unknown>>) {
+          for (const block of betaMessage.content as Array<
+            Record<string, unknown>
+          >) {
             if (block.type === "text" && typeof block.text === "string") {
               assistantText += block.text;
             }

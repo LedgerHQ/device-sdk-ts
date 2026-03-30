@@ -3,25 +3,33 @@ import { electronAPI } from "@electron-toolkit/preload";
 
 import type { LogEntry } from "../main/store";
 import type { AnalysisCommand, AnalysisResult } from "../main/analyzer";
+import type { ModelOption } from "../main/claude";
 
 export interface DmkApi {
+  listModels: () => Promise<ModelOption[]>;
   onLogEntry: (cb: (entry: LogEntry) => void) => () => void;
   onCleared: (cb: () => void) => () => void;
   getAllLogs: () => Promise<LogEntry[]>;
   clearLogs: () => Promise<void>;
   exportLogs: () => Promise<{ saved: boolean; path?: string }>;
   analyzeLocal: (command: AnalysisCommand) => Promise<AnalysisResult>;
-  analyzeAi: (command: string) => void;
+  analyzeAi: (command: string, model?: string) => void;
   cancelAi: () => void;
   onAiChunk: (cb: (chunk: string) => void) => () => void;
   onAiDone: (cb: (fullText: string) => void) => () => void;
   onAiError: (cb: (msg: string) => void) => () => void;
-  getServerStatus: () => Promise<{ running: boolean; port: number; logCount: number }>;
+  getServerStatus: () => Promise<{
+    running: boolean;
+    port: number;
+    logCount: number;
+  }>;
   onServerReady: (cb: (port: number) => void) => () => void;
   onServerError: (cb: (msg: string) => void) => () => void;
 }
 
 const dmk: DmkApi = {
+  listModels: () => ipcRenderer.invoke("models:list"),
+
   onLogEntry: (cb) => {
     const handler = (_: unknown, entry: LogEntry): void => cb(entry);
     ipcRenderer.on("logs:entry", handler);
@@ -39,8 +47,8 @@ const dmk: DmkApi = {
   exportLogs: () => ipcRenderer.invoke("logs:export"),
   analyzeLocal: (command) => ipcRenderer.invoke("analyze:local", command),
 
-  analyzeAi: (command) => {
-    ipcRenderer.invoke("analyze:ai", command);
+  analyzeAi: (command, model) => {
+    ipcRenderer.invoke("analyze:ai", command, model);
   },
   cancelAi: () => {
     ipcRenderer.invoke("analyze:ai:cancel");
