@@ -3,11 +3,53 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import MermaidBlock from "./MermaidBlock";
 
+const LOADING_PHASES = [
+  { after: 0, label: "Preparing log context..." },
+  { after: 2000, label: "Sending logs to Claude..." },
+  { after: 5000, label: "Analyzing APDU exchanges..." },
+  { after: 10000, label: "Decoding device communication..." },
+  { after: 18000, label: "Building sequence diagram..." },
+  { after: 28000, label: "Finalizing analysis..." },
+];
+
+function useLoadingPhase(loading: boolean, hasText: boolean): string {
+  const [phase, setPhase] = useState("");
+  const startRef = useRef(0);
+
+  useEffect(() => {
+    if (!loading) {
+      setPhase("");
+      return;
+    }
+    if (hasText) {
+      setPhase("Streaming response...");
+      return;
+    }
+
+    startRef.current = Date.now();
+    setPhase(LOADING_PHASES[0]!.label);
+
+    const id = setInterval(() => {
+      const elapsed = Date.now() - startRef.current;
+      let current = LOADING_PHASES[0]!.label;
+      for (const p of LOADING_PHASES) {
+        if (elapsed >= p.after) current = p.label;
+      }
+      setPhase(current);
+    }, 500);
+
+    return () => clearInterval(id);
+  }, [loading, hasText]);
+
+  return phase;
+}
+
 export default function AiPanel(): JSX.Element {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const outputRef = useRef<HTMLDivElement>(null);
+  const phase = useLoadingPhase(loading, text.length > 0);
 
   useEffect(() => {
     const offChunk = window.dmk.onAiChunk((chunk) => {
@@ -33,11 +75,11 @@ export default function AiPanel(): JSX.Element {
     }
   }, [text]);
 
-  const run = (command: string): void => {
+  const run = (): void => {
     setText("");
     setError(null);
     setLoading(true);
-    window.dmk.analyzeAi(command);
+    window.dmk.analyzeAi("analyze");
   };
 
   const cancel = (): void => {
@@ -47,40 +89,65 @@ export default function AiPanel(): JSX.Element {
 
   return (
     <div style={styles.container}>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
       <div style={styles.toolbar}>
-        <button style={styles.btn} onClick={() => run("analyze")} disabled={loading}>
-          AI: Analyze
-        </button>
-        <button style={styles.btn} onClick={() => run("diagram")} disabled={loading}>
-          AI: Diagram
-        </button>
-        <button style={styles.btn} onClick={() => run("clear-signing")} disabled={loading}>
-          AI: Clear Signing
-        </button>
-        {loading && (
-          <>
-            <span style={styles.spinner}>Streaming...</span>
-            <button style={styles.btnCancel} onClick={cancel}>
-              Cancel
-            </button>
-          </>
-        )}
+        <span style={styles.toolbarTitle}>AI Analysis</span>
+        <div style={styles.toolbarRight}>
+          {loading ? (
+            <>
+              <span style={styles.streaming}>
+                <span style={styles.streamDot} />
+                {phase}
+              </span>
+              <button style={styles.btnCancel} onClick={cancel}>Stop</button>
+            </>
+          ) : (
+            <button style={styles.btnRun} onClick={run}>Analyze</button>
+          )}
+        </div>
       </div>
 
       <div style={styles.content}>
         {!text && !loading && !error && (
           <div style={styles.empty}>
-            Run AI-powered analysis using Claude. Your logs will be sent to Claude
-            for deep analysis, APDU decoding, and diagnostic suggestions.
-            <br />
-            <br />
-            Requires <code style={styles.code}>ANTHROPIC_API_KEY</code> env var or a configured Claude subscription.
+            <div style={styles.emptyIcon}>AI</div>
+            <p style={styles.emptyText}>
+              Analyze device communication logs with Claude.
+              <br />
+              APDU decoding, sequence diagrams, and diagnostics.
+            </p>
+            <button style={styles.btnRunLarge} onClick={run}>Analyze Logs</button>
           </div>
         )}
 
         {error && (
           <div style={styles.error}>
             <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {loading && !text && (
+          <div style={styles.skeletonWrap}>
+            <div style={styles.skeletonHeader}>
+              <div style={{ ...styles.skeletonPulse, width: 24, height: 24, borderRadius: 6 }} />
+              <div style={{ ...styles.skeletonPulse, width: 180, height: 16 }} />
+            </div>
+            <div style={{ ...styles.skeletonPulse, width: "90%", height: 12, marginTop: 20 }} />
+            <div style={{ ...styles.skeletonPulse, width: "75%", height: 12, marginTop: 10 }} />
+            <div style={{ ...styles.skeletonPulse, width: "85%", height: 12, marginTop: 10 }} />
+            <div style={{ ...styles.skeletonPulse, width: "60%", height: 12, marginTop: 10 }} />
+            <div style={{ ...styles.skeletonPulse, width: "95%", height: 80, marginTop: 20, borderRadius: 6 }} />
+            <div style={{ ...styles.skeletonPulse, width: "70%", height: 12, marginTop: 20 }} />
+            <div style={{ ...styles.skeletonPulse, width: "80%", height: 12, marginTop: 10 }} />
           </div>
         )}
 
@@ -146,121 +213,96 @@ export default function AiPanel(): JSX.Element {
 
 const md: Record<string, CSSProperties> = {
   h1: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 700,
-    color: "#e94560",
-    margin: "20px 0 10px",
-    paddingBottom: 6,
-    borderBottom: "1px solid #0f3460",
+    color: "#f43f5e",
+    margin: "24px 0 10px",
+    paddingBottom: 8,
+    borderBottom: "1px solid #334155",
   },
   h2: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: 700,
-    color: "#e0e0e0",
-    margin: "18px 0 8px",
-    paddingBottom: 4,
-    borderBottom: "1px solid rgba(15, 52, 96, 0.5)",
+    color: "#f1f5f9",
+    margin: "20px 0 8px",
+    paddingBottom: 6,
+    borderBottom: "1px solid rgba(51, 65, 85, 0.5)",
   },
   h3: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 600,
-    color: "#c0c0c0",
-    margin: "14px 0 6px",
+    color: "#e2e8f0",
+    margin: "16px 0 6px",
   },
   h4: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 600,
-    color: "#a0b0c0",
-    margin: "12px 0 4px",
+    color: "#cbd5e1",
+    margin: "14px 0 4px",
   },
   p: {
     margin: "8px 0",
-    lineHeight: "22px",
-    color: "#d0d0d0",
+    lineHeight: "24px",
+    color: "#e2e8f0",
+    fontSize: 14,
   },
-  ul: {
-    margin: "6px 0",
-    paddingLeft: 24,
-  },
-  ol: {
-    margin: "6px 0",
-    paddingLeft: 24,
-  },
+  ul: { margin: "6px 0", paddingLeft: 22 },
+  ol: { margin: "6px 0", paddingLeft: 22 },
   li: {
     margin: "3px 0",
-    lineHeight: "21px",
-    color: "#d0d0d0",
+    lineHeight: "24px",
+    color: "#e2e8f0",
+    fontSize: 14,
   },
-  strong: {
-    color: "#e0e0e0",
-    fontWeight: 600,
-  },
-  em: {
-    color: "#a78bfa",
-    fontStyle: "italic",
-  },
-  a: {
-    color: "#53a8b6",
-    textDecoration: "underline",
-  },
+  strong: { color: "#f1f5f9", fontWeight: 600 },
+  em: { color: "#c4b5fd", fontStyle: "italic" },
+  a: { color: "#38bdf8", textDecoration: "underline" },
   blockquote: {
-    margin: "8px 0",
+    margin: "10px 0",
     padding: "8px 14px",
-    borderLeft: "3px solid #533483",
-    background: "rgba(45, 27, 105, 0.3)",
-    color: "#b0b0c0",
+    borderLeft: "3px solid #6366f1",
+    background: "rgba(99, 102, 241, 0.1)",
+    color: "#c7d2fe",
+    fontSize: 14,
   },
-  hr: {
-    border: "none",
-    borderTop: "1px solid #0f3460",
-    margin: "16px 0",
-  },
+  hr: { border: "none", borderTop: "1px solid #334155", margin: "16px 0" },
   pre: {
     margin: "10px 0",
     padding: 14,
-    background: "#0d1b2a",
+    background: "#0f172a",
     borderRadius: 6,
-    border: "1px solid #0f3460",
+    border: "1px solid #1e293b",
     overflowX: "auto",
   },
   codeBlock: {
-    fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
-    fontSize: 12,
-    lineHeight: "19px",
-    color: "#a8dadc",
+    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+    fontSize: 13,
+    lineHeight: "20px",
+    color: "#7dd3fc",
     whiteSpace: "pre",
   },
   codeInline: {
-    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-    fontSize: 12,
-    padding: "1px 5px",
-    background: "#0f3460",
+    fontFamily: "'JetBrains Mono', monospace",
+    fontSize: 13,
+    padding: "2px 6px",
+    background: "#1e293b",
     borderRadius: 3,
-    color: "#a8dadc",
+    color: "#7dd3fc",
   },
-  tableWrapper: {
-    overflowX: "auto",
-    margin: "10px 0",
-  },
-  table: {
-    borderCollapse: "collapse",
-    width: "100%",
-    fontSize: 12,
-  },
-  thead: {
-    background: "#0f3460",
-  },
+  tableWrapper: { overflowX: "auto", margin: "10px 0" },
+  table: { borderCollapse: "collapse", width: "100%", fontSize: 13 },
+  thead: { background: "#1e293b" },
   th: {
     padding: "6px 12px",
     textAlign: "left",
     fontWeight: 600,
-    color: "#e0e0e0",
-    borderBottom: "1px solid #1a3d6e",
+    color: "#f1f5f9",
+    borderBottom: "1px solid #334155",
   },
   td: {
     padding: "5px 12px",
-    borderBottom: "1px solid rgba(15, 52, 96, 0.4)",
-    color: "#c0c0c0",
+    borderBottom: "1px solid rgba(51, 65, 85, 0.4)",
+    color: "#cbd5e1",
   },
 };
 
@@ -270,77 +312,140 @@ const styles: Record<string, CSSProperties> = {
     flexDirection: "column",
     flex: 1,
     overflow: "hidden",
+    background: "#0f172a",
   },
   toolbar: {
     display: "flex",
     alignItems: "center",
-    gap: 8,
-    padding: "8px 12px",
-    background: "#1a1a2e",
-    borderBottom: "1px solid #0f3460",
+    justifyContent: "space-between",
+    padding: "0 12px",
+    height: 36,
+    background: "#1e293b",
+    borderBottom: "1px solid #334155",
+    flexShrink: 0,
   },
-  btn: {
-    padding: "6px 14px",
-    border: "1px solid #533483",
+  toolbarTitle: {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "#64748b",
+    textTransform: "uppercase" as const,
+    letterSpacing: 0.5,
+  },
+  toolbarRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+  },
+  streaming: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    color: "#a78bfa",
+    fontSize: 11,
+  },
+  streamDot: {
+    width: 6,
+    height: 6,
+    borderRadius: "50%",
+    background: "#a78bfa",
+    animation: "pulse-dot 1.2s ease-in-out infinite",
+  },
+  btnRun: {
+    padding: "4px 12px",
+    border: "none",
     borderRadius: 4,
-    background: "#2d1b69",
-    color: "#e0e0e0",
+    background: "#6366f1",
+    color: "#fff",
     cursor: "pointer",
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: 600,
+  },
+  btnRunLarge: {
+    padding: "8px 24px",
+    border: "none",
+    borderRadius: 6,
+    background: "#6366f1",
+    color: "#fff",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 600,
+    marginTop: 16,
   },
   btnCancel: {
-    padding: "6px 14px",
-    border: "1px solid #5c1a1a",
+    padding: "4px 10px",
+    border: "1px solid rgba(248, 113, 113, 0.3)",
     borderRadius: 4,
     background: "transparent",
-    color: "#ff6b6b",
+    color: "#f87171",
     cursor: "pointer",
-    fontSize: 12,
-  },
-  spinner: {
-    color: "#a78bfa",
-    fontSize: 12,
-    marginLeft: 8,
+    fontSize: 11,
+    fontWeight: 500,
   },
   content: {
     flex: 1,
     overflowY: "auto",
-    padding: 12,
   },
   empty: {
-    color: "#8090a0",
-    textAlign: "center",
-    padding: 24,
-    lineHeight: "22px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+    padding: 32,
   },
-  code: {
-    padding: "2px 6px",
-    background: "#0f3460",
-    borderRadius: 3,
+  emptyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    background: "linear-gradient(135deg, #6366f1, #a78bfa)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: 16,
+    fontWeight: 800,
+    color: "#fff",
+    marginBottom: 16,
+  },
+  emptyText: {
+    color: "#64748b",
+    textAlign: "center",
+    lineHeight: "20px",
     fontSize: 12,
-    fontFamily: "'JetBrains Mono', monospace",
+    margin: 0,
   },
   error: {
-    padding: 12,
-    background: "#3d1a1a",
-    border: "1px solid #5c1a1a",
+    margin: 12,
+    padding: 10,
+    background: "rgba(248, 113, 113, 0.1)",
+    border: "1px solid rgba(248, 113, 113, 0.2)",
     borderRadius: 6,
-    color: "#ff6b6b",
-    fontSize: 13,
+    color: "#f87171",
+    fontSize: 12,
   },
   output: {
-    padding: 16,
-    background: "#16213e",
-    borderRadius: 6,
-    fontSize: 13,
-    lineHeight: "22px",
-    color: "#d0d0d0",
-    overflowY: "auto",
-    flex: 1,
+    padding: 20,
+    fontSize: 14,
+    lineHeight: "24px",
+    color: "#e2e8f0",
   },
   cursor: {
     color: "#a78bfa",
     fontWeight: 700,
     fontSize: 16,
+  },
+  skeletonWrap: {
+    padding: 24,
+  },
+  skeletonHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+  skeletonPulse: {
+    height: 12,
+    borderRadius: 4,
+    background: "linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%)",
+    backgroundSize: "200% 100%",
+    animation: "shimmer 1.8s ease-in-out infinite",
   },
 };

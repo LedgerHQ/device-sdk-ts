@@ -13,10 +13,10 @@ interface LogEntry {
 type LevelFilter = "all" | "debug" | "info" | "warn" | "error";
 
 const LEVEL_COLORS: Record<string, string> = {
-  debug: "#6c757d",
-  info: "#17a2b8",
-  warn: "#ffc107",
-  error: "#dc3545",
+  debug: "#64748b",
+  info: "#38bdf8",
+  warn: "#facc15",
+  error: "#f87171",
 };
 
 export default function LogViewer({ logs }: { logs: LogEntry[] }): JSX.Element {
@@ -40,10 +40,7 @@ export default function LogViewer({ logs }: { logs: LogEntry[] }): JSX.Element {
     if (search) {
       const s = search.toLowerCase();
       const tag = Array.isArray(log.tag) ? log.tag.join(":") : log.tag;
-      if (
-        !log.message.toLowerCase().includes(s) &&
-        !tag.toLowerCase().includes(s)
-      )
+      if (!log.message.toLowerCase().includes(s) && !tag.toLowerCase().includes(s))
         return false;
     }
     return true;
@@ -71,7 +68,7 @@ export default function LogViewer({ logs }: { logs: LogEntry[] }): JSX.Element {
         </select>
         <input
           type="text"
-          placeholder="Search logs..."
+          placeholder="Filter logs..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           style={styles.search}
@@ -91,7 +88,7 @@ export default function LogViewer({ logs }: { logs: LogEntry[] }): JSX.Element {
         {filtered.length === 0 ? (
           <div style={styles.empty}>
             {logs.length === 0
-              ? "No logs yet. Send logs to http://localhost:8432/logs"
+              ? "Waiting for logs..."
               : "No logs match the current filters."}
           </div>
         ) : (
@@ -116,12 +113,7 @@ export default function LogViewer({ logs }: { logs: LogEntry[] }): JSX.Element {
                       fractionalSecondDigits: 3,
                     } as Intl.DateTimeFormatOptions)}
                   </span>
-                  <span
-                    style={{
-                      ...styles.level,
-                      color: LEVEL_COLORS[log.level],
-                    }}
-                  >
+                  <span style={{ ...styles.level, color: LEVEL_COLORS[log.level] }}>
                     {log.level.toUpperCase().padEnd(5)}
                   </span>
                   <span style={styles.tag}>
@@ -160,61 +152,66 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     padding: "6px 12px",
-    background: "#1a1a2e",
-    borderBottom: "1px solid #0f3460",
+    background: "#1e293b",
+    borderBottom: "1px solid #334155",
+    flexShrink: 0,
   },
   select: {
     padding: "4px 8px",
-    background: "#16213e",
-    border: "1px solid #0f3460",
+    background: "#0f172a",
+    border: "1px solid #334155",
     borderRadius: 4,
     color: "#e0e0e0",
-    fontSize: 12,
+    fontSize: 11,
+    outline: "none",
   },
   search: {
     flex: 1,
     padding: "4px 8px",
-    background: "#16213e",
-    border: "1px solid #0f3460",
+    background: "#0f172a",
+    border: "1px solid #334155",
     borderRadius: 4,
     color: "#e0e0e0",
-    fontSize: 12,
+    fontSize: 11,
     outline: "none",
   },
   autoScrollLabel: {
     display: "flex",
     alignItems: "center",
     gap: 4,
-    color: "#8090a0",
-    fontSize: 12,
-    whiteSpace: "nowrap",
-  },
-  count: {
-    color: "#8090a0",
+    color: "#64748b",
     fontSize: 11,
     whiteSpace: "nowrap",
+    userSelect: "none",
+  },
+  count: {
+    color: "#475569",
+    fontSize: 11,
+    whiteSpace: "nowrap",
+    fontVariantNumeric: "tabular-nums",
   },
   list: {
     flex: 1,
     overflowY: "auto",
     fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace",
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: "20px",
   },
   empty: {
-    padding: 24,
+    padding: 32,
     textAlign: "center",
-    color: "#8090a0",
+    color: "#475569",
+    fontSize: 12,
   },
   row: {
     display: "flex",
     gap: 8,
     padding: "1px 12px",
-    borderBottom: "1px solid rgba(15, 52, 96, 0.4)",
+    borderBottom: "1px solid rgba(51, 65, 85, 0.3)",
     whiteSpace: "nowrap",
   },
   time: {
-    color: "#6c757d",
+    color: "#475569",
     flexShrink: 0,
   },
   level: {
@@ -223,31 +220,32 @@ const styles: Record<string, React.CSSProperties> = {
     width: 44,
   },
   tag: {
-    color: "#53a8b6",
+    color: "#38bdf8",
     flexShrink: 0,
-    maxWidth: 200,
+    maxWidth: 220,
     overflow: "hidden",
     textOverflow: "ellipsis",
+    opacity: 0.7,
   },
   message: {
-    color: "#d0d0d0",
+    color: "#cbd5e1",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   expandIcon: {
     marginRight: 4,
-    fontSize: 10,
-    color: "#8090a0",
+    fontSize: 9,
+    color: "#475569",
   },
   dataBlock: {
     margin: "0 12px 0 52px",
     padding: "6px 10px",
-    background: "#0d1b2a",
-    borderLeft: "2px solid #0f3460",
+    background: "#0f172a",
+    borderLeft: "2px solid #334155",
     borderRadius: "0 0 4px 4px",
-    color: "#a0c4ff",
-    fontSize: 11,
-    lineHeight: "16px",
+    color: "#7dd3fc",
+    fontSize: 10,
+    lineHeight: "15px",
     overflowX: "auto",
     whiteSpace: "pre-wrap",
     wordBreak: "break-all",
