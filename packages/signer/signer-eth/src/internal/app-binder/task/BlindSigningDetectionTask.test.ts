@@ -1,4 +1,7 @@
-import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  ClearSignContextType,
+  type ContextModule,
+} from "@ledgerhq/context-module";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 
 import {
@@ -90,6 +93,67 @@ describe("computeIsBlindSign", () => {
         type: "typedData",
         hasContext: false,
         usedFallback: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("should return true when hasContext is true but only metadata-only context types are present", () => {
+    expect(
+      computeIsBlindSign({
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [ClearSignContextType.TRANSACTION_CHECK],
+      }),
+    ).toBe(true);
+  });
+
+  it("should return true when hasContext is true but only DYNAMIC_NETWORK and GATED_SIGNING context types are present", () => {
+    expect(
+      computeIsBlindSign({
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.GATED_SIGNING,
+        ],
+      }),
+    ).toBe(true);
+  });
+
+  it("should return false when hasContext is true and real clear-signing context types are present alongside metadata", () => {
+    expect(
+      computeIsBlindSign({
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [
+          ClearSignContextType.TRANSACTION_CHECK,
+          ClearSignContextType.TRANSACTION_INFO,
+        ],
+      }),
+    ).toBe(false);
+  });
+
+  it("should return false when hasContext is true with empty contextTypes (no calldata scenario)", () => {
+    expect(
+      computeIsBlindSign({
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("should return true when hasContext is false even with contextTypes provided", () => {
+    expect(
+      computeIsBlindSign({
+        ...baseInput,
+        hasContext: false,
+        usedFallback: false,
+        contextTypes: [],
       }),
     ).toBe(true);
   });

@@ -622,6 +622,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 input: {
                   type: "transaction" as const,
                   hasContext: !hasCalldata || contexts.length > 0,
+                  contextTypes: contexts.map((c) => c.context.type),
                   usedFallback,
                   chainId: subset?.chainId ?? null,
                   targetAddress: subset?.to ?? null,

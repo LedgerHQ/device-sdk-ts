@@ -2,6 +2,7 @@ import {
   BlindSigningMethod,
   type BlindSigningReportParams,
   BlindSignReason,
+  ClearSignContextType,
   type ContextModule,
   mapDeviceModelId,
 } from "@ledgerhq/context-module";
@@ -11,9 +12,17 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { generateSignatureId } from "@ledgerhq/signer-utils";
 
+const METADATA_ONLY_CONTEXT_TYPES = new Set<ClearSignContextType>([
+  ClearSignContextType.TRANSACTION_CHECK,
+  ClearSignContextType.DYNAMIC_NETWORK,
+  ClearSignContextType.DYNAMIC_NETWORK_ICON,
+  ClearSignContextType.GATED_SIGNING,
+]);
+
 export type BlindSigningDetectionInput = {
   type: "transaction" | "typedData";
   hasContext: boolean;
+  contextTypes?: ClearSignContextType[];
   usedFallback: boolean;
   chainId: number | null;
   targetAddress: string | null;
@@ -35,6 +44,14 @@ export type BlindSigningDetectionTaskResult = {
 export function computeIsBlindSign(input: BlindSigningDetectionInput): boolean {
   if (input.usedFallback) {
     return true;
+  }
+  if (input.contextTypes && input.hasContext && input.contextTypes.length > 0) {
+    const hasClearSignContexts = input.contextTypes.some(
+      (type) => !METADATA_ONLY_CONTEXT_TYPES.has(type),
+    );
+    if (!hasClearSignContexts) {
+      return true;
+    }
   }
   return !input.hasContext;
 }
