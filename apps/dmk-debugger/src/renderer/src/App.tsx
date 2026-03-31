@@ -12,7 +12,7 @@ interface LogEntry {
   receivedAt: number;
 }
 
-const HANDLE_W = 4;
+const HANDLE_W = 6;
 const MIN_PANEL = 50;
 const CONTENT_MIN_LOGS = 500;
 const CONTENT_MIN_AI = 500;
@@ -212,10 +212,16 @@ export default function App(): JSX.Element {
         <div
           style={{
             ...styles.resizeHandle,
-            background: dragging ? "#6366f1" : "#334155",
+            background: dragging ? "#818cf8" : "#6366f1",
           }}
           onMouseDown={onDragStart}
-        />
+        >
+          <div style={styles.resizeGrip}>
+            <div style={styles.resizeGripDot} />
+            <div style={styles.resizeGripDot} />
+            <div style={styles.resizeGripDot} />
+          </div>
+        </div>
 
         {/* AI panel: outer wrapper takes remaining width, scrolls when content clips */}
         <div
@@ -372,6 +378,21 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "col-resize",
     flexShrink: 0,
     transition: "background 0.1s",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  resizeGrip: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 3,
+    alignItems: "center",
+  },
+  resizeGripDot: {
+    width: 2,
+    height: 2,
+    borderRadius: "50%",
+    background: "rgba(255, 255, 255, 0.5)",
   },
   dragOverlay: {
     position: "fixed",

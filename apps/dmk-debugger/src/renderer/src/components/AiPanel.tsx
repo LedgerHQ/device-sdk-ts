@@ -492,11 +492,15 @@ export default function AiPanel(): JSX.Element {
           <div
             style={{
               ...styles.chatDragHandle,
-              background: chatDragging ? "#6366f1" : "#334155",
+              background: chatDragging ? "#818cf8" : "#6366f1",
             }}
             onMouseDown={onChatDragStart}
           >
-            <div style={styles.chatDragGrip} />
+            <div style={styles.chatDragGrip}>
+              <div style={styles.chatDragGripDot} />
+              <div style={styles.chatDragGripDot} />
+              <div style={styles.chatDragGripDot} />
+            </div>
           </div>
           <div style={styles.chatHeader}>
             <span style={styles.chatTitle}>Chat</span>
@@ -852,10 +856,16 @@ const styles: Record<string, CSSProperties> = {
     transition: "background 0.1s",
   },
   chatDragGrip: {
-    width: 32,
+    display: "flex",
+    flexDirection: "row",
+    gap: 3,
+    alignItems: "center",
+  },
+  chatDragGripDot: {
+    width: 2,
     height: 2,
-    borderRadius: 1,
-    background: "#64748b",
+    borderRadius: "50%",
+    background: "rgba(255, 255, 255, 0.5)",
   },
   chatDragOverlay: {
     position: "fixed",
