@@ -258,15 +258,6 @@ export default function AiPanel(): JSX.Element {
     setLoading(false);
   };
 
-  const newSession = (): void => {
-    window.dmk.resetSession();
-    setText("");
-    setError(null);
-    setChatOpen(false);
-    setChatMessages([]);
-    setShowChatBtn(false);
-  };
-
   const sendChat = (): void => {
     const msg = chatInput.trim();
     if (!msg || chatStreaming) return;
@@ -354,20 +345,9 @@ export default function AiPanel(): JSX.Element {
               </button>
             </>
           ) : (
-            <>
-              <button style={styles.btnRun} onClick={run}>
-                Analyze
-              </button>
-              {text && (
-                <button
-                  style={styles.btnNewSession}
-                  onClick={newSession}
-                  title="Start a fresh AI conversation (clears cached context)"
-                >
-                  New Session
-                </button>
-              )}
-            </>
+            <button style={styles.btnRun} onClick={run}>
+              Analyze
+            </button>
           )}
         </div>
       </div>
@@ -381,15 +361,162 @@ export default function AiPanel(): JSX.Element {
               <br />
               APDU decoding, sequence diagrams, and diagnostics.
             </p>
-            <button style={styles.btnRunLarge} onClick={run}>
-              Analyze Logs
-            </button>
           </div>
         )}
 
         {error && (
           <div style={styles.error}>
             <strong>Error:</strong> {error}
+          </div>
+        )}
+
+        {loading && !text && (
+          <div style={styles.skeletonWrap}>
+            <div style={styles.skeletonHeader}>
+              <div
+                style={{
+                  ...styles.skeletonPulse,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                }}
+              />
+              <div
+                style={{ ...styles.skeletonPulse, width: 180, height: 16 }}
+              />
+            </div>
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "90%",
+                height: 12,
+                marginTop: 20,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "75%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "85%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "60%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "95%",
+                height: 80,
+                marginTop: 20,
+                borderRadius: 6,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "70%",
+                height: 12,
+                marginTop: 20,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "80%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+          </div>
+        )}
+
+        {loading && !text && (
+          <div style={styles.skeletonWrap}>
+            <div style={styles.skeletonHeader}>
+              <div
+                style={{
+                  ...styles.skeletonPulse,
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                }}
+              />
+              <div
+                style={{ ...styles.skeletonPulse, width: 180, height: 16 }}
+              />
+            </div>
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "90%",
+                height: 12,
+                marginTop: 20,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "75%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "85%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "60%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "95%",
+                height: 80,
+                marginTop: 20,
+                borderRadius: 6,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "70%",
+                height: 12,
+                marginTop: 20,
+              }}
+            />
+            <div
+              style={{
+                ...styles.skeletonPulse,
+                width: "80%",
+                height: 12,
+                marginTop: 10,
+              }}
+            />
           </div>
         )}
 
@@ -492,7 +619,7 @@ export default function AiPanel(): JSX.Element {
           <div
             style={{
               ...styles.chatDragHandle,
-              background: chatDragging ? "#818cf8" : "#6366f1",
+              background: chatDragging ? "#6366f1" : "#334155",
             }}
             onMouseDown={onChatDragStart}
           >
@@ -739,16 +866,6 @@ const styles: Record<string, CSSProperties> = {
     borderRadius: 4,
     background: "transparent",
     color: "#f87171",
-    cursor: "pointer",
-    fontSize: 11,
-    fontWeight: 500,
-  },
-  btnNewSession: {
-    padding: "4px 10px",
-    border: "1px solid #334155",
-    borderRadius: 4,
-    background: "transparent",
-    color: "#94a3b8",
     cursor: "pointer",
     fontSize: 11,
     fontWeight: 500,

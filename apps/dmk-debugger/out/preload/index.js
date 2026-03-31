@@ -15,7 +15,6 @@ const dmk = {
   },
   getAllLogs: () => electron.ipcRenderer.invoke("logs:getAll"),
   clearLogs: () => electron.ipcRenderer.invoke("logs:clear"),
-  resetSession: () => electron.ipcRenderer.invoke("session:reset"),
   exportLogs: () => electron.ipcRenderer.invoke("logs:export"),
   analyzeLocal: (command) => electron.ipcRenderer.invoke("analyze:local", command),
   analyzeAi: (command, model) => {

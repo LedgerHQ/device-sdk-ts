@@ -125,6 +125,10 @@ export async function streamAnalysis(
   let fullText = "";
 
   try {
+    console.log(
+      `[claude] streamAnalysis: sessionId=${sessionId ?? "NONE (fresh)"}, prompt length=${prompt.length}`,
+    );
+
     const stream = query({
       prompt,
       options: {

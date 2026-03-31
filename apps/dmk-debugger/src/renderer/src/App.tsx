@@ -212,7 +212,7 @@ export default function App(): JSX.Element {
         <div
           style={{
             ...styles.resizeHandle,
-            background: dragging ? "#818cf8" : "#6366f1",
+            background: dragging ? "#6366f1" : "#334155",
           }}
           onMouseDown={onDragStart}
         >

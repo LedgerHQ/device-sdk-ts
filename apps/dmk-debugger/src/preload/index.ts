@@ -11,7 +11,6 @@ export interface DmkApi {
   onCleared: (cb: () => void) => () => void;
   getAllLogs: () => Promise<LogEntry[]>;
   clearLogs: () => Promise<void>;
-  resetSession: () => Promise<void>;
   exportLogs: () => Promise<{ saved: boolean; path?: string }>;
   analyzeLocal: (command: AnalysisCommand) => Promise<AnalysisResult>;
   analyzeAi: (command: string, model?: string) => void;
@@ -53,7 +52,6 @@ const dmk: DmkApi = {
 
   getAllLogs: () => ipcRenderer.invoke("logs:getAll"),
   clearLogs: () => ipcRenderer.invoke("logs:clear"),
-  resetSession: () => ipcRenderer.invoke("session:reset"),
   exportLogs: () => ipcRenderer.invoke("logs:export"),
   analyzeLocal: (command) => ipcRenderer.invoke("analyze:local", command),
 

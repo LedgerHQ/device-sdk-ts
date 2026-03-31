@@ -66,13 +66,11 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle("logs:clear", () => {
     store.clear();
-    console.log(`[ipc] logs:clear → store size after clear: ${store.size}`);
-    mainWindow?.webContents.send("logs:cleared");
-  });
-
-  ipcMain.handle("session:reset", () => {
     resetSession();
-    console.log("[ipc] session:reset → Claude session dropped");
+    console.log(
+      `[ipc] logs:clear → store flushed (size=${store.size}), session reset`,
+    );
+    mainWindow?.webContents.send("logs:cleared");
   });
 
   ipcMain.handle("logs:export", async () => {
@@ -99,6 +97,9 @@ function registerIpcHandlers(): void {
     activeAiAbort = ac;
 
     const logs = store.getAll();
+    console.log(
+      `[ipc] analyze:ai → store has ${logs.length} entries (store.size=${store.size})`,
+    );
     if (logs.length === 0) {
       event.sender.send("ai:error", "No DMK logs collected yet.");
       return;

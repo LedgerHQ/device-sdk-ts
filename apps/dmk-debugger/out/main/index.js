@@ -1005,6 +1005,9 @@ async function streamChat(message, onChunk, onDone, onError, signal) {
 async function streamAnalysis(prompt, onChunk, onDone, onError, signal, model) {
   let fullText = "";
   try {
+    console.log(
+      `[claude] streamAnalysis: sessionId=${sessionId ?? "NONE (fresh)"}, prompt length=${prompt.length}`
+    );
     const stream = claudeAgentSdk.query({
       prompt,
       options: {
@@ -1111,12 +1114,11 @@ function registerIpcHandlers() {
   });
   electron.ipcMain.handle("logs:clear", () => {
     store.clear();
-    console.log(`[ipc] logs:clear → store size after clear: ${store.size}`);
-    mainWindow?.webContents.send("logs:cleared");
-  });
-  electron.ipcMain.handle("session:reset", () => {
     resetSession();
-    console.log("[ipc] session:reset → Claude session dropped");
+    console.log(
+      `[ipc] logs:clear → store flushed (size=${store.size}), session reset`
+    );
+    mainWindow?.webContents.send("logs:cleared");
   });
   electron.ipcMain.handle("logs:export", async () => {
     const result = await electron.dialog.showSaveDialog({
@@ -1138,6 +1140,9 @@ function registerIpcHandlers() {
     const ac = new AbortController();
     activeAiAbort = ac;
     const logs = store.getAll();
+    console.log(
+      `[ipc] analyze:ai → store has ${logs.length} entries (store.size=${store.size})`
+    );
     if (logs.length === 0) {
       event.sender.send("ai:error", "No DMK logs collected yet.");
       return;
