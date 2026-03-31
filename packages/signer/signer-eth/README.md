@@ -414,7 +414,7 @@ observable.subscribe({
 When the status is DeviceActionStatus.Pending, the state will include an `intermediateValue` object that provides useful information for interaction. The intermediateValue contains:
 
 - `requiredUserInteraction`: Indicates what action is needed from the user
-- `step`: The current step in the device action flow, available for the 'signTransaction' and 'signTypedData' flow.
+- `step`: The current step in the device action flow, available for the 'signTransaction' and 'signTypedData' flow. Steps include context provisioning, signing, blind sign fallback, and blind signing detection (`DETECT_BLIND_SIGNING`).
 
 ```typescript
 const { requiredUserInteraction, step /* if available */ } = intermediateValue;

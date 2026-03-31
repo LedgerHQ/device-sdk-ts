@@ -3,6 +3,7 @@ import {
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceModelId,
+  DeviceSessionStateType,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -39,6 +40,11 @@ import {
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
+import {
+  BlindSigningDetectionTask,
+  type BlindSigningDetectionTaskArgs,
+  type BlindSigningDetectionTaskResult,
+} from "@internal/app-binder/task/BlindSigningDetectionTask";
 import {
   BuildFullContextsTask,
   type BuildFullContextsTaskArgs,
@@ -85,6 +91,9 @@ export type MachineDependencies = {
       clearSigningType: ClearSigningType;
     };
   }) => Promise<CommandResult<Signature, EthErrorCodes>>;
+  readonly detectBlindSigning: (arg0: {
+    input: BlindSigningDetectionTaskArgs;
+  }) => Promise<BlindSigningDetectionTaskResult>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -119,6 +128,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       buildContexts,
       signTransaction,
       provideContexts,
+      detectBlindSigning,
     } = this.extractDependencies(internalApi);
 
     return setup({
@@ -138,6 +148,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         buildContexts: fromPromise(buildContexts),
         provideContexts: fromPromise(provideContexts),
         signTransaction: fromPromise(signTransaction),
+        detectBlindSigning: fromPromise(detectBlindSigning),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -160,6 +171,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
         skipOpenApp: ({ context }) => !!context.input.options.skipOpenApp,
+        hasSignature: ({ context }) =>
+          context._internalState.signature !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -188,6 +201,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             clearSigningType: null,
             transactionType: null,
             signature: null,
+            isBlindSign: null,
+            usedFallback: false,
           },
         };
       },
@@ -465,15 +480,6 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               step: SignTransactionDAStep.PROVIDE_CONTEXTS,
             },
           }),
-          exit: assign({
-            // remove the first context of the first transaction details as it has been consumed
-            _internalState: ({ context }) => {
-              return {
-                ...context._internalState,
-                contexts: context._internalState.contexts.slice(1),
-              };
-            },
-          }),
           invoke: {
             id: "provideContexts",
             src: "provideContexts",
@@ -536,12 +542,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         SignTransactionResultCheck: {
           always: [
-            { guard: "noInternalError", target: "Success" },
+            { guard: "noInternalError", target: "DetectBlindSigning" },
             {
               guard: "notRefusedByUser",
               target: "BlindSignTransactionFallback",
             },
-            { target: "Error" },
+            { target: "DetectBlindSigning" },
           ],
         },
         BlindSignTransactionFallback: {
@@ -550,6 +556,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               requiredUserInteraction: UserInteractionRequired.None,
               step: SignTransactionDAStep.BLIND_SIGN_TRANSACTION_FALLBACK,
             },
+            _internalState: ({ context }) => ({
+              ...context._internalState,
+              usedFallback: true,
+            }),
           }),
           invoke: {
             id: "blindSignTransactionFallback",
@@ -581,16 +591,75 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
+              target: "DetectBlindSigning",
               actions: "assignErrorFromEvent",
             },
           },
         },
         BlindSignTransactionFallbackResultCheck: {
-          always: [
-            { guard: "noInternalError", target: "Success" },
-            { target: "Error" },
-          ],
+          always: "DetectBlindSigning",
+        },
+        DetectBlindSigning: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTransactionDAStep.DETECT_BLIND_SIGNING,
+            },
+          }),
+          invoke: {
+            id: "detectBlindSigning",
+            src: "detectBlindSigning",
+            input: ({ context }) => {
+              const sessionState = internalApi.getDeviceSessionState();
+              const deviceVersion =
+                sessionState.sessionStateType !==
+                DeviceSessionStateType.Connected
+                  ? (sessionState.firmwareVersion?.os ?? null)
+                  : null;
+              const { subset, contexts, usedFallback } = context._internalState;
+              const hasCalldata = !!subset?.data && subset.data.length > 2;
+              return {
+                input: {
+                  type: "transaction" as const,
+                  hasContext: !hasCalldata || contexts.length > 0,
+                  usedFallback,
+                  chainId: subset?.chainId ?? null,
+                  targetAddress: subset?.to ?? null,
+                  deviceModelId: internalApi.getDeviceModel().id,
+                  signerAppVersion:
+                    context._internalState.appConfig?.version ?? "",
+                  deviceVersion,
+                },
+                contextModule: context.input.contextModule,
+                loggerFactory: this.getLoggerFactory(internalApi),
+              };
+            },
+            onDone: [
+              {
+                guard: "hasSignature",
+                target: "Success",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    isBlindSign: event.output.isBlindSign,
+                  }),
+                }),
+              },
+              {
+                target: "Error",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    isBlindSign: event.output.isBlindSign,
+                  }),
+                }),
+              },
+            ],
+            onError: [
+              { guard: "hasSignature", target: "Success" },
+              { target: "Error" },
+            ],
+          },
         },
         Success: {
           type: "final",
@@ -648,6 +717,10 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 
+    const detectBlindSigning = async (arg0: {
+      input: BlindSigningDetectionTaskArgs;
+    }) => new BlindSigningDetectionTask(arg0.input).run();
+
     return {
       getAddress,
       getAppConfig,
@@ -656,6 +729,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       buildContexts,
       provideContexts,
       signTransaction,
+      detectBlindSigning,
     };
   }
 }

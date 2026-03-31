@@ -17,7 +17,7 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { Transaction } from "ethers";
-import { Just } from "purify-ts";
+import { Right } from "purify-ts";
 import { lastValueFrom, Observable } from "rxjs";
 
 import {
@@ -76,7 +76,9 @@ describe("SignTransactionDeviceAction", () => {
   const provideContextsMock = vi.fn();
   const signTransactionMock = vi.fn();
   const getAddressMock = vi.fn();
+  const detectBlindSigningMock = vi.fn();
   function extractDependenciesMock() {
+    detectBlindSigningMock.mockResolvedValue({ isBlindSign: false });
     return {
       getAppConfig: getAppConfigMock,
       web3CheckOptIn: web3CheckOptInMock,
@@ -85,10 +87,25 @@ describe("SignTransactionDeviceAction", () => {
       provideContexts: provideContextsMock,
       signTransaction: signTransactionMock,
       getAddress: getAddressMock,
+      detectBlindSigning: detectBlindSigningMock,
     };
   }
   const apiMock = makeDeviceActionInternalApiMock();
   const defaultOptions = {};
+
+  function setupDefaultDeviceMocks() {
+    apiMock.getDeviceSessionState.mockReturnValue({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    apiMock.getDeviceModel.mockReturnValue({
+      id: DeviceModelId.FLEX,
+    } as unknown as TransportDeviceModel);
+  }
   const defaultTransaction: Uint8Array = hexaStringToBuffer(
     Transaction.from({
       chainId: 1n,
@@ -123,7 +140,7 @@ describe("SignTransactionDeviceAction", () => {
     web3ChecksEnabled: boolean,
     web3ChecksOptIn: boolean,
   ) {
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
+    apiMock.getDeviceSessionState.mockReturnValue({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
@@ -131,7 +148,7 @@ describe("SignTransactionDeviceAction", () => {
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
-    apiMock.getDeviceModel.mockReturnValueOnce({
+    apiMock.getDeviceModel.mockReturnValue({
       id: DeviceModelId.FLEX,
     } as unknown as TransportDeviceModel);
     getAppConfigMock.mockResolvedValue(
@@ -188,7 +205,7 @@ describe("SignTransactionDeviceAction", () => {
           clearSignContexts: contexts,
           clearSigningType: ClearSigningType.EIP7730,
         });
-        provideContextsMock.mockResolvedValueOnce(Just(void 0));
+        provideContextsMock.mockResolvedValueOnce(Right(void 0));
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -366,7 +383,7 @@ describe("SignTransactionDeviceAction", () => {
           clearSignContextsOptional: [],
           clearSigningType: ClearSigningType.BASIC,
         });
-        provideContextsMock.mockResolvedValueOnce(Just(void 0));
+        provideContextsMock.mockResolvedValueOnce(Right(void 0));
         signTransactionMock.mockResolvedValueOnce(
           CommandResultFactory({
             data: {
@@ -482,6 +499,7 @@ describe("SignTransactionDeviceAction", () => {
   describe("Error cases", () => {
     beforeEach(() => {
       vi.resetAllMocks();
+      setupDefaultDeviceMocks();
     });
 
     it("should return an error if the open app throw an error", async () => {
@@ -612,6 +630,7 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
       signTransactionMock.mockResolvedValueOnce(
         CommandResultFactory({
           data: {
@@ -698,7 +717,7 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
       signTransactionMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("Sign transaction failed"),
@@ -759,7 +778,7 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.EIP7730,
       });
-      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
       signTransactionMock.mockRejectedValueOnce(
         new Error("Sign transaction failed"),
       );
@@ -843,7 +862,7 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
       signTransactionMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("Sign transaction failed"),
@@ -896,7 +915,7 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
       signTransactionMock.mockResolvedValueOnce(
         CommandResultFactory({
           error: new InvalidStatusWordError("Sign transaction failed"),
@@ -947,7 +966,7 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
       });
-      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
 
       // Create an error with the user refusal error code
       const userRefusalError = new InvalidStatusWordError(
@@ -1006,7 +1025,7 @@ describe("SignTransactionDeviceAction", () => {
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.EIP7730,
       });
-      provideContextsMock.mockResolvedValueOnce(Just(void 0));
+      provideContextsMock.mockResolvedValueOnce(Right(void 0));
 
       // Create an error with a different error code (not user refusal)
       const otherError = new InvalidStatusWordError("Some other error");

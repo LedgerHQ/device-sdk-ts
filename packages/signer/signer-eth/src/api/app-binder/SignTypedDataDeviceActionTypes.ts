@@ -28,6 +28,7 @@ export enum SignTypedDataDAStateStep {
   PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
   SIGN_TYPED_DATA = "signer.eth.steps.signTypedData",
   SIGN_TYPED_DATA_LEGACY = "signer.eth.steps.signTypedDataLegacy",
+  DETECT_BLIND_SIGNING = "signer.eth.steps.detectBlindSigning",
 }
 
 export type SignTypedDataDAOutput = Signature;
@@ -77,6 +78,8 @@ export type SignTypedDataDAInternalState = {
   readonly from: string | null;
   readonly typedDataContext: ProvideEIP712ContextTaskArgs | null;
   readonly signature: Signature | null;
+  readonly isBlindSign: boolean | null;
+  readonly usedFallback: boolean;
 };
 
 export type SignTypedDataDAReturnType = ExecuteDeviceActionReturnType<
