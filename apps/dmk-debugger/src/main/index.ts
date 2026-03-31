@@ -61,6 +61,7 @@ let mainWindow: BrowserWindow | null = null;
 let activeAiAbort: AbortController | null = null;
 let serverRunning = false;
 let actualPort = 0;
+let recording = false;
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -232,8 +233,22 @@ function registerIpcHandlers(): void {
   ipcMain.handle("models:list", () => fetchSupportedModels());
 
   ipcMain.handle("server:status", () => {
-    return { running: serverRunning, port: actualPort, logCount: store.size };
+    return {
+      running: serverRunning,
+      port: actualPort,
+      logCount: store.size,
+      recording,
+    };
   });
+
+  ipcMain.handle("recording:set", (_event, value: boolean) => {
+    recording = value;
+    console.log(`[ipc] recording:set → ${recording}`);
+    mainWindow?.webContents.send("recording:changed", recording);
+    return recording;
+  });
+
+  ipcMain.handle("recording:get", () => recording);
 }
 
 function wireStoreToRenderer(): void {
@@ -263,6 +278,7 @@ app.whenReady().then(async () => {
       const { start } = createLogServer({
         port,
         store,
+        isRecording: () => recording,
         onReady: (p) => {
           console.log(`DMK log server listening on http://localhost:${p}`);
           actualPort = p;

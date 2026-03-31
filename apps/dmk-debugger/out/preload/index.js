@@ -58,6 +58,13 @@ const dmk = {
     return () => electron.ipcRenderer.removeListener("chat:error", handler);
   },
   getServerStatus: () => electron.ipcRenderer.invoke("server:status"),
+  setRecording: (value) => electron.ipcRenderer.invoke("recording:set", value),
+  getRecording: () => electron.ipcRenderer.invoke("recording:get"),
+  onRecordingChanged: (cb) => {
+    const handler = (_, value) => cb(value);
+    electron.ipcRenderer.on("recording:changed", handler);
+    return () => electron.ipcRenderer.removeListener("recording:changed", handler);
+  },
   onServerReady: (cb) => {
     const handler = (_, port) => cb(port);
     electron.ipcRenderer.on("server:ready", handler);

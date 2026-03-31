@@ -817,7 +817,7 @@ function handleToolCall(req, store2) {
   }
 }
 function createLogServer(options) {
-  const { port, store: store2, onReady, onError } = options;
+  const { port, store: store2, isRecording, onReady, onError } = options;
   const app = express();
   let server = null;
   app.use(express.json({ limit: "10mb" }));
@@ -842,18 +842,26 @@ function createLogServer(options) {
     });
   });
   app.post("/logs", (req, res) => {
+    if (!isRecording()) {
+      res.json({ accepted: 0, discarded: true });
+      return;
+    }
     const body = req.body;
-    console.log(`[server] POST /logs body type=${typeof body}, isArray=${Array.isArray(body)}, keys=${body && typeof body === "object" ? Object.keys(body).join(",") : "n/a"}`);
     if (Array.isArray(body)) {
       const entries = store2.addBatch(body);
-      console.log(`[server] Accepted batch of ${entries.length} logs (store size: ${store2.size})`);
+      console.log(
+        `[server] Accepted batch of ${entries.length} logs (store size: ${store2.size})`
+      );
       res.json({ accepted: entries.length });
     } else if (body && typeof body === "object") {
-      const entry = store2.add(body);
-      console.log(`[server] Accepted log #${entry.id}: ${entry.message} (store size: ${store2.size})`);
+      const entry = store2.add(
+        body
+      );
+      console.log(
+        `[server] Accepted log #${entry.id}: ${entry.message} (store size: ${store2.size})`
+      );
       res.json({ accepted: 1, id: entry.id });
     } else {
-      console.log(`[server] Rejected: body is ${typeof body}`);
       res.status(400).json({ error: "Expected a log entry object or array" });
     }
   });
@@ -1095,6 +1103,7 @@ let mainWindow = null;
 let activeAiAbort = null;
 let serverRunning = false;
 let actualPort = 0;
+let recording = true;
 function createWindow() {
   mainWindow = new electron.BrowserWindow({
     width: 1200,
@@ -1239,8 +1248,20 @@ function registerIpcHandlers() {
   });
   electron.ipcMain.handle("models:list", () => fetchSupportedModels());
   electron.ipcMain.handle("server:status", () => {
-    return { running: serverRunning, port: actualPort, logCount: store.size };
+    return {
+      running: serverRunning,
+      port: actualPort,
+      logCount: store.size,
+      recording
+    };
   });
+  electron.ipcMain.handle("recording:set", (_event, value) => {
+    recording = value;
+    console.log(`[ipc] recording:set → ${recording}`);
+    mainWindow?.webContents.send("recording:changed", recording);
+    return recording;
+  });
+  electron.ipcMain.handle("recording:get", () => recording);
 }
 function wireStoreToRenderer() {
   store.on("entry", (entry) => {
@@ -1265,6 +1286,7 @@ electron.app.whenReady().then(async () => {
       const { start } = createLogServer({
         port,
         store,
+        isRecording: () => recording,
         onReady: (p) => {
           console.log(`DMK log server listening on http://localhost:${p}`);
           actualPort = p;

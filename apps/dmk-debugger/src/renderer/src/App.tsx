@@ -23,6 +23,7 @@ export default function App(): JSX.Element {
     "starting" | "running" | "error"
   >("starting");
   const [serverPort, setServerPort] = useState(0);
+  const [recording, setRecording] = useState(false);
   const [dividerX, setDividerX] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
   const panelsRef = useRef<HTMLDivElement>(null);
@@ -33,7 +34,9 @@ export default function App(): JSX.Element {
         setServerStatus("running");
         setServerPort(status.port);
       }
+      setRecording(status.recording);
     });
+    window.dmk.getRecording().then(setRecording);
     const offReady = window.dmk.onServerReady((port) => {
       setServerStatus("running");
       setServerPort(port);
@@ -41,9 +44,11 @@ export default function App(): JSX.Element {
     const offError = window.dmk.onServerError(() => {
       setServerStatus("error");
     });
+    const offRec = window.dmk.onRecordingChanged(setRecording);
     return () => {
       offReady();
       offError();
+      offRec();
     };
   }, []);
 
@@ -106,6 +111,12 @@ export default function App(): JSX.Element {
 
   return (
     <div style={styles.root}>
+      <style>{`
+        @keyframes rec-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5); }
+          50% { box-shadow: 0 0 6px 2px rgba(74, 222, 128, 0.4); }
+        }
+      `}</style>
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <span style={styles.logo}>DMK</span>
@@ -129,6 +140,31 @@ export default function App(): JSX.Element {
                 ? "Server Error"
                 : "Starting..."}
           </span>
+          <div style={styles.divider} />
+          <span
+            style={{
+              ...styles.recLight,
+              background: recording ? "#4ade80" : "#334155",
+              animation: recording
+                ? "rec-pulse 1.5s ease-in-out infinite"
+                : "none",
+            }}
+          />
+          {recording ? (
+            <button
+              style={styles.btnRecActive}
+              onClick={() => window.dmk.setRecording(false)}
+            >
+              Pause
+            </button>
+          ) : (
+            <button
+              style={styles.btnRecInactive}
+              onClick={() => window.dmk.setRecording(true)}
+            >
+              Record
+            </button>
+          )}
           <div style={styles.divider} />
           <span style={styles.stat}>{logs.length} logs</span>
           {errorCount > 0 && (
@@ -278,6 +314,32 @@ const styles: Record<string, React.CSSProperties> = {
   statError: {
     fontSize: 11,
     color: "#f87171",
+    fontWeight: 600,
+  },
+  recLight: {
+    width: 9,
+    height: 9,
+    borderRadius: "50%",
+    flexShrink: 0,
+  },
+  btnRecActive: {
+    padding: "2px 8px",
+    border: "1px solid rgba(74, 222, 128, 0.3)",
+    borderRadius: 4,
+    background: "transparent",
+    color: "#4ade80",
+    cursor: "pointer",
+    fontSize: 10,
+    fontWeight: 600,
+  },
+  btnRecInactive: {
+    padding: "2px 8px",
+    border: "1px solid #334155",
+    borderRadius: 4,
+    background: "transparent",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 10,
     fontWeight: 600,
   },
   btnGhost: {

@@ -6,6 +6,7 @@ import type { LogStore } from "./store";
 export interface ServerOptions {
   port: number;
   store: LogStore;
+  isRecording: () => boolean;
   onReady?: (port: number) => void;
   onError?: (error: Error) => void;
 }
@@ -15,7 +16,7 @@ export function createLogServer(options: ServerOptions): {
   start: () => Promise<Server>;
   stop: () => Promise<void>;
 } {
-  const { port, store, onReady, onError } = options;
+  const { port, store, isRecording, onReady, onError } = options;
   const app = express();
   let server: Server | null = null;
 
@@ -45,19 +46,33 @@ export function createLogServer(options: ServerOptions): {
   });
 
   app.post("/logs", (req, res) => {
+    if (!isRecording()) {
+      res.json({ accepted: 0, discarded: true });
+      return;
+    }
+
     const body = req.body as unknown;
-    console.log(`[server] POST /logs body type=${typeof body}, isArray=${Array.isArray(body)}, keys=${body && typeof body === "object" ? Object.keys(body as object).join(",") : "n/a"}`);
 
     if (Array.isArray(body)) {
       const entries = store.addBatch(body);
-      console.log(`[server] Accepted batch of ${entries.length} logs (store size: ${store.size})`);
+      console.log(
+        `[server] Accepted batch of ${entries.length} logs (store size: ${store.size})`,
+      );
       res.json({ accepted: entries.length });
     } else if (body && typeof body === "object") {
-      const entry = store.add(body as { level: "info"; message: string; tag: string; timestamp: string });
-      console.log(`[server] Accepted log #${entry.id}: ${entry.message} (store size: ${store.size})`);
+      const entry = store.add(
+        body as {
+          level: "info";
+          message: string;
+          tag: string;
+          timestamp: string;
+        },
+      );
+      console.log(
+        `[server] Accepted log #${entry.id}: ${entry.message} (store size: ${store.size})`,
+      );
       res.json({ accepted: 1, id: entry.id });
     } else {
-      console.log(`[server] Rejected: body is ${typeof body}`);
       res.status(400).json({ error: "Expected a log entry object or array" });
     }
   });
@@ -70,7 +85,12 @@ export function createLogServer(options: ServerOptions): {
   app.get("/logs", (req, res) => {
     const { level, tag, search, since } = req.query;
     const entries = store.query({
-      level: level as string | undefined as "debug" | "info" | "warn" | "error" | undefined,
+      level: level as string | undefined as
+        | "debug"
+        | "info"
+        | "warn"
+        | "error"
+        | undefined,
       tag: tag as string | undefined,
       search: search as string | undefined,
       since: since ? Number(since) : undefined,

@@ -27,7 +27,11 @@ export interface DmkApi {
     running: boolean;
     port: number;
     logCount: number;
+    recording: boolean;
   }>;
+  setRecording: (value: boolean) => Promise<boolean>;
+  getRecording: () => Promise<boolean>;
+  onRecordingChanged: (cb: (value: boolean) => void) => () => void;
   onServerReady: (cb: (port: number) => void) => () => void;
   onServerError: (cb: (msg: string) => void) => () => void;
 }
@@ -98,6 +102,14 @@ const dmk: DmkApi = {
   },
 
   getServerStatus: () => ipcRenderer.invoke("server:status"),
+
+  setRecording: (value) => ipcRenderer.invoke("recording:set", value),
+  getRecording: () => ipcRenderer.invoke("recording:get"),
+  onRecordingChanged: (cb) => {
+    const handler = (_: unknown, value: boolean): void => cb(value);
+    ipcRenderer.on("recording:changed", handler);
+    return () => ipcRenderer.removeListener("recording:changed", handler);
+  },
 
   onServerReady: (cb) => {
     const handler = (_: unknown, port: number): void => cb(port);
