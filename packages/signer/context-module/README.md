@@ -74,6 +74,16 @@ const contextModule = new ContextModuleBuilder({
   .build();
 ```
 
+You can set a source identifier that will be included in blind signing reports. This helps distinguish which integration triggered a blind signing event. The default value is `"third-party"`.
+
+```ts
+const contextModule = new ContextModuleBuilder({
+  originToken: "origin-token", // replace with your origin token
+})
+  .setSource("my-app-name")
+  .build();
+```
+
 It is also possible to instantiate the context module without the default loaders.
 
 ```ts

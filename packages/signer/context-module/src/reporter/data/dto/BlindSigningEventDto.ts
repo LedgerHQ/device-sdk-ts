@@ -15,10 +15,10 @@ export type BlindSigningEventDto = {
   signatureId: string;
   signingMethod: BlindSigningMethod;
   source: string;
-  isBlindSign?: boolean;
+  isBlindSign: boolean;
   chainId: number | null;
   targetAddress: string | null;
-  blindSignReason: BlindSignReason;
+  blindSignReason: BlindSignReason | null;
   modelId: BlindSigningModelId;
   signerAppVersion: string;
   deviceVersion: string | null;

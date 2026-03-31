@@ -28,8 +28,8 @@ export class HttpBlindSigningReporterDatasource
     try {
       await axios.request({
         method: "POST",
-        url: `${this.config.reporter.url}/v1/blind-signing-events`,
-        data: params,
+        url: `${this.config.reporter.url}/blind-signing-events`,
+        data: { ...params, source: this.config.source },
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,

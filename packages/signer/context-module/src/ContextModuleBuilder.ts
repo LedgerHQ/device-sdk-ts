@@ -25,7 +25,7 @@ import { DefaultContextModule } from "./DefaultContextModule";
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
-const DEFAULT_REPORTER_URL = "https://blind-signing-reporting.api.ledger.com";
+const DEFAULT_REPORTER_URL = "https://ingest.aws.stg.ldg-tech.com/ingest/v1";
 
 /**
  * Default configuration for the context module
@@ -49,6 +49,7 @@ export const DEFAULT_CONFIG: Readonly<ContextModuleConfig> = Object.freeze({
     url: DEFAULT_REPORTER_URL,
   }),
   datasource: Object.freeze({ proxy: "default" }),
+  source: "third-party",
 });
 
 /**
@@ -178,6 +179,17 @@ export class ContextModuleBuilder {
    */
   setReporterConfig(reporterConfig: ContextModuleReporterConfig) {
     this.config.reporter = reporterConfig;
+    return this;
+  }
+
+  /**
+   * Set the source identifier included in blind signing reports
+   *
+   * @param source
+   * @returns this
+   */
+  setSource(source: string) {
+    this.config.source = source;
     return this;
   }
 
