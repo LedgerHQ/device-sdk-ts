@@ -1071,39 +1071,13 @@ async function streamAnalysis(prompt, onChunk, onDone, onError, signal, model) {
   }
 }
 const LOG_SERVER_PORTS = [8432, 8433, 8434];
-const ACTION_WINDOW_MS = 5e3;
-function hasTag(entry, pattern) {
-  const tags = Array.isArray(entry.tag) ? entry.tag : [entry.tag];
-  return tags.some((t) => t.toLowerCase().includes(pattern));
-}
-function isActionLog(entry) {
-  return hasTag(entry, "XStateDeviceAction") || hasTag(entry, "signer");
-}
-function filterRelevantLogs(entries) {
-  const actionTimestamps = entries.filter(isActionLog).map((e) => e.receivedAt);
-  function nearAction(ts) {
-    return actionTimestamps.some((at) => Math.abs(ts - at) <= ACTION_WINDOW_MS);
-  }
-  return entries.filter((entry) => {
-    if (isActionLog(entry)) return true;
-    return nearAction(entry.receivedAt);
-  });
-}
-let lastActionAt = 0;
-function isRelevantRealtime(entry) {
-  if (isActionLog(entry)) {
-    lastActionAt = Date.now();
-    return true;
-  }
-  return Date.now() - lastActionAt <= ACTION_WINDOW_MS;
-}
 const store = new LogStore();
 const analyzer = new AnalyzerService();
 let mainWindow = null;
 let activeAiAbort = null;
 let serverRunning = false;
 let actualPort = 0;
-let recording = true;
+let recording = false;
 function createWindow() {
   mainWindow = new electron.BrowserWindow({
     width: 1200,
@@ -1131,13 +1105,12 @@ function createWindow() {
 }
 function registerIpcHandlers() {
   electron.ipcMain.handle("logs:getAll", () => {
-    const all = filterRelevantLogs(store.getAll());
+    const all = store.getAll();
     console.log(`[ipc] logs:getAll → returning ${all.length} entries`);
     return all;
   });
   electron.ipcMain.handle("logs:clear", () => {
     store.clear();
-    lastActionAt = 0;
     console.log(`[ipc] logs:clear → store size after clear: ${store.size}`);
     mainWindow?.webContents.send("logs:cleared");
   });
@@ -1164,7 +1137,7 @@ function registerIpcHandlers() {
     if (activeAiAbort) activeAiAbort.abort();
     const ac = new AbortController();
     activeAiAbort = ac;
-    const logs = filterRelevantLogs(store.getAll());
+    const logs = store.getAll();
     if (logs.length === 0) {
       event.sender.send("ai:error", "No DMK logs collected yet.");
       return;
@@ -1265,7 +1238,6 @@ function registerIpcHandlers() {
 }
 function wireStoreToRenderer() {
   store.on("entry", (entry) => {
-    if (!isRelevantRealtime(entry)) return;
     console.log(
       `[ipc] Forwarding log #${entry.id} to renderer (window=${!!mainWindow})`
     );
