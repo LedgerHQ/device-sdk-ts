@@ -1,9 +1,16 @@
 import React, { useMemo } from "react";
 import {
+  BackupStorageCommand,
+  type BackupStorageCommandErrorCodes,
+  type BackupStorageCommandResponse,
   BatteryStatusType,
   CloseAppCommand,
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
+  GetAppStorageInfoCommand,
+  type GetAppStorageInfoCommandArgs,
+  type GetAppStorageInfoCommandErrorCodes,
+  type GetAppStorageInfoCommandResponse,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
   type GetBatteryStatusResponse,
@@ -115,6 +122,38 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
           statusType: BatteryStatusType.BATTERY_CURRENT,
         },
       } satisfies CommandProps<GetBatteryStatusArgs, GetBatteryStatusResponse>,
+      {
+        title: "Get app storage info",
+        description: "Get the app storage info of the device",
+        sendCommand: ({ appName }) => {
+          const command = new GetAppStorageInfoCommand({ appName });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { appName: "" },
+      } satisfies CommandProps<
+        GetAppStorageInfoCommandArgs,
+        GetAppStorageInfoCommandResponse,
+        GetAppStorageInfoCommandErrorCodes
+      >,
+      {
+        title: "Backup app storage",
+        description: "Backup the app storage of the device",
+        sendCommand: () => {
+          const command = new BackupStorageCommand();
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: undefined,
+      } satisfies CommandProps<
+        void,
+        BackupStorageCommandResponse,
+        BackupStorageCommandErrorCodes
+      >,
     ],
     [selectedSessionId, dmk],
   );

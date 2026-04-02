@@ -17,11 +17,24 @@ export {
   CommandResultStatus,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
+export {
+  BackupStorageCommand,
+  type BackupStorageCommandErrorCodes,
+  type BackupStorageCommandResponse,
+  type BackupStorageCommandResult,
+} from "@api/command/os/BackupStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
+export {
+  GetAppStorageInfoCommand,
+  type GetAppStorageInfoCommandArgs,
+  type GetAppStorageInfoCommandErrorCodes,
+  type GetAppStorageInfoCommandResponse,
+  type GetAppStorageInfoCommandResult,
+} from "@api/command/os/GetAppStorageInfoCommand";
 export {
   GetBackgroundImageSizeCommand,
   GetBackgroundImageSizeCommandError,
