@@ -1,4 +1,5 @@
 import {
+  type ErrorLanguageNotFound,
   type InvalidBatteryDataError,
   type InvalidBatteryStatusTypeError,
   type InvalidGetFirmwareMetadataResponseError,
@@ -22,6 +23,7 @@ export type CommandSuccessResult<Data> = {
 export type CommandErrorResult<SpecificErrorCodes = void> = {
   error:
     | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
+    | ErrorLanguageNotFound
     | InvalidBatteryDataError
     | InvalidBatteryStatusTypeError
     | InvalidResponseFormatError
@@ -43,6 +45,7 @@ export function CommandResultFactory<Data, SpecificErrorCodes = void>({
       data?: undefined;
       error:
         | DeviceExchangeError<SpecificErrorCodes>
+        | ErrorLanguageNotFound
         | InvalidBatteryDataError
         | InvalidBatteryStatusTypeError
         | InvalidResponseFormatError

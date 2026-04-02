@@ -8,6 +8,7 @@ export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
 export { type Command } from "@api/command/Command";
 export {
+  ErrorLanguageNotFound,
   InvalidGetFirmwareMetadataResponseError,
   InvalidResponseFormatError,
   InvalidStatusWordError,
@@ -123,6 +124,7 @@ export type {
   GoToDashboardDARequiredInteraction,
   GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
+export { InstallLanguagePackageDeviceAction } from "@api/device-action/os/InstallLanguagePackage/InstallLanguagePackageDeviceAction";
 export { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOrUpdateApps/InstallOrUpdateAppsDeviceAction";
 export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction";

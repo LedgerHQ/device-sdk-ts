@@ -26,6 +26,11 @@ import {
   type InstallAppDAIntermediateValue,
   type InstallAppDAOutput,
   InstallAppDeviceAction,
+  type InstallLanguagePackageDAError,
+  type InstallLanguagePackageDAInput,
+  type InstallLanguagePackageDAIntermediateValue,
+  type InstallLanguagePackageDAOutput,
+  InstallLanguagePackageDeviceAction,
   type InstallOrUpdateAppsDAError,
   type InstallOrUpdateAppsDAIntermediateValue,
   type InstallOrUpdateAppsDAOutput,
@@ -194,6 +199,31 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GoToDashboardDAInput,
         GoToDashboardDAError,
         GoToDashboardDAIntermediateValue
+      >,
+      {
+        title: "Install language package (device info)",
+        description:
+          'Go to dashboard, then language "english" deletes all language packs (0xFF); otherwise resolves catalog metadata for that language via Manager API',
+        executeDeviceAction: ({ unlockTimeout, language }, inspect) => {
+          const deviceAction = new InstallLanguagePackageDeviceAction({
+            input: { unlockTimeout, language },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          unlockTimeout: UNLOCK_TIMEOUT,
+          language: "french",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        InstallLanguagePackageDAOutput,
+        InstallLanguagePackageDAInput,
+        InstallLanguagePackageDAError,
+        InstallLanguagePackageDAIntermediateValue
       >,
       {
         title: "List apps",
