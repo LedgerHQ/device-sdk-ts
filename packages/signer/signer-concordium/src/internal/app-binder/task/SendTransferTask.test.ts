@@ -12,7 +12,7 @@ import {
   ConcordiumAppCommandError,
   ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
-import { SendInChunksTask } from "@internal/app-binder/task/SendInChunksTask";
+import { SendTransferTask } from "@internal/app-binder/task/SendTransferTask";
 
 const DERIVATION_PATH = "44'/919'/0'/0'/0'";
 
@@ -32,7 +32,7 @@ function getApduP2(cmd: SignTransferCommand): number {
   return raw[3]!;
 }
 
-describe("SendInChunksTask", () => {
+describe("SendTransferTask", () => {
   let sentCommands: SignTransferCommand[];
   let sendCommandMock: ReturnType<typeof vi.fn>;
   let apiMock: InternalApi;
@@ -65,7 +65,7 @@ describe("SendInChunksTask", () => {
 
     captureCommands(CommandResultFactory({ data: signature }));
 
-    const task = new SendInChunksTask(
+    const task = new SendTransferTask(
       apiMock,
       { derivationPath: DERIVATION_PATH, transaction },
       loggerMock,
@@ -100,7 +100,7 @@ describe("SendInChunksTask", () => {
     );
     captureCommands(...results);
 
-    const task = new SendInChunksTask(
+    const task = new SendTransferTask(
       apiMock,
       { derivationPath: DERIVATION_PATH, transaction },
       loggerMock,
@@ -134,7 +134,7 @@ describe("SendInChunksTask", () => {
 
     captureCommands(CommandResultFactory({ data: new Uint8Array(64) }));
 
-    const task = new SendInChunksTask(
+    const task = new SendTransferTask(
       apiMock,
       { derivationPath: DERIVATION_PATH, transaction },
       loggerMock,
@@ -164,7 +164,7 @@ describe("SendInChunksTask", () => {
       }),
     );
 
-    const task = new SendInChunksTask(
+    const task = new SendTransferTask(
       apiMock,
       { derivationPath: DERIVATION_PATH, transaction },
       loggerMock,
@@ -191,7 +191,7 @@ describe("SendInChunksTask", () => {
       }),
     );
 
-    const task = new SendInChunksTask(
+    const task = new SendTransferTask(
       apiMock,
       { derivationPath: DERIVATION_PATH, transaction },
       loggerMock,
@@ -219,7 +219,7 @@ describe("SendInChunksTask", () => {
       CommandResultFactory({ data: signature }),
     );
 
-    const task = new SendInChunksTask(
+    const task = new SendTransferTask(
       apiMock,
       { derivationPath: DERIVATION_PATH, transaction },
       loggerMock,
@@ -238,7 +238,7 @@ describe("SendInChunksTask", () => {
 
     captureCommands(CommandResultFactory({ data: new Uint8Array(64) }));
 
-    const task = new SendInChunksTask(
+    const task = new SendTransferTask(
       apiMock,
       { derivationPath: DERIVATION_PATH, transaction },
       loggerMock,

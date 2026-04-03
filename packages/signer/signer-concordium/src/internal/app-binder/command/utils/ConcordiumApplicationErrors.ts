@@ -11,6 +11,7 @@ export enum ConcordiumErrorCodes {
   INS_NOT_SUPPORTED = "6d00",
   CLA_NOT_SUPPORTED = "6e00",
   UNKNOWN_ERROR = "6f00",
+  UNSUPPORTED_TRANSACTION_TYPE = "unsupported_transaction_type",
 }
 
 export const CONCORDIUM_APP_ERRORS: CommandErrors<ConcordiumErrorCodes> = {
@@ -20,6 +21,7 @@ export const CONCORDIUM_APP_ERRORS: CommandErrors<ConcordiumErrorCodes> = {
   "6d00": { message: "INS not supported" },
   "6e00": { message: "CLA not supported" },
   "6f00": { message: "Unknown error" },
+  unsupported_transaction_type: { message: "Unsupported transaction type" },
 };
 
 export class ConcordiumAppCommandError extends DeviceExchangeError<ConcordiumErrorCodes> {

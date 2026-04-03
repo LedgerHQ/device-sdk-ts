@@ -16,22 +16,22 @@ import {
 import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { encodeDerivationPath } from "@internal/app-binder/command/utils/EncodeDerivationPath";
 
-type SendInChunksTaskArgs = {
+type SendTransferTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
 };
 
-export class SendInChunksTask {
+export class SendTransferTask {
   constructor(
-    private api: InternalApi,
-    private args: SendInChunksTaskArgs,
-    private logger: LoggerPublisherService,
+    private readonly api: InternalApi,
+    private readonly args: SendTransferTaskArgs,
+    private readonly logger: LoggerPublisherService,
   ) {}
 
   async run(): Promise<
     CommandResult<SignTransferCommandResponse, ConcordiumErrorCodes>
   > {
-    this.logger.debug("[run] Starting SendInChunksTask", {
+    this.logger.debug("[run] Starting SendTransferTask", {
       data: {
         derivationPath: this.args.derivationPath,
         transactionLength: this.args.transaction.length,
