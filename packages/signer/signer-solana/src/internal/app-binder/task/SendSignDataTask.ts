@@ -15,6 +15,7 @@ import {
 } from "./SendCommandInChunksTask";
 
 const PATH_SIZE = 4;
+const HEADER_SIZE = 2;
 
 type SignDataTaskArgs = {
   sendingData: Uint8Array;
@@ -35,7 +36,7 @@ export class SignDataTask {
 
     const paths = DerivationPathUtils.splitPath(derivationPath);
     const builder = new ByteArrayBuilder(
-      sendingData.length + 2 + paths.length * PATH_SIZE,
+      sendingData.length + HEADER_SIZE + paths.length * PATH_SIZE,
     );
     // add the number of signers
     builder.add8BitUIntToData(1);

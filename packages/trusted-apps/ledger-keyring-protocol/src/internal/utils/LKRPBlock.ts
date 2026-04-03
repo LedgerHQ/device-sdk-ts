@@ -15,6 +15,8 @@ import { GeneralTags } from "@internal/models/Tags";
 
 import { TLVParser } from "./TLVParser";
 
+const SIGNATURE_TLV_HEADER_LENGTH = 2;
+
 export class LKRPBlock {
   private hashValue: Maybe<string> = Nothing; // Cache hash value for performance
   private data: Maybe<Either<LKRPParsingError, LKRPBlockParsedData>>;
@@ -87,7 +89,7 @@ export class LKRPBlock {
           `Commands:${data.commands
             .flatMap((cmd) => cmd.split("\n").map((l) => `\n  ${l}`))
             .join("")}`,
-          `Signature: ${bufferToHexaString(data.signature.slice(2), false)}`,
+          `Signature: ${bufferToHexaString(data.signature.slice(SIGNATURE_TLV_HEADER_LENGTH), false)}`,
         ].join("\n"),
       );
   }

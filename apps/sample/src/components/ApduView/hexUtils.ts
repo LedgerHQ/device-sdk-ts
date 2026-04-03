@@ -1,10 +1,15 @@
+const HEX_RADIX = 16;
+const HEX_CHARS_PER_BYTE = 2;
+
 /**
  * Validates if a string is a valid hex string (even length, only hex characters).
  * Whitespace is ignored.
  */
 export function isValidHexString(str: string): boolean {
   const cleaned = str.replace(/\s/g, "");
-  return /^[0-9a-fA-F]*$/.test(cleaned) && cleaned.length % 2 === 0;
+  return (
+    /^[0-9a-fA-F]*$/.test(cleaned) && cleaned.length % HEX_CHARS_PER_BYTE === 0
+  );
 }
 
 /**
@@ -13,9 +18,12 @@ export function isValidHexString(str: string): boolean {
  */
 export function hexStringToUint8Array(hex: string): Uint8Array {
   const cleaned = hex.replace(/\s/g, "");
-  const bytes = new Uint8Array(cleaned.length / 2);
-  for (let i = 0; i < cleaned.length; i += 2) {
-    bytes[i / 2] = parseInt(cleaned.substring(i, i + 2), 16);
+  const bytes = new Uint8Array(cleaned.length / HEX_CHARS_PER_BYTE);
+  for (let i = 0; i < cleaned.length; i += HEX_CHARS_PER_BYTE) {
+    bytes[i / HEX_CHARS_PER_BYTE] = parseInt(
+      cleaned.substring(i, i + HEX_CHARS_PER_BYTE),
+      16,
+    );
   }
   return bytes;
 }
@@ -28,7 +36,9 @@ export function hexStringToUint8Array(hex: string): Uint8Array {
  */
 export function toPlainHexString(raw: Uint8Array): string {
   return Array.from(raw)
-    .map((byte) => byte.toString(16).padStart(2, "0").toUpperCase())
+    .map((byte) =>
+      byte.toString(HEX_RADIX).padStart(HEX_CHARS_PER_BYTE, "0").toUpperCase(),
+    )
     .join("");
 }
 
@@ -43,7 +53,10 @@ export function toPlainHexString(raw: Uint8Array): string {
 export function formatDisplayableHexString(raw: Uint8Array): string {
   return Array.from(raw)
     .map((byte) => {
-      const hex = byte.toString(16).padStart(2, "0").toUpperCase();
+      const hex = byte
+        .toString(HEX_RADIX)
+        .padStart(HEX_CHARS_PER_BYTE, "0")
+        .toUpperCase();
       // Insert word joiner (zero-width non-breaking) between the two hex characters
       return hex[0] + "\u2060" + hex[1];
     })

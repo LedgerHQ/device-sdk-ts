@@ -14,6 +14,9 @@ import { DataStore } from "@internal/data-store/model/DataStore";
 import { type DataStoreService } from "@internal/data-store/service/DataStoreService";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
+const HEX_RADIX = 16;
+const HEX_BYTE_LENGTH = 2;
+
 export type SendSignMessageTaskArgs = {
   derivationPath: string;
   message: string;
@@ -58,7 +61,7 @@ export class SendSignMessageTask {
         chunksCount: chunks.length,
         merkleRoot: merkleRoot
           ? Array.from(merkleRoot)
-              .map((b) => b.toString(16).padStart(2, "0"))
+              .map((b) => b.toString(HEX_RADIX).padStart(HEX_BYTE_LENGTH, "0"))
               .join("")
           : null,
       },

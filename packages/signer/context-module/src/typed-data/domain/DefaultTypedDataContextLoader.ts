@@ -38,6 +38,11 @@ import type { TypedDataDataSource } from "@/typed-data/data/TypedDataDataSource"
 import { typedDataTypes } from "@/typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
 
+const SELECTOR_WITH_PREFIX_LENGTH = 10;
+const HEX_RADIX = 16;
+const HEX_PAD_LENGTH = 2;
+const ADDRESS_HEX_LENGTH = 40;
+
 type ResolvedProxy = {
   resolvedAddress: string;
   context?: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>;
@@ -305,7 +310,7 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
       const selector = this.extractHexaString(
         filters.find((filter) => filter.type === "calldata-selector"),
         typedData,
-        data.slice(0, 10),
+        data.slice(0, SELECTOR_WITH_PREFIX_LENGTH),
       );
 
       // Get to
@@ -407,11 +412,10 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
   }
 
   private convertAddressToHexaString(address: Uint8Array): HexaString {
-    // Address size is 20 bytes so 40 characters, padded with zeros on the left
     return `0x${Array.from(address, (byte) =>
-      byte.toString(16).padStart(2, "0"),
+      byte.toString(HEX_RADIX).padStart(HEX_PAD_LENGTH, "0"),
     )
       .join("")
-      .padStart(40, "0")}`;
+      .padStart(ADDRESS_HEX_LENGTH, "0")}`;
   }
 }

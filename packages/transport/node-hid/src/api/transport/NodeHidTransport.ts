@@ -44,6 +44,9 @@ import {
   type NodeHidApduSenderDependencies,
 } from "@api/transport/NodeHidApduSender";
 
+const HEX_RADIX = 16;
+const PRODUCT_ID_SHIFT = 8;
+
 type NodeHIDAPI = typeof NodeHIDAPI;
 const NodeHIDAPI = { devicesAsync, HIDAsync } as const;
 
@@ -216,10 +219,10 @@ export class NodeHidTransport implements Transport {
       Nothing: () => {
         // [ASK] Or we just ignore the not recognized device ? And log them
         this._logger.warn(
-          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
+          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(HEX_RADIX)}`,
         );
         throw new DeviceNotRecognizedError(
-          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(16)}`,
+          `Device not recognized: hidDevice.productId: 0x${hidDevice.productId.toString(HEX_RADIX)}`,
         );
       },
     });
@@ -467,7 +470,7 @@ export class NodeHidTransport implements Transport {
     const matchingModel = this._deviceModelDataSource.getAllDeviceModels().find(
       (deviceModel) =>
         // outside of bootloader mode, the value that we need to identify a device model is the first byte of the actual hidDevice.productId
-        deviceModel.usbProductId === productId >> 8 ||
+        deviceModel.usbProductId === productId >> PRODUCT_ID_SHIFT ||
         deviceModel.bootloaderUsbProductId === productId,
     );
     return matchingModel ? Maybe.of(matchingModel) : Maybe.zero();
@@ -476,7 +479,7 @@ export class NodeHidTransport implements Transport {
   private getHidUsbProductId(hidDevice: NodeHIDDevice): number {
     return this.getDeviceModel(hidDevice).caseOf({
       Just: (deviceModel) => deviceModel.usbProductId,
-      Nothing: () => hidDevice.productId >> 8,
+      Nothing: () => hidDevice.productId >> PRODUCT_ID_SHIFT,
     });
   }
 
@@ -536,7 +539,7 @@ export class NodeHidTransport implements Transport {
       ] of this._deviceConnectionsByHidDevice.entries()) {
         if (
           hidDevice.vendorId === idVendor &&
-          (hidDevice.productId >> 8 === idProduct ||
+          (hidDevice.productId >> PRODUCT_ID_SHIFT === idProduct ||
             hidDevice.productId === idProduct)
         ) {
           return Just(deviceConnection);
@@ -608,7 +611,7 @@ export class NodeHidTransport implements Transport {
         const matchingHidDevice = hidDevices.find(
           (hidDevice) =>
             hidDevice.vendorId === idVendor &&
-            (hidDevice.productId >> 8 === idProduct ||
+            (hidDevice.productId >> PRODUCT_ID_SHIFT === idProduct ||
               hidDevice.productId === idProduct),
         );
 

@@ -11,6 +11,8 @@ import {
   ResultFormatter,
 } from "@root/src/domain/utils/ResultFormatter";
 
+const DELAY_BETWEEN_TESTS_MS = 2000;
+
 /**
  * Configuration for batch testing
  */
@@ -106,7 +108,9 @@ export class TestBatchFromFileUseCase<T extends SignableInput> {
         results.push(errorResult);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) =>
+        setTimeout(resolve, DELAY_BETWEEN_TESTS_MS),
+      );
     }
 
     return ResultFormatter.formatBatchResults(results, items.length, {

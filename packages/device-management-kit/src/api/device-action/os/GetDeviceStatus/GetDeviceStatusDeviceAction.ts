@@ -43,6 +43,8 @@ import {
   getDeviceStatusDAStateStep,
 } from "./types";
 
+const POLLING_INTERVAL_MS = 1000;
+
 type GetDeviceStatusMachineInternalState = {
   readonly onboarded: boolean;
   readonly locked: boolean;
@@ -358,7 +360,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
     }: {
       input: { unlockTimeout: number };
     }) =>
-      interval(1000).pipe(
+      interval(POLLING_INTERVAL_MS).pipe(
         switchMap(() =>
           from(internalApi.sendCommand(new GetAppAndVersionCommand())),
         ),

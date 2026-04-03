@@ -19,6 +19,8 @@ import styled from "styled-components/native";
 
 import { DiscoveredDeviceItem } from "./DiscoveredDeviceItem";
 
+const JSON_INDENT = 2;
+
 const Container = styled.SafeAreaView`
     flex: 1;
     background-color: ${({ theme }: ThemeProps) =>
@@ -154,7 +156,7 @@ export const ConnectDeviceScreen: React.FC = () => {
       <Container>
         <Text m={6}>
           Error while scanning for devices:{"\n"}
-          {JSON.stringify(listenToAvailableDevicesError, null, 2)}
+          {JSON.stringify(listenToAvailableDevicesError, null, JSON_INDENT)}
         </Text>
         <Button type="color" onPress={startScanning}>
           Start scan
@@ -234,7 +236,7 @@ export const ConnectDeviceScreen: React.FC = () => {
               <ErrorBanner>
                 <ErrorTitle>Error connecting to device</ErrorTitle>
                 <ErrorText>
-                  {JSON.stringify(connectionError, null, 2)}
+                  {JSON.stringify(connectionError, null, JSON_INDENT)}
                 </ErrorText>
                 <Button
                   type="shade"

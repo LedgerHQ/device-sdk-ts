@@ -3,6 +3,13 @@ import type {
   RenderPixelDataToImageResult,
 } from "@api/customLockScreenUtils/types";
 
+const GRAY_LEVELS_BASE = 2;
+const MAX_COLOR_VALUE = 255;
+const BPP_4 = 4;
+const NIBBLE_SHIFT = 4;
+const NIBBLE_MASK = 0x0f;
+const MAX_BIT_INDEX = 7;
+
 /**
  * Render packed pixel data to a displayable image.
  *
@@ -33,8 +40,8 @@ export function renderPixelDataToImage(
 
   const imageData: number[] = [];
 
-  const numLevelsOfGray = Math.pow(2, bitsPerPixel);
-  const rgbStep = 255 / (numLevelsOfGray - 1);
+  const numLevelsOfGray = Math.pow(GRAY_LEVELS_BASE, bitsPerPixel);
+  const rgbStep = MAX_COLOR_VALUE / (numLevelsOfGray - 1);
 
   // Create a 2D array to store pixel values
   const pixels256: number[][] = Array.from(Array(height), () =>
@@ -44,13 +51,13 @@ export function renderPixelDataToImage(
   // Parse packed pixel data back into pixel values
   let pixelIndex = 0;
 
-  if (bitsPerPixel === 4) {
+  if (bitsPerPixel === BPP_4) {
     // 4bpp: each byte contains 2 pixels (high nibble first)
     for (let byteIdx = 0; byteIdx < pixelData.length; byteIdx++) {
       const byte = pixelData[byteIdx]!;
 
       // High nibble (first pixel)
-      const highNibble = (byte >> 4) & 0x0f;
+      const highNibble = (byte >> NIBBLE_SHIFT) & NIBBLE_MASK;
       if (pixelIndex < width * height) {
         const y = pixelIndex % height;
         const x = width - 1 - Math.floor(pixelIndex / height);
@@ -62,7 +69,7 @@ export function renderPixelDataToImage(
       }
 
       // Low nibble (second pixel)
-      const lowNibble = byte & 0x0f;
+      const lowNibble = byte & NIBBLE_MASK;
       if (pixelIndex < width * height) {
         const y = pixelIndex % height;
         const x = width - 1 - Math.floor(pixelIndex / height);
@@ -78,7 +85,7 @@ export function renderPixelDataToImage(
     for (let byteIdx = 0; byteIdx < pixelData.length; byteIdx++) {
       const byte = pixelData[byteIdx]!;
 
-      for (let bit = 7; bit >= 0; bit--) {
+      for (let bit = MAX_BIT_INDEX; bit >= 0; bit--) {
         if (pixelIndex >= width * height) break;
 
         const y = pixelIndex % height;
@@ -86,7 +93,7 @@ export function renderPixelDataToImage(
 
         // Extract bit and invert (0 becomes white, 1 becomes black)
         const bitVal = (byte >> bit) & 1;
-        const pixelVal = bitVal ? 0 : 255;
+        const pixelVal = bitVal ? 0 : MAX_COLOR_VALUE;
 
         if (y >= 0 && y < height && x >= 0 && x < width) {
           pixels256[y]![x] = pixelVal;
@@ -103,7 +110,7 @@ export function renderPixelDataToImage(
       imageData.push(val); // R
       imageData.push(val); // G
       imageData.push(val); // B
-      imageData.push(255); // alpha
+      imageData.push(MAX_COLOR_VALUE); // alpha
     }
   }
 

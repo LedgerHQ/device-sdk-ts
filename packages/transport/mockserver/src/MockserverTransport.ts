@@ -27,6 +27,12 @@ import {
 import { type Either, Left, Right } from "purify-ts";
 import { from, mergeMap, type Observable } from "rxjs";
 
+const DEVICE_BLOCK_SIZE = 32;
+const MEMORY_SIZE_KB = 320;
+const BYTES_PER_KB = 1024;
+const DEVICE_MASK = 0x31100000;
+const STATUS_CODE_HEX_LENGTH = 4;
+
 export const mockserverIdentifier: TransportIdentifier = "MOCKSERVER";
 
 export class MockTransport implements Transport {
@@ -66,11 +72,11 @@ export class MockTransport implements Transport {
             usbProductId: 0x10,
             bootloaderUsbProductId: 0x0001,
             getBlockSize() {
-              return 32;
+              return DEVICE_BLOCK_SIZE;
             },
             usbOnly: true,
-            memorySize: 320 * 1024,
-            masks: [0x31100000],
+            memorySize: MEMORY_SIZE_KB * BYTES_PER_KB,
+            masks: [DEVICE_MASK],
           },
           transport: this.identifier,
         }));
@@ -107,11 +113,11 @@ export class MockTransport implements Transport {
           legacyUsbProductId: 0x0001,
           bootloaderUsbProductId: 0x10,
           getBlockSize() {
-            return 32;
+            return DEVICE_BLOCK_SIZE;
           },
           usbOnly: true,
-          memorySize: 320 * 1024,
-          masks: [0x31100000],
+          memorySize: MEMORY_SIZE_KB * BYTES_PER_KB,
+          masks: [DEVICE_MASK],
         },
         id: params.deviceId,
         type: session.device.connectivity_type,
@@ -157,12 +163,15 @@ export class MockTransport implements Transport {
       const apduResponse = {
         statusCode: this.mockClient.fromHexString(
           response.response.substring(
-            response.response.length - 4,
+            response.response.length - STATUS_CODE_HEX_LENGTH,
             response.response.length,
           ),
         ),
         data: this.mockClient.fromHexString(
-          response.response.substring(0, response.response.length - 4),
+          response.response.substring(
+            0,
+            response.response.length - STATUS_CODE_HEX_LENGTH,
+          ),
         ),
       } as ApduResponse;
       this.logger.debug(formatApduReceivedLog(apduResponse));

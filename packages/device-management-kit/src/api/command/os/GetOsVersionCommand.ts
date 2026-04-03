@@ -22,6 +22,10 @@ import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 import { SecureElementFlagsParser } from "./SecureElementFlagsParser";
 
+const TARGET_ID_TYPE_MASK = 0xf0000000;
+const TARGET_ID_TYPE_APPLICATION = 0x30000000;
+const SE_DATA_MIN_LENGTH = 5;
+
 /**
  * Response of the GetOsVersionCommand.
  */
@@ -159,7 +163,8 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
       seFlags = new Uint8Array();
     }
 
-    const isBootloader = (targetId & 0xf0000000) !== 0x30000000;
+    const isBootloader =
+      (targetId & TARGET_ID_TYPE_MASK) !== TARGET_ID_TYPE_APPLICATION;
     const isOsu = version.includes("-osu");
     let seVersion: string = "";
     let mcuSephVersion: string = "";
@@ -176,7 +181,7 @@ export class GetOsVersionCommand implements Command<GetOsVersionResponse> {
 
       const seData = parser.extractFieldLVEncoded();
       if (seData) {
-        if (seData.length >= 5) {
+        if (seData.length >= SE_DATA_MIN_LENGTH) {
           // It means it's a version followed by the seTargetId
           seVersion = parser.encodeToString(seData);
           seTargetId = parseInt(

@@ -17,7 +17,8 @@ import {
 
 // const { inspect } = createBrowserInspector();
 
-const TRANSPORT_BUSY_WAIT_TIME = 10000; // 10 seconds
+const TRANSPORT_BUSY_WAIT_TIME = 10000;
+const BUSY_STATUS_CODE_HIGH = 0x66;
 
 type DeviceDisconnectedEvent = {
   type: "DeviceDisconnected";
@@ -313,7 +314,7 @@ function makeStateMachine({
           return false;
         }
         return (
-          event.apduResponse.statusCode[0] === 0x66 &&
+          event.apduResponse.statusCode[0] === BUSY_STATUS_CODE_HIGH &&
           event.apduResponse.statusCode[1] === 0x01
         );
       },

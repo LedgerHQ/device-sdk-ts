@@ -20,6 +20,10 @@ import { type Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 import { FRAME_SIZE } from "@api/data/NodeHidConfig";
 import { NodeHidSendReportError } from "@api/model/Errors";
 
+const MAX_CHANNEL_VALUE = 0xffff;
+const CHANNEL_BYTE_LENGTH = 2;
+const DEVICE_OPEN_DELAY_MS = 300;
+
 export type NodeHidApduSenderDependencies = {
   device: NodeHIDDevice;
 };
@@ -53,7 +57,10 @@ export class NodeHidApduSender
     loggerFactory,
   }: NodeHidApduSenderConstructorArgs) {
     const channel = Maybe.of(
-      FramerUtils.numberToByteArray(Math.floor(Math.random() * 0xffff), 2),
+      FramerUtils.numberToByteArray(
+        Math.floor(Math.random() * MAX_CHANNEL_VALUE),
+        CHANNEL_BYTE_LENGTH,
+      ),
     );
     this.dependencies = dependencies;
     this.apduSenderFactory = apduSenderFactory;
@@ -148,7 +155,7 @@ export class NodeHidApduSender
       throw new Error("Missing device path");
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 300)); //make sure the device is opened on the OS level
+    await new Promise((resolve) => setTimeout(resolve, DEVICE_OPEN_DELAY_MS));
 
     this.hidAsync = Maybe.of(
       await HIDAsync.open(this.dependencies.device.path, {

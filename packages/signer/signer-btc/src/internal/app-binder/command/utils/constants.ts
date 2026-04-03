@@ -12,4 +12,8 @@ export enum ClientCommandCodes {
   GET_MORE_ELEMENTS = 0xa0,
 }
 
-export const SW_INTERRUPTED_EXECUTION = Uint8Array.from([0xe0, 0x00]);
+const SW_INTERRUPTED_EXECUTION_BYTE = 0xe0;
+export const SW_INTERRUPTED_EXECUTION = Uint8Array.from([
+  SW_INTERRUPTED_EXECUTION_BYTE,
+  0x00,
+]);

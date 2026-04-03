@@ -10,6 +10,14 @@ import { derivationPathAsString } from "./derivationPath";
 import { eitherSeqRecord } from "./eitherSeqRecord";
 import { LKRPCommand } from "./LKRPCommand";
 
+const COMMAND_TAG_MIN = 0x10;
+const COMMAND_TAG_MAX = 0x3f;
+const HEX_RADIX = 16;
+const HEX_BYTE_LENGTH = 2;
+const TLV_HEADER_LENGTH = 2;
+const INT_LENGTH_UINT16 = 2;
+const INT_LENGTH_UINT32 = 4;
+
 type ParserValue = Either<
   LKRPParsingError,
   | { tag: GeneralTags.Null; value: null }
@@ -116,10 +124,12 @@ export class TLVParser {
 
   parseCommandBytes(): Either<LKRPParsingError, Uint8Array> {
     return this.parse().chain(({ tag, value }) =>
-      tag < 0x10 || tag > 0x3f || !(value instanceof Uint8Array)
+      tag < COMMAND_TAG_MIN ||
+      tag > COMMAND_TAG_MAX ||
+      !(value instanceof Uint8Array)
         ? Left(
             new LKRPParsingError(
-              `Invalid command type: 0x${tag.toString(16).padStart(2, "0")}`,
+              `Invalid command type: 0x${tag.toString(HEX_RADIX).padStart(HEX_BYTE_LENGTH, "0")}`,
             ),
           )
         : Right(value),
@@ -134,7 +144,7 @@ export class TLVParser {
     return bytes
       .chain<LKRPParsingError, LKRPCommandData>((value) => {
         const type = value[0];
-        this.offset -= value.length - 2; // Adjust offset to the start of the command
+        this.offset -= value.length - TLV_HEADER_LENGTH; // Adjust offset to the start of the command
         switch (type) {
           // https://ledgerhq.atlassian.net/wiki/spaces/TA/pages/4105207815/ARCH+LKRP+-+v1+specifications#Seed-(0x10)
           case CommandTags.Seed:
@@ -181,7 +191,7 @@ export class TLVParser {
           default:
             return Left(
               new LKRPParsingError(
-                `Unsupported command type: 0x${type?.toString(16).padStart(2, "0")}`,
+                `Unsupported command type: 0x${type?.toString(HEX_RADIX).padStart(HEX_BYTE_LENGTH, "0")}`,
               ),
             );
         }
@@ -264,10 +274,10 @@ export class TLVParser {
               case 1:
                 yield Right({ tag, value: dataView.getUint8(0) });
                 break;
-              case 2:
+              case INT_LENGTH_UINT16:
                 yield Right({ tag, value: dataView.getUint16(0, false) }); // Big-endian
                 break;
-              case 4:
+              case INT_LENGTH_UINT32:
                 yield Right({ tag, value: dataView.getUint32(0, false) }); // Big-endian
                 break;
               default:

@@ -12,6 +12,8 @@ import {
   ResultFormatter,
 } from "@root/src/domain/utils/ResultFormatter";
 
+const DELAY_BETWEEN_TESTS_MS = 2000;
+
 export type TestContractConfig = {
   readonly chainId: number;
   readonly contractAddress: string;
@@ -87,7 +89,9 @@ export class TestContractUseCase {
         results.push(errorResult);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) =>
+        setTimeout(resolve, DELAY_BETWEEN_TESTS_MS),
+      );
     }
 
     return ResultFormatter.formatBatchResults(results, txs.length, {

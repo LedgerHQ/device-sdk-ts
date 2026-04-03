@@ -17,6 +17,9 @@ import { type Wallet as InternalWallet } from "@internal/wallet/model/Wallet";
 import type { WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
+const HEX_RADIX = 16;
+const HEX_BYTE_LENGTH = 2;
+
 export type RegisterWalletTaskArgs = {
   walletPolicy: WalletPolicy;
   loggerFactory: (tag: string) => LoggerPublisherService;
@@ -96,7 +99,7 @@ export class RegisterWalletTask {
         data: {
           walletName: walletPolicy.name,
           walletHmac: Array.from(walletHmac)
-            .map((b) => b.toString(16).padStart(2, "0"))
+            .map((b) => b.toString(HEX_RADIX).padStart(HEX_BYTE_LENGTH, "0"))
             .join(""),
         },
       });

@@ -3,6 +3,10 @@ import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { GENUINE_DEVICE_RESULT } from "@api/secure-channel/constants";
 import { type SecureChannelEventPayload } from "@api/secure-channel/task/types";
 
+const APDU_CLA = 0xe0;
+const APDU_INS_VALIDATE_CERTIFICATE = 0x51;
+const APDU_INS_GET_CERTIFICATE = 0x52;
+
 /**
  * Checks if the given APDU command will request permission.
  *
@@ -12,7 +16,7 @@ import { type SecureChannelEventPayload } from "@api/secure-channel/task/types";
  * @returns `true` if the APDU command will request permission, otherwise `false`.
  */
 export function willRequestPermission(apdu: Uint8Array): boolean {
-  return apdu[0] === 0xe0 && apdu[1] === 0x51;
+  return apdu[0] === APDU_CLA && apdu[1] === APDU_INS_VALIDATE_CERTIFICATE;
 }
 
 /**
@@ -24,7 +28,7 @@ export function willRequestPermission(apdu: Uint8Array): boolean {
  * @returns `true` if the APDU command is a GetCertificate command, otherwise `false`.
  */
 export function isGetCertificateApdu(apdu: Uint8Array): boolean {
-  return apdu[0] === 0xe0 && apdu[1] === 0x52;
+  return apdu[0] === APDU_CLA && apdu[1] === APDU_INS_GET_CERTIFICATE;
 }
 
 /**

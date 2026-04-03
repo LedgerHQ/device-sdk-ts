@@ -19,14 +19,18 @@ export type LinkedFields<Args extends Record<string, FieldType>> = {
   ) => Partial<Args>;
 };
 
+const ENUM_ENTRIES_HALF = 2;
+
 export function getValueSelectorFromEnum<
   T extends Record<string, string | number>,
 >(enumObject: T) {
   const entries = Object.entries(enumObject);
-  const res = entries.slice(entries.length / 2).map(([key, value]) => ({
-    label: key,
-    value,
-  }));
+  const res = entries
+    .slice(entries.length / ENUM_ENTRIES_HALF)
+    .map(([key, value]) => ({
+      label: key,
+      value,
+    }));
   return res;
 }
 

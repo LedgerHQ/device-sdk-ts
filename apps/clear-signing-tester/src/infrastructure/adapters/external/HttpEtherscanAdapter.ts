@@ -8,6 +8,7 @@ import { type EtherscanConfig } from "@root/src/domain/models/config/EtherscanCo
 import { type TransactionData } from "@root/src/domain/models/TransactionData";
 
 const ETHERSCAN_TRANSACTIONS_OFFSET = 500;
+const DEFAULT_TIMEOUT_MS = 30000;
 
 /**
  * Etherscan API transaction response
@@ -201,7 +202,7 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
 
     const response = await axios.get<EtherscanApiResponse>(baseUrl, {
       params,
-      timeout: this.etherscanConfig.timeout || 30000,
+      timeout: this.etherscanConfig.timeout || DEFAULT_TIMEOUT_MS,
     });
 
     this.logger.debug("Etherscan API response", {

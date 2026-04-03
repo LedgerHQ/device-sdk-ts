@@ -2,6 +2,8 @@ import "zx/globals";
 
 import { select } from "@inquirer/prompts";
 import { appTypes } from "@ldmk/app/di/app.types";
+
+const DEVTOOLS_READY_DELAY_MS = 1000;
 import {
   ActionHandler,
   ConnectionMode,
@@ -39,7 +41,9 @@ export class FrontController {
   }
 
   private async waitForDevToolsToBeReady(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) =>
+      setTimeout(resolve, DEVTOOLS_READY_DELAY_MS),
+    );
   }
 
   private sendWelcomeMessage(): void {

@@ -7,6 +7,8 @@ import {
 import WebSocket from "isomorphic-ws";
 import { ReplaySubject, Subject, type Subscription } from "rxjs";
 
+const RECONNECT_DELAY_MS = 5000;
+
 type Params = {
   url: string;
 };
@@ -215,7 +217,7 @@ export class DevToolsWebSocketConnector implements Connector {
     this.reconnectionTimeout = setTimeout(() => {
       this.log("[DevToolsWebSocketConnector] Reconnecting...");
       this.connect(params);
-    }, 5000);
+    }, RECONNECT_DELAY_MS);
   }
 
   private initialize() {

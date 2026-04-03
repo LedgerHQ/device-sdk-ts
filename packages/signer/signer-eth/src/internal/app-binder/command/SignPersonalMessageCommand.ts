@@ -23,6 +23,7 @@ import {
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;
+const P1_CONTINUATION = 0x80;
 
 export type SignPersonalMessageCommandArgs = {
   /**
@@ -61,7 +62,7 @@ export class SignPersonalMessageCommand
     const signPersonalMessageArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x08,
-      p1: isFirstChunk ? 0x00 : 0x80,
+      p1: isFirstChunk ? 0x00 : P1_CONTINUATION,
       p2: 0x00,
     };
 

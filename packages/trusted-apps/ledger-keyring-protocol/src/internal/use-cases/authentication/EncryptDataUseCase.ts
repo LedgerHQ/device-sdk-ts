@@ -10,6 +10,8 @@ import {
 import { AES256_BLOCK_SIZE } from "@api/crypto/Key";
 import { externalTypes } from "@internal/externalTypes";
 
+const IV_LENGTH = 16;
+
 @injectable()
 export class EncryptDataUseCase {
   constructor(
@@ -39,7 +41,7 @@ export class EncryptDataUseCase {
     );
 
     // Generate a random IV (nonce)
-    const iv = this.cryptoService.randomBytes(16);
+    const iv = this.cryptoService.randomBytes(IV_LENGTH);
 
     // Encrypt data
     const symmetricKey = this.cryptoService.importSymmetricKey(

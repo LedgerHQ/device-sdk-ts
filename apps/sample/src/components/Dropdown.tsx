@@ -37,6 +37,8 @@ export const DropdownItem = styled.button`
   }
 `;
 
+const DROPDOWN_OFFSET_PX = 4;
+
 type DropdownProps = {
   trigger: React.ReactNode;
   children: React.ReactNode;
@@ -83,7 +85,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
     if (!isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
       setMenuPosition({
-        top: rect.bottom + 4,
+        top: rect.bottom + DROPDOWN_OFFSET_PX,
         left: rect.left,
       });
     }

@@ -17,6 +17,9 @@ import {
 import { LKRPBlock } from "./LKRPBlock";
 import { TLVParser } from "./TLVParser";
 
+const HASH_BYTE_LENGTH = 32;
+const PRIVATE_KEY_LENGTH = 32;
+
 export class LKRPBlockStream {
   private validation: Maybe<Promise<boolean>> = Nothing;
   private blocks: Maybe<Either<LKRPParsingError, LKRPBlock[]>> = Nothing;
@@ -40,7 +43,10 @@ export class LKRPBlockStream {
     const blocks: LKRPBlock[] = [];
     let hash =
       parentHash ??
-      bufferToHexaString(crypto.getRandomValues(new Uint8Array(32)), false);
+      bufferToHexaString(
+        crypto.getRandomValues(new Uint8Array(HASH_BYTE_LENGTH)),
+        false,
+      );
 
     for (const blockData of blocksData) {
       const block = LKRPBlock.fromData({
@@ -200,7 +206,10 @@ export class LKRPBlockStream {
         published.initializationVector,
         published.encryptedXpriv,
       );
-      return { privateKey: xpriv.slice(0, 32), chainCode: xpriv.slice(32) };
+      return {
+        privateKey: xpriv.slice(0, PRIVATE_KEY_LENGTH),
+        chainCode: xpriv.slice(PRIVATE_KEY_LENGTH),
+      };
     });
   }
 }

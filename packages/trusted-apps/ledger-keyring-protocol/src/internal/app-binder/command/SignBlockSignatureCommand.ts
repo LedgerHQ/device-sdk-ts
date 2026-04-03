@@ -17,6 +17,8 @@ import {
   LedgerKeyringProtocolErrorFactory,
 } from "./utils/ledgerKeyringProtocolErrors";
 
+const MIN_RESPONSE_LENGTH = 2;
+
 export type SignBlockSignatureCommandArgs = Record<string, never>;
 
 export interface SignBlockSignatureCommandResponse {
@@ -69,7 +71,7 @@ export class SignBlockSignatureCommand
         });
       }
 
-      if (data.length < 2) {
+      if (data.length < MIN_RESPONSE_LENGTH) {
         return CommandResultFactory({
           error: new InvalidStatusWordError(
             "Invalid response: missing signature length or reserved byte",
@@ -87,7 +89,7 @@ export class SignBlockSignatureCommand
       }
 
       const sigLen = raw;
-      if (data.length < 2 + sigLen) {
+      if (data.length < MIN_RESPONSE_LENGTH + sigLen) {
         return CommandResultFactory({
           error: new InvalidStatusWordError("Signature length out of bounds"),
         });

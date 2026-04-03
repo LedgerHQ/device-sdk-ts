@@ -38,9 +38,27 @@ import { gzip } from "pako";
 
 import { concatUint8Arrays } from "@api/customLockScreenUtils/codec/byteUtils";
 import type { ScreenSpecs } from "@api/customLockScreenUtils/screenSpecs";
+import type { BitsPerPixel } from "@api/customLockScreenUtils/types";
 
 /** Size of each chunk before compression (2048 bytes) */
 const COMPRESS_CHUNK_SIZE = 2048;
+
+const BPP_4 = 4;
+const NIBBLE_SHIFT = 4;
+const NIBBLE_MASK = 0x0f;
+const MAX_BIT_INDEX = 7;
+const PIXELS_PER_BYTE_4BPP = 2;
+const PIXELS_PER_BYTE_1BPP = 8;
+const HEADER_SIZE = 8;
+const HEIGHT_OFFSET = 2;
+const FLAGS_INDEX = 4;
+const DATA_LEN_BYTE_0_INDEX = 5;
+const DATA_LEN_BYTE_1_INDEX = 6;
+const DATA_LEN_BYTE_2_INDEX = 7;
+const BITS_PER_BYTE = 8;
+const SHIFT_16 = 16;
+const BYTE_MASK = 0xff;
+const SIZE_PREFIX_BYTES = 2;
 
 /**
  * Map from bitsPerPixel to the bpp indicator used in the image header.
@@ -60,23 +78,27 @@ const bitsPerPixelToBppIndicator: Record<ScreenSpecs["bitsPerPixel"], number> =
  */
 function unpackPixels(
   data: Uint8Array,
-  bitsPerPixel: 1 | 4,
+  bitsPerPixel: BitsPerPixel,
   pixelCount: number,
 ): number[] {
   const pixels: number[] = [];
 
-  if (bitsPerPixel === 4) {
+  if (bitsPerPixel === BPP_4) {
     for (let i = 0; i < data.length && pixels.length < pixelCount; i++) {
       const byte = data[i]!;
-      pixels.push((byte >> 4) & 0x0f); // high nibble
+      pixels.push((byte >> NIBBLE_SHIFT) & NIBBLE_MASK); // high nibble
       if (pixels.length < pixelCount) {
-        pixels.push(byte & 0x0f); // low nibble
+        pixels.push(byte & NIBBLE_MASK); // low nibble
       }
     }
   } else {
     for (let i = 0; i < data.length && pixels.length < pixelCount; i++) {
       const byte = data[i]!;
-      for (let bit = 7; bit >= 0 && pixels.length < pixelCount; bit--) {
+      for (
+        let bit = MAX_BIT_INDEX;
+        bit >= 0 && pixels.length < pixelCount;
+        bit--
+      ) {
         pixels.push((byte >> bit) & 1);
       }
     }
@@ -90,26 +112,26 @@ function unpackPixels(
  * For 4bpp: 2 pixels per byte (high nibble first)
  * For 1bpp: 8 pixels per byte (bit 7 first)
  */
-function packPixels(pixels: number[], bitsPerPixel: 1 | 4): Uint8Array {
-  if (bitsPerPixel === 4) {
-    const byteLength = Math.ceil(pixels.length / 2);
+function packPixels(pixels: number[], bitsPerPixel: BitsPerPixel): Uint8Array {
+  if (bitsPerPixel === BPP_4) {
+    const byteLength = Math.ceil(pixels.length / PIXELS_PER_BYTE_4BPP);
     const result = new Uint8Array(byteLength);
-    for (let i = 0; i < pixels.length; i += 2) {
+    for (let i = 0; i < pixels.length; i += PIXELS_PER_BYTE_4BPP) {
       const high = pixels[i] ?? 0;
       const low = pixels[i + 1] ?? 0;
-      result[i / 2] = (high << 4) | low;
+      result[i / PIXELS_PER_BYTE_4BPP] = (high << NIBBLE_SHIFT) | low;
     }
     return result;
   } else {
-    const byteLength = Math.ceil(pixels.length / 8);
+    const byteLength = Math.ceil(pixels.length / PIXELS_PER_BYTE_1BPP);
     const result = new Uint8Array(byteLength);
-    for (let i = 0; i < pixels.length; i += 8) {
+    for (let i = 0; i < pixels.length; i += PIXELS_PER_BYTE_1BPP) {
       let byte = 0;
-      for (let bit = 0; bit < 8; bit++) {
+      for (let bit = 0; bit < PIXELS_PER_BYTE_1BPP; bit++) {
         const pixel = pixels[i + bit] ?? 0;
-        byte |= (pixel & 1) << (7 - bit);
+        byte |= (pixel & 1) << (MAX_BIT_INDEX - bit);
       }
-      result[i / 8] = byte;
+      result[i / PIXELS_PER_BYTE_1BPP] = byte;
     }
     return result;
   }
@@ -222,12 +244,12 @@ export async function encodeImageForDevice(
   const compression = compress ? 1 : 0;
 
   // Create 8-byte header
-  const header = new Uint8Array(8);
+  const header = new Uint8Array(HEADER_SIZE);
   const headerView = new DataView(header.buffer);
 
   headerView.setUint16(0, width, true); // width (LE)
-  headerView.setUint16(2, height, true); // height (LE)
-  header[4] = (bpp << 4) | compression;
+  headerView.setUint16(HEIGHT_OFFSET, height, true); // height (LE)
+  header[FLAGS_INDEX] = (bpp << NIBBLE_SHIFT) | compression;
 
   // Pad the image if needed
   const imgData = padImage ? padPixelData(pixelData, screenSpecs) : pixelData;
@@ -235,9 +257,9 @@ export async function encodeImageForDevice(
   if (!compress) {
     // Uncompressed: just set the data length and concatenate
     const dataLength = imgData.length;
-    header[5] = dataLength & 0xff; // lowest byte
-    header[6] = (dataLength >> 8) & 0xff; // middle byte
-    header[7] = (dataLength >> 16) & 0xff; // highest byte
+    header[DATA_LEN_BYTE_0_INDEX] = dataLength & BYTE_MASK; // lowest byte
+    header[DATA_LEN_BYTE_1_INDEX] = (dataLength >> BITS_PER_BYTE) & BYTE_MASK; // middle byte
+    header[DATA_LEN_BYTE_2_INDEX] = (dataLength >> SHIFT_16) & BYTE_MASK; // highest byte
 
     return concatUint8Arrays([header, imgData]);
   }
@@ -253,7 +275,7 @@ export async function encodeImageForDevice(
       const compressedChunk = gzip(chunk);
 
       // Create 2-byte LE size prefix
-      const sizePrefix = new Uint8Array(2);
+      const sizePrefix = new Uint8Array(SIZE_PREFIX_BYTES);
       const sizeView = new DataView(sizePrefix.buffer);
       sizeView.setUint16(0, compressedChunk.length, true);
 
@@ -264,9 +286,9 @@ export async function encodeImageForDevice(
   const compressedData = concatUint8Arrays(compressedChunks);
   const dataLength = compressedData.length;
 
-  header[5] = dataLength & 0xff; // lowest byte
-  header[6] = (dataLength >> 8) & 0xff; // middle byte
-  header[7] = (dataLength >> 16) & 0xff; // highest byte
+  header[DATA_LEN_BYTE_0_INDEX] = dataLength & BYTE_MASK; // lowest byte
+  header[DATA_LEN_BYTE_1_INDEX] = (dataLength >> BITS_PER_BYTE) & BYTE_MASK; // middle byte
+  header[DATA_LEN_BYTE_2_INDEX] = (dataLength >> SHIFT_16) & BYTE_MASK; // highest byte
 
   return concatUint8Arrays([header, compressedData]);
 }

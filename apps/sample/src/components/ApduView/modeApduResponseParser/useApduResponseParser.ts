@@ -11,6 +11,13 @@ import {
   type ParserStepResult,
 } from "./types";
 
+const RANDOM_STRING_RADIX = 36;
+const RANDOM_SUBSTRING_START = 2;
+const RANDOM_SUBSTRING_END = 9;
+const STATUS_CODE_BYTE_LENGTH = 2;
+const HEX_RADIX = 16;
+const HEX_CHARS_PER_BYTE = 2;
+
 /**
  * Hook to manage APDU response parser state
  */
@@ -21,7 +28,7 @@ export function useApduResponseParser() {
 
   // Generate unique ID for steps
   const generateId = useCallback(() => {
-    return `step-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    return `step-${Date.now()}-${Math.random().toString(RANDOM_STRING_RADIX).substring(RANDOM_SUBSTRING_START, RANDOM_SUBSTRING_END)}`;
   }, []);
 
   // Validate hex input
@@ -32,16 +39,18 @@ export function useApduResponseParser() {
     if (!inputValidation.isValid) return null;
 
     const bytes = hexStringToUint8Array(hexInput);
-    if (bytes.length < 2) return null;
+    if (bytes.length < STATUS_CODE_BYTE_LENGTH) return null;
 
-    const statusCode = bytes.slice(-2);
-    const data = bytes.slice(0, -2);
+    const statusCode = bytes.slice(-STATUS_CODE_BYTE_LENGTH);
+    const data = bytes.slice(0, -STATUS_CODE_BYTE_LENGTH);
 
     return {
       statusCode,
       data,
       statusCodeHex: Array.from(statusCode)
-        .map((b) => b.toString(16).padStart(2, "0").toUpperCase())
+        .map((b) =>
+          b.toString(HEX_RADIX).padStart(HEX_CHARS_PER_BYTE, "0").toUpperCase(),
+        )
         .join(""),
     };
   }, [hexInput, inputValidation.isValid]);
@@ -159,7 +168,7 @@ export function useApduResponseParser() {
               if (rawValue instanceof Uint8Array) {
                 encodedValue = parser.encodeToHexaString(rawValue);
               } else if (typeof rawValue === "number") {
-                encodedValue = rawValue.toString(16).toUpperCase();
+                encodedValue = rawValue.toString(HEX_RADIX).toUpperCase();
               } else if ("tag" in rawValue) {
                 encodedValue = parser.encodeToHexaString(rawValue.value);
               }

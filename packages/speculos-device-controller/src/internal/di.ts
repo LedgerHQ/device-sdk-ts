@@ -7,6 +7,8 @@ import type { DeviceControllerOptions } from "@internal/core/types";
 import { type AxisMap, createAxes } from "@internal/utils/axisClamp";
 import type { TouchController } from "@root/src/internal/core/TouchController";
 
+const DEFAULT_TIMEOUT_MS = 1500;
+
 export type ControllersContainer = {
   buttons: ButtonController;
   touch: TouchController;
@@ -18,7 +20,7 @@ export function createDefaultControllers(
 ): ControllersContainer {
   const http: AxiosInstance = axios.create({
     baseURL: baseURL,
-    timeout: opts.timeoutMs ?? 1500,
+    timeout: opts.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     headers: {
       "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",
     },

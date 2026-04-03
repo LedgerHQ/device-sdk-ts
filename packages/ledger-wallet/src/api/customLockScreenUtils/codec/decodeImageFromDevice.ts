@@ -9,14 +9,28 @@
 
 import { ungzip } from "pako";
 
+import type { BitsPerPixel } from "@api/customLockScreenUtils/types";
+
 import { concatUint8Arrays } from "./byteUtils";
+
+const HEADER_SIZE = 8;
+const HEIGHT_OFFSET = 2;
+const FLAGS_INDEX = 4;
+const DATA_LEN_BYTE_0 = 5;
+const DATA_LEN_BYTE_1 = 6;
+const DATA_LEN_BYTE_2 = 7;
+const NIBBLE_SHIFT = 4;
+const NIBBLE_MASK = 0x0f;
+const BITS_PER_BYTE = 8;
+const SHIFT_16 = 16;
+const CHUNK_SIZE_PREFIX_BYTES = 2;
 
 /**
  * Map from bpp indicator back to bitsPerPixel.
  * - 0 -> 1 bpp
  * - 2 -> 4 bpp
  */
-const bppIndicatorToBitsPerPixel: Record<number, 1 | 4> = {
+const bppIndicatorToBitsPerPixel: Record<number, BitsPerPixel> = {
   0: 1,
   2: 4,
 };
@@ -30,7 +44,7 @@ export type DecodeImageFromDeviceResult = {
   /** Image height in pixels */
   height: number;
   /** Bits per pixel (1 or 4) */
-  bitsPerPixel: 1 | 4;
+  bitsPerPixel: BitsPerPixel;
   /** Whether the data was compressed */
   wasCompressed: boolean;
   /** Raw packed pixel data (ready for renderPixelDataToImage) */
@@ -52,21 +66,24 @@ export type DecodeImageFromDeviceResult = {
 export function decodeImageFromDevice(
   data: Uint8Array,
 ): DecodeImageFromDeviceResult {
-  if (data.length < 8) {
+  if (data.length < HEADER_SIZE) {
     throw new Error("Invalid image data: too short for header");
   }
 
-  const headerView = new DataView(data.buffer, data.byteOffset, 8);
+  const headerView = new DataView(data.buffer, data.byteOffset, HEADER_SIZE);
 
   // Parse header
   const width = headerView.getUint16(0, true); // LE
-  const height = headerView.getUint16(2, true); // LE
-  const flags = data[4]!;
-  const dataLength = data[5]! | (data[6]! << 8) | (data[7]! << 16); // 3-byte LE
+  const height = headerView.getUint16(HEIGHT_OFFSET, true); // LE
+  const flags = data[FLAGS_INDEX]!;
+  const dataLength =
+    data[DATA_LEN_BYTE_0]! |
+    (data[DATA_LEN_BYTE_1]! << BITS_PER_BYTE) |
+    (data[DATA_LEN_BYTE_2]! << SHIFT_16); // 3-byte LE
 
   // Parse flags
-  const bppIndicator = (flags >> 4) & 0x0f;
-  const isCompressed = (flags & 0x0f) === 1;
+  const bppIndicator = (flags >> NIBBLE_SHIFT) & NIBBLE_MASK;
+  const isCompressed = (flags & NIBBLE_MASK) === 1;
 
   const bitsPerPixel = bppIndicatorToBitsPerPixel[bppIndicator];
   if (bitsPerPixel === undefined) {
@@ -74,12 +91,12 @@ export function decodeImageFromDevice(
   }
 
   // Extract data section
-  const imageDataStart = 8;
+  const imageDataStart = HEADER_SIZE;
   const imageDataEnd = imageDataStart + dataLength;
 
   if (data.length < imageDataEnd) {
     throw new Error(
-      `Invalid image data: expected ${dataLength} bytes but got ${data.length - 8}`,
+      `Invalid image data: expected ${dataLength} bytes but got ${data.length - HEADER_SIZE}`,
     );
   }
 
@@ -94,13 +111,14 @@ export function decodeImageFromDevice(
 
     while (offset < compressedOrRawData.length) {
       // Read 2-byte LE chunk size
-      if (offset + 2 > compressedOrRawData.length) {
+      if (offset + CHUNK_SIZE_PREFIX_BYTES > compressedOrRawData.length) {
         throw new Error("Invalid compressed data: incomplete chunk size");
       }
 
       const chunkSize =
-        compressedOrRawData[offset]! | (compressedOrRawData[offset + 1]! << 8);
-      offset += 2;
+        compressedOrRawData[offset]! |
+        (compressedOrRawData[offset + 1]! << BITS_PER_BYTE);
+      offset += CHUNK_SIZE_PREFIX_BYTES;
 
       if (offset + chunkSize > compressedOrRawData.length) {
         throw new Error("Invalid compressed data: incomplete chunk");

@@ -41,10 +41,13 @@ const Root = styled(Flex).attrs({ py: 8, px: 6, rowGap: 6 })`
   overflow-y: auto;
 `;
 
+const INACTIVE_OPACITY = 0.5;
+
 const MenuContainer = styled(Flex)`
   flex: 1;
   flex-direction: column;
-  opacity: ${({ active }: { active: boolean }) => (active ? 1 : 0.5)};
+  opacity: ${({ active }: { active: boolean }) =>
+    active ? 1 : INACTIVE_OPACITY};
 `;
 
 const BottomContainer = styled(Flex)`

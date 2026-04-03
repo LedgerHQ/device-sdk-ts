@@ -26,6 +26,8 @@ import {
 } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { GenerateSolanaTransaction } from "@internal/services/GenerateSolanaTransaction";
 
+const DEFAULT_LAMPORTS = 1_000_000;
+
 export type MachineDependencies = {
   readonly getPublicKey: (arg0: {
     input: { derivationPath: string; checkOnDevice: boolean };
@@ -253,7 +255,7 @@ export class GenerateTransactionDeviceAction extends XStateDeviceAction<
       return generator.generatePlainSolanaTransaction(
         arg0.input.publicKey,
         recipientKey,
-        1_000_000,
+        DEFAULT_LAMPORTS,
       );
     };
 

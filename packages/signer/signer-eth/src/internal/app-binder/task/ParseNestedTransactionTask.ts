@@ -9,6 +9,7 @@ import { bufferToHexaString } from "@ledgerhq/device-management-kit";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 const DEFAULT_SELECTOR_LENGTH = 10;
+const ADDRESS_BYTE_LENGTH = 20;
 
 export type ParseNestedTransactionTaskResult = {
   readonly subsets: TransactionSubset[];
@@ -64,7 +65,7 @@ export class ParseNestedTransactionTask {
       const data = extractedValues[i];
       const chainId = extractedChainId[i];
       const to = extractedTo[i]?.slice(
-        Math.max(0, extractedTo[i]!.length - 20),
+        Math.max(0, extractedTo[i]!.length - ADDRESS_BYTE_LENGTH),
       );
       const selector = extractedSelectors[i];
 

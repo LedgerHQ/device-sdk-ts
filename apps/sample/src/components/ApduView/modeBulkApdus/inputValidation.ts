@@ -18,6 +18,8 @@ export type BulkValidation =
       validApdus: Uint8Array[];
     };
 
+const ARROW_PREFIX_LENGTH = 2;
+
 export const parseBulkInput = (
   input: string,
 ): { validApdus: Uint8Array[]; invalidLines: number[] } => {
@@ -29,7 +31,7 @@ export const parseBulkInput = (
     // Clean up the line: remove "=>" or "=> " prefix if present
     let cleaned = line.trim();
     if (cleaned.startsWith("=>")) {
-      cleaned = cleaned.substring(2).trim();
+      cleaned = cleaned.substring(ARROW_PREFIX_LENGTH).trim();
     }
 
     // Skip empty lines

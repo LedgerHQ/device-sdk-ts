@@ -17,8 +17,18 @@ import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
 
 import { type PsbtSerializer } from "./PsbtSerializer";
 
-// PSBT magic bytes
-const PSBT_MAGIC_BYTES = Uint8Array.from([0x70, 0x73, 0x62, 0x74, 0xff]);
+const PSBT_MAGIC_P = 0x70;
+const PSBT_MAGIC_S = 0x73;
+const PSBT_MAGIC_B = 0x62;
+const PSBT_MAGIC_T = 0x74;
+const PSBT_MAGIC_SEPARATOR = 0xff;
+const PSBT_MAGIC_BYTES = Uint8Array.from([
+  PSBT_MAGIC_P,
+  PSBT_MAGIC_S,
+  PSBT_MAGIC_B,
+  PSBT_MAGIC_T,
+  PSBT_MAGIC_SEPARATOR,
+]);
 
 /**
  * According to specification, psbt is formatted as:

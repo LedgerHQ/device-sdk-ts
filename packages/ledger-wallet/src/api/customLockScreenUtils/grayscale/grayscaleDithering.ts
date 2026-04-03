@@ -1,9 +1,30 @@
 import { createCanvas } from "@api/customLockScreenUtils/fit/canvasUtils";
 import type {
+  BitsPerPixel,
   DitheringAlgorithm,
   ProcessImageArgs,
   ProcessorResult,
 } from "@api/customLockScreenUtils/types";
+
+const RGB_MIDPOINT = 128;
+const FS_WEIGHT_7 = 7;
+const FS_WEIGHT_3 = 3;
+const FS_WEIGHT_5 = 5;
+const DITHERING_DIVISOR = 16;
+const ATKINSON_DIVISOR = 8;
+const DITHERING_OFFSET_2 = 2;
+const RA_WEIGHT_2 = 2;
+const BLUE_CHANNEL_INDEX = 2;
+const LIGHTNESS_DIVISOR = 2.0;
+const GRAY_LEVELS_BASE = 2;
+const MAX_COLOR_VALUE = 255;
+const RGBA_CHANNELS = 4;
+const BW_THRESHOLD = 127;
+const BPP_4 = 4;
+const PIXELS_PER_BYTE_4BPP = 2;
+const NIBBLE_SHIFT = 4;
+const PIXELS_PER_BYTE_1BPP = 8;
+const MAX_BIT_INDEX = 7;
 
 /**
  * Clamp a value between min and max.
@@ -16,7 +37,7 @@ function clamp(val: number, min: number, max: number): number {
  * Apply contrast adjustment to an RGB value.
  */
 function contrastRGB(rgbVal: number, contrastVal: number): number {
-  return (rgbVal - 128) * contrastVal + 128;
+  return (rgbVal - RGB_MIDPOINT) * contrastVal + RGB_MIDPOINT;
 }
 
 /**
@@ -60,7 +81,7 @@ function applyFloydSteinbergDithering(
     width,
     height,
     quantError,
-    7 / 16,
+    FS_WEIGHT_7 / DITHERING_DIVISOR,
     pixels256Colors,
   );
   applyErrorToPixel(
@@ -69,7 +90,7 @@ function applyFloydSteinbergDithering(
     width,
     height,
     quantError,
-    3 / 16,
+    FS_WEIGHT_3 / DITHERING_DIVISOR,
     pixels256Colors,
   );
   applyErrorToPixel(
@@ -78,7 +99,7 @@ function applyFloydSteinbergDithering(
     width,
     height,
     quantError,
-    5 / 16,
+    FS_WEIGHT_5 / DITHERING_DIVISOR,
     pixels256Colors,
   );
   applyErrorToPixel(
@@ -87,7 +108,7 @@ function applyFloydSteinbergDithering(
     width,
     height,
     quantError,
-    1 / 16,
+    1 / DITHERING_DIVISOR,
     pixels256Colors,
   );
 }
@@ -109,7 +130,7 @@ function applyAtkinsonDithering(
   quantError: number,
   pixels256Colors: number[][],
 ): void {
-  const errorFraction = 1 / 8;
+  const errorFraction = 1 / ATKINSON_DIVISOR;
   applyErrorToPixel(
     x + 1,
     y,
@@ -120,7 +141,7 @@ function applyAtkinsonDithering(
     pixels256Colors,
   );
   applyErrorToPixel(
-    x + 2,
+    x + DITHERING_OFFSET_2,
     y,
     width,
     height,
@@ -157,7 +178,7 @@ function applyAtkinsonDithering(
   );
   applyErrorToPixel(
     x,
-    y + 2,
+    y + DITHERING_OFFSET_2,
     width,
     height,
     quantError,
@@ -187,16 +208,16 @@ function applyReducedAtkinsonDithering(
     width,
     height,
     quantError,
-    2 / 16,
+    RA_WEIGHT_2 / DITHERING_DIVISOR,
     pixels256Colors,
   );
   applyErrorToPixel(
-    x + 2,
+    x + DITHERING_OFFSET_2,
     y,
     width,
     height,
     quantError,
-    1 / 16,
+    1 / DITHERING_DIVISOR,
     pixels256Colors,
   );
   applyErrorToPixel(
@@ -205,7 +226,7 @@ function applyReducedAtkinsonDithering(
     width,
     height,
     quantError,
-    2 / 16,
+    RA_WEIGHT_2 / DITHERING_DIVISOR,
     pixels256Colors,
   );
   applyErrorToPixel(
@@ -214,7 +235,7 @@ function applyReducedAtkinsonDithering(
     width,
     height,
     quantError,
-    1 / 16,
+    1 / DITHERING_DIVISOR,
     pixels256Colors,
   );
 }
@@ -224,9 +245,9 @@ function applyReducedAtkinsonDithering(
  * Provides better contrast preservation compared to simple RGB averaging.
  */
 function calculatePixelLightness(pixel: number[]): number {
-  const max = Math.max(pixel[0]!, pixel[1]!, pixel[2]!);
-  const min = Math.min(pixel[0]!, pixel[1]!, pixel[2]!);
-  return Math.floor((max + min) / 2.0);
+  const max = Math.max(pixel[0]!, pixel[1]!, pixel[BLUE_CHANNEL_INDEX]!);
+  const min = Math.min(pixel[0]!, pixel[1]!, pixel[BLUE_CHANNEL_INDEX]!);
+  return Math.floor((max + min) / LIGHTNESS_DIVISOR);
 }
 
 /**
@@ -236,15 +257,15 @@ function applyFilter(
   imageData: ImageData,
   contrastAmount: number,
   ditheringAlgorithm: DitheringAlgorithm,
-  bitsPerPixel: 1 | 4,
+  bitsPerPixel: BitsPerPixel,
 ): { imageDataResult: Uint8ClampedArray; pixelDataResult: Uint8Array } {
   const filteredImageData: number[] = [];
 
   const data = imageData.data;
 
   // Determine number of gray levels based on bitsPerPixel
-  const numLevelsOfGray = Math.pow(2, bitsPerPixel);
-  const rgbStep = 255 / (numLevelsOfGray - 1);
+  const numLevelsOfGray = Math.pow(GRAY_LEVELS_BASE, bitsPerPixel);
+  const rgbStep = MAX_COLOR_VALUE / (numLevelsOfGray - 1);
 
   const { width, height } = imageData;
 
@@ -259,14 +280,14 @@ function applyFilter(
   );
 
   // First pass: calculate lightness and apply contrast
-  for (let pxIndex = 0; pxIndex < data.length / 4; pxIndex += 1) {
+  for (let pxIndex = 0; pxIndex < data.length / RGBA_CHANNELS; pxIndex += 1) {
     const x = pxIndex % width;
     const y = (pxIndex - x) / width;
 
     const [redIndex, greenIndex, blueIndex] = [
-      4 * pxIndex,
-      4 * pxIndex + 1,
-      4 * pxIndex + 2,
+      RGBA_CHANNELS * pxIndex,
+      RGBA_CHANNELS * pxIndex + 1,
+      RGBA_CHANNELS * pxIndex + BLUE_CHANNEL_INDEX,
     ];
     const pixelLightness = calculatePixelLightness([
       data[redIndex]!,
@@ -279,7 +300,7 @@ function applyFilter(
     pixels256Colors[y]![x] = clamp(
       contrastRGB(pixelLightness, contrastAmount),
       0,
-      255,
+      MAX_COLOR_VALUE,
     );
   }
 
@@ -290,7 +311,7 @@ function applyFilter(
 
       let posterizedGray256: number;
       if (bitsPerPixel === 1) {
-        posterizedGray256 = oldpixel >= 127 ? 255 : 0;
+        posterizedGray256 = oldpixel >= BW_THRESHOLD ? MAX_COLOR_VALUE : 0;
       } else {
         const posterizedGrayNColors = Math.floor(oldpixel / rgbStep);
         posterizedGray256 = posterizedGrayNColors * rgbStep;
@@ -346,7 +367,7 @@ function applyFilter(
       filteredImageData.push(val256Colors); // R
       filteredImageData.push(val256Colors); // G
       filteredImageData.push(val256Colors); // B
-      filteredImageData.push(255); // alpha
+      filteredImageData.push(MAX_COLOR_VALUE); // alpha
     }
   }
 
@@ -360,21 +381,30 @@ function applyFilter(
 
   let pixelDataResult: Uint8Array;
 
-  if (bitsPerPixel === 4) {
+  if (bitsPerPixel === BPP_4) {
     // 4bpp: 2 pixels per byte (high nibble = first pixel, low nibble = second)
-    const byteLength = Math.ceil(orderedPixelsNColors.length / 2);
+    const byteLength = Math.ceil(
+      orderedPixelsNColors.length / PIXELS_PER_BYTE_4BPP,
+    );
     pixelDataResult = new Uint8Array(byteLength);
-    for (let i = 0; i < orderedPixelsNColors.length; i += 2) {
+    for (
+      let i = 0;
+      i < orderedPixelsNColors.length;
+      i += PIXELS_PER_BYTE_4BPP
+    ) {
       const highNibble = orderedPixelsNColors[i] ?? 0;
       const lowNibble = orderedPixelsNColors[i + 1] ?? 0;
-      pixelDataResult[i / 2] = (highNibble << 4) | lowNibble;
+      pixelDataResult[i / PIXELS_PER_BYTE_4BPP] =
+        (highNibble << NIBBLE_SHIFT) | lowNibble;
     }
   } else {
     // 1bpp: 8 pixels per byte (bit 7 = first pixel, colors inverted)
-    const byteLength = Math.ceil(orderedPixelsNColors.length / 8);
+    const byteLength = Math.ceil(
+      orderedPixelsNColors.length / PIXELS_PER_BYTE_1BPP,
+    );
     pixelDataResult = new Uint8Array(byteLength);
     let byteIndex = 0;
-    let bitIndex = 7;
+    let bitIndex = MAX_BIT_INDEX;
     let currentByte = 0;
 
     for (const pixel of orderedPixelsNColors) {
@@ -385,7 +415,7 @@ function applyFilter(
       if (bitIndex === 0) {
         pixelDataResult[byteIndex] = currentByte;
         byteIndex++;
-        bitIndex = 7;
+        bitIndex = MAX_BIT_INDEX;
         currentByte = 0;
       } else {
         bitIndex--;
@@ -393,7 +423,7 @@ function applyFilter(
     }
 
     // Handle remaining bits (tail padding)
-    if (bitIndex !== 7) {
+    if (bitIndex !== MAX_BIT_INDEX) {
       pixelDataResult[byteIndex] = currentByte;
     }
   }

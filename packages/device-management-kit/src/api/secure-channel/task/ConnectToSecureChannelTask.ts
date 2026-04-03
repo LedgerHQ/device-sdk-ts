@@ -27,6 +27,9 @@ import {
   type WebSocketConnectionError,
 } from "@internal/secure-channel/model/Errors";
 
+const MIN_APDU_LENGTH = 5;
+const PROGRESS_DECIMAL_PLACES = 2;
+
 export type ConnectToSecureChannelTaskArgs = {
   connection: Either<WebSocketConnectionError, WebSocket>;
   cryptoService?: CryptoService;
@@ -151,7 +154,7 @@ export class ConnectToSecureChannelTask {
 
             // APDU should be a valid hex string
             const apdu = hexaStringToBuffer(data);
-            if (apdu === null || apdu.length < 5) {
+            if (apdu === null || apdu.length < MIN_APDU_LENGTH) {
               notifyError(
                 new SecureChannelError(`Received invalid APDU data: ${data}`),
               );
@@ -256,7 +259,7 @@ export class ConnectToSecureChannelTask {
             for (let i = 0, len = input.data.length; i < len; i++) {
               // APDU should be a valid hex string
               const apdu = hexaStringToBuffer(input.data[i]!);
-              if (apdu === null || apdu.length < 5) {
+              if (apdu === null || apdu.length < MIN_APDU_LENGTH) {
                 notifyError(
                   new SecureChannelError(
                     `Received invalid APDU bulk data: ${input.data[i]}`,
@@ -282,7 +285,9 @@ export class ConnectToSecureChannelTask {
                   subscriber.next({
                     type: SecureChannelEventType.Progress,
                     payload: {
-                      progress: +Number((i + 1) / len).toFixed(2),
+                      progress: +Number((i + 1) / len).toFixed(
+                        PROGRESS_DECIMAL_PLACES,
+                      ),
                       index: i,
                       total: len,
                     },

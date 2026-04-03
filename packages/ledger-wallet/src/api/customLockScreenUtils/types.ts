@@ -2,6 +2,8 @@
  * Type definitions for custom lock screen image processing utilities.
  */
 
+export type BitsPerPixel = 1 | 4;
+
 /**
  * Dithering algorithms available for image processing.
  * - floyd-steinberg: Classic algorithm, spreads error to 4 neighboring pixels
@@ -34,7 +36,7 @@ export type ProcessImageArgs = {
    * - 4: 16 levels of gray (for Stax, Flex)
    * - 1: 2 levels (black/white, for Apex)
    */
-  readonly bitsPerPixel: 1 | 4;
+  readonly bitsPerPixel: BitsPerPixel;
   /**
    * The dithering algorithm to use.
    */
@@ -144,7 +146,7 @@ export type RenderPixelDataToImageArgs = {
   /**
    * Number of bits per pixel used in encoding.
    */
-  readonly bitsPerPixel: 1 | 4;
+  readonly bitsPerPixel: BitsPerPixel;
 };
 
 /**

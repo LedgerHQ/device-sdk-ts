@@ -1,6 +1,8 @@
 import { Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
+const DISABLED_OPACITY = 0.5;
+
 export const PreviewContainer = styled(Flex)`
   flex-direction: row;
   gap: 16px;
@@ -39,7 +41,7 @@ export const DropZone = styled.div<{ isDragging: boolean; disabled?: boolean }>`
   cursor: ${(p) => (p.disabled ? "not-allowed" : "pointer")};
   background-color: ${(p) =>
     p.isDragging ? p.theme.colors.primary.c20 : "transparent"};
-  opacity: ${(p) => (p.disabled ? 0.5 : 1)};
+  opacity: ${(p) => (p.disabled ? DISABLED_OPACITY : 1)};
   transition: all 0.2s ease;
 
   &:hover {
@@ -65,7 +67,7 @@ export const DropZoneWithPreview = styled.div<{
   cursor: ${(p) => (p.disabled ? "not-allowed" : "pointer")};
   background-color: ${(p) =>
     p.isDragging ? p.theme.colors.primary.c20 : "transparent"};
-  opacity: ${(p) => (p.disabled ? 0.5 : 1)};
+  opacity: ${(p) => (p.disabled ? DISABLED_OPACITY : 1)};
   transition: all 0.2s ease;
   height: ${MAX_SIZE}px;
   display: flex;

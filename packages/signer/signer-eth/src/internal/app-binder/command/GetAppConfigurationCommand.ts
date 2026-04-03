@@ -20,6 +20,9 @@ import {
   type EthErrorCodes,
 } from "./utils/ethAppErrors";
 
+const WEB3_CHECKS_ENABLED_FLAG = 0x00000010;
+const WEB3_CHECKS_OPT_IN_FLAG = 0x00000020;
+
 export class GetAppConfiguration
   implements Command<GetAppConfigurationCommandResponse, void, EthErrorCodes>
 {
@@ -68,8 +71,8 @@ export class GetAppConfiguration
       }
 
       const blindSigningEnabled = !!(configFlags & 0x00000001);
-      const web3ChecksEnabled = !!(configFlags & 0x00000010);
-      const web3ChecksOptIn = !!(configFlags & 0x00000020);
+      const web3ChecksEnabled = !!(configFlags & WEB3_CHECKS_ENABLED_FLAG);
+      const web3ChecksOptIn = !!(configFlags & WEB3_CHECKS_OPT_IN_FLAG);
 
       const data: GetAppConfigurationCommandResponse = {
         blindSigningEnabled,

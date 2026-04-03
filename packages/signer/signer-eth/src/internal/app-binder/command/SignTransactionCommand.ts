@@ -22,6 +22,7 @@ import {
 
 const R_LENGTH = 32;
 const S_LENGTH = 32;
+const P1_CONTINUATION = 0x80;
 
 export type SignTransactionCommandResponse = Maybe<{
   v: number;
@@ -66,7 +67,7 @@ export class SignTransactionCommand
     const signEthTransactionArgs: ApduBuilderArgs = {
       cla: 0xe0,
       ins: 0x04,
-      p1: isFirstChunk ? 0x00 : 0x80,
+      p1: isFirstChunk ? 0x00 : P1_CONTINUATION,
       p2: 0x00,
     };
 

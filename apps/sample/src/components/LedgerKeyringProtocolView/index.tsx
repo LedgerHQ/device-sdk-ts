@@ -29,6 +29,8 @@ import { selectSelectedSessionId } from "@/state/sessions/selectors";
 import { base64FromBytes, bytesFromBase64, genIdentity } from "@/utils/crypto";
 import { parsePermissions } from "@/utils/lkrp-permissions";
 
+const HEX_PREFIX_LENGTH = 2;
+
 export const LedgerKeyringProtocolView: React.FC = () => {
   const dmk = useDmk();
 
@@ -101,7 +103,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
                           rootId: output.trustchainId,
                           walletSyncEncryptionKey: bufferToHexaString(
                             output.encryptionKey,
-                          ).slice(2),
+                          ).slice(HEX_PREFIX_LENGTH),
                           applicationPath: output.applicationPath,
                         },
                         memberCredentials: {

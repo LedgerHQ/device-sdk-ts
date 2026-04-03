@@ -7,6 +7,8 @@ import { Flex, InfiniteLoader, Text, Tooltip } from "@ledgerhq/react-ui";
 
 import { type FieldType } from "@/hooks/useForm";
 
+const JSON_INDENT = 2;
+
 export type CommandResponseProps<Response, ErrorCodes> = {
   args: Record<string, FieldType>;
   date: Date;
@@ -18,7 +20,7 @@ export function CommandResponse<Response, ErrorCodes>(
   props: CommandResponseProps<Response, ErrorCodes> & { isLatest: boolean },
 ) {
   const { args, date, loading, response, isLatest } = props;
-  const responseString = JSON.stringify(response, null, 2);
+  const responseString = JSON.stringify(response, null, JSON_INDENT);
   const isError = response !== null && !isSuccessCommandResult(response);
   return (
     <Flex flexDirection="column" alignItems="flex-start">
@@ -27,7 +29,7 @@ export function CommandResponse<Response, ErrorCodes>(
         content={
           <Text color="neutral.c00" whiteSpace="pre-wrap">
             Arguments:{"\n"}
-            {JSON.stringify(args, null, 2)}
+            {JSON.stringify(args, null, JSON_INDENT)}
           </Text>
         }
       >
