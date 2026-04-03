@@ -1,14 +1,8 @@
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
+import { type SignCredentialDeploymentTransactionDAReturnType } from "@api/app-binder/SignCredentialDeploymentTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-
-export type PublicKeyOptions = {
-  checkOnDevice?: boolean;
-  skipOpenApp?: boolean;
-};
-
-export type TransactionOptions = {
-  skipOpenApp?: boolean;
-};
+import { type PublicKeyOptions } from "@api/model/PublicKeyOptions";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
 
 export interface SignerConcordium {
   getPublicKey: (
@@ -21,4 +15,10 @@ export interface SignerConcordium {
     transaction: Uint8Array,
     options?: TransactionOptions,
   ) => SignTransactionDAReturnType;
+
+  signCredentialDeploymentTransaction: (
+    derivationPath: string,
+    transaction: Uint8Array,
+    options?: TransactionOptions,
+  ) => SignCredentialDeploymentTransactionDAReturnType;
 }

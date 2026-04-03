@@ -9,12 +9,14 @@ import {
 import { inject, injectable } from "inversify";
 
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
+import { type SignCredentialDeploymentTransactionDAReturnType } from "@api/app-binder/SignCredentialDeploymentTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import {
   GetPublicKeyCommand,
   type GetPublicKeyCommandArgs,
 } from "@internal/app-binder/command/GetPublicKeyCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { SendCredentialDeploymentTransactionTask } from "@internal/app-binder/task/SendCredentialDeploymentTransactionTask";
 import { createSignTransactionTask } from "@internal/app-binder/task/SignTransactionTaskFactory";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -64,6 +66,33 @@ export class ConcordiumAppBinder {
           skipOpenApp: args.skipOpenApp ?? false,
         },
         logger: this.dmkLoggerFactory("SignTransaction"),
+      }),
+    });
+  }
+
+  signCredentialDeploymentTransaction(args: {
+    derivationPath: string;
+    transaction: Uint8Array;
+    skipOpenApp?: boolean;
+  }): SignCredentialDeploymentTransactionDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SendCredentialDeploymentTransactionTask(
+              internalApi,
+              {
+                derivationPath: args.derivationPath,
+                transaction: args.transaction,
+              },
+              this.dmkLoggerFactory("SendCredentialDeploymentTransactionTask"),
+            ).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp ?? false,
+        },
+        logger: this.dmkLoggerFactory("SignCredentialDeploymentTransaction"),
       }),
     });
   }

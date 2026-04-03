@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
-import { type PublicKeyOptions } from "@api/SignerConcordium";
+import { type PublicKeyOptions } from "@api/model/PublicKeyOptions";
 import { ConcordiumAppBinder } from "@internal/app-binder/ConcordiumAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 
