@@ -15,7 +15,7 @@ import {
   type GetPublicKeyCommandArgs,
 } from "@internal/app-binder/command/GetPublicKeyCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
-import { SendInChunksTask } from "@internal/app-binder/task/SendInChunksTask";
+import { createSignTransactionTask } from "@internal/app-binder/task/SignTransactionTaskFactory";
 import { externalTypes } from "@internal/externalTypes";
 
 @injectable()
@@ -54,16 +54,16 @@ export class ConcordiumAppBinder {
       deviceAction: new CallTaskInAppDeviceAction({
         input: {
           task: async (internalApi) =>
-            new SendInChunksTask(
+            createSignTransactionTask(
               internalApi,
               args,
-              this.dmkLoggerFactory("SendInChunksTask"),
-            ).run(),
+              this.dmkLoggerFactory,
+            )(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,
         },
-        logger: this.dmkLoggerFactory("SignTransferCommand"),
+        logger: this.dmkLoggerFactory("SignTransaction"),
       }),
     });
   }
