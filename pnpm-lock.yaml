@@ -187,8 +187,8 @@ catalogs:
       specifier: 13.0.4
       version: 13.0.4
     electron:
-      specifier: 38.1.2
-      version: 38.1.2
+      specifier: 39.8.4
+      version: 39.8.4
     electron-builder:
       specifier: 25.1.8
       version: 25.1.8
@@ -515,10 +515,10 @@ importers:
     dependencies:
       '@electron-toolkit/preload':
         specifier: ^3.0.2
-        version: 3.0.2(electron@38.1.2)
+        version: 3.0.2(electron@39.8.4)
       '@electron-toolkit/utils':
         specifier: ^4.0.0
-        version: 4.0.0(electron@38.1.2)
+        version: 4.0.0(electron@39.8.4)
       '@ledgerhq/device-management-kit-devtools-core':
         specifier: workspace:^
         version: link:../../packages/devtools/core
@@ -561,7 +561,7 @@ importers:
         version: 5.0.1(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       electron:
         specifier: 'catalog:'
-        version: 38.1.2
+        version: 39.8.4
       electron-builder:
         specifier: 'catalog:'
         version: 25.1.8(electron-builder-squirrel-windows@25.1.8)
@@ -6380,6 +6380,7 @@ packages:
   '@xmldom/xmldom@0.8.11':
     resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -7852,8 +7853,8 @@ packages:
       '@swc/core':
         optional: true
 
-  electron@38.1.2:
-    resolution: {integrity: sha512-WXUcN3W8h8NTTZViA3KNX0rV2YBU0X0mEUM3ubupXTDY4QtIN7tmiqYVOKSKpR2LckTmBWGuEeY4D6xVoffwKQ==}
+  electron@39.8.4:
+    resolution: {integrity: sha512-eXYKxr4y+s31xs78keVJYg+XY20tGQMQzyIhZvc5L0XRDH2Gp08mbeFlbR1OjAeM5h5l/T2JYT2MFK2kYe2fMg==}
     engines: {node: '>= 12.20.55'}
     hasBin: true
 
@@ -14321,17 +14322,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@electron-toolkit/preload@3.0.2(electron@38.1.2)':
+  '@electron-toolkit/preload@3.0.2(electron@39.8.4)':
     dependencies:
-      electron: 38.1.2
+      electron: 39.8.4
 
   '@electron-toolkit/tsconfig@2.0.0(@types/node@22.10.1)':
     dependencies:
       '@types/node': 22.10.1
 
-  '@electron-toolkit/utils@4.0.0(electron@38.1.2)':
+  '@electron-toolkit/utils@4.0.0(electron@39.8.4)':
     dependencies:
-      electron: 38.1.2
+      electron: 39.8.4
 
   '@electron/asar@3.4.1':
     dependencies:
@@ -19824,7 +19825,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@38.1.2:
+  electron@39.8.4:
     dependencies:
       '@electron/get': 2.0.3
       '@types/node': 22.10.1
