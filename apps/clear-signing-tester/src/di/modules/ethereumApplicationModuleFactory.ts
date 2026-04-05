@@ -8,7 +8,7 @@ import { TestTransactionUseCase } from "@root/src/application/usecases/TestTrans
 import { TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
 import { TYPES } from "@root/src/di/types";
 
-export const applicationModuleFactory = () =>
+export const ethereumApplicationModuleFactory = () =>
   new ContainerModule(({ bind }) => {
     bind(TYPES.TestTransactionUseCase).to(TestTransactionUseCase);
     bind(TYPES.TestBatchTransactionFromFileUseCase).to(

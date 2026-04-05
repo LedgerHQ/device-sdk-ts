@@ -43,7 +43,7 @@ export class SpeculosDeviceRepository implements DeviceRepository {
 
     await this.screenshotSaver.save();
 
-    const signingResult = this.signingService.sign(input, derivationPath);
+    const signingResult = await this.signingService.sign(input, derivationPath);
 
     return await this.orchestrator.orchestrateSigningFlow(signingResult, input);
   }

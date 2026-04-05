@@ -2,29 +2,31 @@ import { Container } from "inversify";
 
 import { type LoggerConfig } from "@root/src/domain/models/config/LoggerConfig";
 
-import { applicationModuleFactory } from "./modules/applicationModuleFactory";
 import {
   type ClearSigningTesterConfig,
   configModuleFactory,
 } from "./modules/configModuleFactory";
-import { infrastructureModuleFactory } from "./modules/infrastructureModuleFactory";
 import { loggerModuleFactory } from "./modules/loggerModuleFactory";
+import { sharedInfrastructureModuleFactory } from "./modules/sharedInfrastructureModuleFactory";
+import { solanaApplicationModuleFactory } from "./modules/solanaApplicationModuleFactory";
+import { solanaInfrastructureModuleFactory } from "./modules/solanaInfrastructureModuleFactory";
 
-type MakeContainerArgs = {
+type MakeSolanaContainerArgs = {
   config: ClearSigningTesterConfig;
   logger: LoggerConfig;
 };
 
-export const makeContainer = ({
+export const makeSolanaContainer = ({
   config,
   logger,
-}: MakeContainerArgs): Container => {
+}: MakeSolanaContainerArgs): Container => {
   const container = new Container();
 
   container.loadSync(
     configModuleFactory(config),
-    infrastructureModuleFactory(config),
-    applicationModuleFactory(),
+    sharedInfrastructureModuleFactory(config),
+    solanaInfrastructureModuleFactory(config),
+    solanaApplicationModuleFactory(),
     loggerModuleFactory({ config: logger }),
   );
 
