@@ -62,6 +62,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .setWeb3ChecksConfig(web3ChecksConfig)
       .setMetadataServiceConfig(metadataServiceConfig)
       .setDatasourceConfig(datasourceConfig)
+      .setSource("device-management-kit-playground")
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,

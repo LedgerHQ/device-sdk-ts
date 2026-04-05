@@ -24,12 +24,12 @@ describe("HttpBlindSigningReporterDatasource", () => {
       url: "https://reporter.test",
     },
     originToken: "originToken",
+    source: "third-party",
   } as ContextModuleServiceConfig;
 
   const params: BlindSigningReportParams = {
     signatureId: "a3f8Kb-1738850400000",
     signingMethod: BlindSigningMethod.ETH_SIGN_TRANSACTION,
-    source: "ledger_wallet",
     isBlindSign: true,
     chainId: 1,
     targetAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
@@ -92,7 +92,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
           method: "POST",
-          url: `${config.reporter!.url}/v1/blind-signing-events`,
+          url: `${config.reporter!.url}/blind-signing-events`,
         }),
       );
     });
@@ -116,7 +116,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
       );
     });
 
-    it("should call axios with the event payload as data", async () => {
+    it("should call axios with the event payload and injected source as data", async () => {
       // GIVEN
       vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
 
@@ -127,7 +127,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
       // THEN
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: params,
+          data: { ...params, source: config.source },
         }),
       );
     });
