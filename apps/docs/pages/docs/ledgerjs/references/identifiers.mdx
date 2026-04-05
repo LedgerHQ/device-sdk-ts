@@ -2,9 +2,17 @@
 title: Where can I find the devices USB identifiers?
 ---
 
+import KeyTakeaway from "/components/features/key-takeaway";
+
+<KeyTakeaway>
+   ☞   The renaming of "Ledger Live" to "Ledger Wallet" and      "wallet" (in
+  the hardware sense) to "signer" is still in progress.      This page may
+  contain legacy references that will be updated.
+</KeyTakeaway>
+
 # Where can I find the devices USB identifiers?
 
-USB identifiers are essential for applications that need to detect and communicate with Ledger hardware wallets. These identifiers consist of **Vendor ID (VID)** and **Product ID (PID)** pairs that uniquely identify different Ledger device models.
+USB identifiers are essential for applications that need to detect and communicate with Ledger signers. These identifiers consist of **Vendor ID (VID)** and **Product ID (PID)** pairs that uniquely identify different Ledger device models.
 
 ## What are USB identifiers?
 
@@ -28,11 +36,11 @@ The complete list of Devices USB identifiers can be found in the [ledger-live re
 
 This file contains:
 
-- **Device descriptors** for all Ledger hardware wallet models (Nano S, Nano S Plus, Nano X, Flex, Stax, etc.)
+- **Device descriptors** for all Ledger signers models (Nano S, Nano S Plus, Nano X, Flex, Stax, etc.)
 - **USB product IDs** for each device variant
 - **Device capabilities** and supported communication protocols
 - **Bootloader mode identifiers** for firmware update scenarios
 
 ---
 
-**Note**: The repository linked above is part of the official Ledger Live monorepo and is the authoritative source maintained by the Ledger team.
+**Note**: The repository linked above is part of the official Ledger Wallet monorepo and is the authoritative source maintained by the Ledger team.
