@@ -8,6 +8,7 @@ export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
 export { type Command } from "@api/command/Command";
 export {
+  ErrorLanguageNotFound,
   InvalidGetFirmwareMetadataResponseError,
   InvalidResponseFormatError,
   InvalidStatusWordError,
@@ -24,6 +25,13 @@ export {
   type BackupStorageCommandResult,
 } from "@api/command/os/BackupStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
+export {
+  DeleteLanguagePackCommand,
+  type DeleteLanguagePackCommandArgs,
+  DeleteLanguagePackCommandError,
+  type DeleteLanguagePackCommandResult,
+  type DeleteLanguagePackErrorCodes,
+} from "@api/command/os/DeleteLanguagePackCommand";
 export {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
@@ -58,6 +66,14 @@ export {
   type ListAppsErrorCodes,
   type ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
+export {
+  ListLanguagePackCommand,
+  type ListLanguagePackCommandArgs,
+  ListLanguagePackCommandError,
+  type ListLanguagePackCommandResult,
+  type ListLanguagePackErrorCodes,
+  type ListLanguagePackResponse,
+} from "@api/command/os/ListLanguagePackCommand";
 export {
   type LoadCertificateArgs,
   LoadCertificateCommand,
@@ -108,6 +124,7 @@ export type {
   GoToDashboardDARequiredInteraction,
   GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
+export { InstallLanguagePackageDeviceAction } from "@api/device-action/os/InstallLanguagePackage/InstallLanguagePackageDeviceAction";
 export { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOrUpdateApps/InstallOrUpdateAppsDeviceAction";
 export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction";

@@ -55,3 +55,16 @@ export class InvalidGetFirmwareMetadataResponseError implements DmkError {
     );
   }
 }
+
+export class ErrorLanguageNotFound implements DmkError {
+  readonly _tag = "ErrorLanguageNotFound";
+  readonly originalError: Error;
+  readonly language: string;
+
+  constructor(language: string, message?: string) {
+    this.language = language;
+    this.originalError = new Error(
+      message ?? `No language package found for language ${String(language)}.`,
+    );
+  }
+}
