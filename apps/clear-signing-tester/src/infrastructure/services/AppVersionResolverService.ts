@@ -136,10 +136,29 @@ export class AppVersionResolverService implements AppVersionResolver {
 
   private getAvailableOsVersions(devicePath: string): string[] {
     try {
-      return readdirSync(devicePath).filter((name) => {
+      const allVersions = readdirSync(devicePath).filter((name) => {
         const fullPath = join(devicePath, name);
         return statSync(fullPath).isDirectory();
       });
+
+      const stableVersions = allVersions.filter(
+        (v) => semver.valid(v) && semver.prerelease(v) === null,
+      );
+
+      if (stableVersions.length > 0) {
+        const skipped = allVersions.length - stableVersions.length;
+        if (skipped > 0) {
+          this.logger.debug(
+            `Filtered out ${skipped} pre-release OS version(s) from auto-resolution`,
+          );
+        }
+        return stableVersions;
+      }
+
+      this.logger.warn(
+        "No stable OS versions found, falling back to all versions including pre-releases",
+      );
+      return allVersions;
     } catch (error) {
       this.logger.error(`Failed to read device directory: ${devicePath}`, {
         data: { error },
