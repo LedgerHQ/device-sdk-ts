@@ -41,7 +41,7 @@ export type BlindSigningDetectionTaskResult = {
   isBlindSign: boolean;
 };
 
-export function computeIsBlindSign(input: BlindSigningDetectionInput): boolean {
+function computeIsBlindSign(input: BlindSigningDetectionInput): boolean {
   if (input.usedFallback) {
     return true;
   }

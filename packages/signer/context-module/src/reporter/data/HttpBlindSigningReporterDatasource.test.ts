@@ -24,7 +24,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
       url: "https://reporter.test",
     },
     originToken: "originToken",
-    source: "third-party",
+    appSource: "third-party",
   } as ContextModuleServiceConfig;
 
   const params: BlindSigningReportParams = {
@@ -127,7 +127,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
       // THEN
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: { ...params, source: config.source },
+          data: { ...params, source: config.appSource },
         }),
       );
     });

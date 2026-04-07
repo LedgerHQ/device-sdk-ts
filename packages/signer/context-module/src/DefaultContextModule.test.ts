@@ -62,7 +62,7 @@ describe("DefaultContextModule", () => {
     datasource: {
       proxy: "default",
     },
-    source: "third-party",
+    appSource: "third-party",
     originToken: "originToken",
     loggerFactory: mockLoggerFactory,
   };

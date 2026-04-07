@@ -80,7 +80,7 @@ You can set a source identifier that will be included in blind signing reports. 
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
 })
-  .setSource("my-app-name")
+  .setAppSource("my-app-name")
   .build();
 ```
 

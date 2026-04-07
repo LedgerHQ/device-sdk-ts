@@ -8,7 +8,6 @@ import {
   type BlindSigningDetectionInput,
   BlindSigningDetectionTask,
   type BlindSigningDetectionTaskArgs,
-  computeIsBlindSign,
 } from "./BlindSigningDetectionTask";
 
 vi.mock("@ledgerhq/signer-utils", () => ({
@@ -35,129 +34,6 @@ const baseInput: BlindSigningDetectionInput = {
   signerAppVersion: "1.12.1",
   deviceVersion: "2.2.3",
 };
-
-describe("computeIsBlindSign", () => {
-  it("should return false when hasContext is true and no fallback", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: true,
-        usedFallback: false,
-      }),
-    ).toBe(false);
-  });
-
-  it("should return true when hasContext is false and no fallback", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: false,
-        usedFallback: false,
-      }),
-    ).toBe(true);
-  });
-
-  it("should return true when usedFallback is true even with context", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: true,
-        usedFallback: true,
-      }),
-    ).toBe(true);
-  });
-
-  it("should return true when usedFallback is true and no context", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: false,
-        usedFallback: true,
-      }),
-    ).toBe(true);
-  });
-
-  it("should work for typedData type", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        type: "typedData",
-        hasContext: true,
-        usedFallback: false,
-      }),
-    ).toBe(false);
-
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        type: "typedData",
-        hasContext: false,
-        usedFallback: false,
-      }),
-    ).toBe(true);
-  });
-
-  it("should return true when hasContext is true but only metadata-only context types are present", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: true,
-        usedFallback: false,
-        contextTypes: [ClearSignContextType.TRANSACTION_CHECK],
-      }),
-    ).toBe(true);
-  });
-
-  it("should return true when hasContext is true but only DYNAMIC_NETWORK and GATED_SIGNING context types are present", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: true,
-        usedFallback: false,
-        contextTypes: [
-          ClearSignContextType.DYNAMIC_NETWORK,
-          ClearSignContextType.GATED_SIGNING,
-        ],
-      }),
-    ).toBe(true);
-  });
-
-  it("should return false when hasContext is true and real clear-signing context types are present alongside metadata", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: true,
-        usedFallback: false,
-        contextTypes: [
-          ClearSignContextType.TRANSACTION_CHECK,
-          ClearSignContextType.TRANSACTION_INFO,
-        ],
-      }),
-    ).toBe(false);
-  });
-
-  it("should return false when hasContext is true with empty contextTypes (no calldata scenario)", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: true,
-        usedFallback: false,
-        contextTypes: [],
-      }),
-    ).toBe(false);
-  });
-
-  it("should return true when hasContext is false even with contextTypes provided", () => {
-    expect(
-      computeIsBlindSign({
-        ...baseInput,
-        hasContext: false,
-        usedFallback: false,
-        contextTypes: [],
-      }),
-    ).toBe(true);
-  });
-});
 
 describe("BlindSigningDetectionTask", () => {
   const mockContextModule = {
@@ -287,6 +163,102 @@ describe("BlindSigningDetectionTask", () => {
 
     expect(result.isBlindSign).toBe(true);
     expect(mockLogger.error).toHaveBeenCalled();
+  });
+
+  it("should return true when hasContext is true but only metadata-only context types are present", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: {
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [ClearSignContextType.TRANSACTION_CHECK],
+      },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    const task = new BlindSigningDetectionTask(args);
+    const result = await task.run();
+
+    expect(result.isBlindSign).toBe(true);
+  });
+
+  it("should return true when hasContext is true but only DYNAMIC_NETWORK and GATED_SIGNING context types are present", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: {
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [
+          ClearSignContextType.DYNAMIC_NETWORK,
+          ClearSignContextType.GATED_SIGNING,
+        ],
+      },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    const task = new BlindSigningDetectionTask(args);
+    const result = await task.run();
+
+    expect(result.isBlindSign).toBe(true);
+  });
+
+  it("should return false when hasContext is true and real clear-signing context types are present alongside metadata", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: {
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [
+          ClearSignContextType.TRANSACTION_CHECK,
+          ClearSignContextType.TRANSACTION_INFO,
+        ],
+      },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    const task = new BlindSigningDetectionTask(args);
+    const result = await task.run();
+
+    expect(result.isBlindSign).toBe(false);
+  });
+
+  it("should return false when hasContext is true with empty contextTypes (no calldata scenario)", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: {
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        contextTypes: [],
+      },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    const task = new BlindSigningDetectionTask(args);
+    const result = await task.run();
+
+    expect(result.isBlindSign).toBe(false);
+  });
+
+  it("should return true when hasContext is false even with contextTypes provided", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: {
+        ...baseInput,
+        hasContext: false,
+        usedFallback: false,
+        contextTypes: [],
+      },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    const task = new BlindSigningDetectionTask(args);
+    const result = await task.run();
+
+    expect(result.isBlindSign).toBe(true);
   });
 
   it("should map DeviceModelId to BlindSigningModelId correctly", async () => {

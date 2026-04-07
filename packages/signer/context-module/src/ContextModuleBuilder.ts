@@ -49,7 +49,7 @@ export const DEFAULT_CONFIG: Readonly<ContextModuleConfig> = Object.freeze({
     url: DEFAULT_REPORTER_URL,
   }),
   datasource: Object.freeze({ proxy: "default" }),
-  source: "third-party",
+  appSource: "third-party",
 });
 
 /**
@@ -183,13 +183,13 @@ export class ContextModuleBuilder {
   }
 
   /**
-   * Set the source identifier included in blind signing reports
+   * Set the app source identifier included in blind signing reports
    *
-   * @param source
+   * @param appSource
    * @returns this
    */
-  setSource(source: string) {
-    this.config.source = source;
+  setAppSource(appSource: string) {
+    this.config.appSource = appSource;
     return this;
   }
 
