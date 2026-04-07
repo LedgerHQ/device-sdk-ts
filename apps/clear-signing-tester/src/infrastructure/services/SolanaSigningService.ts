@@ -1,3 +1,4 @@
+import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
 import { type SignerSolana } from "@ledgerhq/device-signer-kit-solana";
 import { inject, injectable, optional } from "inversify";
 
@@ -44,7 +45,10 @@ export class SolanaSigningService implements SigningService {
               derivationPath,
               input.rawTx,
             );
-        const txBytes = base64ToUint8Array(rawTx);
+        const txBytes = base64StringToBuffer(rawTx);
+        if (!txBytes) {
+          throw new Error("Invalid base64 transaction data.");
+        }
         return this.signer.signTransaction(derivationPath, txBytes, {
           skipOpenApp: true,
           solanaRPCURL: this.solanaRpcConfig?.url,
@@ -56,13 +60,4 @@ export class SolanaSigningService implements SigningService {
         );
     }
   }
-}
-
-function base64ToUint8Array(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes;
 }
