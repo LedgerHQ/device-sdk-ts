@@ -13,7 +13,7 @@ export interface DmkApi {
   clearLogs: () => Promise<void>;
   exportLogs: () => Promise<{ saved: boolean; path?: string }>;
   analyzeLocal: (command: AnalysisCommand) => Promise<AnalysisResult>;
-  analyzeAi: (command: string, model?: string) => void;
+  analyzeAi: (command: string, model?: string, depth?: number) => void;
   cancelAi: () => void;
   onAiChunk: (cb: (chunk: string) => void) => () => void;
   onAiDone: (cb: (fullText: string) => void) => () => void;
@@ -55,8 +55,8 @@ const dmk: DmkApi = {
   exportLogs: () => ipcRenderer.invoke("logs:export"),
   analyzeLocal: (command) => ipcRenderer.invoke("analyze:local", command),
 
-  analyzeAi: (command, model) => {
-    ipcRenderer.invoke("analyze:ai", command, model);
+  analyzeAi: (command, model, depth) => {
+    ipcRenderer.invoke("analyze:ai", command, model, depth);
   },
   cancelAi: () => {
     ipcRenderer.invoke("analyze:ai:cancel");

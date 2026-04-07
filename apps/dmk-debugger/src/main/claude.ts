@@ -52,8 +52,7 @@ export async function streamChat(
     const stream = query({
       prompt: message,
       options: {
-        allowedTools: [],
-        maxTurns: 1,
+        maxTurns: 4,
         resume: sessionId,
       },
     });
@@ -121,19 +120,19 @@ export async function streamAnalysis(
   onError: (msg: string) => void,
   signal: AbortSignal,
   model?: string,
+  maxTurns = 6,
 ): Promise<void> {
   let fullText = "";
 
   try {
     console.log(
-      `[claude] streamAnalysis: sessionId=${sessionId ?? "NONE (fresh)"}, prompt length=${prompt.length}`,
+      `[claude] streamAnalysis: sessionId=${sessionId ?? "NONE (fresh)"}, maxTurns=${maxTurns}, prompt length=${prompt.length}`,
     );
 
     const stream = query({
       prompt,
       options: {
-        allowedTools: [],
-        maxTurns: 1,
+        maxTurns,
         ...(sessionId ? { resume: sessionId } : {}),
         ...(model ? { model } : {}),
       },

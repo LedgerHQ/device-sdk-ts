@@ -17,8 +17,8 @@ const dmk = {
   clearLogs: () => electron.ipcRenderer.invoke("logs:clear"),
   exportLogs: () => electron.ipcRenderer.invoke("logs:export"),
   analyzeLocal: (command) => electron.ipcRenderer.invoke("analyze:local", command),
-  analyzeAi: (command, model) => {
-    electron.ipcRenderer.invoke("analyze:ai", command, model);
+  analyzeAi: (command, model, depth) => {
+    electron.ipcRenderer.invoke("analyze:ai", command, model, depth);
   },
   cancelAi: () => {
     electron.ipcRenderer.invoke("analyze:ai:cancel");

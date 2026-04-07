@@ -90,80 +90,84 @@ function registerIpcHandlers(): void {
     return analyzer.analyze(store, command);
   });
 
-  ipcMain.handle("analyze:ai", (event, command: string, model?: string) => {
-    if (activeAiAbort) activeAiAbort.abort();
+  ipcMain.handle(
+    "analyze:ai",
+    (event, command: string, model?: string, depth?: number) => {
+      if (activeAiAbort) activeAiAbort.abort();
 
-    const ac = new AbortController();
-    activeAiAbort = ac;
+      const ac = new AbortController();
+      activeAiAbort = ac;
 
-    const logs = store.getAll();
-    console.log(
-      `[ipc] analyze:ai → store has ${logs.length} entries (store.size=${store.size})`,
-    );
-    if (logs.length === 0) {
-      event.sender.send("ai:error", "No DMK logs collected yet.");
-      return;
-    }
+      const logs = store.getAll();
+      console.log(
+        `[ipc] analyze:ai → store has ${logs.length} entries (store.size=${store.size})`,
+      );
+      if (logs.length === 0) {
+        event.sender.send("ai:error", "No DMK logs collected yet.");
+        return;
+      }
 
-    const logContext = buildLogContext(logs);
+      const logContext = buildLogContext(logs);
 
-    const systemPrompts: Record<string, string> = {
-      analyze: SYSTEM_PROMPT_ANALYZE,
-      diagram: SYSTEM_PROMPT_DIAGRAM,
-      "clear-signing": SYSTEM_PROMPT_CLEAR_SIGNING,
-    };
+      const systemPrompts: Record<string, string> = {
+        analyze: SYSTEM_PROMPT_ANALYZE,
+        diagram: SYSTEM_PROMPT_DIAGRAM,
+        "clear-signing": SYSTEM_PROMPT_CLEAR_SIGNING,
+      };
 
-    const instructions: Record<string, string> = {
-      analyze:
-        "Analyze these DMK logs. Identify errors, decode APDU commands and status words, detect failure patterns, and provide a clear diagnosis with suggested fixes.",
-      diagram:
-        "Generate a Mermaid sequence diagram from these DMK logs showing the APDU exchanges between Host and Device. Group related exchanges and highlight errors.",
-      "clear-signing":
-        "Analyze these DMK logs for clear signing issues. Determine if clear signing was attempted, what context was resolved, whether it succeeded or failed, and why.",
-    };
+      const instructions: Record<string, string> = {
+        analyze:
+          "Analyze these DMK logs. Identify errors, decode APDU commands and status words, detect failure patterns, and provide a clear diagnosis with suggested fixes.",
+        diagram:
+          "Generate a Mermaid sequence diagram from these DMK logs showing the APDU exchanges between Host and Device. Group related exchanges and highlight errors.",
+        "clear-signing":
+          "Analyze these DMK logs for clear signing issues. Determine if clear signing was attempted, what context was resolved, whether it succeeded or failed, and why.",
+      };
 
-    const systemPrompt = systemPrompts[command] ?? systemPrompts["analyze"]!;
-    const instruction = instructions[command] ?? instructions["analyze"]!;
+      const systemPrompt = systemPrompts[command] ?? systemPrompts["analyze"]!;
+      const instruction = instructions[command] ?? instructions["analyze"]!;
 
-    const analysisId = `analysis-${Date.now()}`;
-    const prompt = [
-      `# NEW ANALYSIS REQUEST [${analysisId}]`,
-      "",
-      "**IMPORTANT**: This is an independent analysis request. Analyze ONLY the logs provided below.",
-      "Disregard any logs or analysis from previous messages in this conversation — they belong to a different session.",
-      "",
-      "---",
-      "",
-      systemPrompt,
-      "",
-      "---",
-      "",
-      `## DMK Logs (${logs.length} entries)`,
-      "",
-      logContext,
-      "",
-      "---",
-      "",
-      instruction,
-    ].join("\n");
+      const analysisId = `analysis-${Date.now()}`;
+      const prompt = [
+        `# NEW ANALYSIS REQUEST [${analysisId}]`,
+        "",
+        "**IMPORTANT**: This is an independent analysis request. Analyze ONLY the logs provided below.",
+        "Disregard any logs or analysis from previous messages in this conversation — they belong to a different session.",
+        "",
+        "---",
+        "",
+        systemPrompt,
+        "",
+        "---",
+        "",
+        `## DMK Logs (${logs.length} entries)`,
+        "",
+        logContext,
+        "",
+        "---",
+        "",
+        instruction,
+      ].join("\n");
 
-    void streamAnalysis(
-      prompt,
-      (chunk) => {
-        if (!ac.signal.aborted) event.sender.send("ai:chunk", chunk);
-      },
-      (fullText) => {
-        activeAiAbort = null;
-        event.sender.send("ai:done", fullText);
-      },
-      (msg) => {
-        activeAiAbort = null;
-        event.sender.send("ai:error", msg);
-      },
-      ac.signal,
-      model,
-    );
-  });
+      void streamAnalysis(
+        prompt,
+        (chunk) => {
+          if (!ac.signal.aborted) event.sender.send("ai:chunk", chunk);
+        },
+        (fullText) => {
+          activeAiAbort = null;
+          event.sender.send("ai:done", fullText);
+        },
+        (msg) => {
+          activeAiAbort = null;
+          event.sender.send("ai:error", msg);
+        },
+        ac.signal,
+        model,
+        depth,
+      );
+    },
+  );
 
   ipcMain.handle("analyze:ai:cancel", () => {
     if (activeAiAbort) {

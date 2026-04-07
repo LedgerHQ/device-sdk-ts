@@ -73,6 +73,18 @@ Use the following resources as your source of truth when decoding APDU commands 
 - Logs tagged with [WebHidApduSender] show raw APDU exchanges (=> = sent to device, <= = received from device).
 - Logs tagged with [Signer*] show signer-level task execution.
 
+## CRITICAL: Cross-reference with source code
+
+You MUST read the actual source code listed in the reference documentation table above to verify your analysis.
+Do NOT guess or rely only on the logs — open and read the relevant source files to:
+- Confirm how APDU commands are built and what parameters they expect
+- Understand the device action state machine flow and where it can fail
+- Check the signer task implementation to see what the host code actually does
+- Verify context module behavior (what loaders are called, what data is fetched)
+- Compare what the code sends vs. what the logs show was actually sent
+
+When diagnosing a failure, always trace the error back to the specific line or function in the source code that caused it.
+
 ## Your task
 
 Analyze the provided DMK logs following this exact structure:
@@ -158,7 +170,13 @@ Analyze the logs and report:
 4. Actionable fix (update app, add token to CAL, fix context module config, etc.)`;
 
 export function buildLogContext(
-  logs: { level: string; message: string; tag: string | string[]; timestamp: string; data?: unknown }[],
+  logs: {
+    level: string;
+    message: string;
+    tag: string | string[];
+    timestamp: string;
+    data?: unknown;
+  }[],
 ): string {
   const lines = logs.map((log) => {
     const tag = Array.isArray(log.tag) ? log.tag.join(":") : log.tag;

@@ -146,12 +146,28 @@ function MarkdownRenderer({ text }: { text: string }): JSX.Element {
   );
 }
 
+const DEPTH_LEVELS = [
+  {
+    value: 1,
+    label: "Quick",
+    description: "Logs only, no source code browsing",
+  },
+  { value: 6, label: "Normal", description: "Read 1–2 key source files" },
+  { value: 10, label: "Deep", description: "Browse multiple source files" },
+  {
+    value: 15,
+    label: "Thorough",
+    description: "Extensive codebase exploration",
+  },
+];
+
 export default function AiPanel(): JSX.Element {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState("");
   const [models, setModels] = useState<ModelOption[]>([]);
+  const [depthIdx, setDepthIdx] = useState(1);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -250,7 +266,8 @@ export default function AiPanel(): JSX.Element {
     setShowChatBtn(false);
     setChatOpen(false);
     setChatMessages([]);
-    window.dmk.analyzeAi("analyze", model || undefined);
+    const depth = DEPTH_LEVELS[depthIdx]!.value;
+    window.dmk.analyzeAi("analyze", model || undefined, depth);
   };
 
   const cancel = (): void => {
@@ -334,6 +351,24 @@ export default function AiPanel(): JSX.Element {
               </option>
             ))}
           </select>
+          <div
+            style={styles.depthGroup}
+            title={DEPTH_LEVELS[depthIdx]!.description}
+          >
+            <input
+              type="range"
+              min={0}
+              max={DEPTH_LEVELS.length - 1}
+              step={1}
+              value={depthIdx}
+              onChange={(e) => setDepthIdx(Number(e.target.value))}
+              disabled={loading}
+              style={styles.depthSlider}
+            />
+            <span style={styles.depthLabel}>
+              {DEPTH_LEVELS[depthIdx]!.label}
+            </span>
+          </div>
           {loading ? (
             <>
               <span style={styles.streaming}>
@@ -824,6 +859,23 @@ const styles: Record<string, CSSProperties> = {
     fontSize: 11,
     outline: "none",
     cursor: "pointer",
+  },
+  depthGroup: {
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+  },
+  depthSlider: {
+    width: 56,
+    height: 3,
+    accentColor: "#6366f1",
+    cursor: "pointer",
+  },
+  depthLabel: {
+    fontSize: 10,
+    color: "#94a3b8",
+    fontWeight: 500,
+    minWidth: 50,
   },
   streaming: {
     display: "flex",
