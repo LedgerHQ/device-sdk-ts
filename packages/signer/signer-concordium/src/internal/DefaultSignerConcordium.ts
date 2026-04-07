@@ -5,13 +5,14 @@ import {
 import { type Container } from "inversify";
 
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
+import { type SignCredentialDeploymentTransactionDAReturnType } from "@api/app-binder/SignCredentialDeploymentTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import {
-  type PublicKeyOptions,
-  type SignerConcordium,
-  type TransactionOptions,
-} from "@api/SignerConcordium";
+import { type PublicKeyOptions } from "@api/model/PublicKeyOptions";
+import { type TransactionOptions } from "@api/model/TransactionOptions";
+import { type SignerConcordium } from "@api/SignerConcordium";
 import { makeContainer } from "@internal/di";
+import { credentialDeploymentTypes } from "@internal/use-cases/credential-deployment/di/credentialDeploymentTypes";
+import { type SignCredentialDeploymentTransactionUseCase } from "@internal/use-cases/credential-deployment/SignCredentialDeploymentTransactionUseCase";
 import { publicKeyTypes } from "@internal/use-cases/publickey/di/publicKeyTypes";
 import { type GetPublicKeyUseCase } from "@internal/use-cases/publickey/GetPublicKeyUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
@@ -45,6 +46,18 @@ export class DefaultSignerConcordium implements SignerConcordium {
   ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
+      .execute(derivationPath, transaction, options);
+  }
+
+  signCredentialDeploymentTransaction(
+    derivationPath: string,
+    transaction: Uint8Array,
+    options?: TransactionOptions,
+  ): SignCredentialDeploymentTransactionDAReturnType {
+    return this._container
+      .get<SignCredentialDeploymentTransactionUseCase>(
+        credentialDeploymentTypes.SignCredentialDeploymentTransactionUseCase,
+      )
       .execute(derivationPath, transaction, options);
   }
 }

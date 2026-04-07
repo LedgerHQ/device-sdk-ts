@@ -4,6 +4,7 @@ This module provides the implementation of the Ledger Concordium signer of the D
 
 - Retrieving the Concordium public key using a given derivation path;
 - Signing a Concordium transaction (Transfer and TransferWithMemo);
+- Signing a Concordium credential deployment transaction;
 
 ## 🔹 Index
 
@@ -13,6 +14,7 @@ This module provides the implementation of the Ledger Concordium signer of the D
 4. [Use Cases](#-use-cases)
    - [Get Public Key](#use-case-1-get-public-key)
    - [Sign Transaction](#use-case-2-sign-transaction)
+   - [Sign Credential Deployment Transaction](#use-case-3-sign-credential-deployment-transaction)
 5. [Observable Behavior](#-observable-behavior)
 
 ## 🔹 How it works
@@ -42,7 +44,7 @@ const signerConcordium = new SignerConcordiumBuilder({
 
 ## 🔹 Use Cases
 
-The `SignerConcordiumBuilder.build()` method will return a `SignerConcordium` instance that exposes 2 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerConcordiumBuilder.build()` method will return a `SignerConcordium` instance that exposes 3 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
@@ -119,6 +121,58 @@ const { observable, cancel } = signerConcordium.signTransaction(
   - **Required**
   - **Type:** `Uint8Array`
   - The serialized transaction bytes to sign. The transaction type (Transfer or TransferWithMemo) is detected automatically from the type byte at offset 60.
+
+- `options`
+
+  - Optional
+  - Type: `TransactionOptions`
+
+    ```typescript
+    type TransactionOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Concordium app on the device.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type Signature = Uint8Array; // 64-byte Ed25519 signature
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 3: Sign Credential Deployment Transaction
+
+Sign a credential deployment transaction on Ledger devices. Credential deployment is required before an account can send its first transaction on the Concordium blockchain. The signer parses the serialized credential deployment bytes and orchestrates the multi-step APDU sequence with the device.
+
+```typescript
+const { observable, cancel } =
+  signerConcordium.signCredentialDeploymentTransaction(
+    derivationPath,
+    transaction,
+    options,
+  );
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/919'/0'/0'/0'"`)
+  - The derivation path used for the signing key.
+
+- `transaction`
+
+  - **Required**
+  - **Type:** `Uint8Array`
+  - The serialized credential deployment bytes. The wire format contains credential values, identity ownership proofs, and expiry, concatenated in the order expected by the Concordium device app.
 
 - `options`
 

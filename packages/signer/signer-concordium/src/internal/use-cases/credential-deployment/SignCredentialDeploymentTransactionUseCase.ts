@@ -1,12 +1,12 @@
 import { inject, injectable } from "inversify";
 
-import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignCredentialDeploymentTransactionDAReturnType } from "@api/app-binder/SignCredentialDeploymentTransactionDeviceActionTypes";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { ConcordiumAppBinder } from "@internal/app-binder/ConcordiumAppBinder";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 
 @injectable()
-export class SignTransactionUseCase {
+export class SignCredentialDeploymentTransactionUseCase {
   private readonly _appBinder: ConcordiumAppBinder;
 
   constructor(
@@ -19,8 +19,8 @@ export class SignTransactionUseCase {
     derivationPath: string,
     transaction: Uint8Array,
     options?: TransactionOptions,
-  ): SignTransactionDAReturnType {
-    return this._appBinder.signTransaction({
+  ): SignCredentialDeploymentTransactionDAReturnType {
+    return this._appBinder.signCredentialDeploymentTransaction({
       derivationPath,
       transaction,
       skipOpenApp: options?.skipOpenApp,
