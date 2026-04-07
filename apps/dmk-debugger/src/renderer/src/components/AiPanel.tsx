@@ -146,6 +146,11 @@ function MarkdownRenderer({ text }: { text: string }): JSX.Element {
   );
 }
 
+const ANALYSIS_TYPES = [
+  { value: "analyze", label: "Full Analysis" },
+  { value: "diagram", label: "Diagram" },
+];
+
 const DEPTH_LEVELS = [
   {
     value: 1,
@@ -167,6 +172,7 @@ export default function AiPanel(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState("");
   const [models, setModels] = useState<ModelOption[]>([]);
+  const [analysisType, setAnalysisType] = useState("analyze");
   const [depthIdx, setDepthIdx] = useState(1);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -267,7 +273,7 @@ export default function AiPanel(): JSX.Element {
     setChatOpen(false);
     setChatMessages([]);
     const depth = DEPTH_LEVELS[depthIdx]!.value;
-    window.dmk.analyzeAi("analyze", model || undefined, depth);
+    window.dmk.analyzeAi(analysisType, model || undefined, depth);
   };
 
   const cancel = (): void => {
@@ -337,6 +343,22 @@ export default function AiPanel(): JSX.Element {
       <div style={styles.toolbar}>
         <span style={styles.toolbarTitle}>AI Analysis</span>
         <div style={styles.toolbarRight}>
+          <div style={styles.segmented}>
+            {ANALYSIS_TYPES.map((t) => (
+              <button
+                key={t.value}
+                style={
+                  analysisType === t.value
+                    ? styles.segmentedActive
+                    : styles.segmentedBtn
+                }
+                onClick={() => setAnalysisType(t.value)}
+                disabled={loading}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
           <select
             style={styles.modelSelect}
             value={model}
@@ -849,6 +871,32 @@ const styles: Record<string, CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 8,
+  },
+  segmented: {
+    display: "flex",
+    border: "1px solid #334155",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  segmentedBtn: {
+    padding: "3px 8px",
+    border: "none",
+    borderRight: "1px solid #334155",
+    background: "transparent",
+    color: "#64748b",
+    fontSize: 10,
+    fontWeight: 500,
+    cursor: "pointer",
+  },
+  segmentedActive: {
+    padding: "3px 8px",
+    border: "none",
+    borderRight: "1px solid #334155",
+    background: "rgba(99, 102, 241, 0.15)",
+    color: "#a78bfa",
+    fontSize: 10,
+    fontWeight: 600,
+    cursor: "pointer",
   },
   modelSelect: {
     padding: "3px 6px",

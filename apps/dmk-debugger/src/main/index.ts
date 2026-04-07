@@ -8,7 +8,6 @@ import {
   buildLogContext,
   SYSTEM_PROMPT_ANALYZE,
   SYSTEM_PROMPT_DIAGRAM,
-  SYSTEM_PROMPT_CLEAR_SIGNING,
 } from "./prompts";
 import {
   streamAnalysis,
@@ -112,7 +111,6 @@ function registerIpcHandlers(): void {
       const systemPrompts: Record<string, string> = {
         analyze: SYSTEM_PROMPT_ANALYZE,
         diagram: SYSTEM_PROMPT_DIAGRAM,
-        "clear-signing": SYSTEM_PROMPT_CLEAR_SIGNING,
       };
 
       const instructions: Record<string, string> = {
@@ -120,8 +118,6 @@ function registerIpcHandlers(): void {
           "Analyze these DMK logs. Identify errors, decode APDU commands and status words, detect failure patterns, and provide a clear diagnosis with suggested fixes.",
         diagram:
           "Generate a Mermaid sequence diagram from these DMK logs showing the APDU exchanges between Host and Device. Group related exchanges and highlight errors.",
-        "clear-signing":
-          "Analyze these DMK logs for clear signing issues. Determine if clear signing was attempted, what context was resolved, whether it succeeded or failed, and why.",
       };
 
       const systemPrompt = systemPrompts[command] ?? systemPrompts["analyze"]!;
