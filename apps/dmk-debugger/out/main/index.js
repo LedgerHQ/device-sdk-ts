@@ -625,29 +625,6 @@ sequenceDiagram
         Device-->>Host: 9000 (Ethereum 1.10.0)
     end
 \`\`\``;
-const SYSTEM_PROMPT_CLEAR_SIGNING = `You are a clear signing debugging specialist for Ledger devices. You analyze DMK logs specifically to determine why a transaction may not be clear-signed.
-
-## Clear signing flow
-1. The signer receives a transaction to sign
-2. The context module is queried for display metadata (token info, domain info, etc.)
-3. If context is found, "provide context" APDUs are sent to the device before the transaction
-4. The device parses the context and displays human-readable info
-5. If any step fails, the device falls back to blind signing
-
-## What to look for
-- Context module logs: did it find metadata? Which loader was used?
-- "Provide trusted name" / "Provide domain" / "Provide token" APDUs
-- Error responses from the device during context provision
-- Timeouts or network errors in context resolution
-- App version compatibility (older apps may not support clear signing)
-- Transaction type support (some tx types aren't supported for clear display)
-
-## Your task
-Analyze the logs and report:
-1. Was clear signing attempted?
-2. What context was resolved (or not)?
-3. If clear signing failed, exactly which step failed and why
-4. Actionable fix (update app, add token to CAL, fix context module config, etc.)`;
 function buildLogContext(logs) {
   const lines = logs.map((log) => {
     const tag = Array.isArray(log.tag) ? log.tag.join(":") : log.tag;
@@ -1162,13 +1139,11 @@ function registerIpcHandlers() {
       const logContext = buildLogContext(logs);
       const systemPrompts = {
         analyze: SYSTEM_PROMPT_ANALYZE,
-        diagram: SYSTEM_PROMPT_DIAGRAM,
-        "clear-signing": SYSTEM_PROMPT_CLEAR_SIGNING
+        diagram: SYSTEM_PROMPT_DIAGRAM
       };
       const instructions = {
         analyze: "Analyze these DMK logs. Identify errors, decode APDU commands and status words, detect failure patterns, and provide a clear diagnosis with suggested fixes.",
-        diagram: "Generate a Mermaid sequence diagram from these DMK logs showing the APDU exchanges between Host and Device. Group related exchanges and highlight errors.",
-        "clear-signing": "Analyze these DMK logs for clear signing issues. Determine if clear signing was attempted, what context was resolved, whether it succeeded or failed, and why."
+        diagram: "Generate a Mermaid sequence diagram from these DMK logs showing the APDU exchanges between Host and Device. Group related exchanges and highlight errors."
       };
       const systemPrompt = systemPrompts[command] ?? systemPrompts["analyze"];
       const instruction = instructions[command] ?? instructions["analyze"];
