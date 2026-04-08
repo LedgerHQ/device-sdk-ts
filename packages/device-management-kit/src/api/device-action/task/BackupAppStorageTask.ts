@@ -15,7 +15,7 @@ import { type InternalApi } from "@api/device-action/DeviceAction";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { bufferToHexaString, type HexaString } from "@api/utils/HexaString";
 
-type BackupAppStorageTaskArgs = {
+export type BackupAppStorageTaskArgs = {
   appName: string;
 };
 
