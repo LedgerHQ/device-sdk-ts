@@ -12,6 +12,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { generateSignatureId } from "@ledgerhq/signer-utils";
 
+import { type ClearSigningType } from "@api/model/ClearSigningType";
+
 const METADATA_ONLY_CONTEXT_TYPES = new Set<ClearSignContextType>([
   ClearSignContextType.TRANSACTION_CHECK,
   ClearSignContextType.DYNAMIC_NETWORK,
@@ -29,6 +31,8 @@ export type BlindSigningDetectionInput = {
   deviceModelId: DeviceModelId;
   signerAppVersion: string;
   deviceVersion: string | null;
+  clearSigningType: ClearSigningType | null;
+  partialContextErrors: number;
 };
 
 export type BlindSigningDetectionTaskArgs = {
@@ -84,7 +88,13 @@ function buildReportParams(
     modelId: mapDeviceModelId(input.deviceModelId),
     signerAppVersion: input.signerAppVersion,
     deviceVersion: input.deviceVersion,
-    ethContext: null,
+    ethContext:
+      input.clearSigningType !== null
+        ? {
+            clearSigningType: input.clearSigningType,
+            partialContextErrors: input.partialContextErrors,
+          }
+        : null,
   };
 }
 

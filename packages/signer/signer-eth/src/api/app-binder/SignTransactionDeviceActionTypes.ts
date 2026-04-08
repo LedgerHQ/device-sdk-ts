@@ -81,6 +81,7 @@ export type SignTransactionDAInternalState = {
   readonly subset: TransactionSubset | null;
   readonly contexts: ContextWithSubContexts[];
   readonly clearSigningType: ClearSigningType | null;
+  readonly contextErrorCount: number;
   readonly transactionType: TransactionType | null;
   readonly signature: Signature | null;
   readonly isBlindSign: boolean | null;

@@ -34,6 +34,11 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
+export type BuildEIP712ContextTaskResult = ProvideEIP712ContextTaskArgs & {
+  clearSigningType: ClearSigningType;
+  contextErrorCount: number;
+};
+
 export class BuildEIP712ContextTask {
   constructor(
     private readonly api: InternalApi,
@@ -52,7 +57,7 @@ export class BuildEIP712ContextTask {
     ) => new BuildFullContextsTask(internalApi, args),
   ) {}
 
-  async run(): Promise<ProvideEIP712ContextTaskArgs> {
+  async run(): Promise<BuildEIP712ContextTaskResult> {
     // Clear signing context
     // Parse the message types and values
     const parsed = this.parser.parse(this.data);
@@ -71,10 +76,8 @@ export class BuildEIP712ContextTask {
       challenge = challengeRes.data.challenge;
     }
 
-    const additionalContexts = await this.getAdditionalContexts(
-      deviceState,
-      challenge,
-    );
+    const { contexts: additionalContexts, contextErrorCount } =
+      await this.getAdditionalContexts(deviceState, challenge);
 
     // Get clear signing context, if any
     let clearSignContext: Maybe<TypedDataClearSignContextSuccess> = Nothing;
@@ -127,13 +130,22 @@ export class BuildEIP712ContextTask {
       deviceModelId: deviceState.deviceModelId,
       loggerFactory: this.loggerFactory,
     };
-    return provideTaskArgs;
+    return {
+      ...provideTaskArgs,
+      clearSigningType: clearSignContext.isJust()
+        ? ClearSigningType.EIP7730
+        : ClearSigningType.BASIC,
+      contextErrorCount,
+    };
   }
 
   private async getAdditionalContexts(
     deviceState: DeviceSessionState,
     challenge: string | undefined,
-  ): Promise<ClearSignContextSuccess[]> {
+  ): Promise<{
+    contexts: ClearSignContextSuccess[];
+    contextErrorCount: number;
+  }> {
     const supportsGatedSigning = new ApplicationChecker(
       deviceState,
       this.appConfig,
@@ -162,7 +174,7 @@ export class BuildEIP712ContextTask {
     }
 
     // Fetch the contexts
-    const contexts = await this.contextModule.getContexts(
+    const allContexts = await this.contextModule.getContexts(
       {
         deviceModelId: deviceState.deviceModelId,
         data: this.data,
@@ -173,10 +185,16 @@ export class BuildEIP712ContextTask {
       contextTypes,
     );
 
+    const contextErrorCount = allContexts.filter(
+      (context) => context.type === ClearSignContextType.ERROR,
+    ).length;
+
     // Filter valid contexts
-    return contexts.filter((context) =>
+    const contexts = allContexts.filter((context) =>
       contextTypes.includes(context.type),
     ) as ClearSignContextSuccess[];
+
+    return { contexts, contextErrorCount };
   }
 
   private getClearSignVersion(

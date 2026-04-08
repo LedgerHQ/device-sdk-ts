@@ -199,6 +199,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             subset: null,
             contexts: [],
             clearSigningType: null,
+            contextErrorCount: 0,
             transactionType: null,
             signature: null,
             isBlindSign: null,
@@ -463,6 +464,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     ...context._internalState,
                     contexts: event.output.clearSignContexts,
                     clearSigningType: event.output.clearSigningType,
+                    contextErrorCount: event.output.contextErrorCount,
                   }),
                 }),
               ],
@@ -616,7 +618,13 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 DeviceSessionStateType.Connected
                   ? (sessionState.firmwareVersion?.os ?? null)
                   : null;
-              const { subset, contexts, usedFallback } = context._internalState;
+              const {
+                subset,
+                contexts,
+                usedFallback,
+                clearSigningType,
+                contextErrorCount,
+              } = context._internalState;
               const hasCalldata = !!subset?.data && subset.data.length > 2;
               return {
                 input: {
@@ -630,6 +638,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                   signerAppVersion:
                     context._internalState.appConfig?.version ?? "",
                   deviceVersion,
+                  clearSigningType,
+                  partialContextErrors: contextErrorCount,
                 },
                 contextModule: context.input.contextModule,
                 loggerFactory: this.getLoggerFactory(internalApi),

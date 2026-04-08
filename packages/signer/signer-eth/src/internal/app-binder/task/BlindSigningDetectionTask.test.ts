@@ -4,6 +4,8 @@ import {
 } from "@ledgerhq/context-module";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 
+import { ClearSigningType } from "@api/model/ClearSigningType";
+
 import {
   type BlindSigningDetectionInput,
   BlindSigningDetectionTask,
@@ -33,6 +35,8 @@ const baseInput: BlindSigningDetectionInput = {
   deviceModelId: DeviceModelId.FLEX,
   signerAppVersion: "1.12.1",
   deviceVersion: "2.2.3",
+  clearSigningType: null,
+  partialContextErrors: 0,
 };
 
 describe("BlindSigningDetectionTask", () => {
@@ -278,6 +282,55 @@ describe("BlindSigningDetectionTask", () => {
 
     expect(mockContextModule.report).toHaveBeenCalledWith(
       expect.objectContaining({ modelId: "nanoX" }),
+    );
+  });
+
+  it("should populate ethContext when clearSigningType is provided", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: {
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        clearSigningType: ClearSigningType.EIP7730,
+        partialContextErrors: 2,
+      },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    const task = new BlindSigningDetectionTask(args);
+    await task.run();
+
+    expect(mockContextModule.report).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ethContext: {
+          clearSigningType: "eip7730",
+          partialContextErrors: 2,
+        },
+      }),
+    );
+  });
+
+  it("should set ethContext to null when clearSigningType is null", async () => {
+    const args: BlindSigningDetectionTaskArgs = {
+      input: {
+        ...baseInput,
+        hasContext: true,
+        usedFallback: false,
+        clearSigningType: null,
+        partialContextErrors: 0,
+      },
+      contextModule: mockContextModule,
+      loggerFactory: mockLoggerFactory,
+    };
+
+    const task = new BlindSigningDetectionTask(args);
+    await task.run();
+
+    expect(mockContextModule.report).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ethContext: null,
+      }),
     );
   });
 });

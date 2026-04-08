@@ -46,7 +46,10 @@ import {
   type BlindSigningDetectionTaskArgs,
   type BlindSigningDetectionTaskResult,
 } from "@internal/app-binder/task/BlindSigningDetectionTask";
-import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
+import {
+  BuildEIP712ContextTask,
+  type BuildEIP712ContextTaskResult,
+} from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
   type ProvideEIP712ContextTaskArgs,
@@ -79,7 +82,7 @@ export type MachineDependencies = {
       transactionParser: TransactionParserService;
       from: string;
     };
-  }) => Promise<ProvideEIP712ContextTaskArgs>;
+  }) => Promise<BuildEIP712ContextTaskResult>;
   readonly provideContext: (arg0: {
     input: {
       contextModule: ContextModule;
@@ -602,6 +605,12 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                   signerAppVersion:
                     context._internalState.appConfig?.version ?? "",
                   deviceVersion,
+                  clearSigningType:
+                    context._internalState.typedDataContext?.clearSigningType ??
+                    null,
+                  partialContextErrors:
+                    context._internalState.typedDataContext
+                      ?.contextErrorCount ?? 0,
                 },
                 contextModule: context.input.contextModule,
                 loggerFactory: this.getLoggerFactory(internalApi),
