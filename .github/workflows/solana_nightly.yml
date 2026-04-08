@@ -45,7 +45,11 @@ jobs:
       enable-file-logging: true
       artifact-prefix: solana-cs-tester-logs
       summary-prefix: "Solana Fixture Test"
-    secrets: inherit
+    secrets:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   solana-program-cs-tester:
     needs: [build-libraries]
@@ -60,4 +64,8 @@ jobs:
       enable-file-logging: true
       artifact-prefix: solana-program-cs-tester-logs
       summary-prefix: "Solana Program Test"
-    secrets: inherit
+    secrets:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}

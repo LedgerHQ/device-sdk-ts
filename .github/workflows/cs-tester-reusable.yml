@@ -51,6 +51,15 @@ on:
         description: "Enable file logging and screenshots"
         type: boolean
         default: false
+    secrets:
+      GH_BOT_APP_ID:
+        required: true
+      GH_BOT_PRIVATE_KEY:
+        required: true
+      GATING_TOKEN:
+        required: true
+      SOLANA_LEDGER_RPC_URL:
+        required: true
 
 permissions:
   contents: read

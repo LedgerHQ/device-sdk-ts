@@ -45,7 +45,11 @@ jobs:
       enable-file-logging: true
       artifact-prefix: erc7730-calldata-logs
       summary-prefix: "ERC7730 Calldata Test"
-    secrets: inherit
+    secrets:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   erc7730-eip712-tests:
     needs: [build-libraries]
@@ -59,4 +63,8 @@ jobs:
       enable-file-logging: true
       artifact-prefix: erc7730-eip712-logs
       summary-prefix: "ERC7730 EIP712 Test"
-    secrets: inherit
+    secrets:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}

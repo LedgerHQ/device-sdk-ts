@@ -149,7 +149,11 @@ jobs:
       runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
       artifact-prefix: eth-cs-tester-logs
       summary-prefix: "Ethereum Clear Signing Test"
-    secrets: inherit
+    secrets:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   solana-cs-tester:
     needs: [build-libraries, detect-changes]
@@ -163,21 +167,8 @@ jobs:
       runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
       artifact-prefix: solana-cs-tester-logs
       summary-prefix: "Solana Fixture Test"
-    secrets: inherit
-
-  # Temporary: program-level tests for validation before nightly merge
-  solana-program-cs-tester:
-    needs: [build-libraries, detect-changes]
-    if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
-    uses: ./.github/workflows/cs-tester-reusable.yml
-    with:
-      runner: cs-tester:solana
-      tests: '["test:solana:program:system", "test:solana:program:stake", "test:solana:program:spl-token", "test:solana:program:token-2022"]'
-      devices: '["stax"]'
-      coin-app: Solana
-      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-      use-rpc: true
-      log-level: error
-      artifact-prefix: solana-program-cs-tester-logs
-      summary-prefix: "Solana Program Test"
-    secrets: inherit
+    secrets:
+      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
+      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
+      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
