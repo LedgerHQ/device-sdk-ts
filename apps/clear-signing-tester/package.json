@@ -1,8 +1,8 @@
 {
-  "name": "@ledgerhq/ethereum-clear-signing-tester",
+  "name": "@ledgerhq/clear-signing-tester",
   "version": "1.0.0",
   "private": true,
-  "description": "TypeScript script for testing Ethereum transactions using Ledger Device Management Kit",
+  "description": "TypeScript tool for testing clear-signing transactions using Ledger Device Management Kit",
   "main": "test-ethereum-transactions.ts",
   "exports": {
     ".": {
@@ -13,6 +13,7 @@
   },
   "scripts": {
     "cli": "tsx src/cli/EthereumTransactionTesterCli.ts",
+    "cli:solana": "tsx src/cli/SolanaTransactionTesterCli.ts",
     "build": "tsc",
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
@@ -22,6 +23,16 @@
     "test:raw:complete": "pnpm cli raw-file ./ressources/core/raw-complete.json",
     "test:raw:multisig": "pnpm cli raw-file ./ressources/core/raw-multisig.json",
     "test:typed-data:multisig": "pnpm cli typed-data-file ./ressources/core/typed-data-multisig.json",
+    "test": "vitest run",
+    "test:solana:system-transfers": "pnpm cli:solana raw-file ./ressources/solana/system-transfers.json",
+    "test:solana:spl-legacy": "pnpm cli:solana raw-file ./ressources/solana/spl-legacy.json",
+    "test:solana:spl-token2022": "pnpm cli:solana raw-file ./ressources/solana/spl-token2022.json",
+    "test:solana:stake": "pnpm cli:solana raw-file ./ressources/solana/stake.json",
+    "test:solana:program:system": "pnpm cli:solana program system",
+    "test:solana:program:stake": "pnpm cli:solana program stake",
+    "test:solana:program:spl-token": "pnpm cli:solana program spl-token",
+    "test:solana:program:token-2022": "pnpm cli:solana program token-2022",
+    "test:solana:program:all": "pnpm cli:solana program-all",
     "test:erc7730": "./scripts/test-erc7730-calldata.sh",
     "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh"
   },
@@ -30,6 +41,8 @@
     "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
+    "@ledgerhq/device-signer-kit-solana": "workspace:^",
+    "@ledgerhq/solana-tools": "workspace:^",
     "@ledgerhq/device-transport-kit-speculos": "workspace:^",
     "@ledgerhq/speculos-device-controller": "workspace:^",
     "axios": "catalog:",
@@ -40,13 +53,15 @@
     "semver": "catalog:"
   },
   "devDependencies": {
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@types/semver": "catalog:",
     "concurrently": "catalog:",
     "ts-node": "catalog:",
-    "tsx": "catalog:"
+    "tsx": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=20"
