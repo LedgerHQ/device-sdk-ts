@@ -38,6 +38,7 @@ export type ContextModuleConfig = {
   metadataServiceDomain: ContextModuleMetadataServiceConfig;
   reporter: ContextModuleReporterConfig;
   datasource: ContextModuleDatasourceConfig;
+  appSource: string;
 };
 
 export type ContextModuleServiceConfig = ContextModuleConfig & {

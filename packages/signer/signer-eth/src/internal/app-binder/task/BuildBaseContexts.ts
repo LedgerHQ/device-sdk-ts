@@ -51,6 +51,7 @@ export type BuildBaseContextsResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
   readonly clearSignContextsOptional: ClearSignContextSuccess[];
   readonly clearSigningType: ClearSigningType;
+  readonly contextErrorCount: number;
 };
 
 export type BuildBaseContextsArgs = {
@@ -108,6 +109,9 @@ export class BuildBaseContexts {
       );
 
     // filter out the error contexts
+    const contextErrorCount = clearSignContexts.filter(
+      (context) => context.type === ClearSignContextType.ERROR,
+    ).length;
     const contextsSuccess: ClearSignContextSuccess[] = clearSignContexts.filter(
       (context) => context.type !== ClearSignContextType.ERROR,
     );
@@ -131,14 +135,15 @@ export class BuildBaseContexts {
       this._supportsGenericParser(deviceState, appConfig) &&
       this._hasValidTransactionInfo(contextsForSigning)
     ) {
-      return this._getERC7730Contexts(contextsForSigning);
+      return this._getERC7730Contexts(contextsForSigning, contextErrorCount);
     } else {
-      return this._getBasicContexts(contextsForSigning);
+      return this._getBasicContexts(contextsForSigning, contextErrorCount);
     }
   }
 
   private _getERC7730Contexts(
     contexts: ClearSignContextSuccess[],
+    contextErrorCount: number,
   ): BuildBaseContextsResult {
     const clearSignContexts: ClearSignContextSuccess[] = contexts
       .filter((context) => this._isContextNeededForERC7730ClearSigning(context))
@@ -153,11 +158,13 @@ export class BuildBaseContexts {
       clearSignContexts,
       clearSignContextsOptional,
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount,
     };
   }
 
   private _getBasicContexts(
     contexts: ClearSignContextSuccess[],
+    contextErrorCount: number,
   ): BuildBaseContextsResult {
     const clearSignContexts: ClearSignContextSuccess[] = contexts
       .filter((context) => this._isContextNeededForBasicClearSigning(context))
@@ -169,6 +176,7 @@ export class BuildBaseContexts {
       clearSignContexts,
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount,
     };
   }
 

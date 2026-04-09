@@ -234,6 +234,8 @@ describe("BuildEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       loggerFactory: mockLoggerFactory,
+      clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -286,6 +288,8 @@ describe("BuildEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       loggerFactory: mockLoggerFactory,
+      clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -341,6 +345,8 @@ describe("BuildEIP712ContextTask", () => {
       calldatasPreContexts: {},
       calldatasPostContexts: {},
       loggerFactory: mockLoggerFactory,
+      clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
     expect(parserMock.parse).toHaveBeenCalledWith(TEST_DATA);
     expect(contextModuleMock.getTypedDataFilters).toHaveBeenCalledWith({
@@ -415,6 +421,8 @@ describe("BuildEIP712ContextTask", () => {
       calldatasPostContexts: {},
       additionalContexts: [txCheckContext],
       loggerFactory: mockLoggerFactory,
+      clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -561,6 +569,8 @@ describe("BuildEIP712ContextTask", () => {
         0: [],
       },
       loggerFactory: mockLoggerFactory,
+      clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 

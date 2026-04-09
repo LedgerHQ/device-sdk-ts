@@ -14,7 +14,6 @@ describe("DefaultBlindSigningReporter", () => {
   const params = {
     signatureId: "a3f8Kb-1738850400000",
     signingMethod: BlindSigningMethod.ETH_SIGN_TRANSACTION,
-    source: "ledger_wallet",
     isBlindSign: true,
     chainId: 1,
     targetAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
