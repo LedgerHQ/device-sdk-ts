@@ -50,6 +50,7 @@
   },
   "dependencies": {
     "axios": "catalog:",
+    "bs58": "catalog:",
     "crypto-js": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",

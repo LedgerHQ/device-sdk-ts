@@ -17,6 +17,8 @@ import { lifiTypes } from "@/solanaLifi/di/solanaLifiTypes";
 import { SolanaLifiContextLoader } from "@/solanaLifi/domain/SolanaLifiContextLoader";
 import { solanaTokenTypes } from "@/solanaToken/di/solanaTokenTypes";
 import { SolanaTokenContextLoader } from "@/solanaToken/domain/SolanaTokenContextLoader";
+import { transactionCheckTypes } from "@/transaction-check/di/transactionCheckTypes";
+import { SolanaTransactionCheckContextLoader } from "@/transaction-check/domain/SolanaTransactionCheckContextLoader";
 
 import { type SolanaContextLoader } from "./SolanaContextLoader";
 import {
@@ -40,6 +42,8 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
     loggerFactory: (tag: string) => LoggerPublisherService,
     @inject(lifiTypes.SolanaLifiContextLoader)
     private readonly _solanaLifiLoader: SolanaLifiContextLoader,
+    @inject(transactionCheckTypes.SolanaTransactionCheckContextLoader)
+    private readonly _solanaTransactionCheckLoader: SolanaTransactionCheckContextLoader,
   ) {
     this.logger = loggerFactory("DefaultSolanaContextLoader");
   }
@@ -65,6 +69,10 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
         loader: this._solanaLifiLoader,
         expectedType: SolanaContextTypes.SOLANA_LIFI,
       },
+      {
+        loader: this._solanaTransactionCheckLoader,
+        expectedType: SolanaContextTypes.TRANSACTION_CHECK,
+      },
     ];
 
     const loaderPromises = loaderEntries
@@ -80,12 +88,10 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
     const loadersResults = settledLoaders
       .map((r) => (r.status === "fulfilled" ? r.value : undefined))
       .filter((v): v is LoaderResult => v !== undefined)
-      // always sort with SOLANA_TOKEN first
-      .sort((a, b) => {
-        const A = a.type === SolanaContextTypes.SOLANA_TOKEN ? 0 : 1;
-        const B = b.type === SolanaContextTypes.SOLANA_TOKEN ? 0 : 1;
-        return A - B;
-      });
+      .sort(
+        (a, b) =>
+          this._loaderResultSortOrder(a) - this._loaderResultSortOrder(b),
+      );
 
     if (!this.needsOwnerInfo(solanaContext)) {
       this.logger.debug(
@@ -119,5 +125,20 @@ export class DefaultSolanaContextLoader implements SolanaContextLoader {
         loadersResults,
       }),
     );
+  }
+
+  private _loaderResultSortOrder(r: LoaderResult): number {
+    switch (r.type) {
+      case SolanaContextTypes.SOLANA_TOKEN:
+        return 0;
+      case SolanaContextTypes.SOLANA_LIFI:
+        return 1;
+      case SolanaContextTypes.TRANSACTION_CHECK:
+        return 2;
+      case SolanaContextTypes.ERROR:
+        return 3;
+      default:
+        return 4;
+    }
   }
 }

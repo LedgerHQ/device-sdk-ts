@@ -59,6 +59,8 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
             version: "2.5.10",
+            web3ChecksEnabled: false,
+            web3ChecksOptIn: false,
           },
         }),
       );
@@ -74,6 +76,27 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.SHORT,
             version: "2.5.10",
+            web3ChecksEnabled: false,
+            web3ChecksOptIn: false,
+          },
+        }),
+      );
+    });
+
+    it("should parse extended feature flags from a 6th byte (Ethereum-aligned bitmask)", () => {
+      const response = new ApduResponse({
+        statusCode: Uint8Array.from([0x90, 0x00]),
+        data: new Uint8Array([0x01, 0x00, 0x02, 0x05, 0x0a, 0x30]),
+      });
+      const parsed = command.parseResponse(response);
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            blindSigningEnabled: true,
+            pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+            version: "2.5.10",
+            web3ChecksEnabled: true,
+            web3ChecksOptIn: true,
           },
         }),
       );

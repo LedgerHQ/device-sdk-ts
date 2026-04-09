@@ -4,11 +4,12 @@ import { Left, Right } from "purify-ts";
 import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+import { WEB3_CHECKS_EXCLUDED_DEVICE_MODELS } from "@/shared/model/Web3ChecksTypes";
 import { type TransactionCheckDataSource } from "@/transaction-check/data/TransactionCheckDataSource";
 import {
-  type TransactionCheckContextInput,
-  TransactionCheckContextLoader,
-} from "@/transaction-check/domain/TransactionCheckContextLoader";
+  type EthereumTransactionCheckContextInput,
+  EthereumTransactionCheckContextLoader,
+} from "@/transaction-check/domain/EthereumTransactionCheckContextLoader";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -18,14 +19,14 @@ const mockLoggerFactory = () => ({
   subscribers: [],
 });
 
-describe("TransactionCheckContextLoader", () => {
+describe("EthereumTransactionCheckContextLoader", () => {
   const mockTransactionCheckDataSource: TransactionCheckDataSource = {
     getTransactionCheck: vi.fn(),
   };
   const mockCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
   };
-  const loader = new TransactionCheckContextLoader(
+  const loader = new EthereumTransactionCheckContextLoader(
     mockTransactionCheckDataSource,
     mockCertificateLoader,
     mockLoggerFactory,
@@ -40,7 +41,7 @@ describe("TransactionCheckContextLoader", () => {
   });
 
   describe("canHandle function", () => {
-    const validInput: TransactionCheckContextInput = {
+    const validInput: EthereumTransactionCheckContextInput = {
       from: "0x1234567890123456789012345678901234567890",
       chainId: 1,
       transaction: new Uint8Array([1, 2, 3]),
@@ -84,13 +85,17 @@ describe("TransactionCheckContextLoader", () => {
       expect(loader.canHandle(input, SUPPORTED_TYPES)).toBe(false);
     });
 
-    it("should return false for NANO_S device model", () => {
-      const inputWithNanoS = {
-        ...validInput,
-        deviceModelId: DeviceModelId.NANO_S,
-      };
-      expect(loader.canHandle(inputWithNanoS, SUPPORTED_TYPES)).toBe(false);
-    });
+    it.each([...WEB3_CHECKS_EXCLUDED_DEVICE_MODELS])(
+      "should return false for %s device model (Web3Checks excluded)",
+      (modelId) => {
+        expect(
+          loader.canHandle(
+            { ...validInput, deviceModelId: modelId },
+            SUPPORTED_TYPES,
+          ),
+        ).toBe(false);
+      },
+    );
 
     it("should return false for non-number chainId", () => {
       const inputWithInvalidChainId = {
@@ -104,7 +109,7 @@ describe("TransactionCheckContextLoader", () => {
   });
 
   describe("load function", () => {
-    const validInput: TransactionCheckContextInput = {
+    const validInput: EthereumTransactionCheckContextInput = {
       from: "0x1234567890123456789012345678901234567890",
       chainId: 1,
       transaction: new Uint8Array([1, 2, 3]),
@@ -159,6 +164,7 @@ describe("TransactionCheckContextLoader", () => {
       expect(
         mockTransactionCheckDataSource.getTransactionCheck,
       ).toHaveBeenCalledWith({
+        kind: "ethereum",
         chainId: validInput.chainId,
         rawTx: "0x010203",
         from: validInput.from,
@@ -215,6 +221,7 @@ describe("TransactionCheckContextLoader", () => {
       expect(
         mockTransactionCheckDataSource.getTransactionCheck,
       ).toHaveBeenCalledWith({
+        kind: "ethereum",
         chainId: validInput.chainId,
         rawTx: "0x010203", // Uint8Array([1, 2, 3]) converted to hex
         from: validInput.from,

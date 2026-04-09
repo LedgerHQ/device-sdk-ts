@@ -1,6 +1,6 @@
 import {
   bufferToHexaString,
-  DeviceModelId,
+  type DeviceModelId,
   isHexaString,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
@@ -15,10 +15,12 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
+import { WEB3_CHECKS_EXCLUDED_DEVICE_MODELS } from "@/shared/model/Web3ChecksTypes";
 import { type TransactionCheckDataSource } from "@/transaction-check/data/TransactionCheckDataSource";
 import { transactionCheckTypes } from "@/transaction-check/di/transactionCheckTypes";
 
-export type TransactionCheckContextInput = {
+/** Input for Ethereum Web3Checks `POST /ethereum/scan/tx` (hex `from` / RLP `raw`). */
+export type EthereumTransactionCheckContextInput = {
   from: string;
   chainId: number;
   transaction: Uint8Array;
@@ -30,8 +32,8 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class TransactionCheckContextLoader
-  implements ContextLoader<TransactionCheckContextInput>
+export class EthereumTransactionCheckContextLoader
+  implements ContextLoader<EthereumTransactionCheckContextInput>
 {
   private logger: LoggerPublisherService;
 
@@ -43,13 +45,13 @@ export class TransactionCheckContextLoader
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("TransactionCheckContextLoader");
+    this.logger = loggerFactory("EthereumTransactionCheckContextLoader");
   }
 
   canHandle(
     input: unknown,
     expectedType: ClearSignContextType[],
-  ): input is TransactionCheckContextInput {
+  ): input is EthereumTransactionCheckContextInput {
     const result =
       typeof input === "object" &&
       input !== null &&
@@ -63,7 +65,9 @@ export class TransactionCheckContextLoader
       input.transaction !== undefined &&
       "deviceModelId" in input &&
       input.deviceModelId !== undefined &&
-      input.deviceModelId !== DeviceModelId.NANO_S &&
+      !WEB3_CHECKS_EXCLUDED_DEVICE_MODELS.has(
+        input.deviceModelId as DeviceModelId,
+      ) &&
       typeof input.chainId === "number" &&
       isHexaString(input.from) &&
       input.from !== "0x" &&
@@ -71,7 +75,9 @@ export class TransactionCheckContextLoader
     return result;
   }
 
-  async load(ctx: TransactionCheckContextInput): Promise<ClearSignContext[]> {
+  async load(
+    ctx: EthereumTransactionCheckContextInput,
+  ): Promise<ClearSignContext[]> {
     const { from, chainId, transaction } = ctx;
 
     const rawTx = bufferToHexaString(transaction);
@@ -82,6 +88,7 @@ export class TransactionCheckContextLoader
     }
 
     const txCheck = await this.transactionCheckDataSource.getTransactionCheck({
+      kind: "ethereum",
       chainId,
       rawTx,
       from,

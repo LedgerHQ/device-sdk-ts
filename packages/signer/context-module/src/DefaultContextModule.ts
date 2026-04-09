@@ -25,10 +25,12 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
-import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import { solanaContextTypes } from "./solana/di/solanaContextTypes";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
-import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
+import {
+  type SolanaTransactionContext,
+  type SolanaTransactionContextResult,
+} from "./solana/domain/solanaContextTypes";
 import { tokenTypes } from "./token/di/tokenTypes";
 import { transactionCheckTypes } from "./transaction-check/di/transactionCheckTypes";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
@@ -99,7 +101,7 @@ export class DefaultContextModule implements ContextModule {
         gatedSigningTypes.GatedSigningTypedDataContextLoader,
       ),
       this._container.get<ContextLoader>(
-        transactionCheckTypes.TransactionCheckContextLoader,
+        transactionCheckTypes.EthereumTransactionCheckContextLoader,
       ),
       this._container.get<ContextLoader>(
         transactionCheckTypes.TypedDataCheckContextLoader,

@@ -4,10 +4,12 @@ import {
   type ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import { type TypedDataClearSignContext } from "./shared/model/TypedDataClearSignContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
-import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
+import {
+  type SolanaTransactionContext,
+  type SolanaTransactionContextResult,
+} from "./solana/domain/solanaContextTypes";
 
 export interface ContextModule {
   getContexts<TInput>(

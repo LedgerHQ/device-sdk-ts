@@ -1411,6 +1411,9 @@ importers:
       axios:
         specifier: 'catalog:'
         version: 1.13.5
+      bs58:
+        specifier: 'catalog:'
+        version: 6.0.0
       crypto-js:
         specifier: 'catalog:'
         version: 4.2.0

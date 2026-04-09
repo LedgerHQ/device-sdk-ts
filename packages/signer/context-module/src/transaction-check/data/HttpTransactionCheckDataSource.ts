@@ -1,6 +1,6 @@
 import axios from "axios";
 import { inject, injectable } from "inversify";
-import { Either, Left, Right } from "purify-ts";
+import { type Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
@@ -8,13 +8,21 @@ import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
+import { dispatchTransactionCheckScanHandler } from "@/transaction-check/scan-handlers/transactionCheckScanHandlerRegistry";
+import { type Web3ChecksScanRequestBody } from "@/transaction-check/scan-handlers/transactionCheckScanTypes";
+import {
+  WEB3CHECKS_ETHEREUM_TX_SCAN_PATH,
+  WEB3CHECKS_SOLANA_TX_SCAN_PATH,
+} from "@/transaction-check/scan-handlers/web3CheckScanPaths";
 import PACKAGE from "@root/package.json";
 
 import { TransactionCheckDto } from "./dto/TransactionCheckDto";
 import {
-  GetTransactionCheckParams,
-  TransactionCheck,
+  type GetTransactionCheckParams,
+  type TransactionCheck,
 } from "./TransactionCheckDataSource";
+
+export { WEB3CHECKS_ETHEREUM_TX_SCAN_PATH, WEB3CHECKS_SOLANA_TX_SCAN_PATH };
 
 @injectable()
 export class HttpTransactionCheckDataSource {
@@ -23,29 +31,32 @@ export class HttpTransactionCheckDataSource {
     private readonly config: ContextModuleServiceConfig,
   ) {}
 
-  public async getTransactionCheck({
-    chainId,
-    rawTx,
-    from,
-  }: GetTransactionCheckParams): Promise<Either<Error, TransactionCheck>> {
-    let transactionCheckDto: TransactionCheckDto;
-    const requestDto = {
-      tx: {
-        from,
-        raw: rawTx,
-      },
-      chain: chainId,
-    };
+  public async getTransactionCheck(
+    params: GetTransactionCheckParams,
+  ): Promise<Either<Error, TransactionCheck>> {
+    return dispatchTransactionCheckScanHandler(params, (urlPath, data) =>
+      this._postScan(urlPath, data),
+    );
+  }
 
+  private _web3ChecksHeaders(): Record<string, string> {
+    return {
+      [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+    };
+  }
+
+  private async _postScan(
+    urlPath: string,
+    data: Web3ChecksScanRequestBody,
+  ): Promise<Either<Error, TransactionCheck>> {
+    let transactionCheckDto: TransactionCheckDto;
     try {
       const response = await axios.request<TransactionCheckDto>({
         method: "POST",
-        url: `${this.config.web3checks.url}/ethereum/scan/tx`,
-        data: requestDto,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
+        url: `${this.config.web3checks.url}${urlPath}`,
+        data,
+        headers: this._web3ChecksHeaders(),
       });
       transactionCheckDto = response.data;
     } catch (_error) {

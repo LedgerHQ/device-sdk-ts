@@ -1,6 +1,7 @@
 import {
   type ContextModule,
   type PkiCertificate,
+  SolanaTransactionScanChainId,
   type SolanaContextLoaderResults,
 } from "@ledgerhq/context-module";
 import {
@@ -11,6 +12,7 @@ import {
 
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 export type SolanaBuildContextResult = {
   trustedNamePKICertificate?: PkiCertificate;
@@ -21,6 +23,8 @@ export type SolanaBuildContextResult = {
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionResolutionContext;
+  readonly transactionBytes: Uint8Array;
+  readonly signerAddress: string | null;
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
@@ -47,6 +51,14 @@ export class BuildTransactionContextTask {
       throw new Error("Failed to get challenge from device");
     }
 
+    const transactionCheck = this.args.signerAddress
+      ? {
+          from: this.args.signerAddress,
+          rawTx: DefaultBs58Encoder.encode(this.args.transactionBytes),
+          chain: SolanaTransactionScanChainId.MAINNET,
+        }
+      : undefined;
+
     const contextModuleGetSolanaContextArgs = {
       deviceModelId: deviceState.deviceModelId,
       tokenAddress: options.tokenAddress,
@@ -54,6 +66,7 @@ export class BuildTransactionContextTask {
       createATA: options.createATA,
       tokenInternalId: options.tokenInternalId,
       templateId: options.templateId,
+      transactionCheck,
     };
     // get Solana context
     this._logger.debug("[run] Calling contextModule.getSolanaContext", {

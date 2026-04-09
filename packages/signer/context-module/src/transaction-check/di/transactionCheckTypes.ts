@@ -1,6 +1,11 @@
 export const transactionCheckTypes = {
   TransactionCheckDataSource: Symbol.for("TransactionCheckDataSource"),
-  TransactionCheckContextLoader: Symbol.for("TransactionCheckContextLoader"),
+  EthereumTransactionCheckContextLoader: Symbol.for(
+    "EthereumTransactionCheckContextLoader",
+  ),
+  SolanaTransactionCheckContextLoader: Symbol.for(
+    "SolanaTransactionCheckContextLoader",
+  ),
   TypedDataCheckDataSource: Symbol.for("TypedDataCheckDataSource"),
   TypedDataCheckContextLoader: Symbol.for("TypedDataCheckContextLoader"),
 };

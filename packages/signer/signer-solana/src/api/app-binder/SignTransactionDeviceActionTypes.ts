@@ -22,7 +22,10 @@ import { type DelayedSignDAStateStep } from "./DelayedSignTransactionDeviceActio
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
   GET_APP_CONFIG: "signer.sol.steps.getAppConfig",
+  WEB3_CHECKS_OPT_IN: "signer.sol.steps.web3ChecksOptIn",
+  WEB3_CHECKS_OPT_IN_RESULT: "signer.sol.steps.web3ChecksOptInResult",
   INSPECT_TRANSACTION: "signer.sol.steps.inspectTransaction",
+  GET_PUB_KEY: "signer.sol.steps.getPubKey",
   BUILD_TRANSACTION_CONTEXT: "signer.sol.steps.buildTransactionContext",
   PROVIDE_TRANSACTION_CONTEXT: "signer.sol.steps.provideTransactionContext",
   SIGN_TRANSACTION: "signer.sol.steps.signTransaction",
@@ -52,10 +55,19 @@ type SignTransactionDARequiredInteraction =
   | UserInteractionRequired
   | OpenAppDARequiredInteraction;
 
-export type SignTransactionDAIntermediateValue = {
-  requiredUserInteraction: SignTransactionDARequiredInteraction;
-  step: SignTransactionDAStateStep;
-};
+export type SignTransactionDAIntermediateValue =
+  | {
+      requiredUserInteraction: SignTransactionDARequiredInteraction;
+      step: Exclude<
+        SignTransactionDAStateStep,
+        typeof signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT
+      >;
+    }
+  | {
+      requiredUserInteraction: UserInteractionRequired.None;
+      step: typeof signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT;
+      result: boolean;
+    };
 
 export type SignTransactionDAState = DeviceActionState<
   SignTransactionDAOutput,
@@ -69,6 +81,7 @@ export type SignTransactionDAInternalState = {
   readonly appConfig: AppConfiguration | null;
   readonly solanaTransactionContext: SolanaTransactionContextResultSuccess | null;
   readonly inspectorResult: TxInspectorResult | null;
+  readonly signerAddress: string | null;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

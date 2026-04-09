@@ -55,6 +55,7 @@ export * from "./shared/model/SolanaContextTypes";
 export * from "./shared/model/TransactionSubset";
 export * from "./shared/model/TypedDataClearSignContext";
 export * from "./shared/model/TypedDataContext";
+export * from "./shared/model/Web3ChecksTypes";
 export * from "./solana/data/HttpSolanaOwnerInfoDataSource";
 export * from "./solana/data/SolanaDataSource";
 export * from "./solana/domain/DefaultSolanaContextLoader";

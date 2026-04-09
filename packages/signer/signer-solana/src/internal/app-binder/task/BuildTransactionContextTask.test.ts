@@ -32,6 +32,8 @@ const contextModuleMock: ContextModule = {
 const defaultArgs = {
   contextModule: contextModuleMock,
   loggerFactory: mockLoggerFactory,
+  transactionBytes: new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+  signerAddress: null,
   options: {
     tokenAddress: "someAddress",
     createATA: undefined,
@@ -77,13 +79,16 @@ describe("BuildTransactionContextTask", () => {
       expect.any(GetChallengeCommand),
     );
 
-    // getSolanaContext called with challenge
-    expect(contextModuleMock.getSolanaContext).toHaveBeenCalledWith({
-      deviceModelId: DeviceModelId.NANO_X,
-      tokenAddress: "someAddress",
-      challenge: "someChallenge",
-      createATA: undefined,
-    });
+    // getSolanaContext called with challenge and no transactionCheck (signerAddress is null)
+    expect(contextModuleMock.getSolanaContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        deviceModelId: DeviceModelId.NANO_X,
+        tokenAddress: "someAddress",
+        challenge: "someChallenge",
+        createATA: undefined,
+        transactionCheck: undefined,
+      }),
+    );
 
     // matches SolanaBuildContextResult shape
     expect(result).toEqual<SolanaBuildContextResult>({
@@ -107,6 +112,36 @@ describe("BuildTransactionContextTask", () => {
 
     await expect(task.run()).rejects.toThrow(
       "Failed to get challenge from device",
+    );
+  });
+
+  it("derives transactionCheck from signerAddress and transactionBytes", async () => {
+    (contextModuleMock.getSolanaContext as any).mockResolvedValue(
+      Right(solanaContextRightPayload),
+    );
+
+    const args = {
+      contextModule: contextModuleMock,
+      loggerFactory: mockLoggerFactory,
+      transactionBytes: new Uint8Array([0xca, 0xfe]),
+      signerAddress: "So1anaSignerPubKey111111111111111111111111111",
+      options: {
+        tokenAddress: undefined,
+        createATA: undefined,
+      },
+    };
+
+    const task = new BuildTransactionContextTask(apiMock, args);
+    await task.run();
+
+    expect(contextModuleMock.getSolanaContext).toHaveBeenCalledWith(
+      expect.objectContaining({
+        transactionCheck: {
+          from: "So1anaSignerPubKey111111111111111111111111111",
+          rawTx: expect.any(String),
+          chain: 1,
+        },
+      }),
     );
   });
 
