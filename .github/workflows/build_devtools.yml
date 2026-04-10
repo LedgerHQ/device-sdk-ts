@@ -53,7 +53,7 @@ jobs:
         run: npx electron-builder --mac --arm64
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: devtools-macos
           path: apps/devtools-deploy/dist/ledger-dmk-devtools-*.dmg
@@ -85,7 +85,7 @@ jobs:
         run: npx electron-builder --linux
 
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: devtools-linux
           path: |
@@ -105,7 +105,7 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
           pattern: devtools-*
