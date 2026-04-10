@@ -210,8 +210,7 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
       >,
       {
         title: "Install language package",
-        description:
-          'Install the language package for the given language or removes the existing language package if the language is "english"',
+        description: "Install the language package for the given language",
         executeDeviceAction: ({ unlockTimeout, language }, inspect) => {
           const deviceAction = new InstallLanguagePackageDeviceAction({
             input: { unlockTimeout, language },

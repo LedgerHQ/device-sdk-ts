@@ -40,7 +40,7 @@ type InstallLanguagePackageMachineInternalState = {
 };
 
 export type MachineDependencies = {
-  readonly prepareInstallLanguagePack: () => Promise<DeleteLanguagePackCommandResult>;
+  readonly deleteCurrentLanguagePack: () => Promise<DeleteLanguagePackCommandResult>;
   readonly installLanguagePack: (
     apduInstallUrl: string,
   ) => Observable<InstallLanguagePackageEvent>;
@@ -74,7 +74,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       InstallLanguagePackageMachineInternalState
     >;
 
-    const { prepareInstallLanguagePack, installLanguagePack } =
+    const { deleteCurrentLanguagePack, installLanguagePack } =
       this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
@@ -105,7 +105,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       },
       actors: {
         getDeviceMetadata: getDeviceMetadataMachine,
-        prepareInstallLanguagePack: fromPromise(prepareInstallLanguagePack),
+        deleteCurrentLanguagePack: fromPromise(deleteCurrentLanguagePack),
         installLanguagePack: fromObservable(
           ({ input }: { input: { apduInstallUrl: string } }) =>
             installLanguagePack(input.apduInstallUrl),
@@ -116,6 +116,8 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
           context._internalState.error !== null,
         hasNoLanguagePacks: ({ context }) =>
           !context._internalState.languagePackage,
+        isDefaultLanguage: ({ context }) =>
+          context.input.language === "english",
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -169,7 +171,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             });
           },
         }),
-        assignPrepareinstallLanguagePackSnapshot: assign({
+        assignDeleteCurrentLanguagePackSnapshot: assign({
           intermediateValue: (_) =>
             ({
               requiredUserInteraction: None,
@@ -195,7 +197,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       },
     }).createMachine({
       id: "InstallLanguagePackageDeviceAction",
-      initial: "DeviceReady",
+      initial: "CheckRequestedLanguage",
       context: (_) => {
         return {
           input: {
@@ -214,11 +216,19 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         };
       },
       states: {
-        DeviceReady: {
-          always: {
-            target: "GetLanguagePack",
-          },
+        CheckRequestedLanguage: {
+          always: [
+            {
+              // The default Language (English) is always available on the device
+              // so the Language pack fetch+install is skipped.
+              // We only delete the existing Language package if it exists.
+              guard: "isDefaultLanguage",
+              target: "DeleteCurrentLanguagePack",
+            },
+            { target: "GetLanguagePack" },
+          ],
         },
+        // This step is skipped for the default language (English)
         GetLanguagePack: {
           invoke: {
             id: "GetLanguagePackFromMetadata",
@@ -249,25 +259,27 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
               guard: "hasNoLanguagePacks",
               target: "Error",
             },
-            { target: "PrepareInstallLanguagePack" },
+            { target: "DeleteCurrentLanguagePack" },
           ],
         },
-        PrepareInstallLanguagePack: {
+        DeleteCurrentLanguagePack: {
           invoke: {
-            id: "PrepareInstallLanguagePack",
-            src: "prepareInstallLanguagePack",
+            id: "DeleteCurrentLanguagePack",
+            src: "deleteCurrentLanguagePack",
             onSnapshot: {
-              actions: "assignPrepareinstallLanguagePackSnapshot",
+              actions: "assignDeleteCurrentLanguagePackSnapshot",
             },
-            onDone: {
-              target: "InstallLanguagePack",
-            },
+            onDone: [
+              { guard: "isDefaultLanguage", target: "Success" },
+              { target: "InstallLanguagePack" },
+            ],
             onError: {
               target: "Error",
               actions: "assignErrorFromEvent",
             },
           },
         },
+        // This step is skipped for the default language (English)
         InstallLanguagePack: {
           invoke: {
             id: "InstallLanguagePack",
@@ -296,12 +308,15 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         },
       },
       output: (_) => {
-        const { languagePackage } = _.context._internalState;
-
         if (_.context._internalState.error !== null) {
           return Left(_.context._internalState.error);
         }
 
+        if (_.context.input.language === "english") {
+          return Right(undefined);
+        }
+
+        const { languagePackage } = _.context._internalState;
         if (languagePackage) return Right(languagePackage);
 
         return Left(new UnknownDAError("InstallLanguagePackageMissingResult"));
@@ -315,7 +330,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
        * Prepare language pack installation by deleting any installed language pack from memory
        * This command will be ignored by the device if the default language (= English) is used
        */
-      prepareInstallLanguagePack: () =>
+      deleteCurrentLanguagePack: () =>
         internalApi.sendCommand(
           new DeleteLanguagePackCommand({ languagePackageId: 0xff }),
         ),
