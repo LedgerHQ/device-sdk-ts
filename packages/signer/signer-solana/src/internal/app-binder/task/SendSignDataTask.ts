@@ -19,7 +19,7 @@ const PATH_SIZE = 4;
 type SignDataTaskArgs = {
   sendingData: Uint8Array;
   derivationPath: string;
-  commandFactory: CommandFactory<Maybe<Signature | SolanaAppErrorCodes>>;
+  commandFactory: CommandFactory<Maybe<Signature>>;
 };
 
 export class SignDataTask {
@@ -28,9 +28,7 @@ export class SignDataTask {
     private args: SignDataTaskArgs,
   ) {}
 
-  async run(): Promise<
-    CommandResult<Maybe<Signature | SolanaAppErrorCodes>, SolanaAppErrorCodes>
-  > {
+  async run(): Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>> {
     const { sendingData, derivationPath, commandFactory } = this.args;
 
     const paths = DerivationPathUtils.splitPath(derivationPath);
@@ -46,9 +44,7 @@ export class SignDataTask {
     builder.addBufferToData(sendingData);
     const buffer = builder.build();
 
-    return await new SendCommandInChunksTask<
-      Maybe<Signature | SolanaAppErrorCodes>
-    >(this.api, {
+    return await new SendCommandInChunksTask<Maybe<Signature>>(this.api, {
       data: buffer,
       commandFactory,
     }).run();

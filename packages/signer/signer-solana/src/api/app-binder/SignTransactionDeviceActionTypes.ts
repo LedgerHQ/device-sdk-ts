@@ -14,7 +14,10 @@ import { type Signature } from "@api/model/Signature";
 import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import { type BlockhashService } from "@internal/app-binder/services/BlockhashService";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
+
+import { type DelayedSignDAStateStep } from "./DelayedSignTransactionDeviceActionTypes";
 
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
@@ -23,10 +26,12 @@ export const signTransactionDAStateSteps = Object.freeze({
   BUILD_TRANSACTION_CONTEXT: "signer.sol.steps.buildTransactionContext",
   PROVIDE_TRANSACTION_CONTEXT: "signer.sol.steps.provideTransactionContext",
   SIGN_TRANSACTION: "signer.sol.steps.signTransaction",
+  DELAYED_SIGN: "signer.sol.steps.delayedSign",
 } as const);
 
 export type SignTransactionDAStateStep =
-  (typeof signTransactionDAStateSteps)[keyof typeof signTransactionDAStateSteps];
+  | (typeof signTransactionDAStateSteps)[keyof typeof signTransactionDAStateSteps]
+  | DelayedSignDAStateStep;
 
 export type SignTransactionDAOutput = Signature;
 
@@ -35,6 +40,8 @@ export type SignTransactionDAInput = {
   readonly transaction: Transaction;
   readonly contextModule: ContextModule;
   readonly transactionOptions?: SolanaTransactionOptionalConfig;
+  readonly solanaRPCURL?: string;
+  readonly blockhashService?: BlockhashService;
 };
 
 export type SignTransactionDAError =
