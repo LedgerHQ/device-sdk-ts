@@ -41,6 +41,7 @@ export type InstallLanguagePackageDAIntermediateValue =
   | {
       readonly requiredUserInteraction: UserInteractionRequired.None;
       readonly step: (typeof installLanguagePackageDAStateStep)[keyof typeof installLanguagePackageDAStateStep];
+      readonly progress?: number;
     };
 
 export type InstallLanguagePackageDAError =

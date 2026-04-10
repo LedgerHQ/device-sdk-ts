@@ -1,5 +1,6 @@
 import { type Either, Left, Right } from "purify-ts";
-import { assign, fromPromise, setup } from "xstate";
+import { type Observable } from "rxjs";
+import { assign, fromObservable, fromPromise, setup } from "xstate";
 
 import {
   DeleteLanguagePackCommand,
@@ -14,7 +15,10 @@ import {
   type GetDeviceMetadataDAError,
   type GetDeviceMetadataDAOutput,
 } from "@api/device-action/os/GetDeviceMetadata/types";
-import { InstallLanguagePackageTask } from "@api/device-action/task/InstallLanguagePackageTask";
+import {
+  type InstallLanguagePackageEvent,
+  InstallLanguagePackageTask,
+} from "@api/device-action/task/InstallLanguagePackageTask";
 import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
   type DeviceActionStateMachine,
@@ -37,7 +41,9 @@ type InstallLanguagePackageMachineInternalState = {
 
 export type MachineDependencies = {
   readonly prepareInstallLanguagePack: () => Promise<DeleteLanguagePackCommandResult>;
-  readonly installLanguagePack: (apduInstallUrl: string) => Promise<void>;
+  readonly installLanguagePack: (
+    apduInstallUrl: string,
+  ) => Observable<InstallLanguagePackageEvent>;
 };
 
 export type ExtractMachineDependencies = (
@@ -100,7 +106,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       actors: {
         getDeviceMetadata: getDeviceMetadataMachine,
         prepareInstallLanguagePack: fromPromise(prepareInstallLanguagePack),
-        installLanguagePack: fromPromise(
+        installLanguagePack: fromObservable(
           ({ input }: { input: { apduInstallUrl: string } }) =>
             installLanguagePack(input.apduInstallUrl),
         ),
@@ -171,11 +177,20 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             }) satisfies types["context"]["intermediateValue"],
         }),
         assignInstallLanguagePackSnapshot: assign({
-          intermediateValue: (_) =>
-            ({
+          intermediateValue: (_) => {
+            const event = _.event["snapshot"]
+              .context as InstallLanguagePackageEvent | null;
+            const currentProgress =
+              "progress" in _.context.intermediateValue
+                ? (_.context.intermediateValue.progress ?? 0)
+                : 0;
+            return {
               requiredUserInteraction: None,
               step: INSTALL_LANGUAGE_PACK,
-            }) satisfies types["context"]["intermediateValue"],
+              progress:
+                event?.type === "progress" ? event.progress : currentProgress,
+            } satisfies types["context"]["intermediateValue"];
+          },
         }),
       },
     }).createMachine({
@@ -190,6 +205,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
           intermediateValue: {
             requiredUserInteraction: None,
             step: DEVICE_READY,
+            progress: 0,
           },
           _internalState: {
             error: null,
