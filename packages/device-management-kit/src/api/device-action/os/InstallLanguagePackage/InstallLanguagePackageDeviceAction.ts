@@ -1,6 +1,10 @@
 import { type Either, Left, Right } from "purify-ts";
-import { assign, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
+import {
+  DeleteLanguagePackCommand,
+  type DeleteLanguagePackCommandResult,
+} from "@api/command/os/DeleteLanguagePackCommand";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
@@ -27,10 +31,12 @@ import {
 
 type InstallLanguagePackageMachineInternalState = {
   readonly error: InstallLanguagePackageDAError | null;
-  readonly languagePackages: LanguagePackage[] | null;
+  readonly languagePackage: LanguagePackage | null;
 };
 
-export type MachineDependencies = Record<string, never>;
+export type MachineDependencies = {
+  readonly prepareLanguagePackInstall: () => Promise<DeleteLanguagePackCommandResult>;
+};
 
 export type ExtractMachineDependencies = (
   internalApi: InternalApi,
@@ -60,14 +66,14 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       InstallLanguagePackageMachineInternalState
     >;
 
-    // eslint-disable-next-line no-empty-pattern
-    const {} = this.extractDependencies();
+    const { prepareLanguagePackInstall } =
+      this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
     const language = this.input.language;
 
     const { None } = UserInteractionRequired;
-    const { GET_DEVICE_METADATA, DEVICE_READY } =
+    const { GET_DEVICE_METADATA, DEVICE_READY, PREPARE_LANGUAGE_PACK_INSTALL } =
       installLanguagePackageDAStateStep;
 
     const getDeviceMetadataMachine = new GetDeviceMetadataDeviceAction({
@@ -87,11 +93,13 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       },
       actors: {
         getDeviceMetadata: getDeviceMetadataMachine,
+        prepareLanguagePackInstall: fromPromise(prepareLanguagePackInstall),
       },
       guards: {
-        hasError: ({ context }: { context: types["context"] }) => {
-          return context._internalState.error !== null;
-        },
+        hasError: ({ context }: { context: types["context"] }) =>
+          context._internalState.error !== null,
+        hasNoLanguagePacks: ({ context }) =>
+          !context._internalState.languagePackage,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -100,14 +108,14 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             error: _.event["error"],
           }),
         }),
-        assignGetLanguagePacksSnapshot: assign({
+        assignGetLanguagePackSnapshot: assign({
           intermediateValue: (_) =>
             ({
               requiredUserInteraction: None,
               step: GET_DEVICE_METADATA,
             }) satisfies types["context"]["intermediateValue"],
         }),
-        assignGetLanguagePacksDone: assign({
+        assignGetLanguagePackDone: assign({
           _internalState: (_) => {
             const output = _.event["output"] as Either<
               GetDeviceMetadataDAError,
@@ -124,9 +132,18 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
                     ) as InstallLanguagePackageDAError,
                   };
                 }
+                const languagePackage = languagePackages.find(
+                  (lp) => lp.language === language,
+                );
+                if (!languagePackage) {
+                  return {
+                    ..._.context._internalState,
+                    error: new UnknownDAError("Language package not found."),
+                  };
+                }
                 return {
                   ..._.context._internalState,
-                  languagePackages,
+                  languagePackage,
                 };
               },
               Left: (error: InstallLanguagePackageDAError) => ({
@@ -135,6 +152,13 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
               }),
             });
           },
+        }),
+        assignPrepareLanguagePackInstallSnapshot: assign({
+          intermediateValue: (_) =>
+            ({
+              requiredUserInteraction: None,
+              step: PREPARE_LANGUAGE_PACK_INSTALL,
+            }) satisfies types["context"]["intermediateValue"],
         }),
       },
     }).createMachine({
@@ -152,32 +176,29 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
           },
           _internalState: {
             error: null,
-            deviceInfo: null,
-            languagePackages: null,
             languagePackage: null,
-            didDeleteAll: false,
           },
         };
       },
       states: {
         DeviceReady: {
           always: {
-            target: "GetLanguagePacks",
+            target: "GetLanguagePack",
           },
         },
-        GetLanguagePacks: {
+        GetLanguagePack: {
           invoke: {
-            id: "GetLanguagePacksFromDeviceMetadata",
+            id: "GetLanguagePackFromMetadata",
             src: "getDeviceMetadata",
             input: ({ context }) => ({
               unlockTimeout: context.input.unlockTimeout,
             }),
             onSnapshot: {
-              actions: "assignGetLanguagePacksSnapshot",
+              actions: "assignGetLanguagePackSnapshot",
             },
             onDone: {
-              target: "GetLanguagePacksCheck",
-              actions: "assignGetLanguagePacksDone",
+              target: "GetLanguagePackCheck",
+              actions: "assignGetLanguagePackDone",
             },
             onError: {
               target: "Error",
@@ -185,16 +206,34 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        GetLanguagePacksCheck: {
+        GetLanguagePackCheck: {
           always: [
             {
-              target: "Error",
               guard: "hasError",
+              target: "Error",
             },
             {
+              guard: "hasNoLanguagePacks",
+              target: "Error",
+            },
+            { target: "PrepareLanguagePackInstall" },
+          ],
+        },
+        PrepareLanguagePackInstall: {
+          invoke: {
+            id: "PrepareLanguagePackInstall",
+            src: "prepareLanguagePackInstall",
+            onSnapshot: {
+              actions: "assignPrepareLanguagePackInstallSnapshot",
+            },
+            onDone: {
               target: "Success",
             },
-          ],
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
         },
         Success: {
           type: "final",
@@ -204,22 +243,29 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         },
       },
       output: (_) => {
-        const { languagePackages } = _.context._internalState;
+        const { languagePackage } = _.context._internalState;
 
         if (_.context._internalState.error !== null) {
           return Left(_.context._internalState.error);
         }
 
-        if (languagePackages != null && languagePackages.length > 0) {
-          return Right({ languagePackages });
-        }
+        if (languagePackage) return Right(languagePackage);
 
         return Left(new UnknownDAError("InstallLanguagePackageMissingResult"));
       },
     });
   }
 
-  extractDependencies(): MachineDependencies {
-    return {};
+  extractDependencies(internalApi: InternalApi): MachineDependencies {
+    return {
+      /**
+       * Prepare language pack installation by deleting any installed language pack from memory
+       * This command will be ignored by the device if the default language (= English) is used
+       */
+      prepareLanguagePackInstall: () =>
+        internalApi.sendCommand(
+          new DeleteLanguagePackCommand({ languagePackageId: 0xff }),
+        ),
+    };
   }
 }

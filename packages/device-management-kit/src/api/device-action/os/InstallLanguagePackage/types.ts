@@ -19,24 +19,17 @@ export type Language =
   | "thai";
 
 export const installLanguagePackageDAStateStep = Object.freeze({
-  GET_DEVICE_METADATA: "os.installLanguagePackage.steps.getDeviceMetadata",
-  DELETE_ALL_LANGUAGE_PACKS:
-    "os.installLanguagePackage.steps.deleteAllLanguagePacks",
-  RESOLVE_LANGUAGE_PACKAGE:
-    "os.installLanguagePackage.steps.resolveLanguagePackage",
-  INSTALL_LANGUAGE_PACKAGE_APDUS:
-    "os.installLanguagePackage.steps.installLanguagePackageApdus",
   DEVICE_READY: "os.installLanguagePackage.steps.deviceReady",
-  DEBUG: "DEBUG",
+  GET_DEVICE_METADATA: "os.installLanguagePackage.steps.getDeviceMetadata",
+  PREPARE_LANGUAGE_PACK_INSTALL:
+    "os.installLanguagePackage.steps.prepareLanguagePackInstall",
 } as const);
 
 export type InstallLanguagePackageDAInput = GoToDashboardDAInput & {
   readonly language: Language;
 };
 
-export type InstallLanguagePackageDAOutput =
-  | { languagePackages: LanguagePackage[] }
-  | undefined;
+export type InstallLanguagePackageDAOutput = LanguagePackage | undefined;
 
 export type InstallLanguagePackageDAIntermediateValue =
   | GetDeviceMetadataDAIntermediateValue
