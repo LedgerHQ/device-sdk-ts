@@ -14,6 +14,7 @@ import {
   type GetDeviceMetadataDAError,
   type GetDeviceMetadataDAOutput,
 } from "@api/device-action/os/GetDeviceMetadata/types";
+import { InstallLanguagePackageTask } from "@api/device-action/task/InstallLanguagePackageTask";
 import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
   type DeviceActionStateMachine,
@@ -35,7 +36,8 @@ type InstallLanguagePackageMachineInternalState = {
 };
 
 export type MachineDependencies = {
-  readonly prepareLanguagePackInstall: () => Promise<DeleteLanguagePackCommandResult>;
+  readonly prepareInstallLanguagePack: () => Promise<DeleteLanguagePackCommandResult>;
+  readonly installLanguagePack: (apduInstallUrl: string) => Promise<void>;
 };
 
 export type ExtractMachineDependencies = (
@@ -66,15 +68,19 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       InstallLanguagePackageMachineInternalState
     >;
 
-    const { prepareLanguagePackInstall } =
+    const { prepareInstallLanguagePack, installLanguagePack } =
       this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
     const language = this.input.language;
 
     const { None } = UserInteractionRequired;
-    const { GET_DEVICE_METADATA, DEVICE_READY, PREPARE_LANGUAGE_PACK_INSTALL } =
-      installLanguagePackageDAStateStep;
+    const {
+      GET_DEVICE_METADATA,
+      DEVICE_READY,
+      PREPARE_LANGUAGE_PACK_INSTALL,
+      INSTALL_LANGUAGE_PACK,
+    } = installLanguagePackageDAStateStep;
 
     const getDeviceMetadataMachine = new GetDeviceMetadataDeviceAction({
       input: {
@@ -93,7 +99,11 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
       },
       actors: {
         getDeviceMetadata: getDeviceMetadataMachine,
-        prepareLanguagePackInstall: fromPromise(prepareLanguagePackInstall),
+        prepareInstallLanguagePack: fromPromise(prepareInstallLanguagePack),
+        installLanguagePack: fromPromise(
+          ({ input }: { input: { apduInstallUrl: string } }) =>
+            installLanguagePack(input.apduInstallUrl),
+        ),
       },
       guards: {
         hasError: ({ context }: { context: types["context"] }) =>
@@ -153,11 +163,18 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             });
           },
         }),
-        assignPrepareLanguagePackInstallSnapshot: assign({
+        assignPrepareinstallLanguagePackSnapshot: assign({
           intermediateValue: (_) =>
             ({
               requiredUserInteraction: None,
               step: PREPARE_LANGUAGE_PACK_INSTALL,
+            }) satisfies types["context"]["intermediateValue"],
+        }),
+        assignInstallLanguagePackSnapshot: assign({
+          intermediateValue: (_) =>
+            ({
+              requiredUserInteraction: None,
+              step: INSTALL_LANGUAGE_PACK,
             }) satisfies types["context"]["intermediateValue"],
         }),
       },
@@ -216,15 +233,35 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
               guard: "hasNoLanguagePacks",
               target: "Error",
             },
-            { target: "PrepareLanguagePackInstall" },
+            { target: "PrepareInstallLanguagePack" },
           ],
         },
-        PrepareLanguagePackInstall: {
+        PrepareInstallLanguagePack: {
           invoke: {
-            id: "PrepareLanguagePackInstall",
-            src: "prepareLanguagePackInstall",
+            id: "PrepareInstallLanguagePack",
+            src: "prepareInstallLanguagePack",
             onSnapshot: {
-              actions: "assignPrepareLanguagePackInstallSnapshot",
+              actions: "assignPrepareinstallLanguagePackSnapshot",
+            },
+            onDone: {
+              target: "InstallLanguagePack",
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        InstallLanguagePack: {
+          invoke: {
+            id: "InstallLanguagePack",
+            src: "installLanguagePack",
+            input: ({ context }) => ({
+              apduInstallUrl:
+                context._internalState.languagePackage!.apduInstallUrl,
+            }),
+            onSnapshot: {
+              actions: "assignInstallLanguagePackSnapshot",
             },
             onDone: {
               target: "Success",
@@ -262,10 +299,14 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
        * Prepare language pack installation by deleting any installed language pack from memory
        * This command will be ignored by the device if the default language (= English) is used
        */
-      prepareLanguagePackInstall: () =>
+      prepareInstallLanguagePack: () =>
         internalApi.sendCommand(
           new DeleteLanguagePackCommand({ languagePackageId: 0xff }),
         ),
+      installLanguagePack: (apduInstallUrl: string) =>
+        new InstallLanguagePackageTask(internalApi, {
+          apduInstallUrl,
+        }).run(),
     };
   }
 }

@@ -1,6 +1,10 @@
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { type UnknownDAError } from "@api/device-action/os/Errors";
+import {
+  type OutOfMemoryDAError,
+  type RefusedByUserDAError,
+  type UnknownDAError,
+} from "@api/device-action/os/Errors";
 import {
   type GetDeviceMetadataDAError,
   type GetDeviceMetadataDAIntermediateValue,
@@ -23,6 +27,7 @@ export const installLanguagePackageDAStateStep = Object.freeze({
   GET_DEVICE_METADATA: "os.installLanguagePackage.steps.getDeviceMetadata",
   PREPARE_LANGUAGE_PACK_INSTALL:
     "os.installLanguagePackage.steps.prepareLanguagePackInstall",
+  INSTALL_LANGUAGE_PACK: "os.installLanguagePackage.steps.installLanguagePack",
 } as const);
 
 export type InstallLanguagePackageDAInput = GoToDashboardDAInput & {
@@ -40,6 +45,8 @@ export type InstallLanguagePackageDAIntermediateValue =
 
 export type InstallLanguagePackageDAError =
   | GetDeviceMetadataDAError
+  | RefusedByUserDAError
+  | OutOfMemoryDAError
   | UnknownDAError;
 
 export type InstallLanguagePackageDAState = DeviceActionState<
