@@ -1,5 +1,15 @@
 # @ledgerhq/context-module
 
+## 1.16.0
+
+### Minor Changes
+
+- [#1398](https://github.com/LedgerHQ/device-sdk-ts/pull/1398) [`3a8cb57`](https://github.com/LedgerHQ/device-sdk-ts/commit/3a8cb572d8884d34af05cbe969dd883bcf1b5add) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add source configuration to ContextModuleBuilder for blind signing reports
+
+- [#1392](https://github.com/LedgerHQ/device-sdk-ts/pull/1392) [`14774e0`](https://github.com/LedgerHQ/device-sdk-ts/commit/14774e003e2ac03077cc6e8978cb94c02d624f02) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Refactor ContextModuleConfig to only expose necessary configuration types publicly, keeping internal types like loader config private since they are not intended for external consumers
+
+- [#1389](https://github.com/LedgerHQ/device-sdk-ts/pull/1389) [`1d58662`](https://github.com/LedgerHQ/device-sdk-ts/commit/1d586621b7a4a2ab6d3940aa6024abc2f6402c33) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add blind signing reporter domain service and plug it into the context module
+
 ## 1.15.0
 
 ### Minor Changes

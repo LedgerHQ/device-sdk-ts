@@ -1,5 +1,16 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.14.0
+
+### Minor Changes
+
+- [#1398](https://github.com/LedgerHQ/device-sdk-ts/pull/1398) [`b3a1237`](https://github.com/LedgerHQ/device-sdk-ts/commit/b3a12375828a542e1d7aa7111a8a0362bcb61106) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add blind signing detection and reporting to sign transaction and sign typed data device actions
+
+### Patch Changes
+
+- Updated dependencies [[`3a8cb57`](https://github.com/LedgerHQ/device-sdk-ts/commit/3a8cb572d8884d34af05cbe969dd883bcf1b5add), [`14774e0`](https://github.com/LedgerHQ/device-sdk-ts/commit/14774e003e2ac03077cc6e8978cb94c02d624f02), [`1d58662`](https://github.com/LedgerHQ/device-sdk-ts/commit/1d586621b7a4a2ab6d3940aa6024abc2f6402c33)]:
+  - @ledgerhq/context-module@1.16.0
+
 ## 1.13.0
 
 ### Minor Changes
