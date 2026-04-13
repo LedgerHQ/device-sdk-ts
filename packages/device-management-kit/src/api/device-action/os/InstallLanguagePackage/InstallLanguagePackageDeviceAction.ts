@@ -232,6 +232,8 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             src: "getDeviceMetadata",
             input: ({ context }) => ({
               unlockTimeout: context.input.unlockTimeout,
+              forceUpdate: true, // ensures the Language pack is fresh and forces user to go to Dashboard
+              useSecureChannel: true,
             }),
             onSnapshot: {
               actions: "assignGetDeviceMetadataSnapshot",
