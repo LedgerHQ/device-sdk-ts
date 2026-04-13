@@ -137,11 +137,15 @@ export class ProvideEIP712ContextTask {
       await this.provideContext(context);
     }
 
-    // Send proxy descriptor first if required
+    // Send proxy descriptor from clear sign context only if not already
+    // provided via additionalContexts (which uses a fresh challenge).
+    const alreadyProvidedProxy = this.args.additionalContexts.some(
+      (c) => c.type === ClearSignContextType.PROXY_INFO,
+    );
     const proxyContext:
       | ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>
       | undefined = this.args.clearSignContext.extract()?.proxy;
-    if (proxyContext !== undefined) {
+    if (proxyContext !== undefined && !alreadyProvidedProxy) {
       await this.provideContext(proxyContext);
     }
 
