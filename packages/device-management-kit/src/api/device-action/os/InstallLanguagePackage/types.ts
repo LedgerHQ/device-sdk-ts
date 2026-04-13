@@ -25,8 +25,8 @@ export type Language =
 export const installLanguagePackageDAStateStep = Object.freeze({
   DEVICE_READY: "os.installLanguagePackage.steps.deviceReady",
   GET_DEVICE_METADATA: "os.installLanguagePackage.steps.getDeviceMetadata",
-  PREPARE_LANGUAGE_PACK_INSTALL:
-    "os.installLanguagePackage.steps.prepareLanguagePackInstall",
+  DELETE_CURRENT_LANGUAGE_PACK:
+    "os.installLanguagePackage.steps.deleteCurrentLanguagePack",
   INSTALL_LANGUAGE_PACK: "os.installLanguagePackage.steps.installLanguagePack",
 } as const);
 

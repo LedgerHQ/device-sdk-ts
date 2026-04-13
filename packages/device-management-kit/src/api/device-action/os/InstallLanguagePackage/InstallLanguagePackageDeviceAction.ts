@@ -84,7 +84,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
     const {
       GET_DEVICE_METADATA,
       DEVICE_READY,
-      PREPARE_LANGUAGE_PACK_INSTALL,
+      DELETE_CURRENT_LANGUAGE_PACK,
       INSTALL_LANGUAGE_PACK,
     } = installLanguagePackageDAStateStep;
 
@@ -112,12 +112,12 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         ),
       },
       guards: {
-        hasError: ({ context }: { context: types["context"] }) =>
-          context._internalState.error !== null,
-        hasNoLanguagePacks: ({ context }) =>
-          !context._internalState.languagePackage,
+        // The default language Package (English) connot be deleted or reinstalled.
+        // If the requested language is English, we will skip the delete and install steps.
         isDefaultLanguage: ({ context }) =>
           context.input.language === "english",
+        hasError: ({ context }: { context: types["context"] }) =>
+          context._internalState.error !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -126,14 +126,14 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             error: _.event["error"],
           }),
         }),
-        assignGetLanguagePackSnapshot: assign({
+        assignGetDeviceMetadataSnapshot: assign({
           intermediateValue: (_) =>
             ({
               requiredUserInteraction: None,
               step: GET_DEVICE_METADATA,
             }) satisfies types["context"]["intermediateValue"],
         }),
-        assignGetLanguagePackDone: assign({
+        assignGetDeviceMetadataDone: assign({
           _internalState: (_) => {
             const output = _.event["output"] as Either<
               GetDeviceMetadataDAError,
@@ -175,7 +175,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
           intermediateValue: (_) =>
             ({
               requiredUserInteraction: None,
-              step: PREPARE_LANGUAGE_PACK_INSTALL,
+              step: DELETE_CURRENT_LANGUAGE_PACK,
             }) satisfies types["context"]["intermediateValue"],
         }),
         assignInstallLanguagePackSnapshot: assign({
@@ -196,6 +196,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
+      /** @xstate-layout N4IgpgJg5mDOIC5QEkB2sAuBDANjgMlqlAK5YwAKWAxgNblgAiYAbgJbVgCC1GbA9qgB0AYQAWYOgCUwARxJwMkQsTIwAxAG0ADAF1EoAA79YbPoIMgAHogBMATltCAjPYCsAZm0AWAOwAObTdfe18AGhAAT0RvRyEPW39nZw9nb20PBIBfLIi0TFwCIlIGKjoGZnZOHnNhcUlaGXlFZWK1MC1nfSQQY1NayxsEBydXTx8AoJDwqMRk+yE-ADY3Vb9fNxSPHLz0bDwVEsoaehhKjm5eAWEAcTAMc84AWXusCCxsdQhBMCE2VBY-FovzuD1YFxe2He2B03SMJjM10GiH8cUc9iWS3cbhWthWEWiw20S0WzkxvhS3g8S38wVsOxA+X2RVUpROFXB1SugiEoMeYEhbw+WHUYAATmL+GKhIYcB8AGZSgC2vPu-MF0KwsMsfURFh6Q1RTnRmOxuPxswQSSEbm0drttPs-l8LoZTMKh3aZVOTE5l1qQk9bLo9ToWj0OoRAwNc2pHiEtlioXSTu8Sw8BLstnjvjxqxdQQ8Gypbr2HrawZ9-Jq10DFeOIYkYc0XUj-SRMYQKXTCaTvhT-jTGctRfj-kSzm0-hp-aWPlLBQO9bA3o5VX9teYOHuYBEJAlYFQGCDDdoXx+fwBQN+W53e4PR5PK5O2p6uujoCGrgSQinbnsdqxEs3jeLYMyElivguDi2a2mB-7aPYC7Mk+q5nH6NY8reSj3mKh7Hsu3rnqgvz-ICwJCNhu77nhj6ES+rZvlGHafnM9g-n+AE+BiIFgZmCBuImQiDum3iDm4zq+JiyHlqyp5rhcmHCFRuH4ahJyihKUoynKGCKmKKoqTRan0XQr7wu2+qsV27FOJxgE8aB4GIB4oEJnmSy2M4EmJr4MlLnJz7lOh65KUI7oBUcQVnt8JGXuRvwRSyUXeuZvTMVZ1h2C6-i-h4AG2sB6TBPxwRQQBnkJFifjpPSuSMmWkVeuyIWKdywhJepYbipK0qygqyrhY1yXNWZEZMZZqDIsMOV5QVxIgVM-Fid4iyePMdpFiBGw5PVqD8BAcCWJ1plVhh7VtnqU2dgAtEs-E3W4Qj2C9r1vW92z1SdgVob6oXtaITaNHICiYK0gWXR+WUIKB-HOEJaQJGB060vDdW7IuI2VgpXIBnyfoasKkMsdDtqrf2r1LCESSrG4-H2Ktth5p4tirB4OLeM4-lY-JrW47WXW0KGtDE5lX7eU9-jswBL0rEExL8UzuX5QkXiIem-afRjKGnTjG5YWA244cZdE-ScovXdZ3l4r+jopLY9qTsOhLs1BCRJNS-75VLXNfcNgt62F30pebE1XdN2bjnNxKZMsrPLQBwlDqzjm5n5fuYwHfP68IADKJDUJwsDwGHUNDF4CPOmJqTAVOIGlVL8RM-YTtebZSEZzrZvBX9bUBgAolpYoW9NFerc4Vc+7Xg7eIrrNNysuabGkwTUrtWRAA */
       id: "InstallLanguagePackageDeviceAction",
       initial: "CheckRequestedLanguage",
       context: (_) => {
@@ -219,29 +220,25 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         CheckRequestedLanguage: {
           always: [
             {
-              // The default Language (English) is always available on the device
-              // so the Language pack fetch+install is skipped.
-              // We only delete the existing Language package if it exists.
               guard: "isDefaultLanguage",
               target: "DeleteCurrentLanguagePack",
             },
-            { target: "GetLanguagePack" },
+            { target: "GetDeviceMetadata" },
           ],
         },
-        // This step is skipped for the default language (English)
-        GetLanguagePack: {
+        GetDeviceMetadata: {
           invoke: {
-            id: "GetLanguagePackFromMetadata",
+            id: "GetDeviceMetadata",
             src: "getDeviceMetadata",
             input: ({ context }) => ({
               unlockTimeout: context.input.unlockTimeout,
             }),
             onSnapshot: {
-              actions: "assignGetLanguagePackSnapshot",
+              actions: "assignGetDeviceMetadataSnapshot",
             },
             onDone: {
-              target: "GetLanguagePackCheck",
-              actions: "assignGetLanguagePackDone",
+              target: "LanguagePackCheck",
+              actions: "assignGetDeviceMetadataDone",
             },
             onError: {
               target: "Error",
@@ -249,14 +246,10 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        GetLanguagePackCheck: {
+        LanguagePackCheck: {
           always: [
             {
               guard: "hasError",
-              target: "Error",
-            },
-            {
-              guard: "hasNoLanguagePacks",
               target: "Error",
             },
             { target: "DeleteCurrentLanguagePack" },
@@ -279,7 +272,6 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        // This step is skipped for the default language (English)
         InstallLanguagePack: {
           invoke: {
             id: "InstallLanguagePack",
@@ -326,10 +318,6 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
     return {
-      /**
-       * Prepare language pack installation by deleting any installed language pack from memory
-       * This command will be ignored by the device if the default language (= English) is used
-       */
       deleteCurrentLanguagePack: () =>
         internalApi.sendCommand(
           new DeleteLanguagePackCommand({ languagePackageId: 0xff }),
