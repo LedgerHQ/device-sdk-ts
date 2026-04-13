@@ -5,7 +5,7 @@ import { Either, Left, Right } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import {
   type ContextModuleCalMode,
-  type ContextModuleConfig,
+  type ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
@@ -55,7 +55,8 @@ export class HttpCalldataDescriptorDataSource
   implements CalldataDescriptorDataSource
 {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
     private readonly endpoint: string,

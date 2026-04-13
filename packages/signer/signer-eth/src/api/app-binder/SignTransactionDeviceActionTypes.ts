@@ -32,6 +32,7 @@ export enum SignTransactionDAStep {
   PROVIDE_CONTEXTS = "signer.eth.steps.provideContexts",
   SIGN_TRANSACTION = "signer.eth.steps.signTransaction",
   BLIND_SIGN_TRANSACTION_FALLBACK = "signer.eth.steps.blindSignTransactionFallback",
+  DETECT_BLIND_SIGNING = "signer.eth.steps.detectBlindSigning",
 }
 
 export type SignTransactionDAOutput = Signature;
@@ -80,8 +81,11 @@ export type SignTransactionDAInternalState = {
   readonly subset: TransactionSubset | null;
   readonly contexts: ContextWithSubContexts[];
   readonly clearSigningType: ClearSigningType | null;
+  readonly contextErrorCount: number;
   readonly transactionType: TransactionType | null;
   readonly signature: Signature | null;
+  readonly isBlindSign: boolean | null;
+  readonly usedFallback: boolean;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

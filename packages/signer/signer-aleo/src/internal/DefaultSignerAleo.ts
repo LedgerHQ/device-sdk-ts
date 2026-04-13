@@ -8,7 +8,6 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
-import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignRootIntentDAReturnType } from "@api/app-binder/SignRootIntentDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
@@ -19,8 +18,6 @@ import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUs
 import { type GetViewKeyUseCase } from "@internal/use-cases/address/GetViewKeyUseCase";
 import { configTypes } from "@internal/use-cases/config/di/configTypes";
 import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";
-import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
-import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
 import { type SignFeeIntentUseCase } from "@internal/use-cases/transaction/SignFeeIntentUseCase";
 import { type SignRootIntentUseCase } from "@internal/use-cases/transaction/SignRootIntentUseCase";
@@ -59,15 +56,6 @@ export class DefaultSignerAleo implements SignerAleo {
     return this._container
       .get<GetViewKeyUseCase>(addressTypes.GetViewKeyUseCase)
       .execute(derivationPath, options);
-  }
-
-  signMessage(
-    derivationPath: string,
-    message: string | Uint8Array,
-  ): SignMessageDAReturnType {
-    return this._container
-      .get<SignMessageUseCase>(messageTypes.SignMessageUseCase)
-      .execute(derivationPath, message);
   }
 
   signRootIntent(

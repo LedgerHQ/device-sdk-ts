@@ -5,7 +5,7 @@
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import {
   SolanaContextTypes,
@@ -39,7 +39,7 @@ const mockConfig = {
     mode: "test",
     branch: "main",
   },
-} as ContextModuleConfig;
+} as ContextModuleServiceConfig;
 
 describe("SolanaLifiContextLoader", () => {
   let mockDataSource: SolanaLifiDataSource;

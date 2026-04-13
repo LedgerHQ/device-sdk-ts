@@ -2,7 +2,7 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/pki/model/KeyId";
@@ -38,7 +38,7 @@ export class SolanaLifiContextLoader
     @inject(lifiTypes.SolanaLifiDataSource)
     private readonly dataSource: SolanaLifiDataSource,
     @inject(configTypes.Config)
-    private readonly config: ContextModuleConfig,
+    private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)

@@ -15,6 +15,7 @@ export const TYPES = {
   SignableInteractions: Symbol.for("SignableInteractions"),
   RetryService: Symbol.for("RetryService"),
   AppVersionResolver: Symbol.for("AppVersionResolver"),
+  TransactionCraftingService: Symbol.for("TransactionCraftingService"),
 
   // State Handlers
   CompleteStateHandler: Symbol.for("CompleteStateHandler"),
@@ -25,6 +26,7 @@ export const TYPES = {
   // Service Controllers
   MainServiceController: Symbol.for("MainServiceController"),
   DMKServiceController: Symbol.for("DMKServiceController"),
+  SolanaDMKServiceController: Symbol.for("SolanaDMKServiceController"),
   SpeculosServiceController: Symbol.for("SpeculosServiceController"),
   ServiceControllers: Symbol.for("ServiceControllers"),
 
@@ -52,11 +54,23 @@ export const TYPES = {
   TestBatchContractFromFileUseCase: Symbol.for(
     "TestBatchContractFromFileUseCase",
   ),
+  TestSolanaTransactionUseCase: Symbol.for("TestSolanaTransactionUseCase"),
+  TestBatchSolanaTransactionFromFileUseCase: Symbol.for(
+    "TestBatchSolanaTransactionFromFileUseCase",
+  ),
+
+  // Solana program-level testing (fetches transactions by program ID via RPC)
+  SolanaRpcAdapter: Symbol.for("SolanaRpcAdapter"),
+  SolanaTransactionProgramRepository: Symbol.for(
+    "SolanaTransactionProgramRepository",
+  ),
+  TestSolanaProgramUseCase: Symbol.for("TestSolanaProgramUseCase"),
 
   // Config
   SpeculosConfig: Symbol.for("SpeculosConfig"),
   SignerConfig: Symbol.for("SignerConfig"),
   EtherscanConfig: Symbol.for("EtherscanConfig"),
+  SolanaRpcConfig: Symbol.for("SolanaRpcConfig"),
   AppsConfig: Symbol.for("AppsConfig"),
   CalConfig: Symbol.for("CalConfig"),
 

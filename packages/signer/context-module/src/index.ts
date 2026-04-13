@@ -1,7 +1,16 @@
 export * from "./calldata/data/CalldataDescriptorDataSource";
 export * from "./calldata/data/HttpCalldataDescriptorDataSource";
 export * from "./calldata/domain/CalldataContextLoader";
-export * from "./config/model/ContextModuleConfig";
+export type {
+  ContextModuleCalBranch,
+  ContextModuleCalConfig,
+  ContextModuleCalMode,
+  ContextModuleConfig,
+  ContextModuleDatasourceConfig,
+  ContextModuleMetadataServiceConfig,
+  ContextModuleReporterConfig,
+  ContextModuleWeb3ChecksConfig,
+} from "./config/model/ContextModuleConfig";
 export * from "./ContextModule";
 export * from "./ContextModuleBuilder";
 export * from "./DefaultContextModule";
@@ -32,6 +41,12 @@ export * from "./proxy/data/HttpProxyDataSource";
 export * from "./proxy/data/HttpSafeProxyDataSource";
 export * from "./proxy/data/ProxyDataSource";
 export * from "./proxy/domain/ProxyContextFieldLoader";
+export * from "./reporter/data/BlindSigningReporterDatasource";
+export * from "./reporter/data/HttpBlindSigningReporterDatasource";
+export * from "./reporter/domain/BlindSigningReporter";
+export * from "./reporter/domain/DefaultBlindSigningReporter";
+export * from "./reporter/model/BlindSigningEvent";
+export * from "./reporter/model/BlindSigningModelId";
 export * from "./shared/domain/ContextFieldLoader";
 export * from "./shared/domain/ContextLoader";
 export * from "./shared/model/ClearSignContext";

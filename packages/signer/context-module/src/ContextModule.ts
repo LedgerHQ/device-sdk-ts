@@ -1,3 +1,4 @@
+import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningReporterDatasource";
 import {
   type ClearSignContext,
   type ClearSignContextType,
@@ -23,4 +24,5 @@ export interface ContextModule {
   getSolanaContext(
     transactionContext: SolanaTransactionContext,
   ): Promise<SolanaTransactionContextResult>;
+  report(params: BlindSigningReportParams): Promise<void>;
 }

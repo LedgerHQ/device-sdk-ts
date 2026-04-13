@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -21,7 +21,8 @@ import { TrustedNameDto } from "./TrustedNameDto";
 @injectable()
 export class HttpTrustedNameDataSource implements TrustedNameDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
   ) {}
 
   public async getDomainNamePayload({

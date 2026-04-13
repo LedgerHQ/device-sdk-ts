@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
   LEDGER_ORIGIN_TOKEN_HEADER,
@@ -22,7 +22,7 @@ const config = {
     url: "https://nft.api.live.ledger.com",
   },
   originToken: "originToken",
-} as ContextModuleConfig;
+} as ContextModuleServiceConfig;
 describe("HttpTrustedNameDataSource", () => {
   let datasource: TrustedNameDataSource;
 

@@ -22,6 +22,8 @@ import { externalTypes } from "@internal/externalTypes";
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
+import { appBinderTypes } from "./di/appBinderTypes";
+import { BlockhashService } from "./services/BlockhashService";
 import { APP_NAME } from "./constants";
 
 @injectable()
@@ -32,6 +34,10 @@ export class SolanaAppBinder {
     @inject(externalTypes.ContextModule) private contextModule: ContextModule,
     @inject(externalTypes.DmkLoggerFactory)
     private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(externalTypes.SolanaRPCURL)
+    private solanaRPCURL: string | undefined,
+    @inject(appBinderTypes.BlockhashService)
+    private blockhashService: BlockhashService,
   ) {}
 
   getAddress(args: {
@@ -68,6 +74,8 @@ export class SolanaAppBinder {
           transaction: args.transaction,
           transactionOptions: args.solanaTransactionOptionalConfig,
           contextModule: this.contextModule,
+          solanaRPCURL: this.solanaRPCURL,
+          blockhashService: this.blockhashService,
         },
         loggerFactory: this.dmkLoggerFactory,
       }),

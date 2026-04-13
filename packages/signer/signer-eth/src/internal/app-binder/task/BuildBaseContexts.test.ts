@@ -28,6 +28,7 @@ describe("BuildBaseContexts", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getSolanaContext: vi.fn(),
+    report: vi.fn(),
   };
   const defaultOptions = {};
   const defaultTransaction: Uint8Array = hexaStringToBuffer(
@@ -96,6 +97,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts,
       clearSignContextsOptional,
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -156,6 +158,7 @@ describe("BuildBaseContexts", () => {
       ],
       clearSignContextsOptional: [clearSignContexts[2]],
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -216,6 +219,7 @@ describe("BuildBaseContexts", () => {
       ],
       clearSignContextsOptional: [clearSignContexts[0]], // enum
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -253,6 +257,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts,
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -302,6 +307,7 @@ describe("BuildBaseContexts", () => {
       ],
       clearSignContextsOptional: [clearSignContexts[2]],
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -337,6 +343,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[0]],
       clearSignContextsOptional,
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -466,6 +473,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 2,
     });
   });
 
@@ -515,6 +523,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -558,6 +567,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -607,6 +617,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [clearSignContexts[4]],
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -652,6 +663,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[0]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -697,6 +709,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[0]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -739,6 +752,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[0]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -778,6 +792,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 

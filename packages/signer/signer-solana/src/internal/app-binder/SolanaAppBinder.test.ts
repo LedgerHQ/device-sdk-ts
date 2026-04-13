@@ -27,6 +27,7 @@ import {
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
+import { BlockhashService } from "./services/BlockhashService";
 import { APP_NAME } from "./constants";
 import { SolanaAppBinder } from "./SolanaAppBinder";
 
@@ -56,6 +57,8 @@ describe("SolanaAppBinder", () => {
       {} as DeviceSessionId,
       contextModuleStub,
       mockLoggerFactory,
+      undefined,
+      new BlockhashService(),
     );
     expect(binder).toBeDefined();
   });
@@ -86,6 +89,8 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
           mockLoggerFactory,
+          undefined,
+          new BlockhashService(),
         );
         const { observable } = appBinder.getAddress({
           derivationPath: "44'/501'",
@@ -143,6 +148,8 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
           mockLoggerFactory,
+          undefined,
+          new BlockhashService(),
         );
         appBinder.getAddress(params);
 
@@ -176,6 +183,8 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
           mockLoggerFactory,
+          undefined,
+          new BlockhashService(),
         );
         appBinder.getAddress(params);
 
@@ -223,6 +232,8 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
           mockLoggerFactory,
+          undefined,
+          new BlockhashService(),
         );
         const { observable } = appBinder.signTransaction({
           derivationPath: "44'/501'",
@@ -271,6 +282,8 @@ describe("SolanaAppBinder", () => {
         "sessionId",
         contextModuleStub,
         mockLoggerFactory,
+        undefined,
+        new BlockhashService(),
       );
       appBinder.signTransaction({
         derivationPath,
@@ -283,12 +296,12 @@ describe("SolanaAppBinder", () => {
         expect.objectContaining({
           sessionId: "sessionId",
           deviceAction: expect.objectContaining({
-            input: {
+            input: expect.objectContaining({
               derivationPath,
               transaction,
               transactionOptions: { skipOpenApp },
               contextModule: contextModuleStub,
-            },
+            }),
           }),
         }),
       );
@@ -328,6 +341,8 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
           mockLoggerFactory,
+          undefined,
+          new BlockhashService(),
         );
         const { observable } = appBinder.signMessage(signMessageArgs);
 
@@ -386,6 +401,8 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
           mockLoggerFactory,
+          undefined,
+          new BlockhashService(),
         );
         const { observable } = appBinder.signMessage({
           derivationPath: "44'/501'/0'/0'",
@@ -449,6 +466,8 @@ describe("SolanaAppBinder", () => {
           "sessionId",
           contextModuleStub,
           mockLoggerFactory,
+          undefined,
+          new BlockhashService(),
         );
         const { observable } = appBinder.getAppConfiguration();
 
@@ -489,6 +508,8 @@ describe("SolanaAppBinder", () => {
         "sessionId",
         contextModuleStub,
         mockLoggerFactory,
+        undefined,
+        new BlockhashService(),
       );
 
       // WHEN

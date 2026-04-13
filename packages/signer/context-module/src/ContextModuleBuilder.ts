@@ -8,9 +8,13 @@ import {
   type ContextModuleCalConfig,
   type ContextModuleConfig,
   type ContextModuleDatasourceConfig,
+  type ContextModuleLoaderConfig,
   type ContextModuleMetadataServiceConfig,
+  type ContextModuleReporterConfig,
+  type ContextModuleServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
+import { type BlindSigningReporter } from "./reporter/domain/BlindSigningReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
@@ -21,46 +25,61 @@ import { DefaultContextModule } from "./DefaultContextModule";
 const DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1";
 const DEFAULT_WEB3_CHECKS_URL = "https://web3checks-backend.api.ledger.com/v3";
 const DEFAULT_METADATA_SERVICE_DOMAIN = "https://nft.api.live.ledger.com";
+const DEFAULT_REPORTER_URL = "https://ingest.aws.stg.ldg-tech.com/ingest/v1";
 
-export const DEFAULT_CONFIG: ContextModuleConfig = {
-  cal: {
+/**
+ * Default configuration for the context module
+ *
+ * @note This configuration is frozen to prevent modifications after construction
+ * and can be used by external packages to get a default configuration.
+ */
+export const DEFAULT_CONFIG: Readonly<ContextModuleConfig> = Object.freeze({
+  cal: Object.freeze({
     url: DEFAULT_CAL_URL,
     mode: "prod",
     branch: "main",
-  },
-  web3checks: {
+  }),
+  web3checks: Object.freeze({
     url: DEFAULT_WEB3_CHECKS_URL,
-  },
-  metadataServiceDomain: {
+  }),
+  metadataServiceDomain: Object.freeze({
     url: DEFAULT_METADATA_SERVICE_DOMAIN,
-  },
+  }),
+  reporter: Object.freeze({
+    url: DEFAULT_REPORTER_URL,
+  }),
+  datasource: Object.freeze({ proxy: "default" }),
+  appSource: "third-party",
+});
+
+/**
+ * Default loader configuration for the context module
+ *
+ * @note This configuration is internal and will be the default configuration for the context module.
+ */
+const DEFAULT_LOADER_CONFIG: ContextModuleLoaderConfig = {
   defaultLoaders: true,
-  customLoaders: [],
   defaultFieldLoaders: true,
+  customLoaders: [],
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
   customSolanaLoader: undefined,
-  loggerFactory: noopLoggerFactory,
+  customBlindSigningReporter: undefined,
+  customTrustedNameDataSource: undefined,
 };
 
 export class ContextModuleBuilder {
-  private config: ContextModuleConfig;
-  private originToken?: string;
+  private config: ContextModuleServiceConfig & ContextModuleLoaderConfig;
 
   constructor({ originToken, loggerFactory }: ContextModuleConstructorArgs) {
-    this.originToken = originToken;
-
     this.config = {
       ...DEFAULT_CONFIG,
-      cal: { ...DEFAULT_CONFIG.cal },
-      web3checks: { ...DEFAULT_CONFIG.web3checks },
-      metadataServiceDomain: { ...DEFAULT_CONFIG.metadataServiceDomain },
-      customLoaders: [...DEFAULT_CONFIG.customLoaders],
-      customFieldLoaders: [...DEFAULT_CONFIG.customFieldLoaders],
-    };
-    if (loggerFactory) {
-      this.config.loggerFactory = loggerFactory;
-    }
+      ...DEFAULT_LOADER_CONFIG,
+      customLoaders: [],
+      customFieldLoaders: [],
+      originToken: originToken ?? "",
+      loggerFactory: loggerFactory ?? noopLoggerFactory,
+    } as ContextModuleServiceConfig & ContextModuleLoaderConfig;
   }
 
   /**
@@ -153,6 +172,39 @@ export class ContextModuleBuilder {
   }
 
   /**
+   * Set a custom reporter configuration
+   *
+   * @param reporterConfig
+   * @returns this
+   */
+  setReporterConfig(reporterConfig: ContextModuleReporterConfig) {
+    this.config.reporter = reporterConfig;
+    return this;
+  }
+
+  /**
+   * Set the app source identifier included in blind signing reports
+   *
+   * @param appSource
+   * @returns this
+   */
+  setAppSource(appSource: string) {
+    this.config.appSource = appSource;
+    return this;
+  }
+
+  /**
+   * Set a custom blind signing reporter
+   *
+   * @param reporter reporter to use for blind signing events
+   * @returns this
+   */
+  setBlindSigningReporter(reporter: BlindSigningReporter) {
+    this.config.customBlindSigningReporter = reporter;
+    return this;
+  }
+
+  /**
    * Set a custom trusted name data source
    *
    * @param dataSource data source to use for trusted name resolution
@@ -180,7 +232,6 @@ export class ContextModuleBuilder {
    * @returns the context module
    */
   build(): ContextModule {
-    const config = { ...this.config, originToken: this.originToken };
-    return new DefaultContextModule(config);
+    return new DefaultContextModule(this.config);
   }
 }

@@ -31,6 +31,7 @@ describe("BuildSafeAddressContextTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {
     getContexts: vi.fn(),
+    report: vi.fn(),
   };
 
   const TEST_CHALLENGE = "0x12345678";

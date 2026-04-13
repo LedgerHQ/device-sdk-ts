@@ -41,6 +41,7 @@ describe("SendGetAddressTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
   const contextModuleMock = {
     getContexts: vi.fn(),
+    report: vi.fn(),
   };
 
   const baseArgs = {
