@@ -1,5 +1,15 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.13.0
+
+### Minor Changes
+
+- [#1336](https://github.com/LedgerHQ/device-sdk-ts/pull/1336) [`afbcc2b`](https://github.com/LedgerHQ/device-sdk-ts/commit/afbcc2b26785815beb069bf10f6774d342734dae) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Add device action factories for GetAddress and SignPersonalMessage
+
+### Patch Changes
+
+- [#1347](https://github.com/LedgerHQ/device-sdk-ts/pull/1347) [`ae31fcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ae31fcc504186452ed86c18dc6f656ac356998a3) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
 ## 1.12.0
 
 ### Minor Changes
