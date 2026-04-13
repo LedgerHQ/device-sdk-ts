@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -11,13 +12,19 @@ import { appConfigModuleFactory } from "@internal/use-cases/app-config/di/appCon
 import { credentialDeploymentModuleFactory } from "@internal/use-cases/credential-deployment/di/credentialDeploymentModule";
 import { publicKeyModuleFactory } from "@internal/use-cases/publickey/di/publicKeyModule";
 import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";
+import { verifyAddressModuleFactory } from "@internal/use-cases/verify-address/di/verifyAddressModule";
 
 type MakeContainerProps = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  contextModule: ContextModule;
 };
 
-export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
+export const makeContainer = ({
+  dmk,
+  sessionId,
+  contextModule,
+}: MakeContainerProps) => {
   const container = new Container();
 
   container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
@@ -33,12 +40,17 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
       dmk.getLoggerFactory()(["SignerConcordium", tag]),
     );
 
+  container
+    .bind<ContextModule>(externalTypes.ContextModule)
+    .toConstantValue(contextModule);
+
   container.loadSync(
     appBindingModuleFactory(),
     appConfigModuleFactory(),
     credentialDeploymentModuleFactory(),
     publicKeyModuleFactory(),
     transactionModuleFactory(),
+    verifyAddressModuleFactory(),
   );
 
   return container;
