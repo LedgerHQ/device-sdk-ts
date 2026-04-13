@@ -2,6 +2,7 @@
 
 This module provides the implementation of the Ledger Concordium signer of the Device Management Kit. It enables interaction with the Concordium application on a Ledger device including:
 
+- Querying the device app configuration and version;
 - Retrieving the Concordium public key using a given derivation path;
 - Signing a Concordium transaction (Transfer and TransferWithMemo);
 - Signing a Concordium credential deployment transaction;
@@ -12,9 +13,10 @@ This module provides the implementation of the Ledger Concordium signer of the D
 2. [Installation](#-installation)
 3. [Initialisation](#-initialisation)
 4. [Use Cases](#-use-cases)
-   - [Get Public Key](#use-case-1-get-public-key)
-   - [Sign Transaction](#use-case-2-sign-transaction)
-   - [Sign Credential Deployment Transaction](#use-case-3-sign-credential-deployment-transaction)
+   - [Get App Configuration](#use-case-1-get-app-configuration)
+   - [Get Public Key](#use-case-2-get-public-key)
+   - [Sign Transaction](#use-case-3-sign-transaction)
+   - [Sign Credential Deployment Transaction](#use-case-4-sign-credential-deployment-transaction)
 5. [Observable Behavior](#-observable-behavior)
 
 ## 🔹 How it works
@@ -44,11 +46,39 @@ const signerConcordium = new SignerConcordiumBuilder({
 
 ## 🔹 Use Cases
 
-The `SignerConcordiumBuilder.build()` method will return a `SignerConcordium` instance that exposes 3 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerConcordiumBuilder.build()` method will return a `SignerConcordium` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
-### Use Case 1: Get Public Key
+### Use Case 1: Get App Configuration
+
+This method allows users to query the Concordium app version running on the device.
+
+> **Note:** This command is supported starting from app-concordium `5.4.1`. Older app-concordium versions will return an `INS_NOT_SUPPORTED` (`0x6D00`) error.
+
+```typescript
+const { observable, cancel } = signerConcordium.getAppConfiguration();
+```
+
+#### **Parameters**
+
+None.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type AppConfiguration = {
+  version: string; // e.g. "5.5.0"
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 2: Get Public Key
 
 This method allows users to retrieve the Concordium Ed25519 public key based on a given `derivationPath`.
 
@@ -96,7 +126,7 @@ type PublicKey = {
 
 ---
 
-### Use Case 2: Sign Transaction
+### Use Case 3: Sign Transaction
 
 Securely sign a Concordium transaction on Ledger devices. Supports both Transfer and TransferWithMemo transaction types. The transaction type is automatically detected from the serialized payload.
 
@@ -147,7 +177,7 @@ type Signature = Uint8Array; // 64-byte Ed25519 signature
 
 ---
 
-### Use Case 3: Sign Credential Deployment Transaction
+### Use Case 4: Sign Credential Deployment Transaction
 
 Sign a credential deployment transaction on Ledger devices. Credential deployment is required before an account can send its first transaction on the Concordium blockchain. The signer parses the serialized credential deployment bytes and orchestrates the multi-step APDU sequence with the device.
 

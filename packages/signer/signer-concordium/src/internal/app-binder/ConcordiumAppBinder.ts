@@ -8,9 +8,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
 import { type SignCredentialDeploymentTransactionDAReturnType } from "@api/app-binder/SignCredentialDeploymentTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import {
   GetPublicKeyCommand,
   type GetPublicKeyCommandArgs,
@@ -28,6 +30,23 @@ export class ConcordiumAppBinder {
     @inject(externalTypes.DmkLoggerFactory)
     private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
   ) {}
+
+  getAppConfiguration(args: {
+    skipOpenApp: boolean;
+  }): GetAppConfigDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetAppConfigCommand(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+        logger: this.dmkLoggerFactory("GetAppConfigCommand"),
+      }),
+    });
+  }
 
   getPublicKey(args: GetPublicKeyCommandArgs): GetPublicKeyDAReturnType {
     return this.dmk.executeDeviceAction({
