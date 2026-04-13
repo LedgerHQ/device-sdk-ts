@@ -1,3 +1,6 @@
+export * from "./account-ownership/data/AccountOwnershipDataSource";
+export * from "./account-ownership/data/HttpAccountOwnershipDataSource";
+export * from "./account-ownership/domain/AccountOwnershipContextLoader";
 export * from "./calldata/data/CalldataDescriptorDataSource";
 export * from "./calldata/data/HttpCalldataDescriptorDataSource";
 export * from "./calldata/domain/CalldataContextLoader";

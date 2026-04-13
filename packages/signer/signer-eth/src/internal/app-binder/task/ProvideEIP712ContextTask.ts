@@ -393,6 +393,7 @@ export class ProvideEIP712ContextTask {
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         throw new Error(
           `Context type ${type} not supported in EIP712 messages`,
         );
