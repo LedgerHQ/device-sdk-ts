@@ -7,6 +7,7 @@ import { Container } from "inversify";
 
 import { appBindingModuleFactory } from "@internal/app-binder/di/appBinderModule";
 import { externalTypes } from "@internal/externalTypes";
+import { appConfigModuleFactory } from "@internal/use-cases/app-config/di/appConfigModule";
 import { credentialDeploymentModuleFactory } from "@internal/use-cases/credential-deployment/di/credentialDeploymentModule";
 import { publicKeyModuleFactory } from "@internal/use-cases/publickey/di/publicKeyModule";
 import { transactionModuleFactory } from "@internal/use-cases/transaction/di/transactionModule";
@@ -34,6 +35,7 @@ export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
 
   container.loadSync(
     appBindingModuleFactory(),
+    appConfigModuleFactory(),
     credentialDeploymentModuleFactory(),
     publicKeyModuleFactory(),
     transactionModuleFactory(),

@@ -4,6 +4,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
+import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
 import { type SignCredentialDeploymentTransactionDAReturnType } from "@api/app-binder/SignCredentialDeploymentTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
@@ -11,6 +12,8 @@ import { type PublicKeyOptions } from "@api/model/PublicKeyOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerConcordium } from "@api/SignerConcordium";
 import { makeContainer } from "@internal/di";
+import { appConfigTypes } from "@internal/use-cases/app-config/di/appConfigTypes";
+import { type GetAppConfigUseCase } from "@internal/use-cases/app-config/GetAppConfigUseCase";
 import { credentialDeploymentTypes } from "@internal/use-cases/credential-deployment/di/credentialDeploymentTypes";
 import { type SignCredentialDeploymentTransactionUseCase } from "@internal/use-cases/credential-deployment/SignCredentialDeploymentTransactionUseCase";
 import { publicKeyTypes } from "@internal/use-cases/publickey/di/publicKeyTypes";
@@ -28,6 +31,12 @@ export class DefaultSignerConcordium implements SignerConcordium {
 
   constructor({ dmk, sessionId }: DefaultSignerConcordiumConstructorArgs) {
     this._container = makeContainer({ dmk, sessionId });
+  }
+
+  getAppConfiguration(): GetAppConfigDAReturnType {
+    return this._container
+      .get<GetAppConfigUseCase>(appConfigTypes.GetAppConfigUseCase)
+      .execute();
   }
 
   getPublicKey(

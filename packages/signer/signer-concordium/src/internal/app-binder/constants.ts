@@ -11,6 +11,7 @@ export const INS = {
   SIGN_TRANSFER_WITH_MEMO: 0x32,
   SIGN_TRANSFER_WITH_SCHEDULE_AND_MEMO: 0x34,
   REGISTER_DATA: 0x35,
+  GET_APP_VERSION: 0x40,
 } as const;
 
 export const P1 = {

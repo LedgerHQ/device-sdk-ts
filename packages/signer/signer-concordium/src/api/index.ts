@@ -1,4 +1,10 @@
 export {
+  type GetAppConfigDAError,
+  type GetAppConfigDAIntermediateValue,
+  type GetAppConfigDAOutput,
+  type GetAppConfigDAReturnType,
+} from "@api/app-binder/GetAppConfigDeviceActionTypes";
+export {
   type GetPublicKeyDAError,
   type GetPublicKeyDAIntermediateValue,
   type GetPublicKeyDAOutput,
@@ -16,6 +22,7 @@ export {
   type SignTransactionDAOutput,
   type SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export { type AppConfiguration } from "@api/model/AppConfiguration";
 export { type PublicKey } from "@api/model/PublicKey";
 export { type PublicKeyOptions } from "@api/model/PublicKeyOptions";
 export { type Signature } from "@api/model/Signature";
