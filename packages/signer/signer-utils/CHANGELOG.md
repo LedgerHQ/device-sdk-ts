@@ -1,5 +1,11 @@
 # @ledgerhq/signer-utils
 
+## 1.2.0
+
+### Minor Changes
+
+- [#1398](https://github.com/LedgerHQ/device-sdk-ts/pull/1398) [`b3a1237`](https://github.com/LedgerHQ/device-sdk-ts/commit/b3a12375828a542e1d7aa7111a8a0362bcb61106) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add generateSignatureId utility for blind signing reports
+
 ## 1.1.3
 
 ### Patch Changes
