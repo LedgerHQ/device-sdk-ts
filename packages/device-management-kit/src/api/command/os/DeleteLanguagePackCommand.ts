@@ -41,9 +41,7 @@ export class DeleteLanguagePackCommandError extends DeviceExchangeError<DeleteLa
 }
 
 /**
- * Delete installed language package by id or delete all language packages if id = 0xFF.
- *
- * https://ledgerhq.atlassian.net/wiki/spaces/FW/pages/4455596105/Ledger+OS+-+APDU+commands#1.14.-Delete-language-pack
+ * Delete installed language package by languagePackageId or delete all language packages if languagePackageId = 0xFF.
  */
 export class DeleteLanguagePackCommand
   implements
