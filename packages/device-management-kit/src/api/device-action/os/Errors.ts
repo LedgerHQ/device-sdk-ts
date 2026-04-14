@@ -73,3 +73,25 @@ export class UnsupportedApplicationDAError implements DmkError {
     );
   }
 }
+
+export class MissingLanguagePackagesForOSDAError implements DmkError {
+  readonly _tag = "MissingLanguagePackagesForOSDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(
+      message ?? "Missing Language Packages for OS DAError.",
+    );
+  }
+}
+
+export class MissingLanguagePackageDAError implements DmkError {
+  readonly _tag = "MissingLanguagePackageDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(
+      message ?? "Missing Language Package DAError.",
+    );
+  }
+}

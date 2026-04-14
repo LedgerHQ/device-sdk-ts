@@ -9,7 +9,10 @@ import {
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
-import { UnknownDAError } from "@api/device-action/os/Errors";
+import {
+  MissingLanguagePackageDAError,
+  MissingLanguagePackagesForOSDAError,
+} from "@api/device-action/os/Errors";
 import { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
 import {
   type GetDeviceMetadataDAError,
@@ -145,8 +148,8 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
                 if (!languagePackages) {
                   return {
                     ..._.context._internalState,
-                    error: new UnknownDAError(
-                      "Device metadata missing OS version response.",
+                    error: new MissingLanguagePackagesForOSDAError(
+                      `Language packages not found for OS ${metadata?.firmwareVersion?.os}.`,
                     ) as InstallLanguagePackageDAError,
                   };
                 }
@@ -156,7 +159,9 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
                 if (!languagePackage) {
                   return {
                     ..._.context._internalState,
-                    error: new UnknownDAError("Language package not found."),
+                    error: new MissingLanguagePackageDAError(
+                      `Language package not found for ${language}.`,
+                    ),
                   };
                 }
                 return {
@@ -313,7 +318,11 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         const { languagePackage } = _.context._internalState;
         if (languagePackage) return Right(languagePackage);
 
-        return Left(new UnknownDAError("InstallLanguagePackageMissingResult"));
+        return Left(
+          new MissingLanguagePackageDAError(
+            "InstallLanguagePackageMissingResult",
+          ),
+        );
       },
     });
   }

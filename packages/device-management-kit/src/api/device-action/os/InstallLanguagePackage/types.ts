@@ -1,9 +1,8 @@
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
-  type OutOfMemoryDAError,
-  type RefusedByUserDAError,
-  type UnknownDAError,
+  type MissingLanguagePackageDAError,
+  type MissingLanguagePackagesForOSDAError,
 } from "@api/device-action/os/Errors";
 import {
   type GetDeviceMetadataDAError,
@@ -46,9 +45,8 @@ export type InstallLanguagePackageDAIntermediateValue =
 
 export type InstallLanguagePackageDAError =
   | GetDeviceMetadataDAError
-  | RefusedByUserDAError
-  | OutOfMemoryDAError
-  | UnknownDAError;
+  | MissingLanguagePackagesForOSDAError
+  | MissingLanguagePackageDAError;
 
 export type InstallLanguagePackageDAState = DeviceActionState<
   InstallLanguagePackageDAOutput,
