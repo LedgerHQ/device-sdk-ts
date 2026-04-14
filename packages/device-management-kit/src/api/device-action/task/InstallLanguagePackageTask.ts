@@ -8,16 +8,17 @@ import {
   RefusedByUserDAError,
   UnknownDAError,
 } from "@api/device-action/os/Errors";
-import { hexaStringToBuffer } from "@api/utils/HexaString";
+import type { InstallLanguagePackageDAError } from "@api/device-action/os/InstallLanguagePackage/types";
+import { bufferToHexaString, hexaStringToBuffer } from "@api/utils/HexaString";
 
 export type InstallLanguagePackageTaskArgs = {
   apduInstallUrl: string;
 };
 
-export type InstallLanguagePackageTaskError =
-  | RefusedByUserDAError
-  | OutOfMemoryDAError
-  | UnknownDAError;
+export type InstallLanguagePackageTaskError = Extract<
+  InstallLanguagePackageDAError,
+  RefusedByUserDAError | OutOfMemoryDAError | UnknownDAError
+>;
 
 export type InstallLanguagePackageEvent = {
   type: "progress";
@@ -67,11 +68,10 @@ export class InstallLanguagePackageTask {
                 );
               }
               if (!CommandUtils.isSuccessResponse(apduResponse)) {
-                const statusHex = Array.from(apduResponse.statusCode)
-                  .map((b) => b.toString(16).padStart(2, "0"))
-                  .join("");
                 return new UnknownDAError(
-                  `Unexpected device response: 0x${statusHex}`,
+                  `Unexpected device response: ${bufferToHexaString(
+                    apduResponse.statusCode,
+                  )}`,
                 );
               }
               return null;

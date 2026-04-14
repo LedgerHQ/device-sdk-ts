@@ -4,6 +4,9 @@ import {
   type DeleteLanguagePackDAError,
   type MissingLanguagePackageDAError,
   type MissingLanguagePackagesForOSDAError,
+  type OutOfMemoryDAError,
+  type RefusedByUserDAError,
+  type UnknownDAError,
 } from "@api/device-action/os/Errors";
 import {
   type GetDeviceMetadataDAError,
@@ -47,7 +50,10 @@ export type InstallLanguagePackageDAError =
   | GetDeviceMetadataDAError
   | MissingLanguagePackagesForOSDAError
   | MissingLanguagePackageDAError
-  | DeleteLanguagePackDAError;
+  | DeleteLanguagePackDAError
+  | RefusedByUserDAError // from InstallLanguagePackageTask
+  | OutOfMemoryDAError // from InstallLanguagePackageTask
+  | UnknownDAError; // from InstallLanguagePackageTask (network error, invalid APDU, etc.)
 
 export type InstallLanguagePackageDAState = DeviceActionState<
   InstallLanguagePackageDAOutput,
