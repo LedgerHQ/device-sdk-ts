@@ -155,7 +155,7 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
           // Success
           {
-            output: LANGUAGE_PACKAGE,
+            output: undefined,
             status: DeviceActionStatus.Completed,
           },
         ];

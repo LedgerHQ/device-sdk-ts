@@ -310,19 +310,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         if (_.context._internalState.error !== null) {
           return Left(_.context._internalState.error);
         }
-
-        if (_.context.input.language === "english") {
-          return Right(undefined);
-        }
-
-        const { languagePackage } = _.context._internalState;
-        if (languagePackage) return Right(languagePackage);
-
-        return Left(
-          new MissingLanguagePackageDAError(
-            "InstallLanguagePackageMissingResult",
-          ),
-        );
+        return Right(undefined);
       },
     });
   }

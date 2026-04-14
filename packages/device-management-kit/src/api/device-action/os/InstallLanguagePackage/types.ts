@@ -9,7 +9,6 @@ import {
   type GetDeviceMetadataDAIntermediateValue,
 } from "@api/device-action/os/GetDeviceMetadata/types";
 import { type GoToDashboardDAInput } from "@api/device-action/os/GoToDashboard/types";
-import { type LanguagePackage } from "@internal/manager-api/model/Language";
 
 export type Language =
   | "french"
@@ -33,7 +32,7 @@ export type InstallLanguagePackageDAInput = GoToDashboardDAInput & {
   readonly language: Language;
 };
 
-export type InstallLanguagePackageDAOutput = LanguagePackage | undefined;
+export type InstallLanguagePackageDAOutput = undefined;
 
 export type InstallLanguagePackageDAIntermediateValue =
   | GetDeviceMetadataDAIntermediateValue
