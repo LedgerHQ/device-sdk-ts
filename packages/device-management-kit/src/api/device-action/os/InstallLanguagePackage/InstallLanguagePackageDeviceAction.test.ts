@@ -1,5 +1,7 @@
 import { of, throwError } from "rxjs";
 
+import { CommandResultFactory } from "@api/command/model/CommandResult";
+import { DeleteLanguagePackCommandError } from "@api/command/os/DeleteLanguagePackCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGetDeviceMetadataMock } from "@api/device-action/__test-utils__/setupTestMachine";
@@ -7,6 +9,7 @@ import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDe
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
+  DeleteLanguagePackDAError,
   MissingLanguagePackageDAError,
   MissingLanguagePackagesForOSDAError,
   UnknownDAError,
@@ -81,7 +84,9 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
         });
 
-        deleteCurrentLanguagePackMock.mockResolvedValueOnce(undefined);
+        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
         installLanguagePackMock.mockReturnValueOnce(
           of(
             { type: "progress", progress: 0.5 },
@@ -178,7 +183,9 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
         });
 
-        deleteCurrentLanguagePackMock.mockResolvedValueOnce(undefined);
+        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
         );
@@ -368,7 +375,7 @@ describe("InstallLanguagePackageDeviceAction", () => {
         });
       }));
 
-    it("should error when DeleteCurrentLanguagePack fails", () =>
+    it("should error when DeleteCurrentLanguagePack returns a command error", () =>
       new Promise<void>((resolve, reject) => {
         setupGetDeviceMetadataMock({
           catalog: {
@@ -382,8 +389,13 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
         });
 
-        deleteCurrentLanguagePackMock.mockRejectedValueOnce(
-          new UnknownDAError("Delete failed"),
+        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            error: new DeleteLanguagePackCommandError({
+              message: "Invalid LANG_ID value.",
+              errorCode: "681a",
+            }),
+          }),
         );
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
@@ -424,7 +436,74 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
           // Error
           {
-            error: new UnknownDAError("Delete failed"),
+            error: new DeleteLanguagePackDAError("Invalid LANG_ID value."),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+          onDone: resolve,
+          onError: reject,
+        });
+      }));
+
+    it("should error when DeleteCurrentLanguagePack promise rejects", () =>
+      new Promise<void>((resolve, reject) => {
+        setupGetDeviceMetadataMock({
+          catalog: {
+            languagePackages: [LANGUAGE_PACKAGE],
+          },
+        } as unknown as GetDeviceMetadataDAOutput);
+
+        const deviceAction = new InstallLanguagePackageDeviceAction({
+          input: {
+            language: "french",
+          },
+        });
+
+        deleteCurrentLanguagePackMock.mockRejectedValueOnce(
+          new DeleteLanguagePackDAError("Delete failed"),
+        );
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+
+        const expectedStates: Array<InstallLanguagePackageDAState> = [
+          // Initial
+          {
+            intermediateValue: {
+              requiredUserInteraction: None,
+              step: DEVICE_READY,
+              progress: 0,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // GetDeviceMetadata
+          {
+            intermediateValue: {
+              requiredUserInteraction: None,
+              step: GET_DEVICE_METADATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: None,
+              step: GET_DEVICE_METADATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // DeleteCurrentLanguagePack
+          {
+            intermediateValue: {
+              requiredUserInteraction: None,
+              step: DELETE_CURRENT_LANGUAGE_PACK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          // Error
+          {
+            error: new DeleteLanguagePackDAError("Delete failed"),
             status: DeviceActionStatus.Error,
           },
         ];
@@ -449,9 +528,11 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
         });
 
-        deleteCurrentLanguagePackMock.mockResolvedValueOnce(undefined);
+        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
         installLanguagePackMock.mockReturnValueOnce(
-          throwError(() => new UnknownDAError("Install failed")),
+          throwError(() => new MissingLanguagePackageDAError("Install failed")),
         );
         vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
           extractDependenciesMock(),
@@ -508,7 +589,7 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
           // Error
           {
-            error: new UnknownDAError("Install failed"),
+            error: new MissingLanguagePackageDAError("Install failed"),
             status: DeviceActionStatus.Error,
           },
         ];

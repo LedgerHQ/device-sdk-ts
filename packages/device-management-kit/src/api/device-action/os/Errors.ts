@@ -95,3 +95,12 @@ export class MissingLanguagePackageDAError implements DmkError {
     );
   }
 }
+
+export class DeleteLanguagePackDAError implements DmkError {
+  readonly _tag = "DeleteLanguagePackDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Delete language pack failed.");
+  }
+}

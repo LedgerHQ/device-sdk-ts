@@ -2,6 +2,7 @@ import { type Either, Left, Right } from "purify-ts";
 import { type Observable } from "rxjs";
 import { assign, fromObservable, fromPromise, setup } from "xstate";
 
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import {
   DeleteLanguagePackCommand,
   type DeleteLanguagePackCommandResult,
@@ -10,6 +11,7 @@ import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 import {
+  DeleteLanguagePackDAError,
   MissingLanguagePackageDAError,
   MissingLanguagePackagesForOSDAError,
 } from "@api/device-action/os/Errors";
@@ -183,6 +185,23 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
               step: DELETE_CURRENT_LANGUAGE_PACK,
             }) satisfies types["context"]["intermediateValue"],
         }),
+        assignDeleteCurrentLanguagePackDone: assign({
+          _internalState: (_) => {
+            const result = _.event["output"] as DeleteLanguagePackCommandResult;
+            if (isSuccessCommandResult(result)) {
+              return _.context._internalState;
+            }
+
+            return {
+              ..._.context._internalState,
+              error: new DeleteLanguagePackDAError(
+                "message" in result.error
+                  ? result.error.message
+                  : "Delete language pack failed.",
+              ),
+            };
+          },
+        }),
         assignInstallLanguagePackSnapshot: assign({
           intermediateValue: (_) => {
             const event = _.event["snapshot"]
@@ -269,15 +288,28 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             onSnapshot: {
               actions: "assignDeleteCurrentLanguagePackSnapshot",
             },
-            onDone: [
-              { guard: "isDefaultLanguage", target: "Success" },
-              { target: "InstallLanguagePack" },
-            ],
+            onDone: {
+              target: "DeleteCurrentLanguagePackResultCheck",
+              actions: "assignDeleteCurrentLanguagePackDone",
+            },
             onError: {
               target: "Error",
               actions: "assignErrorFromEvent",
             },
           },
+        },
+        DeleteCurrentLanguagePackResultCheck: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
+            },
+            {
+              guard: "isDefaultLanguage",
+              target: "Success",
+            },
+            { target: "InstallLanguagePack" },
+          ],
         },
         InstallLanguagePack: {
           invoke: {

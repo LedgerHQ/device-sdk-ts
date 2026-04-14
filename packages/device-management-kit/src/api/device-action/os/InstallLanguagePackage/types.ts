@@ -1,6 +1,7 @@
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
+  type DeleteLanguagePackDAError,
   type MissingLanguagePackageDAError,
   type MissingLanguagePackagesForOSDAError,
 } from "@api/device-action/os/Errors";
@@ -45,7 +46,8 @@ export type InstallLanguagePackageDAIntermediateValue =
 export type InstallLanguagePackageDAError =
   | GetDeviceMetadataDAError
   | MissingLanguagePackagesForOSDAError
-  | MissingLanguagePackageDAError;
+  | MissingLanguagePackageDAError
+  | DeleteLanguagePackDAError;
 
 export type InstallLanguagePackageDAState = DeviceActionState<
   InstallLanguagePackageDAOutput,

@@ -104,6 +104,7 @@ export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDe
 export { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 export {
   AppAlreadyInstalledDAError,
+  DeleteLanguagePackDAError,
   DeviceLockedError,
   DeviceNotOnboardedError,
   OutOfMemoryDAError,
