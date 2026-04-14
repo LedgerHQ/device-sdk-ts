@@ -37,6 +37,11 @@ export class InstallLanguagePackageTask {
           this.args.apduInstallUrl,
         );
         const apdus = rawApdus.split(/\r?\n/).filter(Boolean);
+        if (apdus.length === 0) {
+          throw new UnknownDAError(
+            "Language pack install script contains no APDUs.",
+          );
+        }
 
         for (let i = 0; i < apdus.length; i++) {
           const apduHex = apdus[i]!;

@@ -6,7 +6,11 @@ import { setupGetDeviceMetadataMock } from "@api/device-action/__test-utils__/se
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
 import { DeviceActionStatus } from "@api/device-action/model/DeviceActionState";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import { UnknownDAError } from "@api/device-action/os/Errors";
+import {
+  MissingLanguagePackageDAError,
+  MissingLanguagePackagesForOSDAError,
+  UnknownDAError,
+} from "@api/device-action/os/Errors";
 import type { GetDeviceMetadataDAOutput } from "@api/device-action/os/GetDeviceMetadata/types";
 import type { DeviceSessionState } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
@@ -262,6 +266,11 @@ describe("InstallLanguagePackageDeviceAction", () => {
     it("should error when language packages are missing from metadata", () =>
       new Promise<void>((resolve, reject) => {
         setupGetDeviceMetadataMock({
+          firmwareVersion: {
+            mcu: "1.0.0",
+            bootloader: "1.0.0",
+            os: "2.4.0",
+          },
           catalog: {
             languagePackages: undefined,
           },
@@ -296,8 +305,8 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
           // Error
           {
-            error: new UnknownDAError(
-              "Device metadata missing OS version response.",
+            error: new MissingLanguagePackagesForOSDAError(
+              "Language packages not found for OS 2.4.0.",
             ),
             status: DeviceActionStatus.Error,
           },
@@ -346,7 +355,9 @@ describe("InstallLanguagePackageDeviceAction", () => {
           },
           // Error
           {
-            error: new UnknownDAError("Language package not found."),
+            error: new MissingLanguagePackageDAError(
+              "Language package not found for spanish.",
+            ),
             status: DeviceActionStatus.Error,
           },
         ];
