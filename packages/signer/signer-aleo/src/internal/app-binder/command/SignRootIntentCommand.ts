@@ -7,20 +7,17 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
-import {
-  CommandErrorHelper,
-  DerivationPathUtils,
-} from "@ledgerhq/signer-utils";
+import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
   ALEO_CLA,
   INS,
   P1,
-  P2_DEFAULT,
+  P2,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { type AleoChunkableCommandArgs } from "@internal/app-binder/task/AleoChunkableCommandArgs";
 
 import {
   ALEO_APP_ERRORS,
@@ -28,10 +25,7 @@ import {
   type AleoErrorCodes,
 } from "./utils/aleoApplicationErrors";
 
-export type SignRootIntentCommandArgs = {
-  readonly derivationPath: string;
-  readonly rootIntent: Uint8Array;
-};
+export type SignRootIntentCommandArgs = AleoChunkableCommandArgs;
 
 export type SignRootIntentCommandResponse = {
   readonly tlvSignature: string;
@@ -57,34 +51,20 @@ export class SignRootIntentCommand
     AleoErrorCodes
   >(ALEO_APP_ERRORS, AleoAppCommandErrorFactory);
 
-  private readonly args: SignRootIntentCommandArgs;
-
-  constructor(args: SignRootIntentCommandArgs) {
-    this.args = args;
-  }
+  constructor(private readonly args: SignRootIntentCommandArgs) {}
 
   getApdu(): Apdu {
     const signRootIntentArgs: ApduBuilderArgs = {
       cla: ALEO_CLA,
       ins: INS.SIGN_INTENT,
-      p1: P1.SIGN_MODE_ROOT, // First chunk
-      p2: P2_DEFAULT,
+      p1: P1.SIGN_MODE_ROOT,
+      p2: this.args.isFirst ? P2.FIRST_CHUNK : P2.NEXT_CHUNK,
     };
 
     const builder = new ApduBuilder(signRootIntentArgs);
 
-    // Add the derivation path
-    const path = DerivationPathUtils.splitPath(this.args.derivationPath);
-    builder.add8BitUIntToData(path.length);
-    path.forEach((element) => {
-      builder.add32BitUIntToData(element);
-    });
-
-    // Add intent length
-    builder.add16BitUIntToData(this.args.rootIntent.byteLength);
-
-    // Add the root intent data
-    builder.addBufferToData(this.args.rootIntent);
+    // Add the chunked data
+    builder.addBufferToData(this.args.chunkedData);
 
     return builder.build();
   }
@@ -112,10 +92,11 @@ export class SignRootIntentCommand
         });
       }
 
+      // for intermediate chunks, the device returns 0 bytes of data with 0x9000.
       return CommandResultFactory({
-        error: new InvalidStatusWordError(
-          "Failed to extract data from response",
-        ),
+        data: {
+          tlvSignature: "",
+        },
       });
     });
   }

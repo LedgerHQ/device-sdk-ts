@@ -1,10 +1,12 @@
 import { ContainerModule } from "inversify";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 
 import { configTypes } from "./configTypes";
 
-export const configModuleFactory = (config: ContextModuleConfig) =>
+export const configModuleFactory = (config: ContextModuleServiceConfig) =>
   new ContainerModule(({ bind }) => {
-    bind<ContextModuleConfig>(configTypes.Config).toConstantValue(config);
+    bind<ContextModuleServiceConfig>(configTypes.Config).toConstantValue(
+      config,
+    );
   });

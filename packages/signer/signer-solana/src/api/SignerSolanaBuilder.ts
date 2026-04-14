@@ -13,6 +13,7 @@ type SignerSolanaBuilderConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
   originToken?: string;
+  solanaRPCURL?: string;
 };
 
 /**
@@ -29,15 +30,18 @@ export class SignerSolanaBuilder {
   private _sessionId: DeviceSessionId;
   private _customContextModule: ContextModule | undefined;
   private _originToken: string | undefined;
+  private readonly _solanaRPCURL: string | undefined;
 
   constructor({
     dmk,
     sessionId,
     originToken,
+    solanaRPCURL,
   }: SignerSolanaBuilderConstructorArgs) {
     this._dmk = dmk;
     this._sessionId = sessionId;
     this._originToken = originToken;
+    this._solanaRPCURL = solanaRPCURL;
   }
 
   /**
@@ -60,6 +64,7 @@ export class SignerSolanaBuilder {
     return new DefaultSignerSolana({
       dmk: this._dmk,
       sessionId: this._sessionId,
+      solanaRPCURL: this._solanaRPCURL,
       contextModule:
         this._customContextModule ??
         new ContextModuleBuilder({

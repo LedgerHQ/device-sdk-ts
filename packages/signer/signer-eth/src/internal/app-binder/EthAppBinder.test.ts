@@ -60,6 +60,7 @@ describe("EthAppBinder", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    report: vi.fn(),
   };
   const mockedMapper: TransactionMapperService = {
     mapTransactionToSubset: vi.fn(),

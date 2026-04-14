@@ -1,9 +1,10 @@
-import { type ContextModule } from "@ledgerhq/context-module";
+import type { ContextModule } from "@ledgerhq/context-module";
 import {
   ApplicationChecker,
   type CommandResult,
   type DeviceActionStateMachine,
   DeviceModelId,
+  DeviceSessionStateType,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -40,7 +41,15 @@ import {
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
-import { BuildEIP712ContextTask } from "@internal/app-binder/task/BuildEIP712ContextTask";
+import {
+  BlindSigningDetectionTask,
+  type BlindSigningDetectionTaskArgs,
+  type BlindSigningDetectionTaskResult,
+} from "@internal/app-binder/task/BlindSigningDetectionTask";
+import {
+  BuildEIP712ContextTask,
+  type BuildEIP712ContextTaskResult,
+} from "@internal/app-binder/task/BuildEIP712ContextTask";
 import {
   ProvideEIP712ContextTask,
   type ProvideEIP712ContextTaskArgs,
@@ -73,7 +82,7 @@ export type MachineDependencies = {
       transactionParser: TransactionParserService;
       from: string;
     };
-  }) => Promise<ProvideEIP712ContextTaskArgs>;
+  }) => Promise<BuildEIP712ContextTaskResult>;
   readonly provideContext: (arg0: {
     input: {
       contextModule: ContextModule;
@@ -91,6 +100,9 @@ export type MachineDependencies = {
       data: TypedData;
     };
   }) => Promise<CommandResult<Signature, EthErrorCodes>>;
+  readonly detectBlindSigning: (arg0: {
+    input: BlindSigningDetectionTaskArgs;
+  }) => Promise<BlindSigningDetectionTaskResult>;
 };
 
 export class SignTypedDataDeviceAction extends XStateDeviceAction<
@@ -125,6 +137,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       provideContext,
       signTypedData,
       signTypedDataLegacy,
+      detectBlindSigning,
     } = this.extractDependencies(internalApi);
 
     return setup({
@@ -144,6 +157,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         provideContext: fromPromise(provideContext),
         signTypedData: fromPromise(signTypedData),
         signTypedDataLegacy: fromPromise(signTypedDataLegacy),
+        detectBlindSigning: fromPromise(detectBlindSigning),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
@@ -166,6 +180,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
         skipOpenApp: ({ context }) => context.input.skipOpenApp,
+        hasSignature: ({ context }) =>
+          context._internalState.signature !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -191,6 +207,8 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
             from: null,
             typedDataContext: null,
             signature: null,
+            isBlindSign: null,
+            usedFallback: false,
           },
         };
       },
@@ -498,16 +516,16 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
+              target: "DetectBlindSigning",
               actions: "assignErrorFromEvent",
             },
           },
         },
         SignTypedDataResultCheck: {
           always: [
-            { guard: "noInternalError", target: "Success" },
+            { guard: "noInternalError", target: "DetectBlindSigning" },
             { guard: "notRefusedByUser", target: "SignTypedDataLegacy" },
-            { target: "Error" },
+            { target: "DetectBlindSigning" },
           ],
         },
         SignTypedDataLegacy: {
@@ -516,6 +534,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
             },
+            _internalState: ({ context }) => ({
+              ...context._internalState,
+              usedFallback: true,
+            }),
           }),
           invoke: {
             id: "signTypedDataLegacy",
@@ -544,16 +566,82 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
+              target: "DetectBlindSigning",
               actions: "assignErrorFromEvent",
             },
           },
         },
         SignTypedDataLegacyResultCheck: {
-          always: [
-            { guard: "noInternalError", target: "Success" },
-            { target: "Error" },
-          ],
+          always: "DetectBlindSigning",
+        },
+        DetectBlindSigning: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+          }),
+          invoke: {
+            id: "detectBlindSigning",
+            src: "detectBlindSigning",
+            input: ({ context }) => {
+              const sessionState = internalApi.getDeviceSessionState();
+              const deviceVersion =
+                sessionState.sessionStateType !==
+                DeviceSessionStateType.Connected
+                  ? (sessionState.firmwareVersion?.os ?? null)
+                  : null;
+              return {
+                input: {
+                  type: "typedData" as const,
+                  hasContext:
+                    context._internalState.typedDataContext?.clearSignContext.isJust() ??
+                    false,
+                  usedFallback: context._internalState.usedFallback,
+                  chainId: context.input.data.domain.chainId ?? null,
+                  targetAddress:
+                    context.input.data.domain.verifyingContract ?? null,
+                  deviceModelId: internalApi.getDeviceModel().id,
+                  signerAppVersion:
+                    context._internalState.appConfig?.version ?? "",
+                  deviceVersion,
+                  clearSigningType:
+                    context._internalState.typedDataContext?.clearSigningType ??
+                    null,
+                  partialContextErrors:
+                    context._internalState.typedDataContext
+                      ?.contextErrorCount ?? 0,
+                },
+                contextModule: context.input.contextModule,
+                loggerFactory: this.getLoggerFactory(internalApi),
+              };
+            },
+            onDone: [
+              {
+                guard: "hasSignature",
+                target: "Success",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    isBlindSign: event.output.isBlindSign,
+                  }),
+                }),
+              },
+              {
+                target: "Error",
+                actions: assign({
+                  _internalState: ({ event, context }) => ({
+                    ...context._internalState,
+                    isBlindSign: event.output.isBlindSign,
+                  }),
+                }),
+              },
+            ],
+            onError: [
+              { guard: "hasSignature", target: "Success" },
+              { target: "Error" },
+            ],
+          },
         },
         Success: {
           type: "final",
@@ -641,6 +729,10 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
         this.getLoggerFactory(internalApi),
       ).run();
 
+    const detectBlindSigning = async (arg0: {
+      input: BlindSigningDetectionTaskArgs;
+    }) => new BlindSigningDetectionTask(arg0.input).run();
+
     return {
       getAddress,
       getAppConfig,
@@ -649,6 +741,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
       provideContext,
       signTypedData,
       signTypedDataLegacy,
+      detectBlindSigning,
     };
   }
 }

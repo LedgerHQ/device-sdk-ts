@@ -14,12 +14,14 @@ export type MakeContainerProps = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
   contextModule: ContextModule;
+  solanaRPCURL?: string;
 };
 
 export const makeContainer = ({
   dmk,
   sessionId,
   contextModule,
+  solanaRPCURL,
 }: MakeContainerProps) => {
   const container = new Container();
 
@@ -30,6 +32,9 @@ export const makeContainer = ({
   container
     .bind<ContextModule>(externalTypes.ContextModule)
     .toConstantValue(contextModule);
+  container
+    .bind<string | undefined>(externalTypes.SolanaRPCURL)
+    .toConstantValue(solanaRPCURL);
 
   container
     .bind<

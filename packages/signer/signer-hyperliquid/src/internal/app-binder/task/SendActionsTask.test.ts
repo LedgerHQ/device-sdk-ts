@@ -48,7 +48,7 @@ describe("SendActionsTask", () => {
       } satisfies HyperliquidAction,
       expectedSerialization:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "01012c" +
         "020101" +
         "81d00100" +
@@ -67,7 +67,6 @@ describe("SendActionsTask", () => {
           "81eb1b" + //BUILDER
             "81d314c0708cdd6cd166d51da264e3f49a0422be26e35b" + // BUILDER_ADDRESS
             "81ec0164", // BUILDER_FEE
-      /* eslint-enable prettier/prettier */
     },
     {
       action: {
@@ -95,7 +94,7 @@ describe("SendActionsTask", () => {
       } satisfies HyperliquidAction,
       expectedSerialization:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "01012c" + // STRUCTURE_TYPE
         "020101" + // VERSION
         "81d00101" + // ACTION_TYPE
@@ -114,7 +113,6 @@ describe("SendActionsTask", () => {
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
           "81dc080000004FDF6BBE6F", // ORDER_ID
-      /* eslint-enable prettier/prettier */
     },
     {
       action: {
@@ -129,7 +127,7 @@ describe("SendActionsTask", () => {
       } satisfies HyperliquidAction,
       expectedSerialization:
         // prettier-ignore
-        /* eslint-disable prettier/prettier */
+
         "01012c" + // STRUCTURE_TYPE
         "020101" + // VERSION
         "81d00102" + // ACTION_TYPE
@@ -138,7 +136,6 @@ describe("SendActionsTask", () => {
           "81d90f" + // CANCEL_ORDERS
             "81d10100" + // ASSET_ID
             "81dc080000004F4BD11216", // ORDER_ID
-      /* eslint-enable prettier/prettier */
     },
   ])(
     "calls SendActionCommand once when actions has one item",

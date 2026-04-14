@@ -7,7 +7,7 @@ import type {
   CalldataFieldV1,
   CalldataTransactionInfoV1,
 } from "@/calldata/data/dto/CalldataDto";
-import type { ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type CalldataDescriptorDataSource } from "@/index";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
@@ -27,7 +27,7 @@ const config = {
     branch: "main",
   },
   originToken: "originToken",
-} as ContextModuleConfig;
+} as ContextModuleServiceConfig;
 
 describe("HttpCalldataDescriptorDataSource", () => {
   let datasource: CalldataDescriptorDataSource;

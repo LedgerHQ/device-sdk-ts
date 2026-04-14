@@ -1,7 +1,7 @@
 import axios from "axios";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { HttpPkiCertificateDataSource } from "@/pki/data/HttpPkiCertificateDataSource";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
@@ -15,7 +15,7 @@ describe("HttpPkiCertificateDataSource", () => {
       mode: "test",
       branch: "main",
     },
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
 
   describe("fetchCertificate", () => {
     it("should return certificate", async () => {

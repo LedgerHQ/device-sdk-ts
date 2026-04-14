@@ -1,5 +1,11 @@
 # @ledgerhq/device-transport-kit-node-hid
 
+## 1.0.1
+
+### Patch Changes
+
+- [#1399](https://github.com/LedgerHQ/device-sdk-ts/pull/1399) [`0ee50c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ee50c4c5793ad2def90b7751c7c417cb7b22574) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Filter Ledger HID devices to the APDU interface on macOS and Windows to prevent stalls when multiple HID interfaces are exposed
+
 ## 1.0.0
 
 ### Major Changes

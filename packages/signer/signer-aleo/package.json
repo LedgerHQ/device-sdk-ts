@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-signer-kit-aleo",
-  "version": "0.1.3",
-  "private": true,
+  "version": "0.2.0",
+  "private": false,
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -57,7 +57,7 @@
     "@ledgerhq/context-module": "workspace:^"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-management-kit": "^1.2.0",
     "@ledgerhq/context-module": "workspace:^"
   }
 }

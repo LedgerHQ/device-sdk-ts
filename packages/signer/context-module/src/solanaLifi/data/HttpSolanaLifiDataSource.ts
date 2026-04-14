@@ -4,7 +4,7 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
 
@@ -19,7 +19,8 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {

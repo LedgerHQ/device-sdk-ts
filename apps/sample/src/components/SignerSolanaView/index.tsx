@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   base64StringToBuffer,
   isBase64String,
@@ -42,6 +42,7 @@ type SignTransactionInput = {
   derivationPath: string;
   transaction: string;
   skipOpenApp: boolean;
+  delayed: boolean;
   templateId: string;
   tokenAddress: string;
   tokenInternalId: string;
@@ -53,6 +54,7 @@ const MAIN_KEYS: (keyof SignTransactionInput)[] = [
   "derivationPath",
   "transaction",
   "skipOpenApp",
+  "delayed",
 ];
 
 const CONTEXT_KEYS: (keyof SignTransactionInput)[] = [
@@ -70,6 +72,9 @@ const SignTransactionForm: React.FC<{
 }> = ({ initialValues, onChange, disabled }) => {
   const [expanded, setExpanded] = useState(false);
 
+  const initialValuesRef = useRef(initialValues);
+  initialValuesRef.current = initialValues;
+
   const mainValues = Object.fromEntries(
     MAIN_KEYS.map((k) => [k, initialValues[k]]),
   ) as Pick<SignTransactionInput, (typeof MAIN_KEYS)[number]>;
@@ -79,13 +84,15 @@ const SignTransactionForm: React.FC<{
   ) as Pick<SignTransactionInput, (typeof CONTEXT_KEYS)[number]>;
 
   const handleMainChange = useCallback(
-    (vals: typeof mainValues) => onChange({ ...initialValues, ...vals }),
-    [initialValues, onChange],
+    (vals: typeof mainValues) =>
+      onChange({ ...initialValuesRef.current, ...vals }),
+    [onChange],
   );
 
   const handleContextChange = useCallback(
-    (vals: typeof contextValues) => onChange({ ...initialValues, ...vals }),
-    [initialValues, onChange],
+    (vals: typeof contextValues) =>
+      onChange({ ...initialValuesRef.current, ...vals }),
+    [onChange],
   );
 
   return (
@@ -137,6 +144,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
     dmk,
     sessionId,
     originToken: "Solana",
+    solanaRPCURL: "https://solana.coin.ledger.com",
   }).build();
   const solanaTools = new SolanaToolsBuilder({
     dmk,
@@ -186,6 +194,7 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
         executeDeviceAction: ({
           derivationPath,
           transaction,
+          delayed,
           templateId,
           tokenAddress,
           tokenInternalId,
@@ -203,25 +212,23 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           const hasResolutionContext =
             templateId || tokenAddress || tokenInternalId || createATA;
 
-          return signer.signTransaction(
-            derivationPath,
-            serializedTransaction,
-            hasResolutionContext
-              ? {
-                  transactionResolutionContext: {
-                    templateId: templateId || undefined,
-                    tokenAddress: tokenAddress || undefined,
-                    tokenInternalId: tokenInternalId || undefined,
-                    createATA,
-                  },
-                }
-              : undefined,
-          );
+          return signer.signTransaction(derivationPath, serializedTransaction, {
+            ...(hasResolutionContext && {
+              transactionResolutionContext: {
+                templateId: templateId || undefined,
+                tokenAddress: tokenAddress || undefined,
+                tokenInternalId: tokenInternalId || undefined,
+                createATA,
+              },
+            }),
+            delayed,
+          });
         },
         initialValues: {
           derivationPath: DEFAULT_DERIVATION_PATH,
           transaction: "",
           skipOpenApp: false,
+          delayed: false,
           templateId: "",
           tokenAddress: "",
           tokenInternalId: "",

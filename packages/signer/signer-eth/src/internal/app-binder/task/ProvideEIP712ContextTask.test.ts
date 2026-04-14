@@ -65,6 +65,7 @@ describe("ProvideEIP712ContextTask", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getSolanaContext: vi.fn(),
+    report: vi.fn(),
   };
 
   const TEST_TYPES = {
@@ -1087,7 +1088,7 @@ describe("ProvideEIP712ContextTask", () => {
     );
   });
 
-  it("Provide proxy", async () => {
+  it("Provide proxy from clearSignContext when not in additionalContexts", async () => {
     // GIVEN
     const proxy: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO> = {
       type: ClearSignContextType.PROXY_INFO,
@@ -1125,6 +1126,61 @@ describe("ProvideEIP712ContextTask", () => {
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
       new ProvideProxyInfoCommand({
         data: hexaStringToBuffer("0x0003010203")!,
+        isFirstChunk: true,
+      }),
+    );
+  });
+
+  it("Skip duplicate proxy from clearSignContext when already in additionalContexts", async () => {
+    // GIVEN
+    const proxy: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO> = {
+      type: ClearSignContextType.PROXY_INFO,
+      payload: "0x010203",
+    };
+    const additionalProxy: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO> =
+      {
+        type: ClearSignContextType.PROXY_INFO,
+        payload: "0xaabbcc",
+      };
+    const clearSignContext: TypedDataClearSignContextSuccess = {
+      ...TEST_CLEAR_SIGN_CONTEXT,
+      proxy,
+    };
+    const args: ProvideEIP712ContextTaskArgs = {
+      deviceModelId: DeviceModelId.STAX,
+      derivationPath: "44'/60'/0'/0/0",
+      types: TEST_TYPES,
+      domain: TEST_DOMAIN_VALUES,
+      message: TEST_MESSAGE_VALUES,
+      clearSignContext: Just(clearSignContext),
+      calldatasPreContexts: {},
+      calldatasPostContexts: {},
+      additionalContexts: [additionalProxy],
+      loggerFactory: mockLoggerFactory,
+    };
+
+    // WHEN
+    apiMock.sendCommand.mockResolvedValue(
+      CommandResultFactory({ data: { tokenIndex: 4 } }),
+    );
+    await new ProvideEIP712ContextTask(
+      apiMock,
+      contextModuleMock,
+      args,
+      provideContextFactoryMock,
+    ).run();
+
+    // THEN — the clearSignContext proxy (0x010203) should NOT be sent
+    expect(apiMock.sendCommand).not.toHaveBeenCalledWith(
+      new ProvideProxyInfoCommand({
+        data: hexaStringToBuffer("0x0003010203")!,
+        isFirstChunk: true,
+      }),
+    );
+    // — the additionalContexts proxy (0xaabbcc) should have been sent
+    expect(apiMock.sendCommand).toHaveBeenCalledWith(
+      new ProvideProxyInfoCommand({
+        data: hexaStringToBuffer("0x0003aabbcc")!,
         isFirstChunk: true,
       }),
     );

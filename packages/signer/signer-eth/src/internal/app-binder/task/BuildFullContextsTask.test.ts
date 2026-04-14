@@ -132,6 +132,7 @@ describe("BuildFullContextsTask", () => {
         clearSignContexts: [],
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.BASIC,
+        contextErrorCount: 0,
       });
 
       const task = new BuildFullContextsTask(
@@ -159,6 +160,7 @@ describe("BuildFullContextsTask", () => {
       expect(result).toEqual({
         clearSignContexts: [],
         clearSigningType: ClearSigningType.BASIC,
+        contextErrorCount: 0,
       });
     });
 
@@ -180,6 +182,7 @@ describe("BuildFullContextsTask", () => {
           },
         ],
         clearSigningType: ClearSigningType.EIP7730,
+        contextErrorCount: 0,
       });
       buildSubContextTaskRunMock.mockReturnValue({
         subcontextCallbacks: [],
@@ -232,6 +235,7 @@ describe("BuildFullContextsTask", () => {
           },
         ],
         clearSigningType: ClearSigningType.EIP7730,
+        contextErrorCount: 0,
       });
     });
 
@@ -250,6 +254,7 @@ describe("BuildFullContextsTask", () => {
         ],
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.EIP7730,
+        contextErrorCount: 0,
       });
       buildSubContextTaskRunMock.mockReturnValueOnce({
         subcontextCallbacks: [],
@@ -341,6 +346,7 @@ describe("BuildFullContextsTask", () => {
           },
         ],
         clearSigningType: ClearSigningType.EIP7730,
+        contextErrorCount: 0,
       });
       // nested context
       buildBaseContextsTaskRunMock.mockReturnValueOnce({
@@ -356,6 +362,7 @@ describe("BuildFullContextsTask", () => {
         ],
         clearSignContextsOptional: [],
         clearSigningType: ClearSigningType.EIP7730,
+        contextErrorCount: 0,
       });
       buildSubContextTaskRunMock.mockReturnValue({
         subcontextCallbacks: [],
@@ -396,6 +403,7 @@ describe("BuildFullContextsTask", () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         clearSignContexts: expect.any(Array),
         clearSigningType: ClearSigningType.EIP7730,
+        contextErrorCount: 0,
       });
       expect(result.clearSignContexts[0]).toEqual({
         context: {
