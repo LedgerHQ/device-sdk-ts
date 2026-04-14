@@ -18,7 +18,9 @@ import {
 import { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
 import {
   type GetDeviceMetadataDAError,
+  type GetDeviceMetadataDAIntermediateValue,
   type GetDeviceMetadataDAOutput,
+  getDeviceMetadataDAStateStep,
 } from "@api/device-action/os/GetDeviceMetadata/types";
 import {
   type InstallLanguagePackageEvent,
@@ -87,8 +89,8 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
 
     const { None } = UserInteractionRequired;
     const {
-      GET_DEVICE_METADATA,
       DEVICE_READY,
+      GET_DEVICE_METADATA,
       DELETE_CURRENT_LANGUAGE_PACK,
       INSTALL_LANGUAGE_PACK,
     } = installLanguagePackageDAStateStep;
@@ -128,15 +130,27 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
-            error: _.event["error"],
+            error: _.event["error"] as InstallLanguagePackageDAError,
           }),
         }),
         assignGetDeviceMetadataSnapshot: assign({
-          intermediateValue: (_) =>
-            ({
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            }) satisfies types["context"]["intermediateValue"],
+          intermediateValue: (_) => {
+            const snapshot = _.event["snapshot"] as {
+              context: {
+                intermediateValue: GetDeviceMetadataDAIntermediateValue;
+              };
+            };
+            const childIv = snapshot.context.intermediateValue;
+            if (
+              childIv.step === getDeviceMetadataDAStateStep.GET_DEVICE_METADATA
+            ) {
+              return {
+                ...childIv,
+                step: GET_DEVICE_METADATA,
+              } satisfies types["context"]["intermediateValue"];
+            }
+            return childIv as types["context"]["intermediateValue"];
+          },
         }),
         assignGetDeviceMetadataDone: assign({
           _internalState: (_) => {
@@ -204,11 +218,14 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         }),
         assignInstallLanguagePackSnapshot: assign({
           intermediateValue: (_) => {
-            const event = _.event["snapshot"]
-              .context as InstallLanguagePackageEvent | null;
+            const snapshot = _.event["snapshot"] as {
+              context: InstallLanguagePackageEvent | null;
+            };
+            const event = snapshot.context;
+            const ctx = _.context as types["context"];
             const currentProgress =
-              "progress" in _.context.intermediateValue
-                ? (_.context.intermediateValue.progress ?? 0)
+              "progress" in ctx.intermediateValue
+                ? (ctx.intermediateValue.progress ?? 0)
                 : 0;
             return {
               requiredUserInteraction: None,
