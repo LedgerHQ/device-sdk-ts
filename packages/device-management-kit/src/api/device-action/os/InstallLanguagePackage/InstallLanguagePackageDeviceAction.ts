@@ -112,8 +112,8 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
         ),
       },
       guards: {
-        // The default language Package (English) connot be deleted or reinstalled.
-        // If the requested language is English, we will skip the delete and install steps.
+        // The default language package (English) cannot be installed as a language pack.
+        // If the requested language is English, we still delete all installed packs and only skip the install step.
         isDefaultLanguage: ({ context }) =>
           context.input.language === "english",
         hasError: ({ context }: { context: types["context"] }) =>
