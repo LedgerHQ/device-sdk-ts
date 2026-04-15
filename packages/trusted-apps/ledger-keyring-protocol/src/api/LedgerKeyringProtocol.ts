@@ -3,7 +3,7 @@ import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
 import { type AuthenticateUsecaseInput } from "@internal/use-cases/authentication/AuthenticateUseCase";
 
 import { type AuthenticateDAReturnType } from "./app-binder/AuthenticateDeviceActionTypes";
-import { type LedgerIdentityDAReturnType } from "./app-binder/LedgerIdentityDeviceActionTypes";
+import { type LedgerProofDAReturnType } from "./app-binder/LedgerProofDeviceActionTypes";
 
 export interface LedgerKeyringProtocol {
   authenticate: (input: AuthenticateUsecaseInput) => AuthenticateDAReturnType;
@@ -18,15 +18,15 @@ export interface LedgerKeyringProtocol {
     data: Uint8Array,
   ) => Promise<Uint8Array>;
 
-  ledgerIdentityEncrypt: (input: {
+  ledgerProofEncrypt: (input: {
     intent: string;
     blob: Uint8Array;
     sessionId: DeviceSessionId;
-  }) => LedgerIdentityDAReturnType;
+  }) => LedgerProofDAReturnType;
 
-  ledgerIdentityDecrypt: (input: {
+  ledgerProofDecrypt: (input: {
     domain: string;
     encryptedData: Uint8Array;
     sessionId: DeviceSessionId;
-  }) => LedgerIdentityDAReturnType;
+  }) => LedgerProofDAReturnType;
 }

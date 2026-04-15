@@ -5,7 +5,7 @@ import {
 import { type Container } from "inversify";
 
 import { type AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
-import { type LedgerIdentityDAReturnType } from "@api/app-binder/LedgerIdentityDeviceActionTypes";
+import { type LedgerProofDAReturnType } from "@api/app-binder/LedgerProofDeviceActionTypes";
 import { type CryptoService } from "@api/crypto/CryptoService";
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
 import { type LKRPEnv } from "@api/model/Env";
@@ -17,8 +17,8 @@ import {
 } from "./use-cases/authentication/AuthenticateUseCase";
 import { type DecryptDataUseCase } from "./use-cases/authentication/DecryptDataUseCase";
 import { type EncryptDataUseCase } from "./use-cases/authentication/EncryptDataUseCase";
-import { type LedgerIdentityDecryptUseCase } from "./use-cases/ledger-identity/LedgerIdentityDecryptUseCase";
-import { type LedgerIdentityEncryptUseCase } from "./use-cases/ledger-identity/LedgerIdentityEncryptUseCase";
+import { type LedgerProofDecryptUseCase } from "./use-cases/ledger-proof/LedgerProofDecryptUseCase";
+import { type LedgerProofEncryptUseCase } from "./use-cases/ledger-proof/LedgerProofEncryptUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 
 type DefaultLedgerKeyringProtocolConstructorArgs = {
@@ -74,26 +74,26 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
       .execute(encryptionKey, data);
   }
 
-  ledgerIdentityEncrypt(input: {
+  ledgerProofEncrypt(input: {
     intent: string;
     blob: Uint8Array;
     sessionId: DeviceSessionId;
-  }): LedgerIdentityDAReturnType {
+  }): LedgerProofDAReturnType {
     return this._container
-      .get<LedgerIdentityEncryptUseCase>(
-        useCasesTypes.LedgerIdentityEncryptUseCase,
+      .get<LedgerProofEncryptUseCase>(
+        useCasesTypes.LedgerProofEncryptUseCase,
       )
       .execute(input);
   }
 
-  ledgerIdentityDecrypt(input: {
+  ledgerProofDecrypt(input: {
     domain: string;
     encryptedData: Uint8Array;
     sessionId: DeviceSessionId;
-  }): LedgerIdentityDAReturnType {
+  }): LedgerProofDAReturnType {
     return this._container
-      .get<LedgerIdentityDecryptUseCase>(
-        useCasesTypes.LedgerIdentityDecryptUseCase,
+      .get<LedgerProofDecryptUseCase>(
+        useCasesTypes.LedgerProofDecryptUseCase,
       )
       .execute(input);
   }

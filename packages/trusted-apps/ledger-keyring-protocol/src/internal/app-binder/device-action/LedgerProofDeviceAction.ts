@@ -11,46 +11,46 @@ import { type Either, Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  type LedgerIdentityDAError,
-  type LedgerIdentityDAInput,
-  type LedgerIdentityDAIntermediateValue,
-  type LedgerIdentityDAInternalState,
-  type LedgerIdentityDAOutput,
-  LedgerIdentityDAStep,
-} from "@api/app-binder/LedgerIdentityDeviceActionTypes";
+  type LedgerProofDAError,
+  type LedgerProofDAInput,
+  type LedgerProofDAIntermediateValue,
+  type LedgerProofDAInternalState,
+  type LedgerProofDAOutput,
+  LedgerProofDAStep,
+} from "@api/app-binder/LedgerProofDeviceActionTypes";
 import { LKRPUnknownError } from "@api/model/Errors";
 
-import { LedgerIdentityGetResponseCommand } from "../command/LedgerIdentityGetResponseCommand";
-import { LedgerIdentitySendChunkCommand } from "../command/LedgerIdentitySendChunkCommand";
+import { LedgerProofGetResponseCommand } from "../command/LedgerProofGetResponseCommand";
+import { LedgerProofSendChunkCommand } from "../command/LedgerProofSendChunkCommand";
 import { raiseAndAssign } from "./utils/raiseAndAssign";
 
-const APP_NAME = "Ledger Identity";
+const APP_NAME = "Ledger Proof";
 const INS_ENCRYPT = 0x10;
 const INS_DECRYPT = 0x11;
 const CHUNK_SIZE = 250;
 
-export class LedgerIdentityDeviceAction extends XStateDeviceAction<
-  LedgerIdentityDAOutput,
-  LedgerIdentityDAInput,
-  LedgerIdentityDAError,
-  LedgerIdentityDAIntermediateValue,
-  LedgerIdentityDAInternalState
+export class LedgerProofDeviceAction extends XStateDeviceAction<
+  LedgerProofDAOutput,
+  LedgerProofDAInput,
+  LedgerProofDAError,
+  LedgerProofDAIntermediateValue,
+  LedgerProofDAInternalState
 > {
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
-    LedgerIdentityDAOutput,
-    LedgerIdentityDAInput,
-    LedgerIdentityDAError,
-    LedgerIdentityDAIntermediateValue,
-    LedgerIdentityDAInternalState
+    LedgerProofDAOutput,
+    LedgerProofDAInput,
+    LedgerProofDAError,
+    LedgerProofDAIntermediateValue,
+    LedgerProofDAInternalState
   > {
     type types = StateMachineTypes<
-      LedgerIdentityDAOutput,
-      LedgerIdentityDAInput,
-      LedgerIdentityDAError,
-      LedgerIdentityDAIntermediateValue,
-      LedgerIdentityDAInternalState
+      LedgerProofDAOutput,
+      LedgerProofDAInput,
+      LedgerProofDAError,
+      LedgerProofDAIntermediateValue,
+      LedgerProofDAInternalState
     >;
 
     const { executeOperation } = this.extractDependencies(internalApi);
@@ -81,7 +81,7 @@ export class LedgerIdentityDeviceAction extends XStateDeviceAction<
         ),
       },
     }).createMachine({
-      id: "LedgerIdentityDeviceAction",
+      id: "LedgerProofDeviceAction",
       context: ({ input }): types["context"] => ({
         input,
         intermediateValue: {
@@ -103,9 +103,9 @@ export class LedgerIdentityDeviceAction extends XStateDeviceAction<
               actions: assign({
                 intermediateValue: ({
                   event,
-                }): LedgerIdentityDAIntermediateValue => ({
+                }): LedgerProofDAIntermediateValue => ({
                   ...event.snapshot.context.intermediateValue,
-                  step: LedgerIdentityDAStep.OpenApp,
+                  step: LedgerProofDAStep.OpenApp,
                 }),
               }),
             },
@@ -122,7 +122,7 @@ export class LedgerIdentityDeviceAction extends XStateDeviceAction<
         ExecuteOperation: {
           entry: assign({
             intermediateValue: {
-              step: LedgerIdentityDAStep.ExecuteOperation,
+              step: LedgerProofDAStep.ExecuteOperation,
               requiredUserInteraction: UserInteractionRequired.None,
             },
           }),
@@ -165,8 +165,8 @@ export class LedgerIdentityDeviceAction extends XStateDeviceAction<
       executeOperation: async ({
         input,
       }: {
-        input: LedgerIdentityDAInput;
-      }): Promise<Either<LedgerIdentityDAError, Uint8Array>> => {
+        input: LedgerProofDAInput;
+      }): Promise<Either<LedgerProofDAError, Uint8Array>> => {
         const ins =
           input.operation === "encrypt" ? INS_ENCRYPT : INS_DECRYPT;
 
@@ -184,7 +184,7 @@ export class LedgerIdentityDeviceAction extends XStateDeviceAction<
         for (let i = 0; i < chunks.length; i++) {
           const isLast = i === chunks.length - 1;
           const result = await internalApi.sendCommand(
-            new LedgerIdentitySendChunkCommand({
+            new LedgerProofSendChunkCommand({
               ins,
               chunkIndex: i,
               isLast,
@@ -202,7 +202,7 @@ export class LedgerIdentityDeviceAction extends XStateDeviceAction<
 
         while (moreFlag === 0x01) {
           const result = await internalApi.sendCommand(
-            new LedgerIdentityGetResponseCommand(),
+            new LedgerProofGetResponseCommand(),
           );
           if (result.status !== CommandResultStatus.Success) {
             return Left(result.error);

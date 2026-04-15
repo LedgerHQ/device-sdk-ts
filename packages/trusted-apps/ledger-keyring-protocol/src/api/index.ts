@@ -1,5 +1,5 @@
 export * from "./app-binder/AuthenticateDeviceActionTypes";
-export * from "./app-binder/LedgerIdentityDeviceActionTypes";
+export * from "./app-binder/LedgerProofDeviceActionTypes";
 export * from "./crypto/CryptoService";
 export * from "./crypto/Key";
 export * from "./crypto/KeyPair";

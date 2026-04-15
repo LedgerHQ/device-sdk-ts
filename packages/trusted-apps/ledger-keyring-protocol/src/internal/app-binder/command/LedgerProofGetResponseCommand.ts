@@ -20,24 +20,24 @@ import {
 const CLA = 0xe0;
 const INS_GET_RESPONSE = 0xc0;
 
-export type LedgerIdentityGetResponseCommandResponse = {
+export type LedgerProofGetResponseCommandResponse = {
   readonly moreFlag: number;
   readonly data: Uint8Array;
 };
 
-export type LedgerIdentityGetResponseCommandArgs = undefined;
+export type LedgerProofGetResponseCommandArgs = undefined;
 
-export class LedgerIdentityGetResponseCommand
+export class LedgerProofGetResponseCommand
   implements
     Command<
-      LedgerIdentityGetResponseCommandResponse,
-      LedgerIdentityGetResponseCommandArgs,
+      LedgerProofGetResponseCommandResponse,
+      LedgerProofGetResponseCommandArgs,
       LedgerKeyringProtocolErrorCodes
     >
 {
-  readonly name = "ledgerIdentityGetResponse";
+  readonly name = "ledgerProofGetResponse";
   private readonly errorHelper = new CommandErrorHelper<
-    LedgerIdentityGetResponseCommandResponse,
+    LedgerProofGetResponseCommandResponse,
     LedgerKeyringProtocolErrorCodes
   >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
 
@@ -53,7 +53,7 @@ export class LedgerIdentityGetResponseCommand
   parseResponse(
     apduResponse: ApduResponse,
   ): CommandResult<
-    LedgerIdentityGetResponseCommandResponse,
+    LedgerProofGetResponseCommandResponse,
     LedgerKeyringProtocolErrorCodes
   > {
     return Maybe.fromNullable(

@@ -14,8 +14,8 @@ import {
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
   Curve,
-  type LedgerIdentityDAError,
-  type LedgerIdentityDAIntermediateValue,
+  type LedgerProofDAError,
+  type LedgerProofDAIntermediateValue,
   LKRPUnknownError,
   NobleCryptoService,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
@@ -240,9 +240,9 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       >,
 
       {
-        title: "Ledger Identity Encrypt",
+        title: "Ledger Proof Encrypt",
         description:
-          "Encrypt data on the Ledger Identity app. Provide an intent string and UTF-8 data to encrypt.",
+          "Encrypt data on the Ledger Proof app. Provide an intent string and UTF-8 data to encrypt.",
         executeDeviceAction: ({ intent, data }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
@@ -258,7 +258,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
             };
           }
           const blob = new TextEncoder().encode(data);
-          const action = app.ledgerIdentityEncrypt({
+          const action = app.ledgerProofEncrypt({
             intent,
             blob,
             sessionId,
@@ -286,14 +286,14 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       } satisfies DeviceActionProps<
         string,
         { intent: string; data: string },
-        LedgerIdentityDAError,
-        LedgerIdentityDAIntermediateValue
+        LedgerProofDAError,
+        LedgerProofDAIntermediateValue
       >,
 
       {
-        title: "Ledger Identity Decrypt",
+        title: "Ledger Proof Decrypt",
         description:
-          "Decrypt data on the Ledger Identity app. Provide a domain (requesting party) and the encrypted data as a hex string.",
+          "Decrypt data on the Ledger Proof app. Provide a domain (requesting party) and the encrypted data as a hex string.",
         executeDeviceAction: ({ domain, encryptedData: encryptedHex }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
@@ -318,7 +318,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
               }),
             };
           }
-          const action = app.ledgerIdentityDecrypt({
+          const action = app.ledgerProofDecrypt({
             domain,
             encryptedData,
             sessionId,
@@ -346,8 +346,8 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       } satisfies DeviceActionProps<
         string,
         { domain: string; encryptedData: string },
-        LedgerIdentityDAError,
-        LedgerIdentityDAIntermediateValue
+        LedgerProofDAError,
+        LedgerProofDAIntermediateValue
       >,
     ],
     [app],

@@ -3,8 +3,8 @@ import { ContainerModule } from "inversify";
 import { AuthenticateUseCase } from "@internal/use-cases/authentication/AuthenticateUseCase";
 import { DecryptDataUseCase } from "@internal/use-cases/authentication/DecryptDataUseCase";
 import { EncryptDataUseCase } from "@internal/use-cases/authentication/EncryptDataUseCase";
-import { LedgerIdentityDecryptUseCase } from "@internal/use-cases/ledger-identity/LedgerIdentityDecryptUseCase";
-import { LedgerIdentityEncryptUseCase } from "@internal/use-cases/ledger-identity/LedgerIdentityEncryptUseCase";
+import { LedgerProofDecryptUseCase } from "@internal/use-cases/ledger-proof/LedgerProofDecryptUseCase";
+import { LedgerProofEncryptUseCase } from "@internal/use-cases/ledger-proof/LedgerProofEncryptUseCase";
 
 import { useCasesTypes } from "./useCasesTypes";
 
@@ -13,10 +13,10 @@ export const useCasesModuleFactory = () =>
     bind(useCasesTypes.AuthenticateUseCase).to(AuthenticateUseCase);
     bind(useCasesTypes.EncryptDataUseCase).to(EncryptDataUseCase);
     bind(useCasesTypes.DecryptDataUseCase).to(DecryptDataUseCase);
-    bind(useCasesTypes.LedgerIdentityEncryptUseCase).to(
-      LedgerIdentityEncryptUseCase,
+    bind(useCasesTypes.LedgerProofEncryptUseCase).to(
+      LedgerProofEncryptUseCase,
     );
-    bind(useCasesTypes.LedgerIdentityDecryptUseCase).to(
-      LedgerIdentityDecryptUseCase,
+    bind(useCasesTypes.LedgerProofDecryptUseCase).to(
+      LedgerProofDecryptUseCase,
     );
   });

@@ -9,42 +9,42 @@ import { type Either } from "purify-ts";
 import { type LKRPUnknownError } from "@api/model/Errors";
 import { type LKRPDeviceCommandError } from "@internal/app-binder/command/utils/ledgerKeyringProtocolErrors";
 
-export type LedgerIdentityDAOutput = Uint8Array;
+export type LedgerProofDAOutput = Uint8Array;
 
-export type LedgerIdentityDAInput = {
+export type LedgerProofDAInput = {
   readonly operation: "encrypt" | "decrypt";
   readonly data: Uint8Array;
 };
 
-export type LedgerIdentityDAError =
+export type LedgerProofDAError =
   | OpenAppDAError
   | LKRPDeviceCommandError
   | LKRPUnknownError;
 
-export type LedgerIdentityDAIntermediateValue =
+export type LedgerProofDAIntermediateValue =
   | {
       requiredUserInteraction: OpenAppDARequiredInteraction;
-      step: LedgerIdentityDAStep.OpenApp;
+      step: LedgerProofDAStep.OpenApp;
     }
   | {
       requiredUserInteraction: UserInteractionRequired.None;
-      step?: LedgerIdentityDAStep.ExecuteOperation;
+      step?: LedgerProofDAStep.ExecuteOperation;
     };
 
-export enum LedgerIdentityDAStep {
-  OpenApp = "ledger-identity.steps.openApp",
-  ExecuteOperation = "ledger-identity.steps.executeOperation",
+export enum LedgerProofDAStep {
+  OpenApp = "ledger-proof.steps.openApp",
+  ExecuteOperation = "ledger-proof.steps.executeOperation",
 }
 
-export type LedgerIdentityDAInternalState = Either<
-  LedgerIdentityDAError,
+export type LedgerProofDAInternalState = Either<
+  LedgerProofDAError,
   {
     readonly result: Uint8Array | null;
   }
 >;
 
-export type LedgerIdentityDAReturnType = ExecuteDeviceActionReturnType<
-  LedgerIdentityDAOutput,
-  LedgerIdentityDAError,
-  LedgerIdentityDAIntermediateValue
+export type LedgerProofDAReturnType = ExecuteDeviceActionReturnType<
+  LedgerProofDAOutput,
+  LedgerProofDAError,
+  LedgerProofDAIntermediateValue
 >;

@@ -8,7 +8,7 @@ import { inject, injectable } from "inversify";
 
 import { AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
 import { GetVersionDAReturnType } from "@api/app-binder/GetVersionDeviceActionTypes";
-import { type LedgerIdentityDAReturnType } from "@api/app-binder/LedgerIdentityDeviceActionTypes";
+import { type LedgerProofDAReturnType } from "@api/app-binder/LedgerProofDeviceActionTypes";
 import { type CryptoService } from "@api/crypto/CryptoService";
 import { KeyPair } from "@api/crypto/KeyPair";
 import { Permissions } from "@api/model/Permissions";
@@ -19,8 +19,8 @@ import { lkrpDatasourceTypes } from "@internal/lkrp-datasource/di/lkrpDatasource
 import { GetVersionCommand } from "./command/GetVersionCommand";
 import { AuthenticateWithDeviceDeviceAction } from "./device-action/AuthenticateWithDeviceDeviceAction";
 import { AuthenticateWithKeypairDeviceAction } from "./device-action/AuthenticateWithKeypairDeviceAction";
-import { LedgerIdentityDeviceAction } from "./device-action/LedgerIdentityDeviceAction";
-import { buildDecryptPayload, buildVaultPayload } from "./utils/ledgerIdentityTlv";
+import { LedgerProofDeviceAction } from "./device-action/LedgerProofDeviceAction";
+import { buildDecryptPayload, buildVaultPayload } from "./utils/ledgerProofTlv";
 
 @injectable()
 export class LedgerKeyringProtocolBinder {
@@ -90,15 +90,15 @@ export class LedgerKeyringProtocolBinder {
     });
   }
 
-  ledgerIdentityEncrypt(args: {
+  ledgerProofEncrypt(args: {
     intent: string;
     blob: Uint8Array;
     sessionId: DeviceSessionId;
-  }): LedgerIdentityDAReturnType {
+  }): LedgerProofDAReturnType {
     const payload = buildVaultPayload(args.intent, args.blob);
     return this.dmk.executeDeviceAction({
       sessionId: args.sessionId,
-      deviceAction: new LedgerIdentityDeviceAction({
+      deviceAction: new LedgerProofDeviceAction({
         input: {
           operation: "encrypt",
           data: payload,
@@ -107,15 +107,15 @@ export class LedgerKeyringProtocolBinder {
     });
   }
 
-  ledgerIdentityDecrypt(args: {
+  ledgerProofDecrypt(args: {
     domain: string;
     encryptedData: Uint8Array;
     sessionId: DeviceSessionId;
-  }): LedgerIdentityDAReturnType {
+  }): LedgerProofDAReturnType {
     const payload = buildDecryptPayload(args.domain, args.encryptedData);
     return this.dmk.executeDeviceAction({
       sessionId: args.sessionId,
-      deviceAction: new LedgerIdentityDeviceAction({
+      deviceAction: new LedgerProofDeviceAction({
         input: {
           operation: "decrypt",
           data: payload,

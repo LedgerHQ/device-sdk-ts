@@ -1,12 +1,12 @@
 import { type DeviceSessionId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { type LedgerIdentityDAReturnType } from "@api/app-binder/LedgerIdentityDeviceActionTypes";
+import { type LedgerProofDAReturnType } from "@api/app-binder/LedgerProofDeviceActionTypes";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { type LedgerKeyringProtocolBinder } from "@internal/app-binder/LedgerKeyringProtocolBinder";
 
 @injectable()
-export class LedgerIdentityDecryptUseCase {
+export class LedgerProofDecryptUseCase {
   constructor(
     @inject(appBinderTypes.AppBinding)
     private appBinder: LedgerKeyringProtocolBinder,
@@ -16,7 +16,7 @@ export class LedgerIdentityDecryptUseCase {
     domain: string;
     encryptedData: Uint8Array;
     sessionId: DeviceSessionId;
-  }): LedgerIdentityDAReturnType {
-    return this.appBinder.ledgerIdentityDecrypt(input);
+  }): LedgerProofDAReturnType {
+    return this.appBinder.ledgerProofDecrypt(input);
   }
 }

@@ -21,31 +21,31 @@ const CLA = 0xe0;
 const P2_MORE = 0x80;
 const P2_LAST = 0x00;
 
-export type LedgerIdentitySendChunkCommandResponse = {
+export type LedgerProofSendChunkCommandResponse = {
   readonly moreFlag: number;
   readonly data: Uint8Array;
 };
 
-export type LedgerIdentitySendChunkCommandArgs = {
+export type LedgerProofSendChunkCommandArgs = {
   readonly ins: number;
   readonly chunkIndex: number;
   readonly isLast: boolean;
   readonly data: Uint8Array;
 };
 
-export class LedgerIdentitySendChunkCommand
+export class LedgerProofSendChunkCommand
   implements
     Command<
-      LedgerIdentitySendChunkCommandResponse,
-      LedgerIdentitySendChunkCommandArgs,
+      LedgerProofSendChunkCommandResponse,
+      LedgerProofSendChunkCommandArgs,
       LedgerKeyringProtocolErrorCodes
     >
 {
-  readonly name = "ledgerIdentitySendChunk";
-  constructor(private readonly args: LedgerIdentitySendChunkCommandArgs) {}
+  readonly name = "ledgerProofSendChunk";
+  constructor(private readonly args: LedgerProofSendChunkCommandArgs) {}
 
   private readonly errorHelper = new CommandErrorHelper<
-    LedgerIdentitySendChunkCommandResponse,
+    LedgerProofSendChunkCommandResponse,
     LedgerKeyringProtocolErrorCodes
   >(LEDGER_SYNC_ERRORS, LedgerKeyringProtocolErrorFactory);
 
@@ -64,7 +64,7 @@ export class LedgerIdentitySendChunkCommand
   parseResponse(
     apduResponse: ApduResponse,
   ): CommandResult<
-    LedgerIdentitySendChunkCommandResponse,
+    LedgerProofSendChunkCommandResponse,
     LedgerKeyringProtocolErrorCodes
   > {
     return Maybe.fromNullable(
