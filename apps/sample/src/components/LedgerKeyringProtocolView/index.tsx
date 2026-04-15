@@ -14,6 +14,8 @@ import {
   type AuthenticateDAIntermediateValue,
   type AuthenticateDAOutput,
   Curve,
+  type LedgerIdentityDAError,
+  type LedgerIdentityDAIntermediateValue,
   LKRPUnknownError,
   NobleCryptoService,
 } from "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol";
@@ -235,6 +237,115 @@ export const LedgerKeyringProtocolView: React.FC = () => {
         { encryptionKey: string; data: string },
         DmkError,
         never
+      >,
+
+      {
+        title: "Ledger Identity Encrypt",
+        description:
+          "Encrypt data on the Ledger Identity app. Provide an intent string and UTF-8 data to encrypt.",
+        executeDeviceAction: ({ intent, data }) => {
+          if (!app) {
+            throw new Error("Ledger Keyring Protocol app not initialized");
+          }
+          const sessionId = sessionIdRef.current;
+          if (!sessionId) {
+            return {
+              cancel: () => undefined,
+              observable: of({
+                status: DeviceActionStatus.Error,
+                error: new LKRPUnknownError("No device session selected"),
+              }),
+            };
+          }
+          const blob = new TextEncoder().encode(data);
+          const action = app.ledgerIdentityEncrypt({
+            intent,
+            blob,
+            sessionId,
+          });
+          return {
+            ...action,
+            observable: action.observable.pipe(
+              map((res) => {
+                if (res.status === DeviceActionStatus.Completed) {
+                  return {
+                    ...res,
+                    output: bufferToHexaString(res.output),
+                  };
+                }
+                return res;
+              }),
+            ),
+          };
+        },
+        initialValues: {
+          intent: "identity",
+          data: "",
+        },
+        deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
+      } satisfies DeviceActionProps<
+        string,
+        { intent: string; data: string },
+        LedgerIdentityDAError,
+        LedgerIdentityDAIntermediateValue
+      >,
+
+      {
+        title: "Ledger Identity Decrypt",
+        description:
+          "Decrypt data on the Ledger Identity app. Provide the encrypted data as a hex string.",
+        executeDeviceAction: ({ encryptedData: encryptedHex }) => {
+          if (!app) {
+            throw new Error("Ledger Keyring Protocol app not initialized");
+          }
+          const sessionId = sessionIdRef.current;
+          if (!sessionId) {
+            return {
+              cancel: () => undefined,
+              observable: of({
+                status: DeviceActionStatus.Error,
+                error: new LKRPUnknownError("No device session selected"),
+              }),
+            };
+          }
+          const encryptedData = hexaStringToBuffer(encryptedHex);
+          if (!encryptedData) {
+            return {
+              cancel: () => undefined,
+              observable: of({
+                status: DeviceActionStatus.Error,
+                error: new LKRPUnknownError("Invalid hex string"),
+              }),
+            };
+          }
+          const action = app.ledgerIdentityDecrypt({
+            encryptedData,
+            sessionId,
+          });
+          return {
+            ...action,
+            observable: action.observable.pipe(
+              map((res) => {
+                if (res.status === DeviceActionStatus.Completed) {
+                  return {
+                    ...res,
+                    output: new TextDecoder().decode(res.output),
+                  };
+                }
+                return res;
+              }),
+            ),
+          };
+        },
+        initialValues: {
+          encryptedData: "",
+        },
+        deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
+      } satisfies DeviceActionProps<
+        string,
+        { encryptedData: string },
+        LedgerIdentityDAError,
+        LedgerIdentityDAIntermediateValue
       >,
     ],
     [app],

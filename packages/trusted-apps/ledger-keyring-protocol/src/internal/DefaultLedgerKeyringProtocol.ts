@@ -1,7 +1,11 @@
-import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
+import {
+  type DeviceManagementKit,
+  type DeviceSessionId,
+} from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
 import { type AuthenticateDAReturnType } from "@api/app-binder/AuthenticateDeviceActionTypes";
+import { type LedgerIdentityDAReturnType } from "@api/app-binder/LedgerIdentityDeviceActionTypes";
 import { type CryptoService } from "@api/crypto/CryptoService";
 import { type LedgerKeyringProtocol } from "@api/LedgerKeyringProtocol";
 import { type LKRPEnv } from "@api/model/Env";
@@ -13,6 +17,8 @@ import {
 } from "./use-cases/authentication/AuthenticateUseCase";
 import { type DecryptDataUseCase } from "./use-cases/authentication/DecryptDataUseCase";
 import { type EncryptDataUseCase } from "./use-cases/authentication/EncryptDataUseCase";
+import { type LedgerIdentityDecryptUseCase } from "./use-cases/ledger-identity/LedgerIdentityDecryptUseCase";
+import { type LedgerIdentityEncryptUseCase } from "./use-cases/ledger-identity/LedgerIdentityEncryptUseCase";
 import { useCasesTypes } from "./use-cases/di/useCasesTypes";
 
 type DefaultLedgerKeyringProtocolConstructorArgs = {
@@ -66,5 +72,28 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
     return this._container
       .get<DecryptDataUseCase>(useCasesTypes.DecryptDataUseCase)
       .execute(encryptionKey, data);
+  }
+
+  ledgerIdentityEncrypt(input: {
+    intent: string;
+    blob: Uint8Array;
+    sessionId: DeviceSessionId;
+  }): LedgerIdentityDAReturnType {
+    return this._container
+      .get<LedgerIdentityEncryptUseCase>(
+        useCasesTypes.LedgerIdentityEncryptUseCase,
+      )
+      .execute(input);
+  }
+
+  ledgerIdentityDecrypt(input: {
+    encryptedData: Uint8Array;
+    sessionId: DeviceSessionId;
+  }): LedgerIdentityDAReturnType {
+    return this._container
+      .get<LedgerIdentityDecryptUseCase>(
+        useCasesTypes.LedgerIdentityDecryptUseCase,
+      )
+      .execute(input);
   }
 }
