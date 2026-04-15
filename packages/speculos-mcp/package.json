@@ -1,0 +1,52 @@
+{
+  "name": "@ledgerhq/speculos-mcp",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
+  },
+  "bin": {
+    "speculos-mcp": "./lib/esm/src/server.js"
+  },
+  "files": [
+    "./lib",
+    "./resources"
+  ],
+  "scripts": {
+    "prebuild": "rimraf lib",
+    "build": "pnpm ldmk-tool build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
+    "watch:builds": "pnpm ldmk-tool watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
+    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "start": "tsx src/server.ts",
+    "lint": "eslint",
+    "lint:fix": "pnpm lint --fix",
+    "prettier": "prettier . --check",
+    "prettier:fix": "prettier . --write",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
+    "test:coverage": "vitest run --coverage --passWithNoTests"
+  },
+  "dependencies": {
+    "@ledgerhq/context-module": "workspace:^",
+    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-signer-kit-ethereum": "workspace:^",
+    "@ledgerhq/device-transport-kit-speculos": "workspace:^",
+    "@ledgerhq/speculos-device-controller": "workspace:^",
+    "@modelcontextprotocol/sdk": "^1.11.0",
+    "axios": "catalog:",
+    "rxjs": "catalog:",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
+    "@ledgerhq/prettier-config-dsdk": "workspace:^",
+    "@ledgerhq/tsconfig-dsdk": "workspace:^",
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "tsx": "catalog:"
+  }
+}

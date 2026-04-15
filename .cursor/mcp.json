@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "speculos": {
+      "command": "pnpm",
+      "args": ["--silent", "--filter", "@ledgerhq/speculos-mcp", "start"],
+      "autoApprove": ["read", "screenshot", "speculos_status", "get_logs", "signing_status"]
+    }
+  }
+}
