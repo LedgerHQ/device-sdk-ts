@@ -13,6 +13,7 @@ export class LedgerIdentityDecryptUseCase {
   ) {}
 
   execute(input: {
+    domain: string;
     encryptedData: Uint8Array;
     sessionId: DeviceSessionId;
   }): LedgerIdentityDAReturnType {

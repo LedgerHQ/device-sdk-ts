@@ -87,6 +87,7 @@ export class DefaultLedgerKeyringProtocol implements LedgerKeyringProtocol {
   }
 
   ledgerIdentityDecrypt(input: {
+    domain: string;
     encryptedData: Uint8Array;
     sessionId: DeviceSessionId;
   }): LedgerIdentityDAReturnType {

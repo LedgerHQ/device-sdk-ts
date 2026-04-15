@@ -20,7 +20,7 @@ import { GetVersionCommand } from "./command/GetVersionCommand";
 import { AuthenticateWithDeviceDeviceAction } from "./device-action/AuthenticateWithDeviceDeviceAction";
 import { AuthenticateWithKeypairDeviceAction } from "./device-action/AuthenticateWithKeypairDeviceAction";
 import { LedgerIdentityDeviceAction } from "./device-action/LedgerIdentityDeviceAction";
-import { buildVaultPayload } from "./utils/ledgerIdentityTlv";
+import { buildDecryptPayload, buildVaultPayload } from "./utils/ledgerIdentityTlv";
 
 @injectable()
 export class LedgerKeyringProtocolBinder {
@@ -108,15 +108,17 @@ export class LedgerKeyringProtocolBinder {
   }
 
   ledgerIdentityDecrypt(args: {
+    domain: string;
     encryptedData: Uint8Array;
     sessionId: DeviceSessionId;
   }): LedgerIdentityDAReturnType {
+    const payload = buildDecryptPayload(args.domain, args.encryptedData);
     return this.dmk.executeDeviceAction({
       sessionId: args.sessionId,
       deviceAction: new LedgerIdentityDeviceAction({
         input: {
           operation: "decrypt",
-          data: args.encryptedData,
+          data: payload,
         },
       }),
     });

@@ -293,8 +293,8 @@ export const LedgerKeyringProtocolView: React.FC = () => {
       {
         title: "Ledger Identity Decrypt",
         description:
-          "Decrypt data on the Ledger Identity app. Provide the encrypted data as a hex string.",
-        executeDeviceAction: ({ encryptedData: encryptedHex }) => {
+          "Decrypt data on the Ledger Identity app. Provide a domain (requesting party) and the encrypted data as a hex string.",
+        executeDeviceAction: ({ domain, encryptedData: encryptedHex }) => {
           if (!app) {
             throw new Error("Ledger Keyring Protocol app not initialized");
           }
@@ -319,6 +319,7 @@ export const LedgerKeyringProtocolView: React.FC = () => {
             };
           }
           const action = app.ledgerIdentityDecrypt({
+            domain,
             encryptedData,
             sessionId,
           });
@@ -338,12 +339,13 @@ export const LedgerKeyringProtocolView: React.FC = () => {
           };
         },
         initialValues: {
+          domain: "",
           encryptedData: "",
         },
         deviceModelId: modelIdRef.current || DeviceModelId.FLEX,
       } satisfies DeviceActionProps<
         string,
-        { encryptedData: string },
+        { domain: string; encryptedData: string },
         LedgerIdentityDAError,
         LedgerIdentityDAIntermediateValue
       >,
