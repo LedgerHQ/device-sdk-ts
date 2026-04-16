@@ -19,6 +19,7 @@ export enum ClearSignContextType {
   SAFE = "safe",
   SIGNER = "signer",
   GATED_SIGNING = "gatedSigning",
+  ACCOUNT_OWNERSHIP = "accountOwnership",
 }
 
 export enum ClearSignContextReferenceType {

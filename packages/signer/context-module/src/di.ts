@@ -1,6 +1,7 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
+import { accountOwnershipModuleFactory } from "@/account-ownership/di/accountOwnershipModuleFactory";
 import { calldataModuleFactory } from "@/calldata/di/calldataModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { configTypes } from "@/config/di/configTypes";
@@ -40,6 +41,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
 
   container.loadSync(
     configModuleFactory(config),
+    accountOwnershipModuleFactory(),
     externalPluginModuleFactory(),
     dynamicNetworkModuleFactory(),
     nftModuleFactory(),
