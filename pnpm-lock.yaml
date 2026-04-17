@@ -1568,6 +1568,9 @@ importers:
         specifier: 'catalog:'
         version: 5.19.2
     devDependencies:
+      '@ledgerhq/context-module':
+        specifier: workspace:^
+        version: link:../context-module
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
         version: link:../../device-management-kit

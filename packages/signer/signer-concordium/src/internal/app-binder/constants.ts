@@ -11,6 +11,8 @@ export const INS = {
   SIGN_TRANSFER_WITH_MEMO: 0x32,
   SIGN_TRANSFER_WITH_SCHEDULE_AND_MEMO: 0x34,
   REGISTER_DATA: 0x35,
+  SET_TRUSTED_NAME: 0x22,
+  GET_CHALLENGE: 0x23,
   GET_APP_VERSION: 0x40,
 } as const;
 
@@ -34,6 +36,7 @@ export const P1 = {
   LENGTH_OF_PROOFS: 0x07,
   PROOFS: 0x08,
   NEW_OR_EXISTING: 0x09,
+  FULL_PATH: 0x02,
 } as const;
 
 export const P2 = {

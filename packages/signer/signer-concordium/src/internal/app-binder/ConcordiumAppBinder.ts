@@ -1,4 +1,8 @@
 import {
+  type AccountOwnershipNetwork,
+  type ContextModule,
+} from "@ledgerhq/context-module";
+import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -12,6 +16,7 @@ import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDevic
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
 import { type SignCredentialDeploymentTransactionDAReturnType } from "@api/app-binder/SignCredentialDeploymentTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type VerifyAddressDAReturnType } from "@api/app-binder/VerifyAddressDeviceActionTypes";
 import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import {
   GetPublicKeyCommand,
@@ -20,6 +25,7 @@ import {
 import { APP_NAME } from "@internal/app-binder/constants";
 import { SendCredentialDeploymentTransactionTask } from "@internal/app-binder/task/SendCredentialDeploymentTransactionTask";
 import { createSignTransactionTask } from "@internal/app-binder/task/SignTransactionTaskFactory";
+import { VerifyAddressTask } from "@internal/app-binder/task/VerifyAddressTask";
 import { externalTypes } from "@internal/externalTypes";
 
 @injectable()
@@ -29,6 +35,8 @@ export class ConcordiumAppBinder {
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
     @inject(externalTypes.DmkLoggerFactory)
     private dmkLoggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(externalTypes.ContextModule)
+    private readonly contextModule: ContextModule,
   ) {}
 
   getAppConfiguration(args: {
@@ -112,6 +120,36 @@ export class ConcordiumAppBinder {
           skipOpenApp: args.skipOpenApp ?? false,
         },
         logger: this.dmkLoggerFactory("SignCredentialDeploymentTransaction"),
+      }),
+    });
+  }
+
+  verifyAddress(args: {
+    derivationPath: string;
+    address: string;
+    network: AccountOwnershipNetwork;
+    skipOpenApp?: boolean;
+  }): VerifyAddressDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new VerifyAddressTask(
+              internalApi,
+              {
+                derivationPath: args.derivationPath,
+                address: args.address,
+                network: args.network,
+                contextModule: this.contextModule,
+              },
+              this.dmkLoggerFactory("VerifyAddressTask"),
+            ).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.VerifyAddress,
+          skipOpenApp: args.skipOpenApp ?? false,
+        },
+        logger: this.dmkLoggerFactory("VerifyAddress"),
       }),
     });
   }
