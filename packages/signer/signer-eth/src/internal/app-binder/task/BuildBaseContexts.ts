@@ -200,6 +200,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.ENUM:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -228,6 +229,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.EXTERNAL_PLUGIN:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -291,6 +293,7 @@ export class BuildBaseContexts {
       /* not used here */
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return 90;
 
       default: {
