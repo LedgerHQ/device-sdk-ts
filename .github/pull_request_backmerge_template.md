@@ -11,9 +11,14 @@ A backmerge operation is being performed to integrate released packages back int
 
 - [ ] Create new branch from `main`: `chore/backmerge`
 - [ ] Create Pull Request targeting `develop` using template `gh pr create -B develop --title "🔀 (release) [NO-ISSUE]: Backmerge release into develop" -T .github/pull_request_backmerge_template.md`
-- [ ] Run `pnpm ldmk-tool exit-release`
-  - [ ] Verify that all relevant packages have `private: true` set in their `package.json` files
-- [ ] fix conflicts with develop branch if needed:
+- [ ] Reset private flags and restore workspace deps:
+  ```bash
+  pnpm exec zx .cursor/scripts/release/revert-private.cjs
+  pnpm exec zx .cursor/scripts/release/unpin-deps.cjs
+  pnpm install
+  ```
+  - [ ] Verify that all relevant packages have `private: false` set in their `package.json` files
+- [ ] Fix conflicts with develop branch if needed:
   - [ ] ⚠️ **NO REBASE!** Merge develop into backmerge branch for fixing conflicts
   - [ ] Resolve all merge conflicts manually
   - [ ] Test resolution locally

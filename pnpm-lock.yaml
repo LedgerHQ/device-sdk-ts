@@ -434,6 +434,9 @@ importers:
       rimraf:
         specifier: 'catalog:'
         version: 6.0.1
+      semver:
+        specifier: 'catalog:'
+        version: 7.7.2
       tsc-alias:
         specifier: 'catalog:'
         version: 1.8.10
@@ -1930,9 +1933,6 @@ importers:
       '@inquirer/prompts':
         specifier: 'catalog:'
         version: 7.3.3(@types/node@24.3.0)
-      semver:
-        specifier: 'catalog:'
-        version: 7.7.2
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:^

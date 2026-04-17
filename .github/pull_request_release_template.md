@@ -11,59 +11,77 @@ A new release is being prepared with the latest updates, improvements, and fixes
 
 <!-- Release information -->
 
-### Packages
+### Core
 
 - **Device Management Kit**: <!-- version -->
-- **Device Management Kit Flipper Plugin Client**: <!-- version -->
-- **Device Mockserver Client**: <!-- version -->
 
 ### Signer Kits
 
-- **Device Signer Kit Bitcoin**: <!-- version -->
 - **Device Signer Kit Ethereum**: <!-- version -->
+- **Device Signer Kit Bitcoin**: <!-- version -->
 - **Device Signer Kit Solana**: <!-- version -->
+- **Device Signer Kit Aleo**: <!-- version -->
+- **Device Signer Kit Cosmos**: <!-- version -->
+- **Device Signer Kit HyperLiquid**: <!-- version -->
+- **Device Signer Kit Zcash**: <!-- version -->
 - **Context Module**: <!-- version -->
 - **Signer Utils**: <!-- version -->
 
 ### Transport Kits
 
-- **Device Transport Kit React Native BLE**: <!-- version -->
-- **Device Transport Kit Mockserver**: <!-- version -->
-- **Device Transport Kit Speculos**: <!-- version -->
-- **Device Transport Kit React Native HID**: <!-- version -->
-- **Device Transport Kit Web BLE**: <!-- version -->
 - **Device Transport Kit Web HID**: <!-- version -->
+- **Device Transport Kit Web BLE**: <!-- version -->
+- **Device Transport Kit Node HID**: <!-- version -->
+- **Device Transport Kit React Native BLE**: <!-- version -->
+- **Device Transport Kit React Native HID**: <!-- version -->
+- **Device Transport Kit Speculos**: <!-- version -->
+- **Device Transport Kit Mockserver**: <!-- version -->
+
+### Trusted Apps
+
+- **Ledger Keyring Protocol**: <!-- version -->
+
+### Developer Tools
+
+- **DevTools Core**: <!-- version -->
+- **DevTools UI**: <!-- version -->
+- **DevTools Rozenite**: <!-- version -->
+- **DevTools WebSocket Common**: <!-- version -->
+- **DevTools WebSocket Connector**: <!-- version -->
+- **DevTools WebSocket Server**: <!-- version -->
 
 <!-- End Release information -->
 
 ## 📋 Release Checklist
 
-- [ ] Create new branch from `develop`: `release`
-- [ ] Run `proto use` to install the latest toolchain
-- [ ] Run `pnpm install` to install the latest dependencies
-- [ ] Run `pnpm ldmk-tool enter-release` and select packages to release
-- [ ] Run `pnpm ldmk-tool bump` to consume changesets and generate `CHANGELOG.md` files:
-  - [ ] Ensure `GITHUB_TOKEN` environment variable is set with SSO
-  - [ ] **Manually verify all generated versions**
-  - [ ] **Check peer dependencies versions (changeset bug workaround)**
-- [ ] Create Pull Request targeting `main` using `pnpm ldmk-tool create-release-pr` or manually using template `gh pr create -B main --title "🔖 (release) [NO-ISSUE]: New release incoming" -F .github/pull_request_release_template.md`
+This release is driven by the agent release skill (`.cursor/skills/release/SKILL.md`).
+The skill automates the steps below via scripts in `.cursor/scripts/release/`.
+
+- [ ] Create `release` branch from `develop`
+- [ ] Run `proto use` and `pnpm install`
+- [ ] Set private flags (`set-private.cjs`)
+- [ ] Pin workspace deps (`pin-deps.cjs`)
+- [ ] Bump versions (`bump.cjs`)
+- [ ] Generate changelogs (`changelog.cjs`)
+- [ ] Clean up consumed changesets (`cleanup.cjs`)
+- [ ] Update lockfile (`pnpm install --no-frozen-lockfile`)
+- [ ] Update `apps/docs/pages/docs/getting-started.mdx`
+- [ ] Create this PR (`create-pr.cjs`)
 - [ ] Quality Assurance:
   - [ ] Test in Sample App
   - [ ] Review and update documentation
-    - [ ] Update `apps/docs/pages/docs/getting-started.mdx`:
     - [ ] Document API changes
     - [ ] Document breaking changes
 - [ ] Review and merge into `main` branch
 
 ## ✅ Final Checklist for Release Reviewers
 
-- [ ] Version number follows semantic versioning
-- [ ] Changelog is complete and accurate
+- [ ] Version numbers follow semantic versioning
+- [ ] Changelogs are complete and accurate
 - [ ] Release notes are clear and user-friendly
 - [ ] All security vulnerabilities are addressed
 - [ ] Dependencies are up-to-date and secure
 - [ ] Documentation is updated
 - [ ] CI/CD pipeline is passing
-- [ ] Release has been tested in staging environment (if applicable)
 
 ---
