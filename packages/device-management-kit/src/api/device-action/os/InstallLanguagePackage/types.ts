@@ -38,11 +38,22 @@ export type InstallLanguagePackageDAInput = GoToDashboardDAInput & {
 
 export type InstallLanguagePackageDAOutput = undefined;
 
+export type InstallLanguagePackageDAGetDeviceMetadataIntermediateValue = Omit<
+  GetDeviceMetadataDAIntermediateValue,
+  "step"
+> & {
+  readonly step: typeof installLanguagePackageDAStateStep.GET_DEVICE_METADATA;
+};
+
 export type InstallLanguagePackageDAIntermediateValue =
   | GetDeviceMetadataDAIntermediateValue
+  | InstallLanguagePackageDAGetDeviceMetadataIntermediateValue
   | {
       readonly requiredUserInteraction: UserInteractionRequired.None;
-      readonly step: (typeof installLanguagePackageDAStateStep)[keyof typeof installLanguagePackageDAStateStep];
+      readonly step: Exclude<
+        (typeof installLanguagePackageDAStateStep)[keyof typeof installLanguagePackageDAStateStep],
+        typeof installLanguagePackageDAStateStep.GET_DEVICE_METADATA
+      >;
       readonly progress?: number;
     };
 
