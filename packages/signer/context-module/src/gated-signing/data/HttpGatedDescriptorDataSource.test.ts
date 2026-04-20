@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
@@ -8,8 +7,6 @@ import {
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpGatedDescriptorDataSource", () => {
   const config: ContextModuleServiceConfig = {
@@ -53,10 +50,11 @@ describe("HttpGatedDescriptorDataSource", () => {
 
   describe("getGatedDescriptor", () => {
     it("should return descriptor on successful request with correct URL and params", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validGatedDappsResponse,
-      });
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(
+          new Response(JSON.stringify(validGatedDappsResponse)),
+        );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -66,20 +64,25 @@ describe("HttpGatedDescriptorDataSource", () => {
         chainId,
       });
 
-      expect(axios.request).toHaveBeenCalledWith({
-        method: "GET",
-        url: "https://crypto-assets-service.api.ledger.com/v1/gated_dapps",
-        params: {
-          ref: "branch:next",
-          output: "gated_descriptors,app,category",
-          contracts: contractAddress,
-          chain_id: chainId,
-        },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
-        },
-      });
+      const calledUrl = new URL(fetchSpy.mock.calls[0]![0]!.toString());
+      expect(calledUrl.origin + calledUrl.pathname).toBe(
+        "https://crypto-assets-service.api.ledger.com/v1/gated_dapps",
+      );
+      expect(calledUrl.searchParams.get("ref")).toBe("branch:next");
+      expect(calledUrl.searchParams.get("output")).toBe(
+        "gated_descriptors,app,category",
+      );
+      expect(calledUrl.searchParams.get("contracts")).toBe(contractAddress);
+      expect(calledUrl.searchParams.get("chain_id")).toBe(String(chainId));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.any(URL),
+        expect.objectContaining({
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
+          },
+        }),
+      );
       expect(result).toEqual(
         Right({
           signedDescriptor: expectedSignedDescriptor,
@@ -88,10 +91,9 @@ describe("HttpGatedDescriptorDataSource", () => {
     });
 
     it("should find descriptor when API response has selector key without 0x prefix", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validGatedDappsResponse,
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify(validGatedDappsResponse)),
+      );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -109,10 +111,9 @@ describe("HttpGatedDescriptorDataSource", () => {
     });
 
     it("should return Left when response is not an array", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: { gated_descriptors: {} },
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ gated_descriptors: {} })),
+      );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -132,10 +133,9 @@ describe("HttpGatedDescriptorDataSource", () => {
     });
 
     it("should return Left when response is empty array", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: [],
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify([])),
+      );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -155,25 +155,26 @@ describe("HttpGatedDescriptorDataSource", () => {
     });
 
     it("should return Left when no descriptor matches contract and selector", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: [
-          {
-            gated_descriptors: {
-              "0xothercontract": {
-                a1251d75: {
-                  descriptor: "some-descriptor",
-                  network: "ethereum",
-                  chain_id: 1,
-                  address: "0xother",
-                  selector: "a1251d75",
-                  version: "v1",
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              gated_descriptors: {
+                "0xothercontract": {
+                  a1251d75: {
+                    descriptor: "some-descriptor",
+                    network: "ethereum",
+                    chain_id: 1,
+                    address: "0xother",
+                    selector: "a1251d75",
+                    version: "v1",
+                  },
                 },
               },
             },
-          },
-        ],
-      });
+          ]),
+        ),
+      );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -192,8 +193,10 @@ describe("HttpGatedDescriptorDataSource", () => {
       );
     });
 
-    it("should return Left when axios request fails", async () => {
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("Network error"));
+    it("should return Left when fetch request fails", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(
+        new Error("Network error"),
+      );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -217,10 +220,11 @@ describe("HttpGatedDescriptorDataSource", () => {
         ...config,
         cal: { ...config.cal!, branch: "main" },
       } as ContextModuleServiceConfig;
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validGatedDappsResponse,
-      });
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(
+          new Response(JSON.stringify(validGatedDappsResponse)),
+        );
 
       await new HttpGatedDescriptorDataSource(configMain).getGatedDescriptor({
         contractAddress,
@@ -228,13 +232,8 @@ describe("HttpGatedDescriptorDataSource", () => {
         chainId,
       });
 
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          params: expect.objectContaining({
-            ref: "branch:main",
-          }),
-        }),
-      );
+      const calledUrl = new URL(fetchSpy.mock.calls[0]![0]!.toString());
+      expect(calledUrl.searchParams.get("ref")).toBe("branch:main");
     });
 
     describe("when response fails DTO validation", () => {
@@ -243,10 +242,9 @@ describe("HttpGatedDescriptorDataSource", () => {
       );
 
       it("should return Left when array item has no gated_descriptors", async () => {
-        vi.spyOn(axios, "request").mockResolvedValue({
-          status: 200,
-          data: [{}],
-        });
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(JSON.stringify([{}])),
+        );
 
         const result = await new HttpGatedDescriptorDataSource(
           config,
@@ -260,10 +258,11 @@ describe("HttpGatedDescriptorDataSource", () => {
       });
 
       it("should return Left when gated_descriptors is not an object", async () => {
-        vi.spyOn(axios, "request").mockResolvedValue({
-          status: 200,
-          data: [{ gated_descriptors: "not-an-object" }],
-        });
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(
+            JSON.stringify([{ gated_descriptors: "not-an-object" }]),
+          ),
+        );
 
         const result = await new HttpGatedDescriptorDataSource(
           config,
@@ -277,25 +276,26 @@ describe("HttpGatedDescriptorDataSource", () => {
       });
 
       it("should return Left when entry is missing required field (descriptor)", async () => {
-        vi.spyOn(axios, "request").mockResolvedValue({
-          status: 200,
-          data: [
-            {
-              gated_descriptors: {
-                [contractAddress]: {
-                  a1251d75: {
-                    network: "ethereum",
-                    chain_id: 1,
-                    address: contractAddress,
-                    selector: "a1251d75",
-                    version: "v1",
-                    // descriptor missing
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(
+            JSON.stringify([
+              {
+                gated_descriptors: {
+                  [contractAddress]: {
+                    a1251d75: {
+                      network: "ethereum",
+                      chain_id: 1,
+                      address: contractAddress,
+                      selector: "a1251d75",
+                      version: "v1",
+                      // descriptor missing
+                    },
                   },
                 },
               },
-            },
-          ],
-        });
+            ]),
+          ),
+        );
 
         const result = await new HttpGatedDescriptorDataSource(
           config,
@@ -309,26 +309,27 @@ describe("HttpGatedDescriptorDataSource", () => {
       });
 
       it("should return Left when entry has wrong type for chain_id", async () => {
-        vi.spyOn(axios, "request").mockResolvedValue({
-          status: 200,
-          data: [
-            {
-              gated_descriptors: {
-                [contractAddress]: {
-                  a1251d75: {
-                    network: "ethereum",
-                    chain_id: "1", // string instead of number
-                    address: contractAddress,
-                    selector: "a1251d75",
-                    version: "v1",
-                    descriptor: descriptorPayload,
-                    signatures: { prod: "00", test: "00" },
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(
+            JSON.stringify([
+              {
+                gated_descriptors: {
+                  [contractAddress]: {
+                    a1251d75: {
+                      network: "ethereum",
+                      chain_id: "1", // string instead of number
+                      address: contractAddress,
+                      selector: "a1251d75",
+                      version: "v1",
+                      descriptor: descriptorPayload,
+                      signatures: { prod: "00", test: "00" },
+                    },
                   },
                 },
               },
-            },
-          ],
-        });
+            ]),
+          ),
+        );
 
         const result = await new HttpGatedDescriptorDataSource(
           config,
@@ -342,26 +343,27 @@ describe("HttpGatedDescriptorDataSource", () => {
       });
 
       it("should return Left when entry signatures contains non-string value", async () => {
-        vi.spyOn(axios, "request").mockResolvedValue({
-          status: 200,
-          data: [
-            {
-              gated_descriptors: {
-                [contractAddress]: {
-                  a1251d75: {
-                    network: "ethereum",
-                    chain_id: 1,
-                    address: contractAddress,
-                    selector: "a1251d75",
-                    version: "v1",
-                    descriptor: descriptorPayload,
-                    signatures: { prod: 123 }, // number instead of string
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(
+            JSON.stringify([
+              {
+                gated_descriptors: {
+                  [contractAddress]: {
+                    a1251d75: {
+                      network: "ethereum",
+                      chain_id: 1,
+                      address: contractAddress,
+                      selector: "a1251d75",
+                      version: "v1",
+                      descriptor: descriptorPayload,
+                      signatures: { prod: 123 }, // number instead of string
+                    },
                   },
                 },
               },
-            },
-          ],
-        });
+            ]),
+          ),
+        );
 
         const result = await new HttpGatedDescriptorDataSource(
           config,
@@ -375,10 +377,9 @@ describe("HttpGatedDescriptorDataSource", () => {
       });
 
       it("should return Left when array item is null", async () => {
-        vi.spyOn(axios, "request").mockResolvedValue({
-          status: 200,
-          data: [null],
-        });
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(JSON.stringify([null])),
+        );
 
         const result = await new HttpGatedDescriptorDataSource(
           config,
@@ -392,16 +393,17 @@ describe("HttpGatedDescriptorDataSource", () => {
       });
 
       it("should return Left when selectors map value is not an object", async () => {
-        vi.spyOn(axios, "request").mockResolvedValue({
-          status: 200,
-          data: [
-            {
-              gated_descriptors: {
-                [contractAddress]: "not-a-selectors-map",
+        vi.spyOn(globalThis, "fetch").mockResolvedValue(
+          new Response(
+            JSON.stringify([
+              {
+                gated_descriptors: {
+                  [contractAddress]: "not-a-selectors-map",
+                },
               },
-            },
-          ],
-        });
+            ]),
+          ),
+        );
 
         const result = await new HttpGatedDescriptorDataSource(
           config,
@@ -441,10 +443,11 @@ describe("HttpGatedDescriptorDataSource", () => {
     const expectedSignedDescriptorTypedData = `${descriptorPayloadTypedData}150100`;
 
     it("should return descriptor on successful request when keyed by schema hash", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validTypedDataResponse,
-      });
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(
+          new Response(JSON.stringify(validTypedDataResponse)),
+        );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -454,20 +457,23 @@ describe("HttpGatedDescriptorDataSource", () => {
         chainId,
       });
 
-      expect(axios.request).toHaveBeenCalledWith({
-        method: "GET",
-        url: "https://crypto-assets-service.api.ledger.com/v1/gated_dapps",
-        params: {
-          ref: "branch:next",
-          output: "gated_descriptors",
-          contracts: contractAddress,
-          chain_id: chainId,
-        },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
-        },
-      });
+      const calledUrl = new URL(fetchSpy.mock.calls[0]![0]!.toString());
+      expect(calledUrl.origin + calledUrl.pathname).toBe(
+        "https://crypto-assets-service.api.ledger.com/v1/gated_dapps",
+      );
+      expect(calledUrl.searchParams.get("ref")).toBe("branch:next");
+      expect(calledUrl.searchParams.get("output")).toBe("gated_descriptors");
+      expect(calledUrl.searchParams.get("contracts")).toBe(contractAddress);
+      expect(calledUrl.searchParams.get("chain_id")).toBe(String(chainId));
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.any(URL),
+        expect.objectContaining({
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
+          },
+        }),
+      );
       expect(result).toEqual(
         Right({
           signedDescriptor: expectedSignedDescriptorTypedData,
@@ -476,25 +482,26 @@ describe("HttpGatedDescriptorDataSource", () => {
     });
 
     it("should return Left when no descriptor matches contract and schema hash", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: [
-          {
-            gated_descriptors: {
-              [contractAddress]: {
-                other_schema_hash: {
-                  descriptor: "some-descriptor",
-                  network: "ethereum",
-                  chain_id: 1,
-                  address: contractAddress,
-                  selector: "eip712",
-                  version: "v1",
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            {
+              gated_descriptors: {
+                [contractAddress]: {
+                  other_schema_hash: {
+                    descriptor: "some-descriptor",
+                    network: "ethereum",
+                    chain_id: 1,
+                    address: contractAddress,
+                    selector: "eip712",
+                    version: "v1",
+                  },
                 },
               },
             },
-          },
-        ],
-      });
+          ]),
+        ),
+      );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
@@ -513,8 +520,10 @@ describe("HttpGatedDescriptorDataSource", () => {
       );
     });
 
-    it("should return Left when axios request fails", async () => {
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("Network error"));
+    it("should return Left when fetch request fails", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(
+        new Error("Network error"),
+      );
 
       const result = await new HttpGatedDescriptorDataSource(
         config,
