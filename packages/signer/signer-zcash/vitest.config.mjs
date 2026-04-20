@@ -9,6 +9,7 @@ export default defineConfig({
   ...baseConfig,
   test: {
     ...baseConfig.test,
+    include: ["src/**/*.test.ts"],
     setupFiles: ["./vitest.setup.mjs"],
     coverage: {
       reporter: ["lcov", "text"],
