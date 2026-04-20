@@ -84,9 +84,7 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
 
   getMcuList(): EitherAsync<HttpFetchApiError, Array<McuFirmware>> {
     return EitherAsync(async () => {
-      const response = await fetch(
-        `${this._managerApiBaseUrl}/mcu_versions`,
-      );
+      const response = await fetch(`${this._managerApiBaseUrl}/mcu_versions`);
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
       return (await response.json()) as Array<McuVersionDto>;
     })
@@ -115,9 +113,7 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   ): EitherAsync<HttpFetchApiError, FinalFirmware> {
     const { deviceId, version } = params;
     return EitherAsync(async () => {
-      const url = new URL(
-        `${this._managerApiBaseUrl}/get_firmware_version`,
-      );
+      const url = new URL(`${this._managerApiBaseUrl}/get_firmware_version`);
       url.searchParams.set("device_version", String(deviceId));
       url.searchParams.set("version_name", version);
       url.searchParams.set("provider", String(this._provider));
@@ -166,9 +162,7 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
     const livecommonversion = "34.27.0"; // Legacy parameter that should just be a too old
     const { currentFinalFirmwareId, deviceId } = params;
     return EitherAsync(async () => {
-      const url = new URL(
-        `${this._managerApiBaseUrl}/get_latest_firmware`,
-      );
+      const url = new URL(`${this._managerApiBaseUrl}/get_latest_firmware`);
       url.searchParams.set(
         "current_se_firmware_final_version",
         String(currentFinalFirmwareId),
@@ -190,14 +184,11 @@ export class AxiosManagerApiDataSource implements ManagerApiDataSource {
   ): EitherAsync<HttpFetchApiError, Array<Application | null>> {
     const { hashes } = params;
     return EitherAsync(async () => {
-      const response = await fetch(
-        `${this._managerApiBaseUrl}/v2/apps/hash`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(hashes),
-        },
-      );
+      const response = await fetch(`${this._managerApiBaseUrl}/v2/apps/hash`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(hashes),
+      });
       if (!response.ok) throw new Error(`HTTP error ${response.status}`);
       return (await response.json()) as Array<ApplicationDto | null>;
     })

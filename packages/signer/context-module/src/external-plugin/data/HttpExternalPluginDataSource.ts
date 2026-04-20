@@ -36,7 +36,9 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
       const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+          ...(this.config.originToken && {
+            [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+          }),
         },
       });
       if (!response.ok) {

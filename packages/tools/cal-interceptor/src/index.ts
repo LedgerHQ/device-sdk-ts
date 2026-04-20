@@ -1,6 +1,6 @@
 export {
-  FetchInterceptor,
   FetchInterceptor as AxiosInterceptor,
+  FetchInterceptor,
 } from "./AxiosInterceptor";
 export { CalInterceptor } from "./CalInterceptor";
 export type {

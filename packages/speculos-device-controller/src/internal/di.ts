@@ -17,8 +17,7 @@ export function createDefaultControllers(
   const timeoutMs = opts.timeoutMs ?? 1500;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "X-Ledger-Client-Version":
-      opts.clientHeader ?? "ldmk-transport-speculos",
+    "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",
   };
 
   const http: HttpClient = {

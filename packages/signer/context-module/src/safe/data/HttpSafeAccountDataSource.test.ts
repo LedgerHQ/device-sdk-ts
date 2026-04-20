@@ -45,9 +45,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(validSafeAccountDto)),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify(validSafeAccountDto)));
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -89,9 +89,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 137, // Polygon
         challenge: "0xabcdef",
       };
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(validSafeAccountDto)),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify(validSafeAccountDto)));
 
       // WHEN
       await new HttpSafeAccountDataSource(config).getDescriptors(params);
@@ -111,9 +111,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(validSafeAccountDto)),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify(validSafeAccountDto)));
 
       // WHEN
       await new HttpSafeAccountDataSource(config).getDescriptors(params);
@@ -132,9 +132,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0x123456789",
       };
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(validSafeAccountDto)),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify(validSafeAccountDto)));
 
       // WHEN
       await new HttpSafeAccountDataSource(config).getDescriptors(params);
@@ -151,9 +151,7 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response("null"),
-      );
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(
@@ -612,9 +610,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(validSafeAccountDto)),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify(validSafeAccountDto)));
 
       // WHEN
       await new HttpSafeAccountDataSource(customConfig).getDescriptors(params);
@@ -643,9 +641,9 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(validSafeAccountDto)),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify(validSafeAccountDto)));
 
       // WHEN
       await new HttpSafeAccountDataSource(customConfig).getDescriptors(params);

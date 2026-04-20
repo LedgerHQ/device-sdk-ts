@@ -43,7 +43,9 @@ export class HttpTypedDataCheckDataSource implements TypedDataCheckDataSource {
           headers: {
             "Content-Type": "application/json",
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+            ...(this.config.originToken && {
+              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+            }),
           },
           body: JSON.stringify(requestDto),
         },

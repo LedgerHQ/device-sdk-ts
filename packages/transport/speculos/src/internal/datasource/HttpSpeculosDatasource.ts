@@ -156,4 +156,3 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
 type SpeculosApduDTO = {
   data: string;
 };
-

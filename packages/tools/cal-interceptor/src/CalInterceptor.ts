@@ -13,9 +13,7 @@ export class CalInterceptor {
   constructor(storage?: StorageInterface) {
     // Default to in-memory storage for environment-agnostic behavior
     this.storage = storage ?? new MemoryStorage();
-    this.interceptor = new FetchInterceptor(
-      this.modifyCalResponse.bind(this),
-    );
+    this.interceptor = new FetchInterceptor(this.modifyCalResponse.bind(this));
   }
 
   /**

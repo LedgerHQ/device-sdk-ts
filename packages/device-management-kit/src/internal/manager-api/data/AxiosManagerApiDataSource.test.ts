@@ -110,10 +110,7 @@ describe("AxiosManagerApiDataSource", () => {
       it("with BTC app and custom lock screen, should return the metadata", async () => {
         vi.spyOn(globalThis, "fetch").mockResolvedValue(
           new Response(
-            JSON.stringify([
-              BTC_APP_METADATA,
-              CUSTOM_LOCK_SCREEN_APP_METADATA,
-            ]),
+            JSON.stringify([BTC_APP_METADATA, CUSTOM_LOCK_SCREEN_APP_METADATA]),
           ),
         );
 

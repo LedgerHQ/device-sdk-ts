@@ -1,4 +1,8 @@
-import { type HttpClient, type PercentCoordinates, SpeculosActions } from "@internal/core/types";
+import {
+  type HttpClient,
+  type PercentCoordinates,
+  SpeculosActions,
+} from "@internal/core/types";
 import type { AxisMap } from "@internal/utils/axisClamp";
 import type { TouchController } from "@root/src/internal/core/TouchController";
 

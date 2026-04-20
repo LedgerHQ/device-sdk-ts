@@ -409,9 +409,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
 
       // THEN
       const calledUrl = vi.mocked(globalThis.fetch).mock.calls[0]![0] as URL;
-      expect(calledUrl.pathname).toBe(
-        `/v1/${endpoint}`,
-      );
+      expect(calledUrl.pathname).toBe(`/v1/${endpoint}`);
     },
   );
 
@@ -497,7 +495,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
   it("should return an error when selector is not found", async () => {
     // GIVEN
     const calldataDTO = createCalldata(transactionInfo, enums, [fieldToken]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -528,7 +528,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       fieldNft,
       fieldEnum,
     ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -637,7 +639,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
         0x01, 0x02, 0x03, 0x04, 0x15, 0x04, 0x05, 0x06, 0x07, 0x08,
       ]),
     };
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValueOnce(
       certificate,
     );
@@ -745,7 +749,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -847,7 +853,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -937,7 +945,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
         "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f0001010101050201140514ae7ab96520de3a18e5e111b5eaab095312d7fe84",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1023,7 +1033,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
         "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f00010101010502011405147d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1057,7 +1069,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
   it("Calldata with CALLDATA fields references", async () => {
     // GIVEN
     const calldataDTO = createCalldata(transactionInfo, [], [fieldCalldata]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1178,7 +1192,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [fieldCalldataMinimal],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1247,7 +1263,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
         },
       },
     };
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1284,7 +1302,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       enums,
       [fieldToken],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1314,7 +1334,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       ["badEnum"] as unknown as CalldataEnumV1,
       [fieldToken],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1344,7 +1366,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       { 0: { 1: { data: "1234" } } } as unknown as CalldataEnumV1,
       [fieldToken],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1383,7 +1407,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       },
       [fieldToken],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1413,7 +1439,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [{ descriptor: 3 }],
     );
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1450,7 +1478,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1487,7 +1517,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1530,7 +1562,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1567,7 +1601,9 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify([calldataDTO])));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify([calldataDTO])),
+    );
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );

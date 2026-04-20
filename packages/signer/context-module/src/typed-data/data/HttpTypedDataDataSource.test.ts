@@ -110,9 +110,9 @@ describe("HttpTypedDataDataSource", () => {
   it("should call fetch with the ledger client version header", async () => {
     // GIVEN
     const version = `context-module/${PACKAGE.version}`;
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([])),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response(JSON.stringify([])));
 
     // WHEN
     await datasource.getTypedDataFilters({
@@ -551,9 +551,7 @@ describe("HttpTypedDataDataSource", () => {
       },
     ]);
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify([{ descriptors_eip712: {} }, ...match]),
-      ),
+      new Response(JSON.stringify([{ descriptors_eip712: {} }, ...match])),
     );
 
     const result = await datasource.getTypedDataFilters({
@@ -578,9 +576,7 @@ describe("HttpTypedDataDataSource", () => {
 
   it("should return an error when data is empty", async () => {
     // GIVEN
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response("null"),
-    );
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
 
     // WHEN
     const result = await datasource.getTypedDataFilters({

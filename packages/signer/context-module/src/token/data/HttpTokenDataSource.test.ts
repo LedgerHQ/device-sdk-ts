@@ -140,9 +140,7 @@ describe("HttpTokenDataSource", () => {
   it("should return undefined when no decimals", async () => {
     // GIVEN
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify([{ live_signature: "0x0", ticker: "USDC" }]),
-      ),
+      new Response(JSON.stringify([{ live_signature: "0x0", ticker: "USDC" }])),
     );
 
     // WHEN

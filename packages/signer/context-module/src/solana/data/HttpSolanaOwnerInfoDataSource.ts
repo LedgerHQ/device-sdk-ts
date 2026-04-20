@@ -57,7 +57,9 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
         {
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+            ...(this.config.originToken && {
+              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+            }),
           },
         },
       );
@@ -92,7 +94,9 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
         {
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && { "X-Ledger-Client-Origin": this.config.originToken }),
+            ...(this.config.originToken && {
+              "X-Ledger-Client-Origin": this.config.originToken,
+            }),
           },
         },
       );

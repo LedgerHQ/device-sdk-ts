@@ -32,7 +32,9 @@ export class HttpNftDataSource implements NftDataSource {
         {
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+            ...(this.config.originToken && {
+              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+            }),
           },
         },
       );
@@ -67,7 +69,9 @@ export class HttpNftDataSource implements NftDataSource {
         {
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && { [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken }),
+            ...(this.config.originToken && {
+              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+            }),
           },
         },
       );

@@ -223,8 +223,7 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
       if (data.status !== "1") {
         if (
           data.status === "0" &&
-          (data.message === "No transactions found" ||
-            data.message === "NOTOK")
+          (data.message === "No transactions found" || data.message === "NOTOK")
         ) {
           this.logger.info(
             `No transactions found for address: ${data.message}`,

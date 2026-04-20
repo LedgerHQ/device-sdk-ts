@@ -32,9 +32,9 @@ describe("HttpTrustedNameDataSource", () => {
     it("should call fetch with the correct url and ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify([])),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify([])));
 
       // WHEN
       await datasource.getDomainNamePayload({
@@ -132,9 +132,9 @@ describe("HttpTrustedNameDataSource", () => {
     it("should call fetch with the correct url and ledger client version header", async () => {
       // GIVEN
       const version = `context-module/${PACKAGE.version}`;
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify([])),
-      );
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValue(new Response(JSON.stringify([])));
 
       // WHEN
       await datasource.getTrustedNamePayload({
