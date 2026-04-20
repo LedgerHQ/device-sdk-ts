@@ -20,6 +20,7 @@ import { type VerifyAddressErrorCodes } from "@api/app-binder/VerifyAddressDevic
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { GetPublicKeyCommand } from "@internal/app-binder/command/GetPublicKeyCommand";
 import { SetTrustedNameCommand } from "@internal/app-binder/command/SetTrustedNameCommand";
+import { TrustedMetadataServiceError } from "@internal/app-binder/command/utils/TrustedMetadataServiceError";
 import { VerifyAddressCommand } from "@internal/app-binder/command/VerifyAddressCommand";
 
 export type VerifyAddressTaskArgs = {
@@ -111,12 +112,15 @@ export class VerifyAddressTask {
       const errorCtx = contexts.find(
         (c) => c.type === ClearSignContextType.ERROR,
       );
-      const errorMessage =
-        errorCtx && "error" in errorCtx
-          ? errorCtx.error.message
-          : "No account ownership context returned";
+      if (errorCtx && "error" in errorCtx) {
+        return CommandResultFactory({
+          error: new TrustedMetadataServiceError(errorCtx.error.message),
+        });
+      }
       return CommandResultFactory({
-        error: new InvalidStatusWordError(errorMessage),
+        error: new InvalidStatusWordError(
+          "No account ownership context returned",
+        ),
       });
     }
 
