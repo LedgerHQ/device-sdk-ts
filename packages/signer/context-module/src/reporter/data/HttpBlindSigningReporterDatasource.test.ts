@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
@@ -16,8 +15,6 @@ import {
   LEDGER_ORIGIN_TOKEN_HEADER,
 } from "@/shared/constant/HttpHeaders";
 import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpBlindSigningReporterDatasource", () => {
   const config = {
@@ -51,7 +48,9 @@ describe("HttpBlindSigningReporterDatasource", () => {
   describe("report", () => {
     it("should return Right(undefined) on success", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response(null, { status: 200 }),
+      );
 
       // WHEN
       const dataSource = new HttpBlindSigningReporterDatasource(config);
@@ -63,7 +62,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
     it("should return Left(Error) when the request fails", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockRejectedValueOnce(
+      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
         new Error("network error"),
       );
 
@@ -81,54 +80,60 @@ describe("HttpBlindSigningReporterDatasource", () => {
       );
     });
 
-    it("should call axios with the correct URL and method", async () => {
+    it("should call fetch with the correct URL and method", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
       // WHEN
       const dataSource = new HttpBlindSigningReporterDatasource(config);
       await dataSource.report(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "POST",
-          url: `${config.reporter!.url}/blind-signing-events`,
-        }),
+      expect(fetchSpy).toHaveBeenCalledWith(
+        `${config.reporter!.url}/blind-signing-events`,
+        expect.objectContaining({ method: "POST" }),
       );
     });
 
-    it("should call axios with the correct headers", async () => {
+    it("should call fetch with the correct headers", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
       // WHEN
       const dataSource = new HttpBlindSigningReporterDatasource(config);
       await dataSource.report(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.any(String),
         expect.objectContaining({
-          headers: {
+          headers: expect.objectContaining({
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
             [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-          },
+          }),
         }),
       );
     });
 
-    it("should call axios with the event payload and injected source as data", async () => {
+    it("should call fetch with the event payload and injected source as body", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
       // WHEN
       const dataSource = new HttpBlindSigningReporterDatasource(config);
       await dataSource.report(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
+      expect(fetchSpy).toHaveBeenCalledWith(
+        expect.any(String),
         expect.objectContaining({
-          data: { ...params, source: config.appSource },
+          body: JSON.stringify({ ...params, source: config.appSource }),
         }),
       );
     });
