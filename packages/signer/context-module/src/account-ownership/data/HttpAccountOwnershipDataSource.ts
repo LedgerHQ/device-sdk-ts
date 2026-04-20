@@ -1,4 +1,3 @@
-import axios from "axios";
 import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -35,20 +34,24 @@ export class HttpAccountOwnershipDataSource
     Either<Error, AccountOwnershipDescriptor>
   > {
     try {
-      const response = await axios.request<AccountOwnershipDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/concordium/owner/${publicKey}/${address}`,
-        params: {
-          challenge,
-          network,
-        },
+      const url = new URL(
+        `${this.config.metadataServiceDomain.url}/v2/concordium/owner/${publicKey}/${address}`,
+      );
+      url.searchParams.set("challenge", challenge);
+      url.searchParams.set("network", network);
+      const response = await fetch(url, {
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
           [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
         },
       });
+      if (!response.ok) {
+        const message = await this.readErrorMessage(response);
+        throw Object.assign(new Error(message), { status: response.status });
+      }
+      const data = (await response.json()) as AccountOwnershipDto | null;
 
-      if (!response.data) {
+      if (!data) {
         return Left(
           new AccountOwnershipError(
             "service_unavailable",
@@ -57,7 +60,7 @@ export class HttpAccountOwnershipDataSource
         );
       }
 
-      if (!this.isAccountOwnershipDto(response.data)) {
+      if (!this.isAccountOwnershipDto(data)) {
         return Left(
           new AccountOwnershipError(
             "service_unavailable",
@@ -67,9 +70,9 @@ export class HttpAccountOwnershipDataSource
       }
 
       return Right({
-        signedDescriptor: response.data.signedDescriptor,
-        keyId: response.data.keyId,
-        keyUsage: response.data.keyUsage,
+        signedDescriptor: data.signedDescriptor,
+        keyId: data.keyId,
+        keyUsage: data.keyUsage,
       });
     } catch (error) {
       return Left(this.classifyError(error));
@@ -82,25 +85,13 @@ export class HttpAccountOwnershipDataSource
    * as `verification_failed`; everything else (network failure, 5xx,
    * unrecognized errors) is marked as `service_unavailable`.
    *
-   * Two shapes are recognized:
-   * - Vanilla {@link AxiosError} with `.response` (standalone axios usage).
-   * - Any error carrying a numeric `.status` field. Consumers may install a
-   *   global axios interceptor that replaces {@link AxiosError} with a
-   *   custom class, typically stripping `.response` but preserving the HTTP
-   *   status on a top-level `.status` field. The duck-typed branch keeps
-   *   classification correct on those paths without coupling to any
-   *   host-specific class.
+   * Errors with a numeric `.status` field are treated as HTTP-shaped failures
+   * (thrown above when the fetch response is not ok, or surfaced by a
+   * wrapping client that preserves the HTTP status on a top-level `.status`
+   * field). Anything else falls through to the canonical
+   * `service_unavailable` message.
    */
   private classifyError(error: unknown): AccountOwnershipError {
-    if (axios.isAxiosError(error) && error.response) {
-      const status = error.response.status;
-      const backendMessage = this.extractBackendMessage(
-        error.response.data,
-        error.message,
-      );
-      return this.classifyFromStatus(status, backendMessage);
-    }
-
     if (this.hasNumericStatus(error)) {
       const status = error.status;
       const message = this.extractErrorMessage(error);
@@ -140,7 +131,8 @@ export class HttpAccountOwnershipDataSource
       typeof value === "object" &&
       value !== null &&
       "message" in value &&
-      typeof (value as { message: unknown }).message === "string"
+      typeof (value as { message: unknown }).message === "string" &&
+      (value as { message: string }).message.length > 0
     ) {
       return (value as { message: string }).message;
     }
@@ -150,20 +142,26 @@ export class HttpAccountOwnershipDataSource
     return "Unknown error";
   }
 
-  private extractBackendMessage(data: unknown, fallback: string): string {
-    if (typeof data === "string" && data.length > 0) {
-      return data;
+  private async readErrorMessage(response: Response): Promise<string> {
+    const text = await response.text().catch(() => "");
+    if (!text) {
+      return "Unknown error";
     }
-    if (
-      typeof data === "object" &&
-      data !== null &&
-      "message" in data &&
-      typeof (data as { message: unknown }).message === "string" &&
-      (data as { message: string }).message.length > 0
-    ) {
-      return (data as { message: string }).message;
+    try {
+      const parsed = JSON.parse(text) as unknown;
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        "message" in parsed &&
+        typeof (parsed as { message: unknown }).message === "string" &&
+        (parsed as { message: string }).message.length > 0
+      ) {
+        return (parsed as { message: string }).message;
+      }
+    } catch {
+      // body is not JSON; use the raw text below
     }
-    return fallback;
+    return text;
   }
 
   private isAccountOwnershipDto(value: unknown): value is AccountOwnershipDto {
