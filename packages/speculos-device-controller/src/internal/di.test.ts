@@ -21,7 +21,7 @@ describe("createDefaultControllers - fetch configuration", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
 
-    const { buttons } = createDefaultControllers("http://example.com/api", {
+    const { buttons } = createDefaultControllers("https://example.com/api", {
       screens: SCREENS,
       timeoutMs: 2345,
       clientHeader: "test-client",
@@ -31,7 +31,7 @@ describe("createDefaultControllers - fetch configuration", () => {
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "http://example.com/api/button/left",
+      "https://example.com/api/button/left",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
@@ -46,14 +46,14 @@ describe("createDefaultControllers - fetch configuration", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
 
-    const { buttons } = createDefaultControllers("http://localhost:1234", {
+    const { buttons } = createDefaultControllers("https://localhost:1234", {
       screens: SCREENS,
     });
 
     await buttons.press("left");
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      "http://localhost:1234/button/left",
+      "https://localhost:1234/button/left",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
@@ -66,7 +66,7 @@ describe("createDefaultControllers - fetch configuration", () => {
 
 describe("createDefaultControllers - wiring", () => {
   it("returns correct controller implementations", () => {
-    const { buttons, touch } = createDefaultControllers("http://x", {
+    const { buttons, touch } = createDefaultControllers("https://x", {
       screens: SCREENS,
     });
 
@@ -76,8 +76,8 @@ describe("createDefaultControllers - wiring", () => {
   });
 
   it("creates fresh instances per invocation", () => {
-    const a = createDefaultControllers("http://x", { screens: SCREENS });
-    const b = createDefaultControllers("http://x", { screens: SCREENS });
+    const a = createDefaultControllers("https://x", { screens: SCREENS });
+    const b = createDefaultControllers("https://x", { screens: SCREENS });
 
     expect(a.buttons).not.toBe(b.buttons);
     expect(a.touch).not.toBe(b.touch);
@@ -88,14 +88,14 @@ describe("createDefaultControllers - wiring", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
 
-    const { buttons } = createDefaultControllers("http://x", {
+    const { buttons } = createDefaultControllers("https://x", {
       screens: SCREENS,
     });
 
     await buttons.press("left");
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      "http://x/button/left",
+      "https://x/button/left",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ action: "press-and-release" }),
@@ -108,7 +108,7 @@ describe("createDefaultControllers - wiring", () => {
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(new Response("{}"));
 
-    const { touch } = createDefaultControllers("http://x", {
+    const { touch } = createDefaultControllers("https://x", {
       screens: SCREENS,
     });
 
@@ -116,7 +116,7 @@ describe("createDefaultControllers - wiring", () => {
     await touch.tapAndRelease("flex", { x: 50 as any, y: 50 as any });
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      "http://x/finger",
+      "https://x/finger",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
