@@ -17,6 +17,7 @@ import {
   ConcordiumAppCommandError,
   ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
+import { TrustedMetadataServiceError } from "@internal/app-binder/command/utils/TrustedMetadataServiceError";
 import { VerifyAddressTask } from "@internal/app-binder/task/VerifyAddressTask";
 
 const DERIVATION_PATH = "44'/919'/0'/0'/0'";
@@ -175,7 +176,7 @@ describe("VerifyAddressTask", () => {
       expect(sendCommandMock).toHaveBeenCalledTimes(2);
     });
 
-    it("should fail when context module returns error context", async () => {
+    it("should fail with TrustedMetadataServiceError when context module returns error context", async () => {
       mockSendCommandSequence(
         CommandResultFactory({ data: { publicKey: PUBLIC_KEY } }),
         CommandResultFactory({ data: { challenge: CHALLENGE } }),
@@ -188,7 +189,11 @@ describe("VerifyAddressTask", () => {
 
       expect(isSuccessCommandResult(result)).toBe(false);
       if (!isSuccessCommandResult(result)) {
-        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+        expect(result.error).toBeInstanceOf(TrustedMetadataServiceError);
+        expect(result.error).toHaveProperty(
+          "errorCode",
+          ConcordiumErrorCodes.TRUSTED_METADATA_SERVICE_ERROR,
+        );
       }
     });
 
