@@ -1,5 +1,4 @@
 import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios from "axios";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -546,9 +545,9 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     if (!sourceTokenAccount) return true;
 
     try {
-      const response = await axios.head(
+      const response = await fetch(
         `${METADATA_SERVICE_URL}/v2/solana/owner/${sourceTokenAccount}`,
-        { timeout: 5000, validateStatus: () => true },
+        { method: "HEAD", signal: AbortSignal.timeout(5000) },
       );
       if (response.status === 200) return false;
       this.logger.debug(
@@ -1043,24 +1042,31 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   }
 
   private async rpcCall<T>(method: string, params: unknown[]): Promise<T> {
-    const response = await axios.post<RpcResponse<T>>(
-      this.rpcConfig.url,
-      {
+    const response = await fetch(this.rpcConfig.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         jsonrpc: "2.0",
         id: 1,
         method,
         params,
-      },
-      { timeout: this.rpcConfig.timeout ?? 30000 },
-    );
+      }),
+      signal: AbortSignal.timeout(this.rpcConfig.timeout ?? 30000),
+    });
 
-    if (response.data.error) {
+    if (!response.ok) {
+      throw new Error(`Solana RPC HTTP error: ${response.status}`);
+    }
+
+    const data = (await response.json()) as RpcResponse<T>;
+
+    if (data.error) {
       throw new Error(
-        `Solana RPC error: ${response.data.error.message} (code ${response.data.error.code})`,
+        `Solana RPC error: ${data.error.message} (code ${data.error.code})`,
       );
     }
 
-    return response.data.result;
+    return data.result;
   }
 
   // --- Encoding helpers ---
