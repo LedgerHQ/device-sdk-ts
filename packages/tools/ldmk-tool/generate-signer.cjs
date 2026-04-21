@@ -2133,12 +2133,100 @@ We encourage you to explore the ${pascalCase} Signer by trying it out in our onl
       }
     }
 
+    // Update release config (.cursor/scripts/release/config.cjs)
+    const releaseConfigPath = ".cursor/scripts/release/config.cjs";
+    if (fs.existsSync(releaseConfigPath)) {
+      let releaseConfigContent = fs.readFileSync(releaseConfigPath, "utf-8");
+      const aliasKey = `signer-${kebabCase}`;
+      const fullPkgName = `@ledgerhq/device-signer-kit-${kebabCase}`;
+
+      if (releaseConfigContent.includes(`"${aliasKey}"`)) {
+        console.log(chalk.yellow(`⚠️  Alias "${aliasKey}" already exists in ${releaseConfigPath}`));
+      } else {
+        // Insert into ALIASES: find the last "signer-*" line that sorts before ours or before "signer-utils"
+        const aliasLines = releaseConfigContent.match(/^ {2}"signer-[^"]*":.*$/gm) || [];
+        let aliasInsertAfter = null;
+        for (const line of aliasLines) {
+          const key = line.match(/"(signer-[^"]+)"/)?.[1];
+          if (key && key < aliasKey) {
+            aliasInsertAfter = line;
+          }
+        }
+        if (aliasInsertAfter) {
+          const newAliasLine = `  "${aliasKey}": "${fullPkgName}",`;
+          releaseConfigContent = releaseConfigContent.replace(
+            aliasInsertAfter,
+            `${aliasInsertAfter}\n${newAliasLine}`
+          );
+        }
+
+        // Insert into DISPLAY_NAMES: find the last "@ledgerhq/device-signer-kit-*" line that sorts before ours
+        const displayLines = releaseConfigContent.match(/^ {2}"@ledgerhq\/device-signer-kit-[^"]*":.*$/gm) || [];
+        let displayInsertAfter = null;
+        for (const line of displayLines) {
+          const key = line.match(/"(@ledgerhq\/device-signer-kit-[^"]+)"/)?.[1];
+          if (key && key < fullPkgName) {
+            displayInsertAfter = line;
+          }
+        }
+        if (displayInsertAfter) {
+          const newDisplayLine = `  "${fullPkgName}": "Signer ${pascalCase}",`;
+          releaseConfigContent = releaseConfigContent.replace(
+            displayInsertAfter,
+            `${displayInsertAfter}\n${newDisplayLine}`
+          );
+        }
+
+        fs.writeFileSync(releaseConfigPath, releaseConfigContent);
+        console.log(chalk.green(`✅ Updated ${releaseConfigPath}`));
+      }
+    }
+
+    // Update release skill (.cursor/skills/release/SKILL.md)
+    const releaseSkillPath = ".cursor/skills/release/SKILL.md";
+    if (fs.existsSync(releaseSkillPath)) {
+      let skillContent = fs.readFileSync(releaseSkillPath, "utf-8");
+      const aliasKey = `signer-${kebabCase}`;
+      const fullPkgName = `@ledgerhq/device-signer-kit-${kebabCase}`;
+
+      if (skillContent.includes(`\`${aliasKey}\``)) {
+        console.log(chalk.yellow(`⚠️  Alias "${aliasKey}" already exists in ${releaseSkillPath}`));
+      } else {
+        // Find all signer-* rows in the markdown table and insert in alphabetical order
+        const signerRowRegex = /^\| `signer-[^`]+`\s*\|.*\|$/gm;
+        const signerRows = skillContent.match(signerRowRegex) || [];
+        let insertAfterRow = null;
+        for (const row of signerRows) {
+          const key = row.match(/`(signer-[^`]+)`/)?.[1];
+          if (key && key < aliasKey) {
+            insertAfterRow = row;
+          }
+        }
+
+        if (insertAfterRow) {
+          const aliasPadded = `\`${aliasKey}\``.padEnd(24);
+          const pkgPadded = `\`${fullPkgName}\``.padEnd(63);
+          const newRow = `| ${aliasPadded}| ${pkgPadded}|`;
+          skillContent = skillContent.replace(
+            insertAfterRow,
+            `${insertAfterRow}\n${newRow}`
+          );
+          fs.writeFileSync(releaseSkillPath, skillContent);
+          console.log(chalk.green(`✅ Updated ${releaseSkillPath}`));
+        } else {
+          console.log(chalk.yellow(`⚠️  Could not update ${releaseSkillPath} - please add the signer alias manually`));
+        }
+      }
+    }
+
     console.log(chalk.green("\n🎉 Signer package generated successfully!"));
     console.log(chalk.gray("\nGenerated files:"));
     console.log(chalk.cyan(`   ✓ Signer package: packages/signer/signer-${kebabCase}`));
     console.log(chalk.cyan(`   ✓ Documentation: apps/docs/pages/docs/references/signers/${kebabCase}.mdx`));
     console.log(chalk.cyan(`   ✓ Sample component: apps/sample/src/components/Signer${pascalCase}View/index.tsx`));
     console.log(chalk.cyan(`   ✓ Sample page: apps/sample/src/app/signers/${kebabCase}/page.tsx`));
+    console.log(chalk.cyan(`   ✓ Release config: .cursor/scripts/release/config.cjs`));
+    console.log(chalk.cyan(`   ✓ Release skill: .cursor/skills/release/SKILL.md`));
     console.log(chalk.gray("\nNext steps:"));
     console.log(chalk.gray("1. Install dependencies from the root:"));
     console.log(chalk.cyan("   pnpm install"));
