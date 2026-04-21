@@ -162,6 +162,16 @@ export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 export { DefaultLogTagFormatter } from "@api/logger-subscriber/service/DefaultLogTagFormatter";
 export { type LogTagFormatter } from "@api/logger-subscriber/service/LogTagFormatter";
 export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";
+export {
+  DmkNetworkClient,
+  type DmkNetworkClientOptions,
+  type DmkNetworkResponse,
+  type DmkQueryParams,
+  type DmkQueryParamValue,
+  type DmkRequestConfig,
+  type DmkResponseType,
+} from "@api/network/DmkNetworkClient";
+export { DmkNetworkClientError } from "@api/network/DmkNetworkClientError";
 export { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 export {
   DeviceConnectionStateMachine,
