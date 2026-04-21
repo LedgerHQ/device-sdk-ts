@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
@@ -21,27 +22,6 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useSignerZcash } from "@/providers/SignerZcashProvider";
-
-const hexToBytes = (hex: string) => {
-  const normalizedHex = hex.startsWith("0x") ? hex.slice(2) : hex;
-
-  if (normalizedHex.length % 2 !== 0) {
-    throw new Error(
-      "Invalid hex string: expected an even number of characters",
-    );
-  }
-
-  if (!/^[0-9a-fA-F]*$/.test(normalizedHex)) {
-    throw new Error("Invalid hex string: expected only hexadecimal characters");
-  }
-
-  const bytes = new Uint8Array(normalizedHex.length / 2);
-  for (let i = 0; i < normalizedHex.length; i += 2) {
-    bytes[i / 2] = parseInt(normalizedHex.slice(i, i + 2), 16);
-  }
-
-  return bytes;
-};
 
 export const SignerZcashView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -112,7 +92,10 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          const txBytes = hexToBytes(transaction);
+          const txBytes = hexaStringToBuffer(transaction);
+          if (!txBytes) {
+            throw new Error("Invalid transaction hex string");
+          }
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,
           });
@@ -145,8 +128,12 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
+          const txBytes = hexaStringToBuffer(transaction);
+          if (!txBytes) {
+            throw new Error("Invalid transaction hex string");
+          }
 
-          return signer.getTrustedInput(hexToBytes(transaction), {
+          return signer.getTrustedInput(txBytes, {
             indexLookup: useIndexLookup ? indexLookup : undefined,
             skipOpenApp,
           });

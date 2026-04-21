@@ -1,116 +1,139 @@
 import {
-  ApduResponse,
   CommandResultFactory,
   type InternalApi,
-  UnknownDeviceExchangeError,
+  InvalidStatusWordError,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+
+import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
 
 import { GetTrustedInputTask } from "./GetTrustedInputTask";
 
+const TRANSPARENT_V5_TX_HEX =
+  "050000800a27a7265510e7c8000000000000000001e1360c957489515ddfb5c564962e2c8cb2dc3c651c4a219e25e0b5e569f49d33000000006b4830450221008844cfb8d9983226f74cdd20cb63ee282360374def5de88d093df7f340775d65022072673cea8cd2092484c11c6e8c35ab765a9501024a96265bdd3b80d0c46f9190012102495e50ff5127b9b74083bad438208c7a39ddd83301cd04e40bff5556d3351ab30000000002a0860100000000001976a914a96e684ec46cd8a2f98d6ef4b847c0ee88395e9388accedb0e00000000001976a9142495eecd3d7ea979d2066da533f45956a3a6b5c888ac000000";
+const V4_NU6_TX_HEX =
+  "0400008085202f89f04dec4d02ffc3d6a9f3ce6b33c05b7499746418b7bbcb17c9a866524a564987bc49b3e294010000006a47304402205adbc4bd6f79d13382f7164a45896c163061649eb39ad21eb7e59e7977f400c202203ade10c6b9a9807791fa6d0bf2c4c3d7bcb4215175e8f2145662a4e8e4c09bdd012103fa6cc45c6e74329a47794ed716525d4b13c4f939adc85e3349ef613eb351bf72feffffff8d191647f23b95ac8d4fd5cf33d946c24a6107046deeaae83704b832dac59217000000006b483045022100f3ca4de2dc6a5c3b00b2cfe31346c050485c65528f7baa24b77fb2507da00dfc0220593452243ded66620cbec5a698e8b2209e5d54c3106fc5ecbd7621bd1acb6f34012103fa6cc45c6e74329a47794ed716525d4b13c4f939adc85e3349ef613eb351bf72feffffff0270af8b00000000001976a9140a773e79f573c395ebee90498d944dedd733e88988acf9261a00000000001976a914657114e0abfc055161fcf9c95c5e238c59bc30cb88ac000000000000000f000000000000000000000000000000000000";
+
+const EXPECTED_APDUS = [
+  "e04200001100000001050000800a27a7265510e7c801",
+  "e042800025e1360c957489515ddfb5c564962e2c8cb2dc3c651c4a219e25e0b5e569f49d33000000006b",
+  "e04280006f4830450221008844cfb8d9983226f74cdd20cb63ee282360374def5de88d093df7f340775d65022072673cea8cd2092484c11c6e8c35ab765a9501024a96265bdd3b80d0c46f9190012102495e50ff5127b9b74083bad438208c7a39ddd83301cd04e40bff5556d3351ab300000000",
+  "e04280000102",
+  "e042800009a08601000000000019",
+  "e04280001976a914a96e684ec46cd8a2f98d6ef4b847c0ee88395e9388ac",
+  "e042800009cedb0e000000000019",
+  "e04280001976a9142495eecd3d7ea979d2066da533f45956a3a6b5c888ac",
+  "e042800003000000",
+  "e042800009000000000400000000",
+];
+
+const hexToBytes = (hex: string): Uint8Array =>
+  Uint8Array.from(Buffer.from(hex, "hex"));
+const bytesToHex = (bytes: Uint8Array): string =>
+  Buffer.from(bytes).toString("hex");
+
+const makeSuccessResponse = (byte: number) => ({
+  statusCode: new Uint8Array([0x90, 0x00]),
+  data: new Uint8Array([byte]),
+});
+
 describe("GetTrustedInputTask", () => {
-  const TRANSPARENT_V5_TX = Uint8Array.from(
-    Buffer.from(
-      "050000800a27a726b4d0d6c200000000a8841e00021111111111111111111111111111111111111111111111111111111111111111000000006b483045022100e35dd2be5e5aeccce0ff7ff892db278047685bc11d34692fd72a9c1914d05f8e0220426dd0a98b39eb6051df9706e4ff9fba4a8be5cd6ef5c3fdd6f2200c709b2bad01210228d06186c26df6afa96076b0ac64cf0d8caf212937f328a52894183cc36e5dd8ffffffff2222222222222222222222222222222222222222222222222222222222222222010000006b483045022100abb1831a7c59bd893420bfe51df0627f239ac2c1524de86958fe84f122c5344d022046ef451e009e500c12516f082a03ffafd3743f522790b866af88ef202fc83a1d0121037e0c5efb047f692c0c89ea9a817f577dc086303aed2f662df4879c89448287c7ffffffff01a0860100000000001976a914b1630abe4ac3749ca5b0ea4c30a7eae5abab19be88ac000000",
-      "hex",
-    ),
-  );
+  let apiMock: InternalApi;
 
-  const apiMock = {
-    sendCommand: vi.fn(),
-  };
-
-  afterEach(() => {
-    vi.clearAllMocks();
+  beforeEach(() => {
+    apiMock = {
+      sendCommand: vi.fn(),
+    } as unknown as InternalApi;
   });
 
-  it("sends parser-aligned trusted input chunks", async () => {
-    const response = new ApduResponse({
-      statusCode: new Uint8Array([0x90, 0x00]),
-      data: new Uint8Array([0x01]),
-    });
-    apiMock.sendCommand.mockResolvedValue(
-      CommandResultFactory({ data: response }),
-    );
+  it("sends the expected trusted-input APDU sequence and returns the last response", async () => {
+    const txBytes = hexToBytes(TRANSPARENT_V5_TX_HEX);
+    const lastResponse = makeSuccessResponse(0x09);
 
-    const task = new GetTrustedInputTask(apiMock as unknown as InternalApi, {
-      transaction: TRANSPARENT_V5_TX,
-      indexLookup: 1,
-    });
-
-    await task.run();
-
-    const rawApdus = apiMock.sendCommand.mock.calls.map(([command]) =>
-      command.getApdu().getRawApdu(),
-    );
-    const expectedLcByChunk = [
-      0x11, 0x25, 0x6f, 0x25, 0x6f, 0x01, 0x09, 0x19, 0x03, 0x09,
-    ];
-
-    expect(rawApdus).toHaveLength(expectedLcByChunk.length);
-
-    rawApdus.forEach((rawApdu, index) => {
-      expect(rawApdu[2]).toBe(index === 0 ? 0x00 : 0x80);
-      expect(rawApdu[4]).toBe(expectedLcByChunk[index]);
-    });
-
-    const firstRawApdu = rawApdus[0];
-    if (!firstRawApdu) {
-      throw new Error("Expected first APDU to be defined");
-    }
-
-    const firstData = Buffer.from(firstRawApdu.slice(5)).toString("hex");
-    expect(firstRawApdu[2]).toBe(0x00);
-    expect(firstData.slice(0, 8)).toBe("00000001");
-    expect(firstData.slice(8)).toBe("050000800a27a726b4d0d6c202");
-  });
-
-  it("returns last command response after sending all chunks", async () => {
-    const firstResponse = new ApduResponse({
-      statusCode: new Uint8Array([0x90, 0x00]),
-      data: new Uint8Array([0x01]),
-    });
-    const finalResponse = new ApduResponse({
-      statusCode: new Uint8Array([0x90, 0x00]),
-      data: new Uint8Array([0x02]),
-    });
-    for (let i = 0; i < 9; i += 1) {
-      apiMock.sendCommand.mockResolvedValueOnce(
-        CommandResultFactory({ data: firstResponse }),
+    EXPECTED_APDUS.forEach((_, index) => {
+      const response =
+        index === EXPECTED_APDUS.length - 1
+          ? lastResponse
+          : makeSuccessResponse(index);
+      vi.mocked(apiMock.sendCommand).mockResolvedValueOnce(
+        CommandResultFactory({ data: response }),
       );
-    }
-    apiMock.sendCommand.mockResolvedValueOnce(
-      CommandResultFactory({ data: finalResponse }),
-    );
-
-    const task = new GetTrustedInputTask(apiMock as unknown as InternalApi, {
-      transaction: TRANSPARENT_V5_TX,
-      indexLookup: 0,
     });
 
-    const result = await task.run();
+    const result = await new GetTrustedInputTask(apiMock, {
+      transaction: txBytes,
+      indexLookup: 1,
+    }).run();
 
-    expect(apiMock.sendCommand).toHaveBeenCalledTimes(10);
-    expect(result).toEqual(CommandResultFactory({ data: finalResponse }));
+    expect(apiMock.sendCommand).toHaveBeenCalledTimes(EXPECTED_APDUS.length);
+    EXPECTED_APDUS.forEach((expectedApduHex, index) => {
+      const command = vi.mocked(apiMock.sendCommand).mock.calls[index]?.[0];
+      expect(command).toBeInstanceOf(GetTrustedInputCommand);
+      const apdu = (command as GetTrustedInputCommand).getApdu().getRawApdu();
+      expect(apdu).toEqual(hexToBytes(expectedApduHex));
+    });
+
+    expect(isSuccessCommandResult(result)).toBe(true);
+    if (isSuccessCommandResult(result)) {
+      expect(result.data).toEqual(lastResponse);
+    }
   });
 
-  it("returns continuation command errors", async () => {
-    const firstResponse = new ApduResponse({
-      statusCode: new Uint8Array([0x90, 0x00]),
-      data: new Uint8Array([0x01]),
-    });
-    const error = new UnknownDeviceExchangeError("send command failed");
-    apiMock.sendCommand
-      .mockResolvedValueOnce(CommandResultFactory({ data: firstResponse }))
-      .mockResolvedValueOnce(CommandResultFactory({ error }));
+  it("returns the first command error without sending remaining chunks", async () => {
+    const txBytes = hexToBytes(TRANSPARENT_V5_TX_HEX);
+    const expectedError = new InvalidStatusWordError("Command failed");
 
-    const task = new GetTrustedInputTask(apiMock as unknown as InternalApi, {
-      transaction: TRANSPARENT_V5_TX,
-      indexLookup: 2,
-    });
+    vi.mocked(apiMock.sendCommand)
+      .mockResolvedValueOnce(
+        CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+      )
+      .mockResolvedValueOnce(CommandResultFactory({ error: expectedError }));
 
-    const result = await task.run();
+    const result = await new GetTrustedInputTask(apiMock, {
+      transaction: txBytes,
+      indexLookup: 1,
+    }).run();
 
     expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
-    expect(result).toEqual(CommandResultFactory({ error }));
+    expect(result).toEqual(CommandResultFactory({ error: expectedError }));
+  });
+
+  it("uses the v4 trailing bytes as the final chunk", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: hexToBytes(V4_NU6_TX_HEX),
+      indexLookup: 1,
+    }).run();
+
+    const sentCommands = vi
+      .mocked(apiMock.sendCommand)
+      .mock.calls.map(([command]) => command as GetTrustedInputCommand);
+
+    const firstChunkData = sentCommands[0]?.getApdu().getRawApdu().slice(5);
+    expect(firstChunkData).toBeDefined();
+    expect(bytesToHex(firstChunkData ?? new Uint8Array())).toBe(
+      "000000010400008085202f89f04dec4d02",
+    );
+
+    const lastChunkData = sentCommands.at(-1)?.getApdu().getRawApdu().slice(5);
+    expect(lastChunkData).toBeDefined();
+    expect(bytesToHex(lastChunkData ?? new Uint8Array())).toBe(
+      "000000000f000000000000000000000000000000000000",
+    );
+  });
+
+  it("throws for malformed transaction input before sending any command", async () => {
+    await expect(
+      new GetTrustedInputTask(apiMock, {
+        transaction: new Uint8Array([0x01, 0x02, 0x03]),
+      }).run(),
+    ).rejects.toThrow(
+      "Malformed transaction while splitting trusted input chunks",
+    );
+
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
   });
 });

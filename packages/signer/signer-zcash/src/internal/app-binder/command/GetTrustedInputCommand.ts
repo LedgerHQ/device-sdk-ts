@@ -30,6 +30,11 @@ export type GetTrustedInputCommandArgs = {
 
 export type GetTrustedInputCommandResponse = ApduResponse;
 
+/**
+ * The length of the prefix for the index lookup in bytes.
+ */
+export const INDEX_LOOKUP_PREFIX_LENGTH = 4;
+
 export class GetTrustedInputCommand
   implements
     Command<
@@ -55,11 +60,17 @@ export class GetTrustedInputCommand
     let data: Uint8Array;
     let firstRound = false;
 
-    if (typeof indexLookup === "number" && indexLookup > 0) {
+    if (typeof indexLookup === "number" && indexLookup >= 0) {
       firstRound = true;
-      const prefix = Buffer.alloc(4);
-      prefix.writeUInt32BE(indexLookup, 0);
-      data = Buffer.concat([prefix, transaction], transaction.length + 4);
+      const prefix = new Uint8Array(INDEX_LOOKUP_PREFIX_LENGTH);
+      new DataView(
+        prefix.buffer,
+        prefix.byteOffset,
+        prefix.byteLength,
+      ).setUint32(0, indexLookup, false);
+      data = new Uint8Array(transaction.length + INDEX_LOOKUP_PREFIX_LENGTH);
+      data.set(prefix, 0);
+      data.set(transaction, INDEX_LOOKUP_PREFIX_LENGTH);
     } else {
       data = transaction;
     }

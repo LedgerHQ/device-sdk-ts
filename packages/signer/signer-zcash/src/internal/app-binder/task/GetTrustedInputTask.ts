@@ -25,6 +25,7 @@ const ORCHARD_ACTION_NON_COMPACT_SIZE = 32 + 32 + 16 + 80;
 const ORCHARD_DIGEST_DATA_SIZE = 1 + 8 + 32;
 const MEMO_CHUNK_SIZE = 128;
 const MEMO_SIZE = 512;
+const TX_VERSION_MASK = 0x7fffffff;
 
 type GetTrustedInputTaskArgs = {
   transaction: Uint8Array;
@@ -166,7 +167,7 @@ const splitTransactionToTrustedInputChunks = (
   transaction: Uint8Array,
 ): Uint8Array[] => {
   const rawVersion = readUInt32LE(transaction, 0);
-  const txVersion = rawVersion & 0x7fffffff;
+  const txVersion = rawVersion & TX_VERSION_MASK;
   const isTxV4 = txVersion === 4;
 
   let offset = 0;
