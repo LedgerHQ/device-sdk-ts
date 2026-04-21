@@ -1,3 +1,5 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
+
 import { DefaultButtonController } from "@internal/adapters/DefaultButtonController";
 import { DefaultTouchController } from "@internal/adapters/DefaultTouchController";
 import type { ButtonController } from "@internal/core/ButtonController";
@@ -15,27 +17,17 @@ export function createDefaultControllers(
   opts: DeviceControllerOptions,
 ): ControllersContainer {
   const timeoutMs = opts.timeoutMs ?? 1500;
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",
-  };
+  const client = new DmkNetworkClient({
+    baseUrl: baseURL,
+    timeoutMs,
+    headers: {
+      "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",
+    },
+  });
 
   const http: HttpClient = {
     async post(url: string, data?: unknown): Promise<unknown> {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-      try {
-        const response = await fetch(`${baseURL}${url}`, {
-          method: "POST",
-          headers,
-          body: data !== undefined ? JSON.stringify(data) : undefined,
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-        return response.json();
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      return client.post(url, data);
     },
   };
 
