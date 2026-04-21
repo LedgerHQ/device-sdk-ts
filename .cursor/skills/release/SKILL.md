@@ -71,26 +71,45 @@ pnpm exec zx .cursor/scripts/release/preflight.cjs
 ### Step 2 -- Discover & confirm
 
 ```bash
-pnpm exec zx .cursor/scripts/release/discover.cjs
+pnpm exec zx .cursor/scripts/release/discover.cjs --packages <PKGS>
 ```
 
-- Parse the JSON output. The script returns `{ releasable, warnings }`.
-- `releasable` is an array of packages that have changesets, each with `name`, `displayName`, `version`, `bump` (highest bump: major > minor > patch), and `changesets` (list of changeset names).
-- Present a **table of all releasable packages** to the user:
+- `--packages` is required. Pass the same comma-separated aliases the user requested (e.g. `signer-sol,signer-eth`).
+- Parse the JSON output. The script returns `{ releasable, selected, warnings }`.
+- Present three sections to the user, in order:
+
+#### a. All releasable packages
+
+`releasable[]` lists every package with pending changesets in the repo. Each entry has `name`, `displayName`, `version`, `bump` (highest of major > minor > patch), and `changesets`.
 
 ```
 | Package | Current version | Bump | Changesets |
 |---------|----------------|------|------------|
-| @ledgerhq/device-signer-kit-ethereum | 1.12.0 | minor | common-bats-fail, plenty-parents-hope |
-| @ledgerhq/signer-utils | 1.1.3 | patch | heavy-apple-write |
+| @ledgerhq/device-signer-kit-ethereum | 1.13.0 | minor | long-flies-try, tidy-onions-flow |
+| @ledgerhq/signer-utils | 1.1.3 | minor | calm-ducks-love |
 ```
 
-- If `warnings` is non-empty, display each warning prominently **below the table**. These warnings flag internal dependencies of a releasable package whose dependency is not itself being released. Example:
+#### b. Packages that will be released in this run
+
+`selected.rows[]` is the exact set that will actually be released, after mirroring `set-private.cjs` major-dep auto-include and `bump.cjs` patch propagation. Columns: `from`, `to`, `bump`, `source` (`requested` or `auto`), `changesets`.
+
+```
+| Package | From | To | Bump | Source | Changesets |
+|---------|------|----|------|--------|------------|
+| @ledgerhq/device-signer-kit-solana | 1.7.1 | 1.8.0 | minor | requested | heavy-mangos-write, itchy-teams-join, ripe-suits-lie |
+```
+
+If `selected.missing` is non-empty, list those packages below the table and note:
+
+> The following requested packages have no pending changesets and will not bump: `<names>`. They will still be marked public by `set-private.cjs`.
+
+#### c. Warnings
+
+If `warnings` is non-empty, display each entry prominently as a blockquote. These flag internal dependencies of a releasable package whose dependency is not itself being released. Example:
 
 > **WARNING:** Signer ETH (@ledgerhq/device-signer-kit-ethereum) depends on Signer Utils (@ledgerhq/signer-utils) as dependency, but Signer Utils has no changesets and will not be released.
 
-- If a requested package has no changesets (not in `releasable`), warn the user explicitly (Bump = "none").
-- **Wait for the user to confirm** before proceeding. Do NOT continue until the user explicitly approves.
+**Wait for the user to confirm** before proceeding. Do NOT continue until the user explicitly approves.
 
 ### Step 3 -- Create release branch
 
