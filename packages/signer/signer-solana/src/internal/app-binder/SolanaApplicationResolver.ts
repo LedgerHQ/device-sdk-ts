@@ -15,7 +15,7 @@ export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 export const SOLANA_APP_SPL_MIN_VERSION = "1.9.2";
 
 export class SolanaApplicationResolver implements ApplicationResolver {
-  resolve(deviceState: DeviceSessionState, _appConfig: AppConfig): ResolvedApp {
+  resolve(deviceState: DeviceSessionState, appConfig: AppConfig): ResolvedApp {
     if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
       return { isCompatible: false, version: DEFAULT_VERSION };
     }
@@ -23,7 +23,15 @@ export class SolanaApplicationResolver implements ApplicationResolver {
     const currentApp = deviceState.currentApp;
     const appName = currentApp?.name;
 
-    if (!appName || appName !== APP_NAME) {
+    if (appName === "Exchange") {
+      return { isCompatible: true, version: appConfig.version };
+    }
+
+    if (!appName) {
+      return { isCompatible: false, version: DEFAULT_VERSION };
+    }
+
+    if (appName !== APP_NAME) {
       return { isCompatible: false, version: DEFAULT_VERSION };
     }
 
