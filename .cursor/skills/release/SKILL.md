@@ -75,8 +75,8 @@ pnpm exec zx .cursor/scripts/release/discover.cjs --packages <PKGS>
 ```
 
 - `--packages` is required. Pass the same comma-separated aliases the user requested (e.g. `signer-sol,signer-eth`).
-- Parse the JSON output. The script returns `{ releasable, selected, warnings }`.
-- Present three sections to the user, in order:
+- Parse the JSON output. The script returns `{ releasable, selected }`.
+- Present two sections to the user, in order:
 
 #### a. All releasable packages
 
@@ -91,23 +91,25 @@ pnpm exec zx .cursor/scripts/release/discover.cjs --packages <PKGS>
 
 #### b. Packages that will be released in this run
 
-`selected.rows[]` is the exact set that will actually be released, after mirroring `set-private.cjs` major-dep auto-include and `bump.cjs` patch propagation. Columns: `from`, `to`, `bump`, `source` (`requested` or `auto`), `changesets`.
+`selected[]` is the intersection of `releasable` and the requested aliases. Each row has `from`, `to`, `bump`, `changesets`, and `depsNotReleased` (workspace deps of this package that are NOT in the selected set).
 
 ```
-| Package | From | To | Bump | Source | Changesets |
-|---------|------|----|------|--------|------------|
-| @ledgerhq/device-signer-kit-solana | 1.7.1 | 1.8.0 | minor | requested | heavy-mangos-write, itchy-teams-join, ripe-suits-lie |
+| Package | From | To | Bump | Changesets |
+|---------|------|----|------|------------|
+| @ledgerhq/device-signer-kit-solana | 1.7.1 | 1.8.0 | minor | heavy-mangos-write, itchy-teams-join, ripe-suits-lie |
 ```
 
-If `selected.missing` is non-empty, list those packages below the table and note:
+For each row where `depsNotReleased` is non-empty, add a sub-bullet block immediately below it:
 
-> The following requested packages have no pending changesets and will not bump: `<names>`. They will still be marked public by `set-private.cjs`.
+> **Signer SOL** has workspace deps that are NOT in this release:
+>
+> - @ledgerhq/context-module (dependency)
+> - @ledgerhq/signer-utils (dependency)
+> - @ledgerhq/device-management-kit (peerDependency)
 
-#### c. Warnings
+These deps will be pinned by `pin-deps.cjs` to their currently-published versions — confirm with the user that this is intended.
 
-If `warnings` is non-empty, display each entry prominently as a blockquote. These flag internal dependencies of a releasable package whose dependency is not itself being released. Example:
-
-> **WARNING:** Signer ETH (@ledgerhq/device-signer-kit-ethereum) depends on Signer Utils (@ledgerhq/signer-utils) as dependency, but Signer Utils has no changesets and will not be released.
+After the table, diff the requested aliases against `selected[].name`. If any requested package did not appear in `selected`, tell the user it has no pending changesets and will be skipped.
 
 **Wait for the user to confirm** before proceeding. Do NOT continue until the user explicitly approves.
 
