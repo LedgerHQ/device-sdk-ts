@@ -1,0 +1,48 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "1inch Aggregation Router",
+        "version": "6",
+        "chainId": 42161,
+        "verifyingContract": "0x111111125421cA6dc452d289314280a0f8842A65"
+      },
+      "primaryType": "Order",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Order": [
+          { "name": "salt", "type": "uint256" },
+          { "name": "maker", "type": "address" },
+          { "name": "receiver", "type": "address" },
+          { "name": "makerAsset", "type": "address" },
+          { "name": "takerAsset", "type": "address" },
+          { "name": "makingAmount", "type": "uint256" },
+          { "name": "takingAmount", "type": "uint256" },
+          { "name": "makerTraits", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "salt": "33701747987788180205607851658196705996806414743713980987838977684301260983342",
+        "maker": "0xf7c69bedb292dd3fc2ca4103989b5bd705164c43",
+        "receiver": "0x0000000000000000000000000000000000000000",
+        "makerAsset": "0x912ce59144191c1204e64559fe8253a0e49e6548",
+        "takerAsset": "0x82af49447d8a07e3bd95bd0d56f35241523fbab1",
+        "makingAmount": "5000000000000000000",
+        "takingAmount": "220288120341122",
+        "makerTraits": "62645329528782394789705396186445553993652106103215206451959675861442112782336"
+      }
+    },
+    "description": "Gating screen — 1inch limit order 5 ARB → ETH (Arbitrum)",
+    "expectedTexts": [
+      "There is a safer way to sign",
+      "1inch",
+      "Ledger Wallet",
+      "Learn more"
+    ]
+  }
+]
