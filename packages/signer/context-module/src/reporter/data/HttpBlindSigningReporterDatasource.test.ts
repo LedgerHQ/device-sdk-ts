@@ -92,7 +92,9 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        `${config.reporter!.url}/blind-signing-events`,
+        expect.objectContaining({
+          href: `${config.reporter!.url}/blind-signing-events`,
+        }),
         expect.objectContaining({ method: "POST" }),
       );
     });
@@ -109,7 +111,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.any(URL),
         expect.objectContaining({
           headers: expect.objectContaining({
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
@@ -131,7 +133,7 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.any(URL),
         expect.objectContaining({
           body: JSON.stringify({ ...params, source: config.appSource }),
         }),

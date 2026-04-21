@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -17,10 +18,21 @@ import {
 } from "./SafeAccountDataSource";
 
 export class HttpSafeAccountDataSource implements SafeAccountDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   async getDescriptors({
     safeContractAddress,
@@ -28,22 +40,10 @@ export class HttpSafeAccountDataSource implements SafeAccountDataSource {
     challenge,
   }: GetSafeAccountParams): Promise<Either<Error, GetSafeAccountResponse>> {
     try {
-      const url = new URL(
+      const data = (await this.http.get(
         `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/safe/account/${safeContractAddress}`,
-      );
-      url.searchParams.set("challenge", challenge);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          ...(this.config.originToken && {
-            [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-          }),
-        },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as SafeAccountDto;
+        { params: { challenge } },
+      )) as SafeAccountDto;
 
       if (!data) {
         return Left(

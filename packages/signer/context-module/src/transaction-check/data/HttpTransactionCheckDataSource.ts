@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -17,10 +18,21 @@ import {
 
 @injectable()
 export class HttpTransactionCheckDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   public async getTransactionCheck({
     chainId,
@@ -37,24 +49,10 @@ export class HttpTransactionCheckDataSource {
     };
 
     try {
-      const response = await fetch(
+      transactionCheckDto = (await this.http.post(
         `${this.config.web3checks.url}/ethereum/scan/tx`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-            }),
-          },
-          body: JSON.stringify(requestDto),
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      transactionCheckDto = (await response.json()) as TransactionCheckDto;
+        requestDto,
+      )) as TransactionCheckDto;
     } catch (_error) {
       return Left(
         new Error(

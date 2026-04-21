@@ -55,8 +55,10 @@ describe("HttpProxyDataSource", () => {
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        `${config.metadataServiceDomain.url}/v2/ethereum/${validParams.chainId}/contract/proxy/delegate`,
-        {
+        expect.objectContaining({
+          href: `${config.metadataServiceDomain.url}/v2/ethereum/${validParams.chainId}/contract/proxy/delegate`,
+        }),
+        expect.objectContaining({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -68,7 +70,7 @@ describe("HttpProxyDataSource", () => {
             data: validParams.calldata,
             challenge: validParams.challenge,
           }),
-        },
+        }),
       );
     });
 
@@ -140,10 +142,7 @@ describe("HttpProxyDataSource", () => {
 
     it("should return Left with error when response data is undefined", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(undefined),
-      } as Response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(""));
 
       // WHEN
       const result =
@@ -332,7 +331,9 @@ describe("HttpProxyDataSource", () => {
       // THEN
       expect(result.isRight()).toBe(true);
       expect(fetchSpy).toHaveBeenCalledWith(
-        `${config.metadataServiceDomain.url}/v2/ethereum/137/contract/proxy/delegate`,
+        expect.objectContaining({
+          href: `${config.metadataServiceDomain.url}/v2/ethereum/137/contract/proxy/delegate`,
+        }),
         expect.anything(),
       );
     });

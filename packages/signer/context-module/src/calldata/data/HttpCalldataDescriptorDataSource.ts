@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -53,13 +54,24 @@ import {
 export class HttpCalldataDescriptorDataSource
   implements CalldataDescriptorDataSource
 {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
     private readonly endpoint: string,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   public async getCalldataDescriptors({
     chainId,
@@ -71,24 +83,15 @@ export class HttpCalldataDescriptorDataSource
   > {
     let dto: CalldataDto[] | undefined;
     try {
-      const url = new URL(`${this.config.cal.url}/${this.endpoint}`);
-      url.searchParams.set("output", "descriptors_calldata");
-      url.searchParams.set("chain_id", String(chainId));
-      url.searchParams.set("contracts", address);
-      url.searchParams.set("contract_address", address);
-      url.searchParams.set("ref", `branch:${this.config.cal.branch}`);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          ...(this.config.originToken && {
-            [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-          }),
+      dto = (await this.http.get(`${this.config.cal.url}/${this.endpoint}`, {
+        params: {
+          output: "descriptors_calldata",
+          chain_id: chainId,
+          contracts: address,
+          contract_address: address,
+          ref: `branch:${this.config.cal.branch}`,
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      dto = (await response.json()) as CalldataDto[];
+      })) as CalldataDto[];
     } catch (error) {
       return Left(
         new Error(

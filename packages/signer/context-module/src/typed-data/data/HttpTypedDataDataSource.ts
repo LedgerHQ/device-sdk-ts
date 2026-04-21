@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -40,10 +41,21 @@ import {
 
 @injectable()
 export class HttpTypedDataDataSource implements TypedDataDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   public async getTypedDataFilters({
     chainId,
@@ -56,25 +68,16 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     let messageInfo: TypedDataMessageInfo | undefined = undefined;
 
     try {
-      const url = new URL(`${this.config.cal.url}/dapps`);
-      url.searchParams.set("contracts", address);
-      url.searchParams.set("chain_id", String(chainId));
-      url.searchParams.set("output", "descriptors_eip712");
-      url.searchParams.set("descriptors_eip712_version", version);
-      url.searchParams.set("descriptors_eip712", "<set>");
-      url.searchParams.set("ref", `branch:${this.config.cal.branch}`);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          ...(this.config.originToken && {
-            [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-          }),
+      const data = (await this.http.get(`${this.config.cal.url}/dapps`, {
+        params: {
+          contracts: address,
+          chain_id: chainId,
+          output: "descriptors_eip712",
+          descriptors_eip712_version: version,
+          descriptors_eip712: "<set>",
+          ref: `branch:${this.config.cal.branch}`,
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as FiltersDto[];
+      })) as FiltersDto[];
 
       const schemaHash = getSchemaHash(schema);
       address = address.toLowerCase();

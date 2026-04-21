@@ -1,4 +1,7 @@
-import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -21,6 +24,8 @@ import {
 
 @injectable()
 export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
@@ -30,6 +35,12 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
         "[ContextModule] - HttpSolanaOwnerInfoDataSource: origin token is required",
       );
     }
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      },
+    });
   }
 
   private isSolanaSPLOwnerInfo(data: {
@@ -52,21 +63,10 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     challenge: string,
   ): Promise<Either<Error, SolanaSPLOwnerInfo>> {
     try {
-      const response = await fetch(
-        `${this.config.metadataServiceDomain.url}/v2/solana/owner/${tokenAddress}?challenge=${challenge}`,
-        {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-            }),
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as SolanaSPLOwnerInfo;
+      const data = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v2/solana/owner/${tokenAddress}`,
+        { params: { challenge } },
+      )) as SolanaSPLOwnerInfo;
       if (!this.isSolanaSPLOwnerInfo(data))
         return Left(
           new Error(
@@ -89,21 +89,10 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     challenge: string,
   ): Promise<Either<Error, SolanaSPLOwnerInfo>> {
     try {
-      const response = await fetch(
-        `${this.config.metadataServiceDomain.url}/v2/solana/computed-token-account/${address}/${mintAddress}?challenge=${challenge}`,
-        {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              "X-Ledger-Client-Origin": this.config.originToken,
-            }),
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as SolanaSPLOwnerInfo;
+      const data = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v2/solana/computed-token-account/${address}/${mintAddress}`,
+        { params: { challenge } },
+      )) as SolanaSPLOwnerInfo;
       if (!this.isSolanaSPLOwnerInfo(data))
         return Left(
           new Error(

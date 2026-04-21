@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -11,29 +12,32 @@ import { TokenDto } from "./TokenDto";
 
 @injectable()
 export class HttpTokenDataSource implements TokenDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      },
+    });
+  }
+
   public async getTokenInfosPayload({
     chainId,
     address,
   }: GetTokenInfosParams): Promise<Either<Error, string>> {
     try {
-      const url = new URL(`${this.config.cal.url}/tokens`);
-      url.searchParams.set("contract_address", address);
-      url.searchParams.set("chain_id", String(chainId));
-      url.searchParams.set("output", "descriptor");
-      url.searchParams.set("ref", `branch:${this.config.cal.branch}`);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      const data = (await this.http.get(`${this.config.cal.url}/tokens`, {
+        params: {
+          contract_address: address,
+          chain_id: chainId,
+          output: "descriptor",
+          ref: `branch:${this.config.cal.branch}`,
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as TokenDto[];
+      })) as TokenDto[];
       const tokenInfos = data?.[0];
 
       if (

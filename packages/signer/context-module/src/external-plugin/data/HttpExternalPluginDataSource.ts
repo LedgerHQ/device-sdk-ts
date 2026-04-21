@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -18,10 +19,21 @@ import PACKAGE from "@root/package.json";
 
 @injectable()
 export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   async getDappInfos({
     chainId,
@@ -29,22 +41,13 @@ export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
     selector,
   }: GetDappInfos): Promise<Either<Error, DappInfos | undefined>> {
     try {
-      const url = new URL(`${this.config.cal.url}/dapps`);
-      url.searchParams.set("output", "b2c,b2c_signatures,abis");
-      url.searchParams.set("chain_id", String(chainId));
-      url.searchParams.set("contracts", address);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          ...(this.config.originToken && {
-            [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-          }),
+      const dappInfos = (await this.http.get(`${this.config.cal.url}/dapps`, {
+        params: {
+          output: "b2c,b2c_signatures,abis",
+          chain_id: chainId,
+          contracts: address,
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const dappInfos = (await response.json()) as DAppDto[];
+      })) as DAppDto[];
 
       if (!dappInfos[0]) {
         return Right(undefined);

@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -20,10 +21,21 @@ import {
 
 @injectable()
 export class HttpProxyDataSource implements ProxyDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   async getProxyImplementationAddress({
     proxyAddress,
@@ -35,28 +47,14 @@ export class HttpProxyDataSource implements ProxyDataSource {
   > {
     let dto: ProxyDelegateCallDto | undefined;
     try {
-      const response = await fetch(
+      dto = (await this.http.post(
         `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/delegate`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-            }),
-          },
-          body: JSON.stringify({
-            proxy: proxyAddress,
-            data: calldata,
-            challenge,
-          }),
+          proxy: proxyAddress,
+          data: calldata,
+          challenge,
         },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      dto = (await response.json()) as ProxyDelegateCallDto;
+      )) as ProxyDelegateCallDto;
     } catch (_error) {
       return Left(
         new Error(

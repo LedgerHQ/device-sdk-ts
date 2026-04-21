@@ -13,7 +13,7 @@ import PACKAGE from "@root/package.json";
 describe("HttpTransactionCheckDataSource", () => {
   const config = {
     web3checks: {
-      url: "web3checksUrl",
+      url: "https://web3checks.test",
     },
     originToken: "originToken",
   } as ContextModuleServiceConfig;
@@ -173,7 +173,7 @@ describe("HttpTransactionCheckDataSource", () => {
 
       // THEN
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.any(URL),
         expect.objectContaining({
           headers: expect.objectContaining({
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
@@ -200,7 +200,9 @@ describe("HttpTransactionCheckDataSource", () => {
 
       // THEN
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        `${config.web3checks.url}/ethereum/scan/tx`,
+        expect.objectContaining({
+          href: `${config.web3checks.url}/ethereum/scan/tx`,
+        }),
         expect.objectContaining({
           method: "POST",
         }),
@@ -224,7 +226,7 @@ describe("HttpTransactionCheckDataSource", () => {
 
       // THEN
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.any(String),
+        expect.any(URL),
         expect.objectContaining({
           body: JSON.stringify({
             tx: {

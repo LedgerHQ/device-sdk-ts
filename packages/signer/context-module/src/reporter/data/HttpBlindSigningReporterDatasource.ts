@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -18,28 +19,27 @@ import {
 export class HttpBlindSigningReporterDatasource
   implements BlindSigningReporterDatasource
 {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      },
+    });
+  }
 
   async report(params: BlindSigningReportParams): Promise<Either<Error, void>> {
     try {
-      const response = await fetch(
+      await this.http.post(
         `${this.config.reporter.url}/blind-signing-events`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-          },
-          body: JSON.stringify({ ...params, source: this.config.appSource }),
-        },
+        { ...params, source: this.config.appSource },
+        { responseType: "void" },
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
     } catch (_error) {
       return Left(
         new Error(

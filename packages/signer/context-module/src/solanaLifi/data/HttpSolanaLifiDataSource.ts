@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -16,6 +19,7 @@ import {
 @injectable()
 export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
   private logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     @inject(configTypes.Config)
@@ -24,6 +28,11 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.logger = loggerFactory("HttpSolanaLifiDataSource");
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      },
+    });
   }
 
   public async getTransactionDescriptorsPayload({
@@ -39,25 +48,18 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
     );
 
     try {
-      const url = new URL(`${this.config.cal.url}/swap_templates`);
-      url.searchParams.set("template_id", templateId);
-      url.searchParams.set("output", "id,chain_id,instructions,descriptors");
-      // TODO LIFI
-      // REVERT WHEN CAL SUPPORTS IT
-      url.searchParams.set(
-        "ref",
-        "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
-      );
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      const data = (await this.http.get(
+        `${this.config.cal.url}/swap_templates`,
+        {
+          params: {
+            template_id: templateId,
+            output: "id,chain_id,instructions,descriptors",
+            // TODO LIFI
+            // REVERT WHEN CAL SUPPORTS IT
+            ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
+          },
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data =
-        (await response.json()) as GetTransactionDescriptorsResponse[];
+      )) as GetTransactionDescriptorsResponse[];
 
       this.logger.debug(
         "[getTransactionDescriptorsPayload] Received response",

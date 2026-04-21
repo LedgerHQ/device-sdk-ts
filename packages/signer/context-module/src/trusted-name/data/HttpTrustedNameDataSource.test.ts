@@ -45,7 +45,9 @@ describe("HttpTrustedNameDataSource", () => {
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
+        expect.objectContaining({
+          href: `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
+        }),
         expect.objectContaining({
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: version,
@@ -147,7 +149,9 @@ describe("HttpTrustedNameDataSource", () => {
 
       // THEN
       expect(fetchSpy).toHaveBeenCalledWith(
-        `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens,crypto_asset_list&challenge=5678`,
+        expect.objectContaining({
+          href: `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens%2Ccrypto_asset_list&challenge=5678`,
+        }),
         expect.objectContaining({
           headers: {
             [LEDGER_CLIENT_VERSION_HEADER]: version,

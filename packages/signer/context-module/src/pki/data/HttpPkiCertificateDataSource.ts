@@ -1,4 +1,7 @@
-import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -23,10 +26,18 @@ import {
 
 @injectable()
 export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      },
+    });
+  }
 
   async fetchCertificate(
     pkiCertificateInfo: PkiCertificateInfo,
@@ -40,21 +51,15 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
     };
 
     try {
-      const url = new URL(`${this.config.cal.url}/certificates`);
-      url.searchParams.set("output", requestDto.output);
-      url.searchParams.set("target_device", requestDto.target_device);
-      url.searchParams.set("latest", String(requestDto.latest));
-      url.searchParams.set("public_key_id", String(requestDto.public_key_id));
-      url.searchParams.set("public_key_usage", requestDto.public_key_usage);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      const data = (await this.http.get(`${this.config.cal.url}/certificates`, {
+        params: {
+          output: requestDto.output,
+          target_device: requestDto.target_device,
+          latest: requestDto.latest,
+          public_key_id: requestDto.public_key_id,
+          public_key_usage: requestDto.public_key_usage,
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as PkiCertificateResponseDto[];
+      })) as PkiCertificateResponseDto[];
 
       if (
         data !== undefined &&

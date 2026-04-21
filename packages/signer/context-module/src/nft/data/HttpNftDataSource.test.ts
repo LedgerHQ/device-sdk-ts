@@ -43,7 +43,7 @@ describe("HttpNftDataSource", () => {
     // THEN
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       1,
-      expect.any(String),
+      expect.any(URL),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: version,
@@ -53,7 +53,7 @@ describe("HttpNftDataSource", () => {
     );
     expect(globalThis.fetch).toHaveBeenNthCalledWith(
       2,
-      expect.any(String),
+      expect.any(URL),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: version,

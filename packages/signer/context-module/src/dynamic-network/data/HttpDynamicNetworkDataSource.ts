@@ -1,4 +1,7 @@
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import {
+  DeviceModelId,
+  DmkNetworkClient,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -26,10 +29,18 @@ const LOWERCASE_KEY_TO_DEVICE_MODEL_ID: Record<string, DeviceModelId> = {
 
 @injectable()
 export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      },
+    });
+  }
 
   async getDynamicNetworkConfiguration(
     chainId: number,
@@ -37,22 +48,16 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
     let response: DynamicNetworkApiResponseDto;
 
     try {
-      const fetchResponse = await fetch(
-        `${this.config.cal.url}/networks?output=id,descriptors,icons&chain_id=${chainId}`,
-        {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          },
+      response = (await this.http.get(`${this.config.cal.url}/networks`, {
+        params: {
+          output: "id,descriptors,icons",
+          chain_id: chainId,
         },
-      );
-      if (!fetchResponse.ok) {
-        throw new Error(`HTTP error ${fetchResponse.status}`);
-      }
-      response = (await fetchResponse.json()) as DynamicNetworkApiResponseDto;
+      })) as DynamicNetworkApiResponseDto;
     } catch (error) {
       return Left(
         error instanceof Error
-          ? error
+          ? new Error(error.message)
           : new Error("Failed to fetch network configuration"),
       );
     }

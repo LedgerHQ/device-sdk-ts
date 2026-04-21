@@ -60,12 +60,15 @@ describe("HttpSafeAccountDataSource", () => {
       expect(calledUrl).toBe(
         "https://metadata.ledger.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890?challenge=0xabcdef",
       );
-      expect(fetchSpy.mock.calls[0]![1]).toEqual({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
-        },
-      });
+      expect(fetchSpy.mock.calls[0]![1]).toEqual(
+        expect.objectContaining({
+          method: "GET",
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
+          },
+        }),
+      );
       expect(result).toEqual(
         Right({
           account: {
@@ -175,10 +178,7 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(undefined),
-      } as Response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(""));
 
       // WHEN
       const result = await new HttpSafeAccountDataSource(config).getDescriptors(

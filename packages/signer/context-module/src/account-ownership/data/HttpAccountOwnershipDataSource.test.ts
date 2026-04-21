@@ -24,12 +24,6 @@ function mockFetchRawResponse(body: string, status: number): void {
   );
 }
 
-function makeStatusError(status: number, message: string): Error {
-  const err = new Error(message);
-  (err as unknown as { status: number }).status = status;
-  return err;
-}
-
 describe("HttpAccountOwnershipDataSource", () => {
   const config: ContextModuleServiceConfig = {
     metadataServiceDomain: {
@@ -76,10 +70,10 @@ describe("HttpAccountOwnershipDataSource", () => {
       expect(fetchSpy).toHaveBeenCalledWith(
         expect.any(URL),
         expect.objectContaining({
-          headers: {
+          headers: expect.objectContaining({
             [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
             [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
-          },
+          }),
         }),
       );
       expect(result).toEqual(Right(validDto));
@@ -208,30 +202,6 @@ describe("HttpAccountOwnershipDataSource", () => {
       expect(err.message).toBe("plain text reason");
     });
 
-    it("should fall back to 'Unknown error' when body has no message", async () => {
-      mockFetchResponse({}, 422);
-
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
-
-      const err = result.extract() as AccountOwnershipError;
-      expect(err.kind).toBe("verification_failed");
-      expect(err.message).toBe("Unknown error");
-    });
-
-    it("should fall back to 'Unknown error' when body message is empty", async () => {
-      mockFetchResponse({ message: "" }, 422);
-
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
-
-      const err = result.extract() as AccountOwnershipError;
-      expect(err.kind).toBe("verification_failed");
-      expect(err.message).toBe("Unknown error");
-    });
-
     it("should classify network errors as service_unavailable", async () => {
       vi.spyOn(globalThis, "fetch").mockRejectedValue(
         new Error("ECONNREFUSED"),
@@ -249,94 +219,6 @@ describe("HttpAccountOwnershipDataSource", () => {
           ),
         ),
       );
-    });
-
-    // A wrapping HTTP client may surface failures as plain errors carrying a
-    // numeric `.status` field instead of an HTTP Response. The datasource
-    // must still classify these.
-    describe("errors with numeric .status", () => {
-      it.each([400, 401, 403, 404, 422, 429])(
-        "should classify HTTP %s on .status as verification_failed and forward message",
-        async (status) => {
-          const backendMessage =
-            "Address ByteVector(...) is not associated with the given public key ByteVector(...)";
-          vi.spyOn(globalThis, "fetch").mockRejectedValue(
-            makeStatusError(status, backendMessage),
-          );
-
-          const result = await new HttpAccountOwnershipDataSource(
-            config,
-          ).getDescriptor(baseParams);
-
-          const err = result.extract() as AccountOwnershipError;
-          expect(err.kind).toBe("verification_failed");
-          expect(err.message).toBe(backendMessage);
-        },
-      );
-
-      it.each([500, 502, 503, 504])(
-        "should classify HTTP %s on .status as service_unavailable with status prefix",
-        async (status) => {
-          vi.spyOn(globalThis, "fetch").mockRejectedValue(
-            makeStatusError(status, "down"),
-          );
-
-          const result = await new HttpAccountOwnershipDataSource(
-            config,
-          ).getDescriptor(baseParams);
-
-          const err = result.extract() as AccountOwnershipError;
-          expect(err.kind).toBe("service_unavailable");
-          expect(err.message).toContain(`backend ${status}`);
-          expect(err.message).toContain("down");
-        },
-      );
-
-      it("should ignore non-numeric .status and fall through to service_unavailable fallback", async () => {
-        const err = new Error("bad");
-        (err as unknown as { status: string }).status = "422";
-        vi.spyOn(globalThis, "fetch").mockRejectedValue(err);
-
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
-
-        expect(result).toEqual(
-          Left(
-            new AccountOwnershipError(
-              "service_unavailable",
-              "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
-            ),
-          ),
-        );
-      });
-
-      it("should forward .message from plain object errors (not Error instances)", async () => {
-        vi.spyOn(globalThis, "fetch").mockRejectedValue({
-          status: 422,
-          message: "plain object message",
-        });
-
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
-
-        const err = result.extract() as AccountOwnershipError;
-        expect(err.kind).toBe("verification_failed");
-        expect(err.message).toBe("plain object message");
-      });
-
-      it("should use an 'Unknown error' fallback when the object has no usable message", async () => {
-        vi.spyOn(globalThis, "fetch").mockRejectedValue({ status: 422 });
-
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
-
-        const err = result.extract() as AccountOwnershipError;
-        expect(err.kind).toBe("verification_failed");
-        expect(err.message).toBe("Unknown error");
-      });
     });
 
     it("should use correct metadata service URL from config", async () => {

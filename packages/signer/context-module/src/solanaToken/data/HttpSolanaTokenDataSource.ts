@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -14,30 +15,31 @@ import {
 
 @injectable()
 export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      },
+    });
+  }
+
   public async getTokenInfosPayload({
     tokenInternalId,
   }: GetSolanaTokenInfosParams): Promise<Either<Error, TokenDataResponse>> {
     try {
-      const url = new URL(`${this.config.cal.url}/tokens`);
-      url.searchParams.set("id", tokenInternalId);
-      url.searchParams.set(
-        "output",
-        "id,name,network,network_family,network_type,exchange_app_config_serialized,live_signature,ticker,decimals,blockchain_name,chain_id,contract_address,descriptor,descriptor_exchange_app,units,symbol",
-      );
-      url.searchParams.set("ref", `branch:${this.config.cal.branch}`);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      const data = (await this.http.get(`${this.config.cal.url}/tokens`, {
+        params: {
+          id: tokenInternalId,
+          output:
+            "id,name,network,network_family,network_type,exchange_app_config_serialized,live_signature,ticker,decimals,blockchain_name,chain_id,contract_address,descriptor,descriptor_exchange_app,units,symbol",
+          ref: `branch:${this.config.cal.branch}`,
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as TokenDataResponse[];
+      })) as TokenDataResponse[];
 
       if (!data || data.length === 0 || !data[0]) {
         return Left(

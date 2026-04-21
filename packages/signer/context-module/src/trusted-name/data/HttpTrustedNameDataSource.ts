@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -19,10 +20,21 @@ import { TrustedNameDto } from "./TrustedNameDto";
 
 @injectable()
 export class HttpTrustedNameDataSource implements TrustedNameDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   public async getDomainNamePayload({
     chainId,
@@ -33,21 +45,12 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
     try {
       const type = "eoa"; // Externally owned account
       const source = "ens"; // Ethereum name service
-      const response = await fetch(
-        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
+      dto = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/forward/${domain}`,
         {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-            }),
-          },
+          params: { types: type, sources: source, challenge },
         },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      dto = (await response.json()) as TrustedNameDto;
+      )) as TrustedNameDto;
     } catch (_error) {
       return Left(
         new Error(
@@ -94,21 +97,16 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
       sources = sources.filter(
         (source) => source === "ens" || source === "crypto_asset_list",
       );
-      const response = await fetch(
-        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
+      dto = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/reverse/${address}`,
         {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-            }),
+          params: {
+            types: types.join(","),
+            sources: sources.join(","),
+            challenge,
           },
         },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      dto = (await response.json()) as TrustedNameDto;
+      )) as TrustedNameDto;
     } catch (_error) {
       return Left(
         new Error(

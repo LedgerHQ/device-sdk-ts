@@ -58,7 +58,9 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "https://crypto-assets-service.api.ledger.com/networks?output=id,descriptors,icons&chain_id=1",
+        expect.objectContaining({
+          href: "https://crypto-assets-service.api.ledger.com/networks?output=id%2Cdescriptors%2Cicons&chain_id=1",
+        }),
         expect.objectContaining({
           headers: expect.any(Object) as Record<string, string>,
         }),
@@ -130,9 +132,7 @@ describe("HttpNetworkDataSource", () => {
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
-      expect(result).toEqual(
-        Left(new Error("Failed to fetch network configuration")),
-      );
+      expect(result).toEqual(Left(new Error("Network request failed")));
     });
 
     it("should handle invalid data - missing id", async () => {
@@ -309,7 +309,9 @@ describe("HttpNetworkDataSource", () => {
       const result = await datasource.getDynamicNetworkConfiguration(137);
 
       expect(globalThis.fetch).toHaveBeenCalledWith(
-        "https://crypto-assets-service.api.ledger.com/networks?output=id,descriptors,icons&chain_id=137",
+        expect.objectContaining({
+          href: "https://crypto-assets-service.api.ledger.com/networks?output=id%2Cdescriptors%2Cicons&chain_id=137",
+        }),
         expect.objectContaining({
           headers: expect.any(Object) as Record<string, string>,
         }),

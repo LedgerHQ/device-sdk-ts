@@ -209,7 +209,7 @@ describe("HttpGatedDescriptorDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpGatedDescriptorDataSource: Failed to fetch gated descriptors: Error: Network error",
+            "[ContextModule] HttpGatedDescriptorDataSource: Failed to fetch gated descriptors: DmkNetworkClientError: Network error",
           ),
         ),
       );
@@ -536,7 +536,7 @@ describe("HttpGatedDescriptorDataSource", () => {
       expect(result).toEqual(
         Left(
           new Error(
-            "[ContextModule] HttpGatedDescriptorDataSource: Failed to fetch gated descriptors: Error: Network error",
+            "[ContextModule] HttpGatedDescriptorDataSource: Failed to fetch gated descriptors: DmkNetworkClientError: Network error",
           ),
         ),
       );

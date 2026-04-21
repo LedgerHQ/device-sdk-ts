@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -16,10 +17,21 @@ import PACKAGE from "@root/package.json";
 
 @injectable()
 export class HttpNftDataSource implements NftDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   public async getSetPluginPayload({
     chainId,
@@ -27,21 +39,9 @@ export class HttpNftDataSource implements NftDataSource {
     selector,
   }: GetSetPluginPayloadParams): Promise<Either<Error, string>> {
     try {
-      const response = await fetch(
+      const data = (await this.http.get(
         `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contracts/${address}/plugin-selector/${selector}`,
-        {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-            }),
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as { payload: string };
+      )) as { payload: string };
 
       return data.payload
         ? Right(data.payload)
@@ -64,21 +64,9 @@ export class HttpNftDataSource implements NftDataSource {
     address,
   }: GetNftInformationsParams): Promise<Either<Error, string>> {
     try {
-      const response = await fetch(
+      const data = (await this.http.get(
         `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contracts/${address}`,
-        {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            ...(this.config.originToken && {
-              [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-            }),
-          },
-        },
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      const data = (await response.json()) as { payload: string };
+      )) as { payload: string };
 
       return data.payload
         ? Right(data.payload)

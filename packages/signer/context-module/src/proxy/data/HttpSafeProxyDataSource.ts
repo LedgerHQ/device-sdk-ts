@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -18,10 +19,21 @@ import {
 
 @injectable()
 export class HttpSafeProxyDataSource implements ProxyDataSource {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
+      },
+    });
+  }
 
   async getProxyImplementationAddress({
     proxyAddress,
@@ -32,23 +44,15 @@ export class HttpSafeProxyDataSource implements ProxyDataSource {
   > {
     let dto: SafeProxyImplementationAddressDto | undefined;
     try {
-      const url = new URL(
+      dto = (await this.http.get(
         `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
-      );
-      url.searchParams.set("challenge", challenge);
-      url.searchParams.set("resolver", "SAFE_GATEWAY");
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          ...(this.config.originToken && {
-            [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-          }),
+        {
+          params: {
+            challenge,
+            resolver: "SAFE_GATEWAY",
+          },
         },
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error ${response.status}`);
-      }
-      dto = (await response.json()) as SafeProxyImplementationAddressDto;
+      )) as SafeProxyImplementationAddressDto;
     } catch (_error) {
       return Left(
         new Error(

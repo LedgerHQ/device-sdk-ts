@@ -432,7 +432,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpCalldataDescriptorDataSource: Failed to fetch calldata descriptors: Error",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Failed to fetch calldata descriptors: DmkNetworkClientError",
         ),
       ),
     );

@@ -225,7 +225,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     await dataSource.getOwnerInfo(context);
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      expect.any(String),
+      expect.any(URL),
       expect.objectContaining({
         headers: {
           [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,

@@ -1,3 +1,4 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -20,10 +21,19 @@ import PACKAGE from "@root/package.json";
 export class HttpAccountOwnershipDataSource
   implements AccountOwnershipDataSource
 {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+  ) {
+    this.http = new DmkNetworkClient({
+      headers: {
+        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      },
+    });
+  }
 
   async getDescriptor({
     publicKey,
@@ -34,22 +44,12 @@ export class HttpAccountOwnershipDataSource
     Either<Error, AccountOwnershipDescriptor>
   > {
     try {
-      const url = new URL(
+      const data = (await this.http.get(
         `${this.config.metadataServiceDomain.url}/v2/concordium/owner/${publicKey}/${address}`,
-      );
-      url.searchParams.set("challenge", challenge);
-      url.searchParams.set("network", network);
-      const response = await fetch(url, {
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        {
+          params: { challenge, network },
         },
-      });
-      if (!response.ok) {
-        const message = await this.readErrorMessage(response);
-        throw Object.assign(new Error(message), { status: response.status });
-      }
-      const data = (await response.json()) as AccountOwnershipDto | null;
+      )) as AccountOwnershipDto | null;
 
       if (!data) {
         return Left(
@@ -85,11 +85,12 @@ export class HttpAccountOwnershipDataSource
    * as `verification_failed`; everything else (network failure, 5xx,
    * unrecognized errors) is marked as `service_unavailable`.
    *
-   * Errors with a numeric `.status` field are treated as HTTP-shaped failures
-   * (thrown above when the fetch response is not ok, or surfaced by a
-   * wrapping client that preserves the HTTP status on a top-level `.status`
-   * field). Anything else falls through to the canonical
-   * `service_unavailable` message.
+   * Errors with a numeric `.status` field are treated as HTTP-shaped
+   * failures. `DmkNetworkClientError` exposes `.status` and a raw
+   * `.responseBody` string; the backend's human-readable message is
+   * extracted from the error's own `.message` first, then from the JSON
+   * body on `.responseBody`, and finally from the raw body as a
+   * last resort.
    */
   private classifyError(error: unknown): AccountOwnershipError {
     if (this.hasNumericStatus(error)) {
@@ -136,19 +137,31 @@ export class HttpAccountOwnershipDataSource
     ) {
       return (value as { message: string }).message;
     }
+    const fromBody = this.extractResponseBodyMessage(value);
+    if (fromBody !== null) {
+      return fromBody;
+    }
     if (typeof value === "string") {
       return value;
     }
     return "Unknown error";
   }
 
-  private async readErrorMessage(response: Response): Promise<string> {
-    const text = await response.text().catch(() => "");
-    if (!text) {
-      return "Unknown error";
+  private extractResponseBodyMessage(value: unknown): string | null {
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      !("responseBody" in value) ||
+      typeof (value as { responseBody: unknown }).responseBody !== "string"
+    ) {
+      return null;
+    }
+    const body = (value as { responseBody: string }).responseBody;
+    if (body.length === 0) {
+      return null;
     }
     try {
-      const parsed = JSON.parse(text) as unknown;
+      const parsed = JSON.parse(body) as unknown;
       if (
         typeof parsed === "object" &&
         parsed !== null &&
@@ -159,9 +172,9 @@ export class HttpAccountOwnershipDataSource
         return (parsed as { message: string }).message;
       }
     } catch {
-      // body is not JSON; use the raw text below
+      // body is not JSON; fall through to use it as plain text
     }
-    return text;
+    return body;
   }
 
   private isAccountOwnershipDto(value: unknown): value is AccountOwnershipDto {

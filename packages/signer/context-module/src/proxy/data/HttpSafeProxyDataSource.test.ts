@@ -66,12 +66,15 @@ describe("HttpSafeProxyDataSource", () => {
         validParams.challenge,
       );
       expect(calledUrl.searchParams.get("resolver")).toBe("SAFE_GATEWAY");
-      expect(fetchSpy.mock.calls[0]![1]).toEqual({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: version,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-        },
-      });
+      expect(fetchSpy.mock.calls[0]![1]).toEqual(
+        expect.objectContaining({
+          method: "GET",
+          headers: {
+            [LEDGER_CLIENT_VERSION_HEADER]: version,
+            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+          },
+        }),
+      );
     });
 
     it("should return Right with proxy implementation data when request succeeds with valid DTO", async () => {
@@ -115,10 +118,7 @@ describe("HttpSafeProxyDataSource", () => {
 
     it("should return Left with error when response data is undefined", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(undefined),
-      } as Response);
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(""));
 
       // WHEN
       const result =
