@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -27,6 +30,7 @@ type CalldataDto = {
 @injectable()
 export class HttpCalAdapter implements CalAdapter {
   private readonly logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.SignerConfig)
@@ -35,6 +39,11 @@ export class HttpCalAdapter implements CalAdapter {
     private readonly loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.logger = this.loggerFactory("cal-service");
+    this.http = new DmkNetworkClient({
+      headers: {
+        "X-Ledger-Client-Origin": this.signerConfig.originToken,
+      },
+    });
   }
 
   async fetchSelectors(
@@ -46,23 +55,14 @@ export class HttpCalAdapter implements CalAdapter {
     );
 
     try {
-      const url = new URL(`${CAL_BASE_URL}/dapps`);
-      url.searchParams.set("output", "descriptors_calldata");
-      url.searchParams.set("chain_id", String(chainId));
-      url.searchParams.set("contracts", contractAddress);
-      url.searchParams.set("ref", "branch:next");
-
-      const fetchResponse = await fetch(url, {
-        method: "GET",
-        headers: {
-          "X-Ledger-Client-Origin": this.signerConfig.originToken,
+      const data = (await this.http.get(`${CAL_BASE_URL}/dapps`, {
+        params: {
+          output: "descriptors_calldata",
+          chain_id: chainId,
+          contracts: contractAddress,
+          ref: "branch:next",
         },
-      });
-
-      if (!fetchResponse.ok)
-        throw new Error(`HTTP error ${fetchResponse.status}`);
-
-      const data = (await fetchResponse.json()) as CalldataDto[];
+      })) as CalldataDto[];
 
       const selectors = this.extractSelectorsFromResponse(
         data,

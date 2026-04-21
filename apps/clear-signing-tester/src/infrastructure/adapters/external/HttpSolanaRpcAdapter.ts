@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -238,6 +241,8 @@ type RpcTransactionResult = {
 @injectable()
 export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   private readonly logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
+  private readonly metadataHttp: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.SolanaRpcConfig)
@@ -246,6 +251,8 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.logger = loggerFactory("solana-rpc-adapter");
+    this.http = new DmkNetworkClient();
+    this.metadataHttp = new DmkNetworkClient({ timeoutMs: 5000 });
   }
 
   async fetchClearSignableTransactions(
@@ -545,18 +552,13 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     if (!sourceTokenAccount) return true;
 
     try {
-      const response = await fetch(
+      await this.metadataHttp.head(
         `${METADATA_SERVICE_URL}/v2/solana/owner/${sourceTokenAccount}`,
-        { method: "HEAD", signal: AbortSignal.timeout(5000) },
       );
-      if (response.status === 200) return false;
-      this.logger.debug(
-        `Skipping tx ${signature.slice(0, 12)}: token account ${sourceTokenAccount.slice(0, 12)}... not in metadata service (${response.status})`,
-      );
-      return true;
+      return false;
     } catch {
       this.logger.debug(
-        `Skipping tx ${signature.slice(0, 12)}: metadata service probe failed`,
+        `Skipping tx ${signature.slice(0, 12)}: token account ${sourceTokenAccount.slice(0, 12)}... not in metadata service`,
       );
       return true;
     }
@@ -1042,23 +1044,16 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   }
 
   private async rpcCall<T>(method: string, params: unknown[]): Promise<T> {
-    const response = await fetch(this.rpcConfig.url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const data = (await this.http.post(
+      this.rpcConfig.url,
+      {
         jsonrpc: "2.0",
         id: 1,
         method,
         params,
-      }),
-      signal: AbortSignal.timeout(this.rpcConfig.timeout ?? 30000),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Solana RPC HTTP error: ${response.status}`);
-    }
-
-    const data = (await response.json()) as RpcResponse<T>;
+      },
+      { timeoutMs: this.rpcConfig.timeout ?? 30000 },
+    )) as RpcResponse<T>;
 
     if (data.error) {
       throw new Error(

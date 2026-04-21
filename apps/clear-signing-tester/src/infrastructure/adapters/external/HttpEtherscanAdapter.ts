@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -51,6 +54,7 @@ type EtherscanApiResponse = {
 @injectable()
 export class HttpEtherscanAdapter implements EtherscanAdapter {
   private readonly logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.EtherscanConfig)
@@ -59,6 +63,7 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
     private readonly loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.logger = this.loggerFactory("etherscan-service");
+    this.http = new DmkNetworkClient();
   }
 
   async fetchRandomTransaction(
@@ -198,52 +203,39 @@ export class HttpEtherscanAdapter implements EtherscanAdapter {
       data: { params },
     });
 
-    const url = new URL(baseUrl);
-    Object.entries(params).forEach(([key, value]) => {
-      url.searchParams.set(key, String(value));
+    const data = (await this.http.get(baseUrl, {
+      params,
+      timeoutMs: this.etherscanConfig.timeout || 30000,
+    })) as EtherscanApiResponse;
+
+    this.logger.debug("Etherscan API response", {
+      data: {
+        status: data.status,
+        message: data.message,
+        result: JSON.stringify(data.result),
+        resultCount: Array.isArray(data.result) ? data.result.length : 0,
+      },
     });
-    const controller = new AbortController();
-    const timeoutMs = this.etherscanConfig.timeout || 30000;
-    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const fetchResponse = await fetch(url, { signal: controller.signal });
-      if (!fetchResponse.ok)
-        throw new Error(`HTTP error ${fetchResponse.status}`);
-      const data = (await fetchResponse.json()) as EtherscanApiResponse;
 
-      this.logger.debug("Etherscan API response", {
-        data: {
-          status: data.status,
-          message: data.message,
-          result: JSON.stringify(data.result),
-          resultCount: Array.isArray(data.result) ? data.result.length : 0,
-        },
-      });
-
-      if (data.status !== "1") {
-        if (
-          data.status === "0" &&
-          (data.message === "No transactions found" || data.message === "NOTOK")
-        ) {
-          this.logger.info(
-            `No transactions found for address: ${data.message}`,
-          );
-          return [];
-        }
-        throw new Error(
-          `Etherscan API error: ${data.message || "Unknown error"}`,
-        );
-      }
-
-      if (!Array.isArray(data.result)) {
-        this.logger.warn("No transactions found");
+    if (data.status !== "1") {
+      if (
+        data.status === "0" &&
+        (data.message === "No transactions found" || data.message === "NOTOK")
+      ) {
+        this.logger.info(`No transactions found for address: ${data.message}`);
         return [];
       }
-
-      return data.result;
-    } finally {
-      clearTimeout(timeoutId);
+      throw new Error(
+        `Etherscan API error: ${data.message || "Unknown error"}`,
+      );
     }
+
+    if (!Array.isArray(data.result)) {
+      this.logger.warn("No transactions found");
+      return [];
+    }
+
+    return data.result;
   }
 
   /**

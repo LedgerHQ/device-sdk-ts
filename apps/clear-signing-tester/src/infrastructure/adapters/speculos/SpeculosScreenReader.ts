@@ -1,4 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -15,6 +18,7 @@ import { type ScreenEvent } from "@root/src/domain/models/ScreenContent";
 export class SpeculosScreenReader implements ScreenReader {
   private readonly speculosUrl: string;
   private readonly logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
@@ -23,6 +27,7 @@ export class SpeculosScreenReader implements ScreenReader {
   ) {
     this.speculosUrl = `${config.url}:${config.port}`;
     this.logger = loggerFactory("screen-reader");
+    this.http = new DmkNetworkClient();
   }
 
   /**
@@ -31,11 +36,9 @@ export class SpeculosScreenReader implements ScreenReader {
    */
   async readRawScreenEvents(): Promise<ScreenEvent[]> {
     try {
-      const response = await fetch(
-        `${this.speculosUrl}/events?stream=false&currentscreenonly=true`,
-      );
-      if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-      const data = (await response.json()) as { events: ScreenEvent[] };
+      const data = (await this.http.get(`${this.speculosUrl}/events`, {
+        params: { stream: false, currentscreenonly: true },
+      })) as { events: ScreenEvent[] };
 
       const rawEvents = data.events || [];
 
