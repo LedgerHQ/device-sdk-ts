@@ -10,6 +10,7 @@ import { type ScreenReader } from "@root/src/domain/adapters/ScreenReader";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { type AppVersionResolver } from "@root/src/domain/services/AppVersionResolver";
+import { type DeviceSetupService } from "@root/src/domain/services/DeviceSetupService";
 import { type FlowOrchestrator } from "@root/src/domain/services/FlowOrchestrator";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
@@ -25,6 +26,7 @@ import { SpeculosDeviceRepository } from "@root/src/infrastructure/repositories/
 import { MainServiceController } from "@root/src/infrastructure/service-controllers/MainServiceController";
 import { SpeculosServiceController } from "@root/src/infrastructure/service-controllers/SpeculosServiceController";
 import { AppVersionResolverService } from "@root/src/infrastructure/services/AppVersionResolverService";
+import { DefaultDeviceSetupService } from "@root/src/infrastructure/services/DefaultDeviceSetupService";
 import { DefaultFlowOrchestrator } from "@root/src/infrastructure/services/DefaultFlowOrchestrator";
 import { DefaultRetryService } from "@root/src/infrastructure/services/DefaultRetryService";
 import { DefaultScreenAnalyzer } from "@root/src/infrastructure/services/DefaultScreenAnalyzer";
@@ -59,6 +61,9 @@ export const sharedInfrastructureModuleFactory = (
       .inSingletonScope();
     bind<AppVersionResolver>(TYPES.AppVersionResolver)
       .to(AppVersionResolverService)
+      .inSingletonScope();
+    bind<DeviceSetupService>(TYPES.DeviceSetupService)
+      .to(DefaultDeviceSetupService)
       .inSingletonScope();
 
     // State Handlers

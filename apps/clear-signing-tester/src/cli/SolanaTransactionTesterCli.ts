@@ -89,7 +89,7 @@ export class SolanaTransactionTesterCli {
       },
       signer: {
         originToken: process.env["GATING_TOKEN"] || "test-origin-token",
-        gated: true,
+        blindSigningEnabled: false,
       },
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
