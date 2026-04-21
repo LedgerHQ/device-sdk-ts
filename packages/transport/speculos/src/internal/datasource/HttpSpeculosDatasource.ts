@@ -1,3 +1,5 @@
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
+
 import PACKAGE from "@root/package.json";
 
 import { type SpeculosDatasource } from "./SpeculosDatasource";
@@ -9,6 +11,7 @@ const removeTrailingSlashes = (url: string) => url.replace(/\/+$/, "");
 export class HttpSpeculosDatasource implements SpeculosDatasource {
   private readonly baseUrl: string;
   private readonly clientHeader: string;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     baseUrl: string,
@@ -16,35 +19,27 @@ export class HttpSpeculosDatasource implements SpeculosDatasource {
   ) {
     this.baseUrl = removeTrailingSlashes(baseUrl);
     this.clientHeader = clientHeader;
+    this.http = new DmkNetworkClient({
+      headers: {
+        "X-Ledger-Client-Version": this.clientHeader,
+      },
+    });
   }
 
   async postApdu(apdu: string): Promise<string> {
-    const response = await fetch(`${this.baseUrl}/apdu`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Ledger-Client-Version": this.clientHeader,
-      },
-      body: JSON.stringify({ data: apdu }),
-    });
-    if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-    const data = (await response.json()) as SpeculosApduDTO;
+    const data = (await this.http.post(`${this.baseUrl}/apdu`, {
+      data: apdu,
+    })) as SpeculosApduDTO;
     return data.data;
   }
 
   async isServerAvailable(): Promise<boolean> {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
-      try {
-        await fetch(`${this.baseUrl}/events`, {
-          headers: { "X-Ledger-Client-Version": this.clientHeader },
-          signal: controller.signal,
-        });
-        return true;
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      await this.http.get(`${this.baseUrl}/events`, {
+        timeoutMs: TIMEOUT,
+        responseType: "void",
+      });
+      return true;
     } catch {
       return false;
     }
