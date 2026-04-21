@@ -120,7 +120,7 @@ git checkout develop && git pull
 git checkout -b release
 ```
 
-### Step 4 -- Set private flags
+### Step 4 -- Set release scope
 
 ```bash
 pnpm exec zx .cursor/scripts/release/set-private.cjs --packages <PKGS>
@@ -134,7 +134,7 @@ pnpm exec zx .cursor/scripts/release/set-private.cjs --packages <PKGS>
 
 ```bash
 git add .
-git commit -m "🔧 (release): Set private flags for <packages>"
+git commit -m "📦 (release): Set release scope to <packages>"
 ```
 
 ### Step 5 -- Pin workspace deps
