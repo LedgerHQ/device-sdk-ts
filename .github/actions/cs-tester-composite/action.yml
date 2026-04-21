@@ -1,0 +1,148 @@
+name: "Clear Signing Tester"
+description: "Run a single Clear Signing Tester cell (one device, one test) against Speculos."
+
+inputs:
+  runner:
+    description: "pnpm script (cs-tester for ETH, cs-tester:solana for Solana)"
+    required: true
+  test:
+    description: "Single test command (e.g. test:raw:complete)"
+    required: true
+  device:
+    description: "Single device type (stax, nanox, flex)"
+    required: true
+  coin-app:
+    description: "Coin app name for ELF sparse checkout (Ethereum or Solana)"
+    required: true
+  artifact-prefix:
+    description: "Prefix for uploaded artifact names"
+    required: true
+  summary-prefix:
+    description: "Prefix for GitHub step summary titles"
+    required: true
+  use-rpc:
+    description: "Include Solana RPC flags (--rpc-url, --scan-limit, --samples-per-instruction)"
+    required: false
+    default: "false"
+  scan-limit:
+    description: "Number of signatures to scan (only when use-rpc is true)"
+    required: false
+    default: "1000"
+  samples-per-instruction:
+    description: "Samples per instruction type (only when use-rpc is true)"
+    required: false
+    default: "20"
+  log-level:
+    description: "Console log level (omit to use app default)"
+    required: false
+    default: ""
+  enable-file-logging:
+    description: "Enable file logging and screenshots"
+    required: false
+    default: "false"
+  gh-bot-app-id:
+    description: "GitHub App ID for coin-apps checkout"
+    required: true
+  gh-bot-private-key:
+    description: "GitHub App private key for coin-apps checkout"
+    required: true
+  gating-token:
+    description: "Clear signing gating token"
+    required: true
+  solana-rpc-url:
+    description: "Solana RPC URL (required when use-rpc is true)"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+    - name: Generate token
+      id: generate-token
+      uses: actions/create-github-app-token@v2
+      with:
+        app-id: ${{ inputs.gh-bot-app-id }}
+        private-key: ${{ inputs.gh-bot-private-key }}
+        owner: LedgerHQ
+        repositories: coin-apps
+
+    - name: Retrieving coin apps
+      uses: actions/checkout@v6
+      with:
+        ref: master
+        repository: LedgerHQ/coin-apps
+        token: ${{ steps.generate-token.outputs.token }}
+        path: coin-apps
+        sparse-checkout: |
+          ${{ inputs.device }}/*/${{ inputs.coin-app }}/*.elf
+        sparse-checkout-cone-mode: false
+
+    - name: Pull Speculos Docker image
+      shell: bash
+      run: docker pull ghcr.io/ledgerhq/speculos
+
+    - name: Run Clear Signing Test
+      shell: bash
+      env:
+        FORCE_COLOR: "0"
+        GATING_TOKEN: ${{ inputs.gating-token }}
+        COIN_APPS_PATH: "${{ github.workspace }}/coin-apps"
+        SOLANA_RPC_URL: ${{ inputs.solana-rpc-url }}
+      run: |
+        set -o pipefail
+        mkdir -p /tmp/logs/screenshots
+
+        ARGS=(
+          "--device" "${{ inputs.device }}"
+        )
+
+        if [ -n "${{ inputs.log-level }}" ]; then
+          ARGS+=("--log-level" "${{ inputs.log-level }}")
+        fi
+
+        if [ "${{ inputs.use-rpc }}" = "true" ]; then
+          ARGS+=("--rpc-url" "${SOLANA_RPC_URL}")
+          ARGS+=("--scan-limit" "${{ inputs.scan-limit }}")
+          ARGS+=("--samples-per-instruction" "${{ inputs.samples-per-instruction }}")
+        fi
+
+        if [ "${{ inputs.enable-file-logging }}" = "true" ]; then
+          SAFE_NAME=$(echo "${{ inputs.test }}" | tr ':/ ' '-')
+          ARGS+=("--log-file" "/tmp/logs/${SAFE_NAME}.log")
+          ARGS+=("--file-log-level" "debug")
+          ARGS+=("--screenshot-folder-path" "/tmp/logs/screenshots")
+        fi
+
+        pnpm ${{ inputs.runner }} ${{ inputs.test }} "${ARGS[@]}" 2>&1 | tee /tmp/cs-tester-output.log
+
+    - name: Write job summary
+      if: always()
+      shell: bash
+      run: |
+        echo "## ${{ inputs.summary-prefix }} (${{ inputs.device }} - ${{ inputs.test }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ -f /tmp/cs-tester-output.log ]; then
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sed -n '/TEST RESULTS\|PROGRAM TEST\|📋/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          sed -n '/SUMMARY\|PROGRAM SUMMARY\|📊/,/^└/p' /tmp/cs-tester-output.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        else
+          echo "No test output available" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Sanitise artifact name
+      if: always()
+      id: artifact
+      shell: bash
+      run: echo "name=$(echo '${{ inputs.artifact-prefix }}-${{ inputs.device }}-${{ inputs.test }}' | tr ':/ ' '-')" >> "$GITHUB_OUTPUT"
+
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v6
+      with:
+        name: ${{ steps.artifact.outputs.name }}
+        path: /tmp/logs/
+        retention-days: 7

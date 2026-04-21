@@ -35,36 +35,78 @@ jobs:
 
   erc7730-calldata-tests:
     needs: [build-libraries]
-    uses: ./.github/workflows/cs-tester-reusable.yml
-    with:
-      runner: cs-tester
-      tests: '["test:erc7730 1inch", "test:erc7730 aave", "test:erc7730 ethena", "test:erc7730 lido", "test:erc7730 lombard", "test:erc7730 poap", "test:erc7730 swissborg", "test:erc7730 tether", "test:erc7730 uniswap", "test:erc7730 velora", "test:erc7730 yieldxyz"]'
-      devices: '["stax", "nanox", "flex"]'
-      coin-app: Ethereum
-      log-level: error
-      enable-file-logging: true
-      artifact-prefix: erc7730-calldata-logs
-      summary-prefix: "ERC7730 Calldata Test"
-    secrets:
-      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
-      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+    name: ERC7730 Calldata Test (${{ matrix.device }} - ${{ matrix.test }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+        test:
+          - "test:erc7730 1inch"
+          - "test:erc7730 aave"
+          - "test:erc7730 ethena"
+          - "test:erc7730 lido"
+          - "test:erc7730 lombard"
+          - "test:erc7730 poap"
+          - "test:erc7730 swissborg"
+          - "test:erc7730 tether"
+          - "test:erc7730 uniswap"
+          - "test:erc7730 velora"
+          - "test:erc7730 yieldxyz"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: ${{ matrix.test }}
+          device: ${{ matrix.device }}
+          coin-app: Ethereum
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: erc7730-calldata-logs
+          summary-prefix: "ERC7730 Calldata Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   erc7730-eip712-tests:
     needs: [build-libraries]
-    uses: ./.github/workflows/cs-tester-reusable.yml
-    with:
-      runner: cs-tester
-      tests: '["test:erc7730:typed-data 1inch", "test:erc7730:typed-data degate", "test:erc7730:typed-data ledgerquest", "test:erc7730:typed-data lens", "test:erc7730:typed-data lombard", "test:erc7730:typed-data opensea", "test:erc7730:typed-data permit", "test:erc7730:typed-data smartcredit", "test:erc7730:typed-data tally", "test:erc7730:typed-data uniswap", "test:erc7730:typed-data velora"]'
-      devices: '["stax", "nanox", "flex"]'
-      coin-app: Ethereum
-      log-level: error
-      enable-file-logging: true
-      artifact-prefix: erc7730-eip712-logs
-      summary-prefix: "ERC7730 EIP712 Test"
-    secrets:
-      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
-      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+    name: ERC7730 EIP712 Test (${{ matrix.device }} - ${{ matrix.test }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+        test:
+          - "test:erc7730:typed-data 1inch"
+          - "test:erc7730:typed-data degate"
+          - "test:erc7730:typed-data ledgerquest"
+          - "test:erc7730:typed-data lens"
+          - "test:erc7730:typed-data lombard"
+          - "test:erc7730:typed-data opensea"
+          - "test:erc7730:typed-data permit"
+          - "test:erc7730:typed-data smartcredit"
+          - "test:erc7730:typed-data tally"
+          - "test:erc7730:typed-data uniswap"
+          - "test:erc7730:typed-data velora"
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: ${{ matrix.test }}
+          device: ${{ matrix.device }}
+          coin-app: Ethereum
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: erc7730-eip712-logs
+          summary-prefix: "ERC7730 EIP712 Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
