@@ -6,6 +6,15 @@ Backmerge the release branch into `develop` after the release PR has been merged
 
 Activate this skill when the user says "backmerge", "/backmerge", or asks to backmerge after a release PR merges.
 
+## Sandbox permissions
+
+The following commands MUST be run with `required_permissions: ["all"]`:
+
+- `pnpm install` (Step 5 — post-install scripts, native deps)
+- `git push -u origin chore/backmerge` + `gh pr create ...` (Step 7 — network + `gh`)
+
+All other scripts (`revert-private`, `unpin-deps`) run fine inside the sandbox.
+
 ## Backmerge flow (step by step)
 
 All revert/unpin scripts live in `.cursor/scripts/release/` and are run with `pnpm exec zx`.
@@ -47,7 +56,6 @@ pnpm exec zx .cursor/scripts/release/unpin-deps.cjs
 pnpm install
 ```
 
-- Run with `required_permissions: ["all"]` since `pnpm install` needs post-install scripts.
 - Regenerates the lockfile to match the restored `workspace:^` deps.
 
 ### Step 6 -- Commit
@@ -64,7 +72,6 @@ git push -u origin chore/backmerge
 gh pr create -B develop --title "🔀 (release) [NO-ISSUE]: Backmerge release into develop" -T .github/pull_request_backmerge_template.md
 ```
 
-- Run with `required_permissions: ["all"]` since `gh pr create` needs network access.
 - Report the PR URL to the user.
 
 ## Handling conflicts

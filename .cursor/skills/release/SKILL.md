@@ -6,6 +6,17 @@ Release one or more packages from this monorepo using the scripts in `.cursor/sc
 
 Activate this skill when the user says "release", "/release", or asks to release specific packages (e.g., "/release dmk signer-eth").
 
+## Sandbox permissions
+
+The following commands MUST be run with `required_permissions: ["all"]` because they need network access, post-install scripts, or the GitHub CLI:
+
+- `pnpm exec zx .cursor/scripts/release/preflight.cjs` (Step 1 — `gh auth status`)
+- `pnpm exec zx .cursor/scripts/release/changelog.cjs` (Step 7 — GitHub API via `gh`)
+- `pnpm install --no-frozen-lockfile` (Step 9 — post-install scripts, native deps)
+- `pnpm exec zx .cursor/scripts/release/create-pr.cjs` (Step 11 — `gh pr create`)
+
+All other scripts (`discover`, `set-private`, `pin-deps`, `bump`, `cleanup`) run fine inside the sandbox.
+
 ## Package aliases
 
 Use these short names in the `--packages` flag. The user may use either aliases or full names.
@@ -54,7 +65,6 @@ Replace `<PKGS>` with a comma-separated list of aliases (e.g., `dmk,signer-eth`)
 pnpm exec zx .cursor/scripts/release/preflight.cjs
 ```
 
-- Run with `required_permissions: ["all"]` since `gh auth status` needs network access.
 - If any check fails, fix the issue before proceeding.
 - This step **MUST** pass before running any other release step.
 
@@ -145,7 +155,6 @@ git commit -m "🔖 (release): Bump versions"
 pnpm exec zx .cursor/scripts/release/changelog.cjs
 ```
 
-- Run with `required_permissions: ["all"]` since the script calls the GitHub API (via `gh`) to enrich changesets with PR/commit metadata.
 - Prepends new entries to each bumped package's `CHANGELOG.md`.
 - Review a couple of changelogs to confirm formatting.
 
