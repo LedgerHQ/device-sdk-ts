@@ -110,3 +110,30 @@ jobs:
           gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  ethereum-gating-tests:
+    needs: [build-libraries]
+    name: Ethereum Gating Test (${{ matrix.device }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, flex]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: test:gating
+          device: ${{ matrix.device }}
+          coin-app: Ethereum
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: ethereum-gating-logs
+          summary-prefix: "Ethereum Gating Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
