@@ -80,8 +80,6 @@ const toCreateATA = (
       }
     : null;
 
-const DEFAULT_RPC_URL = "https://api.mainnet-beta.solana.com/";
-
 /**
  * Determines whether a raw Solana transaction is an SPL token operation
  * and, if so, extracts the token account address or ATA creation details
@@ -97,10 +95,11 @@ export class TransactionInspector {
   private readonly parser: TransactionParser;
 
   constructor(rpcUrl?: string) {
-    const connection = new Connection(rpcUrl ?? DEFAULT_RPC_URL, {
-      commitment: "confirmed",
-    });
-    const resolver = new RpcAddressLookupTableResolver(connection);
+    const resolver = rpcUrl
+      ? new RpcAddressLookupTableResolver(
+          new Connection(rpcUrl, { commitment: "confirmed" }),
+        )
+      : undefined;
     this.parser = new TransactionParser(resolver);
   }
 
