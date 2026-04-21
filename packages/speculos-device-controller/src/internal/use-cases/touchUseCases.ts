@@ -70,13 +70,3 @@ export const acceptBlindSigning =
   <K extends string>(touch: TouchController<K>, deviceKey: K) =>
   async () =>
     await tapQuick(touch, deviceKey)({ x: 50, y: 94 });
-
-export const openMenu =
-  <K extends string>(touch: TouchController<K>, deviceKey: K) =>
-  async () =>
-    await tapQuick(touch, deviceKey)({ x: 85, y: 8 });
-
-export const closeMenu =
-  <K extends string>(touch: TouchController<K>, deviceKey: K) =>
-  async () =>
-    await tapQuick(touch, deviceKey)({ x: 10, y: 4 });

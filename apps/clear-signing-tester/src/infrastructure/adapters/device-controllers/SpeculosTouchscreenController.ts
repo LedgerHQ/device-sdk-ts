@@ -75,7 +75,7 @@ export class SpeculosTouchscreenController implements DeviceController {
 
   async enableBlindSigningInSettings(): Promise<void> {
     this.logger.debug("☝️ (touch) : Opening settings menu");
-    await this.tap.openMenu();
+    await this.tap.enterMenu();
     await this.delay(SETTINGS_NAV_DELAY_MS);
 
     this.logger.debug("☝️ (touch) : Tapping blind signing toggle");
@@ -83,7 +83,7 @@ export class SpeculosTouchscreenController implements DeviceController {
     await this.delay(SETTINGS_NAV_DELAY_MS);
 
     this.logger.debug("☝️ (touch) : Closing settings menu");
-    await this.tap.closeMenu();
+    await this.tap.exitMenu();
     await this.delay(SETTINGS_NAV_DELAY_MS);
 
     this.logger.info("Blind signing enabled in settings");
