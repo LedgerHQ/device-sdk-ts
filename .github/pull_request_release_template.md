@@ -57,9 +57,10 @@ A new release is being prepared with the latest updates, improvements, and fixes
 This release is driven by the agent release skill (`.cursor/skills/release/SKILL.md`).
 The skill automates the steps below via scripts in `.cursor/scripts/release/`.
 
+- [ ] Run preflight checks (`preflight.cjs`)
+- [ ] Discover & confirm packages (`discover.cjs`)
 - [ ] Create `release` branch from `develop`
-- [ ] Run `proto use` and `pnpm install`
-- [ ] Set private flags (`set-private.cjs`)
+- [ ] Set release scope (`set-private.cjs`)
 - [ ] Pin workspace deps (`pin-deps.cjs`)
 - [ ] Bump versions (`bump.cjs`)
 - [ ] Generate changelogs (`changelog.cjs`)
@@ -67,6 +68,7 @@ The skill automates the steps below via scripts in `.cursor/scripts/release/`.
 - [ ] Update lockfile (`pnpm install --no-frozen-lockfile`)
 - [ ] Update `apps/docs/pages/docs/getting-started.mdx`
 - [ ] Create this PR (`create-pr.cjs`)
+- [ ] Verify documentation and README
 - [ ] Quality Assurance:
   - [ ] Test in Sample App
   - [ ] Review and update documentation

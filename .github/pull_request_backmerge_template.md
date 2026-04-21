@@ -11,13 +11,23 @@ A backmerge operation is being performed to integrate released packages back int
 
 - [ ] Create new branch from `main`: `chore/backmerge`
 - [ ] Create Pull Request targeting `develop` using template `gh pr create -B develop --title "🔀 (release) [NO-ISSUE]: Backmerge release into develop" -T .github/pull_request_backmerge_template.md`
-- [ ] Reset private flags and restore workspace deps:
-  ```bash
-  pnpm exec zx .cursor/scripts/release/revert-private.cjs
-  pnpm exec zx .cursor/scripts/release/unpin-deps.cjs
-  pnpm install
-  ```
+- [ ] Revert private flags (`revert-private.cjs`)
   - [ ] Verify that all relevant packages have `private: false` set in their `package.json` files
+- [ ] Restore workspace deps (`unpin-deps.cjs`)
+- [ ] Update lockfile (`pnpm install`)
+
+```bash
+pnpm exec zx .cursor/scripts/release/revert-private.cjs
+pnpm exec zx .cursor/scripts/release/unpin-deps.cjs
+pnpm install
+```
+
+- [ ] Commit the reset:
+
+```bash
+git commit -m "🔧 (release): Reset private packages after release"
+```
+
 - [ ] Fix conflicts with develop branch if needed:
   - [ ] ⚠️ **NO REBASE!** Merge develop into backmerge branch for fixing conflicts
   - [ ] Resolve all merge conflicts manually
