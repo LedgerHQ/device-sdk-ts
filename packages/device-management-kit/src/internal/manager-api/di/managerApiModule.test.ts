@@ -1,7 +1,7 @@
 import { Container } from "inversify";
 
 import { type DmkConfig } from "@api/DmkConfig";
-import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
+import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { StubUseCase } from "@root/src/di.stub";
 
@@ -33,7 +33,7 @@ describe("managerApiModuleFactory", () => {
       const managerApiDataSource = container.get(
         managerApiTypes.ManagerApiDataSource,
       );
-      expect(managerApiDataSource).toBeInstanceOf(AxiosManagerApiDataSource);
+      expect(managerApiDataSource).toBeInstanceOf(HttpManagerApiDataSource);
 
       const managerApiService = container.get(
         managerApiTypes.ManagerApiService,

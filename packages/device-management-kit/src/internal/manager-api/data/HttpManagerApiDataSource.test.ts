@@ -10,14 +10,14 @@ import {
 import { type DmkConfig } from "@api/DmkConfig";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 
-import { AxiosManagerApiDataSource } from "./AxiosManagerApiDataSource";
+import { HttpManagerApiDataSource } from "./HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "./ManagerApiDataSource";
 
-describe("AxiosManagerApiDataSource", () => {
+describe("HttpManagerApiDataSource", () => {
   describe("getAppList", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -76,7 +76,7 @@ describe("AxiosManagerApiDataSource", () => {
     describe("success cases", () => {
       let api: ManagerApiDataSource;
       beforeEach(() => {
-        api = new AxiosManagerApiDataSource({
+        api = new HttpManagerApiDataSource({
           managerApiUrl: "http://localhost",
         } as DmkConfig);
       });
@@ -130,7 +130,7 @@ describe("AxiosManagerApiDataSource", () => {
     describe("error cases", () => {
       let api: ManagerApiDataSource;
       beforeEach(() => {
-        api = new AxiosManagerApiDataSource({
+        api = new HttpManagerApiDataSource({
           managerApiUrl: "http://localhost",
         } as DmkConfig);
       });
@@ -154,7 +154,7 @@ describe("AxiosManagerApiDataSource", () => {
 
       it("should throw an error if the request fails", async () => {
         // given
-        const api = new AxiosManagerApiDataSource({
+        const api = new HttpManagerApiDataSource({
           managerApiUrl: "http://localhost",
         } as DmkConfig);
 
@@ -175,7 +175,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getDeviceVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -240,7 +240,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -327,9 +327,9 @@ describe("AxiosManagerApiDataSource", () => {
   });
 
   describe("setProvider", () => {
-    let api: AxiosManagerApiDataSource;
+    let api: HttpManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://fake-url.com",
         provider: 1,
       } as DmkConfig);
@@ -381,7 +381,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getFirmwareVersionById", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -427,7 +427,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getLatestFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -536,7 +536,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getOsuFirmwareVersion", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -619,7 +619,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getLanguagePackages", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -745,7 +745,7 @@ describe("AxiosManagerApiDataSource", () => {
   describe("getMcuList", () => {
     let api: ManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://localhost",
       } as DmkConfig);
     });
@@ -844,9 +844,9 @@ describe("AxiosManagerApiDataSource", () => {
     });
   });
   describe("getProvider", () => {
-    let api: AxiosManagerApiDataSource;
+    let api: HttpManagerApiDataSource;
     beforeEach(() => {
-      api = new AxiosManagerApiDataSource({
+      api = new HttpManagerApiDataSource({
         managerApiUrl: "http://fake-url.com",
         provider: 123,
       } as DmkConfig);
