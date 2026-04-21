@@ -1,4 +1,4 @@
-name: "[Tests] ERC7730 Nightly"
+name: "[Tests] Ethereum Nightly"
 on:
   schedule:
     # Run every day at 2:00 AM UTC
@@ -72,9 +72,9 @@ jobs:
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
-  erc7730-eip712-tests:
+  erc7730-ethereum-tests:
     needs: [build-libraries]
-    name: ERC7730 EIP712 Test (${{ matrix.device }} - ${{ matrix.test }})
+    name: ERC7730 Ethereum Test (${{ matrix.device }} - ${{ matrix.test }})
     runs-on: ledgerhq-device-sdk
     permissions:
       contents: read
@@ -104,8 +104,8 @@ jobs:
           coin-app: Ethereum
           log-level: error
           enable-file-logging: "true"
-          artifact-prefix: erc7730-eip712-logs
-          summary-prefix: "ERC7730 EIP712 Test"
+          artifact-prefix: erc7730-ethereum-logs
+          summary-prefix: "ERC7730 Ethereum Test"
           gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
           gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
