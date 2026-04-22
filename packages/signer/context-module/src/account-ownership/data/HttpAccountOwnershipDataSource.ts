@@ -30,7 +30,9 @@ export class HttpAccountOwnershipDataSource
     this.http = new DmkNetworkClient({
       headers: {
         [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        ...(this.config.originToken && {
+          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+        }),
       },
     });
   }
