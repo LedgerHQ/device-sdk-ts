@@ -1,14 +1,17 @@
 import { DmkNetworkClientError } from "./DmkNetworkClientError";
+import {
+  buildBodyAndHeaders,
+  buildSignal,
+  buildUrl,
+  type DmkQueryParams,
+  type DmkResponseType,
+  parseBody,
+  safeReadText,
+  wrapFetchError,
+} from "./DmkNetworkClientHelpers";
 
-/**
- * Values accepted for URL query parameters. `null`/`undefined` entries are
- * skipped so callers can build params objects conditionally without guards.
- */
-export type DmkQueryParamValue = string | number | boolean | null | undefined;
-
-export type DmkQueryParams = Record<string, DmkQueryParamValue>;
-
-export type DmkResponseType = "json" | "text" | "blob" | "arrayBuffer" | "void";
+export type { DmkQueryParamValue } from "./DmkNetworkClientHelpers";
+export type { DmkQueryParams, DmkResponseType };
 
 /**
  * Per-request configuration. Everything is optional — sensible defaults are
@@ -74,8 +77,6 @@ type InternalRequestConfig = DmkRequestConfig & {
   url: string;
   body?: unknown;
 };
-
-const JSON_CONTENT_TYPE = "application/json";
 
 /**
  * Minimal axios-like wrapper over `fetch`. Handles:
@@ -170,13 +171,22 @@ export class DmkNetworkClient {
   public async request(
     config: InternalRequestConfig,
   ): Promise<DmkNetworkResponse> {
-    const url = this.buildUrl(config.url, config.params);
-    const { body, headers } = this.buildBodyAndHeaders(
-      config.method,
-      config.body,
-      config.headers,
-    );
-    const signal = this.buildSignal(config.timeoutMs, config.signal);
+    const url = buildUrl({
+      url: config.url,
+      params: config.params,
+      baseUrl: this.baseUrl,
+    });
+    const { body, headers } = buildBodyAndHeaders({
+      method: config.method,
+      body: config.body,
+      defaultHeaders: this.defaultHeaders,
+      perRequestHeaders: config.headers,
+    });
+    const signal = buildSignal({
+      perRequestTimeoutMs: config.timeoutMs,
+      defaultTimeoutMs: this.defaultTimeoutMs,
+      externalSignal: config.signal,
+    });
     const throwOnHttpError = config.throwOnHttpError ?? true;
     const responseType: DmkResponseType = config.responseType ?? "json";
 
@@ -189,11 +199,16 @@ export class DmkNetworkClient {
         signal,
       });
     } catch (cause) {
-      throw this.wrapFetchError(cause, config.signal, config.timeoutMs);
+      throw wrapFetchError({
+        cause,
+        externalSignal: config.signal,
+        perRequestTimeoutMs: config.timeoutMs,
+        defaultTimeoutMs: this.defaultTimeoutMs,
+      });
     }
 
     if (!response.ok && throwOnHttpError) {
-      const responseBody = await this.safeReadText(response);
+      const responseBody = await safeReadText(response);
       throw new DmkNetworkClientError({
         message: `HTTP error ${response.status} ${response.statusText}`.trim(),
         status: response.status,
@@ -202,7 +217,7 @@ export class DmkNetworkClient {
       });
     }
 
-    const data = await this.parseBody(response, responseType);
+    const data = await parseBody(response, responseType);
 
     return {
       data,
@@ -211,157 +226,5 @@ export class DmkNetworkClient {
       headers: response.headers,
       ok: response.ok,
     };
-  }
-
-  private buildUrl(url: string, params?: DmkQueryParams): URL {
-    const fullUrl = /^[a-z][a-z0-9+.-]*:\/\//i.test(url)
-      ? new URL(url)
-      : this.baseUrl
-        ? new URL(this.joinPath(this.baseUrl, url))
-        : new URL(url);
-
-    if (params) {
-      for (const [key, value] of Object.entries(params)) {
-        if (value !== null && value !== undefined) {
-          fullUrl.searchParams.set(key, String(value));
-        }
-      }
-    }
-
-    return fullUrl;
-  }
-
-  private joinPath(base: string, path: string): string {
-    if (!path) return base;
-    const trimmedBase = base.endsWith("/") ? base.slice(0, -1) : base;
-    const trimmedPath = path.startsWith("/") ? path : `/${path}`;
-    return `${trimmedBase}${trimmedPath}`;
-  }
-
-  private buildBodyAndHeaders(
-    method: string,
-    body: unknown,
-    perRequestHeaders?: Record<string, string>,
-  ): { body?: BodyInit; headers: Record<string, string> } {
-    const headers: Record<string, string> = {
-      ...this.defaultHeaders,
-      ...perRequestHeaders,
-    };
-
-    if (body === undefined || method === "GET" || method === "HEAD") {
-      return { body: undefined, headers };
-    }
-
-    if (this.isRawBody(body)) {
-      return { body, headers };
-    }
-
-    if (!this.hasHeader(headers, "content-type")) {
-      headers["Content-Type"] = JSON_CONTENT_TYPE;
-    }
-    return { body: JSON.stringify(body), headers };
-  }
-
-  private isRawBody(body: unknown): body is BodyInit {
-    return (
-      typeof body === "string" ||
-      body instanceof ArrayBuffer ||
-      body instanceof Blob ||
-      body instanceof FormData ||
-      body instanceof URLSearchParams ||
-      body instanceof ReadableStream ||
-      ArrayBuffer.isView(body)
-    );
-  }
-
-  private hasHeader(headers: Record<string, string>, name: string): boolean {
-    const lower = name.toLowerCase();
-    return Object.keys(headers).some((k) => k.toLowerCase() === lower);
-  }
-
-  private buildSignal(
-    perRequestTimeoutMs: number | undefined,
-    externalSignal: AbortSignal | undefined,
-  ): AbortSignal | undefined {
-    const timeoutMs = perRequestTimeoutMs ?? this.defaultTimeoutMs;
-    const timeoutSignal =
-      timeoutMs && timeoutMs > 0 ? AbortSignal.timeout(timeoutMs) : undefined;
-
-    if (timeoutSignal && externalSignal) {
-      return AbortSignal.any([externalSignal, timeoutSignal]);
-    }
-    return timeoutSignal ?? externalSignal;
-  }
-
-  private async parseBody(
-    response: Response,
-    responseType: DmkResponseType,
-  ): Promise<unknown> {
-    switch (responseType) {
-      case "void":
-        return undefined;
-      case "text":
-        return await response.text();
-      case "blob":
-        return await response.blob();
-      case "arrayBuffer":
-        return await response.arrayBuffer();
-      case "json":
-      default: {
-        const text = await response.text();
-        if (text.length === 0) {
-          return undefined;
-        }
-        try {
-          return JSON.parse(text);
-        } catch (cause) {
-          throw new DmkNetworkClientError({
-            message: "Failed to parse JSON response body",
-            status: response.status,
-            statusText: response.statusText,
-            responseBody: text,
-            cause,
-          });
-        }
-      }
-    }
-  }
-
-  private async safeReadText(response: Response): Promise<string | undefined> {
-    try {
-      return await response.text();
-    } catch {
-      return undefined;
-    }
-  }
-
-  private wrapFetchError(
-    cause: unknown,
-    externalSignal: AbortSignal | undefined,
-    perRequestTimeoutMs: number | undefined,
-  ): DmkNetworkClientError {
-    const timeoutMs = perRequestTimeoutMs ?? this.defaultTimeoutMs;
-    const hasTimeout = Boolean(timeoutMs && timeoutMs > 0);
-    const isAbortError =
-      cause instanceof Error &&
-      (cause.name === "AbortError" || cause.name === "TimeoutError");
-
-    if (isAbortError) {
-      const externallyAborted = externalSignal?.aborted ?? false;
-      const timedOut =
-        !externallyAborted && (cause.name === "TimeoutError" || hasTimeout);
-      return new DmkNetworkClientError({
-        message: timedOut ? `Request timed out` : "Request aborted",
-        isTimeout: timedOut,
-        isAbort: externallyAborted,
-        cause,
-      });
-    }
-
-    return new DmkNetworkClientError({
-      message:
-        cause instanceof Error ? cause.message : "Network request failed",
-      cause,
-    });
   }
 }
