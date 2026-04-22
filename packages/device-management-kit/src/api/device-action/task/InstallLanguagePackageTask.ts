@@ -34,13 +34,20 @@ export class InstallLanguagePackageTask {
   run(): Observable<InstallLanguagePackageEvent> {
     return new Observable((subscriber) => {
       const execute = async () => {
-        const { data: rawApdus } = await axios.get<string>(
-          this.args.apduInstallUrl,
-        );
-        const apdus = rawApdus.split(/\r?\n/).filter(Boolean);
-        if (apdus.length === 0) {
+        let rawApdus: string;
+        try {
+          const response = await axios.get<string>(this.args.apduInstallUrl);
+          rawApdus = response.data;
+        } catch (error) {
           throw new UnknownDAError(
-            "Language pack install script contains no APDUs.",
+            `Failed to fetch APDUs: ${error instanceof Error ? error.message : String(error)}`,
+          );
+        }
+
+        const apdus = rawApdus.split(/\r?\n/).filter(Boolean);
+        if (typeof rawApdus !== "string" || apdus.length === 0) {
+          throw new UnknownDAError(
+            `Language pack install script contains no APDUs: ${this.args.apduInstallUrl}`,
           );
         }
 
