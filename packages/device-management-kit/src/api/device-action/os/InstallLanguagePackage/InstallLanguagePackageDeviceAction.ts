@@ -31,6 +31,7 @@ import {
   type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import { type InstalledLanguagePackage } from "@api/device-session/DeviceSessionState";
 import { type LanguagePackage } from "@internal/manager-api/model/Language";
 
 import {
@@ -44,6 +45,7 @@ import {
 type InstallLanguagePackageMachineInternalState = {
   readonly error: InstallLanguagePackageDAError | null;
   readonly languagePackage: LanguagePackage | null;
+  readonly shouldSkipInstall: boolean;
 };
 
 export type MachineDependencies = {
@@ -125,12 +127,15 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
           context.input.language === "english",
         hasError: ({ context }: { context: types["context"] }) =>
           context._internalState.error !== null,
+        shouldSkipInstall: ({ context }) =>
+          context._internalState.shouldSkipInstall,
       },
       actions: {
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
             error: _.event["error"] as InstallLanguagePackageDAError,
+            shouldSkipInstall: false,
           }),
         }),
         assignGetDeviceMetadataSnapshot: assign({
@@ -169,6 +174,26 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
                     ) as InstallLanguagePackageDAError,
                   };
                 }
+
+                const installedLanguageNames = (
+                  metadata.installedLanguages ?? []
+                ).map(
+                  (installedLanguage: InstalledLanguagePackage) =>
+                    languagePackages.find(
+                      (lp: LanguagePackage) =>
+                        lp.languagePackageVersionId === installedLanguage.id,
+                    )?.language,
+                );
+
+                if (installedLanguageNames.includes(language)) {
+                  return {
+                    ..._.context._internalState,
+                    error: null,
+                    languagePackage: null,
+                    shouldSkipInstall: true,
+                  };
+                }
+
                 const languagePackage = languagePackages.find(
                   (lp) => lp.language === language,
                 );
@@ -254,6 +279,7 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
           _internalState: {
             error: null,
             languagePackage: null,
+            shouldSkipInstall: false,
           },
         };
       },
@@ -294,6 +320,10 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
             {
               guard: "hasError",
               target: "Error",
+            },
+            {
+              guard: "shouldSkipInstall",
+              target: "Success",
             },
             { target: "DeleteCurrentLanguagePack" },
           ],
