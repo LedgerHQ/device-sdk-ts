@@ -51,7 +51,7 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
     };
 
     try {
-      const data = (await this.http.get(`${this.config.cal.url}/certificates`, {
+      const data = await this.http.get(`${this.config.cal.url}/certificates`, {
         params: {
           output: requestDto.output,
           target_device: requestDto.target_device,
@@ -59,10 +59,10 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
           public_key_id: requestDto.public_key_id,
           public_key_usage: requestDto.public_key_usage,
         },
-      })) as PkiCertificateResponseDto[];
+      });
 
       if (
-        data !== undefined &&
+        Array.isArray(data) &&
         data.length > 0 &&
         this.isValidPkiCertificateResponse(data[0], this.config.cal.mode)
       ) {
@@ -107,20 +107,27 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
     value: unknown,
     mode: ContextModuleCalMode,
   ): value is PkiCertificateResponseDto {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      "descriptor" in value &&
-      typeof value.descriptor === "object" &&
-      value.descriptor !== null &&
-      "data" in value.descriptor &&
-      typeof value.descriptor.data === "string" &&
-      "signatures" in value.descriptor &&
-      typeof value.descriptor.signatures === "object" &&
-      value.descriptor.signatures !== null &&
-      mode in value.descriptor.signatures &&
-      typeof (value.descriptor.signatures as Record<string, unknown>)[mode] ===
-        "string"
-    );
+    if (
+      typeof value !== "object" ||
+      value === null ||
+      !("descriptor" in value) ||
+      typeof value.descriptor !== "object" ||
+      value.descriptor === null
+    ) {
+      return false;
+    }
+    const { descriptor } = value;
+    if (
+      !("data" in descriptor) ||
+      typeof descriptor.data !== "string" ||
+      !("signatures" in descriptor) ||
+      typeof descriptor.signatures !== "object" ||
+      descriptor.signatures === null ||
+      !(mode in descriptor.signatures)
+    ) {
+      return false;
+    }
+    const signature = (descriptor.signatures as Record<string, unknown>)[mode];
+    return typeof signature === "string";
   }
 }
