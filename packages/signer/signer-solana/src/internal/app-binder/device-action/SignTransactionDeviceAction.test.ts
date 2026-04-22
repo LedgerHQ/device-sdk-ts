@@ -18,6 +18,8 @@ import {
   type SignTransactionDAIntermediateValue,
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type AppConfiguration } from "@api/model/AppConfiguration";
+import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import { SolanaAppCommandError } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
@@ -33,6 +35,14 @@ import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 
 const defaultDerivation = "44'/501'/0'/0'";
 const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
+
+function makeAppConfig(version: string): AppConfiguration {
+  return {
+    version,
+    blindSigningEnabled: false,
+    pubKeyDisplayMode: PublicKeyDisplayMode.SHORT,
+  };
+}
 
 const contextModuleStub: ContextModule = {
   getSolanaContext: vi.fn(),
@@ -79,7 +89,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockImplementation(
         async (arg: { rpcUrl?: string }) => {
           expect(arg.rpcUrl).toBe("https://per-call.example.com");
@@ -154,7 +166,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
       });
@@ -255,7 +269,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
 
       // InspectTransaction fails, machine transitions to SignTransaction
       inspectTransactionMock.mockRejectedValue(
@@ -330,7 +346,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
       });
@@ -411,7 +429,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
       });
@@ -515,7 +535,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
       });
@@ -616,7 +638,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SWAP,
         data: {},
@@ -724,7 +748,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
       });
@@ -806,7 +832,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockRejectedValue(
         new InvalidStatusWordError("inspErr"),
       );
@@ -878,7 +906,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig(belowDelayedVersion) }),
+      );
       inspectTransactionMock.mockRejectedValue(
         new InvalidStatusWordError("inspErr"),
       );
@@ -947,7 +977,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.9.1") }),
+      );
 
       const sig = new Uint8Array([0xa1, 0xb2]);
       signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
@@ -1006,7 +1038,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
 
       const sig = new Uint8Array([0xc3, 0xd4]);
       signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
@@ -1065,7 +1099,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         isSecureConnectionAllowed: true,
       });
 
-      getAppConfigMock.mockResolvedValue(CommandResultFactory({ data: {} }));
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+      );
       inspectTransactionMock.mockRejectedValue(
         new InvalidStatusWordError("inspErr"),
       );
@@ -1174,7 +1210,9 @@ describe("SignTransactionDeviceAction – child machine integration", () => {
 
     getAppConfigMock = vi
       .fn()
-      .mockResolvedValue(CommandResultFactory({ data: {} }));
+      .mockResolvedValue(
+        CommandResultFactory({ data: makeAppConfig("1.14.0") }),
+      );
     buildContextMock = vi.fn();
     provideContextMock = vi.fn();
     signMock = vi.fn();

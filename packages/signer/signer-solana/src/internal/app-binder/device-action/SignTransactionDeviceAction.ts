@@ -32,11 +32,7 @@ import {
 } from "@api/model/TransactionResolutionContext";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
-import {
-  DELAYED_SIGNING_MISSING_RPC_URL_WARNING,
-  delayedSigningVersionWarning,
-  type SolanaAppErrorCodes,
-} from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 import {
   SolanaTransactionTypes,
@@ -217,8 +213,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           );
           this.logger?.warn(
             hasConfig
-              ? delayedSigningVersionWarning(SOLANA_MIN_DELAYED_SIGNING_VERSION)
-              : DELAYED_SIGNING_MISSING_RPC_URL_WARNING,
+              ? `delayed signing requires Solana app version >= ${SOLANA_MIN_DELAYED_SIGNING_VERSION}; falling back to standard signing`
+              : "delayed signing requires a Solana RPC URL or a fetchBlockhash callback; falling back to standard signing",
           );
         },
       },

@@ -42,9 +42,3 @@ export class SolanaAppCommandError extends DeviceExchangeError<SolanaAppErrorCod
 export const SolanaAppCommandErrorFactory = (
   args: CommandErrorArgs<SolanaAppErrorCodes>,
 ) => new SolanaAppCommandError(args);
-
-export const DELAYED_SIGNING_MISSING_RPC_URL_WARNING =
-  "delayed signing requires a Solana RPC URL or a fetchBlockhash callback; falling back to standard signing";
-
-export const delayedSigningVersionWarning = (minVersion: string) =>
-  `delayed signing requires Solana app version >= ${minVersion}; falling back to standard signing`;
