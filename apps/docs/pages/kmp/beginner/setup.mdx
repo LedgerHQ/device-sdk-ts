@@ -1,0 +1,97 @@
+import { Callout } from "nextra/components";
+
+# Setup
+
+> The following steps describe only a minimal setup. You will need to perform additional steps depending on the module you want to work on — refer to its dedicated page.
+
+## Add dependencies
+
+### Version Catalog (recommended)
+
+Add the Ledger SDK version catalog to your `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("ledger") {
+            from("com.ledgerhq:sdk-version-catalog:<version>")
+        }
+    }
+}
+```
+
+---
+
+### Device Management Kit
+
+#### Using the Version Catalog
+
+```kotlin
+dependencies {
+    implementation(platform(ledger.bom))
+    implementation(ledger.device.management)
+}
+```
+
+#### Using the BOM only
+
+```kotlin
+dependencies {
+    implementation(platform("com.ledgerhq:sdk-bom:<version>"))
+    implementation("com.ledger:device-management")
+}
+```
+
+#### Direct dependency
+
+```kotlin
+dependencies {
+    implementation("com.ledger:device-management:<version>")
+}
+```
+
+#### iOS (Swift Package Manager)
+
+Add the `LedgerDMK` XCFramework to your Xcode project or `Package.swift`.
+
+---
+
+### Ethereum Signer
+
+<Callout type="info" emoji="ℹ️">
+  This module depends on the `device-management` module, which must be installed
+  first.
+</Callout>
+
+#### Using the Version Catalog
+
+```kotlin
+dependencies {
+    implementation(platform(ledger.bom))
+    implementation(ledger.device.management)
+    implementation(ledger.signer.eth)
+}
+```
+
+#### Using the BOM only
+
+```kotlin
+dependencies {
+    implementation(platform("com.ledgerhq:sdk-bom:<version>"))
+    implementation("com.ledger:device-management")
+    implementation("com.ledger:signer-eth")
+}
+```
+
+#### Direct dependency
+
+```kotlin
+dependencies {
+    implementation("com.ledger:device-management:<version>")
+    implementation("com.ledger:signer-eth:<version>")
+}
+```
+
+#### iOS (Swift Package Manager)
+
+Add the `SignerEth` XCFramework to your Xcode project or `Package.swift`.

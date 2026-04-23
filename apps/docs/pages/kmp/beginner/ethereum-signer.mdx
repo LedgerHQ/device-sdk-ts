@@ -1,0 +1,255 @@
+import { Callout } from "nextra/components";
+
+# Ethereum Signer
+
+This module provides the implementation of the Ledger Ethereum Signer for the Mobile Device Management Kit. It enables interaction with the Ethereum application on a Ledger device:
+
+- Retrieving the Ethereum address using a given derivation path
+- Signing an Ethereum transaction ([Clear Signing](https://www.ledger.com/academy/topics/ledgersolutions/what-is-clear-signing))
+- Signing a message displayed on a Ledger device
+
+## How it works
+
+The Ledger Ethereum Signer uses the interface provided by the Device Management Kit to establish communication with the Ledger device and execute operations. Communication with the device is performed using APDUs (Application Protocol Data Units), encapsulated within `Command` objects, which are in turn encapsulated within `DeviceAction` objects to handle real-world scenarios.
+
+For transaction signing, the Signer integrates with the [Context Module](./context-module) to provide context data to the device, enabling Clear Signing — the display of human-readable transaction details on the device screen.
+
+## Installation
+
+<Callout type="info" emoji="ℹ️">
+  This module is not standalone: it depends on the `device-management` module,
+  which must be installed first.
+</Callout>
+
+The module is published as:
+- **Android**: `com.ledger:signer-eth` (Maven/Gradle)
+- **iOS**: `SignerEth` (XCFramework / Swift Package Manager)
+
+### Android
+
+#### Using the Version Catalog (recommended)
+
+Add the Ledger SDK version catalog to your `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    versionCatalogs {
+        create("ledger") {
+            from("com.ledgerhq:sdk-version-catalog:<version>")
+        }
+    }
+}
+```
+
+Then in your module's `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation(platform(ledger.bom))
+    implementation(ledger.device.management)
+    implementation(ledger.signer.eth)
+}
+```
+
+#### Using the BOM only
+
+```kotlin
+dependencies {
+    implementation(platform("com.ledgerhq:sdk-bom:<version>"))
+    implementation("com.ledger:device-management")
+    implementation("com.ledger:signer-eth")
+}
+```
+
+#### Direct dependency
+
+```kotlin
+dependencies {
+    implementation("com.ledger:device-management:<version>")
+    implementation("com.ledger:signer-eth:<version>")
+}
+```
+
+### iOS (Swift Package Manager)
+
+Add the `SignerEth` XCFramework to your Xcode project or `Package.swift`.
+
+## Initialisation
+
+To create an `EthereumSigner` instance, you need a `DeviceManagementKitApi` instance. Use the `ethereumSigner` builder DSL:
+
+```kotlin
+import com.ledger.signer.eth.ethereumSigner
+
+val signerEth = ethereumSigner {
+    deviceManagementKit = dmk
+    originToken = "your-origin-token" // optional, for context module identification
+}
+```
+
+You can also customize the context module endpoints:
+
+```kotlin
+val signerEth = ethereumSigner {
+    deviceManagementKit = dmk
+    originToken = "your-origin-token"
+    calUrl = "https://your-custom-cal-url"
+    metadataServiceUrl = "https://your-custom-metadata-url"
+    transactionCheckUrl = "https://your-custom-tx-check-url"
+    enableLog = true
+}
+```
+
+On Android, pass the application context:
+
+```kotlin
+val signerEth = ethereumSigner {
+    context = applicationContext
+    deviceManagementKit = dmk
+    originToken = "your-origin-token"
+}
+```
+
+## Use Cases
+
+The `EthereumSigner` instance exposes 3 methods. Each returns a `Flow<DeviceActionResult<T>>` — a stream of state updates tracking the operation's progress.
+
+### Get Address
+
+Retrieve the Ethereum address for a given derivation path.
+
+```kotlin
+val flow: Flow<DeviceActionResult<EthereumAddress>> = signerEth.getAddress(
+    deviceUid = connectedDevice.uid,
+    request = GetEthereumAddressRequest(
+        derivationPath = "44'/60'/0'/0/0",
+        checkOnDevice = false, // set to true to require user confirmation on device
+        withChainCode = false,
+    ),
+)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `deviceUid` | `String` | UID of the connected device, from `ConnectedDevice.uid` |
+| `request.derivationPath` | `String` | e.g. `"44'/60'/0'/0/0"` |
+| `request.checkOnDevice` | `Boolean` | Whether user confirmation is required on the device |
+| `request.withChainCode` | `Boolean` | Whether to return the chain code |
+
+**Returns:** `Flow<DeviceActionResult<EthereumAddress>>`
+
+```kotlin
+data class EthereumAddress(
+    val publicKey: String,   // Public key derived from the given path
+    val address: String,     // Ethereum address (hex format)
+    val chainCode: String?,  // Chain code (if requested)
+)
+```
+
+---
+
+### Sign Transaction
+
+Sign an Ethereum transaction using Clear Signing on the Ledger device. The Context Module automatically enriches the transaction with token, NFT, and trusted name information so the device can display human-readable details.
+
+```kotlin
+val flow: Flow<DeviceActionResult<Signature>> = signerEth.signTransaction(
+    deviceUid = connectedDevice.uid,
+    request = SignEthereumRequest(
+        derivationPath = "44'/60'/0'/0/0",
+        value = rawTransactionHex, // RLP-encoded transaction as hex string
+        isHexadecimalValue = true,
+    ),
+)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `deviceUid` | `String` | UID of the connected device |
+| `request.derivationPath` | `String` | e.g. `"44'/60'/0'/0/0"` |
+| `request.value` | `String` | RLP-encoded transaction as hex string |
+| `request.isHexadecimalValue` | `Boolean` | Must be `true` for transaction signing |
+
+**Returns:** `Flow<DeviceActionResult<Signature>>`
+
+```kotlin
+data class Signature(
+    val r: String,  // R component of the ECDSA signature (hex)
+    val s: String,  // S component of the ECDSA signature (hex)
+    val v: Int,     // Recovery parameter
+)
+```
+
+---
+
+### Sign Message
+
+Sign a text message (EIP-191 `personal_sign`) displayed on the Ledger device.
+
+```kotlin
+val flow: Flow<DeviceActionResult<Signature>> = signerEth.signMessage(
+    deviceUid = connectedDevice.uid,
+    request = SignEthereumRequest(
+        derivationPath = "44'/60'/0'/0/0",
+        value = "Hello from Ledger",
+        isHexadecimalValue = false,
+    ),
+)
+```
+
+**Parameters:**
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| `deviceUid` | `String` | UID of the connected device |
+| `request.derivationPath` | `String` | e.g. `"44'/60'/0'/0/0"` |
+| `request.value` | `String` | The message to sign (UTF-8 string or hex) |
+| `request.isHexadecimalValue` | `Boolean` | Set to `true` if `value` is in hexadecimal format |
+
+**Returns:** `Flow<DeviceActionResult<Signature>>`
+
+---
+
+## Observable Behavior
+
+Each method returns a `Flow` emitting `DeviceActionResult<T>` updates:
+
+- **`DeviceActionResult.IntermediateValue`**: Operation in progress. May include a `userRequirement` indicating what action is needed from the user.
+- **`DeviceActionResult.Success`**: Operation completed; the result is available.
+- **`DeviceActionResult.Failure`**: An error occurred; the reason is available.
+
+```kotlin
+signerEth.signTransaction(deviceUid, request).collect { result ->
+    when (result) {
+        is DeviceActionResult.IntermediateValue -> {
+            when (result.userRequirement) {
+                is UserInteractionRequirement.UnlockDevice -> {
+                    println("Ask the user to unlock the device.")
+                }
+                null -> println("Processing: ${result.value}")
+            }
+        }
+        is DeviceActionResult.Success -> {
+            val signature: Signature = result.value
+            println("Signed: r=${signature.r}, s=${signature.s}, v=${signature.v}")
+        }
+        is DeviceActionResult.Failure -> {
+            println("Signing failed: ${result.reason}")
+        }
+    }
+}
+```
+
+To cancel an in-progress signing operation:
+
+```kotlin
+deviceAction.cancel()
+```
+
+## Lifecycle
+
+The `EthereumSigner` is a singleton within its Koin scope. It must be initialized once before use. If you need to reinitialize it (e.g., after a new session), destroy the previous instance first.

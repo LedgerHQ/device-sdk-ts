@@ -1,0 +1,169 @@
+import { Callout } from "nextra/components";
+
+# Build a Custom Command
+
+You can build your own command by implementing the `Command<T>` interface and providing an APDU payload and a response parser.
+
+You can then execute it with `dmk.executeCommand()`, exactly like any pre-defined command. This is strongly recommended over direct usage of `sendApdu`.
+
+## The `Command` Interface
+
+```kotlin
+public interface Command<out T> {
+    val apduPayload: ApduPayload
+    fun parseResponse(connectedDevice: ConnectedDevice, response: ByteArray): DeviceOperationResult<T>
+    fun checkPreconditions(): DeviceOperationResult.Failure?
+}
+```
+
+| Member | Description |
+| ------ | ----------- |
+| `apduPayload` | The APDU to send to the device |
+| `parseResponse` | Parses the raw response bytes into a typed result |
+| `checkPreconditions` | Validates inputs before sending — return `null` if valid |
+
+## Quick Example
+
+Here is a complete custom command that retrieves a hypothetical device serial number:
+
+```kotlin
+import com.ledger.devicemanagement.api.DeviceOperationFailureReason
+import com.ledger.devicemanagement.api.DeviceOperationResult
+import com.ledger.devicemanagement.api.apdu.ApduParser
+import com.ledger.devicemanagement.api.apdu.ApduPayload
+import com.ledger.devicemanagement.api.apdu.apdu
+import com.ledger.devicemanagement.api.apdu.uniqueApduPayload
+import com.ledger.devicemanagement.api.command.Command
+import com.ledger.devicemanagement.api.connection.ConnectedDevice
+
+data class SerialNumber(val value: String)
+
+class GetSerialNumberCommand : Command<SerialNumber> {
+
+    override val apduPayload: ApduPayload = uniqueApduPayload(
+        apdu = apdu {
+            classInstruction = 0xE0.toByte()
+            instructionMethod = 0x02.toByte()
+            parameter1 = 0x00.toByte()
+            parameter2 = 0x00.toByte()
+        },
+    )
+
+    override fun parseResponse(
+        connectedDevice: ConnectedDevice,
+        response: ByteArray,
+    ): DeviceOperationResult<SerialNumber> {
+        if (response.size < 2) {
+            return DeviceOperationResult.Failure(DeviceOperationFailureReason.Unknown)
+        }
+        val parser = ApduParser(response)
+        val length = parser.extract1BytesValue().toInt()
+        val serial = parser.extractValueString(nbrBytes = length)
+        return DeviceOperationResult.Success(SerialNumber(serial))
+    }
+
+    override fun checkPreconditions(): DeviceOperationResult.Failure? = null
+}
+```
+
+## Usage
+
+Once your command is implemented, execute it with `dmk.executeCommand()`:
+
+```kotlin
+val command = GetSerialNumberCommand()
+
+val result: DeviceOperationResult<SerialNumber> = dmk.executeCommand(deviceUid, command)
+
+when (result) {
+    is DeviceOperationResult.Success -> println("Serial: ${result.value.serial}")
+    is DeviceOperationResult.Failure -> println("Failed: ${result.reason}")
+}
+```
+
+## Building the APDU
+
+Use the `apdu { }` DSL to construct the APDU header and optional data payload, then wrap it with `uniqueApduPayload`:
+
+```kotlin
+override val apduPayload: ApduPayload = uniqueApduPayload(
+    apdu = apdu {
+        classInstruction = 0xE0.toByte()  // CLA
+        instructionMethod = 0xD8.toByte() // INS
+        parameter1 = 0x00.toByte()        // P1
+        parameter2 = 0x00.toByte()        // P2
+        data = "Ethereum".encodeToByteArray() // optional data
+    },
+)
+```
+
+<Callout type="info" emoji="ℹ️">
+  Use `uniqueApduPayload` for single-APDU commands. For commands whose data
+  exceeds 255 bytes and must be split across multiple APDUs, use
+  `chunkApduPayload`.
+</Callout>
+
+## Parsing the Response
+
+`ApduParser` reads the response bytes sequentially. Use the appropriate extraction method for each field:
+
+```kotlin
+val parser = ApduParser(response)
+
+val singleByte  = parser.extractByteValue()               // 1 byte as Byte
+val rawByte     = parser.extract1BytesValue()             // 1 byte as ByteArray
+val twoBytes    = parser.extract2BytesValue()             // 2 bytes
+val fourBytes   = parser.extract4BytesValue()             // 4 bytes
+val nBytes      = parser.extractBytesValue(nbrBytes = 6)  // N bytes
+val text        = parser.extractValueString(nbrBytes = 10) // N bytes decoded as String
+val remaining   = parser.extractRemainingBytesValue()     // everything left
+```
+
+A typical pattern for length-prefixed strings:
+
+```kotlin
+val length = parser.extract1BytesValue().toInt()
+val value  = parser.extractValueString(nbrBytes = length)
+```
+
+## Custom Failure Reasons
+
+For command-specific errors, extend `DeviceOperationFailureReason`:
+
+```kotlin
+sealed class GetSerialNumberFailureReason : DeviceOperationFailureReason() {
+    data object NotSupported : GetSerialNumberFailureReason()
+    data object InvalidResponse : GetSerialNumberFailureReason()
+}
+```
+
+Then return them in `parseResponse`:
+
+```kotlin
+private const val SW_NOT_SUPPORTED = "6D00"
+
+override fun parseResponse(
+    connectedDevice: ConnectedDevice,
+    response: ByteArray,
+): DeviceOperationResult<SerialNumber> {
+    if (response.toHexadecimalString() == SW_NOT_SUPPORTED) {
+        return DeviceOperationResult.Failure(GetSerialNumberFailureReason.NotSupported)
+    }
+    // ... parse normally
+}
+```
+
+## Precondition Checking
+
+Use `checkPreconditions` to validate inputs before the APDU is sent — for example to reject empty strings or out-of-range values:
+
+```kotlin
+override fun checkPreconditions(): DeviceOperationResult.Failure? =
+    if (name.isEmpty()) {
+        DeviceOperationResult.Failure(GetSerialNumberFailureReason.InvalidResponse)
+    } else {
+        null
+    }
+```
+
+Return `null` if all preconditions are met.

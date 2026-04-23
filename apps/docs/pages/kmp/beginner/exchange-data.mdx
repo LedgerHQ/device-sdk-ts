@@ -1,0 +1,180 @@
+import { Callout } from "nextra/components";
+
+# Exchange data with the device
+
+In this guide, you'll learn how to send commands to a connected Ledger device and process the responses using the Device Management Kit (DMK). By the end, you'll understand multiple ways to communicate with your device.
+
+## What you'll learn
+
+- How to send low-level APDU commands to a device
+- How to use pre-defined commands for common operations
+- How to work with Device Actions for complex flows
+
+## Prerequisites
+
+Before starting, make sure you have completed:
+
+- [Initializing and Configuring the DMK](./init-dmk)
+- [Connecting to a Device](./discover-and-connect)
+
+You should have a working DMK instance and a connected device with a valid `deviceUid`.
+
+## Step 1: Sending an APDU
+
+APDU (Application Protocol Data Unit) commands are the low-level protocol used to communicate with Ledger devices. While it is generally recommended to use higher-level abstractions, you can send raw APDUs when needed.
+
+```kotlin
+import com.ledger.devicemanagement.api.apdu.ApduPayload
+
+val apduPayload: ApduPayload = /* build your APDU payload */
+
+val result: DeviceOperationResult<ByteArray> = dmk.sendApdu(deviceUid, apduPayload)
+
+when (result) {
+    is DeviceOperationResult.Success -> {
+        val responseBytes: ByteArray = result.value
+    }
+    is DeviceOperationResult.Failure -> {
+        when (result.reason) {
+            DeviceOperationFailureReason.DeviceLocked -> { /* Device is locked */ }
+            DeviceOperationFailureReason.DeviceBusy -> { /* Device is busy */ }
+            DeviceOperationFailureReason.NoResponse -> { /* No response from device */ }
+            else -> { /* Handle other failures */ }
+        }
+    }
+}
+```
+
+## Step 2: Using pre-defined commands
+
+For most common operations, the DMK provides pre-defined commands. `executeCommand` handles building the APDU, sending it to the device, and parsing the response.
+
+<Callout type="warning" emoji="⚠️">
+  Most commands return `DeviceOperationResult.Failure` if the device is locked
+  or busy. Check the device state with `observeDeviceState` before sending
+  commands.
+</Callout>
+
+### Opening an app
+
+```kotlin
+import com.ledger.devicemanagement.api.command.openapp.OpenApplicationCommand
+
+val command = OpenApplicationCommand(name = "Ethereum")
+
+val result: DeviceOperationResult<Unit> = dmk.executeCommand(deviceUid, command)
+
+when (result) {
+    is DeviceOperationResult.Success -> println("App opened successfully")
+    is DeviceOperationResult.Failure -> println("Failed: ${result.reason}")
+}
+```
+
+### Closing an app
+
+```kotlin
+import com.ledger.devicemanagement.api.command.closeapp.CloseRunningApplicationCommand
+
+val command = CloseRunningApplicationCommand()
+
+val result: DeviceOperationResult<Unit> = dmk.executeCommand(deviceUid, command)
+
+when (result) {
+    is DeviceOperationResult.Success -> println("App closed successfully")
+    is DeviceOperationResult.Failure -> println("Failed: ${result.reason}")
+}
+```
+
+### Getting OS information
+
+```kotlin
+import com.ledger.devicemanagement.api.command.getosversion.GetOsVersionCommand
+import com.ledger.devicemanagement.api.command.getosversion.OsVersion
+
+val command = GetOsVersionCommand()
+
+val result: DeviceOperationResult<OsVersion> = dmk.executeCommand(deviceUid, command)
+
+when (result) {
+    is DeviceOperationResult.Success -> {
+        val osVersion: OsVersion = result.value
+        println("SE version: ${osVersion.secureElementVersion}")
+        println("MCU version: ${osVersion.microcontrollerSephVersion}")
+        println("Hardware version: ${osVersion.hardwareVersion}")
+    }
+    is DeviceOperationResult.Failure -> println("Failed: ${result.reason}")
+}
+```
+
+### Getting app information
+
+```kotlin
+import com.ledger.devicemanagement.api.command.getappandversion.GetAppAndVersionCommand
+import com.ledger.devicemanagement.api.command.getappandversion.AppAndVersion
+
+val command = GetAppAndVersionCommand()
+
+val result: DeviceOperationResult<AppAndVersion> = dmk.executeCommand(deviceUid, command)
+
+when (result) {
+    is DeviceOperationResult.Success -> {
+        val appInfo: AppAndVersion = result.value
+        println("Running app: ${appInfo.appName} v${appInfo.appVersion}")
+    }
+    is DeviceOperationResult.Failure -> println("Failed: ${result.reason}")
+}
+```
+
+## Step 3: Working with Device Actions
+
+Device Actions define a sequence of commands sent to the device. They are useful for operations that require user interaction, such as opening an app while handling device lock or confirmation screens automatically.
+
+Device Actions return a `Flow<DeviceActionResult<T>>` that emits state updates during execution.
+
+### Opening an app with a Device Action
+
+```kotlin
+import com.ledger.devicemanagement.api.deviceaction.openapp.OpenApplicationDeviceAction
+import com.ledger.devicemanagement.api.deviceaction.DeviceActionResult
+import com.ledger.devicemanagement.api.deviceaction.UserInteractionRequirement
+
+val deviceAction = OpenApplicationDeviceAction(appName = "Ethereum")
+
+dmk.executeDeviceAction(deviceUid, deviceAction).collect { result ->
+    when (result) {
+        is DeviceActionResult.IntermediateValue -> {
+            when (result.userRequirement) {
+                is UserInteractionRequirement.UnlockDevice -> {
+                    println("Ask the user to unlock the device")
+                }
+                null -> println("Processing...")
+            }
+        }
+        is DeviceActionResult.Success -> {
+            println("App opened successfully")
+        }
+        is DeviceActionResult.Failure -> {
+            println("Action failed: ${result.reason}")
+        }
+    }
+}
+```
+
+The `OpenApplicationDeviceAction` automatically handles the full flow:
+
+1. Checks if the device is onboarded
+2. Checks if the requested app is already open
+3. Closes the current app if a different one is running
+4. Opens the requested app and waits for user confirmation on the device
+
+To cancel an in-progress action:
+
+```kotlin
+deviceAction.cancel()
+```
+
+## What you've learned
+
+- How to send raw APDU commands with `sendApdu()`
+- How to use pre-defined commands (`OpenApplicationCommand`, `CloseRunningApplicationCommand`, `GetOsVersionCommand`, `GetAppAndVersionCommand`) with `executeCommand()`
+- How to use `OpenApplicationDeviceAction` to handle complex multi-step flows with user interaction

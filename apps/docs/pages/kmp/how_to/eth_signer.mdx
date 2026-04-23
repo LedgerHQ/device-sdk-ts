@@ -1,0 +1,201 @@
+import { Callout } from "nextra/components";
+
+# Use the Ethereum Signer
+
+This module provides the implementation of the Ledger Ethereum Signer for the Mobile Device Management Kit. It enables interaction with the Ethereum application on a Ledger device:
+
+- Retrieving the Ethereum address using a given derivation path
+- Signing an Ethereum transaction ([Clear Signing](https://www.ledger.com/academy/topics/ledgersolutions/what-is-clear-signing))
+- Signing a message displayed on a Ledger device
+
+## 🔹 Index
+
+1. [How it works](#-how-it-works)
+2. [Initialisation](#-initialisation)
+3. [Use Cases](#-use-cases)
+   - [Get Address](#use-case-1-get-address)
+   - [Sign Transaction](#use-case-2-sign-transaction)
+   - [Sign Message](#use-case-3-sign-message)
+
+## 🔹 How it works
+
+The Ledger Ethereum Signer uses the interface provided by the Device Management Kit to establish communication with the Ledger device and execute operations. Communication is performed using [APDUs](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit), encapsulated within `Command` objects, which are in turn encapsulated within `DeviceAction` objects to handle real-world scenarios.
+
+For transaction signing, the Signer integrates with the Context Module to provide context data to the device, enabling Clear Signing — the display of human-readable transaction details on the device screen.
+
+## 🔹 Initialisation
+
+To initialize an Ethereum signer instance, you need a `DeviceManagementKitApi` instance. Use the `ethereumSigner` builder DSL:
+
+```kotlin
+import com.ledger.signer.eth.ethereumSigner
+
+val signerEth = ethereumSigner {
+    context = applicationContext // required on Android
+    deviceManagementKit = dmk
+    originToken = "your-origin-token"
+}
+```
+
+<Callout type="info" emoji="ℹ️">
+  The `originToken` is required by the default Context Module for transaction
+  checks. It should be delivered by Ledger — without it, Transaction Checks will
+  not be available.
+</Callout>
+
+You can also customize the Context Module endpoints:
+
+```kotlin
+val signerEth = ethereumSigner {
+    context = applicationContext
+    deviceManagementKit = dmk
+    originToken = "your-origin-token"
+    calUrl = "https://your-custom-cal-url"
+    metadataServiceUrl = "https://your-custom-metadata-url"
+    transactionCheckUrl = "https://your-custom-tx-check-url"
+    enableLog = true
+}
+```
+
+## 🔹 Use Cases
+
+The `EthereumSigner` exposes 3 dedicated methods. Each returns a `Flow<DeviceActionResult<T>>` — a stream of state updates tracking the operation's progress.
+
+---
+
+### Use Case 1: Get Address
+
+Retrieve the Ethereum address for a given derivation path.
+
+```kotlin
+val flow: Flow<DeviceActionResult<EthereumAddress>> = signerEth.getAddress(
+    deviceUid = connectedDevice.uid,
+    request = GetEthereumAddressRequest(
+        derivationPath = "44'/60'/0'/0/0",
+        checkOnDevice = false,
+        withChainCode = false,
+    ),
+)
+```
+
+#### **Parameters**
+
+- `deviceUid`
+  - **Required**
+  - **Type:** `String`
+  - The UID of the connected device, from `ConnectedDevice.uid`.
+
+- `request`
+  - **Required**
+  - **Type:** `GetEthereumAddressRequest`
+
+  | Field | Type | Description |
+  | ----- | ---- | ----------- |
+  | `derivationPath` | `String` | Derivation path, e.g. `"44'/60'/0'/0/0"` |
+  | `checkOnDevice` | `Boolean` | Whether user confirmation is required on the device |
+  | `withChainCode` | `Boolean` | Whether to return the chain code |
+
+#### **Returns**
+
+`Flow<DeviceActionResult<EthereumAddress>>`
+
+```kotlin
+data class EthereumAddress(
+    val publicKey: String,   // Public key derived from the given path
+    val address: String,     // Ethereum address (hex format)
+    val chainCode: String?,  // Chain code (if requested)
+)
+```
+
+---
+
+### Use Case 2: Sign Transaction
+
+Sign an Ethereum transaction using Clear Signing on the Ledger device. The Context Module automatically enriches the transaction with token, NFT, and trusted name information so the device can display human-readable details.
+
+```kotlin
+val flow: Flow<DeviceActionResult<Signature>> = signerEth.signTransaction(
+    deviceUid = connectedDevice.uid,
+    request = SignEthereumRequest(
+        derivationPath = "44'/60'/0'/0/0",
+        value = rawTransactionHex,
+        isHexadecimalValue = true,
+    ),
+)
+```
+
+#### **Parameters**
+
+- `deviceUid`
+  - **Required**
+  - **Type:** `String`
+  - The UID of the connected device.
+
+- `request`
+  - **Required**
+  - **Type:** `SignEthereumRequest`
+
+  | Field | Type | Description |
+  | ----- | ---- | ----------- |
+  | `derivationPath` | `String` | Derivation path, e.g. `"44'/60'/0'/0/0"` |
+  | `value` | `String` | RLP-encoded transaction as hex string |
+  | `isHexadecimalValue` | `Boolean` | Must be `true` for transaction signing |
+
+#### **Returns**
+
+`Flow<DeviceActionResult<Signature>>`
+
+```kotlin
+data class Signature(
+    val r: String,  // R component of the ECDSA signature (hex)
+    val s: String,  // S component of the ECDSA signature (hex)
+    val v: Int,     // Recovery parameter
+)
+```
+
+---
+
+### Use Case 3: Sign Message
+
+Sign a text message (EIP-191 `personal_sign`) displayed on the Ledger device.
+
+```kotlin
+val flow: Flow<DeviceActionResult<Signature>> = signerEth.signMessage(
+    deviceUid = connectedDevice.uid,
+    request = SignEthereumRequest(
+        derivationPath = "44'/60'/0'/0/0",
+        value = "Hello from Ledger",
+        isHexadecimalValue = false,
+    ),
+)
+```
+
+#### **Parameters**
+
+- `deviceUid`
+  - **Required**
+  - **Type:** `String`
+  - The UID of the connected device.
+
+- `request`
+  - **Required**
+  - **Type:** `SignEthereumRequest`
+
+  | Field | Type | Description |
+  | ----- | ---- | ----------- |
+  | `derivationPath` | `String` | Derivation path, e.g. `"44'/60'/0'/0/0"` |
+  | `value` | `String` | Message to sign (UTF-8 string or hex) |
+  | `isHexadecimalValue` | `Boolean` | Set to `true` if `value` is hexadecimal |
+
+#### **Returns**
+
+`Flow<DeviceActionResult<Signature>>`
+
+```kotlin
+data class Signature(
+    val r: String,  // R component of the ECDSA signature (hex)
+    val s: String,  // S component of the ECDSA signature (hex)
+    val v: Int,     // Recovery parameter
+)
+```
+
