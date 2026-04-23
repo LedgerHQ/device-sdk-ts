@@ -34,7 +34,8 @@
     "test:solana:program:token-2022": "pnpm cli:solana program token-2022",
     "test:solana:program:all": "pnpm cli:solana program-all",
     "test:erc7730": "./scripts/test-erc7730-calldata.sh",
-    "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh"
+    "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh",
+    "test:gating-screen": "pnpm cli raw-file ./ressources/gating/raw-gating-screen.json --blind-signing-enabled --skip-origin-token"
   },
   "dependencies": {
     "@ledgerhq/cal-interceptor": "workspace:^",

@@ -67,10 +67,10 @@ export class DefaultSignerSolana implements SignerSolana {
    *   and ensures accurate clear-signing details on the device.
    *
    *   - **solanaRPCURL** `string`
-   *     Solana RPC endpoint for transaction inspection (including SPL
-   *     resolution) and for fetching a blockhash when `delayed: true`. If the
-   *     signer was built with `SignerSolanaBuilder({ solanaRPCURL })`, the
-   *     value here overrides that default for this call only.
+   *     Solana RPC endpoint for fetching a fresh blockhash when
+   *     `delayed: true`. If the signer was built with
+   *     `SignerSolanaBuilder({ solanaRPCURL })`, the value here overrides
+   *     that default for this call only.
    *
    *   - **delayed** `boolean`
    *     When `true`, uses the device’s two-step signing flow (preview then

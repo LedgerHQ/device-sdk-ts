@@ -22,10 +22,18 @@ export {
   type SignTransactionDAOutput,
   type SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export {
+  type VerifyAddressDAError,
+  type VerifyAddressDAIntermediateValue,
+  type VerifyAddressDAOutput,
+  type VerifyAddressDAReturnType,
+  type VerifyAddressErrorCodes,
+} from "@api/app-binder/VerifyAddressDeviceActionTypes";
 export { type AppConfiguration } from "@api/model/AppConfiguration";
 export { type PublicKey } from "@api/model/PublicKey";
 export { type PublicKeyOptions } from "@api/model/PublicKeyOptions";
 export { type Signature } from "@api/model/Signature";
 export { type TransactionOptions } from "@api/model/TransactionOptions";
+export { type VerifyAddressOptions } from "@api/model/VerifyAddressOptions";
 export { type SignerConcordium } from "@api/SignerConcordium";
 export { SignerConcordiumBuilder } from "@api/SignerConcordiumBuilder";

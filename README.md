@@ -263,6 +263,11 @@ pnpm doc build
 
 This project uses Github CI. Please have a look to the following link for more details: [GitHub](https://docs.github.com/en/actions/automating-builds-and-tests/about-continuous-integration)
 
+## Release
+
+Package releases are driven by an agent skill (`.cursor/skills/release/SKILL.md`) that orchestrates scripts in `.cursor/scripts/release/`.
+See the [release PR template](.github/pull_request_release_template.md) for the full checklist.
+
 ## Scripting
 
 To avoid task repetition, you can add scripts to the corresponding package's script folder, or to a root script folder if they concern multiple packages.

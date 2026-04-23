@@ -42,11 +42,11 @@ To initialise a Solana signer instance, you need a Ledger Device Management Kit 
 const signerSolana = new SignerSolanaBuilder({
   dmk,
   sessionId,
-  solanaRPCURL: "https://api.mainnet-beta.solana.com/",
+  solanaRPCURL,
 }).build();
 ```
 
-- **solanaRPCURL** _(optional)_ — Default Solana RPC endpoint for transaction inspection (SPL token resolution) and fetching a fresh `recentBlockhash` during delayed signing. You can override it per `signTransaction` call via `SolanaTransactionOptionalConfig.solanaRPCURL`. In browser environments, use a CORS-enabled RPC URL.
+- **solanaRPCURL** _(optional)_ — Solana RPC endpoint used for fetching a fresh `recentBlockhash` during delayed signing. Only required when using `delayed: true` without a custom `fetchBlockhash` callback. You can override it per `signTransaction` call via `SolanaTransactionOptionalConfig.solanaRPCURL`. In browser environments, use a CORS-enabled RPC URL.
 
 ## 🔹 Use Cases
 
@@ -126,7 +126,13 @@ const { observable, cancel } = signerSolana.signTransaction(
   Provides additional context for transaction signing.
 
   - **solanaRPCURL** `string` _(optional)_  
-    Overrides the RPC URL from `SignerSolanaBuilder` for this call (inspection and delayed signing).
+    Overrides the RPC URL from `SignerSolanaBuilder` for this call. Used only for fetching a fresh blockhash during delayed signing.
+
+  - **delayed** `boolean` _(optional)_  
+    When `true`, uses the two-step delayed signing flow so the user's review time does not race the blockhash expiry. Requires the Solana app version to support delayed signing and either `solanaRPCURL` (builder or per-call) or `fetchBlockhash` to be provided. If the conditions are not met (missing RPC config or unsupported app version), the signer falls back to standard signing and logs a warning.
+
+  - **fetchBlockhash** `() => Promise<Uint8Array>` _(optional)_  
+    Custom callback to supply the fresh 32-byte blockhash for delayed signing instead of fetching via `solanaRPCURL`. When provided, `solanaRPCURL` is not required for the delayed path.
 
   - **transactionResolutionContext** `object`  
     Lets you explicitly pass `tokenAddress` and ATA details, bypassing extraction from the transaction itself.

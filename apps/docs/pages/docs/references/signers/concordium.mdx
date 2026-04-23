@@ -6,6 +6,7 @@ This module provides the implementation of the Ledger Concordium signer of the D
 - Retrieving the Concordium public key using a given derivation path
 - Signing a Concordium transaction (Transfer and TransferWithMemo)
 - Signing a Concordium credential deployment transaction
+- Verifying a Concordium address on-device using a trusted backend
 
 ## 🔹 Index
 
@@ -17,6 +18,7 @@ This module provides the implementation of the Ledger Concordium signer of the D
    - [Get Public Key](#use-case-2-get-public-key)
    - [Sign Transaction](#use-case-3-sign-transaction)
    - [Sign Credential Deployment Transaction](#use-case-4-sign-credential-deployment-transaction)
+   - [Verify Address](#use-case-5-verify-address)
 5. [Observable Behavior](#-observable-behavior)
 
 ## 🔹 How it works
@@ -44,9 +46,24 @@ const signerConcordium = new SignerConcordiumBuilder({
 }).build();
 ```
 
+The builder creates a default `ContextModule` out of the box, which is used by `verifyAddress` to communicate with the trusted metadata service. You can also provide a customized context module:
+
+```typescript
+import { ContextModuleBuilder } from "@ledgerhq/context-module";
+
+const customContextModule = new ContextModuleBuilder({ originToken }).build();
+
+const signerConcordium = new SignerConcordiumBuilder({
+  dmk,
+  sessionId,
+})
+  .withContextModule(customContextModule)
+  .build();
+```
+
 ## 🔹 Use Cases
 
-The `SignerConcordiumBuilder.build()` method will return a `SignerConcordium` instance that exposes 4 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+The `SignerConcordiumBuilder.build()` method will return a `SignerConcordium` instance that exposes 5 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
 
 ---
 
@@ -220,6 +237,60 @@ const { observable, cancel } =
 ```typescript
 type Signature = Uint8Array; // 64-byte Ed25519 signature
 ```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 5: Verify Address
+
+Securely verify a Concordium account address on the Ledger device using the trusted backend pattern. The signer fetches a signed account ownership descriptor from the trusted metadata service, loads it onto the device via the PKI infrastructure, then triggers address verification. The device validates the descriptor's signature chain, derives the public key from the given path, and displays the address for user confirmation only if the key matches.
+
+```typescript
+const { observable, cancel } = signerConcordium.verifyAddress(
+  derivationPath,
+  address,
+  network,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/919'/0'/0'/0'"`)
+  - The derivation path for the account's signing key.
+
+- `address`
+
+  - **Required**
+  - **Type:** `string`
+  - The Concordium Base58Check account address to verify (e.g., `"3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB"`).
+
+- `network`
+
+  - **Required**
+  - **Type:** `"mainnet" | "testnet"`
+  - The Concordium network for which to verify the address.
+
+- `options`
+
+  - Optional
+  - Type: `VerifyAddressOptions`
+
+    ```typescript
+    type VerifyAddressOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Concordium app on the device.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates. On completion, the output is `true` (the address was verified and approved by the user).
 
 - `cancel` A function to cancel the action on the Ledger device.
 
