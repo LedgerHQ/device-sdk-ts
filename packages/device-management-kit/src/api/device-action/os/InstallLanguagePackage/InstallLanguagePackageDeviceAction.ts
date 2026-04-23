@@ -31,7 +31,6 @@ import {
   type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
-import { type InstalledLanguagePackage } from "@api/device-session/DeviceSessionState";
 import { type LanguagePackage } from "@internal/manager-api/model/Language";
 
 import {
@@ -175,25 +174,6 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
                   };
                 }
 
-                const installedLanguageNames = (
-                  metadata.installedLanguages ?? []
-                ).map(
-                  (installedLanguage: InstalledLanguagePackage) =>
-                    languagePackages.find(
-                      (lp: LanguagePackage) =>
-                        lp.languagePackageVersionId === installedLanguage.id,
-                    )?.language,
-                );
-
-                if (installedLanguageNames.includes(language)) {
-                  return {
-                    ..._.context._internalState,
-                    error: null,
-                    languagePackage: null,
-                    shouldSkipInstall: true,
-                  };
-                }
-
                 const languagePackage = languagePackages.find(
                   (lp) => lp.language === language,
                 );
@@ -203,6 +183,21 @@ export class InstallLanguagePackageDeviceAction extends XStateDeviceAction<
                     error: new MissingLanguagePackageDAError(
                       `Language package not found for ${language}.`,
                     ),
+                  };
+                }
+
+                const installedLanguageIds = (
+                  metadata.installedLanguages ?? []
+                ).map(({ id }) => id);
+
+                const isAlreadyInstalled = installedLanguageIds.includes(
+                  languagePackage.languagePackageId,
+                );
+
+                if (isAlreadyInstalled) {
+                  return {
+                    ..._.context._internalState,
+                    shouldSkipInstall: true,
                   };
                 }
                 return {

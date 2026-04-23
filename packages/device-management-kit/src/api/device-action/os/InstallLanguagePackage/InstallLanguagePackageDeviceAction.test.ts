@@ -2,7 +2,6 @@ import { of, throwError } from "rxjs";
 
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { DeleteLanguagePackCommandError } from "@api/command/os/DeleteLanguagePackCommand";
-import { DeviceStatus } from "@api/device/DeviceStatus";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { setupGetDeviceMetadataMock } from "@api/device-action/__test-utils__/setupTestMachine";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
@@ -15,8 +14,6 @@ import {
   UnknownDAError,
 } from "@api/device-action/os/Errors";
 import type { GetDeviceMetadataDAOutput } from "@api/device-action/os/GetDeviceMetadata/types";
-import type { DeviceSessionState } from "@api/device-session/DeviceSessionState";
-import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import type { LanguagePackage } from "@internal/manager-api/model/Language";
 
 import { InstallLanguagePackageDeviceAction } from "./InstallLanguagePackageDeviceAction";
@@ -54,550 +51,697 @@ describe("InstallLanguagePackageDeviceAction", () => {
     INSTALL_LANGUAGE_PACK,
   } = installLanguagePackageDAStateStep;
 
-  function extractDependenciesMock() {
-    return {
-      deleteCurrentLanguagePack: deleteCurrentLanguagePackMock,
-      installLanguagePack: installLanguagePackMock,
-    };
-  }
+  const extractDependenciesMock = {
+    deleteCurrentLanguagePack: deleteCurrentLanguagePackMock,
+    installLanguagePack: installLanguagePackMock,
+  };
+
+  const buildMetadata = (
+    partial: {
+      installedLanguages?: Array<{ id: number; size: number }>;
+      catalog?: { languagePackages?: LanguagePackage[] | undefined };
+      firmwareVersion?: GetDeviceMetadataDAOutput["firmwareVersion"];
+    } = {},
+  ): GetDeviceMetadataDAOutput =>
+    ({
+      installedLanguages: [],
+      ...partial,
+      catalog: {
+        languagePackages: [],
+        ...(partial.catalog ?? {}),
+      },
+    }) as unknown as GetDeviceMetadataDAOutput;
+
+  const runTest = (
+    deviceAction: InstallLanguagePackageDeviceAction,
+    expectedStates: Array<InstallLanguagePackageDAState>,
+    onDoneExtra?: () => void,
+  ) =>
+    new Promise<void>((resolve, reject) => {
+      vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+        extractDependenciesMock,
+      );
+      testDeviceActionStates(deviceAction, expectedStates, apiMock, {
+        onDone: () => {
+          try {
+            onDoneExtra?.();
+            resolve();
+          } catch (e) {
+            reject(e as Error);
+          }
+        },
+        onError: reject,
+      });
+    });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    apiMock.getDeviceSessionState.mockReturnValue({
-      sessionStateType: DeviceSessionStateType.Connected,
-      deviceStatus: DeviceStatus.CONNECTED,
-    } as DeviceSessionState);
   });
 
   describe("success cases", () => {
-    it("should install a non-default language package", () =>
-      new Promise<void>((resolve, reject) => {
-        setupGetDeviceMetadataMock({
-          catalog: {
-            languagePackages: [LANGUAGE_PACKAGE],
-          },
-        } as unknown as GetDeviceMetadataDAOutput);
+    it("should install a non-default language package", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({ catalog: { languagePackages: [LANGUAGE_PACKAGE] } }),
+      );
 
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "french",
-          },
-        });
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
 
-        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
-          CommandResultFactory({ data: undefined }),
-        );
-        installLanguagePackMock.mockReturnValueOnce(
-          of(
-            { type: "progress", progress: 0.5 },
-            { type: "progress", progress: 1 },
-          ),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+      deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+      installLanguagePackMock.mockReturnValueOnce(
+        of(
+          { type: "progress", progress: 0.5 },
+          { type: "progress", progress: 1 },
+        ),
+      );
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        // Initial
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-          // GetDeviceMetadata
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        // GetDeviceMetadata
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          // DeleteCurrentLanguagePack
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DELETE_CURRENT_LANGUAGE_PACK,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        // DeleteCurrentLanguagePack
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DELETE_CURRENT_LANGUAGE_PACK,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
           },
-          // InstallLanguagePack
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: INSTALL_LANGUAGE_PACK,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        // InstallLanguagePack
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 0,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: INSTALL_LANGUAGE_PACK,
-              progress: 0.5,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 0.5,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: INSTALL_LANGUAGE_PACK,
-              progress: 1,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 1,
           },
-          // Success
-          {
-            output: undefined,
-            status: DeviceActionStatus.Completed,
-          },
-        ];
+          status: DeviceActionStatus.Pending,
+        },
+        // Success
+        {
+          output: undefined,
+          status: DeviceActionStatus.Completed,
+        },
+      ];
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      return runTest(deviceAction, expectedStates);
+    });
 
-    it("should delete and skip install for the default language (english)", () =>
-      new Promise<void>((resolve, reject) => {
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "english",
+    it("should install when a different language pack is already installed", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({
+          catalog: { languagePackages: [LANGUAGE_PACKAGE] },
+          installedLanguages: [{ id: 999, size: 2048 }],
+        }),
+      );
+
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
+
+      deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+      installLanguagePackMock.mockReturnValueOnce(
+        of({ type: "progress", progress: 1 }),
+      );
+
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-        });
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 0,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 1,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          output: undefined,
+          status: DeviceActionStatus.Completed,
+        },
+      ];
 
-        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
-          CommandResultFactory({ data: undefined }),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+      return runTest(deviceAction, expectedStates, () => {
+        expect(deleteCurrentLanguagePackMock).toHaveBeenCalledOnce();
+        expect(installLanguagePackMock).toHaveBeenCalledOnce();
+      });
+    });
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
+    it("should succeed without delete or install when the language pack is already installed", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({
+          catalog: { languagePackages: [LANGUAGE_PACKAGE] },
+          installedLanguages: [
+            {
+              id: LANGUAGE_PACKAGE.languagePackageId,
+              size: LANGUAGE_PACKAGE.bytes,
             },
-            status: DeviceActionStatus.Pending,
-          },
-          // DeleteCurrentLanguagePack
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DELETE_CURRENT_LANGUAGE_PACK,
-            },
-            status: DeviceActionStatus.Pending,
-          },
-          // Success
-          {
-            output: undefined,
-            status: DeviceActionStatus.Completed,
-          },
-        ];
+          ],
+        }),
+      );
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
+
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          output: undefined,
+          status: DeviceActionStatus.Completed,
+        },
+      ];
+
+      return runTest(deviceAction, expectedStates, () => {
+        expect(deleteCurrentLanguagePackMock).not.toHaveBeenCalled();
+        expect(installLanguagePackMock).not.toHaveBeenCalled();
+      });
+    });
+
+    it("should install when only a matching languagePackageVersionId is reported as installed", () => {
+      // Guards against a regression where the implementation compares against
+      // languagePackageVersionId instead of languagePackageId.
+      setupGetDeviceMetadataMock(
+        buildMetadata({
+          catalog: { languagePackages: [LANGUAGE_PACKAGE] },
+          installedLanguages: [
+            {
+              id: LANGUAGE_PACKAGE.languagePackageVersionId,
+              size: LANGUAGE_PACKAGE.bytes,
+            },
+          ],
+        }),
+      );
+
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
+
+      deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+      installLanguagePackMock.mockReturnValueOnce(
+        of({ type: "progress", progress: 1 }),
+      );
+
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 0,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 1,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          output: undefined,
+          status: DeviceActionStatus.Completed,
+        },
+      ];
+
+      return runTest(deviceAction, expectedStates, () => {
+        expect(installLanguagePackMock).toHaveBeenCalledOnce();
+      });
+    });
+
+    it("should delete and skip install for the default language (english)", () => {
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "english" },
+      });
+
+      deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          output: undefined,
+          status: DeviceActionStatus.Completed,
+        },
+      ];
+
+      return runTest(deviceAction, expectedStates, () => {
+        expect(deleteCurrentLanguagePackMock).toHaveBeenCalledOnce();
+        expect(installLanguagePackMock).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe("error cases", () => {
-    it("should error when GetDeviceMetadata fails", () =>
-      new Promise<void>((resolve, reject) => {
-        setupGetDeviceMetadataMock(
-          {} as unknown as GetDeviceMetadataDAOutput,
-          true,
-        );
+    it("should error when GetDeviceMetadata fails", () => {
+      setupGetDeviceMetadataMock(
+        {} as unknown as GetDeviceMetadataDAOutput,
+        true,
+      );
 
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "french",
-          },
-        });
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-          // GetDeviceMetadata
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          // Error
-          {
-            error: new UnknownDAError("GetDeviceMetadata failed"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new UnknownDAError("GetDeviceMetadata failed"),
+          status: DeviceActionStatus.Error,
+        },
+      ];
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      return runTest(deviceAction, expectedStates);
+    });
 
-    it("should error when language packages are missing from metadata", () =>
-      new Promise<void>((resolve, reject) => {
-        setupGetDeviceMetadataMock({
+    it("should error when language packages are missing from metadata", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({
           firmwareVersion: {
             mcu: "1.0.0",
             bootloader: "1.0.0",
             os: "2.4.0",
-          },
-          catalog: {
-            languagePackages: undefined,
-          },
-        } as unknown as GetDeviceMetadataDAOutput);
+          } as GetDeviceMetadataDAOutput["firmwareVersion"],
+          catalog: { languagePackages: undefined },
+        }),
+      );
 
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "french",
-          },
-        });
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-          // GetDeviceMetadata
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          // Error
-          {
-            error: new MissingLanguagePackagesForOSDAError(
-              "Language packages not found for OS 2.4.0.",
-            ),
-            status: DeviceActionStatus.Error,
-          },
-        ];
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new MissingLanguagePackagesForOSDAError(
+            "Language packages not found for OS 2.4.0.",
+          ),
+          status: DeviceActionStatus.Error,
+        },
+      ];
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      return runTest(deviceAction, expectedStates);
+    });
 
-    it("should error when the requested language is not found", () =>
-      new Promise<void>((resolve, reject) => {
-        setupGetDeviceMetadataMock({
-          catalog: {
-            languagePackages: [LANGUAGE_PACKAGE],
-          },
-        } as unknown as GetDeviceMetadataDAOutput);
+    it("should error when the requested language is not found", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({ catalog: { languagePackages: [LANGUAGE_PACKAGE] } }),
+      );
 
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "spanish",
-          },
-        });
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "spanish" },
+      });
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-          // GetDeviceMetadata
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          // Error
-          {
-            error: new MissingLanguagePackageDAError(
-              "Language package not found for spanish.",
-            ),
-            status: DeviceActionStatus.Error,
-          },
-        ];
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new MissingLanguagePackageDAError(
+            "Language package not found for spanish.",
+          ),
+          status: DeviceActionStatus.Error,
+        },
+      ];
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      return runTest(deviceAction, expectedStates);
+    });
 
-    it("should error when DeleteCurrentLanguagePack returns a command error", () =>
-      new Promise<void>((resolve, reject) => {
-        setupGetDeviceMetadataMock({
-          catalog: {
-            languagePackages: [LANGUAGE_PACKAGE],
-          },
-        } as unknown as GetDeviceMetadataDAOutput);
+    it("should error when DeleteCurrentLanguagePack returns a command error", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({ catalog: { languagePackages: [LANGUAGE_PACKAGE] } }),
+      );
 
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "french",
-          },
-        });
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
 
-        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
-          CommandResultFactory({
-            error: new DeleteLanguagePackCommandError({
-              message: "Invalid LANG_ID value.",
-              errorCode: "681a",
-            }),
+      deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+        CommandResultFactory({
+          error: new DeleteLanguagePackCommandError({
+            message: "Invalid LANG_ID value.",
+            errorCode: "681a",
           }),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+        }),
+      );
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-          // GetDeviceMetadata
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          // DeleteCurrentLanguagePack
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DELETE_CURRENT_LANGUAGE_PACK,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
           },
-          // Error
-          {
-            error: new DeleteLanguagePackDAError("Invalid LANG_ID value."),
-            status: DeviceActionStatus.Error,
-          },
-        ];
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new DeleteLanguagePackDAError("Invalid LANG_ID value."),
+          status: DeviceActionStatus.Error,
+        },
+      ];
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      return runTest(deviceAction, expectedStates);
+    });
 
-    it("should error when DeleteCurrentLanguagePack promise rejects", () =>
-      new Promise<void>((resolve, reject) => {
-        setupGetDeviceMetadataMock({
-          catalog: {
-            languagePackages: [LANGUAGE_PACKAGE],
-          },
-        } as unknown as GetDeviceMetadataDAOutput);
+    it("should error when DeleteCurrentLanguagePack promise rejects", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({ catalog: { languagePackages: [LANGUAGE_PACKAGE] } }),
+      );
 
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "french",
-          },
-        });
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
 
-        deleteCurrentLanguagePackMock.mockRejectedValueOnce(
-          new DeleteLanguagePackDAError("Delete failed"),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+      deleteCurrentLanguagePackMock.mockRejectedValueOnce(
+        new DeleteLanguagePackDAError("Delete failed"),
+      );
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-          // GetDeviceMetadata
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          // DeleteCurrentLanguagePack
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DELETE_CURRENT_LANGUAGE_PACK,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
           },
-          // Error
-          {
-            error: new DeleteLanguagePackDAError("Delete failed"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new DeleteLanguagePackDAError("Delete failed"),
+          status: DeviceActionStatus.Error,
+        },
+      ];
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      return runTest(deviceAction, expectedStates);
+    });
 
-    it("should error when InstallLanguagePack observable errors", () =>
-      new Promise<void>((resolve, reject) => {
-        setupGetDeviceMetadataMock({
-          catalog: {
-            languagePackages: [LANGUAGE_PACKAGE],
-          },
-        } as unknown as GetDeviceMetadataDAOutput);
+    it("should error when InstallLanguagePack observable errors", () => {
+      setupGetDeviceMetadataMock(
+        buildMetadata({ catalog: { languagePackages: [LANGUAGE_PACKAGE] } }),
+      );
 
-        const deviceAction = new InstallLanguagePackageDeviceAction({
-          input: {
-            language: "french",
-          },
-        });
+      const deviceAction = new InstallLanguagePackageDeviceAction({
+        input: { language: "french" },
+      });
 
-        deleteCurrentLanguagePackMock.mockResolvedValueOnce(
-          CommandResultFactory({ data: undefined }),
-        );
-        installLanguagePackMock.mockReturnValueOnce(
-          throwError(() => new MissingLanguagePackageDAError("Install failed")),
-        );
-        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
-          extractDependenciesMock(),
-        );
+      deleteCurrentLanguagePackMock.mockResolvedValueOnce(
+        CommandResultFactory({ data: undefined }),
+      );
+      installLanguagePackMock.mockReturnValueOnce(
+        throwError(() => new UnknownDAError("Install failed")),
+      );
 
-        const expectedStates: Array<InstallLanguagePackageDAState> = [
-          // Initial
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DEVICE_READY,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+      const expectedStates: Array<InstallLanguagePackageDAState> = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DEVICE_READY,
+            progress: 0,
           },
-          // GetDeviceMetadata
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: GET_DEVICE_METADATA,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: GET_DEVICE_METADATA,
           },
-          // DeleteCurrentLanguagePack
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DELETE_CURRENT_LANGUAGE_PACK,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
           },
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: DELETE_CURRENT_LANGUAGE_PACK,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: DELETE_CURRENT_LANGUAGE_PACK,
           },
-          // InstallLanguagePack
-          {
-            intermediateValue: {
-              requiredUserInteraction: None,
-              step: INSTALL_LANGUAGE_PACK,
-              progress: 0,
-            },
-            status: DeviceActionStatus.Pending,
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: None,
+            step: INSTALL_LANGUAGE_PACK,
+            progress: 0,
           },
-          // Error
-          {
-            error: new MissingLanguagePackageDAError("Install failed"),
-            status: DeviceActionStatus.Error,
-          },
-        ];
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          error: new UnknownDAError("Install failed"),
+          status: DeviceActionStatus.Error,
+        },
+      ];
 
-        testDeviceActionStates(deviceAction, expectedStates, apiMock, {
-          onDone: resolve,
-          onError: reject,
-        });
-      }));
+      return runTest(deviceAction, expectedStates);
+    });
   });
 });
