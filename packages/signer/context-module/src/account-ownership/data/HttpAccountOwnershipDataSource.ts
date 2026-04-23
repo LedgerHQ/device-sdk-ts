@@ -7,6 +7,7 @@ import {
   type AccountOwnershipDescriptor,
   type GetAccountOwnershipParams,
 } from "@/account-ownership/data/AccountOwnershipDataSource";
+import { AccountOwnershipError } from "@/account-ownership/data/AccountOwnershipError";
 import { type AccountOwnershipDto } from "@/account-ownership/data/dto/AccountOwnershipDto";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
@@ -49,7 +50,8 @@ export class HttpAccountOwnershipDataSource
 
       if (!response.data) {
         return Left(
-          new Error(
+          new AccountOwnershipError(
+            "service_unavailable",
             "[ContextModule] HttpAccountOwnershipDataSource: unexpected empty response",
           ),
         );
@@ -57,7 +59,8 @@ export class HttpAccountOwnershipDataSource
 
       if (!this.isAccountOwnershipDto(response.data)) {
         return Left(
-          new Error(
+          new AccountOwnershipError(
+            "service_unavailable",
             "[ContextModule] HttpAccountOwnershipDataSource: invalid response format",
           ),
         );
@@ -68,13 +71,55 @@ export class HttpAccountOwnershipDataSource
         keyId: response.data.keyId,
         keyUsage: response.data.keyUsage,
       });
-    } catch (_error) {
-      return Left(
-        new Error(
-          "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
-        ),
+    } catch (error) {
+      return Left(this.classifyError(error));
+    }
+  }
+
+  /**
+   * Classifies a caught request error into an {@link AccountOwnershipError}:
+   * HTTP 4xx responses carry the backend's `message` verbatim and are marked
+   * as `verification_failed`; everything else (network failure, 5xx,
+   * non-axios errors) is marked as `service_unavailable`.
+   */
+  private classifyError(error: unknown): AccountOwnershipError {
+    if (axios.isAxiosError(error) && error.response) {
+      const status = error.response.status;
+      const backendMessage = this.extractBackendMessage(
+        error.response.data,
+        error.message,
+      );
+
+      if (status >= 400 && status < 500) {
+        return new AccountOwnershipError("verification_failed", backendMessage);
+      }
+
+      return new AccountOwnershipError(
+        "service_unavailable",
+        `[ContextModule] HttpAccountOwnershipDataSource: backend ${status}: ${backendMessage}`,
       );
     }
+
+    return new AccountOwnershipError(
+      "service_unavailable",
+      "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
+    );
+  }
+
+  private extractBackendMessage(data: unknown, fallback: string): string {
+    if (typeof data === "string" && data.length > 0) {
+      return data;
+    }
+    if (
+      typeof data === "object" &&
+      data !== null &&
+      "message" in data &&
+      typeof (data as { message: unknown }).message === "string" &&
+      (data as { message: string }).message.length > 0
+    ) {
+      return (data as { message: string }).message;
+    }
+    return fallback;
   }
 
   private isAccountOwnershipDto(value: unknown): value is AccountOwnershipDto {

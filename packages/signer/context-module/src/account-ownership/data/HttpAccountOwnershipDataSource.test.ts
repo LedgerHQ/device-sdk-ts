@@ -1,6 +1,7 @@
-import axios from "axios";
+import axios, { AxiosError, type AxiosResponse } from "axios";
 import { Left, Right } from "purify-ts";
 
+import { AccountOwnershipError } from "@/account-ownership/data/AccountOwnershipError";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import {
   LEDGER_CLIENT_VERSION_HEADER,
@@ -11,6 +12,23 @@ import PACKAGE from "@root/package.json";
 import { HttpAccountOwnershipDataSource } from "./HttpAccountOwnershipDataSource";
 
 vi.mock("axios");
+
+function makeAxiosError(
+  status: number,
+  data: unknown,
+  message = "Request failed",
+): AxiosError {
+  const err = new AxiosError(message);
+  err.message = message;
+  err.response = {
+    status,
+    data,
+    statusText: "",
+    headers: {},
+    config: {} as never,
+  } as AxiosResponse;
+  return err;
+}
 
 describe("HttpAccountOwnershipDataSource", () => {
   const config: ContextModuleServiceConfig = {
@@ -26,30 +44,31 @@ describe("HttpAccountOwnershipDataSource", () => {
     keyUsage: "trusted_name",
   };
 
+  const baseParams = {
+    publicKey: "abcdef1234567890",
+    address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
+    challenge: "0xabcdef",
+    network: "mainnet" as const,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(axios, "isAxiosError").mockImplementation(
+      (value: unknown): value is AxiosError => value instanceof AxiosError,
+    );
   });
 
   describe("getDescriptor", () => {
     it("should return descriptor on successful request", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: validDto,
       });
 
-      // WHEN
       const result = await new HttpAccountOwnershipDataSource(
         config,
-      ).getDescriptor(params);
+      ).getDescriptor(baseParams);
 
-      // THEN
       expect(axios.request).toHaveBeenCalledWith({
         method: "GET",
         url: "https://nft.api.live.ledger-test.com/v2/concordium/owner/abcdef1234567890/3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
@@ -62,32 +81,20 @@ describe("HttpAccountOwnershipDataSource", () => {
           [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
         },
       });
-      expect(result).toEqual(
-        Right({
-          signedDescriptor: "signed-descriptor-data",
-          keyId: "domain_metadata_key",
-          keyUsage: "trusted_name",
-        }),
-      );
+      expect(result).toEqual(Right(validDto));
     });
 
     it("should pass testnet network parameter", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "testnet" as const,
-      };
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: validDto,
       });
 
-      // WHEN
-      await new HttpAccountOwnershipDataSource(config).getDescriptor(params);
+      await new HttpAccountOwnershipDataSource(config).getDescriptor({
+        ...baseParams,
+        network: "testnet",
+      });
 
-      // THEN
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
           params: {
@@ -98,178 +105,171 @@ describe("HttpAccountOwnershipDataSource", () => {
       );
     });
 
-    it("should return error when response data is empty", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
+    it("should classify empty response as service_unavailable", async () => {
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: null,
       });
 
-      // WHEN
       const result = await new HttpAccountOwnershipDataSource(
         config,
-      ).getDescriptor(params);
+      ).getDescriptor(baseParams);
 
-      // THEN
-      expect(result).toEqual(
-        Left(
-          new Error(
-            "[ContextModule] HttpAccountOwnershipDataSource: unexpected empty response",
-          ),
-        ),
-      );
+      expect(result.isLeft()).toBe(true);
+      const err = result.extract() as AccountOwnershipError;
+      expect(err).toBeInstanceOf(AccountOwnershipError);
+      expect(err.kind).toBe("service_unavailable");
+      expect(err.message).toContain("unexpected empty response");
     });
 
-    it("should return error when signedDescriptor is missing", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          keyId: "domain_metadata_key",
-          keyUsage: "trusted_name",
-        },
-      });
+    it.each([
+      ["signedDescriptor missing", { keyId: "k", keyUsage: "u" }],
+      ["keyId missing", { signedDescriptor: "s", keyUsage: "u" }],
+      ["keyUsage missing", { signedDescriptor: "s", keyId: "k" }],
+      [
+        "wrong field type",
+        { signedDescriptor: "s", keyId: 123, keyUsage: "u" },
+      ],
+    ])(
+      "should classify malformed response (%s) as service_unavailable",
+      async (_label, data) => {
+        vi.spyOn(axios, "request").mockResolvedValue({ status: 200, data });
 
-      // WHEN
+        const result = await new HttpAccountOwnershipDataSource(
+          config,
+        ).getDescriptor(baseParams);
+
+        expect(result.isLeft()).toBe(true);
+        const err = result.extract() as AccountOwnershipError;
+        expect(err).toBeInstanceOf(AccountOwnershipError);
+        expect(err.kind).toBe("service_unavailable");
+        expect(err.message).toContain("invalid response format");
+      },
+    );
+
+    it("should classify 422 with { message } body as verification_failed and forward backend message", async () => {
+      const backendMessage =
+        "Address ByteVector(32 bytes, 0xa63c) is not associated with the given public key ByteVector(32 bytes, 0x9dc1) on the network Testnet";
+      vi.spyOn(axios, "request").mockRejectedValue(
+        makeAxiosError(422, { message: backendMessage }),
+      );
+
       const result = await new HttpAccountOwnershipDataSource(
         config,
-      ).getDescriptor(params);
+      ).getDescriptor(baseParams);
 
-      // THEN
-      expect(result).toEqual(
-        Left(
-          new Error(
-            "[ContextModule] HttpAccountOwnershipDataSource: invalid response format",
-          ),
-        ),
-      );
+      expect(result.isLeft()).toBe(true);
+      const err = result.extract() as AccountOwnershipError;
+      expect(err).toBeInstanceOf(AccountOwnershipError);
+      expect(err.kind).toBe("verification_failed");
+      expect(err.message).toBe(backendMessage);
     });
 
-    it("should return error when keyId is missing", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          signedDescriptor: "signed-descriptor-data",
-          keyUsage: "trusted_name",
-        },
-      });
+    it.each([400, 401, 403, 404, 429])(
+      "should classify HTTP %s as verification_failed",
+      async (status) => {
+        vi.spyOn(axios, "request").mockRejectedValue(
+          makeAxiosError(status, { message: "refused" }),
+        );
 
-      // WHEN
+        const result = await new HttpAccountOwnershipDataSource(
+          config,
+        ).getDescriptor(baseParams);
+
+        const err = result.extract() as AccountOwnershipError;
+        expect(err.kind).toBe("verification_failed");
+        expect(err.message).toBe("refused");
+      },
+    );
+
+    it("should classify 500 as service_unavailable with status prefix", async () => {
+      vi.spyOn(axios, "request").mockRejectedValue(
+        makeAxiosError(500, { message: "internal error" }),
+      );
+
       const result = await new HttpAccountOwnershipDataSource(
         config,
-      ).getDescriptor(params);
+      ).getDescriptor(baseParams);
 
-      // THEN
-      expect(result).toEqual(
-        Left(
-          new Error(
-            "[ContextModule] HttpAccountOwnershipDataSource: invalid response format",
-          ),
-        ),
-      );
+      const err = result.extract() as AccountOwnershipError;
+      expect(err.kind).toBe("service_unavailable");
+      expect(err.message).toContain("backend 500");
+      expect(err.message).toContain("internal error");
     });
 
-    it("should return error when keyUsage is missing", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          signedDescriptor: "signed-descriptor-data",
-          keyId: "domain_metadata_key",
-        },
-      });
+    it.each([502, 503, 504])(
+      "should classify HTTP %s as service_unavailable",
+      async (status) => {
+        vi.spyOn(axios, "request").mockRejectedValue(
+          makeAxiosError(status, { message: "down" }),
+        );
 
-      // WHEN
+        const result = await new HttpAccountOwnershipDataSource(
+          config,
+        ).getDescriptor(baseParams);
+
+        const err = result.extract() as AccountOwnershipError;
+        expect(err.kind).toBe("service_unavailable");
+      },
+    );
+
+    it("should accept string body and forward it as message on 4xx", async () => {
+      vi.spyOn(axios, "request").mockRejectedValue(
+        makeAxiosError(422, "plain text reason"),
+      );
+
       const result = await new HttpAccountOwnershipDataSource(
         config,
-      ).getDescriptor(params);
+      ).getDescriptor(baseParams);
 
-      // THEN
-      expect(result).toEqual(
-        Left(
-          new Error(
-            "[ContextModule] HttpAccountOwnershipDataSource: invalid response format",
-          ),
-        ),
-      );
+      const err = result.extract() as AccountOwnershipError;
+      expect(err.kind).toBe("verification_failed");
+      expect(err.message).toBe("plain text reason");
     });
 
-    it("should return error when field has wrong type", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          signedDescriptor: "signed-descriptor-data",
-          keyId: 123,
-          keyUsage: "trusted_name",
-        },
-      });
+    it("should fall back to axios error message when body has no message", async () => {
+      vi.spyOn(axios, "request").mockRejectedValue(
+        makeAxiosError(422, {}, "Request failed with status code 422"),
+      );
 
-      // WHEN
       const result = await new HttpAccountOwnershipDataSource(
         config,
-      ).getDescriptor(params);
+      ).getDescriptor(baseParams);
 
-      // THEN
-      expect(result).toEqual(
-        Left(
-          new Error(
-            "[ContextModule] HttpAccountOwnershipDataSource: invalid response format",
-          ),
-        ),
-      );
+      const err = result.extract() as AccountOwnershipError;
+      expect(err.kind).toBe("verification_failed");
+      expect(err.message).toBe("Request failed with status code 422");
     });
 
-    it("should return error when axios request fails", async () => {
-      // GIVEN
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("Network error"));
+    it("should fall back to axios error message when body message is empty", async () => {
+      vi.spyOn(axios, "request").mockRejectedValue(
+        makeAxiosError(
+          422,
+          { message: "" },
+          "Request failed with status code 422",
+        ),
+      );
 
-      // WHEN
       const result = await new HttpAccountOwnershipDataSource(
         config,
-      ).getDescriptor(params);
+      ).getDescriptor(baseParams);
 
-      // THEN
+      const err = result.extract() as AccountOwnershipError;
+      expect(err.kind).toBe("verification_failed");
+      expect(err.message).toBe("Request failed with status code 422");
+    });
+
+    it("should classify non-axios / network errors as service_unavailable", async () => {
+      vi.spyOn(axios, "request").mockRejectedValue(new Error("ECONNREFUSED"));
+
+      const result = await new HttpAccountOwnershipDataSource(
+        config,
+      ).getDescriptor(baseParams);
+
       expect(result).toEqual(
         Left(
-          new Error(
+          new AccountOwnershipError(
+            "service_unavailable",
             "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
           ),
         ),
@@ -277,30 +277,21 @@ describe("HttpAccountOwnershipDataSource", () => {
     });
 
     it("should use correct metadata service URL from config", async () => {
-      // GIVEN
       const customConfig: ContextModuleServiceConfig = {
         metadataServiceDomain: {
           url: "https://custom-metadata.example.com",
         },
         originToken: "custom-token",
       } as ContextModuleServiceConfig;
-      const params = {
-        publicKey: "abcdef1234567890",
-        address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        challenge: "0xabcdef",
-        network: "mainnet" as const,
-      };
       vi.spyOn(axios, "request").mockResolvedValue({
         status: 200,
         data: validDto,
       });
 
-      // WHEN
       await new HttpAccountOwnershipDataSource(customConfig).getDescriptor(
-        params,
+        baseParams,
       );
 
-      // THEN
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
           url: "https://custom-metadata.example.com/v2/concordium/owner/abcdef1234567890/3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
