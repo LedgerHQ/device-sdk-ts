@@ -1,5 +1,11 @@
 # @ledgerhq/context-module
 
+## 1.17.0
+
+### Minor Changes
+
+- [#1416](https://github.com/LedgerHQ/device-sdk-ts/pull/1416) [`106a40f`](https://github.com/LedgerHQ/device-sdk-ts/commit/106a40f18f93d04b0eb2646e4b0f5af748df16d6) Thanks [@lysyi3m](https://github.com/lysyi3m)! - Add AccountOwnership context loader for Concordium on-device address verification via trusted metadata service
+
 ## 1.16.0
 
 ### Minor Changes

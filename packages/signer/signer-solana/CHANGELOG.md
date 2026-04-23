@@ -1,5 +1,24 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.8.0
+
+### Minor Changes
+
+- [#1358](https://github.com/LedgerHQ/device-sdk-ts/pull/1358) [`fc8c132`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc8c132c59e5e0aaa3a9c2563006c32f7093ba34) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add delayed transaction signing feature
+
+### Patch Changes
+
+- [#1432](https://github.com/LedgerHQ/device-sdk-ts/pull/1432) [`e3b3421`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3b3421fc481fa2f952760d66e65654bab5e4336) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patch application resolver for all swap cases
+
+- [#1336](https://github.com/LedgerHQ/device-sdk-ts/pull/1336) [`ee21448`](https://github.com/LedgerHQ/device-sdk-ts/commit/ee21448eaabe25dbb9713f432a7b2b9725e75ac7) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
+- [#1432](https://github.com/LedgerHQ/device-sdk-ts/pull/1432) [`bc9784d`](https://github.com/LedgerHQ/device-sdk-ts/commit/bc9784db39098a14a06c46f44e01ea43e4c4ba2a) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove RPC fallback and warn upon missing config on signTransaction
+
+- [#1396](https://github.com/LedgerHQ/device-sdk-ts/pull/1396) [`9d9a3cf`](https://github.com/LedgerHQ/device-sdk-ts/commit/9d9a3cf5dc91d3b1c4171d3f93972d2d63aa1d9c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Update docs
+
+- Updated dependencies [[`106a40f`](https://github.com/LedgerHQ/device-sdk-ts/commit/106a40f18f93d04b0eb2646e4b0f5af748df16d6)]:
+  - @ledgerhq/context-module@1.17.0
+
 ## 1.7.1
 
 ### Patch Changes
