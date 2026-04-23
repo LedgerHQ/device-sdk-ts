@@ -2,7 +2,7 @@ import { type TransactionResolutionContext } from "./TransactionResolutionContex
 
 export type SolanaTransactionOptionalConfig = {
   transactionResolutionContext?: TransactionResolutionContext;
-  /** When set, overrides the signer default RPC URL for this sign only. */
+  /** When set, overrides the signer-level RPC URL for this call. */
   solanaRPCURL?: string;
   skipOpenApp?: boolean;
   delayed?: boolean;

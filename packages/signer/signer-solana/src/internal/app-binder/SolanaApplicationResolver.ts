@@ -15,18 +15,20 @@ export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 export const SOLANA_APP_SPL_MIN_VERSION = "1.9.2";
 
 export class SolanaApplicationResolver implements ApplicationResolver {
-  resolve(deviceState: DeviceSessionState, _appConfig: AppConfig): ResolvedApp {
+  resolve(deviceState: DeviceSessionState, appConfig: AppConfig): ResolvedApp {
     if (deviceState.sessionStateType === DeviceSessionStateType.Connected) {
       return { isCompatible: false, version: DEFAULT_VERSION };
     }
 
-    const currentApp = deviceState.currentApp;
-    const appName = currentApp?.name;
+    const appName = deviceState.currentApp?.name;
 
-    if (!appName || appName !== APP_NAME) {
+    if (!appName || (appName !== APP_NAME && appName !== "Exchange")) {
       return { isCompatible: false, version: DEFAULT_VERSION };
     }
 
-    return { isCompatible: true, version: currentApp.version };
+    // appConfig.version is authoritative: it comes from GetAppConfiguration
+    // executed against the signer app, so it reflects the actual on-device version
+    // whether Solana is opened directly or via Exchange orchestration.
+    return { isCompatible: true, version: appConfig.version };
   }
 }

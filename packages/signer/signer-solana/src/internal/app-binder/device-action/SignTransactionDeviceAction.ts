@@ -59,7 +59,7 @@ import { DelayedSignTransactionDeviceAction } from "./DelayedSignTransactionDevi
 
 /**
  * Per-sign `transactionOptions.solanaRPCURL` overrides the builder default
- * (`input.solanaRPCURL`) for inspection and delayed signing.
+ * (`input.solanaRPCURL`).
  */
 function resolveSolanaRpcUrl(
   input: SignTransactionDAInput,
@@ -163,6 +163,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) =>
           context.input.transactionOptions?.skipOpenApp || false,
+        isDelayedRequested: ({ context }) =>
+          context.input.transactionOptions?.delayed === true,
         isSPLSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
@@ -204,6 +206,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             ),
           }),
         }),
+        logDelayedFallbackWarning: ({ context }) => {
+          const hasConfig = !!(
+            resolveSolanaRpcUrl(context.input) ||
+            context.input.transactionOptions?.fetchBlockhash
+          );
+          this.logger?.warn(
+            hasConfig
+              ? `delayed signing requires Solana app version >= ${SOLANA_MIN_DELAYED_SIGNING_VERSION}; falling back to standard signing`
+              : "delayed signing requires a Solana RPC URL or a fetchBlockhash callback; falling back to standard signing",
+          );
+        },
       },
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EAJgCMADg4BWAGw7jAGhABPRHr3SA7Bx0BONwGYALNOPfvUz1jHQBfUOs0TFwCIjYqWgYmVnIqbl5+IRExKT15JBBlVVSMDW0EfSMzC2s7BDdvHQ5pby9ff0DgsIiQKOx8QhISxMYWeM4AeUUwDGZFRRHk8fEIKjAOVAw6CgBrdYpp2fnhUTAAWRIAC02wGXylFTUqMsQnN1MON2lzK1tEN0MJicOicTlMoM8LXe4Ui6H6sSG7EWYxKHAAwpcwMQdlMZnMFvRRil2AAlOAAVwEpCkcg0RSepQK5T0nmMRmkwR+tX+3iMgVM0mc+j0OgM3Vh0QGcWGhKWqIxWJxh3xyOJVDJsEp1MkeTpjxKLwQLLZzU5NT+CAMeg4rTcBneLN8bx8MN6cJig3GqvGHAA4mBSPi0VQAGboFZrDZbXbrGCB+bBjBhqB3PXFdRM+wGUzeVymaq-OqOMWfe0BHyeNxOPSmV19D3SpGylHsP0BoOh8NgHA4Cg4DiKASiEN9gC2HDjHaT6FTBXpBszRuzuZ0+a5Fr0Hk+HjL2YsLNMtZ69aliISzbVnH98cUieTGq1CuxNPuhX1GdA5R0nh0TRapgMJxC3sBwmgMMVwU8QC3l5Yw63dU8vQvH1ryne8KSpJ8dlyV95w-LRdB-P9AkA4CEB8a0qxzYwnE8H5jW8eDJQRJCkhbNIeFgaYyAbM8MAjDB1k2bY9ijLisVIXjxlnB502eRdRS+Dgc2+c0i2kBoODBUUDA0ytqyPCV4U9GU2MvdJxJ4xCSnEbte37QdhzHMTuMk6z2Bkt85MZT9dHtaRlN8dc6kCALvDBbwzA0jTwqApjjMbc8zJ9ZgQzEHBONcl80wZQ0fyCLSKyA7kjRZa1+UFYFQLFeKpNMokUrS7tMoknCcoXXzyNXa1aO8Txio3SFjC0jwfD8AIghCWr3KShrUVS9KWrIKQdFw995M6-KeqKsiBSaSLIUMYwvgaUFppY+q5VbAAhclUAECBEzETRqVWQSoxE9YACM7oep6wBezy8I2gjyKcbMbQMPqBqLBxPA4HxzD0RpaKhQy3WYkym2S1Fbvux6qGe6k7L7Ach1IEccHHH78f+wHaTndafNB-qId5aGyOBAK3GMQ7aM3KD9HOrHZqutIAAVewYCAwDp17I2EmMByl1AZbloGmcNPrRQRr5gpA8EOHA1daOghoDDg48EIu7G5tbSWKGl2XCYB4me1JxyKecxQVbVl36bW7ytZ-IxK1Usi90+dwaLtAWxT0YXEpoZDUQdp25YfTDMWfDWg8XcKeYR47+rIhwgOaVoxo6SbxQxhK+O9VPfedjAicz0gsLaxm886gvhtZLwYfsQVcz15HvzjoWrcxpPG9bE8baoAShOjUTVBnvjc9yxdeZ0XN-AAoejVXIxVx0vSqxrROG5T+frZF-iSYc8nKfHdf6+khnZO3zrd-3kij6gXhkFZGjhwpWhzNfVids0gLwfu3TuW8OqgxjsNNwlRAGeAcAjMUTgOQjwAryKBl12KcDgUnBB2dsI6kDj-FBbw0EYNLqufuuDpCsnATWRiroMAUBlvAAo5Cb443wsDZm5QAC0pgSpSOaIKeRCiFFOGIbbMWnAeBqEECcMQ7V8LlEaCVRwhs3heErCCSErR0ZCOgWojguIjgEhESDMRWtBSfHDiVMsrhRpmNRpYlRotSHoiofYlUt91QYVILokGzJ-zKVIiVBoAV3CmPQX46E08P4kPMqhBMnYoDRPEfYfwRhB6lyhMpH8wIALHQtpbIydVVFBNybefJlDFSFMNDoIUrhDCALAVpGsgpi6XysffWe4T1GEFco05xmsFLGBFJ8Q+5SnC5lMPlap3xBYGACcnJxnAFrNWmRJTpi4sE1kKhzQxIo3CDIFH4Lwoy9lzzSHjP6-sondzoeUHwUMjYinKV4XpDyRkGU8C8yZHA06qxbkTM5m0PC5muRuBwPUfFpIsRkhpM19kwM4DCv2rdXbtOxAi0GB0Pg7RuYeI2EEtkbLFLszJsy8W2Oscglx+c7QfFFICwxe8jAshNqubZTLIUHI4By0kkSsLkvKMYXeJhDGQnhvoY6e9FU82cGMjeNignIHJMQJgsABHf2QeUAUtKoYlxVdIUOEEPC0QuW4CV+KOAAFF3Y4HlYgK1HwbWAL3vDMwkVumRV0ofcI4QgA */
@@ -429,6 +442,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             {
               target: "InvokeDelayedSign",
               guard: "isDelayedWithConfigAndSupported",
+            },
+            {
+              target: "SignTransaction",
+              guard: "isDelayedRequested",
+              actions: "logDelayedFallbackWarning",
             },
             { target: "SignTransaction" },
           ],
