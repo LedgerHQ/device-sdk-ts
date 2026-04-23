@@ -14,6 +14,7 @@ export enum ConcordiumErrorCodes {
   TRUSTED_NAME_MISMATCH = "6b0c",
   UNSUPPORTED_TRANSACTION_TYPE = "unsupported_transaction_type",
   TRUSTED_METADATA_SERVICE_ERROR = "trusted_metadata_service_error",
+  ADDRESS_VERIFICATION_FAILED = "address_verification_failed",
 }
 
 export const CONCORDIUM_APP_ERRORS: CommandErrors<ConcordiumErrorCodes> = {
@@ -27,6 +28,9 @@ export const CONCORDIUM_APP_ERRORS: CommandErrors<ConcordiumErrorCodes> = {
   unsupported_transaction_type: { message: "Unsupported transaction type" },
   trusted_metadata_service_error: {
     message: "Trusted metadata service error",
+  },
+  address_verification_failed: {
+    message: "Address verification failed",
   },
 };
 

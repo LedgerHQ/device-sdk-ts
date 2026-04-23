@@ -1,4 +1,5 @@
 export * from "./account-ownership/data/AccountOwnershipDataSource";
+export * from "./account-ownership/data/AccountOwnershipError";
 export * from "./account-ownership/data/HttpAccountOwnershipDataSource";
 export * from "./account-ownership/domain/AccountOwnershipContextLoader";
 export * from "./calldata/data/CalldataDescriptorDataSource";
