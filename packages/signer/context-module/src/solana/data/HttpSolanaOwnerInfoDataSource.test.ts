@@ -1,15 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   DeviceModelId,
+  type DmkNetworkClient,
   hexaStringToBuffer,
 } from "@ledgerhq/device-management-kit";
 import { Left } from "purify-ts";
 
 import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpSolanaOwnerInfoDataSource } from "@/solana/data/HttpSolanaOwnerInfoDataSource";
 import type { SolanaTransactionContext } from "@/solana/domain/solanaContextTypes";
-import PACKAGE from "@root/package.json";
 
 function stringToHex(str: string): string {
   const encoder = new TextEncoder();
@@ -33,8 +32,11 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     signedDescriptor: signedDescriptorHex,
   };
 
+  let httpMock: { get: ReturnType<typeof vi.fn> };
+
   beforeEach(() => {
     vi.resetAllMocks();
+    httpMock = { get: vi.fn() };
   });
 
   it("should fetch address metadata via tokenAddress", async () => {
@@ -44,13 +46,18 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       challenge: "random",
       createATA: undefined,
     };
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify(responseData)),
-    );
+    httpMock.get.mockResolvedValueOnce(responseData);
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
     const result = await dataSource.getOwnerInfo(context);
 
+    expect(httpMock.get).toHaveBeenCalledWith(
+      `${config.metadataServiceDomain.url}/v2/solana/owner/some-token`,
+      { params: { challenge: "random" } },
+    );
     expect(result.isRight()).toBe(true);
     expect(result.extract()).toEqual({
       tlvDescriptor: hexaStringToBuffer(signedDescriptorHex),
@@ -65,7 +72,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
     const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
@@ -85,7 +95,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
     const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
@@ -98,14 +111,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
   });
 
   it("should return an error if the descriptor is not valid base64", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          ...responseData,
-          signedDescriptor: "!!!not-valid-base64!!!",
-        }),
-      ),
-    );
+    httpMock.get.mockResolvedValueOnce({
+      ...responseData,
+      signedDescriptor: "!!!not-valid-base64!!!",
+    });
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: "some-token",
@@ -113,7 +122,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
     const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
@@ -126,9 +138,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
   });
 
   it("should return an error if the metadata request fails", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
-      new Error("Network error"),
-    );
+    httpMock.get.mockRejectedValueOnce(new Error("Network error"));
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
       tokenAddress: "some-token",
@@ -136,7 +146,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
     const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
@@ -149,9 +162,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
   });
 
   it("should return an error if fetch request return wrong shape for fetchAddressMetadata", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ wrong: "field" })),
-    );
+    httpMock.get.mockResolvedValueOnce({ wrong: "field" });
 
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
@@ -160,7 +171,10 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
     const result = await dataSource.getOwnerInfo(context);
 
     expect(result).toEqual(
@@ -173,9 +187,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
   });
 
   it("should return an error if fetch request return wrong shape for computeAddressMetadata", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ wrong: "field" })),
-    );
+    httpMock.get.mockResolvedValueOnce({ wrong: "field" });
 
     const context: SolanaTransactionContext = {
       deviceModelId: DeviceModelId.FLEX,
@@ -187,9 +199,16 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       },
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
+    const dataSource = new HttpSolanaOwnerInfoDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
     const result = await dataSource.getOwnerInfo(context);
 
+    expect(httpMock.get).toHaveBeenCalledWith(
+      `${config.metadataServiceDomain.url}/v2/solana/computed-token-account/some-address/some-mint`,
+      { params: { challenge: "random" } },
+    );
     expect(result).toEqual(
       Left(
         new Error(
@@ -201,37 +220,15 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
 
   it("should throw if originToken is missing", () => {
     expect(() => {
-      new HttpSolanaOwnerInfoDataSource({
-        ...config,
-        originToken: undefined,
-      } as any);
+      new HttpSolanaOwnerInfoDataSource(
+        {
+          ...config,
+          originToken: undefined,
+        } as any,
+        httpMock as unknown as DmkNetworkClient,
+      );
     }).toThrow(
       "[ContextModule] - HttpSolanaOwnerInfoDataSource: origin token is required",
-    );
-  });
-
-  it("should call fetch with correct headers", async () => {
-    const context: SolanaTransactionContext = {
-      deviceModelId: DeviceModelId.FLEX,
-      tokenAddress: "some-token",
-      challenge: "random",
-      createATA: undefined,
-    };
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(new Response(JSON.stringify(responseData)));
-
-    const dataSource = new HttpSolanaOwnerInfoDataSource(config);
-    await dataSource.getOwnerInfo(context);
-
-    expect(fetchSpy).toHaveBeenCalledWith(
-      expect.any(URL),
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          "X-Ledger-Client-Origin": config.originToken,
-        },
-      }),
     );
   });
 });

@@ -10,13 +10,12 @@ import type {
   ContextModuleCalMode,
   ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import { KeyUsageMapper } from "@/shared/utils/KeyUsageMapper";
-import PACKAGE from "@root/package.json";
 
 import { type PkiCertificateDataSource } from "./PkiCertificateDataSource";
 import {
@@ -26,18 +25,12 @@ import {
 
 @injectable()
 export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-      },
-    });
-  }
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {}
 
   async fetchCertificate(
     pkiCertificateInfo: PkiCertificateInfo,

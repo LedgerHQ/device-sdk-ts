@@ -11,29 +11,16 @@ import {
 } from "@/external-plugin/data/ExternalPluginDataSource";
 import { DappInfos } from "@/external-plugin/model/DappInfos";
 import { SelectorDetails } from "@/external-plugin/model/SelectorDetails";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 @injectable()
 export class HttpExternalPluginDataSource implements ExternalPluginDataSource {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        ...(this.config.originToken && {
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        }),
-      },
-    });
-  }
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {}
 
   async getDappInfos({
     chainId,

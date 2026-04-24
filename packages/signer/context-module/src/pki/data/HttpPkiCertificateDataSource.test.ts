@@ -1,3 +1,4 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
@@ -14,6 +15,18 @@ describe("HttpPkiCertificateDataSource", () => {
     },
   } as ContextModuleServiceConfig;
 
+  let httpMock: { get: ReturnType<typeof vi.fn> };
+  let datasource: HttpPkiCertificateDataSource;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpPkiCertificateDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
+  });
+
   describe("fetchCertificate", () => {
     it("should return certificate", async () => {
       // GIVEN
@@ -22,25 +35,19 @@ describe("HttpPkiCertificateDataSource", () => {
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(
-          JSON.stringify([
-            {
-              descriptor: {
-                data: "01020304",
-                signatures: {
-                  test: "05060708",
-                },
-              },
+      httpMock.get.mockResolvedValue([
+        {
+          descriptor: {
+            data: "01020304",
+            signatures: {
+              test: "05060708",
             },
-          ]),
-        ),
-      );
+          },
+        },
+      ]);
 
       // WHEN
-      const result = await new HttpPkiCertificateDataSource(
-        config,
-      ).fetchCertificate(pkiCertificateInfo);
+      const result = await datasource.fetchCertificate(pkiCertificateInfo);
 
       // THEN
       expect(result).toEqual(
@@ -53,6 +60,33 @@ describe("HttpPkiCertificateDataSource", () => {
       );
     });
 
+    it("should call the network client with the expected URL and params", async () => {
+      // GIVEN
+      const pkiCertificateInfo: PkiCertificateInfo = {
+        targetDevice: "targetDevice",
+        keyUsage: KeyUsage.Calldata,
+        keyId: "keyId",
+      };
+      httpMock.get.mockResolvedValue([]);
+
+      // WHEN
+      await datasource.fetchCertificate(pkiCertificateInfo);
+
+      // THEN
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://cal.com/certificates",
+        {
+          params: {
+            output: "descriptor",
+            target_device: "targetDevice",
+            latest: true,
+            public_key_id: "keyId",
+            public_key_usage: KeyUsage.Calldata,
+          },
+        },
+      );
+    });
+
     it("should return an error when certificate is not found", async () => {
       // GIVEN
       const pkiCertificateInfo: PkiCertificateInfo = {
@@ -60,14 +94,10 @@ describe("HttpPkiCertificateDataSource", () => {
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify([])),
-      );
+      httpMock.get.mockResolvedValue([]);
 
       // WHEN
-      const result = await new HttpPkiCertificateDataSource(
-        config,
-      ).fetchCertificate(pkiCertificateInfo);
+      const result = await datasource.fetchCertificate(pkiCertificateInfo);
 
       // THEN
       expect(result).toEqual(
@@ -79,19 +109,17 @@ describe("HttpPkiCertificateDataSource", () => {
       );
     });
 
-    it("should return an error when fetch request fails", async () => {
+    it("should return an error when network client throws", async () => {
       // GIVEN
       const pkiCertificateInfo: PkiCertificateInfo = {
         targetDevice: "targetDevice",
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
+      httpMock.get.mockRejectedValue(new Error("error"));
 
       // WHEN
-      const result = await new HttpPkiCertificateDataSource(
-        config,
-      ).fetchCertificate(pkiCertificateInfo);
+      const result = await datasource.fetchCertificate(pkiCertificateInfo);
 
       // THEN
       expect(result).toEqual(
@@ -110,25 +138,19 @@ describe("HttpPkiCertificateDataSource", () => {
         keyUsage: KeyUsage.Calldata,
         keyId: "keyId",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(
-          JSON.stringify([
-            {
-              descriptor: {
-                data: "corrupteddata",
-                signatures: {
-                  test: "05060708",
-                },
-              },
+      httpMock.get.mockResolvedValue([
+        {
+          descriptor: {
+            data: "corrupteddata",
+            signatures: {
+              test: "05060708",
             },
-          ]),
-        ),
-      );
+          },
+        },
+      ]);
 
       // WHEN
-      const result = await new HttpPkiCertificateDataSource(
-        config,
-      ).fetchCertificate(pkiCertificateInfo);
+      const result = await datasource.fetchCertificate(pkiCertificateInfo);
 
       // THEN
       expect(result).toEqual(

@@ -1,5 +1,6 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 
@@ -7,6 +8,7 @@ import { HttpDynamicNetworkDataSource } from "./HttpDynamicNetworkDataSource";
 
 describe("HttpNetworkDataSource", () => {
   let datasource: HttpDynamicNetworkDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
   const mockConfig: ContextModuleServiceConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com",
@@ -41,29 +43,29 @@ describe("HttpNetworkDataSource", () => {
     },
   ];
 
-  beforeAll(() => {
-    datasource = new HttpDynamicNetworkDataSource(mockConfig);
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpDynamicNetworkDataSource(
+      mockConfig,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
   describe("getNetworkConfiguration", () => {
     it("should return network configuration successfully", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(mockNetworkData)),
-      );
+      httpMock.get.mockResolvedValue(mockNetworkData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          href: "https://crypto-assets-service.api.ledger.com/networks?output=id%2Cdescriptors%2Cicons&chain_id=1",
-        }),
-        expect.objectContaining({
-          headers: expect.any(Object) as Record<string, string>,
-        }),
+      expect(httpMock.get).toHaveBeenCalledWith(
+        `${mockConfig.cal.url}/networks`,
+        {
+          params: {
+            output: "id,descriptors,icons",
+            chain_id: 1,
+          },
+        },
       );
 
       expect(result).toEqual(
@@ -96,9 +98,7 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should return error when network data is not found", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify([])),
-      );
+      httpMock.get.mockResolvedValue([]);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -108,7 +108,7 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should return error when network data is undefined", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
+      httpMock.get.mockResolvedValue(null);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -117,22 +117,22 @@ describe("HttpNetworkDataSource", () => {
       );
     });
 
-    it("should return error when fetch throws an error", async () => {
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(
-        new Error("Network error"),
-      );
+    it("should return error when http.get throws an error", async () => {
+      httpMock.get.mockRejectedValue(new Error("Network error"));
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
       expect(result).toEqual(Left(new Error("Network error")));
     });
 
-    it("should return generic error when fetch throws non-Error", async () => {
-      vi.spyOn(globalThis, "fetch").mockRejectedValue("String error");
+    it("should return generic error when http.get throws non-Error", async () => {
+      httpMock.get.mockRejectedValue("String error");
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
-      expect(result).toEqual(Left(new Error("Network request failed")));
+      expect(result).toEqual(
+        Left(new Error("Failed to fetch network configuration")),
+      );
     });
 
     it("should handle invalid data - missing id", async () => {
@@ -142,9 +142,7 @@ describe("HttpNetworkDataSource", () => {
           descriptors: {},
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -162,9 +160,7 @@ describe("HttpNetworkDataSource", () => {
           // Missing descriptors
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -189,9 +185,7 @@ describe("HttpNetworkDataSource", () => {
           },
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -216,9 +210,7 @@ describe("HttpNetworkDataSource", () => {
           },
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -246,9 +238,7 @@ describe("HttpNetworkDataSource", () => {
           },
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -289,9 +279,7 @@ describe("HttpNetworkDataSource", () => {
           },
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(dataWithIcons)),
-      );
+      httpMock.get.mockResolvedValue(dataWithIcons);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -302,19 +290,18 @@ describe("HttpNetworkDataSource", () => {
     });
 
     it("should transform data correctly for Polygon chain ID", async () => {
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(mockNetworkData)),
-      );
+      httpMock.get.mockResolvedValue(mockNetworkData);
 
       const result = await datasource.getDynamicNetworkConfiguration(137);
 
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          href: "https://crypto-assets-service.api.ledger.com/networks?output=id%2Cdescriptors%2Cicons&chain_id=137",
-        }),
-        expect.objectContaining({
-          headers: expect.any(Object) as Record<string, string>,
-        }),
+      expect(httpMock.get).toHaveBeenCalledWith(
+        `${mockConfig.cal.url}/networks`,
+        {
+          params: {
+            output: "id,descriptors,icons",
+            chain_id: 137,
+          },
+        },
       );
 
       expect(result.isRight()).toBe(true);
@@ -324,9 +311,7 @@ describe("HttpNetworkDataSource", () => {
 
     it("should handle invalid data - null data", async () => {
       const invalidData = [null];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -337,9 +322,7 @@ describe("HttpNetworkDataSource", () => {
 
     it("should handle invalid data - non-object data", async () => {
       const invalidData = ["string_instead_of_object"];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -368,9 +351,7 @@ describe("HttpNetworkDataSource", () => {
           icons: "should_be_object_not_string",
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -399,9 +380,7 @@ describe("HttpNetworkDataSource", () => {
           icons: 123,
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -421,9 +400,7 @@ describe("HttpNetworkDataSource", () => {
           },
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 
@@ -443,9 +420,7 @@ describe("HttpNetworkDataSource", () => {
           },
         },
       ];
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidData)),
-      );
+      httpMock.get.mockResolvedValue(invalidData);
 
       const result = await datasource.getDynamicNetworkConfiguration(1);
 

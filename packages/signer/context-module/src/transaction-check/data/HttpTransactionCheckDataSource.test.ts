@@ -1,14 +1,10 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
 import { type TransactionCheckDto } from "@/transaction-check/data/dto/TransactionCheckDto";
 import { HttpTransactionCheckDataSource } from "@/transaction-check/data/HttpTransactionCheckDataSource";
 import { type GetTransactionCheckParams } from "@/transaction-check/data/TransactionCheckDataSource";
-import PACKAGE from "@root/package.json";
 
 describe("HttpTransactionCheckDataSource", () => {
   const config = {
@@ -18,8 +14,16 @@ describe("HttpTransactionCheckDataSource", () => {
     originToken: "originToken",
   } as ContextModuleServiceConfig;
 
+  let httpMock: { post: ReturnType<typeof vi.fn> };
+  let dataSource: HttpTransactionCheckDataSource;
+
   beforeEach(() => {
     vi.resetAllMocks();
+    httpMock = { post: vi.fn() };
+    dataSource = new HttpTransactionCheckDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
   describe("getTransactionCheck", () => {
@@ -34,12 +38,9 @@ describe("HttpTransactionCheckDataSource", () => {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-        new Response(JSON.stringify(dto)),
-      );
+      httpMock.post.mockResolvedValueOnce(dto);
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -58,10 +59,9 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
+      httpMock.post.mockRejectedValue(new Error("error"));
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -81,13 +81,9 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      const dto = {};
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(dto)),
-      );
+      httpMock.post.mockResolvedValue({});
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -107,15 +103,11 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      const dto = {
+      httpMock.post.mockResolvedValue({
         descriptor: "test-descriptor",
-      };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(dto)),
-      );
+      });
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -135,15 +127,11 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      const dto = {
+      httpMock.post.mockResolvedValue({
         public_key_id: "test-key-id",
-      };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(dto)),
-      );
+      });
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -156,86 +144,28 @@ describe("HttpTransactionCheckDataSource", () => {
       );
     });
 
-    it("should call fetch with the correct headers", async () => {
+    it("should call http.post with the correct URL and body", async () => {
       // GIVEN
       const params: GetTransactionCheckParams = {
         from: "0x1234567890123456789012345678901234567890",
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-        new Response(JSON.stringify({})),
-      );
+      httpMock.post.mockResolvedValueOnce({});
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       await dataSource.getTransactionCheck(params);
 
       // THEN
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.any(URL),
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-          }),
-        }),
-      );
-    });
-
-    it("should call fetch with the correct URL and method", async () => {
-      // GIVEN
-      const params: GetTransactionCheckParams = {
-        from: "0x1234567890123456789012345678901234567890",
-        rawTx: "0xabcdef",
-        chainId: 1,
-      };
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-        new Response(JSON.stringify({})),
-      );
-
-      // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
-      await dataSource.getTransactionCheck(params);
-
-      // THEN
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          href: `${config.web3checks.url}/ethereum/scan/tx`,
-        }),
-        expect.objectContaining({
-          method: "POST",
-        }),
-      );
-    });
-
-    it("should call fetch with the correct request body", async () => {
-      // GIVEN
-      const params: GetTransactionCheckParams = {
-        from: "0x1234567890123456789012345678901234567890",
-        rawTx: "0xabcdef",
-        chainId: 1,
-      };
-      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-        new Response(JSON.stringify({})),
-      );
-
-      // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
-      await dataSource.getTransactionCheck(params);
-
-      // THEN
-      expect(globalThis.fetch).toHaveBeenCalledWith(
-        expect.any(URL),
-        expect.objectContaining({
-          body: JSON.stringify({
-            tx: {
-              from: "0x1234567890123456789012345678901234567890",
-              raw: "0xabcdef",
-            },
-            chain: 1,
-          }),
-        }),
+      expect(httpMock.post).toHaveBeenCalledWith(
+        `${config.web3checks.url}/ethereum/scan/tx`,
+        {
+          tx: {
+            from: "0x1234567890123456789012345678901234567890",
+            raw: "0xabcdef",
+          },
+          chain: 1,
+        },
       );
     });
   });

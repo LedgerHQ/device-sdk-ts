@@ -1,13 +1,9 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
 import { HttpTrustedNameDataSource } from "@/trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
-import PACKAGE from "@root/package.json";
 
 const config = {
   cal: {
@@ -20,21 +16,24 @@ const config = {
   },
   originToken: "originToken",
 } as ContextModuleServiceConfig;
+
 describe("HttpTrustedNameDataSource", () => {
   let datasource: TrustedNameDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
 
-  beforeAll(() => {
-    datasource = new HttpTrustedNameDataSource(config);
+  beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpTrustedNameDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
   describe("getDomainNamePayload", () => {
-    it("should call fetch with the correct url and ledger client version header", async () => {
+    it("should call http.get with the correct url and params", async () => {
       // GIVEN
-      const version = `context-module/${PACKAGE.version}`;
-      const fetchSpy = vi
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(new Response(JSON.stringify([])));
+      httpMock.get.mockResolvedValue([]);
 
       // WHEN
       await datasource.getDomainNamePayload({
@@ -44,22 +43,17 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          href: `https://nft.api.live.ledger.com/v2/names/ethereum/137/forward/hello.eth?types=eoa&sources=ens&challenge=9876`,
-        }),
-        expect.objectContaining({
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: version,
-            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-          },
-        }),
+      expect(httpMock.get).toHaveBeenCalledWith(
+        `${config.metadataServiceDomain.url}/v2/names/ethereum/137/forward/hello.eth`,
+        {
+          params: { types: "eoa", sources: "ens", challenge: "9876" },
+        },
       );
     });
 
-    it("should throw an error when fetch throws an error", async () => {
+    it("should throw an error when http.get throws an error", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error());
+      httpMock.get.mockRejectedValue(new Error());
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -80,9 +74,7 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return an error when no payload is returned", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ test: "" })),
-      );
+      httpMock.get.mockResolvedValue({ test: "" });
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -108,9 +100,7 @@ describe("HttpTrustedNameDataSource", () => {
         keyId: "testKeyId",
         keyUsage: "testKeyUsage",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(responseData)),
-      );
+      httpMock.get.mockResolvedValue(responseData);
 
       // WHEN
       const result = await datasource.getDomainNamePayload({
@@ -131,12 +121,9 @@ describe("HttpTrustedNameDataSource", () => {
   });
 
   describe("getTrustedNamePayload", () => {
-    it("should call fetch with the correct url and ledger client version header", async () => {
+    it("should call http.get with the correct url and params", async () => {
       // GIVEN
-      const version = `context-module/${PACKAGE.version}`;
-      const fetchSpy = vi
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(new Response(JSON.stringify([])));
+      httpMock.get.mockResolvedValue([]);
 
       // WHEN
       await datasource.getTrustedNamePayload({
@@ -148,22 +135,21 @@ describe("HttpTrustedNameDataSource", () => {
       });
 
       // THEN
-      expect(fetchSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          href: `https://nft.api.live.ledger.com/v2/names/ethereum/137/reverse/0x1234?types=eoa&sources=ens%2Ccrypto_asset_list&challenge=5678`,
-        }),
-        expect.objectContaining({
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: version,
-            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+      expect(httpMock.get).toHaveBeenCalledWith(
+        `${config.metadataServiceDomain.url}/v2/names/ethereum/137/reverse/0x1234`,
+        {
+          params: {
+            types: "eoa",
+            sources: "ens,crypto_asset_list",
+            challenge: "5678",
           },
-        }),
+        },
       );
     });
 
-    it("should throw an error when fetch throws an error", async () => {
+    it("should throw an error when http.get throws an error", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error());
+      httpMock.get.mockRejectedValue(new Error());
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -186,9 +172,7 @@ describe("HttpTrustedNameDataSource", () => {
 
     it("should return an error when no payload is returned", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ test: "" })),
-      );
+      httpMock.get.mockResolvedValue({ test: "" });
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -214,9 +198,7 @@ describe("HttpTrustedNameDataSource", () => {
       const responseData = {
         signedDescriptor: { data: "payload", signatures: { prod: "12345" } },
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(responseData)),
-      );
+      httpMock.get.mockResolvedValue(responseData);
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -244,9 +226,7 @@ describe("HttpTrustedNameDataSource", () => {
         keyId: "testKeyId",
         keyUsage: "testKeyUsage",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(responseData)),
-      );
+      httpMock.get.mockResolvedValue(responseData);
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({
@@ -274,9 +254,7 @@ describe("HttpTrustedNameDataSource", () => {
         keyId: "testKeyId",
         keyUsage: "testKeyUsage",
       };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(responseData)),
-      );
+      httpMock.get.mockResolvedValue(responseData);
 
       // WHEN
       const result = await datasource.getTrustedNamePayload({

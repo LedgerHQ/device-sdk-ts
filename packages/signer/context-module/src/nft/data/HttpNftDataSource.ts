@@ -4,34 +4,21 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 import {
   GetNftInformationsParams,
   GetSetPluginPayloadParams,
   NftDataSource,
 } from "@/nft/data/NftDataSource";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 @injectable()
 export class HttpNftDataSource implements NftDataSource {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        ...(this.config.originToken && {
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        }),
-      },
-    });
-  }
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {}
 
   public async getSetPluginPayload({
     chainId,

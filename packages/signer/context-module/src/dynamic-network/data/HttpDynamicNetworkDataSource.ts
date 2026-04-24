@@ -11,8 +11,7 @@ import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
 } from "@/dynamic-network/model/DynamicNetworkConfiguration";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import { type DynamicNetworkApiResponseDto } from "./dto/DynamicNetworkApiResponseDto";
 import { type DynamicNetworkDataSource } from "./DynamicNetworkDataSource";
@@ -29,18 +28,12 @@ const LOWERCASE_KEY_TO_DEVICE_MODEL_ID: Record<string, DeviceModelId> = {
 
 @injectable()
 export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-      },
-    });
-  }
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {}
 
   async getDynamicNetworkConfiguration(
     chainId: number,

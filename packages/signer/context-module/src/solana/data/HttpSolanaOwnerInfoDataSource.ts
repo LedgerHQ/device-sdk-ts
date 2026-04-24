@@ -7,15 +7,11 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { networkTypes } from "@/network/di/networkTypes";
 import {
   SolanaSPLOwnerInfo,
   type SolanaTransactionContext,
 } from "@/solana/domain/solanaContextTypes";
-import PACKAGE from "@root/package.json";
 
 import {
   HttpSolanaOwnerInfoDataSourceResult,
@@ -24,23 +20,17 @@ import {
 
 @injectable()
 export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {
     if (!this.config.originToken) {
       throw new Error(
         "[ContextModule] - HttpSolanaOwnerInfoDataSource: origin token is required",
       );
     }
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-      },
-    });
   }
 
   private isSolanaSPLOwnerInfo(data: {

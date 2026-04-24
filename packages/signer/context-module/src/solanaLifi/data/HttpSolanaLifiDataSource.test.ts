@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { HttpSolanaLifiDataSource } from "./HttpSolanaLifiDataSource";
 import {
@@ -23,6 +22,7 @@ const mockLoggerFactory = () => ({
 
 describe("HttpSolanaLifiDataSource", () => {
   let datasource: SolanaLifiDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
   const templateId = "tpl-123";
   const config: ContextModuleServiceConfig = {
     cal: {
@@ -32,36 +32,38 @@ describe("HttpSolanaLifiDataSource", () => {
     },
   } as ContextModuleServiceConfig;
 
-  beforeAll(() => {
-    datasource = new HttpSolanaLifiDataSource(config, mockLoggerFactory);
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpSolanaLifiDataSource(
+      config,
+      mockLoggerFactory,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
-  it("should call fetch with the ledger client version header and correct params", async () => {
+  it("should call the network client with the expected URL and params", async () => {
     // given
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([])),
-    );
+    httpMock.get.mockResolvedValue([]);
 
     // when
     await datasource.getTransactionDescriptorsPayload({ templateId });
 
     // then
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.any(URL),
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+    expect(httpMock.get).toHaveBeenCalledTimes(1);
+    expect(httpMock.get).toHaveBeenCalledWith(
+      "https://crypto-assets-service.api.ledger.com/v1/swap_templates",
+      {
+        params: {
+          template_id: templateId,
+          output: "id,chain_id,instructions,descriptors",
+          ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
         },
-      }),
+      },
     );
   });
 
-  it("should return Right(data[0]) when fetch responds with a non-empty array", async () => {
+  it("should return Right(data[0]) when the network client responds with a non-empty array", async () => {
     // given
     const response0: GetTransactionDescriptorsResponse = {
       descriptors: {
@@ -69,9 +71,7 @@ describe("HttpSolanaLifiDataSource", () => {
       },
     } as any;
 
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([response0])),
-    );
+    httpMock.get.mockResolvedValue([response0]);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -84,7 +84,7 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when data is undefined", async () => {
     // given
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
+    httpMock.get.mockResolvedValue(null);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -103,9 +103,7 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when data array is empty", async () => {
     // given
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([])),
-    );
+    httpMock.get.mockResolvedValue([]);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -124,9 +122,7 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when first element is falsy", async () => {
     // given
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([null])),
-    );
+    httpMock.get.mockResolvedValue([null]);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -143,9 +139,9 @@ describe("HttpSolanaLifiDataSource", () => {
     );
   });
 
-  it("should return an error when fetch throws", async () => {
+  it("should return an error when the network client throws", async () => {
     // given
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
+    httpMock.get.mockRejectedValue(new Error("network"));
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({

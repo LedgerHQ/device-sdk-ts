@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { HttpSolanaTokenDataSource } from "./HttpSolanaTokenDataSource";
 import {
@@ -15,6 +14,7 @@ import {
 
 describe("HttpSolanaTokenDataSource", () => {
   let datasource: SolanaTokenDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
   const tokenInternalId = "sol:usdc";
   const config: ContextModuleServiceConfig = {
     cal: {
@@ -27,36 +27,35 @@ describe("HttpSolanaTokenDataSource", () => {
   const errorMessage = (id: string) =>
     `[ContextModule] HttpSolanaTokenDataSource: no token metadata for id ${id}`;
 
-  beforeAll(() => {
-    datasource = new HttpSolanaTokenDataSource(config);
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpSolanaTokenDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
-  it("should call fetch with the ledger client version header and correct params", async () => {
+  it("should call http.get with the correct url and params", async () => {
     // given
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([])),
-    );
+    httpMock.get.mockResolvedValue([]);
 
     // when
     await datasource.getTokenInfosPayload({ tokenInternalId });
 
     // then
-    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.any(URL),
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        },
-      }),
-    );
+    expect(httpMock.get).toHaveBeenCalledTimes(1);
+    expect(httpMock.get).toHaveBeenCalledWith(`${config.cal.url}/tokens`, {
+      params: {
+        id: tokenInternalId,
+        output:
+          "id,name,network,network_family,network_type,exchange_app_config_serialized,live_signature,ticker,decimals,blockchain_name,chain_id,contract_address,descriptor,descriptor_exchange_app,units,symbol",
+        ref: `branch:${config.cal.branch}`,
+      },
+    });
   });
 
-  it("should return Right(data[0]) when fetch responds with a non-empty array", async () => {
+  it("should return Right(data[0]) when http.get responds with a non-empty array", async () => {
     // given
     const response0: TokenDataResponse = {
       descriptor: {
@@ -68,9 +67,7 @@ describe("HttpSolanaTokenDataSource", () => {
       },
     } as any;
 
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([response0])),
-    );
+    httpMock.get.mockResolvedValue([response0]);
 
     // when
     const result = await datasource.getTokenInfosPayload({ tokenInternalId });
@@ -81,15 +78,13 @@ describe("HttpSolanaTokenDataSource", () => {
 
   describe.each`
     caseName                    | responseBody
-    ${"data is undefined"}      | ${"null"}
-    ${"data array is empty"}    | ${JSON.stringify([])}
-    ${"first element is falsy"} | ${JSON.stringify([null])}
+    ${"data is undefined"}      | ${null}
+    ${"data array is empty"}    | ${[]}
+    ${"first element is falsy"} | ${[null]}
   `("Error cases", ({ caseName, responseBody }) => {
     it(`should return an error when ${caseName}`, async () => {
       // given
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(responseBody as string),
-      );
+      httpMock.get.mockResolvedValue(responseBody);
 
       // when
       const result = await datasource.getTokenInfosPayload({ tokenInternalId });
@@ -99,9 +94,9 @@ describe("HttpSolanaTokenDataSource", () => {
     });
   });
 
-  it("should return an error when fetch throws", async () => {
+  it("should return an error when http.get throws", async () => {
     // given
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network"));
+    httpMock.get.mockRejectedValue(new Error("network"));
 
     // when
     const result = await datasource.getTokenInfosPayload({ tokenInternalId });

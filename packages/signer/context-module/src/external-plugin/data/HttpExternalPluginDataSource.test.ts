@@ -1,3 +1,5 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
+
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import ABI from "@/external-plugin/__tests__/abi.json";
 import {
@@ -8,15 +10,6 @@ import {
 } from "@/external-plugin/data/DAppDto";
 import { type ExternalPluginDataSource } from "@/external-plugin/data/ExternalPluginDataSource";
 import { HttpExternalPluginDataSource } from "@/external-plugin/data/HttpExternalPluginDataSource";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
-
-const fetchResponseBuilder = (dto: Partial<DAppDto>[]) => {
-  return new Response(JSON.stringify(dto));
-};
 
 const config = {
   web3checks: {
@@ -30,6 +23,7 @@ const config = {
 
 describe("HttpExternalPuginDataSource", () => {
   let datasource: ExternalPluginDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
   const exampleB2c: B2c = {
     blockchainName: "ethereum",
     chainId: 1,
@@ -77,17 +71,20 @@ describe("HttpExternalPuginDataSource", () => {
     },
   };
 
-  beforeAll(() => {
-    datasource = new HttpExternalPluginDataSource(config);
+  beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpExternalPluginDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
-  it("should call fetch with the ledger client version header", async () => {
+  const dappDtoResponse = (dto: Partial<DAppDto>[]) => dto as DAppDto[];
+
+  it("should call the expected CAL URL with query params", async () => {
     // GIVEN
-    const version = `context-module/${PACKAGE.version}`;
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([])),
-    );
+    httpMock.get.mockResolvedValue([]);
 
     // WHEN
     await datasource.getDappInfos({
@@ -97,23 +94,25 @@ describe("HttpExternalPuginDataSource", () => {
     });
 
     // THEN
-    expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.any(URL),
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: version,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+    expect(httpMock.get).toHaveBeenCalledWith(
+      "https://crypto-assets-service.api.ledger.com/v1/dapps",
+      {
+        params: {
+          output: "b2c,b2c_signatures,abis",
+          chain_id: 1,
+          contracts: "0x0abc",
         },
-      }),
+      },
     );
   });
 
   it("should return undefined when no abis is undefined", async () => {
     // GIVEN
-    const response = fetchResponseBuilder([
-      { b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -128,10 +127,11 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no selectors", async () => {
     // GIVEN
-    const response = fetchResponseBuilder([
-      { abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -146,10 +146,11 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no abis data", async () => {
     // GIVEN
-    const response = fetchResponseBuilder([
-      { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -162,12 +163,13 @@ describe("HttpExternalPuginDataSource", () => {
     expect(result.extract()).toEqual(undefined);
   });
 
-  it("should return undefined when no abis data", async () => {
+  it("should return undefined when no abis data (duplicate case)", async () => {
     // GIVEN
-    const response = fetchResponseBuilder([
-      { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { abis: {}, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -183,10 +185,11 @@ describe("HttpExternalPuginDataSource", () => {
   it("should return undefined when no abis data for the contract address", async () => {
     // GIVEN
     const abis: Abis = { "0x1": ABI };
-    const response = fetchResponseBuilder([
-      { abis, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { abis, b2c: exampleB2c, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -201,10 +204,9 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return undefined when no b2c signature", async () => {
     // GIVEN
-    const response = fetchResponseBuilder([
-      { b2c: exampleB2c, abis: exampleAbis },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([{ b2c: exampleB2c, abis: exampleAbis }]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -233,10 +235,11 @@ describe("HttpExternalPuginDataSource", () => {
       ],
       name: "test",
     } as unknown as B2c;
-    const response = fetchResponseBuilder([
-      { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -265,10 +268,11 @@ describe("HttpExternalPuginDataSource", () => {
       ],
       name: "test",
     } as unknown as B2c;
-    const response = fetchResponseBuilder([
-      { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -297,42 +301,11 @@ describe("HttpExternalPuginDataSource", () => {
       ],
       name: "test",
     } as unknown as B2c;
-    const response = fetchResponseBuilder([
-      { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
-
-    // WHEN
-    const result = await datasource.getDappInfos({
-      chainId: 1,
-      address: "0x0abc",
-      selector: "0x01ff",
-    });
-
-    // THEN
-    expect(result.extract()).toEqual(undefined);
-  });
-
-  it("should return undefined when no method", async () => {
-    // GIVEN
-    const b2c = {
-      blockchainName: "ethereum",
-      chainId: 1,
-      contracts: [
-        {
-          address: "0x0abc",
-          contractName: "name",
-          selectors: {
-            "0x01ff": { erc20OfInterest: ["fromToken"], plugin: "plugin" },
-          },
-        },
-      ],
-      name: "test",
-    } as unknown as B2c;
-    const response = fetchResponseBuilder([
-      { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { b2c, abis: exampleAbis, b2c_signatures: exampleB2cSignatures },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -350,12 +323,11 @@ describe("HttpExternalPuginDataSource", () => {
     const B2CSignature = {
       "0x0abc": { "0x01ff": { plugin: "plugin", serialized_data: "0x001" } },
     } as unknown as B2cSignatures;
-
-    // FIXME
-    const response = fetchResponseBuilder([
-      { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -373,12 +345,11 @@ describe("HttpExternalPuginDataSource", () => {
     const B2CSignature = {
       "0x0abc": { "0x01ff": { plugin: "plugin", signature: "0x002" } },
     } as unknown as B2cSignatures;
-
-    // FIXME
-    const response = fetchResponseBuilder([
-      { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        { b2c: exampleB2c, abis: exampleAbis, b2c_signatures: B2CSignature },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -393,14 +364,15 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should return a correct response", async () => {
     // GIVEN
-    const response = fetchResponseBuilder([
-      {
-        b2c: exampleB2c,
-        abis: exampleAbis,
-        b2c_signatures: exampleB2cSignatures,
-      },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        {
+          b2c: exampleB2c,
+          abis: exampleAbis,
+          b2c_signatures: exampleB2cSignatures,
+        },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -424,14 +396,15 @@ describe("HttpExternalPuginDataSource", () => {
 
   it("should normalize the address and selector", async () => {
     // GIVEN
-    const response = fetchResponseBuilder([
-      {
-        b2c: exampleB2c,
-        abis: exampleAbis,
-        b2c_signatures: exampleB2cSignatures,
-      },
-    ]);
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue(
+      dappDtoResponse([
+        {
+          b2c: exampleB2c,
+          abis: exampleAbis,
+          b2c_signatures: exampleB2cSignatures,
+        },
+      ]),
+    );
 
     // WHEN
     const result = await datasource.getDappInfos({
@@ -453,9 +426,9 @@ describe("HttpExternalPuginDataSource", () => {
     });
   });
 
-  it("should return an error when fetch throws an error", async () => {
+  it("should return an error when network client throws an error", async () => {
     // GIVEN
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
+    httpMock.get.mockRejectedValue(new Error("error"));
 
     // WHEN
     const result = await datasource.getDappInfos({

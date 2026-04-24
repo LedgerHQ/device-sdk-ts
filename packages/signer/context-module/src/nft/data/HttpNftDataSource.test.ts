@@ -1,9 +1,6 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
+
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { HttpNftDataSource } from "./HttpNftDataSource";
 import { type NftDataSource } from "./NftDataSource";
@@ -17,64 +14,38 @@ const config = {
   },
   originToken: "originToken",
 } as ContextModuleServiceConfig;
+
 describe("HttpNftDataSource", () => {
   let datasource: NftDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
 
-  beforeAll(() => {
-    datasource = new HttpNftDataSource(config);
-    vi.clearAllMocks();
-  });
-
-  it("should call fetch with the ledger client version and origin Token header", async () => {
-    // GIVEN
-    const version = `context-module/${PACKAGE.version}`;
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify([])),
-    );
-
-    // WHEN
-    await datasource.getNftInfosPayload({ address: "0x00", chainId: 1 });
-    await datasource.getSetPluginPayload({
-      address: "0x00",
-      chainId: 1,
-      selector: "0x00",
-    });
-
-    // THEN
-    expect(globalThis.fetch).toHaveBeenNthCalledWith(
-      1,
-      expect.any(URL),
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: version,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-        },
-      }),
-    );
-    expect(globalThis.fetch).toHaveBeenNthCalledWith(
-      2,
-      expect.any(URL),
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: version,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-        },
-      }),
+  beforeEach(() => {
+    httpMock = { get: vi.fn() };
+    datasource = new HttpNftDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
     );
   });
 
   describe("getNftInfosPayload", () => {
-    it("should return an error when fetch throws an error", async () => {
-      // GIVEN
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
+    it("should call the expected metadata service URL", async () => {
+      httpMock.get.mockResolvedValue({ payload: "payload" });
 
-      // WHEN
+      await datasource.getNftInfosPayload({ address: "0x00", chainId: 1 });
+
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://nft.api.live.ledger.com/v1/ethereum/1/contracts/0x00",
+      );
+    });
+
+    it("should return an error when the network client throws", async () => {
+      httpMock.get.mockRejectedValue(new Error("error"));
+
       const result = await datasource.getNftInfosPayload({
         address: "0x00",
         chainId: 1,
       });
 
-      // THEN
       expect(result.extract()).toEqual(
         new Error(
           "[ContextModule] HttpNftDataSource: Failed to fetch nft informations",
@@ -82,54 +53,55 @@ describe("HttpNftDataSource", () => {
       );
     });
 
-    it("should return an error when the response is empty", async () => {
-      // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({})),
-      );
+    it("should return an error when the response has no payload", async () => {
+      httpMock.get.mockResolvedValue({});
 
-      // WHEN
       const result = await datasource.getNftInfosPayload({
         address: "0x00",
         chainId: 1,
       });
 
-      // THEN
       expect(result.extract()).toEqual(
         new Error("[ContextModule] HttpNftDataSource: no nft metadata"),
       );
     });
 
     it("should return the payload", async () => {
-      // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ payload: "payload" })),
-      );
+      httpMock.get.mockResolvedValue({ payload: "payload" });
 
-      // WHEN
       const result = await datasource.getNftInfosPayload({
         address: "0x00",
         chainId: 1,
       });
 
-      // THEN
       expect(result.extract()).toEqual("payload");
     });
   });
 
   describe("getSetPluginPayload", () => {
-    it("should return an error when fetch throws an error", async () => {
-      // GIVEN
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("error"));
+    it("should call the expected metadata service URL", async () => {
+      httpMock.get.mockResolvedValue({ payload: "payload" });
 
-      // WHEN
+      await datasource.getSetPluginPayload({
+        address: "0x00",
+        chainId: 1,
+        selector: "0x00",
+      });
+
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://nft.api.live.ledger.com/v1/ethereum/1/contracts/0x00/plugin-selector/0x00",
+      );
+    });
+
+    it("should return an error when the network client throws", async () => {
+      httpMock.get.mockRejectedValue(new Error("error"));
+
       const result = await datasource.getSetPluginPayload({
         address: "0x00",
         chainId: 1,
         selector: "0x00",
       });
 
-      // THEN
       expect(result.extract()).toEqual(
         new Error(
           "[ContextModule] HttpNftDataSource: Failed to fetch set plugin payload",
@@ -137,20 +109,15 @@ describe("HttpNftDataSource", () => {
       );
     });
 
-    it("should return an error when the response is empty", async () => {
-      // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({})),
-      );
+    it("should return an error when the response has no payload", async () => {
+      httpMock.get.mockResolvedValue({});
 
-      // WHEN
       const result = await datasource.getSetPluginPayload({
         address: "0x00",
         chainId: 1,
         selector: "0x00",
       });
 
-      // THEN
       expect(result.extract()).toEqual(
         new Error(
           "[ContextModule] HttpNftDataSource: unexpected empty response",
@@ -159,19 +126,14 @@ describe("HttpNftDataSource", () => {
     });
 
     it("should return the payload", async () => {
-      // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ payload: "payload" })),
-      );
+      httpMock.get.mockResolvedValue({ payload: "payload" });
 
-      // WHEN
       const result = await datasource.getSetPluginPayload({
         address: "0x00",
         chainId: 1,
         selector: "0x00",
       });
 
-      // THEN
       expect(result.extract()).toEqual("payload");
     });
   });

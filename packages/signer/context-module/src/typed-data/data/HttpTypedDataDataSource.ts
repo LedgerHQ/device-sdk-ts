@@ -7,10 +7,7 @@ import type {
   ContextModuleCalMode,
   ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { networkTypes } from "@/network/di/networkTypes";
 import type {
   TypedDataCalldataIndex,
   TypedDataFilter,
@@ -19,7 +16,6 @@ import type {
 } from "@/shared/model/TypedDataClearSignContext";
 import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
 import { getSchemaHash } from "@/typed-data/utils/getSchemaHash";
-import PACKAGE from "@root/package.json";
 
 import type {
   FiltersDto,
@@ -41,21 +37,12 @@ import {
 
 @injectable()
 export class HttpTypedDataDataSource implements TypedDataDataSource {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        ...(this.config.originToken && {
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        }),
-      },
-    });
-  }
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {}
 
   public async getTypedDataFilters({
     chainId,

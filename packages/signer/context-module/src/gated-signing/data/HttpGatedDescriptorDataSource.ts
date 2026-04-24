@@ -4,13 +4,9 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { networkTypes } from "@/network/di/networkTypes";
 import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
-import PACKAGE from "@root/package.json";
 
 import {
   type GatedDappsDto,
@@ -28,19 +24,12 @@ import {
 export class HttpGatedDescriptorDataSource
   implements GatedDescriptorDataSource
 {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-      },
-    });
-  }
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {}
 
   async getGatedDescriptor({
     contractAddress,

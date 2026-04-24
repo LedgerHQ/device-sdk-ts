@@ -11,31 +11,18 @@ import { AccountOwnershipError } from "@/account-ownership/data/AccountOwnership
 import { type AccountOwnershipDto } from "@/account-ownership/data/dto/AccountOwnershipDto";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 @injectable()
 export class HttpAccountOwnershipDataSource
   implements AccountOwnershipDataSource
 {
-  private readonly http: DmkNetworkClient;
-
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {
-    this.http = new DmkNetworkClient({
-      headers: {
-        [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        ...(this.config.originToken && {
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        }),
-      },
-    });
-  }
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {}
 
   async getDescriptor({
     publicKey,
@@ -130,6 +117,10 @@ export class HttpAccountOwnershipDataSource
   }
 
   private extractErrorMessage(value: unknown): string {
+    const fromBody = this.extractResponseBodyMessage(value);
+    if (fromBody !== null) {
+      return fromBody;
+    }
     if (
       typeof value === "object" &&
       value !== null &&
@@ -138,10 +129,6 @@ export class HttpAccountOwnershipDataSource
       (value as { message: string }).message.length > 0
     ) {
       return (value as { message: string }).message;
-    }
-    const fromBody = this.extractResponseBodyMessage(value);
-    if (fromBody !== null) {
-      return fromBody;
     }
     if (typeof value === "string") {
       return value;

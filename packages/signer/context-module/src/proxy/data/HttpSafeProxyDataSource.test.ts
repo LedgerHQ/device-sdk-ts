@@ -1,9 +1,6 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
+
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { type SafeProxyImplementationAddressDto } from "./dto/SafeProxyImplementationAddressDto";
 import { HttpSafeProxyDataSource } from "./HttpSafeProxyDataSource";
@@ -18,14 +15,15 @@ const config = {
 
 describe("HttpSafeProxyDataSource", () => {
   let datasource: ProxyDataSource;
-
-  beforeAll(() => {
-    datasource = new HttpSafeProxyDataSource(config);
-    vi.clearAllMocks();
-  });
+  let httpMock: { get: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpSafeProxyDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
   const validParams = {
@@ -46,42 +44,28 @@ describe("HttpSafeProxyDataSource", () => {
   };
 
   describe("getProxyImplementationAddress", () => {
-    it("should call fetch with correct URL, headers, and parameters", async () => {
+    it("should call the network client with correct URL and parameters", async () => {
       // GIVEN
-      const version = `context-module/${PACKAGE.version}`;
-      const fetchSpy = vi
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(new Response(JSON.stringify(validDto)));
+      httpMock.get.mockResolvedValue(validDto);
 
       // WHEN
       await datasource.getProxyImplementationAddress(validParams);
 
       // THEN
-      expect(fetchSpy).toHaveBeenCalled();
-      const calledUrl = new URL(fetchSpy.mock.calls[0]![0]!.toString());
-      expect(calledUrl.origin + calledUrl.pathname).toBe(
+      expect(httpMock.get).toHaveBeenCalledWith(
         `${config.metadataServiceDomain.url}/v3/ethereum/${validParams.chainId}/contract/proxy/${validParams.proxyAddress}`,
-      );
-      expect(calledUrl.searchParams.get("challenge")).toBe(
-        validParams.challenge,
-      );
-      expect(calledUrl.searchParams.get("resolver")).toBe("SAFE_GATEWAY");
-      expect(fetchSpy.mock.calls[0]![1]).toEqual(
-        expect.objectContaining({
-          method: "GET",
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: version,
-            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+        {
+          params: {
+            challenge: validParams.challenge,
+            resolver: "SAFE_GATEWAY",
           },
-        }),
+        },
       );
     });
 
     it("should return Right with proxy implementation data when request succeeds with valid DTO", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(validDto)),
-      );
+      httpMock.get.mockResolvedValue(validDto);
 
       // WHEN
       const result =
@@ -97,11 +81,9 @@ describe("HttpSafeProxyDataSource", () => {
       });
     });
 
-    it("should return Left with error when fetch throws an error", async () => {
+    it("should return Left with error when network client throws", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockRejectedValue(
-        new Error("Network error"),
-      );
+      httpMock.get.mockRejectedValue(new Error("Network error"));
 
       // WHEN
       const result =
@@ -118,7 +100,7 @@ describe("HttpSafeProxyDataSource", () => {
 
     it("should return Left with error when response data is undefined", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(""));
+      httpMock.get.mockResolvedValue(undefined);
 
       // WHEN
       const result =
@@ -135,7 +117,7 @@ describe("HttpSafeProxyDataSource", () => {
 
     it("should return Left with error when response data is null", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
+      httpMock.get.mockResolvedValue(null);
 
       // WHEN
       const result =
@@ -153,9 +135,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when proxyAddress is missing", async () => {
       // GIVEN
       const { proxyAddress: _, ...invalidDto } = validDto;
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -173,9 +153,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when implementationAddress is missing", async () => {
       // GIVEN
       const { implementationAddress: _, ...invalidDto } = validDto;
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -193,9 +171,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when standard is missing", async () => {
       // GIVEN
       const { standard: _, ...invalidDto } = validDto;
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -213,9 +189,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when signedDescriptor is missing", async () => {
       // GIVEN
       const { signedDescriptor: _, ...invalidDto } = validDto;
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -233,9 +207,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when providedBy is missing", async () => {
       // GIVEN
       const { providedBy: _, ...invalidDto } = validDto;
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -253,9 +225,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when proxyAddress is not a string", async () => {
       // GIVEN
       const invalidDto = { ...validDto, proxyAddress: 123 };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -273,9 +243,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when implementationAddress is not a string", async () => {
       // GIVEN
       const invalidDto = { ...validDto, implementationAddress: null };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -293,9 +261,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when standard is not a string", async () => {
       // GIVEN
       const invalidDto = { ...validDto, standard: [] };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -313,9 +279,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when signedDescriptor is not a string", async () => {
       // GIVEN
       const invalidDto = { ...validDto, signedDescriptor: {} };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -333,9 +297,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should return Left with error when providedBy is not a string", async () => {
       // GIVEN
       const invalidDto = { ...validDto, providedBy: true };
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify(invalidDto)),
-      );
+      httpMock.get.mockResolvedValue(invalidDto);
 
       // WHEN
       const result =
@@ -352,9 +314,7 @@ describe("HttpSafeProxyDataSource", () => {
 
     it("should return Left with error when response is not an object", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify("not an object")),
-      );
+      httpMock.get.mockResolvedValue("not an object");
 
       // WHEN
       const result =
@@ -371,7 +331,7 @@ describe("HttpSafeProxyDataSource", () => {
 
     it("should return Left with error when response is null", async () => {
       // GIVEN
-      vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("null"));
+      httpMock.get.mockResolvedValue(null);
 
       // WHEN
       const result =
@@ -389,9 +349,7 @@ describe("HttpSafeProxyDataSource", () => {
     it("should handle different chainId values correctly", async () => {
       // GIVEN
       const paramsWithDifferentChainId = { ...validParams, chainId: 137 };
-      const fetchSpy = vi
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(new Response(JSON.stringify(validDto)));
+      httpMock.get.mockResolvedValue(validDto);
 
       // WHEN
       const result = await datasource.getProxyImplementationAddress(
@@ -400,9 +358,9 @@ describe("HttpSafeProxyDataSource", () => {
 
       // THEN
       expect(result.isRight()).toBe(true);
-      const calledUrl = fetchSpy.mock.calls[0]![0]!.toString();
-      expect(calledUrl).toContain(
+      expect(httpMock.get).toHaveBeenCalledWith(
         `${config.metadataServiceDomain.url}/v3/ethereum/137/contract/proxy/${validParams.proxyAddress}`,
+        expect.anything(),
       );
     });
 
@@ -414,9 +372,7 @@ describe("HttpSafeProxyDataSource", () => {
         ...validParams,
         proxyAddress: differentProxyAddress,
       };
-      const fetchSpy = vi
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(new Response(JSON.stringify(validDto)));
+      httpMock.get.mockResolvedValue(validDto);
 
       // WHEN
       const result = await datasource.getProxyImplementationAddress(
@@ -425,9 +381,9 @@ describe("HttpSafeProxyDataSource", () => {
 
       // THEN
       expect(result.isRight()).toBe(true);
-      const calledUrl = fetchSpy.mock.calls[0]![0]!.toString();
-      expect(calledUrl).toContain(
+      expect(httpMock.get).toHaveBeenCalledWith(
         `${config.metadataServiceDomain.url}/v3/ethereum/${validParams.chainId}/contract/proxy/${differentProxyAddress}`,
+        expect.anything(),
       );
     });
 
@@ -438,9 +394,7 @@ describe("HttpSafeProxyDataSource", () => {
         ...validParams,
         challenge: customChallenge,
       };
-      const fetchSpy = vi
-        .spyOn(globalThis, "fetch")
-        .mockResolvedValue(new Response(JSON.stringify(validDto)));
+      httpMock.get.mockResolvedValue(validDto);
 
       // WHEN
       const result = await datasource.getProxyImplementationAddress(
@@ -449,9 +403,9 @@ describe("HttpSafeProxyDataSource", () => {
 
       // THEN
       expect(result.isRight()).toBe(true);
-      const calledUrl = new URL(fetchSpy.mock.calls[0]![0]!.toString());
-      expect(calledUrl.searchParams.get("challenge")).toBe(customChallenge);
-      expect(calledUrl.searchParams.get("resolver")).toBe("SAFE_GATEWAY");
+      expect(httpMock.get).toHaveBeenCalledWith(expect.any(String), {
+        params: { challenge: customChallenge, resolver: "SAFE_GATEWAY" },
+      });
     });
   });
 });
