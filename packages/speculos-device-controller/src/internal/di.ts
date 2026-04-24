@@ -19,7 +19,6 @@ export function createDefaultControllers(
   const timeoutMs = opts.timeoutMs ?? 1500;
   const client = new DmkNetworkClient({
     baseUrl: baseURL,
-    timeoutMs,
     headers: {
       "X-Ledger-Client-Version": opts.clientHeader ?? "ldmk-transport-speculos",
     },
@@ -27,7 +26,7 @@ export function createDefaultControllers(
 
   const http: HttpClient = {
     async post(url: string, data?: unknown): Promise<unknown> {
-      return client.post(url, data);
+      return client.post(url, data, { timeoutMs });
     },
   };
 

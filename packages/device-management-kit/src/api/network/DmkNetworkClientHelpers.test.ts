@@ -191,18 +191,16 @@ describe("DmkNetworkClientHelpers", () => {
     it("should return undefined when no timeout and no external signal", () => {
       expect(
         buildSignal({
-          perRequestTimeoutMs: undefined,
-          defaultTimeoutMs: undefined,
+          timeoutMs: undefined,
           externalSignal: undefined,
         }),
       ).toBeUndefined();
     });
 
-    it("should return undefined when timeouts are zero and no external signal", () => {
+    it("should return undefined when timeout is zero and no external signal", () => {
       expect(
         buildSignal({
-          perRequestTimeoutMs: 0,
-          defaultTimeoutMs: 1000,
+          timeoutMs: 0,
           externalSignal: undefined,
         }),
       ).toBeUndefined();
@@ -211,8 +209,7 @@ describe("DmkNetworkClientHelpers", () => {
     it("should return the external signal alone when no timeout is configured", () => {
       const controller = new AbortController();
       const signal = buildSignal({
-        perRequestTimeoutMs: undefined,
-        defaultTimeoutMs: undefined,
+        timeoutMs: undefined,
         externalSignal: controller.signal,
       });
       expect(signal).toBe(controller.signal);
@@ -220,30 +217,27 @@ describe("DmkNetworkClientHelpers", () => {
 
     it("should return a timeout signal when only a timeout is configured", () => {
       const signal = buildSignal({
-        perRequestTimeoutMs: undefined,
-        defaultTimeoutMs: 1000,
+        timeoutMs: 1000,
         externalSignal: undefined,
       });
       expect(signal).toBeInstanceOf(AbortSignal);
     });
 
-    it("should prefer the per-request timeout over the default", () => {
-      const anySpy = vi.spyOn(AbortSignal, "timeout");
+    it("should use the provided timeout value for AbortSignal.timeout", () => {
+      const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
       buildSignal({
-        perRequestTimeoutMs: 50,
-        defaultTimeoutMs: 1000,
+        timeoutMs: 50,
         externalSignal: undefined,
       });
-      expect(anySpy).toHaveBeenCalledWith(50);
-      anySpy.mockRestore();
+      expect(timeoutSpy).toHaveBeenCalledWith(50);
+      timeoutSpy.mockRestore();
     });
 
     it("should compose both signals with AbortSignal.any when both are set", () => {
       const anySpy = vi.spyOn(AbortSignal, "any");
       const controller = new AbortController();
       const signal = buildSignal({
-        perRequestTimeoutMs: 100,
-        defaultTimeoutMs: undefined,
+        timeoutMs: 100,
         externalSignal: controller.signal,
       });
       expect(signal).toBeInstanceOf(AbortSignal);
@@ -326,8 +320,7 @@ describe("DmkNetworkClientHelpers", () => {
       const error = wrapFetchError({
         cause,
         externalSignal: undefined,
-        perRequestTimeoutMs: undefined,
-        defaultTimeoutMs: undefined,
+        timeoutMs: undefined,
       });
       expect(error).toBeInstanceOf(DmkNetworkClientError);
       expect(error.message).toBe("network down");
@@ -340,8 +333,7 @@ describe("DmkNetworkClientHelpers", () => {
       const error = wrapFetchError({
         cause: "something",
         externalSignal: undefined,
-        perRequestTimeoutMs: undefined,
-        defaultTimeoutMs: undefined,
+        timeoutMs: undefined,
       });
       expect(error.message).toBe("Network request failed");
       expect(error.cause).toBe("something");
@@ -353,8 +345,7 @@ describe("DmkNetworkClientHelpers", () => {
       const error = wrapFetchError({
         cause,
         externalSignal: undefined,
-        perRequestTimeoutMs: 10,
-        defaultTimeoutMs: undefined,
+        timeoutMs: 10,
       });
       expect(error.isTimeout).toBe(true);
       expect(error.isAbort).toBe(false);
@@ -367,8 +358,7 @@ describe("DmkNetworkClientHelpers", () => {
       const error = wrapFetchError({
         cause,
         externalSignal: undefined,
-        perRequestTimeoutMs: undefined,
-        defaultTimeoutMs: 1000,
+        timeoutMs: 1000,
       });
       expect(error.isTimeout).toBe(true);
       expect(error.isAbort).toBe(false);
@@ -382,8 +372,7 @@ describe("DmkNetworkClientHelpers", () => {
       const error = wrapFetchError({
         cause,
         externalSignal: controller.signal,
-        perRequestTimeoutMs: undefined,
-        defaultTimeoutMs: undefined,
+        timeoutMs: undefined,
       });
       expect(error.isAbort).toBe(true);
       expect(error.isTimeout).toBe(false);
@@ -396,8 +385,7 @@ describe("DmkNetworkClientHelpers", () => {
       const error = wrapFetchError({
         cause,
         externalSignal: undefined,
-        perRequestTimeoutMs: undefined,
-        defaultTimeoutMs: undefined,
+        timeoutMs: undefined,
       });
       expect(error.isTimeout).toBe(false);
       expect(error.isAbort).toBe(false);

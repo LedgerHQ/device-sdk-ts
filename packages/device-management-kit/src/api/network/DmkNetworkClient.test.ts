@@ -264,12 +264,9 @@ describe("DmkNetworkClient", () => {
   describe("timeout", () => {
     it("should pass an AbortSignal when timeoutMs is configured", async () => {
       const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
-      const client = new DmkNetworkClient({
-        fetch: fetchMock,
-        timeoutMs: 1000,
-      });
+      const client = new DmkNetworkClient({ fetch: fetchMock });
 
-      await client.get("https://api.example.com/items");
+      await client.get("https://api.example.com/items", { timeoutMs: 1000 });
 
       const init = fetchMock.mock.calls[0]![1] as RequestInit;
       expect(init.signal).toBeInstanceOf(AbortSignal);
@@ -289,13 +286,10 @@ describe("DmkNetworkClient", () => {
       const timeoutError = new Error("The operation was aborted");
       timeoutError.name = "TimeoutError";
       const fetchMock = vi.fn().mockRejectedValue(timeoutError);
-      const client = new DmkNetworkClient({
-        fetch: fetchMock,
-        timeoutMs: 10,
-      });
+      const client = new DmkNetworkClient({ fetch: fetchMock });
 
       const error = await client
-        .get("https://api.example.com/items")
+        .get("https://api.example.com/items", { timeoutMs: 10 })
         .catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(DmkNetworkClientError);

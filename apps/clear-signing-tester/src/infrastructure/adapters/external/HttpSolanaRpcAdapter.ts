@@ -240,9 +240,10 @@ type RpcTransactionResult = {
 
 @injectable()
 export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
+  private static readonly METADATA_TIMEOUT_MS = 5000;
+
   private readonly logger: LoggerPublisherService;
   private readonly http: DmkNetworkClient;
-  private readonly metadataHttp: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.SolanaRpcConfig)
@@ -252,7 +253,6 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   ) {
     this.logger = loggerFactory("solana-rpc-adapter");
     this.http = new DmkNetworkClient();
-    this.metadataHttp = new DmkNetworkClient({ timeoutMs: 5000 });
   }
 
   async fetchClearSignableTransactions(
@@ -552,8 +552,9 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     if (!sourceTokenAccount) return true;
 
     try {
-      await this.metadataHttp.head(
+      await this.http.head(
         `${METADATA_SERVICE_URL}/v2/solana/owner/${sourceTokenAccount}`,
+        { timeoutMs: HttpSolanaRpcAdapter.METADATA_TIMEOUT_MS },
       );
       return false;
     } catch {

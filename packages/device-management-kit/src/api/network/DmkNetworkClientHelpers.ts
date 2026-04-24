@@ -112,12 +112,10 @@ export function buildBodyAndHeaders(args: {
  * either one firing aborts the request.
  */
 export function buildSignal(args: {
-  perRequestTimeoutMs: number | undefined;
-  defaultTimeoutMs: number | undefined;
+  timeoutMs: number | undefined;
   externalSignal: AbortSignal | undefined;
 }): AbortSignal | undefined {
-  const { perRequestTimeoutMs, defaultTimeoutMs, externalSignal } = args;
-  const timeoutMs = perRequestTimeoutMs ?? defaultTimeoutMs;
+  const { timeoutMs, externalSignal } = args;
   const timeoutSignal =
     timeoutMs && timeoutMs > 0 ? AbortSignal.timeout(timeoutMs) : undefined;
 
@@ -187,11 +185,9 @@ export async function safeReadText(
 export function wrapFetchError(args: {
   cause: unknown;
   externalSignal: AbortSignal | undefined;
-  perRequestTimeoutMs: number | undefined;
-  defaultTimeoutMs: number | undefined;
+  timeoutMs: number | undefined;
 }): DmkNetworkClientError {
-  const { cause, externalSignal, perRequestTimeoutMs, defaultTimeoutMs } = args;
-  const timeoutMs = perRequestTimeoutMs ?? defaultTimeoutMs;
+  const { cause, externalSignal, timeoutMs } = args;
   const hasTimeout = Boolean(timeoutMs && timeoutMs > 0);
   const isAbortError =
     cause instanceof Error &&

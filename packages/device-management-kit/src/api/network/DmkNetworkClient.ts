@@ -23,8 +23,8 @@ export type DmkRequestConfig = {
   /** Per-request headers merged on top of the client's default headers. */
   headers?: Record<string, string>;
   /**
-   * Per-request timeout in milliseconds. Overrides the client default.
-   * Pass `0` to disable the timeout entirely for this request.
+   * Per-request timeout in milliseconds. When unset (or `0`), the request
+   * has no timeout.
    */
   timeoutMs?: number;
   /**
@@ -64,8 +64,6 @@ export type DmkNetworkResponse = {
 export type DmkNetworkClientOptions = {
   /** Base URL prepended to relative request URLs. */
   baseUrl?: string;
-  /** Default timeout applied to every request (ms). `0` disables. */
-  timeoutMs?: number;
   /** Default headers merged into every request. */
   headers?: Record<string, string>;
   /** Injection point for tests. Defaults to `globalThis.fetch`. */
@@ -94,13 +92,11 @@ type InternalRequestConfig = DmkRequestConfig & {
  */
 export class DmkNetworkClient {
   private readonly baseUrl?: string;
-  private readonly defaultTimeoutMs?: number;
   private readonly defaultHeaders: Record<string, string>;
   private readonly fetchImpl?: typeof fetch;
 
   constructor(options: DmkNetworkClientOptions = {}) {
     this.baseUrl = options.baseUrl;
-    this.defaultTimeoutMs = options.timeoutMs;
     this.defaultHeaders = options.headers ?? {};
     this.fetchImpl = options.fetch;
   }
@@ -183,8 +179,7 @@ export class DmkNetworkClient {
       perRequestHeaders: config.headers,
     });
     const signal = buildSignal({
-      perRequestTimeoutMs: config.timeoutMs,
-      defaultTimeoutMs: this.defaultTimeoutMs,
+      timeoutMs: config.timeoutMs,
       externalSignal: config.signal,
     });
     const throwOnHttpError = config.throwOnHttpError ?? true;
@@ -202,8 +197,7 @@ export class DmkNetworkClient {
       throw wrapFetchError({
         cause,
         externalSignal: config.signal,
-        perRequestTimeoutMs: config.timeoutMs,
-        defaultTimeoutMs: this.defaultTimeoutMs,
+        timeoutMs: config.timeoutMs,
       });
     }
 
