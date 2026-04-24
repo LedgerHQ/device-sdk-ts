@@ -28,6 +28,11 @@ export default [
               message: "Use DmkResultFactory outside the command layer.",
             },
             {
+              name: "@api/index",
+              importNames: ["CommandResultFactory"],
+              message: "Use DmkResultFactory outside the command layer.",
+            },
+            {
               name: "@ledgerhq/device-management-kit",
               importNames: ["CommandResultFactory"],
               message: "Use DmkResultFactory outside the command layer.",
