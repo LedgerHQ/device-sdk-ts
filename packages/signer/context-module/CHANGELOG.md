@@ -1,5 +1,19 @@
 # @ledgerhq/context-module
 
+## 1.17.0
+
+### Minor Changes
+
+- [#1440](https://github.com/LedgerHQ/device-sdk-ts/pull/1440) [`c371e43`](https://github.com/LedgerHQ/device-sdk-ts/commit/c371e435f066346af656ffe8a0f5a2dcba26eee4) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add optional platform, appVersion, platformOS, platformVersion, liveAppContext and sessionId fields to BlindSigningReportParams to mirror BlindSigningEventDto, allowing consumers with a custom blind signing reporter to forward them end-to-end
+
+- [#1416](https://github.com/LedgerHQ/device-sdk-ts/pull/1416) [`106a40f`](https://github.com/LedgerHQ/device-sdk-ts/commit/106a40f18f93d04b0eb2646e4b0f5af748df16d6) Thanks [@lysyi3m](https://github.com/lysyi3m)! - Add AccountOwnership context loader for Concordium on-device address verification via trusted metadata service
+
+- [#1434](https://github.com/LedgerHQ/device-sdk-ts/pull/1434) [`b473783`](https://github.com/LedgerHQ/device-sdk-ts/commit/b4737837cb50a260ff94b0745da3a288a1222999) Thanks [@lysyi3m](https://github.com/lysyi3m)! - Split trusted metadata service errors for account ownership into `verification_failed` (HTTP 4xx) vs `service_unavailable` (network / 5xx / malformed), exposed via the new `AccountOwnershipError` class. Backend error message is now forwarded verbatim instead of swallowed.
+
+### Patch Changes
+
+- [#1439](https://github.com/LedgerHQ/device-sdk-ts/pull/1439) [`2d4950f`](https://github.com/LedgerHQ/device-sdk-ts/commit/2d4950f73e2fdb988c1d40a57f5813863457acf2) Thanks [@lysyi3m](https://github.com/lysyi3m)! - Classify account-ownership errors by numeric `.status`, so consumer-intercepted errors are handled the same as vanilla `AxiosError`.
+
 ## 1.16.0
 
 ### Minor Changes
