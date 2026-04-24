@@ -10,6 +10,7 @@ import {
   type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import { type DmkError } from "@api/Error";
 import { type DmkResult, isSuccessDmkResult } from "@api/model/DmkResult";
 
 import {
@@ -19,7 +20,6 @@ import {
   type CallTaskInAppDAInternalState,
   type CallTaskInAppDAOutput,
   callTaskInAppDAStateStep,
-  type CallTaskInAppTaskError,
 } from "./CallTaskInAppDeviceActionTypes";
 
 /**
@@ -30,7 +30,9 @@ import {
  * ```ts
  * input: {
  *  appName: string;
- *  task: (internalApi: InternalApi) => Promise<DmkResult<TaskResponse, TaskError>>;
+ *  task: (
+ *    internalApi: InternalApi,
+ *  ) => Promise<DmkResult<TaskResponse, TaskError>>;
  *  requiredUserInteraction: UserInteraction;
  * }
  * ```
@@ -50,7 +52,7 @@ import {
  */
 export class CallTaskInAppDeviceAction<
   TaskResponse,
-  TaskError = void,
+  TaskError extends DmkError = DmkError,
   UserInteraction extends UserInteractionRequired = UserInteractionRequired,
 > extends XStateDeviceAction<
   CallTaskInAppDAOutput<TaskResponse>,
@@ -243,11 +245,8 @@ export class CallTaskInAppDeviceAction<
       callTask: (_: {
         input: (
           internalApi: InternalApi,
-        ) => Promise<
-          DmkResult<TaskResponse, CallTaskInAppTaskError<TaskError>>
-        >;
-      }): Promise<DmkResult<TaskResponse, CallTaskInAppTaskError<TaskError>>> =>
-        _.input(internalApi),
+        ) => Promise<DmkResult<TaskResponse, TaskError>>;
+      }): Promise<DmkResult<TaskResponse, TaskError>> => _.input(internalApi),
     };
   }
 }

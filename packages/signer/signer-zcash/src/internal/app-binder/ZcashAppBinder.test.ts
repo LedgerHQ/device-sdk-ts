@@ -1,5 +1,6 @@
 import {
   CallTaskInAppDeviceAction,
+  type DmkError,
   DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -42,7 +43,7 @@ type ExecuteDeviceActionTaskCallArgs = {
   sessionId: DeviceSessionId;
   deviceAction: CallTaskInAppDeviceAction<
     unknown,
-    unknown,
+    DmkError,
     UserInteractionRequired.None
   >;
 };
