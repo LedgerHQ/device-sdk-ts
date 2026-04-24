@@ -6,6 +6,7 @@ import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningRepor
 import { HttpBlindSigningReporterDatasource } from "@/reporter/data/HttpBlindSigningReporterDatasource";
 import {
   BlindSigningMethod,
+  BlindSigningPlatform,
   BlindSignReason,
   ClearSigningType,
 } from "@/reporter/model/BlindSigningEvent";
@@ -128,6 +129,31 @@ describe("HttpBlindSigningReporterDatasource", () => {
       expect(axios.request).toHaveBeenCalledWith(
         expect.objectContaining({
           data: { ...params, source: config.appSource },
+        }),
+      );
+    });
+
+    it("should forward optional DTO fields when provided", async () => {
+      // GIVEN
+      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      const paramsWithOptionalFields: BlindSigningReportParams = {
+        ...params,
+        platform: BlindSigningPlatform.DESKTOP,
+        appVersion: "2.80.0",
+        platformOS: "macOS",
+        platformVersion: "14.5",
+        liveAppContext: "swap",
+        sessionId: "session-123",
+      };
+
+      // WHEN
+      const dataSource = new HttpBlindSigningReporterDatasource(config);
+      await dataSource.report(paramsWithOptionalFields);
+
+      // THEN
+      expect(axios.request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: { ...paramsWithOptionalFields, source: config.appSource },
         }),
       );
     });
