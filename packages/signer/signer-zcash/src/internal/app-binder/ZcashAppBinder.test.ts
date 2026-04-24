@@ -1,8 +1,10 @@
 import {
+  CallTaskInAppDeviceAction,
   DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
   type ExecuteDeviceActionReturnType,
+  type InternalApi,
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -21,6 +23,7 @@ import {
 } from "@internal/app-binder/command/GetAddressCommand";
 import type { ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { GetTrustedInputTask } from "@internal/app-binder/task/GetTrustedInputTask";
 import { ZcashAppBinder } from "@internal/app-binder/ZcashAppBinder";
 
 type ZcashGetAddressSendCommandAction = SendCommandInAppDeviceAction<
@@ -33,6 +36,15 @@ type ZcashGetAddressSendCommandAction = SendCommandInAppDeviceAction<
 type ExecuteDeviceActionCallArgs = {
   sessionId: DeviceSessionId;
   deviceAction: ZcashGetAddressSendCommandAction;
+};
+
+type ExecuteDeviceActionTaskCallArgs = {
+  sessionId: DeviceSessionId;
+  deviceAction: CallTaskInAppDeviceAction<
+    unknown,
+    unknown,
+    UserInteractionRequired.None
+  >;
 };
 
 describe("ZcashAppBinder", () => {
@@ -132,6 +144,64 @@ describe("ZcashAppBinder", () => {
       expect(args.deviceAction.input.requiredUserInteraction).toBe(
         UserInteractionRequired.None,
       );
+      expect(args.deviceAction.input.skipOpenApp).toBe(true);
+    });
+  });
+
+  describe("getTrustedInput", () => {
+    it("should call dmk.executeDeviceAction with CallTaskInAppDeviceAction and default skipOpenApp to false", async () => {
+      const sessionId = "test-session-id";
+      const getTrustedInputArgs = {
+        transaction: new Uint8Array([0x01, 0x02, 0x03]),
+      };
+      const expectedResult = {
+        observable: from([]),
+        cancel: vi.fn(),
+      };
+      const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, sessionId);
+      const runSpy = vi
+        .spyOn(GetTrustedInputTask.prototype, "run")
+        .mockResolvedValue({} as never);
+
+      const result = binder.getTrustedInput(getTrustedInputArgs);
+
+      expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
+      expect(args.sessionId).toBe(sessionId);
+      expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+      expect(args.deviceAction.input.appName).toBe(APP_NAME);
+      expect(args.deviceAction.input.requiredUserInteraction).toBe(
+        UserInteractionRequired.None,
+      );
+      expect(args.deviceAction.input.skipOpenApp).toBe(false);
+      expect(result).toBe(expectedResult);
+
+      await args.deviceAction.input.task({} as InternalApi);
+      expect(runSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should keep provided skipOpenApp value", () => {
+      const executeDeviceActionMock = vi.fn().mockReturnValue({
+        observable: from([]),
+        cancel: vi.fn(),
+      });
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, "sessionId");
+
+      binder.getTrustedInput({
+        transaction: new Uint8Array([0x00]),
+        skipOpenApp: true,
+      });
+
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
       expect(args.deviceAction.input.skipOpenApp).toBe(true);
     });
   });

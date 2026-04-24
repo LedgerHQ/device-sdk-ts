@@ -9,6 +9,11 @@ export type {
   GetAppConfigDAOutput,
 } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 export type {
+  GetTrustedInputDAError,
+  GetTrustedInputDAIntermediateValue,
+  GetTrustedInputDAOutput,
+} from "@api/app-binder/GetTrustedInputActionTypes";
+export type {
   SignMessageDAError,
   SignMessageDAIntermediateValue,
   SignMessageDAOutput,
