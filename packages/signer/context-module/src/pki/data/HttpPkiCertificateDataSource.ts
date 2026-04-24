@@ -100,27 +100,20 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
     value: unknown,
     mode: ContextModuleCalMode,
   ): value is PkiCertificateResponseDto {
+    if (!this.isRecord(value) || !this.isRecord(value["descriptor"])) {
+      return false;
+    }
+    const descriptor = value["descriptor"];
     if (
-      typeof value !== "object" ||
-      value === null ||
-      !("descriptor" in value) ||
-      typeof value.descriptor !== "object" ||
-      value.descriptor === null
+      typeof descriptor["data"] !== "string" ||
+      !this.isRecord(descriptor["signatures"])
     ) {
       return false;
     }
-    const { descriptor } = value;
-    if (
-      !("data" in descriptor) ||
-      typeof descriptor.data !== "string" ||
-      !("signatures" in descriptor) ||
-      typeof descriptor.signatures !== "object" ||
-      descriptor.signatures === null ||
-      !(mode in descriptor.signatures)
-    ) {
-      return false;
-    }
-    const signature = (descriptor.signatures as Record<string, unknown>)[mode];
-    return typeof signature === "string";
+    return typeof descriptor["signatures"][mode] === "string";
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
   }
 }
