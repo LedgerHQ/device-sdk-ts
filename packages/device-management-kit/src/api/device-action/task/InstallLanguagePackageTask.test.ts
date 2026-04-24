@@ -4,6 +4,7 @@ import { lastValueFrom, toArray } from "rxjs";
 
 import type { InternalApi } from "@api/device-action/DeviceAction";
 import {
+  NetworkDAError,
   OutOfMemoryDAError,
   RefusedByUserDAError,
   UnknownDAError,
@@ -117,6 +118,19 @@ describe("InstallLanguagePackageTask", () => {
   });
 
   describe("error", () => {
+    it("should throw NetworkDAError when fetching APDUs fails", async () => {
+      vi.mocked(axios.get).mockRejectedValueOnce(new Error("Network timeout"));
+
+      const task = new InstallLanguagePackageTask(api, {
+        apduInstallUrl: "https://example.com/install",
+      });
+
+      await expect(lastValueFrom(task.run())).rejects.toEqual(
+        new NetworkDAError("Failed to fetch APDUs: Network timeout"),
+      );
+      expect(sendApdu).not.toHaveBeenCalled();
+    });
+
     it("should throw UnknownDAError for invalid APDU hex data", async () => {
       vi.mocked(axios.get).mockResolvedValueOnce({
         data: "ZZZZ",

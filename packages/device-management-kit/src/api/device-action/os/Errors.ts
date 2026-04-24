@@ -104,3 +104,12 @@ export class DeleteLanguagePackDAError implements DmkError {
     this.originalError = new Error(message ?? "Delete language pack failed.");
   }
 }
+
+export class NetworkDAError implements DmkError {
+  readonly _tag = "NetworkDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Network error.");
+  }
+}

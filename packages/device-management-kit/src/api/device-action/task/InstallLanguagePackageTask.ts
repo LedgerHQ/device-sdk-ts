@@ -4,6 +4,7 @@ import { Observable } from "rxjs";
 import { CommandUtils } from "@api/command/utils/CommandUtils";
 import type { InternalApi } from "@api/device-action/DeviceAction";
 import {
+  NetworkDAError,
   OutOfMemoryDAError,
   RefusedByUserDAError,
   UnknownDAError,
@@ -39,7 +40,7 @@ export class InstallLanguagePackageTask {
           const response = await axios.get<string>(this.args.apduInstallUrl);
           rawApdus = response.data;
         } catch (error) {
-          throw new UnknownDAError(
+          throw new NetworkDAError(
             `Failed to fetch APDUs: ${error instanceof Error ? error.message : String(error)}`,
           );
         }
