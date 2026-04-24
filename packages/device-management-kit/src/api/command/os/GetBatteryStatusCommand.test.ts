@@ -3,6 +3,7 @@ import {
   CommandResultFactory,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import {
@@ -33,6 +34,7 @@ const TEMPERATURE_RESPONSE_HEX = Uint8Array.from([0x10, 0x90, 0x00]);
 const FLAGS_RESPONSE_HEX = Uint8Array.from([
   0x00, 0x00, 0x00, 0x0f, 0x90, 0x00,
 ]);
+const EMPTY_SUCCESS_RESPONSE_HEX = Uint8Array.from([0x90, 0x00]);
 const FAILED_RESPONSE_HEX = Uint8Array.from([0x67, 0x00]);
 
 describe("GetBatteryStatus", () => {
@@ -138,7 +140,7 @@ describe("GetBatteryStatus", () => {
         }),
       );
     });
-    it("should return InvalidResponseFormatError when expected battery data is missing", () => {
+    it("should return a handled command error when the status word is not successful", () => {
       const FAILED_RESPONSE = new ApduResponse({
         statusCode: FAILED_RESPONSE_HEX.slice(-2),
         data: FAILED_RESPONSE_HEX.slice(0, -2),
@@ -147,6 +149,21 @@ describe("GetBatteryStatus", () => {
         statusType: BatteryStatusType.BATTERY_PERCENTAGE,
       });
       const result = command.parseResponse(FAILED_RESPONSE);
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: GlobalCommandErrorHandler.handle(FAILED_RESPONSE),
+        }),
+      );
+    });
+    it("should return InvalidResponseFormatError when expected battery data is missing", () => {
+      const EMPTY_SUCCESS_RESPONSE = new ApduResponse({
+        statusCode: EMPTY_SUCCESS_RESPONSE_HEX.slice(-2),
+        data: EMPTY_SUCCESS_RESPONSE_HEX.slice(0, -2),
+      });
+      const command = new GetBatteryStatusCommand({
+        statusType: BatteryStatusType.BATTERY_PERCENTAGE,
+      });
+      const result = command.parseResponse(EMPTY_SUCCESS_RESPONSE);
       expect(result).toStrictEqual(
         CommandResultFactory({
           error: new InvalidResponseFormatError(

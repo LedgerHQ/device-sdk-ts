@@ -7,6 +7,8 @@ import {
   type CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
+import { CommandUtils } from "@api/command/utils/CommandUtils";
+import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 /**
@@ -99,6 +101,11 @@ export class GetBatteryStatusCommand
   parseResponse(
     apduResponse: ApduResponse,
   ): CommandResult<GetBatteryStatusResponse> {
+    if (!CommandUtils.isSuccessResponse(apduResponse)) {
+      return CommandResultFactory({
+        error: GlobalCommandErrorHandler.handle(apduResponse),
+      });
+    }
     const parser = new ApduParser(apduResponse);
     const invalidResponseFormat = (message: string) =>
       CommandResultFactory<GetBatteryStatusResponse>({
