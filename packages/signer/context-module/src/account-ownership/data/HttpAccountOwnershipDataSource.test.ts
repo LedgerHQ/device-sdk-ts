@@ -30,6 +30,12 @@ function makeAxiosError(
   return err;
 }
 
+function makeInterceptedError(status: number, message: string): Error {
+  const err = new Error(message);
+  (err as unknown as { status: number }).status = status;
+  return err;
+}
+
 describe("HttpAccountOwnershipDataSource", () => {
   const config: ContextModuleServiceConfig = {
     metadataServiceDomain: {
@@ -274,6 +280,95 @@ describe("HttpAccountOwnershipDataSource", () => {
           ),
         ),
       );
+    });
+
+    // Consumers may install a global axios interceptor that replaces
+    // AxiosError with a custom class, preserving the HTTP status on
+    // `.status` and dropping `.response`. The datasource must still
+    // classify these.
+    describe("intercepted error shape (numeric .status on the error)", () => {
+      it.each([400, 401, 403, 404, 422, 429])(
+        "should classify HTTP %s on .status as verification_failed and forward message",
+        async (status) => {
+          const backendMessage =
+            "Address ByteVector(...) is not associated with the given public key ByteVector(...)";
+          vi.spyOn(axios, "request").mockRejectedValue(
+            makeInterceptedError(status, backendMessage),
+          );
+
+          const result = await new HttpAccountOwnershipDataSource(
+            config,
+          ).getDescriptor(baseParams);
+
+          const err = result.extract() as AccountOwnershipError;
+          expect(err.kind).toBe("verification_failed");
+          expect(err.message).toBe(backendMessage);
+        },
+      );
+
+      it.each([500, 502, 503, 504])(
+        "should classify HTTP %s on .status as service_unavailable with status prefix",
+        async (status) => {
+          vi.spyOn(axios, "request").mockRejectedValue(
+            makeInterceptedError(status, "down"),
+          );
+
+          const result = await new HttpAccountOwnershipDataSource(
+            config,
+          ).getDescriptor(baseParams);
+
+          const err = result.extract() as AccountOwnershipError;
+          expect(err.kind).toBe("service_unavailable");
+          expect(err.message).toContain(`backend ${status}`);
+          expect(err.message).toContain("down");
+        },
+      );
+
+      it("should ignore non-numeric .status and fall through to service_unavailable fallback", async () => {
+        const err = new Error("bad");
+        (err as unknown as { status: string }).status = "422";
+        vi.spyOn(axios, "request").mockRejectedValue(err);
+
+        const result = await new HttpAccountOwnershipDataSource(
+          config,
+        ).getDescriptor(baseParams);
+
+        expect(result).toEqual(
+          Left(
+            new AccountOwnershipError(
+              "service_unavailable",
+              "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
+            ),
+          ),
+        );
+      });
+
+      it("should forward .message from plain object errors (not Error instances)", async () => {
+        vi.spyOn(axios, "request").mockRejectedValue({
+          status: 422,
+          message: "plain object message",
+        });
+
+        const result = await new HttpAccountOwnershipDataSource(
+          config,
+        ).getDescriptor(baseParams);
+
+        const err = result.extract() as AccountOwnershipError;
+        expect(err.kind).toBe("verification_failed");
+        expect(err.message).toBe("plain object message");
+      });
+
+      it("should use an 'Unknown error' fallback when the object has no usable message", async () => {
+        vi.spyOn(axios, "request").mockRejectedValue({ status: 422 });
+
+        const result = await new HttpAccountOwnershipDataSource(
+          config,
+        ).getDescriptor(baseParams);
+
+        const err = result.extract() as AccountOwnershipError;
+        expect(err.kind).toBe("verification_failed");
+        expect(err.message).toBe("Unknown error");
+      });
     });
 
     it("should use correct metadata service URL from config", async () => {

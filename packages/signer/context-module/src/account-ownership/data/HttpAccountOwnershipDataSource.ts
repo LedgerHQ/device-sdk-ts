@@ -80,7 +80,16 @@ export class HttpAccountOwnershipDataSource
    * Classifies a caught request error into an {@link AccountOwnershipError}:
    * HTTP 4xx responses carry the backend's `message` verbatim and are marked
    * as `verification_failed`; everything else (network failure, 5xx,
-   * non-axios errors) is marked as `service_unavailable`.
+   * unrecognized errors) is marked as `service_unavailable`.
+   *
+   * Two shapes are recognized:
+   * - Vanilla {@link AxiosError} with `.response` (standalone axios usage).
+   * - Any error carrying a numeric `.status` field. Consumers may install a
+   *   global axios interceptor that replaces {@link AxiosError} with a
+   *   custom class, typically stripping `.response` but preserving the HTTP
+   *   status on a top-level `.status` field. The duck-typed branch keeps
+   *   classification correct on those paths without coupling to any
+   *   host-specific class.
    */
   private classifyError(error: unknown): AccountOwnershipError {
     if (axios.isAxiosError(error) && error.response) {
@@ -89,21 +98,56 @@ export class HttpAccountOwnershipDataSource
         error.response.data,
         error.message,
       );
+      return this.classifyFromStatus(status, backendMessage);
+    }
 
-      if (status >= 400 && status < 500) {
-        return new AccountOwnershipError("verification_failed", backendMessage);
-      }
-
-      return new AccountOwnershipError(
-        "service_unavailable",
-        `[ContextModule] HttpAccountOwnershipDataSource: backend ${status}: ${backendMessage}`,
-      );
+    if (this.hasNumericStatus(error)) {
+      const status = error.status;
+      const message = this.extractErrorMessage(error);
+      return this.classifyFromStatus(status, message);
     }
 
     return new AccountOwnershipError(
       "service_unavailable",
       "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
     );
+  }
+
+  private classifyFromStatus(
+    status: number,
+    message: string,
+  ): AccountOwnershipError {
+    if (status >= 400 && status < 500) {
+      return new AccountOwnershipError("verification_failed", message);
+    }
+    return new AccountOwnershipError(
+      "service_unavailable",
+      `[ContextModule] HttpAccountOwnershipDataSource: backend ${status}: ${message}`,
+    );
+  }
+
+  private hasNumericStatus(value: unknown): value is { status: number } {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      "status" in value &&
+      typeof (value as { status: unknown }).status === "number"
+    );
+  }
+
+  private extractErrorMessage(value: unknown): string {
+    if (
+      typeof value === "object" &&
+      value !== null &&
+      "message" in value &&
+      typeof (value as { message: unknown }).message === "string"
+    ) {
+      return (value as { message: string }).message;
+    }
+    if (typeof value === "string") {
+      return value;
+    }
+    return "Unknown error";
   }
 
   private extractBackendMessage(data: unknown, fallback: string): string {
