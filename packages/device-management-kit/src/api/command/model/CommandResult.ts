@@ -1,6 +1,4 @@
 import {
-  type InvalidBatteryDataError,
-  type InvalidBatteryStatusTypeError,
   type InvalidGetFirmwareMetadataResponseError,
   type InvalidResponseFormatError,
   type InvalidStatusWordError,
@@ -22,8 +20,6 @@ export type CommandSuccessResult<Data> = {
 export type CommandErrorResult<SpecificErrorCodes = void> = {
   error:
     | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
-    | InvalidBatteryDataError
-    | InvalidBatteryStatusTypeError
     | InvalidResponseFormatError
     | InvalidStatusWordError
     | InvalidGetFirmwareMetadataResponseError
@@ -43,8 +39,6 @@ export function CommandResultFactory<Data, SpecificErrorCodes = void>({
       data?: undefined;
       error:
         | DeviceExchangeError<SpecificErrorCodes>
-        | InvalidBatteryDataError
-        | InvalidBatteryStatusTypeError
         | InvalidResponseFormatError
         | InvalidStatusWordError
         | InvalidGetFirmwareMetadataResponseError

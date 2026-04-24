@@ -2,10 +2,7 @@ import { type Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder, type ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { type Command } from "@api/command/Command";
-import {
-  InvalidBatteryDataError,
-  InvalidBatteryStatusTypeError,
-} from "@api/command/Errors";
+import { InvalidResponseFormatError } from "@api/command/Errors";
 import {
   type CommandResult,
   CommandResultFactory,
@@ -103,14 +100,18 @@ export class GetBatteryStatusCommand
     apduResponse: ApduResponse,
   ): CommandResult<GetBatteryStatusResponse> {
     const parser = new ApduParser(apduResponse);
+    const invalidResponseFormat = (message: string) =>
+      CommandResultFactory<GetBatteryStatusResponse>({
+        error: new InvalidResponseFormatError(message),
+      });
 
     switch (this.args.statusType) {
       case BatteryStatusType.BATTERY_PERCENTAGE: {
         const percentage = parser.extract8BitUInt();
         if (percentage === undefined) {
-          return CommandResultFactory({
-            error: new InvalidBatteryDataError("Cannot parse APDU response"),
-          });
+          return invalidResponseFormat(
+            "getBatteryStatus: missing battery percentage in response",
+          );
         }
         return CommandResultFactory({
           data: percentage > 100 ? -1 : percentage,
@@ -119,9 +120,9 @@ export class GetBatteryStatusCommand
       case BatteryStatusType.BATTERY_VOLTAGE: {
         const data = parser.extract16BitUInt();
         if (data === undefined) {
-          return CommandResultFactory({
-            error: new InvalidBatteryDataError("Cannot parse APDU response"),
-          });
+          return invalidResponseFormat(
+            "getBatteryStatus: missing battery voltage in response",
+          );
         }
         return CommandResultFactory({
           data,
@@ -131,9 +132,11 @@ export class GetBatteryStatusCommand
       case BatteryStatusType.BATTERY_CURRENT: {
         const data = parser.extract8BitUInt();
         if (data === undefined) {
-          return CommandResultFactory({
-            error: new InvalidBatteryDataError("Cannot parse APDU response"),
-          });
+          return invalidResponseFormat(
+            this.args.statusType === BatteryStatusType.BATTERY_TEMPERATURE
+              ? "getBatteryStatus: missing battery temperature in response"
+              : "getBatteryStatus: missing battery current in response",
+          );
         }
         return CommandResultFactory({
           data: (data << 24) >> 24,
@@ -142,9 +145,9 @@ export class GetBatteryStatusCommand
       case BatteryStatusType.BATTERY_FLAGS: {
         const flags = parser.extract32BitUInt();
         if (flags === undefined) {
-          return CommandResultFactory({
-            error: new InvalidBatteryDataError("Cannot parse APDU response"),
-          });
+          return invalidResponseFormat(
+            "getBatteryStatus: missing battery flags in response",
+          );
         }
         const chargingUSB = !!(flags & FlagMasks.USB_POWERED);
         const chargingQi = !chargingUSB && !!(flags & FlagMasks.CHARGING);
@@ -162,11 +165,9 @@ export class GetBatteryStatusCommand
         });
       }
       default:
-        return CommandResultFactory({
-          error: new InvalidBatteryStatusTypeError(
-            "One or some case(s) not covered",
-          ),
-        });
+        return invalidResponseFormat(
+          "getBatteryStatus: unsupported battery status type",
+        );
     }
   }
 }

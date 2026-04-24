@@ -9,33 +9,6 @@ export class InvalidStatusWordError implements DmkError {
   }
 }
 
-export class InvalidBatteryStatusTypeError implements DmkError {
-  readonly _tag = "InvalidBatteryStatusTypeError";
-  readonly originalError: Error;
-
-  constructor(message?: string) {
-    this.originalError = new Error(message ?? "Invalid battery status type.");
-  }
-}
-
-export class InvalidBatteryDataError implements DmkError {
-  readonly _tag = "InvalidBatteryDataError";
-  readonly originalError: Error;
-
-  constructor(message?: string) {
-    this.originalError = new Error(message ?? "Invalid battery data.");
-  }
-}
-
-export class InvalidBatteryFlagsError implements DmkError {
-  readonly _tag = "InvalidBatteryFlagsError";
-  readonly originalError: Error;
-
-  constructor(message?: string) {
-    this.originalError = new Error(message ?? "Invalid battery flags.");
-  }
-}
-
 export class InvalidResponseFormatError implements DmkError {
   readonly _tag = "InvalidResponseFormatError";
   readonly originalError: Error;

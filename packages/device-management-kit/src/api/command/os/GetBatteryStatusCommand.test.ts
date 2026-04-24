@@ -1,3 +1,4 @@
+import { InvalidResponseFormatError } from "@api/command/Errors";
 import {
   CommandResultFactory,
   isSuccessCommandResult,
@@ -137,7 +138,7 @@ describe("GetBatteryStatus", () => {
         }),
       );
     });
-    it("should return an error if the response returned unsupported format", () => {
+    it("should return InvalidResponseFormatError when expected battery data is missing", () => {
       const FAILED_RESPONSE = new ApduResponse({
         statusCode: FAILED_RESPONSE_HEX.slice(-2),
         data: FAILED_RESPONSE_HEX.slice(0, -2),
@@ -146,7 +147,31 @@ describe("GetBatteryStatus", () => {
         statusType: BatteryStatusType.BATTERY_PERCENTAGE,
       });
       const result = command.parseResponse(FAILED_RESPONSE);
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: new InvalidResponseFormatError(
+            "getBatteryStatus: missing battery percentage in response",
+          ),
+        }),
+      );
+    });
+    it("should return InvalidResponseFormatError when status type is unsupported", () => {
+      const PERCENTAGE_RESPONSE = new ApduResponse({
+        statusCode: PERCENTAGE_RESPONSE_HEX.slice(-2),
+        data: PERCENTAGE_RESPONSE_HEX.slice(0, -2),
+      });
+      const command = new GetBatteryStatusCommand({
+        statusType: 0xff as BatteryStatusType,
+      });
+      const result = command.parseResponse(PERCENTAGE_RESPONSE);
       expect(isSuccessCommandResult(result)).toBeFalsy();
+      expect(result).toStrictEqual(
+        CommandResultFactory({
+          error: new InvalidResponseFormatError(
+            "getBatteryStatus: unsupported battery status type",
+          ),
+        }),
+      );
     });
   });
 });
