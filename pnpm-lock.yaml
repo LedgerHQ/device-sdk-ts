@@ -1977,31 +1977,6 @@ importers:
         specifier: workspace:*
         version: link:../../config/typescript
 
-  packages/tools/dmk-debugger:
-    dependencies:
-      express:
-        specifier: ^5.1.0
-        version: 5.2.1
-    devDependencies:
-      '@ledgerhq/eslint-config-dsdk':
-        specifier: workspace:*
-        version: link:../../config/eslint
-      '@ledgerhq/prettier-config-dsdk':
-        specifier: workspace:*
-        version: link:../../config/prettier
-      '@types/express':
-        specifier: ^5.0.0
-        version: 5.0.6
-      '@types/vscode':
-        specifier: ^1.93.0
-        version: 1.109.0
-      esbuild:
-        specifier: 'catalog:'
-        version: 0.25.4
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.2
-
   packages/tools/ldmk-tool:
     dependencies:
       '@inquirer/prompts':
@@ -6432,9 +6407,6 @@ packages:
 
   '@types/verror@1.10.11':
     resolution: {integrity: sha512-RlDm9K7+o5stv0Co8i8ZRGxDbrTxhJtgjqjFyVh/tXQyl/rYtTKlnTvZ88oSTeYREWurwx20Js4kTuKCsFkUtg==}
-
-  '@types/vscode@1.109.0':
-    resolution: {integrity: sha512-0Pf95rnwEIwDbmXGC08r0B4TQhAbsHQ5UyTIgVgoieDe4cOnf92usuR5dEczb6bTKEp7ziZH4TV1TRGPPCExtw==}
 
   '@types/w3c-web-hid@1.0.6':
     resolution: {integrity: sha512-IWyssXmRDo6K7s31dxf+U+x/XUWuVsl9qUIYbJmpUHPcTv/COfBCKw/F0smI45+gPV34brjyP30BFcIsHgYWLA==}
@@ -18206,8 +18178,6 @@ snapshots:
 
   '@types/verror@1.10.11':
     optional: true
-
-  '@types/vscode@1.109.0': {}
 
   '@types/w3c-web-hid@1.0.6': {}
 

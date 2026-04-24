@@ -103,7 +103,7 @@ export class SendSignTransactionTask {
       const result = await this.api.sendCommand(
         new SignTransactionCommand({
           serializedTransaction: chunks[i]!,
-          isFirstChunk: i === 0,
+          isFirstChunk: i !== 0,
         }),
       );
       if (!isSuccessCommandResult(result)) {
