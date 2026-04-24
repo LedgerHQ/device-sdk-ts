@@ -2,6 +2,7 @@ import { type Either } from "purify-ts";
 
 import {
   type BlindSigningMethod,
+  type BlindSigningPlatform,
   type BlindSignReason,
   type ClearSigningType,
 } from "@/reporter/model/BlindSigningEvent";
@@ -23,6 +24,12 @@ export type BlindSigningReportParams = {
   signerAppVersion: string;
   deviceVersion: string | null;
   ethContext: BlindSigningReportEthContext | null;
+  platform?: BlindSigningPlatform;
+  appVersion?: string;
+  platformOS?: string;
+  platformVersion?: string;
+  liveAppContext?: string | null;
+  sessionId?: string | null;
 };
 
 export interface BlindSigningReporterDatasource {
