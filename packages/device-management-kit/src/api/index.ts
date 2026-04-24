@@ -8,7 +8,6 @@ export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
 export { type Command } from "@api/command/Command";
 export {
-  InvalidGetFirmwareMetadataResponseError,
   InvalidResponseFormatError,
   InvalidStatusWordError,
 } from "@api/command/Errors";
@@ -116,6 +115,10 @@ export { OpenAppWithDependenciesDeviceAction } from "@api/device-action/os/OpenA
 export { SendCommandInAppDeviceAction } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceAction";
 export { BackupAppStorageTask } from "@api/device-action/task/BackupAppStorageTask";
 export {
+  GetApplicationsMetadataTaskError,
+  InvalidGetFirmwareMetadataResponseError,
+} from "@api/device-action/task/Errors";
+export {
   type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
@@ -128,6 +131,11 @@ export {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
+export {
+  DmkResultFactory,
+  DmkResultStatus,
+  isSuccessDmkResult,
+} from "@api/model/DmkResult";
 export { GenuineCheckDeviceAction } from "@api/secure-channel/device-action/GenuineCheck/GenuineCheckDeviceAction";
 export { InstallAppDeviceAction } from "@api/secure-channel/device-action/InstallApp/InstallAppDeviceAction";
 export { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";

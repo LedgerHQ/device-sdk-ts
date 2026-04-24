@@ -134,6 +134,24 @@ export default [
       ],
     },
   },
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx", "**/command/**"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "warn",
+        {
+          paths: [
+            {
+              name: "@ledgerhq/device-management-kit",
+              importNames: ["CommandResultFactory"],
+              message: "Use DmkResultFactory outside the command layer.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 
   {
     files: ["**/*.tsx"],

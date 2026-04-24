@@ -1,10 +1,6 @@
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
-import {
-  type CommandResult,
-  isSuccessCommandResult,
-} from "@api/command/model/CommandResult";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
@@ -14,6 +10,7 @@ import {
   type DeviceActionStateMachine,
   XStateDeviceAction,
 } from "@api/device-action/xstate-utils/XStateDeviceAction";
+import { type DmkResult, isSuccessDmkResult } from "@api/model/DmkResult";
 
 import {
   type CallTaskInAppDAError,
@@ -22,6 +19,7 @@ import {
   type CallTaskInAppDAInternalState,
   type CallTaskInAppDAOutput,
   callTaskInAppDAStateStep,
+  type CallTaskInAppTaskError,
 } from "./CallTaskInAppDeviceActionTypes";
 
 /**
@@ -32,7 +30,7 @@ import {
  * ```ts
  * input: {
  *  appName: string;
- *  task: (internalApi: InternalApi) => Promise<CommandResult<TaskResponse, TaskErrorCodes>>;
+ *  task: (internalApi: InternalApi) => Promise<DmkResult<TaskResponse, TaskError>>;
  *  requiredUserInteraction: UserInteraction;
  * }
  * ```
@@ -52,30 +50,30 @@ import {
  */
 export class CallTaskInAppDeviceAction<
   TaskResponse,
-  TaskErrorCodes,
-  UserInteraction extends UserInteractionRequired,
+  TaskError = void,
+  UserInteraction extends UserInteractionRequired = UserInteractionRequired,
 > extends XStateDeviceAction<
   CallTaskInAppDAOutput<TaskResponse>,
-  CallTaskInAppDAInput<TaskResponse, TaskErrorCodes, UserInteraction>,
-  CallTaskInAppDAError<TaskErrorCodes>,
+  CallTaskInAppDAInput<TaskResponse, TaskError, UserInteraction>,
+  CallTaskInAppDAError<TaskError>,
   CallTaskInAppDAIntermediateValue<UserInteraction>,
-  CallTaskInAppDAInternalState<TaskResponse, TaskErrorCodes>
+  CallTaskInAppDAInternalState<TaskResponse, TaskError>
 > {
   makeStateMachine(
     internalAPI: InternalApi,
   ): DeviceActionStateMachine<
     CallTaskInAppDAOutput<TaskResponse>,
-    CallTaskInAppDAInput<TaskResponse, TaskErrorCodes, UserInteraction>,
-    CallTaskInAppDAError<TaskErrorCodes>,
+    CallTaskInAppDAInput<TaskResponse, TaskError, UserInteraction>,
+    CallTaskInAppDAError<TaskError>,
     CallTaskInAppDAIntermediateValue<UserInteraction>,
-    CallTaskInAppDAInternalState<TaskResponse, TaskErrorCodes>
+    CallTaskInAppDAInternalState<TaskResponse, TaskError>
   > {
     type types = StateMachineTypes<
       CallTaskInAppDAOutput<TaskResponse>,
-      CallTaskInAppDAInput<TaskResponse, TaskErrorCodes, UserInteraction>,
-      CallTaskInAppDAError<TaskErrorCodes>,
+      CallTaskInAppDAInput<TaskResponse, TaskError, UserInteraction>,
+      CallTaskInAppDAError<TaskError>,
       CallTaskInAppDAIntermediateValue<UserInteraction>,
-      CallTaskInAppDAInternalState<TaskResponse, TaskErrorCodes>
+      CallTaskInAppDAInternalState<TaskResponse, TaskError>
     >;
 
     const { callTask } = this.extractDependencies(internalAPI);
@@ -149,7 +147,7 @@ export class CallTaskInAppDeviceAction<
               actions: assign({
                 _internalState: (_) => {
                   return _.event.output.caseOf<
-                    CallTaskInAppDAInternalState<TaskResponse, TaskErrorCodes>
+                    CallTaskInAppDAInternalState<TaskResponse, TaskError>
                   >({
                     Right: () => _.context._internalState,
                     Left: (error) => ({
@@ -194,7 +192,7 @@ export class CallTaskInAppDeviceAction<
               actions: [
                 assign({
                   _internalState: ({ event, context }) => {
-                    if (isSuccessCommandResult(event.output)) {
+                    if (isSuccessDmkResult(event.output)) {
                       return {
                         ...context._internalState,
                         taskResponse: event.output.data,
@@ -245,8 +243,10 @@ export class CallTaskInAppDeviceAction<
       callTask: (_: {
         input: (
           internalApi: InternalApi,
-        ) => Promise<CommandResult<TaskResponse, TaskErrorCodes>>;
-      }): Promise<CommandResult<TaskResponse, TaskErrorCodes>> =>
+        ) => Promise<
+          DmkResult<TaskResponse, CallTaskInAppTaskError<TaskError>>
+        >;
+      }): Promise<DmkResult<TaskResponse, CallTaskInAppTaskError<TaskError>>> =>
         _.input(internalApi),
     };
   }
