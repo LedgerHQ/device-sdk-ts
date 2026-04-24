@@ -114,6 +114,7 @@ export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListApps
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export { OpenAppWithDependenciesDeviceAction } from "@api/device-action/os/OpenAppWithDependencies/OpenAppWithDependenciesDeviceAction";
 export { SendCommandInAppDeviceAction } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceAction";
+export { BackupAppStorageTask } from "@api/device-action/task/BackupAppStorageTask";
 export {
   type DeviceActionStateMachine,
   XStateDeviceAction,
@@ -130,7 +131,12 @@ export {
 export { GenuineCheckDeviceAction } from "@api/secure-channel/device-action/GenuineCheck/GenuineCheckDeviceAction";
 export { InstallAppDeviceAction } from "@api/secure-channel/device-action/InstallApp/InstallAppDeviceAction";
 export { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
+export type { InstalledApp } from "@api/secure-channel/device-action/ListInstalledApps/types";
 export { UninstallAppDeviceAction } from "@api/secure-channel/device-action/UninstallApp/UninstallAppDeviceAction";
+export {
+  DMK_STORAGE_PREFIX_KEY,
+  type KeyValueStorage,
+} from "@api/storage/KeyValueStorage";
 export { SecureChannelError } from "@internal/secure-channel/model/Errors";
 // TODO: remove from exported
 export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
