@@ -59,6 +59,52 @@ describe("SignTransferWithMemoCommand", () => {
 
       expect(raw.slice(5)).toStrictEqual(data);
     });
+
+    it("should use P2=FEE_DISPLAY on initial APDU when fee is provided", () => {
+      const data = new Uint8Array([0x11, 0x22, 0x33]);
+      const command = new SignTransferWithMemoCommand({
+        p1: P1.INITIAL_WITH_MEMO,
+        data,
+        displayFeeMicroCcd: 0x0123456789abcdefn,
+      });
+
+      const raw = command.getApdu().getRawApdu();
+
+      expect(raw[3]).toBe(P2.FEE_DISPLAY);
+      const payload = raw.slice(5);
+      expect(payload.slice(0, data.length)).toStrictEqual(data);
+      expect(payload.slice(data.length)).toStrictEqual(
+        new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]),
+      );
+    });
+
+    it("should ignore fee on memo APDU (P2 stays NONE, no fee appended)", () => {
+      const data = new Uint8Array([0xab, 0xcd]);
+      const command = new SignTransferWithMemoCommand({
+        p1: P1.MEMO,
+        data,
+        displayFeeMicroCcd: 0xffffn,
+      });
+
+      const raw = command.getApdu().getRawApdu();
+
+      expect(raw[3]).toBe(P2.NONE);
+      expect(raw.slice(5)).toStrictEqual(data);
+    });
+
+    it("should ignore fee on amount APDU (P2 stays NONE, no fee appended)", () => {
+      const data = new Uint8Array(8).fill(0x44);
+      const command = new SignTransferWithMemoCommand({
+        p1: P1.AMOUNT,
+        data,
+        displayFeeMicroCcd: 0xffffn,
+      });
+
+      const raw = command.getApdu().getRawApdu();
+
+      expect(raw[3]).toBe(P2.NONE);
+      expect(raw.slice(5)).toStrictEqual(data);
+    });
   });
 
   describe("parseResponse", () => {

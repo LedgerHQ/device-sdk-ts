@@ -15,10 +15,12 @@ import {
 } from "@internal/app-binder/command/SignTransferCommand";
 import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { encodeDerivationPath } from "@internal/app-binder/command/utils/EncodeDerivationPath";
+import { shouldUseFeeDisplay } from "@internal/app-binder/utils/FeeDisplaySupport";
 
 type SendTransferTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  displayFeeMicroCcd?: bigint;
 };
 
 export class SendTransferTask {
@@ -38,8 +40,18 @@ export class SendTransferTask {
       },
     });
 
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, transaction, displayFeeMicroCcd } = this.args;
     const pathBytes = encodeDerivationPath(derivationPath);
+
+    // Preflight version check: only pass the fee to the last chunk if the
+    // device firmware accepts the P2=FEE_DISPLAY extension. Older firmwares
+    // reject non-zero P2 bytes, so we silently fall back to the legacy path.
+    const feeForLastChunk = (await shouldUseFeeDisplay(
+      this.api,
+      displayFeeMicroCcd,
+    ))
+      ? displayFeeMicroCcd
+      : undefined;
 
     // Prepend derivation path to the transaction data so the first chunk
     // contains the path followed by as much transaction data as fits.
@@ -59,6 +71,9 @@ export class SendTransferTask {
         new SignTransferCommand({
           chunkedData,
           isLastChunk,
+          // Only the last chunk carries the fee bytes; intermediate chunks
+          // stay on the legacy path so P2 remains MORE (0x80).
+          displayFeeMicroCcd: isLastChunk ? feeForLastChunk : undefined,
         }),
       );
 

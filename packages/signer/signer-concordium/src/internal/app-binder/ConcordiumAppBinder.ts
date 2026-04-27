@@ -77,6 +77,7 @@ export class ConcordiumAppBinder {
     derivationPath: string;
     transaction: Uint8Array;
     skipOpenApp?: boolean;
+    displayFeeMicroCcd?: bigint;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,

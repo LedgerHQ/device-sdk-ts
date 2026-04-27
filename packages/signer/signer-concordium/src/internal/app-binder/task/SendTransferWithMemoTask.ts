@@ -16,6 +16,7 @@ import {
 import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { encodeDerivationPath } from "@internal/app-binder/command/utils/EncodeDerivationPath";
 import { P1 } from "@internal/app-binder/constants";
+import { shouldUseFeeDisplay } from "@internal/app-binder/utils/FeeDisplaySupport";
 
 // Serialized transaction layout:
 // [sender:32][nonce:8][energy:8][payloadSize:4][expiry:8][type:1] = 61 bytes header
@@ -28,6 +29,7 @@ const AMOUNT_LENGTH = 8;
 type SendTransferWithMemoTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  displayFeeMicroCcd?: bigint;
 };
 
 export class SendTransferWithMemoTask {
@@ -47,8 +49,18 @@ export class SendTransferWithMemoTask {
       },
     });
 
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, transaction, displayFeeMicroCcd } = this.args;
     const pathBytes = encodeDerivationPath(derivationPath);
+
+    // Preflight version check: fee is only carried on the initial APDU and
+    // only when firmware accepts the P2=FEE_DISPLAY extension. Older
+    // firmwares reject non-zero P2, so we silently fall back to legacy.
+    const feeForInitial = (await shouldUseFeeDisplay(
+      this.api,
+      displayFeeMicroCcd,
+    ))
+      ? displayFeeMicroCcd
+      : undefined;
 
     const minLength =
       HEADER_LENGTH + RECIPIENT_LENGTH + MEMO_LENGTH_FIELD + AMOUNT_LENGTH;
@@ -122,6 +134,9 @@ export class SendTransferWithMemoTask {
       new SignTransferWithMemoCommand({
         p1: P1.INITIAL_WITH_MEMO,
         data: headerPayload,
+        // Fee bytes are only attached to the initial APDU; memo and amount
+        // steps stay on the legacy path (P2=NONE, no fee suffix).
+        displayFeeMicroCcd: feeForInitial,
       }),
     );
 

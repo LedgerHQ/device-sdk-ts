@@ -43,4 +43,20 @@ export const P2 = {
   NONE: 0x00,
   MORE: 0x80,
   LAST: 0x00,
+  // Set on the final SIGN_TRANSFER / initial SIGN_TRANSFER_WITH_MEMO APDU to
+  // request that the device display the transaction fee during signing.
+  // When set, the 8-byte big-endian µCCD fee MUST be appended to the APDU
+  // data (after the normal payload). Requires Concordium app ≥ 5.5.2.
+  FEE_DISPLAY: 0x01,
+} as const;
+
+/**
+ * Minimum Concordium app version that accepts the P2=FEE_DISPLAY APDU
+ * extension. Older firmwares reject the non-zero P2 byte, so we gate the
+ * feature behind this version check via {@link GetAppConfigCommand}.
+ */
+export const MIN_FEE_DISPLAY_VERSION = {
+  major: 5,
+  minor: 5,
+  patch: 2,
 } as const;

@@ -48,6 +48,53 @@ describe("SignTransferCommand", () => {
       // Data starts at byte 5
       expect(raw.slice(5)).toStrictEqual(data);
     });
+
+    it("should use P2=FEE_DISPLAY on last chunk when fee is provided", () => {
+      const chunk = new Uint8Array([0x01, 0x02, 0x03]);
+      const command = new SignTransferCommand({
+        chunkedData: chunk,
+        isLastChunk: true,
+        displayFeeMicroCcd: 0x0123456789abcdefn,
+      });
+
+      const raw = command.getApdu().getRawApdu();
+
+      expect(raw[3]).toBe(P2.FEE_DISPLAY);
+      // Data = chunk bytes followed by 8-byte big-endian fee
+      const payload = raw.slice(5);
+      expect(payload.slice(0, chunk.length)).toStrictEqual(chunk);
+      expect(payload.slice(chunk.length)).toStrictEqual(
+        new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]),
+      );
+    });
+
+    it("should ignore fee on non-last chunk (P2 stays MORE, no fee appended)", () => {
+      const chunk = new Uint8Array([0x01, 0x02, 0x03]);
+      const command = new SignTransferCommand({
+        chunkedData: chunk,
+        isLastChunk: false,
+        displayFeeMicroCcd: 0xffffn,
+      });
+
+      const raw = command.getApdu().getRawApdu();
+
+      expect(raw[3]).toBe(P2.MORE);
+      // No fee suffix — only the chunk bytes
+      expect(raw.slice(5)).toStrictEqual(chunk);
+    });
+
+    it("should fall back to P2=LAST when fee is undefined on last chunk", () => {
+      const chunk = new Uint8Array([0x0a]);
+      const command = new SignTransferCommand({
+        chunkedData: chunk,
+        isLastChunk: true,
+      });
+
+      const raw = command.getApdu().getRawApdu();
+
+      expect(raw[3]).toBe(P2.LAST);
+      expect(raw.slice(5)).toStrictEqual(chunk);
+    });
   });
 
   describe("parseResponse", () => {

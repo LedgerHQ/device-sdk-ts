@@ -8,12 +8,13 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
+import { GetAppConfigCommand } from "@internal/app-binder/command/GetAppConfigCommand";
 import { type SignTransferWithMemoCommand } from "@internal/app-binder/command/SignTransferWithMemoCommand";
 import {
   ConcordiumAppCommandError,
   ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
-import { P1 } from "@internal/app-binder/constants";
+import { P1, P2 } from "@internal/app-binder/constants";
 import { SendTransferWithMemoTask } from "@internal/app-binder/task/SendTransferWithMemoTask";
 
 const DERIVATION_PATH = "44'/919'/0'/0'/0'";
@@ -329,5 +330,146 @@ describe("SendTransferWithMemoTask", () => {
     if (!isSuccessCommandResult(result)) {
       expect(result.error).toBeInstanceOf(InvalidStatusWordError);
     }
+  });
+
+  describe("fee display", () => {
+    /**
+     * Intercept GetAppConfigCommand separately so assertions on
+     * `sentCommands` still see only the SignTransferWithMemo APDUs.
+     */
+    function mockVersionAndSignFlow(
+      version: string | null,
+      ...signResults: ReturnType<typeof CommandResultFactory>[]
+    ) {
+      let signIndex = 0;
+      sendCommandMock.mockImplementation((cmd: unknown) => {
+        if (cmd instanceof GetAppConfigCommand) {
+          if (version === null) {
+            return Promise.resolve(
+              CommandResultFactory({
+                error: new InvalidStatusWordError("probe failed"),
+              }),
+            );
+          }
+          return Promise.resolve(CommandResultFactory({ data: { version } }));
+        }
+        sentCommands.push(cmd as SignTransferWithMemoCommand);
+        return Promise.resolve(signResults[signIndex++]);
+      });
+    }
+
+    it("attaches fee bytes and P2=FEE_DISPLAY to the initial APDU when supported", async () => {
+      const memoSize = 10;
+      const transaction = buildTransaction(memoSize);
+      const signature = new Uint8Array(64).fill(0xab);
+      const fee = 0x0123456789abcdefn;
+
+      mockVersionAndSignFlow(
+        "5.5.2",
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: signature }),
+      );
+
+      const task = new SendTransferWithMemoTask(
+        apiMock,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction,
+          displayFeeMicroCcd: fee,
+        },
+        loggerMock,
+      );
+
+      const result = await task.run();
+
+      expect(sentCommands).toHaveLength(3);
+
+      // Step 1 (header): P2=FEE_DISPLAY, 8-byte fee appended
+      const initial = sentCommands[0]!;
+      expect(initial.getApdu().getRawApdu()[3]).toBe(P2.FEE_DISPLAY);
+      const initialData = getApduData(initial);
+      expect(initialData.slice(-8)).toStrictEqual(
+        new Uint8Array([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef]),
+      );
+      expect(initialData.slice(0, -8)).toHaveLength(
+        PATH_BYTES_LENGTH +
+          HEADER_LENGTH +
+          RECIPIENT_LENGTH +
+          MEMO_LENGTH_FIELD,
+      );
+
+      // Steps 2 & 3 (memo, amount): legacy path, no fee appended
+      expect(sentCommands[1]!.getApdu().getRawApdu()[3]).toBe(P2.NONE);
+      expect(getApduData(sentCommands[1]!)).toHaveLength(memoSize);
+      expect(sentCommands[2]!.getApdu().getRawApdu()[3]).toBe(P2.NONE);
+      expect(getApduData(sentCommands[2]!)).toHaveLength(AMOUNT_LENGTH);
+
+      expect(isSuccessCommandResult(result)).toBe(true);
+    });
+
+    it("falls back to legacy path when firmware is below 5.5.2", async () => {
+      const transaction = buildTransaction(10);
+      const signature = new Uint8Array(64).fill(0xcd);
+
+      mockVersionAndSignFlow(
+        "5.5.1",
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: signature }),
+      );
+
+      const task = new SendTransferWithMemoTask(
+        apiMock,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction,
+          displayFeeMicroCcd: 99n,
+        },
+        loggerMock,
+      );
+
+      await task.run();
+
+      expect(sentCommands).toHaveLength(3);
+      // All three APDUs use the legacy P2=NONE path with no fee bytes
+      for (const cmd of sentCommands) {
+        expect(cmd.getApdu().getRawApdu()[3]).toBe(P2.NONE);
+      }
+      // Initial data ends at memoLengthField, not with fee bytes
+      expect(getApduData(sentCommands[0]!)).toHaveLength(
+        PATH_BYTES_LENGTH +
+          HEADER_LENGTH +
+          RECIPIENT_LENGTH +
+          MEMO_LENGTH_FIELD,
+      );
+    });
+
+    it("falls back to legacy path when version probe fails", async () => {
+      const transaction = buildTransaction(10);
+      const signature = new Uint8Array(64).fill(0xee);
+
+      mockVersionAndSignFlow(
+        null,
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: signature }),
+      );
+
+      const task = new SendTransferWithMemoTask(
+        apiMock,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction,
+          displayFeeMicroCcd: 99n,
+        },
+        loggerMock,
+      );
+
+      await task.run();
+
+      expect(sentCommands).toHaveLength(3);
+      expect(sentCommands[0]!.getApdu().getRawApdu()[3]).toBe(P2.NONE);
+    });
   });
 });

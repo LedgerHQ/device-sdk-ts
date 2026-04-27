@@ -24,6 +24,7 @@ export class SignTransactionUseCase {
       derivationPath,
       transaction,
       skipOpenApp: options?.skipOpenApp,
+      displayFeeMicroCcd: options?.displayFeeMicroCcd,
     });
   }
 }

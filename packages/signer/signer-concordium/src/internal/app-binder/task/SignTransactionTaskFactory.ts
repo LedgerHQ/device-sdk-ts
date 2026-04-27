@@ -18,6 +18,7 @@ const TRANSACTION_TYPE_TRANSFER_WITH_MEMO = 22;
 type TaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  displayFeeMicroCcd?: bigint;
 };
 
 export function createSignTransactionTask(
