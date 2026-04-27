@@ -2,7 +2,9 @@
 // so we need to pass them as arguments, only types can be imported
 import { type GitHubPRDSL, type DangerDSLType } from "danger";
 import { execSync } from "child_process";
-import { writeFileSync, appendFileSync } from "fs";
+import { writeFileSync, appendFileSync, readdirSync, readFileSync } from "fs";
+import { join } from "path";
+import parseChangeset from "@changesets/parse";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -305,6 +307,51 @@ const checkChangesets = (danger: DangerDSLType): CheckResult => {
   return { passed: true };
 };
 
+const checkChangesetSinglePackage = (): CheckResult => {
+  const dir = ".changeset";
+  let files: string[];
+  try {
+    files = readdirSync(dir).filter(
+      (f) =>
+        !f.startsWith(".") &&
+        f.endsWith(".md") &&
+        f.toLowerCase() !== "readme.md",
+    );
+  } catch {
+    return { passed: true };
+  }
+
+  const offenders = files
+    .map((file) => ({
+      file: `.changeset/${file}`,
+      packages: parseChangeset(
+        readFileSync(join(dir, file), "utf-8"),
+      ).releases.map((r) => r.name),
+    }))
+    .filter(({ packages }) => packages.length > 1);
+
+  if (offenders.length === 0) return { passed: true };
+
+  const details = offenders
+    .map(
+      ({ file, packages }) =>
+        `- \`${file}\` declares ${packages.length} packages: ${packages
+          .map((p) => `\`${p}\``)
+          .join(", ")}`,
+    )
+    .join("\n");
+
+  return {
+    passed: false,
+    message: `One or more changeset files declare more than one package. Each changeset must affect only one package, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
+
+**Offending changesets**:
+${details}
+
+Please split the changeset above into one file per package.`,
+  };
+};
+
 const checkSignedCommits = (
   danger: DangerDSLType,
   fork: boolean = false
@@ -331,6 +378,7 @@ export function runChecks(
     ...(opts.includeTitle ? [checkTitle(danger, opts.fork)] : []),
     checkSignedCommits(danger, opts.fork),
     checkChangesets(danger),
+    checkChangesetSinglePackage(),
   ];
 
   const hasFailures = checkResults.some((o) => !o.passed);
@@ -373,10 +421,12 @@ function generateReport(checkResults: CheckResult[]): string {
 }
 
 type MarkdownFn = (message: string) => void;
+type FailFn = (message: string) => void;
 
 export function outputResults(
   checkResults: CheckResult[],
   markdown: MarkdownFn,
+  fail: FailFn,
 ) {
   const report = generateReport(checkResults);
 
@@ -401,8 +451,10 @@ export function outputResults(
     console.error("Failed to post danger comment:", e);
   }
 
-  // Exit with failure if any checks failed
-  if (checkResults.some((res) => !res.passed)) {
-    process.exit(1);
-  }
+  const failures = checkResults.filter((res) => !res.passed);
+  if (failures.length === 0) return;
+
+  // Use danger's `fail` so the run is marked failed without process.exit(1),
+  // which danger reports as a synthetic "node failed." entry in the PR comment.
+  fail(`Danger: ${failures.length} check(s) failed — see report above.`);
 }

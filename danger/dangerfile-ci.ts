@@ -1,4 +1,4 @@
-import { danger, markdown } from "danger";
+import { danger, markdown, fail } from "danger";
 import {
   runChecks,
   outputResults,
@@ -20,4 +20,4 @@ if (isBot) {
 
 const fork = isFork(danger.github.pr);
 const checkResults = runChecks(danger, { fork, includeTitle: true });
-outputResults(checkResults, markdown);
+outputResults(checkResults, markdown, fail);

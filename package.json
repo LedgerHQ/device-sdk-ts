@@ -61,6 +61,7 @@
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",
     "@changesets/cli": "catalog:",
+    "@changesets/parse": "catalog:",
     "@ledgerhq/ldmk-cli": "workspace:^",
     "@ledgerhq/ldmk-tool": "workspace:^",
     "@types/node": "catalog:",
