@@ -11,7 +11,7 @@ import {
   type ListAppsDARequiredInteraction,
   type ListAppsDAStateStep,
 } from "@api/device-action/os/ListApps/types";
-import { type GetApplicationsMetadataTaskError } from "@api/device-action/task/GetApplicationsMetadataTask";
+import { type GetApplicationsMetadataTaskError } from "@api/device-action/task/Errors";
 import { type GetFirmwareMetadataTaskError } from "@api/device-action/task/GetFirmwareMetadataTask";
 import {
   type Catalog,

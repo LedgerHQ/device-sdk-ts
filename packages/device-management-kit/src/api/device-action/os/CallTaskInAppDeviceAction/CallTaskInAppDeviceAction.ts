@@ -52,8 +52,8 @@ import {
  */
 export class CallTaskInAppDeviceAction<
   TaskResponse,
-  TaskError extends DmkError = DmkError,
-  UserInteraction extends UserInteractionRequired = UserInteractionRequired,
+  TaskError extends DmkError,
+  UserInteraction extends UserInteractionRequired,
 > extends XStateDeviceAction<
   CallTaskInAppDAOutput<TaskResponse>,
   CallTaskInAppDAInput<TaskResponse, TaskError, UserInteraction>,

@@ -14,8 +14,6 @@ import { type Application } from "@internal/manager-api/model/Application";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
-export { GetApplicationsMetadataTaskError } from "@api/device-action/task/Errors";
-
 export type InstalledApp = {
   hash: string;
   hashCode: string;

@@ -19,8 +19,8 @@ export type CallTaskInAppDAOutput<TaskResponse> = TaskResponse;
 
 export type CallTaskInAppDAInput<
   TaskResponse,
-  TaskError extends DmkError = DmkError,
-  UserInteraction = UserInteractionRequired,
+  TaskError extends DmkError,
+  UserInteraction,
 > = {
   readonly task: (
     internalApi: InternalApi,
