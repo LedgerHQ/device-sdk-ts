@@ -70,6 +70,16 @@ export type {
   GetCustomLockScreenInfoDARequiredInteraction,
   GetCustomLockScreenInfoDAState,
 } from "./api/device-action/GetCustomLockScreenInfo/types";
+export { BackupDeviceAction } from "./api/device-action/OsUpdate/Backup/BackupDeviceAction";
+export type {
+  BackupDAError,
+  BackupDAInput,
+  BackupDAIntermediateValue,
+  BackupDAOutput,
+  BackupDARequiredInteraction,
+  BackupDAState,
+  BackupSteps,
+} from "./api/device-action/OsUpdate/Backup/types";
 export { RemoveCustomLockScreenDeviceAction } from "./api/device-action/RemoveCustomLockScreen/RemoveCustomLockScreenDeviceAction";
 export type {
   RemoveCustomLockScreenDAError,

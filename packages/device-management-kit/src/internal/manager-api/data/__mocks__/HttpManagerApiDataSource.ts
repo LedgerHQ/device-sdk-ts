@@ -1,6 +1,6 @@
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 
-export class AxiosManagerApiDataSource implements ManagerApiDataSource {
+export class HttpManagerApiDataSource implements ManagerApiDataSource {
   getAppList = vi.fn();
   getDeviceVersion = vi.fn();
   getFirmwareVersion = vi.fn();

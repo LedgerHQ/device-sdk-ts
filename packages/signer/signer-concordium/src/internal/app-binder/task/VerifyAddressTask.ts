@@ -1,4 +1,5 @@
 import {
+  AccountOwnershipError,
   type AccountOwnershipNetwork,
   type ClearSignContextSuccess,
   ClearSignContextType,
@@ -20,6 +21,7 @@ import { type VerifyAddressErrorCodes } from "@api/app-binder/VerifyAddressDevic
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { GetPublicKeyCommand } from "@internal/app-binder/command/GetPublicKeyCommand";
 import { SetTrustedNameCommand } from "@internal/app-binder/command/SetTrustedNameCommand";
+import { AddressVerificationFailedError } from "@internal/app-binder/command/utils/AddressVerificationFailedError";
 import { TrustedMetadataServiceError } from "@internal/app-binder/command/utils/TrustedMetadataServiceError";
 import { VerifyAddressCommand } from "@internal/app-binder/command/VerifyAddressCommand";
 
@@ -113,8 +115,17 @@ export class VerifyAddressTask {
         (c) => c.type === ClearSignContextType.ERROR,
       );
       if (errorCtx && "error" in errorCtx) {
+        const err = errorCtx.error;
+        if (
+          err instanceof AccountOwnershipError &&
+          err.kind === "verification_failed"
+        ) {
+          return CommandResultFactory({
+            error: new AddressVerificationFailedError(err.message),
+          });
+        }
         return CommandResultFactory({
-          error: new TrustedMetadataServiceError(errorCtx.error.message),
+          error: new TrustedMetadataServiceError(err.message),
         });
       }
       return CommandResultFactory({

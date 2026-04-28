@@ -6,6 +6,7 @@ import { type Container } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
@@ -19,6 +20,7 @@ import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfi
 import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
+import { type GetTrustedInputUseCase } from "@internal/use-cases/transaction/GetTrustedInputUseCase";
 import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
 
 type DefaultSignerZcashConstructorArgs = {
@@ -65,5 +67,14 @@ export class DefaultSignerZcash implements SignerZcash {
     return this._container
       .get<SignMessageUseCase>(messageTypes.SignMessageUseCase)
       .execute(derivationPath, message);
+  }
+
+  getTrustedInput(
+    transaction: Uint8Array,
+    options?: { indexLookup?: number; skipOpenApp?: boolean },
+  ): GetTrustedInputDAReturnType {
+    return this._container
+      .get<GetTrustedInputUseCase>(transactionTypes.GetTrustedInputUseCase)
+      .execute(transaction, options);
   }
 }

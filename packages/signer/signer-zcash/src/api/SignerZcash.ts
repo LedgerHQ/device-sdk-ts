@@ -1,5 +1,6 @@
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
@@ -23,4 +24,9 @@ export interface SignerZcash {
     derivationPath: string,
     message: string | Uint8Array,
   ) => SignMessageDAReturnType;
+
+  getTrustedInput: (
+    transaction: Uint8Array,
+    options?: { indexLookup?: number; skipOpenApp?: boolean },
+  ) => GetTrustedInputDAReturnType;
 }

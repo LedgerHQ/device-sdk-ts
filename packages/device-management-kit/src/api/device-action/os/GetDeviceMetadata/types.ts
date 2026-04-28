@@ -1,4 +1,3 @@
-import { type CommandErrorResult } from "@api/command/model/CommandResult";
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type GetDeviceStatusDAStateStep } from "@api/device-action/os/GetDeviceStatus/types";
 import {
@@ -12,6 +11,8 @@ import {
   type ListAppsDARequiredInteraction,
   type ListAppsDAStateStep,
 } from "@api/device-action/os/ListApps/types";
+import { type GetApplicationsMetadataTaskError } from "@api/device-action/task/Errors";
+import { type GetFirmwareMetadataTaskError } from "@api/device-action/task/GetFirmwareMetadataTask";
 import {
   type Catalog,
   type CustomImage,
@@ -59,7 +60,8 @@ export type GetDeviceMetadataDAError =
   | ListAppsDAError
   | ListInstalledAppsDAError
   | SecureChannelDAErrors
-  | CommandErrorResult["error"];
+  | GetApplicationsMetadataTaskError
+  | GetFirmwareMetadataTaskError;
 
 export type GetDeviceMetadataDARequiredInteraction =
   | GoToDashboardDARequiredInteraction

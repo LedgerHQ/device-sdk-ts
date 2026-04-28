@@ -1,5 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios, { AxiosError } from "axios";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -28,6 +30,7 @@ type CalldataDto = {
 @injectable()
 export class HttpCalAdapter implements CalAdapter {
   private readonly logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.SignerConfig)
@@ -36,6 +39,11 @@ export class HttpCalAdapter implements CalAdapter {
     private readonly loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.logger = this.loggerFactory("cal-service");
+    this.http = new DmkNetworkClient({
+      headers: {
+        "X-Ledger-Client-Origin": this.signerConfig.originToken,
+      },
+    });
   }
 
   async fetchSelectors(
@@ -47,29 +55,24 @@ export class HttpCalAdapter implements CalAdapter {
     );
 
     try {
-      const response = await axios.request<CalldataDto[]>({
-        method: "GET",
-        url: `${CAL_BASE_URL}/dapps`,
+      const data = (await this.http.get(`${CAL_BASE_URL}/dapps`, {
         params: {
           output: "descriptors_calldata",
           chain_id: chainId,
           contracts: contractAddress,
           ref: "branch:next",
         },
-        headers: {
-          "X-Ledger-Client-Origin": this.signerConfig.originToken,
-        },
-      });
+      })) as CalldataDto[];
 
       const selectors = this.extractSelectorsFromResponse(
-        response.data,
+        data,
         contractAddress,
       );
 
       return selectors;
     } catch (error) {
-      if (error instanceof AxiosError) {
-        const errorMessage = `${error.status || "Unknown status"}: Failed to fetch selectors from ${CAL_BASE_URL}/dapps for contract ${contractAddress} on chain ${chainId}`;
+      if (error instanceof Error) {
+        const errorMessage = `Failed to fetch selectors from ${CAL_BASE_URL}/dapps for contract ${contractAddress} on chain ${chainId}: ${error.message}`;
         this.logger.error(errorMessage, {
           data: { error: error.message },
         });

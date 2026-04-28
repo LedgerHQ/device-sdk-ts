@@ -1,6 +1,5 @@
 import {
-  type CommandResult,
-  CommandResultFactory,
+  type CommandErrorResult,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 import {
@@ -13,9 +12,10 @@ import {
 } from "@api/command/os/GetAppStorageInfoCommand";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { type DmkResult, DmkResultFactory } from "@api/model/DmkResult";
 import { bufferToHexaString, type HexaString } from "@api/utils/HexaString";
 
-type BackupAppStorageTaskArgs = {
+export type BackupAppStorageTaskArgs = {
   appName: string;
 };
 
@@ -27,6 +27,10 @@ export type BackupAppStorageTaskErrorCodes =
   | GetAppStorageInfoCommandErrorCodes
   | BackupStorageCommandErrorCodes;
 
+export type BackupAppStorageTaskError =
+  | CommandErrorResult<GetAppStorageInfoCommandErrorCodes>["error"]
+  | CommandErrorResult<BackupStorageCommandErrorCodes>["error"];
+
 export class BackupAppStorageTask {
   constructor(
     private readonly args: BackupAppStorageTaskArgs,
@@ -35,7 +39,7 @@ export class BackupAppStorageTask {
   ) {}
 
   public async run(): Promise<
-    CommandResult<BackupAppStorageTaskResponse, BackupAppStorageTaskErrorCodes>
+    DmkResult<BackupAppStorageTaskResponse, BackupAppStorageTaskError>
   > {
     this.logger.debug("[run] Starting BackupAppStorageTask", {
       data: {
@@ -55,7 +59,9 @@ export class BackupAppStorageTask {
       this.logger.debug("[run] Failed to get app storage info", {
         data: { error: getAppStorageInfo.error },
       });
-      return getAppStorageInfo;
+      return DmkResultFactory({
+        error: getAppStorageInfo.error,
+      });
     }
 
     const { storageSize } = getAppStorageInfo.data;
@@ -70,7 +76,9 @@ export class BackupAppStorageTask {
         this.logger.debug("[run] Failed to backup app storage", {
           data: { error: backupStorage.error },
         });
-        return backupStorage;
+        return DmkResultFactory({
+          error: backupStorage.error,
+        });
       }
 
       const { chunkData, chunkSize } = backupStorage.data;
@@ -88,7 +96,7 @@ export class BackupAppStorageTask {
       },
     });
 
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: {
         appStorageData,
       },

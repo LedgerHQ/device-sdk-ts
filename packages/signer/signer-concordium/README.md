@@ -250,6 +250,13 @@ type Signature = Uint8Array; // 64-byte Ed25519 signature
 
 Securely verify a Concordium account address on the Ledger device using the trusted backend pattern. The signer fetches a signed account ownership descriptor from the trusted metadata service, loads it onto the device via the PKI infrastructure, then triggers address verification. The device validates the descriptor's signature chain, derives the public key from the given path, and displays the address for user confirmation only if the key matches.
 
+The flow can fail in two distinct ways at the metadata-service boundary. Both are surfaced via `DeviceActionStatus.Error` and must be discriminated by the stable `errorCode` string on the emitted error:
+
+- **`errorCode: "address_verification_failed"`** — the trusted metadata service was reached and actively refused the pubkey → address mapping (HTTP 4xx, typically 422). The backend's `message` is forwarded verbatim in `error.message`. Treat as a terminal, non-retryable verification failure.
+- **`errorCode: "trusted_metadata_service_error"`** — the trusted metadata service could not answer (network failure, HTTP 5xx, malformed response). Treat as transient; a retry or a cached-address fallback may be appropriate.
+
+Device-originated errors (`"6985"` user rejected, `"5515"` locked device, `"6b0c"` trusted name mismatch) are surfaced the same way.
+
 ```typescript
 const { observable, cancel } = signerConcordium.verifyAddress(
   derivationPath,

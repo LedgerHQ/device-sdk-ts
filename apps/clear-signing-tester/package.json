@@ -35,7 +35,7 @@
     "test:solana:program:all": "pnpm cli:solana program-all",
     "test:erc7730": "./scripts/test-erc7730-calldata.sh",
     "test:erc7730:typed-data": "./scripts/test-erc7730-typed-data.sh",
-    "test:gating-screen": "pnpm cli raw-file ./ressources/gating/raw-gating-screen.json --blind-signing-enabled --skip-origin-token"
+    "test:gating": "./scripts/test-gating.sh"
   },
   "dependencies": {
     "@ledgerhq/cal-interceptor": "workspace:^",
@@ -46,7 +46,6 @@
     "@ledgerhq/solana-tools": "workspace:^",
     "@ledgerhq/device-transport-kit-speculos": "workspace:^",
     "@ledgerhq/speculos-device-controller": "workspace:^",
-    "axios": "catalog:",
     "commander": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",

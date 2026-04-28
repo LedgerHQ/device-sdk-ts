@@ -1,11 +1,10 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import { GetTokenInfosParams, TokenDataSource } from "./TokenDataSource";
 import { TokenDto } from "./TokenDto";
@@ -15,26 +14,24 @@ export class HttpTokenDataSource implements TokenDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
+
   public async getTokenInfosPayload({
     chainId,
     address,
   }: GetTokenInfosParams): Promise<Either<Error, string>> {
     try {
-      const response = await axios.request<TokenDto[]>({
-        method: "GET",
-        url: `${this.config.cal.url}/tokens`,
+      const data = (await this.http.get(`${this.config.cal.url}/tokens`, {
         params: {
           contract_address: address,
           chain_id: chainId,
           output: "descriptor",
           ref: `branch:${this.config.cal.branch}`,
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        },
-      });
-      const tokenInfos = response.data?.[0];
+      })) as TokenDto[];
+      const tokenInfos = data?.[0];
 
       if (
         !tokenInfos ||

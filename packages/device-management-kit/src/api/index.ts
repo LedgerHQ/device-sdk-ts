@@ -8,7 +8,6 @@ export { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 export { ByteArrayParser } from "@api/apdu/utils/ByteArrayParser";
 export { type Command } from "@api/command/Command";
 export {
-  InvalidGetFirmwareMetadataResponseError,
   InvalidResponseFormatError,
   InvalidStatusWordError,
 } from "@api/command/Errors";
@@ -114,6 +113,11 @@ export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListApps
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export { OpenAppWithDependenciesDeviceAction } from "@api/device-action/os/OpenAppWithDependencies/OpenAppWithDependenciesDeviceAction";
 export { SendCommandInAppDeviceAction } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceAction";
+export { BackupAppStorageTask } from "@api/device-action/task/BackupAppStorageTask";
+export {
+  GetApplicationsMetadataTaskError,
+  InvalidGetFirmwareMetadataResponseError,
+} from "@api/device-action/task/Errors";
 export {
   type DeviceActionStateMachine,
   XStateDeviceAction,
@@ -127,10 +131,20 @@ export {
   type DeviceSessionState,
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
+export {
+  DmkResultFactory,
+  DmkResultStatus,
+  isSuccessDmkResult,
+} from "@api/model/DmkResult";
 export { GenuineCheckDeviceAction } from "@api/secure-channel/device-action/GenuineCheck/GenuineCheckDeviceAction";
 export { InstallAppDeviceAction } from "@api/secure-channel/device-action/InstallApp/InstallAppDeviceAction";
 export { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
+export type { InstalledApp } from "@api/secure-channel/device-action/ListInstalledApps/types";
 export { UninstallAppDeviceAction } from "@api/secure-channel/device-action/UninstallApp/UninstallAppDeviceAction";
+export {
+  DMK_STORAGE_PREFIX_KEY,
+  type KeyValueStorage,
+} from "@api/storage/KeyValueStorage";
 export { SecureChannelError } from "@internal/secure-channel/model/Errors";
 // TODO: remove from exported
 export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
@@ -148,6 +162,16 @@ export { ConsoleLogger } from "@api/logger-subscriber/service/ConsoleLogger";
 export { DefaultLogTagFormatter } from "@api/logger-subscriber/service/DefaultLogTagFormatter";
 export { type LogTagFormatter } from "@api/logger-subscriber/service/LogTagFormatter";
 export { WebLogsExporterLogger } from "@api/logger-subscriber/service/WebLogsExporterLogger";
+export {
+  DmkNetworkClient,
+  type DmkNetworkClientOptions,
+  type DmkNetworkResponse,
+  type DmkQueryParams,
+  type DmkQueryParamValue,
+  type DmkRequestConfig,
+  type DmkResponseType,
+} from "@api/network/DmkNetworkClient";
+export { DmkNetworkClientError } from "@api/network/DmkNetworkClientError";
 export { ConnectedDevice } from "@api/transport/model/ConnectedDevice";
 export {
   DeviceConnectionStateMachine,

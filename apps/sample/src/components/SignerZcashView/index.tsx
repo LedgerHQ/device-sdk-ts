@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
@@ -6,6 +7,9 @@ import {
   type GetAppConfigDAError,
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
+  type GetTrustedInputDAError,
+  type GetTrustedInputDAIntermediateValue,
+  type GetTrustedInputDAOutput,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
@@ -88,19 +92,10 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          // Convert hex string to Uint8Array
-          const txBytes = transaction.startsWith("0x")
-            ? new Uint8Array(
-                transaction
-                  .slice(2)
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              )
-            : new Uint8Array(
-                transaction
-                  .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
-              );
+          const txBytes = hexaStringToBuffer(transaction);
+          if (!txBytes) {
+            throw new Error("Invalid transaction hex string");
+          }
           return signer.signTransaction(derivationPath, txBytes, {
             skipOpenApp,
           });
@@ -120,6 +115,46 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >,
+      {
+        title: "Get Trusted Input",
+        description: "Call GET_TRUSTED_INPUT command on the device",
+        executeDeviceAction: ({
+          transaction,
+          useIndexLookup,
+          indexLookup,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          const txBytes = hexaStringToBuffer(transaction);
+          if (!txBytes) {
+            throw new Error("Invalid transaction hex string");
+          }
+
+          return signer.getTrustedInput(txBytes, {
+            indexLookup: useIndexLookup ? indexLookup : undefined,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          transaction: "",
+          useIndexLookup: true,
+          indexLookup: 0,
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetTrustedInputDAOutput,
+        {
+          transaction: string;
+          useIndexLookup: boolean;
+          indexLookup: number;
+          skipOpenApp?: boolean;
+        },
+        GetTrustedInputDAError,
+        GetTrustedInputDAIntermediateValue
       >,
       {
         title: "Sign Message",

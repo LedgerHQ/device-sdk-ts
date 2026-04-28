@@ -5,7 +5,11 @@ import {
   BackupAppStorageTask,
   type BackupAppStorageTaskResponse,
 } from "@api/device-action/task/BackupAppStorageTask";
-import { CommandResultFactory, isSuccessCommandResult } from "@api/index";
+import {
+  CommandResultFactory,
+  DmkResultFactory,
+  isSuccessDmkResult,
+} from "@api/index";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 
 describe("BackupAppStorageTask", () => {
@@ -67,7 +71,7 @@ describe("BackupAppStorageTask", () => {
       const result = await task.run();
 
       // ASSERT
-      expect(isSuccessCommandResult(result)).toBe(true);
+      expect(isSuccessDmkResult(result)).toBe(true);
       expect(
         (result as { data: BackupAppStorageTaskResponse }).data.appStorageData,
       ).toBe("0x01234567890a0b0c0d0e0f10111213");
@@ -98,7 +102,14 @@ describe("BackupAppStorageTask", () => {
       const result = await task.run();
 
       // ASSERT
-      expect(result.status).toBe("ERROR");
+      expect(result).toStrictEqual(
+        DmkResultFactory({
+          error: new GetAppStorageInfoCommandError({
+            message: "Application not found.",
+            errorCode: "5123",
+          }),
+        }),
+      );
     });
 
     it("should return error when backing up app storage data fails", async () => {
@@ -128,7 +139,7 @@ describe("BackupAppStorageTask", () => {
       const result = await task.run();
 
       // ASSERT
-      expect(isSuccessCommandResult(result)).toBe(false);
+      expect(isSuccessDmkResult(result)).toBe(false);
       expect(
         (result as { error: BackupStorageCommandError }).error,
       ).toBeInstanceOf(BackupStorageCommandError);

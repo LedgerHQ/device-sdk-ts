@@ -10,7 +10,7 @@ import {
   ETH_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
 import { type DmkConfig } from "@api/DmkConfig";
-import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
+import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { HttpFetchApiError } from "@internal/manager-api/model/Errors";
 import {
   type FinalFirmware,
@@ -20,14 +20,14 @@ import {
 import { DefaultManagerApiService } from "./DefaultManagerApiService";
 import { type ManagerApiService } from "./ManagerApiService";
 
-vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
-let dataSource: Mocked<AxiosManagerApiDataSource>;
+vi.mock("@internal/manager-api/data/HttpManagerApiDataSource");
+let dataSource: Mocked<HttpManagerApiDataSource>;
 let service: ManagerApiService;
 describe("ManagerApiService", () => {
   beforeEach(() => {
-    dataSource = new AxiosManagerApiDataSource(
+    dataSource = new HttpManagerApiDataSource(
       {} as DmkConfig,
-    ) as Mocked<AxiosManagerApiDataSource>;
+    ) as Mocked<HttpManagerApiDataSource>;
     service = new DefaultManagerApiService(dataSource);
   });
 

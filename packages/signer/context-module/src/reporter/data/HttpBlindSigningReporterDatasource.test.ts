@@ -1,4 +1,4 @@
-import axios from "axios";
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
@@ -6,17 +6,11 @@ import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningRepor
 import { HttpBlindSigningReporterDatasource } from "@/reporter/data/HttpBlindSigningReporterDatasource";
 import {
   BlindSigningMethod,
+  BlindSigningPlatform,
   BlindSignReason,
   ClearSigningType,
 } from "@/reporter/model/BlindSigningEvent";
 import { BlindSigningModelId } from "@/reporter/model/BlindSigningModelId";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpBlindSigningReporterDatasource", () => {
   const config = {
@@ -43,17 +37,24 @@ describe("HttpBlindSigningReporterDatasource", () => {
     },
   };
 
+  let httpMock: { post: ReturnType<typeof vi.fn> };
+  let dataSource: HttpBlindSigningReporterDatasource;
+
   beforeEach(() => {
     vi.resetAllMocks();
+    httpMock = { post: vi.fn() };
+    dataSource = new HttpBlindSigningReporterDatasource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
   describe("report", () => {
     it("should return Right(undefined) on success", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      httpMock.post.mockResolvedValueOnce(undefined);
 
       // WHEN
-      const dataSource = new HttpBlindSigningReporterDatasource(config);
       const result = await dataSource.report(params);
 
       // THEN
@@ -62,12 +63,9 @@ describe("HttpBlindSigningReporterDatasource", () => {
 
     it("should return Left(Error) when the request fails", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockRejectedValueOnce(
-        new Error("network error"),
-      );
+      httpMock.post.mockRejectedValueOnce(new Error("network error"));
 
       // WHEN
-      const dataSource = new HttpBlindSigningReporterDatasource(config);
       const result = await dataSource.report(params);
 
       // THEN
@@ -80,55 +78,42 @@ describe("HttpBlindSigningReporterDatasource", () => {
       );
     });
 
-    it("should call axios with the correct URL and method", async () => {
+    it("should call http.post with the correct URL, body and options", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      httpMock.post.mockResolvedValueOnce(undefined);
 
       // WHEN
-      const dataSource = new HttpBlindSigningReporterDatasource(config);
       await dataSource.report(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "POST",
-          url: `${config.reporter!.url}/blind-signing-events`,
-        }),
+      expect(httpMock.post).toHaveBeenCalledWith(
+        `${config.reporter!.url}/blind-signing-events`,
+        { ...params, source: config.appSource },
+        { responseType: "void" },
       );
     });
 
-    it("should call axios with the correct headers", async () => {
+    it("should forward optional DTO fields when provided", async () => {
       // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      httpMock.post.mockResolvedValueOnce(undefined);
+      const paramsWithOptionalFields: BlindSigningReportParams = {
+        ...params,
+        platform: BlindSigningPlatform.DESKTOP,
+        appVersion: "2.80.0",
+        platformOS: "macOS",
+        platformVersion: "14.5",
+        liveAppContext: "swap",
+        sessionId: "session-123",
+      };
 
       // WHEN
-      const dataSource = new HttpBlindSigningReporterDatasource(config);
-      await dataSource.report(params);
+      await dataSource.report(paramsWithOptionalFields);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-          },
-        }),
-      );
-    });
-
-    it("should call axios with the event payload and injected source as data", async () => {
-      // GIVEN
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
-
-      // WHEN
-      const dataSource = new HttpBlindSigningReporterDatasource(config);
-      await dataSource.report(params);
-
-      // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: { ...params, source: config.appSource },
-        }),
+      expect(httpMock.post).toHaveBeenCalledWith(
+        `${config.reporter!.url}/blind-signing-events`,
+        { ...paramsWithOptionalFields, source: config.appSource },
+        { responseType: "void" },
       );
     });
   });

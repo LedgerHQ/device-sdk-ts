@@ -7,7 +7,7 @@ import { DeviceSessionNotFound } from "@internal/device-session/model/Errors";
 import { DefaultDeviceSessionService } from "@internal/device-session/service/DefaultDeviceSessionService";
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
+import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
 import { DefaultSecureChannelDataSource } from "@internal/secure-channel/data/DefaultSecureChannelDataSource";
@@ -34,7 +34,7 @@ describe("DisableDeviceSessionRefresherUseCase", () => {
     );
     sessionService = new DefaultDeviceSessionService(() => logger);
     managerApi = new DefaultManagerApiService(
-      new AxiosManagerApiDataSource({} as DmkConfig),
+      new HttpManagerApiDataSource({} as DmkConfig),
     );
     secureChannel = new DefaultSecureChannelService(
       new DefaultSecureChannelDataSource({} as DmkConfig),

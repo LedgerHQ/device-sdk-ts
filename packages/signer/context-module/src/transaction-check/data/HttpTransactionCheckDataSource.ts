@@ -1,14 +1,10 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import { TransactionCheckDto } from "./dto/TransactionCheckDto";
 import {
@@ -21,6 +17,8 @@ export class HttpTransactionCheckDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   public async getTransactionCheck({
@@ -38,16 +36,10 @@ export class HttpTransactionCheckDataSource {
     };
 
     try {
-      const response = await axios.request<TransactionCheckDto>({
-        method: "POST",
-        url: `${this.config.web3checks.url}/ethereum/scan/tx`,
-        data: requestDto,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
-      transactionCheckDto = response.data;
+      transactionCheckDto = (await this.http.post(
+        `${this.config.web3checks.url}/ethereum/scan/tx`,
+        requestDto,
+      )) as TransactionCheckDto;
     } catch (_error) {
       return Left(
         new Error(

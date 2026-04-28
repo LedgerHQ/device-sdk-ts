@@ -2,7 +2,9 @@
 // so we need to pass them as arguments, only types can be imported
 import { type GitHubPRDSL, type DangerDSLType } from "danger";
 import { execSync } from "child_process";
-import { writeFileSync, appendFileSync } from "fs";
+import { writeFileSync, appendFileSync, readdirSync, readFileSync } from "fs";
+import { join } from "path";
+import parseChangeset from "@changesets/parse";
 
 // ── Types ──────────────────────────────────────────────────────────
 
@@ -53,7 +55,7 @@ const Branch = (danger: DangerDSLType, isFork: boolean = false) => ({
     ? new RegExp(`^(${BRANCH_PREFIX.join("|")})\/.+`, "i")
     : new RegExp(
         `^(release|chore\/backmerge(-.+){0,}|(${BRANCH_PREFIX.join("|")})\/((dsdk|live)-[0-9]+|no-issue|NOISSUE|issue-[0-9]+)-.+)`,
-        "i"
+        "i",
       ),
 
   getBranch: () => {
@@ -136,7 +138,7 @@ Special case for commit messages coming from a pull request merge:
 
     const currentBranch = Branch(danger, fork).getBranch();
     return execSync(
-      `git log origin/develop..${currentBranch} --pretty=format:%s`
+      `git log origin/develop..${currentBranch} --pretty=format:%s`,
     )
       .toString()
       .split("\n");
@@ -225,7 +227,7 @@ See [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CON
     // %s returns the commit subject
     const currentBranch = Branch(danger, fork).getBranch();
     const output = execSync(
-      `git log origin/develop..${currentBranch} --pretty=format:"%G?|%s"`
+      `git log origin/develop..${currentBranch} --pretty=format:"%G?|%s"`,
     )
       .toString()
       .trim();
@@ -247,7 +249,7 @@ See [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CON
 
 const checkBranches = (
   danger: DangerDSLType,
-  fork: boolean = false
+  fork: boolean = false,
 ): CheckResult => {
   const config = Branch(danger, fork);
   const currentBranch = config.getBranch();
@@ -260,13 +262,13 @@ const checkBranches = (
 
 const checkCommits = (
   danger: DangerDSLType,
-  fork: boolean = false
+  fork: boolean = false,
 ): CheckResult => {
   const config = Commits(danger, fork);
   const branchCommits = config.getCommits();
 
   const wrongCommits = branchCommits.filter(
-    (commit) => !config.regex.test(commit)
+    (commit) => !config.regex.test(commit),
   );
 
   if (wrongCommits.length > 0) {
@@ -278,7 +280,7 @@ const checkCommits = (
 
 const checkTitle = (
   danger: DangerDSLType,
-  fork: boolean = false
+  fork: boolean = false,
 ): CheckResult => {
   const config = Title(danger, fork);
   if (!config.regex.test(danger.github.pr.title)) {
@@ -305,9 +307,54 @@ const checkChangesets = (danger: DangerDSLType): CheckResult => {
   return { passed: true };
 };
 
+const checkChangesetSinglePackage = (): CheckResult => {
+  const dir = ".changeset";
+  let files: string[];
+  try {
+    files = readdirSync(dir).filter(
+      (f) =>
+        !f.startsWith(".") &&
+        f.endsWith(".md") &&
+        f.toLowerCase() !== "readme.md",
+    );
+  } catch {
+    return { passed: true };
+  }
+
+  const offenders = files
+    .map((file) => ({
+      file: `.changeset/${file}`,
+      packages: parseChangeset(
+        readFileSync(join(dir, file), "utf-8"),
+      ).releases.map((r) => r.name),
+    }))
+    .filter(({ packages }) => packages.length > 1);
+
+  if (offenders.length === 0) return { passed: true };
+
+  const details = offenders
+    .map(
+      ({ file, packages }) =>
+        `- \`${file}\` declares ${packages.length} packages: ${packages
+          .map((p) => `\`${p}\``)
+          .join(", ")}`,
+    )
+    .join("\n");
+
+  return {
+    passed: false,
+    message: `One or more changeset files declare more than one package. Each changeset must affect only one package, see [CONTRIBUTING.md](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/CONTRIBUTING.md).
+
+**Offending changesets**:
+${details}
+
+Please split the changeset above into one file per package.`,
+  };
+};
+
 const checkSignedCommits = (
   danger: DangerDSLType,
-  fork: boolean = false
+  fork: boolean = false,
 ): CheckResult => {
   const config = SignedCommits(danger, fork);
   const unsignedCommits = config.getUnsignedCommits();
@@ -323,7 +370,7 @@ const checkSignedCommits = (
 
 export function runChecks(
   danger: DangerDSLType,
-  opts: RunChecksOptions
+  opts: RunChecksOptions,
 ): CheckResult[] {
   const checkResults: CheckResult[] = [
     checkBranches(danger, opts.fork),
@@ -331,6 +378,7 @@ export function runChecks(
     ...(opts.includeTitle ? [checkTitle(danger, opts.fork)] : []),
     checkSignedCommits(danger, opts.fork),
     checkChangesets(danger),
+    checkChangesetSinglePackage(),
   ];
 
   const hasFailures = checkResults.some((o) => !o.passed);
@@ -361,7 +409,7 @@ function generateReport(checkResults: CheckResult[]): string {
     const rows = messages
       .map(
         (o) =>
-          `<tr><td>${o.icon || "✅"}</td><td>\n\n${o.message}\n\n</td></tr>`
+          `<tr><td>${o.icon || "✅"}</td><td>\n\n${o.message}\n\n</td></tr>`,
       )
       .join("\n");
     sections.push(`### Messages\n\n<table>\n${rows}\n</table>`);

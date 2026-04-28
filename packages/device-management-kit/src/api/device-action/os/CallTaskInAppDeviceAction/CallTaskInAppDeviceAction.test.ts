@@ -16,6 +16,7 @@ import { UserInteractionRequired } from "@api/device-action/model/UserInteractio
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { openAppDAStateStep } from "@api/device-action/os/OpenAppDeviceAction/types";
+import { DmkResultFactory } from "@api/model/DmkResult";
 import { type Command } from "@api/types";
 import { UnknownDeviceExchangeError } from "@root/src";
 
@@ -174,7 +175,7 @@ describe("CallTaskInAppDeviceAction", () => {
         setupOpenAppDAMock();
 
         callMyTask.mockResolvedValue(
-          CommandResultFactory({
+          DmkResultFactory({
             error: new UnknownDeviceExchangeError("Mocked error"),
           }),
         );
@@ -239,7 +240,7 @@ describe("CallTaskInAppDeviceAction", () => {
         setupOpenAppDAMock();
 
         callMyTask.mockResolvedValue(
-          CommandResultFactory({ data: mockedCommandResponse }),
+          DmkResultFactory({ data: mockedCommandResponse }),
         );
 
         const deviceAction = new CallTaskInAppDeviceAction({
@@ -300,7 +301,7 @@ describe("CallTaskInAppDeviceAction", () => {
         setupOpenAppDAMock();
 
         callMyTask.mockResolvedValue(
-          CommandResultFactory({ data: mockedCommandResponse }),
+          DmkResultFactory({ data: mockedCommandResponse }),
         );
 
         const deviceAction = new CallTaskInAppDeviceAction({
@@ -374,7 +375,7 @@ class TestCommand implements Command<MyCommandResponse, MyCommandParams> {
 
 type MyCommandCallTaskDAState = DeviceActionState<
   CallTaskInAppDAOutput<MyCommandResponse>,
-  CallTaskInAppDAError<UnknownDAError>,
+  CallTaskInAppDAError<UnknownDAError | UnknownDeviceExchangeError>,
   CallTaskInAppDAIntermediateValue<
     UserInteractionRequired.None | UserInteractionRequired.VerifyAddress
   >

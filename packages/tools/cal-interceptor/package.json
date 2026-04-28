@@ -34,9 +34,7 @@
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "axios": "catalog:"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@ledgerhq/eslint-config-dsdk": "workspace:*",
     "@ledgerhq/ldmk-tool": "workspace:*",

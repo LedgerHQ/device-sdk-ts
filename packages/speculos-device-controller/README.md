@@ -40,7 +40,7 @@ Under the hood, percentages are clamped to [0, 100] and converted to pixels usin
 
 ```ts
 const deviceClient = deviceControllerClientFactory("http://localhost:4000", {
-  timeoutMs: 2000, // optional axios timeout
+  timeoutMs: 2000, // optional fetch timeout
   clientHeader: "ldmk-transport-speculos", // optional header
   screens: {
     // override by default keys
@@ -91,7 +91,7 @@ type DeviceControllerClient = {
 type DeviceControllerClientFactory = (
   baseURL: string,
   opts?: {
-    timeoutMs?: number; // axios timeout (ms)
+    timeoutMs?: number; // fetch timeout (ms)
     clientHeader?: string; // "X-Ledger-Client-Version" header
     screens?: DeviceScreens<string>;
   },

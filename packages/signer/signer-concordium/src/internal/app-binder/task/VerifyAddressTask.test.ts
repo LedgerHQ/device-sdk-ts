@@ -1,4 +1,5 @@
 import {
+  AccountOwnershipError,
   type ClearSignContext,
   ClearSignContextType,
   type ContextModule,
@@ -13,6 +14,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
+import { AddressVerificationFailedError } from "@internal/app-binder/command/utils/AddressVerificationFailedError";
 import {
   ConcordiumAppCommandError,
   ConcordiumErrorCodes,
@@ -41,11 +43,11 @@ function makeSuccessContext(withCertificate = true): ClearSignContext[] {
   ];
 }
 
-function makeErrorContext(message: string): ClearSignContext[] {
+function makeErrorContext(error: Error): ClearSignContext[] {
   return [
     {
       type: ClearSignContextType.ERROR,
-      error: new Error(message),
+      error,
     },
   ];
 }
@@ -176,13 +178,13 @@ describe("VerifyAddressTask", () => {
       expect(sendCommandMock).toHaveBeenCalledTimes(2);
     });
 
-    it("should fail with TrustedMetadataServiceError when context module returns error context", async () => {
+    it("should fail with TrustedMetadataServiceError when context loader returns a plain Error (service_unavailable)", async () => {
       mockSendCommandSequence(
         CommandResultFactory({ data: { publicKey: PUBLIC_KEY } }),
         CommandResultFactory({ data: { challenge: CHALLENGE } }),
       );
       vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue(
-        makeErrorContext("Backend unavailable"),
+        makeErrorContext(new Error("Backend unavailable")),
       );
 
       const result = await createTask().run();
@@ -193,6 +195,56 @@ describe("VerifyAddressTask", () => {
         expect(result.error).toHaveProperty(
           "errorCode",
           ConcordiumErrorCodes.TRUSTED_METADATA_SERVICE_ERROR,
+        );
+      }
+    });
+
+    it("should fail with TrustedMetadataServiceError when AccountOwnershipError kind is service_unavailable", async () => {
+      mockSendCommandSequence(
+        CommandResultFactory({ data: { publicKey: PUBLIC_KEY } }),
+        CommandResultFactory({ data: { challenge: CHALLENGE } }),
+      );
+      vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue(
+        makeErrorContext(
+          new AccountOwnershipError("service_unavailable", "backend 503"),
+        ),
+      );
+
+      const result = await createTask().run();
+
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toBeInstanceOf(TrustedMetadataServiceError);
+        expect((result.error as TrustedMetadataServiceError).message).toBe(
+          "backend 503",
+        );
+      }
+    });
+
+    it("should fail with AddressVerificationFailedError when AccountOwnershipError kind is verification_failed", async () => {
+      const backendMessage =
+        "Address ByteVector(32 bytes, 0xa63c) is not associated with the given public key ByteVector(32 bytes, 0x9dc1) on the network Testnet";
+      mockSendCommandSequence(
+        CommandResultFactory({ data: { publicKey: PUBLIC_KEY } }),
+        CommandResultFactory({ data: { challenge: CHALLENGE } }),
+      );
+      vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue(
+        makeErrorContext(
+          new AccountOwnershipError("verification_failed", backendMessage),
+        ),
+      );
+
+      const result = await createTask().run();
+
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        expect(result.error).toBeInstanceOf(AddressVerificationFailedError);
+        expect(result.error).toHaveProperty(
+          "errorCode",
+          ConcordiumErrorCodes.ADDRESS_VERIFICATION_FAILED,
+        );
+        expect((result.error as AddressVerificationFailedError).message).toBe(
+          backendMessage,
         );
       }
     });

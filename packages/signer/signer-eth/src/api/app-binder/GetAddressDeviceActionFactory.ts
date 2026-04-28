@@ -6,7 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
+import { type GetAddressTaskError } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { SendGetAddressTask } from "@internal/app-binder/task/SendGetAddressTask";
 
@@ -20,12 +20,12 @@ export const GetAddressDeviceActionFactory = (args: {
   loggerFactory: (tag: string) => LoggerPublisherService;
 }): CallTaskInAppDeviceAction<
   GetAddressCommandResponse,
-  EthErrorCodes,
+  GetAddressTaskError,
   UserInteractionRequired.VerifyAddress | UserInteractionRequired.None
 > => {
   return new CallTaskInAppDeviceAction<
     GetAddressCommandResponse,
-    EthErrorCodes,
+    GetAddressTaskError,
     UserInteractionRequired.VerifyAddress | UserInteractionRequired.None
   >({
     input: {

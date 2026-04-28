@@ -1,5 +1,7 @@
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  DeviceModelId,
+  DmkNetworkClient,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -9,8 +11,7 @@ import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
 } from "@/dynamic-network/model/DynamicNetworkConfiguration";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import { type DynamicNetworkApiResponseDto } from "./dto/DynamicNetworkApiResponseDto";
 import { type DynamicNetworkDataSource } from "./DynamicNetworkDataSource";
@@ -30,6 +31,8 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   async getDynamicNetworkConfiguration(
@@ -38,19 +41,16 @@ export class HttpDynamicNetworkDataSource implements DynamicNetworkDataSource {
     let response: DynamicNetworkApiResponseDto;
 
     try {
-      const axiosResponse = await axios.get<DynamicNetworkApiResponseDto>(
-        `${this.config.cal.url}/networks?output=id,descriptors,icons&chain_id=${chainId}`,
-        {
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          },
+      response = (await this.http.get(`${this.config.cal.url}/networks`, {
+        params: {
+          output: "id,descriptors,icons",
+          chain_id: chainId,
         },
-      );
-      response = axiosResponse.data;
+      })) as DynamicNetworkApiResponseDto;
     } catch (error) {
       return Left(
         error instanceof Error
-          ? error
+          ? new Error(error.message)
           : new Error("Failed to fetch network configuration"),
       );
     }

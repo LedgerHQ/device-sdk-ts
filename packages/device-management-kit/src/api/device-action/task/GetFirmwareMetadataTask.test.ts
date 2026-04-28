@@ -1,12 +1,11 @@
 import { EitherAsync } from "purify-ts";
 
-import {
-  InvalidGetFirmwareMetadataResponseError,
-  InvalidStatusWordError,
-} from "@api/command/Errors";
+import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { InvalidGetFirmwareMetadataResponseError } from "@api/device-action/task/Errors";
+import { DmkResultFactory } from "@api/model/DmkResult";
 import {
   type FinalFirmware,
   type McuFirmware,
@@ -104,7 +103,7 @@ describe("GetFirmwareMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           deviceVersion: DEVICE_VERSION,
           firmware: FIRMWARE_VERSION,
@@ -137,7 +136,7 @@ describe("GetFirmwareMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           deviceVersion: DEVICE_VERSION,
           firmware: FIRMWARE_VERSION,
@@ -193,7 +192,7 @@ describe("GetFirmwareMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           deviceVersion: DEVICE_VERSION,
           firmware: FIRMWARE_VERSION,
@@ -228,7 +227,7 @@ describe("GetFirmwareMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({ error: new InvalidStatusWordError("error") }),
+      DmkResultFactory({ error: new InvalidStatusWordError("error") }),
     );
   });
 
@@ -248,7 +247,7 @@ describe("GetFirmwareMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         error: new InvalidGetFirmwareMetadataResponseError(),
       }),
     );
@@ -270,7 +269,7 @@ describe("GetFirmwareMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         error: new InvalidGetFirmwareMetadataResponseError(),
       }),
     );

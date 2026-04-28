@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type { TouchController } from "@root/src/internal/core/TouchController";
 
-import { tapLong, tapQuick } from "./touchUseCases";
+import { enableBlindSigningSettings, tapLong, tapQuick } from "./touchUseCases";
 
 describe("touchUsecases", () => {
   const deviceKey = "devA";
@@ -110,5 +110,32 @@ describe("touchUsecases", () => {
 
     expect(controller.tap).toHaveBeenCalledTimes(1);
     expect(controller.release).toHaveBeenCalledTimes(1);
+  });
+
+  describe("enableBlindSigningSettings", () => {
+    it.each([
+      ["stax", { x: 88, y: 51 }],
+      ["flex", { x: 88, y: 58 }],
+      ["apex", { x: 88, y: 58 }],
+    ] as const)(
+      "taps the blind-signing toggle at the %s coordinates",
+      async (key, expected) => {
+        await enableBlindSigningSettings(controller, key)();
+
+        expect(controller.tapAndRelease).toHaveBeenCalledTimes(1);
+        expect(controller.tapAndRelease).toHaveBeenCalledWith(key, expected);
+      },
+    );
+
+    it("falls back to default coordinates for an unknown device key", async () => {
+      const unknownKey = "unknown";
+      await enableBlindSigningSettings(controller, unknownKey)();
+
+      expect(controller.tapAndRelease).toHaveBeenCalledTimes(1);
+      expect(controller.tapAndRelease).toHaveBeenCalledWith(unknownKey, {
+        x: 88,
+        y: 51,
+      });
+    });
   });
 });
