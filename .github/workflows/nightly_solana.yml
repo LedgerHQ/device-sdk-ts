@@ -108,5 +108,5 @@ jobs:
       - uses: ./.github/actions/slack-notify-composite
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          slack-channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
           results: ${{ join(needs.*.result, ',') }}
