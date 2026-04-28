@@ -1,13 +1,14 @@
 import { EitherAsync } from "purify-ts";
 
-import { InvalidStatusWordError } from "@api/command/Errors";
 import { CommandResultFactory } from "@api/command/model/CommandResult";
 import {
   BTC_APP_METADATA,
   ETH_APP_METADATA,
 } from "@api/device-action/__test-utils__/data";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
+import { GetApplicationsMetadataTaskError } from "@api/device-action/task/Errors";
 import { type FirmwareVersion } from "@api/device-session/DeviceSessionState";
+import { DmkResultFactory } from "@api/model/DmkResult";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 import { type LanguagePackage } from "@internal/manager-api/model/Language";
@@ -86,7 +87,7 @@ describe("GetApplicationsMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           applications: APPS,
           applicationsUpdates: [],
@@ -113,7 +114,7 @@ describe("GetApplicationsMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           applications: APPS,
           applicationsUpdates: [],
@@ -143,7 +144,7 @@ describe("GetApplicationsMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           applications: [app],
           applicationsUpdates: [BTC_APP_METADATA],
@@ -167,7 +168,7 @@ describe("GetApplicationsMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           applications: APPS,
           applicationsUpdates: [],
@@ -194,8 +195,10 @@ describe("GetApplicationsMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
-        error: new InvalidStatusWordError("Cannot get the application catalog"),
+      DmkResultFactory({
+        error: new GetApplicationsMetadataTaskError(
+          "Cannot get the application catalog",
+        ),
       }),
     );
   });
@@ -213,8 +216,10 @@ describe("GetApplicationsMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
-        error: new InvalidStatusWordError("Cannot get the application catalog"),
+      DmkResultFactory({
+        error: new GetApplicationsMetadataTaskError(
+          "Cannot get the application catalog",
+        ),
       }),
     );
   });
@@ -232,8 +237,10 @@ describe("GetApplicationsMetadataTask", () => {
 
     // THEN
     expect(result).toStrictEqual(
-      CommandResultFactory({
-        error: new InvalidStatusWordError("Cannot get the languages catalog"),
+      DmkResultFactory({
+        error: new GetApplicationsMetadataTaskError(
+          "Cannot get the languages catalog",
+        ),
       }),
     );
   });

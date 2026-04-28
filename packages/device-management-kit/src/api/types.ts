@@ -123,6 +123,11 @@ export type {
   LoggerSubscriberService,
   LogParams,
 } from "@api/logger-subscriber/service/LoggerSubscriberService";
+export type {
+  DmkErrorResult,
+  DmkResult,
+  DmkSuccessResult,
+} from "@api/model/DmkResult";
 export {
   type GenuineCheckDAError,
   type GenuineCheckDAInput,

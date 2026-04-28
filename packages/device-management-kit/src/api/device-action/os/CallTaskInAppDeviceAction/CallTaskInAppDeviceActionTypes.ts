@@ -1,13 +1,11 @@
-import {
-  type CommandErrorResult,
-  type CommandResult,
-} from "@api/command/model/CommandResult";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import {
   type OpenAppDAError,
   type OpenAppDAIntermediateValue,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
+import { type DmkError } from "@api/Error";
+import { type DmkResult } from "@api/model/DmkResult";
 
 export const callTaskInAppDAStateStep = Object.freeze({
   OPEN_APP: "os.callTaskInApp.steps.openApp",
@@ -21,20 +19,20 @@ export type CallTaskInAppDAOutput<TaskResponse> = TaskResponse;
 
 export type CallTaskInAppDAInput<
   TaskResponse,
-  TaskErrorCodes,
+  TaskError extends DmkError,
   UserInteraction,
 > = {
   readonly task: (
     internalApi: InternalApi,
-  ) => Promise<CommandResult<TaskResponse, TaskErrorCodes>>;
+  ) => Promise<DmkResult<TaskResponse, TaskError>>;
   readonly appName: string;
   readonly skipOpenApp: boolean;
   readonly requiredUserInteraction: UserInteraction;
 };
 
-export type CallTaskInAppDAError<TaskErrorCodes = void> =
+export type CallTaskInAppDAError<TaskError extends DmkError = DmkError> =
   | OpenAppDAError
-  | CommandErrorResult<TaskErrorCodes>["error"];
+  | TaskError;
 
 export type CallTaskInAppDARequiredInteraction = UserInteractionRequired.None;
 
@@ -47,7 +45,10 @@ export type CallTaskInAppDAIntermediateValue<UserInteraction> =
     }
   | OpenAppDAIntermediateValue;
 
-export type CallTaskInAppDAInternalState<TaskResponse, TaskErrorCodes> = {
+export type CallTaskInAppDAInternalState<
+  TaskResponse,
+  TaskError extends DmkError = DmkError,
+> = {
   readonly taskResponse: TaskResponse | null;
-  readonly error: CallTaskInAppDAError<TaskErrorCodes> | null;
+  readonly error: CallTaskInAppDAError<TaskError> | null;
 };

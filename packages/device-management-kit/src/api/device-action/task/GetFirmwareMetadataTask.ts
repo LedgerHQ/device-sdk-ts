@@ -1,28 +1,37 @@
-import { InvalidGetFirmwareMetadataResponseError } from "@api/command/Errors";
 import {
-  type CommandResult,
-  CommandResultFactory,
+  type CommandErrorResult,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 import { GetBackgroundImageSizeCommand } from "@api/command/os/GetBackgroundImageSizeCommand";
 import { GetOsVersionCommand } from "@api/command/os/GetOsVersionCommand";
 import type { InternalApi } from "@api/device-action/DeviceAction";
+import { InvalidGetFirmwareMetadataResponseError } from "@api/device-action/task/Errors";
 import {
   type CustomImage,
   type FirmwareUpdate,
   type FirmwareUpdateContext,
   type FirmwareVersion,
 } from "@api/device-session/DeviceSessionState";
+import { type DmkResult, DmkResultFactory } from "@api/model/DmkResult";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
 
-export type GetFirmwareMetadataTaskResult = CommandResult<{
+export type GetFirmwareMetadataTaskResponse = {
   deviceVersion: DeviceVersion;
   firmware: FinalFirmware;
   firmwareVersion: FirmwareVersion;
   firmwareUpdateContext: FirmwareUpdateContext;
   customImage: CustomImage;
-}>;
+};
+
+export type GetFirmwareMetadataTaskError =
+  | CommandErrorResult["error"]
+  | InvalidGetFirmwareMetadataResponseError;
+
+export type GetFirmwareMetadataTaskResult = DmkResult<
+  GetFirmwareMetadataTaskResponse,
+  GetFirmwareMetadataTaskError
+>;
 
 export class GetFirmwareMetadataTask {
   constructor(private readonly api: InternalApi) {}
@@ -31,7 +40,9 @@ export class GetFirmwareMetadataTask {
     // Get installed firmware metadata
     const osVersion = await this.api.sendCommand(new GetOsVersionCommand());
     if (!isSuccessCommandResult(osVersion)) {
-      return osVersion;
+      return DmkResultFactory({
+        error: osVersion.error,
+      });
     }
     const firmwareVersion: FirmwareVersion = {
       mcu: osVersion.data.mcuSephVersion,
@@ -50,7 +61,7 @@ export class GetFirmwareMetadataTask {
           .map((currentFirmware) => ({ deviceVersion, currentFirmware })),
       );
     if (result.isLeft()) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidGetFirmwareMetadataResponseError(),
       });
     }
@@ -95,7 +106,7 @@ export class GetFirmwareMetadataTask {
     }
 
     // Return firmware metadata
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: {
         deviceVersion,
         firmware: currentFirmware,

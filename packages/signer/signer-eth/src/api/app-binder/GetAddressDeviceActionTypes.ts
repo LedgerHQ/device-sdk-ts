@@ -2,6 +2,7 @@ import {
   type CallTaskInAppDAError,
   type CallTaskInAppDAIntermediateValue,
   type CallTaskInAppDAOutput,
+  type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -15,7 +16,8 @@ type GetAddressDAUserInteractionRequired =
 
 export type GetAddressDAOutput =
   CallTaskInAppDAOutput<GetAddressCommandResponse>;
-export type GetAddressDAError = CallTaskInAppDAError<EthErrorCodes>;
+export type GetAddressTaskError = CommandErrorResult<EthErrorCodes>["error"];
+export type GetAddressDAError = CallTaskInAppDAError<GetAddressTaskError>;
 export type GetAddressDAIntermediateValue =
   CallTaskInAppDAIntermediateValue<GetAddressDAUserInteractionRequired>;
 

@@ -3,6 +3,7 @@ import {
   DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type DmkError,
   type ExecuteDeviceActionReturnType,
   type InternalApi,
   SendCommandInAppDeviceAction,
@@ -42,7 +43,7 @@ type ExecuteDeviceActionTaskCallArgs = {
   sessionId: DeviceSessionId;
   deviceAction: CallTaskInAppDeviceAction<
     unknown,
-    unknown,
+    DmkError,
     UserInteractionRequired.None
   >;
 };

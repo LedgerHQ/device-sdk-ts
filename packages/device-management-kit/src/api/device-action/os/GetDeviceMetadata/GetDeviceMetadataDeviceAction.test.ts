@@ -1,6 +1,5 @@
 import { concat, of, throwError } from "rxjs";
 
-import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { BTC_APP } from "@api/device-action/__test-utils__/data";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
@@ -22,6 +21,7 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 import { UnknownDeviceExchangeError } from "@api/Error";
+import { DmkResultFactory } from "@api/model/DmkResult";
 import {
   type SecureChannelEventPayload,
   SecureChannelEventType,
@@ -133,7 +133,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
 
         getDeviceMetadataMock.mockResolvedValueOnce(null);
         getFirmwareMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               deviceVersion: DEVICE_VERSION,
               firmware: FIRMWARE,
@@ -144,7 +144,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           }),
         );
         getApplicationsMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               applications: APPS,
               applicationsUpdates: APPS_UPDATE,
@@ -244,7 +244,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
         });
 
         getFirmwareMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               deviceVersion: DEVICE_VERSION,
               firmware: FIRMWARE,
@@ -255,7 +255,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           }),
         );
         getApplicationsMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               applications: APPS,
               applicationsUpdates: APPS_UPDATE,
@@ -347,7 +347,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
 
         getDeviceMetadataMock.mockResolvedValueOnce(null);
         getFirmwareMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               deviceVersion: DEVICE_VERSION,
               firmware: FIRMWARE,
@@ -382,7 +382,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           ),
         );
         getApplicationsMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               applications: APPS,
               applicationsUpdates: APPS_UPDATE,
@@ -619,7 +619,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
 
         getDeviceMetadataMock.mockResolvedValueOnce(null);
         getFirmwareMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             error: new UnknownDeviceExchangeError("GetFirmwareMetadata failed"),
           }),
         );
@@ -683,7 +683,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
 
         getDeviceMetadataMock.mockResolvedValueOnce(null);
         getFirmwareMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               deviceVersion: DEVICE_VERSION,
               firmware: FIRMWARE,
@@ -769,7 +769,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
 
         getDeviceMetadataMock.mockResolvedValueOnce(null);
         getFirmwareMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               deviceVersion: DEVICE_VERSION,
               firmware: FIRMWARE,
@@ -780,7 +780,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
           }),
         );
         getApplicationsMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             error: new UnknownDeviceExchangeError(
               "GetApplicationsMetadata failed",
             ),
@@ -871,7 +871,7 @@ describe("GetDeviceMetadataDeviceAction", () => {
 
         getDeviceMetadataMock.mockResolvedValueOnce(null);
         getFirmwareMetadataMock.mockResolvedValueOnce(
-          CommandResultFactory({
+          DmkResultFactory({
             data: {
               deviceVersion: DEVICE_VERSION,
               firmware: FIRMWARE,

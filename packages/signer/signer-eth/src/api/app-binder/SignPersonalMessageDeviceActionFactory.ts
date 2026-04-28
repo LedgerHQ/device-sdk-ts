@@ -4,8 +4,8 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
+import { type SignPersonalMessageTaskError } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { SendSignPersonalMessageTask } from "@internal/app-binder/task/SendSignPersonalMessageTask";
 
@@ -16,13 +16,13 @@ export const SignPersonalMessageDeviceActionFactory = (args: {
   loggerFactory: (tag: string) => LoggerPublisherService;
 }): CallTaskInAppDeviceAction<
   Signature,
-  EthErrorCodes,
+  SignPersonalMessageTaskError,
   UserInteractionRequired.SignPersonalMessage
 > => {
   const taskLogger = args.loggerFactory("SendSignPersonalMessageTask");
   return new CallTaskInAppDeviceAction<
     Signature,
-    EthErrorCodes,
+    SignPersonalMessageTaskError,
     UserInteractionRequired.SignPersonalMessage
   >({
     input: {
