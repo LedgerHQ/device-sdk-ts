@@ -1,12 +1,13 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import {
   GetTransactionDescriptorsParams,
@@ -23,6 +24,8 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
     private readonly config: ContextModuleServiceConfig,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {
     this.logger = loggerFactory("HttpSolanaLifiDataSource");
   }
@@ -32,30 +35,26 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
   }: GetTransactionDescriptorsParams): Promise<
     Either<Error, GetTransactionDescriptorsResponse>
   > {
-    const url = `${this.config.cal.url}/swap_templates`;
-    const params = {
-      id: templateId,
-      output: "id,chain_id,instructions,descriptors",
-    };
-
     this.logger.debug(
       "[getTransactionDescriptorsPayload] Fetching transaction descriptors",
       {
-        data: { templateId, url, params },
+        data: { templateId },
       },
     );
 
     try {
-      const { data } = await axios.request<GetTransactionDescriptorsResponse[]>(
+      const data = (await this.http.get(
+        `${this.config.cal.url}/swap_templates`,
         {
-          method: "GET",
-          url,
-          params,
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+          params: {
+            template_id: templateId,
+            output: "id,chain_id,instructions,descriptors",
+            // TODO LIFI
+            // REVERT WHEN CAL SUPPORTS IT
+            ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
           },
         },
-      );
+      )) as GetTransactionDescriptorsResponse[];
 
       this.logger.debug(
         "[getTransactionDescriptorsPayload] Received response",
@@ -99,7 +98,6 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
         {
           data: {
             templateId,
-            url,
             error: error instanceof Error ? error.message : String(error),
           },
         },

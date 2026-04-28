@@ -1,4 +1,4 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -7,10 +7,7 @@ import type {
   ContextModuleCalMode,
   ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { networkTypes } from "@/network/di/networkTypes";
 import type {
   TypedDataCalldataIndex,
   TypedDataFilter,
@@ -19,7 +16,6 @@ import type {
 } from "@/shared/model/TypedDataClearSignContext";
 import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
 import { getSchemaHash } from "@/typed-data/utils/getSchemaHash";
-import PACKAGE from "@root/package.json";
 
 import type {
   FiltersDto,
@@ -44,6 +40,8 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   public async getTypedDataFilters({
@@ -57,9 +55,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     let messageInfo: TypedDataMessageInfo | undefined = undefined;
 
     try {
-      const response = await axios.request<FiltersDto[]>({
-        method: "GET",
-        url: `${this.config.cal.url}/dapps`,
+      const data = (await this.http.get(`${this.config.cal.url}/dapps`, {
         params: {
           contracts: address,
           chain_id: chainId,
@@ -68,16 +64,11 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
           descriptors_eip712: "<set>",
           ref: `branch:${this.config.cal.branch}`,
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
+      })) as FiltersDto[];
 
-      // Try to get the filters JSON descriptor, from address and schema hash
       const schemaHash = getSchemaHash(schema);
       address = address.toLowerCase();
-      const dataArray = response.data ?? [];
+      const dataArray = data ?? [];
       const filtersJson = dataArray
         .map((item) => item?.descriptors_eip712?.[address]?.[schemaHash])
         .find(Boolean);

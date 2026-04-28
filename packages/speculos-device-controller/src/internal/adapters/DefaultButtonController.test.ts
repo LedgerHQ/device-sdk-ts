@@ -1,18 +1,16 @@
-import type { AxiosInstance } from "axios";
-
-import type { ButtonKey } from "@internal/core/types";
+import type { ButtonKey, HttpClient } from "@internal/core/types";
 
 import { DefaultButtonController } from "./DefaultButtonController";
 
 describe("DefaultButtonController", () => {
   let postMock: ReturnType<typeof vi.fn>;
-  let axiosFake: AxiosInstance;
+  let httpClient: HttpClient;
   let controller: DefaultButtonController;
 
   beforeEach(() => {
-    postMock = vi.fn().mockResolvedValue({ status: 200, data: {} });
-    axiosFake = { post: postMock } as unknown as AxiosInstance;
-    controller = new DefaultButtonController(axiosFake);
+    postMock = vi.fn().mockResolvedValue(undefined);
+    httpClient = { post: postMock };
+    controller = new DefaultButtonController(httpClient);
   });
 
   const keys: ButtonKey[] = ["left", "right", "both"];

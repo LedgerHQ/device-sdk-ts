@@ -1,4 +1,4 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
@@ -11,11 +11,7 @@ import { AccountOwnershipError } from "@/account-ownership/data/AccountOwnership
 import { type AccountOwnershipDto } from "@/account-ownership/data/dto/AccountOwnershipDto";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 @injectable()
 export class HttpAccountOwnershipDataSource
@@ -24,6 +20,8 @@ export class HttpAccountOwnershipDataSource
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   async getDescriptor({
@@ -35,20 +33,14 @@ export class HttpAccountOwnershipDataSource
     Either<Error, AccountOwnershipDescriptor>
   > {
     try {
-      const response = await axios.request<AccountOwnershipDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/concordium/owner/${publicKey}/${address}`,
-        params: {
-          challenge,
-          network,
+      const data = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v2/concordium/owner/${publicKey}/${address}`,
+        {
+          params: { challenge, network },
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
+      )) as AccountOwnershipDto | null;
 
-      if (!response.data) {
+      if (!data) {
         return Left(
           new AccountOwnershipError(
             "service_unavailable",
@@ -57,7 +49,7 @@ export class HttpAccountOwnershipDataSource
         );
       }
 
-      if (!this.isAccountOwnershipDto(response.data)) {
+      if (!this.isAccountOwnershipDto(data)) {
         return Left(
           new AccountOwnershipError(
             "service_unavailable",
@@ -67,9 +59,9 @@ export class HttpAccountOwnershipDataSource
       }
 
       return Right({
-        signedDescriptor: response.data.signedDescriptor,
-        keyId: response.data.keyId,
-        keyUsage: response.data.keyUsage,
+        signedDescriptor: data.signedDescriptor,
+        keyId: data.keyId,
+        keyUsage: data.keyUsage,
       });
     } catch (error) {
       return Left(this.classifyError(error));
@@ -82,25 +74,14 @@ export class HttpAccountOwnershipDataSource
    * as `verification_failed`; everything else (network failure, 5xx,
    * unrecognized errors) is marked as `service_unavailable`.
    *
-   * Two shapes are recognized:
-   * - Vanilla {@link AxiosError} with `.response` (standalone axios usage).
-   * - Any error carrying a numeric `.status` field. Consumers may install a
-   *   global axios interceptor that replaces {@link AxiosError} with a
-   *   custom class, typically stripping `.response` but preserving the HTTP
-   *   status on a top-level `.status` field. The duck-typed branch keeps
-   *   classification correct on those paths without coupling to any
-   *   host-specific class.
+   * Errors with a numeric `.status` field are treated as HTTP-shaped
+   * failures. `DmkNetworkClientError` exposes `.status` and a raw
+   * `.responseBody` string; the backend's human-readable message is
+   * extracted from the error's own `.message` first, then from the JSON
+   * body on `.responseBody`, and finally from the raw body as a
+   * last resort.
    */
   private classifyError(error: unknown): AccountOwnershipError {
-    if (axios.isAxiosError(error) && error.response) {
-      const status = error.response.status;
-      const backendMessage = this.extractBackendMessage(
-        error.response.data,
-        error.message,
-      );
-      return this.classifyFromStatus(status, backendMessage);
-    }
-
     if (this.hasNumericStatus(error)) {
       const status = error.status;
       const message = this.extractErrorMessage(error);
@@ -136,11 +117,16 @@ export class HttpAccountOwnershipDataSource
   }
 
   private extractErrorMessage(value: unknown): string {
+    const fromBody = this.extractResponseBodyMessage(value);
+    if (fromBody !== null) {
+      return fromBody;
+    }
     if (
       typeof value === "object" &&
       value !== null &&
       "message" in value &&
-      typeof (value as { message: unknown }).message === "string"
+      typeof (value as { message: unknown }).message === "string" &&
+      (value as { message: string }).message.length > 0
     ) {
       return (value as { message: string }).message;
     }
@@ -150,20 +136,34 @@ export class HttpAccountOwnershipDataSource
     return "Unknown error";
   }
 
-  private extractBackendMessage(data: unknown, fallback: string): string {
-    if (typeof data === "string" && data.length > 0) {
-      return data;
-    }
+  private extractResponseBodyMessage(value: unknown): string | null {
     if (
-      typeof data === "object" &&
-      data !== null &&
-      "message" in data &&
-      typeof (data as { message: unknown }).message === "string" &&
-      (data as { message: string }).message.length > 0
+      typeof value !== "object" ||
+      value === null ||
+      !("responseBody" in value) ||
+      typeof (value as { responseBody: unknown }).responseBody !== "string"
     ) {
-      return (data as { message: string }).message;
+      return null;
     }
-    return fallback;
+    const body = (value as { responseBody: string }).responseBody;
+    if (body.length === 0) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(body) as unknown;
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        "message" in parsed &&
+        typeof (parsed as { message: unknown }).message === "string" &&
+        (parsed as { message: string }).message.length > 0
+      ) {
+        return (parsed as { message: string }).message;
+      }
+    } catch {
+      // body is not JSON; fall through to use it as plain text
+    }
+    return body;
   }
 
   private isAccountOwnershipDto(value: unknown): value is AccountOwnershipDto {

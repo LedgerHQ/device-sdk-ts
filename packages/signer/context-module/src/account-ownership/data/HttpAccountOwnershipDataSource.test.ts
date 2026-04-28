@@ -1,38 +1,29 @@
-import axios, { AxiosError, type AxiosResponse } from "axios";
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { AccountOwnershipError } from "@/account-ownership/data/AccountOwnershipError";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { HttpAccountOwnershipDataSource } from "./HttpAccountOwnershipDataSource";
 
-vi.mock("axios");
-
-function makeAxiosError(
-  status: number,
-  data: unknown,
-  message = "Request failed",
-): AxiosError {
-  const err = new AxiosError(message);
-  err.message = message;
-  err.response = {
-    status,
-    data,
-    statusText: "",
-    headers: {},
-    config: {} as never,
-  } as AxiosResponse;
-  return err;
-}
-
-function makeInterceptedError(status: number, message: string): Error {
-  const err = new Error(message);
-  (err as unknown as { status: number }).status = status;
+/**
+ * Build an error that quacks like a {@link DmkNetworkClientError}: a real
+ * `Error` with numeric `.status` and raw `.responseBody` text. Callers can
+ * omit fields to simulate specific shapes.
+ */
+function makeHttpError(options: {
+  status?: number;
+  message?: string;
+  responseBody?: string;
+}): Error {
+  const err = new Error(options.message ?? "HTTP error");
+  if (options.status !== undefined) {
+    (err as unknown as { status: number }).status = options.status;
+  }
+  if (options.responseBody !== undefined) {
+    (err as unknown as { responseBody: string }).responseBody =
+      options.responseBody;
+  }
   return err;
 }
 
@@ -57,69 +48,50 @@ describe("HttpAccountOwnershipDataSource", () => {
     network: "mainnet" as const,
   };
 
+  let httpMock: { get: ReturnType<typeof vi.fn> };
+  let datasource: HttpAccountOwnershipDataSource;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(axios, "isAxiosError").mockImplementation(
-      (value: unknown): value is AxiosError => value instanceof AxiosError,
+    httpMock = { get: vi.fn() };
+    datasource = new HttpAccountOwnershipDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
     );
   });
 
   describe("getDescriptor", () => {
     it("should return descriptor on successful request", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validDto,
-      });
+      httpMock.get.mockResolvedValue(validDto);
 
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
+      const result = await datasource.getDescriptor(baseParams);
 
-      expect(axios.request).toHaveBeenCalledWith({
-        method: "GET",
-        url: "https://nft.api.live.ledger-test.com/v2/concordium/owner/abcdef1234567890/3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-        params: {
-          challenge: "0xabcdef",
-          network: "mainnet",
+      expect(httpMock.get).toHaveBeenCalledWith(
+        `${config.metadataServiceDomain.url}/v2/concordium/owner/${baseParams.publicKey}/${baseParams.address}`,
+        {
+          params: {
+            challenge: baseParams.challenge,
+            network: baseParams.network,
+          },
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
-        },
-      });
+      );
       expect(result).toEqual(Right(validDto));
     });
 
     it("should pass testnet network parameter", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validDto,
-      });
+      httpMock.get.mockResolvedValue(validDto);
 
-      await new HttpAccountOwnershipDataSource(config).getDescriptor({
-        ...baseParams,
-        network: "testnet",
-      });
+      await datasource.getDescriptor({ ...baseParams, network: "testnet" });
 
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          params: {
-            challenge: "0xabcdef",
-            network: "testnet",
-          },
-        }),
-      );
+      expect(httpMock.get).toHaveBeenCalledWith(expect.any(String), {
+        params: { challenge: baseParams.challenge, network: "testnet" },
+      });
     });
 
     it("should classify empty response as service_unavailable", async () => {
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: null,
-      });
+      httpMock.get.mockResolvedValue(null);
 
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
+      const result = await datasource.getDescriptor(baseParams);
 
       expect(result.isLeft()).toBe(true);
       const err = result.extract() as AccountOwnershipError;
@@ -139,11 +111,9 @@ describe("HttpAccountOwnershipDataSource", () => {
     ])(
       "should classify malformed response (%s) as service_unavailable",
       async (_label, data) => {
-        vi.spyOn(axios, "request").mockResolvedValue({ status: 200, data });
+        httpMock.get.mockResolvedValue(data);
 
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
+        const result = await datasource.getDescriptor(baseParams);
 
         expect(result.isLeft()).toBe(true);
         const err = result.extract() as AccountOwnershipError;
@@ -156,13 +126,15 @@ describe("HttpAccountOwnershipDataSource", () => {
     it("should classify 422 with { message } body as verification_failed and forward backend message", async () => {
       const backendMessage =
         "Address ByteVector(32 bytes, 0xa63c) is not associated with the given public key ByteVector(32 bytes, 0x9dc1) on the network Testnet";
-      vi.spyOn(axios, "request").mockRejectedValue(
-        makeAxiosError(422, { message: backendMessage }),
+      httpMock.get.mockRejectedValue(
+        makeHttpError({
+          status: 422,
+          message: "HTTP error 422",
+          responseBody: JSON.stringify({ message: backendMessage }),
+        }),
       );
 
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
+      const result = await datasource.getDescriptor(baseParams);
 
       expect(result.isLeft()).toBe(true);
       const err = result.extract() as AccountOwnershipError;
@@ -172,15 +144,17 @@ describe("HttpAccountOwnershipDataSource", () => {
     });
 
     it.each([400, 401, 403, 404, 429])(
-      "should classify HTTP %s as verification_failed",
+      "should classify HTTP %s as verification_failed with forwarded message",
       async (status) => {
-        vi.spyOn(axios, "request").mockRejectedValue(
-          makeAxiosError(status, { message: "refused" }),
+        httpMock.get.mockRejectedValue(
+          makeHttpError({
+            status,
+            message: `HTTP error ${status}`,
+            responseBody: JSON.stringify({ message: "refused" }),
+          }),
         );
 
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
+        const result = await datasource.getDescriptor(baseParams);
 
         const err = result.extract() as AccountOwnershipError;
         expect(err.kind).toBe("verification_failed");
@@ -189,13 +163,15 @@ describe("HttpAccountOwnershipDataSource", () => {
     );
 
     it("should classify 500 as service_unavailable with status prefix", async () => {
-      vi.spyOn(axios, "request").mockRejectedValue(
-        makeAxiosError(500, { message: "internal error" }),
+      httpMock.get.mockRejectedValue(
+        makeHttpError({
+          status: 500,
+          message: "HTTP error 500",
+          responseBody: JSON.stringify({ message: "internal error" }),
+        }),
       );
 
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
+      const result = await datasource.getDescriptor(baseParams);
 
       const err = result.extract() as AccountOwnershipError;
       expect(err.kind).toBe("service_unavailable");
@@ -206,71 +182,59 @@ describe("HttpAccountOwnershipDataSource", () => {
     it.each([502, 503, 504])(
       "should classify HTTP %s as service_unavailable",
       async (status) => {
-        vi.spyOn(axios, "request").mockRejectedValue(
-          makeAxiosError(status, { message: "down" }),
+        httpMock.get.mockRejectedValue(
+          makeHttpError({
+            status,
+            message: `HTTP error ${status}`,
+            responseBody: JSON.stringify({ message: "down" }),
+          }),
         );
 
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
+        const result = await datasource.getDescriptor(baseParams);
 
         const err = result.extract() as AccountOwnershipError;
         expect(err.kind).toBe("service_unavailable");
+        expect(err.message).toContain(`backend ${status}`);
+        expect(err.message).toContain("down");
       },
     );
 
-    it("should accept string body and forward it as message on 4xx", async () => {
-      vi.spyOn(axios, "request").mockRejectedValue(
-        makeAxiosError(422, "plain text reason"),
+    it("should accept plain-text response body and forward it on 4xx", async () => {
+      httpMock.get.mockRejectedValue(
+        makeHttpError({
+          status: 422,
+          message: "HTTP error 422",
+          responseBody: "plain text reason",
+        }),
       );
 
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
+      const result = await datasource.getDescriptor(baseParams);
 
       const err = result.extract() as AccountOwnershipError;
       expect(err.kind).toBe("verification_failed");
       expect(err.message).toBe("plain text reason");
     });
 
-    it("should fall back to axios error message when body has no message", async () => {
-      vi.spyOn(axios, "request").mockRejectedValue(
-        makeAxiosError(422, {}, "Request failed with status code 422"),
+    it("should fall back to the client error message when response body is empty", async () => {
+      httpMock.get.mockRejectedValue(
+        makeHttpError({
+          status: 422,
+          message: "HTTP error 422",
+          responseBody: "",
+        }),
       );
 
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
+      const result = await datasource.getDescriptor(baseParams);
 
       const err = result.extract() as AccountOwnershipError;
       expect(err.kind).toBe("verification_failed");
-      expect(err.message).toBe("Request failed with status code 422");
+      expect(err.message).toBe("HTTP error 422");
     });
 
-    it("should fall back to axios error message when body message is empty", async () => {
-      vi.spyOn(axios, "request").mockRejectedValue(
-        makeAxiosError(
-          422,
-          { message: "" },
-          "Request failed with status code 422",
-        ),
-      );
+    it("should classify network errors (no status) as service_unavailable", async () => {
+      httpMock.get.mockRejectedValue(new Error("Network error"));
 
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
-
-      const err = result.extract() as AccountOwnershipError;
-      expect(err.kind).toBe("verification_failed");
-      expect(err.message).toBe("Request failed with status code 422");
-    });
-
-    it("should classify non-axios / network errors as service_unavailable", async () => {
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("ECONNREFUSED"));
-
-      const result = await new HttpAccountOwnershipDataSource(
-        config,
-      ).getDescriptor(baseParams);
+      const result = await datasource.getDescriptor(baseParams);
 
       expect(result).toEqual(
         Left(
@@ -282,23 +246,20 @@ describe("HttpAccountOwnershipDataSource", () => {
       );
     });
 
-    // Consumers may install a global axios interceptor that replaces
-    // AxiosError with a custom class, preserving the HTTP status on
-    // `.status` and dropping `.response`. The datasource must still
-    // classify these.
-    describe("intercepted error shape (numeric .status on the error)", () => {
+    // Errors surfaced by the network client (or any wrapping layer) that
+    // expose a numeric `.status` field must still be classified, even if
+    // they are not true `DmkNetworkClientError` instances.
+    describe("errors with numeric .status", () => {
       it.each([400, 401, 403, 404, 422, 429])(
-        "should classify HTTP %s on .status as verification_failed and forward message",
+        "should classify HTTP %s on .status as verification_failed and forward .message",
         async (status) => {
           const backendMessage =
             "Address ByteVector(...) is not associated with the given public key ByteVector(...)";
-          vi.spyOn(axios, "request").mockRejectedValue(
-            makeInterceptedError(status, backendMessage),
+          httpMock.get.mockRejectedValue(
+            makeHttpError({ status, message: backendMessage }),
           );
 
-          const result = await new HttpAccountOwnershipDataSource(
-            config,
-          ).getDescriptor(baseParams);
+          const result = await datasource.getDescriptor(baseParams);
 
           const err = result.extract() as AccountOwnershipError;
           expect(err.kind).toBe("verification_failed");
@@ -309,13 +270,11 @@ describe("HttpAccountOwnershipDataSource", () => {
       it.each([500, 502, 503, 504])(
         "should classify HTTP %s on .status as service_unavailable with status prefix",
         async (status) => {
-          vi.spyOn(axios, "request").mockRejectedValue(
-            makeInterceptedError(status, "down"),
+          httpMock.get.mockRejectedValue(
+            makeHttpError({ status, message: "down" }),
           );
 
-          const result = await new HttpAccountOwnershipDataSource(
-            config,
-          ).getDescriptor(baseParams);
+          const result = await datasource.getDescriptor(baseParams);
 
           const err = result.extract() as AccountOwnershipError;
           expect(err.kind).toBe("service_unavailable");
@@ -327,11 +286,9 @@ describe("HttpAccountOwnershipDataSource", () => {
       it("should ignore non-numeric .status and fall through to service_unavailable fallback", async () => {
         const err = new Error("bad");
         (err as unknown as { status: string }).status = "422";
-        vi.spyOn(axios, "request").mockRejectedValue(err);
+        httpMock.get.mockRejectedValue(err);
 
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
+        const result = await datasource.getDescriptor(baseParams);
 
         expect(result).toEqual(
           Left(
@@ -344,14 +301,12 @@ describe("HttpAccountOwnershipDataSource", () => {
       });
 
       it("should forward .message from plain object errors (not Error instances)", async () => {
-        vi.spyOn(axios, "request").mockRejectedValue({
+        httpMock.get.mockRejectedValue({
           status: 422,
           message: "plain object message",
         });
 
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
+        const result = await datasource.getDescriptor(baseParams);
 
         const err = result.extract() as AccountOwnershipError;
         expect(err.kind).toBe("verification_failed");
@@ -359,11 +314,9 @@ describe("HttpAccountOwnershipDataSource", () => {
       });
 
       it("should use an 'Unknown error' fallback when the object has no usable message", async () => {
-        vi.spyOn(axios, "request").mockRejectedValue({ status: 422 });
+        httpMock.get.mockRejectedValue({ status: 422 });
 
-        const result = await new HttpAccountOwnershipDataSource(
-          config,
-        ).getDescriptor(baseParams);
+        const result = await datasource.getDescriptor(baseParams);
 
         const err = result.extract() as AccountOwnershipError;
         expect(err.kind).toBe("verification_failed");
@@ -378,22 +331,17 @@ describe("HttpAccountOwnershipDataSource", () => {
         },
         originToken: "custom-token",
       } as ContextModuleServiceConfig;
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validDto,
-      });
-
-      await new HttpAccountOwnershipDataSource(customConfig).getDescriptor(
-        baseParams,
+      const customDatasource = new HttpAccountOwnershipDataSource(
+        customConfig,
+        httpMock as unknown as DmkNetworkClient,
       );
+      httpMock.get.mockResolvedValue(validDto);
 
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: "https://custom-metadata.example.com/v2/concordium/owner/abcdef1234567890/3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
-          headers: expect.objectContaining({
-            [LEDGER_ORIGIN_TOKEN_HEADER]: "custom-token",
-          }),
-        }),
+      await customDatasource.getDescriptor(baseParams);
+
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://custom-metadata.example.com/v2/concordium/owner/abcdef1234567890/3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
+        expect.anything(),
       );
     });
   });

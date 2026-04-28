@@ -1,5 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -238,7 +240,10 @@ type RpcTransactionResult = {
 
 @injectable()
 export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
+  private static readonly METADATA_TIMEOUT_MS = 5000;
+
   private readonly logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.SolanaRpcConfig)
@@ -247,6 +252,7 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
     this.logger = loggerFactory("solana-rpc-adapter");
+    this.http = new DmkNetworkClient();
   }
 
   async fetchClearSignableTransactions(
@@ -546,18 +552,14 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
     if (!sourceTokenAccount) return true;
 
     try {
-      const response = await axios.head(
+      await this.http.head(
         `${METADATA_SERVICE_URL}/v2/solana/owner/${sourceTokenAccount}`,
-        { timeout: 5000, validateStatus: () => true },
+        { timeoutMs: HttpSolanaRpcAdapter.METADATA_TIMEOUT_MS },
       );
-      if (response.status === 200) return false;
-      this.logger.debug(
-        `Skipping tx ${signature.slice(0, 12)}: token account ${sourceTokenAccount.slice(0, 12)}... not in metadata service (${response.status})`,
-      );
-      return true;
+      return false;
     } catch {
       this.logger.debug(
-        `Skipping tx ${signature.slice(0, 12)}: metadata service probe failed`,
+        `Skipping tx ${signature.slice(0, 12)}: token account ${sourceTokenAccount.slice(0, 12)}... not in metadata service`,
       );
       return true;
     }
@@ -1043,7 +1045,7 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
   }
 
   private async rpcCall<T>(method: string, params: unknown[]): Promise<T> {
-    const response = await axios.post<RpcResponse<T>>(
+    const data = (await this.http.post(
       this.rpcConfig.url,
       {
         jsonrpc: "2.0",
@@ -1051,16 +1053,16 @@ export class HttpSolanaRpcAdapter implements SolanaRpcAdapter {
         method,
         params,
       },
-      { timeout: this.rpcConfig.timeout ?? 30000 },
-    );
+      { timeoutMs: this.rpcConfig.timeout ?? 30000 },
+    )) as RpcResponse<T>;
 
-    if (response.data.error) {
+    if (data.error) {
       throw new Error(
-        `Solana RPC error: ${response.data.error.message} (code ${response.data.error.code})`,
+        `Solana RPC error: ${data.error.message} (code ${data.error.code})`,
       );
     }
 
-    return response.data.result;
+    return data.result;
   }
 
   // --- Encoding helpers ---

@@ -4,6 +4,7 @@ import { HttpCalldataDescriptorDataSource } from "@/calldata/data/HttpCalldataDe
 import { calldataTypes } from "@/calldata/di/calldataTypes";
 import { CalldataContextLoader } from "@/calldata/domain/CalldataContextLoader";
 import { configTypes } from "@/config/di/configTypes";
+import { networkTypes } from "@/network/di/networkTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 
 export const calldataModuleFactory = () =>
@@ -14,6 +15,7 @@ export const calldataModuleFactory = () =>
           context.get(configTypes.Config),
           context.get(pkiTypes.PkiCertificateLoader),
           "dapps",
+          context.get(networkTypes.NetworkClient),
         ),
     );
     bind(calldataTypes.TokenCalldataDescriptorDataSource).toDynamicValue(
@@ -22,6 +24,7 @@ export const calldataModuleFactory = () =>
           context.get(configTypes.Config),
           context.get(pkiTypes.PkiCertificateLoader),
           "tokens",
+          context.get(networkTypes.NetworkClient),
         ),
     );
     bind(calldataTypes.CalldataContextLoader).to(CalldataContextLoader);

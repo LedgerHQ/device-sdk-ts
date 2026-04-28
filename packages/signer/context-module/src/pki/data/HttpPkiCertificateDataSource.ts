@@ -1,5 +1,7 @@
-import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  DmkNetworkClient,
+  hexaStringToBuffer,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
@@ -8,13 +10,12 @@ import type {
   ContextModuleCalMode,
   ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 import { PkiCertificate } from "@/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/pki/model/PkiCertificateInfo";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
 import { KeyUsageMapper } from "@/shared/utils/KeyUsageMapper";
-import PACKAGE from "@root/package.json";
 
 import { type PkiCertificateDataSource } from "./PkiCertificateDataSource";
 import {
@@ -27,6 +28,8 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   async fetchCertificate(
@@ -41,32 +44,25 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
     };
 
     try {
-      const pkiCertificateResponse = await axios.request<
-        PkiCertificateResponseDto[]
-      >({
-        method: "GET",
-        url: `${this.config.cal.url}/certificates`,
-        params: requestDto,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+      const data = await this.http.get(`${this.config.cal.url}/certificates`, {
+        params: {
+          output: requestDto.output,
+          target_device: requestDto.target_device,
+          latest: requestDto.latest,
+          public_key_id: requestDto.public_key_id,
+          public_key_usage: requestDto.public_key_usage,
         },
       });
 
       if (
-        pkiCertificateResponse.status == 200 &&
-        pkiCertificateResponse.data !== undefined &&
-        pkiCertificateResponse.data.length > 0 &&
-        this.isValidPkiCertificateResponse(
-          pkiCertificateResponse.data[0],
-          this.config.cal.mode,
-        )
+        Array.isArray(data) &&
+        data.length > 0 &&
+        this.isValidPkiCertificateResponse(data[0], this.config.cal.mode)
       ) {
         const payload = hexaStringToBuffer(
           HexStringUtils.appendSignatureToPayload(
-            pkiCertificateResponse.data[0].descriptor.data,
-            pkiCertificateResponse.data[0].descriptor.signatures[
-              this.config.cal.mode
-            ],
+            data[0].descriptor.data,
+            data[0].descriptor.signatures[this.config.cal.mode],
             SIGNATURE_TAG,
           ),
         );
@@ -104,20 +100,20 @@ export class HttpPkiCertificateDataSource implements PkiCertificateDataSource {
     value: unknown,
     mode: ContextModuleCalMode,
   ): value is PkiCertificateResponseDto {
-    return (
-      typeof value === "object" &&
-      value !== null &&
-      "descriptor" in value &&
-      typeof value.descriptor === "object" &&
-      value.descriptor !== null &&
-      "data" in value.descriptor &&
-      typeof value.descriptor.data === "string" &&
-      "signatures" in value.descriptor &&
-      typeof value.descriptor.signatures === "object" &&
-      value.descriptor.signatures !== null &&
-      mode in value.descriptor.signatures &&
-      typeof (value.descriptor.signatures as Record<string, unknown>)[mode] ===
-        "string"
-    );
+    if (!this.isRecord(value) || !this.isRecord(value["descriptor"])) {
+      return false;
+    }
+    const descriptor = value["descriptor"];
+    if (
+      typeof descriptor["data"] !== "string" ||
+      !this.isRecord(descriptor["signatures"])
+    ) {
+      return false;
+    }
+    return typeof descriptor["signatures"][mode] === "string";
+  }
+
+  private isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
   }
 }

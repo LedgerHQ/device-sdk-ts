@@ -1,7 +1,7 @@
 import { ContainerModule } from "inversify";
 
 import { type DmkConfig } from "@api/DmkConfig";
-import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
+import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { SetProviderUseCase } from "@internal/manager-api/use-case/SetProviderUseCase";
 import { StubUseCase } from "@root/src/di.stub";
@@ -18,7 +18,7 @@ export const managerApiModuleFactory = ({ stub, config }: FactoryProps) =>
     bind(managerApiTypes.DmkConfig).toConstantValue(config);
 
     bind(managerApiTypes.ManagerApiDataSource)
-      .to(AxiosManagerApiDataSource)
+      .to(HttpManagerApiDataSource)
       .inSingletonScope();
     bind(managerApiTypes.ManagerApiService)
       .to(DefaultManagerApiService)

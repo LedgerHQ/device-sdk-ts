@@ -1,5 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
@@ -16,6 +18,7 @@ import { type ScreenEvent } from "@root/src/domain/models/ScreenContent";
 export class SpeculosScreenReader implements ScreenReader {
   private readonly speculosUrl: string;
   private readonly logger: LoggerPublisherService;
+  private readonly http: DmkNetworkClient;
 
   constructor(
     @inject(TYPES.SpeculosConfig) config: SpeculosConfig,
@@ -24,6 +27,7 @@ export class SpeculosScreenReader implements ScreenReader {
   ) {
     this.speculosUrl = `${config.url}:${config.port}`;
     this.logger = loggerFactory("screen-reader");
+    this.http = new DmkNetworkClient();
   }
 
   /**
@@ -32,11 +36,11 @@ export class SpeculosScreenReader implements ScreenReader {
    */
   async readRawScreenEvents(): Promise<ScreenEvent[]> {
     try {
-      const response = await axios.get<{ events: ScreenEvent[] }>(
-        `${this.speculosUrl}/events?stream=false&currentscreenonly=true`,
-      );
+      const data = (await this.http.get(`${this.speculosUrl}/events`, {
+        params: { stream: false, currentscreenonly: true },
+      })) as { events: ScreenEvent[] };
 
-      const rawEvents = response.data.events || [];
+      const rawEvents = data.events || [];
 
       // Convert raw API events to domain events
       const screenEvents: ScreenEvent[] = rawEvents.map((event) => ({

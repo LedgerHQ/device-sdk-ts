@@ -8,7 +8,7 @@ import { DefaultDeviceSessionService } from "@internal/device-session/service/De
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { ListenToConnectedDeviceUseCase } from "@internal/discovery/use-case/ListenToConnectedDeviceUseCase";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
+import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -17,7 +17,7 @@ import { type SecureChannelDataSource } from "@internal/secure-channel/data/Secu
 import { DefaultSecureChannelService } from "@internal/secure-channel/service/DefaultSecureChannelService";
 import { type SecureChannelService } from "@internal/secure-channel/service/SecureChannelService";
 
-vi.mock("@internal/manager-api/data/AxiosManagerApiDataSource");
+vi.mock("@internal/manager-api/data/HttpManagerApiDataSource");
 
 let logger: LoggerPublisherService;
 let sessionService: DeviceSessionService;
@@ -34,7 +34,7 @@ describe("ListenToConnectedDevice", () => {
       [],
       "listen-to-connected-device-use-case",
     );
-    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,

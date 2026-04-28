@@ -1,5 +1,7 @@
-import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import * as fs from "fs";
 import { inject, injectable } from "inversify";
 import * as path from "path";
@@ -13,6 +15,7 @@ export class SpeculosScreenshotSaver implements ScreenshotSaver {
   private readonly speculosUrl: string;
   private readonly logger: LoggerPublisherService;
   private readonly screenshotPath: string | null;
+  private readonly http: DmkNetworkClient;
   private counter = 0;
 
   constructor(
@@ -23,6 +26,7 @@ export class SpeculosScreenshotSaver implements ScreenshotSaver {
     this.speculosUrl = `${config.url}:${config.port}`;
     this.screenshotPath = config.screenshotPath ?? null;
     this.logger = loggerFactory("screenshot-saver");
+    this.http = new DmkNetworkClient();
 
     if (config.screenshotPath && !fs.existsSync(config.screenshotPath)) {
       throw new Error(
@@ -44,12 +48,16 @@ export class SpeculosScreenshotSaver implements ScreenshotSaver {
       const filename = `screenshot_${this.counter}.png`;
       const filePath = path.join(this.screenshotPath, filename);
 
-      const response = await axios.get(`${this.speculosUrl}/screenshot`, {
-        headers: { accept: "image/png" },
-        responseType: "arraybuffer",
-      });
+      const arrayBuffer = (await this.http.get(
+        `${this.speculosUrl}/screenshot`,
+        {
+          headers: { accept: "image/png" },
+          responseType: "arrayBuffer",
+        },
+      )) as ArrayBuffer;
+      const buffer = Buffer.from(arrayBuffer);
 
-      fs.writeFileSync(filePath, response.data);
+      fs.writeFileSync(filePath, buffer);
       this.logger.info(`Saved screenshot: ${filePath}`);
 
       return filePath;

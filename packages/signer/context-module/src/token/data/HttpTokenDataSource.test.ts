@@ -1,19 +1,17 @@
-import axios from "axios";
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
 import { HttpTokenDataSource } from "@/token/data/HttpTokenDataSource";
 import { type TokenDataSource } from "@/token/data/TokenDataSource";
 import { type TokenDto } from "@/token/data/TokenDto";
-import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpTokenDataSource", () => {
   let datasource: TokenDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
 
-  beforeAll(() => {
+  beforeEach(() => {
+    vi.clearAllMocks();
     const config = {
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
@@ -21,28 +19,35 @@ describe("HttpTokenDataSource", () => {
         branch: "main",
       },
     } as ContextModuleServiceConfig;
-    datasource = new HttpTokenDataSource(config);
-    vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpTokenDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
-  it("should call axios with the ledger client version header", async () => {
+  it("should call the expected CAL tokens URL with params", async () => {
     // GIVEN
-    const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    httpMock.get.mockResolvedValue([]);
 
     // WHEN
     await datasource.getTokenInfosPayload({ address: "0x00", chainId: 1 });
 
     // THEN
-    expect(requestSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        headers: { [LEDGER_CLIENT_VERSION_HEADER]: version },
-      }),
+    expect(httpMock.get).toHaveBeenCalledWith(
+      "https://crypto-assets-service.api.ledger.com/v1/tokens",
+      {
+        params: {
+          contract_address: "0x00",
+          chain_id: 1,
+          output: "descriptor",
+          ref: "branch:main",
+        },
+      },
     );
   });
 
-  it("should return a string when axios response is correct", async () => {
+  it("should return a string when response is correct", async () => {
     // GIVEN
     const tokenDTO: TokenDto = {
       ticker: "USDC",
@@ -53,7 +58,7 @@ describe("HttpTokenDataSource", () => {
         },
       },
     };
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
+    httpMock.get.mockResolvedValue([tokenDTO]);
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -67,7 +72,7 @@ describe("HttpTokenDataSource", () => {
     );
   });
 
-  it("should return a string when axios response is correct with a prefixed ticker", async () => {
+  it("should return a string when response is correct with a prefixed ticker", async () => {
     // GIVEN
     const tokenDTO: TokenDto = {
       ticker: "tUSDC",
@@ -78,7 +83,7 @@ describe("HttpTokenDataSource", () => {
         },
       },
     };
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [tokenDTO] });
+    httpMock.get.mockResolvedValue([tokenDTO]);
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -94,7 +99,7 @@ describe("HttpTokenDataSource", () => {
 
   it("should return an error when data is empty", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+    httpMock.get.mockResolvedValue(null);
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -114,7 +119,7 @@ describe("HttpTokenDataSource", () => {
 
   it("should return undefined when no signature", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [{}] });
+    httpMock.get.mockResolvedValue([{}]);
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -134,9 +139,7 @@ describe("HttpTokenDataSource", () => {
 
   it("should return undefined when no decimals", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({
-      data: [{ live_signature: "0x0", ticker: "USDC" }],
-    });
+    httpMock.get.mockResolvedValue([{ live_signature: "0x0", ticker: "USDC" }]);
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
@@ -154,9 +157,9 @@ describe("HttpTokenDataSource", () => {
     );
   });
 
-  it("should return an error when axios throws an error", async () => {
+  it("should return an error when network client throws an error", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockRejectedValue(new Error());
+    httpMock.get.mockRejectedValue(new Error());
 
     // WHEN
     const result = await datasource.getTokenInfosPayload({
