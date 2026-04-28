@@ -1,9 +1,9 @@
 import {
   CallTaskInAppDeviceAction,
-  type DmkError,
   DeviceActionStatus,
   type DeviceManagementKit,
   type DeviceSessionId,
+  type DmkError,
   type ExecuteDeviceActionReturnType,
   type InternalApi,
   SendCommandInAppDeviceAction,
