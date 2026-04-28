@@ -5,8 +5,8 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type GetAddressTaskError } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAddressCommandResponse } from "@api/app-binder/GetAddressCommandTypes";
+import { type GetAddressTaskError } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { SendGetAddressTask } from "@internal/app-binder/task/SendGetAddressTask";
 
