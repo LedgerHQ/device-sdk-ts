@@ -56,10 +56,30 @@ export const exitMenu =
   async () =>
     await tapQuick(touch, deviceKey)({ x: 10, y: 4 });
 
+const BLIND_SIGNING_TOGGLE_COORDS = {
+  stax: { x: 88, y: 51 },
+  flex: { x: 88, y: 58 },
+  apex: { x: 88, y: 58 },
+} as const satisfies Record<string, PercentCoordinates>;
+
+type BlindSigningTouchKey = keyof typeof BLIND_SIGNING_TOGGLE_COORDS;
+
+const isBlindSigningTouchKey = (key: string): key is BlindSigningTouchKey =>
+  Object.hasOwn(BLIND_SIGNING_TOGGLE_COORDS, key);
+
+const DEFAULT_BLIND_SIGNING_TOGGLE_COORDS: PercentCoordinates = {
+  x: 88,
+  y: 51,
+};
+
 export const enableBlindSigningSettings =
   <K extends string>(touch: TouchController<K>, deviceKey: K) =>
-  async () =>
-    await tapQuick(touch, deviceKey)({ x: 88, y: 51 });
+  async () => {
+    const point = isBlindSigningTouchKey(deviceKey)
+      ? BLIND_SIGNING_TOGGLE_COORDS[deviceKey]
+      : DEFAULT_BLIND_SIGNING_TOGGLE_COORDS;
+    await tapQuick(touch, deviceKey)(point);
+  };
 
 export const continueToBlindSigning =
   <K extends string>(touch: TouchController<K>, deviceKey: K) =>

@@ -140,35 +140,60 @@ jobs:
   cs-tester:
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-ethereum-cs-tester == 'true'
-    uses: ./.github/workflows/cs-tester-reusable.yml
-    with:
-      runner: cs-tester
-      tests: '["test:raw:complete", "test:raw:multisig", "test:typed-data:multisig"]'
-      devices: '["stax", "nanox"]'
-      coin-app: Ethereum
-      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-      artifact-prefix: eth-cs-tester-logs
-      summary-prefix: "Ethereum Clear Signing Test"
-    secrets:
-      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
-      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+    name: Ethereum Clear Signing Test (${{ matrix.device }} - ${{ matrix.test }})
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox]
+        test:
+          - test:raw:complete
+          - test:raw:multisig
+          - test:typed-data:multisig
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: ${{ matrix.test }}
+          device: ${{ matrix.device }}
+          coin-app: Ethereum
+          artifact-prefix: eth-cs-tester-logs
+          summary-prefix: "Ethereum Clear Signing Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
 
   solana-cs-tester:
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
-    uses: ./.github/workflows/cs-tester-reusable.yml
-    with:
-      runner: cs-tester:solana
-      tests: '["test:solana:system-transfers", "test:solana:spl-legacy", "test:solana:spl-token2022", "test:solana:stake"]'
-      devices: '["stax", "nanox"]'
-      coin-app: Solana
-      runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-      artifact-prefix: solana-cs-tester-logs
-      summary-prefix: "Solana Fixture Test"
-    secrets:
-      GH_BOT_APP_ID: ${{ secrets.GH_BOT_APP_ID }}
-      GH_BOT_PRIVATE_KEY: ${{ secrets.GH_BOT_PRIVATE_KEY }}
-      GATING_TOKEN: ${{ secrets.GATING_TOKEN }}
-      SOLANA_LEDGER_RPC_URL: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+    name: Solana Fixture Test (${{ matrix.device }} - ${{ matrix.test }})
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox]
+        test:
+          - test:solana:system-transfers
+          - test:solana:spl-legacy
+          - test:solana:spl-token2022
+          - test:solana:stake
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester:solana
+          test: ${{ matrix.test }}
+          device: ${{ matrix.device }}
+          coin-app: Solana
+          artifact-prefix: solana-cs-tester-logs
+          summary-prefix: "Solana Fixture Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
