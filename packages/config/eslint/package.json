@@ -13,6 +13,7 @@
     "@eslint/compat": "catalog:",
     "@eslint/core": "catalog:",
     "@eslint/js": "catalog:",
+    "eslint-plugin-diff": "catalog:",
     "eslint-plugin-prettier": "catalog:",
     "eslint-plugin-react": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",

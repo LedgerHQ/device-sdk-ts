@@ -5,7 +5,10 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import eslintPluginReact from "eslint-plugin-react";
 import eslintPluginReactHooks from "eslint-plugin-react-hooks";
+import eslintPluginDiff from "eslint-plugin-diff";
 import { fixupPluginRules } from "@eslint/compat";
+
+process.env.ESLINT_PLUGIN_DIFF_COMMIT ??= "origin/develop";
 
 export default [
   {
@@ -167,6 +170,33 @@ export default [
       react: {
         version: "detect",
       },
+    },
+  },
+
+  // Diff-scoped no-magic-numbers: the `diff/diff` processor filters this
+  // override's diagnostics to lines changed vs origin/develop, so the rule
+  // only flags magic numbers in code added/modified on the current branch.
+  // Other rules are unaffected because they live in earlier config blocks
+  // without this processor.
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    ignores: ["**/*.test.ts", "**/*.test.tsx"],
+    plugins: { diff: eslintPluginDiff },
+    processor: "diff/diff",
+    rules: {
+      "no-magic-numbers": "off",
+      "@typescript-eslint/no-magic-numbers": [
+        "error",
+        {
+          ignore: [-1, 0, 1, 2],
+          ignoreArrayIndexes: true,
+          ignoreDefaultValues: true,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+        },
+      ],
     },
   },
 ];
