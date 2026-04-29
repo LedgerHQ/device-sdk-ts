@@ -5,6 +5,7 @@ import { type Either, Left, Right } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { networkTypes } from "@/network/di/networkTypes";
+import { networkClientFactory } from "@/network/networkClientFactory";
 
 import {
   type BlindSigningReporterDatasource,
@@ -15,12 +16,16 @@ import {
 export class HttpBlindSigningReporterDatasource
   implements BlindSigningReporterDatasource
 {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
     @inject(networkTypes.NetworkClient)
-    private readonly http: DmkNetworkClient,
-  ) {}
+    networkClient?: DmkNetworkClient,
+  ) {
+    this.http = networkClient ?? networkClientFactory(config);
+  }
 
   async report(params: BlindSigningReportParams): Promise<Either<Error, void>> {
     try {
