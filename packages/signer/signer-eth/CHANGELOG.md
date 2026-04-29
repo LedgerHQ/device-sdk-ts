@@ -1,5 +1,19 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.15.0
+
+### Minor Changes
+
+- [#1450](https://github.com/LedgerHQ/device-sdk-ts/pull/1450) [`8a44481`](https://github.com/LedgerHQ/device-sdk-ts/commit/8a44481eefe12797a03c7c44cfb6a64fbea7ae1d) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add AccountOwnership context loader for Concordium on-device address verification via trusted metadata service
+
+### Patch Changes
+
+- [#1446](https://github.com/LedgerHQ/device-sdk-ts/pull/1446) [`5e812cf`](https://github.com/LedgerHQ/device-sdk-ts/commit/5e812cf549ac67d0528d3eebd102581fe3187835) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Align Ethereum device action error typing with the DMK task result error contract.
+
+- Updated dependencies [[`c428276`](https://github.com/LedgerHQ/device-sdk-ts/commit/c42827651315a343eee47061c9751d30c4c379b8), [`c371e43`](https://github.com/LedgerHQ/device-sdk-ts/commit/c371e435f066346af656ffe8a0f5a2dcba26eee4), [`106a40f`](https://github.com/LedgerHQ/device-sdk-ts/commit/106a40f18f93d04b0eb2646e4b0f5af748df16d6), [`2d4950f`](https://github.com/LedgerHQ/device-sdk-ts/commit/2d4950f73e2fdb988c1d40a57f5813863457acf2), [`b473783`](https://github.com/LedgerHQ/device-sdk-ts/commit/b4737837cb50a260ff94b0745da3a288a1222999), [`006b63d`](https://github.com/LedgerHQ/device-sdk-ts/commit/006b63da567101999284691e15ed4d49473540e7), [`36105c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/36105c4b319e9be5983958bed4031efdddefca01), [`99734ee`](https://github.com/LedgerHQ/device-sdk-ts/commit/99734ee385bcf94aa5b1b38879cd0bc1a28fa031), [`fc8c132`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc8c132c59e5e0aaa3a9c2563006c32f7093ba34), [`3a86e5c`](https://github.com/LedgerHQ/device-sdk-ts/commit/3a86e5c7d2b33c054344bb2ec79261cc49a2b919)]:
+  - @ledgerhq/context-module@1.17.0
+  - @ledgerhq/device-management-kit@1.3.0
+
 ## 1.14.0
 
 ### Minor Changes

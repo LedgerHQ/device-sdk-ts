@@ -1,5 +1,0 @@
----
-"@ledgerhq/context-module": minor
----
-
-Add AccountOwnership context loader for Concordium on-device address verification via trusted metadata service
