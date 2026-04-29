@@ -4,8 +4,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 
 import { type StateHandler, type StateHandlerResult } from "./StateHandler";
@@ -27,9 +26,7 @@ export class ErrorStateHandler implements StateHandler {
     this.logger = this.loggerFactory("error-state-handler");
   }
 
-  async handle(ctx: {
-    input: TransactionInput | TypedDataInput;
-  }): Promise<StateHandlerResult> {
+  async handle(ctx: { input: SignableInput }): Promise<StateHandlerResult> {
     this.logger.debug("Error state handler", {
       data: { ctx: JSON.stringify(ctx) },
     });

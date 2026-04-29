@@ -4,8 +4,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 
@@ -33,9 +32,7 @@ export class CompleteStateHandler implements StateHandler {
     this.logger = this.loggerFactory("complete-state-handler");
   }
 
-  async handle(ctx: {
-    input: TransactionInput | TypedDataInput;
-  }): Promise<StateHandlerResult> {
+  async handle(ctx: { input: SignableInput }): Promise<StateHandlerResult> {
     this.logger.debug("Complete state handler", {
       data: { ctx },
     });

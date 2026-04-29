@@ -1,18 +1,15 @@
 import { gt } from "semver";
 
-import { InvalidStatusWordError } from "@api/command/Errors";
-import {
-  type CommandResult,
-  CommandResultFactory,
-  isSuccessCommandResult,
-} from "@api/command/model/CommandResult";
+import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import { ListLanguagePackCommand } from "@api/command/os/ListLanguagePackCommand";
 import type { InternalApi } from "@api/device-action/DeviceAction";
+import { GetApplicationsMetadataTaskError } from "@api/device-action/task/Errors";
 import {
   type Catalog,
   type FirmwareVersion,
   type InstalledLanguagePackage,
 } from "@api/device-session/DeviceSessionState";
+import { type DmkResult, DmkResultFactory } from "@api/model/DmkResult";
 import { type Application } from "@internal/manager-api/model/Application";
 import { type DeviceVersion } from "@internal/manager-api/model/Device";
 import { type FinalFirmware } from "@internal/manager-api/model/Firmware";
@@ -30,12 +27,17 @@ export type GetApplicationsMetadataTaskArgs = {
   installedApps: InstalledApp[];
 };
 
-export type GetApplicationsMetadataTaskResult = CommandResult<{
+export type GetApplicationsMetadataTaskResponse = {
   applications: Application[];
   applicationsUpdates: Application[];
   installedLanguages: InstalledLanguagePackage[];
   catalog: Catalog;
-}>;
+};
+
+export type GetApplicationsMetadataTaskResult = DmkResult<
+  GetApplicationsMetadataTaskResponse,
+  GetApplicationsMetadataTaskError
+>;
 
 const ZERO_HASH =
   "0000000000000000000000000000000000000000000000000000000000000000";
@@ -61,8 +63,10 @@ export class GetApplicationsMetadataTask {
           .map((catalog) => ({ applications, catalog })),
       );
     if (result.isLeft()) {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Cannot get the application catalog"),
+      return DmkResultFactory({
+        error: new GetApplicationsMetadataTaskError(
+          "Cannot get the application catalog",
+        ),
       });
     }
     const { applications, catalog } = result.unsafeCoerce();
@@ -111,7 +115,7 @@ export class GetApplicationsMetadataTask {
     );
     if (languages.isRight()) {
       // Return the application metadata
-      return CommandResultFactory({
+      return DmkResultFactory({
         data: {
           applications: appsWithMetadata,
           applicationsUpdates: filteredCatalog,
@@ -123,8 +127,10 @@ export class GetApplicationsMetadataTask {
         },
       });
     } else {
-      return CommandResultFactory({
-        error: new InvalidStatusWordError("Cannot get the languages catalog"),
+      return DmkResultFactory({
+        error: new GetApplicationsMetadataTaskError(
+          "Cannot get the languages catalog",
+        ),
       });
     }
   }

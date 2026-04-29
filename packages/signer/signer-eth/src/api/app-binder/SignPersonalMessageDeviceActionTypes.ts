@@ -1,7 +1,7 @@
 import {
+  type CallTaskInAppDAError,
   type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
-  type OpenAppDAError,
   type OpenAppDARequiredInteraction,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -11,11 +11,12 @@ import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErr
 
 export type SignPersonalMessageDAOutput = Signature;
 
+export type SignPersonalMessageTaskError =
+  CommandErrorResult<EthErrorCodes>["error"];
 export type SignPersonalMessageDAError =
-  | OpenAppDAError
-  | CommandErrorResult<EthErrorCodes>["error"];
+  CallTaskInAppDAError<SignPersonalMessageTaskError>;
 
-type SignPersonalMessageDARequiredInteraction =
+export type SignPersonalMessageDARequiredInteraction =
   | OpenAppDARequiredInteraction
   | UserInteractionRequired.SignPersonalMessage;
 

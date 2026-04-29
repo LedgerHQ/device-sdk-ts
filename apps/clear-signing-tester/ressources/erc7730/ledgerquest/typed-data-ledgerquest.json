@@ -1,0 +1,32 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "LedgerQuest",
+        "version": "1",
+        "chainId": 137,
+        "verifyingContract": "0x33c6eec1723b12c46732f7ab41398de45641fa42"
+      },
+      "primaryType": "mint",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "mint": [
+          { "name": "receiver", "type": "address" },
+          { "name": "categoryId", "type": "uint256" },
+          { "name": "collectionId", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "receiver": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "categoryId": "1",
+        "collectionId": "42"
+      }
+    },
+    "description": "LedgerQuest: Mint"
+  }
+]

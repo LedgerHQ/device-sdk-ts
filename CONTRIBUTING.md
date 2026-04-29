@@ -78,7 +78,7 @@ We use [**changesets**](https://github.com/changesets/changesets) to handle the 
 
 Run `pnpm changeset` to create a changeset interactively. You will be prompted to:
 
-- Select the affected package(s)
+- Select the affected package (one package per changeset)
 - Choose the version bump type:
   - **patch** - Bug fixes or minor, non-breaking modifications
   - **minor** - New features, additions, or improvements
@@ -87,7 +87,7 @@ Run `pnpm changeset` to create a changeset interactively. You will be prompted t
 
 **Guidelines:**
 
-- Prefer a single changeset per package per PR
+- Each changeset must affect only one package; create separate changesets for separate packages
 - Each changeset should be concise and focused on a specific purpose
 - Changesets are required for published packages, not for apps or internal tooling
 

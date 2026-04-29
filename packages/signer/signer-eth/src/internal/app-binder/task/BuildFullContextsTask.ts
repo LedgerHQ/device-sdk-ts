@@ -34,6 +34,7 @@ import {
 export type BuildFullContextsTaskResult = {
   readonly clearSignContexts: ContextWithSubContexts[];
   readonly clearSigningType: ClearSigningType;
+  readonly contextErrorCount: number;
 };
 
 export type BuildFullContextsTaskArgs = {
@@ -79,8 +80,12 @@ export class BuildFullContextsTask {
     this._logger.debug("[run] Starting BuildFullContextsTask");
 
     // get the base contexts
-    const { clearSignContexts, clearSigningType, clearSignContextsOptional } =
-      await this._buildBaseContextsTaskFactory(this._api, this._args).run();
+    const {
+      clearSignContexts,
+      clearSigningType,
+      clearSignContextsOptional,
+      contextErrorCount,
+    } = await this._buildBaseContextsTaskFactory(this._api, this._args).run();
 
     this._logger.debug("[run] Base contexts built", {
       data: {
@@ -163,6 +168,7 @@ export class BuildFullContextsTask {
     return {
       clearSignContexts: contextWithNestedContexts,
       clearSigningType,
+      contextErrorCount,
     };
   }
 }

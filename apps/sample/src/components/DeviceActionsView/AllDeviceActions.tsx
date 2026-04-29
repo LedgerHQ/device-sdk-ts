@@ -60,8 +60,16 @@ import {
   type UninstallAppDAOutput,
   UninstallAppDeviceAction,
 } from "@ledgerhq/device-management-kit";
+import {
+  type BackupDAError,
+  type BackupDAInput,
+  type BackupDAIntermediateValue,
+  type BackupDAOutput,
+  BackupDeviceAction,
+} from "@ledgerhq/dmk-ledger-wallet";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { LocalStorage } from "@/utils/os-update/localStorage";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
 import { type DeviceActionProps } from "./DeviceActionTester";
@@ -391,6 +399,40 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         UninstallAppDAInput,
         UninstallAppDAError,
         UninstallAppDAIntermediateValue
+      >,
+      {
+        title: `${SECURE_CHANNEL_ICON} OS Update Backup`,
+        description:
+          "Perform all the actions necessary to backup the device data before an OS update",
+        executeDeviceAction: (
+          { isDeviceOnboarded, deviceId, unlockTimeout },
+          inspect,
+        ) => {
+          const deviceAction = new BackupDeviceAction({
+            input: {
+              isDeviceOnboarded,
+              deviceId,
+              storage: new LocalStorage(),
+              unlockTimeout,
+            },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: {
+          isDeviceOnboarded: true,
+          deviceId: "12345",
+          unlockTimeout: UNLOCK_TIMEOUT,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        BackupDAOutput,
+        Omit<BackupDAInput, "storage">,
+        BackupDAError,
+        BackupDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],

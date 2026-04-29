@@ -1,24 +1,23 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 import {
   GetNftInformationsParams,
   GetSetPluginPayloadParams,
   NftDataSource,
 } from "@/nft/data/NftDataSource";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 @injectable()
 export class HttpNftDataSource implements NftDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   public async getSetPluginPayload({
@@ -27,17 +26,12 @@ export class HttpNftDataSource implements NftDataSource {
     selector,
   }: GetSetPluginPayloadParams): Promise<Either<Error, string>> {
     try {
-      const response = await axios.request<{ payload: string }>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contracts/${address}/plugin-selector/${selector}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
+      const data = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contracts/${address}/plugin-selector/${selector}`,
+      )) as { payload: string };
 
-      return response.data.payload
-        ? Right(response.data.payload)
+      return data.payload
+        ? Right(data.payload)
         : Left(
             new Error(
               "[ContextModule] HttpNftDataSource: unexpected empty response",
@@ -57,17 +51,12 @@ export class HttpNftDataSource implements NftDataSource {
     address,
   }: GetNftInformationsParams): Promise<Either<Error, string>> {
     try {
-      const response = await axios.request<{ payload: string }>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contracts/${address}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
+      const data = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v1/ethereum/${chainId}/contracts/${address}`,
+      )) as { payload: string };
 
-      return response.data.payload
-        ? Right(response.data.payload)
+      return data.payload
+        ? Right(data.payload)
         : Left(new Error("[ContextModule] HttpNftDataSource: no nft metadata"));
     } catch (_error) {
       return Left(

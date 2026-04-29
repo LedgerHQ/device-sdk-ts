@@ -27,6 +27,7 @@ import {
 import { Just, Maybe, Nothing } from "purify-ts";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
 import {
   NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
@@ -77,7 +78,14 @@ export type ProvideEIP712ContextTaskArgs = {
   domain: Array<TypedDataValue>;
   message: Array<TypedDataValue>;
   clearSignContext: Maybe<TypedDataClearSignContextSuccess>;
-  calldatasContexts: Record<TypedDataCalldataIndex, ContextWithSubContexts[]>;
+  calldatasPreContexts: Record<
+    TypedDataCalldataIndex,
+    ContextWithSubContexts[]
+  >;
+  calldatasPostContexts: Record<
+    TypedDataCalldataIndex,
+    ContextWithSubContexts[]
+  >;
   additionalContexts: ClearSignContextSuccess[];
   loggerFactory: (tag: string) => LoggerPublisherService;
 };
@@ -91,7 +99,7 @@ type DeviceAssetIndexes = {
 
 type CalldataFiltersMetadata = {
   remainingFilters: number;
-  contexts?: ContextWithSubContexts[];
+  postContexts?: ContextWithSubContexts[];
 };
 
 export class ProvideEIP712ContextTask {
@@ -129,11 +137,15 @@ export class ProvideEIP712ContextTask {
       await this.provideContext(context);
     }
 
-    // Send proxy descriptor first if required
+    // Send proxy descriptor from clear sign context only if not already
+    // provided via additionalContexts (which uses a fresh challenge).
+    const alreadyProvidedProxy = this.args.additionalContexts.some(
+      (c) => c.type === ClearSignContextType.PROXY_INFO,
+    );
     const proxyContext:
       | ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>
       | undefined = this.args.clearSignContext.extract()?.proxy;
-    if (proxyContext !== undefined) {
+    if (proxyContext !== undefined && !alreadyProvidedProxy) {
       await this.provideContext(proxyContext);
     }
 
@@ -361,6 +373,16 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
+      case ClearSignContextType.GATED_SIGNING:
+        await new SendPayloadInChunksTask(this.api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideGatedSigningCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+        break;
       case ClearSignContextType.TOKEN:
       case ClearSignContextType.NFT:
       case ClearSignContextType.TRUSTED_NAME:
@@ -371,6 +393,7 @@ export class ProvideEIP712ContextTask {
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         throw new Error(
           `Context type ${type} not supported in EIP712 messages`,
         );
@@ -674,9 +697,20 @@ export class ProvideEIP712ContextTask {
           TypedDataCalldataParamPresence.Present,
       ];
       const filtersCount = filtersPresence.filter((f) => f).length;
+
+      const preContexts = this.args.calldatasPreContexts[calldataIndex];
+
+      if (preContexts?.length) {
+        await this.provideContextFactory({
+          contexts: preContexts,
+          derivationPath: this.args.derivationPath,
+          loggerFactory: this.args.loggerFactory,
+        }).run();
+      }
+
       this.calldataMetadatas[calldataIndex] = {
         remainingFilters: filtersCount - 1, // Minus 1 since a filter is already being sent
-        contexts: this.args.calldatasContexts[calldataIndex],
+        postContexts: this.args.calldatasPostContexts[calldataIndex],
       };
 
       // provide the transaction infos filter
@@ -708,11 +742,9 @@ export class ProvideEIP712ContextTask {
     for (const calldataIndex in this.calldataMetadatas) {
       const metadata = this.calldataMetadatas[calldataIndex]!;
       if (metadata.remainingFilters === 0) {
-        // All the filters and implementations were sent for that TX,
-        // the related clear sign contexts should now be provided
-        if (metadata.contexts !== undefined) {
+        if (metadata.postContexts?.length) {
           await this.provideContextFactory({
-            contexts: metadata.contexts,
+            contexts: metadata.postContexts,
             derivationPath: this.args.derivationPath,
             loggerFactory: this.args.loggerFactory,
           }).run();

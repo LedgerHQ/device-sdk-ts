@@ -34,6 +34,7 @@ import {
   type InstallOrUpdateAppsDAInput,
   type InstallOrUpdateAppsDAIntermediateValue,
   type InstallOrUpdateAppsDAOutput,
+  installOrUpdateAppsDAStateStep,
 } from "./types";
 
 type InstallOrUpdateAppsMachineInternalState = {
@@ -169,6 +170,7 @@ export class InstallOrUpdateAppsDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: installOrUpdateAppsDAStateStep.UPDATE_DEVICE_METADATA,
             installPlan: null,
           },
           _internalState: {

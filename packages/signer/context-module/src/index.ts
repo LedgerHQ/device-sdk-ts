@@ -1,7 +1,20 @@
+export * from "./account-ownership/data/AccountOwnershipDataSource";
+export * from "./account-ownership/data/AccountOwnershipError";
+export * from "./account-ownership/data/HttpAccountOwnershipDataSource";
+export * from "./account-ownership/domain/AccountOwnershipContextLoader";
 export * from "./calldata/data/CalldataDescriptorDataSource";
 export * from "./calldata/data/HttpCalldataDescriptorDataSource";
 export * from "./calldata/domain/CalldataContextLoader";
-export * from "./config/model/ContextModuleConfig";
+export type {
+  ContextModuleCalBranch,
+  ContextModuleCalConfig,
+  ContextModuleCalMode,
+  ContextModuleConfig,
+  ContextModuleDatasourceConfig,
+  ContextModuleMetadataServiceConfig,
+  ContextModuleReporterConfig,
+  ContextModuleWeb3ChecksConfig,
+} from "./config/model/ContextModuleConfig";
 export * from "./ContextModule";
 export * from "./ContextModuleBuilder";
 export * from "./DefaultContextModule";
@@ -12,6 +25,10 @@ export * from "./dynamic-network/model/DynamicNetworkConfiguration";
 export * from "./external-plugin/data/ExternalPluginDataSource";
 export * from "./external-plugin/data/HttpExternalPluginDataSource";
 export * from "./external-plugin/domain/ExternalPluginContextLoader";
+export * from "./gated-signing/data/GatedDescriptorDataSource";
+export * from "./gated-signing/data/HttpGatedDescriptorDataSource";
+export * from "./gated-signing/domain/GatedSigningContextLoader";
+export * from "./gated-signing/domain/GatedSigningTypedDataContextLoader";
 export * from "./nft/data/HttpNftDataSource";
 export * from "./nft/data/NftDataSource";
 export * from "./nft/domain/NftContextFieldLoader";
@@ -28,6 +45,12 @@ export * from "./proxy/data/HttpProxyDataSource";
 export * from "./proxy/data/HttpSafeProxyDataSource";
 export * from "./proxy/data/ProxyDataSource";
 export * from "./proxy/domain/ProxyContextFieldLoader";
+export * from "./reporter/data/BlindSigningReporterDatasource";
+export * from "./reporter/data/HttpBlindSigningReporterDatasource";
+export * from "./reporter/domain/BlindSigningReporter";
+export * from "./reporter/domain/DefaultBlindSigningReporter";
+export * from "./reporter/model/BlindSigningEvent";
+export * from "./reporter/model/BlindSigningModelId";
 export * from "./shared/domain/ContextFieldLoader";
 export * from "./shared/domain/ContextLoader";
 export * from "./shared/model/ClearSignContext";
@@ -53,6 +76,7 @@ export * from "./typed-data/data/HttpTypedDataDataSource";
 export * from "./typed-data/data/TypedDataDataSource";
 export * from "./typed-data/domain/DefaultTypedDataContextLoader";
 export * from "./typed-data/domain/TypedDataContextLoader";
+export * from "./typed-data/utils/getSchemaHash";
 export * from "./uniswap/data/AbiDecoderDataSource";
 export * from "./uniswap/data/CommandDecoderDataSource";
 export * from "./uniswap/data/DefaultCommandDecoderDataSource";

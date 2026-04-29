@@ -38,6 +38,8 @@ import { type ValueParser } from "@internal/psbt/service/value/ValueParser";
 import { type WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import { type WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
+import { APP_NAME } from "./constants";
+
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
   info: vi.fn(),
@@ -177,7 +179,7 @@ describe("BtcAppBinder", () => {
           deviceAction: expect.objectContaining({
             input: {
               command: new GetExtendedPublicKeyCommand(params),
-              appName: "Bitcoin",
+              appName: APP_NAME,
               requiredUserInteraction: UserInteractionRequired.VerifyAddress,
               skipOpenApp: false,
             },
@@ -212,7 +214,7 @@ describe("BtcAppBinder", () => {
           deviceAction: expect.objectContaining({
             input: {
               command: new GetExtendedPublicKeyCommand(params),
-              appName: "Bitcoin",
+              appName: APP_NAME,
               requiredUserInteraction: UserInteractionRequired.None,
               skipOpenApp: false,
             },
@@ -318,7 +320,7 @@ describe("BtcAppBinder", () => {
         deviceAction: expect.objectContaining({
           input: {
             command: new GetMasterFingerprintCommand(),
-            appName: "Bitcoin",
+            appName: APP_NAME,
             requiredUserInteraction: UserInteractionRequired.None,
             skipOpenApp: false,
           },
@@ -351,7 +353,7 @@ describe("BtcAppBinder", () => {
         deviceAction: expect.objectContaining({
           input: {
             command: new GetMasterFingerprintCommand(),
-            appName: "Bitcoin",
+            appName: APP_NAME,
             requiredUserInteraction: UserInteractionRequired.None,
             skipOpenApp: true,
           },

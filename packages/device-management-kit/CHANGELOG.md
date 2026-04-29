@@ -1,5 +1,39 @@
 # @ledgerhq/device-management-kit
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1400](https://github.com/LedgerHQ/device-sdk-ts/pull/1400) [`006b63d`](https://github.com/LedgerHQ/device-sdk-ts/commit/006b63da567101999284691e15ed4d49473540e7) Thanks [@benruseau](https://github.com/benruseau)! - Add backup app storage task
+
+- [#1411](https://github.com/LedgerHQ/device-sdk-ts/pull/1411) [`36105c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/36105c4b319e9be5983958bed4031efdddefca01) Thanks [@benruseau](https://github.com/benruseau)! - Add KeyValueStorage contract
+
+- [#1334](https://github.com/LedgerHQ/device-sdk-ts/pull/1334) [`c428276`](https://github.com/LedgerHQ/device-sdk-ts/commit/c42827651315a343eee47061c9751d30c4c379b8) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Add DmkNetworkClient HTTP client abstraction and migrate manager API data source to use it
+
+### Patch Changes
+
+- [#1441](https://github.com/LedgerHQ/device-sdk-ts/pull/1441) [`99734ee`](https://github.com/LedgerHQ/device-sdk-ts/commit/99734ee385bcf94aa5b1b38879cd0bc1a28fa031) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Remove battery-specific command result errors and use `InvalidResponseFormatError` for battery response parsing failures.
+
+- [#1358](https://github.com/LedgerHQ/device-sdk-ts/pull/1358) [`fc8c132`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc8c132c59e5e0aaa3a9c2563006c32f7093ba34) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - deduplicate repeated state logs, log terminal states, include intermediateValue in debug output
+
+- [#1446](https://github.com/LedgerHQ/device-sdk-ts/pull/1446) [`3a86e5c`](https://github.com/LedgerHQ/device-sdk-ts/commit/3a86e5c7d2b33c054344bb2ec79261cc49a2b919) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Introduce `DmkResult` as a generic base result abstraction and move task-specific firmware metadata errors out of `CommandResult`.
+
+Code that constructs `CommandResultFactory` with `InvalidGetFirmwareMetadataResponseError` will now fail at the type level. Non-command flows should use `DmkResultFactory` instead.
+
+## 1.2.0
+
+### Minor Changes
+
+- [#1338](https://github.com/LedgerHQ/device-sdk-ts/pull/1338) [`09b2291`](https://github.com/LedgerHQ/device-sdk-ts/commit/09b2291bd8883697788606465f0fe41929671b94) Thanks [@sprohaszka-ledger](https://github.com/sprohaszka-ledger)! - Add allowMissingApplication parameters for OpenAppDA (for test purpose)
+
+- [#1160](https://github.com/LedgerHQ/device-sdk-ts/pull/1160) [`4dab467`](https://github.com/LedgerHQ/device-sdk-ts/commit/4dab467e3db460c4b47cf5ec38f72e65dcf86b49) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add OS device actions intermediate steps
+
+### Patch Changes
+
+- [#1165](https://github.com/LedgerHQ/device-sdk-ts/pull/1165) [`a2fb7f8`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fb7f83bc45e6c4c3fdacbd91f67d962960a595) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add bufferToBase64String util
+
+- [#1327](https://github.com/LedgerHQ/device-sdk-ts/pull/1327) [`0ffd62d`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ffd62da50e41a6725cde92dd67ff73448a3ecb7) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix GetAddress device action return type to use CallTaskInAppDA types instead of SendCommandInAppDA types
+
 ## 1.1.0
 
 ### Minor Changes

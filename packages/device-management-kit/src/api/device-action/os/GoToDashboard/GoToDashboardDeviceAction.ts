@@ -26,11 +26,12 @@ import {
 } from "@api/device-session/DeviceSessionState";
 import { isDashboardName } from "@api/utils/AppName";
 
-import type {
-  GoToDashboardDAError,
-  GoToDashboardDAInput,
-  GoToDashboardDAIntermediateValue,
-  GoToDashboardDAOutput,
+import {
+  type GoToDashboardDAError,
+  type GoToDashboardDAInput,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDAOutput,
+  goToDashboardDAStateStep,
 } from "./types";
 
 type GoToDashboardMachineInternalState = {
@@ -136,6 +137,7 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: goToDashboardDAStateStep.GET_DEVICE_STATUS,
           },
           _internalState: {
             currentApp:
@@ -225,6 +227,10 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
                   ..._.context._internalState,
                   error: new UnknownDAError("currentApp === null"),
                 }),
+                intermediateValue: (_) => ({
+                  requiredUserInteraction: UserInteractionRequired.None,
+                  step: goToDashboardDAStateStep.DASHBOARD_CHECK,
+                }),
               }),
             },
             {
@@ -247,6 +253,10 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
                     error: _.event.output.error,
                   };
                 },
+                intermediateValue: (_) => ({
+                  requiredUserInteraction: UserInteractionRequired.None,
+                  step: goToDashboardDAStateStep.CLOSE_APP,
+                }),
               }),
             },
             onError: {
@@ -296,6 +306,10 @@ export class GoToDashboardDeviceAction extends XStateDeviceAction<
                     error: _.event.output.error,
                   };
                 },
+                intermediateValue: (_) => ({
+                  requiredUserInteraction: UserInteractionRequired.None,
+                  step: goToDashboardDAStateStep.CONFIRM_DASHBOARD_OPEN,
+                }),
               }),
             },
           },

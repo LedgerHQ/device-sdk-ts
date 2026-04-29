@@ -54,7 +54,13 @@ export function getTransportFactoriesForConfig(
   switch (transportConfig.type) {
     case "speculos":
       return {
-        factories: [speculosTransportFactory(transportConfig.url)],
+        factories: [
+          speculosTransportFactory(
+            transportConfig.url,
+            false,
+            transportConfig.deviceModelId,
+          ),
+        ],
       };
     case "mockserver":
       return {

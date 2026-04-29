@@ -6,6 +6,7 @@ import {
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
+  ApplicationChecker,
   DeviceModelId,
   type DeviceSessionState,
   type InternalApi,
@@ -16,7 +17,11 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { ClearSigningType } from "@api/model/ClearSigningType";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { ApplicationChecker } from "@internal/shared/utils/ApplicationChecker";
+import { EthereumApplicationResolver } from "@internal/app-binder/EthereumApplicationResolver";
+import {
+  MIN_ETH_APP_VERSION_FOR_GATED_SIGNING,
+  MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER,
+} from "@internal/shared/EthAppVersions";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.TRUSTED_NAME,
@@ -39,12 +44,14 @@ export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.NFT,
   ClearSignContextType.PLUGIN,
   ClearSignContextType.EXTERNAL_PLUGIN,
+  ClearSignContextType.GATED_SIGNING,
 ];
 
 export type BuildBaseContextsResult = {
   readonly clearSignContexts: ClearSignContextSuccess[];
   readonly clearSignContextsOptional: ClearSignContextSuccess[];
   readonly clearSigningType: ClearSigningType;
+  readonly contextErrorCount: number;
 };
 
 export type BuildBaseContextsArgs = {
@@ -102,22 +109,41 @@ export class BuildBaseContexts {
       );
 
     // filter out the error contexts
+    const contextErrorCount = clearSignContexts.filter(
+      (context) => context.type === ClearSignContextType.ERROR,
+    ).length;
     const contextsSuccess: ClearSignContextSuccess[] = clearSignContexts.filter(
       (context) => context.type !== ClearSignContextType.ERROR,
     );
 
+    // Remove gating contexts when app does not support them
+    const supportsGatedSigning = new ApplicationChecker(
+      deviceState,
+      appConfig,
+      new EthereumApplicationResolver(),
+    )
+      .withMinVersionInclusive(MIN_ETH_APP_VERSION_FOR_GATED_SIGNING)
+      .excludeDeviceModel(DeviceModelId.NANO_S)
+      .check();
+    const contextsForSigning = supportsGatedSigning
+      ? contextsSuccess
+      : contextsSuccess.filter(
+          (context) => context.type !== ClearSignContextType.GATED_SIGNING,
+        );
+
     if (
       this._supportsGenericParser(deviceState, appConfig) &&
-      this._hasValidTransactionInfo(contextsSuccess)
+      this._hasValidTransactionInfo(contextsForSigning)
     ) {
-      return this._getERC7730Contexts(contextsSuccess);
+      return this._getERC7730Contexts(contextsForSigning, contextErrorCount);
     } else {
-      return this._getBasicContexts(contextsSuccess);
+      return this._getBasicContexts(contextsForSigning, contextErrorCount);
     }
   }
 
   private _getERC7730Contexts(
     contexts: ClearSignContextSuccess[],
+    contextErrorCount: number,
   ): BuildBaseContextsResult {
     const clearSignContexts: ClearSignContextSuccess[] = contexts
       .filter((context) => this._isContextNeededForERC7730ClearSigning(context))
@@ -132,11 +158,13 @@ export class BuildBaseContexts {
       clearSignContexts,
       clearSignContextsOptional,
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount,
     };
   }
 
   private _getBasicContexts(
     contexts: ClearSignContextSuccess[],
+    contextErrorCount: number,
   ): BuildBaseContextsResult {
     const clearSignContexts: ClearSignContextSuccess[] = contexts
       .filter((context) => this._isContextNeededForBasicClearSigning(context))
@@ -148,6 +176,7 @@ export class BuildBaseContexts {
       clearSignContexts,
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount,
     };
   }
 
@@ -163,13 +192,15 @@ export class BuildBaseContexts {
       case ClearSignContextType.TRUSTED_NAME:
       case ClearSignContextType.TOKEN:
       case ClearSignContextType.NFT:
+      case ClearSignContextType.GATED_SIGNING:
+      case ClearSignContextType.PROXY_INFO:
         return true;
       case ClearSignContextType.TRANSACTION_INFO:
       case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ENUM:
-      case ClearSignContextType.PROXY_INFO:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -188,6 +219,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
       case ClearSignContextType.TRANSACTION_CHECK:
+      case ClearSignContextType.GATED_SIGNING:
         return true;
       case ClearSignContextType.ENUM: // enum is needed but as optional
       case ClearSignContextType.TRUSTED_NAME:
@@ -197,6 +229,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.EXTERNAL_PLUGIN:
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -219,8 +252,12 @@ export class BuildBaseContexts {
     deviceState: DeviceSessionState,
     appConfig: GetConfigCommandResponse,
   ): boolean {
-    return new ApplicationChecker(deviceState, appConfig)
-      .withMinVersionExclusive("1.14.0")
+    return new ApplicationChecker(
+      deviceState,
+      appConfig,
+      new EthereumApplicationResolver(),
+    )
+      .withMinVersionExclusive(MIN_ETH_APP_VERSION_FOR_GENERIC_PARSER)
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
   }
@@ -234,11 +271,13 @@ export class BuildBaseContexts {
    */
   private _getContextPriority({ type }: ClearSignContextSuccess): number {
     switch (type) {
+      case ClearSignContextType.PROXY_INFO:
+        return 5;
       case ClearSignContextType.TRANSACTION_CHECK:
+      case ClearSignContextType.GATED_SIGNING:
         return 10;
       case ClearSignContextType.DYNAMIC_NETWORK:
       case ClearSignContextType.DYNAMIC_NETWORK_ICON:
-      case ClearSignContextType.PROXY_INFO:
         return 30;
       case ClearSignContextType.TRANSACTION_INFO:
         return 50;
@@ -254,6 +293,7 @@ export class BuildBaseContexts {
       /* not used here */
       case ClearSignContextType.SAFE:
       case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return 90;
 
       default: {

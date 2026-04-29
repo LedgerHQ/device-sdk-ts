@@ -1,0 +1,93 @@
+name: "Slack Notify"
+description: "Post a workflow run status notification to Slack. No-op when SLACK_BOT_TOKEN or SLACK_CHANNEL_ID are not provided."
+
+inputs:
+  slack-bot-token:
+    description: "Slack bot OAuth token (xoxb-...). Notification is skipped when empty."
+    required: false
+    default: ""
+  slack-channel-id:
+    description: "Target Slack channel ID. Notification is skipped when empty."
+    required: false
+    default: ""
+  title:
+    description: "Notification title (defaults to the current workflow name)."
+    required: false
+    default: ""
+  results:
+    description: "Comma-separated job results (typically join(needs.*.result, ',')). Used to derive the overall status."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Skip if Slack secrets are not configured
+      id: guard
+      shell: bash
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
+        SLACK_CHANNEL_ID: ${{ inputs.slack-channel-id }}
+      run: |
+        if [ -z "$SLACK_BOT_TOKEN" ] || [ -z "$SLACK_CHANNEL_ID" ]; then
+          echo "enabled=false" >> "$GITHUB_OUTPUT"
+          echo "Slack secrets not provided, skipping notification."
+        else
+          echo "enabled=true" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Compute status
+      if: steps.guard.outputs.enabled == 'true'
+      id: status
+      shell: bash
+      env:
+        RESULTS: ${{ inputs.results }}
+      run: |
+        if [[ "$RESULTS" == *"failure"* ]]; then
+          echo "emoji=:x:" >> "$GITHUB_OUTPUT"
+          echo "label=Failure" >> "$GITHUB_OUTPUT"
+        elif [[ "$RESULTS" == *"cancelled"* ]]; then
+          echo "emoji=:black_square_for_stop:" >> "$GITHUB_OUTPUT"
+          echo "label=Cancelled" >> "$GITHUB_OUTPUT"
+        elif [[ "$RESULTS" == *"success"* ]]; then
+          echo "emoji=:white_check_mark:" >> "$GITHUB_OUTPUT"
+          echo "label=Success" >> "$GITHUB_OUTPUT"
+        else
+          echo "emoji=:warning:" >> "$GITHUB_OUTPUT"
+          echo "label=$RESULTS" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Resolve title
+      if: steps.guard.outputs.enabled == 'true'
+      id: title
+      shell: bash
+      env:
+        INPUT_TITLE: ${{ inputs.title }}
+        WORKFLOW: ${{ github.workflow }}
+      run: |
+        if [ -n "$INPUT_TITLE" ]; then
+          echo "value=$INPUT_TITLE" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=$WORKFLOW" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Post to Slack
+      if: steps.guard.outputs.enabled == 'true'
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        method: chat.postMessage
+        token: ${{ inputs.slack-bot-token }}
+        payload: |
+          channel: "${{ inputs.slack-channel-id }}"
+          text: "${{ steps.status.outputs.emoji }} ${{ steps.title.outputs.value }}: ${{ steps.status.outputs.label }}"
+          blocks:
+            - type: section
+              text:
+                type: mrkdwn
+                text: "${{ steps.status.outputs.emoji }} *${{ steps.title.outputs.value }}* — *${{ steps.status.outputs.label }}*\n*Repo:* `${{ github.repository }}`\n*Branch:* `${{ github.ref_name }}`"
+            - type: actions
+              elements:
+                - type: button
+                  text:
+                    type: plain_text
+                    text: "View workflow run"
+                  url: "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

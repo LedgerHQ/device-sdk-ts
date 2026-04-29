@@ -18,13 +18,14 @@ export class SignMessageUseCase {
 
   execute(
     derivationPath: string,
-    message: string,
+    message: string | Uint8Array,
     options?: MessageOptions,
   ): SignMessageDAReturnType {
     return this._appBinder.signMessage({
       derivationPath,
       message,
       skipOpenApp: options?.skipOpenApp ?? false,
+      version: options?.version,
       appDomain: options?.appDomain,
     });
   }

@@ -12,7 +12,7 @@ import { type GetConfigCommandResponse } from "@api/app-binder/GetConfigCommandT
 import { type Signature } from "@api/model/Signature";
 import { type TypedData } from "@api/model/TypedData";
 import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
-import type { ProvideEIP712ContextTaskArgs } from "@internal/app-binder/task/ProvideEIP712ContextTask";
+import type { BuildEIP712ContextTaskResult } from "@internal/app-binder/task/BuildEIP712ContextTask";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
@@ -28,6 +28,7 @@ export enum SignTypedDataDAStateStep {
   PROVIDE_GENERIC_CONTEXT = "signer.eth.steps.provideGenericContext",
   SIGN_TYPED_DATA = "signer.eth.steps.signTypedData",
   SIGN_TYPED_DATA_LEGACY = "signer.eth.steps.signTypedDataLegacy",
+  DETECT_BLIND_SIGNING = "signer.eth.steps.detectBlindSigning",
 }
 
 export type SignTypedDataDAOutput = Signature;
@@ -75,8 +76,10 @@ export type SignTypedDataDAInternalState = {
   readonly error: SignTypedDataDAError | null;
   readonly appConfig: GetConfigCommandResponse | null;
   readonly from: string | null;
-  readonly typedDataContext: ProvideEIP712ContextTaskArgs | null;
+  readonly typedDataContext: BuildEIP712ContextTaskResult | null;
   readonly signature: Signature | null;
+  readonly isBlindSign: boolean | null;
+  readonly usedFallback: boolean;
 };
 
 export type SignTypedDataDAReturnType = ExecuteDeviceActionReturnType<

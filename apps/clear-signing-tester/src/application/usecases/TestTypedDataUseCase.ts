@@ -43,7 +43,7 @@ export class TestTypedDataUseCase {
       data: { typedData, description: "single typed data" },
     });
 
-    const result = await this.deviceRepository.performSignTypedData(
+    const result = await this.deviceRepository.performSign(
       typedData,
       config.derivationPath,
     );

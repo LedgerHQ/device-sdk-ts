@@ -6,7 +6,7 @@ import { DefaultDeviceSessionService } from "@internal/device-session/service/De
 import { type DeviceSessionService } from "@internal/device-session/service/DeviceSessionService";
 import { ListConnectedDevicesUseCase } from "@internal/discovery/use-case/ListConnectedDevicesUseCase";
 import { DefaultLoggerPublisherService } from "@internal/logger-publisher/service/DefaultLoggerPublisherService";
-import { AxiosManagerApiDataSource } from "@internal/manager-api/data/AxiosManagerApiDataSource";
+import { HttpManagerApiDataSource } from "@internal/manager-api/data/HttpManagerApiDataSource";
 import { type ManagerApiDataSource } from "@internal/manager-api/data/ManagerApiDataSource";
 import { DefaultManagerApiService } from "@internal/manager-api/service/DefaultManagerApiService";
 import { type ManagerApiService } from "@internal/manager-api/service/ManagerApiService";
@@ -29,7 +29,7 @@ describe("ListDeviceSessionsUseCase", () => {
       [],
       "list-device-sessions-use-case-test",
     );
-    managerApiDataSource = new AxiosManagerApiDataSource({} as DmkConfig);
+    managerApiDataSource = new HttpManagerApiDataSource({} as DmkConfig);
     managerApi = new DefaultManagerApiService(managerApiDataSource);
     secureChannelDataSource = new DefaultSecureChannelDataSource(
       {} as DmkConfig,

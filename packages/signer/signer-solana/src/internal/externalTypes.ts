@@ -3,4 +3,5 @@ export const externalTypes = {
   SessionId: Symbol.for("SessionId"),
   ContextModule: Symbol.for("ContextModule"),
   DmkLoggerFactory: Symbol.for("DmkLoggerFactory"),
+  SolanaRPCURL: Symbol.for("SolanaRPCURL"),
 };

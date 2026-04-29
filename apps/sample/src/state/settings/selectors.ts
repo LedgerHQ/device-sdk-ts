@@ -13,14 +13,30 @@ export const selectSpeculosUrl = (state: RootState) =>
   state.settings.speculosUrl;
 export const selectSpeculosVncUrl = (state: RootState) =>
   state.settings.speculosVncUrl;
+export const selectSpeculosDeviceModel = (state: RootState) =>
+  state.settings.speculosDeviceModel;
 
 // Derived transport config selector (memoized to avoid creating new objects on every render)
 export const selectTransportConfig = createSelector(
-  [selectTransportType, selectMockServerUrl, selectSpeculosUrl],
-  (transportType, mockServerUrl, speculosUrl): TransportConfig => {
+  [
+    selectTransportType,
+    selectMockServerUrl,
+    selectSpeculosUrl,
+    selectSpeculosDeviceModel,
+  ],
+  (
+    transportType,
+    mockServerUrl,
+    speculosUrl,
+    speculosDeviceModel,
+  ): TransportConfig => {
     switch (transportType) {
       case "speculos":
-        return { type: "speculos", url: speculosUrl };
+        return {
+          type: "speculos",
+          url: speculosUrl,
+          deviceModelId: speculosDeviceModel,
+        };
       case "mockserver":
         return { type: "mockserver", url: mockServerUrl };
       default:

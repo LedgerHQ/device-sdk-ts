@@ -32,6 +32,7 @@ import {
   type OpenAppDAInput,
   type OpenAppDAIntermediateValue,
   type OpenAppDAOutput,
+  openAppDAStateStep,
 } from "./types";
 
 type OpenAppStateMachineInternalState = {
@@ -186,6 +187,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
           input,
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: openAppDAStateStep.GET_DEVICE_STATUS,
           },
           _internalState: {
             error: null,

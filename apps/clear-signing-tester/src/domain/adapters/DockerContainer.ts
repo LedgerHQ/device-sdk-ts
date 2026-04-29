@@ -38,6 +38,37 @@ export interface DockerContainer {
    * @returns Promise resolving to the image ID if found, null otherwise
    */
   getImageId(image: string): Promise<string | null>;
+
+  /**
+   * Get the repo digest of a locally cached Docker image.
+   * @param image - The Docker image name and tag
+   * @returns Promise resolving to the digest string (e.g. "sha256:..."), or null
+   */
+  getLocalImageRepoDigest(image: string): Promise<string | null>;
+
+  /**
+   * Get the manifest digest of a Docker image from the remote registry.
+   * @param image - The Docker image name and tag
+   * @returns Promise resolving to the digest string (e.g. "sha256:..."), or null
+   */
+  getRemoteImageManifestDigest(image: string): Promise<string | null>;
+
+  /**
+   * Get a metadata label value from a locally cached Docker image.
+   * @param image - The Docker image name and tag
+   * @param label - The label key (e.g. "org.opencontainers.image.version")
+   * @returns Promise resolving to the label value, or null
+   */
+  getLocalImageLabel(image: string, label: string): Promise<string | null>;
+
+  /**
+   * Get a metadata label value from a Docker image in the remote registry,
+   * selecting the platform matching the current host architecture.
+   * @param image - The Docker image name and tag
+   * @param label - The label key (e.g. "org.opencontainers.image.version")
+   * @returns Promise resolving to the label value, or null
+   */
+  getRemoteImageLabel(image: string, label: string): Promise<string | null>;
 }
 
 export type DockerRunOptions = {

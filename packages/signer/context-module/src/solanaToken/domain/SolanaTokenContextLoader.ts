@@ -1,11 +1,8 @@
-import {
-  DeviceModelId,
-  LoggerPublisherService,
-} from "@ledgerhq/device-management-kit";
+import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
@@ -23,16 +20,11 @@ import {
 } from "@/solanaToken/data/SolanaTokenDataSource";
 import { solanaTokenTypes } from "@/solanaToken/di/solanaTokenTypes";
 
-type SolanaTokenFieldInput = SolanaTransactionContext & {
-  deviceModelId: DeviceModelId;
-  tokenInternalId: string;
-};
-
 @injectable()
 export class SolanaTokenContextLoader
   implements
     ContextFieldLoader<
-      SolanaTokenFieldInput,
+      SolanaTransactionContext,
       SolanaContextTypes,
       SolanaTokenContextResult
     >
@@ -42,7 +34,8 @@ export class SolanaTokenContextLoader
   constructor(
     @inject(solanaTokenTypes.SolanaTokenDataSource)
     private readonly dataSource: SolanaTokenDataSource,
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
@@ -54,7 +47,7 @@ export class SolanaTokenContextLoader
   public canHandle(
     field: unknown,
     expectedType: SolanaContextTypes,
-  ): field is SolanaTokenFieldInput {
+  ): field is SolanaTransactionContext {
     if (expectedType !== SolanaContextTypes.SOLANA_TOKEN) {
       return false;
     }
@@ -74,12 +67,21 @@ export class SolanaTokenContextLoader
   }
 
   public async loadField(
-    solanaTokenContextInput: SolanaTokenFieldInput,
+    solanaTokenContextInput: SolanaTransactionContext,
   ): Promise<SolanaTokenContextResult> {
     this.logger.debug("[loadField] Loading solana token context", {
       data: { input: solanaTokenContextInput },
     });
     const { tokenInternalId, deviceModelId } = solanaTokenContextInput;
+
+    if (!tokenInternalId) {
+      return {
+        type: SolanaContextTypes.ERROR,
+        error: new Error(
+          "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
+        ),
+      };
+    }
 
     const payload = await this.dataSource.getTokenInfosPayload({
       tokenInternalId,

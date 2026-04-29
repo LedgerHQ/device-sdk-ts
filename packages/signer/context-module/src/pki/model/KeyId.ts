@@ -10,4 +10,6 @@ export enum KeyId {
   CalCalldataKey = "cal_calldata_key",
   CalTrustedNameKey = "cal_trusted_name_key",
   CalNetwork = "cal_network",
+  CalGatedSigning = "cal_gated_signing",
+  SwapTemplateKey = "swap_template_key",
 }

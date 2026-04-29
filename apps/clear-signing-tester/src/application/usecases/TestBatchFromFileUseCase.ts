@@ -2,8 +2,7 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
-import { TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type DeviceRepository } from "@root/src/domain/repositories/DeviceRepository";
 import { TestResult } from "@root/src/domain/types/TestStatus";
@@ -33,9 +32,7 @@ export type TestFormattingConfig = {
  * Works with any data type T through the DataFileRepository interface
  */
 @injectable()
-export class TestBatchFromFileUseCase<
-  T extends TransactionInput | TypedDataInput,
-> {
+export class TestBatchFromFileUseCase<T extends SignableInput> {
   private readonly logger: LoggerPublisherService;
 
   constructor(

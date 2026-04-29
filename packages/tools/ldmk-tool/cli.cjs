@@ -2,13 +2,10 @@
 
 require("zx/globals");
 const { usePowerShell } = require("zx");
-const { enterRelease, exitRelease } = require("./release.cjs");
 const { help } = require("./help.cjs");
 const { build } = require("./build.cjs");
 const { watch } = require("./watch.cjs");
-const { bump } = require("./bump.cjs");
 const { bumpSnapshot } = require("./bump-snapshot.cjs");
-const { createReleasePullRequest } = require("./create-release-pr.cjs");
 const { pack } = require("./pack.cjs");
 const { canonicalize } = require("./canonicalize.cjs");
 const { generateSigner } = require("./generate-signer.cjs");
@@ -28,28 +25,6 @@ process.on("uncaughtException", (error) => {
 });
 
 const availableCommands = [
-  {
-    name: "enter-release",
-    description: "toggle private on packages.json to be released",
-    // NOTE: Example of a flag with a short name
-    // flags: [{ name: "commit", description: "commit the changes", short: "c" }],
-    flags: [],
-  },
-  {
-    name: "exit-release",
-    description: "toggle private on packages.json to be released",
-    flags: [],
-  },
-  {
-    name: "create-release-pr",
-    description: "create a release pull request",
-    flags: [],
-  },
-  {
-    name: "bump",
-    description: "bump package versions using changesets",
-    flags: [],
-  },
   {
     name: "bump-snapshot",
     description:
@@ -155,18 +130,6 @@ async function main() {
       console.log(chalk.green("🚀 Generating new signer package"));
       await generateSigner();
       break;
-    case "enter-release":
-      console.log(chalk.green("🔧 (packages): Entering release mode"));
-      await enterRelease();
-      break;
-    case "exit-release":
-      console.log(chalk.green("🔧 (packages): Exiting release mode"));
-      await exitRelease();
-      break;
-    case "bump":
-      console.log(chalk.green("🔖 (packages): Bumping versions"));
-      await bump();
-      break;
     case "bump-snapshot":
       console.log(
         chalk.green(
@@ -174,10 +137,6 @@ async function main() {
         ),
       );
       await bumpSnapshot(tag, type || "patch");
-      break;
-    case "create-release-pr":
-      console.log(chalk.green("🔖 (packages): Creating release pull request"));
-      await createReleasePullRequest();
       break;
     case "build":
       if (!entryPoints) {

@@ -1,4 +1,5 @@
 import {
+  ApplicationChecker,
   type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
@@ -20,6 +21,7 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
+  type SignTransactionDAStateStep,
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
@@ -31,12 +33,17 @@ import {
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-import { ApplicationChecker } from "@internal/app-binder/services/ApplicationChecker";
+import { APP_NAME } from "@internal/app-binder/constants";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
+import {
+  SOLANA_APP_SPL_MIN_VERSION,
+  SOLANA_MIN_DELAYED_SIGNING_VERSION,
+  SolanaApplicationResolver,
+} from "@internal/app-binder/SolanaApplicationResolver";
 import {
   BuildTransactionContextTask,
   type BuildTransactionContextTaskArgs,
@@ -47,6 +54,18 @@ import {
   type ProvideSolanaTransactionContextTaskArgs,
 } from "@internal/app-binder/task/ProvideTransactionContextTask";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
+
+import { DelayedSignTransactionDeviceAction } from "./DelayedSignTransactionDeviceAction";
+
+/**
+ * Per-sign `transactionOptions.solanaRPCURL` overrides the builder default
+ * (`input.solanaRPCURL`).
+ */
+function resolveSolanaRpcUrl(
+  input: SignTransactionDAInput,
+): string | undefined {
+  return input.transactionOptions?.solanaRPCURL ?? input.solanaRPCURL;
+}
 
 export type MachineDependencies = {
   readonly getAppConfig: () => Promise<
@@ -68,9 +87,7 @@ export type MachineDependencies = {
       derivationPath: string;
       serializedTransaction: Uint8Array;
     };
-  }) => Promise<
-    CommandResult<Maybe<Signature | SolanaAppErrorCodes>, SolanaAppErrorCodes>
-  >;
+  }) => Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -113,7 +130,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       },
       actors: {
         openAppStateMachine: new OpenAppDeviceAction({
-          input: { appName: "Solana" },
+          input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
         inspectTransaction: fromPromise(
@@ -135,25 +152,48 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
         signTransaction: fromPromise(signTransaction),
+        delayedSignStateMachine: new DelayedSignTransactionDeviceAction({
+          input: {
+            derivationPath: "",
+            transaction: new Uint8Array(),
+          },
+        }).makeStateMachine(internalApi),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) =>
           context.input.transactionOptions?.skipOpenApp || false,
+        isDelayedRequested: ({ context }) =>
+          context.input.transactionOptions?.delayed === true,
         isSPLSupported: ({ context }) =>
           new ApplicationChecker(
             internalApi.getDeviceSessionState(),
             context._internalState.appConfig!,
+            new SolanaApplicationResolver(),
           )
-            .withMinVersionExclusive("1.4.0")
             .excludeDeviceModel(DeviceModelId.NANO_S)
+            .withMinVersionInclusive(SOLANA_APP_SPL_MIN_VERSION)
             .check(),
-        isAnSPLTransaction: ({ context }) =>
+        shouldBuildContext: ({ context }) =>
           context._internalState.inspectorResult?.transactionType ===
-          SolanaTransactionTypes.SPL,
-        shouldSkipInspection: ({ context }) =>
-          context._internalState.error === null &&
-          !!context.input.transactionOptions?.transactionResolutionContext,
+            SolanaTransactionTypes.SPL ||
+          context._internalState.inspectorResult?.transactionType ===
+            SolanaTransactionTypes.SWAP,
+        isDelayedWithConfigAndSupported: ({ context }) =>
+          context.input.transactionOptions?.delayed === true &&
+          !!(
+            resolveSolanaRpcUrl(context.input) ||
+            context.input.transactionOptions?.fetchBlockhash
+          ) &&
+          new ApplicationChecker(
+            internalApi.getDeviceSessionState(),
+            context._internalState.appConfig!,
+            new SolanaApplicationResolver(),
+          )
+            .withMinVersionInclusive(SOLANA_MIN_DELAYED_SIGNING_VERSION)
+            .check(),
+        hasSignature: ({ context }) =>
+          context._internalState.signature !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -166,6 +206,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             ),
           }),
         }),
+        logDelayedFallbackWarning: ({ context }) => {
+          const hasConfig = !!(
+            resolveSolanaRpcUrl(context.input) ||
+            context.input.transactionOptions?.fetchBlockhash
+          );
+          this.logger?.warn(
+            hasConfig
+              ? `delayed signing requires Solana app version >= ${SOLANA_MIN_DELAYED_SIGNING_VERSION}; falling back to standard signing`
+              : "delayed signing requires a Solana RPC URL or a fetchBlockhash callback; falling back to standard signing",
+          );
+        },
       },
     }).createMachine({
       /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EAJgCMADg4BWAGw7jAGhABPRHr3SA7Bx0BONwGYALNOPfvUz1jHQBfUOs0TFwCIjYqWgYmVnIqbl5+IRExKT15JBBlVVSMDW0EfSMzC2s7BDdvHQ5pby9ff0DgsIiQKOx8QhISxMYWeM4AeUUwDGZFRRHk8fEIKjAOVAw6CgBrdYpp2fnhUTAAWRIAC02wGXylFTUqMsQnN1MON2lzK1tEN0MJicOicTlMoM8LXe4Ui6H6sSG7EWYxKHAAwpcwMQdlMZnMFvRRil2AAlOAAVwEpCkcg0RSepQK5T0nmMRmkwR+tX+3iMgVM0mc+j0OgM3Vh0QGcWGhKWqIxWJxh3xyOJVDJsEp1MkeTpjxKLwQLLZzU5NT+CAMeg4rTcBneLN8bx8MN6cJig3GqvGHAA4mBSPi0VQAGboFZrDZbXbrGCB+bBjBhqB3PXFdRM+wGUzeVymaq-OqOMWfe0BHyeNxOPSmV19D3SpGylHsP0BoOh8NgHA4Cg4DiKASiEN9gC2HDjHaT6FTBXpBszRuzuZ0+a5Fr0Hk+HjL2YsLNMtZ69aliISzbVnH98cUieTGq1CuxNPuhX1GdA5R0nh0TRapgMJxC3sBwmgMMVwU8QC3l5Yw63dU8vQvH1ryne8KSpJ8dlyV95w-LRdB-P9AkA4CEB8a0qxzYwnE8H5jW8eDJQRJCkhbNIeFgaYyAbM8MAjDB1k2bY9ijLisVIXjxlnB502eRdRS+Dgc2+c0i2kBoODBUUDA0ytqyPCV4U9GU2MvdJxJ4xCSnEbte37QdhzHMTuMk6z2Bkt85MZT9dHtaRlN8dc6kCALvDBbwzA0jTwqApjjMbc8zJ9ZgQzEHBONcl80wZQ0fyCLSKyA7kjRZa1+UFYFQLFeKpNMokUrS7tMoknCcoXXzyNXa1aO8Txio3SFjC0jwfD8AIghCWr3KShrUVS9KWrIKQdFw995M6-KeqKsiBSaSLIUMYwvgaUFppY+q5VbAAhclUAECBEzETRqVWQSoxE9YACM7oep6wBezy8I2gjyKcbMbQMPqBqLBxPA4HxzD0RpaKhQy3WYkym2S1Fbvux6qGe6k7L7Ach1IEccHHH78f+wHaTndafNB-qId5aGyOBAK3GMQ7aM3KD9HOrHZqutIAAVewYCAwDp17I2EmMByl1AZbloGmcNPrRQRr5gpA8EOHA1daOghoDDg48EIu7G5tbSWKGl2XCYB4me1JxyKecxQVbVl36bW7ytZ-IxK1Usi90+dwaLtAWxT0YXEpoZDUQdp25YfTDMWfDWg8XcKeYR47+rIhwgOaVoxo6SbxQxhK+O9VPfedjAicz0gsLaxm886gvhtZLwYfsQVcz15HvzjoWrcxpPG9bE8baoAShOjUTVBnvjc9yxdeZ0XN-AAoejVXIxVx0vSqxrROG5T+frZF-iSYc8nKfHdf6+khnZO3zrd-3kij6gXhkFZGjhwpWhzNfVids0gLwfu3TuW8OqgxjsNNwlRAGeAcAjMUTgOQjwAryKBl12KcDgUnBB2dsI6kDj-FBbw0EYNLqufuuDpCsnATWRiroMAUBlvAAo5Cb443wsDZm5QAC0pgSpSOaIKeRCiFFOGIbbMWnAeBqEECcMQ7V8LlEaCVRwhs3heErCCSErR0ZCOgWojguIjgEhESDMRWtBSfHDiVMsrhRpmNRpYlRotSHoiofYlUt91QYVILokGzJ-zKVIiVBoAV3CmPQX46E08P4kPMqhBMnYoDRPEfYfwRhB6lyhMpH8wIALHQtpbIydVVFBNybefJlDFSFMNDoIUrhDCALAVpGsgpi6XysffWe4T1GEFco05xmsFLGBFJ8Q+5SnC5lMPlap3xBYGACcnJxnAFrNWmRJTpi4sE1kKhzQxIo3CDIFH4Lwoy9lzzSHjP6-sondzoeUHwUMjYinKV4XpDyRkGU8C8yZHA06qxbkTM5m0PC5muRuBwPUfFpIsRkhpM19kwM4DCv2rdXbtOxAi0GB0Pg7RuYeI2EEtkbLFLszJsy8W2Oscglx+c7QfFFICwxe8jAshNqubZTLIUHI4By0kkSsLkvKMYXeJhDGQnhvoY6e9FU82cGMjeNignIHJMQJgsABHf2QeUAUtKoYlxVdIUOEEPC0QuW4CV+KOAAFF3Y4HlYgK1HwbWAL3vDMwkVumRV0ofcI4QgA */
@@ -202,7 +253,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "openAppStateMachine",
             src: "openAppStateMachine",
-            input: () => ({ appName: "Solana" }),
+            input: () => ({ appName: APP_NAME }),
             onSnapshot: {
               actions: assign({
                 intermediateValue: ({ event }) => ({
@@ -262,8 +313,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
-            { target: "InspectTransaction", guard: "noInternalError" },
+            { target: "CheckSPLSupported", guard: "noInternalError" },
             { target: "Error" },
+          ],
+        },
+        CheckSPLSupported: {
+          always: [
+            { target: "InspectTransaction", guard: "isSPLSupported" },
+            { target: "CheckDelayed" },
           ],
         },
         InspectTransaction: {
@@ -281,7 +338,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               serializedTransaction: context.input.transaction,
               resolutionContext:
                 context.input.transactionOptions?.transactionResolutionContext,
-              rpcUrl: context.input.transactionOptions?.solanaRPCURL,
+              rpcUrl: resolveSolanaRpcUrl(context.input),
             }),
             onDone: {
               target: "AfterInspect",
@@ -293,14 +350,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onError: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
           },
         },
         AfterInspect: {
           always: [
-            { target: "BuildContext", guard: "isAnSPLTransaction" },
-            { target: "SignTransaction" },
+            { target: "BuildContext", guard: "shouldBuildContext" },
+            { target: "CheckDelayed" },
           ],
         },
         BuildContext: {
@@ -346,7 +403,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onError: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
           },
         },
@@ -373,12 +430,113 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               };
             },
             onDone: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
             onError: {
-              target: "SignTransaction",
+              target: "CheckDelayed",
             },
           },
+        },
+        CheckDelayed: {
+          always: [
+            {
+              target: "InvokeDelayedSign",
+              guard: "isDelayedWithConfigAndSupported",
+            },
+            {
+              target: "SignTransaction",
+              guard: "isDelayedRequested",
+              actions: "logDelayedFallbackWarning",
+            },
+            { target: "SignTransaction" },
+          ],
+        },
+        InvokeDelayedSign: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.DELAYED_SIGN,
+            }),
+          }),
+          invoke: {
+            id: "delayedSignStateMachine",
+            src: "delayedSignStateMachine",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              transaction: context.input.transaction,
+              rpcUrl: resolveSolanaRpcUrl(context.input),
+              fetchBlockhash: context.input.transactionOptions?.fetchBlockhash,
+              userInputType:
+                context.input.transactionOptions?.transactionResolutionContext
+                  ?.userInputType,
+              blockhashService: context.input.blockhashService,
+            }),
+            onSnapshot: {
+              actions: [
+                assign({
+                  intermediateValue: ({ event }) => ({
+                    requiredUserInteraction:
+                      event.snapshot.context.intermediateValue
+                        .requiredUserInteraction,
+                    step: event.snapshot.context.intermediateValue
+                      .step as SignTransactionDAStateStep,
+                  }),
+                }),
+                ({ event }) => {
+                  const stateValue =
+                    typeof event.snapshot.value === "string"
+                      ? event.snapshot.value
+                      : JSON.stringify(event.snapshot.value);
+                  this.logger?.debug(
+                    `[DelayedSign] Child state: ${stateValue}`,
+                    {
+                      data: {
+                        internalState: event.snapshot.context._internalState,
+                        intermediateValue:
+                          event.snapshot.context.intermediateValue,
+                      },
+                    },
+                  );
+                },
+              ],
+            },
+            onDone: {
+              target: "CheckDelayedResult",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  event.output.caseOf({
+                    Right: (signature: Uint8Array) => ({
+                      ...context._internalState,
+                      signature,
+                    }),
+                    Left: (error) => {
+                      if (error instanceof UnknownDAError) {
+                        this.logger?.debug(
+                          "Delayed signing failed, falling back to legacy signing",
+                          {
+                            data: {
+                              error: error.originalError?.message,
+                            },
+                          },
+                        );
+                        return context._internalState;
+                      }
+                      return {
+                        ...context._internalState,
+                        error,
+                      };
+                    },
+                  }),
+              }),
+            },
+          },
+        },
+        CheckDelayedResult: {
+          always: [
+            { target: "SignTransactionResultCheck", guard: "hasSignature" },
+            { target: "SignTransaction", guard: "noInternalError" },
+            { target: "Error" },
+          ],
         },
         SignTransaction: {
           entry: assign({
@@ -475,6 +633,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           arg0.serializedTransaction,
           arg0.resolutionContext?.tokenAddress,
           arg0.resolutionContext?.createATA,
+          arg0.resolutionContext?.templateId,
         ),
       );
 

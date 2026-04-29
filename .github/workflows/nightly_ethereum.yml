@@ -1,0 +1,155 @@
+name: "[Tests] Ethereum Nightly"
+on:
+  schedule:
+    # Run every day at 2:00 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: Setup toolchain and dependencies
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+
+  build-libraries:
+    name: Build libraries
+    needs: [setup]
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+  erc7730-calldata-tests:
+    needs: [build-libraries]
+    name: ERC7730 Calldata Test (${{ matrix.device }} - ${{ matrix.dapp }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+        dapp:
+          - 1inch
+          - aave
+          - ethena
+          - lido
+          - lombard
+          - poap
+          - swissborg
+          - tether
+          - uniswap
+          - velora
+          - yieldxyz
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: test:erc7730
+          dapp: ${{ matrix.dapp }}
+          device: ${{ matrix.device }}
+          coin-app: Ethereum
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: erc7730-calldata-logs
+          summary-prefix: "ERC7730 Calldata Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  erc7730-ethereum-tests:
+    needs: [build-libraries]
+    name: ERC7730 Ethereum Test (${{ matrix.device }} - ${{ matrix.dapp }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+        dapp:
+          - 1inch
+          - degate
+          - ledgerquest
+          - lens
+          - lombard
+          - opensea
+          - permit
+          - smartcredit
+          - tally
+          - uniswap
+          - velora
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: test:erc7730:typed-data
+          dapp: ${{ matrix.dapp }}
+          device: ${{ matrix.device }}
+          coin-app: Ethereum
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: erc7730-ethereum-logs
+          summary-prefix: "ERC7730 Ethereum Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  ethereum-gating-tests:
+    needs: [build-libraries]
+    name: Ethereum Gating Test (${{ matrix.device }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, flex]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester
+          test: test:gating
+          device: ${{ matrix.device }}
+          coin-app: Ethereum
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: ethereum-gating-logs
+          summary-prefix: "Ethereum Gating Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  notify:
+    name: Notify Slack
+    needs:
+      [erc7730-calldata-tests, erc7730-ethereum-tests, ethereum-gating-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/slack-notify-composite
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
+          results: ${{ join(needs.*.result, ',') }}

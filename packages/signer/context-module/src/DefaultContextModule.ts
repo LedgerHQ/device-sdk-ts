@@ -1,14 +1,22 @@
 import { type Container } from "inversify";
 import { Left } from "purify-ts";
 
+import { accountOwnershipTypes } from "@/account-ownership/di/accountOwnershipTypes";
 import { calldataTypes } from "@/calldata/di/calldataTypes";
 import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
+import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningReporterDatasource";
+import { reporterTypes } from "@/reporter/di/reporterTypes";
+import { type BlindSigningReporter } from "@/reporter/domain/BlindSigningReporter";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
-import { type ContextModuleConfig } from "./config/model/ContextModuleConfig";
+import {
+  type ContextModuleLoaderConfig,
+  type ContextModuleServiceConfig,
+} from "./config/model/ContextModuleConfig";
 import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
+import { gatedSigningTypes } from "./gated-signing/di/gatedSigningTypes";
 import { nftTypes } from "./nft/di/nftTypes";
 import { proxyTypes } from "./proxy/di/proxyTypes";
 import { safeTypes } from "./safe/di/safeTypes";
@@ -35,8 +43,9 @@ export class DefaultContextModule implements ContextModule {
   private _typedDataLoader: TypedDataContextLoader;
   private _solanaLoader: SolanaContextLoader;
   private _fieldLoaders: ContextFieldLoader<unknown>[];
+  private _blindSigningReporter: BlindSigningReporter;
 
-  constructor(args: ContextModuleConfig) {
+  constructor(args: ContextModuleServiceConfig & ContextModuleLoaderConfig) {
     this._container = makeContainer({ config: args });
 
     this._loaders = args.defaultLoaders ? this._getDefaultLoaders() : [];
@@ -50,6 +59,8 @@ export class DefaultContextModule implements ContextModule {
     this._typedDataLoader =
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
+    this._blindSigningReporter =
+      args.customBlindSigningReporter ?? this._getBlindSigningReporter();
   }
 
   private _getDefaultFieldLoaders(): ContextFieldLoader[] {
@@ -70,6 +81,9 @@ export class DefaultContextModule implements ContextModule {
   private _getDefaultLoaders(): ContextLoader<unknown>[] {
     return [
       this._container.get<ContextLoader>(
+        accountOwnershipTypes.AccountOwnershipContextLoader,
+      ),
+      this._container.get<ContextLoader>(
         externalPluginTypes.ExternalPluginContextLoader,
       ),
       this._container.get<ContextLoader>(
@@ -83,6 +97,12 @@ export class DefaultContextModule implements ContextModule {
       ),
       this._container.get<ContextLoader>(safeTypes.SafeAddressLoader),
       this._container.get<ContextLoader>(
+        gatedSigningTypes.GatedSigningContextLoader,
+      ),
+      this._container.get<ContextLoader>(
+        gatedSigningTypes.GatedSigningTypedDataContextLoader,
+      ),
+      this._container.get<ContextLoader>(
         transactionCheckTypes.TransactionCheckContextLoader,
       ),
       this._container.get<ContextLoader>(
@@ -94,6 +114,12 @@ export class DefaultContextModule implements ContextModule {
   private _getDefaultTypedDataLoader(): TypedDataContextLoader {
     return this._container.get<TypedDataContextLoader>(
       typedDataTypes.TypedDataContextLoader,
+    );
+  }
+
+  private _getBlindSigningReporter(): BlindSigningReporter {
+    return this._container.get<BlindSigningReporter>(
+      reporterTypes.BlindSigningReporter,
     );
   }
 
@@ -168,5 +194,9 @@ export class DefaultContextModule implements ContextModule {
     transactionContext: SolanaTransactionContext,
   ): Promise<SolanaTransactionContextResult> {
     return await this._solanaLoader.load(transactionContext);
+  }
+
+  public async report(params: BlindSigningReportParams): Promise<void> {
+    await this._blindSigningReporter.report(params);
   }
 }

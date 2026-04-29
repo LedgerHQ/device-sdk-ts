@@ -95,7 +95,7 @@ A brief overview of this project's packages:
 
 | Name                                            | Path                        | Description                                   |
 | ----------------------------------------------- | --------------------------- | --------------------------------------------- |
-| @ledgerhq/device-transport-kit-node-hid          | packages/transport/node-hid  | Node HID transport implementation              |
+| @ledgerhq/device-transport-kit-node-hid         | packages/transport/node-hid | Node HID transport implementation             |
 | @ledgerhq/device-transport-kit-web-hid          | packages/transport/web-hid  | Web HID transport implementation              |
 | @ledgerhq/device-transport-kit-web-ble          | packages/transport/web-ble  | Web BLE transport implementation              |
 | @ledgerhq/device-transport-kit-react-native-ble | packages/transport/rn-ble   | React Native BLE transport implementation     |
@@ -104,11 +104,13 @@ A brief overview of this project's packages:
 
 ### Signer Packages
 
-| Name                                 | Path                          | Description                                  |
-| ------------------------------------ | ----------------------------- | -------------------------------------------- |
-| @ledgerhq/device-signer-kit-bitcoin  | packages/signer/signer-btc    | Bitcoin coin application dedicated handlers  |
-| @ledgerhq/device-signer-kit-ethereum | packages/signer/signer-eth    | Ethereum coin application dedicated handlers |
-| @ledgerhq/device-signer-kit-solana   | packages/signer/signer-solana | Solana coin application dedicated handlers   |
+| Name                                    | Path                               | Description                                    |
+| --------------------------------------- | ---------------------------------- | ---------------------------------------------- |
+| @ledgerhq/device-signer-kit-bitcoin     | packages/signer/signer-btc         | Bitcoin coin application dedicated handlers    |
+| @ledgerhq/device-signer-kit-concordium  | packages/signer/signer-concordium  | Concordium coin application dedicated handlers |
+| @ledgerhq/device-signer-kit-ethereum    | packages/signer/signer-eth         | Ethereum coin application dedicated handlers   |
+| @ledgerhq/device-signer-kit-hyperliquid | packages/signer/signer-hyperliquid | HyperLiquid application dedicated handlers     |
+| @ledgerhq/device-signer-kit-solana      | packages/signer/signer-solana      | Solana coin application dedicated handlers     |
 
 ### Trusted Apps
 
@@ -262,6 +264,11 @@ pnpm doc build
 
 This project uses Github CI. Please have a look to the following link for more details: [GitHub](https://docs.github.com/en/actions/automating-builds-and-tests/about-continuous-integration)
 
+## Release
+
+Package releases are driven by an agent skill (`.cursor/skills/release/SKILL.md`) that orchestrates scripts in `.cursor/scripts/release/`.
+See the [release PR template](.github/pull_request_release_template.md) for the full checklist.
+
 ## Scripting
 
 To avoid task repetition, you can add scripts to the corresponding package's script folder, or to a root script folder if they concern multiple packages.
@@ -277,9 +284,10 @@ The `_templates` folder contains the basic generators to create new ones.
 
 ### Available templates
 
-| workspace | script          | description                           |
-| --------- | --------------- | ------------------------------------- |
-| 📦 dmk    | `module:create` | scaffolds a new _src/internal_ module |
+| workspace | script                      | description                                                             |
+| --------- | --------------------------- | ----------------------------------------------------------------------- |
+| 📦 dmk    | `module:create`             | scaffolds a new _src/internal_ module                                   |
+| 📦 signer | `ldmk-tool generate-signer` | scaffolds a new signer package ([more info](./how-to-create-signer.md)) |
 
 ### Process for adding a new generator
 

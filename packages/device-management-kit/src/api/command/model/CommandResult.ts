@@ -1,38 +1,38 @@
-import {
-  type InvalidBatteryDataError,
-  type InvalidBatteryStatusTypeError,
-  type InvalidGetFirmwareMetadataResponseError,
-  type InvalidResponseFormatError,
-  type InvalidStatusWordError,
+import type {
+  InvalidResponseFormatError,
+  InvalidStatusWordError,
 } from "@api/command/Errors";
-import { type GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
-import {
-  type DeviceExchangeError,
-  type UnknownDeviceExchangeError,
+import type { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
+import type {
+  DeviceExchangeError,
+  UnknownDeviceExchangeError,
 } from "@api/Error";
+import type {
+  DmkErrorResult,
+  DmkResult,
+  DmkSuccessResult,
+} from "@api/model/DmkResult";
+import {
+  DmkResultFactory,
+  DmkResultStatus,
+  isSuccessDmkResult,
+} from "@api/model/DmkResult";
 
-export enum CommandResultStatus {
-  Error = "ERROR",
-  Success = "SUCCESS",
-}
-export type CommandSuccessResult<Data> = {
-  status: CommandResultStatus.Success;
-  data: Data;
-};
-export type CommandErrorResult<SpecificErrorCodes = void> = {
-  error:
-    | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
-    | InvalidBatteryDataError
-    | InvalidBatteryStatusTypeError
-    | InvalidResponseFormatError
-    | InvalidStatusWordError
-    | InvalidGetFirmwareMetadataResponseError
-    | UnknownDeviceExchangeError;
-  status: CommandResultStatus.Error;
-};
-export type CommandResult<Data, SpecificErrorCodes = void> =
-  | CommandSuccessResult<Data>
-  | CommandErrorResult<SpecificErrorCodes>;
+export { DmkResultStatus as CommandResultStatus };
+type CommandError<SpecificErrorCodes = void> =
+  | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
+  | InvalidResponseFormatError
+  | InvalidStatusWordError
+  | UnknownDeviceExchangeError;
+
+export type CommandSuccessResult<Data> = DmkSuccessResult<Data>;
+export type CommandErrorResult<SpecificErrorCodes = void> = DmkErrorResult<
+  CommandError<SpecificErrorCodes>
+>;
+export type CommandResult<Data, SpecificErrorCodes = void> = DmkResult<
+  Data,
+  CommandError<SpecificErrorCodes>
+>;
 
 export function CommandResultFactory<Data, SpecificErrorCodes = void>({
   data,
@@ -41,29 +41,21 @@ export function CommandResultFactory<Data, SpecificErrorCodes = void>({
   | { data: Data; error?: undefined }
   | {
       data?: undefined;
-      error:
-        | DeviceExchangeError<SpecificErrorCodes>
-        | InvalidBatteryDataError
-        | InvalidBatteryStatusTypeError
-        | InvalidResponseFormatError
-        | InvalidStatusWordError
-        | InvalidGetFirmwareMetadataResponseError
-        | UnknownDeviceExchangeError;
+      error: CommandError<SpecificErrorCodes>;
     }): CommandResult<Data, SpecificErrorCodes> {
-  if (error) {
-    return {
-      status: CommandResultStatus.Error,
+  if (error !== undefined) {
+    return DmkResultFactory({
       error,
-    };
+    });
   }
-  return {
-    status: CommandResultStatus.Success,
+
+  return DmkResultFactory({
     data,
-  };
+  });
 }
 
 export function isSuccessCommandResult<Data, StatusCode>(
   result: CommandResult<Data, StatusCode>,
 ): result is CommandSuccessResult<Data> {
-  return result.status === CommandResultStatus.Success;
+  return isSuccessDmkResult(result);
 }

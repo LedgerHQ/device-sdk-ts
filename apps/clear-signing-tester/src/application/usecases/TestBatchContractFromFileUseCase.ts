@@ -3,6 +3,7 @@ import { inject, injectable } from "inversify";
 
 import { TYPES } from "@root/src/di/types";
 import { type ContractInput } from "@root/src/domain/models/ContractInput";
+import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type DataFileRepository } from "@root/src/domain/repositories/DataFileRepository";
 import { type TestResult } from "@root/src/domain/types/TestStatus";
 import {
@@ -100,6 +101,7 @@ export class TestBatchContractFromFileUseCase {
           const enhancedResults = batchResult.resultsTable.map((row) => {
             const testResult: TestResult = {
               input: {
+                kind: SignableInputKind.Transaction,
                 rawTx: "",
                 description: `[${contract.name}/${contract.owner}/Chain ${chainId}] ${row.Description}`,
               },
@@ -120,6 +122,7 @@ export class TestBatchContractFromFileUseCase {
           // Create error result
           const errorResult: TestResult = {
             input: {
+              kind: SignableInputKind.Transaction,
               rawTx: "",
               description: `${contract.name} (${contract.owner}) on chain ${chainId}`,
             },

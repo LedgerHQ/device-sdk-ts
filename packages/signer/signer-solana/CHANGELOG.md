@@ -1,5 +1,50 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.8.0
+
+### Minor Changes
+
+- [#1358](https://github.com/LedgerHQ/device-sdk-ts/pull/1358) [`fc8c132`](https://github.com/LedgerHQ/device-sdk-ts/commit/fc8c132c59e5e0aaa3a9c2563006c32f7093ba34) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add delayed transaction signing feature
+
+### Patch Changes
+
+- [#1432](https://github.com/LedgerHQ/device-sdk-ts/pull/1432) [`e3b3421`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3b3421fc481fa2f952760d66e65654bab5e4336) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patch application resolver for all swap cases
+
+- [#1336](https://github.com/LedgerHQ/device-sdk-ts/pull/1336) [`ee21448`](https://github.com/LedgerHQ/device-sdk-ts/commit/ee21448eaabe25dbb9713f432a7b2b9725e75ac7) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
+- [#1432](https://github.com/LedgerHQ/device-sdk-ts/pull/1432) [`bc9784d`](https://github.com/LedgerHQ/device-sdk-ts/commit/bc9784db39098a14a06c46f44e01ea43e4c4ba2a) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove RPC fallback and warn upon missing config on signTransaction
+
+- [#1396](https://github.com/LedgerHQ/device-sdk-ts/pull/1396) [`9d9a3cf`](https://github.com/LedgerHQ/device-sdk-ts/commit/9d9a3cf5dc91d3b1c4171d3f93972d2d63aa1d9c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Update docs
+
+## 1.7.1
+
+### Patch Changes
+
+- [`98af6cf`](https://github.com/LedgerHQ/device-sdk-ts/commit/98af6cf4d1b25dcf2940b5607524c7552ea886e9) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patch solana app version gating for sign transaction
+
+- [#1347](https://github.com/LedgerHQ/device-sdk-ts/pull/1347) [`ae31fcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ae31fcc504186452ed86c18dc6f656ac356998a3) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
+## 1.7.0
+
+### Minor Changes
+
+- [#1346](https://github.com/LedgerHQ/device-sdk-ts/pull/1346) [`5f5a61f`](https://github.com/LedgerHQ/device-sdk-ts/commit/5f5a61f06a13540fb013bf748fcc1a25ad16474d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Edit solana CAL response and use Lifi loaders in context module
+
+- [#1165](https://github.com/LedgerHQ/device-sdk-ts/pull/1165) [`a2fb7f8`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fb7f83bc45e6c4c3fdacbd91f67d962960a595) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add transaction crafter
+
+- [#1344](https://github.com/LedgerHQ/device-sdk-ts/pull/1344) [`f7c9a69`](https://github.com/LedgerHQ/device-sdk-ts/commit/f7c9a6930fb588b7a24e6bcbf539be13ad88ebe0) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add support for OCMS v1 in signMessage
+
+### Patch Changes
+
+- [#1193](https://github.com/LedgerHQ/device-sdk-ts/pull/1193) [`7db6392`](https://github.com/LedgerHQ/device-sdk-ts/commit/7db639274cc57366f2172a7a2b37a3341b7d9654) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Moved ApplicationChecker into SignerUtils
+
+- [#1314](https://github.com/LedgerHQ/device-sdk-ts/pull/1314) [`e3522eb`](https://github.com/LedgerHQ/device-sdk-ts/commit/e3522eb5342658ef232a559baf7a164f996d016a) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Refactor transactionInspector
+
+- Updated dependencies [[`a2fb7f8`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fb7f83bc45e6c4c3fdacbd91f67d962960a595), [`f42443c`](https://github.com/LedgerHQ/device-sdk-ts/commit/f42443c2fbbcef0d5a563a8ed3bee29e7579885d), [`0ffd62d`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ffd62da50e41a6725cde92dd67ff73448a3ecb7), [`7db6392`](https://github.com/LedgerHQ/device-sdk-ts/commit/7db639274cc57366f2172a7a2b37a3341b7d9654), [`5f5a61f`](https://github.com/LedgerHQ/device-sdk-ts/commit/5f5a61f06a13540fb013bf748fcc1a25ad16474d), [`09b2291`](https://github.com/LedgerHQ/device-sdk-ts/commit/09b2291bd8883697788606465f0fe41929671b94), [`4dab467`](https://github.com/LedgerHQ/device-sdk-ts/commit/4dab467e3db460c4b47cf5ec38f72e65dcf86b49)]:
+  - @ledgerhq/device-management-kit@1.2.0
+  - @ledgerhq/context-module@1.15.0
+  - @ledgerhq/signer-utils@1.1.3
+
 ## 1.6.2
 
 ### Patch Changes

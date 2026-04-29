@@ -1,11 +1,13 @@
-import axios from "axios";
+import {
+  DmkNetworkClient,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import {
   GetTransactionDescriptorsParams,
@@ -15,19 +17,35 @@ import {
 
 @injectable()
 export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
+  private logger: LoggerPublisherService;
+
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
-  ) {}
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
+  ) {
+    this.logger = loggerFactory("HttpSolanaLifiDataSource");
+  }
+
   public async getTransactionDescriptorsPayload({
     templateId,
   }: GetTransactionDescriptorsParams): Promise<
     Either<Error, GetTransactionDescriptorsResponse>
   > {
+    this.logger.debug(
+      "[getTransactionDescriptorsPayload] Fetching transaction descriptors",
+      {
+        data: { templateId },
+      },
+    );
+
     try {
-      const { data } = await axios.request<GetTransactionDescriptorsResponse[]>(
+      const data = (await this.http.get(
+        `${this.config.cal.url}/swap_templates`,
         {
-          method: "GET",
-          url: `${this.config.cal.url}/swap_templates`,
           params: {
             template_id: templateId,
             output: "id,chain_id,instructions,descriptors",
@@ -35,13 +53,27 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
             // REVERT WHEN CAL SUPPORTS IT
             ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
           },
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
+        },
+      )) as GetTransactionDescriptorsResponse[];
+
+      this.logger.debug(
+        "[getTransactionDescriptorsPayload] Received response",
+        {
+          data: {
+            templateId,
+            responseLength: data?.length ?? 0,
+            hasData: !!data && data.length > 0,
           },
         },
       );
 
       if (!data || data.length === 0 || !data[0]) {
+        this.logger.warn(
+          "[getTransactionDescriptorsPayload] No transaction descriptors found",
+          {
+            data: { templateId, responseLength: data?.length ?? 0 },
+          },
+        );
         return Left(
           new Error(
             `[ContextModule] HttpSolanaLifiDataSource: no transaction descriptors for id ${templateId}`,
@@ -49,8 +81,27 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
         );
       }
 
+      this.logger.info(
+        "[getTransactionDescriptorsPayload] Successfully fetched transaction descriptors",
+        {
+          data: {
+            templateId,
+            descriptorsCount: data[0].descriptors?.length ?? 0,
+          },
+        },
+      );
+
       return Right(data[0]);
-    } catch (_error) {
+    } catch (error) {
+      this.logger.error(
+        "[getTransactionDescriptorsPayload] Failed to fetch transaction descriptors",
+        {
+          data: {
+            templateId,
+            error: error instanceof Error ? error.message : String(error),
+          },
+        },
+      );
       return Left(
         new Error(
           "[ContextModule] HttpSolanaLifiDataSource: Failed to fetch transaction descriptors",

@@ -5,7 +5,7 @@ import {
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type DynamicNetworkDataSource } from "@/dynamic-network/data/DynamicNetworkDataSource";
 import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
@@ -26,7 +26,8 @@ export type DynamicNetworkContextInput = {
 
 const NETWORK_SIGNATURE_TAG = "15";
 
-const SUPPORTED_TYPES: ClearSignContextType[] = [
+/** Context types produced by DynamicNetworkContextLoader (used for getContexts expectedTypes). */
+export const DYNAMIC_NETWORK_CONTEXT_TYPES: ClearSignContextType[] = [
   ClearSignContextType.DYNAMIC_NETWORK,
   ClearSignContextType.DYNAMIC_NETWORK_ICON,
 ];
@@ -36,7 +37,7 @@ export class DynamicNetworkContextLoader
   implements ContextLoader<DynamicNetworkContextInput>
 {
   private readonly _networkDataSource: DynamicNetworkDataSource;
-  private readonly _config: ContextModuleConfig;
+  private readonly _config: ContextModuleServiceConfig;
   private readonly _certificateLoader: PkiCertificateLoader;
   private logger: LoggerPublisherService;
 
@@ -44,7 +45,7 @@ export class DynamicNetworkContextLoader
     @inject(dynamicNetworkTypes.DynamicNetworkDataSource)
     networkDataSource: DynamicNetworkDataSource,
     @inject(configTypes.Config)
-    config: ContextModuleConfig,
+    config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
@@ -68,7 +69,9 @@ export class DynamicNetworkContextLoader
       input.deviceModelId !== undefined &&
       input.deviceModelId !== DeviceModelId.NANO_S &&
       typeof input.chainId === "number" &&
-      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+      DYNAMIC_NETWORK_CONTEXT_TYPES.every((type) =>
+        expectedTypes.includes(type),
+      )
     );
   }
 

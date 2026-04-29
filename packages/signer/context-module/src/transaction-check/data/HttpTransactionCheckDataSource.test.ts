@@ -1,28 +1,29 @@
-import axios from "axios";
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type TransactionCheckDto } from "@/transaction-check/data/dto/TransactionCheckDto";
 import { HttpTransactionCheckDataSource } from "@/transaction-check/data/HttpTransactionCheckDataSource";
 import { type GetTransactionCheckParams } from "@/transaction-check/data/TransactionCheckDataSource";
-import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpTransactionCheckDataSource", () => {
   const config = {
     web3checks: {
-      url: "web3checksUrl",
+      url: "https://web3checks.test",
     },
     originToken: "originToken",
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
+
+  let httpMock: { post: ReturnType<typeof vi.fn> };
+  let dataSource: HttpTransactionCheckDataSource;
 
   beforeEach(() => {
     vi.resetAllMocks();
+    httpMock = { post: vi.fn() };
+    dataSource = new HttpTransactionCheckDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
   describe("getTransactionCheck", () => {
@@ -37,10 +38,9 @@ describe("HttpTransactionCheckDataSource", () => {
         public_key_id: "test-key-id",
         descriptor: "test-descriptor",
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: dto });
+      httpMock.post.mockResolvedValueOnce(dto);
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -59,10 +59,9 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("error"));
+      httpMock.post.mockRejectedValue(new Error("error"));
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -82,11 +81,9 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      const dto = {};
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      httpMock.post.mockResolvedValue({});
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -106,13 +103,11 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      const dto = {
+      httpMock.post.mockResolvedValue({
         descriptor: "test-descriptor",
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      });
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -132,13 +127,11 @@ describe("HttpTransactionCheckDataSource", () => {
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      const dto = {
+      httpMock.post.mockResolvedValue({
         public_key_id: "test-key-id",
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({ data: dto });
+      });
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       const result = await dataSource.getTransactionCheck(params);
 
       // THEN
@@ -151,76 +144,28 @@ describe("HttpTransactionCheckDataSource", () => {
       );
     });
 
-    it("should call axios with the correct headers", async () => {
+    it("should call http.post with the correct URL and body", async () => {
       // GIVEN
       const params: GetTransactionCheckParams = {
         from: "0x1234567890123456789012345678901234567890",
         rawTx: "0xabcdef",
         chainId: 1,
       };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
+      httpMock.post.mockResolvedValueOnce({});
 
       // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
       await dataSource.getTransactionCheck(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: {
-            [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-            [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
+      expect(httpMock.post).toHaveBeenCalledWith(
+        `${config.web3checks.url}/ethereum/scan/tx`,
+        {
+          tx: {
+            from: "0x1234567890123456789012345678901234567890",
+            raw: "0xabcdef",
           },
-        }),
-      );
-    });
-
-    it("should call axios with the correct URL and method", async () => {
-      // GIVEN
-      const params: GetTransactionCheckParams = {
-        from: "0x1234567890123456789012345678901234567890",
-        rawTx: "0xabcdef",
-        chainId: 1,
-      };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
-
-      // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
-      await dataSource.getTransactionCheck(params);
-
-      // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          method: "POST",
-          url: `${config.web3checks.url}/ethereum/scan/tx`,
-        }),
-      );
-    });
-
-    it("should call axios with the correct request data", async () => {
-      // GIVEN
-      const params: GetTransactionCheckParams = {
-        from: "0x1234567890123456789012345678901234567890",
-        rawTx: "0xabcdef",
-        chainId: 1,
-      };
-      vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
-
-      // WHEN
-      const dataSource = new HttpTransactionCheckDataSource(config);
-      await dataSource.getTransactionCheck(params);
-
-      // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: {
-            tx: {
-              from: "0x1234567890123456789012345678901234567890",
-              raw: "0xabcdef",
-            },
-            chain: 1,
-          },
-        }),
+          chain: 1,
+        },
       );
     });
   });

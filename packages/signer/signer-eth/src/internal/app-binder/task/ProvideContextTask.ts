@@ -12,6 +12,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { ProvideEnumCommand } from "@internal/app-binder/command/ProvideEnumCommand";
+import { ProvideGatedSigningCommand } from "@internal/app-binder/command/ProvideGatedSigningCommand";
 import {
   NetworkConfigurationType,
   ProvideNetworkConfigurationCommand,
@@ -208,6 +209,21 @@ export class ProvideContextTask {
               type: ProvideSafeAccountCommandType.SIGNER_DESCRIPTOR,
             }),
         }).run();
+      case ClearSignContextType.GATED_SIGNING:
+        return this._sendPayloadInChunksTaskFactory(this._api, {
+          payload,
+          commandFactory: (args) =>
+            new ProvideGatedSigningCommand({
+              data: args.chunkedData,
+              isFirstChunk: args.isFirstChunk,
+            }),
+        }).run();
+      case ClearSignContextType.ACCOUNT_OWNERSHIP:
+        return CommandResultFactory({
+          error: new InvalidStatusWordError(
+            `The context type [${type}] is not supported by the Ethereum signer`,
+          ),
+        });
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

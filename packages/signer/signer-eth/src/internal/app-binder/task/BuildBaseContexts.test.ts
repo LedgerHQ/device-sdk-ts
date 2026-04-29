@@ -28,6 +28,7 @@ describe("BuildBaseContexts", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getSolanaContext: vi.fn(),
+    report: vi.fn(),
   };
   const defaultOptions = {};
   const defaultTransaction: Uint8Array = hexaStringToBuffer(
@@ -96,6 +97,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts,
       clearSignContextsOptional,
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -156,6 +158,7 @@ describe("BuildBaseContexts", () => {
       ],
       clearSignContextsOptional: [clearSignContexts[2]],
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -216,6 +219,7 @@ describe("BuildBaseContexts", () => {
       ],
       clearSignContextsOptional: [clearSignContexts[0]], // enum
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -253,6 +257,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts,
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -302,6 +307,7 @@ describe("BuildBaseContexts", () => {
       ],
       clearSignContextsOptional: [clearSignContexts[2]],
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -324,7 +330,7 @@ describe("BuildBaseContexts", () => {
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
-      currentApp: { name: "Ethereum", version: "1.15.0" },
+      currentApp: { name: "Ethereum", version: "1.22.0" },
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
@@ -337,6 +343,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[0]],
       clearSignContextsOptional,
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -466,6 +473,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 2,
     });
   });
 
@@ -515,6 +523,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -558,6 +567,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -607,6 +617,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[1], clearSignContexts[3]],
       clearSignContextsOptional: [clearSignContexts[4]],
       clearSigningType: ClearSigningType.EIP7730,
+      contextErrorCount: 0,
     });
   });
 
@@ -652,6 +663,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[0]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -697,6 +709,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[0]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -739,6 +752,7 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [clearSignContexts[0]],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
   });
 
@@ -778,6 +792,123 @@ describe("BuildBaseContexts", () => {
       clearSignContexts: [],
       clearSignContextsOptional: [],
       clearSigningType: ClearSigningType.BASIC,
+      contextErrorCount: 0,
     });
+  });
+
+  it("should exclude GATED_SIGNING when app version is below 1.22.0", async () => {
+    // GIVEN - use mockReturnValue so every getDeviceSessionState() call returns 1.20.0
+    // (coverage runs can invoke it more than once)
+    const proxyInfoContext = {
+      type: ClearSignContextType.PROXY_INFO,
+      payload: "proxy-info",
+    } as ClearSignContext;
+    const gatedSigningContext = {
+      type: ClearSignContextType.GATED_SIGNING,
+      payload: "gated-signing",
+    } as ClearSignContext;
+    const tokenContext = {
+      type: ClearSignContextType.TOKEN,
+      payload: "token",
+    } as ClearSignContext;
+    const clearSignContexts: ClearSignContext[] = [
+      proxyInfoContext,
+      gatedSigningContext,
+      tokenContext,
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValue({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.20.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+    // THEN
+    expect(result.clearSignContexts).not.toContainEqual(gatedSigningContext);
+    expect(result.clearSignContexts).toEqual([proxyInfoContext, tokenContext]);
+    expect(result.clearSigningType).toBe(ClearSigningType.BASIC);
+  });
+
+  it("should exclude GATED_SIGNING on Nano S even when app version supports it", async () => {
+    // GIVEN
+    const proxyInfoContext = {
+      type: ClearSignContextType.PROXY_INFO,
+      payload: "proxy-info",
+    } as ClearSignContext;
+    const gatedSigningContext = {
+      type: ClearSignContextType.GATED_SIGNING,
+      payload: "gated-signing",
+    } as ClearSignContext;
+    const tokenContext = {
+      type: ClearSignContextType.TOKEN,
+      payload: "token",
+    } as ClearSignContext;
+    const clearSignContexts: ClearSignContext[] = [
+      proxyInfoContext,
+      gatedSigningContext,
+      tokenContext,
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValue({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.22.0" },
+      deviceModelId: DeviceModelId.NANO_S,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+    // THEN
+    expect(result.clearSignContexts).not.toContainEqual(gatedSigningContext);
+    expect(result.clearSignContexts).toEqual([proxyInfoContext, tokenContext]);
+    expect(result.clearSigningType).toBe(ClearSigningType.BASIC);
+  });
+
+  it("should include PROXY_INFO and GATED_SIGNING when app version is 1.22.0 or newer", async () => {
+    // GIVEN
+    const proxyInfoContext = {
+      type: ClearSignContextType.PROXY_INFO,
+      payload: "proxy-info",
+    } as ClearSignContext;
+    const gatedSigningContext = {
+      type: ClearSignContextType.GATED_SIGNING,
+      payload: "gated-signing",
+    } as ClearSignContext;
+    const tokenContext = {
+      type: ClearSignContextType.TOKEN,
+      payload: "token",
+    } as ClearSignContext;
+    const clearSignContexts: ClearSignContext[] = [
+      proxyInfoContext,
+      gatedSigningContext,
+      tokenContext,
+    ];
+    contextModuleMock.getContexts.mockResolvedValueOnce(clearSignContexts);
+    apiMock.getDeviceSessionState.mockReturnValueOnce({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.22.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+
+    // WHEN
+    const result = await new BuildBaseContexts(apiMock, defaultArgs).run();
+
+    // THEN
+    expect(result.clearSignContexts).toContainEqual(proxyInfoContext);
+    expect(result.clearSignContexts).toContainEqual(gatedSigningContext);
+    expect(result.clearSignContexts).toContainEqual(tokenContext);
+    expect(result.clearSigningType).toBe(ClearSigningType.BASIC);
   });
 });

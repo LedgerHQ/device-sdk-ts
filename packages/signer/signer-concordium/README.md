@@ -1,0 +1,389 @@
+# Ledger Concordium Signer Implementation
+
+This module provides the implementation of the Ledger Concordium signer of the Device Management Kit. It enables interaction with the Concordium application on a Ledger device including:
+
+- Querying the device app configuration and version;
+- Retrieving the Concordium public key using a given derivation path;
+- Signing a Concordium transaction (Transfer and TransferWithMemo);
+- Signing a Concordium credential deployment transaction;
+- Verifying a Concordium address on-device using a trusted backend;
+
+## 🔹 Index
+
+1. [How it works](#-how-it-works)
+2. [Installation](#-installation)
+3. [Initialisation](#-initialisation)
+4. [Use Cases](#-use-cases)
+   - [Get App Configuration](#use-case-1-get-app-configuration)
+   - [Get Public Key](#use-case-2-get-public-key)
+   - [Sign Transaction](#use-case-3-sign-transaction)
+   - [Sign Credential Deployment Transaction](#use-case-4-sign-credential-deployment-transaction)
+   - [Verify Address](#use-case-5-verify-address)
+5. [Observable Behavior](#-observable-behavior)
+
+## 🔹 How it works
+
+The Ledger Concordium Signer utilizes the advanced capabilities of the Ledger device to provide secure operations for end users. It takes advantage of the interface provided by the Device Management Kit to establish communication with the Ledger device and execute various operations. The communication with the Ledger device is performed using [APDU](https://en.wikipedia.org/wiki/Smart_card_application_protocol_data_unit)s (Application Protocol Data Units), which are encapsulated within the `Command` object. These commands are then organized into tasks, allowing for the execution of complex operations with one or more APDUs. The tasks are further encapsulated within `DeviceAction` objects to handle different real-world scenarios. Finally, the Signer exposes dedicated and independent use cases that can be directly utilized by end users.
+
+## 🔹 Installation
+
+> **Note:** This module is not standalone; it depends on the [@ledgerhq/device-management-kit](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/device-management-kit) package, so you need to install it first.
+
+To install the `device-signer-kit-concordium` package, run the following command:
+
+```sh
+npm install @ledgerhq/device-signer-kit-concordium
+```
+
+## 🔹 Initialisation
+
+To initialise a Concordium signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerConcordiumBuilder`:
+
+```typescript
+const signerConcordium = new SignerConcordiumBuilder({
+  dmk,
+  sessionId,
+}).build();
+```
+
+The builder creates a default `ContextModule` out of the box, which is used by `verifyAddress` to communicate with the trusted metadata service. You can also provide a customized context module:
+
+```typescript
+import { ContextModuleBuilder } from "@ledgerhq/context-module";
+
+const customContextModule = new ContextModuleBuilder({ originToken }).build();
+
+const signerConcordium = new SignerConcordiumBuilder({
+  dmk,
+  sessionId,
+})
+  .withContextModule(customContextModule)
+  .build();
+```
+
+## 🔹 Use Cases
+
+The `SignerConcordiumBuilder.build()` method will return a `SignerConcordium` instance that exposes 5 dedicated methods, each of which calls an independent use case. Each use case will return an object that contains an observable and a method called `cancel`.
+
+---
+
+### Use Case 1: Get App Configuration
+
+This method allows users to query the Concordium app version running on the device.
+
+> **Note:** This command is supported starting from app-concordium `5.4.1`. Older app-concordium versions will return an `INS_NOT_SUPPORTED` (`0x6D00`) error.
+
+```typescript
+const { observable, cancel } = signerConcordium.getAppConfiguration();
+```
+
+#### **Parameters**
+
+None.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type AppConfiguration = {
+  version: string; // e.g. "5.5.0"
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 2: Get Public Key
+
+This method allows users to retrieve the Concordium Ed25519 public key based on a given `derivationPath`.
+
+```typescript
+const { observable, cancel } = signerConcordium.getPublicKey(
+  derivationPath,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/919'/0'/0'/0'"`)
+  - The derivation path used for the Concordium key. Concordium uses hardened paths: `44'/919'/account'/identity'/credential'`.
+
+- `options`
+
+  - Optional
+  - Type: `PublicKeyOptions`
+
+    ```typescript
+    type PublicKeyOptions = {
+      checkOnDevice?: boolean;
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `checkOnDevice`: An optional boolean indicating whether user confirmation on the device is required (`true`) or not (`false`).
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Concordium app on the device.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type PublicKey = {
+  publicKey: Uint8Array; // 32-byte Ed25519 public key
+};
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 3: Sign Transaction
+
+Securely sign a Concordium transaction on Ledger devices. Supports both Transfer and TransferWithMemo transaction types. The transaction type is automatically detected from the serialized payload.
+
+```typescript
+const { observable, cancel } = signerConcordium.signTransaction(
+  derivationPath,
+  transaction,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/919'/0'/0'/0'"`)
+  - The derivation path used for the signing key.
+
+- `transaction`
+
+  - **Required**
+  - **Type:** `Uint8Array`
+  - The serialized transaction bytes to sign. The transaction type (Transfer or TransferWithMemo) is detected automatically from the type byte at offset 60.
+
+- `options`
+
+  - Optional
+  - Type: `TransactionOptions`
+
+    ```typescript
+    type TransactionOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Concordium app on the device.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type Signature = Uint8Array; // 64-byte Ed25519 signature
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 4: Sign Credential Deployment Transaction
+
+Sign a credential deployment transaction on Ledger devices. Credential deployment is required before an account can send its first transaction on the Concordium blockchain. The signer parses the serialized credential deployment bytes and orchestrates the multi-step APDU sequence with the device.
+
+```typescript
+const { observable, cancel } =
+  signerConcordium.signCredentialDeploymentTransaction(
+    derivationPath,
+    transaction,
+    options,
+  );
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/919'/0'/0'/0'"`)
+  - The derivation path used for the signing key.
+
+- `transaction`
+
+  - **Required**
+  - **Type:** `Uint8Array`
+  - The serialized credential deployment bytes. The wire format contains credential values, identity ownership proofs, and expiry, concatenated in the order expected by the Concordium device app.
+
+- `options`
+
+  - Optional
+  - Type: `TransactionOptions`
+
+    ```typescript
+    type TransactionOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Concordium app on the device.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates, including the following details:
+
+```typescript
+type Signature = Uint8Array; // 64-byte Ed25519 signature
+```
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 5: Verify Address
+
+Securely verify a Concordium account address on the Ledger device using the trusted backend pattern. The signer fetches a signed account ownership descriptor from the trusted metadata service, loads it onto the device via the PKI infrastructure, then triggers address verification. The device validates the descriptor's signature chain, derives the public key from the given path, and displays the address for user confirmation only if the key matches.
+
+The flow can fail in two distinct ways at the metadata-service boundary. Both are surfaced via `DeviceActionStatus.Error` and must be discriminated by the stable `errorCode` string on the emitted error:
+
+- **`errorCode: "address_verification_failed"`** — the trusted metadata service was reached and actively refused the pubkey → address mapping (HTTP 4xx, typically 422). The backend's `message` is forwarded verbatim in `error.message`. Treat as a terminal, non-retryable verification failure.
+- **`errorCode: "trusted_metadata_service_error"`** — the trusted metadata service could not answer (network failure, HTTP 5xx, malformed response). Treat as transient; a retry or a cached-address fallback may be appropriate.
+
+Device-originated errors (`"6985"` user rejected, `"5515"` locked device, `"6b0c"` trusted name mismatch) are surfaced the same way.
+
+```typescript
+const { observable, cancel } = signerConcordium.verifyAddress(
+  derivationPath,
+  address,
+  network,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `derivationPath`
+
+  - **Required**
+  - **Type:** `string` (e.g., `"44'/919'/0'/0'/0'"`)
+  - The derivation path for the account's signing key.
+
+- `address`
+
+  - **Required**
+  - **Type:** `string`
+  - The Concordium Base58Check account address to verify (e.g., `"3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB"`).
+
+- `network`
+
+  - **Required**
+  - **Type:** `"mainnet" | "testnet"`
+  - The Concordium network for which to verify the address.
+
+- `options`
+
+  - Optional
+  - Type: `VerifyAddressOptions`
+
+    ```typescript
+    type VerifyAddressOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the Concordium app on the device.
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates. On completion, the output is `true` (the address was verified and approved by the user).
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+## 🔹 Observable Behavior
+
+Each method returns an [Observable](https://rxjs.dev/guide/observable) emitting updates structured as [`DeviceActionState`](https://github.com/LedgerHQ/device-sdk-ts/blob/develop/packages/device-management-kit/src/api/device-action/model/DeviceActionState.ts). These updates reflect the operation's progress and status:
+
+- **NotStarted**: The operation hasn't started.
+- **Pending**: The operation is in progress and may require user interaction.
+- **Stopped**: The operation was canceled or stopped.
+- **Completed**: The operation completed successfully, with results available.
+- **Error**: An error occurred.
+
+**Example Observable Subscription:**
+
+```typescript
+observable.subscribe({
+  next: (state: DeviceActionState) => {
+    switch (state.status) {
+      case DeviceActionStatus.NotStarted: {
+        console.log("The action is not started yet.");
+        break;
+      }
+      case DeviceActionStatus.Pending: {
+        const { intermediateValue } = state;
+        console.log(
+          "The action is pending and the intermediate value is: ",
+          intermediateValue,
+        );
+        break;
+      }
+      case DeviceActionStatus.Stopped: {
+        console.log("The action has been stopped.");
+        break;
+      }
+      case DeviceActionStatus.Completed: {
+        const { output } = state;
+        console.log("The action has been completed: ", output);
+        break;
+      }
+      case DeviceActionStatus.Error: {
+        const { error } = state;
+        console.log("An error occurred during the action: ", error);
+        break;
+      }
+    }
+  },
+});
+```
+
+**Intermediate Values in Pending Status:**
+
+When the status is DeviceActionStatus.Pending, the state will include an `intermediateValue` object that provides useful information for interaction:
+
+```typescript
+const { requiredUserInteraction } = intermediateValue;
+
+switch (requiredUserInteraction) {
+  case UserInteractionRequired.VerifyAddress: {
+    console.log("User needs to verify the address displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.SignTransaction: {
+    console.log("User needs to sign the transaction displayed on the device.");
+    break;
+  }
+  case UserInteractionRequired.ConfirmOpenApp: {
+    console.log("The user needs to confirm on the device to open the app.");
+    break;
+  }
+  case UserInteractionRequired.UnlockDevice: {
+    console.log("The user needs to unlock the device.");
+    break;
+  }
+  case UserInteractionRequired.None: {
+    console.log("No user action needed.");
+    break;
+  }
+  default:
+    const uncaughtUserInteraction: never = requiredUserInteraction;
+    console.error("Unhandled user interaction case:", uncaughtUserInteraction);
+}
+```

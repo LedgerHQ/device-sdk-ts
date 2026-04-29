@@ -39,8 +39,14 @@ npm install @ledgerhq/device-signer-kit-solana
 To initialise a Solana signer instance, you need a Ledger Device Management Kit instance and the ID of the session of the connected device. Use the `SignerSolanaBuilder` along with the [Context Module](https://github.com/LedgerHQ/device-sdk-ts/tree/develop/packages/signer/context-module) by default developed by Ledger:
 
 ```typescript
-const signerSolana = new SignerSolanaBuilder({ sdk, sessionId }).build();
+const signerSolana = new SignerSolanaBuilder({
+  dmk,
+  sessionId,
+  solanaRPCURL,
+}).build();
 ```
+
+- **solanaRPCURL** _(optional)_ — Solana RPC endpoint used for fetching a fresh `recentBlockhash` during delayed signing. Only required when using `delayed: true` without a custom `fetchBlockhash` callback. You can override it per `signTransaction` call via `SolanaTransactionOptionalConfig.solanaRPCURL`. In browser environments, use a CORS-enabled RPC URL.
 
 ## 🔹 Use Cases
 
@@ -82,9 +88,7 @@ const { observable, cancel } = signerSolana.getAddress(derivationPath, options);
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type GetAddressCommandResponse = {
-  publicKey: string; // Address in base58 format
-};
+type GetAddressDAOutput = string; // base58-encoded Solana address
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
@@ -121,6 +125,15 @@ const { observable, cancel } = signerSolana.signTransaction(
 - **transactionOptions** `SolanaTransactionOptionalConfig`  
   Provides additional context for transaction signing.
 
+  - **solanaRPCURL** `string` _(optional)_  
+    Overrides the RPC URL from `SignerSolanaBuilder` for this call. Used only for fetching a fresh blockhash during delayed signing.
+
+  - **delayed** `boolean` _(optional)_  
+    When `true`, uses the two-step delayed signing flow so the user's review time does not race the blockhash expiry. Requires the Solana app version to support delayed signing and either `solanaRPCURL` (builder or per-call) or `fetchBlockhash` to be provided. If the conditions are not met (missing RPC config or unsupported app version), the signer falls back to standard signing and logs a warning.
+
+  - **fetchBlockhash** `() => Promise<Uint8Array>` _(optional)_  
+    Custom callback to supply the fresh 32-byte blockhash for delayed signing instead of fetching via `solanaRPCURL`. When provided, `solanaRPCURL` is not required for the delayed path.
+
   - **transactionResolutionContext** `object`  
     Lets you explicitly pass `tokenAddress` and ATA details, bypassing extraction from the transaction itself.
 
@@ -136,11 +149,8 @@ const { observable, cancel } = signerSolana.signTransaction(
     - **tokenInternalId** `string`
       Ledger internal token ID
 
-  - **solanaRPCURL** `string`  
-    RPC endpoint to use if `transactionResolutionContext` is not provided  
-    and parsing requires network lookups.  
-    In browser environments, use a CORS-enabled RPC URL.  
-    Defaults to: `"https://api.mainnet-beta.solana.com/"`.
+- **skipOpenApp** `boolean`  
+  If `true`, skips opening the Solana app on the device.
 
 ---
 
@@ -149,9 +159,7 @@ const { observable, cancel } = signerSolana.signTransaction(
 - `observable` That emits DeviceActionState updates, including the following details:
 
 ```ts
-type SolanaSignature = {
-  signature: Uint8Array; // Signed transaction bytes
-};
+type SignTransactionDAOutput = Uint8Array; // raw signature (64 bytes)
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
@@ -188,7 +196,7 @@ enum DeviceActionStatus {
 - **Pending** → Waiting for user confirmation on the device.  
   Includes an `intermediateValue` of type `IntermediateValue`.
 - **Stopped** → Action was cancelled before completion.
-- **Completed** → Provides the signed transaction bytes (`Uint8Array`).
+- **Completed** → Provides the raw 64-byte Ed25519 signature (`Uint8Array`).
 - **Error** → The device or signing operation failed (`SignTransactionDAError`).
 
 ---
@@ -228,18 +236,19 @@ const subscription = observable.subscribe({
 
 #### **Notes**
 
-- Clear signing only supports simple instructions like a single `transfer` or combos like `createAccound + fundAccount` or `createAccount + transfer`. If you are receiving `6808` error from device, most likely the instructions are not supported and blind signing is required.
+- Clear signing only supports simple instructions like a single `transfer` or combos like `createAccount + fundAccount` or `createAccount + transfer`. If you are receiving `6808` error from device, most likely the instructions are not supported and blind signing is required.
 
 ---
 
 ### Use Case 3: Sign Message
 
-This method allows users to sign a text string that is displayed on Ledger devices.
+This method allows users to sign an off-chain message displayed on Ledger devices, following the [Solana off-chain message signing specification](https://docs.anza.xyz/proposals/off-chain-message-signing).
 
 ```typescript
 const { observable, cancel } = signerSolana.signMessage(
   derivationPath,
   message,
+  options,
 );
 ```
 
@@ -254,15 +263,47 @@ const { observable, cancel } = signerSolana.signMessage(
 - `message`
 
   - **Required**
-  - **Type:** `string`
-  - The message to be signed, which will be displayed on the Ledger device.
+  - **Type:** `string | Uint8Array`
+  - The message to sign. Pass a `string` for V0/V1/Legacy (UTF-8 encoded automatically). Pass a `Uint8Array` for Raw mode when you have an already-formatted binary payload.
+
+- `options`
+
+  - Optional
+  - Type: `MessageOptions`
+
+    ```typescript
+    import { SignMessageVersion } from "@ledgerhq/device-signer-kit-solana";
+
+    enum SignMessageVersion {
+      Raw = "raw",
+      Legacy = "legacy",
+      V0 = "v0",
+      V1 = "v1",
+    }
+
+    type MessageOptions = {
+      skipOpenApp?: boolean;
+      version?: SignMessageVersion; // defaults to V0
+      appDomain?: string; // V0 only
+    };
+    ```
+
+  - `skipOpenApp`: Skip the automatic open-app step.
+  - `version`: The off-chain message signing mode. Defaults to `SignMessageVersion.V0`.
+    - **V0** (default) — original off-chain message header with `appDomain`, format detection, and up to 65 515 bytes. Falls back to Legacy on `6a81`.
+    - **V1** — simplified header: no `appDomain`, no format byte. Up to 65 535 bytes. Falls back to V0 -> Legacy on `6a81`. Requires Solana device app version 1.14+.
+    - **Legacy** — compact header for backward compatibility with old Solana app firmware. Current firmware will reject it with `6a81`.
+    - **Raw** — pass-through mode: sends the caller-provided `Uint8Array` payload directly with no header wrapping. Use when you have already built a valid off-chain message. Returns a plain base58 signature (no envelope).
+  - `appDomain`: Application domain string for V0 headers. Encoded as UTF-8 and padded/truncated to 32 bytes. Ignored for V1, Legacy, and Raw.
 
 #### **Returns**
 
 - `observable` Emits DeviceActionState updates, including the following details:
 
 ```typescript
-type Signature = Uint8Array; // Signed message bytes
+type SignMessageOutput = {
+  signature: string; // base58 envelope (V1/V0/Legacy) or raw base58 signature (Raw)
+};
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.

@@ -1,0 +1,74 @@
+[
+  {
+    "data": {
+      "domain": {
+        "name": "OpenSea",
+        "version": "1",
+        "chainId": 1,
+        "verifyingContract": "0x7f268357a8c2552623316e2562d90e642bb538e5"
+      },
+      "primaryType": "Order",
+      "types": {
+        "EIP712Domain": [
+          { "name": "name", "type": "string" },
+          { "name": "version", "type": "string" },
+          { "name": "chainId", "type": "uint256" },
+          { "name": "verifyingContract", "type": "address" }
+        ],
+        "Order": [
+          { "name": "exchange", "type": "address" },
+          { "name": "maker", "type": "address" },
+          { "name": "taker", "type": "address" },
+          { "name": "makerRelayerFee", "type": "uint256" },
+          { "name": "takerRelayerFee", "type": "uint256" },
+          { "name": "makerProtocolFee", "type": "uint256" },
+          { "name": "takerProtocolFee", "type": "uint256" },
+          { "name": "feeRecipient", "type": "address" },
+          { "name": "feeMethod", "type": "uint8" },
+          { "name": "side", "type": "uint8" },
+          { "name": "saleKind", "type": "uint8" },
+          { "name": "target", "type": "address" },
+          { "name": "howToCall", "type": "uint8" },
+          { "name": "calldata", "type": "bytes" },
+          { "name": "replacementPattern", "type": "bytes" },
+          { "name": "staticTarget", "type": "address" },
+          { "name": "staticExtradata", "type": "bytes" },
+          { "name": "paymentToken", "type": "address" },
+          { "name": "basePrice", "type": "uint256" },
+          { "name": "extra", "type": "uint256" },
+          { "name": "listingTime", "type": "uint256" },
+          { "name": "expirationTime", "type": "uint256" },
+          { "name": "salt", "type": "uint256" },
+          { "name": "nonce", "type": "uint256" }
+        ]
+      },
+      "message": {
+        "exchange": "0x7f268357a8c2552623316e2562d90e642bb538e5",
+        "maker": "0x6cbcd73cd8e8a42844662f0a0e76d7f79afd933d",
+        "taker": "0x0000000000000000000000000000000000000000",
+        "makerRelayerFee": "250",
+        "takerRelayerFee": "0",
+        "makerProtocolFee": "0",
+        "takerProtocolFee": "0",
+        "feeRecipient": "0x5b3256965e7c3cf26e11fcaf296dfc8807c01073",
+        "feeMethod": 1,
+        "side": 1,
+        "saleKind": 0,
+        "target": "0xbaf2127b49fc93cbca6269fade0f7f31df4c88a7",
+        "howToCall": 1,
+        "calldata": "0x",
+        "replacementPattern": "0x",
+        "staticTarget": "0x0000000000000000000000000000000000000000",
+        "staticExtradata": "0x",
+        "paymentToken": "0x0000000000000000000000000000000000000000",
+        "basePrice": "750000000000000000",
+        "extra": "0",
+        "listingTime": "1700000000",
+        "expirationTime": "1735689600",
+        "salt": "123456789",
+        "nonce": 0
+      }
+    },
+    "description": "OpenSea: Wyvern Order Listing"
+  }
+]

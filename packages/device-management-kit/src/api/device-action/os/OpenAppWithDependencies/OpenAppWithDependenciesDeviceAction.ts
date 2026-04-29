@@ -21,6 +21,7 @@ import {
   type OpenAppWithDependenciesDAInput,
   type OpenAppWithDependenciesDAIntermediateValue,
   type OpenAppWithDependenciesDAOutput,
+  openAppWithDependenciesDAStateStep,
 } from "./types";
 
 type OpenAppWithDependenciesMachineInternalState = {
@@ -67,7 +68,7 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
       input: {
         unlockTimeout,
         applications: [...this.input.dependencies, this.input.application],
-        allowMissingApplication: false,
+        allowMissingApplication: this.input.allowMissingApplication ?? false,
       },
     }).makeStateMachine(internalApi);
 
@@ -115,6 +116,7 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: openAppWithDependenciesDAStateStep.GET_DEVICE_METADATA,
             installPlan: null,
           },
           _internalState: {
@@ -225,7 +227,8 @@ export class OpenAppWithDependenciesDeviceAction extends XStateDeviceAction<
                 ..._.context.input.dependencies,
                 _.context.input.application,
               ],
-              allowMissingApplication: false,
+              allowMissingApplication:
+                this.input.allowMissingApplication ?? false,
             }),
             onSnapshot: {
               actions: assign({

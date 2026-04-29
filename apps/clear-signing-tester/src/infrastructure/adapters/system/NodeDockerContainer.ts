@@ -262,6 +262,140 @@ export class NodeDockerContainer implements DockerContainer {
     });
   }
 
+  async getLocalImageRepoDigest(image: string): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "image",
+        "inspect",
+        "--format",
+        "{{index .RepoDigests 0}}",
+        image,
+      ]);
+      const digest = output.trim().split("@")[1]?.trim();
+      return digest ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  async getRemoteImageManifestDigest(image: string): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "buildx",
+        "imagetools",
+        "inspect",
+        image,
+        "--format",
+        "{{json .Manifest.Digest}}",
+      ]);
+      const digest = JSON.parse(output.trim()) as string;
+      return digest || null;
+    } catch (error) {
+      this.logger.debug(
+        `Unable to resolve remote digest for "${image}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return null;
+    }
+  }
+
+  async getLocalImageLabel(
+    image: string,
+    label: string,
+  ): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "image",
+        "inspect",
+        "--format",
+        `{{index .Config.Labels "${label}"}}`,
+        image,
+      ]);
+      const value = output.trim();
+      return value.length > 0 ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async getRemoteImageLabel(
+    image: string,
+    label: string,
+  ): Promise<string | null> {
+    try {
+      const output = await this.runCommand("docker", [
+        "buildx",
+        "imagetools",
+        "inspect",
+        image,
+        "--format",
+        "{{json .Image}}",
+      ]);
+      const imageData = JSON.parse(output) as Record<
+        string,
+        { config?: { Labels?: Record<string, string> } }
+      >;
+
+      const preferredPlatform = this.getDockerPlatformKey();
+      const platformData =
+        imageData[preferredPlatform] ??
+        imageData["linux/amd64"] ??
+        imageData["linux/arm64"] ??
+        Object.values(imageData)[0];
+
+      return platformData?.config?.Labels?.[label] ?? null;
+    } catch (error) {
+      this.logger.debug(
+        `Unable to resolve remote image label "${label}" for "${image}": ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return null;
+    }
+  }
+
+  private getDockerPlatformKey(): string {
+    const dockerOs = "linux";
+    const arch = process.arch === "x64" ? "amd64" : process.arch;
+    return `${dockerOs}/${arch}`;
+  }
+
+  private runCommand(command: string, args: string[]): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const childProcess = spawn(command, args, {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      childProcess.stdout.on("data", (data: Buffer) => {
+        stdout += data.toString();
+      });
+
+      childProcess.stderr.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      childProcess.on("close", (code) => {
+        if (code === 0) {
+          resolve(stdout);
+        } else {
+          reject(
+            new Error(
+              `Command failed (${command} ${args.join(" ")}): ${stderr.trim()}`,
+            ),
+          );
+        }
+      });
+
+      childProcess.on("error", (error) => {
+        reject(error);
+      });
+    });
+  }
+
   private buildDockerRunArgs(
     imageName: string,
     options: DockerRunOptions,

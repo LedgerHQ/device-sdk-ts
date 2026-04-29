@@ -1,16 +1,12 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { ProxyDelegateCallDto } from "./dto/ProxyDelegateCallDto";
 import {
@@ -22,7 +18,10 @@ import {
 @injectable()
 export class HttpProxyDataSource implements ProxyDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   async getProxyImplementationAddress({
@@ -35,20 +34,14 @@ export class HttpProxyDataSource implements ProxyDataSource {
   > {
     let dto: ProxyDelegateCallDto | undefined;
     try {
-      const response = await axios.request<ProxyDelegateCallDto>({
-        method: "POST",
-        url: `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/delegate`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-        data: {
+      dto = (await this.http.post(
+        `${this.config.metadataServiceDomain.url}/v2/ethereum/${chainId}/contract/proxy/delegate`,
+        {
           proxy: proxyAddress,
           data: calldata,
           challenge,
         },
-      });
-      dto = response.data;
+      )) as ProxyDelegateCallDto;
     } catch (_error) {
       return Left(
         new Error(

@@ -2,7 +2,6 @@ import { Left, Right } from "purify-ts";
 import { type Observable } from "rxjs";
 import { assign, fromObservable, fromPromise, setup } from "xstate";
 
-import { isSuccessCommandResult } from "@api/command/model/CommandResult";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
@@ -30,6 +29,7 @@ import {
   type FirmwareVersion,
   type InstalledLanguagePackage,
 } from "@api/device-session/DeviceSessionState";
+import { isSuccessDmkResult } from "@api/model/DmkResult";
 import { installedAppResultGuard } from "@api/secure-channel/device-action/ListInstalledApps/types";
 import { ConnectToSecureChannelTask } from "@api/secure-channel/task/ConnectToSecureChannelTask";
 import { SecureChannelEventType } from "@api/secure-channel/task/types";
@@ -43,6 +43,7 @@ import {
   type GetDeviceMetadataDAInput,
   type GetDeviceMetadataDAIntermediateValue,
   type GetDeviceMetadataDAOutput,
+  getDeviceMetadataDAStateStep,
 } from "./types";
 
 type GetDeviceMetadataMachineInternalState = {
@@ -186,6 +187,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceMetadataDAStateStep.GET_DEVICE_METADATA,
           },
           _internalState: {
             error: null,
@@ -260,6 +262,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.GO_TO_DASHBOARD,
             },
           }),
           invoke: {
@@ -312,7 +315,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
               target: "GetFirmwareMetadataResultCheck",
               actions: assign({
                 _internalState: (_) => {
-                  if (isSuccessCommandResult(_.event.output)) {
+                  if (isSuccessDmkResult(_.event.output)) {
                     const deviceState = internalApi.getDeviceSessionState();
                     if (
                       deviceState.sessionStateType !==
@@ -368,6 +371,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS_SECURE_CHANNEL,
             },
           }),
           invoke: {
@@ -464,6 +468,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
           exit: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceMetadataDAStateStep.LIST_APPS,
             },
           }),
           invoke: {
@@ -532,7 +537,7 @@ export class GetDeviceMetadataDeviceAction extends XStateDeviceAction<
               target: "GetApplicationsMetadataResultCheck",
               actions: assign({
                 _internalState: (_) => {
-                  if (isSuccessCommandResult(_.event.output)) {
+                  if (isSuccessDmkResult(_.event.output)) {
                     const deviceState = internalApi.getDeviceSessionState();
                     if (
                       deviceState.sessionStateType !==

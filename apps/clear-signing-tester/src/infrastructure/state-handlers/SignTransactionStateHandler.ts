@@ -4,8 +4,7 @@ import { inject, injectable } from "inversify";
 import { TYPES } from "@root/src/di/types";
 import { type DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type ScreenshotSaver } from "@root/src/domain/adapters/ScreenshotSaver";
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
 import { type RetryService } from "@root/src/domain/services/RetryService";
 import { type ScreenAnalyzerService } from "@root/src/domain/services/ScreenAnalyzer";
 
@@ -35,9 +34,7 @@ export class SignTransactionStateHandler implements StateHandler {
     this.logger = this.loggerFactory("sign-transaction-state-handler");
   }
 
-  async handle(ctx: {
-    input: TransactionInput | TypedDataInput;
-  }): Promise<StateHandlerResult> {
+  async handle(ctx: { input: SignableInput }): Promise<StateHandlerResult> {
     this.logger.debug("Sign transaction state handler", {
       data: { ctx },
     });
@@ -109,7 +106,26 @@ export class SignTransactionStateHandler implements StateHandler {
       await this.retryService.retryUntil(
         async () => {
           await this.screenshotSaver.save();
-          return await this.deviceController.navigateNext();
+
+          if (await this.screenAnalyzer.isBlindSigningBlocked()) {
+            this.logger.error("Blind signing is not enabled -- cannot proceed");
+            await this.deviceController.rejectTransaction();
+            throw new Error("Blind signing is not enabled on the device");
+          }
+
+          if (await this.screenAnalyzer.isContinueToBlindSigningScreen()) {
+            this.logger.debug(
+              "Detected 'safer way to sign' screen, tapping 'Continue to blind signing'",
+            );
+            await this.deviceController.continueToBlindSigning();
+          } else if (await this.screenAnalyzer.isBlindSigningWarning()) {
+            this.logger.debug(
+              "Detected 'blind signing ahead' screen, tapping 'Accept risk and continue'",
+            );
+            await this.deviceController.acceptBlindSigning();
+          } else {
+            await this.deviceController.navigateNext();
+          }
         },
         async () => await this.screenAnalyzer.isLastPage(),
         NAVIGATION_MAX_ATTEMPTS,

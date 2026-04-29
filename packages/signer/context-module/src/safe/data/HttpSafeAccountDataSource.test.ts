@@ -1,24 +1,19 @@
-import { type HexaString } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  type DmkNetworkClient,
+  type HexaString,
+} from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { HttpSafeAccountDataSource } from "@/safe/data/HttpSafeAccountDataSource";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
-
-vi.mock("axios");
 
 describe("HttpSafeAccountDataSource", () => {
-  const config: ContextModuleConfig = {
+  const config: ContextModuleServiceConfig = {
     metadataServiceDomain: {
       url: "https://metadata.ledger.com",
     },
     originToken: "test-origin-token",
-  } as ContextModuleConfig;
+  } as ContextModuleServiceConfig;
 
   const validSafeAccountDto = {
     accountDescriptor: {
@@ -36,8 +31,16 @@ describe("HttpSafeAccountDataSource", () => {
   const validsafeContractAddress: HexaString =
     "0x1234567890123456789012345678901234567890";
 
+  let httpMock: { get: ReturnType<typeof vi.fn> };
+  let datasource: HttpSafeAccountDataSource;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpSafeAccountDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
   describe("getDescriptors", () => {
@@ -48,28 +51,16 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      httpMock.get.mockResolvedValue(validSafeAccountDto);
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith({
-        method: "GET",
-        url: "https://metadata.ledger.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890",
-        params: {
-          challenge: "0xabcdef",
-        },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: "test-origin-token",
-        },
-      });
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://metadata.ledger.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890",
+        { params: { challenge: "0xabcdef" } },
+      );
       expect(result).toEqual(
         Right({
           account: {
@@ -93,19 +84,15 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 137, // Polygon
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      httpMock.get.mockResolvedValue(validSafeAccountDto);
 
       // WHEN
-      await new HttpSafeAccountDataSource(config).getDescriptors(params);
+      await datasource.getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: "https://metadata.ledger.com/v2/ethereum/137/safe/account/0x1234567890123456789012345678901234567890",
-        }),
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://metadata.ledger.com/v2/ethereum/137/safe/account/0x1234567890123456789012345678901234567890",
+        { params: { challenge: "0xabcdef" } },
       );
     });
 
@@ -117,19 +104,15 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      httpMock.get.mockResolvedValue(validSafeAccountDto);
 
       // WHEN
-      await new HttpSafeAccountDataSource(config).getDescriptors(params);
+      await datasource.getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: "https://metadata.ledger.com/v2/ethereum/1/safe/account/0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
-        }),
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://metadata.ledger.com/v2/ethereum/1/safe/account/0xabcdefabcdefabcdefabcdefabcdefabcdefabcd",
+        { params: { challenge: "0xabcdef" } },
       );
     });
 
@@ -140,22 +123,15 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0x123456789",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      httpMock.get.mockResolvedValue(validSafeAccountDto);
 
       // WHEN
-      await new HttpSafeAccountDataSource(config).getDescriptors(params);
+      await datasource.getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          params: {
-            challenge: "0x123456789",
-          },
-        }),
-      );
+      expect(httpMock.get).toHaveBeenCalledWith(expect.any(String), {
+        params: { challenge: "0x123456789" },
+      });
     });
 
     it("should return error when response data is empty", async () => {
@@ -165,15 +141,10 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: null,
-      });
+      httpMock.get.mockResolvedValue(null);
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -192,15 +163,10 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: undefined,
-      });
+      httpMock.get.mockResolvedValue(undefined);
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -219,17 +185,12 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
-        },
+      httpMock.get.mockResolvedValue({
+        signersDescriptor: validSafeAccountDto.signersDescriptor,
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -248,17 +209,12 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: validSafeAccountDto.accountDescriptor,
-        },
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: validSafeAccountDto.accountDescriptor,
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -277,21 +233,16 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            keyId: "account-key-id",
-            keyUsage: "account-key-usage",
-          },
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: {
+          keyId: "account-key-id",
+          keyUsage: "account-key-usage",
         },
+        signersDescriptor: validSafeAccountDto.signersDescriptor,
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -310,21 +261,16 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: "account-signed-descriptor-data",
-            keyUsage: "account-key-usage",
-          },
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: {
+          signedDescriptor: "account-signed-descriptor-data",
+          keyUsage: "account-key-usage",
         },
+        signersDescriptor: validSafeAccountDto.signersDescriptor,
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -343,21 +289,16 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: "account-signed-descriptor-data",
-            keyId: "account-key-id",
-          },
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: {
+          signedDescriptor: "account-signed-descriptor-data",
+          keyId: "account-key-id",
         },
+        signersDescriptor: validSafeAccountDto.signersDescriptor,
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -376,22 +317,17 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: validSafeAccountDto.accountDescriptor,
-          signersDescriptor: {
-            signedDescriptor: "signers-signed-descriptor-data",
-            keyId: 123, // wrong type
-            keyUsage: "signers-key-usage",
-          },
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: validSafeAccountDto.accountDescriptor,
+        signersDescriptor: {
+          signedDescriptor: "signers-signed-descriptor-data",
+          keyId: 123, // wrong type
+          keyUsage: "signers-key-usage",
         },
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -410,18 +346,13 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: "invalid-string",
-          signersDescriptor: validSafeAccountDto.signersDescriptor,
-        },
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: "invalid-string",
+        signersDescriptor: validSafeAccountDto.signersDescriptor,
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -440,18 +371,13 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: validSafeAccountDto.accountDescriptor,
-          signersDescriptor: null,
-        },
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: validSafeAccountDto.accountDescriptor,
+        signersDescriptor: null,
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -463,19 +389,17 @@ describe("HttpSafeAccountDataSource", () => {
       );
     });
 
-    it("should return error when axios request fails", async () => {
+    it("should return error when network client rejects", async () => {
       // GIVEN
       const params = {
         safeContractAddress: validsafeContractAddress,
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("Network error"));
+      httpMock.get.mockRejectedValue(new Error("Network error"));
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -487,19 +411,17 @@ describe("HttpSafeAccountDataSource", () => {
       );
     });
 
-    it("should return error when axios throws an exception", async () => {
+    it("should return error when network client throws an exception", async () => {
       // GIVEN
       const params = {
         safeContractAddress: validsafeContractAddress,
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockRejectedValue(new Error("timeout"));
+      httpMock.get.mockRejectedValue(new Error("timeout"));
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -518,26 +440,21 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: "",
-            keyId: "",
-            keyUsage: "",
-          },
-          signersDescriptor: {
-            signedDescriptor: "",
-            keyId: "",
-            keyUsage: "",
-          },
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: {
+          signedDescriptor: "",
+          keyId: "",
+          keyUsage: "",
+        },
+        signersDescriptor: {
+          signedDescriptor: "",
+          keyId: "",
+          keyUsage: "",
         },
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -564,26 +481,21 @@ describe("HttpSafeAccountDataSource", () => {
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: {
-          accountDescriptor: {
-            signedDescriptor: longValue,
-            keyId: "account-key-id",
-            keyUsage: "account-key-usage",
-          },
-          signersDescriptor: {
-            signedDescriptor: longValue,
-            keyId: "signers-key-id",
-            keyUsage: "signers-key-usage",
-          },
+      httpMock.get.mockResolvedValue({
+        accountDescriptor: {
+          signedDescriptor: longValue,
+          keyId: "account-key-id",
+          keyUsage: "account-key-usage",
+        },
+        signersDescriptor: {
+          signedDescriptor: longValue,
+          keyId: "signers-key-id",
+          keyUsage: "signers-key-usage",
         },
       });
 
       // WHEN
-      const result = await new HttpSafeAccountDataSource(config).getDescriptors(
-        params,
-      );
+      const result = await datasource.getDescriptors(params);
 
       // THEN
       expect(result).toEqual(
@@ -602,63 +514,32 @@ describe("HttpSafeAccountDataSource", () => {
       );
     });
 
-    it("should use correct origin token from config", async () => {
-      // GIVEN
-      const customConfig: ContextModuleConfig = {
-        metadataServiceDomain: {
-          url: "https://metadata.ledger.com",
-        },
-        originToken: "custom-origin-token",
-      } as ContextModuleConfig;
-      const params = {
-        safeContractAddress: validsafeContractAddress,
-        chainId: 1,
-        challenge: "0xabcdef",
-      };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
-
-      // WHEN
-      await new HttpSafeAccountDataSource(customConfig).getDescriptors(params);
-
-      // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headers: expect.objectContaining({
-            [LEDGER_ORIGIN_TOKEN_HEADER]: "custom-origin-token",
-          }),
-        }),
-      );
-    });
-
     it("should use correct metadata service URL from config", async () => {
       // GIVEN
-      const customConfig: ContextModuleConfig = {
+      const customConfig: ContextModuleServiceConfig = {
         metadataServiceDomain: {
           url: "https://custom-metadata.example.com",
         },
         originToken: "test-token",
-      } as ContextModuleConfig;
+      } as ContextModuleServiceConfig;
+      const customDatasource = new HttpSafeAccountDataSource(
+        customConfig,
+        httpMock as unknown as DmkNetworkClient,
+      );
       const params = {
         safeContractAddress: validsafeContractAddress,
         chainId: 1,
         challenge: "0xabcdef",
       };
-      vi.spyOn(axios, "request").mockResolvedValue({
-        status: 200,
-        data: validSafeAccountDto,
-      });
+      httpMock.get.mockResolvedValue(validSafeAccountDto);
 
       // WHEN
-      await new HttpSafeAccountDataSource(customConfig).getDescriptors(params);
+      await customDatasource.getDescriptors(params);
 
       // THEN
-      expect(axios.request).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: "https://custom-metadata.example.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890",
-        }),
+      expect(httpMock.get).toHaveBeenCalledWith(
+        "https://custom-metadata.example.com/v2/ethereum/1/safe/account/0x1234567890123456789012345678901234567890",
+        { params: { challenge: "0xabcdef" } },
       );
     });
   });

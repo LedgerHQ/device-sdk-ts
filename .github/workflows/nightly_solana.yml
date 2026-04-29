@@ -1,0 +1,112 @@
+name: "[Tests] Solana Nightly"
+on:
+  schedule:
+    # Run every day at 3:00 AM UTC (offset from Ethereum/ERC7730 nightly at 2:00 AM)
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+env:
+  FORCE_COLOR: "1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: Setup toolchain and dependencies
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+
+  build-libraries:
+    name: Build libraries
+    needs: [setup]
+    runs-on: ledgerhq-device-sdk
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+  solana-cs-tester:
+    needs: [build-libraries]
+    name: Solana Fixture Test (${{ matrix.device }} - ${{ matrix.test }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+        test:
+          - test:solana:system-transfers
+          - test:solana:spl-legacy
+          - test:solana:spl-token2022
+          - test:solana:stake
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester:solana
+          test: ${{ matrix.test }}
+          device: ${{ matrix.device }}
+          coin-app: Solana
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: solana-cs-tester-logs
+          summary-prefix: "Solana Fixture Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  solana-program-cs-tester:
+    needs: [build-libraries]
+    name: Solana Program Test (${{ matrix.device }} - ${{ matrix.test }})
+    runs-on: ledgerhq-device-sdk
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [stax, nanox, flex]
+        test:
+          - test:solana:program:system
+          - test:solana:program:stake
+          - test:solana:program:spl-token
+          - test:solana:program:token-2022
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/cs-tester-composite
+        with:
+          runner: cs-tester:solana
+          test: ${{ matrix.test }}
+          device: ${{ matrix.device }}
+          coin-app: Solana
+          use-rpc: "true"
+          log-level: error
+          enable-file-logging: "true"
+          artifact-prefix: solana-program-cs-tester-logs
+          summary-prefix: "Solana Program Test"
+          gh-bot-app-id: ${{ secrets.GH_BOT_APP_ID }}
+          gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
+          gating-token: ${{ secrets.GATING_TOKEN }}
+          solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  notify:
+    name: Notify Slack
+    needs: [solana-cs-tester, solana-program-cs-tester]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/slack-notify-composite
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
+          results: ${{ join(needs.*.result, ',') }}

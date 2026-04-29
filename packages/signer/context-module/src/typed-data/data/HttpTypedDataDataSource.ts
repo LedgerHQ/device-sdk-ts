@@ -1,17 +1,13 @@
-import axios from "axios";
-import SHA224 from "crypto-js/sha224";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type {
   ContextModuleCalMode,
-  ContextModuleConfig,
+  ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { networkTypes } from "@/network/di/networkTypes";
 import type {
   TypedDataCalldataIndex,
   TypedDataFilter,
@@ -19,8 +15,7 @@ import type {
   TypedDataMessageInfo,
 } from "@/shared/model/TypedDataClearSignContext";
 import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
-import type { TypedDataSchema } from "@/shared/model/TypedDataContext";
-import PACKAGE from "@root/package.json";
+import { getSchemaHash } from "@/typed-data/utils/getSchemaHash";
 
 import type {
   FiltersDto,
@@ -43,7 +38,10 @@ import {
 @injectable()
 export class HttpTypedDataDataSource implements TypedDataDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   public async getTypedDataFilters({
@@ -57,9 +55,7 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
     let messageInfo: TypedDataMessageInfo | undefined = undefined;
 
     try {
-      const response = await axios.request<FiltersDto[]>({
-        method: "GET",
-        url: `${this.config.cal.url}/dapps`,
+      const data = (await this.http.get(`${this.config.cal.url}/dapps`, {
         params: {
           contracts: address,
           chain_id: chainId,
@@ -68,18 +64,11 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
           descriptors_eip712: "<set>",
           ref: `branch:${this.config.cal.branch}`,
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
+      })) as FiltersDto[];
 
-      // Try to get the filters JSON descriptor, from address and schema hash
-      const schemaHash = SHA224(
-        JSON.stringify(this.sortTypes(schema)).replace(" ", ""),
-      ).toString();
+      const schemaHash = getSchemaHash(schema);
       address = address.toLowerCase();
-      const dataArray = response.data ?? [];
+      const dataArray = data ?? [];
       const filtersJson = dataArray
         .map((item) => item?.descriptors_eip712?.[address]?.[schemaHash])
         .find(Boolean);
@@ -388,17 +377,6 @@ export class HttpTypedDataDataSource implements TypedDataDataSource {
         "calldata-spender",
       ].includes(data.format) &&
       typeof data.calldata_index === "number"
-    );
-  }
-
-  private sortTypes(types: TypedDataSchema): TypedDataSchema {
-    return Object.fromEntries(
-      Object.entries(types)
-        .sort(([aKey], [bKey]) => aKey.localeCompare(bKey))
-        .map(([key, value]) => [
-          key,
-          value.map((v) => ({ name: v.name, type: v.type })),
-        ]),
     );
   }
 }

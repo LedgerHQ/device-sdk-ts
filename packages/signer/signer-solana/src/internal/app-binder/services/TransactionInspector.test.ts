@@ -376,6 +376,56 @@ describe("TransactionInspector", () => {
     expect(result.data.createATA).toEqual(overrideATA);
   });
 
+  it("classifies as SWAP when templateId is provided", async () => {
+    const payer = Keypair.generate();
+    const dest = Keypair.generate().publicKey;
+
+    const instruction = SystemProgram.transfer({
+      fromPubkey: payer.publicKey,
+      toPubkey: dest,
+      lamports: 1_000,
+    });
+
+    const { raw } = makeSignedRawTx([instruction], [payer], payer);
+
+    const result = await new TransactionInspector().inspectTransactionType(
+      raw,
+      undefined,
+      undefined,
+      "some-template-id",
+    );
+
+    expect(result.transactionType).toBe(SolanaTransactionTypes.SWAP);
+    expect(result.data).toEqual({});
+  });
+
+  it("SWAP takes precedence over SPL when templateId is provided", async () => {
+    const owner = Keypair.generate();
+    const source = Keypair.generate().publicKey;
+    const destination = Keypair.generate().publicKey;
+
+    const instruction = createTransferInstruction(
+      source,
+      destination,
+      owner.publicKey,
+      42n,
+      [],
+      TOKEN_PROGRAM_ID,
+    );
+
+    const { raw } = makeSignedRawTx([instruction], [owner], owner);
+
+    const result = await new TransactionInspector().inspectTransactionType(
+      raw,
+      undefined,
+      undefined,
+      "swap-template-id",
+    );
+
+    expect(result.transactionType).toBe(SolanaTransactionTypes.SWAP);
+    expect(result.data).toEqual({});
+  });
+
   it("fast path: both overrides + SPL instruction, SPL and returns both", async () => {
     const owner = Keypair.generate();
     const source = Keypair.generate().publicKey;

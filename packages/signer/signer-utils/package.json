@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/signer-utils",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -40,14 +40,18 @@
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
-    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "@types/semver": "catalog:",
     "ts-node": "catalog:"
   },
   "peerDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^"
+  },
+  "dependencies": {
+    "semver": "catalog:"
   }
 }

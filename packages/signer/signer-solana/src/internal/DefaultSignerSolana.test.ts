@@ -57,7 +57,7 @@ describe("DefaultSignerSolana", () => {
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
 
-  it("should call signMessage", () => {
+  it("should call signMessage with a string", () => {
     const dmk = {
       executeDeviceAction: vi.fn(),
       getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
@@ -69,6 +69,21 @@ describe("DefaultSignerSolana", () => {
       contextModule: contextModuleStub,
     });
     signer.signMessage("44'/501'/0'/0'", "Hello world");
+    expect(dmk.executeDeviceAction).toHaveBeenCalled();
+  });
+
+  it("should call signMessage with a Uint8Array for Raw pass-through", () => {
+    const dmk = {
+      executeDeviceAction: vi.fn(),
+      getLoggerFactory: vi.fn().mockReturnValue(mockLoggerFactory),
+    } as unknown as DeviceManagementKit;
+    const sessionId = {} as DeviceSessionId;
+    const signer = new DefaultSignerSolana({
+      dmk,
+      sessionId,
+      contextModule: contextModuleStub,
+    });
+    signer.signMessage("44'/501'/0'/0'", new Uint8Array([0xff, 0x01, 0x02]));
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
 

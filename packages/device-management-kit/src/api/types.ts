@@ -26,6 +26,11 @@ export {
   type ExecuteDeviceActionReturnType,
 } from "@api/device-action/DeviceAction";
 export {
+  type CallTaskInAppDAError,
+  type CallTaskInAppDAIntermediateValue,
+  type CallTaskInAppDAOutput,
+} from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceActionTypes";
+export {
   type GetDeviceMetadataDAError,
   type GetDeviceMetadataDAInput,
   type GetDeviceMetadataDAIntermediateValue,
@@ -118,6 +123,11 @@ export type {
   LoggerSubscriberService,
   LogParams,
 } from "@api/logger-subscriber/service/LoggerSubscriberService";
+export type {
+  DmkErrorResult,
+  DmkResult,
+  DmkSuccessResult,
+} from "@api/model/DmkResult";
 export {
   type GenuineCheckDAError,
   type GenuineCheckDAInput,

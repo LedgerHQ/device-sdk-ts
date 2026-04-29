@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
 
@@ -9,7 +10,7 @@ import { type TestBatchTypedDataFromFileUseCase } from "@root/src/application/us
 import { type TestContractUseCase } from "@root/src/application/usecases/TestContractUseCase";
 import { type TestTransactionUseCase } from "@root/src/application/usecases/TestTransactionUseCase";
 import { type TestTypedDataUseCase } from "@root/src/application/usecases/TestTypedDataUseCase";
-import { makeContainer } from "@root/src/di/container";
+import { makeEthereumContainer } from "@root/src/di/ethereumContainer";
 import { type ClearSigningTesterConfig } from "@root/src/di/modules/configModuleFactory";
 import { TYPES } from "@root/src/di/types";
 import {
@@ -17,6 +18,7 @@ import {
   type CliLogLevel,
 } from "@root/src/domain/models/config/LoggerConfig";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
+import { SignableInputKind } from "@root/src/domain/models/SignableInputKind";
 import { type ServiceController } from "@root/src/domain/services/ServiceController";
 import { ERC7730InterceptorService } from "@root/src/infrastructure/services/ERC7730InterceptorService";
 
@@ -33,10 +35,14 @@ export type CliConfig = {
   pluginVersion?: string;
   screenshotFolderPath?: string;
   customApp?: string;
+  forcePull?: boolean;
+  externalSpeculos?: boolean;
 
   // config.signer
   skipCal?: boolean;
   erc7730Files?: string[];
+  blindSigningEnabled?: boolean;
+  skipOriginToken?: boolean;
 
   // config.logger
   logLevel: CliLogLevel;
@@ -60,6 +66,7 @@ export type CliConfig = {
 export class EthereumTransactionTesterCli {
   private container: Container;
   private controller: ServiceController;
+  private logger: LoggerPublisherService;
   private config: CliConfig;
   private interceptorService?: ERC7730InterceptorService;
 
@@ -87,10 +94,14 @@ export class EthereumTransactionTesterCli {
         pluginVersion: config.pluginVersion,
         screenshotPath: config.screenshotFolderPath,
         customAppPath: config.customApp,
+        forcePull: config.forcePull,
+        externalSpeculos: config.externalSpeculos,
       },
       signer: {
-        originToken: process.env["GATING_TOKEN"] || "test-origin-token",
-        gated: true,
+        originToken: config.skipOriginToken
+          ? ""
+          : process.env["GATING_TOKEN"] || "test-origin-token",
+        blindSigningEnabled: config.blindSigningEnabled ?? false,
       },
       cal: {
         url: "https://crypto-assets-service.api.ledger.com/v1",
@@ -107,7 +118,7 @@ export class EthereumTransactionTesterCli {
     };
 
     // Create DI container and resolve tester
-    this.container = makeContainer({
+    this.container = makeEthereumContainer({
       config: diConfig,
       logger: {
         cli: {
@@ -123,6 +134,11 @@ export class EthereumTransactionTesterCli {
       },
     });
 
+    const loggerFactory = this.container.get<
+      (tag: string) => LoggerPublisherService
+    >(TYPES.LoggerPublisherServiceFactory);
+    this.logger = loggerFactory("cli");
+
     this.controller = this.container.get<ServiceController>(
       TYPES.MainServiceController,
     );
@@ -134,11 +150,25 @@ export class EthereumTransactionTesterCli {
   async initialize(): Promise<void> {
     // Set up ERC7730 interceptor if files are provided
     if (this.config.erc7730Files && this.config.erc7730Files.length > 0) {
-      this.interceptorService = new ERC7730InterceptorService();
+      this.interceptorService = new ERC7730InterceptorService(this.logger);
       try {
         await this.interceptorService.setupFromFiles(this.config.erc7730Files);
       } catch (error) {
-        console.error("Failed to setup ERC7730 interceptor:", error);
+        // If a custom ERC7730_API_URL was explicitly set, the user expects the
+        // local server to be running.  Silently continuing would fall through to
+        // the production CAL with mismatched test certificates, producing
+        // misleading blind-signing results.  Abort loudly instead.
+        if (process.env["ERC7730_API_URL"]) {
+          this.logger.error(
+            `ERC7730_API_URL is set to ${process.env["ERC7730_API_URL"]} but the server is unreachable. ` +
+              "Start the local API first: cd apps/sample && pnpm flask-dev, " +
+              "or unset ERC7730_API_URL to use the remote service.",
+          );
+          throw error;
+        }
+        this.logger.error("Failed to setup ERC7730 interceptor", {
+          data: { error },
+        });
       }
     }
 
@@ -167,7 +197,7 @@ export class EthereumTransactionTesterCli {
     let exitCode = 0;
 
     program
-      .name("ethereum-clear-signing-tester")
+      .name("clear-signing-tester")
       .description(
         "Ethereum Transaction Tester CLI - Clean Architecture Edition",
       )
@@ -264,6 +294,16 @@ export class EthereumTransactionTesterCli {
         "Custom app file path. Relative paths resolve to COIN_APPS_PATH, absolute paths are mounted automatically. Bypasses automatic Ethereum app version resolution.",
       )
       .option(
+        "--force-pull",
+        "Force pulling the Docker image even if it already exists locally",
+        false,
+      )
+      .option(
+        "--external-speculos",
+        "Skip Docker Speculos lifecycle and connect to an already-running Speculos instance on the configured --speculos-port.",
+        false,
+      )
+      .option(
         "--log-level <level>",
         `Console log level: ${CLI_LOG_LEVELS.join(", ")} (default: info)`,
         (value: string) => {
@@ -288,11 +328,21 @@ export class EthereumTransactionTesterCli {
           }
           return value as CliLogLevel;
         },
+      )
+      .option(
+        "--blind-signing-enabled",
+        "Enable blind signing in device settings before test",
+        false,
+      )
+      .option(
+        "--skip-origin-token",
+        "Do not pass origin token to signer (forces blind signing path)",
+        false,
       );
 
     // Set up signal handlers that work with the CLI instance
     const handleShutdown = async (signal: string) => {
-      console.error(`Received ${signal}, cleaning up...`);
+      cli?.logger.info(`Received ${signal}, cleaning up...`);
       await cli?.cleanup();
       process.exit(0);
     };
@@ -302,8 +352,16 @@ export class EthereumTransactionTesterCli {
 
     program.hook("preAction", async (_, command) => {
       const config = command.parent!.opts() as CliConfig;
-      // Set onlySpeculos flag when running start-speculos command
       config.onlySpeculos = command.name() === "start-speculos";
+
+      if (config.onlySpeculos && config.externalSpeculos) {
+        throw new Error(
+          "--external-speculos cannot be used with start-speculos. " +
+            "Use start-speculos to let cs-tester manage Speculos, " +
+            "or use other commands with --external-speculos to connect to an already-running instance.",
+        );
+      }
+
       cli = new EthereumTransactionTesterCli(config);
       await cli.initialize();
     });
@@ -405,6 +463,7 @@ export class EthereumTransactionTesterCli {
 
     const result = await testTransactionUseCase.execute(
       {
+        kind: SignableInputKind.Transaction,
         rawTx: transaction,
         description: "Single transaction test",
       },
@@ -447,7 +506,11 @@ export class EthereumTransactionTesterCli {
     );
 
     const result = await testTypedDataUseCase.execute(
-      { data, description: "single typed data" },
+      {
+        kind: SignableInputKind.TypedData,
+        data,
+        description: "single typed data",
+      },
       { derivationPath: this.config.derivationPath },
     );
 
@@ -536,8 +599,7 @@ export class EthereumTransactionTesterCli {
    * Starts Speculos and keeps it running until interrupted
    */
   async handleStartSpeculos(): Promise<void> {
-    console.log("\nSpeculos is running.");
-    console.log("Press Ctrl+C to stop.\n");
+    this.logger.info("Speculos is running. Press Ctrl+C to stop.");
 
     // Wait indefinitely until interrupted
     await new Promise<void>(() => {});

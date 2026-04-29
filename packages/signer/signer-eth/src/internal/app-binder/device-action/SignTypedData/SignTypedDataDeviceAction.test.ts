@@ -6,6 +6,7 @@ import {
   DeviceModelId,
   DeviceSessionStateType,
   DeviceStatus,
+  type TransportDeviceModel,
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
@@ -103,7 +104,8 @@ describe("SignTypedDataDeviceAction", () => {
         },
       },
     }),
-    calldatasContexts: {},
+    calldatasPreContexts: {},
+    calldatasPostContexts: {},
     additionalContexts: [],
     loggerFactory: mockLoggerFactory,
   };
@@ -122,6 +124,7 @@ describe("SignTypedDataDeviceAction", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
+    report: vi.fn(),
   };
   const apiMock = makeDeviceActionInternalApiMock();
   const getAppConfigMock = vi.fn();
@@ -131,7 +134,9 @@ describe("SignTypedDataDeviceAction", () => {
   const signTypedDataMock = vi.fn();
   const signTypedDataLegacyMock = vi.fn();
   const getAddressMock = vi.fn();
+  const detectBlindSigningMock = vi.fn();
   function extractDependenciesMock() {
+    detectBlindSigningMock.mockResolvedValue({ isBlindSign: false });
     return {
       getAddress: getAddressMock,
       getAppConfig: getAppConfigMock,
@@ -140,6 +145,7 @@ describe("SignTypedDataDeviceAction", () => {
       provideContext: provideContextMock,
       signTypedData: signTypedDataMock,
       signTypedDataLegacy: signTypedDataLegacyMock,
+      detectBlindSigning: detectBlindSigningMock,
     };
   }
 
@@ -161,7 +167,7 @@ describe("SignTypedDataDeviceAction", () => {
     web3ChecksEnabled: boolean,
     web3ChecksOptIn: boolean,
   ) {
-    apiMock.getDeviceSessionState.mockReturnValueOnce({
+    apiMock.getDeviceSessionState.mockReturnValue({
       sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
       deviceStatus: DeviceStatus.CONNECTED,
       installedApps: [],
@@ -169,6 +175,9 @@ describe("SignTypedDataDeviceAction", () => {
       deviceModelId: DeviceModelId.FLEX,
       isSecureConnectionAllowed: false,
     });
+    apiMock.getDeviceModel.mockReturnValue({
+      id: DeviceModelId.FLEX,
+    } as unknown as TransportDeviceModel);
     getAppConfigMock.mockResolvedValue(
       CommandResultFactory({
         data: createAppConfig(version, web3ChecksEnabled, web3ChecksOptIn),
@@ -178,6 +187,17 @@ describe("SignTypedDataDeviceAction", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    apiMock.getDeviceSessionState.mockReturnValue({
+      sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+      deviceStatus: DeviceStatus.CONNECTED,
+      installedApps: [],
+      currentApp: { name: "Ethereum", version: "1.15.0" },
+      deviceModelId: DeviceModelId.FLEX,
+      isSecureConnectionAllowed: false,
+    });
+    apiMock.getDeviceModel.mockReturnValue({
+      id: DeviceModelId.FLEX,
+    } as unknown as TransportDeviceModel);
   });
 
   describe("Success case", () => {
@@ -270,6 +290,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -403,6 +430,13 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
             output: {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
@@ -514,6 +548,13 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
             output: {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
@@ -606,6 +647,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -814,6 +862,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -1067,6 +1122,13 @@ describe("SignTypedDataDeviceAction", () => {
             status: DeviceActionStatus.Pending,
           },
           {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
             output: {
               v: 0x1c,
               r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
@@ -1183,6 +1245,13 @@ describe("SignTypedDataDeviceAction", () => {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTypedData,
               step: SignTypedDataDAStateStep.SIGN_TYPED_DATA_LEGACY,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: SignTypedDataDAStateStep.DETECT_BLIND_SIGNING,
             },
             status: DeviceActionStatus.Pending,
           },

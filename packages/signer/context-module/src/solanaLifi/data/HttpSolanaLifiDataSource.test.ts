@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import axios from "axios";
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 
 import { HttpSolanaLifiDataSource } from "./HttpSolanaLifiDataSource";
 import {
@@ -14,56 +12,58 @@ import {
   type SolanaLifiDataSource,
 } from "./SolanaLifiDataSource";
 
-vi.mock("axios");
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
 
 describe("HttpSolanaLifiDataSource", () => {
   let datasource: SolanaLifiDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
   const templateId = "tpl-123";
-  const config: ContextModuleConfig = {
+  const config: ContextModuleServiceConfig = {
     cal: {
       url: "https://crypto-assets-service.api.ledger.com/v1",
       mode: "prod",
       branch: "main",
     },
-  } as ContextModuleConfig;
-
-  beforeAll(() => {
-    datasource = new HttpSolanaLifiDataSource(config);
-  });
+  } as ContextModuleServiceConfig;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpSolanaLifiDataSource(
+      config,
+      mockLoggerFactory,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
-  it("should call axios with the ledger client version header and correct params", async () => {
+  it("should call the network client with the expected URL and params", async () => {
     // given
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    httpMock.get.mockResolvedValue([]);
 
     // when
     await datasource.getTransactionDescriptorsPayload({ templateId });
 
     // then
-    expect(requestSpy).toHaveBeenCalledTimes(1);
-    expect(requestSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        method: "GET",
-        url: `${config.cal.url}/swap_templates`,
+    expect(httpMock.get).toHaveBeenCalledTimes(1);
+    expect(httpMock.get).toHaveBeenCalledWith(
+      "https://crypto-assets-service.api.ledger.com/v1/swap_templates",
+      {
         params: {
           template_id: templateId,
           output: "id,chain_id,instructions,descriptors",
-          // TODO LIFI
-          // REVERT WHEN CAL SUPPORTS IT
           ref: "ref=commit:866b6e7633a7a806fab7f9941bcc3df7ee640784",
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        },
-      }),
+      },
     );
   });
 
-  it("should return Right(data[0]) when axios responds with a non-empty array", async () => {
+  it("should return Right(data[0]) when the network client responds with a non-empty array", async () => {
     // given
     const response0: GetTransactionDescriptorsResponse = {
       descriptors: {
@@ -71,7 +71,7 @@ describe("HttpSolanaLifiDataSource", () => {
       },
     } as any;
 
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [response0] });
+    httpMock.get.mockResolvedValue([response0]);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -84,7 +84,7 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when data is undefined", async () => {
     // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: undefined });
+    httpMock.get.mockResolvedValue(null);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -103,7 +103,7 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when data array is empty", async () => {
     // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [] });
+    httpMock.get.mockResolvedValue([]);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -122,7 +122,7 @@ describe("HttpSolanaLifiDataSource", () => {
 
   it("should return an error when first element is falsy", async () => {
     // given
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [undefined] });
+    httpMock.get.mockResolvedValue([null]);
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({
@@ -139,9 +139,9 @@ describe("HttpSolanaLifiDataSource", () => {
     );
   });
 
-  it("should return an error when axios throws", async () => {
+  it("should return an error when the network client throws", async () => {
     // given
-    vi.spyOn(axios, "request").mockRejectedValue(new Error("network"));
+    httpMock.get.mockRejectedValue(new Error("network"));
 
     // when
     const result = await datasource.getTransactionDescriptorsPayload({

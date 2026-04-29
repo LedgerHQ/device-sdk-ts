@@ -1,5 +1,4 @@
-import { type TransactionInput } from "@root/src/domain/models/TransactionInput";
-import { type TypedDataInput } from "@root/src/domain/models/TypedDataInput";
+import { type SignableInput } from "@root/src/domain/models/SignableInput";
 
 /**
  * Status of a signing test result
@@ -14,7 +13,7 @@ export type TestStatus =
  * Common type for test results with status
  */
 export type TestResult = {
-  readonly input: TransactionInput | TypedDataInput;
+  readonly input: SignableInput;
   readonly status: TestStatus;
   readonly timestamp: string;
   readonly errorMessage?: string;

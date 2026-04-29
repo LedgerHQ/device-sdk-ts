@@ -19,7 +19,10 @@ import {
 import { DeviceSessionStateType } from "@api/device-session/DeviceSessionState";
 
 import { GetDeviceStatusDeviceAction } from "./GetDeviceStatusDeviceAction";
-import { type GetDeviceStatusDAState } from "./types";
+import {
+  type GetDeviceStatusDAState,
+  getDeviceStatusDAStateStep,
+} from "./types";
 
 describe("GetDeviceStatusDeviceAction", () => {
   const getAppAndVersionMock = vi.fn();
@@ -74,6 +77,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -134,18 +138,21 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -206,12 +213,14 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -257,6 +266,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -312,6 +322,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -376,6 +387,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -488,18 +500,21 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -614,12 +629,14 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
+              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -704,6 +721,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -756,6 +774,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
             },
             status: DeviceActionStatus.Pending,
           },
@@ -806,6 +825,7 @@ describe("GetDeviceStatusDeviceAction", () => {
           status: DeviceActionStatus.Pending, // get app and version
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
           },
         },
         {

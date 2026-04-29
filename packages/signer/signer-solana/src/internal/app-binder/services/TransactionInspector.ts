@@ -12,6 +12,7 @@ import { TransactionParser } from "@internal/app-binder/services/utils/Transacti
 export enum SolanaTransactionTypes {
   STANDARD = "Standard",
   SPL = "SPL",
+  SWAP = "Swap",
 }
 
 export type NormalizedCompiledIx = {
@@ -79,8 +80,6 @@ const toCreateATA = (
       }
     : null;
 
-const DEFAULT_RPC_URL = "https://api.mainnet-beta.solana.com/";
-
 /**
  * Determines whether a raw Solana transaction is an SPL token operation
  * and, if so, extracts the token account address or ATA creation details
@@ -96,10 +95,11 @@ export class TransactionInspector {
   private readonly parser: TransactionParser;
 
   constructor(rpcUrl?: string) {
-    const connection = new Connection(rpcUrl ?? DEFAULT_RPC_URL, {
-      commitment: "confirmed",
-    });
-    const resolver = new RpcAddressLookupTableResolver(connection);
+    const resolver = rpcUrl
+      ? new RpcAddressLookupTableResolver(
+          new Connection(rpcUrl, { commitment: "confirmed" }),
+        )
+      : undefined;
     this.parser = new TransactionParser(resolver);
   }
 
@@ -112,7 +112,12 @@ export class TransactionInspector {
           mintAddress: string;
         }
       | undefined,
+    templateId?: string | undefined,
   ): Promise<TxInspectorResult> {
+    if (templateId) {
+      return { transactionType: SolanaTransactionTypes.SWAP, data: {} };
+    }
+
     try {
       const { message } = await this.parser.parse(rawTransactionBytes);
       return classify(message, tokenAddress, createATA);

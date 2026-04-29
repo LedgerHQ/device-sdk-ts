@@ -43,6 +43,7 @@ import type { WalletBuilder } from "@internal/wallet/service/WalletBuilder";
 import type { WalletSerializer } from "@internal/wallet/service/WalletSerializer";
 
 import { GetWalletAddressDeviceAction } from "./device-action/GetWalletAddress/GetWalletAddressDeviceAction";
+import { APP_NAME } from "./constants";
 
 @injectable()
 export class BtcAppBinder {
@@ -73,7 +74,7 @@ export class BtcAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetExtendedPublicKeyCommand(args),
-          appName: "Bitcoin",
+          appName: APP_NAME,
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
@@ -92,7 +93,7 @@ export class BtcAppBinder {
       deviceAction: new SendCommandInAppDeviceAction({
         input: {
           command: new GetMasterFingerprintCommand(),
-          appName: "Bitcoin",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
@@ -120,7 +121,7 @@ export class BtcAppBinder {
               },
               this._dataStoreService,
             ).run(),
-          appName: "Bitcoin",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
           skipOpenApp: args.skipOpenApp,
         },
@@ -216,7 +217,7 @@ export class BtcAppBinder {
               this._walletSerializer,
               this._dataStoreService,
             ).run(),
-          appName: "Bitcoin",
+          appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.RegisterWallet,
           skipOpenApp: args.skipOpenApp,
         },

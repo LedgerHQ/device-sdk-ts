@@ -1,5 +1,16 @@
 # @ledgerhq/device-signer-kit-bitcoin
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1192](https://github.com/LedgerHQ/device-sdk-ts/pull/1192) [`4d985c6`](https://github.com/LedgerHQ/device-sdk-ts/commit/4d985c631f888c54976a6bc4ac65b02584bb6ade) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add steps to btc signer device actions
+
+### Patch Changes
+
+- Updated dependencies [[`a2fb7f8`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fb7f83bc45e6c4c3fdacbd91f67d962960a595), [`0ffd62d`](https://github.com/LedgerHQ/device-sdk-ts/commit/0ffd62da50e41a6725cde92dd67ff73448a3ecb7), [`09b2291`](https://github.com/LedgerHQ/device-sdk-ts/commit/09b2291bd8883697788606465f0fe41929671b94), [`4dab467`](https://github.com/LedgerHQ/device-sdk-ts/commit/4dab467e3db460c4b47cf5ec38f72e65dcf86b49)]:
+  - @ledgerhq/device-management-kit@1.2.0
+
 ## 1.2.1
 
 ### Patch Changes

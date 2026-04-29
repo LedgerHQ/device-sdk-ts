@@ -1,14 +1,10 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import { TypedDataCheckDto } from "./dto/TypedDataCheckDto";
 import {
@@ -20,7 +16,10 @@ import {
 @injectable()
 export class HttpTypedDataCheckDataSource implements TypedDataCheckDataSource {
   constructor(
-    @inject(configTypes.Config) private readonly config: ContextModuleConfig,
+    @inject(configTypes.Config)
+    private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   public async getTypedDataCheck({
@@ -36,16 +35,10 @@ export class HttpTypedDataCheckDataSource implements TypedDataCheckDataSource {
     };
 
     try {
-      const response = await axios.request<TypedDataCheckDto>({
-        method: "POST",
-        url: `${this.config.web3checks.url}/ethereum/scan/eip-712`,
-        data: requestDto,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
-      typedDataCheckDto = response.data;
+      typedDataCheckDto = (await this.http.post(
+        `${this.config.web3checks.url}/ethereum/scan/eip-712`,
+        requestDto,
+      )) as TypedDataCheckDto;
     } catch (_error) {
       return Left(
         new Error(

@@ -72,6 +72,24 @@ export class SpeculosNanoController implements DeviceController {
     await this.buttons.both();
   }
 
+  async acceptBlindSigning(): Promise<void> {
+    throw new Error(
+      "Not implemented: acceptBlindSigning is only supported on touchscreen devices",
+    );
+  }
+
+  async continueToBlindSigning(): Promise<void> {
+    throw new Error(
+      "Not implemented: continueToBlindSigning is only supported on touchscreen devices",
+    );
+  }
+
+  async enableBlindSigningInSettings(): Promise<void> {
+    throw new Error(
+      "Not implemented: enableBlindSigningInSettings is only supported on touchscreen devices",
+    );
+  }
+
   /**
    * Navigate to the next screen by pressing the right button
    */
