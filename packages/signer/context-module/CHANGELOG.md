@@ -1,5 +1,11 @@
 # @ledgerhq/context-module
 
+## 1.17.1
+
+### Patch Changes
+
+- [#1457](https://github.com/LedgerHQ/device-sdk-ts/pull/1457) [`c397e3a`](https://github.com/LedgerHQ/device-sdk-ts/commit/c397e3a1d3b8e77b7b2fcaf013db3f33e1ef2b28) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add a default network client factory so context-module data sources used outside of dependency injection keep the same headers without requiring callers to provide a client.
+
 ## 1.17.0
 
 ### Minor Changes

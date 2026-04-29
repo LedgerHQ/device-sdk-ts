@@ -1,0 +1,46 @@
+name: "Test Workflow [Slack Notification]"
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: "Notification title/text to display in Slack."
+        required: true
+        type: string
+        default: "Test Slack Notification"
+      status:
+        description: "Status to send to the Slack notify composite action."
+        required: true
+        type: choice
+        default: success
+        options:
+          - success
+          - error
+
+jobs:
+  notify:
+    name: Notify Slack
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Map status to composite action result
+        id: map
+        shell: bash
+        env:
+          STATUS: ${{ inputs.status }}
+        run: |
+          if [ "$STATUS" = "error" ]; then
+            echo "result=failure" >> "$GITHUB_OUTPUT"
+          else
+            echo "result=success" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ./.github/actions/slack-notify-composite
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          slack-channel-id: ${{ vars.SLACK_CHANNEL_ID }}
+          title: ${{ inputs.text }}
+          results: ${{ steps.map.outputs.result }}
