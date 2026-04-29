@@ -1,4 +1,4 @@
-name: "Test Slack Notification"
+name: "Test Workflow [Slack Notification]"
 
 on:
   workflow_dispatch:
