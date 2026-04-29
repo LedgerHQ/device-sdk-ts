@@ -5,6 +5,7 @@ import { Either, Left, Right } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { networkTypes } from "@/network/di/networkTypes";
+import { networkClientFactory } from "@/network/networkClientFactory";
 import {
   GetDomainNameInfosParams,
   GetTrustedNameInfosParams,
@@ -16,12 +17,15 @@ import { TrustedNameDto } from "./TrustedNameDto";
 
 @injectable()
 export class HttpTrustedNameDataSource implements TrustedNameDataSource {
+  private readonly http: DmkNetworkClient;
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
     @inject(networkTypes.NetworkClient)
-    private readonly http: DmkNetworkClient,
-  ) {}
+    networkClient?: DmkNetworkClient,
+  ) {
+    this.http = networkClient ?? networkClientFactory(config);
+  }
 
   public async getDomainNamePayload({
     chainId,
