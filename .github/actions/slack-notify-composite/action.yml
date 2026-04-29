@@ -72,7 +72,7 @@ runs:
 
     - name: Post to Slack
       if: steps.guard.outputs.enabled == 'true'
-      uses: slackapi/slack-github-action@v2.0.0
+      uses: slackapi/slack-github-action@v3.0.2
       with:
         method: chat.postMessage
         token: ${{ inputs.slack-bot-token }}
