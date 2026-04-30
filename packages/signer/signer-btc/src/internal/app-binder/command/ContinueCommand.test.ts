@@ -16,7 +16,7 @@ describe("ContinueCommand", (): void => {
     0xf8, // CLA
     0x01, // INS
     0x00, // P1
-    0x00, // P2
+    0x01, // P2
     0x04, // Lc
     0xde,
     0xad,
