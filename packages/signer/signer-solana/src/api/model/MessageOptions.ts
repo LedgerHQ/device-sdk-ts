@@ -45,4 +45,17 @@ export type MessageOptions = {
    * @see https://docs.anza.xyz/proposals/off-chain-message-signing
    */
   appDomain?: string;
+  /**
+   * V1 only: additional required signers to include in the off-chain message
+   * header alongside the user's key. Per sRFC 38, this is the recommended
+   * replacement for the V0 `appDomain` field — add the dApp's pubkey here to
+   * bind the message to a specific application. Ignored for V0, Legacy, and Raw.
+   *
+   * Each entry must be a 32-byte Ed25519 public key (`Uint8Array` of length 32).
+   * The V1 signer count is encoded as a `uint8`, so at most 254 additional
+   * signers are supported (1 slot is reserved for the user's key). Passing a
+   * signer with the wrong length or exceeding the limit returns an error before
+   * any device communication.
+   */
+  signers?: Uint8Array[];
 };

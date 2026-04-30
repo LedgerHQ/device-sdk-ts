@@ -5,6 +5,7 @@ import type {
 import type { GlobalCommandErrorStatusCode } from "@api/command/utils/GlobalCommandError";
 import type {
   DeviceExchangeError,
+  InvalidArgumentError,
   UnknownDeviceExchangeError,
 } from "@api/Error";
 import type {
@@ -23,6 +24,7 @@ type CommandError<SpecificErrorCodes = void> =
   | DeviceExchangeError<SpecificErrorCodes | GlobalCommandErrorStatusCode>
   | InvalidResponseFormatError
   | InvalidStatusWordError
+  | InvalidArgumentError
   | UnknownDeviceExchangeError;
 
 export type CommandSuccessResult<Data> = DmkSuccessResult<Data>;

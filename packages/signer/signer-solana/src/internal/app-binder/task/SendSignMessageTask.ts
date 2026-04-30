@@ -2,6 +2,7 @@ import {
   type CommandResult,
   CommandResultFactory,
   type InternalApi,
+  InvalidArgumentError,
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -14,6 +15,7 @@ import {
   type SignOffChainRawResponse,
 } from "@internal/app-binder/command/SignOffChainMessageCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import { SOLANA_PUBKEY_LEN } from "@internal/app-binder/constants";
 import {
   type Bs58Encoder,
   DefaultBs58Encoder,
@@ -32,6 +34,8 @@ import {
 
 export { MessageFormat } from "@internal/app-binder/services/OffchainMessageBuilder";
 
+const V1_MAX_SIGNERS = 255;
+
 const MESSAGE_SIZE_LIMITS: Partial<Record<SignMessageVersion, number>> = {
   [SignMessageVersion.V1]: OFFCHAINMSG_MAX_V1_LEN,
   [SignMessageVersion.V0]: OFFCHAINMSG_MAX_V0_LEN,
@@ -43,6 +47,7 @@ export type SendSignMessageTaskArgs = {
   derivationPath: string;
   version?: SignMessageVersion;
   appDomain?: string;
+  signers?: Uint8Array[];
 };
 
 export type SendSignMessageTaskRunFunctionReturn = Promise<
@@ -191,6 +196,24 @@ export class SendSignMessageTask {
     derivationPath: string,
     paths: number[],
   ): SendSignMessageTaskRunFunctionReturn {
+    const extraSigners = this.args.signers ?? [];
+    for (const s of extraSigners) {
+      if (s.length !== SOLANA_PUBKEY_LEN) {
+        return CommandResultFactory({
+          error: new InvalidArgumentError(
+            `Invalid signer length: ${s.length} bytes (expected ${SOLANA_PUBKEY_LEN})`,
+          ),
+        });
+      }
+    }
+    if (extraSigners.length + 1 > V1_MAX_SIGNERS) {
+      return CommandResultFactory({
+        error: new InvalidArgumentError(
+          `Too many signers: ${extraSigners.length + 1} (max ${V1_MAX_SIGNERS})`,
+        ),
+      });
+    }
+
     const signerPubkey = await this._getSignerPubkey(derivationPath);
     if (!signerPubkey) {
       return CommandResultFactory({
@@ -200,7 +223,10 @@ export class SendSignMessageTask {
       });
     }
 
-    const v1OCM = this._builder.buildV1(sendingData, [signerPubkey]);
+    const v1OCM = this._builder.buildV1(sendingData, [
+      signerPubkey,
+      ...extraSigners,
+    ]);
     const v1Result = await this._sendAndWrap(v1OCM, paths);
 
     return (
