@@ -12,6 +12,7 @@ import { HttpProxyDataSource } from "./proxy/data/HttpProxyDataSource";
 import { HttpSafeProxyDataSource } from "./proxy/data/HttpSafeProxyDataSource";
 import { proxyTypes } from "./proxy/di/proxyTypes";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { HttpTrustedNameDataSource } from "./trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "./trusted-name/di/trustedNameTypes";
@@ -47,7 +48,8 @@ describe("ContextModuleBuilder", () => {
   it("should return a default context module", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
-    const res = contextModuleBuilder.build();
+    const res = contextModuleBuilder.setChain(ContextModuleChainID.Ethereum)
+        .build();
 
     expect(res).toBeInstanceOf(DefaultContextModule);
   });
@@ -62,7 +64,8 @@ describe("ContextModuleBuilder", () => {
     const res = contextModuleBuilder
       .removeDefaultLoaders()
       .addLoader(customLoader)
-      .build();
+      .setChain(ContextModuleChainID.Ethereum)
+        .build();
 
     expect(res).toBeInstanceOf(DefaultContextModule);
   });
@@ -74,7 +77,8 @@ describe("ContextModuleBuilder", () => {
     const res = contextModuleBuilder
       .removeDefaultLoaders()
       .addTypedDataLoader(customLoader)
-      .build();
+      .setChain(ContextModuleChainID.Ethereum)
+        .build();
 
     expect(res).toBeInstanceOf(DefaultContextModule);
     // @ts-expect-error _typedDataLoader is private
@@ -87,7 +91,8 @@ describe("ContextModuleBuilder", () => {
     const res = contextModuleBuilder
       .setCalConfig(defaultCalConfig)
       .setWeb3ChecksConfig(defaultWeb3ChecksConfig)
-      .build();
+      .setChain(ContextModuleChainID.Ethereum)
+        .build();
     const config = (res as DefaultContextModule)[
       "_container"
     ].get<ContextModuleServiceConfig>(configTypes.Config);
@@ -97,10 +102,20 @@ describe("ContextModuleBuilder", () => {
     expect(config.web3checks).toEqual(defaultWeb3ChecksConfig);
   });
 
-  it("should not throw an error if origin token is provided", () => {
+  it("should not throw when setChain is called before build", () => {
     const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
-    expect(() => contextModuleBuilder.build()).not.toThrow();
+    expect(() =>
+      contextModuleBuilder.setChain(ContextModuleChainID.Ethereum).build(),
+    ).not.toThrow();
+  });
+
+  it("should throw when setChain is not called before build", () => {
+    const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
+
+    expect(() => contextModuleBuilder.build()).toThrow(
+      "[ContextModuleBuilder] setChain() must be called before build()",
+    );
   });
 
   describe("setMetadataServiceConfig", () => {
@@ -112,6 +127,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setMetadataServiceConfig(customMetadataConfig)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
@@ -129,6 +145,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setMetadataServiceConfig(customMetadataConfig)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
@@ -150,7 +167,8 @@ describe("ContextModuleBuilder", () => {
         branch: "next",
       };
 
-      const res = contextModuleBuilder.setCalConfig(customCalConfig).build();
+      const res = contextModuleBuilder.setCalConfig(customCalConfig).setChain(ContextModuleChainID.Ethereum)
+        .build();
       const config = (res as DefaultContextModule)[
         "_container"
       ].get<ContextModuleServiceConfig>(configTypes.Config);
@@ -167,7 +185,8 @@ describe("ContextModuleBuilder", () => {
         branch: "demo",
       };
 
-      const res = contextModuleBuilder.setCalConfig(customCalConfig).build();
+      const res = contextModuleBuilder.setCalConfig(customCalConfig).setChain(ContextModuleChainID.Ethereum)
+        .build();
       const config = (res as DefaultContextModule)[
         "_container"
       ].get<ContextModuleServiceConfig>(configTypes.Config);
@@ -190,6 +209,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setWeb3ChecksConfig(customWeb3ChecksConfig)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
@@ -207,6 +227,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setWeb3ChecksConfig(customWeb3ChecksConfig)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       const config = (res as DefaultContextModule)[
         "_container"
@@ -228,6 +249,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setDatasourceConfig(customDatasourceConfig)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       // @ts-expect-error _container is private
       const proxyDataSource = res["_container"].get(proxyTypes.ProxyDataSource);
@@ -244,6 +266,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setDatasourceConfig(customDatasourceConfig)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       // @ts-expect-error _container is private
       const proxyDataSource = res["_container"].get(proxyTypes.ProxyDataSource);
@@ -258,6 +281,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setDatasourceConfig(customDatasourceConfig)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       // @ts-expect-error _container is private
       const proxyDataSource = res["_container"].get(proxyTypes.ProxyDataSource);
@@ -273,7 +297,8 @@ describe("ContextModuleBuilder", () => {
         originToken: "test",
       });
 
-      const res = contextModuleBuilder.build();
+      const res = contextModuleBuilder.setChain(ContextModuleChainID.Ethereum)
+        .build();
       const loggerFactory = (res as DefaultContextModule)["_container"].get<
         (tag: string) => LoggerPublisherService
       >(configTypes.ContextModuleLoggerFactory);
@@ -302,7 +327,8 @@ describe("ContextModuleBuilder", () => {
         loggerFactory,
       });
 
-      const res = contextModuleBuilder.build();
+      const res = contextModuleBuilder.setChain(ContextModuleChainID.Ethereum)
+        .build();
       const boundLoggerFactory = (res as DefaultContextModule)[
         "_container"
       ].get<(tag: string) => LoggerPublisherService>(
@@ -318,7 +344,8 @@ describe("ContextModuleBuilder", () => {
 
       const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
-      const res = contextModuleBuilder.setLoggerFactory(loggerFactory).build();
+      const res = contextModuleBuilder.setLoggerFactory(loggerFactory).setChain(ContextModuleChainID.Ethereum)
+        .build();
       const boundLoggerFactory = (res as DefaultContextModule)[
         "_container"
       ].get<(tag: string) => LoggerPublisherService>(
@@ -342,6 +369,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setLoggerFactory(overrideLoggerFactory)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       const boundLoggerFactory = (res as DefaultContextModule)[
         "_container"
@@ -365,8 +393,10 @@ describe("ContextModuleBuilder", () => {
 
       builder1.addLoader(customLoader);
 
-      const res1 = builder1.removeDefaultLoaders().build();
-      const res2 = builder2.removeDefaultLoaders().build();
+      const res1 = builder1.removeDefaultLoaders().setChain(ContextModuleChainID.Ethereum)
+        .build();
+      const res2 = builder2.removeDefaultLoaders().setChain(ContextModuleChainID.Ethereum)
+        .build();
 
       // @ts-expect-error _loaders is private
       expect(res1["_loaders"]).toHaveLength(1);
@@ -385,6 +415,7 @@ describe("ContextModuleBuilder", () => {
 
       const res = contextModuleBuilder
         .setTrustedNameDataSource(customDataSource)
+        .setChain(ContextModuleChainID.Ethereum)
         .build();
       const injectedDataSource = (res as DefaultContextModule)[
         "_container"
@@ -396,7 +427,8 @@ describe("ContextModuleBuilder", () => {
     it("should use HttpTrustedNameDataSource when no custom data source is set", () => {
       const contextModuleBuilder = new ContextModuleBuilder(defaultBuilderArgs);
 
-      const res = contextModuleBuilder.build();
+      const res = contextModuleBuilder.setChain(ContextModuleChainID.Ethereum)
+        .build();
       const injectedDataSource = (res as DefaultContextModule)[
         "_container"
       ].get<TrustedNameDataSource>(trustedNameTypes.TrustedNameDataSource);

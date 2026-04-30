@@ -11,18 +11,21 @@ import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
+import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { type TransactionCheckDataSource } from "@/transaction-check/data/TransactionCheckDataSource";
-import { transactionCheckTypes } from "@/transaction-check/di/transactionCheckTypes";
+import { type Web3CheckDataSource } from "@/shared/web3-checks/data/Web3CheckDataSource";
+import { web3ChecksTypes } from "@/shared/web3-checks/di/web3ChecksTypes";
+import { EthereumWeb3CheckPath } from "@/shared/web3-checks/utils/constants";
 
-export type TransactionCheckContextInput = {
+export type EthereumWeb3CheckContextInput = {
   from: string;
   chainId: number;
   transaction: Uint8Array;
   deviceModelId: DeviceModelId;
+  chain?: ContextModuleChainID;
 };
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
@@ -30,48 +33,50 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class TransactionCheckContextLoader
-  implements ContextLoader<TransactionCheckContextInput>
+export class EthereumWeb3CheckContextLoader
+  implements ContextLoader<EthereumWeb3CheckContextInput>
 {
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(transactionCheckTypes.TransactionCheckDataSource)
-    private transactionCheckDataSource: TransactionCheckDataSource,
+    @inject(web3ChecksTypes.Web3CheckDataSource)
+    private web3CheckDataSource: Web3CheckDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("TransactionCheckContextLoader");
+    this.logger = loggerFactory("EthereumWeb3CheckContextLoader");
   }
 
   canHandle(
     input: unknown,
     expectedType: ClearSignContextType[],
-  ): input is TransactionCheckContextInput {
-    const result =
-      typeof input === "object" &&
-      input !== null &&
+  ): input is EthereumWeb3CheckContextInput {
+    if (!SUPPORTED_TYPES.every((type) => expectedType.includes(type)))
+      return false;
+    if (typeof input !== "object" || input === null) return false;
+    if (
+      "chain" in input &&
+      input.chain !== undefined &&
+      input.chain !== ContextModuleChainID.Ethereum
+    )
+      return false;
+    return (
       "from" in input &&
-      input.from !== undefined &&
       isHexaString(input.from) &&
+      input.from !== "0x" &&
       "chainId" in input &&
-      input.chainId !== undefined &&
       typeof input.chainId === "number" &&
       "transaction" in input &&
       input.transaction !== undefined &&
       "deviceModelId" in input &&
       input.deviceModelId !== undefined &&
-      input.deviceModelId !== DeviceModelId.NANO_S &&
-      typeof input.chainId === "number" &&
-      isHexaString(input.from) &&
-      input.from !== "0x" &&
-      SUPPORTED_TYPES.every((type) => expectedType.includes(type));
-    return result;
+      input.deviceModelId !== DeviceModelId.NANO_S
+    );
   }
 
-  async load(ctx: TransactionCheckContextInput): Promise<ClearSignContext[]> {
+  async load(ctx: EthereumWeb3CheckContextInput): Promise<ClearSignContext[]> {
     const { from, chainId, transaction } = ctx;
 
     const rawTx = bufferToHexaString(transaction);
@@ -81,10 +86,9 @@ export class TransactionCheckContextLoader
       return [];
     }
 
-    const txCheck = await this.transactionCheckDataSource.getTransactionCheck({
-      chainId,
-      rawTx,
-      from,
+    const txCheck = await this.web3CheckDataSource.check({
+      path: EthereumWeb3CheckPath.Transaction,
+      body: { tx: { from, raw: rawTx }, chain: chainId },
     });
 
     const context = await txCheck.caseOf<Promise<ClearSignContext>>({

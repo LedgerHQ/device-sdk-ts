@@ -53,6 +53,7 @@ export * from "./reporter/model/BlindSigningEvent";
 export * from "./reporter/model/BlindSigningModelId";
 export * from "./shared/domain/ContextFieldLoader";
 export * from "./shared/domain/ContextLoader";
+export * from "./shared/domain/ContextModuleChainID";
 export * from "./shared/model/ClearSignContext";
 export * from "./shared/model/GenericPath";
 export * from "./shared/model/SolanaContextTypes";

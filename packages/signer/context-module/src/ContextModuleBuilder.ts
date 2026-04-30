@@ -16,6 +16,7 @@ import {
 } from "./config/model/ContextModuleConfig";
 import { type BlindSigningReporter } from "./reporter/domain/BlindSigningReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { type ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
@@ -227,11 +228,27 @@ export class ContextModuleBuilder {
   }
 
   /**
+   * Set the chain for which this context module is built
+   *
+   * @param chain
+   * @returns this
+   */
+  setChain(chain: ContextModuleChainID) {
+    this.config.chain = chain;
+    return this;
+  }
+
+  /**
    * Build the context module
    *
    * @returns the context module
    */
   build(): ContextModule {
+    if (!this.config.chain) {
+      throw new Error(
+        "[ContextModuleBuilder] setChain() must be called before build()",
+      );
+    }
     return new DefaultContextModule(this.config);
   }
 }
