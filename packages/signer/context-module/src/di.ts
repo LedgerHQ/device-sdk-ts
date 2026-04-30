@@ -18,11 +18,12 @@ import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { proxyModuleFactory } from "@/proxy/di/proxyModuleFactory";
 import { reporterModuleFactory } from "@/reporter/di/reporterModuleFactory";
 import { safeModuleFactory } from "@/safe/di/safeModuleFactory";
+import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
+import { web3ChecksModuleFactory } from "@/shared/web3-checks/di/web3ChecksModuleFactory";
 import { solanaContextModuleFactory } from "@/solana/di/SolanaContextModuleFactory";
 import { solanaLifiModuleFactory } from "@/solanaLifi/di/lifiModuleFactory";
 import { solanaTokenModuleFactory } from "@/solanaToken/di/tokenModuleFactory";
 import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
-import { transactionCheckModuleFactory } from "@/transaction-check/di/transactionCheckModuleFactory";
 import { trustedNameModuleFactory } from "@/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/uniswap/di/uniswapModuleFactory";
@@ -40,27 +41,40 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     >(configTypes.ContextModuleLoggerFactory)
     .toConstantValue(config.loggerFactory);
 
+  const { chain } = config;
+
   container.loadSync(
+    // Chain-agnostic — always loaded
     configModuleFactory(config),
     networkModuleFactory(config),
-    accountOwnershipModuleFactory(),
-    externalPluginModuleFactory(),
-    dynamicNetworkModuleFactory(),
-    nftModuleFactory(),
-    proxyModuleFactory(config.datasource),
-    safeModuleFactory(),
-    gatedSigningModuleFactory(),
-    tokenModuleFactory(),
-    calldataModuleFactory(),
     trustedNameModuleFactory(config.customTrustedNameDataSource),
-    typedDataModuleFactory(),
     nanoPkiModuleFactory(),
-    uniswapModuleFactory(),
-    transactionCheckModuleFactory(),
+    reporterModuleFactory(),
+
+    // Ethereum-owned — only when chain = Ethereum
+    ...(chain === ContextModuleChainID.Ethereum
+      ? [
+          accountOwnershipModuleFactory(),
+          externalPluginModuleFactory(),
+          dynamicNetworkModuleFactory(),
+          nftModuleFactory(),
+          proxyModuleFactory(config.datasource),
+          safeModuleFactory(),
+          gatedSigningModuleFactory(),
+          tokenModuleFactory(),
+          calldataModuleFactory(),
+          typedDataModuleFactory(),
+          uniswapModuleFactory(),
+        ]
+      : []),
+
+    // Solana-owned — unconditional; scoping is a future task
     solanaContextModuleFactory(),
     solanaTokenModuleFactory(),
     solanaLifiModuleFactory(),
-    reporterModuleFactory(),
+
+    // Web3-checks
+    web3ChecksModuleFactory({ chain: chain! }),
   );
 
   return container;

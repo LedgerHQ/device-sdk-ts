@@ -10,20 +10,33 @@ import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
+import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  TypedData,
-  type TypedDataCheckDataSource,
-} from "@/transaction-check/data/TypedDataCheckDataSource";
-import { transactionCheckTypes } from "@/transaction-check/di/transactionCheckTypes";
+import { type Web3CheckDataSource } from "@/shared/web3-checks/data/Web3CheckDataSource";
+import { web3ChecksTypes } from "@/shared/web3-checks/di/web3ChecksTypes";
+import { EthereumWeb3CheckPath } from "@/shared/web3-checks/utils/constants";
 
-export type TypedDataCheckContextInput = {
+export type TypedData = {
+  domain: {
+    name?: string;
+    version?: string;
+    chainId?: number;
+    verifyingContract?: string;
+    salt?: string;
+  };
+  types: Record<string, Array<{ name: string; type: string }>>;
+  primaryType: string;
+  message: Record<string, unknown>;
+};
+
+export type EthereumTypedDataCheckContextInput = {
   from: string;
   data: TypedData;
   deviceModelId: DeviceModelId;
+  chain?: ContextModuleChainID;
 };
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
@@ -31,44 +44,50 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class TypedDataCheckContextLoader
-  implements ContextLoader<TypedDataCheckContextInput>
+export class EthereumTypedDataCheckContextLoader
+  implements ContextLoader<EthereumTypedDataCheckContextInput>
 {
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(transactionCheckTypes.TypedDataCheckDataSource)
-    private typedDataCheckDataSource: TypedDataCheckDataSource,
+    @inject(web3ChecksTypes.Web3CheckDataSource)
+    private web3CheckDataSource: Web3CheckDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("TypedDataCheckContextLoader");
+    this.logger = loggerFactory("EthereumTypedDataCheckContextLoader");
   }
 
   canHandle(
     input: unknown,
     expectedType: ClearSignContextType[],
-  ): input is TypedDataCheckContextInput {
-    const result =
-      typeof input === "object" &&
-      input !== null &&
+  ): input is EthereumTypedDataCheckContextInput {
+    if (!SUPPORTED_TYPES.every((type) => expectedType.includes(type)))
+      return false;
+    if (typeof input !== "object" || input === null) return false;
+    if (
+      "chain" in input &&
+      input.chain !== undefined &&
+      input.chain !== ContextModuleChainID.Ethereum
+    )
+      return false;
+    return (
       "from" in input &&
-      input.from !== undefined &&
       isHexaString(input.from) &&
       input.from !== "0x" &&
       "data" in input &&
       typeof input.data === "object" &&
       "deviceModelId" in input &&
       input.deviceModelId !== undefined &&
-      input.deviceModelId !== DeviceModelId.NANO_S &&
-      SUPPORTED_TYPES.every((type) => expectedType.includes(type));
-
-    return result;
+      input.deviceModelId !== DeviceModelId.NANO_S
+    );
   }
 
-  async load(ctx: TypedDataCheckContextInput): Promise<ClearSignContext[]> {
+  async load(
+    ctx: EthereumTypedDataCheckContextInput,
+  ): Promise<ClearSignContext[]> {
     const { from, data } = ctx;
 
     if (!from || !data) {
@@ -76,9 +95,9 @@ export class TypedDataCheckContextLoader
       return [];
     }
 
-    const txCheck = await this.typedDataCheckDataSource.getTypedDataCheck({
-      data,
-      from,
+    const txCheck = await this.web3CheckDataSource.check({
+      path: EthereumWeb3CheckPath.TypedData,
+      body: { msg: { from, data } },
     });
 
     const context = await txCheck.caseOf<Promise<ClearSignContext>>({

@@ -4,6 +4,7 @@ import {
 } from "./config/model/ContextModuleConfig";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
+import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import {
   type ClearSignContext,
   ClearSignContextType,
@@ -63,6 +64,7 @@ describe("DefaultContextModule", () => {
       proxy: "default",
     },
     appSource: "third-party",
+    chain: ContextModuleChainID.Ethereum,
     originToken: "originToken",
     loggerFactory: mockLoggerFactory,
   };

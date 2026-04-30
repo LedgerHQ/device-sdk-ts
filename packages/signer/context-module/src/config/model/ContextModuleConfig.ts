@@ -3,6 +3,7 @@ import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { type BlindSigningReporter } from "@/reporter/domain/BlindSigningReporter";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
+import { type ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
 import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
@@ -39,6 +40,7 @@ export type ContextModuleConfig = {
   reporter: ContextModuleReporterConfig;
   datasource: ContextModuleDatasourceConfig;
   appSource: string;
+  chain?: ContextModuleChainID;
 };
 
 export type ContextModuleServiceConfig = ContextModuleConfig & {

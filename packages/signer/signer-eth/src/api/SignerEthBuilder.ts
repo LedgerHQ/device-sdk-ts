@@ -1,6 +1,7 @@
 import {
   type ContextModule,
   ContextModuleBuilder,
+  ContextModuleChainID,
 } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
@@ -63,7 +64,9 @@ export class SignerEthBuilder {
         originToken: this._originToken,
         loggerFactory: (tag: string) =>
           this._dmk.getLoggerFactory()(["ContextModule", tag]),
-      }).build();
+      })
+        .setChain(ContextModuleChainID.Ethereum)
+        .build();
 
     return new DefaultSignerEth({
       dmk: this._dmk,
