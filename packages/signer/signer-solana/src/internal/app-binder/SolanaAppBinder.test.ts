@@ -1,5 +1,7 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
+  type CommandResult,
+  CommandResultFactory,
   type DeviceActionIntermediateValue,
   type DeviceActionState,
   DeviceActionStatus,
@@ -20,10 +22,13 @@ import {
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
   type SignMessageDAOutput,
+  SignMessageVersion,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
+  type SolanaAppErrorCodes,
 } from "@api/index";
+import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
 import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
@@ -374,6 +379,61 @@ describe("SolanaAppBinder", () => {
           },
         });
       }));
+
+    it("passes signers into the V1 OCM via the task closure", async () => {
+      const signers = [new Uint8Array(32).fill(0x22)];
+      const userPubkey = new Uint8Array(32).fill(0x11);
+      const rawSig = new Uint8Array(64).fill(0xaa);
+
+      (
+        mockedDmk.executeDeviceAction as ReturnType<typeof vi.fn>
+      ).mockReturnValueOnce({ observable: from([]), cancel: vi.fn() });
+
+      const appBinder = new SolanaAppBinder(
+        mockedDmk,
+        "sessionId",
+        contextModuleStub,
+        mockLoggerFactory,
+        undefined,
+        new BlockhashService(),
+      );
+
+      appBinder.signMessage({
+        derivationPath: "44'/501'/0'/0'",
+        message: "hi",
+        skipOpenApp: false,
+        version: SignMessageVersion.V1,
+        signers,
+      });
+
+      type TaskFn = (api: {
+        sendCommand: ReturnType<typeof vi.fn>;
+      }) => Promise<CommandResult<{ signature: string }, SolanaAppErrorCodes>>;
+      type DeviceActionArg = { deviceAction: { input: { task: TaskFn } } };
+
+      const taskFn = (
+        vi.mocked(mockedDmk.executeDeviceAction).mock
+          .calls[0]![0] as DeviceActionArg
+      ).deviceAction.input.task;
+      const mockSendCommand = vi
+        .fn()
+        .mockResolvedValueOnce(
+          CommandResultFactory({ data: DefaultBs58Encoder.encode(userPubkey) }),
+        )
+        .mockResolvedValueOnce(CommandResultFactory({ data: rawSig }));
+
+      const result = await taskFn({ sendCommand: mockSendCommand });
+
+      expect("data" in result).toBe(true);
+      if (!("data" in result)) throw new Error("expected data result");
+      const envelope = DefaultBs58Encoder.decode(result.data.signature);
+      const ocm = envelope.slice(65);
+      expect(ocm[16]).toBe(1); // V1 version byte
+      expect(ocm[17]).toBe(2); // 2 signers: userPubkey + extra
+      // userPubkey (0x11) < signers[0] (0x22) → sorted: userPubkey first
+      expect(ocm.slice(18, 50)).toEqual(userPubkey);
+      expect(ocm.slice(50, 82)).toEqual(signers[0]);
+    });
 
     it("should accept a Uint8Array message for Raw pass-through", () =>
       new Promise<void>((resolve, reject) => {

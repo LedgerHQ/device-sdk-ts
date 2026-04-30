@@ -27,6 +27,7 @@ export class SignMessageUseCase {
       skipOpenApp: options?.skipOpenApp ?? false,
       version: options?.version,
       appDomain: options?.appDomain,
+      signers: options?.signers,
     });
   }
 }

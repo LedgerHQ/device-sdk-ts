@@ -30,6 +30,7 @@ import {
   type GenerateTransactionDAOutput,
   SolanaToolsBuilder,
 } from "@ledgerhq/solana-tools";
+import bs58 from "bs58";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
@@ -254,6 +255,8 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           message,
           version,
           skipOpenApp,
+          appDomain,
+          signers,
         }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
@@ -270,9 +273,22 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
               hex.match(/.{1,2}/g)?.map((b) => parseInt(b, 16)) ?? [],
             );
           }
+          const parsedSigners =
+            version === SignMessageVersion.V1 && signers.trim()
+              ? signers
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+                  .map((s) => bs58.decode(s))
+              : undefined;
           return signer.signMessage(derivationPath, payload, {
             version,
             skipOpenApp,
+            appDomain:
+              version === SignMessageVersion.V0 && appDomain
+                ? appDomain
+                : undefined,
+            signers: parsedSigners,
           });
         },
         initialValues: {
@@ -280,6 +296,8 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           message: "Hello World",
           version: SignMessageVersion.V0,
           skipOpenApp: false,
+          appDomain: "",
+          signers: "",
         },
         valueSelector: {
           version: signMessageVersionOptions,
@@ -289,6 +307,8 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           message: "Message (hex bytes for Raw mode)",
           version: "Signing mode",
           skipOpenApp: "Skip open app",
+          appDomain: "App domain (V0 only)",
+          signers: "Additional signers, comma-separated base58 (V1 only)",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -298,6 +318,8 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
           message: string;
           version: SignMessageVersion;
           skipOpenApp: boolean;
+          appDomain: string;
+          signers: string;
         },
         SignMessageDAError,
         SignMessageDAIntermediateValue

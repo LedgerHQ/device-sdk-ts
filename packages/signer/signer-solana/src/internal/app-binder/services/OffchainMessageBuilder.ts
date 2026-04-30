@@ -1,5 +1,6 @@
 import { ByteArrayBuilder } from "@ledgerhq/device-management-kit";
 
+import { SOLANA_PUBKEY_LEN } from "@internal/app-binder/constants";
 import { OffchainMessageBuildError } from "@internal/app-binder/services/Errors";
 
 import { type Bs58Encoder, DefaultBs58Encoder } from "./bs58Encoder";
@@ -22,7 +23,6 @@ export const OFFCHAINMSG_MAX_V0_LEN = 65515;
 export const OFFCHAINMSG_MAX_V1_LEN = 65535; // 2-byte LE uint16 max
 
 const ED25519_SIGNATURE_LEN = 64;
-const SOLANA_PUBKEY_LEN = 32;
 const APP_DOMAIN_LEN = 32;
 const BYTES_PER_PATH_INDEX = 4;
 

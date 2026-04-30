@@ -240,7 +240,7 @@ Sign a Solana off-chain message on Ledger devices. Supports multiple signing
 modes via `SignMessageVersion`:
 
 - **V0** (default) — original [off-chain message](https://docs.anza.xyz/proposals/off-chain-message-signing) header with `appDomain` and signer fields. Supported on all firmware with off-chain signing. Falls back to Legacy on `6a81`.
-- **V1** — simplified header without `appDomain`; supports lexicographically sorted multi-signer payloads. Requires Solana device app version 1.14+. Falls back to V0 then Legacy on `6a81`.
+- **V1** — simplified header per [sRFC 38](https://github.com/solana-foundation/SRFCs/discussions/3): no `appDomain`, no format byte. Use `signers` to bind the message to a specific application instead. Requires Solana device app version 1.14+. Falls back to V0 then Legacy on `6a81`.
 - **Legacy** — compact header for backward compatibility with very old Solana app firmware. Current firmware will reject it.
 - **Raw** — pass-through: the caller provides the fully formatted payload as a `Uint8Array` and the SDK sends it as-is with no header wrapping.
 
@@ -279,6 +279,11 @@ const { observable, cancel } = signerSolana.signMessage(
     (UTF-8 encoded, padded/truncated to 32 bytes). Defaults to 32 zero bytes.
     Ignored for V1, Legacy, and Raw.
 
+  - **signers** `Uint8Array[]`
+    V1 only: additional required signers to include in the off-chain message header alongside the user's key. Per sRFC 38, this is the recommended replacement for the V0 `appDomain` field — pass the dApp's public key here to bind the message to a specific application. Signers are sorted and deduplicated automatically.
+    Each entry must be a 32-byte Ed25519 public key. At most 254 additional signers are supported (1 slot is reserved for the user's key). Passing a signer with the wrong length or exceeding the limit returns an error before any device communication.
+    Ignored for V0, Legacy, and Raw.
+
   - **skipOpenApp** `boolean`
     If `true`, skips opening the Solana app on the device.
 
@@ -287,7 +292,8 @@ import { SignMessageVersion } from "@ledgerhq/device-signer-kit-solana";
 
 type MessageOptions = {
   version?: SignMessageVersion;
-  appDomain?: string;
+  appDomain?: string; // V0 only
+  signers?: Uint8Array[]; // V1 only
   skipOpenApp?: boolean;
 };
 ```
@@ -324,11 +330,14 @@ type SignMessageDAOutput = {
 ```typescript
 import { SignMessageVersion } from "@ledgerhq/device-signer-kit-solana";
 
-// V0 (default) — sign a simple text message
+// V0 — sign with app domain
 const { observable } = signerSolana.signMessage(
   "44'/501'/0'/0'",
   "Hello World",
-  { version: SignMessageVersion.V0 },
+  {
+    version: SignMessageVersion.V0,
+    appDomain: "my-app.com",
+  },
 );
 
 observable.subscribe({
@@ -348,6 +357,22 @@ observable.subscribe({
   error: (err) => console.error("Observable error:", err),
   complete: () => console.log("Signing flow ended"),
 });
+```
+
+#### V1 with Additional Signers
+
+V1 removes `appDomain` (no central registry — anyone could spoof it). To bind a message to a specific application, add the dApp's public key as a required signer instead:
+
+```typescript
+// V1 — bind message to dApp via required signer (sRFC 38)
+const { observable } = signerSolana.signMessage(
+  "44'/501'/0'/0'",
+  "Hello World",
+  {
+    version: SignMessageVersion.V1,
+    signers: [dAppPubkeyBytes], // dApp's Ed25519 public key as Uint8Array(32)
+  },
+);
 ```
 
 #### Raw Mode

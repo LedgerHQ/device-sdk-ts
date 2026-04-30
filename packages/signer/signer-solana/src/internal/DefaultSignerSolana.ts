@@ -141,8 +141,9 @@ export class DefaultSignerSolana implements SignerSolana {
    * Supports multiple signing modes via `SignMessageVersion`:
    * - **V0** (default) — original header with `appDomain`, up to 65 515 bytes.
    *   Falls back to Legacy on `6a81`.
-   * - **V1** — simplified header, up to 65 535 bytes. Falls back to V0 then
-   *   Legacy on `6a81`. Requires Solana device app version 1.14+.
+   * - **V1** — simplified header per sRFC 38, up to 65 535 bytes. No `appDomain`
+   *   field; use `signers` to bind the message to a specific application instead.
+   *   Falls back to V0 then Legacy on `6a81`. Requires Solana device app version 1.14+.
    * - **Legacy** — compact header for backward compatibility with old Solana app firmware.
    * - **Raw** — pass-through: sends a caller-formatted `Uint8Array` payload
    *   as-is, no header wrapping.
@@ -167,6 +168,15 @@ export class DefaultSignerSolana implements SignerSolana {
    *   - **appDomain** `string`
    *     V0 only: application domain included in the header (padded/truncated to 32 bytes).
    *     Ignored for V1, Legacy, and Raw.
+   *   - **signers** `Uint8Array[]`
+   *     V1 only: additional required signers included in the off-chain message header
+   *     alongside the user's key. Per sRFC 38, this is the recommended replacement for
+   *     the V0 `appDomain` field — pass the dApp's public key here to bind the message
+   *     to a specific application. Signers are sorted and deduplicated automatically.
+   *     Each entry must be a 32-byte Ed25519 public key. At most 254 additional signers
+   *     are supported (1 slot reserved for the user's key). Invalid length or exceeding
+   *     the limit returns an error before any device communication.
+   *     Ignored for V0, Legacy, and Raw.
    *
    * ### Returns
    *
@@ -178,9 +188,18 @@ export class DefaultSignerSolana implements SignerSolana {
    *
    * @example
    * ```ts
+   * // V0 with app domain
    * const { observable } = signer.signMessage("44'/501'/0'", "Hello World", {
    *   version: SignMessageVersion.V0,
+   *   appDomain: "my-app.com",
    * });
+   *
+   * // V1 with additional required signer (replaces appDomain per sRFC 38)
+   * const { observable } = signer.signMessage("44'/501'/0'", "Hello World", {
+   *   version: SignMessageVersion.V1,
+   *   signers: [dAppPubkeyBytes],
+   * });
+   *
    * observable.subscribe({
    *   next: (state) => {
    *     if (state.status === DeviceActionStatus.Completed) {
