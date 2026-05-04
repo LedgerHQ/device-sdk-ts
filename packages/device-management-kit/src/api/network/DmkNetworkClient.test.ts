@@ -17,10 +17,8 @@ describe("DmkNetworkClient", () => {
       await client.get("https://api.example.com/items");
 
       const [calledUrl] = fetchMock.mock.calls[0]!;
-      expect(calledUrl).toBeInstanceOf(URL);
-      expect((calledUrl as URL).toString()).toBe(
-        "https://api.example.com/items",
-      );
+      expect(typeof calledUrl).toBe("string");
+      expect(calledUrl).toBe("https://api.example.com/items");
     });
 
     it("should prepend baseUrl to relative paths with slash normalization", async () => {
@@ -35,12 +33,8 @@ describe("DmkNetworkClient", () => {
       await client.get("/items");
       await client.get("items");
 
-      expect((fetchMock.mock.calls[0]![0] as URL).toString()).toBe(
-        "https://api.example.com/items",
-      );
-      expect((fetchMock.mock.calls[1]![0] as URL).toString()).toBe(
-        "https://api.example.com/items",
-      );
+      expect(fetchMock.mock.calls[0]![0]).toBe("https://api.example.com/items");
+      expect(fetchMock.mock.calls[1]![0]).toBe("https://api.example.com/items");
     });
 
     it("should set URL search params from the config", async () => {
@@ -57,7 +51,9 @@ describe("DmkNetworkClient", () => {
         },
       });
 
-      const url = fetchMock.mock.calls[0]![0] as URL;
+      const calledUrl = fetchMock.mock.calls[0]![0] as string;
+      expect(typeof calledUrl).toBe("string");
+      const url = new URL(calledUrl);
       expect(url.searchParams.get("chain")).toBe("1");
       expect(url.searchParams.get("contract")).toBe("0xabc");
       expect(url.searchParams.get("active")).toBe("true");

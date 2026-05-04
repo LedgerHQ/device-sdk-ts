@@ -20,9 +20,50 @@ export function joinPath(base: string, path: string): string {
 }
 
 /**
+ * Serializes a {@link DmkQueryParams} object into a percent-encoded
+ * (RFC 3986) query string (without the leading `?`). `null`/`undefined`
+ * entries are skipped.
+ *
+ * Note: this is not strictly `application/x-www-form-urlencoded` — spaces
+ * are encoded as `%20` (via `encodeURIComponent`) rather than `+`. Any
+ * RFC 3986-compliant server will decode both forms identically.
+ *
+ * Implemented manually rather than via `URLSearchParams` so it works on
+ * runtimes where `URLSearchParams.set` is not implemented (e.g. some
+ * React Native versions).
+ */
+function serializeParams(params: DmkQueryParams): string {
+  const parts: string[] = [];
+  for (const [key, value] of Object.entries(params)) {
+    if (value === null || value === undefined) continue;
+    parts.push(
+      `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`,
+    );
+  }
+  return parts.join("&");
+}
+
+/**
  * Builds the final request URL from an input URL (absolute or relative), an
  * optional base URL, and optional query params. `null`/`undefined` param
  * values are skipped.
+ *
+ * Query params are serialized manually (see {@link serializeParams}) instead
+ * of via `URL.searchParams`, because some runtimes (notably React Native)
+ * ship a `URLSearchParams` whose mutation methods (`set`, `append`, …) are
+ * not implemented.
+ *
+ * @remarks
+ * Fragments (`#...`) in the input URL are not supported when `params` is
+ * provided: the query string is concatenated after the fragment, so it ends
+ * up parsed as part of `.hash` rather than `.search`. Callers should strip
+ * or avoid fragments on URLs passed to this function.
+ *
+ * @remarks
+ * If `url` already contains a query string, `params` are appended to it.
+ * Keys present in both the existing query string and `params` are not merged:
+ * both occurrences will appear in the final URL. Callers relying on override
+ * semantics should pre-merge their parameters.
  */
 export function buildUrl(args: {
   url: string;
@@ -31,21 +72,15 @@ export function buildUrl(args: {
 }): URL {
   const { url, params, baseUrl } = args;
   const isAbsolute = /^[a-z][a-z0-9+.-]*:\/\//i.test(url);
-  const fullUrl = isAbsolute
-    ? new URL(url)
-    : baseUrl
-      ? new URL(joinPath(baseUrl, url))
-      : new URL(url);
+  const composed = isAbsolute ? url : baseUrl ? joinPath(baseUrl, url) : url;
 
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== null && value !== undefined) {
-        fullUrl.searchParams.set(key, String(value));
-      }
-    }
+  const query = params ? serializeParams(params) : "";
+  if (query.length === 0) {
+    return new URL(composed);
   }
 
-  return fullUrl;
+  const separator = composed.includes("?") ? "&" : "?";
+  return new URL(`${composed}${separator}${query}`);
 }
 
 /**
@@ -62,17 +97,22 @@ export function hasHeader(
 /**
  * Returns `true` when the value is already a `BodyInit` accepted by `fetch`
  * and should be passed through without JSON serialization.
+ *
+ * Each Web-global `instanceof` check is guarded with a `typeof` test so the
+ * function is safe on runtimes (e.g. some React Native versions) where
+ * `Blob`, `FormData`, `URLSearchParams` or `ReadableStream` are not defined.
  */
 export function isRawBody(body: unknown): body is BodyInit {
-  return (
-    typeof body === "string" ||
-    body instanceof ArrayBuffer ||
-    body instanceof Blob ||
-    body instanceof FormData ||
-    body instanceof URLSearchParams ||
-    body instanceof ReadableStream ||
-    ArrayBuffer.isView(body)
-  );
+  if (typeof body === "string") return true;
+  if (body instanceof ArrayBuffer) return true;
+  if (ArrayBuffer.isView(body)) return true;
+  if (typeof Blob !== "undefined" && body instanceof Blob) return true;
+  if (typeof FormData !== "undefined" && body instanceof FormData) return true;
+  if (typeof URLSearchParams !== "undefined" && body instanceof URLSearchParams)
+    return true;
+  if (typeof ReadableStream !== "undefined" && body instanceof ReadableStream)
+    return true;
+  return false;
 }
 
 /**
