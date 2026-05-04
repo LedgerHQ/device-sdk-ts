@@ -16,11 +16,6 @@ export const P1 = {
   NEXT: 0x80,
 } as const;
 
-export const P1_VK = {
-  FIRST: 0x00,
-  CONTINUE: 0x80,
-} as const;
-
 export const P2 = {
   DEFAULT: 0x00,
 } as const;

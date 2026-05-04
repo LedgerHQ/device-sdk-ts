@@ -142,5 +142,25 @@ describe("GetFullViewingKeyCommand", () => {
         expect((result.error as ZcashAppCommandError).errorCode).toBe("6b00");
       }
     });
+
+    it("should map status 0xB007 to BadStateError", () => {
+      const command = new GetFullViewingKeyCommand({
+        isContinue: false,
+        p2: P2_VK.UFVK,
+        derivationPath: path,
+      });
+      const result = command.parseResponse(
+        new ApduResponse({
+          statusCode: new Uint8Array([0xb0, 0x07]),
+          data: new Uint8Array(),
+        }),
+      );
+      expect(isSuccessCommandResult(result)).toBe(false);
+      if (!isSuccessCommandResult(result)) {
+        const err = result.error as ZcashAppCommandError;
+        expect(err.errorCode).toBe("b007");
+        expect(err.message).toBe("BadStateError");
+      }
+    });
   });
 });

@@ -10,6 +10,7 @@ import {
   type GetTrustedInputCommandResponse,
 } from "@internal/app-binder/command/GetTrustedInputCommand";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
 const MAX_APDU_DATA_LENGTH = 0xff;
 const INDEX_LOOKUP_LENGTH = 4;
@@ -36,19 +37,6 @@ type CompactSize = {
   value: number;
   byteLength: number;
   nextOffset: number;
-};
-
-const concatArrays = (...chunks: Uint8Array[]): Uint8Array => {
-  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const buffer = new Uint8Array(totalLength);
-  let offset = 0;
-
-  chunks.forEach((chunk) => {
-    buffer.set(chunk, offset);
-    offset += chunk.length;
-  });
-
-  return buffer;
 };
 
 const readUInt8 = (buffer: Uint8Array, offset: number): number => {
@@ -161,7 +149,7 @@ const splitForApduData = (chunks: Uint8Array[]): Uint8Array[] => {
 const splitV5ExtraData = (
   locktime: Uint8Array,
   expiry: Uint8Array,
-): Uint8Array => concatArrays(locktime, new Uint8Array([0x04]), expiry);
+): Uint8Array => concatUint8Arrays(locktime, new Uint8Array([0x04]), expiry);
 
 const splitTransactionToTrustedInputChunks = (
   transaction: Uint8Array,
@@ -187,7 +175,7 @@ const splitTransactionToTrustedInputChunks = (
   const vin = readCompactSize(transaction, offset);
   offset = vin.nextOffset;
   chunks.push(
-    concatArrays(
+    concatUint8Arrays(
       transaction.slice(0, HEADER_V4_SIZE),
       transaction.slice(offset - vin.byteLength, offset),
     ),

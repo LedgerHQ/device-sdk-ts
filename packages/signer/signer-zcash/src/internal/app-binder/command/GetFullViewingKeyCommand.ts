@@ -15,7 +15,7 @@ import { Maybe } from "purify-ts";
 
 import {
   INS,
-  P1_VK,
+  P1,
   P2_VK,
   ZCASH_CLA,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
@@ -27,14 +27,19 @@ import {
 
 export type ZcashFvkP2 = (typeof P2_VK)[keyof typeof P2_VK];
 
-export type GetFullViewingKeyCommandArgs = {
-  /** When true, P1=CONTINUE and APDU data must be empty. */
-  readonly isContinue: boolean;
-  /** See app `P2VkMode` (UFVK string vs raw Orchard FVK bytes). */
-  readonly p2: ZcashFvkP2;
-  /** Required for the first exchange only. */
-  readonly derivationPath?: string;
-};
+export type GetFullViewingKeyCommandArgs =
+  | {
+      /** First GET_VK exchange: P1=FIRST and path in APDU data. */
+      readonly isContinue: false;
+      readonly derivationPath: string;
+      /** See app `P2VkMode` (UFVK string vs raw Orchard FVK bytes). */
+      readonly p2: ZcashFvkP2;
+    }
+  | {
+      /** Subsequent chunk(s): P1=NEXT and empty APDU data. */
+      readonly isContinue: true;
+      readonly p2: ZcashFvkP2;
+    };
 
 /**
  * One GET_VK APDU. Response is a single chunk; the host task concatenates
@@ -64,13 +69,7 @@ export class GetFullViewingKeyCommand
   }
 
   getApdu(): Apdu {
-    if (!this.args.isContinue && this.args.derivationPath === undefined) {
-      throw new Error(
-        "derivationPath is required for the first GetFullViewingKey APDU",
-      );
-    }
-
-    const p1 = this.args.isContinue ? P1_VK.CONTINUE : P1_VK.FIRST;
+    const p1 = this.args.isContinue ? P1.NEXT : P1.FIRST;
 
     const getVkArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
@@ -81,7 +80,7 @@ export class GetFullViewingKeyCommand
 
     const builder = new ApduBuilder(getVkArgs);
 
-    if (!this.args.isContinue && this.args.derivationPath !== undefined) {
+    if (!this.args.isContinue) {
       const path = DerivationPathUtils.splitPath(this.args.derivationPath);
       builder.add8BitUIntToData(path.length);
       path.forEach((element) => {

@@ -14,13 +14,7 @@ import {
 } from "@internal/app-binder/command/GetFullViewingKeyCommand";
 import { VK_RESPONSE_CHUNK_SIZE } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
-
-const concat = (a: Uint8Array, b: Uint8Array): Uint8Array<ArrayBufferLike> => {
-  const out = new Uint8Array(a.length + b.length);
-  out.set(a, 0);
-  out.set(b, a.length);
-  return out;
-};
+import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
 export type GetFullViewingKeyTaskArgs = {
   derivationPath: string;
@@ -40,6 +34,44 @@ export type GetFullViewingKeyTaskSuccessOrchard = {
 export type GetFullViewingKeyTaskData =
   | GetFullViewingKeyTaskSuccessUfvk
   | GetFullViewingKeyTaskSuccessOrchard;
+
+/**
+ * Serialized Orchard full viewing key length (see Zcash protocol / `orchard` crate).
+ * GET_VK with P2_ORCHARD_FVK returns exactly this many raw bytes when successful.
+ */
+export const ORCHARD_FVK_BYTE_LENGTH = 96 as const;
+
+function orchardFvkLengthMismatchMessage(assembled: Uint8Array): string {
+  const base = `Orchard FVK must be ${ORCHARD_FVK_BYTE_LENGTH} bytes (got ${assembled.length})`;
+  if (assembled.length < 2) {
+    return base;
+  }
+  const view = new DataView(
+    assembled.buffer,
+    assembled.byteOffset,
+    assembled.byteLength,
+  );
+  const strLength = view.getUint16(0, false);
+  if (2 + strLength === assembled.length) {
+    return `${base}. Payload matches UFVK framing (u16 BE length + ${strLength} bytes). Use mode "ufvk" for this response, or use a Zcash app build that exports raw Orchard FVK for GET_VK P2=0x01.`;
+  }
+  return base;
+}
+
+function parseAssembledOrchardFvk(
+  assembled: Uint8Array,
+): CommandResult<GetFullViewingKeyTaskSuccessOrchard, ZcashErrorCodes> {
+  if (assembled.length !== ORCHARD_FVK_BYTE_LENGTH) {
+    return CommandResultFactory({
+      error: new InvalidStatusWordError(
+        orchardFvkLengthMismatchMessage(assembled),
+      ),
+    });
+  }
+  return CommandResultFactory({
+    data: { mode: "orchardFvk", fullViewingKey: assembled },
+  });
+}
 
 function parseAssembledUfvk(
   assembled: Uint8Array,
@@ -107,10 +139,8 @@ export class GetFullViewingKeyTask {
       return firstResult;
     }
 
-    let lastChunk: Uint8Array<ArrayBufferLike> = new Uint8Array(
-      firstResult.data.data,
-    );
-    let assembled: Uint8Array<ArrayBufferLike> = lastChunk;
+    let lastChunk: Uint8Array = new Uint8Array(firstResult.data.data);
+    let assembled: Uint8Array = lastChunk;
 
     while (lastChunk.length === VK_RESPONSE_CHUNK_SIZE) {
       const next = await this.api.sendCommand(
@@ -123,15 +153,13 @@ export class GetFullViewingKeyTask {
         return next;
       }
       lastChunk = new Uint8Array(next.data.data);
-      assembled = concat(assembled, lastChunk);
+      assembled = concatUint8Arrays(assembled, lastChunk);
     }
 
     if (this.args.mode === "ufvk") {
       return parseAssembledUfvk(assembled);
     }
 
-    return CommandResultFactory({
-      data: { mode: "orchardFvk", fullViewingKey: assembled },
-    });
+    return parseAssembledOrchardFvk(assembled);
   }
 }
