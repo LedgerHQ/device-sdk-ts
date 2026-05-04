@@ -52,6 +52,14 @@ export {
   type GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
 export {
+  type InstallLanguagePackageDAError,
+  type InstallLanguagePackageDAInput,
+  type InstallLanguagePackageDAIntermediateValue,
+  type InstallLanguagePackageDAOutput,
+  type InstallLanguagePackageDAState,
+  type Language,
+} from "@api/device-action/os/InstallLanguagePackage/types";
+export {
   type ApplicationConstraint,
   type ApplicationDependency,
   type ApplicationVersionConstraint,
