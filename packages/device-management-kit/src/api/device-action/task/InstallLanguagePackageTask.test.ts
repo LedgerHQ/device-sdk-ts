@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Left, Right } from "purify-ts";
 import { lastValueFrom, toArray } from "rxjs";
 
@@ -12,8 +11,6 @@ import {
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
 import { InstallLanguagePackageTask } from "./InstallLanguagePackageTask";
-
-vi.mock("axios");
 
 describe("InstallLanguagePackageTask", () => {
   let api: InternalApi;
@@ -33,11 +30,15 @@ describe("InstallLanguagePackageTask", () => {
     api = { sendApdu } as unknown as InternalApi;
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("success", () => {
     it("should send all APDUs and emit progress events", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000\ne0c4010000\ne0c4020000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000\ne0c4010000\ne0c4020000"),
+      );
       sendApdu
         .mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)))
         .mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)))
@@ -49,7 +50,9 @@ describe("InstallLanguagePackageTask", () => {
 
       const events = await lastValueFrom(task.run().pipe(toArray()));
 
-      expect(axios.get).toHaveBeenCalledWith("https://example.com/install");
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        "https://example.com/install",
+      );
       expect(sendApdu).toHaveBeenCalledTimes(3);
       expect(events).toEqual([
         { type: "progress", progress: 1 / 3 },
@@ -59,9 +62,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should handle a single APDU", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000"),
+      );
       sendApdu.mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)));
 
       const task = new InstallLanguagePackageTask(api, {
@@ -75,9 +78,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should skip empty lines in APDU data", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000\n\ne0c4010000\n",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000\n\ne0c4010000\n"),
+      );
       sendApdu
         .mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)))
         .mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)));
@@ -96,9 +99,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should handle Windows-style line endings", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000\r\ne0c4010000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000\r\ne0c4010000"),
+      );
       sendApdu
         .mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)))
         .mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)));
@@ -119,7 +122,9 @@ describe("InstallLanguagePackageTask", () => {
 
   describe("error", () => {
     it("should throw NetworkDAError when fetching APDUs fails", async () => {
-      vi.mocked(axios.get).mockRejectedValueOnce(new Error("Network timeout"));
+      vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+        new Error("Network timeout"),
+      );
 
       const task = new InstallLanguagePackageTask(api, {
         apduInstallUrl: "https://example.com/install",
@@ -132,9 +137,7 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should throw UnknownDAError for invalid APDU hex data", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "ZZZZ",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("ZZZZ"));
 
       const task = new InstallLanguagePackageTask(api, {
         apduInstallUrl: "https://example.com/install",
@@ -147,9 +150,7 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should throw UnknownDAError for too-short APDU data", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response("e0c4"));
 
       const task = new InstallLanguagePackageTask(api, {
         apduInstallUrl: "https://example.com/install",
@@ -162,9 +163,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should throw UnknownDAError on device communication error (Left)", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000"),
+      );
       sendApdu.mockResolvedValueOnce(Left(new Error("Transport error")));
 
       const task = new InstallLanguagePackageTask(api, {
@@ -179,9 +180,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should throw RefusedByUserDAError when device refuses", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000"),
+      );
       sendApdu.mockResolvedValueOnce(Right(makeApduResponse(REFUSED_STATUS)));
 
       const task = new InstallLanguagePackageTask(api, {
@@ -194,9 +195,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should throw OutOfMemoryDAError when device is out of memory", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000"),
+      );
       sendApdu.mockResolvedValueOnce(
         Right(makeApduResponse(OUT_OF_MEMORY_STATUS)),
       );
@@ -211,9 +212,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should throw UnknownDAError for unexpected device response status", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000"),
+      );
       sendApdu.mockResolvedValueOnce(
         Right(makeApduResponse(UNKNOWN_ERROR_STATUS)),
       );
@@ -228,9 +229,9 @@ describe("InstallLanguagePackageTask", () => {
     });
 
     it("should error on second APDU after first succeeds", async () => {
-      vi.mocked(axios.get).mockResolvedValueOnce({
-        data: "e0c4000000\ne0c4010000",
-      });
+      vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+        new Response("e0c4000000\ne0c4010000"),
+      );
       sendApdu
         .mockResolvedValueOnce(Right(makeApduResponse(SUCCESS_STATUS)))
         .mockResolvedValueOnce(Right(makeApduResponse(REFUSED_STATUS)));

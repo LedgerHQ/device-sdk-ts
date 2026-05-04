@@ -1,4 +1,3 @@
-import axios from "axios";
 import { Observable } from "rxjs";
 
 import { CommandUtils } from "@api/command/utils/CommandUtils";
@@ -37,8 +36,11 @@ export class InstallLanguagePackageTask {
       const execute = async () => {
         let rawApdus: string;
         try {
-          const response = await axios.get<string>(this.args.apduInstallUrl);
-          rawApdus = response.data;
+          const response = await fetch(this.args.apduInstallUrl);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status} ${response.statusText}`);
+          }
+          rawApdus = await response.text();
         } catch (error) {
           throw new NetworkDAError(
             `Failed to fetch APDUs: ${error instanceof Error ? error.message : String(error)}`,
