@@ -4,16 +4,16 @@ export type {
   GetAddressDAOutput,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
 export type {
+  GetAppConfigDAError,
+  GetAppConfigDAIntermediateValue,
+  GetAppConfigDAOutput,
+} from "@api/app-binder/GetAppConfigDeviceActionTypes";
+export type {
   GetFullViewingKeyDAError,
   GetFullViewingKeyDAIntermediateValue,
   GetFullViewingKeyDAOutput,
   GetFullViewingKeyDAReturnType,
 } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
-export type {
-  GetAppConfigDAError,
-  GetAppConfigDAIntermediateValue,
-  GetAppConfigDAOutput,
-} from "@api/app-binder/GetAppConfigDeviceActionTypes";
 export type {
   GetTrustedInputDAError,
   GetTrustedInputDAIntermediateValue,

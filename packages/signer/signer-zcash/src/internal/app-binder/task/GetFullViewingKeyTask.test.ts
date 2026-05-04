@@ -1,12 +1,15 @@
 import {
   CommandResultFactory,
-  isSuccessCommandResult,
   type InternalApi,
+  isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it, vi } from "vitest";
 
-import { GetFullViewingKeyCommand } from "@internal/app-binder/command/GetFullViewingKeyCommand";
-import { P2_VK, VK_RESPONSE_CHUNK_SIZE } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { type GetFullViewingKeyCommand } from "@internal/app-binder/command/GetFullViewingKeyCommand";
+import {
+  P2_VK,
+  VK_RESPONSE_CHUNK_SIZE,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import { GetFullViewingKeyTask } from "./GetFullViewingKeyTask";
 
@@ -45,12 +48,8 @@ describe("GetFullViewingKeyTask", () => {
 
     const sendCommand = vi
       .fn()
-      .mockResolvedValueOnce(
-        CommandResultFactory({ data: { data: a } }),
-      )
-      .mockResolvedValueOnce(
-        CommandResultFactory({ data: { data: b } }),
-      );
+      .mockResolvedValueOnce(CommandResultFactory({ data: { data: a } }))
+      .mockResolvedValueOnce(CommandResultFactory({ data: { data: b } }));
 
     const api = { sendCommand } as unknown as InternalApi;
     const result = await new GetFullViewingKeyTask(api, {

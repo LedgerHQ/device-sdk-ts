@@ -1,11 +1,12 @@
 import {
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
   type InternalApi,
+  InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
 import {
   GetFullViewingKeyCommand,
   type ZcashFvkP2,
@@ -13,7 +14,6 @@ import {
 } from "@internal/app-binder/command/GetFullViewingKeyCommand";
 import { VK_RESPONSE_CHUNK_SIZE } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
-import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
 
 const concat = (a: Uint8Array, b: Uint8Array): Uint8Array<ArrayBufferLike> => {
   const out = new Uint8Array(a.length + b.length);
@@ -87,8 +87,8 @@ function parseAssembledUfvk(
  */
 export class GetFullViewingKeyTask {
   constructor(
-    private api: InternalApi,
-    private args: GetFullViewingKeyTaskArgs,
+    private readonly api: InternalApi,
+    private readonly args: GetFullViewingKeyTaskArgs,
   ) {}
 
   async run(): Promise<

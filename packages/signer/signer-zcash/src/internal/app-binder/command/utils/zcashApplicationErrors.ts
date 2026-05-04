@@ -70,7 +70,7 @@ export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "9810": { message: "ContradictionInvalidationError" },
   "9840": { message: "CodeBlockedError" },
   "9850": { message: "MaxValueReachedError" },
-  "b007": { message: "BadStateError" },
+  b007: { message: "BadStateError" },
 };
 
 export class ZcashAppCommandError extends DeviceExchangeError<ZcashErrorCodes> {

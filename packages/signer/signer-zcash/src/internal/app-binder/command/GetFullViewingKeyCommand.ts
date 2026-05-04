@@ -7,7 +7,10 @@ import {
   type CommandResult,
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper, DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
@@ -62,7 +65,9 @@ export class GetFullViewingKeyCommand
 
   getApdu(): Apdu {
     if (!this.args.isContinue && this.args.derivationPath === undefined) {
-      throw new Error("derivationPath is required for the first GetFullViewingKey APDU");
+      throw new Error(
+        "derivationPath is required for the first GetFullViewingKey APDU",
+      );
     }
 
     const p1 = this.args.isContinue ? P1_VK.CONTINUE : P1_VK.FIRST;

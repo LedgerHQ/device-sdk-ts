@@ -6,8 +6,8 @@ import {
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type GetFullViewingKeyTaskData } from "@internal/app-binder/task/GetFullViewingKeyTask";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import { type GetFullViewingKeyTaskData } from "@internal/app-binder/task/GetFullViewingKeyTask";
 
 type GetFullViewingKeyDAUserInteractionRequired = UserInteractionRequired.None;
 
