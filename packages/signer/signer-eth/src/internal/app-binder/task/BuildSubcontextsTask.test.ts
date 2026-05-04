@@ -1,9 +1,9 @@
 import {
   type ClearSignContextReference,
   ClearSignContextReferenceType,
-  type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type EthereumClearSignContextSuccess,
   type GenericPath,
 } from "@ledgerhq/context-module";
 import {
@@ -38,7 +38,7 @@ describe("BuildSubcontextsTask", () => {
     vi.resetAllMocks();
     defaultArgs = {
       context: {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "test payload",
       },
       contextOptional: [],
@@ -57,26 +57,26 @@ describe("BuildSubcontextsTask", () => {
   });
 
   describe("when context type is a simple type", () => {
-    const simpleTypes: ClearSignContextSuccess["type"][] = [
-      ClearSignContextType.TRANSACTION_INFO,
-      ClearSignContextType.TRANSACTION_CHECK,
-      ClearSignContextType.PLUGIN,
-      ClearSignContextType.EXTERNAL_PLUGIN,
-      ClearSignContextType.DYNAMIC_NETWORK,
-      ClearSignContextType.DYNAMIC_NETWORK_ICON,
-      ClearSignContextType.ENUM,
-      ClearSignContextType.TOKEN,
-      ClearSignContextType.NFT,
+    const simpleTypes: EthereumClearSignContextSuccess["type"][] = [
+      ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+      ClearSignContextType.ETHEREUM_WEB3_CHECK,
+      ClearSignContextType.ETHEREUM_PLUGIN,
+      ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
+      ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+      ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+      ClearSignContextType.ETHEREUM_ENUM,
+      ClearSignContextType.ETHEREUM_TOKEN,
+      ClearSignContextType.ETHEREUM_NFT,
     ];
 
     it.each(simpleTypes)(
       "should return context with empty subcontextCallbacks for %s",
       (type) => {
         // GIVEN
-        const context: ClearSignContextSuccess = {
+        const context: EthereumClearSignContextSuccess = {
           type,
           payload: "test payload",
-        } as ClearSignContextSuccess;
+        } as EthereumClearSignContextSuccess;
         const args = { ...defaultArgs, context };
 
         // WHEN
@@ -91,8 +91,8 @@ describe("BuildSubcontextsTask", () => {
   describe("when context has a direct value reference", () => {
     it("should create a callback to get context with the direct value", async () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
@@ -117,14 +117,14 @@ describe("BuildSubcontextsTask", () => {
       await callback();
       expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
         expectedContext,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
     });
 
     it("should handle undefined value in reference", () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: undefined as unknown as ClearSignContextReference,
       };
@@ -148,8 +148,8 @@ describe("BuildSubcontextsTask", () => {
     describe("when extractValue returns Left (error)", () => {
       it("should return context with empty subcontextCallbacks", () => {
         // GIVEN
-        const context: ClearSignContextSuccess = {
-          type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        const context: EthereumClearSignContextSuccess = {
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
           payload: "test payload",
           reference: {
             type: ClearSignContextReferenceType.TOKEN,
@@ -173,8 +173,8 @@ describe("BuildSubcontextsTask", () => {
       describe("for ENUM type", () => {
         it("should create callbacks for matching enum contexts", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -183,22 +183,22 @@ describe("BuildSubcontextsTask", () => {
             },
           };
           // enum with the same id but different value
-          const enumContext1: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext1: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 1,
             value: 1,
             payload: "enum context 1",
           };
           // enum to select, id and value match
-          const enumContext2: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext2: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 1,
             value: 2,
             payload: "enum context 2",
           };
           // other enum context with different id
-          const enumContext3: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext3: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 2,
             value: 2,
             payload: "enum context 3",
@@ -225,8 +225,8 @@ describe("BuildSubcontextsTask", () => {
 
         it("should create callbacks for matching enum contexts with two values", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -235,22 +235,22 @@ describe("BuildSubcontextsTask", () => {
             },
           };
           // enum to select, id and value match
-          const enumContext1: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext1: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 1,
             value: 1,
             payload: "enum context 1",
           };
           // enum to select, id and value match
-          const enumContext2: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext2: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 1,
             value: 2,
             payload: "enum context 2",
           };
           // other enum context with different id
-          const enumContext3: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext3: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 2,
             value: 2,
             payload: "enum context 3",
@@ -283,8 +283,8 @@ describe("BuildSubcontextsTask", () => {
 
         it("should skip when enum value is undefined", () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -307,8 +307,8 @@ describe("BuildSubcontextsTask", () => {
 
         it("should create callback with enum id 0", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -316,14 +316,14 @@ describe("BuildSubcontextsTask", () => {
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
           };
-          const enumContext1: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext1: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 0,
             value: 0,
             payload: "enum context 1",
           };
-          const enumContext2: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext2: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 1,
             value: 1,
             payload: "enum context 2",
@@ -350,8 +350,8 @@ describe("BuildSubcontextsTask", () => {
 
         it("should skip when no matching enum context found", () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.ENUM,
@@ -359,8 +359,8 @@ describe("BuildSubcontextsTask", () => {
               valuePath: [{ type: "TUPLE", offset: 0 }],
             },
           };
-          const enumContext: ClearSignContextSuccess = {
-            type: ClearSignContextType.ENUM,
+          const enumContext: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_ENUM,
             id: 2, // Different ID
             value: 2,
             payload: "enum context",
@@ -386,8 +386,8 @@ describe("BuildSubcontextsTask", () => {
       describe("for TOKEN type", () => {
         it("should create callbacks to get token context", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TOKEN,
@@ -405,7 +405,7 @@ describe("BuildSubcontextsTask", () => {
             Right(extractedValues),
           );
           contextModuleMock.getFieldContext.mockResolvedValue({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result",
           });
 
@@ -417,7 +417,7 @@ describe("BuildSubcontextsTask", () => {
           const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result",
           });
           expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
@@ -426,14 +426,14 @@ describe("BuildSubcontextsTask", () => {
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
               deviceModelId: DeviceModelId.STAX,
             },
-            ClearSignContextType.TOKEN,
+            ClearSignContextType.ETHEREUM_TOKEN,
           );
         });
 
         it("should create callbacks to get token as constant", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TOKEN,
@@ -442,7 +442,7 @@ describe("BuildSubcontextsTask", () => {
           };
           const args = { ...defaultArgs, context };
           contextModuleMock.getFieldContext.mockResolvedValue({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result",
           });
 
@@ -454,7 +454,7 @@ describe("BuildSubcontextsTask", () => {
           const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result",
           });
           expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
@@ -463,7 +463,7 @@ describe("BuildSubcontextsTask", () => {
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
               deviceModelId: DeviceModelId.STAX,
             },
-            ClearSignContextType.TOKEN,
+            ClearSignContextType.ETHEREUM_TOKEN,
           );
         });
       });
@@ -471,8 +471,8 @@ describe("BuildSubcontextsTask", () => {
       describe("for NFT type", () => {
         it("should create callbacks to get NFT context", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.NFT,
@@ -490,7 +490,7 @@ describe("BuildSubcontextsTask", () => {
             Right(extractedValues),
           );
           contextModuleMock.getFieldContext.mockResolvedValue({
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.ETHEREUM_NFT,
             payload: "nft result",
           });
 
@@ -502,7 +502,7 @@ describe("BuildSubcontextsTask", () => {
           const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.ETHEREUM_NFT,
             payload: "nft result",
           });
           expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
@@ -511,14 +511,14 @@ describe("BuildSubcontextsTask", () => {
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
               deviceModelId: DeviceModelId.STAX,
             },
-            ClearSignContextType.NFT,
+            ClearSignContextType.ETHEREUM_NFT,
           );
         });
 
         it("should create callbacks to get NFT as constant", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.NFT,
@@ -527,7 +527,7 @@ describe("BuildSubcontextsTask", () => {
           };
           const args = { ...defaultArgs, context };
           contextModuleMock.getFieldContext.mockResolvedValue({
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.ETHEREUM_NFT,
             payload: "nft result",
           });
 
@@ -539,7 +539,7 @@ describe("BuildSubcontextsTask", () => {
           const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.ETHEREUM_NFT,
             payload: "nft result",
           });
           expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
@@ -548,7 +548,7 @@ describe("BuildSubcontextsTask", () => {
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
               deviceModelId: DeviceModelId.STAX,
             },
-            ClearSignContextType.NFT,
+            ClearSignContextType.ETHEREUM_NFT,
           );
         });
       });
@@ -556,8 +556,8 @@ describe("BuildSubcontextsTask", () => {
       describe("for TRUSTED_NAME type", () => {
         it("should create callbacks to get trusted name context with challenge", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TRUSTED_NAME,
@@ -577,7 +577,7 @@ describe("BuildSubcontextsTask", () => {
             Right(extractedValues),
           );
           contextModuleMock.getFieldContext.mockResolvedValue({
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
             payload: "trusted name result",
           });
 
@@ -589,7 +589,7 @@ describe("BuildSubcontextsTask", () => {
           const callback = result.subcontextCallbacks[0]!;
           const callbackResult = await callback();
           expect(callbackResult).toEqual({
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
             payload: "trusted name result",
           });
           expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -604,14 +604,14 @@ describe("BuildSubcontextsTask", () => {
               sources: ["source1", "source2"],
               deviceModelId: DeviceModelId.STAX,
             },
-            ClearSignContextType.TRUSTED_NAME,
+            ClearSignContextType.ETHEREUM_TRUSTED_NAME,
           );
         });
 
         it("should handle challenge command failure", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TRUSTED_NAME,
@@ -654,8 +654,8 @@ describe("BuildSubcontextsTask", () => {
       describe("for multiple values", () => {
         it("should create callbacks for each extracted value", async () => {
           // GIVEN
-          const context: ClearSignContextSuccess = {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          const context: EthereumClearSignContextSuccess = {
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TOKEN,
@@ -677,11 +677,11 @@ describe("BuildSubcontextsTask", () => {
             Right(extractedValues),
           );
           contextModuleMock.getFieldContext.mockResolvedValueOnce({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result 1",
           });
           contextModuleMock.getFieldContext.mockResolvedValueOnce({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result 2",
           });
 
@@ -695,11 +695,11 @@ describe("BuildSubcontextsTask", () => {
           const callbackResult1 = await callback1();
           const callbackResult2 = await callback2();
           expect(callbackResult1).toEqual({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result 1",
           });
           expect(callbackResult2).toEqual({
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "token result 2",
           });
           expect(contextModuleMock.getFieldContext).toHaveBeenCalledTimes(2);
@@ -710,7 +710,7 @@ describe("BuildSubcontextsTask", () => {
               address: "0x030405060708090a0b0c0d0e0f10111213141516",
               deviceModelId: DeviceModelId.STAX,
             },
-            ClearSignContextType.TOKEN,
+            ClearSignContextType.ETHEREUM_TOKEN,
           );
           expect(contextModuleMock.getFieldContext).toHaveBeenNthCalledWith(
             2,
@@ -719,7 +719,7 @@ describe("BuildSubcontextsTask", () => {
               address: "0x232425262728292a2b2c2d2e2f30313233343536",
               deviceModelId: DeviceModelId.STAX,
             },
-            ClearSignContextType.TOKEN,
+            ClearSignContextType.ETHEREUM_TOKEN,
           );
         });
       });
@@ -729,8 +729,8 @@ describe("BuildSubcontextsTask", () => {
   describe("when context has no reference", () => {
     it("should return context with empty subcontextCallbacks", () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TOKEN,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "test payload",
       };
       const args = { ...defaultArgs, context };
@@ -746,8 +746,8 @@ describe("BuildSubcontextsTask", () => {
   describe("when context has reference but no valuePath", () => {
     it("should return context with empty subcontextCallbacks", () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
@@ -768,9 +768,9 @@ describe("BuildSubcontextsTask", () => {
     it("should throw error for uncovered context type", () => {
       // GIVEN
       const context = {
-        type: "UNKNOWN_TYPE" as ClearSignContextSuccess["type"],
+        type: "UNKNOWN_TYPE" as EthereumClearSignContextSuccess["type"],
         payload: "test payload",
-      } as ClearSignContextSuccess;
+      } as EthereumClearSignContextSuccess;
       const args = { ...defaultArgs, context };
 
       // WHEN / THEN
@@ -781,8 +781,8 @@ describe("BuildSubcontextsTask", () => {
 
     it("should throw error for uncovered reference type", () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: "UNKNOWN_REFERENCE_TYPE" as ClearSignContextReference["type"],
@@ -800,8 +800,8 @@ describe("BuildSubcontextsTask", () => {
   describe("CALLDATA reference type", () => {
     it("should return empty subcontextCallbacks for CALLDATA reference", () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.CALLDATA,
@@ -822,8 +822,8 @@ describe("BuildSubcontextsTask", () => {
   describe("references without valuePath", () => {
     it("should return empty subcontextCallbacks for ENUM reference without valuePath", () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.ENUM,
@@ -842,8 +842,8 @@ describe("BuildSubcontextsTask", () => {
 
     it("should return empty subcontextCallbacks for TRUSTED_NAME reference without valuePath", () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TRUSTED_NAME,
@@ -871,8 +871,8 @@ describe("BuildSubcontextsTask", () => {
 
     it("should create callback to get proxy delegate call context", async () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_INFO,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -885,7 +885,7 @@ describe("BuildSubcontextsTask", () => {
         },
       };
       contextModuleMock.getFieldContext.mockResolvedValue({
-        type: ClearSignContextType.PROXY_INFO,
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "proxy result",
       });
 
@@ -898,7 +898,7 @@ describe("BuildSubcontextsTask", () => {
       const callbackResult = await callback();
 
       expect(callbackResult).toEqual({
-        type: ClearSignContextType.PROXY_INFO,
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "proxy result",
       });
       expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -912,14 +912,14 @@ describe("BuildSubcontextsTask", () => {
           deviceModelId: DeviceModelId.STAX,
           challenge: "test-challenge",
         },
-        ClearSignContextType.PROXY_INFO,
+        ClearSignContextType.ETHEREUM_PROXY_INFO,
       );
     });
 
     it("should handle challenge command failure", async () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_INFO,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -958,8 +958,8 @@ describe("BuildSubcontextsTask", () => {
 
     it("should handle missing proxy address", async () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_INFO,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -992,8 +992,8 @@ describe("BuildSubcontextsTask", () => {
 
     it("should use correct device model id in context", async () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.PROXY_INFO,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "proxy payload",
       };
       const args = {
@@ -1007,7 +1007,7 @@ describe("BuildSubcontextsTask", () => {
         },
       };
       contextModuleMock.getFieldContext.mockResolvedValue({
-        type: ClearSignContextType.PROXY_INFO,
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "proxy result",
       });
 
@@ -1027,7 +1027,7 @@ describe("BuildSubcontextsTask", () => {
           deviceModelId: DeviceModelId.NANO_SP,
           challenge: "test-challenge",
         },
-        ClearSignContextType.PROXY_INFO,
+        ClearSignContextType.ETHEREUM_PROXY_INFO,
       );
     });
   });
@@ -1035,8 +1035,8 @@ describe("BuildSubcontextsTask", () => {
   describe("edge cases", () => {
     it("should handle value array shorter than 20 bytes for address extraction", async () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
@@ -1070,14 +1070,14 @@ describe("BuildSubcontextsTask", () => {
           address: "0x010203",
           deviceModelId: DeviceModelId.STAX,
         },
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
     });
 
     it("should handle empty value array", async () => {
       // GIVEN
-      const context: ClearSignContextSuccess = {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      const context: EthereumClearSignContextSuccess = {
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "test payload",
         reference: {
           type: ClearSignContextReferenceType.TOKEN,
@@ -1090,7 +1090,7 @@ describe("BuildSubcontextsTask", () => {
         Right(extractedValues),
       );
       contextModuleMock.getFieldContext.mockResolvedValue({
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "token result",
       });
 
@@ -1104,7 +1104,7 @@ describe("BuildSubcontextsTask", () => {
       const callback = result.subcontextCallbacks[0]!;
       const callbackResult = await callback();
       expect(callbackResult).toEqual({
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "token result",
       });
       expect(contextModuleMock.getFieldContext).toHaveBeenCalledWith(
@@ -1113,7 +1113,7 @@ describe("BuildSubcontextsTask", () => {
           address: "0x",
           deviceModelId: DeviceModelId.STAX,
         },
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
     });
   });

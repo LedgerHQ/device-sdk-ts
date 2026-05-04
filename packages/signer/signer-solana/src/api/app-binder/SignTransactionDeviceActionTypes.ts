@@ -1,5 +1,7 @@
-import { type ContextModule } from "@ledgerhq/context-module";
-import { type SolanaTransactionContextResultSuccess } from "@ledgerhq/context-module/src/solana/domain/solanaContextTypes.js";
+import {
+  type ContextModule,
+  type SolanaTransactionContextResultSuccess,
+} from "@ledgerhq/context-module";
 import {
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,

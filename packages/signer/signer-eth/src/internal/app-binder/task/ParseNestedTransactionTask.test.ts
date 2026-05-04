@@ -45,9 +45,9 @@ describe("ParseNestedTransactionTask", () => {
     },
   ];
 
-  const defaultContext: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION> =
+  const defaultContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION> =
     {
-      type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
       payload: "test payload",
       reference: {
         type: ClearSignContextReferenceType.CALLDATA,
@@ -73,9 +73,9 @@ describe("ParseNestedTransactionTask", () => {
     describe("error cases", () => {
       it("should throw error when context has no reference", () => {
         // GIVEN
-        const contextWithoutReference: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION> =
+        const contextWithoutReference: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION> =
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
           };
         const args = { ...defaultArgs, context: contextWithoutReference };
@@ -88,9 +88,9 @@ describe("ParseNestedTransactionTask", () => {
 
       it("should throw error when reference type is not CALLDATA", () => {
         // GIVEN
-        const contextWithWrongType: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION> =
+        const contextWithWrongType: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION> =
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.TOKEN,
@@ -107,9 +107,9 @@ describe("ParseNestedTransactionTask", () => {
 
       it("should throw error when reference has no valuePath", () => {
         // GIVEN
-        const contextWithoutValuePath: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION> =
+        const contextWithoutValuePath: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION> =
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.CALLDATA,
@@ -156,9 +156,9 @@ describe("ParseNestedTransactionTask", () => {
           Right([new Uint8Array([0x03, 0x04, 0x05, 0x06])]),
         );
 
-        const context: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION> =
+        const context: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION> =
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.CALLDATA,
@@ -210,9 +210,9 @@ describe("ParseNestedTransactionTask", () => {
           Right([new Uint8Array([0x03, 0x04, 0x05, 0x06])]),
         );
 
-        const context: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION> =
+        const context: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION> =
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.CALLDATA,
@@ -243,9 +243,9 @@ describe("ParseNestedTransactionTask", () => {
         );
         transactionParserMock.extractValue.mockReturnValue(Right([]));
 
-        const context: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION> =
+        const context: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION> =
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "test payload",
             reference: {
               type: ClearSignContextReferenceType.CALLDATA,

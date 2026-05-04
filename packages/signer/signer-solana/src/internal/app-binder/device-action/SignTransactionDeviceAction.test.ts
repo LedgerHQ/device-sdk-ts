@@ -45,7 +45,7 @@ function makeAppConfig(version: string): AppConfiguration {
 }
 
 const contextModuleStub: ContextModule = {
-  getSolanaContext: vi.fn(),
+  getContexts: vi.fn(),
 } as unknown as ContextModule;
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
@@ -180,6 +180,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array([0x01]),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       };
       buildContextMock.mockResolvedValue(ctx);
       provideContextMock.mockResolvedValue(Nothing);
@@ -443,6 +444,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array([0x02]),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       };
       buildContextMock.mockResolvedValue(ctx);
 
@@ -549,6 +551,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array(),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       });
       provideContextMock.mockResolvedValue(
         Just(
@@ -653,6 +656,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array([0x01]),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       };
       buildContextMock.mockResolvedValue(ctx);
       provideContextMock.mockResolvedValue(Nothing);

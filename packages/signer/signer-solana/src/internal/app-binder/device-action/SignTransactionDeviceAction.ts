@@ -398,6 +398,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                     trustedNamePKICertificate:
                       event.output.trustedNamePKICertificate,
                     loadersResults: event.output.loadersResults,
+                    contextErrorCount: event.output.contextErrorCount,
                   },
                 }),
               }),

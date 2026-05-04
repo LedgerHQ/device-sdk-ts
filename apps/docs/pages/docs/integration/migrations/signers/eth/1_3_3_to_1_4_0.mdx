@@ -50,9 +50,13 @@ const signer = new SignerEthBuilder({ dmk, sessionId })
 ### After (v1.4.0)
 
 ```typescript
+import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+
 const contextModule = new ContextModuleBuilder({
   originToken: "your-origin-token", // Required for security features
-}).build();
+})
+  .setChain(ContextModuleChainID.Ethereum)
+  .build();
 
 const signer = new SignerEthBuilder({ dmk, sessionId })
   .withContextModule(contextModule)

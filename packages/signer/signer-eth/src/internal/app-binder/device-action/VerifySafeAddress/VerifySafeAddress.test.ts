@@ -66,12 +66,12 @@ describe("VerifySafeAddressDeviceAction", () => {
   const TEST_CHAIN_ID = 1;
 
   const validSafeContext = {
-    type: ClearSignContextType.SAFE,
+    type: ClearSignContextType.ETHEREUM_SAFE,
     payload: "safe_payload",
   };
 
   const validSignerContext = {
-    type: ClearSignContextType.SIGNER,
+    type: ClearSignContextType.ETHEREUM_SIGNER,
     payload: "signer_payload",
   };
 
@@ -272,7 +272,7 @@ describe("VerifySafeAddressDeviceAction", () => {
         setupDeviceModel(DeviceModelId.FLEX);
 
         const safeContextWithCert = {
-          type: ClearSignContextType.SAFE,
+          type: ClearSignContextType.ETHEREUM_SAFE,
           payload: "safe_payload",
           certificate: {
             keyUsageNumber: 1,
@@ -281,7 +281,7 @@ describe("VerifySafeAddressDeviceAction", () => {
         };
 
         const signerContextWithCert = {
-          type: ClearSignContextType.SIGNER,
+          type: ClearSignContextType.ETHEREUM_SIGNER,
           payload: "signer_payload",
           certificate: {
             keyUsageNumber: 2,

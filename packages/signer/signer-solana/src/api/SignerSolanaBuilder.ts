@@ -1,6 +1,7 @@
 import {
   type ContextModule,
   ContextModuleBuilder,
+  ContextModuleChainID,
 } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
@@ -71,7 +72,9 @@ export class SignerSolanaBuilder {
           originToken: this._originToken,
           loggerFactory: (tag: string) =>
             this._dmk.getLoggerFactory()(["ContextModule", tag]),
-        }).build(),
+        })
+          .setChain(ContextModuleChainID.Solana)
+          .build(),
     });
   }
 }

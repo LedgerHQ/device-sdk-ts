@@ -296,7 +296,7 @@ describe("BuildEIP712ContextTask", () => {
   it("Build context with clear signing context", async () => {
     // GIVEN
     const txCheckContext = {
-      type: ClearSignContextType.TRANSACTION_CHECK,
+      type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
       payload: "web3Check",
     };
     const task = new BuildEIP712ContextTask(
@@ -372,7 +372,7 @@ describe("BuildEIP712ContextTask", () => {
   it("Build context with clear signing context and transaction checks", async () => {
     // GIVEN
     const txCheckContext = {
-      type: ClearSignContextType.TRANSACTION_CHECK,
+      type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
       payload: "transactionCheck",
     };
     const task = new BuildEIP712ContextTask(
@@ -618,14 +618,14 @@ describe("BuildEIP712ContextTask", () => {
     };
     const trustedNameContext1 = {
       context: {
-        type: ClearSignContextType.TRUSTED_NAME as const,
+        type: ClearSignContextType.ETHEREUM_TRUSTED_NAME as const,
         payload: "trusted-name-payload-1",
       },
       subcontextCallbacks: [],
     };
     const trustedNameContext2 = {
       context: {
-        type: ClearSignContextType.TRUSTED_NAME as const,
+        type: ClearSignContextType.ETHEREUM_TRUSTED_NAME as const,
         payload: "trusted-name-payload-2",
       },
       subcontextCallbacks: [],
@@ -710,21 +710,21 @@ describe("BuildEIP712ContextTask", () => {
     };
     const trustedNameContext = {
       context: {
-        type: ClearSignContextType.TRUSTED_NAME as const,
+        type: ClearSignContextType.ETHEREUM_TRUSTED_NAME as const,
         payload: "trusted-name-payload",
       },
       subcontextCallbacks: [],
     };
     const txInfoContext = {
       context: {
-        type: ClearSignContextType.TRANSACTION_INFO as const,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO as const,
         payload: "tx-info-payload",
       },
       subcontextCallbacks: [],
     };
     const txFieldContext = {
       context: {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION as const,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION as const,
         payload: "tx-field-payload",
       },
       subcontextCallbacks: [],
@@ -835,10 +835,10 @@ describe("BuildEIP712ContextTask", () => {
       contextModuleMock.getContexts.mock.calls[0]?.[1];
     expect(contextTypesRequested).toBeDefined();
     expect(contextTypesRequested).not.toContain(
-      ClearSignContextType.GATED_SIGNING,
+      ClearSignContextType.ETHEREUM_GATED_SIGNING,
     );
     expect(contextTypesRequested).not.toContain(
-      ClearSignContextType.PROXY_INFO,
+      ClearSignContextType.ETHEREUM_PROXY_INFO,
     );
     expect(builtContext.additionalContexts).toEqual([]);
   });
@@ -886,10 +886,10 @@ describe("BuildEIP712ContextTask", () => {
       contextModuleMock.getContexts.mock.calls[0]?.[1];
     expect(contextTypesRequested).toBeDefined();
     expect(contextTypesRequested).not.toContain(
-      ClearSignContextType.GATED_SIGNING,
+      ClearSignContextType.ETHEREUM_GATED_SIGNING,
     );
     expect(contextTypesRequested).not.toContain(
-      ClearSignContextType.PROXY_INFO,
+      ClearSignContextType.ETHEREUM_PROXY_INFO,
     );
     expect(builtContext.additionalContexts).toEqual([]);
   });
@@ -897,11 +897,11 @@ describe("BuildEIP712ContextTask", () => {
   it("should request GATED_SIGNING and PROXY_INFO when app version is 1.22.0 or newer", async () => {
     // GIVEN
     const gatedSigningContext = {
-      type: ClearSignContextType.GATED_SIGNING,
+      type: ClearSignContextType.ETHEREUM_GATED_SIGNING,
       payload: "gated-signing",
     };
     const proxyInfoContext = {
-      type: ClearSignContextType.PROXY_INFO,
+      type: ClearSignContextType.ETHEREUM_PROXY_INFO,
       payload: "proxy-info",
     };
     const task = new BuildEIP712ContextTask(
@@ -947,8 +947,12 @@ describe("BuildEIP712ContextTask", () => {
     const contextTypesRequested =
       contextModuleMock.getContexts.mock.calls[0]?.[1];
     expect(contextTypesRequested).toBeDefined();
-    expect(contextTypesRequested).toContain(ClearSignContextType.GATED_SIGNING);
-    expect(contextTypesRequested).toContain(ClearSignContextType.PROXY_INFO);
+    expect(contextTypesRequested).toContain(
+      ClearSignContextType.ETHEREUM_GATED_SIGNING,
+    );
+    expect(contextTypesRequested).toContain(
+      ClearSignContextType.ETHEREUM_PROXY_INFO,
+    );
     expect(builtContext.additionalContexts).toContainEqual(gatedSigningContext);
     expect(builtContext.additionalContexts).toContainEqual(proxyInfoContext);
   });

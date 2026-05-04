@@ -17,7 +17,7 @@ export type ParseNestedTransactionTaskResult = {
 export type ParseNestedTransactionTaskArgs = {
   readonly parser: TransactionParserService;
   readonly subset: TransactionSubset;
-  readonly context: ClearSignContextSuccess<ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION>;
+  readonly context: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION>;
 };
 
 /**

@@ -1,4 +1,7 @@
-import { ClearSignContextType } from "@ledgerhq/context-module";
+import {
+  ClearSignContextType,
+  isEthereumClearSignContextSuccess,
+} from "@ledgerhq/context-module";
 import {
   ByteArrayBuilder,
   type CommandErrorResult,
@@ -93,6 +96,11 @@ export class ProvideTransactionContextsTask {
           continue;
         }
 
+        if (!isEthereumClearSignContextSuccess(subcontext)) {
+          // silently ignore non-Ethereum subcontexts
+          continue;
+        }
+
         // Don't fail immediately on subcontext errors because the main context may still be successful
         await this._provideContextTaskFactory(this._api, {
           context: subcontext,
@@ -101,8 +109,8 @@ export class ProvideTransactionContextsTask {
       }
 
       if (
-        context.type === ClearSignContextType.PROXY_INFO ||
-        context.type === ClearSignContextType.TRUSTED_NAME
+        context.type === ClearSignContextType.ETHEREUM_PROXY_INFO ||
+        context.type === ClearSignContextType.ETHEREUM_TRUSTED_NAME
       ) {
         // In this specific case, the context is not valid as the challenge is not valid on the first call
         // the real data is provided in the subcontext callback
@@ -112,7 +120,7 @@ export class ProvideTransactionContextsTask {
       if (
         !transactionInfoProvided &&
         this._args.serializedTransaction !== undefined &&
-        context.type === ClearSignContextType.TRANSACTION_INFO
+        context.type === ClearSignContextType.ETHEREUM_TRANSACTION_INFO
       ) {
         // Send the serialized transaction for the first TRANSACTION_INFO.
         // All other TRANSACTION_INFO contexts will be ignored as it will be for nested calldata.

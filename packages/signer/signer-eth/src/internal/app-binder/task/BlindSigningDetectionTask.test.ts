@@ -44,7 +44,6 @@ describe("BlindSigningDetectionTask", () => {
     getContexts: vi.fn(),
     getFieldContext: vi.fn(),
     getTypedDataFilters: vi.fn(),
-    getSolanaContext: vi.fn(),
     report: vi.fn(),
   } as unknown as ContextModule;
 
@@ -175,7 +174,7 @@ describe("BlindSigningDetectionTask", () => {
         ...baseInput,
         hasContext: true,
         usedFallback: false,
-        contextTypes: [ClearSignContextType.TRANSACTION_CHECK],
+        contextTypes: [ClearSignContextType.ETHEREUM_WEB3_CHECK],
       },
       contextModule: mockContextModule,
       loggerFactory: mockLoggerFactory,
@@ -194,8 +193,8 @@ describe("BlindSigningDetectionTask", () => {
         hasContext: true,
         usedFallback: false,
         contextTypes: [
-          ClearSignContextType.DYNAMIC_NETWORK,
-          ClearSignContextType.GATED_SIGNING,
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+          ClearSignContextType.ETHEREUM_GATED_SIGNING,
         ],
       },
       contextModule: mockContextModule,
@@ -215,8 +214,8 @@ describe("BlindSigningDetectionTask", () => {
         hasContext: true,
         usedFallback: false,
         contextTypes: [
-          ClearSignContextType.TRANSACTION_CHECK,
-          ClearSignContextType.TRANSACTION_INFO,
+          ClearSignContextType.ETHEREUM_WEB3_CHECK,
+          ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         ],
       },
       contextModule: mockContextModule,
