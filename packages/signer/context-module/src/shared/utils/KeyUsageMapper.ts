@@ -1,4 +1,4 @@
-import { KeyUsage } from "@/pki/model/KeyUsage";
+import { KeyUsage } from "@/chain-agnostic-loaders/pki/model/KeyUsage";
 
 export class KeyUsageMapper {
   private static keyUsageMap = new Map<KeyUsage, number>([

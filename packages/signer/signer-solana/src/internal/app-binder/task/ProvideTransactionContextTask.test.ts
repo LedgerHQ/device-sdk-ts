@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { SolanaContextTypes } from "@ledgerhq/context-module";
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   LoadCertificateCommand,
@@ -186,14 +186,14 @@ describe("ProvideSolanaTransactionContextTask", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(1);
     });
 
-    it("ignores SolanaContextTypes.ERROR entries (no extra APDUs beyond base context)", async () => {
+    it("ignores ClearSignContextType.ERROR entries (no extra APDUs beyond base context)", async () => {
       // given: include an ERROR loader which should be ignored
       api.sendCommand
         .mockResolvedValueOnce(success) // PKI
         .mockResolvedValueOnce(success); // TLV
 
       const loadersResults = [
-        { type: SolanaContextTypes.ERROR, error: { message: "err" } as any },
+        { type: ClearSignContextType.ERROR, error: { message: "err" } as any },
       ];
 
       const context = {
@@ -235,7 +235,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: {
             solanaTokenDescriptor: tokenDescriptor,
           },
@@ -285,7 +285,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: undefined,
           certificate: tokenCert,
         },
@@ -320,7 +320,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: undefined,
         },
@@ -360,7 +360,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
@@ -400,7 +400,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
@@ -466,12 +466,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "A_PID:1": { data: SIG, signature: SIG },
@@ -551,12 +551,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "A_PID:1": { data: SIG, signature: SIG },
@@ -607,12 +607,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "ONLY_PID:": {
@@ -662,12 +662,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: { descriptors: {}, instructions: [] },
         },
       ];
@@ -715,12 +715,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "A_PID:1": { data: SIG, signature: SIG },
@@ -783,12 +783,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "SIG_PID:1": {
@@ -876,12 +876,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               [`${SYSTEM_PID}:`]: {
@@ -985,12 +985,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               [`${SYSTEM_PID}:`]: {
@@ -1099,12 +1099,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               [`${SYSTEM_PID}:`]: {
@@ -1175,12 +1175,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_TOKEN,
+          type: ClearSignContextType.SOLANA_TOKEN,
           payload: { solanaTokenDescriptor: tokenDescriptor },
           certificate: tokenCert,
         },
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "MULTI:aaff": {
@@ -1288,7 +1288,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: undefined as any,
             instructions: [],
@@ -1334,7 +1334,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "P1:1": { data: SIG, signature: SIG },
@@ -1385,7 +1385,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               // key "PROG:1" deliberately absent despite the instruction meta listing it
@@ -1431,7 +1431,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "SHORT:2aade37a": {
@@ -1482,7 +1482,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const loadersResults = [
         {
-          type: SolanaContextTypes.SOLANA_LIFI,
+          type: ClearSignContextType.SOLANA_LIFI,
           payload: {
             descriptors: {
               "MISMATCH:aabbccdd": {

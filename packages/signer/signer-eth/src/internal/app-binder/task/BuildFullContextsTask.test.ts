@@ -169,15 +169,15 @@ describe("BuildFullContextsTask", () => {
       buildBaseContextsTaskRunMock.mockReturnValueOnce({
         clearSignContexts: [
           {
-            type: ClearSignContextType.TRANSACTION_INFO,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "payload-1",
           },
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "payload-2",
           },
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "payload-3",
           },
         ],
@@ -214,21 +214,21 @@ describe("BuildFullContextsTask", () => {
         clearSignContexts: [
           {
             context: {
-              type: ClearSignContextType.TRANSACTION_INFO,
+              type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
               payload: "payload-1",
             },
             subcontextCallbacks: [],
           },
           {
             context: {
-              type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+              type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
               payload: "payload-2",
             },
             subcontextCallbacks: [],
           },
           {
             context: {
-              type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+              type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
               payload: "payload-3",
             },
             subcontextCallbacks: [],
@@ -244,11 +244,11 @@ describe("BuildFullContextsTask", () => {
       buildBaseContextsTaskRunMock.mockReturnValueOnce({
         clearSignContexts: [
           {
-            type: ClearSignContextType.TRANSACTION_INFO,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "payload-1",
           },
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "payload-2",
           },
         ],
@@ -263,12 +263,12 @@ describe("BuildFullContextsTask", () => {
         subcontextCallbacks: [
           () =>
             Promise.resolve({
-              type: ClearSignContextType.TOKEN,
+              type: ClearSignContextType.ETHEREUM_TOKEN,
               payload: "payload-3",
             }),
           () =>
             Promise.resolve({
-              type: ClearSignContextType.TOKEN,
+              type: ClearSignContextType.ETHEREUM_TOKEN,
               payload: "payload-4",
             }),
         ],
@@ -298,14 +298,14 @@ describe("BuildFullContextsTask", () => {
       // THEN
       expect(result.clearSignContexts[0]).toEqual({
         context: {
-          type: ClearSignContextType.TRANSACTION_INFO,
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
           payload: "payload-1",
         },
         subcontextCallbacks: [],
       });
       expect(result.clearSignContexts[1]).toEqual({
         context: {
-          type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
           payload: "payload-2",
         },
         subcontextCallbacks: [expect.any(Function), expect.any(Function)],
@@ -313,13 +313,13 @@ describe("BuildFullContextsTask", () => {
       await expect(
         result.clearSignContexts[1]!.subcontextCallbacks[0]!(),
       ).resolves.toEqual({
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-3",
       });
       await expect(
         result.clearSignContexts[1]!.subcontextCallbacks[1]!(),
       ).resolves.toEqual({
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-4",
       });
     });
@@ -329,11 +329,11 @@ describe("BuildFullContextsTask", () => {
       buildBaseContextsTaskRunMock.mockReturnValueOnce({
         clearSignContexts: [
           {
-            type: ClearSignContextType.TRANSACTION_INFO,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "payload-1",
           },
           {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "payload-2",
             reference: {
               type: ClearSignContextReferenceType.CALLDATA,
@@ -352,11 +352,11 @@ describe("BuildFullContextsTask", () => {
       buildBaseContextsTaskRunMock.mockReturnValueOnce({
         clearSignContexts: [
           {
-            type: ClearSignContextType.TRANSACTION_INFO,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "payload-3",
           },
           {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload-4",
           },
         ],
@@ -407,14 +407,14 @@ describe("BuildFullContextsTask", () => {
       });
       expect(result.clearSignContexts[0]).toEqual({
         context: {
-          type: ClearSignContextType.TRANSACTION_INFO,
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
           payload: "payload-1",
         },
         subcontextCallbacks: [],
       });
       expect(result.clearSignContexts[1]).toEqual({
         context: {
-          type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
           payload: "payload-2",
           reference: {
             type: ClearSignContextReferenceType.CALLDATA,
@@ -429,14 +429,14 @@ describe("BuildFullContextsTask", () => {
       });
       expect(result.clearSignContexts[2]).toEqual({
         context: {
-          type: ClearSignContextType.TRANSACTION_INFO,
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
           payload: "payload-3",
         },
         subcontextCallbacks: [],
       });
       expect(result.clearSignContexts[3]).toEqual({
         context: {
-          type: ClearSignContextType.TOKEN,
+          type: ClearSignContextType.ETHEREUM_TOKEN,
           payload: "payload-4",
         },
         subcontextCallbacks: [],

@@ -64,7 +64,6 @@ describe("ProvideEIP712ContextTask", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
-    getSolanaContext: vi.fn(),
     report: vi.fn(),
   };
 
@@ -378,7 +377,7 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPostContexts: {},
       additionalContexts: [
         {
-          type: ClearSignContextType.TRANSACTION_CHECK,
+          type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
           payload: "transactionCheck",
           certificate: {
             keyUsageNumber: 1,
@@ -416,7 +415,7 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPostContexts: {},
       additionalContexts: [
         {
-          type: ClearSignContextType.DYNAMIC_NETWORK,
+          type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
           payload: "0x010203",
         },
       ],
@@ -456,7 +455,7 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPostContexts: {},
       additionalContexts: [
         {
-          type: ClearSignContextType.DYNAMIC_NETWORK_ICON,
+          type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
           payload: "0x010203",
         },
       ],
@@ -1090,10 +1089,11 @@ describe("ProvideEIP712ContextTask", () => {
 
   it("Provide proxy from clearSignContext when not in additionalContexts", async () => {
     // GIVEN
-    const proxy: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO> = {
-      type: ClearSignContextType.PROXY_INFO,
-      payload: "0x010203",
-    };
+    const proxy: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_PROXY_INFO> =
+      {
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
+        payload: "0x010203",
+      };
     const clearSignContext: TypedDataClearSignContextSuccess = {
       ...TEST_CLEAR_SIGN_CONTEXT,
       proxy,
@@ -1133,13 +1133,14 @@ describe("ProvideEIP712ContextTask", () => {
 
   it("Skip duplicate proxy from clearSignContext when already in additionalContexts", async () => {
     // GIVEN
-    const proxy: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO> = {
-      type: ClearSignContextType.PROXY_INFO,
-      payload: "0x010203",
-    };
-    const additionalProxy: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO> =
+    const proxy: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_PROXY_INFO> =
       {
-        type: ClearSignContextType.PROXY_INFO,
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
+        payload: "0x010203",
+      };
+    const additionalProxy: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_PROXY_INFO> =
+      {
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "0xaabbcc",
       };
     const clearSignContext: TypedDataClearSignContextSuccess = {
@@ -1529,7 +1530,7 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const trustedNameContext = {
       context: {
-        type: ClearSignContextType.TRUSTED_NAME as const,
+        type: ClearSignContextType.ETHEREUM_TRUSTED_NAME as const,
         payload: "trusted-name-payload",
       },
       subcontextCallbacks: [],
@@ -1670,14 +1671,14 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const txInfoContext = {
       context: {
-        type: ClearSignContextType.TRANSACTION_INFO as const,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO as const,
         payload: "tx-info-payload",
       },
       subcontextCallbacks: [],
     };
     const txFieldContext = {
       context: {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION as const,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION as const,
         payload: "tx-field-payload",
       },
       subcontextCallbacks: [],
@@ -1772,14 +1773,14 @@ describe("ProvideEIP712ContextTask", () => {
     // GIVEN
     const trustedNameContext = {
       context: {
-        type: ClearSignContextType.TRUSTED_NAME as const,
+        type: ClearSignContextType.ETHEREUM_TRUSTED_NAME as const,
         payload: "trusted-name-payload",
       },
       subcontextCallbacks: [],
     };
     const txInfoContext = {
       context: {
-        type: ClearSignContextType.TRANSACTION_INFO as const,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO as const,
         payload: "tx-info-payload",
       },
       subcontextCallbacks: [],

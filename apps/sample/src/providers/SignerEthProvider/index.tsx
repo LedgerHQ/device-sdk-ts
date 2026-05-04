@@ -8,7 +8,7 @@ import React, {
   useState,
 } from "react";
 import { useSelector } from "react-redux";
-import { ContextModuleBuilder } from "@ledgerhq/context-module";
+import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
 import {
   type SignerEth,
   SignerEthBuilder,
@@ -63,6 +63,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .setMetadataServiceConfig(metadataServiceConfig)
       .setDatasourceConfig(datasourceConfig)
       .setAppSource("device-management-kit-playground")
+      .setChain(ContextModuleChainID.Ethereum)
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,

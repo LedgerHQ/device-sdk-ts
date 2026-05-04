@@ -1,5 +1,5 @@
 import {
-  SolanaContextTypes,
+  ClearSignContextType,
   type SolanaLifiContextSuccess,
   type SolanaLifiInstructionMeta,
   type SolanaTokenContextSuccess,
@@ -79,12 +79,13 @@ export class ProvideSolanaTransactionContextTask {
     for (const loaderResult of loadersResults) {
       switch (loaderResult.type) {
         // always resolve SOLANA_TOKEN first
-        case SolanaContextTypes.SOLANA_TOKEN: {
+        case ClearSignContextType.SOLANA_TOKEN: {
           const tokenMetadataResult = loadersResults.find(
-            (res) => res.type === SolanaContextTypes.SOLANA_TOKEN,
+            (res): res is SolanaTokenContextSuccess =>
+              res.type === ClearSignContextType.SOLANA_TOKEN,
           );
           this._logger.debug(
-            `[run] Providing ${SolanaContextTypes.SOLANA_TOKEN}`,
+            `[run] Providing ${ClearSignContextType.SOLANA_TOKEN}`,
             { data: { args: { tokenMetadataResult } } },
           );
           if (tokenMetadataResult) {
@@ -93,12 +94,13 @@ export class ProvideSolanaTransactionContextTask {
           break;
         }
 
-        case SolanaContextTypes.SOLANA_LIFI: {
+        case ClearSignContextType.SOLANA_LIFI: {
           const lifiDescriptorListResult = loadersResults.find(
-            (res) => res.type === SolanaContextTypes.SOLANA_LIFI,
+            (res): res is SolanaLifiContextSuccess =>
+              res.type === ClearSignContextType.SOLANA_LIFI,
           );
           this._logger.debug(
-            `[run] Providing ${SolanaContextTypes.SOLANA_LIFI}`,
+            `[run] Providing ${ClearSignContextType.SOLANA_LIFI}`,
             { data: { args: { lifiDescriptorListResult, transactionBytes } } },
           );
           if (lifiDescriptorListResult) {
@@ -110,13 +112,14 @@ export class ProvideSolanaTransactionContextTask {
           break;
         }
 
-        case SolanaContextTypes.ERROR: {
+        case ClearSignContextType.ERROR: {
           this._logger.debug(`[run] Loader result of type ERROR, skipping`);
           break;
         }
 
         default: {
-          this._logger.debug(`[run] Loader result of unknown type, skipping`);
+          const _exhaustiveCheck: never = loaderResult;
+          void _exhaustiveCheck;
           break;
         }
       }

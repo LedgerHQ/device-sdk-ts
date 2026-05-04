@@ -49,27 +49,34 @@ It currently supports the following features:
 - Custom plugins: provide complex informations to external plugins such as the **1inch** or **paraswap** plugin.
 
 > [!NOTE]  
-> At the moment the context module is available only for Ethereum blockchain.
+> The context module supports Ethereum, Solana, and Concordium blockchains.
 
 ### Setting up
 
-The context-module package exposes a builder `ContextModuleBuilder` which will be used to initialise the context module with your configuration.
+The context-module package exposes a builder `ContextModuleBuilder` which will be used to initialise the context module with your configuration. You must call `setChain()` before `build()`.
 
 ```ts
+import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
-}).build();
+})
+  .setChain(ContextModuleChainID.Ethereum)
+  .build();
 ```
 
 You can use a custom configuration for your context module.
 
 ```ts
+import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+
 const config: ContextModuleCalConfig = {
   // config to use
 };
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
 })
+  .setChain(ContextModuleChainID.Ethereum)
   .addCalConfig(config)
   .build();
 ```
@@ -77,9 +84,12 @@ const contextModule = new ContextModuleBuilder({
 You can set a source identifier that will be included in blind signing reports. This helps distinguish which integration triggered a blind signing event. The default value is `"third-party"`.
 
 ```ts
+import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
 })
+  .setChain(ContextModuleChainID.Ethereum)
   .setAppSource("my-app-name")
   .build();
 ```
@@ -87,9 +97,12 @@ const contextModule = new ContextModuleBuilder({
 It is also possible to instantiate the context module without the default loaders.
 
 ```ts
+import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
 })
+  .setChain(ContextModuleChainID.Ethereum)
   .removeDefaultLoaders()
   .build();
 ```
@@ -100,6 +113,8 @@ const contextModule = new ContextModuleBuilder({
 You can add a custom list of loader to the context module.
 
 ```ts
+import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+
 // Default Token Loader
 const tokenLoader = new TokenContextLoader(new TokenDataSource());
 
@@ -113,6 +128,7 @@ const myTokenLoader = new TokenContextLoader();
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
 })
+  .setChain(ContextModuleChainID.Ethereum)
   .removeDefaultLoaders()
   .addLoader(tokenLoader)
   .addLoader(myTokenLoader)

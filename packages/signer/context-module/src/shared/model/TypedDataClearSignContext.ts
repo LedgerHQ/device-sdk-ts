@@ -1,6 +1,6 @@
 import type { HexaString } from "@ledgerhq/device-management-kit";
 
-import { type PkiCertificate } from "@/pki/model/PkiCertificate";
+import { type PkiCertificate } from "@/chain-agnostic-loaders/pki/model/PkiCertificate";
 import {
   type ClearSignContextSuccess,
   type ClearSignContextType,
@@ -95,7 +95,7 @@ export type TypedDataClearSignContextSuccess = {
   tokens: Record<TypedDataTokenIndex, TypedDataToken>;
   calldatas: Record<TypedDataCalldataIndex, TypedDataCalldataInfo>;
   certificate?: PkiCertificate;
-  proxy?: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>;
+  proxy?: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_PROXY_INFO>;
 };
 export type TypedDataClearSignContextError = {
   type: "error";

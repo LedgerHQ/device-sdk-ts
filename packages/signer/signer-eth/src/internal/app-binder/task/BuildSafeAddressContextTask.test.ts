@@ -47,14 +47,15 @@ describe("BuildSafeAddressContextTask", () => {
     error: {} as UnknownDeviceExchangeError,
   });
 
-  const validSafeContext: ClearSignContextSuccess<ClearSignContextType.SAFE> = {
-    type: ClearSignContextType.SAFE,
-    payload: "safe_payload",
-  };
-
-  const validSignerContext: ClearSignContextSuccess<ClearSignContextType.SIGNER> =
+  const validSafeContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_SAFE> =
     {
-      type: ClearSignContextType.SIGNER,
+      type: ClearSignContextType.ETHEREUM_SAFE,
+      payload: "safe_payload",
+    };
+
+  const validSignerContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_SIGNER> =
+    {
+      type: ClearSignContextType.ETHEREUM_SIGNER,
       payload: "signer_payload",
     };
 
@@ -93,24 +94,27 @@ describe("BuildSafeAddressContextTask", () => {
           deviceModelId: DeviceModelId.FLEX,
           challenge: TEST_CHALLENGE,
         },
-        [ClearSignContextType.SAFE, ClearSignContextType.SIGNER],
+        [
+          ClearSignContextType.ETHEREUM_SAFE,
+          ClearSignContextType.ETHEREUM_SIGNER,
+        ],
       );
     });
 
     it("should include certificates when provided in contexts", async () => {
       // GIVEN
-      const safeContextWithCert: ClearSignContextSuccess<ClearSignContextType.SAFE> =
+      const safeContextWithCert: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_SAFE> =
         {
-          type: ClearSignContextType.SAFE,
+          type: ClearSignContextType.ETHEREUM_SAFE,
           payload: "safe_payload",
           certificate: {
             keyUsageNumber: 1,
             payload: new Uint8Array([1, 2, 3]),
           },
         };
-      const signerContextWithCert: ClearSignContextSuccess<ClearSignContextType.SIGNER> =
+      const signerContextWithCert: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_SIGNER> =
         {
-          type: ClearSignContextType.SIGNER,
+          type: ClearSignContextType.ETHEREUM_SIGNER,
           payload: "signer_payload",
           certificate: {
             keyUsageNumber: 2,
@@ -226,9 +230,9 @@ describe("BuildSafeAddressContextTask", () => {
 
     it("should throw error when more than two contexts are returned", async () => {
       // GIVEN
-      const extraContext: ClearSignContextSuccess<ClearSignContextType.TOKEN> =
+      const extraContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TOKEN> =
         {
-          type: ClearSignContextType.TOKEN,
+          type: ClearSignContextType.ETHEREUM_TOKEN,
           payload: "extra_payload",
         };
       const args: BuildSafeAddressContextTaskArgs = {
@@ -298,15 +302,16 @@ describe("BuildSafeAddressContextTask", () => {
 
     it("should throw error when contexts are of wrong types", async () => {
       // GIVEN
-      const wrongContext1: ClearSignContextSuccess<ClearSignContextType.TOKEN> =
+      const wrongContext1: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TOKEN> =
         {
-          type: ClearSignContextType.TOKEN,
+          type: ClearSignContextType.ETHEREUM_TOKEN,
           payload: "token_payload",
         };
-      const wrongContext2: ClearSignContextSuccess<ClearSignContextType.NFT> = {
-        type: ClearSignContextType.NFT,
-        payload: "nft_payload",
-      };
+      const wrongContext2: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_NFT> =
+        {
+          type: ClearSignContextType.ETHEREUM_NFT,
+          payload: "nft_payload",
+        };
       const args: BuildSafeAddressContextTaskArgs = {
         contextModule: contextModuleMock as unknown as ContextModule,
         safeContractAddress: TEST_SAFE_ADDRESS,
@@ -391,7 +396,10 @@ describe("BuildSafeAddressContextTask", () => {
           expect.objectContaining({
             deviceModelId,
           }),
-          [ClearSignContextType.SAFE, ClearSignContextType.SIGNER],
+          [
+            ClearSignContextType.ETHEREUM_SAFE,
+            ClearSignContextType.ETHEREUM_SIGNER,
+          ],
         );
       },
     );
@@ -426,7 +434,10 @@ describe("BuildSafeAddressContextTask", () => {
         expect.objectContaining({
           challenge: customChallenge,
         }),
-        [ClearSignContextType.SAFE, ClearSignContextType.SIGNER],
+        [
+          ClearSignContextType.ETHEREUM_SAFE,
+          ClearSignContextType.ETHEREUM_SIGNER,
+        ],
       );
     });
   });

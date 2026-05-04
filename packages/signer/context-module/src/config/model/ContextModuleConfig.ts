@@ -1,12 +1,11 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
-import { type BlindSigningReporter } from "@/reporter/domain/BlindSigningReporter";
+import { type BlindSigningReporter } from "@/chain-agnostic-loaders/reporter/domain/BlindSigningReporter";
+import { type TrustedNameDataSource } from "@/ethereum-loaders/trusted-name/data/TrustedNameDataSource";
+import { type TypedDataContextLoader } from "@/ethereum-loaders/typed-data/domain/TypedDataContextLoader";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
-import { type SolanaContextLoader } from "@/solana/domain/SolanaContextLoader";
-import { type TrustedNameDataSource } from "@/trusted-name/data/TrustedNameDataSource";
-import { type TypedDataContextLoader } from "@/typed-data/domain/TypedDataContextLoader";
 
 export type ContextModuleCalMode = "prod" | "test";
 export type ContextModuleCalBranch = "next" | "main" | "demo";
@@ -43,7 +42,8 @@ export type ContextModuleConfig = {
   chain?: ContextModuleChainID;
 };
 
-export type ContextModuleServiceConfig = ContextModuleConfig & {
+export type ContextModuleServiceConfig = Omit<ContextModuleConfig, "chain"> & {
+  chain: ContextModuleChainID;
   originToken: string;
   loggerFactory: (tag: string) => LoggerPublisherService;
 };
@@ -54,7 +54,6 @@ export type ContextModuleLoaderConfig = {
   customFieldLoaders: ContextFieldLoader[];
   customLoaders: ContextLoader[];
   customTypedDataLoader?: TypedDataContextLoader;
-  customSolanaLoader?: SolanaContextLoader;
   customBlindSigningReporter?: BlindSigningReporter;
   customTrustedNameDataSource?: TrustedNameDataSource;
 };

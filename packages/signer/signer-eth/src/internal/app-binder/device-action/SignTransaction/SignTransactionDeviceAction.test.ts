@@ -172,14 +172,14 @@ describe("SignTransactionDeviceAction", () => {
       const contexts: ContextWithSubContexts[] = [
         {
           context: {
-            type: ClearSignContextType.TRANSACTION_INFO,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "payload-1",
           },
           subcontextCallbacks: [],
         },
         {
           context: {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "payload-2",
           },
           subcontextCallbacks: [],
@@ -1099,7 +1099,7 @@ describe("SignTransactionDeviceAction", () => {
       const metadataOnlyContexts: ContextWithSubContexts[] = [
         {
           context: {
-            type: ClearSignContextType.TRANSACTION_CHECK,
+            type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
             payload: "check-payload",
           },
           subcontextCallbacks: [],
@@ -1151,7 +1151,7 @@ describe("SignTransactionDeviceAction", () => {
           input: expect.objectContaining({
             input: expect.objectContaining({
               hasContext: true,
-              contextTypes: [ClearSignContextType.TRANSACTION_CHECK],
+              contextTypes: [ClearSignContextType.ETHEREUM_WEB3_CHECK],
               type: "transaction",
             }),
           }),

@@ -1,0 +1,443 @@
+import { DeviceModelId } from "@ledgerhq/device-management-kit";
+import { Left, Right } from "purify-ts";
+
+import { type PkiCertificateLoader } from "@/chain-agnostic-loaders/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/chain-agnostic-loaders/pki/model/KeyId";
+import { KeyUsage } from "@/chain-agnostic-loaders/pki/model/KeyUsage";
+import { type PkiCertificate } from "@/chain-agnostic-loaders/pki/model/PkiCertificate";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { type DynamicNetworkDataSource } from "@/ethereum-loaders/dynamic-network/data/DynamicNetworkDataSource";
+import {
+  type DynamicNetworkContextInput,
+  DynamicNetworkContextLoader,
+} from "@/ethereum-loaders/dynamic-network/domain/DynamicNetworkContextLoader";
+import {
+  type DynamicNetworkConfiguration,
+  type DynamicNetworkDescriptor,
+} from "@/ethereum-loaders/dynamic-network/model/DynamicNetworkConfiguration";
+import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
+describe("DynamicNetworkContextLoader", () => {
+  const mockNetworkDataSource: DynamicNetworkDataSource = {
+    getDynamicNetworkConfiguration: vi.fn(),
+  };
+
+  const mockConfig = {
+    cal: {
+      url: "https://crypto-assets-service.api.ledger.com",
+      mode: "prod",
+      branch: "main",
+    },
+  } as ContextModuleServiceConfig;
+
+  const mockCertificateLoader: PkiCertificateLoader = {
+    loadCertificate: vi.fn(),
+  };
+
+  const mockCertificate: PkiCertificate = {
+    keyUsageNumber: 1,
+    payload: new Uint8Array([0x01, 0x02, 0x03]),
+  };
+
+  const loader = new DynamicNetworkContextLoader(
+    mockNetworkDataSource,
+    mockConfig,
+    mockCertificateLoader,
+    mockLoggerFactory,
+  );
+
+  // Helper function to create a mock NetworkDescriptor
+  const createMockDescriptor = (
+    partial?: Partial<DynamicNetworkDescriptor>,
+  ): DynamicNetworkDescriptor => ({
+    data: "",
+    descriptorType: "",
+    descriptorVersion: "",
+    signatures: {
+      prod: "",
+      test: "",
+    },
+    icon: undefined,
+    ...partial,
+  });
+
+  const createMockDescriptors = (
+    overrides: Partial<Record<DeviceModelId, DynamicNetworkDescriptor>> = {},
+  ): Record<DeviceModelId, DynamicNetworkDescriptor> => ({
+    [DeviceModelId.NANO_S]: createMockDescriptor(),
+    [DeviceModelId.NANO_SP]: createMockDescriptor(),
+    [DeviceModelId.NANO_X]: createMockDescriptor(),
+    [DeviceModelId.STAX]: createMockDescriptor(),
+    [DeviceModelId.FLEX]: createMockDescriptor(),
+    [DeviceModelId.APEX]: createMockDescriptor(),
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.spyOn(mockCertificateLoader, "loadCertificate").mockResolvedValue(
+      mockCertificate,
+    );
+  });
+
+  describe("canHandle function", () => {
+    const validInput: DynamicNetworkContextInput = {
+      chainId: 1,
+      deviceModelId: DeviceModelId.STAX,
+    };
+
+    it("should return true for valid input", () => {
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(true);
+    });
+
+    it("should return false for invalid expected type", () => {
+      expect(
+        loader.canHandle(validInput, [ClearSignContextType.ETHEREUM_TOKEN]),
+      ).toBe(false);
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+        ]),
+      ).toBe(false);
+      expect(
+        loader.canHandle(validInput, [
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [null, "null input"],
+      [undefined, "undefined input"],
+      [{}, "empty object"],
+      ["string", "string input"],
+      [123, "number input"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, chainId: undefined }, "missing chainId"],
+      [{ ...validInput, deviceModelId: undefined }, "missing deviceModelId"],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+
+    it.each([
+      [{ ...validInput, chainId: "1" }, "string chainId"],
+      [{ ...validInput, chainId: null }, "null chainId"],
+      [
+        { ...validInput, deviceModelId: DeviceModelId.NANO_S },
+        "NANO_S deviceModelId",
+      ],
+    ])("should return false for %s", (input, _description) => {
+      expect(
+        loader.canHandle(input, [
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+          ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+        ]),
+      ).toBe(false);
+    });
+  });
+
+  describe("load function", () => {
+    it("should return empty array when network data source returns error", async () => {
+      // GIVEN
+      const input: DynamicNetworkContextInput = {
+        chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
+      };
+      vi.spyOn(
+        mockNetworkDataSource,
+        "getDynamicNetworkConfiguration",
+      ).mockResolvedValue(Left(new Error("Network error")));
+
+      // WHEN
+      const result = await loader.load(input);
+
+      // THEN
+      expect(result).toEqual([]);
+      expect(
+        mockNetworkDataSource.getDynamicNetworkConfiguration,
+      ).toHaveBeenCalledWith(1);
+    });
+
+    it("should return empty array when descriptor for device model is not found", async () => {
+      // GIVEN
+      const input: DynamicNetworkContextInput = {
+        chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
+      };
+      const descriptors = createMockDescriptors({
+        flex: createMockDescriptor({
+          data: "0x0101",
+          descriptorType: "network",
+          descriptorVersion: "v1",
+          signatures: {
+            prod: "prod-sig",
+            test: "test-sig",
+          },
+          icon: undefined,
+        }),
+        stax: undefined as unknown as DynamicNetworkDescriptor,
+      });
+      const networkConfig: DynamicNetworkConfiguration = {
+        id: "ethereum",
+        descriptors,
+      };
+      vi.spyOn(
+        mockNetworkDataSource,
+        "getDynamicNetworkConfiguration",
+      ).mockResolvedValue(Right(networkConfig));
+
+      // WHEN
+      const result = await loader.load(input);
+
+      // THEN
+      expect(result).toEqual([]);
+    });
+
+    it("should return empty array when signature for mode is not found", async () => {
+      // GIVEN
+      const input: DynamicNetworkContextInput = {
+        chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
+      };
+      const networkConfig: DynamicNetworkConfiguration = {
+        id: "ethereum",
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
+            data: "0x0101",
+            descriptorType: "network",
+            descriptorVersion: "v1",
+            signatures: {
+              prod: "",
+              test: "test-sig",
+            },
+            icon: undefined,
+          }),
+        }),
+      };
+      vi.spyOn(
+        mockNetworkDataSource,
+        "getDynamicNetworkConfiguration",
+      ).mockResolvedValue(Right(networkConfig));
+
+      // WHEN
+      const result = await loader.load(input);
+
+      // THEN
+      expect(result).toEqual([]);
+    });
+
+    it("should return context with network configuration when all data is available", async () => {
+      // GIVEN
+      const input: DynamicNetworkContextInput = {
+        chainId: 137,
+        deviceModelId: DeviceModelId.STAX,
+      };
+      const networkConfig: DynamicNetworkConfiguration = {
+        id: "polygon",
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
+            data: "0x0101080201015101012308000000000000008952",
+            descriptorType: "network",
+            descriptorVersion: "v1",
+            signatures: {
+              prod: "3045022100cf42c039c16fc95dc97c09f15cdd93bed0e63ee45cf5c38c2b30bb8a3bc17f8d022053a96c9e51695c3c1c1a31f5cbf84bd6febadc97f4bb02bdc67cf3e24ad0c32d",
+              test: "test-sig",
+            },
+            icon: undefined,
+          }),
+        }),
+      };
+      vi.spyOn(
+        mockNetworkDataSource,
+        "getDynamicNetworkConfiguration",
+      ).mockResolvedValue(Right(networkConfig));
+
+      // WHEN
+      const result = await loader.load(input);
+
+      // THEN
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+        certificate: mockCertificate,
+      });
+      const context = result[0];
+      if (context && "payload" in context) {
+        expect(context.payload).toContain(
+          "0x0101080201015101012308000000000000008952",
+        );
+      }
+      expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: KeyId.CalNetwork,
+        keyUsage: KeyUsage.Network,
+        targetDevice: DeviceModelId.STAX,
+      });
+    });
+
+    it("should include icon context when icon is available", async () => {
+      // GIVEN
+      const input: DynamicNetworkContextInput = {
+        chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
+      };
+      const networkConfig: DynamicNetworkConfiguration = {
+        id: "ethereum",
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
+            data: "0x0101",
+            descriptorType: "network",
+            descriptorVersion: "v1",
+            signatures: {
+              prod: "prod-sig",
+              test: "test-sig",
+            },
+            icon: "icon-hex-data",
+          }),
+        }),
+      };
+      vi.spyOn(
+        mockNetworkDataSource,
+        "getDynamicNetworkConfiguration",
+      ).mockResolvedValue(Right(networkConfig));
+
+      // WHEN
+      const result = await loader.load(input);
+
+      // THEN
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+        certificate: mockCertificate,
+      });
+      const networkContext = result[0];
+      if (networkContext && "payload" in networkContext) {
+        expect(networkContext.payload).toEqual(expect.any(String));
+      }
+      expect(result[1]).toMatchObject({
+        type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+      });
+      const iconContext = result[1];
+      if (iconContext && "payload" in iconContext) {
+        expect(iconContext.payload).toBe("icon-hex-data");
+      }
+    });
+
+    it("should handle multiple device models correctly", async () => {
+      // GIVEN
+      const input: DynamicNetworkContextInput = {
+        chainId: 1,
+        deviceModelId: DeviceModelId.FLEX,
+      };
+      const networkConfig: DynamicNetworkConfiguration = {
+        id: "ethereum",
+        descriptors: createMockDescriptors({
+          flex: createMockDescriptor({
+            data: "0xFLEX",
+            descriptorType: "network",
+            descriptorVersion: "v1",
+            signatures: {
+              prod: "flex-prod-sig",
+              test: "flex-test-sig",
+            },
+            icon: undefined,
+          }),
+          stax: createMockDescriptor({
+            data: "0xSTAX",
+            descriptorType: "network",
+            descriptorVersion: "v1",
+            signatures: {
+              prod: "stax-prod-sig",
+              test: "stax-test-sig",
+            },
+            icon: undefined,
+          }),
+        }),
+      };
+      vi.spyOn(
+        mockNetworkDataSource,
+        "getDynamicNetworkConfiguration",
+      ).mockResolvedValue(Right(networkConfig));
+
+      // WHEN
+      const result = await loader.load(input);
+
+      // THEN
+      expect(result).toHaveLength(1);
+      const context = result[0];
+      if (context && "payload" in context) {
+        expect(context.payload).toContain("0xFLEX");
+        expect(context.payload).toContain("flex-prod-sig");
+      }
+    });
+
+    it("should use test mode signature when configured", async () => {
+      // GIVEN
+      const testModeLoader = new DynamicNetworkContextLoader(
+        mockNetworkDataSource,
+        { ...mockConfig, cal: { ...mockConfig.cal, mode: "test" } },
+        mockCertificateLoader,
+        mockLoggerFactory,
+      );
+      const input: DynamicNetworkContextInput = {
+        chainId: 1,
+        deviceModelId: DeviceModelId.STAX,
+      };
+      const networkConfig: DynamicNetworkConfiguration = {
+        id: "ethereum",
+        descriptors: createMockDescriptors({
+          stax: createMockDescriptor({
+            data: "0x0101",
+            descriptorType: "network",
+            descriptorVersion: "v1",
+            signatures: {
+              prod: "prod-sig",
+              test: "test-sig",
+            },
+            icon: undefined,
+          }),
+        }),
+      };
+      vi.spyOn(
+        mockNetworkDataSource,
+        "getDynamicNetworkConfiguration",
+      ).mockResolvedValue(Right(networkConfig));
+
+      // WHEN
+      const result = await testModeLoader.load(input);
+
+      // THEN
+      expect(result).toHaveLength(1);
+      const context = result[0];
+      if (context && "payload" in context) {
+        expect(context.payload).toContain("test-sig");
+      }
+    });
+  });
+});

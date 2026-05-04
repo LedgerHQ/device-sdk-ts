@@ -1,7 +1,9 @@
 import {
+  type ClearSignContextSuccess,
+  ClearSignContextType,
   type ContextModule,
-  type PkiCertificate,
-  type SolanaContextLoaderResults,
+  type LoaderResult,
+  type SolanaTransactionContextResultSuccess,
 } from "@ledgerhq/context-module";
 import {
   type InternalApi,
@@ -12,11 +14,7 @@ import {
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
-export type SolanaBuildContextResult = {
-  trustedNamePKICertificate?: PkiCertificate;
-  tlvDescriptor?: Uint8Array;
-  loadersResults: SolanaContextLoaderResults;
-};
+export type { SolanaTransactionContextResultSuccess as SolanaBuildContextResult };
 
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
@@ -33,7 +31,7 @@ export class BuildTransactionContextTask {
     this._logger = args.loggerFactory("BuildTransactionContextTask");
   }
 
-  async run(): Promise<SolanaBuildContextResult> {
+  async run(): Promise<SolanaTransactionContextResultSuccess> {
     this._logger.debug("[run] Starting BuildTransactionContextTask");
     const { contextModule, options } = this.args;
     const deviceState = this.api.getDeviceSessionState();
@@ -47,7 +45,7 @@ export class BuildTransactionContextTask {
       throw new Error("Failed to get challenge from device");
     }
 
-    const contextModuleGetSolanaContextArgs = {
+    const contextModuleGetContextArgs = {
       deviceModelId: deviceState.deviceModelId,
       tokenAddress: options.tokenAddress,
       challenge,
@@ -56,36 +54,58 @@ export class BuildTransactionContextTask {
       templateId: options.templateId,
     };
     // get Solana context
-    this._logger.debug("[run] Calling contextModule.getSolanaContext", {
+    this._logger.debug("[run] Calling contextModule.getContexts for Solana", {
       data: {
-        args: contextModuleGetSolanaContextArgs,
+        args: contextModuleGetContextArgs,
       },
     });
-    const contextResult = await contextModule.getSolanaContext(
-      contextModuleGetSolanaContextArgs,
+
+    const contexts = await contextModule.getContexts(
+      contextModuleGetContextArgs,
+      [
+        ClearSignContextType.SOLANA_TOKEN,
+        ClearSignContextType.SOLANA_LIFI,
+        ClearSignContextType.SOLANA_TRUSTED_NAME,
+      ],
     );
 
-    return contextResult.caseOf({
-      Left: (err) => {
-        this._logger.error("[run] Solana context result", {
-          data: {
-            error: {
-              message: err.message,
-              name: err.name,
-              stack: err.stack,
-            },
-          },
-        });
-        throw err;
-      },
-      Right: (ctx) => {
-        this._logger.debug("[run] Solana context result", {
-          data: {
-            result: ctx,
-          },
-        });
-        return ctx;
-      },
+    this._logger.debug("[run] Solana context result", {
+      data: { contexts },
     });
+
+    const contextErrorCount = contexts.filter(
+      (contextResponseItem) =>
+        contextResponseItem.type === ClearSignContextType.ERROR,
+    ).length;
+
+    const trustedNameCtx = contexts.find(
+      (
+        contextResponseItem,
+      ): contextResponseItem is ClearSignContextSuccess<ClearSignContextType.SOLANA_TRUSTED_NAME> =>
+        contextResponseItem.type === ClearSignContextType.SOLANA_TRUSTED_NAME,
+    );
+    const trustedNamePKICertificate = trustedNameCtx?.certificate;
+    const tlvDescriptor = trustedNameCtx?.payload;
+
+    const ownerInfoRequired = !!(options.tokenAddress || options.createATA);
+    if (ownerInfoRequired && trustedNameCtx === undefined) {
+      throw new Error(
+        "[SignerSolana] BuildTransactionContextTask: owner info was required but could not be resolved",
+      );
+    }
+
+    const loadersResults = contexts.filter(
+      (contextResponseItem): contextResponseItem is LoaderResult =>
+        contextResponseItem.type === ClearSignContextType.ERROR ||
+        contextResponseItem.type === ClearSignContextType.SOLANA_TOKEN ||
+        contextResponseItem.type === ClearSignContextType.SOLANA_LIFI,
+    );
+
+    return {
+      trustedNamePKICertificate,
+      tlvDescriptor,
+      loadersResults,
+      contextErrorCount,
+    };
   }
 }

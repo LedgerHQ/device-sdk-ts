@@ -2,6 +2,7 @@ import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "./config/model/ContextModuleConfig";
+import type { TypedDataContextLoader } from "./ethereum-loaders/typed-data/domain/TypedDataContextLoader";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
@@ -10,7 +11,6 @@ import {
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
-import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const mockLoggerFactory = () => ({
@@ -105,10 +105,10 @@ describe("DefaultContextModule", () => {
   it("should return an array of context response", async () => {
     const loader = contextLoaderStubBuilder(true);
     const responses = [
-      [{ type: "provideERC20Info", payload: "payload1" }],
+      [{ type: ClearSignContextType.ETHEREUM_TOKEN, payload: "payload1" }],
       [
-        { type: "provideERC20Info", payload: "payload2" },
-        { type: "plugin", payload: "payload3" },
+        { type: ClearSignContextType.ETHEREUM_TOKEN, payload: "payload2" },
+        { type: ClearSignContextType.ETHEREUM_PLUGIN, payload: "payload3" },
       ],
     ] as ClearSignContext[][];
     vi.spyOn(loader, "load")
@@ -133,10 +133,10 @@ describe("DefaultContextModule", () => {
     vi.spyOn(loader1, "canHandle").mockReturnValue(true);
     vi.spyOn(loader2, "canHandle").mockReturnValue(false);
     vi.spyOn(loader1, "load").mockResolvedValue([
-      { type: ClearSignContextType.TOKEN, payload: "payload1" },
+      { type: ClearSignContextType.ETHEREUM_TOKEN, payload: "payload1" },
     ]);
     vi.spyOn(loader2, "load").mockResolvedValue([
-      { type: ClearSignContextType.NFT, payload: "payload2" },
+      { type: ClearSignContextType.ETHEREUM_NFT, payload: "payload2" },
     ]);
 
     const contextModule = new DefaultContextModule({
@@ -157,7 +157,7 @@ describe("DefaultContextModule", () => {
     );
     expect(loader1.load).toHaveBeenCalledWith(testInput);
     expect(loader2.load).not.toHaveBeenCalled(); // Should not be called since canHandle returned false
-    expect(res).toEqual([{ type: "token", payload: "payload1" }]);
+    expect(res).toEqual([{ type: "ethereumToken", payload: "payload1" }]);
   });
 
   it("should use expected types if provided", async () => {
@@ -166,7 +166,7 @@ describe("DefaultContextModule", () => {
     vi.spyOn(loader, "canHandle").mockReturnValue(true);
 
     vi.spyOn(loader, "load").mockResolvedValue([
-      { type: ClearSignContextType.TOKEN, payload: "payload1" },
+      { type: ClearSignContextType.ETHEREUM_TOKEN, payload: "payload1" },
     ]);
 
     const contextModule = new DefaultContextModule({
@@ -175,10 +175,12 @@ describe("DefaultContextModule", () => {
     });
 
     const testInput = { to: "0x123", selector: "0xabc" };
-    await contextModule.getContexts(testInput, [ClearSignContextType.TOKEN]);
+    await contextModule.getContexts(testInput, [
+      ClearSignContextType.ETHEREUM_TOKEN,
+    ]);
 
     expect(loader.canHandle).toHaveBeenCalledWith(testInput, [
-      ClearSignContextType.TOKEN,
+      ClearSignContextType.ETHEREUM_TOKEN,
     ]);
   });
 
@@ -209,19 +211,19 @@ describe("DefaultContextModule", () => {
       // WHEN
       const result = await contextModule.getFieldContext(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
 
       // THEN
       expect(fieldLoader.canHandle).toHaveBeenCalledWith(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader.loadField).not.toHaveBeenCalled();
       expect(result).toEqual({
         type: ClearSignContextType.ERROR,
         error: new Error(
-          `Loader not found for field: ${testField} and expected type: ${ClearSignContextType.TOKEN}`,
+          `Loader not found for field: ${testField} and expected type: ${ClearSignContextType.ETHEREUM_TOKEN}`,
         ),
       });
     });
@@ -230,7 +232,7 @@ describe("DefaultContextModule", () => {
       // GIVEN
       const fieldLoader = fieldLoaderStubBuilder();
       const mockContext: ClearSignContext = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "test-payload",
       };
 
@@ -247,13 +249,13 @@ describe("DefaultContextModule", () => {
       // WHEN
       const result = await contextModule.getFieldContext(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
 
       // THEN
       expect(fieldLoader.canHandle).toHaveBeenCalledWith(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
       expect(result).toEqual(mockContext);
@@ -265,11 +267,11 @@ describe("DefaultContextModule", () => {
       const fieldLoader2 = fieldLoaderStubBuilder();
 
       const mockContext1: ClearSignContext = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "first-payload",
       };
       const mockContext2: ClearSignContext = {
-        type: ClearSignContextType.NFT,
+        type: ClearSignContextType.ETHEREUM_NFT,
         payload: "second-payload",
       };
 
@@ -288,17 +290,17 @@ describe("DefaultContextModule", () => {
       // WHEN
       const result = await contextModule.getFieldContext(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
 
       // THEN
       expect(fieldLoader1.canHandle).toHaveBeenCalledWith(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader2.canHandle).toHaveBeenCalledWith(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader1.loadField).toHaveBeenCalledWith(testField);
       expect(fieldLoader2.loadField).not.toHaveBeenCalled();
@@ -314,7 +316,7 @@ describe("DefaultContextModule", () => {
         error: new Error("first-error"),
       };
       const mockContext2: ClearSignContext = {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "second-payload",
       };
       vi.spyOn(fieldLoader1, "canHandle").mockReturnValue(true);
@@ -332,17 +334,17 @@ describe("DefaultContextModule", () => {
       // WHEN
       const result = await contextModule.getFieldContext(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
 
       // THEN
       expect(fieldLoader1.canHandle).toHaveBeenCalledWith(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader2.canHandle).toHaveBeenCalledWith(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader1.loadField).toHaveBeenCalledWith(testField);
       expect(fieldLoader2.loadField).toHaveBeenCalledWith(testField);
@@ -366,12 +368,15 @@ describe("DefaultContextModule", () => {
 
       // WHEN & THEN
       await expect(
-        contextModule.getFieldContext(testField, ClearSignContextType.TOKEN),
+        contextModule.getFieldContext(
+          testField,
+          ClearSignContextType.ETHEREUM_TOKEN,
+        ),
       ).rejects.toThrow("Load field failed");
 
       expect(fieldLoader.canHandle).toHaveBeenCalledWith(
         testField,
-        ClearSignContextType.TOKEN,
+        ClearSignContextType.ETHEREUM_TOKEN,
       );
       expect(fieldLoader.loadField).toHaveBeenCalledWith(testField);
     });

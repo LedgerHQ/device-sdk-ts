@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { type ContextModule } from "@ledgerhq/context-module";
+import {
+  ClearSignContextType,
+  type ContextModule,
+} from "@ledgerhq/context-module";
 import {
   CommandResultStatus,
   DeviceModelId,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
-import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
@@ -26,7 +28,7 @@ const mockLoggerFactory = () => ({
 });
 
 const contextModuleMock: ContextModule = {
-  getSolanaContext: vi.fn(),
+  getContexts: vi.fn(),
 } as unknown as ContextModule;
 
 const defaultArgs = {
@@ -38,14 +40,19 @@ const defaultArgs = {
   },
 };
 
-const solanaContextRightPayload = {
-  tlvDescriptor: new Uint8Array([1, 2, 3]),
-  trustedNamePKICertificate: {
-    payload: new Uint8Array([0xaa, 0xbb]),
-    keyUsageNumber: 1,
+const trustedNamePayload = new Uint8Array([1, 2, 3]);
+const trustedNameCert = {
+  payload: new Uint8Array([0xaa, 0xbb]),
+  keyUsageNumber: 1,
+};
+
+const solanaContextsPayload = [
+  {
+    type: ClearSignContextType.SOLANA_TRUSTED_NAME,
+    payload: trustedNamePayload as unknown as string,
+    certificate: trustedNameCert,
   },
-  loadersResults: [], // required by the task's return type
-} as const;
+];
 
 let apiMock: InternalApi;
 
@@ -65,8 +72,8 @@ describe("BuildTransactionContextTask", () => {
   });
 
   it("returns context successfully when challenge command succeeds", async () => {
-    (contextModuleMock.getSolanaContext as any).mockResolvedValue(
-      Right(solanaContextRightPayload),
+    (contextModuleMock.getContexts as any).mockResolvedValue(
+      solanaContextsPayload,
     );
 
     const task = new BuildTransactionContextTask(apiMock, defaultArgs);
@@ -77,20 +84,28 @@ describe("BuildTransactionContextTask", () => {
       expect.any(GetChallengeCommand),
     );
 
-    // getSolanaContext called with challenge
-    expect(contextModuleMock.getSolanaContext).toHaveBeenCalledWith({
-      deviceModelId: DeviceModelId.NANO_X,
-      tokenAddress: "someAddress",
-      challenge: "someChallenge",
-      createATA: undefined,
-    });
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
+      {
+        deviceModelId: DeviceModelId.NANO_X,
+        tokenAddress: "someAddress",
+        challenge: "someChallenge",
+        createATA: undefined,
+        tokenInternalId: undefined,
+        templateId: undefined,
+      },
+      [
+        ClearSignContextType.SOLANA_TOKEN,
+        ClearSignContextType.SOLANA_LIFI,
+        ClearSignContextType.SOLANA_TRUSTED_NAME,
+      ],
+    );
 
     // matches SolanaBuildContextResult shape
     expect(result).toEqual<SolanaBuildContextResult>({
-      tlvDescriptor: solanaContextRightPayload.tlvDescriptor,
-      trustedNamePKICertificate:
-        solanaContextRightPayload.trustedNamePKICertificate,
+      tlvDescriptor: trustedNamePayload,
+      trustedNamePKICertificate: trustedNameCert,
       loadersResults: [],
+      contextErrorCount: 0,
     });
   });
 
@@ -99,8 +114,8 @@ describe("BuildTransactionContextTask", () => {
       status: CommandResultStatus.Error,
       data: {},
     });
-    (contextModuleMock.getSolanaContext as any).mockResolvedValue(
-      Right(solanaContextRightPayload),
+    (contextModuleMock.getContexts as any).mockResolvedValue(
+      solanaContextsPayload,
     );
 
     const task = new BuildTransactionContextTask(apiMock, defaultArgs);
@@ -110,12 +125,75 @@ describe("BuildTransactionContextTask", () => {
     );
   });
 
-  it("throws if getSolanaContext returns Left", async () => {
+  it("returns empty result when getContexts returns only errors and owner info is not required", async () => {
     const error = new Error("Solana context failure");
-    (contextModuleMock.getSolanaContext as any).mockResolvedValue(Left(error));
+    const argsWithoutOwnerInfo = {
+      ...defaultArgs,
+      options: { tokenAddress: undefined, createATA: undefined },
+    };
+    (contextModuleMock.getContexts as any).mockResolvedValue([
+      { type: ClearSignContextType.ERROR, error },
+    ]);
+
+    const task = new BuildTransactionContextTask(apiMock, argsWithoutOwnerInfo);
+    const result = await task.run();
+
+    expect(result.trustedNamePKICertificate).toBeUndefined();
+    expect(result.tlvDescriptor).toBeUndefined();
+    expect(result.loadersResults).toHaveLength(1);
+    expect(result.loadersResults[0]).toEqual({
+      type: ClearSignContextType.ERROR,
+      error,
+    });
+    expect(result.contextErrorCount).toBe(1);
+  });
+
+  it("throws when owner info was required but only errors were returned", async () => {
+    const error = new Error("PKI cert load failure");
+    // defaultArgs has tokenAddress: "someAddress", so owner info IS required
+    (contextModuleMock.getContexts as any).mockResolvedValue([
+      { type: ClearSignContextType.ERROR, error },
+    ]);
 
     const task = new BuildTransactionContextTask(apiMock, defaultArgs);
 
-    await expect(task.run()).rejects.toThrow("Solana context failure");
+    await expect(task.run()).rejects.toThrow(
+      "[SignerSolana] BuildTransactionContextTask: owner info was required but could not be resolved",
+    );
+  });
+
+  it("throws when owner info was required but getContexts returns empty array", async () => {
+    // (getOwnerInfo succeeded but tlvDescriptor is undefined) — no error, but no TRUSTED_NAME either.
+    (contextModuleMock.getContexts as any).mockResolvedValue([]);
+
+    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+
+    await expect(task.run()).rejects.toThrow(
+      "[SignerSolana] BuildTransactionContextTask: owner info was required but could not be resolved",
+    );
+  });
+
+  it("reports contextErrorCount when some contexts are errors alongside successes", async () => {
+    const error = new Error("token loader failure");
+    (contextModuleMock.getContexts as any).mockResolvedValue([
+      {
+        type: ClearSignContextType.SOLANA_TRUSTED_NAME,
+        payload: trustedNamePayload as unknown as string,
+        certificate: trustedNameCert,
+      },
+      { type: ClearSignContextType.ERROR, error },
+    ]);
+
+    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const result = await task.run();
+
+    expect(result.trustedNamePKICertificate).toEqual(trustedNameCert);
+    expect(result.tlvDescriptor).toEqual(trustedNamePayload);
+    expect(result.contextErrorCount).toBe(1);
+    expect(result.loadersResults).toHaveLength(1);
+    expect(result.loadersResults[0]).toEqual({
+      type: ClearSignContextType.ERROR,
+      error,
+    });
   });
 });

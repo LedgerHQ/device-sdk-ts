@@ -1,0 +1,135 @@
+import {
+  DeviceModelId,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+import { inject, injectable } from "inversify";
+
+import { pkiTypes } from "@/chain-agnostic-loaders/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/chain-agnostic-loaders/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/chain-agnostic-loaders/pki/model/KeyId";
+import { KeyUsage } from "@/chain-agnostic-loaders/pki/model/KeyUsage";
+import { configTypes } from "@/config/di/configTypes";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { type DynamicNetworkDataSource } from "@/ethereum-loaders/dynamic-network/data/DynamicNetworkDataSource";
+import { ethereumDynamicNetworkTypes } from "@/ethereum-loaders/dynamic-network/di/ethereumDynamicNetworkTypes";
+import { ContextLoader } from "@/shared/domain/ContextLoader";
+import {
+  ClearSignContext,
+  ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
+import { HexStringUtils } from "@/shared/utils/HexStringUtils";
+
+export type DynamicNetworkContextInput = {
+  chainId: number;
+  deviceModelId: DeviceModelId;
+};
+
+const NETWORK_SIGNATURE_TAG = "15";
+
+/** Context types produced by DynamicNetworkContextLoader (used for getContexts expectedTypes). */
+export const DYNAMIC_NETWORK_CONTEXT_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+  ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+];
+
+@injectable()
+export class DynamicNetworkContextLoader
+  implements ContextLoader<DynamicNetworkContextInput>
+{
+  private readonly _networkDataSource: DynamicNetworkDataSource;
+  private readonly _config: ContextModuleServiceConfig;
+  private readonly _certificateLoader: PkiCertificateLoader;
+  private logger: LoggerPublisherService;
+
+  constructor(
+    @inject(ethereumDynamicNetworkTypes.EthereumDynamicNetworkDataSource)
+    networkDataSource: DynamicNetworkDataSource,
+    @inject(configTypes.Config)
+    config: ContextModuleServiceConfig,
+    @inject(pkiTypes.PkiCertificateLoader)
+    certificateLoader: PkiCertificateLoader,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this._networkDataSource = networkDataSource;
+    this._config = config;
+    this._certificateLoader = certificateLoader;
+    this.logger = loggerFactory("DynamicNetworkContextLoader");
+  }
+
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is DynamicNetworkContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "chainId" in input &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
+      input.deviceModelId !== DeviceModelId.NANO_S &&
+      typeof input.chainId === "number" &&
+      DYNAMIC_NETWORK_CONTEXT_TYPES.every((type) =>
+        expectedTypes.includes(type),
+      )
+    );
+  }
+
+  async load(input: DynamicNetworkContextInput): Promise<ClearSignContext[]> {
+    const { chainId, deviceModelId } = input;
+
+    const networkConfig =
+      await this._networkDataSource.getDynamicNetworkConfiguration(chainId);
+
+    // Fetch certificate for the network configuration upfront
+    const certificate = await this._certificateLoader.loadCertificate({
+      keyId: KeyId.CalNetwork,
+      keyUsage: KeyUsage.Network,
+      targetDevice: deviceModelId,
+    });
+
+    const result = networkConfig.caseOf({
+      Left: () => [],
+      Right: (configuration) => {
+        const contexts: ClearSignContext[] = [];
+        const descriptor = configuration.descriptors[deviceModelId];
+
+        if (!descriptor) {
+          return [];
+        }
+
+        const signature = descriptor.signatures[this._config.cal.mode];
+
+        if (!signature) {
+          return [];
+        }
+
+        const configPayload = HexStringUtils.appendSignatureToPayload(
+          descriptor.data,
+          signature,
+          NETWORK_SIGNATURE_TAG,
+        );
+
+        contexts.push({
+          type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+          payload: configPayload,
+          certificate,
+        });
+
+        // Add icon if available in the descriptor
+        if (descriptor.icon) {
+          // Icons don't need signatures appended
+          contexts.push({
+            type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+            payload: descriptor.icon,
+          });
+        }
+
+        return contexts;
+      },
+    });
+
+    this.logger.debug("load result", { data: { result } });
+    return result;
+  }
+}

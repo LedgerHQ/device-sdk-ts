@@ -1,9 +1,8 @@
 import {
-  type ClearSignContextSuccess,
-  ClearSignContextType,
   type ContextModule,
   DYNAMIC_NETWORK_CONTEXT_TYPES,
   type DynamicNetworkContextInput,
+  isEthereumClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
   type CommandResult,
@@ -68,8 +67,7 @@ export class SendGetAddressTask {
       );
 
       const successContexts = contexts.filter(
-        (c): c is ClearSignContextSuccess =>
-          c.type !== ClearSignContextType.ERROR,
+        isEthereumClearSignContextSuccess,
       );
 
       for (const context of successContexts) {

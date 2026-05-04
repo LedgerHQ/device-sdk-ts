@@ -1,10 +1,12 @@
-import type { PkiCertificate } from "@/pki/model/PkiCertificate";
-
-export enum SolanaContextTypes {
-  SOLANA_TOKEN = "solanaToken",
-  SOLANA_LIFI = "solanaLifi",
-  ERROR = "error",
-}
+import {
+  type ClearSignContextError,
+  type ClearSignContextSuccess,
+  type ClearSignContextType,
+  type SolanaLifiInstructionMeta,
+  type SolanaLifiPayload,
+  type SolanaTokenData,
+  type SolanaTransactionDescriptor,
+} from "./ClearSignContext";
 
 export type SolanaTransactionDescriptorRaw = {
   data: string;
@@ -14,13 +16,6 @@ export type SolanaTransactionDescriptorRaw = {
     prod?: string;
     test?: string;
   };
-};
-
-export type SolanaTransactionDescriptor = {
-  data: string;
-  descriptorType: string;
-  descriptorVersion: string;
-  signature: string;
 };
 
 export type SolanaLifiDescriptorEntry = {
@@ -45,58 +40,27 @@ export type SolanaTransactionDescriptorList = Record<
   SolanaTransactionDescriptor
 >;
 
-export type SolanaLifiInstructionMeta = {
-  program_id: string;
-  discriminator_hex?: string;
-};
-
-export type SolanaLifiPayload = {
-  descriptors: SolanaTransactionDescriptorList;
-  instructions: SolanaLifiInstructionMeta[];
-};
-
-export type SolanaTokenData = {
-  solanaTokenDescriptor: {
-    data: string;
-    signature: string;
-  };
-};
-
-export type SolanaContextSuccessType = Exclude<
-  SolanaContextTypes,
-  SolanaContextTypes.ERROR
->;
-
-// map from Solana success type to payload
-type SolanaContextSuccessPayloads = {
-  [SolanaContextTypes.SOLANA_TOKEN]: {
-    payload: SolanaTokenData;
-    certificate?: PkiCertificate;
-  };
-  [SolanaContextTypes.SOLANA_LIFI]: {
-    payload: SolanaLifiPayload;
-    certificate?: PkiCertificate;
-  };
-};
+export type SolanaContextSuccessType =
+  | ClearSignContextType.SOLANA_TOKEN
+  | ClearSignContextType.SOLANA_LIFI;
 
 export type SolanaContextSuccess<
   T extends SolanaContextSuccessType = SolanaContextSuccessType,
-> = {
-  type: T;
-} & SolanaContextSuccessPayloads[T];
+> = ClearSignContextSuccess<T>;
 
-export type SolanaContextError = {
-  type: SolanaContextTypes.ERROR;
-  error: Error;
-};
+export type SolanaContextError = ClearSignContextError;
 
-export type SolanaContext = SolanaContextSuccess | SolanaContextError;
+export type SolanaContext =
+  | ClearSignContextSuccess<
+      ClearSignContextType.SOLANA_TOKEN | ClearSignContextType.SOLANA_LIFI
+    >
+  | ClearSignContextError;
 
 export type SolanaTokenContextSuccess =
-  SolanaContextSuccess<SolanaContextTypes.SOLANA_TOKEN>;
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_TOKEN>;
 
 export type SolanaLifiContextSuccess =
-  SolanaContextSuccess<SolanaContextTypes.SOLANA_LIFI>;
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_LIFI>;
 
 export type SolanaTokenContextResult =
   | SolanaTokenContextSuccess
@@ -107,3 +71,11 @@ export type SolanaLifiContextResult =
   | SolanaContextError;
 
 export type LoaderResult = SolanaTokenContextResult | SolanaLifiContextResult;
+
+// Re-export payload types so existing importers from this module still work
+export type {
+  SolanaLifiInstructionMeta,
+  SolanaLifiPayload,
+  SolanaTokenData,
+  SolanaTransactionDescriptor,
+};

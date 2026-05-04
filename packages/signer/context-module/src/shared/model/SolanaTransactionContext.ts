@@ -11,3 +11,10 @@ export type SolanaTransactionContext = {
     mintAddress: string;
   };
 };
+
+export type SolanaSPLOwnerInfo = {
+  tokenAccount: string;
+  owner: string;
+  contract: string;
+  signedDescriptor: string;
+};

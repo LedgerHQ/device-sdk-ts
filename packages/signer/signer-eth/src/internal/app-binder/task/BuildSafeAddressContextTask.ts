@@ -1,7 +1,8 @@
 import {
-  type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type EthereumClearSignContextSuccess,
+  isEthereumClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
@@ -22,7 +23,7 @@ export type BuildSafeAddressContextTaskArgs = {
 };
 
 export type BuildSafeAddressContextTaskResult = {
-  readonly clearSignContexts: ClearSignContextSuccess[];
+  readonly clearSignContexts: EthereumClearSignContextSuccess[];
 };
 
 export class BuildSafeAddressContextTask {
@@ -61,7 +62,10 @@ export class BuildSafeAddressContextTask {
         deviceModelId: this._args.deviceModelId,
         challenge,
       },
-      [ClearSignContextType.SAFE, ClearSignContextType.SIGNER],
+      [
+        ClearSignContextType.ETHEREUM_SAFE,
+        ClearSignContextType.ETHEREUM_SIGNER,
+      ],
     );
 
     contexts.forEach((context) => {
@@ -73,18 +77,19 @@ export class BuildSafeAddressContextTask {
     // should contain one SAFE and one SIGNER context
     if (
       contexts.length !== 2 ||
-      contexts.find((context) => context.type === ClearSignContextType.SAFE) ===
-        undefined ||
       contexts.find(
-        (context) => context.type === ClearSignContextType.SIGNER,
+        (context) => context.type === ClearSignContextType.ETHEREUM_SAFE,
+      ) === undefined ||
+      contexts.find(
+        (context) => context.type === ClearSignContextType.ETHEREUM_SIGNER,
       ) === undefined
     ) {
       this._logger.error("[run] Invalid safe address contexts", {
         data: {
           receivedTypes: contexts.map((c) => c.type),
           expectedTypes: [
-            ClearSignContextType.SAFE,
-            ClearSignContextType.SIGNER,
+            ClearSignContextType.ETHEREUM_SAFE,
+            ClearSignContextType.ETHEREUM_SIGNER,
           ],
         },
       });
@@ -96,7 +101,7 @@ export class BuildSafeAddressContextTask {
     );
 
     return {
-      clearSignContexts: contexts as ClearSignContextSuccess[],
+      clearSignContexts: contexts.filter(isEthereumClearSignContextSuccess),
     };
   }
 }

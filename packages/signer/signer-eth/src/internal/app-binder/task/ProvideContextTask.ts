@@ -1,6 +1,6 @@
 import {
-  type ClearSignContextSuccess,
   ClearSignContextType,
+  type EthereumClearSignContextSuccess,
 } from "@ledgerhq/context-module";
 import {
   type CommandResult,
@@ -41,7 +41,7 @@ export type ProvideContextTaskArgs = {
   /**
    * The clear sign context to provide.
    */
-  context: ClearSignContextSuccess;
+  context: EthereumClearSignContextSuccess;
   /**
    * Logger factory for creating loggers with custom tags.
    */
@@ -72,7 +72,7 @@ export class ProvideContextTask {
     this._logger.debug("[run] Providing context", {
       data: {
         type,
-        payloadLength: payload.length,
+        payloadLength: typeof payload === "string" ? payload.length : undefined,
         hasCertificate: !!certificate,
       },
     });
@@ -88,25 +88,25 @@ export class ProvideContextTask {
     }
 
     switch (type) {
-      case ClearSignContextType.PLUGIN: {
+      case ClearSignContextType.ETHEREUM_PLUGIN: {
         return await this._api.sendCommand(new SetPluginCommand({ payload }));
       }
-      case ClearSignContextType.EXTERNAL_PLUGIN: {
+      case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN: {
         return await this._api.sendCommand(
           new SetExternalPluginCommand({ payload }),
         );
       }
-      case ClearSignContextType.NFT: {
+      case ClearSignContextType.ETHEREUM_NFT: {
         return await this._api.sendCommand(
           new ProvideNFTInformationCommand({ payload }),
         );
       }
-      case ClearSignContextType.TOKEN: {
+      case ClearSignContextType.ETHEREUM_TOKEN: {
         return await this._api.sendCommand(
           new ProvideTokenInformationCommand({ payload }),
         );
       }
-      case ClearSignContextType.TRANSACTION_INFO: {
+      case ClearSignContextType.ETHEREUM_TRANSACTION_INFO: {
         const transactionInfoResult =
           await this._sendPayloadInChunksTaskFactory(this._api, {
             payload,
@@ -119,7 +119,7 @@ export class ProvideContextTask {
 
         return transactionInfoResult;
       }
-      case ClearSignContextType.TRUSTED_NAME: {
+      case ClearSignContextType.ETHEREUM_TRUSTED_NAME: {
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -129,7 +129,7 @@ export class ProvideContextTask {
             }),
         }).run();
       }
-      case ClearSignContextType.ENUM:
+      case ClearSignContextType.ETHEREUM_ENUM:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -138,7 +138,7 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -147,7 +147,7 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-      case ClearSignContextType.TRANSACTION_CHECK:
+      case ClearSignContextType.ETHEREUM_WEB3_CHECK:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -156,7 +156,7 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-      case ClearSignContextType.PROXY_INFO:
+      case ClearSignContextType.ETHEREUM_PROXY_INFO:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -165,7 +165,7 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-      case ClearSignContextType.DYNAMIC_NETWORK:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
         // Dynamic network configuration uses the existing ProvideNetworkConfiguration command
         // but is provided as part of the context flow
         return this._sendPayloadInChunksTaskFactory(this._api, {
@@ -177,7 +177,7 @@ export class ProvideContextTask {
               configurationType: NetworkConfigurationType.CONFIGURATION,
             }),
         }).run();
-      case ClearSignContextType.DYNAMIC_NETWORK_ICON: {
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON: {
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -189,7 +189,7 @@ export class ProvideContextTask {
           withPayloadLength: false,
         }).run();
       }
-      case ClearSignContextType.SAFE:
+      case ClearSignContextType.ETHEREUM_SAFE:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -199,7 +199,7 @@ export class ProvideContextTask {
               type: ProvideSafeAccountCommandType.SAFE_DESCRIPTOR,
             }),
         }).run();
-      case ClearSignContextType.SIGNER:
+      case ClearSignContextType.ETHEREUM_SIGNER:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
@@ -209,7 +209,7 @@ export class ProvideContextTask {
               type: ProvideSafeAccountCommandType.SIGNER_DESCRIPTOR,
             }),
         }).run();
-      case ClearSignContextType.GATED_SIGNING:
+      case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>
