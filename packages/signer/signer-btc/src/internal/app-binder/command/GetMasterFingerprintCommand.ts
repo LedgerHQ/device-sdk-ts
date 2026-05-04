@@ -18,6 +18,7 @@ import {
   BtcAppCommandErrorFactory,
   type BtcErrorCodes,
 } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 const MASTER_FINGERPRINT_LENGTH = 4;
@@ -45,7 +46,7 @@ export class GetMasterFingerprintCommand
       cla: 0xe1,
       ins: 0x05,
       p1: 0x00,
-      p2: 0x00,
+      p2: PROTOCOL_VERSION,
     };
     return new ApduBuilder(getMasterFingerprintArgs).build();
   }
