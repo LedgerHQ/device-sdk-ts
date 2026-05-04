@@ -35,7 +35,8 @@ export type ZcashErrorCodes =
   | "9808"
   | "9810"
   | "9840"
-  | "9850";
+  | "9850"
+  | "b007";
 
 export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "6300": { message: "GPAuthFailedError" },
@@ -69,6 +70,7 @@ export const ZCASH_APP_ERRORS: CommandErrors<ZcashErrorCodes> = {
   "9810": { message: "ContradictionInvalidationError" },
   "9840": { message: "CodeBlockedError" },
   "9850": { message: "MaxValueReachedError" },
+  "b007": { message: "BadStateError" },
 };
 
 export class ZcashAppCommandError extends DeviceExchangeError<ZcashErrorCodes> {

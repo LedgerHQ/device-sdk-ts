@@ -16,6 +16,11 @@ import {
 import { Maybe } from "purify-ts";
 
 import {
+  INS,
+  ZCASH_CLA,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+
+import {
   ZCASH_APP_ERRORS,
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
@@ -53,8 +58,8 @@ export class GetAddressCommand
 
   getApdu(): Apdu {
     const getAddressArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x40,
+      cla: ZCASH_CLA,
+      ins: INS.GET_WALLET_PUBLIC_KEY,
       p1: this.args.checkOnDevice ? 0x01 : 0x00,
       p2: 0x00,
     };

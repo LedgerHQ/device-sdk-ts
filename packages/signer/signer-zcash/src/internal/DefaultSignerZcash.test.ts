@@ -26,4 +26,16 @@ describe("DefaultSignerZcash", () => {
 
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
+
+  it("should call getFullViewingKey via device action", () => {
+    const dmk = {
+      executeDeviceAction: vi.fn(),
+    } as unknown as DeviceManagementKit;
+    const sessionId = {} as DeviceSessionId;
+    const signer = new DefaultSignerZcash({ dmk, sessionId });
+
+    signer.getFullViewingKey("44'/133'/0'/0/0", {});
+
+    expect(dmk.executeDeviceAction).toHaveBeenCalled();
+  });
 });

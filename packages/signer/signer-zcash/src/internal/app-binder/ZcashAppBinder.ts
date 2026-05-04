@@ -6,6 +6,8 @@ import {
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
+import { type GetFullViewingKeyDAReturnType } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
+import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
 import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
@@ -19,6 +21,7 @@ import { externalTypes } from "@internal/externalTypes";
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { SignMessageCommand } from "./command/SignMessageCommand";
+import { GetFullViewingKeyTask } from "./task/GetFullViewingKeyTask";
 import { GetTrustedInputTask } from "./task/GetTrustedInputTask";
 import { SignTransactionTask } from "./task/SignTransactionTask";
 
@@ -57,6 +60,28 @@ export class ZcashAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  getFullViewingKey(args: {
+    derivationPath: string;
+    mode: ZcashFullViewingKeyMode;
+    skipOpenApp: boolean;
+  }): GetFullViewingKeyDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi: InternalApi) =>
+            new GetFullViewingKeyTask(internalApi, {
+              derivationPath: args.derivationPath,
+              mode: args.mode,
+            }).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
       }),

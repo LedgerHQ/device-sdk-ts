@@ -7,6 +7,9 @@ import {
   type GetAppConfigDAError,
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
+  type GetFullViewingKeyDAError,
+  type GetFullViewingKeyDAIntermediateValue,
+  type GetFullViewingKeyDAOutput,
   type GetTrustedInputDAError,
   type GetTrustedInputDAIntermediateValue,
   type GetTrustedInputDAOutput,
@@ -16,6 +19,7 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
+  type ZcashFullViewingKeyMode,
 } from "@ledgerhq/device-signer-kit-zcash";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -84,6 +88,34 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Get Full Viewing Key",
+        description: "Get a full viewing key from the device",
+        executeDeviceAction: ({ derivationPath, mode, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          return signer.getFullViewingKey(derivationPath, {
+            mode,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/133'/0'/0/0",
+          mode: "ufvk",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetFullViewingKeyDAOutput,
+        {
+          derivationPath: string;
+          mode?: ZcashFullViewingKeyMode;
+          skipOpenApp?: boolean;
+        },
+        GetFullViewingKeyDAError,
+        GetFullViewingKeyDAIntermediateValue
       >,
       {
         title: "Sign Transaction",
