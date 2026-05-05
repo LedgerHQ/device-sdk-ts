@@ -1,0 +1,536 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { Left, Right } from "purify-ts";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { type PkiCertificateLoader } from "@/loaders/chain-agnostic/pki/domain/PkiCertificateLoader";
+import {
+  type GetTransactionDescriptorsResponse,
+  type SolanaLifiDataSource,
+} from "@/loaders/solana/lifi/data/SolanaLifiDataSource";
+import { ClearSignContextType } from "@/shared/model/ClearSignContext";
+import {
+  type SolanaTransactionDescriptor,
+  type SolanaTransactionDescriptorList,
+  type SolanaTransactionDescriptorRaw,
+} from "@/shared/model/SolanaContextTypes";
+
+import { SolanaLifiContextLoader } from "./SolanaLifiContextLoader";
+
+const mockLoggerFactory = () => ({
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  subscribers: [],
+});
+
+const mockCertificate = {
+  keyUsageNumber: 13,
+  payload: new Uint8Array([0x01, 0x02]),
+};
+
+const mockConfig = {
+  cal: {
+    url: "https://crypto-assets-service.api.ledger.com",
+    mode: "test",
+    branch: "main",
+  },
+} as ContextModuleServiceConfig;
+
+describe("SolanaLifiContextLoader", () => {
+  let mockDataSource: SolanaLifiDataSource;
+  let mockCertificateLoader: PkiCertificateLoader;
+
+  const makeRawDescriptor = (
+    data: string,
+    sig = "deadbeef",
+  ): SolanaTransactionDescriptorRaw => ({
+    data,
+    descriptorType: "swap_template",
+    descriptorVersion: "v1",
+    signatures: { test: sig, prod: `prod_${sig}` },
+  });
+
+  const makeResolvedDescriptor = (
+    data: string,
+    sig = "deadbeef",
+  ): SolanaTransactionDescriptor => ({
+    data,
+    descriptorType: "swap_template",
+    descriptorVersion: "v1",
+    signature: sig,
+  });
+
+  const responseDescriptorsArray: GetTransactionDescriptorsResponse["descriptors"] =
+    [
+      {
+        program_id: "SomeProgram",
+        discriminator_hex: "1",
+        descriptor: makeRawDescriptor("abc123"),
+      },
+      {
+        program_id: "AnotherProgram",
+        // discriminator_hex intentionally omitted -> defaults to ""
+        descriptor: makeRawDescriptor("def456"),
+      },
+    ];
+
+  const expectedPlucked: SolanaTransactionDescriptorList = {
+    "SomeProgram:1": makeResolvedDescriptor("abc123"),
+    "AnotherProgram:": makeResolvedDescriptor("def456"),
+  };
+
+  const responseInstructionsArray: GetTransactionDescriptorsResponse["instructions"] =
+    [
+      {
+        program_id: "SomeProgram",
+        discriminator: 1,
+        discriminator_hex: "1",
+      },
+      {
+        program_id: "AnotherProgram",
+        // discriminator_hex intentionally omitted
+      },
+    ];
+
+  const txDescriptorsResponse: GetTransactionDescriptorsResponse = {
+    id: "tpl-1",
+    chain_id: 101,
+    instructions: responseInstructionsArray,
+    descriptors: responseDescriptorsArray,
+  };
+
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockDataSource = {
+      getTransactionDescriptorsPayload: vi.fn(),
+    } as unknown as SolanaLifiDataSource;
+    mockCertificateLoader = {
+      loadCertificate: vi.fn().mockResolvedValue(mockCertificate),
+    } as unknown as PkiCertificateLoader;
+  });
+
+  const makeLoader = () =>
+    new SolanaLifiContextLoader(
+      mockDataSource,
+      mockConfig,
+      mockCertificateLoader,
+      mockLoggerFactory,
+    );
+
+  describe("canHandle", () => {
+    it("returns true when templateId is provided and SOLANA_LIFI is in expectedTypes", () => {
+      const loader = makeLoader();
+
+      expect(
+        loader.canHandle(
+          {
+            templateId: "tpl-123",
+            deviceModelId: "nanoS" as any,
+          },
+          [ClearSignContextType.SOLANA_LIFI],
+        ),
+      ).toBe(true);
+    });
+
+    it("returns false when SOLANA_LIFI is not in expectedTypes", () => {
+      const loader = makeLoader();
+
+      expect(
+        loader.canHandle({ templateId: "tpl-123" } as any, [
+          ClearSignContextType.SOLANA_TOKEN,
+        ]),
+      ).toBe(false);
+    });
+
+    it("returns false when templateId is missing or falsy", () => {
+      const loader = makeLoader();
+
+      expect(
+        loader.canHandle({ templateId: "" } as any, [
+          ClearSignContextType.SOLANA_LIFI,
+        ]),
+      ).toBe(false);
+      expect(
+        loader.canHandle({ templateId: undefined } as any, [
+          ClearSignContextType.SOLANA_LIFI,
+        ]),
+      ).toBe(false);
+      expect(
+        loader.canHandle({} as any, [ClearSignContextType.SOLANA_LIFI]),
+      ).toBe(false);
+    });
+  });
+
+  describe("load", () => {
+    it("returns an array with an error when datasource returns Left(error)", async () => {
+      const loader = makeLoader();
+      const error = new Error("boom");
+
+      vi.spyOn(
+        mockDataSource,
+        "getTransactionDescriptorsPayload",
+      ).mockResolvedValue(Left(error));
+
+      const input = { templateId: "tpl-err", deviceModelId: "nanoS" as any };
+      const result = await loader.load(input);
+
+      expect(
+        mockDataSource.getTransactionDescriptorsPayload,
+      ).toHaveBeenCalledWith({
+        templateId: "tpl-err",
+      });
+
+      expect(result).toEqual([
+        {
+          type: ClearSignContextType.ERROR,
+          error,
+        },
+      ]);
+    });
+
+    it("returns SOLANA_LIFI array with plucked descriptors and certificate when datasource returns Right(value)", async () => {
+      const loader = makeLoader();
+
+      vi.spyOn(
+        mockDataSource,
+        "getTransactionDescriptorsPayload",
+      ).mockResolvedValue(Right(txDescriptorsResponse));
+
+      const input = { templateId: "tpl-ok", deviceModelId: "nanoS" as any };
+      const result = await loader.load(input);
+
+      expect(
+        mockDataSource.getTransactionDescriptorsPayload,
+      ).toHaveBeenCalledWith({
+        templateId: "tpl-ok",
+      });
+
+      expect(mockCertificateLoader.loadCertificate).toHaveBeenCalledWith({
+        keyId: "swap_template_key",
+        keyUsage: "swap_template",
+        targetDevice: "nanoS",
+      });
+
+      expect(result).toEqual([
+        {
+          type: ClearSignContextType.SOLANA_LIFI,
+          payload: {
+            descriptors: expectedPlucked,
+            instructions: [
+              { program_id: "SomeProgram", discriminator_hex: "1" },
+              { program_id: "AnotherProgram" },
+            ],
+          },
+          certificate: mockCertificate,
+        },
+      ]);
+    });
+  });
+
+  describe("pluckTransactionData (private)", () => {
+    it("returns a map keyed by `${program_id}:${discriminator_hex ?? '0'}`", () => {
+      const loader = makeLoader();
+      const pluck = (loader as any).pluckTransactionData.bind(loader);
+
+      const result: SolanaTransactionDescriptorList = pluck(
+        txDescriptorsResponse,
+      );
+
+      expect(result).toEqual(expectedPlucked);
+    });
+  });
+
+  describe("extractInstructionsMeta (private)", () => {
+    it("returns instruction metadata from the API response", () => {
+      const loader = makeLoader();
+      const extract = (loader as any).extractInstructionsMeta.bind(loader);
+
+      const result = extract(txDescriptorsResponse);
+
+      expect(result).toEqual([
+        { program_id: "SomeProgram", discriminator_hex: "1" },
+        { program_id: "AnotherProgram" },
+      ]);
+    });
+
+    it("returns empty array when instructions are missing", () => {
+      const loader = makeLoader();
+      const extract = (loader as any).extractInstructionsMeta.bind(loader);
+
+      const result = extract({
+        ...txDescriptorsResponse,
+        instructions: undefined,
+      });
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("pluckTransactionData mode resolution (private)", () => {
+    it("resolves signature using config.cal.mode", () => {
+      const loader = makeLoader();
+      const pluck = (loader as any).pluckTransactionData.bind(loader);
+
+      const result: SolanaTransactionDescriptorList = pluck(
+        txDescriptorsResponse,
+      );
+
+      expect(result["SomeProgram:1"]?.signature).toBe("deadbeef");
+    });
+  });
+
+  describe("real CAL payload (LiFi template 4c694669)", () => {
+    const realApiResponse: GetTransactionDescriptorsResponse = {
+      id: "4c694669",
+      chain_id: 101,
+      instructions: [
+        {
+          program_id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+          discriminator: 1,
+          discriminator_hex: "1",
+        },
+        {
+          program_id: "11111111111111111111111111111111",
+          discriminator: 2,
+          discriminator_hex: "2",
+        },
+        {
+          program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+          discriminator: 3.0753642362361016e18,
+          discriminator_hex: "2aade37a97cb17e0",
+        },
+        {
+          program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+          discriminator: 9.339575302786589e18,
+          discriminator_hex: "819cd641339b2148",
+        },
+        { program_id: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr" },
+        {
+          program_id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+          discriminator: 1,
+          discriminator_hex: "1",
+        },
+        { program_id: "3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br" },
+        {
+          program_id: "ComputeBudget111111111111111111111111111111",
+          discriminator: 2,
+          discriminator_hex: "2",
+        },
+        {
+          program_id: "ComputeBudget111111111111111111111111111111",
+          discriminator: 3,
+          discriminator_hex: "3",
+        },
+        {
+          program_id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          discriminator: 3,
+          discriminator_hex: "3",
+        },
+        {
+          program_id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          discriminator: 17,
+          discriminator_hex: "11",
+        },
+        { program_id: "BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB" },
+      ],
+      descriptors: [
+        {
+          program_id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+          discriminator_hex: "1",
+          descriptor: makeRawDescriptor("atoken_1", "sig_atoken"),
+        },
+        {
+          program_id: "11111111111111111111111111111111",
+          discriminator_hex: "2",
+          descriptor: makeRawDescriptor("system_2", "sig_system"),
+        },
+        {
+          program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+          discriminator_hex: "2aade37a97cb17e0",
+          descriptor: makeRawDescriptor("jup_route", "sig_jup_route"),
+        },
+        {
+          program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+          discriminator_hex: "819cd641339b2148",
+          descriptor: makeRawDescriptor("jup_shared", "sig_jup_shared"),
+        },
+        {
+          program_id: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+          descriptor: makeRawDescriptor("memo", "sig_memo"),
+        },
+        {
+          program_id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+          discriminator_hex: "1",
+          descriptor: makeRawDescriptor("atoken_1", "sig_atoken"),
+        },
+        {
+          program_id: "3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br",
+          descriptor: makeRawDescriptor("3i5jeu", "sig_3i5jeu"),
+        },
+        {
+          program_id: "ComputeBudget111111111111111111111111111111",
+          discriminator_hex: "2",
+          descriptor: makeRawDescriptor("cb_2", "sig_cb2"),
+        },
+        {
+          program_id: "ComputeBudget111111111111111111111111111111",
+          discriminator_hex: "3",
+          descriptor: makeRawDescriptor("cb_3", "sig_cb3"),
+        },
+        {
+          program_id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          discriminator_hex: "3",
+          descriptor: makeRawDescriptor("tokenkeg_3", "sig_tk3"),
+        },
+        {
+          program_id: "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          discriminator_hex: "11",
+          descriptor: makeRawDescriptor("tokenkeg_11", "sig_tk11"),
+        },
+        {
+          program_id: "BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB",
+          descriptor: makeRawDescriptor("brdg", "sig_brdg"),
+        },
+      ],
+    };
+
+    it("produces 11 unique descriptor keys (ATokenGP:1 appears twice but deduplicates)", () => {
+      const loader = makeLoader();
+      const pluck = (loader as any).pluckTransactionData.bind(loader);
+
+      const result: SolanaTransactionDescriptorList = pluck(realApiResponse);
+      const keys = Object.keys(result);
+
+      // 12 descriptors but ATokenGP:1 appears twice -> 11 unique keys
+      expect(keys).toHaveLength(11);
+    });
+
+    it("creates distinct keys for same program_id with different discriminators", () => {
+      const loader = makeLoader();
+      const pluck = (loader as any).pluckTransactionData.bind(loader);
+
+      const result: SolanaTransactionDescriptorList = pluck(realApiResponse);
+
+      // JUP6 has two different discriminators -> two distinct entries
+      expect(
+        result["JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:2aade37a97cb17e0"]
+          ?.data,
+      ).toBe("jup_route");
+      expect(
+        result["JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:819cd641339b2148"]
+          ?.data,
+      ).toBe("jup_shared");
+
+      // ComputeBudget has discriminator 2 and 3
+      expect(
+        result["ComputeBudget111111111111111111111111111111:2"]?.data,
+      ).toBe("cb_2");
+      expect(
+        result["ComputeBudget111111111111111111111111111111:3"]?.data,
+      ).toBe("cb_3");
+
+      // TokenkegQ has discriminator 3 and 11
+      expect(
+        result["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:3"]?.data,
+      ).toBe("tokenkeg_3");
+      expect(
+        result["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:11"]?.data,
+      ).toBe("tokenkeg_11");
+    });
+
+    it("uses :0 suffix for programs without a discriminator", () => {
+      const loader = makeLoader();
+      const pluck = (loader as any).pluckTransactionData.bind(loader);
+
+      const result: SolanaTransactionDescriptorList = pluck(realApiResponse);
+
+      expect(result["MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr:"]?.data).toBe(
+        "memo",
+      );
+      expect(
+        result["3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br:"]?.data,
+      ).toBe("3i5jeu");
+      expect(
+        result["BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB:"]?.data,
+      ).toBe("brdg");
+    });
+
+    it("extracts 12 instruction metadata entries preserving order and discriminators", () => {
+      const loader = makeLoader();
+      const extract = (loader as any).extractInstructionsMeta.bind(loader);
+
+      const result = extract(realApiResponse);
+
+      expect(result).toHaveLength(12);
+
+      // First: ATokenGP with discriminator
+      expect(result[0]).toEqual({
+        program_id: "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+        discriminator_hex: "1",
+      });
+      // JUP6 route (8-byte discriminator)
+      expect(result[2]).toEqual({
+        program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+        discriminator_hex: "2aade37a97cb17e0",
+      });
+      // JUP6 shared (8-byte discriminator)
+      expect(result[3]).toEqual({
+        program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+        discriminator_hex: "819cd641339b2148",
+      });
+      // Memo: no discriminator
+      expect(result[4]).toEqual({
+        program_id: "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
+      });
+      // BrdgN2: no discriminator (last entry)
+      expect(result[11]).toEqual({
+        program_id: "BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB",
+      });
+    });
+
+    it("load returns full payload with descriptors and instructions from real API response", async () => {
+      const loader = makeLoader();
+
+      vi.spyOn(
+        mockDataSource,
+        "getTransactionDescriptorsPayload",
+      ).mockResolvedValue(Right(realApiResponse));
+
+      const input = { templateId: "4c694669", deviceModelId: "nanoS" as any };
+      const result = await loader.load(input);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        type: ClearSignContextType.SOLANA_LIFI,
+        payload: {
+          descriptors: expect.objectContaining({
+            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:2aade37a97cb17e0":
+              expect.objectContaining({ data: "jup_route" }),
+            "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:819cd641339b2148":
+              expect.objectContaining({ data: "jup_shared" }),
+          }),
+          instructions: expect.arrayContaining([
+            expect.objectContaining({
+              program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+              discriminator_hex: "2aade37a97cb17e0",
+            }),
+            expect.objectContaining({
+              program_id: "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+              discriminator_hex: "819cd641339b2148",
+            }),
+          ]),
+        },
+      });
+
+      expect(Object.keys((result[0] as any).payload.descriptors)).toHaveLength(
+        11,
+      );
+      expect((result[0] as any).payload.instructions).toHaveLength(12);
+    });
+  });
+});

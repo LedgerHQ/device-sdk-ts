@@ -165,7 +165,7 @@ export class BuildEIP712ContextTask {
       }
     }
     if (this.appConfig.web3ChecksEnabled) {
-      contextTypes.push(ClearSignContextType.ETHEREUM_WEB3_CHECK);
+      contextTypes.push(ClearSignContextType.ETHEREUM_TRANSACTION_CHECK);
     }
     if (this.data.domain.chainId !== undefined) {
       contextTypes.push(

@@ -329,7 +329,7 @@ export class ProvideEIP712ContextTask {
     }
 
     switch (type) {
-      case ClearSignContextType.ETHEREUM_WEB3_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>

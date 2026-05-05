@@ -59,7 +59,7 @@ describe("BuildSubcontextsTask", () => {
   describe("when context type is a simple type", () => {
     const simpleTypes: EthereumClearSignContextSuccess["type"][] = [
       ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
-      ClearSignContextType.ETHEREUM_WEB3_CHECK,
+      ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
       ClearSignContextType.ETHEREUM_PLUGIN,
       ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
       ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,

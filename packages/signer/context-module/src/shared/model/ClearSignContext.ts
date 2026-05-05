@@ -1,4 +1,4 @@
-import { type PkiCertificate } from "@/chain-agnostic-loaders/pki/model/PkiCertificate";
+import { type PkiCertificate } from "@/loaders/chain-agnostic/pki/model/PkiCertificate";
 
 import { type GenericPath } from "./GenericPath";
 
@@ -39,7 +39,7 @@ export enum ClearSignContextType {
   ETHEREUM_PROXY_INFO = "ethereumProxyInfo",
   ETHEREUM_ENUM = "ethereumEnum",
   ETHEREUM_TRANSACTION_FIELD_DESCRIPTION = "ethereumTransactionFieldDescription",
-  ETHEREUM_WEB3_CHECK = "ethereumWeb3Check",
+  ETHEREUM_TRANSACTION_CHECK = "ethereumTransactionCheck",
   ETHEREUM_DYNAMIC_NETWORK = "ethereumDynamicNetwork",
   ETHEREUM_DYNAMIC_NETWORK_ICON = "ethereumDynamicNetworkIcon",
   ETHEREUM_SAFE = "ethereumSafe",
@@ -190,7 +190,7 @@ export type EthereumClearSignContextSuccessType =
   | ClearSignContextType.ETHEREUM_PROXY_INFO
   | ClearSignContextType.ETHEREUM_ENUM
   | ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION
-  | ClearSignContextType.ETHEREUM_WEB3_CHECK
+  | ClearSignContextType.ETHEREUM_TRANSACTION_CHECK
   | ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK
   | ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON
   | ClearSignContextType.ETHEREUM_SAFE
@@ -218,7 +218,7 @@ export const ETHEREUM_CLEAR_SIGN_CONTEXT_SUCCESS_TYPES =
     ClearSignContextType.ETHEREUM_PROXY_INFO,
     ClearSignContextType.ETHEREUM_ENUM,
     ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
-    ClearSignContextType.ETHEREUM_WEB3_CHECK,
+    ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
     ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
     ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
     ClearSignContextType.ETHEREUM_SAFE,

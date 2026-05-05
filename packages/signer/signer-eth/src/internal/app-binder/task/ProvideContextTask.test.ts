@@ -131,7 +131,10 @@ describe("ProvideContextTask", () => {
           ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,
         ],
-        [ClearSignContextType.ETHEREUM_WEB3_CHECK, ProvideWeb3CheckCommand],
+        [
+          ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
+          ProvideWeb3CheckCommand,
+        ],
         [ClearSignContextType.ETHEREUM_PROXY_INFO, ProvideProxyInfoCommand],
       ] as const)(
         "should provide context by calling sendPayloadInChunksTask for a %s context",

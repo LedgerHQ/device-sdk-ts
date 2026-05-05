@@ -3,7 +3,6 @@ import {
   noopLoggerFactory,
 } from "@ledgerhq/device-management-kit";
 
-import { type BlindSigningReporter } from "./chain-agnostic-loaders/reporter/domain/BlindSigningReporter";
 import { type ContextModuleConstructorArgs } from "./config/model/ContextModuleBuildArgs";
 import {
   type ContextModuleCalConfig,
@@ -15,8 +14,9 @@ import {
   type ContextModuleServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
-import { type TrustedNameDataSource } from "./ethereum-loaders/trusted-name/data/TrustedNameDataSource";
-import { type TypedDataContextLoader } from "./ethereum-loaders/typed-data/domain/TypedDataContextLoader";
+import { type BlindSigningReporter } from "./loaders/chain-agnostic/reporter/domain/BlindSigningReporter";
+import { type TrustedNameDataSource } from "./loaders/ethereum/trusted-name/data/TrustedNameDataSource";
+import { type TypedDataContextLoader } from "./loaders/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { type ContextModule } from "./ContextModule";

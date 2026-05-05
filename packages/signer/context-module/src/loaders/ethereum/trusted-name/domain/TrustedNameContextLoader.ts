@@ -1,0 +1,96 @@
+import {
+  DeviceModelId,
+  isHexaString,
+  LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+import { inject, injectable } from "inversify";
+
+import { configTypes } from "@/config/di/configTypes";
+import { pkiTypes } from "@/loaders/chain-agnostic/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/loaders/chain-agnostic/pki/domain/PkiCertificateLoader";
+import type { TrustedNameDataSource } from "@/loaders/ethereum/trusted-name/data/TrustedNameDataSource";
+import { ethereumTrustedNameTypes } from "@/loaders/ethereum/trusted-name/di/ethereumTrustedNameTypes";
+import { ContextLoader } from "@/shared/domain/ContextLoader";
+import {
+  ClearSignContext,
+  ClearSignContextType,
+} from "@/shared/model/ClearSignContext";
+
+export type TrustedNameContextInput = {
+  chainId: number;
+  to: string;
+  deviceModelId: DeviceModelId;
+};
+
+const SUPPORTED_TYPES: ClearSignContextType[] = [
+  ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+];
+
+@injectable()
+export class TrustedNameContextLoader
+  implements ContextLoader<TrustedNameContextInput>
+{
+  private logger: LoggerPublisherService;
+
+  constructor(
+    @inject(ethereumTrustedNameTypes.EthereumTrustedNameDataSource)
+    private _dataSource: TrustedNameDataSource,
+    @inject(pkiTypes.PkiCertificateLoader)
+    private _certificateLoader: PkiCertificateLoader,
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this.logger = loggerFactory("TrustedNameContextLoader");
+  }
+
+  canHandle(
+    input: unknown,
+    expectedTypes: ClearSignContextType[],
+  ): input is TrustedNameContextInput {
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      "chainId" in input &&
+      input.chainId !== undefined &&
+      typeof input.chainId === "number" &&
+      "to" in input &&
+      input.to !== undefined &&
+      isHexaString(input.to) &&
+      input.to !== "0x" &&
+      "deviceModelId" in input &&
+      input.deviceModelId !== undefined &&
+      SUPPORTED_TYPES.every((type) => expectedTypes.includes(type))
+    );
+  }
+
+  async load(input: TrustedNameContextInput): Promise<ClearSignContext[]> {
+    const payload = await this._dataSource.getTrustedNamePayload({
+      chainId: input.chainId,
+      address: input.to,
+      challenge: "", // use empty challenge for trusted name context loader as it will be re fetched during the provide step
+      types: ["eoa"],
+      sources: ["ens"],
+    });
+
+    this.logger.debug("[ContextModule]: load result", { data: { payload } });
+
+    return await payload.caseOf({
+      Left: (error): Promise<ClearSignContext[]> =>
+        Promise.resolve([{ type: ClearSignContextType.ERROR, error }]),
+      Right: async ({ data, keyId, keyUsage }): Promise<ClearSignContext[]> => {
+        const certificate = await this._certificateLoader.loadCertificate({
+          keyId,
+          keyUsage,
+          targetDevice: input.deviceModelId,
+        });
+        return [
+          {
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+            payload: data,
+            certificate,
+          },
+        ];
+      },
+    });
+  }
+}

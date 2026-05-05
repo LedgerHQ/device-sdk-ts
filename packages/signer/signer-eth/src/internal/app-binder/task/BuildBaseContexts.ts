@@ -37,7 +37,7 @@ export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
   ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
   ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
   ClearSignContextType.ETHEREUM_PROXY_INFO,
-  ClearSignContextType.ETHEREUM_WEB3_CHECK,
+  ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
   ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
   ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
   ClearSignContextType.ETHEREUM_ENUM,
@@ -192,7 +192,7 @@ export class BuildBaseContexts {
     type,
   }: EthereumClearSignContextSuccess): boolean {
     switch (type) {
-      case ClearSignContextType.ETHEREUM_WEB3_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
       case ClearSignContextType.ETHEREUM_PLUGIN:
       case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
@@ -225,7 +225,7 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_PROXY_INFO:
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
-      case ClearSignContextType.ETHEREUM_WEB3_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
       case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         return true;
       case ClearSignContextType.ETHEREUM_ENUM:
@@ -282,7 +282,7 @@ export class BuildBaseContexts {
     switch (type) {
       case ClearSignContextType.ETHEREUM_PROXY_INFO:
         return 5;
-      case ClearSignContextType.ETHEREUM_WEB3_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
       case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         return 10;
       case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:

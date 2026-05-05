@@ -44,7 +44,7 @@ export class BuildSubcontextsTask {
     const type = context.type;
 
     switch (type) {
-      case ClearSignContextType.ETHEREUM_WEB3_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
       case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
       case ClearSignContextType.ETHEREUM_PLUGIN:
       case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
