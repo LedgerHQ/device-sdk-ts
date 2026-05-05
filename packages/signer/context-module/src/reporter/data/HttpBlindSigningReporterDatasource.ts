@@ -1,14 +1,11 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
+import { networkClientFactory } from "@/network/networkClientFactory";
 
 import {
   type BlindSigningReporterDatasource,
@@ -19,22 +16,24 @@ import {
 export class HttpBlindSigningReporterDatasource
   implements BlindSigningReporterDatasource
 {
+  private readonly http: DmkNetworkClient;
+
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+    @inject(networkTypes.NetworkClient)
+    networkClient?: DmkNetworkClient,
+  ) {
+    this.http = networkClient ?? networkClientFactory(config);
+  }
 
   async report(params: BlindSigningReportParams): Promise<Either<Error, void>> {
     try {
-      await axios.request({
-        method: "POST",
-        url: `${this.config.reporter.url}/blind-signing-events`,
-        data: { ...params, source: this.config.appSource },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
+      await this.http.post(
+        `${this.config.reporter.url}/blind-signing-events`,
+        { ...params, source: this.config.appSource },
+        { responseType: "void" },
+      );
     } catch (_error) {
       return Left(
         new Error(

@@ -1,6 +1,7 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
+import { accountOwnershipModuleFactory } from "@/account-ownership/di/accountOwnershipModuleFactory";
 import { calldataModuleFactory } from "@/calldata/di/calldataModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { configTypes } from "@/config/di/configTypes";
@@ -11,6 +12,7 @@ import {
 import { dynamicNetworkModuleFactory } from "@/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
 import { gatedSigningModuleFactory } from "@/gated-signing/di/gatedSigningModuleFactory";
+import { networkModuleFactory } from "@/network/di/networkModuleFactory";
 import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
 import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { proxyModuleFactory } from "@/proxy/di/proxyModuleFactory";
@@ -40,6 +42,8 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
 
   container.loadSync(
     configModuleFactory(config),
+    networkModuleFactory(config),
+    accountOwnershipModuleFactory(),
     externalPluginModuleFactory(),
     dynamicNetworkModuleFactory(),
     nftModuleFactory(),

@@ -3,7 +3,6 @@ import type { PkiCertificate } from "@/pki/model/PkiCertificate";
 export enum SolanaContextTypes {
   SOLANA_TOKEN = "solanaToken",
   SOLANA_LIFI = "solanaLifi",
-  TRANSACTION_CHECK = "transactionCheck",
   ERROR = "error",
 }
 
@@ -78,12 +77,6 @@ type SolanaContextSuccessPayloads = {
     payload: SolanaLifiPayload;
     certificate?: PkiCertificate;
   };
-  [SolanaContextTypes.TRANSACTION_CHECK]: {
-    payload: {
-      descriptor: string;
-    };
-    certificate?: PkiCertificate;
-  };
 };
 
 export type SolanaContextSuccess<
@@ -113,14 +106,4 @@ export type SolanaLifiContextResult =
   | SolanaLifiContextSuccess
   | SolanaContextError;
 
-export type SolanaTransactionCheckContextSuccess =
-  SolanaContextSuccess<SolanaContextTypes.TRANSACTION_CHECK>;
-
-export type SolanaTransactionCheckContextResult =
-  | SolanaTransactionCheckContextSuccess
-  | SolanaContextError;
-
-export type LoaderResult =
-  | SolanaTokenContextResult
-  | SolanaLifiContextResult
-  | SolanaTransactionCheckContextResult;
+export type LoaderResult = SolanaTokenContextResult | SolanaLifiContextResult;

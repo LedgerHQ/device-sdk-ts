@@ -3,8 +3,7 @@ import { ContainerModule } from "inversify";
 import { HttpTransactionCheckDataSource } from "@/transaction-check/data/HttpTransactionCheckDataSource";
 import { HttpTypedDataCheckDataSource } from "@/transaction-check/data/HttpTypedDataCheckDataSource";
 import { transactionCheckTypes } from "@/transaction-check/di/transactionCheckTypes";
-import { EthereumTransactionCheckContextLoader } from "@/transaction-check/domain/EthereumTransactionCheckContextLoader";
-import { SolanaTransactionCheckContextLoader } from "@/transaction-check/domain/SolanaTransactionCheckContextLoader";
+import { TransactionCheckContextLoader } from "@/transaction-check/domain/TransactionCheckContextLoader";
 import { TypedDataCheckContextLoader } from "@/transaction-check/domain/TypedDataCheckContextLoader";
 
 export const transactionCheckModuleFactory = () =>
@@ -12,11 +11,8 @@ export const transactionCheckModuleFactory = () =>
     bind(transactionCheckTypes.TransactionCheckDataSource).to(
       HttpTransactionCheckDataSource,
     );
-    bind(transactionCheckTypes.EthereumTransactionCheckContextLoader).to(
-      EthereumTransactionCheckContextLoader,
-    );
-    bind(transactionCheckTypes.SolanaTransactionCheckContextLoader).to(
-      SolanaTransactionCheckContextLoader,
+    bind(transactionCheckTypes.TransactionCheckContextLoader).to(
+      TransactionCheckContextLoader,
     );
     bind(transactionCheckTypes.TypedDataCheckDataSource).to(
       HttpTypedDataCheckDataSource,

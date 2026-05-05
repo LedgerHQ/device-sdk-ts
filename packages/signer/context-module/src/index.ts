@@ -1,3 +1,7 @@
+export * from "./account-ownership/data/AccountOwnershipDataSource";
+export * from "./account-ownership/data/AccountOwnershipError";
+export * from "./account-ownership/data/HttpAccountOwnershipDataSource";
+export * from "./account-ownership/domain/AccountOwnershipContextLoader";
 export * from "./calldata/data/CalldataDescriptorDataSource";
 export * from "./calldata/data/HttpCalldataDescriptorDataSource";
 export * from "./calldata/domain/CalldataContextLoader";
@@ -55,7 +59,6 @@ export * from "./shared/model/SolanaContextTypes";
 export * from "./shared/model/TransactionSubset";
 export * from "./shared/model/TypedDataClearSignContext";
 export * from "./shared/model/TypedDataContext";
-export * from "./shared/model/Web3ChecksTypes";
 export * from "./solana/data/HttpSolanaOwnerInfoDataSource";
 export * from "./solana/data/SolanaDataSource";
 export * from "./solana/domain/DefaultSolanaContextLoader";

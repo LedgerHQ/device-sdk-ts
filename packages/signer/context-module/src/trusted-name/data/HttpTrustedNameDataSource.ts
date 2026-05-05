@@ -1,29 +1,31 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { networkTypes } from "@/network/di/networkTypes";
+import { networkClientFactory } from "@/network/networkClientFactory";
 import {
   GetDomainNameInfosParams,
   GetTrustedNameInfosParams,
   TrustedNameDataSource,
   TrustedNamePayload,
 } from "@/trusted-name/data/TrustedNameDataSource";
-import PACKAGE from "@root/package.json";
 
 import { TrustedNameDto } from "./TrustedNameDto";
 
 @injectable()
 export class HttpTrustedNameDataSource implements TrustedNameDataSource {
+  private readonly http: DmkNetworkClient;
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
-  ) {}
+    @inject(networkTypes.NetworkClient)
+    networkClient?: DmkNetworkClient,
+  ) {
+    this.http = networkClient ?? networkClientFactory(config);
+  }
 
   public async getDomainNamePayload({
     chainId,
@@ -34,15 +36,12 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
     try {
       const type = "eoa"; // Externally owned account
       const source = "ens"; // Ethereum name service
-      const response = await axios.request<TrustedNameDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/forward/${domain}?types=${type}&sources=${source}&challenge=${challenge}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      dto = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/forward/${domain}`,
+        {
+          params: { types: type, sources: source, challenge },
         },
-      });
-      dto = response.data;
+      )) as TrustedNameDto;
     } catch (_error) {
       return Left(
         new Error(
@@ -89,15 +88,16 @@ export class HttpTrustedNameDataSource implements TrustedNameDataSource {
       sources = sources.filter(
         (source) => source === "ens" || source === "crypto_asset_list",
       );
-      const response = await axios.request<TrustedNameDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/reverse/${address}?types=${types.join(",")}&sources=${sources.join(",")}&challenge=${challenge}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      dto = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v2/names/ethereum/${chainId}/reverse/${address}`,
+        {
+          params: {
+            types: types.join(","),
+            sources: sources.join(","),
+            challenge,
+          },
         },
-      });
-      dto = response.data;
+      )) as TrustedNameDto;
     } catch (_error) {
       return Left(
         new Error(

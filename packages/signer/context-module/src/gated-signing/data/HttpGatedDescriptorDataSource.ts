@@ -1,16 +1,12 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
+import { networkTypes } from "@/network/di/networkTypes";
 import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
-import PACKAGE from "@root/package.json";
 
 import {
   type GatedDappsDto,
@@ -31,6 +27,8 @@ export class HttpGatedDescriptorDataSource
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   async getGatedDescriptor({
@@ -42,21 +40,14 @@ export class HttpGatedDescriptorDataSource
   > {
     let dto: GatedDappsDto | undefined;
     try {
-      const response = await axios.request<GatedDappsDto>({
-        method: "GET",
-        url: `${this.config.cal.url}/gated_dapps`,
+      dto = (await this.http.get(`${this.config.cal.url}/gated_dapps`, {
         params: {
           ref: `branch:${this.config.cal.branch}`,
           output: "gated_descriptors,app,category",
           contracts: contractAddress,
           chain_id: chainId,
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
-      dto = response.data;
+      })) as GatedDappsDto;
     } catch (error) {
       return Left(
         new Error(
@@ -114,21 +105,14 @@ export class HttpGatedDescriptorDataSource
   > {
     let dto: GatedDappsDto | undefined;
     try {
-      const response = await axios.request<GatedDappsDto>({
-        method: "GET",
-        url: `${this.config.cal.url}/gated_dapps`,
+      dto = (await this.http.get(`${this.config.cal.url}/gated_dapps`, {
         params: {
           ref: `branch:${this.config.cal.branch}`,
           output: "gated_descriptors",
           contracts: contractAddress,
           chain_id: chainId,
         },
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
-        },
-      });
-      dto = response.data;
+      })) as GatedDappsDto;
     } catch (error) {
       return Left(
         new Error(

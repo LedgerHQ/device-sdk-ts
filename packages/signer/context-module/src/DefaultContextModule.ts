@@ -1,6 +1,7 @@
 import { type Container } from "inversify";
 import { Left } from "purify-ts";
 
+import { accountOwnershipTypes } from "@/account-ownership/di/accountOwnershipTypes";
 import { calldataTypes } from "@/calldata/di/calldataTypes";
 import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
 import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningReporterDatasource";
@@ -25,12 +26,10 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
+import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import { solanaContextTypes } from "./solana/di/solanaContextTypes";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
-import {
-  type SolanaTransactionContext,
-  type SolanaTransactionContextResult,
-} from "./solana/domain/solanaContextTypes";
+import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
 import { tokenTypes } from "./token/di/tokenTypes";
 import { transactionCheckTypes } from "./transaction-check/di/transactionCheckTypes";
 import { typedDataTypes } from "./typed-data/di/typedDataTypes";
@@ -82,6 +81,9 @@ export class DefaultContextModule implements ContextModule {
   private _getDefaultLoaders(): ContextLoader<unknown>[] {
     return [
       this._container.get<ContextLoader>(
+        accountOwnershipTypes.AccountOwnershipContextLoader,
+      ),
+      this._container.get<ContextLoader>(
         externalPluginTypes.ExternalPluginContextLoader,
       ),
       this._container.get<ContextLoader>(
@@ -101,7 +103,7 @@ export class DefaultContextModule implements ContextModule {
         gatedSigningTypes.GatedSigningTypedDataContextLoader,
       ),
       this._container.get<ContextLoader>(
-        transactionCheckTypes.EthereumTransactionCheckContextLoader,
+        transactionCheckTypes.TransactionCheckContextLoader,
       ),
       this._container.get<ContextLoader>(
         transactionCheckTypes.TypedDataCheckContextLoader,

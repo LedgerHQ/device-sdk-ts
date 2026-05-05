@@ -1,12 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import axios from "axios";
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { LEDGER_CLIENT_VERSION_HEADER } from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { HttpSolanaTokenDataSource } from "./HttpSolanaTokenDataSource";
 import {
@@ -14,10 +12,9 @@ import {
   type TokenDataResponse,
 } from "./SolanaTokenDataSource";
 
-vi.mock("axios");
-
 describe("HttpSolanaTokenDataSource", () => {
   let datasource: SolanaTokenDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
   const tokenInternalId = "sol:usdc";
   const config: ContextModuleServiceConfig = {
     cal: {
@@ -30,40 +27,35 @@ describe("HttpSolanaTokenDataSource", () => {
   const errorMessage = (id: string) =>
     `[ContextModule] HttpSolanaTokenDataSource: no token metadata for id ${id}`;
 
-  beforeAll(() => {
-    datasource = new HttpSolanaTokenDataSource(config);
-  });
-
   beforeEach(() => {
     vi.clearAllMocks();
+    httpMock = { get: vi.fn() };
+    datasource = new HttpSolanaTokenDataSource(
+      config,
+      httpMock as unknown as DmkNetworkClient,
+    );
   });
 
-  it("should call axios with the ledger client version header and correct params", async () => {
+  it("should call http.get with the correct url and params", async () => {
     // given
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
+    httpMock.get.mockResolvedValue([]);
 
     // when
     await datasource.getTokenInfosPayload({ tokenInternalId });
 
     // then
-    expect(requestSpy).toHaveBeenCalledTimes(1);
-    expect(requestSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        method: "GET",
-        url: `${config.cal.url}/tokens`,
-        params: expect.objectContaining({
-          id: tokenInternalId,
-          ref: `branch:${config.cal.branch}`,
-        }),
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-        },
-      }),
-    );
+    expect(httpMock.get).toHaveBeenCalledTimes(1);
+    expect(httpMock.get).toHaveBeenCalledWith(`${config.cal.url}/tokens`, {
+      params: {
+        id: tokenInternalId,
+        output:
+          "id,name,network,network_family,network_type,exchange_app_config_serialized,live_signature,ticker,decimals,blockchain_name,chain_id,contract_address,descriptor,descriptor_exchange_app,units,symbol",
+        ref: `branch:${config.cal.branch}`,
+      },
+    });
   });
 
-  it("should return Right(data[0]) when axios responds with a non-empty array", async () => {
+  it("should return Right(data[0]) when http.get responds with a non-empty array", async () => {
     // given
     const response0: TokenDataResponse = {
       descriptor: {
@@ -75,7 +67,7 @@ describe("HttpSolanaTokenDataSource", () => {
       },
     } as any;
 
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [response0] });
+    httpMock.get.mockResolvedValue([response0]);
 
     // when
     const result = await datasource.getTokenInfosPayload({ tokenInternalId });
@@ -85,14 +77,14 @@ describe("HttpSolanaTokenDataSource", () => {
   });
 
   describe.each`
-    caseName                    | apiResponse
-    ${"data is undefined"}      | ${{ data: undefined }}
-    ${"data array is empty"}    | ${{ data: [] }}
-    ${"first element is falsy"} | ${{ data: [undefined] }}
-  `("Error cases", ({ caseName, apiResponse }) => {
+    caseName                    | responseBody
+    ${"data is undefined"}      | ${null}
+    ${"data array is empty"}    | ${[]}
+    ${"first element is falsy"} | ${[null]}
+  `("Error cases", ({ caseName, responseBody }) => {
     it(`should return an error when ${caseName}`, async () => {
       // given
-      vi.spyOn(axios, "request").mockResolvedValue(apiResponse);
+      httpMock.get.mockResolvedValue(responseBody);
 
       // when
       const result = await datasource.getTokenInfosPayload({ tokenInternalId });
@@ -102,9 +94,9 @@ describe("HttpSolanaTokenDataSource", () => {
     });
   });
 
-  it("should return an error when axios throws", async () => {
+  it("should return an error when http.get throws", async () => {
     // given
-    vi.spyOn(axios, "request").mockRejectedValue(new Error("network"));
+    httpMock.get.mockRejectedValue(new Error("network"));
 
     // when
     const result = await datasource.getTokenInfosPayload({ tokenInternalId });

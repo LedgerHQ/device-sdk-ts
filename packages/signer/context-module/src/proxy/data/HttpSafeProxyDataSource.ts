@@ -1,14 +1,10 @@
-import axios from "axios";
+import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
+import { networkTypes } from "@/network/di/networkTypes";
 
 import { SafeProxyImplementationAddressDto } from "./dto/SafeProxyImplementationAddressDto";
 import {
@@ -22,6 +18,8 @@ export class HttpSafeProxyDataSource implements ProxyDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
+    @inject(networkTypes.NetworkClient)
+    private readonly http: DmkNetworkClient,
   ) {}
 
   async getProxyImplementationAddress({
@@ -33,19 +31,15 @@ export class HttpSafeProxyDataSource implements ProxyDataSource {
   > {
     let dto: SafeProxyImplementationAddressDto | undefined;
     try {
-      const response = await axios.request<SafeProxyImplementationAddressDto>({
-        method: "GET",
-        url: `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: this.config.originToken,
+      dto = (await this.http.get(
+        `${this.config.metadataServiceDomain.url}/v3/ethereum/${chainId}/contract/proxy/${proxyAddress}`,
+        {
+          params: {
+            challenge,
+            resolver: "SAFE_GATEWAY",
+          },
         },
-        params: {
-          challenge,
-          resolver: "SAFE_GATEWAY",
-        },
-      });
-      dto = response.data;
+      )) as SafeProxyImplementationAddressDto;
     } catch (_error) {
       return Left(
         new Error(

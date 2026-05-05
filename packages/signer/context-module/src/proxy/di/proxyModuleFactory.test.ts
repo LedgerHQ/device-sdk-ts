@@ -1,7 +1,9 @@
+import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { networkTypes } from "@/network/di/networkTypes";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { HttpProxyDataSource } from "@/proxy/data/HttpProxyDataSource";
@@ -30,6 +32,10 @@ describe("proxyModuleFactory", () => {
     container
       .bind(pkiTypes.PkiCertificateLoader)
       .toConstantValue(mockPkiCertificateLoader);
+    container.bind(networkTypes.NetworkClient).toConstantValue({
+      get: vi.fn(),
+      post: vi.fn(),
+    } as unknown as DmkNetworkClient);
   });
 
   describe("when datasource config is undefined", () => {

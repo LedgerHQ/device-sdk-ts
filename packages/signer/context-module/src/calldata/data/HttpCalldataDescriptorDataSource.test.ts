@@ -1,5 +1,7 @@
-import { DeviceModelId } from "@ledgerhq/device-management-kit";
-import axios from "axios";
+import {
+  DeviceModelId,
+  type DmkNetworkClient,
+} from "@ledgerhq/device-management-kit";
 import { Left } from "purify-ts";
 
 import type {
@@ -11,15 +13,9 @@ import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 import { type CalldataDescriptorDataSource } from "@/index";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/pki/model/PkiCertificate";
-import {
-  LEDGER_CLIENT_VERSION_HEADER,
-  LEDGER_ORIGIN_TOKEN_HEADER,
-} from "@/shared/constant/HttpHeaders";
-import PACKAGE from "@root/package.json";
 
 import { HttpCalldataDescriptorDataSource } from "./HttpCalldataDescriptorDataSource";
 
-vi.mock("axios");
 const config = {
   cal: {
     url: "https://crypto-assets-service.api.ledger.com/v1",
@@ -31,6 +27,7 @@ const config = {
 
 describe("HttpCalldataDescriptorDataSource", () => {
   let datasource: CalldataDescriptorDataSource;
+  let httpMock: { get: ReturnType<typeof vi.fn> };
   let transactionInfo: CalldataTransactionInfoV1;
   let enums: CalldataEnumV1;
   let fieldToken: CalldataFieldV1;
@@ -46,13 +43,18 @@ describe("HttpCalldataDescriptorDataSource", () => {
     loadCertificate: vi.fn(),
   };
 
-  beforeAll(() => {
-    vi.clearAllMocks();
+  beforeEach(() => {
+    httpMock = { get: vi.fn() };
     datasource = new HttpCalldataDescriptorDataSource(
       config,
       certificateLoaderMock as unknown as PkiCertificateLoader,
       "dapps",
+      httpMock as unknown as DmkNetworkClient,
     );
+  });
+
+  beforeAll(() => {
+    vi.clearAllMocks();
 
     transactionInfo = {
       descriptor: {
@@ -358,44 +360,16 @@ describe("HttpCalldataDescriptorDataSource", () => {
     };
   }
 
-  it("should call axios with the ledger client version header", async () => {
-    // GIVEN
-    const version = `context-module/${PACKAGE.version}`;
-    const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-    vi.spyOn(axios, "request").mockImplementation(requestSpy);
-    vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
-      undefined,
-    );
-
-    // WHEN
-    await datasource.getCalldataDescriptors({
-      deviceModelId: DeviceModelId.FLEX,
-      chainId: 1,
-      address: "0x0abc",
-      selector: "0x01ff",
-    });
-
-    // THEN
-    expect(requestSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: version,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-        },
-      }),
-    );
-  });
-
   it.each([["dapps"], ["tokens"]])(
-    "should call axios with the correct url for endpoint '%s'",
+    "should call http.get with the correct url for endpoint '%s'",
     async (endpoint) => {
       // GIVEN
-      const requestSpy = vi.fn(() => Promise.resolve({ data: [] }));
-      vi.spyOn(axios, "request").mockImplementation(requestSpy);
+      httpMock.get.mockResolvedValue([]);
       const customDataSource = new HttpCalldataDescriptorDataSource(
         config,
         certificateLoaderMock as unknown as PkiCertificateLoader,
         endpoint,
+        httpMock as unknown as DmkNetworkClient,
       );
 
       // WHEN
@@ -407,17 +381,24 @@ describe("HttpCalldataDescriptorDataSource", () => {
       });
 
       // THEN
-      expect(requestSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          url: `https://crypto-assets-service.api.ledger.com/v1/${endpoint}`,
-        }),
+      expect(httpMock.get).toHaveBeenCalledWith(
+        `${config.cal.url}/${endpoint}`,
+        {
+          params: {
+            output: "descriptors_calldata",
+            chain_id: 1,
+            contracts: "0x0abc",
+            contract_address: "0x0abc",
+            ref: `branch:${config.cal.branch}`,
+          },
+        },
       );
     },
   );
 
-  it("should return an error when axios throws an error", async () => {
+  it("should return an error when http.get throws an error", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockRejectedValue(new Error());
+    httpMock.get.mockRejectedValue(new Error("boom"));
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -434,7 +415,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpCalldataDescriptorDataSource: Failed to fetch calldata descriptors: Error",
+          "[ContextModule] HttpCalldataDescriptorDataSource: Failed to fetch calldata descriptors: Error: boom",
         ),
       ),
     );
@@ -442,8 +423,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
 
   it("should return an error when no payload is returned", async () => {
     // GIVEN
-    const response = { data: { test: "" } };
-    vi.spyOn(axios, "request").mockResolvedValue(response);
+    httpMock.get.mockResolvedValue({ test: "" });
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -468,7 +448,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
 
   it("should return an error when an empty array is returned", async () => {
     // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [] });
+    httpMock.get.mockResolvedValue([]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -494,7 +474,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
   it("should return an error when selector is not found", async () => {
     // GIVEN
     const calldataDTO = createCalldata(transactionInfo, enums, [fieldToken]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -525,7 +505,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       fieldNft,
       fieldEnum,
     ]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -634,7 +614,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
         0x01, 0x02, 0x03, 0x04, 0x15, 0x04, 0x05, 0x06, 0x07, 0x08,
       ]),
     };
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValueOnce(
       certificate,
     );
@@ -742,7 +722,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -788,9 +768,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({
-      data: [{}, {}, calldataDTO],
-    });
+    httpMock.get.mockResolvedValue([{}, {}, calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -844,7 +822,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [fieldAmount, fieldDatetime, fieldUnit, fieldDuration],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -934,7 +912,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
         "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f0001010101050201140514ae7ab96520de3a18e5e111b5eaab095312d7fe84",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1020,7 +998,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
         "0001010112416d6f756e7420746f2065786368616e6765020102033b0001010115000101010101020120030a00010101020000040103021f00010101010502011405147d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1054,7 +1032,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
   it("Calldata with CALLDATA fields references", async () => {
     // GIVEN
     const calldataDTO = createCalldata(transactionInfo, [], [fieldCalldata]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1175,7 +1153,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [fieldCalldataMinimal],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1244,7 +1222,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
         },
       },
     };
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1281,7 +1259,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       enums,
       [fieldToken],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1311,7 +1289,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       ["badEnum"] as unknown as CalldataEnumV1,
       [fieldToken],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1341,7 +1319,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       { 0: { 1: { data: "1234" } } } as unknown as CalldataEnumV1,
       [fieldToken],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1380,7 +1358,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       },
       [fieldToken],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1410,7 +1388,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       [],
       [{ descriptor: 3 }],
     );
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1447,7 +1425,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1484,7 +1462,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1527,7 +1505,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1564,7 +1542,7 @@ describe("HttpCalldataDescriptorDataSource", () => {
       descriptor: "000100010c546f20726563697069667",
     };
     const calldataDTO = createCalldata(transactionInfo, [], [field]);
-    vi.spyOn(axios, "request").mockResolvedValue({ data: [calldataDTO] });
+    httpMock.get.mockResolvedValue([calldataDTO]);
     vi.spyOn(certificateLoaderMock, "loadCertificate").mockResolvedValue(
       undefined,
     );
@@ -1584,29 +1562,6 @@ describe("HttpCalldataDescriptorDataSource", () => {
           "[ContextModule] HttpCalldataDescriptorDataSource: Invalid response for contract 0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9 and selector 0x69328dec",
         ),
       ),
-    );
-  });
-
-  it("should call axios with the correct headers", async () => {
-    // GIVEN
-    vi.spyOn(axios, "request").mockResolvedValueOnce({ data: {} });
-
-    // WHEN
-    await datasource.getCalldataDescriptors({
-      deviceModelId: DeviceModelId.FLEX,
-      chainId: 1,
-      address: "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9",
-      selector: "0x69328dec",
-    });
-
-    // THEN
-    expect(axios.request).toHaveBeenCalledWith(
-      expect.objectContaining({
-        headers: {
-          [LEDGER_CLIENT_VERSION_HEADER]: `context-module/${PACKAGE.version}`,
-          [LEDGER_ORIGIN_TOKEN_HEADER]: config.originToken,
-        },
-      }),
     );
   });
 });
