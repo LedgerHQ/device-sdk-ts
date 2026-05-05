@@ -55,3 +55,12 @@ export class DeviceBusyError implements DmkError {
       originalError ?? new Error("Device is busy, please try again later");
   }
 }
+
+export class InvalidArgumentError implements DmkError {
+  readonly _tag = "InvalidArgumentError";
+  readonly originalError: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Invalid argument.");
+  }
+}

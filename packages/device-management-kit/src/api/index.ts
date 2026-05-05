@@ -24,6 +24,13 @@ export {
 } from "@api/command/os/BackupStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
+  DeleteLanguagePackCommand,
+  type DeleteLanguagePackCommandArgs,
+  DeleteLanguagePackCommandError,
+  type DeleteLanguagePackCommandResult,
+  type DeleteLanguagePackErrorCodes,
+} from "@api/command/os/DeleteLanguagePackCommand";
+export {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
@@ -58,6 +65,14 @@ export {
   type ListAppsResponse,
 } from "@api/command/os/ListAppsCommand";
 export {
+  ListLanguagePackCommand,
+  type ListLanguagePackCommandArgs,
+  ListLanguagePackCommandError,
+  type ListLanguagePackCommandResult,
+  type ListLanguagePackErrorCodes,
+  type ListLanguagePackResponse,
+} from "@api/command/os/ListLanguagePackCommand";
+export {
   type LoadCertificateArgs,
   LoadCertificateCommand,
   type LoadCertificateErrorCodes,
@@ -89,6 +104,7 @@ export { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDe
 export { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
 export {
   AppAlreadyInstalledDAError,
+  DeleteLanguagePackDAError,
   DeviceLockedError,
   DeviceNotOnboardedError,
   OutOfMemoryDAError,
@@ -107,6 +123,7 @@ export type {
   GoToDashboardDARequiredInteraction,
   GoToDashboardDAState,
 } from "@api/device-action/os/GoToDashboard/types";
+export { InstallLanguagePackageDeviceAction } from "@api/device-action/os/InstallLanguagePackage/InstallLanguagePackageDeviceAction";
 export { InstallOrUpdateAppsDeviceAction } from "@api/device-action/os/InstallOrUpdateApps/InstallOrUpdateAppsDeviceAction";
 export { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDeviceAction";
 export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListAppsWithMetadata/ListAppsWithMetadataDeviceAction";

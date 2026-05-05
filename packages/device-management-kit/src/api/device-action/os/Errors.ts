@@ -73,3 +73,43 @@ export class UnsupportedApplicationDAError implements DmkError {
     );
   }
 }
+
+export class MissingLanguagePackagesForOSDAError implements DmkError {
+  readonly _tag = "MissingLanguagePackagesForOSDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(
+      message ?? "Missing Language Packages for OS DAError.",
+    );
+  }
+}
+
+export class MissingLanguagePackageDAError implements DmkError {
+  readonly _tag = "MissingLanguagePackageDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(
+      message ?? "Missing Language Package DAError.",
+    );
+  }
+}
+
+export class DeleteLanguagePackDAError implements DmkError {
+  readonly _tag = "DeleteLanguagePackDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Delete language pack failed.");
+  }
+}
+
+export class NetworkDAError implements DmkError {
+  readonly _tag = "NetworkDAError";
+  readonly originalError?: Error;
+
+  constructor(message?: string) {
+    this.originalError = new Error(message ?? "Network error.");
+  }
+}

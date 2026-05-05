@@ -14,6 +14,7 @@ import {
   BtcAppCommandErrorFactory,
   type BtcErrorCodes,
 } from "@internal/app-binder/command/utils/bitcoinAppErrors";
+import { PROTOCOL_VERSION } from "@internal/app-binder/command/utils/constants";
 import { BtcCommandUtils } from "@internal/utils/BtcCommandUtils";
 
 export type ContinueCommandArgs = {
@@ -44,7 +45,7 @@ export class ContinueCommand
       cla: 0xf8,
       ins: 0x01,
       p1: 0x00,
-      p2: 0x00,
+      p2: PROTOCOL_VERSION,
     })
       .addBufferToData(this._args.payload)
       .build();

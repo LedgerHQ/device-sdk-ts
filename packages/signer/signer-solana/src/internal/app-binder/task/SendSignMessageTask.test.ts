@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   CommandResultFactory,
+  InvalidArgumentError,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 
@@ -413,6 +414,102 @@ describe("SendSignMessageTask", () => {
 
         expect("error" in res).toBe(true);
         expect((res as any).error).toBeInstanceOf(InvalidStatusWordError);
+      });
+    });
+
+    describe("V1", () => {
+      it("includes extra signers in V1 OCM alongside user pubkey", async () => {
+        const msg = new TextEncoder().encode("hello");
+        const rawSig = new Uint8Array(64).fill(0x99);
+        const extraSigner = new Uint8Array(32).fill(0x22);
+
+        apiMock.sendCommand
+          .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+          .mockResolvedValueOnce(CommandResultFactory({ data: rawSig }));
+
+        const res = await makeTask(apiMock, {
+          sendingData: msg,
+          version: SignMessageVersion.V1,
+          signers: [extraSigner],
+        }).run();
+
+        expect("data" in res).toBe(true);
+        const envelope = DefaultBs58Encoder.decode(
+          (res as any).data.signature as string,
+        );
+        const ocm = envelope.slice(65);
+        // PUBKEY (0x11) < extraSigner (0x22) → sorted: PUBKEY first
+        expect(ocm[17]).toBe(2);
+        expect(ocm.slice(18, 50)).toEqual(PUBKEY);
+        expect(ocm.slice(50, 82)).toEqual(extraSigner);
+      });
+
+      it("dedupes user pubkey when it also appears in signers", async () => {
+        const msg = new TextEncoder().encode("hi");
+        const rawSig = new Uint8Array(64).fill(0xaa);
+
+        apiMock.sendCommand
+          .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+          .mockResolvedValueOnce(CommandResultFactory({ data: rawSig }));
+
+        const res = await makeTask(apiMock, {
+          sendingData: msg,
+          version: SignMessageVersion.V1,
+          signers: [PUBKEY],
+        }).run();
+
+        expect("data" in res).toBe(true);
+        const envelope = DefaultBs58Encoder.decode(
+          (res as any).data.signature as string,
+        );
+        const ocm = envelope.slice(65);
+        expect(ocm[17]).toBe(1);
+      });
+
+      it("rejects a signer that is not 32 bytes", async () => {
+        const res = await makeTask(apiMock, {
+          sendingData: new Uint8Array([1]),
+          version: SignMessageVersion.V1,
+          signers: [new Uint8Array(16)],
+        }).run();
+
+        expect(apiMock.sendCommand).toHaveBeenCalledTimes(0);
+        expect((res as any).error).toBeInstanceOf(InvalidArgumentError);
+        expect((res as any).error.originalError.message).toContain("16 bytes");
+      });
+
+      it("rejects when total signer count exceeds 255", async () => {
+        const res = await makeTask(apiMock, {
+          sendingData: new Uint8Array([1]),
+          version: SignMessageVersion.V1,
+          signers: Array.from({ length: 255 }, () => new Uint8Array(32)),
+        }).run();
+
+        expect(apiMock.sendCommand).toHaveBeenCalledTimes(0);
+        expect((res as any).error).toBeInstanceOf(InvalidArgumentError);
+        expect((res as any).error.originalError.message).toContain("256");
+      });
+
+      it("uses only user pubkey when no extra signers provided", async () => {
+        const msg = new TextEncoder().encode("hi");
+        const rawSig = new Uint8Array(64).fill(0xbb);
+
+        apiMock.sendCommand
+          .mockResolvedValueOnce(CommandResultFactory({ data: PUBKEY_BASE58 }))
+          .mockResolvedValueOnce(CommandResultFactory({ data: rawSig }));
+
+        const res = await makeTask(apiMock, {
+          sendingData: msg,
+          version: SignMessageVersion.V1,
+        }).run();
+
+        expect("data" in res).toBe(true);
+        const envelope = DefaultBs58Encoder.decode(
+          (res as any).data.signature as string,
+        );
+        const ocm = envelope.slice(65);
+        expect(ocm[17]).toBe(1);
+        expect(ocm.slice(18, 50)).toEqual(PUBKEY);
       });
     });
 

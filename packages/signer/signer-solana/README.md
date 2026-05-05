@@ -285,16 +285,18 @@ const { observable, cancel } = signerSolana.signMessage(
       skipOpenApp?: boolean;
       version?: SignMessageVersion; // defaults to V0
       appDomain?: string; // V0 only
+      signers?: Uint8Array[]; // V1 only
     };
     ```
 
   - `skipOpenApp`: Skip the automatic open-app step.
   - `version`: The off-chain message signing mode. Defaults to `SignMessageVersion.V0`.
     - **V0** (default) — original off-chain message header with `appDomain`, format detection, and up to 65 515 bytes. Falls back to Legacy on `6a81`.
-    - **V1** — simplified header: no `appDomain`, no format byte. Up to 65 535 bytes. Falls back to V0 -> Legacy on `6a81`. Requires Solana device app version 1.14+.
+    - **V1** — simplified header per [sRFC 38](https://github.com/solana-foundation/SRFCs/discussions/3): no `appDomain`, no format byte. Up to 65 535 bytes. Falls back to V0 -> Legacy on `6a81`. Requires Solana device app version 1.14+.
     - **Legacy** — compact header for backward compatibility with old Solana app firmware. Current firmware will reject it with `6a81`.
     - **Raw** — pass-through mode: sends the caller-provided `Uint8Array` payload directly with no header wrapping. Use when you have already built a valid off-chain message. Returns a plain base58 signature (no envelope).
-  - `appDomain`: Application domain string for V0 headers. Encoded as UTF-8 and padded/truncated to 32 bytes. Ignored for V1, Legacy, and Raw.
+  - `appDomain`: V0 only. Application domain string included in the off-chain message header. Encoded as UTF-8 and padded/truncated to 32 bytes. Ignored for V1, Legacy, and Raw.
+  - `signers`: V1 only. Additional required signers to include in the off-chain message header alongside the user's key. Per sRFC 38, this is the recommended replacement for the V0 `appDomain` field — pass the dApp's public key here to bind the message to a specific application. Signers are sorted and deduplicated automatically. Each entry must be a 32-byte Ed25519 public key; at most 254 additional signers are supported (1 slot reserved for the user's key). Passing a signer with the wrong length or exceeding the limit returns an error before any device communication. Ignored for V0, Legacy, and Raw.
 
 #### **Returns**
 
@@ -307,6 +309,26 @@ type SignMessageOutput = {
 ```
 
 - `cancel` A function to cancel the action on the Ledger device.
+
+#### **Examples**
+
+V0 with app domain:
+
+```typescript
+const { observable } = signerSolana.signMessage("44'/501'/0'", "Hello World", {
+  version: SignMessageVersion.V0,
+  appDomain: "my-app.com",
+});
+```
+
+V1 with additional required signer (replaces `appDomain` per sRFC 38):
+
+```typescript
+const { observable } = signerSolana.signMessage("44'/501'/0'", "Hello World", {
+  version: SignMessageVersion.V1,
+  signers: [dAppPubkeyBytes], // dApp's Ed25519 public key as Uint8Array(32)
+});
+```
 
 ---
 

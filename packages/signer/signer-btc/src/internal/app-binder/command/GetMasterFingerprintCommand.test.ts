@@ -8,7 +8,7 @@ import { InvalidStatusWordError } from "@ledgerhq/device-management-kit";
 import { GetMasterFingerprintCommand } from "./GetMasterFingerprintCommand";
 
 const GET_MASTER_FINGERPRINT_APDU = new Uint8Array([
-  0xe1, 0x05, 0x00, 0x00, 0x00,
+  0xe1, 0x05, 0x00, 0x01, 0x00,
 ]);
 
 const GET_MASTER_FINGERPRINT_RESPONSE = new Uint8Array([

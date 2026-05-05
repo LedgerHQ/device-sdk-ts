@@ -81,6 +81,46 @@ describe("DmkNetworkClientHelpers", () => {
       expect(url.searchParams.has("skip")).toBe(false);
       expect(url.searchParams.has("alsoSkip")).toBe(false);
     });
+
+    it("should preserve a pre-existing query string in the input URL", () => {
+      const url = buildUrl({
+        url: "https://api.example.com/items?keep=1",
+        params: { chain: 2 },
+      });
+      expect(url.searchParams.get("keep")).toBe("1");
+      expect(url.searchParams.get("chain")).toBe("2");
+    });
+
+    it("should percent-encode keys and values", () => {
+      const url = buildUrl({
+        url: "https://api.example.com/items",
+        params: { "a key": "a value&b" },
+      });
+      expect(url.toString()).toBe(
+        "https://api.example.com/items?a%20key=a%20value%26b",
+      );
+    });
+
+    it("should still build the URL when URLSearchParams.set is unavailable (React Native regression)", () => {
+      const original = URLSearchParams.prototype.set;
+      // Simulate a runtime (e.g. some React Native versions) where
+      // URLSearchParams exists but `set` is not implemented.
+      URLSearchParams.prototype.set = function notImplemented(): never {
+        throw new Error("URLSearchParams.set is not implemented");
+      };
+      try {
+        const url = buildUrl({
+          url: "https://api.example.com/items",
+          params: { chain: 1, contract: "0xabc" },
+        });
+        // Reading `searchParams.get` in jsdom does not call `set`, so it is
+        // safe to assert against the parsed URL here.
+        expect(url.toString()).toContain("chain=1");
+        expect(url.toString()).toContain("contract=0xabc");
+      } finally {
+        URLSearchParams.prototype.set = original;
+      }
+    });
   });
 
   describe("hasHeader", () => {
@@ -112,6 +152,26 @@ describe("DmkNetworkClientHelpers", () => {
       expect(isRawBody(42)).toBe(false);
       expect(isRawBody(null)).toBe(false);
       expect(isRawBody(undefined)).toBe(false);
+    });
+
+    it("should not throw when optional Web globals are missing (React Native regression)", () => {
+      const globals = globalThis as unknown as Record<string, unknown>;
+      const names = ["Blob", "FormData", "URLSearchParams", "ReadableStream"];
+      const saved: Record<string, unknown> = {};
+      for (const name of names) {
+        saved[name] = globals[name];
+        delete globals[name];
+      }
+      try {
+        expect(() => isRawBody({ foo: "bar" })).not.toThrow();
+        expect(isRawBody({ foo: "bar" })).toBe(false);
+        expect(isRawBody("raw")).toBe(true);
+        expect(isRawBody(new Uint8Array([1]))).toBe(true);
+      } finally {
+        for (const name of names) {
+          globals[name] = saved[name];
+        }
+      }
     });
   });
 
