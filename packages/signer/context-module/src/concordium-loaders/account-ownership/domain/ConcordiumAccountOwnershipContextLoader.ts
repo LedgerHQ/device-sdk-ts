@@ -1,38 +1,40 @@
 import { type DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import type {
-  AccountOwnershipDataSource,
-  AccountOwnershipNetwork,
-} from "@/chain-agnostic-loaders/account-ownership/data/AccountOwnershipDataSource";
-import { accountOwnershipTypes } from "@/chain-agnostic-loaders/account-ownership/di/accountOwnershipTypes";
 import { pkiTypes } from "@/chain-agnostic-loaders/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/chain-agnostic-loaders/pki/domain/PkiCertificateLoader";
+import type {
+  ConcordiumAccountOwnershipDataSource,
+  ConcordiumAccountOwnershipNetwork,
+} from "@/concordium-loaders/account-ownership/data/ConcordiumAccountOwnershipDataSource";
+import { concordiumAccountOwnershipTypes } from "@/concordium-loaders/account-ownership/di/concordiumAccountOwnershipTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-export type AccountOwnershipContextInput = {
+export type ConcordiumAccountOwnershipContextInput = {
   publicKey: string;
   address: string;
-  network: AccountOwnershipNetwork;
+  network: ConcordiumAccountOwnershipNetwork;
   deviceModelId: DeviceModelId;
   challenge: string;
 };
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
-  ClearSignContextType.ACCOUNT_OWNERSHIP,
+  ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
 ];
 
 @injectable()
-export class AccountOwnershipContextLoader
-  implements ContextLoader<AccountOwnershipContextInput>
+export class ConcordiumAccountOwnershipContextLoader
+  implements ContextLoader<ConcordiumAccountOwnershipContextInput>
 {
   constructor(
-    @inject(accountOwnershipTypes.AccountOwnershipDataSource)
-    private readonly _dataSource: AccountOwnershipDataSource,
+    @inject(
+      concordiumAccountOwnershipTypes.ConcordiumAccountOwnershipDataSource,
+    )
+    private readonly _dataSource: ConcordiumAccountOwnershipDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
   ) {}
@@ -40,7 +42,7 @@ export class AccountOwnershipContextLoader
   canHandle(
     input: unknown,
     expectedTypes: ClearSignContextType[],
-  ): input is AccountOwnershipContextInput {
+  ): input is ConcordiumAccountOwnershipContextInput {
     return (
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type)) &&
       typeof input === "object" &&
@@ -67,7 +69,7 @@ export class AccountOwnershipContextLoader
     network,
     deviceModelId,
     challenge,
-  }: AccountOwnershipContextInput): Promise<ClearSignContext[]> {
+  }: ConcordiumAccountOwnershipContextInput): Promise<ClearSignContext[]> {
     const descriptor = await this._dataSource.getDescriptor({
       publicKey,
       address,
@@ -85,7 +87,7 @@ export class AccountOwnershipContextLoader
         ]),
       Right: async (result): Promise<ClearSignContext[]> => [
         {
-          type: ClearSignContextType.ACCOUNT_OWNERSHIP,
+          type: ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
           payload: result.signedDescriptor,
           certificate: await this._certificateLoader.loadCertificate({
             keyId: result.keyId,

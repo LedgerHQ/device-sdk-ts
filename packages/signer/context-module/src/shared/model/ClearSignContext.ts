@@ -28,6 +28,8 @@ export type SolanaLifiPayload = {
 };
 
 export enum ClearSignContextType {
+  ERROR = "error",
+  CONCORDIUM_ACCOUNT_OWNERSHIP = "accountOwnership",
   ETHEREUM_TOKEN = "ethereumToken",
   ETHEREUM_NFT = "ethereumNft",
   ETHEREUM_TRUSTED_NAME = "ethereumTrustedName",
@@ -43,11 +45,9 @@ export enum ClearSignContextType {
   ETHEREUM_SAFE = "ethereumSafe",
   ETHEREUM_SIGNER = "ethereumSigner",
   ETHEREUM_GATED_SIGNING = "ethereumGatedSigning",
-  ACCOUNT_OWNERSHIP = "accountOwnership",
   SOLANA_TOKEN = "solanaToken",
   SOLANA_LIFI = "solanaLifi",
   SOLANA_TRUSTED_NAME = "solanaTrustedName",
-  ERROR = "error",
 }
 
 export enum ClearSignContextReferenceType {
@@ -195,8 +195,7 @@ export type EthereumClearSignContextSuccessType =
   | ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON
   | ClearSignContextType.ETHEREUM_SAFE
   | ClearSignContextType.ETHEREUM_SIGNER
-  | ClearSignContextType.ETHEREUM_GATED_SIGNING
-  | ClearSignContextType.ACCOUNT_OWNERSHIP;
+  | ClearSignContextType.ETHEREUM_GATED_SIGNING;
 
 /**
  * A ClearSignContextSuccess narrowed to only Ethereum-relevant types.
@@ -225,7 +224,6 @@ export const ETHEREUM_CLEAR_SIGN_CONTEXT_SUCCESS_TYPES =
     ClearSignContextType.ETHEREUM_SAFE,
     ClearSignContextType.ETHEREUM_SIGNER,
     ClearSignContextType.ETHEREUM_GATED_SIGNING,
-    ClearSignContextType.ACCOUNT_OWNERSHIP,
   ]);
 
 /**

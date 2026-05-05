@@ -1,4 +1,4 @@
-export type AccountOwnershipDto = {
+export type ConcordiumAccountOwnershipDto = {
   signedDescriptor: string;
   keyId: string;
   keyUsage: string;

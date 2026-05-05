@@ -1,4 +1,4 @@
-import { type AccountOwnershipNetwork } from "@ledgerhq/context-module";
+import { type ConcordiumAccountOwnershipNetwork } from "@ledgerhq/context-module";
 
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetPublicKeyDAReturnType } from "@api/app-binder/GetPublicKeyDeviceActionTypes";
@@ -32,7 +32,7 @@ export interface SignerConcordium {
   verifyAddress: (
     derivationPath: string,
     address: string,
-    network: AccountOwnershipNetwork,
+    network: ConcordiumAccountOwnershipNetwork,
     options?: VerifyAddressOptions,
   ) => VerifyAddressDAReturnType;
 }

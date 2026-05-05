@@ -1,10 +1,10 @@
 import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { AccountOwnershipError } from "@/chain-agnostic-loaders/account-ownership/data/AccountOwnershipError";
+import { ConcordiumAccountOwnershipError } from "@/concordium-loaders/account-ownership/data/ConcordiumAccountOwnershipError";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 
-import { HttpAccountOwnershipDataSource } from "./HttpAccountOwnershipDataSource";
+import { HttpConcordiumAccountOwnershipDataSource } from "./HttpConcordiumAccountOwnershipDataSource";
 
 /**
  * Build an error that quacks like a {@link DmkNetworkClientError}: a real
@@ -27,7 +27,7 @@ function makeHttpError(options: {
   return err;
 }
 
-describe("HttpAccountOwnershipDataSource", () => {
+describe("HttpConcordiumAccountOwnershipDataSource", () => {
   const config: ContextModuleServiceConfig = {
     metadataServiceDomain: {
       url: "https://nft.api.live.ledger-test.com",
@@ -49,12 +49,12 @@ describe("HttpAccountOwnershipDataSource", () => {
   };
 
   let httpMock: { get: ReturnType<typeof vi.fn> };
-  let datasource: HttpAccountOwnershipDataSource;
+  let datasource: HttpConcordiumAccountOwnershipDataSource;
 
   beforeEach(() => {
     vi.clearAllMocks();
     httpMock = { get: vi.fn() };
-    datasource = new HttpAccountOwnershipDataSource(
+    datasource = new HttpConcordiumAccountOwnershipDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -94,8 +94,8 @@ describe("HttpAccountOwnershipDataSource", () => {
       const result = await datasource.getDescriptor(baseParams);
 
       expect(result.isLeft()).toBe(true);
-      const err = result.extract() as AccountOwnershipError;
-      expect(err).toBeInstanceOf(AccountOwnershipError);
+      const err = result.extract() as ConcordiumAccountOwnershipError;
+      expect(err).toBeInstanceOf(ConcordiumAccountOwnershipError);
       expect(err.kind).toBe("service_unavailable");
       expect(err.message).toContain("unexpected empty response");
     });
@@ -116,8 +116,8 @@ describe("HttpAccountOwnershipDataSource", () => {
         const result = await datasource.getDescriptor(baseParams);
 
         expect(result.isLeft()).toBe(true);
-        const err = result.extract() as AccountOwnershipError;
-        expect(err).toBeInstanceOf(AccountOwnershipError);
+        const err = result.extract() as ConcordiumAccountOwnershipError;
+        expect(err).toBeInstanceOf(ConcordiumAccountOwnershipError);
         expect(err.kind).toBe("service_unavailable");
         expect(err.message).toContain("invalid response format");
       },
@@ -137,8 +137,8 @@ describe("HttpAccountOwnershipDataSource", () => {
       const result = await datasource.getDescriptor(baseParams);
 
       expect(result.isLeft()).toBe(true);
-      const err = result.extract() as AccountOwnershipError;
-      expect(err).toBeInstanceOf(AccountOwnershipError);
+      const err = result.extract() as ConcordiumAccountOwnershipError;
+      expect(err).toBeInstanceOf(ConcordiumAccountOwnershipError);
       expect(err.kind).toBe("verification_failed");
       expect(err.message).toBe(backendMessage);
     });
@@ -156,7 +156,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
         const result = await datasource.getDescriptor(baseParams);
 
-        const err = result.extract() as AccountOwnershipError;
+        const err = result.extract() as ConcordiumAccountOwnershipError;
         expect(err.kind).toBe("verification_failed");
         expect(err.message).toBe("refused");
       },
@@ -173,7 +173,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
       const result = await datasource.getDescriptor(baseParams);
 
-      const err = result.extract() as AccountOwnershipError;
+      const err = result.extract() as ConcordiumAccountOwnershipError;
       expect(err.kind).toBe("service_unavailable");
       expect(err.message).toContain("backend 500");
       expect(err.message).toContain("internal error");
@@ -192,7 +192,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
         const result = await datasource.getDescriptor(baseParams);
 
-        const err = result.extract() as AccountOwnershipError;
+        const err = result.extract() as ConcordiumAccountOwnershipError;
         expect(err.kind).toBe("service_unavailable");
         expect(err.message).toContain(`backend ${status}`);
         expect(err.message).toContain("down");
@@ -210,7 +210,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
       const result = await datasource.getDescriptor(baseParams);
 
-      const err = result.extract() as AccountOwnershipError;
+      const err = result.extract() as ConcordiumAccountOwnershipError;
       expect(err.kind).toBe("verification_failed");
       expect(err.message).toBe("plain text reason");
     });
@@ -226,7 +226,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
       const result = await datasource.getDescriptor(baseParams);
 
-      const err = result.extract() as AccountOwnershipError;
+      const err = result.extract() as ConcordiumAccountOwnershipError;
       expect(err.kind).toBe("verification_failed");
       expect(err.message).toBe("HTTP error 422");
     });
@@ -238,9 +238,9 @@ describe("HttpAccountOwnershipDataSource", () => {
 
       expect(result).toEqual(
         Left(
-          new AccountOwnershipError(
+          new ConcordiumAccountOwnershipError(
             "service_unavailable",
-            "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
+            "[ContextModule] HttpConcordiumAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
           ),
         ),
       );
@@ -261,7 +261,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
           const result = await datasource.getDescriptor(baseParams);
 
-          const err = result.extract() as AccountOwnershipError;
+          const err = result.extract() as ConcordiumAccountOwnershipError;
           expect(err.kind).toBe("verification_failed");
           expect(err.message).toBe(backendMessage);
         },
@@ -276,7 +276,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
           const result = await datasource.getDescriptor(baseParams);
 
-          const err = result.extract() as AccountOwnershipError;
+          const err = result.extract() as ConcordiumAccountOwnershipError;
           expect(err.kind).toBe("service_unavailable");
           expect(err.message).toContain(`backend ${status}`);
           expect(err.message).toContain("down");
@@ -292,9 +292,9 @@ describe("HttpAccountOwnershipDataSource", () => {
 
         expect(result).toEqual(
           Left(
-            new AccountOwnershipError(
+            new ConcordiumAccountOwnershipError(
               "service_unavailable",
-              "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
+              "[ContextModule] HttpConcordiumAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
             ),
           ),
         );
@@ -308,7 +308,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
         const result = await datasource.getDescriptor(baseParams);
 
-        const err = result.extract() as AccountOwnershipError;
+        const err = result.extract() as ConcordiumAccountOwnershipError;
         expect(err.kind).toBe("verification_failed");
         expect(err.message).toBe("plain object message");
       });
@@ -318,7 +318,7 @@ describe("HttpAccountOwnershipDataSource", () => {
 
         const result = await datasource.getDescriptor(baseParams);
 
-        const err = result.extract() as AccountOwnershipError;
+        const err = result.extract() as ConcordiumAccountOwnershipError;
         expect(err.kind).toBe("verification_failed");
         expect(err.message).toBe("Unknown error");
       });
@@ -331,7 +331,7 @@ describe("HttpAccountOwnershipDataSource", () => {
         },
         originToken: "custom-token",
       } as ContextModuleServiceConfig;
-      const customDatasource = new HttpAccountOwnershipDataSource(
+      const customDatasource = new HttpConcordiumAccountOwnershipDataSource(
         customConfig,
         httpMock as unknown as DmkNetworkClient,
       );

@@ -218,12 +218,6 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
-        return CommandResultFactory({
-          error: new InvalidStatusWordError(
-            `The context type [${type}] is not supported by the Ethereum signer`,
-          ),
-        });
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

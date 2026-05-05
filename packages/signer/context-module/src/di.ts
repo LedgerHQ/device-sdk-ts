@@ -1,10 +1,10 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
-import { accountOwnershipModuleFactory } from "@/chain-agnostic-loaders/account-ownership/di/accountOwnershipModuleFactory";
 import { networkModuleFactory } from "@/chain-agnostic-loaders/network/di/networkModuleFactory";
 import { nanoPkiModuleFactory } from "@/chain-agnostic-loaders/pki/di/pkiModuleFactory";
 import { reporterModuleFactory } from "@/chain-agnostic-loaders/reporter/di/reporterModuleFactory";
+import { concordiumAccountOwnershipModuleFactory } from "@/concordium-loaders/account-ownership/di/concordiumAccountOwnershipModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { configTypes } from "@/config/di/configTypes";
 import {
@@ -47,7 +47,6 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
   container.loadSync(
     configModuleFactory(config),
     networkModuleFactory(config),
-    accountOwnershipModuleFactory(),
     nanoPkiModuleFactory(),
     reporterModuleFactory(),
     web3ChecksModuleFactory({ chain }),
@@ -79,7 +78,8 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
       );
       break;
     case ContextModuleChainID.Concordium:
-      // concordium specific loaders and services: none for now
+      // concordium specific loaders and services
+      container.loadSync(concordiumAccountOwnershipModuleFactory());
       break;
     default: {
       // ensure exhaustive check at compile time when new chains are added

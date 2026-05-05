@@ -1,7 +1,3 @@
-export * from "./chain-agnostic-loaders/account-ownership/data/AccountOwnershipDataSource";
-export * from "./chain-agnostic-loaders/account-ownership/data/AccountOwnershipError";
-export * from "./chain-agnostic-loaders/account-ownership/data/HttpAccountOwnershipDataSource";
-export * from "./chain-agnostic-loaders/account-ownership/domain/AccountOwnershipContextLoader";
 export * from "./chain-agnostic-loaders/pki/data/HttpPkiCertificateDataSource";
 export * from "./chain-agnostic-loaders/pki/data/PkiCertificateDataSource";
 export * from "./chain-agnostic-loaders/pki/domain/DefaultPkiCertificateLoader";
@@ -16,6 +12,10 @@ export * from "./chain-agnostic-loaders/reporter/domain/BlindSigningReporter";
 export * from "./chain-agnostic-loaders/reporter/domain/DefaultBlindSigningReporter";
 export * from "./chain-agnostic-loaders/reporter/model/BlindSigningEvent";
 export * from "./chain-agnostic-loaders/reporter/model/BlindSigningModelId";
+export * from "./concordium-loaders/account-ownership/data/ConcordiumAccountOwnershipDataSource";
+export * from "./concordium-loaders/account-ownership/data/ConcordiumAccountOwnershipError";
+export * from "./concordium-loaders/account-ownership/data/HttpConcordiumAccountOwnershipDataSource";
+export * from "./concordium-loaders/account-ownership/domain/ConcordiumAccountOwnershipContextLoader";
 export type {
   ContextModuleCalBranch,
   ContextModuleCalConfig,

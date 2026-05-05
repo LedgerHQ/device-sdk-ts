@@ -1,9 +1,9 @@
 import { type Container } from "inversify";
 
-import { accountOwnershipTypes } from "@/chain-agnostic-loaders/account-ownership/di/accountOwnershipTypes";
 import { type BlindSigningReportParams } from "@/chain-agnostic-loaders/reporter/data/BlindSigningReporterDatasource";
 import { reporterTypes } from "@/chain-agnostic-loaders/reporter/di/reporterTypes";
 import { type BlindSigningReporter } from "@/chain-agnostic-loaders/reporter/domain/BlindSigningReporter";
+import { concordiumAccountOwnershipTypes } from "@/concordium-loaders/account-ownership/di/concordiumAccountOwnershipTypes";
 import { ethereumCalldataTypes } from "@/ethereum-loaders/calldata/di/ethereumCalldataTypes";
 import { ethereumDynamicNetworkTypes } from "@/ethereum-loaders/dynamic-network/di/ethereumDynamicNetworkTypes";
 import { ethereumTrustedNameTypes } from "@/ethereum-loaders/trusted-name/di/ethereumTrustedNameTypes";
@@ -82,18 +82,9 @@ export class DefaultContextModule implements ContextModule {
 
   private _getDefaultLoaders(): ContextLoader<unknown>[] {
     const { chain } = this._config;
-
-    const baseLoaders: ContextLoader<unknown>[] = [
-      this._container.get<ContextLoader>(
-        accountOwnershipTypes.AccountOwnershipContextLoader,
-      ),
-    ];
-
     switch (chain) {
       case ContextModuleChainID.Ethereum:
-        // ethereum specific loaders and services
         return [
-          ...baseLoaders,
           this._container.get<ContextLoader>(
             ethereumExternalPluginTypes.EthereumExternalPluginContextLoader,
           ),
@@ -129,9 +120,7 @@ export class DefaultContextModule implements ContextModule {
           ),
         ];
       case ContextModuleChainID.Solana:
-        // solana specific loaders and services
         return [
-          ...baseLoaders,
           this._container.get<ContextLoader>(
             solanaTokenTypes.SolanaTokenContextLoader,
           ),
@@ -143,13 +132,15 @@ export class DefaultContextModule implements ContextModule {
           ),
         ];
       case ContextModuleChainID.Concordium:
-        // concordium specific loaders and services: none for now
-        return [...baseLoaders];
+        return [
+          this._container.get<ContextLoader>(
+            concordiumAccountOwnershipTypes.ConcordiumAccountOwnershipContextLoader,
+          ),
+        ];
       default: {
-        // ensure exhaustive check at compile time when new chains are added
         const exhaustiveCheck: never = chain;
         void exhaustiveCheck;
-        return [...baseLoaders];
+        return [];
       }
     }
   }

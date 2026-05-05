@@ -1,5 +1,5 @@
 import {
-  type AccountOwnershipNetwork,
+  type ConcordiumAccountOwnershipNetwork,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -127,7 +127,7 @@ export class ConcordiumAppBinder {
   verifyAddress(args: {
     derivationPath: string;
     address: string;
-    network: AccountOwnershipNetwork;
+    network: ConcordiumAccountOwnershipNetwork;
     skipOpenApp?: boolean;
   }): VerifyAddressDAReturnType {
     return this.dmk.executeDeviceAction({
