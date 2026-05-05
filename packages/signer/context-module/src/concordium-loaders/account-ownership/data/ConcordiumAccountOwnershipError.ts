@@ -9,16 +9,16 @@
  *   HTTP 5xx, malformed response). Treat as transient; fallback UI may be
  *   appropriate.
  */
-export type AccountOwnershipErrorKind =
+export type ConcordiumAccountOwnershipErrorKind =
   | "verification_failed"
   | "service_unavailable";
 
-export class AccountOwnershipError extends Error {
-  readonly kind: AccountOwnershipErrorKind;
+export class ConcordiumAccountOwnershipError extends Error {
+  readonly kind: ConcordiumAccountOwnershipErrorKind;
 
-  constructor(kind: AccountOwnershipErrorKind, message: string) {
+  constructor(kind: ConcordiumAccountOwnershipErrorKind, message: string) {
     super(message);
-    this.name = "AccountOwnershipError";
+    this.name = "ConcordiumAccountOwnershipError";
     this.kind = kind;
   }
 }

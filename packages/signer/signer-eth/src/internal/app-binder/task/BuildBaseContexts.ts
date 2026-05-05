@@ -208,7 +208,6 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_ENUM:
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -237,7 +236,6 @@ export class BuildBaseContexts {
       case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -304,7 +302,6 @@ export class BuildBaseContexts {
       /* not used here */
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return 90;
 
       default: {

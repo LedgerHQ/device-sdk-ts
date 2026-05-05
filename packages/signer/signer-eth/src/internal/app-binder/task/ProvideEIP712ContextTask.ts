@@ -392,7 +392,6 @@ export class ProvideEIP712ContextTask {
       case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         throw new Error(
           `Context type ${type} not supported in EIP712 messages`,
         );

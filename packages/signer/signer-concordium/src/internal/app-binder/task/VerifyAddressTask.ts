@@ -1,8 +1,8 @@
 import {
-  AccountOwnershipError,
-  type AccountOwnershipNetwork,
   type ClearSignContextSuccess,
   ClearSignContextType,
+  ConcordiumAccountOwnershipError,
+  type ConcordiumAccountOwnershipNetwork,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -28,7 +28,7 @@ import { VerifyAddressCommand } from "@internal/app-binder/command/VerifyAddress
 export type VerifyAddressTaskArgs = {
   readonly derivationPath: string;
   readonly address: string;
-  readonly network: AccountOwnershipNetwork;
+  readonly network: ConcordiumAccountOwnershipNetwork;
   readonly contextModule: ContextModule;
 };
 
@@ -92,7 +92,7 @@ export class VerifyAddressTask {
           network,
           deviceModelId,
         },
-        [ClearSignContextType.ACCOUNT_OWNERSHIP],
+        [ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP],
       );
     } catch (error) {
       this.logger.error("[run] Context module error", { data: { error } });
@@ -106,8 +106,8 @@ export class VerifyAddressTask {
     const ownershipContext = contexts.find(
       (
         c,
-      ): c is ClearSignContextSuccess<ClearSignContextType.ACCOUNT_OWNERSHIP> =>
-        c.type === ClearSignContextType.ACCOUNT_OWNERSHIP,
+      ): c is ClearSignContextSuccess<ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP> =>
+        c.type === ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
     );
 
     if (!ownershipContext) {
@@ -117,7 +117,7 @@ export class VerifyAddressTask {
       if (errorCtx && "error" in errorCtx) {
         const err = errorCtx.error;
         if (
-          err instanceof AccountOwnershipError &&
+          err instanceof ConcordiumAccountOwnershipError &&
           err.kind === "verification_failed"
         ) {
           return CommandResultFactory({

@@ -1,7 +1,7 @@
 import {
-  AccountOwnershipError,
   type ClearSignContext,
   ClearSignContextType,
+  ConcordiumAccountOwnershipError,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -36,7 +36,7 @@ const CERTIFICATE = {
 function makeSuccessContext(withCertificate = true): ClearSignContext[] {
   return [
     {
-      type: ClearSignContextType.ACCOUNT_OWNERSHIP,
+      type: ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
       payload: DESCRIPTOR_HEX,
       certificate: withCertificate ? CERTIFICATE : undefined,
     },
@@ -124,7 +124,7 @@ describe("VerifyAddressTask", () => {
           network: NETWORK,
           deviceModelId: DeviceModelId.NANO_SP,
         }),
-        [ClearSignContextType.ACCOUNT_OWNERSHIP],
+        [ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP],
       );
     });
 
@@ -199,14 +199,17 @@ describe("VerifyAddressTask", () => {
       }
     });
 
-    it("should fail with TrustedMetadataServiceError when AccountOwnershipError kind is service_unavailable", async () => {
+    it("should fail with TrustedMetadataServiceError when ConcordiumAccountOwnershipError kind is service_unavailable", async () => {
       mockSendCommandSequence(
         CommandResultFactory({ data: { publicKey: PUBLIC_KEY } }),
         CommandResultFactory({ data: { challenge: CHALLENGE } }),
       );
       vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue(
         makeErrorContext(
-          new AccountOwnershipError("service_unavailable", "backend 503"),
+          new ConcordiumAccountOwnershipError(
+            "service_unavailable",
+            "backend 503",
+          ),
         ),
       );
 
@@ -221,7 +224,7 @@ describe("VerifyAddressTask", () => {
       }
     });
 
-    it("should fail with AddressVerificationFailedError when AccountOwnershipError kind is verification_failed", async () => {
+    it("should fail with AddressVerificationFailedError when ConcordiumAccountOwnershipError kind is verification_failed", async () => {
       const backendMessage =
         "Address ByteVector(32 bytes, 0xa63c) is not associated with the given public key ByteVector(32 bytes, 0x9dc1) on the network Testnet";
       mockSendCommandSequence(
@@ -230,7 +233,10 @@ describe("VerifyAddressTask", () => {
       );
       vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue(
         makeErrorContext(
-          new AccountOwnershipError("verification_failed", backendMessage),
+          new ConcordiumAccountOwnershipError(
+            "verification_failed",
+            backendMessage,
+          ),
         ),
       );
 
@@ -310,7 +316,7 @@ describe("VerifyAddressTask", () => {
       );
       vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue([
         {
-          type: ClearSignContextType.ACCOUNT_OWNERSHIP,
+          type: ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
           payload: "",
           certificate: CERTIFICATE,
         },

@@ -1,29 +1,29 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import type {
-  AccountOwnershipDataSource,
-  AccountOwnershipDescriptor,
-} from "@/chain-agnostic-loaders/account-ownership/data/AccountOwnershipDataSource";
-import {
-  type AccountOwnershipContextInput,
-  AccountOwnershipContextLoader,
-} from "@/chain-agnostic-loaders/account-ownership/domain/AccountOwnershipContextLoader";
 import { type PkiCertificateLoader } from "@/chain-agnostic-loaders/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/chain-agnostic-loaders/pki/model/PkiCertificate";
+import type {
+  ConcordiumAccountOwnershipDataSource,
+  ConcordiumAccountOwnershipDescriptor,
+} from "@/concordium-loaders/account-ownership/data/ConcordiumAccountOwnershipDataSource";
+import {
+  type ConcordiumAccountOwnershipContextInput,
+  ConcordiumAccountOwnershipContextLoader,
+} from "@/concordium-loaders/account-ownership/domain/ConcordiumAccountOwnershipContextLoader";
 import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-describe("AccountOwnershipContextLoader", () => {
-  const mockDataSource: AccountOwnershipDataSource = {
+describe("ConcordiumAccountOwnershipContextLoader", () => {
+  const mockDataSource: ConcordiumAccountOwnershipDataSource = {
     getDescriptor: vi.fn(),
   };
   const mockPkiCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
   };
-  const loader = new AccountOwnershipContextLoader(
+  const loader = new ConcordiumAccountOwnershipContextLoader(
     mockDataSource,
     mockPkiCertificateLoader,
   );
@@ -33,7 +33,7 @@ describe("AccountOwnershipContextLoader", () => {
     payload: new Uint8Array([1, 2, 3]),
   };
 
-  const mockDescriptor: AccountOwnershipDescriptor = {
+  const mockDescriptor: ConcordiumAccountOwnershipDescriptor = {
     signedDescriptor: "account-ownership-descriptor-payload",
     keyId: "domain_metadata_key",
     keyUsage: "trusted_name",
@@ -47,7 +47,7 @@ describe("AccountOwnershipContextLoader", () => {
   });
 
   describe("canHandle", () => {
-    const validInput: AccountOwnershipContextInput = {
+    const validInput: ConcordiumAccountOwnershipContextInput = {
       publicKey: "abcdef1234567890",
       address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
       network: "mainnet",
@@ -55,9 +55,11 @@ describe("AccountOwnershipContextLoader", () => {
       challenge: "0xabcdef",
     };
 
-    it("should return true for valid input with ACCOUNT_OWNERSHIP type", () => {
+    it("should return true for valid input with CONCORDIUM_ACCOUNT_OWNERSHIP type", () => {
       expect(
-        loader.canHandle(validInput, [ClearSignContextType.ACCOUNT_OWNERSHIP]),
+        loader.canHandle(validInput, [
+          ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
+        ]),
       ).toBe(true);
     });
 
@@ -72,10 +74,10 @@ describe("AccountOwnershipContextLoader", () => {
       ).toBe(false);
     });
 
-    it("should return true when expected types include ACCOUNT_OWNERSHIP among others", () => {
+    it("should return true when expected types include CONCORDIUM_ACCOUNT_OWNERSHIP among others", () => {
       expect(
         loader.canHandle(validInput, [
-          ClearSignContextType.ACCOUNT_OWNERSHIP,
+          ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
           ClearSignContextType.ETHEREUM_TOKEN,
         ]),
       ).toBe(true);
@@ -89,7 +91,9 @@ describe("AccountOwnershipContextLoader", () => {
       [123, "number input"],
     ])("should return false for %s", (input, _description) => {
       expect(
-        loader.canHandle(input, [ClearSignContextType.ACCOUNT_OWNERSHIP]),
+        loader.canHandle(input, [
+          ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
+        ]),
       ).toBe(false);
     });
 
@@ -101,7 +105,9 @@ describe("AccountOwnershipContextLoader", () => {
       [{ ...validInput, challenge: undefined }, "missing challenge"],
     ])("should return false for %s", (input, _description) => {
       expect(
-        loader.canHandle(input, [ClearSignContextType.ACCOUNT_OWNERSHIP]),
+        loader.canHandle(input, [
+          ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
+        ]),
       ).toBe(false);
     });
 
@@ -111,14 +117,16 @@ describe("AccountOwnershipContextLoader", () => {
       [{ ...validInput, challenge: "" }, "empty challenge"],
     ])("should return false for %s", (input, _description) => {
       expect(
-        loader.canHandle(input, [ClearSignContextType.ACCOUNT_OWNERSHIP]),
+        loader.canHandle(input, [
+          ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
+        ]),
       ).toBe(false);
     });
 
     it("should return false for invalid network value", () => {
       expect(
         loader.canHandle({ ...validInput, network: "devnet" }, [
-          ClearSignContextType.ACCOUNT_OWNERSHIP,
+          ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
         ]),
       ).toBe(false);
     });
@@ -126,7 +134,7 @@ describe("AccountOwnershipContextLoader", () => {
     it("should return true for testnet network", () => {
       expect(
         loader.canHandle({ ...validInput, network: "testnet" }, [
-          ClearSignContextType.ACCOUNT_OWNERSHIP,
+          ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
         ]),
       ).toBe(true);
     });
@@ -141,7 +149,7 @@ describe("AccountOwnershipContextLoader", () => {
       ]) {
         expect(
           loader.canHandle({ ...validInput, deviceModelId }, [
-            ClearSignContextType.ACCOUNT_OWNERSHIP,
+            ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
           ]),
         ).toBe(true);
       }
@@ -149,7 +157,7 @@ describe("AccountOwnershipContextLoader", () => {
   });
 
   describe("load", () => {
-    const input: AccountOwnershipContextInput = {
+    const input: ConcordiumAccountOwnershipContextInput = {
       publicKey: "abcdef1234567890",
       address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
       network: "mainnet",
@@ -157,7 +165,7 @@ describe("AccountOwnershipContextLoader", () => {
       challenge: "0xabcdef",
     };
 
-    it("should return ACCOUNT_OWNERSHIP context with certificate", async () => {
+    it("should return CONCORDIUM_ACCOUNT_OWNERSHIP context with certificate", async () => {
       // GIVEN
       vi.spyOn(mockDataSource, "getDescriptor").mockResolvedValue(
         Right(mockDescriptor),
@@ -180,14 +188,14 @@ describe("AccountOwnershipContextLoader", () => {
       });
       expect(result).toEqual([
         {
-          type: ClearSignContextType.ACCOUNT_OWNERSHIP,
+          type: ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
           payload: "account-ownership-descriptor-payload",
           certificate: mockCertificate,
         },
       ]);
     });
 
-    it("should return ACCOUNT_OWNERSHIP context without certificate when loadCertificate returns undefined", async () => {
+    it("should return CONCORDIUM_ACCOUNT_OWNERSHIP context without certificate when loadCertificate returns undefined", async () => {
       // GIVEN
       vi.spyOn(mockDataSource, "getDescriptor").mockResolvedValue(
         Right(mockDescriptor),
@@ -202,7 +210,7 @@ describe("AccountOwnershipContextLoader", () => {
       // THEN
       expect(result).toEqual([
         {
-          type: ClearSignContextType.ACCOUNT_OWNERSHIP,
+          type: ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
           payload: "account-ownership-descriptor-payload",
           certificate: undefined,
         },

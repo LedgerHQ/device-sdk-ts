@@ -2,20 +2,20 @@ import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 import { type Either, Left, Right } from "purify-ts";
 
-import {
-  type AccountOwnershipDataSource,
-  type AccountOwnershipDescriptor,
-  type GetAccountOwnershipParams,
-} from "@/chain-agnostic-loaders/account-ownership/data/AccountOwnershipDataSource";
-import { AccountOwnershipError } from "@/chain-agnostic-loaders/account-ownership/data/AccountOwnershipError";
-import { type AccountOwnershipDto } from "@/chain-agnostic-loaders/account-ownership/data/dto/AccountOwnershipDto";
 import { networkTypes } from "@/chain-agnostic-loaders/network/di/networkTypes";
+import {
+  type ConcordiumAccountOwnershipDataSource,
+  type ConcordiumAccountOwnershipDescriptor,
+  type ConcordiumGetAccountOwnershipParams,
+} from "@/concordium-loaders/account-ownership/data/ConcordiumAccountOwnershipDataSource";
+import { ConcordiumAccountOwnershipError } from "@/concordium-loaders/account-ownership/data/ConcordiumAccountOwnershipError";
+import { type ConcordiumAccountOwnershipDto } from "@/concordium-loaders/account-ownership/data/dto/ConcordiumAccountOwnershipDto";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 
 @injectable()
-export class HttpAccountOwnershipDataSource
-  implements AccountOwnershipDataSource
+export class HttpConcordiumAccountOwnershipDataSource
+  implements ConcordiumAccountOwnershipDataSource
 {
   constructor(
     @inject(configTypes.Config)
@@ -29,8 +29,8 @@ export class HttpAccountOwnershipDataSource
     address,
     challenge,
     network,
-  }: GetAccountOwnershipParams): Promise<
-    Either<Error, AccountOwnershipDescriptor>
+  }: ConcordiumGetAccountOwnershipParams): Promise<
+    Either<Error, ConcordiumAccountOwnershipDescriptor>
   > {
     try {
       const data = (await this.http.get(
@@ -38,22 +38,22 @@ export class HttpAccountOwnershipDataSource
         {
           params: { challenge, network },
         },
-      )) as AccountOwnershipDto | null;
+      )) as ConcordiumAccountOwnershipDto | null;
 
       if (!data) {
         return Left(
-          new AccountOwnershipError(
+          new ConcordiumAccountOwnershipError(
             "service_unavailable",
-            "[ContextModule] HttpAccountOwnershipDataSource: unexpected empty response",
+            "[ContextModule] HttpConcordiumAccountOwnershipDataSource: unexpected empty response",
           ),
         );
       }
 
-      if (!this.isAccountOwnershipDto(data)) {
+      if (!this.isConcordiumAccountOwnershipDto(data)) {
         return Left(
-          new AccountOwnershipError(
+          new ConcordiumAccountOwnershipError(
             "service_unavailable",
-            "[ContextModule] HttpAccountOwnershipDataSource: invalid response format",
+            "[ContextModule] HttpConcordiumAccountOwnershipDataSource: invalid response format",
           ),
         );
       }
@@ -69,7 +69,7 @@ export class HttpAccountOwnershipDataSource
   }
 
   /**
-   * Classifies a caught request error into an {@link AccountOwnershipError}:
+   * Classifies a caught request error into an {@link ConcordiumAccountOwnershipError}:
    * HTTP 4xx responses carry the backend's `message` verbatim and are marked
    * as `verification_failed`; everything else (network failure, 5xx,
    * unrecognized errors) is marked as `service_unavailable`.
@@ -81,29 +81,32 @@ export class HttpAccountOwnershipDataSource
    * body on `.responseBody`, and finally from the raw body as a
    * last resort.
    */
-  private classifyError(error: unknown): AccountOwnershipError {
+  private classifyError(error: unknown): ConcordiumAccountOwnershipError {
     if (this.hasNumericStatus(error)) {
       const status = error.status;
       const message = this.extractErrorMessage(error);
       return this.classifyFromStatus(status, message);
     }
 
-    return new AccountOwnershipError(
+    return new ConcordiumAccountOwnershipError(
       "service_unavailable",
-      "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
+      "[ContextModule] HttpConcordiumAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
     );
   }
 
   private classifyFromStatus(
     status: number,
     message: string,
-  ): AccountOwnershipError {
+  ): ConcordiumAccountOwnershipError {
     if (status >= 400 && status < 500) {
-      return new AccountOwnershipError("verification_failed", message);
+      return new ConcordiumAccountOwnershipError(
+        "verification_failed",
+        message,
+      );
     }
-    return new AccountOwnershipError(
+    return new ConcordiumAccountOwnershipError(
       "service_unavailable",
-      `[ContextModule] HttpAccountOwnershipDataSource: backend ${status}: ${message}`,
+      `[ContextModule] HttpConcordiumAccountOwnershipDataSource: backend ${status}: ${message}`,
     );
   }
 
@@ -166,7 +169,9 @@ export class HttpAccountOwnershipDataSource
     return body;
   }
 
-  private isAccountOwnershipDto(value: unknown): value is AccountOwnershipDto {
+  private isConcordiumAccountOwnershipDto(
+    value: unknown,
+  ): value is ConcordiumAccountOwnershipDto {
     return (
       typeof value === "object" &&
       value !== null &&

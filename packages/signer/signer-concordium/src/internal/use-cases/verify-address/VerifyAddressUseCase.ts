@@ -1,4 +1,4 @@
-import { type AccountOwnershipNetwork } from "@ledgerhq/context-module";
+import { type ConcordiumAccountOwnershipNetwork } from "@ledgerhq/context-module";
 import { inject, injectable } from "inversify";
 
 import { type VerifyAddressDAReturnType } from "@api/app-binder/VerifyAddressDeviceActionTypes";
@@ -19,7 +19,7 @@ export class VerifyAddressUseCase {
   execute(
     derivationPath: string,
     address: string,
-    network: AccountOwnershipNetwork,
+    network: ConcordiumAccountOwnershipNetwork,
     options?: VerifyAddressOptions,
   ): VerifyAddressDAReturnType {
     return this._appBinder.verifyAddress({

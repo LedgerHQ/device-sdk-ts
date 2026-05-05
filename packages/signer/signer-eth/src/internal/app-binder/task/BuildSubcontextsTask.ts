@@ -56,7 +56,6 @@ export class BuildSubcontextsTask {
       case ClearSignContextType.ETHEREUM_SAFE:
       case ClearSignContextType.ETHEREUM_SIGNER:
       case ClearSignContextType.ETHEREUM_GATED_SIGNING:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
         return {
           subcontextCallbacks: [],
         };
