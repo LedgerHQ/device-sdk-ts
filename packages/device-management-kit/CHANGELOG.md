@@ -1,5 +1,17 @@
 # @ledgerhq/device-management-kit
 
+## 1.4.0
+
+### Minor Changes
+
+- [#1382](https://github.com/LedgerHQ/device-sdk-ts/pull/1382) [`68947bf`](https://github.com/LedgerHQ/device-sdk-ts/commit/68947bfa299c7c7620c7a3bf3de5788555ba4961) Thanks [@pvautherin-ledger](https://github.com/pvautherin-ledger)! - Add Language Package install device action and Delete command
+
+### Patch Changes
+
+- [#1467](https://github.com/LedgerHQ/device-sdk-ts/pull/1467) [`16e08f2`](https://github.com/LedgerHQ/device-sdk-ts/commit/16e08f2e504e5361f6a0e70de679ad588b5034b2) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix React Native compatibility in `DmkNetworkClient`: serialize query params manually instead of using `URLSearchParams.set` (not implemented in React Native), and guard optional Web globals (`Blob`, `FormData`, `URLSearchParams`, `ReadableStream`) in `isRawBody` to avoid `ReferenceError` on runtimes where they are missing.
+
+- [#1461](https://github.com/LedgerHQ/device-sdk-ts/pull/1461) [`8051f90`](https://github.com/LedgerHQ/device-sdk-ts/commit/8051f908e987c178e3e54aa5132d4111a354969d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add InvalidArgumentError error
+
 ## 1.3.0
 
 ### Minor Changes
