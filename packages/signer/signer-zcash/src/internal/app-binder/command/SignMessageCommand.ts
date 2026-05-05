@@ -1,13 +1,32 @@
 import {
   type Apdu,
+  ApduBuilder,
+  type ApduBuilderArgs,
+  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
+  InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 
-import { type ZcashErrorCodes } from "./utils/zcashApplicationErrors";
+import {
+  ZCASH_APP_ERRORS,
+  ZcashAppCommandErrorFactory,
+  type ZcashErrorCodes,
+} from "./utils/zcashApplicationErrors";
+import { INS, P1, P2, ZCASH_CLA } from "./utils/apduHeaderUtils";
+
+const R_LENGTH = 32;
+const S_LENGTH = 32;
+const SIGN_MESSAGE_MAX_LENGTH = 0xffff;
 
 export type SignMessageCommandArgs = {
   derivationPath: string;
@@ -23,26 +42,85 @@ export class SignMessageCommand
   readonly name = "SignMessage";
 
   private readonly args: SignMessageCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignMessageCommandResponse,
+    ZcashErrorCodes
+  >(ZCASH_APP_ERRORS, ZcashAppCommandErrorFactory);
 
   constructor(args: SignMessageCommandArgs) {
     this.args = args;
   }
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    console.log(this.args);
-    throw new Error("SignMessageCommand.getApdu() not implemented");
+    const { derivationPath, message } = this.args;
+    const messageBytes =
+      typeof message === "string" ? new TextEncoder().encode(message) : message;
+
+    if (messageBytes.length > SIGN_MESSAGE_MAX_LENGTH) {
+      throw new Error("Message length exceeds 65535 bytes");
+    }
+
+    const signMessageArgs: ApduBuilderArgs = {
+      cla: ZCASH_CLA,
+      ins: INS.SIGN_MESSAGE,
+      p1: P1.FIRST,
+      p2: P2.DEFAULT,
+    };
+
+    const path = DerivationPathUtils.splitPath(derivationPath);
+    const builder = new ApduBuilder(signMessageArgs);
+    builder.add8BitUIntToData(path.length);
+    path.forEach((element) => {
+      builder.add32BitUIntToData(element);
+    });
+    builder
+      .add16BitUIntToData(messageBytes.length)
+      .addBufferToData(messageBytes);
+
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    apduResponse: ApduResponse,
   ): CommandResult<SignMessageCommandResponse, ZcashErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignMessageCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(
+      this.errorHelper.getError(apduResponse),
+    ).orDefaultLazy(() => {
+      const parser = new ApduParser(apduResponse);
+      const v = parser.extract8BitUInt();
+      if (v === undefined) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("V is missing"),
+        });
+      }
+
+      const r = parser.encodeToHexaString(
+        parser.extractFieldByLength(R_LENGTH),
+        true,
+      );
+      if (!r) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("R is missing"),
+        });
+      }
+
+      const s = parser.encodeToHexaString(
+        parser.extractFieldByLength(S_LENGTH),
+        true,
+      );
+      if (!s) {
+        return CommandResultFactory({
+          error: new InvalidStatusWordError("S is missing"),
+        });
+      }
+
+      return CommandResultFactory({
+        data: {
+          v,
+          r,
+          s,
+        },
+      });
+    });
   }
 }

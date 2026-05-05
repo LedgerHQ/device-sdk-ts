@@ -2,6 +2,7 @@ export const ZCASH_CLA = 0xe0 as const;
 
 export const INS = {
   GET_TRUSTED_INPUT: 0x42,
+  SIGN_MESSAGE: 0x4e,
 } as const;
 
 export const P1 = {
