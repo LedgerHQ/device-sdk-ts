@@ -377,7 +377,7 @@ describe("ProvideEIP712ContextTask", () => {
       calldatasPostContexts: {},
       additionalContexts: [
         {
-          type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
+          type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
           payload: "transactionCheck",
           certificate: {
             keyUsageNumber: 1,

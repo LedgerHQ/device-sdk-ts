@@ -1,6 +1,6 @@
 import type { HexaString } from "@ledgerhq/device-management-kit";
 
-import { type PkiCertificate } from "@/chain-agnostic-loaders/pki/model/PkiCertificate";
+import { type PkiCertificate } from "@/loaders/chain-agnostic/pki/model/PkiCertificate";
 import {
   type ClearSignContextSuccess,
   type ClearSignContextType,

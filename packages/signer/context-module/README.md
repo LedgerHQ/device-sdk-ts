@@ -56,7 +56,10 @@ It currently supports the following features:
 The context-module package exposes a builder `ContextModuleBuilder` which will be used to initialise the context module with your configuration. You must call `setChain()` before `build()`.
 
 ```ts
-import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
@@ -68,7 +71,10 @@ const contextModule = new ContextModuleBuilder({
 You can use a custom configuration for your context module.
 
 ```ts
-import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 
 const config: ContextModuleCalConfig = {
   // config to use
@@ -84,7 +90,10 @@ const contextModule = new ContextModuleBuilder({
 You can set a source identifier that will be included in blind signing reports. This helps distinguish which integration triggered a blind signing event. The default value is `"third-party"`.
 
 ```ts
-import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
@@ -97,7 +106,10 @@ const contextModule = new ContextModuleBuilder({
 It is also possible to instantiate the context module without the default loaders.
 
 ```ts
-import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 
 const contextModule = new ContextModuleBuilder({
   originToken: "origin-token", // replace with your origin token
@@ -113,7 +125,10 @@ const contextModule = new ContextModuleBuilder({
 You can add a custom list of loader to the context module.
 
 ```ts
-import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 
 // Default Token Loader
 const tokenLoader = new TokenContextLoader(new TokenDataSource());

@@ -1,4 +1,4 @@
-import { KeyUsage } from "@/chain-agnostic-loaders/pki/model/KeyUsage";
+import { KeyUsage } from "@/loaders/chain-agnostic/pki/model/KeyUsage";
 import { KeyUsageMapper } from "@/shared/utils/KeyUsageMapper";
 
 describe("KeyUsageMapper", () => {

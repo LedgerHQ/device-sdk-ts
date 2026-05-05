@@ -1,38 +1,38 @@
 import { type Container } from "inversify";
 
-import { type BlindSigningReportParams } from "@/chain-agnostic-loaders/reporter/data/BlindSigningReporterDatasource";
-import { reporterTypes } from "@/chain-agnostic-loaders/reporter/di/reporterTypes";
-import { type BlindSigningReporter } from "@/chain-agnostic-loaders/reporter/domain/BlindSigningReporter";
-import { concordiumAccountOwnershipTypes } from "@/concordium-loaders/account-ownership/di/concordiumAccountOwnershipTypes";
-import { ethereumCalldataTypes } from "@/ethereum-loaders/calldata/di/ethereumCalldataTypes";
-import { ethereumDynamicNetworkTypes } from "@/ethereum-loaders/dynamic-network/di/ethereumDynamicNetworkTypes";
-import { ethereumTrustedNameTypes } from "@/ethereum-loaders/trusted-name/di/ethereumTrustedNameTypes";
+import { type BlindSigningReportParams } from "@/loaders/chain-agnostic/reporter/data/BlindSigningReporterDatasource";
+import { reporterTypes } from "@/loaders/chain-agnostic/reporter/di/reporterTypes";
+import { type BlindSigningReporter } from "@/loaders/chain-agnostic/reporter/domain/BlindSigningReporter";
+import { concordiumAccountOwnershipTypes } from "@/loaders/concordium/account-ownership/di/concordiumAccountOwnershipTypes";
+import { ethereumCalldataTypes } from "@/loaders/ethereum/calldata/di/ethereumCalldataTypes";
+import { ethereumDynamicNetworkTypes } from "@/loaders/ethereum/dynamic-network/di/ethereumDynamicNetworkTypes";
+import { ethereumTrustedNameTypes } from "@/loaders/ethereum/trusted-name/di/ethereumTrustedNameTypes";
+import { ethereumTransactionCheckTypes } from "@/loaders/shared/transaction-check/ethereum/di/ethereumTransactionCheckTypes";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
-import { ethereumTransactionWeb3CheckTypes } from "@/shared-loaders/web3-checks/ethereum/di/ethereumWeb3CheckTypes";
 
 import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "./config/model/ContextModuleConfig";
-import { ethereumExternalPluginTypes } from "./ethereum-loaders/external-plugin/di/ethereumExternalPluginTypes";
-import { ethereumGatedSigningTypes } from "./ethereum-loaders/gated-signing/di/ethereumGatedSigningTypes";
-import { ethereumNftTypes } from "./ethereum-loaders/nft/di/ethereumNftTypes";
-import { ethereumProxyTypes } from "./ethereum-loaders/proxy/di/ethereumProxyTypes";
-import { ethereumSafeTypes } from "./ethereum-loaders/safe/di/ethereumSafeTypes";
-import { ethereumTokenTypes } from "./ethereum-loaders/token/di/ethereumTokenTypes";
-import { ethereumTypedDataTypes } from "./ethereum-loaders/typed-data/di/ethereumTypedDataTypes";
-import type { TypedDataContextLoader } from "./ethereum-loaders/typed-data/domain/TypedDataContextLoader";
+import { ethereumExternalPluginTypes } from "./loaders/ethereum/external-plugin/di/ethereumExternalPluginTypes";
+import { ethereumGatedSigningTypes } from "./loaders/ethereum/gated-signing/di/ethereumGatedSigningTypes";
+import { ethereumNftTypes } from "./loaders/ethereum/nft/di/ethereumNftTypes";
+import { ethereumProxyTypes } from "./loaders/ethereum/proxy/di/ethereumProxyTypes";
+import { ethereumSafeTypes } from "./loaders/ethereum/safe/di/ethereumSafeTypes";
+import { ethereumTokenTypes } from "./loaders/ethereum/token/di/ethereumTokenTypes";
+import { ethereumTypedDataTypes } from "./loaders/ethereum/typed-data/di/ethereumTypedDataTypes";
+import type { TypedDataContextLoader } from "./loaders/ethereum/typed-data/domain/TypedDataContextLoader";
+import { solanaLifiTypes } from "./loaders/solana/lifi/di/solanaLifiTypes";
+import { solanaContextTypes } from "./loaders/solana/owner-info/di/solanaContextTypes";
+import { solanaTokenTypes } from "./loaders/solana/token/di/solanaTokenTypes";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
   type ClearSignContext,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
-import { solanaLifiTypes } from "./solana-loaders/lifi/di/solanaLifiTypes";
-import { solanaContextTypes } from "./solana-loaders/owner-info/di/solanaContextTypes";
-import { solanaTokenTypes } from "./solana-loaders/token/di/solanaTokenTypes";
 import { type ContextModule } from "./ContextModule";
 import { makeContainer } from "./di";
 
@@ -113,10 +113,10 @@ export class DefaultContextModule implements ContextModule {
             ethereumGatedSigningTypes.EthereumGatedSigningTypedDataContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumTransactionWeb3CheckTypes.EthereumTransactionWeb3CheckContextLoader,
+            ethereumTransactionCheckTypes.EthereumTransactionCheckContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumTransactionWeb3CheckTypes.EthereumTypedDataWeb3CheckContextLoader,
+            ethereumTransactionCheckTypes.EthereumTypedDataTransactionCheckContextLoader,
           ),
         ];
       case ContextModuleChainID.Solana:

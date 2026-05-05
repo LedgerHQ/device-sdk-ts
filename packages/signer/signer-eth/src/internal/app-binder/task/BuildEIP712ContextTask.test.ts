@@ -296,7 +296,7 @@ describe("BuildEIP712ContextTask", () => {
   it("Build context with clear signing context", async () => {
     // GIVEN
     const txCheckContext = {
-      type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
       payload: "web3Check",
     };
     const task = new BuildEIP712ContextTask(
@@ -372,7 +372,7 @@ describe("BuildEIP712ContextTask", () => {
   it("Build context with clear signing context and transaction checks", async () => {
     // GIVEN
     const txCheckContext = {
-      type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
       payload: "transactionCheck",
     };
     const task = new BuildEIP712ContextTask(

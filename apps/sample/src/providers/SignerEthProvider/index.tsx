@@ -8,7 +8,10 @@ import React, {
   useState,
 } from "react";
 import { useSelector } from "react-redux";
-import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 import {
   type SignerEth,
   SignerEthBuilder,

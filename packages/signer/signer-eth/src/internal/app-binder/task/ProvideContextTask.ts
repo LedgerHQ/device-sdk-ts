@@ -147,7 +147,7 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
-      case ClearSignContextType.ETHEREUM_WEB3_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
         return this._sendPayloadInChunksTaskFactory(this._api, {
           payload,
           commandFactory: (args) =>

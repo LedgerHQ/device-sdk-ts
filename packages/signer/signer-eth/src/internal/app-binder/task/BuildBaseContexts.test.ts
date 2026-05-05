@@ -125,7 +125,7 @@ describe("BuildBaseContexts", () => {
       },
     ];
     const expectedTxCheck = {
-      type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
       payload: "transactionCheck",
     };
     contextModuleMock.getContexts.mockResolvedValueOnce([
@@ -186,7 +186,7 @@ describe("BuildBaseContexts", () => {
       },
     ];
     const expectedTxCheck = {
-      type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
       payload: "transactionCheck",
     };
     contextModuleMock.getContexts.mockResolvedValueOnce([
@@ -226,7 +226,7 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.ETHEREUM_WEB3_CHECK,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
         payload: "transactionCheck",
       },
       {

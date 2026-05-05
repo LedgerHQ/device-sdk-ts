@@ -1,4 +1,4 @@
-import { type BlindSigningReportParams } from "@/chain-agnostic-loaders/reporter/data/BlindSigningReporterDatasource";
+import { type BlindSigningReportParams } from "@/loaders/chain-agnostic/reporter/data/BlindSigningReporterDatasource";
 import {
   type ClearSignContext,
   type ClearSignContextType,

@@ -23,7 +23,10 @@ const contextModule = new ContextModuleBuilder({ originToken }).build();
 Pass the chain that matches your signer using `ContextModuleChainID`:
 
 ```typescript
-import { ContextModuleBuilder, ContextModuleChainID } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 
 // Ethereum signer
 const contextModule = new ContextModuleBuilder({ originToken })
@@ -43,11 +46,11 @@ const contextModule = new ContextModuleBuilder({ originToken })
 
 #### Available chains
 
-| `ContextModuleChainID` | Value | Signer |
-|---|---|---|
-| `Ethereum` | `"ethereum"` | `SignerEthBuilder` |
-| `Solana` | `"solana"` | `SignerSolanaBuilder` |
-| `Concordium` | `"concordium"` | `SignerConcordiumBuilder` |
+| `ContextModuleChainID` | Value          | Signer                    |
+| ---------------------- | -------------- | ------------------------- |
+| `Ethereum`             | `"ethereum"`   | `SignerEthBuilder`        |
+| `Solana`               | `"solana"`     | `SignerSolanaBuilder`     |
+| `Concordium`           | `"concordium"` | `SignerConcordiumBuilder` |
 
 #### Error message
 

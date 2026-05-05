@@ -174,7 +174,7 @@ describe("BlindSigningDetectionTask", () => {
         ...baseInput,
         hasContext: true,
         usedFallback: false,
-        contextTypes: [ClearSignContextType.ETHEREUM_WEB3_CHECK],
+        contextTypes: [ClearSignContextType.ETHEREUM_TRANSACTION_CHECK],
       },
       contextModule: mockContextModule,
       loggerFactory: mockLoggerFactory,
@@ -214,7 +214,7 @@ describe("BlindSigningDetectionTask", () => {
         hasContext: true,
         usedFallback: false,
         contextTypes: [
-          ClearSignContextType.ETHEREUM_WEB3_CHECK,
+          ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
           ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         ],
       },
