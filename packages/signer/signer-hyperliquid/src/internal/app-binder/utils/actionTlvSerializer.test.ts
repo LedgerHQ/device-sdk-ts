@@ -105,7 +105,7 @@ describe("buildActionStructure", () => {
           },
         ],
         grouping: "na",
-        nonce: 1, // Not serialized with this fuction call
+        nonce: 1, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -137,7 +137,7 @@ describe("buildActionStructure", () => {
           },
         ],
         grouping: "na",
-        nonce: 1, // Not serialized with this fuction call
+        nonce: 1, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -320,7 +320,7 @@ describe("buildActionStructure", () => {
             },
           },
         ],
-        nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
+        nonce: 1773050015814, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -363,7 +363,7 @@ describe("buildActionStructure", () => {
             },
           },
         ],
-        nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
+        nonce: 1773050015814, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -423,7 +423,7 @@ describe("buildActionStructure", () => {
             },
           },
         ],
-        nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
+        nonce: 1773050015814, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -497,7 +497,7 @@ describe("buildActionStructure", () => {
             },
           },
         ],
-        nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
+        nonce: 1773050015814, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -536,7 +536,7 @@ describe("buildActionStructure", () => {
       action: {
         type: "cancel",
         cancels: [{ a: 0, o: 340574409238 }],
-        nonce: 1772813983827, // Not serialized with this fuction call
+        nonce: 1772813983827, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -553,7 +553,7 @@ describe("buildActionStructure", () => {
           { a: 0, o: 340574409238 },
           { a: 0, o: 340574409238 },
         ],
-        nonce: 1772813983827, // Not serialized with this fuction call
+        nonce: 1772813983827, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -572,7 +572,7 @@ describe("buildActionStructure", () => {
         asset: 0,
         isCross: false,
         leverage: 10,
-        nonce: 3, // Not serialized with this fuction call
+        nonce: 3, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         "81d10100" + // ASSET_ID
@@ -587,7 +587,7 @@ describe("buildActionStructure", () => {
         signatureChainId: "0xa4b1",
         maxFeeRate: "0.1000%",
         builder: "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
-        nonce: 1772440978175, // Not serialized with this fuction call
+        nonce: 1772440978175, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         "2302a4b1" + // CHAIN_ID

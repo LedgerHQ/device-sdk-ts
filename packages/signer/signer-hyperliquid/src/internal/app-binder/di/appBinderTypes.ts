@@ -24,7 +24,7 @@ export type Order = {
           tpsl: "tp" | "sl";
         };
       }; // Type
-  c?: string; // CLOID
+  c?: HexaString; // CLOID
 };
 
 /**
