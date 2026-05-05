@@ -31,9 +31,7 @@ describe("createDefaultControllers - fetch configuration", () => {
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: "https://example.com/api/button/left",
-      }),
+      "https://example.com/api/button/left",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
@@ -55,9 +53,7 @@ describe("createDefaultControllers - fetch configuration", () => {
     await buttons.press("left");
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: "https://localhost:1234/button/left",
-      }),
+      "https://localhost:1234/button/left",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
@@ -99,7 +95,7 @@ describe("createDefaultControllers - wiring", () => {
     await buttons.press("left");
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ href: "https://x/button/left" }),
+      "https://x/button/left",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ action: "press-and-release" }),
@@ -120,7 +116,7 @@ describe("createDefaultControllers - wiring", () => {
     await touch.tapAndRelease("flex", { x: 50 as any, y: 50 as any });
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      expect.objectContaining({ href: "https://x/finger" }),
+      "https://x/finger",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
