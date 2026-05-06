@@ -14,9 +14,9 @@ import {
   type ContextModuleServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
-import { type BlindSigningReporter } from "./loaders/chain-agnostic/reporter/domain/BlindSigningReporter";
-import { type TrustedNameDataSource } from "./loaders/ethereum/trusted-name/data/TrustedNameDataSource";
-import { type TypedDataContextLoader } from "./loaders/ethereum/typed-data/domain/TypedDataContextLoader";
+import { type BlindSigningReporter } from "./modules/chain-agnostic/reporter/domain/BlindSigningReporter";
+import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
+import { type TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { type ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { type ContextModule } from "./ContextModule";

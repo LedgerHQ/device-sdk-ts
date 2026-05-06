@@ -8,12 +8,12 @@ import {
   type ContextModuleMetadataServiceConfig,
   type ContextModuleServiceConfig,
 } from "./config/model/ContextModuleConfig";
-import { HttpProxyDataSource } from "./loaders/ethereum/proxy/data/HttpProxyDataSource";
-import { HttpSafeProxyDataSource } from "./loaders/ethereum/proxy/data/HttpSafeProxyDataSource";
-import { ethereumProxyTypes } from "./loaders/ethereum/proxy/di/ethereumProxyTypes";
-import { HttpTrustedNameDataSource } from "./loaders/ethereum/trusted-name/data/HttpTrustedNameDataSource";
-import { type TrustedNameDataSource } from "./loaders/ethereum/trusted-name/data/TrustedNameDataSource";
-import { ethereumTrustedNameTypes } from "./loaders/ethereum/trusted-name/di/ethereumTrustedNameTypes";
+import { HttpProxyDataSource } from "./modules/ethereum/proxy/data/HttpProxyDataSource";
+import { HttpSafeProxyDataSource } from "./modules/ethereum/proxy/data/HttpSafeProxyDataSource";
+import { ethereumProxyTypes } from "./modules/ethereum/proxy/di/ethereumProxyTypes";
+import { HttpTrustedNameDataSource } from "./modules/ethereum/trusted-name/data/HttpTrustedNameDataSource";
+import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
+import { ethereumTrustedNameTypes } from "./modules/ethereum/trusted-name/di/ethereumTrustedNameTypes";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
