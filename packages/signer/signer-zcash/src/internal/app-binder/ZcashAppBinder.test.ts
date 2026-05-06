@@ -24,6 +24,7 @@ import {
 } from "@internal/app-binder/command/GetAddressCommand";
 import type { ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { GetFullViewingKeyTask } from "@internal/app-binder/task/GetFullViewingKeyTask";
 import { GetTrustedInputTask } from "@internal/app-binder/task/GetTrustedInputTask";
 import { ZcashAppBinder } from "@internal/app-binder/ZcashAppBinder";
 
@@ -146,6 +147,45 @@ describe("ZcashAppBinder", () => {
         UserInteractionRequired.None,
       );
       expect(args.deviceAction.input.skipOpenApp).toBe(true);
+    });
+  });
+
+  describe("getFullViewingKey", () => {
+    it("should call dmk.executeDeviceAction with CallTaskInAppDeviceAction and run GetFullViewingKeyTask", async () => {
+      const sessionId = "test-session-id";
+      const expectedResult = {
+        observable: from([]),
+        cancel: vi.fn(),
+      };
+      const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, sessionId);
+      const runSpy = vi
+        .spyOn(GetFullViewingKeyTask.prototype, "run")
+        .mockResolvedValue({} as never);
+
+      const result = binder.getFullViewingKey({
+        derivationPath: "44'/133'/0'/0/0",
+        mode: "ufvk",
+        skipOpenApp: false,
+      });
+
+      expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
+      expect(args.sessionId).toBe(sessionId);
+      expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+      expect(args.deviceAction.input.appName).toBe(APP_NAME);
+      expect(args.deviceAction.input.requiredUserInteraction).toBe(
+        UserInteractionRequired.None,
+      );
+      expect(args.deviceAction.input.skipOpenApp).toBe(false);
+      expect(result).toBe(expectedResult);
+
+      await args.deviceAction.input.task({} as InternalApi);
+      expect(runSpy).toHaveBeenCalledOnce();
     });
   });
 

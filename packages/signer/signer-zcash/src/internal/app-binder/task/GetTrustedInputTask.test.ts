@@ -1,8 +1,9 @@
 import {
   CommandResultFactory,
+  DmkResultFactory,
   type InternalApi,
   InvalidStatusWordError,
-  isSuccessCommandResult,
+  isSuccessDmkResult,
 } from "@ledgerhq/device-management-kit";
 
 import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
@@ -73,8 +74,8 @@ describe("GetTrustedInputTask", () => {
       expect(apdu).toEqual(hexToBytes(expectedApduHex));
     });
 
-    expect(isSuccessCommandResult(result)).toBe(true);
-    if (isSuccessCommandResult(result)) {
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
       expect(result.data).toEqual(lastResponse);
     }
   });
@@ -95,7 +96,7 @@ describe("GetTrustedInputTask", () => {
     }).run();
 
     expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
-    expect(result).toEqual(CommandResultFactory({ error: expectedError }));
+    expect(result).toEqual(DmkResultFactory({ error: expectedError }));
   });
 
   it("uses the v4 trailing bytes as the final chunk", async () => {

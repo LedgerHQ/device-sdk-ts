@@ -1,6 +1,7 @@
 import {
-  type CommandResult,
-  CommandResultFactory,
+  type CommandErrorResult,
+  type DmkResult,
+  DmkResultFactory,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -10,6 +11,7 @@ import {
   type GetTrustedInputCommandResponse,
 } from "@internal/app-binder/command/GetTrustedInputCommand";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
 const MAX_APDU_DATA_LENGTH = 0xff;
 const INDEX_LOOKUP_LENGTH = 4;
@@ -31,24 +33,16 @@ type GetTrustedInputTaskArgs = {
   transaction: Uint8Array;
   indexLookup?: number;
 };
+type GetTrustedInputTaskError = CommandErrorResult<ZcashErrorCodes>["error"];
+type GetTrustedInputTaskResult = DmkResult<
+  GetTrustedInputCommandResponse,
+  GetTrustedInputTaskError
+>;
 
 type CompactSize = {
   value: number;
   byteLength: number;
   nextOffset: number;
-};
-
-const concatArrays = (...chunks: Uint8Array[]): Uint8Array => {
-  const totalLength = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-  const buffer = new Uint8Array(totalLength);
-  let offset = 0;
-
-  chunks.forEach((chunk) => {
-    buffer.set(chunk, offset);
-    offset += chunk.length;
-  });
-
-  return buffer;
 };
 
 const readUInt8 = (buffer: Uint8Array, offset: number): number => {
@@ -161,7 +155,7 @@ const splitForApduData = (chunks: Uint8Array[]): Uint8Array[] => {
 const splitV5ExtraData = (
   locktime: Uint8Array,
   expiry: Uint8Array,
-): Uint8Array => concatArrays(locktime, new Uint8Array([0x04]), expiry);
+): Uint8Array => concatUint8Arrays(locktime, new Uint8Array([0x04]), expiry);
 
 const splitTransactionToTrustedInputChunks = (
   transaction: Uint8Array,
@@ -187,7 +181,7 @@ const splitTransactionToTrustedInputChunks = (
   const vin = readCompactSize(transaction, offset);
   offset = vin.nextOffset;
   chunks.push(
-    concatArrays(
+    concatUint8Arrays(
       transaction.slice(0, HEADER_V4_SIZE),
       transaction.slice(offset - vin.byteLength, offset),
     ),
@@ -360,9 +354,7 @@ export class GetTrustedInputTask {
     private args: GetTrustedInputTaskArgs,
   ) {}
 
-  async run(): Promise<
-    CommandResult<GetTrustedInputCommandResponse, ZcashErrorCodes>
-  > {
+  async run(): Promise<GetTrustedInputTaskResult> {
     const trustedInputIndex = this.args.indexLookup ?? 0;
     const chunks = splitTransactionToTrustedInputChunks(this.args.transaction);
 
@@ -379,7 +371,9 @@ export class GetTrustedInputTask {
     );
 
     if (!isSuccessCommandResult(firstResult)) {
-      return firstResult;
+      return DmkResultFactory({
+        error: firstResult.error,
+      });
     }
 
     let lastResponse = firstResult.data;
@@ -395,14 +389,16 @@ export class GetTrustedInputTask {
       );
 
       if (!isSuccessCommandResult(nextResult)) {
-        return nextResult;
+        return DmkResultFactory({
+          error: nextResult.error,
+        });
       }
 
       lastResponse = nextResult.data;
       chunkIndex += 1;
     }
 
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: lastResponse,
     });
   }

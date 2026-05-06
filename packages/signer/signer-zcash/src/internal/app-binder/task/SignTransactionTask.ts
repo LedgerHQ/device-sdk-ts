@@ -1,6 +1,7 @@
 import {
-  type CommandResult,
-  CommandResultFactory,
+  type CommandErrorResult,
+  type DmkResult,
+  DmkResultFactory,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -13,6 +14,8 @@ type SignTransactionTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
 };
+type SignTransactionTaskError = CommandErrorResult<ZcashErrorCodes>["error"];
+type SignTransactionTaskResult = DmkResult<Signature, SignTransactionTaskError>;
 
 export class SignTransactionTask {
   constructor(
@@ -20,7 +23,7 @@ export class SignTransactionTask {
     private args: SignTransactionTaskArgs,
   ) {}
 
-  async run(): Promise<CommandResult<Signature, ZcashErrorCodes>> {
+  async run(): Promise<SignTransactionTaskResult> {
     // TODO: Adapt this implementation to your blockchain's signing protocol
     // For transactions larger than a single APDU, you may need to:
     // 1. Split the transaction into chunks
@@ -35,10 +38,12 @@ export class SignTransactionTask {
     );
 
     if (!isSuccessCommandResult(result)) {
-      return result;
+      return DmkResultFactory({
+        error: result.error,
+      });
     }
 
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: result.data.signature,
     });
   }

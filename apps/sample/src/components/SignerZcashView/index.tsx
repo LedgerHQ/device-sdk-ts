@@ -7,6 +7,9 @@ import {
   type GetAppConfigDAError,
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
+  type GetFullViewingKeyDAError,
+  type GetFullViewingKeyDAIntermediateValue,
+  type GetFullViewingKeyDAOutput,
   type GetTrustedInputDAError,
   type GetTrustedInputDAIntermediateValue,
   type GetTrustedInputDAOutput,
@@ -16,12 +19,20 @@ import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
+  type ZcashFullViewingKeyMode,
 } from "@ledgerhq/device-signer-kit-zcash";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
+import { type ValueSelector } from "@/components/Form";
+import { type FieldType } from "@/hooks/useForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useSignerZcash } from "@/providers/SignerZcashProvider";
+
+const fullViewingKeyModeOptions: ValueSelector<FieldType>["mode"] = [
+  { label: "UFVK (string, P2=0x00)", value: "ufvk" },
+  { label: "Orchard FVK (96 raw bytes, P2=0x01)", value: "orchardFvk" },
+];
 
 export const SignerZcashView: React.FC<{ sessionId: string }> = ({
   sessionId,
@@ -84,6 +95,43 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Get Full Viewing Key",
+        description:
+          "Exports a full viewing key (UFVK/FVK) from the device. It does not spend funds, but it allows watching shielded balance and activity for this derivation — treat it as highly sensitive secret material. Do not share, log, or commit sample output; use only for local SDK testing.",
+        executeDeviceAction: ({ derivationPath, mode, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          const resolvedMode: ZcashFullViewingKeyMode =
+            mode === "orchardFvk" ? "orchardFvk" : "ufvk";
+          return signer.getFullViewingKey(derivationPath, {
+            mode: resolvedMode,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "32'/133'/0'",
+          mode: "ufvk",
+          skipOpenApp: false,
+        },
+        valueSelector: { mode: fullViewingKeyModeOptions },
+        labelSelector: {
+          mode: "Export mode (GET_VK P2)",
+          derivationPath: "Derivation path",
+          skipOpenApp: "Skip open app",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetFullViewingKeyDAOutput,
+        {
+          derivationPath: string;
+          mode: ZcashFullViewingKeyMode;
+          skipOpenApp?: boolean;
+        },
+        GetFullViewingKeyDAError,
+        GetFullViewingKeyDAIntermediateValue
       >,
       {
         title: "Sign Transaction",

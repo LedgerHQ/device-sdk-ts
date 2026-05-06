@@ -15,6 +15,8 @@ import {
 } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
+import { ZCASH_CLA } from "@internal/app-binder/command/utils/apduHeaderUtils";
+
 import {
   ZCASH_APP_ERRORS,
   ZcashAppCommandErrorFactory,
@@ -22,6 +24,7 @@ import {
 } from "./utils/zcashApplicationErrors";
 
 const CHAIN_CODE_LENGTH = 32;
+const GET_ADDRESS_INS = 0x40;
 
 export type GetAddressCommandArgs = {
   readonly derivationPath: string;
@@ -53,8 +56,8 @@ export class GetAddressCommand
 
   getApdu(): Apdu {
     const getAddressArgs: ApduBuilderArgs = {
-      cla: 0xe0,
-      ins: 0x40,
+      cla: ZCASH_CLA,
+      ins: GET_ADDRESS_INS,
       p1: this.args.checkOnDevice ? 0x01 : 0x00,
       p2: 0x00,
     };
