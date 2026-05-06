@@ -1,8 +1,8 @@
 import {
   type ClearSignContextSuccess,
   ClearSignContextType,
-  ConcordiumAccountOwnershipError,
-  type ConcordiumAccountOwnershipNetwork,
+  AccountOwnershipError,
+  type AccountOwnershipNetwork,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -28,7 +28,7 @@ import { VerifyAddressCommand } from "@internal/app-binder/command/VerifyAddress
 export type VerifyAddressTaskArgs = {
   readonly derivationPath: string;
   readonly address: string;
-  readonly network: ConcordiumAccountOwnershipNetwork;
+  readonly network: AccountOwnershipNetwork;
   readonly contextModule: ContextModule;
 };
 
@@ -117,7 +117,7 @@ export class VerifyAddressTask {
       if (errorCtx && "error" in errorCtx) {
         const err = errorCtx.error;
         if (
-          err instanceof ConcordiumAccountOwnershipError &&
+          err instanceof AccountOwnershipError &&
           err.kind === "verification_failed"
         ) {
           return CommandResultFactory({

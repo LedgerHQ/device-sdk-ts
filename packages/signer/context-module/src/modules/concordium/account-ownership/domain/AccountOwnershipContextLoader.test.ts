@@ -4,26 +4,26 @@ import { Left, Right } from "purify-ts";
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import { type PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import type {
-  ConcordiumAccountOwnershipDataSource,
-  ConcordiumAccountOwnershipDescriptor,
-} from "@/modules/concordium/account-ownership/data/ConcordiumAccountOwnershipDataSource";
+  AccountOwnershipDataSource,
+  AccountOwnershipDescriptor,
+} from "@/modules/concordium/account-ownership/data/AccountOwnershipDataSource";
 import {
-  type ConcordiumAccountOwnershipContextInput,
-  ConcordiumAccountOwnershipContextLoader,
-} from "@/modules/concordium/account-ownership/domain/ConcordiumAccountOwnershipContextLoader";
+  type AccountOwnershipContextInput,
+  AccountOwnershipContextLoader,
+} from "@/modules/concordium/account-ownership/domain/AccountOwnershipContextLoader";
 import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-describe("ConcordiumAccountOwnershipContextLoader", () => {
-  const mockDataSource: ConcordiumAccountOwnershipDataSource = {
+describe("AccountOwnershipContextLoader", () => {
+  const mockDataSource: AccountOwnershipDataSource = {
     getDescriptor: vi.fn(),
   };
   const mockPkiCertificateLoader: PkiCertificateLoader = {
     loadCertificate: vi.fn(),
   };
-  const loader = new ConcordiumAccountOwnershipContextLoader(
+  const loader = new AccountOwnershipContextLoader(
     mockDataSource,
     mockPkiCertificateLoader,
   );
@@ -33,7 +33,7 @@ describe("ConcordiumAccountOwnershipContextLoader", () => {
     payload: new Uint8Array([1, 2, 3]),
   };
 
-  const mockDescriptor: ConcordiumAccountOwnershipDescriptor = {
+  const mockDescriptor: AccountOwnershipDescriptor = {
     signedDescriptor: "account-ownership-descriptor-payload",
     keyId: "domain_metadata_key",
     keyUsage: "trusted_name",
@@ -47,7 +47,7 @@ describe("ConcordiumAccountOwnershipContextLoader", () => {
   });
 
   describe("canHandle", () => {
-    const validInput: ConcordiumAccountOwnershipContextInput = {
+    const validInput: AccountOwnershipContextInput = {
       publicKey: "abcdef1234567890",
       address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
       network: "mainnet",
@@ -157,7 +157,7 @@ describe("ConcordiumAccountOwnershipContextLoader", () => {
   });
 
   describe("load", () => {
-    const input: ConcordiumAccountOwnershipContextInput = {
+    const input: AccountOwnershipContextInput = {
       publicKey: "abcdef1234567890",
       address: "3kFkntk2H5FGMzeR3GjQKPhdZK9LShKdPHsj2fiGKCdmDXj2WB",
       network: "mainnet",

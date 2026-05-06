@@ -9,7 +9,7 @@ import {
 } from "@/config/model/ContextModuleConfig";
 import { nanoPkiModuleFactory } from "@/modules/chain-agnostic/pki/di/pkiModuleFactory";
 import { reporterModuleFactory } from "@/modules/chain-agnostic/reporter/di/reporterModuleFactory";
-import { concordiumAccountOwnershipModuleFactory } from "@/modules/concordium/account-ownership/di/concordiumAccountOwnershipModuleFactory";
+import { accountOwnershipModuleFactory } from "@/modules/concordium/account-ownership/di/accountOwnershipModuleFactory";
 import { calldataModuleFactory } from "@/modules/ethereum/calldata/di/calldataModuleFactory";
 import { dynamicNetworkModuleFactory } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkModuleFactory";
 import { externalPluginModuleFactory } from "@/modules/ethereum/external-plugin/di/externalPluginModuleFactory";
@@ -78,7 +78,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     case ContextModuleChainID.Concordium:
       container.loadSync(
         nanoPkiModuleFactory(),
-        concordiumAccountOwnershipModuleFactory(),
+        accountOwnershipModuleFactory(),
       );
       break;
     default: {

@@ -1,5 +1,5 @@
 import {
-  type ConcordiumAccountOwnershipNetwork,
+  type AccountOwnershipNetwork,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -86,7 +86,7 @@ export class DefaultSignerConcordium implements SignerConcordium {
   verifyAddress(
     derivationPath: string,
     address: string,
-    network: ConcordiumAccountOwnershipNetwork,
+    network: AccountOwnershipNetwork,
     options?: VerifyAddressOptions,
   ): VerifyAddressDAReturnType {
     return this._container

@@ -1,22 +1,22 @@
 import { type Either } from "purify-ts";
 
-export type ConcordiumAccountOwnershipNetwork = "mainnet" | "testnet";
+export type AccountOwnershipNetwork = "mainnet" | "testnet";
 
 export type ConcordiumGetAccountOwnershipParams = {
   publicKey: string;
   address: string;
   challenge: string;
-  network: ConcordiumAccountOwnershipNetwork;
+  network: AccountOwnershipNetwork;
 };
 
-export type ConcordiumAccountOwnershipDescriptor = {
+export type AccountOwnershipDescriptor = {
   signedDescriptor: string;
   keyId: string;
   keyUsage: string;
 };
 
-export interface ConcordiumAccountOwnershipDataSource {
+export interface AccountOwnershipDataSource {
   getDescriptor(
     params: ConcordiumGetAccountOwnershipParams,
-  ): Promise<Either<Error, ConcordiumAccountOwnershipDescriptor>>;
+  ): Promise<Either<Error, AccountOwnershipDescriptor>>;
 }
