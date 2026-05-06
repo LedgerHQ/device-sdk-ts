@@ -1,40 +1,39 @@
 import { type Container } from "inversify";
 
-import { type BlindSigningReportParams } from "@/modules/chain-agnostic/reporter/data/BlindSigningReporterDatasource";
-import { reporterTypes } from "@/modules/chain-agnostic/reporter/di/reporterTypes";
-import { type BlindSigningReporter } from "@/modules/chain-agnostic/reporter/domain/BlindSigningReporter";
-import { concordiumAccountOwnershipTypes } from "@/modules/concordium/account-ownership/di/concordiumAccountOwnershipTypes";
-import { ethereumCalldataTypes } from "@/modules/ethereum/calldata/di/ethereumCalldataTypes";
-import { ethereumDynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/ethereumDynamicNetworkTypes";
-import { ethereumTrustedNameTypes } from "@/modules/ethereum/trusted-name/di/ethereumTrustedNameTypes";
-import { ethereumTransactionCheckTypes } from "@/modules/shared/transaction-check/ethereum/di/ethereumTransactionCheckTypes";
-import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
-import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
-import type { TypedDataContext } from "@/shared/model/TypedDataContext";
-
 import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
-} from "./config/model/ContextModuleConfig";
-import { ethereumExternalPluginTypes } from "./modules/ethereum/external-plugin/di/ethereumExternalPluginTypes";
-import { ethereumGatedSigningTypes } from "./modules/ethereum/gated-signing/di/ethereumGatedSigningTypes";
-import { ethereumNftTypes } from "./modules/ethereum/nft/di/ethereumNftTypes";
-import { ethereumProxyTypes } from "./modules/ethereum/proxy/di/ethereumProxyTypes";
-import { ethereumSafeTypes } from "./modules/ethereum/safe/di/ethereumSafeTypes";
-import { ethereumTokenTypes } from "./modules/ethereum/token/di/ethereumTokenTypes";
-import { ethereumTypedDataTypes } from "./modules/ethereum/typed-data/di/ethereumTypedDataTypes";
-import type { TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
-import { solanaLifiTypes } from "./modules/solana/lifi/di/solanaLifiTypes";
-import { solanaContextTypes } from "./modules/solana/owner-info/di/solanaContextTypes";
-import { solanaTokenTypes } from "./modules/solana/token/di/solanaTokenTypes";
-import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
-import { type ContextLoader } from "./shared/domain/ContextLoader";
+} from "@/config/model/ContextModuleConfig";
+import { type ContextModule } from "@/ContextModule";
+import { makeContainer } from "@/di";
+import { type BlindSigningReportParams } from "@/modules/chain-agnostic/reporter/data/BlindSigningReporterDatasource";
+import { reporterTypes } from "@/modules/chain-agnostic/reporter/di/reporterTypes";
+import { type BlindSigningReporter } from "@/modules/chain-agnostic/reporter/domain/BlindSigningReporter";
+import { accountOwnershipTypes } from "@/modules/concordium/account-ownership/di/accountOwnershipTypes";
+import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
+import { dynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkTypes";
+import { externalPluginTypes } from "@/modules/ethereum/external-plugin/di/externalPluginTypes";
+import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
+import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
+import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
+import { safeTypes } from "@/modules/ethereum/safe/di/safeTypes";
+import { tokenTypes as ethereumTokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
+import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
+import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
+import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { transactionCheckTypes as ethereumTransactionCheckTypes } from "@/modules/shared/transaction-check/ethereum/di/transactionCheckTypes";
+import { lifiTypes } from "@/modules/solana/lifi/di/lifiTypes";
+import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
+import { tokenTypes as solanaTokenTypes } from "@/modules/solana/token/di/tokenTypes";
+import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
+import { type ContextLoader } from "@/shared/domain/ContextLoader";
+import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import {
   type ClearSignContext,
   ClearSignContextType,
-} from "./shared/model/ClearSignContext";
-import { type ContextModule } from "./ContextModule";
-import { makeContainer } from "./di";
+} from "@/shared/model/ClearSignContext";
+import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
+import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 
 export class DefaultContextModule implements ContextModule {
   private _container: Container;
@@ -65,17 +64,15 @@ export class DefaultContextModule implements ContextModule {
   private _getDefaultFieldLoaders(): ContextFieldLoader[] {
     if (this._config.chain !== ContextModuleChainID.Ethereum) return [];
     return [
+      this._container.get<ContextFieldLoader>(nftTypes.NftContextFieldLoader),
       this._container.get<ContextFieldLoader>(
-        ethereumNftTypes.EthereumNftContextFieldLoader,
+        ethereumTokenTypes.TokenContextFieldLoader,
       ),
       this._container.get<ContextFieldLoader>(
-        ethereumTokenTypes.EthereumTokenContextFieldLoader,
+        trustedNameTypes.TrustedNameContextFieldLoader,
       ),
       this._container.get<ContextFieldLoader>(
-        ethereumTrustedNameTypes.EthereumTrustedNameContextFieldLoader,
-      ),
-      this._container.get<ContextFieldLoader>(
-        ethereumProxyTypes.EthereumProxyContextFieldLoader,
+        proxyTypes.ProxyContextFieldLoader,
       ),
     ];
   }
@@ -86,55 +83,49 @@ export class DefaultContextModule implements ContextModule {
       case ContextModuleChainID.Ethereum:
         return [
           this._container.get<ContextLoader>(
-            ethereumExternalPluginTypes.EthereumExternalPluginContextLoader,
+            externalPluginTypes.ExternalPluginContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumTrustedNameTypes.EthereumTrustedNameContextLoader,
+            trustedNameTypes.TrustedNameContextLoader,
+          ),
+          this._container.get<ContextLoader>(nftTypes.NftContextLoader),
+          this._container.get<ContextLoader>(
+            ethereumTokenTypes.TokenContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumNftTypes.EthereumNftContextLoader,
+            calldataTypes.CalldataContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumTokenTypes.EthereumTokenContextLoader,
+            dynamicNetworkTypes.DynamicNetworkContextLoader,
+          ),
+          this._container.get<ContextLoader>(safeTypes.SafeAddressLoader),
+          this._container.get<ContextLoader>(
+            gatedSigningTypes.GatedSigningContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumCalldataTypes.EthereumCalldataContextLoader,
+            gatedSigningTypes.GatedSigningTypedDataContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumDynamicNetworkTypes.EthereumDynamicNetworkContextLoader,
+            ethereumTransactionCheckTypes.TransactionCheckContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumSafeTypes.EthereumSafeAddressLoader,
-          ),
-          this._container.get<ContextLoader>(
-            ethereumGatedSigningTypes.EthereumGatedSigningContextLoader,
-          ),
-          this._container.get<ContextLoader>(
-            ethereumGatedSigningTypes.EthereumGatedSigningTypedDataContextLoader,
-          ),
-          this._container.get<ContextLoader>(
-            ethereumTransactionCheckTypes.EthereumTransactionCheckContextLoader,
-          ),
-          this._container.get<ContextLoader>(
-            ethereumTransactionCheckTypes.EthereumTypedDataTransactionCheckContextLoader,
+            ethereumTransactionCheckTypes.TypedDataTransactionCheckContextLoader,
           ),
         ];
       case ContextModuleChainID.Solana:
         return [
           this._container.get<ContextLoader>(
-            solanaTokenTypes.SolanaTokenContextLoader,
+            solanaTokenTypes.TokenContextLoader,
           ),
+          this._container.get<ContextLoader>(lifiTypes.LifiContextLoader),
           this._container.get<ContextLoader>(
-            solanaLifiTypes.SolanaLifiContextLoader,
-          ),
-          this._container.get<ContextLoader>(
-            solanaContextTypes.SolanaOwnerInfoContextLoader,
+            ownerInfoTypes.OwnerInfoContextLoader,
           ),
         ];
       case ContextModuleChainID.Concordium:
         return [
           this._container.get<ContextLoader>(
-            concordiumAccountOwnershipTypes.ConcordiumAccountOwnershipContextLoader,
+            accountOwnershipTypes.AccountOwnershipContextLoader,
           ),
         ];
       default: {
@@ -157,7 +148,7 @@ export class DefaultContextModule implements ContextModule {
       };
     }
     return this._container.get<TypedDataContextLoader>(
-      ethereumTypedDataTypes.EthereumTypedDataContextLoader,
+      typedDataTypes.TypedDataContextLoader,
     );
   }
 

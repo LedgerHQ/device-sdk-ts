@@ -4,17 +4,17 @@ import { HttpGatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/
 import { GatedSigningContextLoader } from "@/modules/ethereum/gated-signing/domain/GatedSigningContextLoader";
 import { GatedSigningTypedDataContextLoader } from "@/modules/ethereum/gated-signing/domain/GatedSigningTypedDataContextLoader";
 
-import { ethereumGatedSigningTypes } from "./ethereumGatedSigningTypes";
+import { gatedSigningTypes } from "./gatedSigningTypes";
 
 export const gatedSigningModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(ethereumGatedSigningTypes.EthereumGatedDescriptorDataSource).to(
+    bind(gatedSigningTypes.GatedDescriptorDataSource).to(
       HttpGatedDescriptorDataSource,
     );
-    bind(ethereumGatedSigningTypes.EthereumGatedSigningContextLoader).to(
+    bind(gatedSigningTypes.GatedSigningContextLoader).to(
       GatedSigningContextLoader,
     );
-    bind(
-      ethereumGatedSigningTypes.EthereumGatedSigningTypedDataContextLoader,
-    ).to(GatedSigningTypedDataContextLoader);
+    bind(gatedSigningTypes.GatedSigningTypedDataContextLoader).to(
+      GatedSigningTypedDataContextLoader,
+    );
   });

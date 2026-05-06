@@ -10,10 +10,10 @@ import {
 } from "./config/model/ContextModuleConfig";
 import { HttpProxyDataSource } from "./modules/ethereum/proxy/data/HttpProxyDataSource";
 import { HttpSafeProxyDataSource } from "./modules/ethereum/proxy/data/HttpSafeProxyDataSource";
-import { ethereumProxyTypes } from "./modules/ethereum/proxy/di/ethereumProxyTypes";
+import { proxyTypes } from "./modules/ethereum/proxy/di/proxyTypes";
 import { HttpTrustedNameDataSource } from "./modules/ethereum/trusted-name/data/HttpTrustedNameDataSource";
 import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
-import { ethereumTrustedNameTypes } from "./modules/ethereum/trusted-name/di/ethereumTrustedNameTypes";
+import { trustedNameTypes } from "./modules/ethereum/trusted-name/di/trustedNameTypes";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { ContextModuleBuilder } from "./ContextModuleBuilder";
@@ -258,7 +258,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const proxyDataSource = (res as DefaultContextModule)[
         "_container"
-      ].get<unknown>(ethereumProxyTypes.EthereumProxyDataSource);
+      ].get<unknown>(proxyTypes.ProxyDataSource);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(proxyDataSource).toBeInstanceOf(HttpSafeProxyDataSource);
@@ -276,7 +276,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const proxyDataSource = (res as DefaultContextModule)[
         "_container"
-      ].get<unknown>(ethereumProxyTypes.EthereumProxyDataSource);
+      ].get<unknown>(proxyTypes.ProxyDataSource);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
@@ -292,7 +292,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const proxyDataSource = (res as DefaultContextModule)[
         "_container"
-      ].get<unknown>(ethereumProxyTypes.EthereumProxyDataSource);
+      ].get<unknown>(proxyTypes.ProxyDataSource);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
@@ -435,9 +435,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const injectedDataSource = (res as DefaultContextModule)[
         "_container"
-      ].get<TrustedNameDataSource>(
-        ethereumTrustedNameTypes.EthereumTrustedNameDataSource,
-      );
+      ].get<TrustedNameDataSource>(trustedNameTypes.TrustedNameDataSource);
 
       expect(injectedDataSource).toBe(customDataSource);
     });
@@ -450,9 +448,7 @@ describe("ContextModuleBuilder", () => {
         .build();
       const injectedDataSource = (res as DefaultContextModule)[
         "_container"
-      ].get<TrustedNameDataSource>(
-        ethereumTrustedNameTypes.EthereumTrustedNameDataSource,
-      );
+      ].get<TrustedNameDataSource>(trustedNameTypes.TrustedNameDataSource);
 
       expect(res).toBeInstanceOf(DefaultContextModule);
       expect(injectedDataSource).toBeInstanceOf(HttpTrustedNameDataSource);

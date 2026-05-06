@@ -8,8 +8,8 @@ import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 
 import { HttpTokenDataSource } from "./HttpTokenDataSource";
 import {
-  type TokenDataSource,
   type TokenDataResponse,
+  type TokenDataSource,
 } from "./TokenDataSource";
 
 describe("HttpTokenDataSource", () => {

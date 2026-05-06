@@ -9,9 +9,9 @@ import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { type GatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/GatedDescriptorDataSource";
-import { ethereumGatedSigningTypes } from "@/modules/ethereum/gated-signing/di/ethereumGatedSigningTypes";
+import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
-import { ethereumProxyTypes } from "@/modules/ethereum/proxy/di/ethereumProxyTypes";
+import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import { getSchemaHash } from "@/modules/ethereum/typed-data/utils/getSchemaHash";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -72,11 +72,11 @@ export class GatedSigningTypedDataContextLoader
   implements ContextLoader<GatedSigningTypedDataContextInput>
 {
   constructor(
-    @inject(ethereumGatedSigningTypes.EthereumGatedDescriptorDataSource)
+    @inject(gatedSigningTypes.GatedDescriptorDataSource)
     private readonly _dataSource: GatedDescriptorDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
-    @inject(ethereumProxyTypes.EthereumProxyDataSource)
+    @inject(proxyTypes.ProxyDataSource)
     private readonly _proxyDataSource: ProxyDataSource,
   ) {}
 

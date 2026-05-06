@@ -3,14 +3,14 @@ import { ContainerModule } from "inversify";
 import { HttpDynamicNetworkDataSource } from "@/modules/ethereum/dynamic-network/data/HttpDynamicNetworkDataSource";
 import { DynamicNetworkContextLoader } from "@/modules/ethereum/dynamic-network/domain/DynamicNetworkContextLoader";
 
-import { ethereumDynamicNetworkTypes } from "./ethereumDynamicNetworkTypes";
+import { dynamicNetworkTypes } from "./dynamicNetworkTypes";
 
 export const dynamicNetworkModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(ethereumDynamicNetworkTypes.EthereumDynamicNetworkDataSource).to(
+    bind(dynamicNetworkTypes.DynamicNetworkDataSource).to(
       HttpDynamicNetworkDataSource,
     );
-    bind(ethereumDynamicNetworkTypes.EthereumDynamicNetworkContextLoader).to(
+    bind(dynamicNetworkTypes.DynamicNetworkContextLoader).to(
       DynamicNetworkContextLoader,
     );
   });

@@ -11,8 +11,8 @@ import type { PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import type { SolanaTransactionContext } from "@/modules/solana/owner-info/domain/solanaContextTypes";
 import {
-  type TokenDataSource,
   type TokenDataResponse,
+  type TokenDataSource,
 } from "@/modules/solana/token/data/TokenDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 

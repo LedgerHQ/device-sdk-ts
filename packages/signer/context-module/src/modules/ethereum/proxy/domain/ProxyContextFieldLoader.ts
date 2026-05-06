@@ -4,7 +4,7 @@ import { inject, injectable } from "inversify";
 import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import { type ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
-import { ethereumProxyTypes } from "@/modules/ethereum/proxy/di/ethereumProxyTypes";
+import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import { type ProxyDelegateCall } from "@/modules/ethereum/proxy/model/ProxyDelegateCall";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
@@ -25,7 +25,7 @@ export class ProxyContextFieldLoader
   implements ContextFieldLoader<ProxyFieldInput>
 {
   constructor(
-    @inject(ethereumProxyTypes.EthereumProxyDataSource)
+    @inject(proxyTypes.ProxyDataSource)
     private _proxyDataSource: ProxyDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,

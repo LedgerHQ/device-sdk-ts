@@ -7,8 +7,8 @@ import type { PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import type { OwnerInfoDataSource } from "@/modules/solana/owner-info/data/OwnerInfoDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-import type { SolanaTransactionContext } from "./solanaContextTypes";
 import { OwnerInfoContextLoader } from "./OwnerInfoContextLoader";
+import type { SolanaTransactionContext } from "./solanaContextTypes";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),

@@ -8,10 +8,10 @@ import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import {
-  type TokenDataSource,
   type TokenDataResponse,
+  type TokenDataSource,
 } from "@/modules/solana/token/data/TokenDataSource";
-import { solanaTokenTypes } from "@/modules/solana/token/di/solanaTokenTypes";
+import { tokenTypes } from "@/modules/solana/token/di/tokenTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
@@ -35,7 +35,7 @@ export class TokenContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(solanaTokenTypes.SolanaTokenDataSource)
+    @inject(tokenTypes.TokenDataSource)
     private readonly dataSource: TokenDataSource,
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,

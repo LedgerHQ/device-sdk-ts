@@ -1,7 +1,7 @@
 import { inject, injectable } from "inversify";
 
 import * as NftDataSource from "@/modules/ethereum/nft/data/NftDataSource";
-import { ethereumNftTypes } from "@/modules/ethereum/nft/di/ethereumNftTypes";
+import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   type ClearSignContext,
@@ -18,7 +18,7 @@ export class NftContextFieldLoader
   implements ContextFieldLoader<NftFieldInput>
 {
   constructor(
-    @inject(ethereumNftTypes.EthereumNftDataSource)
+    @inject(nftTypes.NftDataSource)
     private _dataSource: NftDataSource.NftDataSource,
   ) {}
 

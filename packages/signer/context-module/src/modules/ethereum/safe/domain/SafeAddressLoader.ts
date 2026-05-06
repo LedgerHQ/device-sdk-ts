@@ -11,7 +11,7 @@ import type {
   GetSafeAccountResponse,
   SafeAccountDataSource,
 } from "@/modules/ethereum/safe/data/SafeAccountDataSource";
-import { ethereumSafeTypes } from "@/modules/ethereum/safe/di/ethereumSafeTypes";
+import { safeTypes } from "@/modules/ethereum/safe/di/safeTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -35,7 +35,7 @@ export class SafeAddressLoader
   implements ContextLoader<SafeAddressContextInput>
 {
   constructor(
-    @inject(ethereumSafeTypes.EthereumSafeAddressDataSource)
+    @inject(safeTypes.SafeAddressDataSource)
     private readonly _dataSource: SafeAccountDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
