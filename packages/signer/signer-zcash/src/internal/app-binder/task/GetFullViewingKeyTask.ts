@@ -73,6 +73,25 @@ function parseAssembledOrchardFvk(
   });
 }
 
+/**
+ * True when `assembled` already contains the u16 BE string length prefix plus
+ * the declared UTF-8 payload. Used to stop chunking when the last payload chunk
+ * is exactly `VK_RESPONSE_CHUNK_SIZE` bytes (otherwise the host would send a
+ * spurious CONTINUE APDU).
+ */
+function isCompleteUfvkLengthFraming(assembled: Uint8Array): boolean {
+  if (assembled.length < 2) {
+    return false;
+  }
+  const view = new DataView(
+    assembled.buffer,
+    assembled.byteOffset,
+    assembled.byteLength,
+  );
+  const strLength = view.getUint16(0, false);
+  return assembled.length >= 2 + strLength;
+}
+
 function parseAssembledUfvk(
   assembled: Uint8Array,
 ): CommandResult<GetFullViewingKeyTaskSuccessUfvk, ZcashErrorCodes> {
@@ -143,6 +162,9 @@ export class GetFullViewingKeyTask {
     let assembled: Uint8Array = lastChunk;
 
     while (lastChunk.length === VK_RESPONSE_CHUNK_SIZE) {
+      if (this.args.mode === "ufvk" && isCompleteUfvkLengthFraming(assembled)) {
+        break;
+      }
       const next = await this.api.sendCommand(
         new GetFullViewingKeyCommand({
           isContinue: true,
