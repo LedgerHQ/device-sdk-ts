@@ -7,7 +7,7 @@ import {
 import { Left } from "purify-ts";
 
 import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { HttpSolanaOwnerInfoDataSource } from "@/modules/solana/owner-info/data/HttpSolanaOwnerInfoDataSource";
+import { HttpOwnerInfoDataSource } from "@/modules/solana/owner-info/data/HttpOwnerInfoDataSource";
 import type { SolanaTransactionContext } from "@/modules/solana/owner-info/domain/solanaContextTypes";
 
 function stringToHex(str: string): string {
@@ -18,7 +18,7 @@ function stringToHex(str: string): string {
     .join("");
 }
 
-describe("HttpSolanaOwnerInfoDataSource", () => {
+describe("HttpOwnerInfoDataSource", () => {
   const config = {
     metadataServiceDomain: { url: "https://some.doma.in" },
     originToken: "mock-origin-token",
@@ -48,7 +48,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     };
     httpMock.get.mockResolvedValueOnce(responseData);
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(
+    const dataSource = new HttpOwnerInfoDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -72,7 +72,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(
+    const dataSource = new HttpOwnerInfoDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -81,7 +81,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: either tokenAddress or valid createATA must be provided",
+          "[ContextModule] - HttpOwnerInfoDataSource: either tokenAddress or valid createATA must be provided",
         ),
       ),
     );
@@ -95,7 +95,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(
+    const dataSource = new HttpOwnerInfoDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -104,7 +104,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: challenge is required",
+          "[ContextModule] - HttpOwnerInfoDataSource: challenge is required",
         ),
       ),
     );
@@ -122,7 +122,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(
+    const dataSource = new HttpOwnerInfoDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -131,7 +131,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 tlvDescriptor received",
+          "[ContextModule] - HttpOwnerInfoDataSource: invalid base64 tlvDescriptor received",
         ),
       ),
     );
@@ -146,7 +146,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(
+    const dataSource = new HttpOwnerInfoDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -155,7 +155,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to fetch address metadata",
+          "[ContextModule] - HttpOwnerInfoDataSource: Failed to fetch address metadata",
         ),
       ),
     );
@@ -171,7 +171,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       createATA: undefined,
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(
+    const dataSource = new HttpOwnerInfoDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -180,7 +180,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
+          "[ContextModule] - HttpOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
         ),
       ),
     );
@@ -199,7 +199,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
       },
     };
 
-    const dataSource = new HttpSolanaOwnerInfoDataSource(
+    const dataSource = new HttpOwnerInfoDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -212,7 +212,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid computeAddressMetadata response shape",
+          "[ContextModule] - HttpOwnerInfoDataSource: invalid computeAddressMetadata response shape",
         ),
       ),
     );
@@ -220,7 +220,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
 
   it("should throw if originToken is missing", () => {
     expect(() => {
-      new HttpSolanaOwnerInfoDataSource(
+      new HttpOwnerInfoDataSource(
         {
           ...config,
           originToken: undefined,
@@ -228,7 +228,7 @@ describe("HttpSolanaOwnerInfoDataSource", () => {
         httpMock as unknown as DmkNetworkClient,
       );
     }).toThrow(
-      "[ContextModule] - HttpSolanaOwnerInfoDataSource: origin token is required",
+      "[ContextModule] - HttpOwnerInfoDataSource: origin token is required",
     );
   });
 });

@@ -1,6 +1,6 @@
 import { type Either } from "purify-ts";
 
-export type GetSolanaTokenInfosParams = {
+export type GetTokenInfosParams = {
   tokenInternalId: string;
 };
 
@@ -42,8 +42,8 @@ export type TokenDataResponse = {
   units: Unit[];
 };
 
-export interface SolanaTokenDataSource {
+export interface TokenDataSource {
   getTokenInfosPayload(
-    params: GetSolanaTokenInfosParams,
+    params: GetTokenInfosParams,
   ): Promise<Either<Error, TokenDataResponse>>;
 }

@@ -5,7 +5,7 @@ import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
-import { type SolanaDataSource } from "@/modules/solana/owner-info/data/SolanaDataSource";
+import { type OwnerInfoDataSource } from "@/modules/solana/owner-info/data/OwnerInfoDataSource";
 import { solanaContextTypes } from "@/modules/solana/owner-info/di/solanaContextTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -19,20 +19,20 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class SolanaOwnerInfoContextLoader
+export class OwnerInfoContextLoader
   implements ContextLoader<SolanaTransactionContext>
 {
   private logger: LoggerPublisherService;
 
   constructor(
     @inject(solanaContextTypes.SolanaDataSource)
-    private readonly _dataSource: SolanaDataSource,
+    private readonly _dataSource: OwnerInfoDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("SolanaOwnerInfoContextLoader");
+    this.logger = loggerFactory("OwnerInfoContextLoader");
   }
 
   public canHandle(
@@ -70,7 +70,7 @@ export class SolanaOwnerInfoContextLoader
         {
           type: ClearSignContextType.ERROR,
           error: new Error(
-            "[ContextModule] SolanaOwnerInfoContextLoader: trustedNamePKICertificate is missing",
+            "[ContextModule] OwnerInfoContextLoader: trustedNamePKICertificate is missing",
           ),
         },
       ];

@@ -12,11 +12,11 @@ import { networkTypes } from "@/shared/network/di/networkTypes";
 import {
   GetTransactionDescriptorsParams,
   GetTransactionDescriptorsResponse,
-  SolanaLifiDataSource,
-} from "./SolanaLifiDataSource";
+  LifiDataSource,
+} from "./LifiDataSource";
 
 @injectable()
-export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
+export class HttpLifiDataSource implements LifiDataSource {
   private logger: LoggerPublisherService;
 
   constructor(
@@ -27,7 +27,7 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
     @inject(networkTypes.NetworkClient)
     private readonly http: DmkNetworkClient,
   ) {
-    this.logger = loggerFactory("HttpSolanaLifiDataSource");
+    this.logger = loggerFactory("HttpLifiDataSource");
   }
 
   public async getTransactionDescriptorsPayload({
@@ -76,7 +76,7 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
         );
         return Left(
           new Error(
-            `[ContextModule] HttpSolanaLifiDataSource: no transaction descriptors for id ${templateId}`,
+            `[ContextModule] HttpLifiDataSource: no transaction descriptors for id ${templateId}`,
           ),
         );
       }
@@ -104,7 +104,7 @@ export class HttpSolanaLifiDataSource implements SolanaLifiDataSource {
       );
       return Left(
         new Error(
-          "[ContextModule] HttpSolanaLifiDataSource: Failed to fetch transaction descriptors",
+          "[ContextModule] HttpLifiDataSource: Failed to fetch transaction descriptors",
         ),
       );
     }

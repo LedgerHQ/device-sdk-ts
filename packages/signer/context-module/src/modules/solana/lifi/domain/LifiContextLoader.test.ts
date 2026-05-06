@@ -9,8 +9,8 @@ import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import {
   type GetTransactionDescriptorsResponse,
-  type SolanaLifiDataSource,
-} from "@/modules/solana/lifi/data/SolanaLifiDataSource";
+  type LifiDataSource,
+} from "@/modules/solana/lifi/data/LifiDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import {
   type SolanaTransactionDescriptor,
@@ -18,7 +18,7 @@ import {
   type SolanaTransactionDescriptorRaw,
 } from "@/shared/model/SolanaContextTypes";
 
-import { SolanaLifiContextLoader } from "./SolanaLifiContextLoader";
+import { LifiContextLoader } from "./LifiContextLoader";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -41,8 +41,8 @@ const mockConfig = {
   },
 } as ContextModuleServiceConfig;
 
-describe("SolanaLifiContextLoader", () => {
-  let mockDataSource: SolanaLifiDataSource;
+describe("LifiContextLoader", () => {
+  let mockDataSource: LifiDataSource;
   let mockCertificateLoader: PkiCertificateLoader;
 
   const makeRawDescriptor = (
@@ -108,14 +108,14 @@ describe("SolanaLifiContextLoader", () => {
     vi.restoreAllMocks();
     mockDataSource = {
       getTransactionDescriptorsPayload: vi.fn(),
-    } as unknown as SolanaLifiDataSource;
+    } as unknown as LifiDataSource;
     mockCertificateLoader = {
       loadCertificate: vi.fn().mockResolvedValue(mockCertificate),
     } as unknown as PkiCertificateLoader;
   });
 
   const makeLoader = () =>
-    new SolanaLifiContextLoader(
+    new LifiContextLoader(
       mockDataSource,
       mockConfig,
       mockCertificateLoader,

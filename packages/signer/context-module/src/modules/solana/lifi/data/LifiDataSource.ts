@@ -8,7 +8,7 @@ export type GetTransactionDescriptorsParams = {
 
 export type { GetTransactionDescriptorsResponse };
 
-export interface SolanaLifiDataSource {
+export interface LifiDataSource {
   getTransactionDescriptorsPayload(
     params: GetTransactionDescriptorsParams,
   ): Promise<Either<Error, GetTransactionDescriptorsResponse>>;

@@ -4,11 +4,11 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import type { SolanaDataSource } from "@/modules/solana/owner-info/data/SolanaDataSource";
+import type { OwnerInfoDataSource } from "@/modules/solana/owner-info/data/OwnerInfoDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import type { SolanaTransactionContext } from "./solanaContextTypes";
-import { SolanaOwnerInfoContextLoader } from "./SolanaOwnerInfoContextLoader";
+import { OwnerInfoContextLoader } from "./OwnerInfoContextLoader";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -18,8 +18,8 @@ const mockLoggerFactory = () => ({
   subscribers: [],
 });
 
-describe("SolanaOwnerInfoContextLoader", () => {
-  let mockDataSource: SolanaDataSource;
+describe("OwnerInfoContextLoader", () => {
+  let mockDataSource: OwnerInfoDataSource;
   let mockCertLoader: PkiCertificateLoader;
 
   const mockCert = {
@@ -37,7 +37,7 @@ describe("SolanaOwnerInfoContextLoader", () => {
 
     mockDataSource = {
       getOwnerInfo: vi.fn(),
-    } as unknown as SolanaDataSource;
+    } as unknown as OwnerInfoDataSource;
 
     mockCertLoader = {
       loadCertificate: vi.fn(),
@@ -45,7 +45,7 @@ describe("SolanaOwnerInfoContextLoader", () => {
   });
 
   const makeLoader = () =>
-    new SolanaOwnerInfoContextLoader(
+    new OwnerInfoContextLoader(
       mockDataSource,
       mockCertLoader,
       mockLoggerFactory,

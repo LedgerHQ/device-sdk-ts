@@ -6,14 +6,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 
-import { HttpSolanaTokenDataSource } from "./HttpSolanaTokenDataSource";
+import { HttpTokenDataSource } from "./HttpTokenDataSource";
 import {
-  type SolanaTokenDataSource,
+  type TokenDataSource,
   type TokenDataResponse,
-} from "./SolanaTokenDataSource";
+} from "./TokenDataSource";
 
-describe("HttpSolanaTokenDataSource", () => {
-  let datasource: SolanaTokenDataSource;
+describe("HttpTokenDataSource", () => {
+  let datasource: TokenDataSource;
   let httpMock: { get: ReturnType<typeof vi.fn> };
   const tokenInternalId = "sol:usdc";
   const config: ContextModuleServiceConfig = {
@@ -25,12 +25,12 @@ describe("HttpSolanaTokenDataSource", () => {
   } as ContextModuleServiceConfig;
 
   const errorMessage = (id: string) =>
-    `[ContextModule] HttpSolanaTokenDataSource: no token metadata for id ${id}`;
+    `[ContextModule] HttpTokenDataSource: no token metadata for id ${id}`;
 
   beforeEach(() => {
     vi.clearAllMocks();
     httpMock = { get: vi.fn() };
-    datasource = new HttpSolanaTokenDataSource(
+    datasource = new HttpTokenDataSource(
       config,
       httpMock as unknown as DmkNetworkClient,
     );
@@ -105,7 +105,7 @@ describe("HttpSolanaTokenDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpSolanaTokenDataSource: Failed to fetch token informations",
+          "[ContextModule] HttpTokenDataSource: Failed to fetch token informations",
         ),
       ),
     );

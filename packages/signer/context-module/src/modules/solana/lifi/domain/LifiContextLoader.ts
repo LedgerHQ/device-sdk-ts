@@ -10,8 +10,8 @@ import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { type PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import {
   GetTransactionDescriptorsResponse,
-  type SolanaLifiDataSource,
-} from "@/modules/solana/lifi/data/SolanaLifiDataSource";
+  type LifiDataSource,
+} from "@/modules/solana/lifi/data/LifiDataSource";
 import { solanaLifiTypes } from "@/modules/solana/lifi/di/solanaLifiTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -32,14 +32,14 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class SolanaLifiContextLoader
+export class LifiContextLoader
   implements ContextLoader<SolanaTransactionContext>
 {
   private logger: LoggerPublisherService;
 
   constructor(
     @inject(solanaLifiTypes.SolanaLifiDataSource)
-    private readonly dataSource: SolanaLifiDataSource,
+    private readonly dataSource: LifiDataSource,
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
@@ -47,7 +47,7 @@ export class SolanaLifiContextLoader
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("SolanaLifiContextLoader");
+    this.logger = loggerFactory("LifiContextLoader");
   }
 
   public canHandle(
@@ -108,7 +108,7 @@ export class SolanaLifiContextLoader
       return {
         type: ClearSignContextType.ERROR,
         error: new Error(
-          "[ContextModule] SolanaLifiContextLoader: templateId is missing",
+          "[ContextModule] LifiContextLoader: templateId is missing",
         ),
       };
     }

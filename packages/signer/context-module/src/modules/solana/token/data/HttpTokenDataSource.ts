@@ -7,13 +7,13 @@ import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import {
-  GetSolanaTokenInfosParams,
-  SolanaTokenDataSource,
+  GetTokenInfosParams,
+  TokenDataSource,
   TokenDataResponse,
-} from "./SolanaTokenDataSource";
+} from "./TokenDataSource";
 
 @injectable()
-export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
+export class HttpTokenDataSource implements TokenDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
@@ -23,7 +23,7 @@ export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
 
   public async getTokenInfosPayload({
     tokenInternalId,
-  }: GetSolanaTokenInfosParams): Promise<Either<Error, TokenDataResponse>> {
+  }: GetTokenInfosParams): Promise<Either<Error, TokenDataResponse>> {
     try {
       const data = (await this.http.get(`${this.config.cal.url}/tokens`, {
         params: {
@@ -37,7 +37,7 @@ export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
       if (!data || data.length === 0 || !data[0]) {
         return Left(
           new Error(
-            `[ContextModule] HttpSolanaTokenDataSource: no token metadata for id ${tokenInternalId}`,
+            `[ContextModule] HttpTokenDataSource: no token metadata for id ${tokenInternalId}`,
           ),
         );
       }
@@ -46,7 +46,7 @@ export class HttpSolanaTokenDataSource implements SolanaTokenDataSource {
     } catch (_error) {
       return Left(
         new Error(
-          "[ContextModule] HttpSolanaTokenDataSource: Failed to fetch token informations",
+          "[ContextModule] HttpTokenDataSource: Failed to fetch token informations",
         ),
       );
     }
