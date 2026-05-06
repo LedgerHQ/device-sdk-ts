@@ -11,12 +11,12 @@ import type { PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import type { SolanaTransactionContext } from "@/modules/solana/owner-info/domain/solanaContextTypes";
 import {
-  type SolanaTokenDataSource,
+  type TokenDataSource,
   type TokenDataResponse,
-} from "@/modules/solana/token/data/SolanaTokenDataSource";
+} from "@/modules/solana/token/data/TokenDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
-import { SolanaTokenContextLoader } from "./SolanaTokenContextLoader";
+import { TokenContextLoader } from "./TokenContextLoader";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -26,8 +26,8 @@ const mockLoggerFactory = () => ({
   subscribers: [],
 });
 
-describe("SolanaTokenContextLoader", () => {
-  let mockDataSource: SolanaTokenDataSource;
+describe("TokenContextLoader", () => {
+  let mockDataSource: TokenDataSource;
   let mockCertLoader: PkiCertificateLoader;
 
   const bytes = new Uint8Array([0xf0, 0xca, 0xcc, 0x1a]);
@@ -53,7 +53,7 @@ describe("SolanaTokenContextLoader", () => {
 
     mockDataSource = {
       getTokenInfosPayload: vi.fn(),
-    } as unknown as SolanaTokenDataSource;
+    } as unknown as TokenDataSource;
 
     mockCertLoader = {
       loadCertificate: vi.fn(),
@@ -62,7 +62,7 @@ describe("SolanaTokenContextLoader", () => {
 
   const makeLoader = (mode?: string) => {
     const config = { cal: { mode } } as unknown as ContextModuleServiceConfig;
-    return new SolanaTokenContextLoader(
+    return new TokenContextLoader(
       mockDataSource,
       config,
       mockCertLoader,
@@ -219,7 +219,7 @@ describe("SolanaTokenContextLoader", () => {
         {
           type: ClearSignContextType.ERROR,
           error: new Error(
-            "[ContextModule] SolanaTokenContextLoader: tokenMetadataCertificate is missing",
+            "[ContextModule] TokenContextLoader: tokenMetadataCertificate is missing",
           ),
         },
       ]);

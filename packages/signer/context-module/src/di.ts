@@ -17,14 +17,14 @@ import { gatedSigningModuleFactory } from "@/modules/ethereum/gated-signing/di/g
 import { nftModuleFactory } from "@/modules/ethereum/nft/di/nftModuleFactory";
 import { proxyModuleFactory } from "@/modules/ethereum/proxy/di/proxyModuleFactory";
 import { safeModuleFactory } from "@/modules/ethereum/safe/di/safeModuleFactory";
-import { tokenModuleFactory } from "@/modules/ethereum/token/di/tokenModuleFactory";
+import { tokenModuleFactory as ethereumTokenModuleFactory } from "@/modules/ethereum/token/di/tokenModuleFactory";
 import { trustedNameModuleFactory } from "@/modules/ethereum/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/modules/ethereum/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModuleFactory";
 import { transactionCheckModuleFactory } from "@/modules/shared/transaction-check/di/transactionCheckModuleFactory";
-import { solanaLifiModuleFactory } from "@/modules/solana/lifi/di/lifiModuleFactory";
-import { solanaContextModuleFactory } from "@/modules/solana/owner-info/di/SolanaContextModuleFactory";
-import { solanaTokenModuleFactory } from "@/modules/solana/token/di/tokenModuleFactory";
+import { lifiModuleFactory } from "@/modules/solana/lifi/di/lifiModuleFactory";
+import { ownerInfoModuleFactory } from "@/modules/solana/owner-info/di/ownerInfoModuleFactory";
+import { tokenModuleFactory as solanaTokenModuleFactory } from "@/modules/solana/token/di/tokenModuleFactory";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import { networkModuleFactory } from "@/shared/network/di/networkModuleFactory";
 
@@ -61,7 +61,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         proxyModuleFactory(config.datasource),
         safeModuleFactory(),
         gatedSigningModuleFactory(),
-        tokenModuleFactory(),
+        ethereumTokenModuleFactory(),
         calldataModuleFactory(),
         typedDataModuleFactory(),
         uniswapModuleFactory(),
@@ -70,9 +70,9 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     case ContextModuleChainID.Solana:
       container.loadSync(
         nanoPkiModuleFactory(),
-        solanaContextModuleFactory(),
+        ownerInfoModuleFactory(),
         solanaTokenModuleFactory(),
-        solanaLifiModuleFactory(),
+        lifiModuleFactory(),
       );
       break;
     case ContextModuleChainID.Concordium:

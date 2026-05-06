@@ -14,12 +14,12 @@ import {
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import {
-  HttpSolanaOwnerInfoDataSourceResult,
-  SolanaDataSource,
-} from "./SolanaDataSource";
+  HttpOwnerInfoDataSourceResult,
+  OwnerInfoDataSource,
+} from "./OwnerInfoDataSource";
 
 @injectable()
-export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
+export class HttpOwnerInfoDataSource implements OwnerInfoDataSource {
   constructor(
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
@@ -28,7 +28,7 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
   ) {
     if (!this.config.originToken) {
       throw new Error(
-        "[ContextModule] - HttpSolanaOwnerInfoDataSource: origin token is required",
+        "[ContextModule] - HttpOwnerInfoDataSource: origin token is required",
       );
     }
   }
@@ -60,14 +60,14 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
       if (!this.isSolanaSPLOwnerInfo(data))
         return Left(
           new Error(
-            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
+            "[ContextModule] - HttpOwnerInfoDataSource: invalid fetchAddressMetadata response shape",
           ),
         );
       return Right(data);
     } catch {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to fetch address metadata",
+          "[ContextModule] - HttpOwnerInfoDataSource: Failed to fetch address metadata",
         ),
       );
     }
@@ -86,14 +86,14 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
       if (!this.isSolanaSPLOwnerInfo(data))
         return Left(
           new Error(
-            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid computeAddressMetadata response shape",
+            "[ContextModule] - HttpOwnerInfoDataSource: invalid computeAddressMetadata response shape",
           ),
         );
       return Right(data);
     } catch {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: Failed to compute address metadata",
+          "[ContextModule] - HttpOwnerInfoDataSource: Failed to compute address metadata",
         ),
       );
     }
@@ -101,13 +101,13 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
 
   async getOwnerInfo(
     context: SolanaTransactionContext,
-  ): Promise<Either<Error, HttpSolanaOwnerInfoDataSourceResult>> {
+  ): Promise<Either<Error, HttpOwnerInfoDataSourceResult>> {
     const { tokenAddress, challenge, createATA } = context;
 
     if (!challenge) {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: challenge is required",
+          "[ContextModule] - HttpOwnerInfoDataSource: challenge is required",
         ),
       );
     }
@@ -128,7 +128,7 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
     } else {
       return Left(
         new Error(
-          "[ContextModule] - HttpSolanaOwnerInfoDataSource: either tokenAddress or valid createATA must be provided",
+          "[ContextModule] - HttpOwnerInfoDataSource: either tokenAddress or valid createATA must be provided",
         ),
       );
     }
@@ -138,7 +138,7 @@ export class HttpSolanaOwnerInfoDataSource implements SolanaDataSource {
       if (!tlvDescriptor) {
         return Left(
           new Error(
-            "[ContextModule] - HttpSolanaOwnerInfoDataSource: invalid base64 tlvDescriptor received",
+            "[ContextModule] - HttpOwnerInfoDataSource: invalid base64 tlvDescriptor received",
           ),
         );
       }

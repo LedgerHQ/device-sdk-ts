@@ -1,13 +1,11 @@
 import { ContainerModule } from "inversify";
 
-import { HttpSolanaTokenDataSource } from "@/modules/solana/token/data/HttpSolanaTokenDataSource";
+import { HttpTokenDataSource } from "@/modules/solana/token/data/HttpTokenDataSource";
 import { solanaTokenTypes } from "@/modules/solana/token/di/solanaTokenTypes";
-import { SolanaTokenContextLoader } from "@/modules/solana/token/domain/SolanaTokenContextLoader";
+import { TokenContextLoader } from "@/modules/solana/token/domain/TokenContextLoader";
 
-export const solanaTokenModuleFactory = () =>
+export const tokenModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(solanaTokenTypes.SolanaTokenDataSource).to(HttpSolanaTokenDataSource);
-    bind(solanaTokenTypes.SolanaTokenContextLoader).to(
-      SolanaTokenContextLoader,
-    );
+    bind(solanaTokenTypes.SolanaTokenDataSource).to(HttpTokenDataSource);
+    bind(solanaTokenTypes.SolanaTokenContextLoader).to(TokenContextLoader);
   });

@@ -1,12 +1,12 @@
 import { ContainerModule } from "inversify";
 
-import { HttpSolanaLifiDataSource } from "@/modules/solana/lifi/data/HttpSolanaLifiDataSource";
-import { SolanaLifiContextLoader } from "@/modules/solana/lifi/domain/SolanaLifiContextLoader";
+import { HttpLifiDataSource } from "@/modules/solana/lifi/data/HttpLifiDataSource";
+import { LifiContextLoader } from "@/modules/solana/lifi/domain/LifiContextLoader";
 
 import { solanaLifiTypes } from "./solanaLifiTypes";
 
-export const solanaLifiModuleFactory = () =>
+export const lifiModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(solanaLifiTypes.SolanaLifiDataSource).to(HttpSolanaLifiDataSource);
-    bind(solanaLifiTypes.SolanaLifiContextLoader).to(SolanaLifiContextLoader);
+    bind(solanaLifiTypes.SolanaLifiDataSource).to(HttpLifiDataSource);
+    bind(solanaLifiTypes.SolanaLifiContextLoader).to(LifiContextLoader);
   });

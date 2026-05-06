@@ -8,9 +8,9 @@ import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import {
-  type SolanaTokenDataSource,
+  type TokenDataSource,
   type TokenDataResponse,
-} from "@/modules/solana/token/data/SolanaTokenDataSource";
+} from "@/modules/solana/token/data/TokenDataSource";
 import { solanaTokenTypes } from "@/modules/solana/token/di/solanaTokenTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -29,14 +29,14 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class SolanaTokenContextLoader
+export class TokenContextLoader
   implements ContextLoader<SolanaTransactionContext>
 {
   private logger: LoggerPublisherService;
 
   constructor(
     @inject(solanaTokenTypes.SolanaTokenDataSource)
-    private readonly dataSource: SolanaTokenDataSource,
+    private readonly dataSource: TokenDataSource,
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
@@ -44,7 +44,7 @@ export class SolanaTokenContextLoader
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
-    this.logger = loggerFactory("SolanaTokenContextLoader");
+    this.logger = loggerFactory("TokenContextLoader");
   }
 
   public canHandle(
@@ -98,7 +98,7 @@ export class SolanaTokenContextLoader
       return {
         type: ClearSignContextType.ERROR,
         error: new Error(
-          "[ContextModule] SolanaTokenContextLoader: tokenInternalId is missing",
+          "[ContextModule] TokenContextLoader: tokenInternalId is missing",
         ),
       };
     }
@@ -118,7 +118,7 @@ export class SolanaTokenContextLoader
       return {
         type: ClearSignContextType.ERROR,
         error: new Error(
-          "[ContextModule] SolanaTokenContextLoader: tokenMetadataCertificate is missing",
+          "[ContextModule] TokenContextLoader: tokenMetadataCertificate is missing",
         ),
       };
     }

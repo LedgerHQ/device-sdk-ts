@@ -2,12 +2,12 @@ import { type Either } from "purify-ts";
 
 import type { SolanaTransactionContext } from "@/shared/model/SolanaTransactionContext";
 
-export type HttpSolanaOwnerInfoDataSourceResult = {
+export type HttpOwnerInfoDataSourceResult = {
   tlvDescriptor: Uint8Array;
 };
 
-export interface SolanaDataSource {
+export interface OwnerInfoDataSource {
   getOwnerInfo(
     params: SolanaTransactionContext,
-  ): Promise<Either<Error, HttpSolanaOwnerInfoDataSourceResult>>;
+  ): Promise<Either<Error, HttpOwnerInfoDataSourceResult>>;
 }

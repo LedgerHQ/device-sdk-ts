@@ -6,11 +6,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 
-import { HttpSolanaLifiDataSource } from "./HttpSolanaLifiDataSource";
+import { HttpLifiDataSource } from "./HttpLifiDataSource";
 import {
   type GetTransactionDescriptorsResponse,
-  type SolanaLifiDataSource,
-} from "./SolanaLifiDataSource";
+  type LifiDataSource,
+} from "./LifiDataSource";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -20,8 +20,8 @@ const mockLoggerFactory = () => ({
   subscribers: [],
 });
 
-describe("HttpSolanaLifiDataSource", () => {
-  let datasource: SolanaLifiDataSource;
+describe("HttpLifiDataSource", () => {
+  let datasource: LifiDataSource;
   let httpMock: { get: ReturnType<typeof vi.fn> };
   const templateId = "tpl-123";
   const config: ContextModuleServiceConfig = {
@@ -35,7 +35,7 @@ describe("HttpSolanaLifiDataSource", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     httpMock = { get: vi.fn() };
-    datasource = new HttpSolanaLifiDataSource(
+    datasource = new HttpLifiDataSource(
       config,
       mockLoggerFactory,
       httpMock as unknown as DmkNetworkClient,
@@ -95,7 +95,7 @@ describe("HttpSolanaLifiDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          `[ContextModule] HttpSolanaLifiDataSource: no transaction descriptors for id ${templateId}`,
+          `[ContextModule] HttpLifiDataSource: no transaction descriptors for id ${templateId}`,
         ),
       ),
     );
@@ -114,7 +114,7 @@ describe("HttpSolanaLifiDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          `[ContextModule] HttpSolanaLifiDataSource: no transaction descriptors for id ${templateId}`,
+          `[ContextModule] HttpLifiDataSource: no transaction descriptors for id ${templateId}`,
         ),
       ),
     );
@@ -133,7 +133,7 @@ describe("HttpSolanaLifiDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          `[ContextModule] HttpSolanaLifiDataSource: no transaction descriptors for id ${templateId}`,
+          `[ContextModule] HttpLifiDataSource: no transaction descriptors for id ${templateId}`,
         ),
       ),
     );
@@ -152,7 +152,7 @@ describe("HttpSolanaLifiDataSource", () => {
     expect(result).toEqual(
       Left(
         new Error(
-          "[ContextModule] HttpSolanaLifiDataSource: Failed to fetch transaction descriptors",
+          "[ContextModule] HttpLifiDataSource: Failed to fetch transaction descriptors",
         ),
       ),
     );
