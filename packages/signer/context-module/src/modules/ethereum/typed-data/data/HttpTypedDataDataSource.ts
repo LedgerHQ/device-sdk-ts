@@ -7,14 +7,14 @@ import type {
   ContextModuleCalMode,
   ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
-import { getSchemaHash } from "@/modules/ethereum/typed-data/utils/getSchemaHash";
 import type {
   TypedDataCalldataIndex,
   TypedDataFilter,
   TypedDataFilterCalldataInfo,
   TypedDataMessageInfo,
-} from "@/shared/model/TypedDataClearSignContext";
-import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
+} from "@/modules/ethereum/model/TypedDataClearSignContext";
+import { TypedDataCalldataParamPresence } from "@/modules/ethereum/model/TypedDataClearSignContext";
+import { getSchemaHash } from "@/modules/ethereum/typed-data/utils/getSchemaHash";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import type {

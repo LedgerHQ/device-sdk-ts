@@ -10,7 +10,7 @@ import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 import {
   type SolanaSPLOwnerInfo,
   type SolanaTransactionContext,
-} from "@/shared/model/SolanaTransactionContext";
+} from "@/modules/solana/model/SolanaTransactionContext";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import {

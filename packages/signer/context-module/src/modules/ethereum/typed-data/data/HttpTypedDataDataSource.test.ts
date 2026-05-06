@@ -2,9 +2,9 @@ import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { TypedDataCalldataParamPresence } from "@/modules/ethereum/model/TypedDataClearSignContext";
 import { HttpTypedDataDataSource } from "@/modules/ethereum/typed-data/data/HttpTypedDataDataSource";
 import { type TypedDataDataSource } from "@/modules/ethereum/typed-data/data/TypedDataDataSource";
-import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
 
 import { type FiltersDto, type InstructionField } from "./FiltersDto";
 

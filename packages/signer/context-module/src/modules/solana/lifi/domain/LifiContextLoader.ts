@@ -13,19 +13,21 @@ import {
   type LifiDataSource,
 } from "@/modules/solana/lifi/data/LifiDataSource";
 import { lifiTypes } from "@/modules/solana/lifi/di/lifiTypes";
+import {
+  type SolanaContextError,
+  type SolanaLifiContextSuccess,
+  type SolanaTransactionDescriptorList,
+} from "@/modules/solana/model/SolanaContextTypes";
+import {
+  type SolanaLifiInstructionMeta,
+  type SolanaLifiPayload,
+} from "@/modules/solana/model/SolanaPayloads";
+import { type SolanaTransactionContext } from "@/modules/solana/model/SolanaTransactionContext";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  type SolanaContextError,
-  type SolanaLifiContextSuccess,
-  type SolanaLifiInstructionMeta,
-  type SolanaLifiPayload,
-  type SolanaTransactionDescriptorList,
-} from "@/shared/model/SolanaContextTypes";
-import { type SolanaTransactionContext } from "@/shared/model/SolanaTransactionContext";
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_LIFI,

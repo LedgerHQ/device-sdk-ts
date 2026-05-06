@@ -1,6 +1,6 @@
 import { type Either } from "purify-ts";
 
-import type { GetTransactionDescriptorsResponse } from "@/shared/model/SolanaContextTypes";
+import type { GetTransactionDescriptorsResponse } from "@/modules/solana/model/SolanaContextTypes";
 
 export type GetTransactionDescriptorsParams = {
   templateId: string;

@@ -1,10 +1,10 @@
 import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
-import { type LoaderResult } from "@/shared/model/SolanaContextTypes";
+import { type LoaderResult } from "@/modules/solana/model/SolanaContextTypes";
 
 export type {
   SolanaSPLOwnerInfo,
   SolanaTransactionContext,
-} from "@/shared/model/SolanaTransactionContext";
+} from "@/modules/solana/model/SolanaTransactionContext";
 
 export type SolanaTransactionContextResultSuccess = {
   trustedNamePKICertificate?: PkiCertificate;

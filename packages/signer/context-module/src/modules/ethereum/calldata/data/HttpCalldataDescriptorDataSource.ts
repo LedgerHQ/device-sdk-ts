@@ -7,6 +7,10 @@ import {
   type ContextModuleCalMode,
   type ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
+import {
+  ClearSignContextReference,
+  ClearSignContextReferenceType,
+} from "@/modules/ethereum/model/EthereumClearSignContext";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/modules/multichain/pki/model/KeyId";
@@ -14,8 +18,6 @@ import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import { PkiCertificateInfo } from "@/modules/multichain/pki/model/PkiCertificateInfo";
 import {
-  ClearSignContextReference,
-  ClearSignContextReferenceType,
   ClearSignContextSuccess,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";

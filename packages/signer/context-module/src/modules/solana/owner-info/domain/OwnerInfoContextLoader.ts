@@ -5,6 +5,7 @@ import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
+import { type SolanaTransactionContext } from "@/modules/solana/model/SolanaTransactionContext";
 import { type OwnerInfoDataSource } from "@/modules/solana/owner-info/data/OwnerInfoDataSource";
 import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
@@ -12,7 +13,6 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import { type SolanaTransactionContext } from "@/shared/model/SolanaTransactionContext";
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_TRUSTED_NAME,

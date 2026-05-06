@@ -6,6 +6,7 @@ import { inject, injectable } from "inversify";
 
 import { type GatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/GatedDescriptorDataSource";
 import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
+import type { TypedDataSchema } from "@/modules/ethereum/model/TypedDataContext";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import { getSchemaHash } from "@/modules/ethereum/typed-data/utils/getSchemaHash";
@@ -18,7 +19,6 @@ import {
   ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import type { TypedDataSchema } from "@/shared/model/TypedDataContext";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 

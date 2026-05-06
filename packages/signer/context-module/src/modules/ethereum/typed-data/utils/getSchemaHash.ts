@@ -1,6 +1,6 @@
 import SHA224 from "crypto-js/sha224";
 
-import type { TypedDataSchema } from "@/shared/model/TypedDataContext";
+import type { TypedDataSchema } from "@/modules/ethereum/model/TypedDataContext";
 
 /**
  * Schema hash is the SHA-224 hex digest of the compact JSON UTF-8 representation
