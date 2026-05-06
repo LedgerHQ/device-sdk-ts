@@ -1,14 +1,14 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
+import { TypedDataCalldataParamPresence } from "@/modules/ethereum/model/TypedDataClearSignContext";
+import type { TypedDataContext } from "@/modules/ethereum/model/TypedDataContext";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
 import type { TypedDataDataSource } from "@/modules/ethereum/typed-data/data/TypedDataDataSource";
 import { DefaultTypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/DefaultTypedDataContextLoader";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
-import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
-import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),

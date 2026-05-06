@@ -2,6 +2,7 @@ import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "./config/model/ContextModuleConfig";
+import { type TypedDataContext } from "./modules/ethereum/model/TypedDataContext";
 import type { TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
@@ -10,7 +11,6 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
-import { type TypedDataContext } from "./shared/model/TypedDataContext";
 import { DefaultContextModule } from "./DefaultContextModule";
 
 const mockLoggerFactory = () => ({

@@ -11,6 +11,8 @@ import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
 import { dynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkTypes";
 import { externalPluginTypes } from "@/modules/ethereum/external-plugin/di/externalPluginTypes";
 import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
+import type { TypedDataClearSignContext } from "@/modules/ethereum/model/TypedDataClearSignContext";
+import type { TypedDataContext } from "@/modules/ethereum/model/TypedDataContext";
 import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
 import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import { safeTypes } from "@/modules/ethereum/safe/di/safeTypes";
@@ -32,8 +34,6 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
-import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 
 export class DefaultContextModule implements ContextModule {
   private _container: Container;

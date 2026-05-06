@@ -11,12 +11,12 @@ import {
   type GetTransactionDescriptorsResponse,
   type LifiDataSource,
 } from "@/modules/solana/lifi/data/LifiDataSource";
-import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import {
-  type SolanaTransactionDescriptor,
   type SolanaTransactionDescriptorList,
   type SolanaTransactionDescriptorRaw,
-} from "@/shared/model/SolanaContextTypes";
+} from "@/modules/solana/model/SolanaContextTypes";
+import { type SolanaTransactionDescriptor } from "@/modules/solana/model/SolanaPayloads";
+import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { LifiContextLoader } from "./LifiContextLoader";
 

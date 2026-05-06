@@ -6,6 +6,22 @@ import {
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
+import type {
+  TypedDataCalldataIndex,
+  TypedDataCalldataInfo,
+  TypedDataClearSignContext,
+  TypedDataFilter,
+  TypedDataFilterCalldata,
+  TypedDataFilterCalldataInfo,
+  TypedDataFilterPath,
+  TypedDataToken,
+  TypedDataTokenIndex,
+} from "@/modules/ethereum/model/TypedDataClearSignContext";
+import {
+  TypedDataCalldataParamPresence,
+  VERIFYING_CONTRACT_TOKEN_INDEX,
+} from "@/modules/ethereum/model/TypedDataClearSignContext";
+import type { TypedDataContext } from "@/modules/ethereum/model/TypedDataContext";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
@@ -21,22 +37,6 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import type {
-  TypedDataCalldataIndex,
-  TypedDataCalldataInfo,
-  TypedDataClearSignContext,
-  TypedDataFilter,
-  TypedDataFilterCalldata,
-  TypedDataFilterCalldataInfo,
-  TypedDataFilterPath,
-  TypedDataToken,
-  TypedDataTokenIndex,
-} from "@/shared/model/TypedDataClearSignContext";
-import {
-  TypedDataCalldataParamPresence,
-  VERIFYING_CONTRACT_TOKEN_INDEX,
-} from "@/shared/model/TypedDataClearSignContext";
-import type { TypedDataContext } from "@/shared/model/TypedDataContext";
 
 type ResolvedProxy = {
   resolvedAddress: string;

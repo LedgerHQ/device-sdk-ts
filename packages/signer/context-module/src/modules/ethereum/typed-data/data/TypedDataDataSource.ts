@@ -5,8 +5,8 @@ import {
   type TypedDataFilter,
   type TypedDataFilterCalldataInfo,
   type TypedDataMessageInfo,
-} from "@/shared/model/TypedDataClearSignContext";
-import { type TypedDataSchema } from "@/shared/model/TypedDataContext";
+} from "@/modules/ethereum/model/TypedDataClearSignContext";
+import { type TypedDataSchema } from "@/modules/ethereum/model/TypedDataContext";
 
 export type GetTypedDataFiltersParams = {
   address: string;

@@ -1,12 +1,9 @@
+import { type SolanaTransactionDescriptor } from "@/modules/solana/model/SolanaPayloads";
 import {
   type ClearSignContextError,
   type ClearSignContextSuccess,
   type ClearSignContextType,
-  type SolanaLifiInstructionMeta,
-  type SolanaLifiPayload,
-  type SolanaTokenData,
-  type SolanaTransactionDescriptor,
-} from "./ClearSignContext";
+} from "@/shared/model/ClearSignContext";
 
 export type SolanaTransactionDescriptorRaw = {
   data: string;
@@ -71,11 +68,3 @@ export type SolanaLifiContextResult =
   | SolanaContextError;
 
 export type LoaderResult = SolanaTokenContextResult | SolanaLifiContextResult;
-
-// Re-export payload types so existing importers from this module still work
-export type {
-  SolanaLifiInstructionMeta,
-  SolanaLifiPayload,
-  SolanaTokenData,
-  SolanaTransactionDescriptor,
-};

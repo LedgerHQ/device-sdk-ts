@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { TypedDataSchema } from "@/shared/model/TypedDataContext";
+import type { TypedDataSchema } from "@/modules/ethereum/model/TypedDataContext";
 
 import { getSchemaHash } from "./getSchemaHash";
 

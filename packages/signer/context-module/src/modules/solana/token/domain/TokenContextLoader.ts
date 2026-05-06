@@ -8,6 +8,12 @@ import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCe
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import {
+  type SolanaContextError,
+  type SolanaTokenContextSuccess,
+} from "@/modules/solana/model/SolanaContextTypes";
+import { type SolanaTokenData } from "@/modules/solana/model/SolanaPayloads";
+import { type SolanaTransactionContext } from "@/modules/solana/model/SolanaTransactionContext";
+import {
   type TokenDataResponse,
   type TokenDataSource,
 } from "@/modules/solana/token/data/TokenDataSource";
@@ -17,12 +23,6 @@ import {
   type ClearSignContext,
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
-import {
-  type SolanaContextError,
-  type SolanaTokenContextSuccess,
-  type SolanaTokenData,
-} from "@/shared/model/SolanaContextTypes";
-import { type SolanaTransactionContext } from "@/shared/model/SolanaTransactionContext";
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_TOKEN,
