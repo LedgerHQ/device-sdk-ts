@@ -1,8 +1,8 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
-import { type BlindSigningReporter } from "@/loaders/chain-agnostic/reporter/domain/BlindSigningReporter";
-import { type TrustedNameDataSource } from "@/loaders/ethereum/trusted-name/data/TrustedNameDataSource";
-import { type TypedDataContextLoader } from "@/loaders/ethereum/typed-data/domain/TypedDataContextLoader";
+import { type BlindSigningReporter } from "@/modules/chain-agnostic/reporter/domain/BlindSigningReporter";
+import { type TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
+import { type TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { type ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
@@ -39,10 +39,9 @@ export type ContextModuleConfig = {
   reporter: ContextModuleReporterConfig;
   datasource: ContextModuleDatasourceConfig;
   appSource: string;
-  chain?: ContextModuleChainID;
 };
 
-export type ContextModuleServiceConfig = Omit<ContextModuleConfig, "chain"> & {
+export type ContextModuleServiceConfig = ContextModuleConfig & {
   chain: ContextModuleChainID;
   originToken: string;
   loggerFactory: (tag: string) => LoggerPublisherService;

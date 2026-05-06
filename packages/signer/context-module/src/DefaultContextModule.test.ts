@@ -2,7 +2,7 @@ import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "./config/model/ContextModuleConfig";
-import type { TypedDataContextLoader } from "./loaders/ethereum/typed-data/domain/TypedDataContextLoader";
+import type { TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import { ContextModuleChainID } from "./shared/domain/ContextModuleChainID";

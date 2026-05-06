@@ -1,13 +1,13 @@
 import { type Container } from "inversify";
 
-import { type BlindSigningReportParams } from "@/loaders/chain-agnostic/reporter/data/BlindSigningReporterDatasource";
-import { reporterTypes } from "@/loaders/chain-agnostic/reporter/di/reporterTypes";
-import { type BlindSigningReporter } from "@/loaders/chain-agnostic/reporter/domain/BlindSigningReporter";
-import { concordiumAccountOwnershipTypes } from "@/loaders/concordium/account-ownership/di/concordiumAccountOwnershipTypes";
-import { ethereumCalldataTypes } from "@/loaders/ethereum/calldata/di/ethereumCalldataTypes";
-import { ethereumDynamicNetworkTypes } from "@/loaders/ethereum/dynamic-network/di/ethereumDynamicNetworkTypes";
-import { ethereumTrustedNameTypes } from "@/loaders/ethereum/trusted-name/di/ethereumTrustedNameTypes";
-import { ethereumTransactionCheckTypes } from "@/loaders/shared/transaction-check/ethereum/di/ethereumTransactionCheckTypes";
+import { type BlindSigningReportParams } from "@/modules/chain-agnostic/reporter/data/BlindSigningReporterDatasource";
+import { reporterTypes } from "@/modules/chain-agnostic/reporter/di/reporterTypes";
+import { type BlindSigningReporter } from "@/modules/chain-agnostic/reporter/domain/BlindSigningReporter";
+import { concordiumAccountOwnershipTypes } from "@/modules/concordium/account-ownership/di/concordiumAccountOwnershipTypes";
+import { ethereumCalldataTypes } from "@/modules/ethereum/calldata/di/ethereumCalldataTypes";
+import { ethereumDynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/ethereumDynamicNetworkTypes";
+import { ethereumTrustedNameTypes } from "@/modules/ethereum/trusted-name/di/ethereumTrustedNameTypes";
+import { ethereumTransactionCheckTypes } from "@/modules/shared/transaction-check/ethereum/di/ethereumTransactionCheckTypes";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";
@@ -16,17 +16,17 @@ import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "./config/model/ContextModuleConfig";
-import { ethereumExternalPluginTypes } from "./loaders/ethereum/external-plugin/di/ethereumExternalPluginTypes";
-import { ethereumGatedSigningTypes } from "./loaders/ethereum/gated-signing/di/ethereumGatedSigningTypes";
-import { ethereumNftTypes } from "./loaders/ethereum/nft/di/ethereumNftTypes";
-import { ethereumProxyTypes } from "./loaders/ethereum/proxy/di/ethereumProxyTypes";
-import { ethereumSafeTypes } from "./loaders/ethereum/safe/di/ethereumSafeTypes";
-import { ethereumTokenTypes } from "./loaders/ethereum/token/di/ethereumTokenTypes";
-import { ethereumTypedDataTypes } from "./loaders/ethereum/typed-data/di/ethereumTypedDataTypes";
-import type { TypedDataContextLoader } from "./loaders/ethereum/typed-data/domain/TypedDataContextLoader";
-import { solanaLifiTypes } from "./loaders/solana/lifi/di/solanaLifiTypes";
-import { solanaContextTypes } from "./loaders/solana/owner-info/di/solanaContextTypes";
-import { solanaTokenTypes } from "./loaders/solana/token/di/solanaTokenTypes";
+import { ethereumExternalPluginTypes } from "./modules/ethereum/external-plugin/di/ethereumExternalPluginTypes";
+import { ethereumGatedSigningTypes } from "./modules/ethereum/gated-signing/di/ethereumGatedSigningTypes";
+import { ethereumNftTypes } from "./modules/ethereum/nft/di/ethereumNftTypes";
+import { ethereumProxyTypes } from "./modules/ethereum/proxy/di/ethereumProxyTypes";
+import { ethereumSafeTypes } from "./modules/ethereum/safe/di/ethereumSafeTypes";
+import { ethereumTokenTypes } from "./modules/ethereum/token/di/ethereumTokenTypes";
+import { ethereumTypedDataTypes } from "./modules/ethereum/typed-data/di/ethereumTypedDataTypes";
+import type { TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { solanaLifiTypes } from "./modules/solana/lifi/di/solanaLifiTypes";
+import { solanaContextTypes } from "./modules/solana/owner-info/di/solanaContextTypes";
+import { solanaTokenTypes } from "./modules/solana/token/di/solanaTokenTypes";
 import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
 import {
@@ -42,7 +42,7 @@ export class DefaultContextModule implements ContextModule {
   private _loaders: ContextLoader<unknown>[];
   private _typedDataLoader: TypedDataContextLoader;
   private _fieldLoaders: ContextFieldLoader<unknown>[];
-  private _blindSigningReporter: BlindSigningReporter;
+  private _blindSigningReporter: BlindSigningReporter | null;
 
   constructor(args: ContextModuleServiceConfig & ContextModuleLoaderConfig) {
     this._config = args;
@@ -161,10 +161,13 @@ export class DefaultContextModule implements ContextModule {
     );
   }
 
-  private _getBlindSigningReporter(): BlindSigningReporter {
-    return this._container.get<BlindSigningReporter>(
-      reporterTypes.BlindSigningReporter,
-    );
+  private _getBlindSigningReporter(): BlindSigningReporter | null {
+    if (this._container.isBound(reporterTypes.BlindSigningReporter)) {
+      return this._container.get<BlindSigningReporter>(
+        reporterTypes.BlindSigningReporter,
+      );
+    }
+    return null;
   }
 
   public async getContexts(
@@ -218,6 +221,6 @@ export class DefaultContextModule implements ContextModule {
   }
 
   public async report(params: BlindSigningReportParams): Promise<void> {
-    await this._blindSigningReporter.report(params);
+    await this._blindSigningReporter?.report(params);
   }
 }
