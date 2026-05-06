@@ -24,7 +24,7 @@ import {
 } from "./utils/zcashApplicationErrors";
 
 const CHAIN_CODE_LENGTH = 32;
-const INS = 0x40;
+const GET_ADDRESS_INS = 0x40;
 
 export type GetAddressCommandArgs = {
   readonly derivationPath: string;
@@ -57,7 +57,7 @@ export class GetAddressCommand
   getApdu(): Apdu {
     const getAddressArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS,
+      ins: GET_ADDRESS_INS,
       p1: this.args.checkOnDevice ? 0x01 : 0x00,
       p2: 0x00,
     };
