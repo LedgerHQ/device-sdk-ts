@@ -11,7 +11,7 @@ import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { type DynamicNetworkDataSource } from "@/modules/ethereum/dynamic-network/data/DynamicNetworkDataSource";
-import { ethereumDynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/ethereumDynamicNetworkTypes";
+import { dynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -42,7 +42,7 @@ export class DynamicNetworkContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumDynamicNetworkTypes.EthereumDynamicNetworkDataSource)
+    @inject(dynamicNetworkTypes.DynamicNetworkDataSource)
     networkDataSource: DynamicNetworkDataSource,
     @inject(configTypes.Config)
     config: ContextModuleServiceConfig,

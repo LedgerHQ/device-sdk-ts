@@ -12,7 +12,7 @@ import {
   GetTransactionDescriptorsResponse,
   type LifiDataSource,
 } from "@/modules/solana/lifi/data/LifiDataSource";
-import { solanaLifiTypes } from "@/modules/solana/lifi/di/solanaLifiTypes";
+import { lifiTypes } from "@/modules/solana/lifi/di/lifiTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
@@ -38,7 +38,7 @@ export class LifiContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(solanaLifiTypes.SolanaLifiDataSource)
+    @inject(lifiTypes.LifiDataSource)
     private readonly dataSource: LifiDataSource,
     @inject(configTypes.Config)
     private readonly config: ContextModuleServiceConfig,

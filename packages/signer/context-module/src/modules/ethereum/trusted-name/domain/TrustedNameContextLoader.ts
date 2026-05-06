@@ -9,7 +9,7 @@ import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import type { TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
-import { ethereumTrustedNameTypes } from "@/modules/ethereum/trusted-name/di/ethereumTrustedNameTypes";
+import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -33,7 +33,7 @@ export class TrustedNameContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumTrustedNameTypes.EthereumTrustedNameDataSource)
+    @inject(trustedNameTypes.TrustedNameDataSource)
     private _dataSource: TrustedNameDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,

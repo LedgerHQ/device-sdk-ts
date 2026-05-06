@@ -7,7 +7,7 @@ import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { NftDataSource } from "@/modules/ethereum/nft/data/NftDataSource";
-import { ethereumNftTypes } from "@/modules/ethereum/nft/di/ethereumNftTypes";
+import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -50,7 +50,7 @@ export class NftContextLoader implements ContextLoader<NftContextInput> {
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumNftTypes.EthereumNftDataSource) dataSource: NftDataSource,
+    @inject(nftTypes.NftDataSource) dataSource: NftDataSource,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {

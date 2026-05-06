@@ -4,7 +4,7 @@ import { inject, injectable } from "inversify";
 import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import * as TrustedNameDataSource from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
-import { ethereumTrustedNameTypes } from "@/modules/ethereum/trusted-name/di/ethereumTrustedNameTypes";
+import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
 import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   ClearSignContext,
@@ -25,7 +25,7 @@ export class TrustedNameContextFieldLoader
   implements ContextFieldLoader<TrustedNameFieldInput>
 {
   constructor(
-    @inject(ethereumTrustedNameTypes.EthereumTrustedNameDataSource)
+    @inject(trustedNameTypes.TrustedNameDataSource)
     private _dataSource: TrustedNameDataSource.TrustedNameDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,

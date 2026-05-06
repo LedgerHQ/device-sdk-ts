@@ -6,7 +6,7 @@ import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { type TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
-import { ethereumTokenTypes } from "@/modules/ethereum/token/di/ethereumTokenTypes";
+import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   type ClearSignContext,
@@ -24,7 +24,7 @@ export class TokenContextFieldLoader
   implements ContextFieldLoader<TokenFieldInput>
 {
   constructor(
-    @inject(ethereumTokenTypes.EthereumTokenDataSource)
+    @inject(tokenTypes.TokenDataSource)
     private _dataSource: TokenDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,

@@ -11,11 +11,11 @@ import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/P
 import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
-import { ethereumProxyTypes } from "@/modules/ethereum/proxy/di/ethereumProxyTypes";
+import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
-import { ethereumTokenTypes } from "@/modules/ethereum/token/di/ethereumTokenTypes";
+import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import type { TypedDataDataSource } from "@/modules/ethereum/typed-data/data/TypedDataDataSource";
-import { ethereumTypedDataTypes } from "@/modules/ethereum/typed-data/di/ethereumTypedDataTypes";
+import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import {
   type ClearSignContextSuccess,
@@ -48,11 +48,11 @@ export class DefaultTypedDataContextLoader implements TypedDataContextLoader {
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumTypedDataTypes.EthereumTypedDataDataSource)
+    @inject(typedDataTypes.TypedDataDataSource)
     private dataSource: TypedDataDataSource,
-    @inject(ethereumTokenTypes.EthereumTokenDataSource)
+    @inject(tokenTypes.TokenDataSource)
     private tokenDataSource: TokenDataSource,
-    @inject(ethereumProxyTypes.EthereumProxyDataSource)
+    @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private _certificateLoader: PkiCertificateLoader,

@@ -7,7 +7,7 @@ import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleCon
 import {
   type AccountOwnershipDataSource,
   type AccountOwnershipDescriptor,
-  type ConcordiumGetAccountOwnershipParams,
+  type GetAccountOwnershipParams,
 } from "@/modules/concordium/account-ownership/data/AccountOwnershipDataSource";
 import { AccountOwnershipError } from "@/modules/concordium/account-ownership/data/AccountOwnershipError";
 import { type AccountOwnershipDto } from "@/modules/concordium/account-ownership/data/dto/AccountOwnershipDto";
@@ -29,7 +29,7 @@ export class HttpAccountOwnershipDataSource
     address,
     challenge,
     network,
-  }: ConcordiumGetAccountOwnershipParams): Promise<
+  }: GetAccountOwnershipParams): Promise<
     Either<Error, AccountOwnershipDescriptor>
   > {
     try {
@@ -99,10 +99,7 @@ export class HttpAccountOwnershipDataSource
     message: string,
   ): AccountOwnershipError {
     if (status >= 400 && status < 500) {
-      return new AccountOwnershipError(
-        "verification_failed",
-        message,
-      );
+      return new AccountOwnershipError("verification_failed", message);
     }
     return new AccountOwnershipError(
       "service_unavailable",

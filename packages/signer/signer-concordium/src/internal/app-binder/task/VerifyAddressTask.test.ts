@@ -1,7 +1,7 @@
 import {
+  AccountOwnershipError,
   type ClearSignContext,
   ClearSignContextType,
-  AccountOwnershipError,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {
@@ -206,10 +206,7 @@ describe("VerifyAddressTask", () => {
       );
       vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue(
         makeErrorContext(
-          new AccountOwnershipError(
-            "service_unavailable",
-            "backend 503",
-          ),
+          new AccountOwnershipError("service_unavailable", "backend 503"),
         ),
       );
 
@@ -233,10 +230,7 @@ describe("VerifyAddressTask", () => {
       );
       vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue(
         makeErrorContext(
-          new AccountOwnershipError(
-            "verification_failed",
-            backendMessage,
-          ),
+          new AccountOwnershipError("verification_failed", backendMessage),
         ),
       );
 

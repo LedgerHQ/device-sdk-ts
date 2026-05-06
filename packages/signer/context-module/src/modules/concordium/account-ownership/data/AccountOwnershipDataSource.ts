@@ -2,7 +2,7 @@ import { type Either } from "purify-ts";
 
 export type AccountOwnershipNetwork = "mainnet" | "testnet";
 
-export type ConcordiumGetAccountOwnershipParams = {
+export type GetAccountOwnershipParams = {
   publicKey: string;
   address: string;
   challenge: string;
@@ -17,6 +17,6 @@ export type AccountOwnershipDescriptor = {
 
 export interface AccountOwnershipDataSource {
   getDescriptor(
-    params: ConcordiumGetAccountOwnershipParams,
+    params: GetAccountOwnershipParams,
   ): Promise<Either<Error, AccountOwnershipDescriptor>>;
 }

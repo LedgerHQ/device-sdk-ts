@@ -4,17 +4,13 @@ import { DefaultCommandDecoderDataSource } from "@/modules/ethereum/uniswap/data
 import { EthersAbiDecoderDataSource } from "@/modules/ethereum/uniswap/data/EthersAbiDecoderDataSource";
 import { UniswapContextLoader } from "@/modules/ethereum/uniswap/domain/UniswapContextLoader";
 
-import { ethereumUniswapTypes } from "./ethereumUniswapTypes";
+import { uniswapTypes } from "./uniswapTypes";
 
 export const uniswapModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(ethereumUniswapTypes.EthereumAbiDecoderDataSource).to(
-      EthersAbiDecoderDataSource,
-    );
-    bind(ethereumUniswapTypes.EthereumCommandDecoderDataSource).to(
+    bind(uniswapTypes.AbiDecoderDataSource).to(EthersAbiDecoderDataSource);
+    bind(uniswapTypes.CommandDecoderDataSource).to(
       DefaultCommandDecoderDataSource,
     );
-    bind(ethereumUniswapTypes.EthereumUniswapContextLoader).to(
-      UniswapContextLoader,
-    );
+    bind(uniswapTypes.UniswapContextLoader).to(UniswapContextLoader);
   });

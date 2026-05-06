@@ -10,8 +10,8 @@ import { HttpSafeProxyDataSource } from "@/modules/ethereum/proxy/data/HttpSafeP
 import { ProxyContextFieldLoader } from "@/modules/ethereum/proxy/domain/ProxyContextFieldLoader";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
-import { ethereumProxyTypes } from "./ethereumProxyTypes";
 import { proxyModuleFactory } from "./proxyModuleFactory";
+import { proxyTypes } from "./proxyTypes";
 
 describe("proxyModuleFactory", () => {
   let container: Container;
@@ -43,9 +43,7 @@ describe("proxyModuleFactory", () => {
       const module = proxyModuleFactory();
       container.loadSync(module);
 
-      const proxyDataSource = container.get(
-        ethereumProxyTypes.EthereumProxyDataSource,
-      );
+      const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
     });
 
@@ -54,7 +52,7 @@ describe("proxyModuleFactory", () => {
       container.loadSync(module);
 
       const proxyContextFieldLoader = container.get(
-        ethereumProxyTypes.EthereumProxyContextFieldLoader,
+        proxyTypes.ProxyContextFieldLoader,
       );
       expect(proxyContextFieldLoader).toBeInstanceOf(ProxyContextFieldLoader);
     });
@@ -65,9 +63,7 @@ describe("proxyModuleFactory", () => {
       const module = proxyModuleFactory({ proxy: "safe" });
       container.loadSync(module);
 
-      const proxyDataSource = container.get(
-        ethereumProxyTypes.EthereumProxyDataSource,
-      );
+      const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpSafeProxyDataSource);
     });
 
@@ -76,7 +72,7 @@ describe("proxyModuleFactory", () => {
       container.loadSync(module);
 
       const proxyContextFieldLoader = container.get(
-        ethereumProxyTypes.EthereumProxyContextFieldLoader,
+        proxyTypes.ProxyContextFieldLoader,
       );
       expect(proxyContextFieldLoader).toBeInstanceOf(ProxyContextFieldLoader);
     });
@@ -87,9 +83,7 @@ describe("proxyModuleFactory", () => {
       const module = proxyModuleFactory({ proxy: "default" });
       container.loadSync(module);
 
-      const proxyDataSource = container.get(
-        ethereumProxyTypes.EthereumProxyDataSource,
-      );
+      const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
     });
   });
@@ -99,9 +93,7 @@ describe("proxyModuleFactory", () => {
       const module = proxyModuleFactory({});
       container.loadSync(module);
 
-      const proxyDataSource = container.get(
-        ethereumProxyTypes.EthereumProxyDataSource,
-      );
+      const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
     });
   });
@@ -113,9 +105,7 @@ describe("proxyModuleFactory", () => {
       });
       container.loadSync(module);
 
-      const proxyDataSource = container.get(
-        ethereumProxyTypes.EthereumProxyDataSource,
-      );
+      const proxyDataSource = container.get(proxyTypes.ProxyDataSource);
       expect(proxyDataSource).toBeInstanceOf(HttpProxyDataSource);
     });
   });

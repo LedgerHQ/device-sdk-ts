@@ -7,7 +7,7 @@ import {
   WETHSupportedChainId,
   WETHSupportedChainIds,
 } from "@/modules/ethereum/uniswap/constants/weth";
-import { ethereumUniswapTypes } from "@/modules/ethereum/uniswap/di/ethereumUniswapTypes";
+import { uniswapTypes } from "@/modules/ethereum/uniswap/di/uniswapTypes";
 
 import { type AbiDecoderDataSource } from "./AbiDecoderDataSource";
 
@@ -17,7 +17,7 @@ const FEE_LENGTH = 3 * 2;
 @injectable()
 export class DefaultCommandDecoderDataSource {
   constructor(
-    @inject(ethereumUniswapTypes.EthereumAbiDecoderDataSource)
+    @inject(uniswapTypes.AbiDecoderDataSource)
     private abiDecoder: AbiDecoderDataSource,
   ) {}
 

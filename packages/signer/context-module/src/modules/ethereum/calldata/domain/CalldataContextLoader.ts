@@ -9,9 +9,9 @@ import { MaybeAsync } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { CalldataDescriptorDataSource } from "@/modules/ethereum/calldata/data/CalldataDescriptorDataSource";
-import { ethereumCalldataTypes } from "@/modules/ethereum/calldata/di/ethereumCalldataTypes";
+import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
-import { ethereumProxyTypes } from "@/modules/ethereum/proxy/di/ethereumProxyTypes";
+import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -48,11 +48,11 @@ export class CalldataContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumCalldataTypes.EthereumDappCalldataDescriptorDataSource)
+    @inject(calldataTypes.DappCalldataDescriptorDataSource)
     private dappDataSource: CalldataDescriptorDataSource,
-    @inject(ethereumCalldataTypes.EthereumTokenCalldataDescriptorDataSource)
+    @inject(calldataTypes.TokenCalldataDescriptorDataSource)
     private tokenDataSource: CalldataDescriptorDataSource,
-    @inject(ethereumProxyTypes.EthereumProxyDataSource)
+    @inject(proxyTypes.ProxyDataSource)
     private proxyDataSource: ProxyDataSource,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,

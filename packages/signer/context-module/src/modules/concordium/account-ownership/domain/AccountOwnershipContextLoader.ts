@@ -7,7 +7,7 @@ import type {
   AccountOwnershipDataSource,
   AccountOwnershipNetwork,
 } from "@/modules/concordium/account-ownership/data/AccountOwnershipDataSource";
-import { concordiumAccountOwnershipTypes } from "@/modules/concordium/account-ownership/di/concordiumAccountOwnershipTypes";
+import { accountOwnershipTypes } from "@/modules/concordium/account-ownership/di/accountOwnershipTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
@@ -31,9 +31,7 @@ export class AccountOwnershipContextLoader
   implements ContextLoader<AccountOwnershipContextInput>
 {
   constructor(
-    @inject(
-      concordiumAccountOwnershipTypes.ConcordiumAccountOwnershipDataSource,
-    )
+    @inject(accountOwnershipTypes.AccountOwnershipDataSource)
     private readonly _dataSource: AccountOwnershipDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,

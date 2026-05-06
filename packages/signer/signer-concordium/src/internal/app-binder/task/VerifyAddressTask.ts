@@ -1,8 +1,8 @@
 import {
-  type ClearSignContextSuccess,
-  ClearSignContextType,
   AccountOwnershipError,
   type AccountOwnershipNetwork,
+  type ClearSignContextSuccess,
+  ClearSignContextType,
   type ContextModule,
 } from "@ledgerhq/context-module";
 import {

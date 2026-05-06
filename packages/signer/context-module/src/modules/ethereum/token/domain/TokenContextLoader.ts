@@ -7,7 +7,7 @@ import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
-import { ethereumTokenTypes } from "@/modules/ethereum/token/di/ethereumTokenTypes";
+import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -39,7 +39,7 @@ export class TokenContextLoader implements ContextLoader<TokenContextInput> {
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumTokenTypes.EthereumTokenDataSource)
+    @inject(tokenTypes.TokenDataSource)
     dataSource: TokenDataSource,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,

@@ -8,8 +8,8 @@ import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import {
   GetTokenInfosParams,
-  TokenDataSource,
   TokenDataResponse,
+  TokenDataSource,
 } from "./TokenDataSource";
 
 @injectable()

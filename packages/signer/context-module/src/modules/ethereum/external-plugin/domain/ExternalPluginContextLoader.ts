@@ -9,10 +9,10 @@ import { Either, EitherAsync, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import type { ExternalPluginDataSource } from "@/modules/ethereum/external-plugin/data/ExternalPluginDataSource";
-import { ethereumExternalPluginTypes } from "@/modules/ethereum/external-plugin/di/ethereumExternalPluginTypes";
+import { externalPluginTypes } from "@/modules/ethereum/external-plugin/di/externalPluginTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
-import { ethereumTokenTypes } from "@/modules/ethereum/token/di/ethereumTokenTypes";
-import { ethereumUniswapTypes } from "@/modules/ethereum/uniswap/di/ethereumUniswapTypes";
+import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
+import { uniswapTypes } from "@/modules/ethereum/uniswap/di/uniswapTypes";
 import type { UniswapContextLoader } from "@/modules/ethereum/uniswap/domain/UniswapContextLoader";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -49,11 +49,11 @@ export class ExternalPluginContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumExternalPluginTypes.EthereumExternalPluginDataSource)
+    @inject(externalPluginTypes.ExternalPluginDataSource)
     private _externalPluginDataSource: ExternalPluginDataSource,
-    @inject(ethereumTokenTypes.EthereumTokenDataSource)
+    @inject(tokenTypes.TokenDataSource)
     private _tokenDataSource: TokenDataSource,
-    @inject(ethereumUniswapTypes.EthereumUniswapContextLoader)
+    @inject(uniswapTypes.UniswapContextLoader)
     private _uniswapLoader: UniswapContextLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,

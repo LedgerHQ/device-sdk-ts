@@ -6,7 +6,7 @@ import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { type OwnerInfoDataSource } from "@/modules/solana/owner-info/data/OwnerInfoDataSource";
-import { solanaContextTypes } from "@/modules/solana/owner-info/di/solanaContextTypes";
+import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
@@ -25,7 +25,7 @@ export class OwnerInfoContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(solanaContextTypes.SolanaDataSource)
+    @inject(ownerInfoTypes.OwnerInfoDataSource)
     private readonly _dataSource: OwnerInfoDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,

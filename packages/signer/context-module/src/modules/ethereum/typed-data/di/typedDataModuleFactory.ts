@@ -1,15 +1,13 @@
 import { ContainerModule } from "inversify";
 
 import { HttpTypedDataDataSource } from "@/modules/ethereum/typed-data/data/HttpTypedDataDataSource";
-import { ethereumTypedDataTypes } from "@/modules/ethereum/typed-data/di/ethereumTypedDataTypes";
+import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import { DefaultTypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/DefaultTypedDataContextLoader";
 
 export const typedDataModuleFactory = () =>
   new ContainerModule(({ bind }) => {
-    bind(ethereumTypedDataTypes.EthereumTypedDataDataSource).to(
-      HttpTypedDataDataSource,
-    );
-    bind(ethereumTypedDataTypes.EthereumTypedDataContextLoader).to(
+    bind(typedDataTypes.TypedDataDataSource).to(HttpTypedDataDataSource);
+    bind(typedDataTypes.TypedDataContextLoader).to(
       DefaultTypedDataContextLoader,
     );
   });

@@ -9,7 +9,7 @@ import { Maybe, Nothing } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
-import { ethereumTokenTypes } from "@/modules/ethereum/token/di/ethereumTokenTypes";
+import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import {
   UNISWAP_COMMANDS,
   UNISWAP_EXECUTE_ABI,
@@ -18,7 +18,7 @@ import {
   UniswapSupportedCommand,
 } from "@/modules/ethereum/uniswap/constants/uniswap";
 import { type CommandDecoderDataSource } from "@/modules/ethereum/uniswap/data/CommandDecoderDataSource";
-import { ethereumUniswapTypes } from "@/modules/ethereum/uniswap/di/ethereumUniswapTypes";
+import { uniswapTypes } from "@/modules/ethereum/uniswap/di/uniswapTypes";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,
@@ -42,9 +42,9 @@ export class UniswapContextLoader
   private logger: LoggerPublisherService;
 
   constructor(
-    @inject(ethereumUniswapTypes.EthereumCommandDecoderDataSource)
+    @inject(uniswapTypes.CommandDecoderDataSource)
     private commandDecoderDataSource: CommandDecoderDataSource,
-    @inject(ethereumTokenTypes.EthereumTokenDataSource)
+    @inject(tokenTypes.TokenDataSource)
     private tokenDataSource: TokenDataSource,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
