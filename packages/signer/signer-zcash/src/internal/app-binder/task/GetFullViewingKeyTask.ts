@@ -6,6 +6,7 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 
 import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
 import {
@@ -13,7 +14,6 @@ import {
   type ZcashFvkP2,
   zcashFvkP2FromMode,
 } from "@internal/app-binder/command/GetFullViewingKeyCommand";
-import { VK_RESPONSE_CHUNK_SIZE } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import { type ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
 
@@ -84,7 +84,7 @@ function parseAssembledOrchardFvk(
 /**
  * True when `assembled` already contains the u16 BE string length prefix plus
  * the declared UTF-8 payload. Used to stop chunking when the last payload chunk
- * is exactly `VK_RESPONSE_CHUNK_SIZE` bytes (otherwise the host would send a
+ * is exactly `APDU_MAX_PAYLOAD` bytes (otherwise the host would send a
  * spurious CONTINUE APDU).
  */
 function isCompleteUfvkLengthFraming(assembled: Uint8Array): boolean {
@@ -169,7 +169,7 @@ export class GetFullViewingKeyTask {
     let lastChunk: Uint8Array = new Uint8Array(firstResult.data.data);
     let assembled: Uint8Array = lastChunk;
 
-    while (lastChunk.length === VK_RESPONSE_CHUNK_SIZE) {
+    while (lastChunk.length === APDU_MAX_PAYLOAD) {
       if (this.args.mode === "ufvk" && isCompleteUfvkLengthFraming(assembled)) {
         break;
       }

@@ -4,13 +4,13 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   type GetFullViewingKeyCommand,
   P2_VK,
 } from "@internal/app-binder/command/GetFullViewingKeyCommand";
-import { VK_RESPONSE_CHUNK_SIZE } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import {
   GetFullViewingKeyTask,
@@ -79,8 +79,8 @@ describe("GetFullViewingKeyTask", () => {
     const assembled = new Uint8Array(510);
     new DataView(assembled.buffer).setUint16(0, strLen, false);
     assembled.fill(0x62, 2, 2 + strLen);
-    const chunk0 = assembled.slice(0, VK_RESPONSE_CHUNK_SIZE);
-    const chunk1 = assembled.slice(VK_RESPONSE_CHUNK_SIZE);
+    const chunk0 = assembled.slice(0, APDU_MAX_PAYLOAD);
+    const chunk1 = assembled.slice(APDU_MAX_PAYLOAD);
     expect(chunk0.length).toBe(255);
     expect(chunk1.length).toBe(255);
     const expectedKey = "b".repeat(strLen);
@@ -219,8 +219,8 @@ describe("GetFullViewingKeyTask", () => {
     new DataView(assembled.buffer).setUint16(0, strLen, false);
     assembled.fill(0x61, 2, 2 + strLen);
 
-    const chunk0 = assembled.slice(0, VK_RESPONSE_CHUNK_SIZE);
-    const chunk1 = assembled.slice(VK_RESPONSE_CHUNK_SIZE);
+    const chunk0 = assembled.slice(0, APDU_MAX_PAYLOAD);
+    const chunk1 = assembled.slice(APDU_MAX_PAYLOAD);
     expect(chunk0.length).toBe(255);
     expect(chunk1.length).toBe(49);
     expect(chunk0.length + chunk1.length).toBe(304);
@@ -273,7 +273,7 @@ describe("GetFullViewingKeyTask", () => {
   });
 
   it("should reassemble multiple chunks then validate Orchard FVK length", async () => {
-    const a = new Uint8Array(VK_RESPONSE_CHUNK_SIZE).fill(0xab);
+    const a = new Uint8Array(APDU_MAX_PAYLOAD).fill(0xab);
     const b = new Uint8Array(10).fill(0xcd);
 
     const sendCommand = vi
@@ -292,7 +292,7 @@ describe("GetFullViewingKeyTask", () => {
       expect(result.error).toBeInstanceOf(InvalidStatusWordError);
       const err = result.error as InvalidStatusWordError;
       expect((err.originalError as { message: string }).message).toBe(
-        `Orchard FVK must be ${ORCHARD_FVK_BYTE_LENGTH} bytes (got ${VK_RESPONSE_CHUNK_SIZE + 10})`,
+        `Orchard FVK must be ${ORCHARD_FVK_BYTE_LENGTH} bytes (got ${APDU_MAX_PAYLOAD + 10})`,
       );
     }
     expect(sendCommand).toHaveBeenCalledTimes(2);
@@ -305,9 +305,9 @@ describe("GetFullViewingKeyTask", () => {
     expect(c2.getApdu().getRawApdu()[3]).toBe(P2_VK.ORCHARD_FVK);
   });
 
-  it("should issue another GET_VK continue when a chunk is exactly VK_RESPONSE_CHUNK_SIZE and more data follows", async () => {
-    const full1 = new Uint8Array(VK_RESPONSE_CHUNK_SIZE).fill(0x11);
-    const full2 = new Uint8Array(VK_RESPONSE_CHUNK_SIZE).fill(0x22);
+  it("should issue another GET_VK continue when a chunk is exactly APDU_MAX_PAYLOAD and more data follows", async () => {
+    const full1 = new Uint8Array(APDU_MAX_PAYLOAD).fill(0x11);
+    const full2 = new Uint8Array(APDU_MAX_PAYLOAD).fill(0x22);
     const tail = new Uint8Array(12).fill(0x33);
 
     const sendCommand = vi
@@ -327,7 +327,7 @@ describe("GetFullViewingKeyTask", () => {
       expect(result.error).toBeInstanceOf(InvalidStatusWordError);
       const err = result.error as InvalidStatusWordError;
       expect((err.originalError as { message: string }).message).toBe(
-        `Orchard FVK must be ${ORCHARD_FVK_BYTE_LENGTH} bytes (got ${VK_RESPONSE_CHUNK_SIZE * 2 + tail.length})`,
+        `Orchard FVK must be ${ORCHARD_FVK_BYTE_LENGTH} bytes (got ${APDU_MAX_PAYLOAD * 2 + tail.length})`,
       );
     }
     expect(sendCommand).toHaveBeenCalledTimes(3);
@@ -357,7 +357,7 @@ describe("GetFullViewingKeyTask", () => {
   });
 
   it("should return continuation GET_VK error immediately without extra continuation calls", async () => {
-    const firstChunk = new Uint8Array(VK_RESPONSE_CHUNK_SIZE).fill(0x42);
+    const firstChunk = new Uint8Array(APDU_MAX_PAYLOAD).fill(0x42);
     const failingResult = CommandResultFactory({
       error: new InvalidStatusWordError("continuation GET_VK failed"),
     });

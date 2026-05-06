@@ -27,7 +27,7 @@ export const P2_VK = {
   UFVK: 0x00,
   ORCHARD_FVK: 0x01,
 } as const;
-const INS = 0x50;
+const GET_VK_INS = 0x50;
 
 export type ZcashFvkP2 = (typeof P2_VK)[keyof typeof P2_VK];
 
@@ -47,7 +47,7 @@ export type GetFullViewingKeyCommandArgs =
 
 /**
  * One GET_VK APDU. Response is a single chunk; the host task concatenates
- * until the last chunk has length < `VK_RESPONSE_CHUNK_SIZE` (255).
+ * until the last chunk has length < `APDU_MAX_PAYLOAD` (255).
  */
 export type GetFullViewingKeyCommandResponse = {
   readonly data: Uint8Array;
@@ -77,7 +77,7 @@ export class GetFullViewingKeyCommand
 
     const getVkArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS,
+      ins: GET_VK_INS,
       p1,
       p2: this.args.p2,
     };
