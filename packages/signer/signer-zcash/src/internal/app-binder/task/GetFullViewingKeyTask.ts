@@ -38,7 +38,7 @@ export type GetFullViewingKeyTaskData =
 export type GetFullViewingKeyTaskError =
   CommandErrorResult<ZcashErrorCodes>["error"];
 
-  export type GetFullViewingKeyTaskResult = DmkResult<
+export type GetFullViewingKeyTaskResult = DmkResult<
   GetFullViewingKeyTaskData,
   GetFullViewingKeyTaskError
 >;

@@ -1,6 +1,7 @@
 import {
-  type CommandResult,
-  CommandResultFactory,
+  type CommandErrorResult,
+  type DmkResult,
+  DmkResultFactory,
   type InternalApi,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
@@ -32,6 +33,11 @@ type GetTrustedInputTaskArgs = {
   transaction: Uint8Array;
   indexLookup?: number;
 };
+type GetTrustedInputTaskError = CommandErrorResult<ZcashErrorCodes>["error"];
+type GetTrustedInputTaskResult = DmkResult<
+  GetTrustedInputCommandResponse,
+  GetTrustedInputTaskError
+>;
 
 type CompactSize = {
   value: number;
@@ -348,9 +354,7 @@ export class GetTrustedInputTask {
     private args: GetTrustedInputTaskArgs,
   ) {}
 
-  async run(): Promise<
-    CommandResult<GetTrustedInputCommandResponse, ZcashErrorCodes>
-  > {
+  async run(): Promise<GetTrustedInputTaskResult> {
     const trustedInputIndex = this.args.indexLookup ?? 0;
     const chunks = splitTransactionToTrustedInputChunks(this.args.transaction);
 
@@ -367,7 +371,9 @@ export class GetTrustedInputTask {
     );
 
     if (!isSuccessCommandResult(firstResult)) {
-      return firstResult;
+      return DmkResultFactory({
+        error: firstResult.error,
+      });
     }
 
     let lastResponse = firstResult.data;
@@ -383,14 +389,16 @@ export class GetTrustedInputTask {
       );
 
       if (!isSuccessCommandResult(nextResult)) {
-        return nextResult;
+        return DmkResultFactory({
+          error: nextResult.error,
+        });
       }
 
       lastResponse = nextResult.data;
       chunkIndex += 1;
     }
 
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: lastResponse,
     });
   }
