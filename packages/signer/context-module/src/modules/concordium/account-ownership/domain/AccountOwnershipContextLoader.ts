@@ -4,9 +4,9 @@ import { inject, injectable } from "inversify";
 import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import type {
-  ConcordiumAccountOwnershipDataSource,
-  ConcordiumAccountOwnershipNetwork,
-} from "@/modules/concordium/account-ownership/data/ConcordiumAccountOwnershipDataSource";
+  AccountOwnershipDataSource,
+  AccountOwnershipNetwork,
+} from "@/modules/concordium/account-ownership/data/AccountOwnershipDataSource";
 import { concordiumAccountOwnershipTypes } from "@/modules/concordium/account-ownership/di/concordiumAccountOwnershipTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
@@ -14,10 +14,10 @@ import {
   ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-export type ConcordiumAccountOwnershipContextInput = {
+export type AccountOwnershipContextInput = {
   publicKey: string;
   address: string;
-  network: ConcordiumAccountOwnershipNetwork;
+  network: AccountOwnershipNetwork;
   deviceModelId: DeviceModelId;
   challenge: string;
 };
@@ -27,14 +27,14 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
 ];
 
 @injectable()
-export class ConcordiumAccountOwnershipContextLoader
-  implements ContextLoader<ConcordiumAccountOwnershipContextInput>
+export class AccountOwnershipContextLoader
+  implements ContextLoader<AccountOwnershipContextInput>
 {
   constructor(
     @inject(
       concordiumAccountOwnershipTypes.ConcordiumAccountOwnershipDataSource,
     )
-    private readonly _dataSource: ConcordiumAccountOwnershipDataSource,
+    private readonly _dataSource: AccountOwnershipDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly _certificateLoader: PkiCertificateLoader,
   ) {}
@@ -42,7 +42,7 @@ export class ConcordiumAccountOwnershipContextLoader
   canHandle(
     input: unknown,
     expectedTypes: ClearSignContextType[],
-  ): input is ConcordiumAccountOwnershipContextInput {
+  ): input is AccountOwnershipContextInput {
     return (
       SUPPORTED_TYPES.every((type) => expectedTypes.includes(type)) &&
       typeof input === "object" &&
@@ -69,7 +69,7 @@ export class ConcordiumAccountOwnershipContextLoader
     network,
     deviceModelId,
     challenge,
-  }: ConcordiumAccountOwnershipContextInput): Promise<ClearSignContext[]> {
+  }: AccountOwnershipContextInput): Promise<ClearSignContext[]> {
     const descriptor = await this._dataSource.getDescriptor({
       publicKey,
       address,

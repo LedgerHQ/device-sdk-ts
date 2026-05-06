@@ -5,17 +5,17 @@ import { type Either, Left, Right } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import {
-  type ConcordiumAccountOwnershipDataSource,
-  type ConcordiumAccountOwnershipDescriptor,
+  type AccountOwnershipDataSource,
+  type AccountOwnershipDescriptor,
   type ConcordiumGetAccountOwnershipParams,
-} from "@/modules/concordium/account-ownership/data/ConcordiumAccountOwnershipDataSource";
-import { ConcordiumAccountOwnershipError } from "@/modules/concordium/account-ownership/data/ConcordiumAccountOwnershipError";
+} from "@/modules/concordium/account-ownership/data/AccountOwnershipDataSource";
+import { AccountOwnershipError } from "@/modules/concordium/account-ownership/data/AccountOwnershipError";
 import { type AccountOwnershipDto } from "@/modules/concordium/account-ownership/data/dto/AccountOwnershipDto";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 @injectable()
-export class HttpConcordiumAccountOwnershipDataSource
-  implements ConcordiumAccountOwnershipDataSource
+export class HttpAccountOwnershipDataSource
+  implements AccountOwnershipDataSource
 {
   constructor(
     @inject(configTypes.Config)
@@ -30,7 +30,7 @@ export class HttpConcordiumAccountOwnershipDataSource
     challenge,
     network,
   }: ConcordiumGetAccountOwnershipParams): Promise<
-    Either<Error, ConcordiumAccountOwnershipDescriptor>
+    Either<Error, AccountOwnershipDescriptor>
   > {
     try {
       const data = (await this.http.get(
@@ -42,18 +42,18 @@ export class HttpConcordiumAccountOwnershipDataSource
 
       if (!data) {
         return Left(
-          new ConcordiumAccountOwnershipError(
+          new AccountOwnershipError(
             "service_unavailable",
-            "[ContextModule] HttpConcordiumAccountOwnershipDataSource: unexpected empty response",
+            "[ContextModule] HttpAccountOwnershipDataSource: unexpected empty response",
           ),
         );
       }
 
       if (!this.isAccountOwnershipDto(data)) {
         return Left(
-          new ConcordiumAccountOwnershipError(
+          new AccountOwnershipError(
             "service_unavailable",
-            "[ContextModule] HttpConcordiumAccountOwnershipDataSource: invalid response format",
+            "[ContextModule] HttpAccountOwnershipDataSource: invalid response format",
           ),
         );
       }
@@ -69,7 +69,7 @@ export class HttpConcordiumAccountOwnershipDataSource
   }
 
   /**
-   * Classifies a caught request error into an {@link ConcordiumAccountOwnershipError}:
+   * Classifies a caught request error into an {@link AccountOwnershipError}:
    * HTTP 4xx responses carry the backend's `message` verbatim and are marked
    * as `verification_failed`; everything else (network failure, 5xx,
    * unrecognized errors) is marked as `service_unavailable`.
@@ -81,32 +81,32 @@ export class HttpConcordiumAccountOwnershipDataSource
    * body on `.responseBody`, and finally from the raw body as a
    * last resort.
    */
-  private classifyError(error: unknown): ConcordiumAccountOwnershipError {
+  private classifyError(error: unknown): AccountOwnershipError {
     if (this.hasNumericStatus(error)) {
       const status = error.status;
       const message = this.extractErrorMessage(error);
       return this.classifyFromStatus(status, message);
     }
 
-    return new ConcordiumAccountOwnershipError(
+    return new AccountOwnershipError(
       "service_unavailable",
-      "[ContextModule] HttpConcordiumAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
+      "[ContextModule] HttpAccountOwnershipDataSource: Failed to fetch account ownership descriptor",
     );
   }
 
   private classifyFromStatus(
     status: number,
     message: string,
-  ): ConcordiumAccountOwnershipError {
+  ): AccountOwnershipError {
     if (status >= 400 && status < 500) {
-      return new ConcordiumAccountOwnershipError(
+      return new AccountOwnershipError(
         "verification_failed",
         message,
       );
     }
-    return new ConcordiumAccountOwnershipError(
+    return new AccountOwnershipError(
       "service_unavailable",
-      `[ContextModule] HttpConcordiumAccountOwnershipDataSource: backend ${status}: ${message}`,
+      `[ContextModule] HttpAccountOwnershipDataSource: backend ${status}: ${message}`,
     );
   }
 
