@@ -3,8 +3,10 @@ import {
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
-import { GetFullViewingKeyCommand } from "@internal/app-binder/command/GetFullViewingKeyCommand";
-import { P2_VK } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import {
+  GetFullViewingKeyCommand,
+  P2_VK,
+} from "@internal/app-binder/command/GetFullViewingKeyCommand";
 import { type ZcashAppCommandError } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 
 // m/44'/133'/0'/0/0 — same path bytes as GetAddress tests

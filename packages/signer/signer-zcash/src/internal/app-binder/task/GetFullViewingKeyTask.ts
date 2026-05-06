@@ -1,6 +1,7 @@
 import {
-  type CommandResult,
-  CommandResultFactory,
+  type CommandErrorResult,
+  type DmkResult,
+  DmkResultFactory,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -34,6 +35,13 @@ export type GetFullViewingKeyTaskSuccessOrchard = {
 export type GetFullViewingKeyTaskData =
   | GetFullViewingKeyTaskSuccessUfvk
   | GetFullViewingKeyTaskSuccessOrchard;
+export type GetFullViewingKeyTaskError =
+  CommandErrorResult<ZcashErrorCodes>["error"];
+
+  export type GetFullViewingKeyTaskResult = DmkResult<
+  GetFullViewingKeyTaskData,
+  GetFullViewingKeyTaskError
+>;
 
 /**
  * Serialized Orchard full viewing key length (see Zcash protocol / `orchard` crate).
@@ -60,15 +68,15 @@ function orchardFvkLengthMismatchMessage(assembled: Uint8Array): string {
 
 function parseAssembledOrchardFvk(
   assembled: Uint8Array,
-): CommandResult<GetFullViewingKeyTaskSuccessOrchard, ZcashErrorCodes> {
+): DmkResult<GetFullViewingKeyTaskSuccessOrchard, GetFullViewingKeyTaskError> {
   if (assembled.length !== ORCHARD_FVK_BYTE_LENGTH) {
-    return CommandResultFactory({
+    return DmkResultFactory({
       error: new InvalidStatusWordError(
         orchardFvkLengthMismatchMessage(assembled),
       ),
     });
   }
-  return CommandResultFactory({
+  return DmkResultFactory({
     data: { mode: "orchardFvk", fullViewingKey: assembled },
   });
 }
@@ -94,9 +102,9 @@ function isCompleteUfvkLengthFraming(assembled: Uint8Array): boolean {
 
 function parseAssembledUfvk(
   assembled: Uint8Array,
-): CommandResult<GetFullViewingKeyTaskSuccessUfvk, ZcashErrorCodes> {
+): DmkResult<GetFullViewingKeyTaskSuccessUfvk, GetFullViewingKeyTaskError> {
   if (assembled.length < 2) {
-    return CommandResultFactory({
+    return DmkResultFactory({
       error: new InvalidStatusWordError("UFVK string length is missing"),
     });
   }
@@ -107,7 +115,7 @@ function parseAssembledUfvk(
   );
   const strLength = view.getUint16(0, false);
   if (2 + strLength > assembled.length) {
-    return CommandResultFactory({
+    return DmkResultFactory({
       error: new InvalidStatusWordError("UFVK string is truncated"),
     });
   }
@@ -116,18 +124,18 @@ function parseAssembledUfvk(
   try {
     fullViewingKey = new TextDecoder("utf-8", { fatal: true }).decode(utf8);
   } catch {
-    return CommandResultFactory({
+    return DmkResultFactory({
       error: new InvalidStatusWordError("UFVK is not valid UTF-8"),
     });
   }
   if (2 + strLength < assembled.length) {
-    return CommandResultFactory({
+    return DmkResultFactory({
       error: new InvalidStatusWordError(
         "UFVK response has extra trailing bytes",
       ),
     });
   }
-  return CommandResultFactory({
+  return DmkResultFactory({
     data: { mode: "ufvk", fullViewingKey },
   });
 }
@@ -142,9 +150,7 @@ export class GetFullViewingKeyTask {
     private readonly args: GetFullViewingKeyTaskArgs,
   ) {}
 
-  async run(): Promise<
-    CommandResult<GetFullViewingKeyTaskData, ZcashErrorCodes>
-  > {
+  async run(): Promise<GetFullViewingKeyTaskResult> {
     const p2: ZcashFvkP2 = zcashFvkP2FromMode(this.args.mode);
 
     const firstResult = await this.api.sendCommand(
@@ -155,7 +161,9 @@ export class GetFullViewingKeyTask {
       }),
     );
     if (!isSuccessCommandResult(firstResult)) {
-      return firstResult;
+      return DmkResultFactory({
+        error: firstResult.error,
+      });
     }
 
     let lastChunk: Uint8Array = new Uint8Array(firstResult.data.data);
@@ -172,7 +180,9 @@ export class GetFullViewingKeyTask {
         }),
       );
       if (!isSuccessCommandResult(next)) {
-        return next;
+        return DmkResultFactory({
+          error: next.error,
+        });
       }
       lastChunk = new Uint8Array(next.data.data);
       assembled = concatUint8Arrays(assembled, lastChunk);

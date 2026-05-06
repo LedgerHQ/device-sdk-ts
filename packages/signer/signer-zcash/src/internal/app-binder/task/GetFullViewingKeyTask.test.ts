@@ -6,11 +6,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { describe, expect, it, vi } from "vitest";
 
-import { type GetFullViewingKeyCommand } from "@internal/app-binder/command/GetFullViewingKeyCommand";
 import {
+  type GetFullViewingKeyCommand,
   P2_VK,
-  VK_RESPONSE_CHUNK_SIZE,
-} from "@internal/app-binder/command/utils/apduHeaderUtils";
+} from "@internal/app-binder/command/GetFullViewingKeyCommand";
+import { VK_RESPONSE_CHUNK_SIZE } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import {
   GetFullViewingKeyTask,
@@ -348,7 +348,7 @@ describe("GetFullViewingKeyTask", () => {
       mode: "orchardFvk",
     }).run();
 
-    expect(result).toBe(failingResult);
+    expect(result).toStrictEqual(failingResult);
     expect(isSuccessCommandResult(result)).toBe(false);
     expect(sendCommand).toHaveBeenCalledOnce();
     const c1 = sendCommand.mock.calls[0]![0] as GetFullViewingKeyCommand;
@@ -374,7 +374,7 @@ describe("GetFullViewingKeyTask", () => {
       mode: "orchardFvk",
     }).run();
 
-    expect(result).toBe(failingResult);
+    expect(result).toStrictEqual(failingResult);
     expect(isSuccessCommandResult(result)).toBe(false);
     expect(sendCommand).toHaveBeenCalledTimes(2);
     const c1 = sendCommand.mock.calls[0]![0] as GetFullViewingKeyCommand;

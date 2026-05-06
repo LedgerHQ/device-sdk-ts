@@ -14,9 +14,7 @@ import {
 import { Maybe } from "purify-ts";
 
 import {
-  INS,
   P1,
-  P2_VK,
   ZCASH_CLA,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
@@ -24,6 +22,12 @@ import {
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+
+export const P2_VK = {
+  UFVK: 0x00,
+  ORCHARD_FVK: 0x01,
+} as const;
+const INS = 0x50;
 
 export type ZcashFvkP2 = (typeof P2_VK)[keyof typeof P2_VK];
 
@@ -73,7 +77,7 @@ export class GetFullViewingKeyCommand
 
     const getVkArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS.GET_VK,
+      ins: INS,
       p1,
       p2: this.args.p2,
     };
