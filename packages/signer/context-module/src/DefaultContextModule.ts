@@ -6,9 +6,6 @@ import {
 } from "@/config/model/ContextModuleConfig";
 import { type ContextModule } from "@/ContextModule";
 import { makeContainer } from "@/di";
-import { type BlindSigningReportParams } from "@/modules/chain-agnostic/reporter/data/BlindSigningReporterDatasource";
-import { reporterTypes } from "@/modules/chain-agnostic/reporter/di/reporterTypes";
-import { type BlindSigningReporter } from "@/modules/chain-agnostic/reporter/domain/BlindSigningReporter";
 import { accountOwnershipTypes } from "@/modules/concordium/account-ownership/di/accountOwnershipTypes";
 import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
 import { dynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkTypes";
@@ -21,7 +18,10 @@ import { tokenTypes as ethereumTokenTypes } from "@/modules/ethereum/token/di/to
 import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
 import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
-import { transactionCheckTypes as ethereumTransactionCheckTypes } from "@/modules/shared/transaction-check/ethereum/di/transactionCheckTypes";
+import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
+import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
+import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
+import { transactionCheckTypes } from "@/modules/multichain/transaction-check/di/transactionCheckTypes";
 import { lifiTypes } from "@/modules/solana/lifi/di/lifiTypes";
 import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
 import { tokenTypes as solanaTokenTypes } from "@/modules/solana/token/di/tokenTypes";
@@ -106,10 +106,10 @@ export class DefaultContextModule implements ContextModule {
             gatedSigningTypes.GatedSigningTypedDataContextLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumTransactionCheckTypes.TransactionCheckContextLoader,
+            transactionCheckTypes.TransactionCheckLoader,
           ),
           this._container.get<ContextLoader>(
-            ethereumTransactionCheckTypes.TypedDataTransactionCheckContextLoader,
+            transactionCheckTypes.TypedDataCheckLoader,
           ),
         ];
       case ContextModuleChainID.Solana:

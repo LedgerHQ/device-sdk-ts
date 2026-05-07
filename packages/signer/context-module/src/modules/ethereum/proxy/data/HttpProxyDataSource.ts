@@ -4,8 +4,8 @@ import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import { ProxyDelegateCallDto } from "./dto/ProxyDelegateCallDto";

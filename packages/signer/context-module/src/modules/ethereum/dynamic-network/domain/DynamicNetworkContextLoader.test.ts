@@ -2,10 +2,6 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
-import { type PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import { type DynamicNetworkDataSource } from "@/modules/ethereum/dynamic-network/data/DynamicNetworkDataSource";
 import {
   type DynamicNetworkContextInput,
@@ -15,6 +11,10 @@ import {
   type DynamicNetworkConfiguration,
   type DynamicNetworkDescriptor,
 } from "@/modules/ethereum/dynamic-network/model/DynamicNetworkConfiguration";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
+import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 const mockLoggerFactory = () => ({

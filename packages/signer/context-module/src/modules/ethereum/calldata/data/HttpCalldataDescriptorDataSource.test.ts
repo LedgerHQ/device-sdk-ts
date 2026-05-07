@@ -6,13 +6,13 @@ import { Left } from "purify-ts";
 
 import type { ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type CalldataDescriptorDataSource } from "@/index";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { type PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import type {
   CalldataEnumV1,
   CalldataFieldV1,
   CalldataTransactionInfoV1,
 } from "@/modules/ethereum/calldata/data/dto/CalldataDto";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 
 import { HttpCalldataDescriptorDataSource } from "./HttpCalldataDescriptorDataSource";
 

@@ -1,11 +1,11 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import { type ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import { type ProxyDelegateCall } from "@/modules/ethereum/proxy/model/ProxyDelegateCall";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   type ClearSignContext,

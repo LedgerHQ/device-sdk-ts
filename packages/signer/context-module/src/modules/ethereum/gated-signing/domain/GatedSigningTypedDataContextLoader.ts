@@ -4,15 +4,15 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import { type GatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/GatedDescriptorDataSource";
 import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import { getSchemaHash } from "@/modules/ethereum/typed-data/utils/getSchemaHash";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,

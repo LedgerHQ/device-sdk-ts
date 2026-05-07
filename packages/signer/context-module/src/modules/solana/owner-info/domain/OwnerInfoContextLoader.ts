@@ -2,9 +2,9 @@ import { LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { type OwnerInfoDataSource } from "@/modules/solana/owner-info/data/OwnerInfoDataSource";
 import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";

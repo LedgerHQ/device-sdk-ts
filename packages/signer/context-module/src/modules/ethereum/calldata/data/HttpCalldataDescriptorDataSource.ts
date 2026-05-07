@@ -7,12 +7,12 @@ import {
   type ContextModuleCalMode,
   type ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
-import { PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
-import { PkiCertificateInfo } from "@/modules/chain-agnostic/pki/model/PkiCertificateInfo";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
+import { PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
+import { PkiCertificateInfo } from "@/modules/multichain/pki/model/PkiCertificateInfo";
 import {
   ClearSignContextReference,
   ClearSignContextReferenceType,

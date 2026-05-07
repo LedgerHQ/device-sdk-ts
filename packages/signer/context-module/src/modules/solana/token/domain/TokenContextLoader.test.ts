@@ -7,8 +7,8 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import type { PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
+import type { PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import type { SolanaTransactionContext } from "@/modules/solana/owner-info/domain/solanaContextTypes";
 import {
   type TokenDataResponse,
