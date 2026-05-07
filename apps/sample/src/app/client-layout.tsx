@@ -20,6 +20,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { useUpdateConnectionsRefresherOptions } from "@/hooks/useUpdateConnectionsRefresherOptions";
 import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
+import { ContactsGate } from "@/providers/ContactsGate";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SettingsGate } from "@/providers/SettingsGate";
@@ -53,6 +54,7 @@ const PageContainer = styled(Flex)`
   background-color: ${({ theme }: { theme: DefaultTheme }) =>
     theme.colors.background.main};
   flex: 1;
+  min-width: 0;
 `;
 
 const RootApp: React.FC<PropsWithChildren> = ({ children }) => {
@@ -74,29 +76,34 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
       <StyleProvider selectedPalette="dark" fontsPath="/fonts">
         <StoreProvider store={store}>
           <SettingsGate>
-            <DmkProvider>
-              <LedgerKeyringProtocolProvider>
-                <SignerEthProvider>
-                  <SignerPolkadotProvider>
-                    <SignerZcashProvider>
-                      <SignerAleoProvider>
-                        <SignerCosmosProvider>
-                          <CalInterceptorProvider>
-                            <GlobalStyle />
-                            <head>
-                              <link rel="shortcut icon" href="../favicon.png" />
-                            </head>
-                            <body>
-                              <RootApp>{children}</RootApp>
-                            </body>
-                          </CalInterceptorProvider>
-                        </SignerCosmosProvider>
-                      </SignerAleoProvider>
-                    </SignerZcashProvider>
-                  </SignerPolkadotProvider>
-                </SignerEthProvider>
-              </LedgerKeyringProtocolProvider>
-            </DmkProvider>
+            <ContactsGate>
+              <DmkProvider>
+                <LedgerKeyringProtocolProvider>
+                  <SignerEthProvider>
+                    <SignerPolkadotProvider>
+                      <SignerZcashProvider>
+                        <SignerAleoProvider>
+                          <SignerCosmosProvider>
+                            <CalInterceptorProvider>
+                              <GlobalStyle />
+                              <head>
+                                <link
+                                  rel="shortcut icon"
+                                  href="../favicon.png"
+                                />
+                              </head>
+                              <body>
+                                <RootApp>{children}</RootApp>
+                              </body>
+                            </CalInterceptorProvider>
+                          </SignerCosmosProvider>
+                        </SignerAleoProvider>
+                      </SignerZcashProvider>
+                    </SignerPolkadotProvider>
+                  </SignerEthProvider>
+                </LedgerKeyringProtocolProvider>
+              </DmkProvider>
+            </ContactsGate>
           </SettingsGate>
         </StoreProvider>
       </StyleProvider>
