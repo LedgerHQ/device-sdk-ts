@@ -16,10 +16,10 @@ public interface Command<out T> {
 }
 ```
 
-| Member | Description |
-| ------ | ----------- |
-| `apduPayload` | The APDU to send to the device |
-| `parseResponse` | Parses the raw response bytes into a typed result |
+| Member               | Description                                              |
+| -------------------- | -------------------------------------------------------- |
+| `apduPayload`        | The APDU to send to the device                           |
+| `parseResponse`      | Parses the raw response bytes into a typed result        |
 | `checkPreconditions` | Validates inputs before sending — return `null` if valid |
 
 ## Quick Example

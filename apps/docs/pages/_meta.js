@@ -10,8 +10,4 @@ export default {
     title: "Documentation",
     type: "page",
   },
-  kmp: {
-    title: "Mobile SDK (KMP)",
-    type: "page",
-  }
 };

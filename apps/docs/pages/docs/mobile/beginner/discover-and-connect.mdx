@@ -41,12 +41,12 @@ dmk.startDiscoveringDevices().collect { result ->
 
 Each `DiscoveryDevice` exposes:
 
-| Property            | Type               | Description                                      |
-| ------------------- | ------------------ | ------------------------------------------------ |
-| `uid`               | `String`           | Unique identifier for the device                 |
-| `name`              | `String`           | Human-readable device name                       |
-| `ledgerDevice`      | `LedgerDevice`     | Device model (e.g. `NanoX`, `Stax`, `Flex`)     |
-| `connectivityType`  | `ConnectivityType` | `USB` or `BLE`                                   |
+| Property           | Type               | Description                                 |
+| ------------------ | ------------------ | ------------------------------------------- |
+| `uid`              | `String`           | Unique identifier for the device            |
+| `name`             | `String`           | Human-readable device name                  |
+| `ledgerDevice`     | `LedgerDevice`     | Device model (e.g. `NanoX`, `Stax`, `Flex`) |
+| `connectivityType` | `ConnectivityType` | `USB` or `BLE`                              |
 
 When discovery is no longer needed, stop it to free resources:
 
@@ -55,8 +55,8 @@ dmk.stopDiscoveringDevices()
 ```
 
 <Callout type="info" emoji="ℹ️">
-  Discovery stops automatically once `discoveryTimeout` is reached (default:
-  1 minute). You can configure this value when initializing the DMK.
+  Discovery stops automatically once `discoveryTimeout` is reached (default: 1
+  minute). You can configure this value when initializing the DMK.
 </Callout>
 
 ## Step 2: Connect to a device
@@ -90,12 +90,12 @@ when (result) {
 
 Once connected, `ConnectedDevice` exposes:
 
-| Property            | Type               | Description                                      |
-| ------------------- | ------------------ | ------------------------------------------------ |
-| `uid`               | `String`           | Session identifier — **keep this to interact with the device** |
-| `name`              | `String`           | Device name                                      |
-| `ledgerDevice`      | `LedgerDevice`     | Device model                                     |
-| `connectivityType`  | `ConnectivityType` | `USB` or `BLE`                                   |
+| Property           | Type               | Description                                                    |
+| ------------------ | ------------------ | -------------------------------------------------------------- |
+| `uid`              | `String`           | Session identifier — **keep this to interact with the device** |
+| `name`             | `String`           | Device name                                                    |
+| `ledgerDevice`     | `LedgerDevice`     | Device model                                                   |
+| `connectivityType` | `ConnectivityType` | `USB` or `BLE`                                                 |
 
 ## Step 3: Disconnect from a device
 

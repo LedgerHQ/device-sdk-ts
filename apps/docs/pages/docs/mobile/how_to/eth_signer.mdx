@@ -81,19 +81,21 @@ val flow: Flow<DeviceActionResult<EthereumAddress>> = signerEth.getAddress(
 #### **Parameters**
 
 - `deviceUid`
+
   - **Required**
   - **Type:** `String`
   - The UID of the connected device, from `ConnectedDevice.uid`.
 
 - `request`
+
   - **Required**
   - **Type:** `GetEthereumAddressRequest`
 
-  | Field | Type | Description |
-  | ----- | ---- | ----------- |
-  | `derivationPath` | `String` | Derivation path, e.g. `"44'/60'/0'/0/0"` |
-  | `checkOnDevice` | `Boolean` | Whether user confirmation is required on the device |
-  | `withChainCode` | `Boolean` | Whether to return the chain code |
+  | Field            | Type      | Description                                         |
+  | ---------------- | --------- | --------------------------------------------------- |
+  | `derivationPath` | `String`  | Derivation path, e.g. `"44'/60'/0'/0/0"`            |
+  | `checkOnDevice`  | `Boolean` | Whether user confirmation is required on the device |
+  | `withChainCode`  | `Boolean` | Whether to return the chain code                    |
 
 #### **Returns**
 
@@ -127,19 +129,21 @@ val flow: Flow<DeviceActionResult<Signature>> = signerEth.signTransaction(
 #### **Parameters**
 
 - `deviceUid`
+
   - **Required**
   - **Type:** `String`
   - The UID of the connected device.
 
 - `request`
+
   - **Required**
   - **Type:** `SignEthereumRequest`
 
-  | Field | Type | Description |
-  | ----- | ---- | ----------- |
-  | `derivationPath` | `String` | Derivation path, e.g. `"44'/60'/0'/0/0"` |
-  | `value` | `String` | RLP-encoded transaction as hex string |
-  | `isHexadecimalValue` | `Boolean` | Must be `true` for transaction signing |
+  | Field                | Type      | Description                              |
+  | -------------------- | --------- | ---------------------------------------- |
+  | `derivationPath`     | `String`  | Derivation path, e.g. `"44'/60'/0'/0/0"` |
+  | `value`              | `String`  | RLP-encoded transaction as hex string    |
+  | `isHexadecimalValue` | `Boolean` | Must be `true` for transaction signing   |
 
 #### **Returns**
 
@@ -173,19 +177,21 @@ val flow: Flow<DeviceActionResult<Signature>> = signerEth.signMessage(
 #### **Parameters**
 
 - `deviceUid`
+
   - **Required**
   - **Type:** `String`
   - The UID of the connected device.
 
 - `request`
+
   - **Required**
   - **Type:** `SignEthereumRequest`
 
-  | Field | Type | Description |
-  | ----- | ---- | ----------- |
-  | `derivationPath` | `String` | Derivation path, e.g. `"44'/60'/0'/0/0"` |
-  | `value` | `String` | Message to sign (UTF-8 string or hex) |
-  | `isHexadecimalValue` | `Boolean` | Set to `true` if `value` is hexadecimal |
+  | Field                | Type      | Description                              |
+  | -------------------- | --------- | ---------------------------------------- |
+  | `derivationPath`     | `String`  | Derivation path, e.g. `"44'/60'/0'/0/0"` |
+  | `value`              | `String`  | Message to sign (UTF-8 string or hex)    |
+  | `isHexadecimalValue` | `Boolean` | Set to `true` if `value` is hexadecimal  |
 
 #### **Returns**
 
@@ -198,4 +204,3 @@ data class Signature(
     val v: Int,     // Recovery parameter
 )
 ```
-

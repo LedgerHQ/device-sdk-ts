@@ -38,13 +38,13 @@ let dmk = DeviceManagementKit.build()
 
 The builder DSL exposes the following parameters:
 
-| Parameter           | Type       | Default      | Description                                                     |
-| ------------------- | ---------- | ------------ | --------------------------------------------------------------- |
-| `context`           | `Any?`     | `null`       | Android application context — required on Android              |
-| `discoveryTimeout`  | `Duration` | `1.minutes`  | How long the SDK scans for nearby devices before stopping       |
-| `connectionTimeout` | `Duration` | `15.seconds` | How long the SDK waits for a device connection before failing   |
-| `enableLog`         | `Boolean`  | `false`      | Enable SDK-wide logging                                         |
-| `enableFake`        | `Boolean`  | `false`      | Use fake device implementations — useful for testing            |
+| Parameter           | Type       | Default      | Description                                                   |
+| ------------------- | ---------- | ------------ | ------------------------------------------------------------- |
+| `context`           | `Any?`     | `null`       | Android application context — required on Android             |
+| `discoveryTimeout`  | `Duration` | `1.minutes`  | How long the SDK scans for nearby devices before stopping     |
+| `connectionTimeout` | `Duration` | `15.seconds` | How long the SDK waits for a device connection before failing |
+| `enableLog`         | `Boolean`  | `false`      | Enable SDK-wide logging                                       |
+| `enableFake`        | `Boolean`  | `false`      | Use fake device implementations — useful for testing          |
 
 Example with all options:
 

@@ -22,6 +22,7 @@ For transaction signing, the Signer integrates with the [Context Module](./conte
 </Callout>
 
 The module is published as:
+
 - **Android**: `com.ledger:signer-eth` (Maven/Gradle)
 - **iOS**: `SignerEth` (XCFramework / Swift Package Manager)
 
@@ -131,12 +132,12 @@ val flow: Flow<DeviceActionResult<EthereumAddress>> = signerEth.getAddress(
 
 **Parameters:**
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `deviceUid` | `String` | UID of the connected device, from `ConnectedDevice.uid` |
-| `request.derivationPath` | `String` | e.g. `"44'/60'/0'/0/0"` |
-| `request.checkOnDevice` | `Boolean` | Whether user confirmation is required on the device |
-| `request.withChainCode` | `Boolean` | Whether to return the chain code |
+| Name                     | Type      | Description                                             |
+| ------------------------ | --------- | ------------------------------------------------------- |
+| `deviceUid`              | `String`  | UID of the connected device, from `ConnectedDevice.uid` |
+| `request.derivationPath` | `String`  | e.g. `"44'/60'/0'/0/0"`                                 |
+| `request.checkOnDevice`  | `Boolean` | Whether user confirmation is required on the device     |
+| `request.withChainCode`  | `Boolean` | Whether to return the chain code                        |
 
 **Returns:** `Flow<DeviceActionResult<EthereumAddress>>`
 
@@ -167,11 +168,11 @@ val flow: Flow<DeviceActionResult<Signature>> = signerEth.signTransaction(
 
 **Parameters:**
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `deviceUid` | `String` | UID of the connected device |
-| `request.derivationPath` | `String` | e.g. `"44'/60'/0'/0/0"` |
-| `request.value` | `String` | RLP-encoded transaction as hex string |
+| Name                         | Type      | Description                            |
+| ---------------------------- | --------- | -------------------------------------- |
+| `deviceUid`                  | `String`  | UID of the connected device            |
+| `request.derivationPath`     | `String`  | e.g. `"44'/60'/0'/0/0"`                |
+| `request.value`              | `String`  | RLP-encoded transaction as hex string  |
 | `request.isHexadecimalValue` | `Boolean` | Must be `true` for transaction signing |
 
 **Returns:** `Flow<DeviceActionResult<Signature>>`
@@ -203,11 +204,11 @@ val flow: Flow<DeviceActionResult<Signature>> = signerEth.signMessage(
 
 **Parameters:**
 
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| `deviceUid` | `String` | UID of the connected device |
-| `request.derivationPath` | `String` | e.g. `"44'/60'/0'/0/0"` |
-| `request.value` | `String` | The message to sign (UTF-8 string or hex) |
+| Name                         | Type      | Description                                       |
+| ---------------------------- | --------- | ------------------------------------------------- |
+| `deviceUid`                  | `String`  | UID of the connected device                       |
+| `request.derivationPath`     | `String`  | e.g. `"44'/60'/0'/0/0"`                           |
+| `request.value`              | `String`  | The message to sign (UTF-8 string or hex)         |
 | `request.isHexadecimalValue` | `Boolean` | Set to `true` if `value` is in hexadecimal format |
 
 **Returns:** `Flow<DeviceActionResult<Signature>>`
