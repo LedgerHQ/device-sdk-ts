@@ -16,6 +16,7 @@ export {
   CommandResultStatus,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
+export * from "@api/contacts";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
   DeleteLanguagePackCommand,

@@ -1,11 +1,14 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 
+import { contactsPersistenceMiddleware } from "./contacts/persistenceMiddleware";
+import { contactsReducer, contactsSlice } from "./contacts/slice";
 import { sessionsReducer, sessionsSlice } from "./sessions/slice";
 import { settingsPersistenceMiddleware } from "./settings/persistenceMiddleware";
 import { settingsReducer, settingsSlice } from "./settings/slice";
 import { uiReducer, uiSlice } from "./ui/slice";
 
 const reducer = combineReducers({
+  [contactsSlice.reducerPath]: contactsReducer,
   [sessionsSlice.reducerPath]: sessionsReducer,
   [settingsSlice.reducerPath]: settingsReducer,
   [uiSlice.reducerPath]: uiReducer,
@@ -16,7 +19,10 @@ export type RootState = ReturnType<typeof reducer>;
 export const store = configureStore({
   reducer,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(settingsPersistenceMiddleware),
+    getDefaultMiddleware().concat(
+      settingsPersistenceMiddleware,
+      contactsPersistenceMiddleware,
+    ),
   devTools: true,
 });
 

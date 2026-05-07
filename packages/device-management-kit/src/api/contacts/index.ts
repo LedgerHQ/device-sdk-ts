@@ -1,0 +1,25 @@
+export {
+  type Account,
+  type Contact,
+  type ContactEntry,
+  emptyWallet,
+  ResponseType,
+  WALLET_SCHEMA_VERSION,
+  type Wallet,
+} from "@api/contacts/types";
+export {
+  ACCOUNT_NAME_BUFFER_LENGTH,
+  CONTACT_NAME_BUFFER_LENGTH,
+  ETH_ADDRESS_BYTES,
+  GID_SIZE,
+  GROUP_HANDLE_SIZE,
+  HMAC_PROOF_LENGTH,
+  IDENTIFIER_MAX_LENGTH,
+  MAX_BIP32_DEPTH,
+  SCOPE_BUFFER_LENGTH,
+  validateAddressHex,
+  validateChainId,
+  validateDerivationPath,
+  validatePrintableLabel,
+  ValidationError,
+} from "@api/contacts/validation";
