@@ -7,8 +7,6 @@ import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
-import { nanoPkiModuleFactory } from "@/modules/chain-agnostic/pki/di/pkiModuleFactory";
-import { reporterModuleFactory } from "@/modules/chain-agnostic/reporter/di/reporterModuleFactory";
 import { accountOwnershipModuleFactory } from "@/modules/concordium/account-ownership/di/accountOwnershipModuleFactory";
 import { calldataModuleFactory } from "@/modules/ethereum/calldata/di/calldataModuleFactory";
 import { dynamicNetworkModuleFactory } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkModuleFactory";
@@ -21,7 +19,9 @@ import { tokenModuleFactory as ethereumTokenModuleFactory } from "@/modules/ethe
 import { trustedNameModuleFactory } from "@/modules/ethereum/trusted-name/di/trustedNameModuleFactory";
 import { typedDataModuleFactory } from "@/modules/ethereum/typed-data/di/typedDataModuleFactory";
 import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModuleFactory";
-import { transactionCheckModuleFactory } from "@/modules/shared/transaction-check/di/transactionCheckModuleFactory";
+import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
+import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
+import { ethereumTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/ethereumTransactionCheckModuleFactory";
 import { lifiModuleFactory } from "@/modules/solana/lifi/di/lifiModuleFactory";
 import { ownerInfoModuleFactory } from "@/modules/solana/owner-info/di/ownerInfoModuleFactory";
 import { tokenModuleFactory as solanaTokenModuleFactory } from "@/modules/solana/token/di/tokenModuleFactory";
@@ -46,9 +46,6 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
   // infrastructure modules needed by all chains
   container.loadSync(configModuleFactory(config), networkModuleFactory(config));
 
-  // shared modules needed by all chains (module-level guards)
-  container.loadSync(transactionCheckModuleFactory({ chain }));
-
   switch (chain) {
     case ContextModuleChainID.Ethereum:
       container.loadSync(
@@ -65,6 +62,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         calldataModuleFactory(),
         typedDataModuleFactory(),
         uniswapModuleFactory(),
+        ethereumTransactionCheckModuleFactory(),
       );
       break;
     case ContextModuleChainID.Solana:

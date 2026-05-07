@@ -1,8 +1,6 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { type PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import type {
   AccountOwnershipDataSource,
   AccountOwnershipDescriptor,
@@ -11,6 +9,8 @@ import {
   type AccountOwnershipContextInput,
   AccountOwnershipContextLoader,
 } from "@/modules/concordium/account-ownership/domain/AccountOwnershipContextLoader";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import {
   type ClearSignContextSuccess,
   ClearSignContextType,

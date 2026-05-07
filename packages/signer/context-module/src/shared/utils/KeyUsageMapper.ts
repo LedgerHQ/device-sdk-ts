@@ -1,4 +1,4 @@
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 
 export class KeyUsageMapper {
   private static keyUsageMap = new Map<KeyUsage, number>([

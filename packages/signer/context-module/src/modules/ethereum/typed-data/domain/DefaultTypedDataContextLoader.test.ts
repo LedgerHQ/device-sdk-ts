@@ -1,11 +1,11 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
 import type { TypedDataDataSource } from "@/modules/ethereum/typed-data/data/TypedDataDataSource";
 import { DefaultTypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/DefaultTypedDataContextLoader";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 import { TypedDataCalldataParamPresence } from "@/shared/model/TypedDataClearSignContext";
 import type { TypedDataContext } from "@/shared/model/TypedDataContext";

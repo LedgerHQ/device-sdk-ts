@@ -3,10 +3,10 @@ import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
-import { PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
+import { PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import {
   type TokenDataResponse,
   type TokenDataSource,

@@ -1,10 +1,10 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import * as TrustedNameDataSource from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
   ClearSignContext,

@@ -6,10 +6,10 @@ import {
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import type { TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   ClearSignContext,

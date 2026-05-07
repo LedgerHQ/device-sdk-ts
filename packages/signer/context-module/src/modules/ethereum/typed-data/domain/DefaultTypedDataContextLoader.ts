@@ -6,10 +6,6 @@ import {
 import { inject, injectable } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
 import type { ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
 import type { TokenDataSource } from "@/modules/ethereum/token/data/TokenDataSource";
@@ -17,6 +13,10 @@ import { tokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
 import type { TypedDataDataSource } from "@/modules/ethereum/typed-data/data/TypedDataDataSource";
 import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
 import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import {
   type ClearSignContextSuccess,
   ClearSignContextType,

@@ -1,13 +1,13 @@
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
-import { KeyId } from "@/modules/chain-agnostic/pki/model/KeyId";
-import { KeyUsage } from "@/modules/chain-agnostic/pki/model/KeyUsage";
-import { type PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
 import { type ProxyDataSource } from "@/modules/ethereum/proxy/data/ProxyDataSource";
 import { ProxyContextFieldLoader } from "@/modules/ethereum/proxy/domain/ProxyContextFieldLoader";
 import { type ProxyDelegateCall } from "@/modules/ethereum/proxy/model/ProxyDelegateCall";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
+import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 describe("ProxyContextFieldLoader", () => {

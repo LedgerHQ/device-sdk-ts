@@ -3,11 +3,11 @@ import { Container } from "inversify";
 
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import { pkiTypes } from "@/modules/chain-agnostic/pki/di/pkiTypes";
-import { type PkiCertificateLoader } from "@/modules/chain-agnostic/pki/domain/PkiCertificateLoader";
 import { HttpProxyDataSource } from "@/modules/ethereum/proxy/data/HttpProxyDataSource";
 import { HttpSafeProxyDataSource } from "@/modules/ethereum/proxy/data/HttpSafeProxyDataSource";
 import { ProxyContextFieldLoader } from "@/modules/ethereum/proxy/domain/ProxyContextFieldLoader";
+import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
+import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import { proxyModuleFactory } from "./proxyModuleFactory";

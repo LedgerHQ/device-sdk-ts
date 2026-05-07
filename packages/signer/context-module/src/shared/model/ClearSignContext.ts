@@ -1,4 +1,4 @@
-import { type PkiCertificate } from "@/modules/chain-agnostic/pki/model/PkiCertificate";
+import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 
 import { type GenericPath } from "./GenericPath";
 
