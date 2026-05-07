@@ -1,7 +1,6 @@
 import {
   type Apdu,
   ApduBuilder,
-  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
@@ -19,6 +18,9 @@ import {
   SolanaAppCommandErrorFactory,
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
+
+const FEATURE_FLAG_WEB3_CHECKS_ENABLED = 0x10;
+const FEATURE_FLAG_WEB3_CHECKS_OPT_IN = 0x20;
 
 type GetAppConfigurationCommandArgs = void;
 
@@ -57,25 +59,32 @@ export class GetAppConfigurationCommand
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
-      const parser = new ApduParser(response);
-      const buffer = parser.extractFieldByLength(5);
-      if (
-        !buffer ||
-        buffer.length !== 5 ||
-        buffer.some((element) => element === undefined)
-      ) {
+      const { data } = response;
+      if (data.length < 5) {
         return CommandResultFactory({
           error: new InvalidStatusWordError("Invalid response"),
         });
       }
 
+      const blindSigningEnabled = Boolean(data[0]);
+      const pubKeyDisplayMode =
+        data[1] === 0 ? PublicKeyDisplayMode.LONG : PublicKeyDisplayMode.SHORT;
+      const version = `${data[2]}.${data[3]}.${data[4]}`;
+
+      let web3ChecksEnabled = false;
+      let web3ChecksOptIn = false;
+      if (data.length >= 6) {
+        const featureFlags = data[5]!;
+        web3ChecksEnabled = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_ENABLED);
+        web3ChecksOptIn = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_OPT_IN);
+      }
+
       const config: AppConfiguration = {
-        blindSigningEnabled: Boolean(buffer[0]),
-        pubKeyDisplayMode:
-          buffer[1] === 0
-            ? PublicKeyDisplayMode.LONG
-            : PublicKeyDisplayMode.SHORT,
-        version: `${buffer[2]}.${buffer[3]}.${buffer[4]}`,
+        blindSigningEnabled,
+        pubKeyDisplayMode,
+        version,
+        web3ChecksEnabled,
+        web3ChecksOptIn,
       };
 
       return CommandResultFactory({
