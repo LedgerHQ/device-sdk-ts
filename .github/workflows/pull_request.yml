@@ -105,8 +105,28 @@ jobs:
       - name: Build apps
         run: pnpm build
 
-  health-check:
-    name: Run health check
+  lint-strict:
+    name: Lint (strict, diff-only)
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Fetch base branch
+        run: git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}"
+
+      - name: Compute PR diff base
+        run: echo "ESLINT_PLUGIN_DIFF_COMMIT=$(git merge-base HEAD origin/${{ github.base_ref }})" >> "$GITHUB_ENV"
+
+      - name: Lint with zero warnings on diff lines
+        run: pnpm turbo run lint -- --max-warnings 0
+
+  prettier:
+    name: Run prettier check
     needs: [build-libraries]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
@@ -114,9 +134,20 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
-      - name: Health check
-        id: health-check
-        run: pnpm health-check
+      - name: Prettier
+        run: pnpm prettier
+
+  typecheck:
+    name: Run typecheck
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Typecheck
+        run: pnpm typecheck
 
   tests:
     name: Run unit tests
@@ -166,6 +197,26 @@ jobs:
           gh-bot-private-key: ${{ secrets.GH_BOT_PRIVATE_KEY }}
           gating-token: ${{ secrets.GATING_TOKEN }}
           solana-rpc-url: ${{ secrets.SOLANA_LEDGER_RPC_URL }}
+
+  health-check:
+    name: Run health check
+    if: ${{ always() }}
+    needs:
+      - build-libraries
+      - build-apps
+      - lint-strict
+      - prettier
+      - typecheck
+      - tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Verify all required checks passed
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more required checks failed or were cancelled"
+            exit 1
+          fi
+          echo "All required checks passed"
 
   solana-cs-tester:
     needs: [build-libraries, detect-changes]

@@ -8,16 +8,15 @@
       "inputs": ["src/**/*.ts", "index.ts"]
     },
     "lint": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build"],
+      "env": ["ESLINT_PLUGIN_DIFF_COMMIT"]
     },
     "lint:fix": {
-      "dependsOn": ["build"]
+      "cache": false
     },
-    "prettier": {
-      "dependsOn": ["^prettier"]
-    },
+    "prettier": {},
     "prettier:fix": {
-      "dependsOn": ["^prettier:fix"]
+      "cache": false
     },
     "dev": {
       "dependsOn": ["^build"],
@@ -34,16 +33,13 @@
       "inputs": ["src/**/*.ts"]
     },
     "typecheck": {
-      "dependsOn": ["^build", "^typecheck"]
+      "dependsOn": ["^build"]
     },
     "@ledgerhq/device-management-kit-sample#typecheck": {
-      "dependsOn": ["build", "^typecheck"]
+      "dependsOn": ["build", "^build"]
     },
     "@ledgerhq/ledger-dmk-docs#typecheck": {
-      "dependsOn": ["build", "^typecheck"]
-    },
-    "health-check": {
-      "dependsOn": ["build", "prettier", "lint", "typecheck"]
+      "dependsOn": ["build", "^build"]
     }
   }
 }

@@ -5,6 +5,7 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import eslintPluginReact from "eslint-plugin-react";
 import eslintPluginReactHooks from "eslint-plugin-react-hooks";
+import diffPlugin from "eslint-plugin-diff";
 import { fixupPluginRules } from "@eslint/compat";
 
 export default [
@@ -132,6 +133,19 @@ export default [
           ignoreRestSiblings: true,
         },
       ],
+      "@typescript-eslint/no-magic-numbers": [
+        "warn",
+        {
+          ignore: [-1, 0, 1, 2],
+          ignoreArrayIndexes: true,
+          ignoreDefaultValues: true,
+          ignoreClassFieldInitialValues: true,
+          ignoreEnums: true,
+          ignoreNumericLiteralTypes: true,
+          ignoreReadonlyClassProperties: true,
+          ignoreTypeIndexes: true,
+        },
+      ],
     },
   },
   {
@@ -169,4 +183,6 @@ export default [
       },
     },
   },
+
+  ...diffPlugin.configs["flat/ci"],
 ];
