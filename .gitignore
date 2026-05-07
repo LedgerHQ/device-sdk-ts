@@ -21,6 +21,7 @@ node_modules
 .idea
 .vscode
 *.iml
+.claude/
 
 # misc
 .DS_Store
