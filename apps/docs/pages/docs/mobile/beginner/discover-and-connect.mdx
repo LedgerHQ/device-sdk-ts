@@ -1,0 +1,113 @@
+import { Callout } from "nextra/components";
+
+# Connecting to a Device
+
+In this guide, you'll learn how to discover and connect to Ledger devices using the Device Management Kit (DMK). By the end, you'll be able to scan for nearby devices, establish connections, and properly disconnect.
+
+## What you'll learn
+
+- How to discover available Ledger devices over USB or BLE
+- How to connect to a specific device
+- How to disconnect from a device
+
+## Prerequisites
+
+Before starting, make sure you have initialized a DMK instance. If you haven't done so yet, refer to the [Initializing and Configuring the DMK](./init-dmk) guide.
+
+## Step 1: Discover devices
+
+`startDiscoveringDevices()` returns a `Flow<DiscoveryResult>` that emits updates as nearby devices are found.
+
+```kotlin
+dmk.startDiscoveringDevices().collect { result ->
+    when (result) {
+        is DiscoveryResult.DevicesDiscovered -> {
+            val devices: List<DiscoveryDevice> = result.devices
+            // Present the list to the user and let them pick one
+        }
+        is DiscoveryResult.Ended -> {
+            // Discovery stopped (timeout reached)
+        }
+        is DiscoveryResult.Failure.BluetoothDisabled -> {
+            // Ask the user to enable Bluetooth
+        }
+        is DiscoveryResult.Failure.BluetoothPermissionNotGranted -> {
+            // Request Bluetooth permissions
+        }
+        else -> { /* Handle other failure cases */ }
+    }
+}
+```
+
+Each `DiscoveryDevice` exposes:
+
+| Property           | Type               | Description                                 |
+| ------------------ | ------------------ | ------------------------------------------- |
+| `uid`              | `String`           | Unique identifier for the device            |
+| `name`             | `String`           | Human-readable device name                  |
+| `ledgerDevice`     | `LedgerDevice`     | Device model (e.g. `NanoX`, `Stax`, `Flex`) |
+| `connectivityType` | `ConnectivityType` | `USB` or `BLE`                              |
+
+When discovery is no longer needed, stop it to free resources:
+
+```kotlin
+dmk.stopDiscoveringDevices()
+```
+
+<Callout type="info" emoji="ℹ️">
+  Discovery stops automatically once `discoveryTimeout` is reached (default: 1
+  minute). You can configure this value when initializing the DMK.
+</Callout>
+
+## Step 2: Connect to a device
+
+Pass a `DiscoveryDevice` from the previous step to `connectDevice()`:
+
+```kotlin
+val result: ConnectionResult = dmk.connectDevice(device)
+
+when (result) {
+    is ConnectionResult.Connected -> {
+        val connectedDevice: ConnectedDevice = result.device
+        // Store connectedDevice.uid — you'll need it for all further interactions
+    }
+    is ConnectionResult.Disconnected -> {
+        when (result.failure) {
+            is ConnectionResult.Failure.PairingFailed -> {
+                // BLE pairing failed — ask the user to retry
+            }
+            is ConnectionResult.Failure.ConnectionTimeout -> {
+                // Connection attempt exceeded connectionTimeout
+            }
+            is ConnectionResult.Failure.PermissionNotGranted -> {
+                // Required permissions were not granted
+            }
+            else -> { /* Handle other failures */ }
+        }
+    }
+}
+```
+
+Once connected, `ConnectedDevice` exposes:
+
+| Property           | Type               | Description                                                    |
+| ------------------ | ------------------ | -------------------------------------------------------------- |
+| `uid`              | `String`           | Session identifier — **keep this to interact with the device** |
+| `name`             | `String`           | Device name                                                    |
+| `ledgerDevice`     | `LedgerDevice`     | Device model                                                   |
+| `connectivityType` | `ConnectivityType` | `USB` or `BLE`                                                 |
+
+## Step 3: Disconnect from a device
+
+When you are done using the device, disconnect to release the connection:
+
+```kotlin
+dmk.disconnectDevice(connectedDevice)
+```
+
+## What you've learned
+
+- How to start and stop device discovery with `startDiscoveringDevices()` / `stopDiscoveringDevices()`
+- How to connect to a discovered device with `connectDevice()` and handle connection failures
+- How to disconnect with `disconnectDevice()`
+- How the `ConnectedDevice.uid` is the key identifier for all further device interactions

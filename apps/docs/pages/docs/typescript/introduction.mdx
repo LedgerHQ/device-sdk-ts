@@ -1,0 +1,71 @@
+import { Callout } from "nextra/components";
+
+# TypeScript SDK
+
+<Callout type="warning" emoji="⚠️">
+  This project is still in early development so we allow ourselves to make
+  breaking changes regarding the usage of the Libraries.
+
+That's why any feedback is relevant for us in order to be able to make it stable as soon as
+possible. Get in touch with us on the [Ledger Discord
+server](https://developers.ledger.com/discord/) to provide your feedbacks.
+
+You can follow the migration guidelines for the DMK [here](./integration/migrations/dmk/05_to_06) and for the signers [here](./integration/migrations/signers/eth/1_1_0_to_1_2_0).
+
+</Callout>
+
+## Who is this for?
+
+The TypeScript SDK is aimed at JavaScript/TypeScript developers who want to integrate Ledger hardware device support into their applications:
+
+- **Web applications** — via Web HID and Web BLE transports, for apps running directly in the browser.
+- **Desktop applications** — via the Node HID transport, for Electron apps or Node.js scripts.
+- **React Native applications** — via React Native BLE and HID transports, for cross-platform mobile apps in JavaScript.
+
+It is the successor to the LedgerJS libraries (`hw-app-XXX`, `transport-XXX`) which are now deprecated. If you are migrating from LedgerJS, see the [LedgerJS: No longer maintained](./ledgerjs/info) section.
+
+## Libraries
+
+Here you can find a summary of all the libraries that compose the DMK.
+
+| Device Management Kit (DMK) | NPM                                                                                              | Version |
+| --------------------------- | ------------------------------------------------------------------------------------------------ | ------- |
+| Device Management Kit       | [@ledgerhq/device-management-kit](https://www.npmjs.com/package/@ledgerhq/device-management-kit) | 1.4.0   |
+
+| Signers & Trusted App Kit | NPM                                                                                                                                                | Version |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| Device Signer Ethereum    | [@ledgerhq/device-signer-kit-ethereum](https://www.npmjs.com/package/@ledgerhq/device-signer-kit-ethereum)                                         | 1.15.0  |
+| Device Signer Bitcoin     | [@ledgerhq/device-signer-kit-bitcoin](https://www.npmjs.com/package/@ledgerhq/device-signer-kit-bitcoin)                                           | 1.3.0   |
+| Device Signer Solana      | [@ledgerhq/device-signer-kit-solana](https://www.npmjs.com/package/@ledgerhq/device-signer-kit-solana)                                             | 1.8.0   |
+| Device Signer Cosmos      | [@ledgerhq/device-signer-kit-cosmos](https://www.npmjs.com/package/@ledgerhq/device-signer-kit-cosmos)                                             | 1.0.0   |
+| Device Signer Hyperliquid | [@ledgerhq/device-signer-kit-hyperliquid](https://www.npmjs.com/package/@ledgerhq/device-signer-kit-hyperliquid)                                   | 1.0.2   |
+| Device Signer Concordium  | [@ledgerhq/device-signer-kit-concordium](https://www.npmjs.com/package/@ledgerhq/device-signer-kit-concordium)                                     | 0.3.0   |
+| Trusted App Ledger Sync   | [@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol](https://www.npmjs.com/package/@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol) | 0.5.0   |
+| Context Module            | [@ledgerhq/context-module](https://www.npmjs.com/package/@ledgerhq/context-module)                                                                 | 1.17.1  |
+
+| Transports                 | NPM                                                                                                                              | Version |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| Web HID Transport          | [@ledgerhq/device-transport-kit-web-hid](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-web-hid)                   | 1.2.3   |
+| Web BLE Transport          | [@ledgerhq/device-transport-kit-web-ble](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-web-ble)                   | 1.3.2   |
+| React Native BLE Transport | [@ledgerhq/device-transport-kit-react-native-ble](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-react-native-ble) | 1.3.2   |
+| React Native HID Transport | [@ledgerhq/device-transport-kit-react-native-hid](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-react-native-hid) | 1.0.3   |
+| Node HID Transport         | [@ledgerhq/device-transport-kit-node-hid](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-node-hid)                 | 1.0.0   |
+| Speculos Transport         | [@ledgerhq/device-transport-kit-speculos](https://www.npmjs.com/package/@ledgerhq/device-transport-kit-speculos)                 | 1.2.0   |
+| Speculos Device Controller | [@ledgerhq/speculos-device-controller](https://www.npmjs.com/package/@ledgerhq/speculos-device-controller)                       | 0.2.3   |
+
+| DevTools                     | NPM                                                                                                                                                        | Version |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| DevTools Core                | [@ledgerhq/device-management-kit-devtools-core](https://www.npmjs.com/package/@ledgerhq/device-management-kit-devtools-core)                               | 1.1.1   |
+| DevTools UI                  | [@ledgerhq/device-management-kit-devtools-ui](https://www.npmjs.com/package/@ledgerhq/device-management-kit-devtools-ui)                                   | 1.1.1   |
+| DevTools Rozenite            | [@ledgerhq/device-management-kit-devtools-rozenite](https://www.npmjs.com/package/@ledgerhq/device-management-kit-devtools-rozenite)                       | 0.1.1   |
+| DevTools Websocket Common    | [@ledgerhq/device-management-kit-devtools-websocket-common](https://www.npmjs.com/package/@ledgerhq/device-management-kit-devtools-websocket-common)       | 1.0.2   |
+| DevTools Websocket Connector | [@ledgerhq/device-management-kit-devtools-websocket-connector](https://www.npmjs.com/package/@ledgerhq/device-management-kit-devtools-websocket-connector) | 1.1.1   |
+| DevTools Websocket Server    | [@ledgerhq/device-management-kit-devtools-websocket-server](https://www.npmjs.com/package/@ledgerhq/device-management-kit-devtools-websocket-server)       | 1.0.1   |
+
+## Legal notice
+
+The Device Management Kit (DMK) is made available under an open source license and is free to use for development, testing, and integration purposes.
+
+Please note that access to the DMK does not grant you any rights to access Ledger SAS backend services, nor any rights to use tokens, APIs, or infrastructure beyond what is explicitly allowed under the open source license. Access to Ledger SAS backend is strictly prohibited unless explicitly authorized by Ledger SAS.
+
+Use of any token to gain access to Ledger SAS backend without a formal, written legal agreement is forbidden. Unauthorized use or access may lead to legal claims, including but not limited to injunctive relief, damages, or other remedies permitted under applicable law.

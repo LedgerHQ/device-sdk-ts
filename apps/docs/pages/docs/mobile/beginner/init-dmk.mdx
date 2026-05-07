@@ -1,0 +1,102 @@
+import { Callout } from "nextra/components";
+
+# Initializing and Configuring the DMK
+
+In this guide, you'll learn how to initialize and configure the Device Management Kit (DMK) for your application. By the end, you'll have a working DMK instance ready to interface with Ledger devices.
+
+## What you'll learn
+
+- How to initialize the DMK using the Kotlin DSL
+- What configuration options are available
+- How to maintain the DMK instance as a singleton
+
+## Step 1: Create the DMK instance
+
+Use the `deviceManagementKit` builder DSL to obtain an instance of `DeviceManagementKitApi`. This should be done **once** in your application lifecycle.
+
+**Android (Kotlin):**
+
+```kotlin
+import com.ledger.devicemanagement.DeviceManagementKitApi
+import com.ledger.devicemanagement.deviceManagementKit
+
+val dmk: DeviceManagementKitApi = deviceManagementKit {
+    context = applicationContext
+    enableLog = true
+}
+```
+
+**iOS (Swift):**
+
+```swift
+import LedgerDMK
+
+let dmk = DeviceManagementKit.build()
+```
+
+## Step 2: Configuration options
+
+The builder DSL exposes the following parameters:
+
+| Parameter           | Type       | Default      | Description                                                   |
+| ------------------- | ---------- | ------------ | ------------------------------------------------------------- |
+| `context`           | `Any?`     | `null`       | Android application context — required on Android             |
+| `discoveryTimeout`  | `Duration` | `1.minutes`  | How long the SDK scans for nearby devices before stopping     |
+| `connectionTimeout` | `Duration` | `15.seconds` | How long the SDK waits for a device connection before failing |
+| `enableLog`         | `Boolean`  | `false`      | Enable SDK-wide logging                                       |
+| `enableFake`        | `Boolean`  | `false`      | Use fake device implementations — useful for testing          |
+
+Example with all options:
+
+```kotlin
+val dmk: DeviceManagementKitApi = deviceManagementKit {
+    context = applicationContext
+    discoveryTimeout = 2.minutes
+    connectionTimeout = 30.seconds
+    enableLog = true
+    enableFake = false
+}
+```
+
+<Callout type="warning" emoji="⚠️">
+  Both `discoveryTimeout` and `connectionTimeout` must be strictly greater than
+  zero, otherwise the builder will throw an exception.
+</Callout>
+
+## Step 3: Keep it as a singleton
+
+<Callout type="error" emoji="🚨">
+  The DMK can only be initialized **once** per application runtime. Attempting
+  to create a second instance will throw an exception. Always keep a single
+  reference and share it across your application.
+</Callout>
+
+```kotlin
+// Application.kt
+class MyApplication : Application() {
+    lateinit var dmk: DeviceManagementKitApi
+
+    override fun onCreate() {
+        super.onCreate()
+        dmk = deviceManagementKit {
+            context = applicationContext
+            enableLog = BuildConfig.DEBUG
+        }
+    }
+}
+```
+
+## Step 4: Release resources
+
+Call `destroy()` when your application closes to release all resources held by the DMK:
+
+```kotlin
+dmk.destroy()
+```
+
+## What you've learned
+
+- How to initialize the DMK with the `deviceManagementKit { }` Kotlin DSL
+- The available configuration parameters and their defaults
+- Why the DMK must be treated as a singleton
+- How to properly release resources on shutdown
