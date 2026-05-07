@@ -35,7 +35,7 @@ describe("DefaultApduSenderService", () => {
       expect(frames).toEqual([
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.of(new Uint8Array([0x12, 0x34])),
             headTag: new Uint8Array([0x05]),
             dataSize: Maybe.of(new Uint8Array([0, 0x05])),
@@ -94,7 +94,7 @@ describe("DefaultApduSenderService", () => {
       expect(frames).toEqual([
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.of(new Uint8Array([0x12, 0x34])),
             headTag: new Uint8Array([0x05]),
             dataSize: Maybe.of(new Uint8Array([0x00, 0x45])),
@@ -112,7 +112,7 @@ describe("DefaultApduSenderService", () => {
         }),
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.of(new Uint8Array([0x12, 0x34])),
             headTag: new Uint8Array([0x05]),
             index: new Uint8Array([0x00, 0x01]),
@@ -194,7 +194,7 @@ describe("DefaultApduSenderService", () => {
       expect(frames).toEqual([
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.of(new Uint8Array([0x12, 0x34])),
             headTag: new Uint8Array([0x05]),
             dataSize: Maybe.of(new Uint8Array([0x00, 0x39])),
@@ -242,7 +242,7 @@ describe("DefaultApduSenderService", () => {
       expect(frames).toEqual([
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.zero(),
             headTag: new Uint8Array([0x05]),
             dataSize: Maybe.of(new Uint8Array([0, 5])),
@@ -279,7 +279,7 @@ describe("DefaultApduSenderService", () => {
       expect(frames).toEqual([
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.zero(),
             headTag: new Uint8Array([0x05]),
             index: new Uint8Array([0, 0]),
@@ -290,7 +290,7 @@ describe("DefaultApduSenderService", () => {
         }),
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.zero(),
             headTag: new Uint8Array([0x05]),
             dataSize: Maybe.zero(),
@@ -301,7 +301,7 @@ describe("DefaultApduSenderService", () => {
         }),
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.zero(),
             headTag: new Uint8Array([0x05]),
             dataSize: Maybe.zero(),
@@ -344,7 +344,7 @@ describe("DefaultApduSenderService", () => {
       expect(frames).toEqual([
         new Frame({
           header: new FrameHeader({
-            uuid: "42",
+            uuid: "",
             channel: Maybe.of(new Uint8Array([0x44, 0x44])),
             headTag: new Uint8Array([0x05]),
             dataSize: Maybe.of(new Uint8Array([0, 0x05])),

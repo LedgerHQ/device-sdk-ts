@@ -7,6 +7,14 @@ import { CommandUtils } from "@api/command/utils/CommandUtils";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type DmkError, UnknownDeviceExchangeError } from "@api/Error";
 import { type DeviceId } from "@api/types";
+import {
+  bulkPerfAddDuration,
+  bulkPerfCount,
+  bulkPerfMark,
+  bulkPerfMeasure,
+  bulkPerfMeasureSinceMark,
+  bulkPerfNow,
+} from "@api/utils/BulkApduPerf";
 
 import { type DeviceApduSender } from "./DeviceApduSender";
 import {
@@ -127,18 +135,45 @@ export class DeviceConnectionStateMachine<Dependencies> {
     triggersDisconnection?: boolean,
     abortTimeout?: number,
   ) {
+    const transportCallStart = bulkPerfNow();
+    bulkPerfMark("connection.transportCallStart", transportCallStart);
+    bulkPerfMeasureSinceMark(
+      "fine.connectionActionStartToTransportCallStartMs",
+      "connection.sendApduActionStart",
+      {
+        counterName: "fine.connectionActionStartToTransportCallStartSamples",
+        end: transportCallStart,
+      },
+    );
     this.deviceAdpuSender
       .sendApdu(apdu, triggersDisconnection, abortTimeout)
       .then((response) => {
+        const transportThenAt = bulkPerfNow();
+        bulkPerfMark("connection.transportPromiseThen", transportThenAt);
+        bulkPerfMeasureSinceMark(
+          "breakdown.bleResponseCompleteToConnectionThenMs",
+          "ble.responseCompleted",
+          {
+            counterName: "breakdown.bleResponseCompleteToConnectionThenSamples",
+            end: transportThenAt,
+          },
+        );
         response.caseOf({
           Left: (error) => {
-            this.machineActor.send({ type: "ApduSendingError", error });
+            bulkPerfMeasure("breakdown.connectionApduErrorEventSendMs", () => {
+              this.machineActor.send({ type: "ApduSendingError", error });
+            });
           },
           Right: (apduResponse) => {
-            this.machineActor.send({
-              type: "ApduResponseReceived",
-              apduResponse,
-            });
+            bulkPerfMeasure(
+              "breakdown.connectionApduResponseEventSendMs",
+              () => {
+                this.machineActor.send({
+                  type: "ApduResponseReceived",
+                  apduResponse,
+                });
+              },
+            );
           },
         });
       })
@@ -171,22 +206,58 @@ export class DeviceConnectionStateMachine<Dependencies> {
     triggersDisconnection?: boolean,
     abortTimeout?: number,
   ): Promise<Either<DmkError, ApduResponse>> {
+    const connectionSendApduStart = bulkPerfNow();
+    bulkPerfMark("connection.sendApduStart", connectionSendApduStart);
+    bulkPerfMeasureSinceMark(
+      "fine.connectedDeviceCallToConnectionSendApduStartMs",
+      "session.connectedDeviceSendApduCallStart",
+      {
+        counterName: "fine.connectedDeviceCallToConnectionSendApduStartSamples",
+        end: connectionSendApduStart,
+      },
+    );
+    bulkPerfCount("connection.sendApduCalls");
     if (this.machineActor.getSnapshot().context.apduInProgress.isJust()) {
+      bulkPerfCount("connection.busyWaitHits");
+      const busyWaitStart = bulkPerfNow();
       await Promise.race([
         new Promise((resolve) => setTimeout(resolve, TRANSPORT_BUSY_WAIT_TIME)),
         this.previousSendApduPromise,
       ]);
+      bulkPerfAddDuration(
+        "connection.busyWaitMs",
+        bulkPerfNow() - busyWaitStart,
+      );
     }
 
     const promise = new Promise<Either<DmkError, ApduResponse>>(
       (responseCallback) => {
-        this.machineActor.send({
-          type: "SendApduCalled",
-          apdu,
-          triggersDisconnection: !!triggersDisconnection,
-          abortTimeout,
-          responseCallback,
+        const xstateSendStart = bulkPerfNow();
+        bulkPerfMark("connection.xstateSendStart", xstateSendStart);
+        bulkPerfMeasureSinceMark(
+          "fine.connectionSendApduStartToXstateSendStartMs",
+          "connection.sendApduStart",
+          {
+            counterName: "fine.connectionSendApduStartToXstateSendStartSamples",
+            end: xstateSendStart,
+          },
+        );
+        bulkPerfMeasure("connection.xstateSendApduMs", () => {
+          this.machineActor.send({
+            type: "SendApduCalled",
+            apdu,
+            triggersDisconnection: !!triggersDisconnection,
+            abortTimeout,
+            responseCallback,
+          });
         });
+        const xstateSendEnd = bulkPerfNow();
+        bulkPerfMark("connection.xstateSendEnd", xstateSendEnd);
+        bulkPerfAddDuration(
+          "fine.connectionXstateSendWallMs",
+          xstateSendEnd - xstateSendStart,
+        );
+        bulkPerfCount("fine.connectionXstateSendWallSamples");
       },
     );
     this.previousSendApduPromise = promise;
@@ -260,6 +331,16 @@ function makeStateMachine({
       reconnectionTimeoutEvent: emit({ type: "ReconnectionTimedOut" }),
       sendApdu: ({ context }) => {
         context.apduInProgress.map(({ apdu, abortTimeout }) => {
+          const actionStart = bulkPerfNow();
+          bulkPerfMark("connection.sendApduActionStart", actionStart);
+          bulkPerfMeasureSinceMark(
+            "fine.connectionXstateSendStartToActionStartMs",
+            "connection.xstateSendStart",
+            {
+              counterName: "fine.connectionXstateSendStartToActionStartSamples",
+              end: actionStart,
+            },
+          );
           sendApduFn(apdu, false, abortTimeout);
         });
       },
@@ -267,14 +348,36 @@ function makeStateMachine({
         { context },
         params: { response: Either<DmkError, ApduResponse> },
       ) => {
-        context.apduInProgress.map(({ responseCallback }) =>
-          responseCallback(params.response),
-        );
+        context.apduInProgress.map(({ responseCallback }) => {
+          const callbackAt = bulkPerfNow();
+          bulkPerfMark("connection.responseCallbackCalled", callbackAt);
+          bulkPerfMeasureSinceMark(
+            "breakdown.bleResponseCompleteToResponseCallbackMs",
+            "ble.responseCompleted",
+            {
+              counterName:
+                "breakdown.bleResponseCompleteToResponseCallbackSamples",
+              end: callbackAt,
+            },
+          );
+          bulkPerfMeasureSinceMark(
+            "breakdown.connectionThenToResponseCallbackMs",
+            "connection.transportPromiseThen",
+            {
+              counterName: "breakdown.connectionThenToResponseCallbackSamples",
+              end: callbackAt,
+            },
+          );
+          bulkPerfMeasure("breakdown.connectionResponseCallbackMs", () => {
+            responseCallback(params.response);
+          });
+        });
       },
       sendGetAppAndVersion: () => {
         sendApduFn(new GetAppAndVersionCommand().getApdu().getRawApdu(), false);
       },
       tryToReconnect: () => {
+        bulkPerfCount("connection.reconnectionEntries");
         tryToReconnect();
       },
       clearApduInProgress: assign({
@@ -420,6 +523,7 @@ function makeStateMachine({
           },
           SendApduCalled: {
             actions: ({ event }) => {
+              bulkPerfCount("connection.alreadySendingErrors");
               event.responseCallback(Left(new AlreadySendingApduError()));
             },
           },
@@ -460,6 +564,7 @@ function makeStateMachine({
           ],
           SendApduCalled: {
             actions: ({ event }) => {
+              bulkPerfCount("connection.alreadySendingErrors");
               event.responseCallback(Left(new AlreadySendingApduError()));
             },
           },
@@ -533,6 +638,7 @@ function makeStateMachine({
           },
           SendApduCalled: {
             actions: ({ event }) => {
+              bulkPerfCount("connection.alreadySendingErrors");
               event.responseCallback(Left(new AlreadySendingApduError()));
             },
           },

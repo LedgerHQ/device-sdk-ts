@@ -65,6 +65,7 @@ import {
 } from "@api/transport/RNBleApduSender";
 
 export const rnBleTransportIdentifier = "RN_BLE";
+const ANDROID_HIGH_CONNECTION_PRIORITY = 1;
 
 type InternalScannedDevice = {
   device: Device;
@@ -489,10 +490,16 @@ export class RNBleTransport implements Transport {
       async ({ throwE }) => {
         let device: Device;
         let servicesUUIDs: string[] = [];
+        const highConnectionPriorityRequested = this._platform.OS === "android";
         try {
-          await this._manager.connectToDevice(params.deviceId, {
+          const connectOptions = {
             requestMTU: DEFAULT_MTU,
-          });
+            ...(highConnectionPriorityRequested
+              ? { connectionPriority: ANDROID_HIGH_CONNECTION_PRIORITY }
+              : {}),
+          };
+
+          await this._manager.connectToDevice(params.deviceId, connectOptions);
 
           device =
             await this._manager.discoverAllServicesAndCharacteristicsForDevice(
@@ -547,7 +554,12 @@ export class RNBleTransport implements Transport {
           {
             apduSenderFactory: this._apduSenderFactory,
             apduReceiverFactory: this._apduReceiverFactory,
-            dependencies: { device, internalDevice, manager: this._manager },
+            dependencies: {
+              device,
+              internalDevice,
+              manager: this._manager,
+              highConnectionPriorityRequested,
+            },
           },
           this._loggerServiceFactory,
         );
@@ -737,9 +749,17 @@ export class RNBleTransport implements Transport {
             data: { id: deviceId },
           },
         );
+        const highConnectionPriorityRequested = this._platform.OS === "android";
+        const reconnectOptions = {
+          requestMTU: DEFAULT_MTU,
+          timeout: 2000,
+          ...(highConnectionPriorityRequested
+            ? { connectionPriority: ANDROID_HIGH_CONNECTION_PRIORITY }
+            : {}),
+        };
         const reconnectedDevice = await this._manager.connectToDevice(
           deviceId,
-          { requestMTU: DEFAULT_MTU, timeout: 2000 },
+          reconnectOptions,
         );
         this._logger.debug(
           `[tryToReconnect](try=${reconnectionTryCount}) Established connection to device`,
@@ -840,6 +860,7 @@ export class RNBleTransport implements Transport {
         device,
         manager: this._manager,
         internalDevice,
+        highConnectionPriorityRequested: this._platform.OS === "android",
       });
 
       await deviceConnectionStateMachine.setupConnection().catch((e) => {

@@ -20,15 +20,23 @@ import { RNHidTransportFactory } from "@ledgerhq/device-transport-kit-react-nati
 
 const DmkContext = createContext<DeviceManagementKit | null>(null);
 
-function buildDefaultDmk() {
-  const connector = RozeniteConnector.getInstance();
+type DmkState = {
+  dmk: DeviceManagementKit;
+  inspector?: DevToolsDmkInspector;
+};
 
-  const dmk = new DeviceManagementKitBuilder()
+function buildDefaultDmk(): DmkState {
+  const builder = new DeviceManagementKitBuilder()
     .addTransport(RNBleTransportFactory)
     .addTransport(RNHidTransportFactory)
-    .addLogger(new ConsoleLogger())
-    .addLogger(new DevToolsLogger(connector))
-    .build();
+    .addLogger(new ConsoleLogger());
+
+  if (!__DEV__) {
+    return { dmk: builder.build() };
+  }
+
+  const connector = RozeniteConnector.getInstance();
+  const dmk = builder.addLogger(new DevToolsLogger(connector)).build();
 
   // Create inspector after DMK is built
   const inspector = new DevToolsDmkInspector(connector, dmk);
@@ -37,12 +45,12 @@ function buildDefaultDmk() {
 }
 
 export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
-  const state = useRef(buildDefaultDmk());
+  const state = useRef<DmkState>(buildDefaultDmk());
 
   useEffect(() => {
     const { dmk, inspector } = state.current;
     return () => {
-      inspector.destroy();
+      inspector?.destroy();
       dmk.close();
     };
   }, []);

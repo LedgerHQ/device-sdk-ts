@@ -312,7 +312,7 @@ describe("ConnectToSecureChannelTask", () => {
     ]);
   });
 
-  it("should handle incoming BULK message", async () => {
+  it("should handle incoming BULK message without emitting progress in perf test mode", async () => {
     sendApduFn.mockResolvedValue(
       Right({
         data: new Uint8Array([0x90, 0x00]),
@@ -344,20 +344,7 @@ describe("ConnectToSecureChannelTask", () => {
     await new Promise((resolve) => setTimeout(resolve, TEST_DELAY));
 
     expect(sendApduFn).toHaveBeenCalledTimes(3);
-    expect(events).toStrictEqual([
-      {
-        type: SecureChannelEventType.Progress,
-        payload: { progress: 0.33, index: 0, total: 3 },
-      },
-      {
-        type: SecureChannelEventType.Progress,
-        payload: { progress: 0.67, index: 1, total: 3 },
-      },
-      {
-        type: SecureChannelEventType.Progress,
-        payload: { progress: 1.0, index: 2, total: 3 },
-      },
-    ]);
+    expect(events).toStrictEqual([]);
     expect(completeFn).toHaveBeenCalledOnce();
   });
 

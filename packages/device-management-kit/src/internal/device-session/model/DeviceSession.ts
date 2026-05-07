@@ -34,6 +34,16 @@ import {
   formatApduReceivedLog,
   formatApduSendingLog,
 } from "@api/utils/apduLogs";
+import {
+  bulkPerfAddDuration,
+  bulkPerfCount,
+  bulkPerfIsActive,
+  bulkPerfMark,
+  bulkPerfMeasure,
+  bulkPerfMeasureAsync,
+  bulkPerfMeasureSinceMark,
+  bulkPerfNow,
+} from "@api/utils/BulkApduPerf";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
 import { IntentQueueService } from "@internal/device-session/service/IntentQueueService";
 import { RefresherService } from "@internal/device-session/service/RefresherService";
@@ -237,31 +247,149 @@ export class DeviceSession {
       abortTimeout: undefined,
     },
   ): Promise<Either<DmkError, ApduResponse>> {
-    this._logger.debug(formatApduSendingLog(rawApdu));
-    const result = await this._connectedDevice.sendApdu(
-      rawApdu,
-      options.triggersDisconnection,
-      options.abortTimeout,
+    const totalStart = bulkPerfNow();
+    bulkPerfMark("session.unsafeSendApduStart", totalStart);
+    bulkPerfMeasureSinceMark(
+      "fine.bulkSendApduCallToSessionStartMs",
+      "bulk.sendApduCallStart",
+      {
+        counterName: "fine.bulkSendApduCallToSessionStartSamples",
+        end: totalStart,
+      },
     );
-
-    return result
-      .ifRight((response: ApduResponse) => {
-        this._logger.debug(formatApduReceivedLog(response));
-        if (CommandUtils.isLockedDeviceResponse(response)) {
-          this._sessionEventDispatcher.dispatch({
-            eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
+    try {
+      bulkPerfMeasureSinceMark(
+        "breakdown.bulkIterationEndToSessionStartMs",
+        "bulk.iterationComplete",
+        { counterName: "breakdown.bulkIterationEndToSessionStartSamples" },
+      );
+      if (bulkPerfIsActive()) {
+        bulkPerfCount("logs.sendSkipped");
+        bulkPerfCount("logs.sessionSendSkipped");
+      } else {
+        bulkPerfMeasure("logs.sendTotalMs", () => {
+          bulkPerfMeasure("logs.sessionSendTotalMs", () => {
+            bulkPerfCount("logs.sendCalls");
+            bulkPerfCount("logs.sessionSendCalls");
+            const sendingLog = bulkPerfMeasure(
+              "session.formatSendingLogMs",
+              () => formatApduSendingLog(rawApdu),
+            );
+            this._logger.debug(sendingLog);
           });
-        } else {
-          this._sessionEventDispatcher.dispatch({
-            eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
-          });
-        }
-      })
-      .ifLeft(() => {
-        this._sessionEventDispatcher.dispatch({
-          eventName: SessionEvents.DEVICE_STATE_UPDATE_UNKNOWN,
         });
-      });
+      }
+      const connectedDeviceCallStart = bulkPerfNow();
+      bulkPerfMark(
+        "session.connectedDeviceSendApduCallStart",
+        connectedDeviceCallStart,
+      );
+      bulkPerfMeasureSinceMark(
+        "fine.sessionStartToConnectedDeviceCallMs",
+        "session.unsafeSendApduStart",
+        {
+          counterName: "fine.sessionStartToConnectedDeviceCallSamples",
+          end: connectedDeviceCallStart,
+        },
+      );
+      bulkPerfMeasureSinceMark(
+        "fine.bulkSendApduCallToConnectedDeviceCallMs",
+        "bulk.sendApduCallStart",
+        {
+          counterName: "fine.bulkSendApduCallToConnectedDeviceCallSamples",
+          end: connectedDeviceCallStart,
+        },
+      );
+      const result = await bulkPerfMeasureAsync(
+        "session.connectedDeviceSendApduMs",
+        () =>
+          this._connectedDevice.sendApdu(
+            rawApdu,
+            options.triggersDisconnection,
+            options.abortTimeout,
+          ),
+      );
+      const connectedDeviceResolvedAt = bulkPerfNow();
+      bulkPerfMark(
+        "session.connectedDeviceSendApduResolved",
+        connectedDeviceResolvedAt,
+      );
+      bulkPerfMeasureSinceMark(
+        "breakdown.responseCallbackToSessionResumeMs",
+        "connection.responseCallbackCalled",
+        {
+          counterName: "breakdown.responseCallbackToSessionResumeSamples",
+          end: connectedDeviceResolvedAt,
+        },
+      );
+      bulkPerfMeasureSinceMark(
+        "breakdown.bleResponseCompleteToSessionResumeMs",
+        "ble.responseCompleted",
+        {
+          counterName: "breakdown.bleResponseCompleteToSessionResumeSamples",
+          end: connectedDeviceResolvedAt,
+        },
+      );
+
+      const finalResult = result
+        .ifRight((response: ApduResponse) => {
+          if (bulkPerfIsActive()) {
+            bulkPerfCount("logs.receiveSkipped");
+            bulkPerfCount("logs.sessionReceiveSkipped");
+          } else {
+            bulkPerfMeasure("logs.receiveTotalMs", () => {
+              bulkPerfMeasure("logs.sessionReceiveTotalMs", () => {
+                bulkPerfCount("logs.receiveCalls");
+                bulkPerfCount("logs.sessionReceiveCalls");
+                const receivedLog = bulkPerfMeasure(
+                  "session.formatReceivedLogMs",
+                  () => formatApduReceivedLog(response),
+                );
+                this._logger.debug(receivedLog);
+              });
+            });
+          }
+          if (CommandUtils.isLockedDeviceResponse(response)) {
+            bulkPerfCount("session.stateDispatch.locked");
+            bulkPerfMeasure("session.stateDispatchMs", () => {
+              this._sessionEventDispatcher.dispatch({
+                eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
+              });
+            });
+          } else {
+            bulkPerfCount("session.stateDispatch.connected");
+            bulkPerfMeasure("session.stateDispatchMs", () => {
+              this._sessionEventDispatcher.dispatch({
+                eventName: SessionEvents.DEVICE_STATE_UPDATE_CONNECTED,
+              });
+            });
+          }
+        })
+        .ifLeft(() => {
+          bulkPerfCount("session.stateDispatch.unknown");
+          bulkPerfMeasure("session.stateDispatchMs", () => {
+            this._sessionEventDispatcher.dispatch({
+              eventName: SessionEvents.DEVICE_STATE_UPDATE_UNKNOWN,
+            });
+          });
+        });
+      const unsafeReturnAt = bulkPerfNow();
+      bulkPerfMark("session.unsafeSendApduReturning", unsafeReturnAt);
+      bulkPerfMeasureSinceMark(
+        "breakdown.sessionResumeToUnsafeReturnMs",
+        "session.connectedDeviceSendApduResolved",
+        {
+          counterName: "breakdown.sessionResumeToUnsafeReturnSamples",
+          end: unsafeReturnAt,
+        },
+      );
+      return finalResult;
+    } finally {
+      bulkPerfAddDuration(
+        "session.totalUnsafeSendApduMs",
+        bulkPerfNow() - totalStart,
+      );
+    }
   }
 
   public sendCommand<Response, Args, ErrorStatusCodes>(

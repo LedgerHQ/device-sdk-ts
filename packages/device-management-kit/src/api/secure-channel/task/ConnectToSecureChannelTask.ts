@@ -18,6 +18,18 @@ import {
   isGetCertificateApdu,
   willRequestPermission,
 } from "@api/secure-channel/utils";
+import {
+  bulkPerfEnd,
+  bulkPerfMark,
+  bulkPerfMarkApdu,
+  bulkPerfMarkProgress,
+  bulkPerfMeasure,
+  bulkPerfMeasureAsync,
+  bulkPerfMeasureSinceMark,
+  bulkPerfNow,
+  bulkPerfRecordError,
+  bulkPerfStart,
+} from "@api/utils/BulkApduPerf";
 import { bufferToHexaString, hexaStringToBuffer } from "@api/utils/HexaString";
 import { type CryptoService } from "@internal/crypto/CryptoService";
 import { NobleCryptoService } from "@internal/crypto/NobleCryptoService";
@@ -118,7 +130,7 @@ export class ConnectToSecureChannelTask {
         // Parse input message
         let input: InMessageType;
         try {
-          const jsonData = JSON.parse(String(event.data));
+          const jsonData: unknown = JSON.parse(String(event.data));
           if (this.isInMessageType(jsonData)) {
             input = jsonData;
           } else {
@@ -253,48 +265,132 @@ export class ConnectToSecureChannelTask {
               return;
             }
 
-            for (let i = 0, len = input.data.length; i < len; i++) {
-              // APDU should be a valid hex string
-              const apdu = hexaStringToBuffer(input.data[i]!);
-              if (apdu === null || apdu.length < 5) {
-                notifyError(
-                  new SecureChannelError(
-                    `Received invalid APDU bulk data: ${input.data[i]}`,
-                  ),
+            const bulkApdus = input.data;
+            bulkPerfStart("secure-channel-bulk", {
+              declaredApduCount: bulkApdus.length,
+            });
+
+            try {
+              for (let i = 0, len = bulkApdus.length; i < len; i++) {
+                const iterationStart = bulkPerfNow();
+                bulkPerfMark("bulk.iterationStart", iterationStart);
+                bulkPerfMeasureSinceMark(
+                  "breakdown.bulkIterationEndToNextIterationStartMs",
+                  "bulk.iterationComplete",
+                  {
+                    counterName:
+                      "breakdown.bulkIterationEndToNextIterationStartSamples",
+                    end: iterationStart,
+                  },
                 );
-                return;
-              }
+                bulkPerfMarkApdu();
 
-              // Send APDU to the device
-              const response = await this._api.sendApdu(apdu);
-              if (unsubscribed) {
-                return;
-              }
-
-              // Map device response
-              if (response.isLeft()) {
-                notifyError(new SecureChannelError(response.extract()));
-                return;
-              } else if (response.isRight()) {
-                const deviceError = this.mapDeviceError(response.extract());
-                if (deviceError === null) {
-                  // Notify the progress
-                  subscriber.next({
-                    type: SecureChannelEventType.Progress,
-                    payload: {
-                      progress: +Number((i + 1) / len).toFixed(2),
-                      index: i,
-                      total: len,
-                    },
-                  });
-                } else {
-                  notifyError(deviceError);
+                // APDU should be a valid hex string
+                const apdu = bulkPerfMeasure("bulk.hexToBufferMs", () =>
+                  hexaStringToBuffer(bulkApdus[i]!),
+                );
+                const hexParsedAt = bulkPerfNow();
+                bulkPerfMark("bulk.hexParsed", hexParsedAt);
+                bulkPerfMeasureSinceMark(
+                  "fine.bulkIterationStartToHexParsedMs",
+                  "bulk.iterationStart",
+                  {
+                    counterName: "fine.bulkIterationStartToHexParsedSamples",
+                    end: hexParsedAt,
+                  },
+                );
+                if (apdu === null || apdu.length < 5) {
+                  const error = new SecureChannelError(
+                    `Received invalid APDU bulk data: ${bulkApdus[i]}`,
+                  );
+                  bulkPerfRecordError(error);
+                  bulkPerfEnd({ status: "invalid-apdu", index: i });
+                  notifyError(error);
                   return;
                 }
+
+                // Send APDU to the device
+                const sendApduCallStart = bulkPerfNow();
+                bulkPerfMark("bulk.sendApduCallStart", sendApduCallStart);
+                bulkPerfMeasureSinceMark(
+                  "fine.bulkHexParsedToSendApduCallMs",
+                  "bulk.hexParsed",
+                  {
+                    counterName: "fine.bulkHexParsedToSendApduCallSamples",
+                    end: sendApduCallStart,
+                    clearMark: true,
+                  },
+                );
+                bulkPerfMeasureSinceMark(
+                  "fine.bulkIterationEndToSendApduCallMs",
+                  "bulk.iterationComplete",
+                  {
+                    counterName: "fine.bulkIterationEndToSendApduCallSamples",
+                    end: sendApduCallStart,
+                  },
+                );
+                const response = await bulkPerfMeasureAsync(
+                  "bulk.sendApduMs",
+                  () => this._api.sendApdu(apdu),
+                );
+                const sendApduResolvedAt = bulkPerfNow();
+                bulkPerfMark("bulk.sendApduAwaitResolved", sendApduResolvedAt);
+                bulkPerfMeasureSinceMark(
+                  "breakdown.unsafeReturnToBulkResumeMs",
+                  "session.unsafeSendApduReturning",
+                  {
+                    counterName: "breakdown.unsafeReturnToBulkResumeSamples",
+                    end: sendApduResolvedAt,
+                  },
+                );
+                if (unsubscribed) {
+                  bulkPerfEnd({ status: "unsubscribed", index: i });
+                  return;
+                }
+
+                // Map device response
+                if (response.isLeft()) {
+                  const error = new SecureChannelError(response.extract());
+                  bulkPerfRecordError(error);
+                  bulkPerfEnd({ status: "send-apdu-left", index: i });
+                  notifyError(error);
+                  return;
+                } else if (response.isRight()) {
+                  const deviceError = bulkPerfMeasure(
+                    "bulk.responseValidationMs",
+                    () => this.mapDeviceError(response.extract()),
+                  );
+                  if (deviceError === null) {
+                    bulkPerfMeasure("bulk.progressNextMs", () => {
+                      bulkPerfMarkProgress();
+                    });
+                    const iterationCompleteAt = bulkPerfNow();
+                    bulkPerfMeasureSinceMark(
+                      "breakdown.bulkResumeToIterationCompleteMs",
+                      "bulk.sendApduAwaitResolved",
+                      {
+                        counterName:
+                          "breakdown.bulkResumeToIterationCompleteSamples",
+                        end: iterationCompleteAt,
+                      },
+                    );
+                    bulkPerfMark("bulk.iterationComplete", iterationCompleteAt);
+                  } else {
+                    bulkPerfRecordError(deviceError);
+                    bulkPerfEnd({ status: "device-error", index: i });
+                    notifyError(deviceError);
+                    return;
+                  }
+                }
               }
+              communicationFinished = true;
+              bulkPerfEnd({ status: "success" });
+              subscriber.complete();
+            } catch (error) {
+              bulkPerfRecordError(error);
+              bulkPerfEnd({ status: "thrown" });
+              throw error;
             }
-            communicationFinished = true;
-            subscriber.complete();
             break;
           }
           case InMessageQueryEnum.SUCCESS: {

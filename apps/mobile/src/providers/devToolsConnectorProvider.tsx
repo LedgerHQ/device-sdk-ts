@@ -7,6 +7,22 @@ const DevToolsConnectorContext = createContext<Connector | null>(null);
 export const DevToolsConnectorProvider: React.FC<React.PropsWithChildren> = ({
   children,
 }) => {
+  if (!__DEV__) {
+    return (
+      <DevToolsConnectorContext.Provider value={null}>
+        {children}
+      </DevToolsConnectorContext.Provider>
+    );
+  }
+
+  return (
+    <DevToolsConnectorProviderDev>{children}</DevToolsConnectorProviderDev>
+  );
+};
+
+const DevToolsConnectorProviderDev: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   const connector = useRozeniteConnector();
   return (
     <DevToolsConnectorContext.Provider value={connector}>

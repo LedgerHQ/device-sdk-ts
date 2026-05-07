@@ -1,6 +1,7 @@
 import { type Maybe } from "purify-ts";
 
 import { FramerUtils } from "@api/device-session/utils/FramerUtils";
+import { bulkPerfMeasure } from "@api/utils/BulkApduPerf";
 
 type FrameHeaderConstructorArgs = {
   uuid: string;
@@ -54,17 +55,21 @@ export class FrameHeader {
     });
   }
   getRawData(): Uint8Array {
-    return new Uint8Array([
-      ...this._channel.caseOf({
-        Just: (channel) => [...channel],
-        Nothing: () => [],
-      }),
-      ...this._headTag,
-      ...this._index,
-      ...this._dataLength.caseOf({
-        Just: (dataSize) => [...dataSize],
-        Nothing: () => [],
-      }),
-    ]);
+    return bulkPerfMeasure(
+      "framer.frameHeaderGetRawDataMs",
+      () =>
+        new Uint8Array([
+          ...this._channel.caseOf({
+            Just: (channel) => [...channel],
+            Nothing: () => [],
+          }),
+          ...this._headTag,
+          ...this._index,
+          ...this._dataLength.caseOf({
+            Just: (dataSize) => [...dataSize],
+            Nothing: () => [],
+          }),
+        ]),
+    );
   }
 }

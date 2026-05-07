@@ -1,6 +1,5 @@
 import { inject, injectable } from "inversify";
 import { Either, Left, Maybe, Right } from "purify-ts";
-import { v4 } from "uuid";
 
 import {
   APDU_DATA_LENGTH_LENGTH,
@@ -15,6 +14,7 @@ import type {
 } from "@api/device-session/service/ApduSenderService";
 import { FramerUtils } from "@api/device-session/utils/FramerUtils";
 import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { bulkPerfCount, bulkPerfMeasure } from "@api/utils/BulkApduPerf";
 import {
   FramerApduError,
   FramerOverflowError,
@@ -64,23 +64,29 @@ export class DefaultApduSenderService implements ApduSenderService {
    * @param apdu
    */
   public getFrames(apdu: Uint8Array): Frame[] {
-    const frames: Frame[] = [];
-    let count = 0;
-    let frame = this.getFrameAtIndex(apdu, count);
+    return bulkPerfMeasure("framer.getFramesMs", () => {
+      bulkPerfCount("framer.apduPayloadBytes", apdu.length);
+      const frames: Frame[] = [];
+      let count = 0;
+      let frame = this.getFrameAtIndex(apdu, count);
 
-    while (frame.isRight()) {
-      frames.push(frame.extract());
-      count += 1;
-      frame = this.getFrameAtIndex(apdu, count).mapLeft((error) => {
-        if (error instanceof FramerOverflowError) {
-          // do nothing
-        } else {
-          this._logger.error("Error while parsing frame", { data: { error } });
-        }
-        return error;
-      });
-    }
-    return frames;
+      while (frame.isRight()) {
+        frames.push(frame.extract());
+        count += 1;
+        frame = this.getFrameAtIndex(apdu, count).mapLeft((error) => {
+          if (error instanceof FramerOverflowError) {
+            // do nothing
+          } else {
+            this._logger.error("Error while parsing frame", {
+              data: { error },
+            });
+          }
+          return error;
+        });
+      }
+      bulkPerfCount("framer.frameObjectsCreated", frames.length);
+      return frames;
+    });
   }
 
   /**
@@ -94,32 +100,39 @@ export class DefaultApduSenderService implements ApduSenderService {
     apdu: Uint8Array,
     frameIndex: number,
   ): Either<DmkError, Frame> {
-    const header = this.getFrameHeaderFrom(frameIndex, apdu.length);
-    const frameOffset =
-      frameIndex === 0
-        ? 0
-        : frameIndex * this._frameSize - this.getHeaderSizeSumFrom(frameIndex);
+    return bulkPerfMeasure("framer.getFrameAtIndexMs", () => {
+      const header = this.getFrameHeaderFrom(frameIndex, apdu.length);
+      const frameOffset =
+        frameIndex === 0
+          ? 0
+          : frameIndex * this._frameSize -
+            this.getHeaderSizeSumFrom(frameIndex);
 
-    if (frameOffset >= apdu.length) {
-      return Left(new FramerOverflowError());
-    }
-    if (header.getLength() > this._frameSize) {
-      return Left(new FramerApduError());
-    }
-    const dataMaxSize = this._frameSize - header.getLength();
-    const data = apdu.slice(
-      frameOffset,
-      frameOffset + this._frameSize - header.getLength(),
-    );
-    const frameData = this._padding
-      ? new Uint8Array(dataMaxSize).fill(0)
-      : new Uint8Array(data.length < dataMaxSize ? data.length : dataMaxSize);
-    frameData.set(data, 0);
-    const frame = new Frame({
-      header,
-      data: frameData,
+      if (frameOffset >= apdu.length) {
+        return Left(new FramerOverflowError());
+      }
+      if (header.getLength() > this._frameSize) {
+        return Left(new FramerApduError());
+      }
+      const dataMaxSize = this._frameSize - header.getLength();
+      const data = bulkPerfMeasure("framer.apduSliceMs", () =>
+        apdu.slice(frameOffset, frameOffset + dataMaxSize),
+      );
+      const frameData = bulkPerfMeasure("framer.frameDataAllocAndSetMs", () => {
+        const buffer = this._padding
+          ? new Uint8Array(dataMaxSize).fill(0)
+          : new Uint8Array(
+              data.length < dataMaxSize ? data.length : dataMaxSize,
+            );
+        buffer.set(data, 0);
+        return buffer;
+      });
+      const frame = new Frame({
+        header,
+        data: frameData,
+      });
+      return Right(frame);
     });
-    return Right(frame);
   }
 
   /**
@@ -132,24 +145,31 @@ export class DefaultApduSenderService implements ApduSenderService {
     frameIndex: number,
     apduSize: number,
   ): FrameHeader {
-    const header = new FrameHeader({
-      uuid: v4(),
-      channel: this._channel.map((channel) =>
-        FramerUtils.getLastBytesFrom(channel, CHANNEL_LENGTH),
-      ),
-      headTag: new Uint8Array([HEAD_TAG]),
-      index: FramerUtils.numberToByteArray(frameIndex, INDEX_LENGTH),
-      length: this.getFrameHeaderSizeFromIndex(frameIndex),
-      dataSize: Maybe.zero(),
-    });
-    if (frameIndex === 0) {
-      header.setDataSize(
-        Maybe.of(
-          FramerUtils.numberToByteArray(apduSize, APDU_DATA_LENGTH_LENGTH),
+    return bulkPerfMeasure("framer.getFrameHeaderFromMs", () => {
+      const header = new FrameHeader({
+        uuid: "",
+        channel: this._channel.map((channel) =>
+          FramerUtils.getLastBytesFrom(channel, CHANNEL_LENGTH),
         ),
-      );
-    }
-    return header;
+        headTag: new Uint8Array([HEAD_TAG]),
+        index: bulkPerfMeasure("framer.numberToByteArrayMs", () =>
+          FramerUtils.numberToByteArray(frameIndex, INDEX_LENGTH),
+        ),
+        length: this.getFrameHeaderSizeFromIndex(frameIndex),
+        dataSize: Maybe.zero(),
+      });
+      bulkPerfCount("framer.frameHeaderObjectsCreated");
+      if (frameIndex === 0) {
+        header.setDataSize(
+          Maybe.of(
+            bulkPerfMeasure("framer.numberToByteArrayMs", () =>
+              FramerUtils.numberToByteArray(apduSize, APDU_DATA_LENGTH_LENGTH),
+            ),
+          ),
+        );
+      }
+      return header;
+    });
   }
 
   /**

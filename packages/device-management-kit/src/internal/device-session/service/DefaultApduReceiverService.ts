@@ -1,6 +1,5 @@
 import { inject, injectable } from "inversify";
 import { Either, Just, Left, Maybe, Nothing, Right } from "purify-ts";
-import { v4 } from "uuid";
 
 import { ApduResponse } from "@api/device-session/ApduResponse";
 import {
@@ -15,6 +14,7 @@ import {
 } from "@api/device-session/service/ApduReceiverService";
 import { FramerUtils } from "@api/device-session/utils/FramerUtils";
 import { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { bulkPerfCount, bulkPerfMeasure } from "@api/utils/BulkApduPerf";
 import { APDU_RESPONSE_STATUS_CODE_LENGTH } from "@internal/device-session/data/ApduResponseConst";
 import { ReceiverApduError } from "@internal/device-session/model/Errors";
 import { Frame } from "@internal/device-session/model/Frame";
@@ -48,15 +48,18 @@ export class DefaultApduReceiverService implements ApduReceiverService {
   public handleFrame(
     frameBytes: Uint8Array,
   ): Either<ReceiverApduError, Maybe<ApduResponse>> {
-    const frame = this.getFrameFromBytes(frameBytes);
+    return bulkPerfMeasure("framer.handleFrameMs", () => {
+      bulkPerfCount("framer.receivedFrameCount");
+      const frame = this.getFrameFromBytes(frameBytes);
 
-    return frame.map((value) => {
-      this._pendingFrames.push(value);
-      if (!this._pendingFrames[0]) {
-        return Nothing;
-      }
-      const dataSize = this._pendingFrames[0].getHeader().getDataLength();
-      return this.getCompleteFrame(dataSize);
+      return frame.map((value) => {
+        this._pendingFrames.push(value);
+        if (!this._pendingFrames[0]) {
+          return Nothing;
+        }
+        const dataSize = this._pendingFrames[0].getHeader().getDataLength();
+        return this.getCompleteFrame(dataSize);
+      });
     });
   }
 
@@ -69,25 +72,36 @@ export class DefaultApduReceiverService implements ApduReceiverService {
    */
   private getCompleteFrame(dataSize: Maybe<number>): Maybe<ApduResponse> {
     return dataSize.chain((value) => {
-      if (!this.isComplete(value)) {
+      if (
+        !bulkPerfMeasure("framer.isCompleteMs", () => this.isComplete(value))
+      ) {
         this._logger.debug("frame is not complete, waiting for more");
         return Nothing;
       }
 
-      const concatenatedFramesData = FramerUtils.getFirstBytesFrom(
-        this.concatFrames(this._pendingFrames),
-        value,
+      const concatenatedFramesData = bulkPerfMeasure(
+        "framer.responseSliceMs",
+        () =>
+          FramerUtils.getFirstBytesFrom(
+            this.concatFrames(this._pendingFrames),
+            value,
+          ),
       );
-      const data = FramerUtils.getFirstBytesFrom(
-        concatenatedFramesData,
-        concatenatedFramesData.length - APDU_RESPONSE_STATUS_CODE_LENGTH,
+      const data = bulkPerfMeasure("framer.responseSliceMs", () =>
+        FramerUtils.getFirstBytesFrom(
+          concatenatedFramesData,
+          concatenatedFramesData.length - APDU_RESPONSE_STATUS_CODE_LENGTH,
+        ),
       );
-      const statusCode = FramerUtils.getLastBytesFrom(
-        concatenatedFramesData,
-        APDU_RESPONSE_STATUS_CODE_LENGTH,
+      const statusCode = bulkPerfMeasure("framer.responseSliceMs", () =>
+        FramerUtils.getLastBytesFrom(
+          concatenatedFramesData,
+          APDU_RESPONSE_STATUS_CODE_LENGTH,
+        ),
       );
 
       this._pendingFrames = [];
+      bulkPerfCount("framer.completedResponseCount");
 
       return Just(
         new ApduResponse({
@@ -107,53 +121,60 @@ export class DefaultApduReceiverService implements ApduReceiverService {
   private getFrameFromBytes(
     rawFrame: Uint8Array,
   ): Either<ReceiverApduError, Frame> {
-    const channelSize = this._channel.caseOf({
-      Just: () => CHANNEL_LENGTH,
-      Nothing: () => 0,
+    return bulkPerfMeasure("framer.parseRawFrameMs", () => {
+      const channelSize = this._channel.caseOf({
+        Just: () => CHANNEL_LENGTH,
+        Nothing: () => 0,
+      });
+
+      const headTag = rawFrame.slice(
+        channelSize,
+        channelSize + HEAD_TAG_LENGTH,
+      );
+      const index = rawFrame.slice(
+        channelSize + HEAD_TAG_LENGTH,
+        channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH,
+      );
+
+      const isFirstIndex = index.reduce((curr, val) => curr + val, 0) === 0;
+
+      if (!isFirstIndex && this._pendingFrames.length === 0) {
+        return Left(new ReceiverApduError());
+      }
+
+      const dataSizeIndex = channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH;
+      const dataSizeLength = isFirstIndex ? APDU_DATA_LENGTH_LENGTH : 0;
+
+      if (
+        rawFrame.length <
+        channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength
+      ) {
+        return Left(new ReceiverApduError("Unable to parse header from apdu"));
+      }
+
+      const dataSize = isFirstIndex
+        ? Just(rawFrame.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
+        : Nothing;
+
+      const dataIndex = dataSizeIndex + dataSizeLength;
+      const data = rawFrame.slice(dataIndex);
+
+      const frame = new Frame({
+        header: new FrameHeader({
+          uuid: "",
+          channel: this._channel,
+          dataSize,
+          headTag,
+          index,
+          length: channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength,
+        }),
+        data,
+      });
+      bulkPerfCount("framer.frameHeaderObjectsCreated");
+      bulkPerfCount("framer.frameObjectsCreated");
+
+      return Right(frame);
     });
-
-    const headTag = rawFrame.slice(channelSize, channelSize + HEAD_TAG_LENGTH);
-    const index = rawFrame.slice(
-      channelSize + HEAD_TAG_LENGTH,
-      channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH,
-    );
-
-    const isFirstIndex = index.reduce((curr, val) => curr + val, 0) === 0;
-
-    if (!isFirstIndex && this._pendingFrames.length === 0) {
-      return Left(new ReceiverApduError());
-    }
-
-    const dataSizeIndex = channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH;
-    const dataSizeLength = isFirstIndex ? APDU_DATA_LENGTH_LENGTH : 0;
-
-    if (
-      rawFrame.length <
-      channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength
-    ) {
-      return Left(new ReceiverApduError("Unable to parse header from apdu"));
-    }
-
-    const dataSize = isFirstIndex
-      ? Just(rawFrame.slice(dataSizeIndex, dataSizeIndex + dataSizeLength))
-      : Nothing;
-
-    const dataIndex = dataSizeIndex + dataSizeLength;
-    const data = rawFrame.slice(dataIndex);
-
-    const frame = new Frame({
-      header: new FrameHeader({
-        uuid: v4(),
-        channel: this._channel,
-        dataSize,
-        headTag,
-        index,
-        length: channelSize + HEAD_TAG_LENGTH + INDEX_LENGTH + dataSizeLength,
-      }),
-      data,
-    });
-
-    return Right(frame);
   }
 
   /*
@@ -171,10 +192,12 @@ export class DefaultApduReceiverService implements ApduReceiverService {
   }
 
   private concatFrames(frames: Frame[]): Uint8Array {
-    return frames.reduce(
-      (prev: Uint8Array, curr: Frame) =>
-        Uint8Array.from([...prev, ...curr.getData()]),
-      new Uint8Array(0),
+    return bulkPerfMeasure("framer.concatFramesMs", () =>
+      frames.reduce(
+        (prev: Uint8Array, curr: Frame) =>
+          Uint8Array.from([...prev, ...curr.getData()]),
+        new Uint8Array(0),
+      ),
     );
   }
 }

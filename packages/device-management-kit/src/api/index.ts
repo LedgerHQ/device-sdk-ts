@@ -184,6 +184,20 @@ export {
   isBase64String,
 } from "@api/utils/Base64String";
 export {
+  bulkPerfAddDuration,
+  bulkPerfCount,
+  bulkPerfEnd,
+  bulkPerfIsActive,
+  bulkPerfMarkApdu,
+  bulkPerfMarkProgress,
+  bulkPerfMeasure,
+  bulkPerfMeasureAsync,
+  bulkPerfNow,
+  bulkPerfRecordError,
+  bulkPerfSetCounter,
+  bulkPerfStart,
+} from "@api/utils/BulkApduPerf";
+export {
   bufferToHexaString,
   hexaStringToBuffer,
   isHexaString,

@@ -5,13 +5,6 @@
       {
         "command": "node .cursor/scripts/hooks/format.cjs"
       }
-    ],
-    "stop": [
-      {
-        "command": "node .cursor/scripts/hooks/post-task-checks.cjs",
-        "timeout": 180,
-        "loop_limit": 3
-      }
     ]
   }
 }

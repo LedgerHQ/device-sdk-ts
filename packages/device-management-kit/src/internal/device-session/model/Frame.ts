@@ -1,4 +1,5 @@
 import { bufferToHexaString } from "@api/index";
+import { bulkPerfCount, bulkPerfMeasure } from "@api/utils/BulkApduPerf";
 import { type FrameHeader } from "@internal/device-session/model/FrameHeader";
 
 type FrameConstructorArgs = {
@@ -27,12 +28,15 @@ export class Frame {
   }
 
   getRawData(): Uint8Array {
-    const headerRaw = this._header.getRawData();
-    const raw = new Uint8Array(headerRaw.length + this._data.length);
+    return bulkPerfMeasure("framer.getRawDataMs", () => {
+      const headerRaw = this._header.getRawData();
+      const raw = new Uint8Array(headerRaw.length + this._data.length);
 
-    raw.set(headerRaw, 0);
-    raw.set(this._data, headerRaw.length);
-    return raw;
+      raw.set(headerRaw, 0);
+      raw.set(this._data, headerRaw.length);
+      bulkPerfCount("framer.frameRawBytes", raw.length);
+      return raw;
+    });
   }
 
   getHeader(): FrameHeader {
