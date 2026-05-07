@@ -13,12 +13,22 @@ import {
 
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
+import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 export type { SolanaTransactionContextResultSuccess as SolanaBuildContextResult };
+
+// !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
+export enum SolanaTransactionScanChainId {
+  MAINNET = 1,
+  DEVNET = 2,
+  TESTNET = 3,
+}
 
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionResolutionContext;
+  readonly transactionBytes: Uint8Array;
+  readonly signerAddress: string | null;
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
@@ -45,23 +55,32 @@ export class BuildTransactionContextTask {
       throw new Error("Failed to get challenge from device");
     }
 
-    const contextModuleGetContextArgs = {
+    const transactionCheck = this.args.signerAddress
+      ? {
+          from: this.args.signerAddress,
+          rawTx: DefaultBs58Encoder.encode(this.args.transactionBytes),
+          chain: SolanaTransactionScanChainId.MAINNET,
+        }
+      : undefined;
+
+    const contextModuleGetSolanaContextArgs = {
       deviceModelId: deviceState.deviceModelId,
       tokenAddress: options.tokenAddress,
       challenge,
       createATA: options.createATA,
       tokenInternalId: options.tokenInternalId,
       templateId: options.templateId,
+      transactionCheck,
     };
     // get Solana context
     this._logger.debug("[run] Calling contextModule.getContexts for Solana", {
       data: {
-        args: contextModuleGetContextArgs,
+        args: contextModuleGetSolanaContextArgs,
       },
     });
 
     const contexts = await contextModule.getContexts(
-      contextModuleGetContextArgs,
+      contextModuleGetSolanaContextArgs,
       [
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
