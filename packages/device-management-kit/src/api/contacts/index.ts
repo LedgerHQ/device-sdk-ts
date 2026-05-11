@@ -23,3 +23,40 @@ export {
   validatePrintableLabel,
   ValidationError,
 } from "@api/contacts/validation";
+export {
+  BLOCKCHAIN_FAMILY_ETH,
+  CONTACTS_TLV_TAG,
+  encodeTlvAscii,
+  encodeTlvBuffer,
+  encodeTlvChainId,
+  encodeTlvHex,
+  encodeTlvUInt8,
+  packDerivationPath,
+  STRUCT_TYPE_EDIT_CONTACT_NAME,
+  STRUCT_TYPE_REGISTER_IDENTITY,
+  STRUCT_VERSION_VALUE,
+} from "@api/contacts/utils/contactsTlvSerializer";
+export { type ContactsService } from "@api/contacts/ContactsService";
+export { ContactsServiceBuilder } from "@api/contacts/ContactsServiceBuilder";
+export {
+  type RenameContactArgs,
+  type RenameContactResult,
+} from "@api/contacts/model/RenameContactArgs";
+export {
+  type EditExternalAddressLabelArgs,
+  type EditExternalAddressLabelResult,
+} from "@api/contacts/model/EditExternalAddressLabelArgs";
+export {
+  type RenameContactDAError,
+  type RenameContactDAIntermediateValue,
+  type RenameContactDAOutput,
+  type RenameContactDAReturnType,
+  type RenameContactDAState,
+} from "@api/contacts/app-binder/RenameContactDeviceActionTypes";
+export {
+  type EditExternalAddressLabelDAError,
+  type EditExternalAddressLabelDAIntermediateValue,
+  type EditExternalAddressLabelDAOutput,
+  type EditExternalAddressLabelDAReturnType,
+  type EditExternalAddressLabelDAState,
+} from "@api/contacts/app-binder/EditExternalAddressLabelDeviceActionTypes";

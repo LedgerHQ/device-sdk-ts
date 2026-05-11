@@ -15,6 +15,7 @@ import {
 import { resetWallet, setWallet } from "@/state/contacts/slice";
 
 import { RegisterExternalAddressForm } from "./RegisterExternalAddressForm";
+import { RenameContactForm } from "./RenameContactForm";
 
 type FixtureOption = { label: string; value: string };
 
@@ -89,15 +90,19 @@ export const ContactsView: React.FC = () => {
             <code>dmk-sample-contacts-state</code> in localStorage.
           </Text>
           <Text variant="paragraph" color="opacityDefault.c50">
-            M2 — Register external address (signer-eth, op 1). Other CRUD
-            (Rename, Edit, Provide) lands in M3+. See plan in{" "}
-            <code>~/.claude/plans/</code>.
+            M3 — Rename contact (DMK-core, op 4). Other CRUD (Edit, Provide)
+            lands in M4+. See plan in <code>~/.claude/plans/</code>.
           </Text>
         </Block>
 
         <Block>
           <SectionTitle>Register external address</SectionTitle>
           <RegisterExternalAddressForm />
+        </Block>
+
+        <Block>
+          <SectionTitle>Rename contact</SectionTitle>
+          <RenameContactForm />
         </Block>
 
         <Block>

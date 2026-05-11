@@ -22,6 +22,11 @@ import { setWallet } from "@/state/contacts/slice";
 
 import { ContactNameInput } from "./ContactNameInput";
 import { NETWORK_OPTIONS, type NetworkName, NETWORKS } from "./networks";
+import {
+  CharacterCounter,
+  describeDeviceError,
+  type FormStatus,
+} from "./_shared";
 
 // Buffer length is null-terminator-inclusive; usable text is one less.
 const CONTACT_NAME_MAX_CHARS = CONTACT_NAME_BUFFER_LENGTH - 1;
@@ -138,59 +143,6 @@ function mergeExtension(
   };
 }
 
-const CharacterCounter: React.FC<{ value: string; max: number }> = ({
-  value,
-  max,
-}) => {
-  const length = value.length;
-  const overLimit = length > max;
-  return (
-    <Text
-      variant="small"
-      color={overLimit ? "error.c60" : "opacityDefault.c50"}
-    >
-      {length} / {max} characters{overLimit ? " — device will reject" : ""}
-    </Text>
-  );
-};
-
-type Status =
-  | { kind: "idle" }
-  | { kind: "running"; intermediate?: string }
-  | { kind: "success"; message: string }
-  | { kind: "error"; message: string };
-
-// SW codes that mean "user explicitly rejected on device" across the various
-// firmware paths. The Contacts firmware is observed to return 0x6a80 in this
-// scenario despite the message ("Invalid data") suggesting otherwise — the SW
-// is genuinely ambiguous since the firmware uses it both for malformed data
-// and user-driven rejection. We surface a friendlier message but always
-// preserve the raw SW + device message for debugging.
-const USER_CANCEL_SWS = new Set(["6985", "6982", "6a80"]);
-
-function describeDeviceError(error: unknown): string {
-  if (error && typeof error === "object") {
-    const obj = error as { errorCode?: unknown; message?: unknown };
-    const code = typeof obj.errorCode === "string" ? obj.errorCode : null;
-    const deviceMessage = typeof obj.message === "string" ? obj.message : null;
-    if (code) {
-      const codeTag = `SW 0x${code}`;
-      if (USER_CANCEL_SWS.has(code)) {
-        return `Cancelled or rejected on device (${codeTag}${
-          deviceMessage ? ` — device said "${deviceMessage}"` : ""
-        }).`;
-      }
-      return deviceMessage
-        ? `${deviceMessage} (${codeTag}).`
-        : `Device error (${codeTag}).`;
-    }
-    if (deviceMessage) return deviceMessage;
-  }
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  return "Device action failed.";
-}
-
 export const RegisterExternalAddressForm: React.FC = () => {
   const dispatch = useDispatch();
   const wallet = useSelector(selectWallet);
@@ -198,7 +150,7 @@ export const RegisterExternalAddressForm: React.FC = () => {
 
   const [contactName, setContactName] = useState("");
   const [values, setValues] = useState<FormValues>(initialFormValues);
-  const [status, setStatus] = useState<Status>({ kind: "idle" });
+  const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
 
   const submitDisabled = useMemo(
     () => !signer || status.kind === "running",
