@@ -11,6 +11,7 @@ import { inject, injectable } from "inversify";
 import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
@@ -18,6 +19,7 @@ import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDev
 import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
+import { type RegisterLedgerAccountArgs } from "@api/model/RegisterLedgerAccountArgs";
 import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
@@ -29,6 +31,7 @@ import { type TransactionMapperService } from "@internal/transaction/service/map
 import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
+import { RegisterLedgerAccountDeviceAction } from "./device-action/RegisterLedgerAccount/RegisterLedgerAccountDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendEditIdentifierTask } from "./task/SendEditIdentifierTask";
@@ -186,6 +189,17 @@ export class EthAppBinder {
           skipOpenApp: false,
         },
         logger: this.dmkLoggerFactory("SendRegisterIdentityTask"),
+      }),
+    });
+  }
+
+  registerLedgerAccount(
+    args: RegisterLedgerAccountArgs,
+  ): RegisterLedgerAccountDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new RegisterLedgerAccountDeviceAction({
+        input: args,
       }),
     });
   }

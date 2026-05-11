@@ -1,11 +1,12 @@
 import React from "react";
-import { Flex, Text } from "@ledgerhq/react-ui";
+import { Flex } from "@ledgerhq/react-ui";
 
 import { Block } from "@/components/Block";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { SectionTitle } from "@/components/SettingsView/SectionTitle";
 
 import { BackToContactsLink } from "./_shared";
+import { RegisterLedgerAccountForm } from "./RegisterLedgerAccountForm";
 
 export const LedgerAccountsView: React.FC = () => {
   return (
@@ -14,11 +15,7 @@ export const LedgerAccountsView: React.FC = () => {
         <BackToContactsLink />
         <Block>
           <SectionTitle>Register Ledger account</SectionTitle>
-          <Text variant="paragraph" color="opacityDefault.c60">
-            M6 not yet implemented — Register Ledger account (signer-eth, op 5)
-            will appear here. Two-APDU flow: Register, then GetAddress to cache
-            the derived ETH address.
-          </Text>
+          <RegisterLedgerAccountForm />
         </Block>
       </Flex>
     </PageWithHeader>
