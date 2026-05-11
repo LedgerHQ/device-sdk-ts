@@ -18,8 +18,8 @@ export type SignNestedCallTaskArgs = {
 
 export class SignNestedCallTask {
   constructor(
-    private api: InternalApi,
-    private args: SignNestedCallTaskArgs,
+    private readonly api: InternalApi,
+    private readonly args: SignNestedCallTaskArgs,
   ) {}
 
   async run(): Promise<

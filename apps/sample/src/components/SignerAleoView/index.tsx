@@ -202,12 +202,12 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
                 nestedCallRequest
                   .slice(2)
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
+                  ?.map((byte) => Number.parseInt(byte, 16)) ?? [],
               )
             : new Uint8Array(
                 nestedCallRequest
                   .match(/.{1,2}/g)
-                  ?.map((byte) => parseInt(byte, 16)) ?? [],
+                  ?.map((byte) => Number.parseInt(byte, 16)) ?? [],
               );
           return signer.signNestedCall(nestedCallRequestBytes, {
             skipOpenApp,
