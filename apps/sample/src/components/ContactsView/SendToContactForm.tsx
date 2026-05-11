@@ -163,17 +163,26 @@ function isValidEthAddressHex(value: string): boolean {
   return raw.length === 40 && /^[0-9a-f]{40}$/.test(raw);
 }
 
+type ProgressState = {
+  status: DeviceActionStatus;
+  intermediateValue?: {
+    step?: unknown;
+    requiredUserInteraction?: unknown;
+  };
+};
+
 // Subscribe to a device-action observable and resolve when it reaches a
 // terminal status (Completed or Error). `onPending` fires for every
-// intermediate emission so the form can flip the "awaiting on device" copy
-// during Sign.
+// intermediate emission so the caller can surface step / interaction
+// progress in the trace.
 function awaitDeviceAction<TOutput>(
-  observable: Observable<{
-    status: DeviceActionStatus;
-    output?: TOutput;
-    error?: unknown;
-  }>,
-  onPending: () => void,
+  observable: Observable<
+    ProgressState & {
+      output?: TOutput;
+      error?: unknown;
+    }
+  >,
+  onPending: (state: ProgressState) => void,
 ): Promise<TOutput> {
   return new Promise<TOutput>((resolve, reject) => {
     observable.subscribe({
@@ -183,12 +192,48 @@ function awaitDeviceAction<TOutput>(
         } else if (state.status === DeviceActionStatus.Error) {
           reject(state.error);
         } else {
-          onPending();
+          onPending(state);
         }
       },
       error: (err) => reject(err),
     });
   });
+}
+
+// Diagnostic: walk an arbitrary error-shaped value into a JSON-safe form
+// so it lands legibly in the form's trace block. Captures the constructor
+// name, message, and all own-enumerable properties (skipping `stack` and
+// functions). Handles circular refs and caps recursion depth. Used to
+// surface DMK error shapes that `describeDeviceError` can't unwrap (i.e.
+// when it falls back to the generic "Device action failed").
+function debugError(error: unknown): string {
+  if (error === null || error === undefined) return "(no error object)";
+  const seen = new WeakSet<object>();
+  const walk = (value: unknown, depth: number): unknown => {
+    if (depth > 4) return "[max depth]";
+    if (value === null || typeof value !== "object") return value;
+    if (seen.has(value as object)) return "[circular]";
+    seen.add(value as object);
+    const cls =
+      (value as { constructor?: { name?: string } }).constructor?.name ??
+      "Object";
+    const result: Record<string, unknown> = { __class: cls };
+    if (value instanceof Error && value.message) {
+      result.message = value.message;
+    }
+    for (const key of Object.getOwnPropertyNames(value)) {
+      if (key === "stack" || key === "constructor") continue;
+      const v = (value as Record<string, unknown>)[key];
+      if (typeof v === "function") continue;
+      result[key] = walk(v, depth + 1);
+    }
+    return result;
+  };
+  try {
+    return JSON.stringify(walk(error, 0), null, 2);
+  } catch {
+    return String(error);
+  }
 }
 
 const CopyButton: React.FC<{ value: string }> = ({ value }) => {
@@ -562,9 +607,39 @@ export const SendToContactForm: React.FC = () => {
       // (OpenAppDeviceAction.ts:296 short-circuits), so the cost is one
       // device round-trip — well worth the correctness.
       const signingPath = fromAccount?.derivationPath ?? DEFAULT_FROM_PATH;
+      // Diagnostic: log the unsigned tx bytes so we can confirm the RLP
+      // we're handing the device parses as we expect.
+      appendTrace({
+        kind: "info",
+        text: `    tx (hex, ${txBytes.length} B): ${Buffer.from(txBytes).toString("hex")}`,
+      });
+      appendTrace({
+        kind: "info",
+        text: `    signing path: ${signingPath}`,
+      });
       const { observable } = signer.signTransaction(signingPath, txBytes, {});
-      const signature: Signature = await awaitDeviceAction(observable, () => {
-        // Keep status as "running"; the form copy already reads "Awaiting…".
+      // Diagnostic: track which SignTransactionDeviceAction sub-step is
+      // running. Each intermediate emission tells us the current state in
+      // the OpenApp → GetAppConfig → ParseTransaction → GetAddress →
+      // BuildContexts → ProvideContexts → SignTransaction ladder. If the
+      // observable errors before resolving, the last-seen step tells us
+      // where SignTransactionDeviceAction was when it died.
+      let lastSignStep: unknown = undefined;
+      let lastInteraction: unknown = undefined;
+      const signature: Signature = await awaitDeviceAction(observable, (s) => {
+        const step = s.intermediateValue?.step;
+        if (step !== undefined && step !== lastSignStep) {
+          lastSignStep = step;
+          appendTrace({ kind: "info", text: `    step: ${String(step)}` });
+        }
+        const interaction = s.intermediateValue?.requiredUserInteraction;
+        if (interaction !== undefined && interaction !== lastInteraction) {
+          lastInteraction = interaction;
+          appendTrace({
+            kind: "info",
+            text: `    requiredUserInteraction: ${String(interaction)}`,
+          });
+        }
       });
 
       appendTrace({ kind: "ok", text: "  ✓ Sign approved" });
@@ -583,6 +658,14 @@ export const SendToContactForm: React.FC = () => {
       // State-rotation is sticky on Sign-reject — the dispatches above are
       // NOT rolled back here. The wallet records what the device knows.
       appendTrace({ kind: "error", text: `  ✗ ${describeDeviceError(err)}` });
+      // Diagnostic: dump the raw error structure into the trace so we can
+      // see what kind of failure this is when describeDeviceError falls
+      // back to the generic message (no SW / no `errorCode` / no
+      // `originalError` it knows how to unwrap).
+      appendTrace({
+        kind: "error",
+        text: `    raw error:\n${debugError(err)}`,
+      });
       setStatus({ kind: "error", message: describeDeviceError(err) });
     }
   }, [
