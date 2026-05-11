@@ -1,5 +1,7 @@
 import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type ProvideContactDAReturnType } from "@api/app-binder/ProvideContactDeviceActionTypes";
+import { type ProvideLedgerAccountDAReturnType } from "@api/app-binder/ProvideLedgerAccountDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
@@ -10,6 +12,8 @@ import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAd
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
 import { type MessageOptions } from "@api/model/MessageOptions";
+import { type ProvideContactArgs } from "@api/model/ProvideContactArgs";
+import { type ProvideLedgerAccountArgs } from "@api/model/ProvideLedgerAccountArgs";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { type RegisterLedgerAccountArgs } from "@api/model/RegisterLedgerAccountArgs";
 import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
@@ -56,4 +60,8 @@ export interface SignerEth {
   registerLedgerAccount: (
     args: RegisterLedgerAccountArgs,
   ) => RegisterLedgerAccountDAReturnType;
+  provideContact: (args: ProvideContactArgs) => ProvideContactDAReturnType;
+  provideLedgerAccount: (
+    args: ProvideLedgerAccountArgs,
+  ) => ProvideLedgerAccountDAReturnType;
 }

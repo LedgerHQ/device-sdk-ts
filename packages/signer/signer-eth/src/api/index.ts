@@ -13,6 +13,20 @@ export {
   type GetAddressDAReturnType,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
 export {
+  type ProvideContactDAError,
+  type ProvideContactDAIntermediateValue,
+  type ProvideContactDAOutput,
+  type ProvideContactDAReturnType,
+  type ProvideContactDAState,
+} from "@api/app-binder/ProvideContactDeviceActionTypes";
+export {
+  type ProvideLedgerAccountDAError,
+  type ProvideLedgerAccountDAIntermediateValue,
+  type ProvideLedgerAccountDAOutput,
+  type ProvideLedgerAccountDAReturnType,
+  type ProvideLedgerAccountDAState,
+} from "@api/app-binder/ProvideLedgerAccountDeviceActionTypes";
+export {
   type RegisterExternalAddressDAError,
   type RegisterExternalAddressDAIntermediateValue,
   type RegisterExternalAddressDAOutput,
@@ -67,6 +81,8 @@ export {
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
 export * from "@api/model/EditExternalAddressArgs";
+export * from "@api/model/ProvideContactArgs";
+export * from "@api/model/ProvideLedgerAccountArgs";
 export * from "@api/model/RegisterExternalAddressArgs";
 export * from "@api/model/RegisterLedgerAccountArgs";
 export * from "@api/model/Signature";
