@@ -4,6 +4,7 @@ import {
   type ContextModule,
   type LoaderResult,
   type SolanaTransactionContextResultSuccess,
+  SolanaTransactionScanChainId,
 } from "@ledgerhq/context-module";
 import {
   type InternalApi,
@@ -16,13 +17,6 @@ import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCo
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 export type { SolanaTransactionContextResultSuccess as SolanaBuildContextResult };
-
-// !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-export enum SolanaTransactionScanChainId {
-  MAINNET = 1,
-  DEVNET = 2,
-  TESTNET = 3,
-}
 
 export type BuildTransactionContextTaskArgs = {
   readonly contextModule: ContextModule;
@@ -85,6 +79,7 @@ export class BuildTransactionContextTask {
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
         ClearSignContextType.SOLANA_TRUSTED_NAME,
+        ClearSignContextType.SOLANA_TRANSACTION_CHECK,
       ],
     );
 
@@ -117,7 +112,9 @@ export class BuildTransactionContextTask {
       (contextResponseItem): contextResponseItem is LoaderResult =>
         contextResponseItem.type === ClearSignContextType.ERROR ||
         contextResponseItem.type === ClearSignContextType.SOLANA_TOKEN ||
-        contextResponseItem.type === ClearSignContextType.SOLANA_LIFI,
+        contextResponseItem.type === ClearSignContextType.SOLANA_LIFI ||
+        contextResponseItem.type ===
+          ClearSignContextType.SOLANA_TRANSACTION_CHECK,
     );
 
     return {

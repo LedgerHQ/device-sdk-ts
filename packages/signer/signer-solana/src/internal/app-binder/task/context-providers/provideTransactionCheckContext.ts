@@ -1,4 +1,7 @@
-import { type SolanaContextTypes } from "@ledgerhq/context-module";
+import {
+  type ClearSignContextType,
+  type SolanaTransactionCheckContextSuccess,
+} from "@ledgerhq/context-module";
 import {
   hexaStringToBuffer,
   isSuccessCommandResult,
@@ -11,9 +14,7 @@ import { SendCommandInChunksTask } from "@internal/app-binder/task/SendCommandIn
 import { type ProvideContextHandler } from "./provideContextTypes";
 
 export const provideTransactionCheckContext: ProvideContextHandler<
-  // @ts-ignore TO DO FIX ME ONCE CONTEXT MOPDULE IS PATCHED
-  SolanaContextTypes.TRANSACTION_CHECK
-  // @ts-ignore TO DO FIX ME ONCE CONTEXT MOPDULE IS PATCHED
+  ClearSignContextType.SOLANA_TRANSACTION_CHECK
 > = async (result: SolanaTransactionCheckContextSuccess, { api, logger }) => {
   const { payload, certificate } = result;
 

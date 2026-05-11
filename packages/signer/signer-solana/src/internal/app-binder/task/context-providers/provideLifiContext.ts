@@ -1,5 +1,5 @@
 import {
-  type SolanaContextTypes,
+  type ClearSignContextType,
   type SolanaLifiContextSuccess,
   type SolanaLifiInstructionMeta,
   type SolanaTransactionDescriptor,
@@ -16,7 +16,7 @@ import { ProvideInstructionDescriptorCommand } from "@internal/app-binder/comman
 import { type ProvideContextHandler } from "./provideContextTypes";
 
 export const provideLifiContext: ProvideContextHandler<
-  SolanaContextTypes.SOLANA_LIFI
+  ClearSignContextType.SOLANA_LIFI
 > = async (
   result: SolanaLifiContextSuccess,
   { api, logger, normaliser, transactionBytes },

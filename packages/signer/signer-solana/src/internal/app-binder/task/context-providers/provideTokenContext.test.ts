@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SolanaContextTypes } from "@ledgerhq/context-module";
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   LoadCertificateCommand,
@@ -52,7 +52,7 @@ describe("provideTokenContext", () => {
       .mockResolvedValueOnce(success);
 
     const result = {
-      type: SolanaContextTypes.SOLANA_TOKEN as const,
+      type: ClearSignContextType.SOLANA_TOKEN as const,
       payload: { solanaTokenDescriptor: tokenDescriptor },
       certificate: tokenCert,
     };
@@ -77,7 +77,7 @@ describe("provideTokenContext", () => {
   // test 2: no commands when payload is missing
   it("does not send commands if payload is missing", async () => {
     const result = {
-      type: SolanaContextTypes.SOLANA_TOKEN as const,
+      type: ClearSignContextType.SOLANA_TOKEN as const,
       payload: undefined,
       certificate: tokenCert,
     };
@@ -90,7 +90,7 @@ describe("provideTokenContext", () => {
   // test 3: no commands when certificate is missing
   it("does not send commands if certificate is missing", async () => {
     const result = {
-      type: SolanaContextTypes.SOLANA_TOKEN as const,
+      type: ClearSignContextType.SOLANA_TOKEN as const,
       payload: { solanaTokenDescriptor: tokenDescriptor },
       certificate: undefined,
     };
@@ -108,7 +108,7 @@ describe("provideTokenContext", () => {
     api.sendCommand.mockResolvedValueOnce(errorResult);
 
     const result = {
-      type: SolanaContextTypes.SOLANA_TOKEN as const,
+      type: ClearSignContextType.SOLANA_TOKEN as const,
       payload: { solanaTokenDescriptor: tokenDescriptor },
       certificate: tokenCert,
     };
