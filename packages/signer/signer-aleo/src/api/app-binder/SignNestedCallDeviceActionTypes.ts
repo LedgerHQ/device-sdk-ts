@@ -17,7 +17,7 @@ export type SignNestedCallDAError =
 
 type SignNestedCallDARequiredInteraction =
   | OpenAppDARequiredInteraction
-  | UserInteractionRequired.SignTransaction;
+  | UserInteractionRequired.None;
 
 export type SignNestedCallDAIntermediateValue = {
   requiredUserInteraction: SignNestedCallDARequiredInteraction;
