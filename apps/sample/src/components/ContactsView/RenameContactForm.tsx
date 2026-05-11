@@ -172,10 +172,8 @@ export const RenameContactForm: React.FC = () => {
           onChange={setOldName}
           contacts={wallet.contacts}
           disabled={status.kind === "running"}
+          mode="rename"
         />
-        <Text variant="small" color="opacityDefault.c50">
-          Pick the contact to rename.
-        </Text>
       </Flex>
 
       <Flex flexDirection="column" rowGap={1}>

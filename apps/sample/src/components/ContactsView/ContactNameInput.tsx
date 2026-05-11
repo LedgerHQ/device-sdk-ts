@@ -10,6 +10,13 @@ type Props = {
   onChange: (next: string) => void;
   contacts: Record<string, Contact>;
   disabled?: boolean;
+  /**
+   * Shapes the status text under the input.
+   * - "register" (default): hints "create new" vs "append to existing" for the M2 Register form.
+   * - "rename": hints "this contact will be renamed" vs "no contact with this name" for the M3 Rename form.
+   * - "none": suppresses the status text entirely; the form's own error/status block speaks instead.
+   */
+  mode?: "register" | "rename" | "none";
 };
 
 const Wrapper = styled(Flex)`
@@ -61,6 +68,7 @@ export const ContactNameInput: React.FC<Props> = ({
   onChange,
   contacts,
   disabled,
+  mode = "register",
 }) => {
   const [focused, setFocused] = useState(false);
   const blurTimer = useRef<number | null>(null);
@@ -73,11 +81,16 @@ export const ContactNameInput: React.FC<Props> = ({
     : names;
   const exactMatch = trimmed && contacts[trimmed];
 
-  const statusText = !trimmed
-    ? null
-    : exactMatch
+  let statusText: string | null = null;
+  if (trimmed && mode === "register") {
+    statusText = exactMatch
       ? `Existing contact — a new address will be appended (${exactMatch.entries.length} existing).`
       : `Will create a new contact named "${trimmed}".`;
+  } else if (trimmed && mode === "rename") {
+    statusText = exactMatch
+      ? `Will rename "${trimmed}" (${exactMatch.entries.length} address${exactMatch.entries.length === 1 ? "" : "es"}, single APDU).`
+      : `No contact named "${trimmed}" in the contact book.`;
+  }
 
   const handleSelect = (name: string) => {
     onChange(name);

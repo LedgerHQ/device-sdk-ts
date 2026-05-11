@@ -17,32 +17,62 @@ export const CharacterCounter: React.FC<{ value: string; max: number }> = ({
   );
 };
 
-// SW codes that mean "user explicitly rejected on device" across the various
-// firmware paths. The Contacts firmware is observed to return 0x6a80 in this
-// scenario despite the message ("Invalid data") suggesting otherwise — the SW
-// is genuinely ambiguous since the firmware uses it both for malformed data
-// and user-driven rejection. We surface a friendlier message but always
-// preserve the raw SW + device message for debugging.
-export const USER_CANCEL_SWS = new Set(["6985", "6982", "6a80"]);
+// SW codes that mean "user explicitly rejected on device". 0x6985 is the
+// canonical user-reject SW. 0x6a80 is officially "TLV parser refused" but the
+// contacts firmware is also observed to return it on user-driven rejection,
+// so we treat it as a cancel here — pre-flight validation prevents the
+// genuine TLV-refused case from reaching the device.
+// 0x6982 (auth/HMAC mismatch) is NOT a cancel — see playground's
+// `service._explain_status_word` for the authoritative interpretation.
+export const USER_CANCEL_SWS = new Set(["6985", "6a80"]);
+
+// DMK-core's UnknownDeviceExchangeError stores the real SW + message inside
+// `originalError` rather than exposing them at top level — we need to dig in
+// to render a useful message. See:
+// packages/device-management-kit/src/api/command/utils/GlobalCommandError.ts:59
+function extractSwAndMessage(error: unknown): {
+  code: string | null;
+  message: string | null;
+} {
+  if (!error || typeof error !== "object") {
+    return { code: null, message: null };
+  }
+  const obj = error as { errorCode?: unknown; message?: unknown; originalError?: unknown };
+  const directCode = typeof obj.errorCode === "string" ? obj.errorCode : null;
+  const directMessage = typeof obj.message === "string" ? obj.message : null;
+  if (directCode) return { code: directCode, message: directMessage };
+
+  // Unwrap one level — UnknownDeviceExchangeError(originalError = { message, errorCode })
+  if (obj.originalError && typeof obj.originalError === "object") {
+    const inner = obj.originalError as { errorCode?: unknown; message?: unknown };
+    const innerCode = typeof inner.errorCode === "string" ? inner.errorCode : null;
+    const innerMessage = typeof inner.message === "string" ? inner.message : null;
+    if (innerCode) return { code: innerCode, message: innerMessage ?? directMessage };
+  }
+  return { code: null, message: directMessage };
+}
 
 export function describeDeviceError(error: unknown): string {
-  if (error && typeof error === "object") {
-    const obj = error as { errorCode?: unknown; message?: unknown };
-    const code = typeof obj.errorCode === "string" ? obj.errorCode : null;
-    const deviceMessage = typeof obj.message === "string" ? obj.message : null;
-    if (code) {
-      const codeTag = `SW 0x${code}`;
-      if (USER_CANCEL_SWS.has(code)) {
-        return `Cancelled or rejected on device (${codeTag}${
-          deviceMessage ? ` — device said "${deviceMessage}"` : ""
-        }).`;
-      }
-      return deviceMessage
-        ? `${deviceMessage} (${codeTag}).`
-        : `Device error (${codeTag}).`;
-    }
-    if (deviceMessage) return deviceMessage;
+  // Always log the raw error so devtools shows the full structure for debugging.
+  if (typeof window !== "undefined") {
+    console.warn("[ContactsView] device action error:", error);
   }
+  const { code, message } = extractSwAndMessage(error);
+  if (code) {
+    const codeTag = `SW 0x${code}`;
+    if (USER_CANCEL_SWS.has(code)) {
+      return `Cancelled or rejected on device (${codeTag}${
+        message && message !== "UnknownError" ? ` — device said "${message}"` : ""
+      }).`;
+    }
+    if (code === "6982") {
+      return `HMAC mismatch (${codeTag}) — the device cannot verify the proof your wallet supplied. Causes: (1) the contact was loaded from a sample fixture (placeholder HMACs — register via M2 first), or (2) the contact was registered against a different firmware/app build than what is on the device now (the K_identity derivation can shift across firmware versions; reset the contact book and re-register).`;
+    }
+    return message && message !== "UnknownError"
+      ? `${message} (${codeTag}).`
+      : `Device error (${codeTag}).`;
+  }
+  if (message) return message;
   if (error instanceof Error) return error.message;
   if (typeof error === "string") return error;
   return "Device action failed.";
