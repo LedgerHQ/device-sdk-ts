@@ -1,11 +1,8 @@
-// DER-style TLV encoding for the Contacts feature on the Ethereum app.
+// DER-style TLV encoding for the Contacts feature.
 // Tags ≥ 0x80 use the 2-byte form (0x81 0xTT); lengths ≥ 0x80 use long form.
-// This matches `tlv.py` (`der_encode` + `serialize_field`) in the
-// app-ethereum python client. The same encoding is used privately in
-// `signer-hyperliquid/src/internal/app-binder/utils/actionTlvSerializer.ts`;
-// promoting these helpers to `@ledgerhq/device-management-kit` is a candidate
-// refactor once a third package needs them.
-import { ByteArrayBuilder } from "@ledgerhq/device-management-kit";
+// Matches `tlv.py` (`der_encode` + `serialize_field`) in the
+// app-ethereum python client.
+import { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 
 const LONG_TAG_PREFIX_HIGH_BYTE = 0x81 << 8;
 
@@ -19,10 +16,12 @@ export const CONTACTS_TLV_TAG = {
   CONTACT_NAME: 0xf0,
   SCOPE: 0xf1,
   ACCOUNT_IDENTIFIER: 0xf2,
+  PREVIOUS_CONTACT_NAME: 0xf3,
   GROUP_HANDLE: 0xf6,
 } as const;
 
 export const STRUCT_TYPE_REGISTER_IDENTITY = 0x2d;
+export const STRUCT_TYPE_EDIT_CONTACT_NAME = 0x2e;
 export const STRUCT_VERSION_VALUE = 0x01;
 export const BLOCKCHAIN_FAMILY_ETH = 0x01;
 

@@ -35,7 +35,7 @@ import {
   packDerivationPath,
   STRUCT_TYPE_REGISTER_IDENTITY,
   STRUCT_VERSION_VALUE,
-} from "@internal/app-binder/utils/contactsTlvSerializer";
+} from "@ledgerhq/device-management-kit";
 
 const APDU_DATA_MAX_BYTES = 255;
 
