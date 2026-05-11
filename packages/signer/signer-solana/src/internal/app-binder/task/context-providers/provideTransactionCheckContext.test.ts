@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   APDU_MAX_PAYLOAD,
   CommandResultFactory,
@@ -47,9 +48,7 @@ describe("provideTransactionCheckContext", () => {
       .mockResolvedValueOnce(success);
 
     const result = {
-      // !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-      // @ts-ignore - to be fixed when transaction check context is exported from context module
-      type: "solanaTransactionCheck" as const,
+      type: ClearSignContextType.SOLANA_TRANSACTION_CHECK as const,
       payload: { descriptor: "aabbccdd" },
       certificate: txCheckCert,
     };
@@ -74,9 +73,7 @@ describe("provideTransactionCheckContext", () => {
     api.sendCommand.mockResolvedValueOnce(errorResult);
 
     const result = {
-      // !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-      // @ts-ignore - to be fixed when transaction check context is exported from context module
-      type: "solanaTransactionCheck" as const,
+      type: ClearSignContextType.SOLANA_TRANSACTION_CHECK as const,
       payload: { descriptor: "aabbccdd" },
       certificate: txCheckCert,
     };
@@ -90,9 +87,7 @@ describe("provideTransactionCheckContext", () => {
     api.sendCommand.mockResolvedValueOnce(success);
 
     const result = {
-      // !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-      // @ts-ignore - to be fixed when transaction check context is exported from context module
-      type: "solanaTransactionCheck" as const,
+      type: ClearSignContextType.SOLANA_TRANSACTION_CHECK as const,
       payload: { descriptor: "aabbccdd" },
       certificate: undefined,
     };
@@ -112,9 +107,7 @@ describe("provideTransactionCheckContext", () => {
       .repeat(APDU_MAX_PAYLOAD + 10)
       .padEnd((APDU_MAX_PAYLOAD + 10) * 2, "bb");
     const result = {
-      // !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-      // @ts-ignore - to be fixed when transaction check context is exported from context module
-      type: "solanaTransactionCheck" as const,
+      type: ClearSignContextType.SOLANA_TRANSACTION_CHECK as const,
       payload: { descriptor: largeDescriptorHex },
       certificate: undefined,
     };
@@ -139,9 +132,7 @@ describe("provideTransactionCheckContext", () => {
     );
 
     const result = {
-      // !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-      // @ts-ignore - to be fixed when transaction check context is exported from context module
-      type: "solanaTransactionCheck" as const,
+      type: ClearSignContextType.SOLANA_TRANSACTION_CHECK as const,
       payload: { descriptor: "aabbccdd" },
       certificate: undefined,
     };
@@ -153,9 +144,7 @@ describe("provideTransactionCheckContext", () => {
 
   it("warns and returns when descriptor is unparseable", async () => {
     const result = {
-      // !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-      // @ts-ignore - to be fixed when transaction check context is exported from context module
-      type: "solanaTransactionCheck" as const,
+      type: ClearSignContextType.SOLANA_TRANSACTION_CHECK as const,
       payload: { descriptor: "" },
       certificate: undefined,
     };

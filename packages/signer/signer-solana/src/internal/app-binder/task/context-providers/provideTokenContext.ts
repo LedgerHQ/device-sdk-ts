@@ -1,5 +1,5 @@
 import {
-  type SolanaContextTypes,
+  type ClearSignContextType,
   type SolanaTokenContextSuccess,
 } from "@ledgerhq/context-module";
 import {
@@ -12,7 +12,7 @@ import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app
 import { type ProvideContextHandler } from "./provideContextTypes";
 
 export const provideTokenContext: ProvideContextHandler<
-  SolanaContextTypes.SOLANA_TOKEN
+  ClearSignContextType.SOLANA_TOKEN
 > = async (result: SolanaTokenContextSuccess, { api, logger }) => {
   const {
     payload: tokenMetadataPayload,

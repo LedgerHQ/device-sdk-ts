@@ -1,7 +1,7 @@
 import {
+  ClearSignContextType,
   type SolanaContextSuccess,
   type SolanaContextSuccessType,
-  SolanaContextTypes,
 } from "@ledgerhq/context-module";
 
 import {
@@ -19,11 +19,10 @@ import { provideTransactionCheckContext } from "./provideTransactionCheckContext
 const PROVIDE_CONTEXT_REGISTRY: {
   [K in SolanaContextSuccessType]: ProvideContextHandler<K>;
 } = {
-  [SolanaContextTypes.SOLANA_TOKEN]: provideTokenContext,
-  [SolanaContextTypes.SOLANA_LIFI]: provideLifiContext,
-  // !!!! TODO-WEB3CHECK TO BE EXPORTED FROM CONTEXT MODULE
-  // @ts-ignore - to be fixed when transaction check context is exported from context module
-  solanaTransactionCheck: provideTransactionCheckContext,
+  [ClearSignContextType.SOLANA_TOKEN]: provideTokenContext,
+  [ClearSignContextType.SOLANA_LIFI]: provideLifiContext,
+  [ClearSignContextType.SOLANA_TRANSACTION_CHECK]:
+    provideTransactionCheckContext,
 };
 
 type DiscriminatedSolanaContextSuccess = {

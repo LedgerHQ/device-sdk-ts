@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { SolanaContextTypes } from "@ledgerhq/context-module";
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   CommandResultFactory,
   LoadCertificateCommand,
@@ -65,7 +65,7 @@ describe("provideLifiContext", () => {
     const normaliser = buildNormaliser(message);
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: {
           "A_PID:1": { data: SIG, signature: SIG },
@@ -109,7 +109,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: { "A:1": { data: SIG, signature: SIG } },
         instructions: [{ program_id: "A", discriminator_hex: "1" }],
@@ -126,7 +126,7 @@ describe("provideLifiContext", () => {
     const normaliser = buildNormaliser({});
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: { descriptors: undefined as any, instructions: [] },
     };
 
@@ -147,7 +147,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: { "P1:1": { data: SIG, signature: SIG } },
         instructions: [{ program_id: "P1", discriminator_hex: "1" }],
@@ -173,7 +173,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: { "PID:": { data: SIG, signature: "" } },
         instructions: [{ program_id: "PID" }],
@@ -192,7 +192,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: { descriptors: {}, instructions: [] },
     };
 
@@ -210,7 +210,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: { "SHORT:2aade37a": { data: SIG, signature: SIG } },
         instructions: [{ program_id: "SHORT", discriminator_hex: "2aade37a" }],
@@ -231,7 +231,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: { "MM:aabbccdd": { data: SIG, signature: SIG } },
         instructions: [{ program_id: "MM", discriminator_hex: "aabbccdd" }],
@@ -255,7 +255,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: {
           "MULTI:aaff": { data: "data_aa", signature: SIG },
@@ -292,7 +292,7 @@ describe("provideLifiContext", () => {
     };
 
     const result = {
-      type: SolanaContextTypes.SOLANA_LIFI as const,
+      type: ClearSignContextType.SOLANA_LIFI as const,
       payload: {
         descriptors: {},
         instructions: [{ program_id: "PROG", discriminator_hex: "1" }],

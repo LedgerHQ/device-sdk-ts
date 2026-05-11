@@ -1,4 +1,4 @@
-import { SolanaContextTypes } from "@ledgerhq/context-module";
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
   type InternalApi,
@@ -76,7 +76,7 @@ export class ProvideSolanaTransactionContextTask {
     };
 
     for (const loaderResult of loadersResults) {
-      if (loaderResult.type === SolanaContextTypes.ERROR) {
+      if (loaderResult.type === ClearSignContextType.ERROR) {
         this._logger.debug("[run] Loader result of type ERROR, skipping");
         continue;
       }
