@@ -14,6 +14,8 @@ import {
 } from "@/state/contacts/selectors";
 import { resetWallet, setWallet } from "@/state/contacts/slice";
 
+import { RegisterExternalAddressForm } from "./RegisterExternalAddressForm";
+
 type FixtureOption = { label: string; value: string };
 
 const fixtureOptions: FixtureOption[] = FIXTURES.map((f) => ({
@@ -44,16 +46,16 @@ export const ContactsView: React.FC = () => {
   const wallet = useSelector(selectWallet);
   const contactsCount = useSelector(selectContactsCount);
   const accountsCount = useSelector(selectAccountsCount);
-  const [pendingFixture, setPendingFixture] = useState<FixtureOption | null>(
+  const [pendingSample, setPendingSample] = useState<FixtureOption | null>(
     null,
   );
 
-  const onLoadFixture = useCallback(() => {
-    if (!pendingFixture) return;
-    const fixture = FIXTURES.find((f) => f.id === pendingFixture.value);
-    if (!fixture) return;
-    dispatch(setWallet(fixture.wallet));
-  }, [dispatch, pendingFixture]);
+  const onLoadSample = useCallback(() => {
+    if (!pendingSample) return;
+    const sample = FIXTURES.find((f) => f.id === pendingSample.value);
+    if (!sample) return;
+    dispatch(setWallet(sample.wallet));
+  }, [dispatch, pendingSample]);
 
   const onReset = useCallback(() => {
     if (
@@ -67,7 +69,7 @@ export const ContactsView: React.FC = () => {
     if (
       typeof window === "undefined" ||
       window.confirm(
-        "Reset will clear all client-side Contacts state. Device-side records (HMACs) are unaffected. Continue?",
+        "Reset will clear the client-side contact book. Device-side records (HMACs) are unaffected. Continue?",
       )
     ) {
       dispatch(resetWallet());
@@ -87,9 +89,15 @@ export const ContactsView: React.FC = () => {
             <code>dmk-sample-contacts-state</code> in localStorage.
           </Text>
           <Text variant="paragraph" color="opacityDefault.c50">
-            M1 — foundation only. Device-driven CRUD lands in M2+ (Register,
-            Rename, Edit, Provide). See plan in <code>~/.claude/plans/</code>.
+            M2 — Register external address (signer-eth, op 1). Other CRUD
+            (Rename, Edit, Provide) lands in M3+. See plan in{" "}
+            <code>~/.claude/plans/</code>.
           </Text>
+        </Block>
+
+        <Block>
+          <SectionTitle>Register external address</SectionTitle>
+          <RegisterExternalAddressForm />
         </Block>
 
         <Block>
@@ -98,9 +106,9 @@ export const ContactsView: React.FC = () => {
         </Block>
 
         <Block>
-          <SectionTitle>Load fixture</SectionTitle>
+          <SectionTitle>Sample contact books</SectionTitle>
           <Text variant="paragraph" color="opacityDefault.c60">
-            Hand-picked client-side wallets to scaffold UI development. Hex
+            Pre-built client-side contact books to scaffold UI development. Hex
             values are illustrative — they do not pass device-side HMAC
             verification.
           </Text>
@@ -108,19 +116,19 @@ export const ContactsView: React.FC = () => {
             <Flex flex={1}>
               <SelectInput
                 options={fixtureOptions}
-                value={pendingFixture}
+                value={pendingSample}
                 onChange={(opt) =>
-                  setPendingFixture(opt as FixtureOption | null)
+                  setPendingSample(opt as FixtureOption | null)
                 }
                 isMulti={false}
                 isSearchable={false}
-                placeholder="Pick a fixture"
+                placeholder="Pick a sample contact book"
               />
             </Flex>
             <Button
               variant="main"
-              onClick={onLoadFixture}
-              disabled={!pendingFixture}
+              onClick={onLoadSample}
+              disabled={!pendingSample}
             >
               Load
             </Button>
@@ -130,12 +138,12 @@ export const ContactsView: React.FC = () => {
         <Block>
           <SectionTitle>Reset</SectionTitle>
           <Text variant="paragraph" color="opacityDefault.c60">
-            Wipes the client-side wallet and removes the localStorage key.
+            Wipes the client-side contact book and removes the localStorage key.
             Device-side records (HMACs, group handles) are not touched.
           </Text>
           <Flex>
             <Button variant="error" onClick={onReset}>
-              Reset wallet
+              Reset contact book
             </Button>
           </Flex>
         </Block>

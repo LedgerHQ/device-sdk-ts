@@ -19,6 +19,10 @@ export type LinkedFields<Args extends Record<string, FieldType>> = {
   ) => Partial<Args>;
 };
 
+export type HintSelector<Args extends Record<string, FieldType>> = {
+  [K in keyof Args]?: (value: Args[K]) => React.ReactNode;
+};
+
 export function getValueSelectorFromEnum<
   T extends Record<string, string | number>,
 >(enumObject: T) {
@@ -29,6 +33,18 @@ export function getValueSelectorFromEnum<
   }));
   return res;
 }
+
+// Every form in apps/sample is a dev/test harness for DMK device actions,
+// never a credential entry point. Tell password managers (1Password,
+// LastPass, Bitwarden) to ignore these inputs — otherwise buttons labeled
+// "Register…" / "Sign…" trigger the autofill or capture popup.
+const PASSWORD_MANAGER_OPT_OUT = {
+  autoComplete: "off",
+  "data-1p-ignore": "true",
+  "data-lpignore": "true",
+  "data-bwignore": "true",
+  "data-form-type": "other",
+} as const;
 
 type FormFieldProps = {
   fieldKey: string;
@@ -90,6 +106,7 @@ const FormField: React.FC<FormFieldProps> = ({
         onChange={(newVal) => onChange(fieldKey, newVal)}
         disabled={disabled}
         data-testid={`input-text_${fieldKey}`}
+        {...PASSWORD_MANAGER_OPT_OUT}
       />
     );
   }
@@ -105,6 +122,7 @@ const FormField: React.FC<FormFieldProps> = ({
       }
       type="number"
       disabled={disabled}
+      {...PASSWORD_MANAGER_OPT_OUT}
     />
   );
 };
@@ -115,6 +133,7 @@ export function Form<Args extends Record<string, FieldType>>({
   valueSelector,
   labelSelector,
   linkedFields,
+  hintSelector,
   disabled,
   className,
 }: {
@@ -123,6 +142,7 @@ export function Form<Args extends Record<string, FieldType>>({
   valueSelector?: ValueSelector<FieldType>;
   labelSelector?: Partial<Record<string, string>>;
   linkedFields?: LinkedFields<Args>;
+  hintSelector?: HintSelector<Args>;
   disabled?: boolean;
   className?: string;
 }) {
@@ -160,18 +180,24 @@ export function Form<Args extends Record<string, FieldType>>({
       rowGap={5}
       columnGap={5}
     >
-      {Object.entries(formValues).map(([key, value]) => (
-        <FormField
-          key={key}
-          fieldKey={key}
-          value={value}
-          defaultValue={actualInitialValues[key]}
-          label={labelSelector?.[key] ?? key}
-          options={valueSelector?.[key]}
-          disabled={disabled}
-          onChange={handleFieldChange}
-        />
-      ))}
+      {Object.entries(formValues).map(([key, value]) => {
+        const hintFn = hintSelector?.[key as keyof Args];
+        const hint = hintFn ? hintFn(value as Args[keyof Args]) : null;
+        return (
+          <Flex key={key} flexDirection="column" rowGap={1}>
+            <FormField
+              fieldKey={key}
+              value={value}
+              defaultValue={actualInitialValues[key]}
+              label={labelSelector?.[key] ?? key}
+              options={valueSelector?.[key]}
+              disabled={disabled}
+              onChange={handleFieldChange}
+            />
+            {hint}
+          </Flex>
+        );
+      })}
     </Flex>
   );
 }
