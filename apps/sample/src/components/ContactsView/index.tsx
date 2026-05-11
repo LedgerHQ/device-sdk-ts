@@ -36,8 +36,7 @@ const StoragePre = styled.pre`
 const SUBSECTIONS = [
   {
     title: "Contacts",
-    description:
-      "Register, rename, edit labels, and edit addresses for cross-chain contacts.",
+    description: "Register and edit external addresses for the Ethereum app.",
     href: "/services/contacts/external-addresses",
     icon: (
       <Flex p={3} backgroundColor="background.card" borderRadius="50%">
@@ -47,8 +46,7 @@ const SUBSECTIONS = [
   },
   {
     title: "Ledger accounts",
-    description:
-      "Register signer-controlled Ledger accounts used as the From side of a Send.",
+    description: "Name signer-controlled Ethereum accounts.",
     href: "/services/contacts/ledger-accounts",
     icon: (
       <Flex p={3} backgroundColor="background.card" borderRadius="50%">
@@ -58,8 +56,7 @@ const SUBSECTIONS = [
   },
   {
     title: "Signing transactions",
-    description:
-      "Send to Contact: Provide From + Provide To + Sign, with both friendly names on device.",
+    description: "Send Ethereum with trusted labels.",
     href: "/services/contacts/signing",
     icon: (
       <Flex p={3} backgroundColor="background.card" borderRadius="50%">
@@ -93,22 +90,6 @@ export const ContactsView: React.FC = () => {
     <PageWithHeader title="Contacts">
       <Flex flexDirection="column" flex={1} overflowY="auto" pb={8} rowGap={6}>
         <Block>
-          <SectionTitle>Overview</SectionTitle>
-          <Text variant="body" color="opacityDefault.c70">
-            {contactsCount} contact{contactsCount === 1 ? "" : "s"} ·{" "}
-            {accountsCount} signer-controlled account
-            {accountsCount === 1 ? "" : "s"}.
-          </Text>
-          <Text variant="body" color="opacityDefault.c70">
-            Schema version {wallet.schemaVersion}.
-          </Text>
-          <Text variant="body" color="opacityDefault.c70">
-            Persisted under <code>dmk-sample-contacts-state</code> in
-            localStorage.
-          </Text>
-        </Block>
-
-        <Block>
           <SectionTitle>Sections</SectionTitle>
           <Grid columns={2} style={{ rowGap: 16, columnGap: 16 }}>
             {SUBSECTIONS.map(({ title, description, icon, href }) => (
@@ -124,12 +105,7 @@ export const ContactsView: React.FC = () => {
         </Block>
 
         <Block>
-          <SectionTitle>Storage viewer</SectionTitle>
-          <StoragePre>{JSON.stringify(wallet, null, 2)}</StoragePre>
-        </Block>
-
-        <Block>
-          <SectionTitle>Reset</SectionTitle>
+          <SectionTitle>Reset local data</SectionTitle>
           <Text variant="paragraph" color="opacityDefault.c60">
             Wipes the client-side contact book and removes the localStorage key.
             Device-side records (HMACs, group handles) are not touched.
@@ -139,6 +115,11 @@ export const ContactsView: React.FC = () => {
               Reset contacts
             </Button>
           </Flex>
+        </Block>
+
+        <Block>
+          <SectionTitle>Storage viewer</SectionTitle>
+          <StoragePre>{JSON.stringify(wallet, null, 2)}</StoragePre>
         </Block>
       </Flex>
     </PageWithHeader>

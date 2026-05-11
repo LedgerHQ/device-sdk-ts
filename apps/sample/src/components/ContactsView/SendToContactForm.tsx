@@ -689,10 +689,7 @@ export const SendToContactForm: React.FC = () => {
     <Flex flexDirection="column" rowGap={4}>
       <Text variant="paragraph" color="opacityDefault.c60">
         Compose an ETH transfer. Up to three APDUs run in order — Provide From,
-        Provide To, Sign — but the device only prompts once (Sign). The two
-        Provides return 0x9000 silently because firmware trusts the HMAC chain
-        authorised at Register time. The Sign review shows the friendly names
-        you provided.
+        Provide To, Sign — but the device only prompts once (Sign).
       </Text>
 
       {!signer && (

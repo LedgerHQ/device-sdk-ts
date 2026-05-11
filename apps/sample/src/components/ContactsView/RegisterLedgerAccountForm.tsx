@@ -17,7 +17,6 @@ import {
   Icons,
   Input,
   SelectInput,
-  Switch,
   Text,
 } from "@ledgerhq/react-ui";
 import styled from "styled-components";
@@ -133,9 +132,6 @@ export const RegisterLedgerAccountForm: React.FC = () => {
   );
   const [nameTouched, setNameTouched] = useState(false);
 
-  const [advancedPath, setAdvancedPath] = useState(false);
-  const [customPath, setCustomPath] = useState(buildLedgerLivePath(0));
-
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
 
   // When the network changes, jump the index to the next free slot for that
@@ -166,23 +162,10 @@ export const RegisterLedgerAccountForm: React.FC = () => {
     () => buildLedgerLivePath(accountIndex),
     [accountIndex],
   );
-  const effectivePath = advancedPath ? customPath : autoPath;
   const chainId = NETWORKS[network];
   const selectedNetworkOption = NETWORK_OPTIONS.find(
     (opt) => opt.value === network,
   );
-
-  const handleAdvancedToggle = useCallback(() => {
-    setAdvancedPath((prev) => {
-      const next = !prev;
-      if (next) {
-        // Entering advanced mode — pre-fill the custom path from the auto-
-        // built one so the user has a sane starting point to tweak.
-        setCustomPath(autoPath);
-      }
-      return next;
-    });
-  }, [autoPath]);
 
   const stepIndex = useCallback((delta: number) => {
     setAccountIndex((prev) => Math.max(0, prev + delta));
@@ -215,7 +198,7 @@ export const RegisterLedgerAccountForm: React.FC = () => {
     try {
       ({ observable } = signer.registerLedgerAccount({
         name: trimmedName,
-        derivationPath: effectivePath,
+        derivationPath: autoPath,
         chainId,
       }));
     } catch (e) {
@@ -236,12 +219,7 @@ export const RegisterLedgerAccountForm: React.FC = () => {
           // The use-case strips the "m/" prefix before sending to the device,
           // but storage keeps the user-facing path — matching the playground's
           // `.contacts_wallet.json` shape.
-          const account = buildAccount(
-            trimmedName,
-            effectivePath,
-            chainId,
-            result,
-          );
+          const account = buildAccount(trimmedName, autoPath, chainId, result);
           dispatch(setWallet(mergeAccount(wallet, account)));
           setStatus({
             kind: "success",
@@ -260,14 +238,12 @@ export const RegisterLedgerAccountForm: React.FC = () => {
         setStatus({ kind: "error", message: describeDeviceError(err) });
       },
     });
-  }, [dispatch, signer, name, effectivePath, chainId, wallet]);
+  }, [dispatch, signer, name, autoPath, chainId, wallet]);
 
   return (
     <Flex flexDirection="column" rowGap={4}>
       <Text variant="paragraph" color="opacityDefault.c60">
-        Register a signer-controlled Ledger account on the device. Two APDUs run
-        back-to-back: a device approval for the account name, then a silent
-        address derivation cached in storage.
+        Register a signer-controlled Ledger account on the device.
       </Text>
 
       {!signer && (
@@ -293,15 +269,13 @@ export const RegisterLedgerAccountForm: React.FC = () => {
 
       <Flex flexDirection="column" rowGap={1}>
         <Flex alignItems="center" columnGap={3}>
-          <InputLabel ml={0}>Account number</InputLabel>
+          <InputLabel ml={0}>Account index</InputLabel>
           <Flex alignItems="center" columnGap={2}>
             <StepperButton
               type="button"
-              aria-label="Decrement account number"
+              aria-label="Decrement account index"
               onClick={() => stepIndex(-1)}
-              disabled={
-                status.kind === "running" || advancedPath || accountIndex === 0
-              }
+              disabled={status.kind === "running" || accountIndex === 0}
             >
               <Icons.Minus size="XS" />
             </StepperButton>
@@ -314,9 +288,9 @@ export const RegisterLedgerAccountForm: React.FC = () => {
             </Text>
             <StepperButton
               type="button"
-              aria-label="Increment account number"
+              aria-label="Increment account index"
               onClick={() => stepIndex(1)}
-              disabled={status.kind === "running" || advancedPath}
+              disabled={status.kind === "running"}
             >
               <Icons.Plus size="XS" />
             </StepperButton>
@@ -340,29 +314,6 @@ export const RegisterLedgerAccountForm: React.FC = () => {
           data-form-type="other"
         />
         <CharacterCounter value={name} max={ACCOUNT_NAME_MAX_CHARS} />
-      </Flex>
-
-      <Flex flexDirection="column" rowGap={2}>
-        <Switch
-          name="advancedPath"
-          checked={advancedPath}
-          onChange={handleAdvancedToggle}
-          disabled={status.kind === "running"}
-          label="Advanced — override derivation path"
-        />
-        {advancedPath && (
-          <Input
-            renderLeft={() => <InputLabel>Derivation path</InputLabel>}
-            value={customPath}
-            onChange={setCustomPath}
-            disabled={status.kind === "running"}
-            autoComplete="off"
-            data-1p-ignore="true"
-            data-lpignore="true"
-            data-bwignore="true"
-            data-form-type="other"
-          />
-        )}
       </Flex>
 
       <Flex columnGap={3} alignItems="center">
