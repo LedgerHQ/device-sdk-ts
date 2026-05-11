@@ -20,6 +20,16 @@ export {
   type RegisterExternalAddressDAState,
 } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 export {
+  type RegisterLedgerAccountDAError,
+  type RegisterLedgerAccountDAInput,
+  type RegisterLedgerAccountDAIntermediateValue,
+  type RegisterLedgerAccountDAInternalState,
+  type RegisterLedgerAccountDAOutput,
+  type RegisterLedgerAccountDAReturnType,
+  type RegisterLedgerAccountDAState,
+  RegisterLedgerAccountDAStep,
+} from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
+export {
   type SignDelegationAuthorizationDAError,
   type SignDelegationAuthorizationDAInput,
   type SignDelegationAuthorizationDAIntermediateValue,
@@ -58,6 +68,7 @@ export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
 export * from "@api/model/EditExternalAddressArgs";
 export * from "@api/model/RegisterExternalAddressArgs";
+export * from "@api/model/RegisterLedgerAccountArgs";
 export * from "@api/model/Signature";
 export * from "@api/model/TransactionOptions";
 export * from "@api/model/TransactionType";

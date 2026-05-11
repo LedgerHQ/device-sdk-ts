@@ -8,6 +8,7 @@ import { type Container } from "inversify";
 import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
@@ -17,6 +18,7 @@ import { type AddressOptions } from "@api/model/AddressOptions";
 import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
+import { type RegisterLedgerAccountArgs } from "@api/model/RegisterLedgerAccountArgs";
 import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
@@ -27,6 +29,7 @@ import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUse
 import { contactsTypes } from "@internal/contacts/di/contactsTypes";
 import { type EditExternalAddressUseCase } from "@internal/contacts/use-case/EditExternalAddressUseCase";
 import { type RegisterExternalAddressUseCase } from "@internal/contacts/use-case/RegisterExternalAddressUseCase";
+import { type RegisterLedgerAccountUseCase } from "@internal/contacts/use-case/RegisterLedgerAccountUseCase";
 import { makeContainer } from "@internal/di";
 import { messageTypes } from "@internal/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/message/use-case/SignMessageUseCase";
@@ -129,6 +132,16 @@ export class DefaultSignerEth implements SignerEth {
   ): EditExternalAddressDAReturnType {
     return this._container
       .get<EditExternalAddressUseCase>(contactsTypes.EditExternalAddressUseCase)
+      .execute(args);
+  }
+
+  registerLedgerAccount(
+    args: RegisterLedgerAccountArgs,
+  ): RegisterLedgerAccountDAReturnType {
+    return this._container
+      .get<RegisterLedgerAccountUseCase>(
+        contactsTypes.RegisterLedgerAccountUseCase,
+      )
       .execute(args);
   }
 }
