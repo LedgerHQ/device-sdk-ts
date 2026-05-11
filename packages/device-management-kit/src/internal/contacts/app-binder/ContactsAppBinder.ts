@@ -6,9 +6,12 @@ import { type LoggerPublisherService } from "@api/logger-publisher/service/Logge
 import { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 
+import { type EditExternalAddressLabelDAReturnType } from "@api/contacts/app-binder/EditExternalAddressLabelDeviceActionTypes";
 import { type RenameContactDAReturnType } from "@api/contacts/app-binder/RenameContactDeviceActionTypes";
+import { type EditExternalAddressLabelArgs } from "@api/contacts/model/EditExternalAddressLabelArgs";
 import { type RenameContactArgs } from "@api/contacts/model/RenameContactArgs";
 import { SendEditContactNameTask } from "@internal/contacts/app-binder/task/SendEditContactNameTask";
+import { SendEditScopeTask } from "@internal/contacts/app-binder/task/SendEditScopeTask";
 import { contactsExternalTypes } from "@internal/contacts/externalTypes";
 
 // UPGRADE POINT — OS-dispatch.
@@ -43,6 +46,28 @@ export class ContactsAppBinder {
           skipOpenApp: false,
         },
         logger: this.dmkLoggerFactory("SendEditContactNameTask"),
+      }),
+    });
+  }
+
+  editExternalAddressLabel(
+    args: EditExternalAddressLabelArgs,
+  ): EditExternalAddressLabelDAReturnType {
+    const taskLogger = this.dmkLoggerFactory("SendEditScopeTask");
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SendEditScopeTask(internalApi, {
+              ...args,
+              logger: taskLogger,
+            }).run(),
+          appName: POLYFILL_APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.RegisterWallet,
+          skipOpenApp: false,
+        },
+        logger: this.dmkLoggerFactory("SendEditScopeTask"),
       }),
     });
   }

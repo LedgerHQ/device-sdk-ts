@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Container } from "inversify";
 
+import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
@@ -13,6 +14,7 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
@@ -23,6 +25,7 @@ import { type SignerEth } from "@api/SignerEth";
 import { addressTypes } from "@internal/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUseCase";
 import { contactsTypes } from "@internal/contacts/di/contactsTypes";
+import { type EditExternalAddressUseCase } from "@internal/contacts/use-case/EditExternalAddressUseCase";
 import { type RegisterExternalAddressUseCase } from "@internal/contacts/use-case/RegisterExternalAddressUseCase";
 import { makeContainer } from "@internal/di";
 import { messageTypes } from "@internal/message/di/messageTypes";
@@ -118,6 +121,14 @@ export class DefaultSignerEth implements SignerEth {
       .get<RegisterExternalAddressUseCase>(
         contactsTypes.RegisterExternalAddressUseCase,
       )
+      .execute(args);
+  }
+
+  editExternalAddress(
+    args: EditExternalAddressArgs,
+  ): EditExternalAddressDAReturnType {
+    return this._container
+      .get<EditExternalAddressUseCase>(contactsTypes.EditExternalAddressUseCase)
       .execute(args);
   }
 }

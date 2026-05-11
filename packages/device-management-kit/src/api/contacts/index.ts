@@ -33,9 +33,15 @@ export {
   encodeTlvUInt8,
   packDerivationPath,
   STRUCT_TYPE_EDIT_CONTACT_NAME,
+  STRUCT_TYPE_EDIT_IDENTIFIER,
+  STRUCT_TYPE_EDIT_SCOPE,
   STRUCT_TYPE_REGISTER_IDENTITY,
   STRUCT_VERSION_VALUE,
 } from "@api/contacts/utils/contactsTlvSerializer";
+export {
+  sendFramedContactsPayload,
+  type SendFramedContactsPayloadArgs,
+} from "@api/contacts/utils/sendFramedContactsPayload";
 export { type ContactsService } from "@api/contacts/ContactsService";
 export { ContactsServiceBuilder } from "@api/contacts/ContactsServiceBuilder";
 export {

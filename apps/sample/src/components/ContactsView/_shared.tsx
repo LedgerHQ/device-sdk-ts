@@ -66,7 +66,7 @@ export function describeDeviceError(error: unknown): string {
       }).`;
     }
     if (code === "6982") {
-      return `HMAC mismatch (${codeTag}) — the device cannot verify the proof your wallet supplied. Causes: (1) the contact was loaded from a sample fixture (placeholder HMACs — register via M2 first), or (2) the contact was registered against a different firmware/app build than what is on the device now (the K_identity derivation can shift across firmware versions; reset the contact book and re-register).`;
+      return `HMAC mismatch (${codeTag}) — the device cannot verify the proof your wallet supplied. Likely cause: the contact was registered against a different firmware/app build than what is on the device now (the K_identity derivation can shift across firmware versions; reset the contact book and re-register).`;
     }
     return message && message !== "UnknownError"
       ? `${message} (${codeTag}).`

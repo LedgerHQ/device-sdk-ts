@@ -1,28 +1,22 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Flex, SelectInput, Text } from "@ledgerhq/react-ui";
+import { Button, Flex, Text } from "@ledgerhq/react-ui";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { Block } from "@/components/Block";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { SectionTitle } from "@/components/SettingsView/SectionTitle";
-import { FIXTURES } from "@/state/contacts/fixtures";
 import {
   selectAccountsCount,
   selectContactsCount,
   selectWallet,
 } from "@/state/contacts/selectors";
-import { resetWallet, setWallet } from "@/state/contacts/slice";
+import { resetWallet } from "@/state/contacts/slice";
 
+import { EditExternalAddressForm } from "./EditExternalAddressForm";
+import { EditExternalAddressLabelForm } from "./EditExternalAddressLabelForm";
 import { RegisterExternalAddressForm } from "./RegisterExternalAddressForm";
 import { RenameContactForm } from "./RenameContactForm";
-
-type FixtureOption = { label: string; value: string };
-
-const fixtureOptions: FixtureOption[] = FIXTURES.map((f) => ({
-  label: f.label,
-  value: f.id,
-}));
 
 const StoragePre = styled.pre`
   background-color: ${({ theme }: { theme: DefaultTheme }) =>
@@ -47,16 +41,6 @@ export const ContactsView: React.FC = () => {
   const wallet = useSelector(selectWallet);
   const contactsCount = useSelector(selectContactsCount);
   const accountsCount = useSelector(selectAccountsCount);
-  const [pendingSample, setPendingSample] = useState<FixtureOption | null>(
-    null,
-  );
-
-  const onLoadSample = useCallback(() => {
-    if (!pendingSample) return;
-    const sample = FIXTURES.find((f) => f.id === pendingSample.value);
-    if (!sample) return;
-    dispatch(setWallet(sample.wallet));
-  }, [dispatch, pendingSample]);
 
   const onReset = useCallback(() => {
     if (
@@ -90,8 +74,9 @@ export const ContactsView: React.FC = () => {
             <code>dmk-sample-contacts-state</code> in localStorage.
           </Text>
           <Text variant="paragraph" color="opacityDefault.c50">
-            M3 — Rename contact (DMK-core, op 4). Other CRUD (Edit, Provide)
-            lands in M4+. See plan in <code>~/.claude/plans/</code>.
+            M5 — Edit external address label (DMK-core, op 2) + Edit external
+            address (signer-eth, op 3) landed. Register Ledger account (M6),
+            Provide ops + Send-to-Contact (M7) pending.
           </Text>
         </Block>
 
@@ -106,38 +91,18 @@ export const ContactsView: React.FC = () => {
         </Block>
 
         <Block>
-          <SectionTitle>Storage viewer</SectionTitle>
-          <StoragePre>{JSON.stringify(wallet, null, 2)}</StoragePre>
+          <SectionTitle>Edit address label</SectionTitle>
+          <EditExternalAddressLabelForm />
         </Block>
 
         <Block>
-          <SectionTitle>Sample contact books</SectionTitle>
-          <Text variant="paragraph" color="opacityDefault.c60">
-            Pre-built client-side contact books to scaffold UI development. Hex
-            values are illustrative — they do not pass device-side HMAC
-            verification.
-          </Text>
-          <Flex columnGap={4} alignItems="center">
-            <Flex flex={1}>
-              <SelectInput
-                options={fixtureOptions}
-                value={pendingSample}
-                onChange={(opt) =>
-                  setPendingSample(opt as FixtureOption | null)
-                }
-                isMulti={false}
-                isSearchable={false}
-                placeholder="Pick a sample contact book"
-              />
-            </Flex>
-            <Button
-              variant="main"
-              onClick={onLoadSample}
-              disabled={!pendingSample}
-            >
-              Load
-            </Button>
-          </Flex>
+          <SectionTitle>Edit address</SectionTitle>
+          <EditExternalAddressForm />
+        </Block>
+
+        <Block>
+          <SectionTitle>Storage viewer</SectionTitle>
+          <StoragePre>{JSON.stringify(wallet, null, 2)}</StoragePre>
         </Block>
 
         <Block>

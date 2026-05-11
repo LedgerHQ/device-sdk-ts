@@ -9,6 +9,7 @@ import { type DeviceManagementKit } from "@api/DeviceManagementKit";
 import { type DeviceSessionId } from "@api/device-session/types";
 import { contactsTypes } from "@internal/contacts/di/contactsTypes";
 import { makeContactsContainer } from "@internal/contacts/di";
+import { type EditExternalAddressLabelUseCase } from "@internal/contacts/use-case/EditExternalAddressLabelUseCase";
 import { type RenameContactUseCase } from "@internal/contacts/use-case/RenameContactUseCase";
 
 type DefaultContactsServiceConstructorArgs = {
@@ -30,10 +31,12 @@ export class DefaultContactsService implements ContactsService {
   }
 
   editExternalAddressLabel(
-    _args: EditExternalAddressLabelArgs,
+    args: EditExternalAddressLabelArgs,
   ): EditExternalAddressLabelDAReturnType {
-    throw new Error(
-      "ContactsService.editExternalAddressLabel is not yet implemented — lands in M4 of the Contacts port.",
-    );
+    return this._container
+      .get<EditExternalAddressLabelUseCase>(
+        contactsTypes.EditExternalAddressLabelUseCase,
+      )
+      .execute(args);
   }
 }
