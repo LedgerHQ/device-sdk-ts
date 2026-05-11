@@ -12,6 +12,9 @@ import {
   type SignFeeIntentDAError,
   type SignFeeIntentDAIntermediateValue,
   type SignFeeIntentDAOutput,
+  type SignNestedCallDAError,
+  type SignNestedCallDAIntermediateValue,
+  type SignNestedCallDAOutput,
   type SignRootIntentDAError,
   type SignRootIntentDAIntermediateValue,
   type SignRootIntentDAOutput,
@@ -69,7 +72,7 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/683'/0",
+          derivationPath: "44'/683'/0'/0'",
           checkOnDevice: false,
           skipOpenApp: false,
         },
@@ -134,7 +137,7 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/683'/0",
+          derivationPath: "44'/683'/0'/0'",
           rootIntent: "",
           skipOpenApp: false,
         },
@@ -185,6 +188,44 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
         },
         SignFeeIntentDAError,
         SignFeeIntentDAIntermediateValue
+      >,
+      {
+        title: "Sign Nested Call",
+        description: "Sign a nested call with the device",
+        executeDeviceAction: ({ nestedCallRequest, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          // Convert hex string to Uint8Array
+          const nestedCallRequestBytes = nestedCallRequest.startsWith("0x")
+            ? new Uint8Array(
+                nestedCallRequest
+                  .slice(2)
+                  .match(/.{1,2}/g)
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
+              )
+            : new Uint8Array(
+                nestedCallRequest
+                  .match(/.{1,2}/g)
+                  ?.map((byte) => parseInt(byte, 16)) ?? [],
+              );
+          return signer.signNestedCall(nestedCallRequestBytes, {
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          nestedCallRequest: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignNestedCallDAOutput,
+        {
+          nestedCallRequest: string;
+          skipOpenApp?: boolean;
+        },
+        SignNestedCallDAError,
+        SignNestedCallDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
