@@ -4,10 +4,16 @@ import { useRouter } from "next/navigation";
 
 export const BackToContactsLink: React.FC = () => {
   const router = useRouter();
+  const handleClick = () => router.push("/services/contacts");
   return (
-    <Flex alignItems="center" columnGap={2}>
+    <Flex
+      alignItems="center"
+      columnGap={2}
+      onClick={handleClick}
+      style={{ cursor: "pointer", width: "fit-content" }}
+    >
       <Icons.ArrowLeft size="S" />
-      <Link onClick={() => router.push("/services/contacts")}>Back</Link>
+      <Link onClick={handleClick}>Back</Link>
     </Flex>
   );
 };
@@ -48,17 +54,27 @@ function extractSwAndMessage(error: unknown): {
   if (!error || typeof error !== "object") {
     return { code: null, message: null };
   }
-  const obj = error as { errorCode?: unknown; message?: unknown; originalError?: unknown };
+  const obj = error as {
+    errorCode?: unknown;
+    message?: unknown;
+    originalError?: unknown;
+  };
   const directCode = typeof obj.errorCode === "string" ? obj.errorCode : null;
   const directMessage = typeof obj.message === "string" ? obj.message : null;
   if (directCode) return { code: directCode, message: directMessage };
 
   // Unwrap one level — UnknownDeviceExchangeError(originalError = { message, errorCode })
   if (obj.originalError && typeof obj.originalError === "object") {
-    const inner = obj.originalError as { errorCode?: unknown; message?: unknown };
-    const innerCode = typeof inner.errorCode === "string" ? inner.errorCode : null;
-    const innerMessage = typeof inner.message === "string" ? inner.message : null;
-    if (innerCode) return { code: innerCode, message: innerMessage ?? directMessage };
+    const inner = obj.originalError as {
+      errorCode?: unknown;
+      message?: unknown;
+    };
+    const innerCode =
+      typeof inner.errorCode === "string" ? inner.errorCode : null;
+    const innerMessage =
+      typeof inner.message === "string" ? inner.message : null;
+    if (innerCode)
+      return { code: innerCode, message: innerMessage ?? directMessage };
   }
   return { code: null, message: directMessage };
 }
@@ -73,7 +89,9 @@ export function describeDeviceError(error: unknown): string {
     const codeTag = `SW 0x${code}`;
     if (USER_CANCEL_SWS.has(code)) {
       return `Cancelled or rejected on device (${codeTag}${
-        message && message !== "UnknownError" ? ` — device said "${message}"` : ""
+        message && message !== "UnknownError"
+          ? ` — device said "${message}"`
+          : ""
       }).`;
     }
     if (code === "6982") {

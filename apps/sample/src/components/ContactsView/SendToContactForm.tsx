@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
-  type Account,
   type Contact,
   type ContactEntry,
   DeviceActionStatus,
@@ -13,11 +12,9 @@ import { type Signature } from "@ledgerhq/device-signer-kit-ethereum";
 import {
   Button,
   Flex,
-  Icons,
   Input,
   Link,
   SelectInput,
-  Switch,
   Tag,
   Text,
 } from "@ledgerhq/react-ui";
@@ -32,17 +29,24 @@ import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
 
 import { describeDeviceError, type FormStatus } from "./_shared";
+import { NETWORK_OPTIONS, type NetworkName, NETWORKS } from "./networks";
 
-// Defaults mirror the playground CLI (`cli.py:710-715`). gas=21000 is the
-// minimum legal value for a value-transfer; gwei=30 is the CLI's hardcoded
-// default. The transaction is never broadcast (M7 is a protocol-composition
-// validator), so the value is cosmetic — kept aligned to avoid reviewer
-// confusion against playground traces.
+// Tx-shape defaults mirror the playground CLI (`cli.py:710-715`). gas=21000
+// is the minimum legal value for a value-transfer; gwei=30 is the CLI's
+// hardcoded default. The transaction is never broadcast — value is cosmetic,
+// kept aligned to avoid reviewer confusion against playground traces.
 const DEFAULT_GAS_LIMIT = 21000;
 const DEFAULT_GAS_PRICE_GWEI = 30;
 const DEFAULT_NONCE = 0;
 
-type ToKind = "contact" | "account";
+// When the user leaves the From field blank, sign with the Ledger Live
+// default path. No Provide From APDU fires; the device review shows the
+// raw derived address with no friendly name. Matches the CLI's
+// `--no-provide-from` behaviour at `service.py:965-968`.
+const NO_FROM_VALUE = "__no_decoration__";
+const DEFAULT_FROM_PATH = "m/44'/60'/0'/0/0";
+
+type ToKind = "hex" | "contact" | "self";
 
 type ContactEntryRef = {
   contact: Contact;
@@ -68,29 +72,7 @@ function formatShortAddress(addressHex: string): string {
   return `${hex.slice(0, 6)}…${hex.slice(-4)}`;
 }
 
-function capitalize(s: string): string {
-  return s.length === 0 ? s : s[0]!.toUpperCase() + s.slice(1);
-}
-
-function formatNetworkName(entry: ContactEntry): string {
-  return `${capitalize(entry.network)} (chainId ${entry.chainId})`;
-}
-
-function buildAccountOptionLabel(account: Account): string {
-  const addr = account.addressHex
-    ? formatShortAddress(account.addressHex)
-    : "(no cached address)";
-  return `${account.name} — ${addr} — chainId ${account.chainId}`;
-}
-
-function buildContactEntryOptionLabel(ref: ContactEntryRef): string {
-  return `${ref.contact.name} / ${ref.entry.scope} — ${formatShortAddress(
-    ref.entry.addressHex,
-  )} — ${formatNetworkName(ref.entry)}`;
-}
-
-// Flatten contacts × entries into a single list of selectable targets. One
-// row per (contact, entry) pair so the user picks an entry directly without
+// Flat (contact, entry) rows so the user picks an entry directly without
 // drilling through a per-contact sub-menu.
 function enumerateContactEntries(wallet: Wallet): ContactEntryRef[] {
   const out: ContactEntryRef[] = [];
@@ -138,8 +120,8 @@ function rotateContactEntryLastResponse(
   };
 }
 
-// Build the unsigned RLP-encoded legacy transaction. Legacy (type=0) not
-// EIP-1559 — matches the playground's `_build_eth_tx_params` shape
+// Build the unsigned RLP-encoded legacy transaction. Legacy (type=0), not
+// EIP-1559 — matches the playground's `_build_eth_tx_params`
 // (`service.py:865-906`).
 function buildLegacyTxBytes(args: {
   toAddressHex: string;
@@ -148,12 +130,10 @@ function buildLegacyTxBytes(args: {
   gasPriceWei: bigint;
   nonce: number;
   chainId: number;
-  dataHex: string;
 }): Uint8Array {
   const toHex = args.toAddressHex.startsWith("0x")
     ? args.toAddressHex
     : `0x${args.toAddressHex}`;
-  const dataHex = args.dataHex.trim();
   const tx = ethers.Transaction.from({
     type: 0,
     to: toHex,
@@ -162,36 +142,31 @@ function buildLegacyTxBytes(args: {
     gasPrice: args.gasPriceWei,
     nonce: args.nonce,
     chainId: args.chainId,
-    data:
-      dataHex.length === 0
-        ? "0x"
-        : dataHex.startsWith("0x")
-          ? dataHex
-          : `0x${dataHex}`,
+    data: "0x",
   });
   const buf = hexaStringToBuffer(tx.unsignedSerialized);
   if (!buf) throw new Error("Failed to serialize legacy transaction.");
   return buf;
 }
 
-function parseHexInputAsBytes(value: string): Uint8Array | null {
+function normalizeAddressHex(value: string): string {
   const trimmed = value.trim();
-  if (trimmed.length === 0) return new Uint8Array();
   const raw =
     trimmed.startsWith("0x") || trimmed.startsWith("0X")
       ? trimmed.slice(2)
       : trimmed;
-  if (raw.length % 2 !== 0 || !/^[0-9a-fA-F]*$/.test(raw)) return null;
-  const bytes = new Uint8Array(raw.length / 2);
-  for (let i = 0; i < raw.length; i += 2) {
-    bytes[i / 2] = parseInt(raw.slice(i, i + 2), 16);
-  }
-  return bytes;
+  return raw.toLowerCase();
+}
+
+function isValidEthAddressHex(value: string): boolean {
+  const raw = normalizeAddressHex(value);
+  return raw.length === 40 && /^[0-9a-f]{40}$/.test(raw);
 }
 
 // Subscribe to a device-action observable and resolve when it reaches a
-// terminal status (Completed or Error). `onPending` fires every intermediate
-// emission so the form can flip the "awaiting on device" status during Sign.
+// terminal status (Completed or Error). `onPending` fires for every
+// intermediate emission so the form can flip the "awaiting on device" copy
+// during Sign.
 function awaitDeviceAction<TOutput>(
   observable: Observable<{
     status: DeviceActionStatus;
@@ -296,11 +271,11 @@ export const SendToContactForm: React.FC = () => {
     [wallet],
   );
 
-  const [fromAccountName, setFromAccountName] = useState<string | null>(
-    () => accountList[0]?.name ?? null,
+  const [fromAccountName, setFromAccountName] = useState<string>(
+    () => accountList[0]?.name ?? NO_FROM_VALUE,
   );
   const [toKind, setToKind] = useState<ToKind>(
-    contactEntryList.length > 0 ? "contact" : "account",
+    contactEntryList.length > 0 ? "contact" : "hex",
   );
   const [toContactEntryKey, setToContactEntryKey] = useState<string | null>(
     () => {
@@ -308,9 +283,11 @@ export const SendToContactForm: React.FC = () => {
       return first ? `${first.contact.name}#${first.entryIndex}` : null;
     },
   );
-  const [toAccountName, setToAccountName] = useState<string | null>(
+  const [toSelfAccountName, setToSelfAccountName] = useState<string | null>(
     () => accountList[0]?.name ?? null,
   );
+  const [toHexAddress, setToHexAddress] = useState("");
+  const [toHexNetwork, setToHexNetwork] = useState<NetworkName>("ethereum");
 
   const [amountEth, setAmountEth] = useState("0.01");
   const [gasLimit, setGasLimit] = useState(String(DEFAULT_GAS_LIMIT));
@@ -319,18 +296,14 @@ export const SendToContactForm: React.FC = () => {
   );
   const [nonce, setNonce] = useState(String(DEFAULT_NONCE));
 
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [dataHex, setDataHex] = useState("");
-  const [provideFrom, setProvideFrom] = useState(true);
-  const [provideTo, setProvideTo] = useState(true);
-
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
   const [trace, setTrace] = useState<TraceLine[]>([]);
   const [result, setResult] = useState<SignResult | null>(null);
 
-  const fromAccount = fromAccountName
-    ? (wallet.accounts[fromAccountName] ?? null)
-    : null;
+  const fromAccount =
+    fromAccountName !== NO_FROM_VALUE
+      ? (wallet.accounts[fromAccountName] ?? null)
+      : null;
   const toContactEntry =
     toKind === "contact" && toContactEntryKey
       ? (contactEntryList.find(
@@ -338,43 +311,76 @@ export const SendToContactForm: React.FC = () => {
             `${ref.contact.name}#${ref.entryIndex}` === toContactEntryKey,
         ) ?? null)
       : null;
-  const toAccount =
-    toKind === "account" && toAccountName
-      ? (wallet.accounts[toAccountName] ?? null)
+  const toSelfAccount =
+    toKind === "self" && toSelfAccountName
+      ? (wallet.accounts[toSelfAccountName] ?? null)
       : null;
 
-  const fromChainId = fromAccount?.chainId ?? null;
-  const toChainId =
-    toKind === "contact"
-      ? (toContactEntry?.entry.chainId ?? null)
-      : (toAccount?.chainId ?? null);
+  // Recipient address resolved from the active To kind. null = not yet valid.
+  const recipientAddressHex: string | null = useMemo(() => {
+    if (toKind === "contact") {
+      return toContactEntry?.entry.addressHex ?? null;
+    }
+    if (toKind === "self") {
+      return toSelfAccount?.addressHex ?? null;
+    }
+    return isValidEthAddressHex(toHexAddress)
+      ? normalizeAddressHex(toHexAddress)
+      : null;
+  }, [toKind, toContactEntry, toSelfAccount, toHexAddress]);
 
+  const recipientChainId: number | null = useMemo(() => {
+    if (toKind === "contact") return toContactEntry?.entry.chainId ?? null;
+    if (toKind === "self") return toSelfAccount?.chainId ?? null;
+    return NETWORKS[toHexNetwork];
+  }, [toKind, toContactEntry, toSelfAccount, toHexNetwork]);
+
+  // Hard-block cross-chain Sends only when the user *picked* a From account;
+  // a blank From means "no decoration, default path", so chainId is taken
+  // unilaterally from the recipient side.
   const chainMismatch =
-    fromChainId !== null && toChainId !== null && fromChainId !== toChainId;
+    fromAccount !== null &&
+    recipientChainId !== null &&
+    fromAccount.chainId !== recipientChainId;
 
-  const dataBytesValid = parseHexInputAsBytes(dataHex) !== null;
+  // Self-transfer is "between any two accounts you own" — sender and
+  // recipient may be the same account or different ones. Disabled only
+  // when no Ledger accounts are registered.
+  const selfTransferDisabled = accountList.length === 0;
 
   const submitDisabled =
     !signer ||
-    !fromAccount ||
-    (toKind === "contact" ? !toContactEntry : !toAccount) ||
+    recipientAddressHex === null ||
+    recipientChainId === null ||
+    (toKind === "self" && selfTransferDisabled) ||
     chainMismatch ||
-    !dataBytesValid ||
     status.kind === "running";
 
-  const accountOptions = useMemo(
-    () =>
-      accountList.map((acc) => ({
-        label: buildAccountOptionLabel(acc),
-        value: acc.name,
-      })),
+  // From options: sentinel "(none)" entry always at the top, then each
+  // registered account with just its name as the label.
+  const fromOptions = useMemo(
+    () => [
+      {
+        label: "(No decoration — device shows raw sender)",
+        value: NO_FROM_VALUE,
+      },
+      ...accountList.map((acc) => ({ label: acc.name, value: acc.name })),
+    ],
     [accountList],
   );
 
+  // Plain account dropdown options (for the Self-transfer recipient).
+  // Label = account name only.
+  const accountOptions = useMemo(
+    () => accountList.map((acc) => ({ label: acc.name, value: acc.name })),
+    [accountList],
+  );
+
+  // Contact-entry options labelled as "<contact name> / <address label>".
   const contactEntryOptions = useMemo(
     () =>
       contactEntryList.map((ref) => ({
-        label: buildContactEntryOptionLabel(ref),
+        label: `${ref.contact.name} / ${ref.entry.scope}`,
         value: `${ref.contact.name}#${ref.entryIndex}`,
       })),
     [contactEntryList],
@@ -385,9 +391,11 @@ export const SendToContactForm: React.FC = () => {
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!signer || !fromAccount) return;
-    if (toKind === "contact" && !toContactEntry) return;
-    if (toKind === "account" && !toAccount) return;
+    if (!signer) return;
+    if (recipientAddressHex === null) return;
+    if (recipientChainId === null) return;
+    if (toKind === "self" && (selfTransferDisabled || toSelfAccount === null))
+      return;
     if (chainMismatch) return;
 
     const amount = (() => {
@@ -429,27 +437,6 @@ export const SendToContactForm: React.FC = () => {
       });
       return;
     }
-    if (!dataBytesValid) {
-      setStatus({
-        kind: "error",
-        message: "Data must be a valid hex string (even length).",
-      });
-      return;
-    }
-
-    const recipientAddressHex =
-      toKind === "contact"
-        ? toContactEntry!.entry.addressHex
-        : toAccount!.addressHex;
-    if (!recipientAddressHex) {
-      setStatus({
-        kind: "error",
-        message:
-          "Recipient account has no cached address — re-register it to refresh.",
-      });
-      return;
-    }
-    const chainId = toChainId ?? fromChainId!;
 
     setTrace([]);
     setResult(null);
@@ -459,7 +446,10 @@ export const SendToContactForm: React.FC = () => {
     let providedToName: string | null = null;
 
     try {
-      if (provideFrom && fromAccount) {
+      // Provide From: fires whenever the user picked a real account.
+      // Blank From → no decoration, signed with the default Ledger Live
+      // path. Matches CLI semantics at service.py:965-968.
+      if (fromAccount !== null) {
         appendTrace({ kind: "info", text: "→ Provide From sent…" });
         const { observable } = signer.provideLedgerAccount({
           accountName: fromAccount.name,
@@ -473,8 +463,8 @@ export const SendToContactForm: React.FC = () => {
           kind: "ok",
           text: `  0x9000 ✓ Provided "${fromAccount.name}"`,
         });
-        // Sticky state-rotation: dispatch on the 0x9000 ack, not only after
-        // Sign. Matches service.py:942-952.
+        // Sticky state-rotation: dispatch on each 0x9000 ack, not only
+        // after Sign. Matches service.py:942-952.
         dispatch(
           setWallet(
             rotateAccountLastResponse(
@@ -486,60 +476,65 @@ export const SendToContactForm: React.FC = () => {
         );
       }
 
-      if (provideTo) {
-        if (toKind === "contact" && toContactEntry) {
-          const { contact, entry, entryIndex } = toContactEntry;
-          appendTrace({ kind: "info", text: "→ Provide To sent…" });
-          const { observable } = signer.provideContact({
-            contactName: contact.name,
-            scope: entry.scope,
-            addressHex: entry.addressHex,
-            groupHandleHex: contact.groupHandleHex,
-            hmacNameHex: contact.hmacNameHex,
-            hmacRestHex: entry.hmacRestHex,
-            derivationPath: entry.derivationPath,
-            chainId: entry.chainId,
-          });
-          await awaitDeviceAction(observable, () => {});
-          providedToName = `${contact.name} / ${entry.scope}`;
-          appendTrace({
-            kind: "ok",
-            text: `  0x9000 ✓ Provided "${providedToName}"`,
-          });
-          dispatch(
-            setWallet(
-              rotateContactEntryLastResponse(
-                wallet,
-                contact.name,
-                entryIndex,
-                ResponseType.ProvideContact,
-              ),
+      // Provide To: branches on the active To kind.
+      //   contact     → provideContact (CLA=0xb0 P1=0x20)
+      //   self        → provideLedgerAccount on the From account
+      //   hex address → no Provide; device review shows raw recipient hex
+      if (toKind === "contact" && toContactEntry) {
+        const { contact, entry, entryIndex } = toContactEntry;
+        appendTrace({ kind: "info", text: "→ Provide To sent…" });
+        const { observable } = signer.provideContact({
+          contactName: contact.name,
+          scope: entry.scope,
+          addressHex: entry.addressHex,
+          groupHandleHex: contact.groupHandleHex,
+          hmacNameHex: contact.hmacNameHex,
+          hmacRestHex: entry.hmacRestHex,
+          derivationPath: entry.derivationPath,
+          chainId: entry.chainId,
+        });
+        await awaitDeviceAction(observable, () => {});
+        providedToName = `${contact.name} / ${entry.scope}`;
+        appendTrace({
+          kind: "ok",
+          text: `  0x9000 ✓ Provided "${providedToName}"`,
+        });
+        dispatch(
+          setWallet(
+            rotateContactEntryLastResponse(
+              wallet,
+              contact.name,
+              entryIndex,
+              ResponseType.ProvideContact,
             ),
-          );
-        } else if (toKind === "account" && toAccount) {
-          appendTrace({ kind: "info", text: "→ Provide To sent…" });
-          const { observable } = signer.provideLedgerAccount({
-            accountName: toAccount.name,
-            hmacProofHex: toAccount.hmacProofHex,
-            derivationPath: toAccount.derivationPath,
-            chainId: toAccount.chainId,
-          });
-          await awaitDeviceAction(observable, () => {});
-          providedToName = toAccount.name;
-          appendTrace({
-            kind: "ok",
-            text: `  0x9000 ✓ Provided "${toAccount.name}"`,
-          });
-          dispatch(
-            setWallet(
-              rotateAccountLastResponse(
-                wallet,
-                toAccount.name,
-                ResponseType.ProvideLedgerAccountContact,
-              ),
+          ),
+        );
+      } else if (toKind === "self" && toSelfAccount !== null) {
+        appendTrace({ kind: "info", text: "→ Provide To sent…" });
+        const { observable } = signer.provideLedgerAccount({
+          accountName: toSelfAccount.name,
+          hmacProofHex: toSelfAccount.hmacProofHex,
+          derivationPath: toSelfAccount.derivationPath,
+          chainId: toSelfAccount.chainId,
+        });
+        await awaitDeviceAction(observable, () => {});
+        providedToName = toSelfAccount.name;
+        appendTrace({
+          kind: "ok",
+          text: `  0x9000 ✓ Provided "${toSelfAccount.name}"`,
+        });
+        // If toSelfAccount === fromAccount the dispatch is a redundant
+        // identity update (Redux state unchanged), so guarding here would
+        // be premature optimisation. Idempotent on device too.
+        dispatch(
+          setWallet(
+            rotateAccountLastResponse(
+              wallet,
+              toSelfAccount.name,
+              ResponseType.ProvideLedgerAccountContact,
             ),
-          );
-        }
+          ),
+        );
       }
 
       const txBytes = buildLegacyTxBytes({
@@ -548,8 +543,7 @@ export const SendToContactForm: React.FC = () => {
         gasLimit: gasLimitNum,
         gasPriceWei,
         nonce: nonceNum,
-        chainId,
-        dataHex,
+        chainId: recipientChainId,
       });
 
       appendTrace({
@@ -565,11 +559,10 @@ export const SendToContactForm: React.FC = () => {
       const ethAppAlreadyOpen =
         providedFromName !== null || providedToName !== null;
 
-      const { observable } = signer.signTransaction(
-        fromAccount.derivationPath,
-        txBytes,
-        { skipOpenApp: ethAppAlreadyOpen },
-      );
+      const signingPath = fromAccount?.derivationPath ?? DEFAULT_FROM_PATH;
+      const { observable } = signer.signTransaction(signingPath, txBytes, {
+        skipOpenApp: ethAppAlreadyOpen,
+      });
       const signature: Signature = await awaitDeviceAction(observable, () => {
         // Keep status as "running"; the form copy already reads "Awaiting…".
       });
@@ -597,18 +590,15 @@ export const SendToContactForm: React.FC = () => {
     fromAccount,
     toKind,
     toContactEntry,
-    toAccount,
+    toSelfAccount,
+    recipientAddressHex,
+    recipientChainId,
     chainMismatch,
+    selfTransferDisabled,
     amountEth,
     gasLimit,
     gasPriceGwei,
     nonce,
-    dataHex,
-    dataBytesValid,
-    provideFrom,
-    provideTo,
-    toChainId,
-    fromChainId,
     wallet,
     dispatch,
     appendTrace,
@@ -617,11 +607,11 @@ export const SendToContactForm: React.FC = () => {
   return (
     <Flex flexDirection="column" rowGap={4}>
       <Text variant="paragraph" color="opacityDefault.c60">
-        Compose an ETH transfer to a contact entry or a Ledger account. Up to
-        three APDUs run in order — Provide From, Provide To, Sign — but the
-        device only prompts once (Sign). The two Provides return 0x9000 silently
-        because firmware trusts the HMAC chain authorised at Register time. The
-        Sign review shows both friendly names.
+        Compose an ETH transfer. Up to three APDUs run in order — Provide From,
+        Provide To, Sign — but the device only prompts once (Sign). The two
+        Provides return 0x9000 silently because firmware trusts the HMAC chain
+        authorised at Register time. The Sign review shows the friendly names
+        you provided.
       </Text>
 
       {!signer && (
@@ -636,35 +626,50 @@ export const SendToContactForm: React.FC = () => {
           renderLeft={() => (
             <SelectInputLabel>From (Ledger account)</SelectInputLabel>
           )}
-          isDisabled={status.kind === "running" || accountList.length === 0}
+          isDisabled={status.kind === "running"}
           value={
-            fromAccountName
-              ? (accountOptions.find((opt) => opt.value === fromAccountName) ??
-                null)
-              : null
+            fromOptions.find((opt) => opt.value === fromAccountName) ?? null
           }
           isMulti={false}
           onChange={(newVal) => {
             if (newVal) setFromAccountName(newVal.value as string);
           }}
-          options={accountOptions}
+          options={fromOptions}
           isSearchable={false}
         />
+        {fromAccount === null && (
+          <Text variant="small" color="opacityDefault.c50">
+            Signing with default path {DEFAULT_FROM_PATH}. No friendly name for
+            the sender on the device review.
+          </Text>
+        )}
         {accountList.length === 0 && (
-          <Text variant="small" color="warning.c60">
-            No Ledger accounts registered.{" "}
+          <Text variant="small" color="opacityDefault.c50">
             <Link
               onClick={() => router.push("/services/contacts/ledger-accounts")}
             >
-              Register one first.
-            </Link>
+              Register a Ledger account
+            </Link>{" "}
+            to provide a friendly From name.
           </Text>
         )}
       </Flex>
 
       <Flex flexDirection="column" rowGap={1}>
-        <Flex columnGap={2} alignItems="center">
+        <Flex columnGap={2} alignItems="center" flexWrap="wrap">
           <InputLabel ml={0}>To</InputLabel>
+          <Tag
+            type={toKind === "hex" ? "plain" : "outlinedOpacity"}
+            active={toKind === "hex"}
+            onClick={() =>
+              status.kind === "running" ? undefined : setToKind("hex")
+            }
+            style={{
+              cursor: status.kind === "running" ? "not-allowed" : "pointer",
+            }}
+          >
+            Hex address
+          </Tag>
           <Tag
             type={toKind === "contact" ? "plain" : "outlinedOpacity"}
             active={toKind === "contact"}
@@ -675,26 +680,66 @@ export const SendToContactForm: React.FC = () => {
               cursor: status.kind === "running" ? "not-allowed" : "pointer",
             }}
           >
-            Contact entry
+            Contact
           </Tag>
           <Tag
-            type={toKind === "account" ? "plain" : "outlinedOpacity"}
-            active={toKind === "account"}
-            onClick={() =>
-              status.kind === "running" ? undefined : setToKind("account")
-            }
+            type={toKind === "self" ? "plain" : "outlinedOpacity"}
+            active={toKind === "self"}
+            onClick={() => {
+              if (status.kind === "running" || selfTransferDisabled) return;
+              setToKind("self");
+            }}
             style={{
-              cursor: status.kind === "running" ? "not-allowed" : "pointer",
+              cursor:
+                status.kind === "running" || selfTransferDisabled
+                  ? "not-allowed"
+                  : "pointer",
+              opacity: selfTransferDisabled ? 0.5 : 1,
             }}
           >
-            Ledger account
+            Self-transfer
           </Tag>
         </Flex>
 
-        {toKind === "contact" ? (
-          contactEntryList.length === 0 ? (
+        {toKind === "hex" && (
+          <Flex flexDirection="column" rowGap={2}>
+            <Flex flexDirection="column" rowGap={1}>
+              <Input
+                renderLeft={() => <InputLabel>Address (0x…)</InputLabel>}
+                value={toHexAddress}
+                onChange={setToHexAddress}
+                disabled={status.kind === "running"}
+                autoComplete="off"
+              />
+              {toHexAddress.trim().length > 0 &&
+                !isValidEthAddressHex(toHexAddress) && (
+                  <Text variant="small" color="error.c60">
+                    Enter a 20-byte hex address (40 hex chars, 0x-prefix
+                    optional).
+                  </Text>
+                )}
+            </Flex>
+            <SelectInput
+              renderLeft={() => <SelectInputLabel>Network</SelectInputLabel>}
+              isDisabled={status.kind === "running"}
+              value={
+                NETWORK_OPTIONS.find((opt) => opt.value === toHexNetwork) ??
+                null
+              }
+              isMulti={false}
+              onChange={(newVal) => {
+                if (newVal) setToHexNetwork(newVal.value as NetworkName);
+              }}
+              options={NETWORK_OPTIONS}
+              isSearchable={false}
+            />
+          </Flex>
+        )}
+
+        {toKind === "contact" &&
+          (contactEntryList.length === 0 ? (
             <Text variant="small" color="warning.c60">
-              No contact entries registered.{" "}
+              No contacts registered.{" "}
               <Link
                 onClick={() =>
                   router.push("/services/contacts/external-addresses")
@@ -705,7 +750,7 @@ export const SendToContactForm: React.FC = () => {
             </Text>
           ) : (
             <SelectInput
-              renderLeft={() => <SelectInputLabel>Entry</SelectInputLabel>}
+              renderLeft={() => <SelectInputLabel>Contact</SelectInputLabel>}
               isDisabled={status.kind === "running"}
               value={
                 toContactEntryKey
@@ -721,41 +766,55 @@ export const SendToContactForm: React.FC = () => {
               options={contactEntryOptions}
               isSearchable={false}
             />
-          )
-        ) : accountList.length === 0 ? (
-          <Text variant="small" color="warning.c60">
-            No Ledger accounts registered.{" "}
-            <Link
-              onClick={() => router.push("/services/contacts/ledger-accounts")}
-            >
-              Register one first.
-            </Link>
-          </Text>
-        ) : (
-          <SelectInput
-            renderLeft={() => <SelectInputLabel>Account</SelectInputLabel>}
-            isDisabled={status.kind === "running"}
-            value={
-              toAccountName
-                ? (accountOptions.find((opt) => opt.value === toAccountName) ??
-                  null)
-                : null
-            }
-            isMulti={false}
-            onChange={(newVal) => {
-              if (newVal) setToAccountName(newVal.value as string);
-            }}
-            options={accountOptions}
-            isSearchable={false}
-          />
-        )}
+          ))}
+
+        {toKind === "self" &&
+          (selfTransferDisabled ? (
+            <Text variant="small" color="warning.c60">
+              No Ledger accounts registered.{" "}
+              <Link
+                onClick={() =>
+                  router.push("/services/contacts/ledger-accounts")
+                }
+              >
+                Register one first.
+              </Link>
+            </Text>
+          ) : (
+            <Flex flexDirection="column" rowGap={1}>
+              <SelectInput
+                renderLeft={() => (
+                  <SelectInputLabel>To account</SelectInputLabel>
+                )}
+                isDisabled={status.kind === "running"}
+                value={
+                  toSelfAccountName
+                    ? (accountOptions.find(
+                        (opt) => opt.value === toSelfAccountName,
+                      ) ?? null)
+                    : null
+                }
+                isMulti={false}
+                onChange={(newVal) => {
+                  if (newVal) setToSelfAccountName(newVal.value as string);
+                }}
+                options={accountOptions}
+                isSearchable={false}
+              />
+              {toSelfAccount?.addressHex && (
+                <Text variant="small" color="opacityDefault.c50">
+                  {formatShortAddress(toSelfAccount.addressHex)}
+                </Text>
+              )}
+            </Flex>
+          ))}
       </Flex>
 
       {chainMismatch && (
         <Text variant="body" color="error.c60">
-          Chain mismatch: From is chainId {fromChainId}, To is chainId{" "}
-          {toChainId}. Cross-chain Sends aren&apos;t supported — pick a matching
-          target.
+          Chain mismatch: From is chainId {fromAccount?.chainId}, To is chainId{" "}
+          {recipientChainId}. Cross-chain Sends aren&apos;t supported — pick a
+          matching target.
         </Text>
       )}
 
@@ -798,64 +857,13 @@ export const SendToContactForm: React.FC = () => {
         </Flex>
       </Flex>
 
-      <Flex flexDirection="column" rowGap={2}>
-        <Flex
-          alignItems="center"
-          columnGap={2}
-          onClick={() => setAdvancedOpen((prev) => !prev)}
-          style={{ cursor: "pointer", userSelect: "none" }}
-        >
-          {advancedOpen ? (
-            <Icons.ChevronDown size="S" />
-          ) : (
-            <Icons.ChevronRight size="S" />
-          )}
-          <Text variant="body" fontWeight="medium">
-            Advanced
-          </Text>
-        </Flex>
-        {advancedOpen && (
-          <Flex flexDirection="column" rowGap={3} pl={5}>
-            <Flex flexDirection="column" rowGap={1}>
-              <Input
-                renderLeft={() => <InputLabel>Data (hex)</InputLabel>}
-                value={dataHex}
-                onChange={setDataHex}
-                disabled={status.kind === "running"}
-                autoComplete="off"
-              />
-              {!dataBytesValid && (
-                <Text variant="small" color="error.c60">
-                  Data must be a valid hex string (0x-prefix optional, even
-                  number of hex chars).
-                </Text>
-              )}
-            </Flex>
-            <Switch
-              name="provideFrom"
-              checked={provideFrom}
-              onChange={() => setProvideFrom((prev) => !prev)}
-              disabled={status.kind === "running"}
-              label="Provide From — off → device review shows raw sender address."
-            />
-            <Switch
-              name="provideTo"
-              checked={provideTo}
-              onChange={() => setProvideTo((prev) => !prev)}
-              disabled={status.kind === "running"}
-              label="Provide To — off → device review shows raw recipient address. A previously-Provided name may linger on device until the Eth app closes."
-            />
-          </Flex>
-        )}
-      </Flex>
-
       <Flex columnGap={3} alignItems="center">
         <Button
           variant="main"
           onClick={() => void handleSubmit()}
           disabled={submitDisabled}
         >
-          Send &amp; sign
+          Send
         </Button>
         {status.kind === "running" && (
           <Text variant="body" color="opacityDefault.c60">
