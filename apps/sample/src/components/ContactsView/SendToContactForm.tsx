@@ -551,18 +551,18 @@ export const SendToContactForm: React.FC = () => {
         text: "→ Sign sent — awaiting approval on device…",
       });
 
-      // If either Provide ran, the ETH app is already open — skip the
-      // redundant OpenApp tick inside signTransaction. OpenApp short-
-      // circuits when the requested app is already open (see
-      // device-management-kit OpenAppDeviceAction.ts:296), so this is a
-      // latency optimisation, not a correctness requirement.
-      const ethAppAlreadyOpen =
-        providedFromName !== null || providedToName !== null;
-
+      // Let signTransaction run its own OpenApp. We previously tried
+      // `skipOpenApp: true` here as a latency optimisation when the
+      // Provides had already opened the ETH app, but hardware smoke
+      // (apex_p, 2026-05-11) failed with a generic "Device action
+      // failed" after both Provides landed cleanly — the SignTransaction
+      // state machine evidently relies on something OpenApp does on the
+      // way through (not just the "is the app open?" guard). OpenApp is
+      // idempotent when the app is already open
+      // (OpenAppDeviceAction.ts:296 short-circuits), so the cost is one
+      // device round-trip — well worth the correctness.
       const signingPath = fromAccount?.derivationPath ?? DEFAULT_FROM_PATH;
-      const { observable } = signer.signTransaction(signingPath, txBytes, {
-        skipOpenApp: ethAppAlreadyOpen,
-      });
+      const { observable } = signer.signTransaction(signingPath, txBytes, {});
       const signature: Signature = await awaitDeviceAction(observable, () => {
         // Keep status as "running"; the form copy already reads "Awaiting…".
       });
