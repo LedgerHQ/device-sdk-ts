@@ -22,6 +22,7 @@ import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModul
 import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
 import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
 import { ethereumTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/ethereumTransactionCheckModuleFactory";
+import { solanaTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/solanaTransactionCheckModuleFactory";
 import { lifiModuleFactory } from "@/modules/solana/lifi/di/lifiModuleFactory";
 import { ownerInfoModuleFactory } from "@/modules/solana/owner-info/di/ownerInfoModuleFactory";
 import { tokenModuleFactory as solanaTokenModuleFactory } from "@/modules/solana/token/di/tokenModuleFactory";
@@ -71,6 +72,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         ownerInfoModuleFactory(),
         solanaTokenModuleFactory(),
         lifiModuleFactory(),
+        solanaTransactionCheckModuleFactory(),
       );
       break;
     case ContextModuleChainID.Concordium:

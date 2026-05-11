@@ -121,6 +121,9 @@ export class DefaultContextModule implements ContextModule {
           this._container.get<ContextLoader>(
             ownerInfoTypes.OwnerInfoContextLoader,
           ),
+          this._container.get<ContextLoader>(
+            transactionCheckTypes.TransactionCheckLoader,
+          ),
         ];
       case ContextModuleChainID.Concordium:
         return [
