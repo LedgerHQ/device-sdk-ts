@@ -83,10 +83,10 @@ export const Menu: React.FC = () => {
       <MenuItem>
         <Icons.User />
         <MenuTitle
-          data-testid="CTA_route-to-/services"
-          onClick={() => router.push("/services")}
+          data-testid="CTA_route-to-/services/contacts"
+          onClick={() => router.push("/services/contacts")}
         >
-          Services
+          Contacts
         </MenuTitle>
       </MenuItem>
       <MenuItem>

@@ -1,9 +1,11 @@
 import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Flex, Text } from "@ledgerhq/react-ui";
+import { Button, Flex, Grid, Icons, Text } from "@ledgerhq/react-ui";
+import { useRouter } from "next/navigation";
 import styled, { type DefaultTheme } from "styled-components";
 
 import { Block } from "@/components/Block";
+import { ClickableListItem } from "@/components/ClickableListItem";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { SectionTitle } from "@/components/SettingsView/SectionTitle";
 import {
@@ -12,11 +14,6 @@ import {
   selectWallet,
 } from "@/state/contacts/selectors";
 import { resetWallet } from "@/state/contacts/slice";
-
-import { EditExternalAddressForm } from "./EditExternalAddressForm";
-import { EditExternalAddressLabelForm } from "./EditExternalAddressLabelForm";
-import { RegisterExternalAddressForm } from "./RegisterExternalAddressForm";
-import { RenameContactForm } from "./RenameContactForm";
 
 const StoragePre = styled.pre`
   background-color: ${({ theme }: { theme: DefaultTheme }) =>
@@ -36,21 +33,52 @@ const StoragePre = styled.pre`
   box-sizing: border-box;
 `;
 
+const SUBSECTIONS = [
+  {
+    title: "Contacts",
+    description:
+      "Register, rename, edit labels, and edit addresses for cross-chain contacts.",
+    href: "/services/contacts/external-addresses",
+    icon: (
+      <Flex p={3} backgroundColor="background.card" borderRadius="50%">
+        <Icons.User size="L" />
+      </Flex>
+    ),
+  },
+  {
+    title: "Ledger accounts",
+    description:
+      "Register signer-controlled Ledger accounts used as the From side of a Send.",
+    href: "/services/contacts/ledger-accounts",
+    icon: (
+      <Flex p={3} backgroundColor="background.card" borderRadius="50%">
+        <Icons.LedgerDevices size="L" />
+      </Flex>
+    ),
+  },
+  {
+    title: "Signing transactions",
+    description:
+      "Send to Contact: Provide From + Provide To + Sign, with both friendly names on device.",
+    href: "/services/contacts/signing",
+    icon: (
+      <Flex p={3} backgroundColor="background.card" borderRadius="50%">
+        <Icons.Signature size="L" />
+      </Flex>
+    ),
+  },
+];
+
 export const ContactsView: React.FC = () => {
   const dispatch = useDispatch();
+  const router = useRouter();
   const wallet = useSelector(selectWallet);
   const contactsCount = useSelector(selectContactsCount);
   const accountsCount = useSelector(selectAccountsCount);
 
+  const isEmpty = contactsCount === 0 && accountsCount === 0;
+
   const onReset = useCallback(() => {
-    if (
-      contactsCount === 0 &&
-      accountsCount === 0 &&
-      typeof window !== "undefined"
-    ) {
-      dispatch(resetWallet());
-      return;
-    }
     if (
       typeof window === "undefined" ||
       window.confirm(
@@ -59,7 +87,7 @@ export const ContactsView: React.FC = () => {
     ) {
       dispatch(resetWallet());
     }
-  }, [accountsCount, contactsCount, dispatch]);
+  }, [dispatch]);
 
   return (
     <PageWithHeader title="Contacts">
@@ -69,35 +97,30 @@ export const ContactsView: React.FC = () => {
           <Text variant="body" color="opacityDefault.c70">
             {contactsCount} contact{contactsCount === 1 ? "" : "s"} ·{" "}
             {accountsCount} signer-controlled account
-            {accountsCount === 1 ? "" : "s"}. Schema version{" "}
-            {wallet.schemaVersion}. Persisted under{" "}
-            <code>dmk-sample-contacts-state</code> in localStorage.
+            {accountsCount === 1 ? "" : "s"}.
           </Text>
-          <Text variant="paragraph" color="opacityDefault.c50">
-            M5 — Edit external address label (DMK-core, op 2) + Edit external
-            address (signer-eth, op 3) landed. Register Ledger account (M6),
-            Provide ops + Send-to-Contact (M7) pending.
+          <Text variant="body" color="opacityDefault.c70">
+            Schema version {wallet.schemaVersion}.
+          </Text>
+          <Text variant="body" color="opacityDefault.c70">
+            Persisted under <code>dmk-sample-contacts-state</code> in
+            localStorage.
           </Text>
         </Block>
 
         <Block>
-          <SectionTitle>Register external address</SectionTitle>
-          <RegisterExternalAddressForm />
-        </Block>
-
-        <Block>
-          <SectionTitle>Rename contact</SectionTitle>
-          <RenameContactForm />
-        </Block>
-
-        <Block>
-          <SectionTitle>Edit address label</SectionTitle>
-          <EditExternalAddressLabelForm />
-        </Block>
-
-        <Block>
-          <SectionTitle>Edit address</SectionTitle>
-          <EditExternalAddressForm />
+          <SectionTitle>Sections</SectionTitle>
+          <Grid columns={2} style={{ rowGap: 16, columnGap: 16 }}>
+            {SUBSECTIONS.map(({ title, description, icon, href }) => (
+              <ClickableListItem
+                key={`contacts-section-${title}`}
+                title={title}
+                description={description}
+                onClick={() => router.push(href)}
+                icon={icon}
+              />
+            ))}
+          </Grid>
         </Block>
 
         <Block>
@@ -112,8 +135,8 @@ export const ContactsView: React.FC = () => {
             Device-side records (HMACs, group handles) are not touched.
           </Text>
           <Flex>
-            <Button variant="error" onClick={onReset}>
-              Reset contact book
+            <Button variant="error" disabled={isEmpty} onClick={onReset}>
+              Reset contacts
             </Button>
           </Flex>
         </Block>

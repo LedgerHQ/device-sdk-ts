@@ -1,5 +1,16 @@
 import React from "react";
-import { Text } from "@ledgerhq/react-ui";
+import { Flex, Icons, Link, Text } from "@ledgerhq/react-ui";
+import { useRouter } from "next/navigation";
+
+export const BackToContactsLink: React.FC = () => {
+  const router = useRouter();
+  return (
+    <Flex alignItems="center" columnGap={2}>
+      <Icons.ArrowLeft size="S" />
+      <Link onClick={() => router.push("/services/contacts")}>Back</Link>
+    </Flex>
+  );
+};
 
 export const CharacterCounter: React.FC<{ value: string; max: number }> = ({
   value,
