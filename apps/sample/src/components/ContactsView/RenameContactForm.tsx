@@ -9,13 +9,13 @@ import {
   ValidationError,
   type Wallet,
 } from "@ledgerhq/device-management-kit";
-import { Button, Flex, Input, Text } from "@ledgerhq/react-ui";
+import { Button, Flex, Input, SelectInput, Text } from "@ledgerhq/react-ui";
 
+import { SelectInputLabel } from "@/components/InputLabel";
 import { useContactsService } from "@/providers/ContactsServiceProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
 
-import { ContactNameInput } from "./ContactNameInput";
 import {
   CharacterCounter,
   describeDeviceError,
@@ -23,6 +23,8 @@ import {
 } from "./_shared";
 
 const CONTACT_NAME_MAX_CHARS = CONTACT_NAME_BUFFER_LENGTH - 1;
+
+type ContactOption = { label: string; value: string };
 
 function findDivergingPath(contact: Contact): string | null {
   if (contact.entries.length === 0) return null;
@@ -66,6 +68,17 @@ export const RenameContactForm: React.FC = () => {
   const [oldName, setOldName] = useState("");
   const [newName, setNewName] = useState("");
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
+
+  const contactOptions = useMemo<ContactOption[]>(
+    () =>
+      Object.keys(wallet.contacts).map((name) => ({
+        label: name,
+        value: name,
+      })),
+    [wallet.contacts],
+  );
+  const selectedContact =
+    contactOptions.find((opt) => opt.value === oldName) ?? null;
 
   const submitDisabled = useMemo(
     () => !service || status.kind === "running",
@@ -131,7 +144,9 @@ export const RenameContactForm: React.FC = () => {
     observable.subscribe({
       next: (state: RenameContactDAState) => {
         if (state.status === "completed") {
-          dispatch(setWallet(applyRename(wallet, oldName, newName, state.output)));
+          dispatch(
+            setWallet(applyRename(wallet, oldName, newName, state.output)),
+          );
           setStatus({
             kind: "success",
             message: `Renamed "${oldName}" → "${newName}".`,
@@ -153,12 +168,6 @@ export const RenameContactForm: React.FC = () => {
 
   return (
     <Flex flexDirection="column" rowGap={4}>
-      <Text variant="paragraph" color="opacityDefault.c60">
-        Rename a contact in the contact book. Single APDU regardless of how
-        many addresses the contact has — the contact-level HMAC rotates;
-        per-entry proofs stay untouched.
-      </Text>
-
       {!service && (
         <Text variant="body" color="warning.c60">
           No active device session. Connect a device on the home page to enable
@@ -167,12 +176,21 @@ export const RenameContactForm: React.FC = () => {
       )}
 
       <Flex flexDirection="column" rowGap={1}>
-        <ContactNameInput
-          value={oldName}
-          onChange={setOldName}
-          contacts={wallet.contacts}
-          disabled={status.kind === "running"}
-          mode="rename"
+        <SelectInput
+          renderLeft={() => <SelectInputLabel>Contact</SelectInputLabel>}
+          options={contactOptions}
+          value={selectedContact}
+          onChange={(opt) =>
+            setOldName((opt as ContactOption | null)?.value ?? "")
+          }
+          isMulti={false}
+          isSearchable={false}
+          placeholder={
+            contactOptions.length === 0
+              ? "No contacts registered yet"
+              : "Select a contact"
+          }
+          isDisabled={contactOptions.length === 0 || status.kind === "running"}
         />
       </Flex>
 

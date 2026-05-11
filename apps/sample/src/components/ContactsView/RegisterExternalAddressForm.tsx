@@ -20,13 +20,13 @@ import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
 
-import { ContactNameInput } from "./ContactNameInput";
-import { NETWORK_OPTIONS, type NetworkName, NETWORKS } from "./networks";
 import {
   CharacterCounter,
   describeDeviceError,
   type FormStatus,
 } from "./_shared";
+import { ContactNameInput } from "./ContactNameInput";
+import { NETWORK_OPTIONS, type NetworkName, NETWORKS } from "./networks";
 
 // Buffer length is null-terminator-inclusive; usable text is one less.
 const CONTACT_NAME_MAX_CHARS = CONTACT_NAME_BUFFER_LENGTH - 1;
@@ -248,9 +248,7 @@ export const RegisterExternalAddressForm: React.FC = () => {
   return (
     <Flex flexDirection="column" rowGap={4}>
       <Text variant="paragraph" color="opacityDefault.c60">
-        Register an address under a Contact. If a Contact with this name already
-        exists, the address is appended to it; otherwise a fresh Contact is
-        created.
+        Register a new external address as a contact.
       </Text>
 
       {!signer && (

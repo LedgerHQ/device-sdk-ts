@@ -12,11 +12,11 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Button, Flex, Input, SelectInput, Text } from "@ledgerhq/react-ui";
 
+import { SelectInputLabel } from "@/components/InputLabel";
 import { useContactsService } from "@/providers/ContactsServiceProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
 
-import { ContactNameInput } from "./ContactNameInput";
 import {
   CharacterCounter,
   describeDeviceError,
@@ -25,6 +25,7 @@ import {
 
 const SCOPE_MAX_CHARS = SCOPE_BUFFER_LENGTH - 1;
 
+type ContactOption = { label: string; value: string };
 type LabelOption = { label: string; value: string };
 
 function applyEditScope(
@@ -62,6 +63,17 @@ export const EditExternalAddressLabelForm: React.FC = () => {
   const [oldLabel, setOldLabel] = useState<LabelOption | null>(null);
   const [newLabel, setNewLabel] = useState("");
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
+
+  const contactOptions = useMemo<ContactOption[]>(
+    () =>
+      Object.keys(wallet.contacts).map((name) => ({
+        label: name,
+        value: name,
+      })),
+    [wallet.contacts],
+  );
+  const selectedContact =
+    contactOptions.find((opt) => opt.value === contactName) ?? null;
 
   const labelOptions = useMemo<LabelOption[]>(() => {
     const contact = wallet.contacts[contactName];
@@ -172,11 +184,6 @@ export const EditExternalAddressLabelForm: React.FC = () => {
 
   return (
     <Flex flexDirection="column" rowGap={4}>
-      <Text variant="paragraph" color="opacityDefault.c60">
-        Rename a single entry's address label. Per-entry HMAC rotates;
-        contact-level proof and other entries stay untouched.
-      </Text>
-
       {!service && (
         <Text variant="body" color="warning.c60">
           No active device session. Connect a device on the home page to enable
@@ -184,16 +191,25 @@ export const EditExternalAddressLabelForm: React.FC = () => {
         </Text>
       )}
 
-      <ContactNameInput
-        value={contactName}
-        onChange={(name) => {
-          setContactName(name);
-          setOldLabel(null);
-        }}
-        contacts={wallet.contacts}
-        disabled={status.kind === "running"}
-        mode="rename"
-      />
+      <Flex flexDirection="column" rowGap={1}>
+        <SelectInput
+          renderLeft={() => <SelectInputLabel>Contact</SelectInputLabel>}
+          options={contactOptions}
+          value={selectedContact}
+          onChange={(opt) => {
+            setContactName((opt as ContactOption | null)?.value ?? "");
+            setOldLabel(null);
+          }}
+          isMulti={false}
+          isSearchable={false}
+          placeholder={
+            contactOptions.length === 0
+              ? "No contacts registered yet"
+              : "Select a contact"
+          }
+          isDisabled={contactOptions.length === 0 || status.kind === "running"}
+        />
+      </Flex>
 
       <Flex flexDirection="column" rowGap={1}>
         <SelectInput
@@ -207,9 +223,7 @@ export const EditExternalAddressLabelForm: React.FC = () => {
               ? "Pick a contact first"
               : "Pick the current label"
           }
-          isDisabled={
-            labelOptions.length === 0 || status.kind === "running"
-          }
+          isDisabled={labelOptions.length === 0 || status.kind === "running"}
         />
       </Flex>
 

@@ -13,13 +13,14 @@ import {
 } from "@ledgerhq/device-signer-kit-ethereum";
 import { Button, Flex, Input, SelectInput, Text } from "@ledgerhq/react-ui";
 
+import { SelectInputLabel } from "@/components/InputLabel";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
 
-import { ContactNameInput } from "./ContactNameInput";
 import { describeDeviceError, type FormStatus } from "./_shared";
 
+type ContactOption = { label: string; value: string };
 type EntryOption = { label: string; value: string };
 
 function normalizeAddressHex(addressHex: string): string {
@@ -65,6 +66,17 @@ export const EditExternalAddressForm: React.FC = () => {
   const [oldEntry, setOldEntry] = useState<EntryOption | null>(null);
   const [newAddressHex, setNewAddressHex] = useState("");
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
+
+  const contactOptions = useMemo<ContactOption[]>(
+    () =>
+      Object.keys(wallet.contacts).map((name) => ({
+        label: name,
+        value: name,
+      })),
+    [wallet.contacts],
+  );
+  const selectedContact =
+    contactOptions.find((opt) => opt.value === contactName) ?? null;
 
   const entryOptions = useMemo<EntryOption[]>(() => {
     const contact = wallet.contacts[contactName];
@@ -113,8 +125,7 @@ export const EditExternalAddressForm: React.FC = () => {
     }
     if (
       contact.entries.some(
-        (e) =>
-          e.addressHex === normalizedNew && e.chainId === entry.chainId,
+        (e) => e.addressHex === normalizedNew && e.chainId === entry.chainId,
       )
     ) {
       setStatus({
@@ -185,12 +196,6 @@ export const EditExternalAddressForm: React.FC = () => {
 
   return (
     <Flex flexDirection="column" rowGap={4}>
-      <Text variant="paragraph" color="opacityDefault.c60">
-        Swap a single entry's address bytes. Address validation lives in the
-        Ethereum app (this op stays signer-eth-bound, not OS-dispatchable).
-        Per-entry HMAC rotates; contact-level proof stays untouched.
-      </Text>
-
       {!signer && (
         <Text variant="body" color="warning.c60">
           No active device session. Connect a device on the home page to enable
@@ -198,16 +203,25 @@ export const EditExternalAddressForm: React.FC = () => {
         </Text>
       )}
 
-      <ContactNameInput
-        value={contactName}
-        onChange={(name) => {
-          setContactName(name);
-          setOldEntry(null);
-        }}
-        contacts={wallet.contacts}
-        disabled={status.kind === "running"}
-        mode="rename"
-      />
+      <Flex flexDirection="column" rowGap={1}>
+        <SelectInput
+          renderLeft={() => <SelectInputLabel>Contact</SelectInputLabel>}
+          options={contactOptions}
+          value={selectedContact}
+          onChange={(opt) => {
+            setContactName((opt as ContactOption | null)?.value ?? "");
+            setOldEntry(null);
+          }}
+          isMulti={false}
+          isSearchable={false}
+          placeholder={
+            contactOptions.length === 0
+              ? "No contacts registered yet"
+              : "Select a contact"
+          }
+          isDisabled={contactOptions.length === 0 || status.kind === "running"}
+        />
+      </Flex>
 
       <Flex flexDirection="column" rowGap={1}>
         <SelectInput
@@ -221,9 +235,7 @@ export const EditExternalAddressForm: React.FC = () => {
               ? "Pick a contact first"
               : "Pick the entry to edit (by label)"
           }
-          isDisabled={
-            entryOptions.length === 0 || status.kind === "running"
-          }
+          isDisabled={entryOptions.length === 0 || status.kind === "running"}
         />
       </Flex>
 
