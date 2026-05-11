@@ -105,7 +105,7 @@ const THREE_EXTERNALS_TWO_ACCOUNTS: Wallet = {
 };
 
 export const FIXTURES: { id: string; label: string; wallet: Wallet }[] = [
-  { id: "empty", label: "Empty wallet", wallet: emptyWallet() },
+  { id: "empty", label: "Empty contact book", wallet: emptyWallet() },
   {
     id: "one-contact-one-entry",
     label: "1 contact / 1 entry",

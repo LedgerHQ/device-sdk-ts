@@ -6,6 +6,13 @@ export {
   type GetAddressDAReturnType,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
 export {
+  type RegisterExternalAddressDAError,
+  type RegisterExternalAddressDAIntermediateValue,
+  type RegisterExternalAddressDAOutput,
+  type RegisterExternalAddressDAReturnType,
+  type RegisterExternalAddressDAState,
+} from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
+export {
   type SignDelegationAuthorizationDAError,
   type SignDelegationAuthorizationDAInput,
   type SignDelegationAuthorizationDAIntermediateValue,
@@ -42,6 +49,7 @@ export {
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
+export * from "@api/model/RegisterExternalAddressArgs";
 export * from "@api/model/Signature";
 export * from "@api/model/TransactionOptions";
 export * from "@api/model/TransactionType";

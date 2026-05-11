@@ -1,4 +1,5 @@
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
@@ -6,6 +7,7 @@ import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDev
 import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
+import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
@@ -41,4 +43,7 @@ export interface SignerEth {
     contractAddress: string,
     nonce: number,
   ) => SignDelegationAuthorizationDAReturnType;
+  registerExternalAddress: (
+    args: RegisterExternalAddressArgs,
+  ) => RegisterExternalAddressDAReturnType;
 }

@@ -9,11 +9,13 @@ import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
+import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
+import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type TypedData } from "@api/model/TypedData";
@@ -28,6 +30,7 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendGetAddressTask } from "./task/SendGetAddressTask";
+import { SendRegisterIdentityTask } from "./task/SendRegisterIdentityTask";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 import { APP_NAME } from "./constants";
 
@@ -158,6 +161,28 @@ export class EthAppBinder {
           skipOpenApp: args.skipOpenApp,
         },
         loggerFactory: this.dmkLoggerFactory,
+      }),
+    });
+  }
+
+  registerExternalAddress(
+    args: RegisterExternalAddressArgs,
+  ): RegisterExternalAddressDAReturnType {
+    const taskLogger = this.dmkLoggerFactory("SendRegisterIdentityTask");
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SendRegisterIdentityTask(internalApi, {
+              ...args,
+              logger: taskLogger,
+            }).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.RegisterWallet,
+          skipOpenApp: false,
+        },
+        logger: this.dmkLoggerFactory("SendRegisterIdentityTask"),
       }),
     });
   }
