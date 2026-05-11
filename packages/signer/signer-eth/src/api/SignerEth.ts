@@ -60,7 +60,57 @@ export interface SignerEth {
   registerLedgerAccount: (
     args: RegisterLedgerAccountArgs,
   ) => RegisterLedgerAccountDAReturnType;
+  /**
+   * Load a previously-registered Contact entry into the device so the
+   * NEXT Sign review screen substitutes the friendly contact name for
+   * the raw recipient address. Silent on device (no approval prompt) —
+   * firmware trusts the HMAC chain authorised at Register time and
+   * replies SW=0x9000 + empty data.
+   *
+   * **Orchestration contract (callers — including Live B2 — must
+   * honour):**
+   * - Call this BEFORE `signTransaction` for the same recipient.
+   * - The Provided friendly name sits in firmware memory until
+   *   `app_quit`, so a single ETH-app session can chain multiple
+   *   `provideContact` / `provideLedgerAccount` / `signTransaction`
+   *   calls without losing decorations. The DMK `OpenAppDeviceAction`
+   *   short-circuits when the requested app is already open, so the
+   *   cache survives the next call's lifecycle.
+   * - Safe to chain via observable `firstValueFrom(... filter(Completed
+   *   || Error))` — see `apps/sample/.../SendToContactForm.tsx` for the
+   *   reference orchestration.
+   *
+   * **Composability:** wire-orthogonal (CLA=0xb0) to all
+   * ContextModule-driven clear-signing channels (tokens, NFTs,
+   * trusted-name, ERC-7730 generic-parser, web3-checks — all CLA=0xe0).
+   * One open question for B2 integrators: `provideContact` and
+   * `ProvideTrustedName` (ENS) both decorate the on-device recipient
+   * field. Firmware precedence is not yet documented; today, only emit
+   * one of the two per Send, or wait for the upstream-asks resolution
+   * tracked in
+   * `~/dev/ledger-contacts-playground/docs/upstream-asks.md`.
+   */
   provideContact: (args: ProvideContactArgs) => ProvideContactDAReturnType;
+  /**
+   * Load a previously-registered Ledger account into the device so the
+   * NEXT Sign review screen substitutes the account name for the
+   * derived address. Used for both From-side decoration (the sender's
+   * known account) and To-side decoration when the recipient is itself
+   * a Ledger account. Silent on device.
+   *
+   * Same orchestration contract as `provideContact`: call BEFORE
+   * `signTransaction`; safe to chain on the same ETH-app session; uses
+   * CLA=0xb0 so it composes cleanly with the ContextModule channels.
+   * The device derives the address from `derivationPath` internally —
+   * the caller never sends `addressHex`.
+   *
+   * Naming note: the upstream Python client calls this op
+   * `provide_ledger_account_contact`. The TS surface drops the trailing
+   * `Contact` to keep `contact` reserved for external-address holders
+   * (mirrors DMK's `contacts: {...}` vs `accounts: {...}` Wallet split).
+   * The wire fixture key in `apdu-traces.json` stays the Python name —
+   * that's the byte-parity source of truth.
+   */
   provideLedgerAccount: (
     args: ProvideLedgerAccountArgs,
   ) => ProvideLedgerAccountDAReturnType;
