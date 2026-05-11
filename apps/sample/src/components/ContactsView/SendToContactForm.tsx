@@ -163,6 +163,20 @@ function isValidEthAddressHex(value: string): boolean {
   return raw.length === 40 && /^[0-9a-f]{40}$/.test(raw);
 }
 
+// `signer.signTransaction` flows the derivationPath straight into
+// `GetAddressCommand` (via `SignTransactionDeviceAction.GetAddress`), whose
+// `getApdu()` calls `DerivationPathUtils.splitPath` — and splitPath chokes
+// on the "m/" prefix because `parseInt("m") === NaN`. Other signer-eth use
+// cases (RegisterExternalAddress, EditExternalAddress, RegisterLedgerAccount)
+// strip the prefix in their use-case layer, but `SignTransactionUseCase`
+// does not — so callers must strip it themselves. Stored
+// `account.derivationPath` carries the "m/" prefix (see M6
+// `RegisterLedgerAccountForm.buildLedgerLivePath`), so we strip here.
+function stripMPrefix(path: string): string {
+  if (path.startsWith("m/") || path.startsWith("M/")) return path.slice(2);
+  return path;
+}
+
 type ProgressState = {
   status: DeviceActionStatus;
   intermediateValue?: {
@@ -606,7 +620,9 @@ export const SendToContactForm: React.FC = () => {
       // idempotent when the app is already open
       // (OpenAppDeviceAction.ts:296 short-circuits), so the cost is one
       // device round-trip — well worth the correctness.
-      const signingPath = fromAccount?.derivationPath ?? DEFAULT_FROM_PATH;
+      const signingPath = stripMPrefix(
+        fromAccount?.derivationPath ?? DEFAULT_FROM_PATH,
+      );
       // Diagnostic: log the unsigned tx bytes so we can confirm the RLP
       // we're handing the device parses as we expect.
       appendTrace({
