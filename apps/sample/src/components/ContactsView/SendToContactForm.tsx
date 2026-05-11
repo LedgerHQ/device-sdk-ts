@@ -503,6 +503,8 @@ export const SendToContactForm: React.FC = () => {
 
     let providedFromName: string | null = null;
     let providedToName: string | null = null;
+    // Hoisted so the catch block can include it in the diagnostic dump.
+    let lastSignStep: unknown = undefined;
 
     try {
       // Provide From: fires whenever the user picked a real account.
@@ -611,51 +613,24 @@ export const SendToContactForm: React.FC = () => {
       });
 
       // Let signTransaction run its own OpenApp. We previously tried
-      // `skipOpenApp: true` here as a latency optimisation when the
-      // Provides had already opened the ETH app, but hardware smoke
-      // (apex_p, 2026-05-11) failed with a generic "Device action
-      // failed" after both Provides landed cleanly — the SignTransaction
-      // state machine evidently relies on something OpenApp does on the
-      // way through (not just the "is the app open?" guard). OpenApp is
+      // `skipOpenApp: true` as a latency optimisation when the Provides
+      // had already opened the ETH app, but hardware smoke (apex_p,
+      // 2026-05-11) failed — the SignTransaction state machine evidently
+      // relies on something OpenApp does on the way through. OpenApp is
       // idempotent when the app is already open
       // (OpenAppDeviceAction.ts:296 short-circuits), so the cost is one
       // device round-trip — well worth the correctness.
       const signingPath = stripMPrefix(
         fromAccount?.derivationPath ?? DEFAULT_FROM_PATH,
       );
-      // Diagnostic: log the unsigned tx bytes so we can confirm the RLP
-      // we're handing the device parses as we expect.
-      appendTrace({
-        kind: "info",
-        text: `    tx (hex, ${txBytes.length} B): ${Buffer.from(txBytes).toString("hex")}`,
-      });
-      appendTrace({
-        kind: "info",
-        text: `    signing path: ${signingPath}`,
-      });
       const { observable } = signer.signTransaction(signingPath, txBytes, {});
-      // Diagnostic: track which SignTransactionDeviceAction sub-step is
-      // running. Each intermediate emission tells us the current state in
-      // the OpenApp → GetAppConfig → ParseTransaction → GetAddress →
-      // BuildContexts → ProvideContexts → SignTransaction ladder. If the
-      // observable errors before resolving, the last-seen step tells us
-      // where SignTransactionDeviceAction was when it died.
-      let lastSignStep: unknown = undefined;
-      let lastInteraction: unknown = undefined;
+      // Silently track the last SignTransactionDeviceAction sub-step we
+      // saw — flushed to the trace only if the observable errors before
+      // resolving (see catch block). Keeps the happy path uncluttered
+      // while preserving the "which sub-state died?" signal for failures.
       const signature: Signature = await awaitDeviceAction(observable, (s) => {
         const step = s.intermediateValue?.step;
-        if (step !== undefined && step !== lastSignStep) {
-          lastSignStep = step;
-          appendTrace({ kind: "info", text: `    step: ${String(step)}` });
-        }
-        const interaction = s.intermediateValue?.requiredUserInteraction;
-        if (interaction !== undefined && interaction !== lastInteraction) {
-          lastInteraction = interaction;
-          appendTrace({
-            kind: "info",
-            text: `    requiredUserInteraction: ${String(interaction)}`,
-          });
-        }
+        if (step !== undefined) lastSignStep = step;
       });
 
       appendTrace({ kind: "ok", text: "  ✓ Sign approved" });
@@ -674,10 +649,17 @@ export const SendToContactForm: React.FC = () => {
       // State-rotation is sticky on Sign-reject — the dispatches above are
       // NOT rolled back here. The wallet records what the device knows.
       appendTrace({ kind: "error", text: `  ✗ ${describeDeviceError(err)}` });
-      // Diagnostic: dump the raw error structure into the trace so we can
-      // see what kind of failure this is when describeDeviceError falls
-      // back to the generic message (no SW / no `errorCode` / no
-      // `originalError` it knows how to unwrap).
+      // Diagnostic dump, error-path only. The last-seen Sign sub-step
+      // tells us where SignTransactionDeviceAction was when it died
+      // (unset if the failure happened earlier, e.g. in a Provide). The
+      // raw error walks the error object so we see DMK error shapes
+      // describeDeviceError can't unwrap.
+      if (lastSignStep !== undefined) {
+        appendTrace({
+          kind: "error",
+          text: `    last step before failure: ${String(lastSignStep)}`,
+        });
+      }
       appendTrace({
         kind: "error",
         text: `    raw error:\n${debugError(err)}`,
