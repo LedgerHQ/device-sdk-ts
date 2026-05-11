@@ -1,3 +1,10 @@
+export {
+  type EditExternalAddressDAError,
+  type EditExternalAddressDAIntermediateValue,
+  type EditExternalAddressDAOutput,
+  type EditExternalAddressDAReturnType,
+  type EditExternalAddressDAState,
+} from "@api/app-binder/EditExternalAddressDeviceActionTypes";
 export { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
 export {
   type GetAddressDAError,
@@ -49,6 +56,7 @@ export {
 } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
+export * from "@api/model/EditExternalAddressArgs";
 export * from "@api/model/RegisterExternalAddressArgs";
 export * from "@api/model/Signature";
 export * from "@api/model/TransactionOptions";
