@@ -21,12 +21,12 @@ import { useUpdateConnectionsRefresherOptions } from "@/hooks/useUpdateConnectio
 import { useUpdateDeviceSessions } from "@/hooks/useUpdateDeviceSessions";
 import { CalInterceptorProvider } from "@/providers/CalInterceptorProvider";
 import { ContactsGate } from "@/providers/ContactsGate";
+import { ContactsServiceProvider } from "@/providers/ContactsServiceProvider";
 import { DmkProvider } from "@/providers/DeviceManagementKitProvider";
 import { LedgerKeyringProtocolProvider } from "@/providers/LedgerKeyringProvider";
 import { SettingsGate } from "@/providers/SettingsGate";
 import { SignerAleoProvider } from "@/providers/SignerAleoProvider";
 import { SignerCosmosProvider } from "@/providers/SignerCosmosProvider";
-import { ContactsServiceProvider } from "@/providers/ContactsServiceProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
 import { SignerPolkadotProvider } from "@/providers/SignerPolkadotProvider";
 import { SignerZcashProvider } from "@/providers/SignerZcashProvider";
