@@ -64,11 +64,12 @@ export class DefaultSignerConcordium implements SignerConcordium {
   signTransaction(
     derivationPath: string,
     transaction: Uint8Array,
+    maxFee: bigint,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
-      .execute(derivationPath, transaction, options);
+      .execute(derivationPath, transaction, maxFee, options);
   }
 
   signCredentialDeploymentTransaction(

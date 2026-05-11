@@ -43,4 +43,7 @@ export const P2 = {
   NONE: 0x00,
   MORE: 0x80,
   LAST: 0x00,
+  FEE_DISPLAY: 0x01,
 } as const;
+
+export const FEE_DISPLAY_SIZE = 8;

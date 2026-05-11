@@ -151,6 +151,7 @@ Securely sign a Concordium transaction on Ledger devices. Supports both Transfer
 const { observable, cancel } = signerConcordium.signTransaction(
   derivationPath,
   transaction,
+  maxFee,
   options,
 );
 ```
@@ -168,6 +169,14 @@ const { observable, cancel } = signerConcordium.signTransaction(
   - **Required**
   - **Type:** `Uint8Array`
   - The serialized transaction bytes to sign. The transaction type (Transfer or TransferWithMemo) is detected automatically from the type byte at offset 60.
+
+- `maxFee`
+
+  - **Required**
+  - **Type:** `bigint` (µCCD)
+  - The max-fee value to display, as a uint64 in µCCD. Rendered on-device alongside the recipient and amount. The value is **display-only**: it is not part of the canonical signed bytes, so the on-chain transaction hash is unaffected.
+  - Requires Concordium app version **5.6.0 or newer** on the device. On older firmware the value is dropped at the wire boundary and the device falls back to the legacy display. Signing still succeeds; only the on-device display degrades. Callers should always pass a real value; do not gate on detected firmware version.
+  - Invalid values (non-bigint, negative, or above uint64 range) are rejected with `InvalidMaxFeeError` (errorCode `"invalid_max_fee"`).
 
 - `options`
 

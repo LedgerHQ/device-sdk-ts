@@ -13,7 +13,7 @@ import {
   ConcordiumAppCommandError,
   ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
-import { P1 } from "@internal/app-binder/constants";
+import { FEE_DISPLAY_SIZE, P1 } from "@internal/app-binder/constants";
 import { SendTransferWithMemoTask } from "@internal/app-binder/task/SendTransferWithMemoTask";
 
 const DERIVATION_PATH = "44'/919'/0'/0'/0'";
@@ -26,6 +26,11 @@ const HEADER_LENGTH = 61;
 const RECIPIENT_LENGTH = 32;
 const MEMO_LENGTH_FIELD = 2;
 const AMOUNT_LENGTH = 8;
+
+const NO_FEE = {
+  maxFee: 0n,
+  supportsFeeDisplay: false,
+};
 
 /**
  * Build a fake serialized TransferWithMemo transaction.
@@ -71,6 +76,10 @@ function getApduP1(cmd: SignTransferWithMemoCommand): number {
   return cmd.getApdu().getRawApdu()[2]!;
 }
 
+function getApduP2(cmd: SignTransferWithMemoCommand): number {
+  return cmd.getApdu().getRawApdu()[3]!;
+}
+
 describe("SendTransferWithMemoTask", () => {
   let sentCommands: SignTransferWithMemoCommand[];
   let sendCommandMock: ReturnType<typeof vi.fn>;
@@ -112,7 +121,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
       loggerMock,
     );
 
@@ -122,6 +131,7 @@ describe("SendTransferWithMemoTask", () => {
 
     // Step 1: header
     expect(getApduP1(sentCommands[0]!)).toBe(P1.INITIAL_WITH_MEMO);
+    expect(getApduP2(sentCommands[0]!)).toBe(0x00);
     const headerData = getApduData(sentCommands[0]!);
     expect(headerData).toHaveLength(
       PATH_BYTES_LENGTH + HEADER_LENGTH + RECIPIENT_LENGTH + MEMO_LENGTH_FIELD,
@@ -129,10 +139,12 @@ describe("SendTransferWithMemoTask", () => {
 
     // Step 2: memo
     expect(getApduP1(sentCommands[1]!)).toBe(P1.MEMO);
+    expect(getApduP2(sentCommands[1]!)).toBe(0x00);
     expect(getApduData(sentCommands[1]!)).toHaveLength(memoSize);
 
     // Step 3: amount
     expect(getApduP1(sentCommands[2]!)).toBe(P1.AMOUNT);
+    expect(getApduP2(sentCommands[2]!)).toBe(0x00);
     expect(getApduData(sentCommands[2]!)).toHaveLength(AMOUNT_LENGTH);
 
     expect(isSuccessCommandResult(result)).toBe(true);
@@ -159,7 +171,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
       loggerMock,
     );
 
@@ -200,7 +212,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
       loggerMock,
     );
 
@@ -225,7 +237,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
       loggerMock,
     );
 
@@ -253,7 +265,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
       loggerMock,
     );
 
@@ -279,7 +291,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction },
+      { derivationPath: DERIVATION_PATH, transaction, ...NO_FEE },
       loggerMock,
     );
 
@@ -300,7 +312,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction: tx },
+      { derivationPath: DERIVATION_PATH, transaction: tx, ...NO_FEE },
       loggerMock,
     );
 
@@ -318,7 +330,7 @@ describe("SendTransferWithMemoTask", () => {
 
     const task = new SendTransferWithMemoTask(
       apiMock,
-      { derivationPath: DERIVATION_PATH, transaction: shortTx },
+      { derivationPath: DERIVATION_PATH, transaction: shortTx, ...NO_FEE },
       loggerMock,
     );
 
@@ -329,5 +341,87 @@ describe("SendTransferWithMemoTask", () => {
     if (!isSuccessCommandResult(result)) {
       expect(result.error).toBeInstanceOf(InvalidStatusWordError);
     }
+  });
+
+  describe("fee display (P2=0x01)", () => {
+    it("appends 8-byte BE max-fee to header and uses P2=0x01 on initial step", async () => {
+      const memoSize = 10;
+      const transaction = buildTransaction(memoSize);
+      const signature = new Uint8Array(64).fill(0xab);
+      const maxFee = 0x0102030405060708n;
+
+      captureCommands(
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: signature }),
+      );
+
+      const task = new SendTransferWithMemoTask(
+        apiMock,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction,
+          maxFee,
+          supportsFeeDisplay: true,
+        },
+        loggerMock,
+      );
+
+      const result = await task.run();
+
+      expect(sentCommands).toHaveLength(3);
+
+      expect(getApduP2(sentCommands[0]!)).toBe(0x01);
+      const headerData = getApduData(sentCommands[0]!);
+      expect(headerData).toHaveLength(
+        PATH_BYTES_LENGTH +
+          HEADER_LENGTH +
+          RECIPIENT_LENGTH +
+          MEMO_LENGTH_FIELD +
+          FEE_DISPLAY_SIZE,
+      );
+      const tail = headerData.slice(headerData.length - FEE_DISPLAY_SIZE);
+      expect(Array.from(tail)).toEqual([
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+      ]);
+
+      expect(getApduP2(sentCommands[1]!)).toBe(0x00);
+      expect(getApduP2(sentCommands[2]!)).toBe(0x00);
+
+      expect(isSuccessCommandResult(result)).toBe(true);
+    });
+
+    it("falls back to legacy header layout when fee display is not supported", async () => {
+      const transaction = buildTransaction(10);
+      const signature = new Uint8Array(64).fill(0xab);
+
+      captureCommands(
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: new Uint8Array(0) }),
+        CommandResultFactory({ data: signature }),
+      );
+
+      const task = new SendTransferWithMemoTask(
+        apiMock,
+        {
+          derivationPath: DERIVATION_PATH,
+          transaction,
+          maxFee: 99999n,
+          supportsFeeDisplay: false,
+        },
+        loggerMock,
+      );
+
+      await task.run();
+
+      expect(getApduP2(sentCommands[0]!)).toBe(0x00);
+      const headerData = getApduData(sentCommands[0]!);
+      expect(headerData).toHaveLength(
+        PATH_BYTES_LENGTH +
+          HEADER_LENGTH +
+          RECIPIENT_LENGTH +
+          MEMO_LENGTH_FIELD,
+      );
+    });
   });
 });

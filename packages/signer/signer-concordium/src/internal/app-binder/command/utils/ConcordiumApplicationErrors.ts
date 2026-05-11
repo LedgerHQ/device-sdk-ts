@@ -15,6 +15,7 @@ export enum ConcordiumErrorCodes {
   UNSUPPORTED_TRANSACTION_TYPE = "unsupported_transaction_type",
   TRUSTED_METADATA_SERVICE_ERROR = "trusted_metadata_service_error",
   ADDRESS_VERIFICATION_FAILED = "address_verification_failed",
+  INVALID_MAX_FEE = "invalid_max_fee",
 }
 
 export const CONCORDIUM_APP_ERRORS: CommandErrors<ConcordiumErrorCodes> = {
@@ -31,6 +32,9 @@ export const CONCORDIUM_APP_ERRORS: CommandErrors<ConcordiumErrorCodes> = {
   },
   address_verification_failed: {
     message: "Address verification failed",
+  },
+  invalid_max_fee: {
+    message: "Invalid maxFee value",
   },
 };
 
