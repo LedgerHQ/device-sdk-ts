@@ -20,9 +20,7 @@
 
 export const CONTACT_NAME_BUFFER_LENGTH = 33; // identity.h:49 (incl. NUL)
 export const SCOPE_BUFFER_LENGTH = 33; // identity.h:50 (incl. NUL)
-export const IDENTIFIER_MAX_LENGTH = 80; // identity.h:51 (raw bytes)
 export const GROUP_HANDLE_SIZE = 64; // identity.h:47
-export const GID_SIZE = 32; // identity.h:46
 export const HMAC_PROOF_LENGTH = 32; // CX_SHA256_SIZE
 export const ACCOUNT_NAME_BUFFER_LENGTH = 33; // ledger_account.h:28
 export const MAX_BIP32_DEPTH = 10; // bip32.h:15 (MAX_BIP32_PATH)

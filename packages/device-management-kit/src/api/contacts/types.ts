@@ -24,7 +24,6 @@ export enum ResponseType {
   RegisterIdentity = 0x2d,
   EditContactName = 0x2e,
   RegisterLedgerAccount = 0x2f,
-  EditLedgerAccount = 0x30,
   EditIdentifier = 0x31,
   EditScope = 0x32,
   ProvideContact = 0x33,
