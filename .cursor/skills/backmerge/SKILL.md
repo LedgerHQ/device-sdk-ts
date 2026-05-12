@@ -69,7 +69,7 @@ git commit -m "🔧 (release): Reset private packages after release"
 
 ```bash
 git push -u origin chore/backmerge
-gh pr create -B develop --title "🔀 (release) [NO-ISSUE]: Backmerge release into develop" -T .github/pull_request_backmerge_template.md
+gh pr create -B develop --title "🔀 (release) [NO-ISSUE]: Backmerge release into develop" -F .github/pull_request_backmerge_template.md
 ```
 
 - Report the PR URL to the user.

@@ -11,6 +11,7 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
+import { type SignNestedCallDAReturnType } from "@api/app-binder/SignNestedCallDeviceActionTypes";
 import { type SignRootIntentDAReturnType } from "@api/app-binder/SignRootIntentDeviceActionTypes";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
@@ -19,6 +20,7 @@ import { GetAddressCommand } from "./command/GetAddressCommand";
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { GetViewKeyCommand } from "./command/GetViewKeyCommand";
 import { SignFeeIntentTask } from "./task/SignFeeIntentTask";
+import { SignNestedCallTask } from "./task/SignNestedCallTask";
 import { SignRootIntentTask } from "./task/SignRootIntentTask";
 
 @injectable()
@@ -95,6 +97,26 @@ export class AleoAppBinder {
             }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  signNestedCall(args: {
+    nestedCallRequest: Uint8Array;
+    skipOpenApp: boolean;
+  }): SignNestedCallDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: (internalApi) =>
+            new SignNestedCallTask(internalApi, {
+              nestedCallRequest: args.nestedCallRequest,
+            }).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
       }),

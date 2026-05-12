@@ -9,6 +9,12 @@ export type {
   GetAppConfigDAOutput,
 } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 export type {
+  GetFullViewingKeyDAError,
+  GetFullViewingKeyDAIntermediateValue,
+  GetFullViewingKeyDAOutput,
+  GetFullViewingKeyDAReturnType,
+} from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
+export type {
   GetTrustedInputDAError,
   GetTrustedInputDAIntermediateValue,
   GetTrustedInputDAOutput,
@@ -23,6 +29,10 @@ export type {
   SignTransactionDAIntermediateValue,
   SignTransactionDAOutput,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export type {
+  FullViewingKeyOptions,
+  ZcashFullViewingKeyMode,
+} from "@api/model/FullViewingKeyOptions";
 export * from "@api/SignerZcash";
 export * from "@api/SignerZcashBuilder";
 // Export other types as needed

@@ -20,5 +20,11 @@ describe("addressModuleFactory", () => {
     it("should bind GetAddressUseCase", () => {
       expect(container.isBound(addressTypes.GetAddressUseCase)).toBeTruthy();
     });
+
+    it("should bind GetFullViewingKeyUseCase", () => {
+      expect(
+        container.isBound(addressTypes.GetFullViewingKeyUseCase),
+      ).toBeTruthy();
+    });
   });
 });

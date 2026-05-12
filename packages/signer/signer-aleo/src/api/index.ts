@@ -19,6 +19,11 @@ export type {
   SignFeeIntentDAOutput,
 } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
 export type {
+  SignNestedCallDAError,
+  SignNestedCallDAIntermediateValue,
+  SignNestedCallDAOutput,
+} from "@api/app-binder/SignNestedCallDeviceActionTypes";
+export type {
   SignRootIntentDAError,
   SignRootIntentDAIntermediateValue,
   SignRootIntentDAOutput,

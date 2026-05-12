@@ -5,13 +5,16 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
+import { ZCASH_CLA } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import { type ZcashAppCommandError } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+
+const GET_ADDRESS_INS = 0x40;
 
 // Standard Zcash BIP44 path: m/44'/133'/0'/0/0
 // Path elements (BE u32): 0x8000002C, 0x80000085, 0x80000000, 0x00000000, 0x00000000
 const GET_ADDRESS_APDU_NO_DISPLAY = Uint8Array.from([
-  0xe0, // CLA
-  0x40, // INS (GET_WALLET_PUBLIC_KEY)
+  ZCASH_CLA,
+  GET_ADDRESS_INS,
   0x00, // P1 (no display)
   0x00, // P2
   0x15, // Data length: 1 (path len) + 5*4 (path elements) = 21
@@ -39,8 +42,8 @@ const GET_ADDRESS_APDU_NO_DISPLAY = Uint8Array.from([
 ]);
 
 const GET_ADDRESS_APDU_WITH_DISPLAY = Uint8Array.from([
-  0xe0, // CLA
-  0x40, // INS
+  ZCASH_CLA,
+  GET_ADDRESS_INS,
   0x01, // P1 (display on device)
   0x00, // P2
   0x15, // Data length: 21
@@ -69,8 +72,8 @@ const GET_ADDRESS_APDU_WITH_DISPLAY = Uint8Array.from([
 
 // m/44'/133'/1'/0/5
 const GET_ADDRESS_APDU_CUSTOM_PATH = Uint8Array.from([
-  0xe0, // CLA
-  0x40, // INS
+  ZCASH_CLA,
+  GET_ADDRESS_INS,
   0x00, // P1 (no display)
   0x00, // P2
   0x15, // Data length: 21

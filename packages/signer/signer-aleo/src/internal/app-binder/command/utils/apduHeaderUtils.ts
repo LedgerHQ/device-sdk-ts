@@ -20,3 +20,9 @@ export const P1 = {
   CHECK_ON_DEVICE: 0x01,
   NO_CHECK: 0x00,
 } as const;
+
+export const APDU_SECTION_LENGTH = {
+  DATA_SIZE: 2, // How many bytes are needed to store APDU data length
+  DERIVATION_PATH_SEGMENT: 4,
+  DERIVATION_PATH_LENGTH: 1, // Derivation path length is encoded on one byte
+} as const;

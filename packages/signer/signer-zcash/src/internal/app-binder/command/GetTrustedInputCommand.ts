@@ -11,7 +11,6 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  INS,
   P1,
   P2,
   ZCASH_CLA,
@@ -34,6 +33,7 @@ export type GetTrustedInputCommandResponse = ApduResponse;
  * The length of the prefix for the index lookup in bytes.
  */
 export const INDEX_LOOKUP_PREFIX_LENGTH = 4;
+const GET_TRUSTED_INPUT_INS = 0x42;
 
 export class GetTrustedInputCommand
   implements
@@ -77,7 +77,7 @@ export class GetTrustedInputCommand
 
     const getTrustedInputCommandArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS.GET_TRUSTED_INPUT,
+      ins: GET_TRUSTED_INPUT_INS,
       p1: firstRound ? P1.FIRST : P1.NEXT,
       p2: P2.DEFAULT,
     };
