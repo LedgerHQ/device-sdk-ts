@@ -23,8 +23,8 @@ export interface ContactsService {
   /**
    * Op 2 — Edit external address label (`SUB_CMD_EDIT_SCOPE`, P1=0x04).
    *
-   * **Not yet implemented — lands in M4.** Method is declared here so the
-   * interface stays stable across the M3/M4 split.
+   * Rotates the targeted entry's `hmac_rest`; contact-level `group_handle`
+   * and `hmac_name` stay untouched.
    */
   editExternalAddressLabel(
     args: EditExternalAddressLabelArgs,
