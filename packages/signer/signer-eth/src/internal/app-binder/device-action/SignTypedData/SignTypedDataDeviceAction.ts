@@ -57,6 +57,7 @@ import {
 } from "@internal/app-binder/task/ProvideEIP712ContextTask";
 import { SignTypedDataLegacyTask } from "@internal/app-binder/task/SignTypedDataLegacyTask";
 import { MIN_ETH_APP_VERSION_FOR_WEB3_CHECKS } from "@internal/shared/EthAppVersions";
+import { normalizeChainId } from "@internal/shared/utils/normalizeChainId";
 import { type TransactionMapperService } from "@internal/transaction/service/mapper/TransactionMapperService";
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
@@ -598,7 +599,7 @@ export class SignTypedDataDeviceAction extends XStateDeviceAction<
                     context._internalState.typedDataContext?.clearSignContext.isJust() ??
                     false,
                   usedFallback: context._internalState.usedFallback,
-                  chainId: context.input.data.domain.chainId ?? null,
+                  chainId: normalizeChainId(context.input.data.domain.chainId),
                   targetAddress:
                     context.input.data.domain.verifyingContract ?? null,
                   deviceModelId: internalApi.getDeviceModel().id,

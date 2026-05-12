@@ -1270,4 +1270,86 @@ describe("SignTypedDataDeviceAction", () => {
         });
       }));
   });
+
+  describe("Blind signing detection input", () => {
+    function runDeviceAction(domain: Record<string, unknown>) {
+      return new Promise<void>((resolve, reject) => {
+        setupOpenAppDAMock();
+        setupAppConfig("1.15.0", false, false);
+        getAddressMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: { address: FROM },
+          }),
+        );
+
+        const deviceAction = new SignTypedDataDeviceAction({
+          input: {
+            derivationPath: "44'/60'/0'/0/0",
+            data: { ...TEST_MESSAGE, domain } as typeof TEST_MESSAGE,
+            contextModule: mockContextModule as unknown as ContextModule,
+            parser: mockParser,
+            transactionParser: mockTransactionParser,
+            transactionMapper: mockTransactionMapper,
+            skipOpenApp: false,
+          },
+        });
+
+        vi.spyOn(deviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+        buildContextMock.mockResolvedValueOnce(TEST_BUILT_CONTEXT);
+        provideContextMock.mockResolvedValueOnce(
+          CommandResultFactory({ data: undefined }),
+        );
+        signTypedDataMock.mockResolvedValueOnce(
+          CommandResultFactory({
+            data: {
+              v: 0x1c,
+              r: "0x8a540510e13b0f2b11a451275716d29e08caad07e89a1c84964782fb5e1ad788",
+              s: "0x64a0de235b270fbe81e8e40688f4a9f9ad9d283d690552c9331d7773ceafa513",
+            },
+          }),
+        );
+
+        const { observable } = deviceAction._execute(apiMock);
+        observable.subscribe({
+          error: reject,
+          complete: () => resolve(),
+        });
+      });
+    }
+
+    it("should normalize a hex-string domain.chainId to a number before reporting", async () => {
+      await runDeviceAction({
+        chainId: "0x1",
+        verifyingContract: "0xabc",
+      });
+
+      expect(detectBlindSigningMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: expect.objectContaining({
+            input: expect.objectContaining({
+              type: "typedData",
+              chainId: 1,
+              targetAddress: "0xabc",
+            }),
+          }),
+        }),
+      );
+    });
+
+    it("should pass null when domain.chainId is missing", async () => {
+      await runDeviceAction({ verifyingContract: "0xabc" });
+
+      expect(detectBlindSigningMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          input: expect.objectContaining({
+            input: expect.objectContaining({
+              chainId: null,
+            }),
+          }),
+        }),
+      );
+    });
+  });
 });
