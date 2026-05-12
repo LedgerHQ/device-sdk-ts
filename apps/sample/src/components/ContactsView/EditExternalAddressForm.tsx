@@ -11,12 +11,20 @@ import {
   type EditExternalAddressDAState,
   type EditExternalAddressResult,
 } from "@ledgerhq/device-signer-kit-ethereum";
-import { Button, Flex, Input, SelectInput, Text } from "@ledgerhq/react-ui";
+import {
+  Button,
+  Flex,
+  Icons,
+  Input,
+  SelectInput,
+  Text,
+} from "@ledgerhq/react-ui";
 
 import { SelectInputLabel } from "@/components/InputLabel";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
+import { randomEthAddressHex } from "@/utils/crypto";
 
 import { describeDeviceError, type FormStatus } from "./_shared";
 
@@ -249,6 +257,23 @@ export const EditExternalAddressForm: React.FC = () => {
           autoComplete="off"
           data-1p-ignore="true"
           data-lpignore="true"
+          renderRight={() => (
+            <Flex
+              alignItems="center"
+              pr="8px"
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <Button
+                variant="shade"
+                outline
+                iconButton
+                Icon={() => <Icons.Refresh size="XS" />}
+                onClick={() => setNewAddressHex(randomEthAddressHex())}
+                disabled={status.kind === "running"}
+                aria-label="Generate random test address"
+              />
+            </Flex>
+          )}
         />
       </Flex>
 
