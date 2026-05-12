@@ -10,6 +10,7 @@ import {
   type SignRootIntentCommandResponse,
 } from "@internal/app-binder/command/SignRootIntentCommand";
 import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
+import { APDU_SECTION_LENGTH } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import { SendAleoCommandInChunksTask } from "./SendAleoCommandInChunksTask";
 
@@ -31,7 +32,11 @@ export class SignRootIntentTask {
 
     const path = DerivationPathUtils.splitPath(derivationPath);
     // Path length (1 byte) + Path (4 bytes per element) + Data length (2 bytes) + Root intent data
-    const totalLength = 1 + path.length * 4 + 2 + rootIntent.byteLength;
+    const totalLength =
+      APDU_SECTION_LENGTH.DERIVATION_PATH_LENGTH +
+      path.length * APDU_SECTION_LENGTH.DERIVATION_PATH_SEGMENT +
+      APDU_SECTION_LENGTH.DATA_SIZE +
+      rootIntent.byteLength;
 
     const builder = new ByteArrayBuilder(totalLength);
 

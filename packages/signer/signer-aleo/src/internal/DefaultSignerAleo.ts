@@ -8,6 +8,7 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
+import { type SignNestedCallDAReturnType } from "@api/app-binder/SignNestedCallDeviceActionTypes";
 import { type SignRootIntentDAReturnType } from "@api/app-binder/SignRootIntentDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
@@ -20,6 +21,7 @@ import { configTypes } from "@internal/use-cases/config/di/configTypes";
 import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
 import { type SignFeeIntentUseCase } from "@internal/use-cases/transaction/SignFeeIntentUseCase";
+import { type SignNestedCallUseCase } from "@internal/use-cases/transaction/SignNestedCallUseCase";
 import { type SignRootIntentUseCase } from "@internal/use-cases/transaction/SignRootIntentUseCase";
 
 type DefaultSignerAleoConstructorArgs = {
@@ -66,6 +68,15 @@ export class DefaultSignerAleo implements SignerAleo {
     return this._container
       .get<SignRootIntentUseCase>(transactionTypes.SignRootIntentUseCase)
       .execute(derivationPath, rootIntent, options);
+  }
+
+  signNestedCall(
+    nestedCallRequest: Uint8Array,
+    options?: TransactionOptions,
+  ): SignNestedCallDAReturnType {
+    return this._container
+      .get<SignNestedCallUseCase>(transactionTypes.SignNestedCallUseCase)
+      .execute(nestedCallRequest, options);
   }
 
   signFeeIntent(

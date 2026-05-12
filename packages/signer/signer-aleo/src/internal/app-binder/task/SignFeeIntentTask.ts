@@ -9,6 +9,7 @@ import {
   type SignFeeIntentCommandResponse,
 } from "@internal/app-binder/command/SignFeeIntentCommand";
 import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
+import { APDU_SECTION_LENGTH } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import { SendAleoCommandInChunksTask } from "./SendAleoCommandInChunksTask";
 
@@ -28,7 +29,7 @@ export class SignFeeIntentTask {
     const { feeIntent } = this.args;
 
     // Data length (2 bytes) + Fee intent data
-    const totalLength = 2 + feeIntent.byteLength;
+    const totalLength = APDU_SECTION_LENGTH.DATA_SIZE + feeIntent.byteLength;
 
     const builder = new ByteArrayBuilder(totalLength);
 
