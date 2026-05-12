@@ -9,6 +9,7 @@ import {
   type SignNestedCallCommandResponse,
 } from "@internal/app-binder/command/SignNestedCallCommand";
 import { type AleoErrorCodes } from "@internal/app-binder/command/utils/aleoApplicationErrors";
+import { APDU_SECTION_LENGTH } from "@internal/app-binder/command/utils/apduHeaderUtils";
 
 import { SendAleoCommandInChunksTask } from "./SendAleoCommandInChunksTask";
 
@@ -28,7 +29,8 @@ export class SignNestedCallTask {
     const { nestedCallRequest } = this.args;
 
     // Data length (2 bytes) + nested call request data
-    const totalLength = 2 + nestedCallRequest.byteLength;
+    const totalLength =
+      APDU_SECTION_LENGTH.DATA_SIZE + nestedCallRequest.byteLength;
 
     const builder = new ByteArrayBuilder(totalLength);
 
