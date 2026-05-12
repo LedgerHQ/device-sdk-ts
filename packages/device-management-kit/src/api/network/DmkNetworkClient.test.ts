@@ -60,6 +60,23 @@ describe("DmkNetworkClient", () => {
       expect(url.searchParams.has("skip")).toBe(false);
       expect(url.searchParams.has("alsoSkip")).toBe(false);
     });
+
+    it("should pass a plain string URL to fetch with no trailing slash after the query (facebook/react-native#54242)", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
+      const client = new DmkNetworkClient({ fetch: fetchMock });
+
+      await client.get(
+        "https://manager.api.live.ledger.com/api/get_device_version",
+        { params: { target_id: 858783748, provider: 1 } },
+      );
+
+      const [calledUrl] = fetchMock.mock.calls[0]!;
+      expect(typeof calledUrl).toBe("string");
+      expect(calledUrl).toBe(
+        "https://manager.api.live.ledger.com/api/get_device_version?target_id=858783748&provider=1",
+      );
+      expect((calledUrl as string).endsWith("/")).toBe(false);
+    });
   });
 
   describe("headers", () => {

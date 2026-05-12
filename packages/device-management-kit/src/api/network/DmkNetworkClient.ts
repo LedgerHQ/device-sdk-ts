@@ -187,7 +187,7 @@ export class DmkNetworkClient {
 
     let response: Response;
     try {
-      response = await this.getFetch()(url.toString(), {
+      response = await this.getFetch()(url, {
         method: config.method,
         headers,
         body,
