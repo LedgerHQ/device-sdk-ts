@@ -13,12 +13,14 @@ import {
   type RegisterExternalAddressDAState,
   type RegisterExternalAddressResult,
 } from "@ledgerhq/device-signer-kit-ethereum";
-import { Button, Flex, Text } from "@ledgerhq/react-ui";
+import { Button, Flex, Icons, Input, Text } from "@ledgerhq/react-ui";
 
 import { Form, type HintSelector } from "@/components/Form";
+import { InputLabel } from "@/components/InputLabel";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
+import { randomEthAddressHex } from "@/utils/crypto";
 
 import {
   CharacterCounter,
@@ -40,17 +42,15 @@ const ADDRESS_LABEL_MAX_CHARS = SCOPE_BUFFER_LENGTH - 1;
 // a power-user `--path` option.
 const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0";
 
-// `contactName` is rendered by a custom <ContactNameInput /> (combobox over
-// existing contacts) so it lives outside FormValues. The rest of the fields
-// flow through the generic <Form />.
+// `contactName` and `addressHex` are rendered manually (custom combobox /
+// Playground "fill with random address" icon-button) so they live outside
+// FormValues. The remaining fields flow through the generic <Form />.
 type FormValues = {
-  addressHex: string;
   addressLabel: string;
   network: string;
 };
 
 const initialFormValues: FormValues = {
-  addressHex: "",
   addressLabel: "",
   network: "ethereum",
 };
@@ -58,7 +58,6 @@ const initialFormValues: FormValues = {
 const valueSelector = { network: NETWORK_OPTIONS };
 
 const labelSelector = {
-  addressHex: "Address (0x…)",
   addressLabel: "Address label",
   network: "Network",
 };
@@ -96,12 +95,13 @@ function findScopeCollision(contact: Contact, scope: string): boolean {
 
 function buildEntry(
   values: FormValues,
+  addressHex: string,
   result: RegisterExternalAddressResult,
 ): ContactEntry {
   return {
     network: values.network,
     chainId: chainIdForNetwork(values.network),
-    addressHex: normalizeAddressHex(values.addressHex),
+    addressHex: normalizeAddressHex(addressHex),
     scope: values.addressLabel,
     derivationPath: DEFAULT_DERIVATION_PATH,
     hmacRestHex: result.hmacRestHex,
@@ -113,13 +113,14 @@ function mergeFresh(
   wallet: Wallet,
   contactName: string,
   values: FormValues,
+  addressHex: string,
   result: RegisterExternalAddressResult,
 ): Wallet {
   const newContact: Contact = {
     name: contactName,
     groupHandleHex: result.groupHandleHex,
     hmacNameHex: result.hmacNameHex,
-    entries: [buildEntry(values, result)],
+    entries: [buildEntry(values, addressHex, result)],
   };
   return {
     ...wallet,
@@ -130,12 +131,13 @@ function mergeFresh(
 function mergeExtension(
   wallet: Wallet,
   values: FormValues,
+  addressHex: string,
   existing: Contact,
   result: RegisterExternalAddressResult,
 ): Wallet {
   const updated: Contact = {
     ...existing,
-    entries: [...existing.entries, buildEntry(values, result)],
+    entries: [...existing.entries, buildEntry(values, addressHex, result)],
   };
   return {
     ...wallet,
@@ -149,6 +151,7 @@ export const RegisterExternalAddressForm: React.FC = () => {
   const signer = useSignerEth();
 
   const [contactName, setContactName] = useState("");
+  const [addressHex, setAddressHex] = useState("");
   const [values, setValues] = useState<FormValues>(initialFormValues);
   const [status, setStatus] = useState<FormStatus>({ kind: "idle" });
 
@@ -160,7 +163,7 @@ export const RegisterExternalAddressForm: React.FC = () => {
   const handleSubmit = useCallback(() => {
     if (!signer) return;
 
-    const normalizedAddress = normalizeAddressHex(values.addressHex);
+    const normalizedAddress = normalizeAddressHex(addressHex);
     const chainId = chainIdForNetwork(values.network);
     const existing = wallet.contacts[contactName];
 
@@ -193,7 +196,7 @@ export const RegisterExternalAddressForm: React.FC = () => {
     try {
       ({ observable } = signer.registerExternalAddress({
         name: contactName,
-        addressHex: values.addressHex,
+        addressHex,
         scope: values.addressLabel,
         derivationPath: DEFAULT_DERIVATION_PATH,
         chainId,
@@ -215,8 +218,8 @@ export const RegisterExternalAddressForm: React.FC = () => {
         if (state.status === "completed") {
           const result = state.output;
           const merged = existing
-            ? mergeExtension(wallet, values, existing, result)
-            : mergeFresh(wallet, contactName, values, result);
+            ? mergeExtension(wallet, values, addressHex, existing, result)
+            : mergeFresh(wallet, contactName, values, addressHex, result);
           dispatch(setWallet(merged));
           setStatus({
             kind: "success",
@@ -237,7 +240,7 @@ export const RegisterExternalAddressForm: React.FC = () => {
         setStatus({ kind: "error", message: describeDeviceError(err) });
       },
     });
-  }, [dispatch, signer, contactName, values, wallet]);
+  }, [dispatch, signer, contactName, addressHex, values, wallet]);
 
   const hintSelector: HintSelector<FormValues> = {
     addressLabel: (value) => (
@@ -266,6 +269,36 @@ export const RegisterExternalAddressForm: React.FC = () => {
           disabled={status.kind === "running"}
         />
         <CharacterCounter value={contactName} max={CONTACT_NAME_MAX_CHARS} />
+      </Flex>
+
+      <Flex flexDirection="column" rowGap={1}>
+        <Input
+          id="addressHex"
+          renderLeft={() => <InputLabel>Address (0x…)</InputLabel>}
+          value={addressHex}
+          onChange={setAddressHex}
+          disabled={status.kind === "running"}
+          autoComplete="off"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          renderRight={() => (
+            <Flex
+              alignItems="center"
+              pr="8px"
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <Button
+                variant="shade"
+                outline
+                iconButton
+                Icon={() => <Icons.Refresh size="XS" />}
+                onClick={() => setAddressHex(randomEthAddressHex())}
+                disabled={status.kind === "running"}
+                aria-label="Generate random test address"
+              />
+            </Flex>
+          )}
+        />
       </Flex>
 
       <Form
