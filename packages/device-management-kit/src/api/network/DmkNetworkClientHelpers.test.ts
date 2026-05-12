@@ -45,7 +45,7 @@ describe("DmkNetworkClientHelpers", () => {
   describe("buildUrl", () => {
     it("should keep an absolute URL as-is", () => {
       const url = buildUrl({ url: "https://api.example.com/items" });
-      expect(url.toString()).toBe("https://api.example.com/items");
+      expect(url).toBe("https://api.example.com/items");
     });
 
     it("should prepend the base URL to a relative path", () => {
@@ -53,7 +53,7 @@ describe("DmkNetworkClientHelpers", () => {
         url: "/items",
         baseUrl: "https://api.example.com/",
       });
-      expect(url.toString()).toBe("https://api.example.com/items");
+      expect(url).toBe("https://api.example.com/items");
     });
 
     it("should ignore the base URL when the input URL is absolute", () => {
@@ -61,7 +61,7 @@ describe("DmkNetworkClientHelpers", () => {
         url: "https://other.example.com/items",
         baseUrl: "https://api.example.com",
       });
-      expect(url.toString()).toBe("https://other.example.com/items");
+      expect(url).toBe("https://other.example.com/items");
     });
 
     it("should append query params and skip null/undefined entries", () => {
@@ -75,11 +75,13 @@ describe("DmkNetworkClientHelpers", () => {
           alsoSkip: undefined,
         },
       });
-      expect(url.searchParams.get("chain")).toBe("1");
-      expect(url.searchParams.get("contract")).toBe("0xabc");
-      expect(url.searchParams.get("active")).toBe("true");
-      expect(url.searchParams.has("skip")).toBe(false);
-      expect(url.searchParams.has("alsoSkip")).toBe(false);
+      expect(typeof url).toBe("string");
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get("chain")).toBe("1");
+      expect(parsed.searchParams.get("contract")).toBe("0xabc");
+      expect(parsed.searchParams.get("active")).toBe("true");
+      expect(parsed.searchParams.has("skip")).toBe(false);
+      expect(parsed.searchParams.has("alsoSkip")).toBe(false);
     });
 
     it("should preserve a pre-existing query string in the input URL", () => {
@@ -87,8 +89,9 @@ describe("DmkNetworkClientHelpers", () => {
         url: "https://api.example.com/items?keep=1",
         params: { chain: 2 },
       });
-      expect(url.searchParams.get("keep")).toBe("1");
-      expect(url.searchParams.get("chain")).toBe("2");
+      const parsed = new URL(url);
+      expect(parsed.searchParams.get("keep")).toBe("1");
+      expect(parsed.searchParams.get("chain")).toBe("2");
     });
 
     it("should percent-encode keys and values", () => {
@@ -96,15 +99,32 @@ describe("DmkNetworkClientHelpers", () => {
         url: "https://api.example.com/items",
         params: { "a key": "a value&b" },
       });
-      expect(url.toString()).toBe(
-        "https://api.example.com/items?a%20key=a%20value%26b",
+      expect(url).toBe("https://api.example.com/items?a%20key=a%20value%26b");
+    });
+
+    it("should not append a trailing slash after the last query value (facebook/react-native#54242)", () => {
+      const url = buildUrl({
+        url: "https://manager.api.live.ledger.com/api/get_device_version",
+        params: { target_id: 858783748, provider: 1 },
+      });
+      expect(typeof url).toBe("string");
+      expect(url).toBe(
+        "https://manager.api.live.ledger.com/api/get_device_version?target_id=858783748&provider=1",
       );
+      expect(url.endsWith("/")).toBe(false);
+    });
+
+    it("should return a plain string (not a URL instance) so RN URL serialization is bypassed", () => {
+      const url = buildUrl({
+        url: "https://api.example.com/items",
+        params: { chain: 1 },
+      });
+      expect(typeof url).toBe("string");
+      expect(url).not.toBeInstanceOf(URL);
     });
 
     it("should still build the URL when URLSearchParams.set is unavailable (React Native regression)", () => {
       const original = URLSearchParams.prototype.set;
-      // Simulate a runtime (e.g. some React Native versions) where
-      // URLSearchParams exists but `set` is not implemented.
       URLSearchParams.prototype.set = function notImplemented(): never {
         throw new Error("URLSearchParams.set is not implemented");
       };
@@ -113,10 +133,8 @@ describe("DmkNetworkClientHelpers", () => {
           url: "https://api.example.com/items",
           params: { chain: 1, contract: "0xabc" },
         });
-        // Reading `searchParams.get` in jsdom does not call `set`, so it is
-        // safe to assert against the parsed URL here.
-        expect(url.toString()).toContain("chain=1");
-        expect(url.toString()).toContain("contract=0xabc");
+        expect(url).toContain("chain=1");
+        expect(url).toContain("contract=0xabc");
       } finally {
         URLSearchParams.prototype.set = original;
       }

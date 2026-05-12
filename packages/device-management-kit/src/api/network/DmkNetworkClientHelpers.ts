@@ -44,43 +44,30 @@ function serializeParams(params: DmkQueryParams): string {
 }
 
 /**
- * Builds the final request URL from an input URL (absolute or relative), an
- * optional base URL, and optional query params. `null`/`undefined` param
- * values are skipped.
+ * Builds the final request URL as a plain string. `null`/`undefined` params
+ * are skipped; params are appended (not merged) when `url` already has a
+ * query string; fragments are not supported alongside `params`.
  *
- * Query params are serialized manually (see {@link serializeParams}) instead
- * of via `URL.searchParams`, because some runtimes (notably React Native)
- * ship a `URLSearchParams` whose mutation methods (`set`, `append`, …) are
- * not implemented.
- *
- * @remarks
- * Fragments (`#...`) in the input URL are not supported when `params` is
- * provided: the query string is concatenated after the fragment, so it ends
- * up parsed as part of `.hash` rather than `.search`. Callers should strip
- * or avoid fragments on URLs passed to this function.
- *
- * @remarks
- * If `url` already contains a query string, `params` are appended to it.
- * Keys present in both the existing query string and `params` are not merged:
- * both occurrences will appear in the final URL. Callers relying on override
- * semantics should pre-merge their parameters.
+ * Returns a string (not a `URL`) to avoid React Native's `URL.toString()`,
+ * which appends a stray trailing `/` to URLs with a query string on affected
+ * versions (facebook/react-native#54242).
  */
 export function buildUrl(args: {
   url: string;
   params?: DmkQueryParams;
   baseUrl?: string;
-}): URL {
+}): string {
   const { url, params, baseUrl } = args;
   const isAbsolute = /^[a-z][a-z0-9+.-]*:\/\//i.test(url);
   const composed = isAbsolute ? url : baseUrl ? joinPath(baseUrl, url) : url;
 
   const query = params ? serializeParams(params) : "";
   if (query.length === 0) {
-    return new URL(composed);
+    return composed;
   }
 
   const separator = composed.includes("?") ? "&" : "?";
-  return new URL(`${composed}${separator}${query}`);
+  return `${composed}${separator}${query}`;
 }
 
 /**
