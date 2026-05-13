@@ -37,11 +37,9 @@ export {
   type RegisterLedgerAccountDAError,
   type RegisterLedgerAccountDAInput,
   type RegisterLedgerAccountDAIntermediateValue,
-  type RegisterLedgerAccountDAInternalState,
   type RegisterLedgerAccountDAOutput,
   type RegisterLedgerAccountDAReturnType,
   type RegisterLedgerAccountDAState,
-  RegisterLedgerAccountDAStep,
 } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 export {
   type SignDelegationAuthorizationDAError,

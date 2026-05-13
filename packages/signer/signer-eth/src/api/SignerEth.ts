@@ -22,6 +22,18 @@ import { type TypedData } from "@api/model/TypedData";
 import { type TypedDataOptions } from "@api/model/TypedDataOptions";
 
 export interface SignerEth {
+  /**
+   * Sign an Ethereum transaction. ContextModule loaders (ENS,
+   * ERC-7730, web3-check, token / NFT info, …) are gathered and pushed
+   * automatically before the SignTx APDU.
+   *
+   * NOTE: Contacts metadata is NOT yet part of that unified pipeline.
+   * Callers that want From / To decoration must invoke
+   * `provideLedgerAccount` and/or `provideContact` BEFORE this call.
+   * Integrating Contacts into ContextModule (new
+   * `ContactsContextLoader` + `ClearSignContextType.CONTACT_*` branches
+   * in `ProvideContextTask`) is tracked separately — see `<TICKET-ID>`.
+   */
   signTransaction: (
     derivationPath: string,
     transaction: Uint8Array,
@@ -89,6 +101,11 @@ export interface SignerEth {
    * one of the two per Send, or wait for the upstream-asks resolution
    * tracked in
    * `~/dev/ledger-contacts-playground/docs/upstream-asks.md`.
+   *
+   * This method exists because Contacts is not yet integrated into the
+   * ContextModule unified loader pipeline. Once it is (see
+   * `signTransaction` JSDoc), this surface becomes optional /
+   * advanced-use rather than the required orchestration step.
    */
   provideContact: (args: ProvideContactArgs) => ProvideContactDAReturnType;
   /**
@@ -110,6 +127,12 @@ export interface SignerEth {
    * (mirrors DMK's `contacts: {...}` vs `accounts: {...}` Wallet split).
    * The wire fixture key in `apdu-traces.json` stays the Python name —
    * that's the byte-parity source of truth.
+   *
+   * Same status as `provideContact`: this method exists because
+   * Contacts is not yet integrated into the ContextModule pipeline (see
+   * `signTransaction` JSDoc). Once it is, the loader will resolve known
+   * From / To accounts automatically and callers will no longer need to
+   * invoke this explicitly.
    */
   provideLedgerAccount: (
     args: ProvideLedgerAccountArgs,

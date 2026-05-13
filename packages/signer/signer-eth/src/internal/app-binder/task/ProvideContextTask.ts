@@ -87,6 +87,12 @@ export class ProvideContextTask {
       );
     }
 
+    // FUTURE: ClearSignContextType.CONTACT_EXTERNAL /
+    // CONTACT_LEDGER_ACCOUNT branches will plug in here once Contacts is
+    // unified into the ContextModule pipeline (see
+    // SignerEth.signTransaction JSDoc). Until then, those decorations
+    // are pushed out-of-band via EthAppBinder.provideContact /
+    // provideLedgerAccount. Tracked: <TICKET-ID>.
     switch (type) {
       case ClearSignContextType.ETHEREUM_PLUGIN: {
         return await this._api.sendCommand(new SetPluginCommand({ payload }));
