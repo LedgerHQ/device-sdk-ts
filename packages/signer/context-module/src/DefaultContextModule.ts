@@ -8,6 +8,7 @@ import { type ContextModule } from "@/ContextModule";
 import { makeContainer } from "@/di";
 import { accountOwnershipTypes } from "@/modules/concordium/account-ownership/di/accountOwnershipTypes";
 import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
+import { contactsTypes } from "@/modules/ethereum/contacts/di/contactsTypes";
 import { dynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkTypes";
 import { externalPluginTypes } from "@/modules/ethereum/external-plugin/di/externalPluginTypes";
 import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
@@ -54,6 +55,16 @@ export class DefaultContextModule implements ContextModule {
     this._container = makeContainer({ config: args });
 
     this._loaders = args.defaultLoaders ? this._getDefaultLoaders() : [];
+    // Contacts is opt-in (local-first): only registered when the SDK
+    // consumer injected a data source. Placed before the default set
+    // so it's consulted first; the signer-eth `BuildFullContextsTask`
+    // also dedups TRUSTED_NAME entries when CONTACT_* covers the same
+    // address (Contacts wins on collision).
+    if (args.customContactsDataSource) {
+      this._loaders.unshift(
+        this._container.get<ContextLoader>(contactsTypes.ContactsContextLoader),
+      );
+    }
     this._loaders.push(...args.customLoaders);
 
     this._fieldLoaders = args.defaultFieldLoaders

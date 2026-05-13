@@ -1,6 +1,6 @@
 import { ValidationError } from "@ledgerhq/device-management-kit";
 
-import { EthAppBinder } from "@internal/app-binder/EthAppBinder";
+import { type EthAppBinder } from "@internal/app-binder/EthAppBinder";
 
 import { EditExternalAddressUseCase } from "./EditExternalAddressUseCase";
 

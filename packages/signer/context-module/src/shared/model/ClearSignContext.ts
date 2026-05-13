@@ -20,6 +20,8 @@ export enum ClearSignContextType {
   ETHEREUM_SAFE = "ethereumSafe",
   ETHEREUM_SIGNER = "ethereumSigner",
   ETHEREUM_GATED_SIGNING = "ethereumGatedSigning",
+  ETHEREUM_CONTACT_EXTERNAL = "ethereumContactExternal",
+  ETHEREUM_CONTACT_LEDGER_ACCOUNT = "ethereumContactLedgerAccount",
   SOLANA_TOKEN = "solanaToken",
   SOLANA_LIFI = "solanaLifi",
   SOLANA_TRUSTED_NAME = "solanaTrustedName",

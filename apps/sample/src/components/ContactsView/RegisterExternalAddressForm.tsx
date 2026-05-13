@@ -37,9 +37,8 @@ const ADDRESS_LABEL_MAX_CHARS = SCOPE_BUFFER_LENGTH - 1;
 // Hidden from the form — this is the BIP32 path used to derive the HMAC
 // key on device, NOT an address-derivation path. Confusing to expose
 // here (Register-external-address takes an address; Register-Ledger-account
-// in M6 is the op that actually derives an address from a path). The
-// playground CLI defaults it to the same value and surfaces it only as
-// a power-user `--path` option.
+// is the op that actually derives an address from a path), so it's
+// hardcoded to the Ledger Live default.
 const DEFAULT_DERIVATION_PATH = "44'/60'/0'/0/0";
 
 // `contactName` and `addressHex` are rendered manually (custom combobox /

@@ -1,7 +1,7 @@
-// Mirrors `service.py:41-48` in the playground. UX-only: the form uses this
-// map to populate the network dropdown and auto-fill chainId. The signer
-// itself takes only `chainId` — `network` is a label that flows into the
-// stored ContactEntry but never reaches the APDU.
+// UX-only: the form uses this map to populate the network dropdown and
+// auto-fill chainId. The signer itself takes only `chainId` —
+// `network` is a label that flows into the stored ContactEntry but
+// never reaches the APDU.
 export const NETWORKS = {
   ethereum: 1,
   polygon: 137,

@@ -1,13 +1,9 @@
 /**
- * Arguments for `SignerEth.provideContact` — runtime op that loads a
- * previously-registered Contact entry into the device so the next Sign
- * review screen substitutes the friendly name for the raw address.
- *
- * Silent on device (no user prompt): firmware trusts the HMAC chain
- * authorised at Register time and replies with SW=0x9000 + empty data.
- * The form/caller is responsible for sequencing this before a Sign call
- * and for picking the right `provide*` variant (this one for external-
- * address holders; `provideLedgerAccount` for Ledger accounts).
+ * Internal-only arg shape consumed by `SendProvideContactTask` (the
+ * wire-layer task that builds the TLV payload and frames the
+ * `provide_contact` APDU). Reached from `ProvideContextTask` when the
+ * `ContactsContextLoader` emits a `CONTACT_EXTERNAL` clear-sign
+ * context for the recipient.
  *
  * Field shapes mirror the Contact/ContactEntry shape from DMK core's
  * `api/contacts/types.ts`: `groupHandleHex` is the contact-level 64-byte

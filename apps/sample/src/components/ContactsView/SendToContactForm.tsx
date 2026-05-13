@@ -5,7 +5,6 @@ import {
   type ContactEntry,
   DeviceActionStatus,
   hexaStringToBuffer,
-  ResponseType,
   type Wallet,
 } from "@ledgerhq/device-management-kit";
 import { type Signature } from "@ledgerhq/device-signer-kit-ethereum";
@@ -26,23 +25,22 @@ import styled from "styled-components";
 import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
-import { setWallet } from "@/state/contacts/slice";
+import { selectContactsAutoDecorationDisabled } from "@/state/signerRuntime/selectors";
+import { setContactsAutoDecorationDisabled } from "@/state/signerRuntime/slice";
 
 import { describeDeviceError, type FormStatus } from "./_shared";
 import { NETWORK_OPTIONS, type NetworkName, NETWORKS } from "./networks";
 
-// Tx-shape defaults mirror the playground CLI (`cli.py:710-715`). gas=21000
-// is the minimum legal value for a value-transfer; gwei=30 is the CLI's
-// hardcoded default. The transaction is never broadcast — value is cosmetic,
-// kept aligned to avoid reviewer confusion against playground traces.
+// gas=21000 is the minimum legal value for a value-transfer; gwei=30 is
+// a conservative default. The transaction is never broadcast — these
+// values are cosmetic and only land on the device review screen.
 const DEFAULT_GAS_LIMIT = 21000;
 const DEFAULT_GAS_PRICE_GWEI = 30;
 const DEFAULT_NONCE = 0;
 
 // When the user leaves the From field blank, sign with the Ledger Live
 // default path. No Provide From APDU fires; the device review shows the
-// raw derived address with no friendly name. Matches the CLI's
-// `--no-provide-from` behaviour at `service.py:965-968`.
+// raw derived address with no friendly name.
 const NO_FROM_VALUE = "__no_decoration__";
 const DEFAULT_FROM_PATH = "m/44'/60'/0'/0/0";
 
@@ -84,45 +82,9 @@ function enumerateContactEntries(wallet: Wallet): ContactEntryRef[] {
   return out;
 }
 
-function rotateAccountLastResponse(
-  wallet: Wallet,
-  accountName: string,
-  responseType: ResponseType,
-): Wallet {
-  const account = wallet.accounts[accountName];
-  if (!account) return wallet;
-  return {
-    ...wallet,
-    accounts: {
-      ...wallet.accounts,
-      [accountName]: { ...account, lastResponseType: responseType },
-    },
-  };
-}
-
-function rotateContactEntryLastResponse(
-  wallet: Wallet,
-  contactName: string,
-  entryIndex: number,
-  responseType: ResponseType,
-): Wallet {
-  const contact = wallet.contacts[contactName];
-  if (!contact) return wallet;
-  const nextEntries = contact.entries.map((entry, i) =>
-    i === entryIndex ? { ...entry, lastResponseType: responseType } : entry,
-  );
-  return {
-    ...wallet,
-    contacts: {
-      ...wallet.contacts,
-      [contactName]: { ...contact, entries: nextEntries },
-    },
-  };
-}
-
-// Build the unsigned RLP-encoded legacy transaction. Legacy (type=0), not
-// EIP-1559 — matches the playground's `_build_eth_tx_params`
-// (`service.py:865-906`).
+// Build the unsigned RLP-encoded legacy transaction. Legacy (type=0),
+// not EIP-1559 — broader device-firmware support and simpler to
+// inspect on the review screen.
 function buildLegacyTxBytes(args: {
   toAddressHex: string;
   amountWei: bigint;
@@ -318,6 +280,9 @@ const ResultValue = styled.span`
 export const SendToContactForm: React.FC = () => {
   const dispatch = useDispatch();
   const wallet = useSelector(selectWallet);
+  const autoDecorationDisabled = useSelector(
+    selectContactsAutoDecorationDisabled,
+  );
   const signer = useSignerEth();
   const router = useRouter();
 
@@ -501,103 +466,26 @@ export const SendToContactForm: React.FC = () => {
     setResult(null);
     setStatus({ kind: "running" });
 
-    let providedFromName: string | null = null;
-    let providedToName: string | null = null;
     // Hoisted so the catch block can include it in the diagnostic dump.
     let lastSignStep: unknown = undefined;
 
+    // Names the SDK *would* surface as decorated, useful for the
+    // post-sign result panel. The real decoration decisions are made
+    // by the `ContactsContextLoader` inside `signTransaction`; this is
+    // the form's best guess based on its own selectors.
+    const providedFromName =
+      autoDecorationDisabled || fromAccount === null
+        ? null
+        : (fromAccount.name ?? null);
+    const providedToName = autoDecorationDisabled
+      ? null
+      : toKind === "contact" && toContactEntry
+        ? `${toContactEntry.contact.name} / ${toContactEntry.entry.scope}`
+        : toKind === "self" && toSelfAccount !== null
+          ? toSelfAccount.name
+          : null;
+
     try {
-      // Provide From: fires whenever the user picked a real account.
-      // Blank From → no decoration, signed with the default Ledger Live
-      // path. Matches CLI semantics at service.py:965-968.
-      if (fromAccount !== null) {
-        appendTrace({ kind: "info", text: "→ Provide From sent…" });
-        const { observable } = signer.provideLedgerAccount({
-          accountName: fromAccount.name,
-          hmacProofHex: fromAccount.hmacProofHex,
-          derivationPath: fromAccount.derivationPath,
-          chainId: fromAccount.chainId,
-        });
-        await awaitDeviceAction(observable, () => {});
-        providedFromName = fromAccount.name;
-        appendTrace({
-          kind: "ok",
-          text: `  0x9000 ✓ Provided "${fromAccount.name}"`,
-        });
-        // Sticky state-rotation: dispatch on each 0x9000 ack, not only
-        // after Sign. Matches service.py:942-952.
-        dispatch(
-          setWallet(
-            rotateAccountLastResponse(
-              wallet,
-              fromAccount.name,
-              ResponseType.ProvideLedgerAccountContact,
-            ),
-          ),
-        );
-      }
-
-      // Provide To: branches on the active To kind.
-      //   contact     → provideContact (CLA=0xb0 P1=0x20)
-      //   self        → provideLedgerAccount on the From account
-      //   hex address → no Provide; device review shows raw recipient hex
-      if (toKind === "contact" && toContactEntry) {
-        const { contact, entry, entryIndex } = toContactEntry;
-        appendTrace({ kind: "info", text: "→ Provide To sent…" });
-        const { observable } = signer.provideContact({
-          contactName: contact.name,
-          scope: entry.scope,
-          addressHex: entry.addressHex,
-          groupHandleHex: contact.groupHandleHex,
-          hmacNameHex: contact.hmacNameHex,
-          hmacRestHex: entry.hmacRestHex,
-          derivationPath: entry.derivationPath,
-          chainId: entry.chainId,
-        });
-        await awaitDeviceAction(observable, () => {});
-        providedToName = `${contact.name} / ${entry.scope}`;
-        appendTrace({
-          kind: "ok",
-          text: `  0x9000 ✓ Provided "${providedToName}"`,
-        });
-        dispatch(
-          setWallet(
-            rotateContactEntryLastResponse(
-              wallet,
-              contact.name,
-              entryIndex,
-              ResponseType.ProvideContact,
-            ),
-          ),
-        );
-      } else if (toKind === "self" && toSelfAccount !== null) {
-        appendTrace({ kind: "info", text: "→ Provide To sent…" });
-        const { observable } = signer.provideLedgerAccount({
-          accountName: toSelfAccount.name,
-          hmacProofHex: toSelfAccount.hmacProofHex,
-          derivationPath: toSelfAccount.derivationPath,
-          chainId: toSelfAccount.chainId,
-        });
-        await awaitDeviceAction(observable, () => {});
-        providedToName = toSelfAccount.name;
-        appendTrace({
-          kind: "ok",
-          text: `  0x9000 ✓ Provided "${toSelfAccount.name}"`,
-        });
-        // If toSelfAccount === fromAccount the dispatch is a redundant
-        // identity update (Redux state unchanged), so guarding here would
-        // be premature optimisation. Idempotent on device too.
-        dispatch(
-          setWallet(
-            rotateAccountLastResponse(
-              wallet,
-              toSelfAccount.name,
-              ResponseType.ProvideLedgerAccountContact,
-            ),
-          ),
-        );
-      }
-
       const txBytes = buildLegacyTxBytes({
         toAddressHex: recipientAddressHex,
         amountWei: amount,
@@ -646,14 +534,11 @@ export const SendToContactForm: React.FC = () => {
         message: "Transaction signed (v/r/s below).",
       });
     } catch (err) {
-      // State-rotation is sticky on Sign-reject — the dispatches above are
-      // NOT rolled back here. The wallet records what the device knows.
       appendTrace({ kind: "error", text: `  ✗ ${describeDeviceError(err)}` });
       // Diagnostic dump, error-path only. The last-seen Sign sub-step
-      // tells us where SignTransactionDeviceAction was when it died
-      // (unset if the failure happened earlier, e.g. in a Provide). The
-      // raw error walks the error object so we see DMK error shapes
-      // describeDeviceError can't unwrap.
+      // tells us where SignTransactionDeviceAction was when it died.
+      // The raw error walks the error object so we see DMK error
+      // shapes describeDeviceError can't unwrap.
       if (lastSignStep !== undefined) {
         appendTrace({
           kind: "error",
@@ -676,21 +561,53 @@ export const SendToContactForm: React.FC = () => {
     recipientChainId,
     chainMismatch,
     selfTransferDisabled,
+    autoDecorationDisabled,
     amountEth,
     gasLimit,
     gasPriceGwei,
     nonce,
-    wallet,
-    dispatch,
     appendTrace,
   ]);
 
   return (
     <Flex flexDirection="column" rowGap={4}>
       <Text variant="paragraph" color="opacityDefault.c60">
-        Compose an ETH transfer. Up to three APDUs run in order — Provide From,
-        Provide To, Sign — but the device only prompts once (Sign).
+        Compose an ETH transfer. `signTransaction` runs the unified
+        ContextModule pipeline: any registered From / To accounts and contacts
+        in this wallet are auto-decorated before the Sign APDU.
       </Text>
+
+      <Flex columnGap={2} alignItems="center" flexWrap="wrap">
+        <InputLabel ml={0}>Auto-decoration (debug)</InputLabel>
+        <Tag
+          type={autoDecorationDisabled ? "outlinedOpacity" : "plain"}
+          active={!autoDecorationDisabled}
+          onClick={() =>
+            status.kind === "running"
+              ? undefined
+              : dispatch(setContactsAutoDecorationDisabled(false))
+          }
+          style={{
+            cursor: status.kind === "running" ? "not-allowed" : "pointer",
+          }}
+        >
+          On (contacts pushed by SDK)
+        </Tag>
+        <Tag
+          type={autoDecorationDisabled ? "plain" : "outlinedOpacity"}
+          active={autoDecorationDisabled}
+          onClick={() =>
+            status.kind === "running"
+              ? undefined
+              : dispatch(setContactsAutoDecorationDisabled(true))
+          }
+          style={{
+            cursor: status.kind === "running" ? "not-allowed" : "pointer",
+          }}
+        >
+          Off (data source returns empty)
+        </Tag>
+      </Flex>
 
       {!signer && (
         <Text variant="body" color="warning.c60">

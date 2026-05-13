@@ -14,6 +14,7 @@ import {
   type ContextModuleServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
+import { type ContactsDataSource } from "./modules/ethereum/contacts/domain/ContactsDataSource";
 import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
 import { type TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
 import { type BlindSigningReporter } from "./modules/multichain/reporter/domain/BlindSigningReporter";
@@ -65,6 +66,7 @@ const DEFAULT_LOADER_CONFIG: ContextModuleLoaderConfig = {
   customTypedDataLoader: undefined,
   customBlindSigningReporter: undefined,
   customTrustedNameDataSource: undefined,
+  customContactsDataSource: undefined,
 };
 
 // Internal config type: all ServiceConfig fields except chain (set later via setChain)
@@ -205,6 +207,25 @@ export class ContextModuleBuilder {
    */
   setTrustedNameDataSource(dataSource: TrustedNameDataSource) {
     this.config.customTrustedNameDataSource = dataSource;
+    return this;
+  }
+
+  /**
+   * Set a custom contacts data source.
+   *
+   * Contacts is local-first (the SDK does not ship a default
+   * implementation). When set, `ContextModule.getContexts(tx)` will
+   * auto-decorate `tx.from` / `tx.to` with the matching
+   * `provideLedgerAccount` / `provideContact` APDUs during
+   * `signTransaction`. When unset, no contacts decoration happens —
+   * other metadata channels (ENS, ERC-7730, web3-check) are
+   * unaffected.
+   *
+   * @param dataSource data source to use for contacts resolution
+   * @returns this
+   */
+  setContactsDataSource(dataSource: ContactsDataSource) {
+    this.config.customContactsDataSource = dataSource;
     return this;
   }
 

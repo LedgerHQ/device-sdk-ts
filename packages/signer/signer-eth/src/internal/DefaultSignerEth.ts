@@ -7,8 +7,6 @@ import { type Container } from "inversify";
 
 import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { type ProvideContactDAReturnType } from "@api/app-binder/ProvideContactDeviceActionTypes";
-import { type ProvideLedgerAccountDAReturnType } from "@api/app-binder/ProvideLedgerAccountDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { type SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
@@ -19,8 +17,6 @@ import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAd
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
 import { type MessageOptions } from "@api/model/MessageOptions";
-import { type ProvideContactArgs } from "@api/model/ProvideContactArgs";
-import { type ProvideLedgerAccountArgs } from "@api/model/ProvideLedgerAccountArgs";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { type RegisterLedgerAccountArgs } from "@api/model/RegisterLedgerAccountArgs";
 import { type SafeAddressOptions } from "@api/model/SafeAddressOptions";
@@ -32,8 +28,6 @@ import { addressTypes } from "@internal/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/address/use-case/GetAddressUseCase";
 import { contactsTypes } from "@internal/contacts/di/contactsTypes";
 import { type EditExternalAddressUseCase } from "@internal/contacts/use-case/EditExternalAddressUseCase";
-import { type ProvideContactUseCase } from "@internal/contacts/use-case/ProvideContactUseCase";
-import { type ProvideLedgerAccountUseCase } from "@internal/contacts/use-case/ProvideLedgerAccountUseCase";
 import { type RegisterExternalAddressUseCase } from "@internal/contacts/use-case/RegisterExternalAddressUseCase";
 import { type RegisterLedgerAccountUseCase } from "@internal/contacts/use-case/RegisterLedgerAccountUseCase";
 import { makeContainer } from "@internal/di";
@@ -147,22 +141,6 @@ export class DefaultSignerEth implements SignerEth {
     return this._container
       .get<RegisterLedgerAccountUseCase>(
         contactsTypes.RegisterLedgerAccountUseCase,
-      )
-      .execute(args);
-  }
-
-  provideContact(args: ProvideContactArgs): ProvideContactDAReturnType {
-    return this._container
-      .get<ProvideContactUseCase>(contactsTypes.ProvideContactUseCase)
-      .execute(args);
-  }
-
-  provideLedgerAccount(
-    args: ProvideLedgerAccountArgs,
-  ): ProvideLedgerAccountDAReturnType {
-    return this._container
-      .get<ProvideLedgerAccountUseCase>(
-        contactsTypes.ProvideLedgerAccountUseCase,
       )
       .execute(args);
   }

@@ -39,8 +39,8 @@ export const CharacterCounter: React.FC<{ value: string; max: number }> = ({
 // contacts firmware is also observed to return it on user-driven rejection,
 // so we treat it as a cancel here — pre-flight validation prevents the
 // genuine TLV-refused case from reaching the device.
-// 0x6982 (auth/HMAC mismatch) is NOT a cancel — see playground's
-// `service._explain_status_word` for the authoritative interpretation.
+// 0x6982 (auth/HMAC mismatch) is NOT a cancel — it means the device
+// rejected the cryptographic proof; surface it as an error.
 export const USER_CANCEL_SWS = new Set(["6985", "6a80"]);
 
 // DMK-core's UnknownDeviceExchangeError stores the real SW + message inside
