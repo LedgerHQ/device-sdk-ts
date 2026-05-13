@@ -217,8 +217,7 @@ export const RegisterLedgerAccountForm: React.FC = () => {
         if (state.status === "completed") {
           const result = state.output;
           // The use-case strips the "m/" prefix before sending to the device,
-          // but storage keeps the user-facing path — matching the playground's
-          // `.contacts_wallet.json` shape.
+          // but storage keeps the user-facing path with the prefix.
           const account = buildAccount(trimmedName, autoPath, chainId, result);
           dispatch(setWallet(mergeAccount(wallet, account)));
           setStatus({

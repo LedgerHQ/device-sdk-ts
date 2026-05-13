@@ -10,8 +10,6 @@ import { inject, injectable } from "inversify";
 
 import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
-import { type ProvideContactDAReturnType } from "@api/app-binder/ProvideContactDeviceActionTypes";
-import { type ProvideLedgerAccountDAReturnType } from "@api/app-binder/ProvideLedgerAccountDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
 import { SignDelegationAuthorizationDAReturnType } from "@api/app-binder/SignDelegationAuthorizationTypes";
@@ -20,8 +18,6 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
-import { type ProvideContactArgs } from "@api/model/ProvideContactArgs";
-import { type ProvideLedgerAccountArgs } from "@api/model/ProvideLedgerAccountArgs";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { type RegisterLedgerAccountArgs } from "@api/model/RegisterLedgerAccountArgs";
 import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
@@ -39,8 +35,6 @@ import { SignTransactionDeviceAction } from "./device-action/SignTransaction/Sig
 import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendEditIdentifierTask } from "./task/SendEditIdentifierTask";
 import { SendGetAddressTask } from "./task/SendGetAddressTask";
-import { SendProvideContactTask } from "./task/SendProvideContactTask";
-import { SendProvideLedgerAccountTask } from "./task/SendProvideLedgerAccountTask";
 import { SendRegisterIdentityTask } from "./task/SendRegisterIdentityTask";
 import { SendRegisterLedgerAccountTask } from "./task/SendRegisterLedgerAccountTask";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
@@ -199,14 +193,6 @@ export class EthAppBinder {
     });
   }
 
-  // NOTE: Contacts metadata (registerLedgerAccount / provideContact /
-  // provideLedgerAccount and siblings below) is currently pushed
-  // out-of-band by callers — see the SignerEth JSDoc for the
-  // orchestration contract. The planned shape is a ContactsContextLoader
-  // registered with DefaultContextModule + new
-  // ClearSignContextType.CONTACT_* branches in ProvideContextTask,
-  // mirroring how ENS / ERC-7730 / web3-check are loaded today. Tracked:
-  // <TICKET-ID>.
   registerLedgerAccount(
     args: RegisterLedgerAccountArgs,
   ): RegisterLedgerAccountDAReturnType {
@@ -247,50 +233,6 @@ export class EthAppBinder {
           skipOpenApp: false,
         },
         logger: this.dmkLoggerFactory("SendEditIdentifierTask"),
-      }),
-    });
-  }
-
-  provideContact(args: ProvideContactArgs): ProvideContactDAReturnType {
-    const taskLogger = this.dmkLoggerFactory("SendProvideContactTask");
-    return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
-        input: {
-          task: async (internalApi) =>
-            new SendProvideContactTask(internalApi, {
-              ...args,
-              logger: taskLogger,
-            }).run(),
-          appName: APP_NAME,
-          // Silent op — firmware trusts the HMAC chain authorised at
-          // Register time and returns 0x9000 with no user prompt.
-          requiredUserInteraction: UserInteractionRequired.None,
-          skipOpenApp: false,
-        },
-        logger: this.dmkLoggerFactory("SendProvideContactTask"),
-      }),
-    });
-  }
-
-  provideLedgerAccount(
-    args: ProvideLedgerAccountArgs,
-  ): ProvideLedgerAccountDAReturnType {
-    const taskLogger = this.dmkLoggerFactory("SendProvideLedgerAccountTask");
-    return this.dmk.executeDeviceAction({
-      sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
-        input: {
-          task: async (internalApi) =>
-            new SendProvideLedgerAccountTask(internalApi, {
-              ...args,
-              logger: taskLogger,
-            }).run(),
-          appName: APP_NAME,
-          requiredUserInteraction: UserInteractionRequired.None,
-          skipOpenApp: false,
-        },
-        logger: this.dmkLoggerFactory("SendProvideLedgerAccountTask"),
       }),
     });
   }

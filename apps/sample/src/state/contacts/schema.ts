@@ -6,7 +6,7 @@ import {
 
 /**
  * Reused as the slice's state shape so persistence round-trips cleanly
- * to/from the playground's `.contacts_wallet.json`.
+ * through localStorage.
  */
 export type ContactsState = Wallet;
 

@@ -36,6 +36,8 @@ import {
   SendPayloadInChunksTask,
   type SendPayloadInChunksTaskArgs,
 } from "./SendPayloadInChunksTask";
+import { SendProvideContactTask } from "./SendProvideContactTask";
+import { SendProvideLedgerAccountTask } from "./SendProvideLedgerAccountTask";
 
 export type ProvideContextTaskArgs = {
   /**
@@ -87,12 +89,6 @@ export class ProvideContextTask {
       );
     }
 
-    // FUTURE: ClearSignContextType.CONTACT_EXTERNAL /
-    // CONTACT_LEDGER_ACCOUNT branches will plug in here once Contacts is
-    // unified into the ContextModule pipeline (see
-    // SignerEth.signTransaction JSDoc). Until then, those decorations
-    // are pushed out-of-band via EthAppBinder.provideContact /
-    // provideLedgerAccount. Tracked: <TICKET-ID>.
     switch (type) {
       case ClearSignContextType.ETHEREUM_PLUGIN: {
         return await this._api.sendCommand(new SetPluginCommand({ payload }));
@@ -224,6 +220,20 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
+      case ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL: {
+        const { decoration } = this._args.context;
+        return await new SendProvideContactTask(this._api, {
+          ...decoration,
+          logger: this._logger,
+        }).run();
+      }
+      case ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT: {
+        const { decoration } = this._args.context;
+        return await new SendProvideLedgerAccountTask(this._api, {
+          ...decoration,
+          logger: this._logger,
+        }).run();
+      }
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

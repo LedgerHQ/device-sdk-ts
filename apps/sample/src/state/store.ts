@@ -5,12 +5,17 @@ import { contactsReducer, contactsSlice } from "./contacts/slice";
 import { sessionsReducer, sessionsSlice } from "./sessions/slice";
 import { settingsPersistenceMiddleware } from "./settings/persistenceMiddleware";
 import { settingsReducer, settingsSlice } from "./settings/slice";
+import {
+  signerRuntimeReducer,
+  signerRuntimeSlice,
+} from "./signerRuntime/slice";
 import { uiReducer, uiSlice } from "./ui/slice";
 
 const reducer = combineReducers({
   [contactsSlice.reducerPath]: contactsReducer,
   [sessionsSlice.reducerPath]: sessionsReducer,
   [settingsSlice.reducerPath]: settingsReducer,
+  [signerRuntimeSlice.reducerPath]: signerRuntimeReducer,
   [uiSlice.reducerPath]: uiReducer,
 });
 

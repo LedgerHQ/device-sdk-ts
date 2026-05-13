@@ -6,9 +6,9 @@ import {
 } from "./schema";
 
 /**
- * Persisted shape mirrors the playground's `.contacts_wallet.json`.
- * If the schema version on disk doesn't match, we fall back to empty
- * — a future bump will get a one-shot migration here.
+ * Versioned shape persisted to localStorage. If the schema version on
+ * disk doesn't match, we fall back to empty — a future bump will get
+ * a one-shot migration here.
  */
 export function loadPersistedContacts(): ContactsState {
   if (typeof window === "undefined") return initialState;

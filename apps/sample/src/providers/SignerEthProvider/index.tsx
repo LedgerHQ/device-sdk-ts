@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useStore } from "react-redux";
 import {
   ContextModuleBuilder,
   ContextModuleChainID,
@@ -27,6 +27,10 @@ import {
   selectReporterConfig,
   selectWeb3ChecksConfig,
 } from "@/state/settings/selectors";
+import { selectContactsAutoDecorationDisabled } from "@/state/signerRuntime/selectors";
+import { type AppDispatch, type RootState } from "@/state/store";
+
+import { makeContactsDataSourceAdapter } from "./contactsDataSourceAdapter";
 
 type SignerEthContextType = {
   signer: SignerEth | null;
@@ -42,6 +46,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   children,
 }) => {
   const dmk = useDmk();
+  const store = useStore<RootState, ReturnType<AppDispatch>>();
   const sessionId = useSelector(selectSelectedSessionId);
 
   const [signer, setSigner] = useState<SignerEth | null>(null);
@@ -58,6 +63,12 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       return;
     }
 
+    const contactsDataSource = makeContactsDataSourceAdapter({
+      getWallet: () => store.getState().contacts,
+      getAutoDecorationDisabled: () =>
+        selectContactsAutoDecorationDisabled(store.getState()),
+    });
+
     const contextModule = new ContextModuleBuilder({
       originToken,
       loggerFactory: (tag: string) =>
@@ -70,6 +81,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .setDatasourceConfig(datasourceConfig)
       .setAppSource("device-management-kit-playground")
       .setChain(ContextModuleChainID.Ethereum)
+      .setContactsDataSource(contactsDataSource)
       .build();
     const newSigner = new SignerEthBuilder({
       dmk,
@@ -83,6 +95,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     calConfig,
     dmk,
     sessionId,
+    store,
     web3ChecksConfig,
     metadataServiceConfig,
     reporterConfig,

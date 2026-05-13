@@ -1,22 +1,18 @@
 /**
- * Arguments for `SignerEth.provideLedgerAccount` — runtime op that
- * loads a previously-registered Ledger account into the device so the
- * next Sign review screen substitutes the account name for the raw
- * derived address. Used for both the sender (From) decoration and the
- * recipient (To) decoration when the recipient is a Ledger account.
+ * Internal-only arg shape consumed by `SendProvideLedgerAccountTask`
+ * (the wire-layer task that builds the TLV payload and frames the
+ * `provide_ledger_account_contact` APDU). Reached from
+ * `ProvideContextTask` when the `ContactsContextLoader` emits a
+ * `CONTACT_LEDGER_ACCOUNT` clear-sign context for either the from-side
+ * sender or a to-side Ledger-account recipient.
  *
- * Silent on device (no user prompt): firmware trusts the HMAC chain
- * authorised at Register time (op 5) and replies with SW=0x9000 +
- * empty data. The device re-derives the address from `derivationPath`
- * internally — we do NOT send `addressHex`.
+ * The device re-derives the address from `derivationPath` internally —
+ * we do NOT send `addressHex`.
  *
- * Note: the Python op is named `provide_ledger_account_contact` in the
- * upstream client. We drop the "Contact" suffix on the TS side to keep
- * the `contact` term reserved for external-address holders (matches
- * the `contacts: {...}` vs `accounts: {...}` split in DMK core's
- * Wallet shape and the M6 `RegisterLedgerAccount` naming). The
- * playground fixture key `provide_ledger_account_contact_*` is the
- * byte-parity source of truth.
+ * Naming note: the firmware op is `provide_ledger_account_contact`.
+ * The TS surface drops the trailing `Contact` to keep `contact`
+ * reserved for external-address holders (mirrors DMK's
+ * `contacts: {...}` vs `accounts: {...}` Wallet split).
  */
 export type ProvideLedgerAccountArgs = {
   readonly accountName: string;
