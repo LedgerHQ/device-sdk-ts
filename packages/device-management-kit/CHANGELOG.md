@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 1.4.1
+
+### Patch Changes
+
+- [#1484](https://github.com/LedgerHQ/device-sdk-ts/pull/1484) [`b06170e`](https://github.com/LedgerHQ/device-sdk-ts/commit/b06170e14252faddf9b2ff4d96cbb6f83927da4d) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Fix React Native Manager API requests failing with HTTP 400 because the last query parameter value was suffixed with a stray `/` (e.g. `provider=1/`). `DmkNetworkClient` now builds and sends the request URL as a plain string instead of round-tripping through `URL`/`URL.toString()`, which corrupted URLs with a query string on affected React Native versions (facebook/react-native#54242).
+
 ## 1.4.0
 
 ### Minor Changes

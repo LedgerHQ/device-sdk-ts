@@ -1,5 +1,14 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.15.1
+
+### Patch Changes
+
+- [#1475](https://github.com/LedgerHQ/device-sdk-ts/pull/1475) [`688ad71`](https://github.com/LedgerHQ/device-sdk-ts/commit/688ad71e53ae8f74e40c91ad5435469a506cb114) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Normalize EIP-712 `domain.chainId` to `number | null` before reporting blind signing events, fixing a "chainId invalid type" error when dapps provide a hex string (e.g. `"0x1"`)
+
+- Updated dependencies [[`b06170e`](https://github.com/LedgerHQ/device-sdk-ts/commit/b06170e14252faddf9b2ff4d96cbb6f83927da4d)]:
+  - @ledgerhq/device-management-kit@1.4.1
+
 ## 1.15.0
 
 ### Minor Changes
