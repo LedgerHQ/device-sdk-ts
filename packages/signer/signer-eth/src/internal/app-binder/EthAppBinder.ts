@@ -35,7 +35,6 @@ import { type TransactionMapperService } from "@internal/transaction/service/map
 import { TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 import { type TypedDataParserService } from "@internal/typed-data/service/TypedDataParserService";
 
-import { RegisterLedgerAccountDeviceAction } from "./device-action/RegisterLedgerAccount/RegisterLedgerAccountDeviceAction";
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendEditIdentifierTask } from "./task/SendEditIdentifierTask";
@@ -43,6 +42,7 @@ import { SendGetAddressTask } from "./task/SendGetAddressTask";
 import { SendProvideContactTask } from "./task/SendProvideContactTask";
 import { SendProvideLedgerAccountTask } from "./task/SendProvideLedgerAccountTask";
 import { SendRegisterIdentityTask } from "./task/SendRegisterIdentityTask";
+import { SendRegisterLedgerAccountTask } from "./task/SendRegisterLedgerAccountTask";
 import { SendSignAuthorizationDelegationTask } from "./task/SendSignAuthorizationDelegationTask";
 import { APP_NAME } from "./constants";
 
@@ -199,13 +199,32 @@ export class EthAppBinder {
     });
   }
 
+  // NOTE: Contacts metadata (registerLedgerAccount / provideContact /
+  // provideLedgerAccount and siblings below) is currently pushed
+  // out-of-band by callers — see the SignerEth JSDoc for the
+  // orchestration contract. The planned shape is a ContactsContextLoader
+  // registered with DefaultContextModule + new
+  // ClearSignContextType.CONTACT_* branches in ProvideContextTask,
+  // mirroring how ENS / ERC-7730 / web3-check are loaded today. Tracked:
+  // <TICKET-ID>.
   registerLedgerAccount(
     args: RegisterLedgerAccountArgs,
   ): RegisterLedgerAccountDAReturnType {
+    const taskLogger = this.dmkLoggerFactory("SendRegisterLedgerAccountTask");
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new RegisterLedgerAccountDeviceAction({
-        input: args,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SendRegisterLedgerAccountTask(internalApi, {
+              ...args,
+              logger: taskLogger,
+            }).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.RegisterWallet,
+          skipOpenApp: false,
+        },
+        logger: this.dmkLoggerFactory("SendRegisterLedgerAccountTask"),
       }),
     });
   }

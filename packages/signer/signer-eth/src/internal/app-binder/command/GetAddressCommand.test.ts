@@ -193,7 +193,7 @@ describe("GetAddressCommand", () => {
 
     it("should send chainId silently (checkOnDevice=false) when explicitly provided — fixture parity with playground register_signer_controlled_ledger_account ex2", () => {
       // Matches the python client's get_public_addr(display=False, chain_id=1).
-      // Used by RegisterLedgerAccountDeviceAction (M6) to derive an account's
+      // Used by SendRegisterLedgerAccountTask (M6) to derive an account's
       // address without prompting the user, while still framing the chainId.
       const SILENT_WITH_CHAIN_ID = Uint8Array.from([
         0xe0, 0x02, 0x00, 0x00, 0x1d, 0x05, 0x80, 0x00, 0x00, 0x2c, 0x80, 0x00,
