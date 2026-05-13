@@ -3,6 +3,7 @@ import {
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
+import { Codec, exactly, number, oneOf, string } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
@@ -32,17 +33,31 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_TRANSACTION_CHECK,
 ];
 
+const solanaTransactionCheckInputCodec = Codec.interface({
+  deviceModelId: oneOf([
+    exactly(DeviceModelId.NANO_X),
+    exactly(DeviceModelId.NANO_SP),
+    exactly(DeviceModelId.STAX),
+    exactly(DeviceModelId.FLEX),
+  ]),
+  transactionCheck: Codec.interface({
+    from: string,
+    rawTx: string,
+    chain: number,
+  }),
+});
+
 @injectable()
 export class SolanaTransactionCheckLoader
   implements TransactionCheckLoader<SolanaTransactionCheckContextInput>
 {
-  private logger: LoggerPublisherService;
+  private readonly logger: LoggerPublisherService;
 
   constructor(
     @inject(transactionCheckTypes.TransactionCheckDataSource)
-    private transactionCheckDataSource: TransactionCheckDataSource,
+    private readonly transactionCheckDataSource: TransactionCheckDataSource,
     @inject(pkiTypes.PkiCertificateLoader)
-    private certificateLoader: PkiCertificateLoader,
+    private readonly certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
     loggerFactory: (tag: string) => LoggerPublisherService,
   ) {
@@ -55,27 +70,11 @@ export class SolanaTransactionCheckLoader
   ): input is SolanaTransactionCheckContextInput {
     if (!SUPPORTED_TYPES.every((type) => expectedType.includes(type)))
       return false;
-    if (typeof input !== "object" || input === null) return false;
-    if (
-      !("deviceModelId" in input) ||
-      input.deviceModelId === undefined ||
-      input.deviceModelId === DeviceModelId.NANO_S
-    )
-      return false;
-    if (!("transactionCheck" in input)) return false;
-    const tc = input.transactionCheck;
-    return (
-      typeof tc === "object" &&
-      tc !== null &&
-      "from" in tc &&
-      typeof tc.from === "string" &&
-      tc.from.length > 0 &&
-      "rawTx" in tc &&
-      typeof tc.rawTx === "string" &&
-      tc.rawTx.length > 0 &&
-      "chain" in tc &&
-      typeof tc.chain === "number"
-    );
+    return solanaTransactionCheckInputCodec.decode(input).caseOf({
+      Left: () => false,
+      Right: ({ transactionCheck: { from, rawTx } }) =>
+        from.length > 0 && rawTx.length > 0,
+    });
   }
 
   async load(

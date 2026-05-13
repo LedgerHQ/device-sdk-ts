@@ -5,15 +5,14 @@ import {
   type SolanaTransactionDescriptor,
   type SolanaTransactionDescriptorList,
 } from "@ledgerhq/context-module";
-import {
-  isSuccessCommandResult,
-  LoadCertificateCommand,
-  type LoggerPublisherService,
-} from "@ledgerhq/device-management-kit";
+import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 
 import { ProvideInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideInstructionDescriptorCommand";
 
+import { loadCertificate } from "./loadCertificate";
 import { type ProvideContextHandler } from "./provideContextTypes";
+
+const HEX_RADIX = 16;
 
 export const provideLifiContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_LIFI
@@ -28,17 +27,11 @@ export const provideLifiContext: ProvideContextHandler<
   if (!lifiDescriptors) return;
 
   if (swapTemplateCertificate) {
-    const swapCertResult = await api.sendCommand(
-      new LoadCertificateCommand({
-        certificate: swapTemplateCertificate.payload,
-        keyUsage: swapTemplateCertificate.keyUsageNumber,
-      }),
+    await loadCertificate(
+      api,
+      swapTemplateCertificate,
+      "[SignerSolana] provideLifiContext: Failed to send swapTemplateCertificate to device",
     );
-    if (!isSuccessCommandResult(swapCertResult)) {
-      throw new Error(
-        "[SignerSolana] provideLifiContext: Failed to send swapTemplateCertificate to device",
-      );
-    }
   }
 
   const message = await normaliser.normaliseMessage(transactionBytes);
@@ -150,13 +143,13 @@ function matchesDiscriminator(
   if (discriminatorHex === "") return true;
 
   const padded =
-    discriminatorHex.length % 2 !== 0
-      ? "0" + discriminatorHex
-      : discriminatorHex;
+    discriminatorHex.length % 2 === 0
+      ? discriminatorHex
+      : "0" + discriminatorHex;
   const discriminatorBytes = new Uint8Array(padded.length / 2);
   for (let i = 0; i < padded.length; i += 2) {
     const byteStr = padded.substring(i, i + 2);
-    const parsed = parseInt(byteStr, 16);
+    const parsed = Number.parseInt(byteStr, HEX_RADIX);
     if (Number.isNaN(parsed)) {
       return false;
     }

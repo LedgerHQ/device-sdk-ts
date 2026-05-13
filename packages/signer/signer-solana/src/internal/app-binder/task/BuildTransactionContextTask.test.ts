@@ -84,34 +84,33 @@ describe("BuildTransactionContextTask", () => {
     );
   });
 
-  // !! TODO-WEB3CHECK FLIP THIS BACK ONCE TRANSACTION CHECK IS READY,
-  // TO BE KEEPT OFF FOR NOW
-  // it("calls contextModule.getContexts with all Solana context types (including transaction-check)", async () => {
-  //   (contextModuleMock.getContexts as any).mockResolvedValue([
-  //     trustedNameSuccessContext,
-  //   ]);
-  //
-  //   const task = new BuildTransactionContextTask(apiMock, defaultArgs);
-  //   await task.run();
-  //
-  //   expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
-  //     {
-  //       deviceModelId: DeviceModelId.NANO_X,
-  //       tokenAddress: "someAddress",
-  //       challenge: "someChallenge",
-  //       createATA: undefined,
-  //       tokenInternalId: undefined,
-  //       templateId: undefined,
-  //       transactionCheck: undefined,
-  //     },
-  //     [
-  //       ClearSignContextType.SOLANA_TOKEN,
-  //       ClearSignContextType.SOLANA_LIFI,
-  //       ClearSignContextType.SOLANA_TRUSTED_NAME,
-  //       ClearSignContextType.SOLANA_TRANSACTION_CHECK,
-  //     ],
-  //   );
-  // });
+  // TODO-WEB3CHECK: flip this back once transaction-check is ready
+  it.skip("calls contextModule.getContexts with all Solana context types (including transaction-check)", async () => {
+    (contextModuleMock.getContexts as any).mockResolvedValue([
+      trustedNameSuccessContext,
+    ]);
+
+    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    await task.run();
+
+    expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
+      {
+        deviceModelId: DeviceModelId.NANO_X,
+        tokenAddress: "someAddress",
+        challenge: "someChallenge",
+        createATA: undefined,
+        tokenInternalId: undefined,
+        templateId: undefined,
+        transactionCheck: undefined,
+      },
+      [
+        ClearSignContextType.SOLANA_TOKEN,
+        ClearSignContextType.SOLANA_LIFI,
+        ClearSignContextType.SOLANA_TRUSTED_NAME,
+        ClearSignContextType.SOLANA_TRANSACTION_CHECK,
+      ],
+    );
+  });
 
   it("derives transactionCheck from signerAddress and transactionBytes when address is provided", async () => {
     (contextModuleMock.getContexts as any).mockResolvedValue([

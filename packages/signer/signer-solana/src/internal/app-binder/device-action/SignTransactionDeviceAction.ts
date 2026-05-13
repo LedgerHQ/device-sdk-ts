@@ -81,8 +81,10 @@ export type MachineDependencies = {
     CommandResult<Web3CheckOptInCommandResponse, SolanaAppErrorCodes>
   >;
   readonly getPubKey: (arg0: {
-    derivationPath: string;
-    checkOnDevice: boolean;
+    input: {
+      derivationPath: string;
+      checkOnDevice: boolean;
+    };
   }) => Promise<CommandResult<GetPubKeyCommandResponse, SolanaAppErrorCodes>>;
   readonly buildContext: (arg0: {
     input: BuildTransactionContextTaskArgs;
@@ -170,20 +172,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
-        getPubKey: fromPromise(
-          ({
-            input,
-          }: {
-            input: {
-              derivationPath: string;
-              checkOnDevice: boolean;
-            };
-          }) =>
-            getPubKey({
-              derivationPath: input.derivationPath,
-              checkOnDevice: input.checkOnDevice,
-            }),
-        ),
+        getPubKey: fromPromise(getPubKey),
         inspectTransaction: fromPromise(
           ({
             input,
@@ -235,8 +224,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         hasSignature: ({ context }) =>
           context._internalState.signature !== null,
         shouldOptIn: ({ context }) =>
-          !(context._internalState.appConfig!.web3ChecksEnabled ?? false) &&
-          !(context._internalState.appConfig!.web3ChecksOptIn ?? false),
+          !context._internalState.appConfig!.web3ChecksEnabled &&
+          !context._internalState.appConfig!.web3ChecksOptIn,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -417,8 +406,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
               step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT,
-              result:
-                context._internalState.appConfig!.web3ChecksEnabled ?? false,
+              result: context._internalState.appConfig!.web3ChecksEnabled!,
             },
           })),
           // Zero-delay self-transition: ensures the entry assign above is
@@ -782,13 +770,15 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       internalApi.sendCommand(new Web3CheckOptInCommand());
 
     const getPubKey = async (arg0: {
-      derivationPath: string;
-      checkOnDevice: boolean;
+      input: {
+        derivationPath: string;
+        checkOnDevice: boolean;
+      };
     }) =>
       internalApi.sendCommand(
         new GetPubKeyCommand({
-          derivationPath: arg0.derivationPath,
-          checkOnDevice: arg0.checkOnDevice,
+          derivationPath: arg0.input.derivationPath,
+          checkOnDevice: arg0.input.checkOnDevice,
         }),
       );
 

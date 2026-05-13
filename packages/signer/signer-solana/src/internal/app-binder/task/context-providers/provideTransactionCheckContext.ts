@@ -5,12 +5,12 @@ import {
 import {
   hexaStringToBuffer,
   isSuccessCommandResult,
-  LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
 
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 import { SendCommandInChunksTask } from "@internal/app-binder/task/SendCommandInChunksTask";
 
+import { loadCertificate } from "./loadCertificate";
 import { type ProvideContextHandler } from "./provideContextTypes";
 
 export const provideTransactionCheckContext: ProvideContextHandler<
@@ -19,17 +19,11 @@ export const provideTransactionCheckContext: ProvideContextHandler<
   const { payload, certificate } = result;
 
   if (certificate) {
-    const certResult = await api.sendCommand(
-      new LoadCertificateCommand({
-        certificate: certificate.payload,
-        keyUsage: certificate.keyUsageNumber,
-      }),
+    await loadCertificate(
+      api,
+      certificate,
+      "[SignerSolana] provideTransactionCheckContext: Failed to send transaction-check certificate to device",
     );
-    if (!isSuccessCommandResult(certResult)) {
-      throw new Error(
-        "[SignerSolana] provideTransactionCheckContext: Failed to send transaction-check certificate to device",
-      );
-    }
   }
 
   const descriptorBytes = hexaStringToBuffer(payload.descriptor);
