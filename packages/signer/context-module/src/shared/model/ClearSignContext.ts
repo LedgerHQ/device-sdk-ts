@@ -23,6 +23,7 @@ export enum ClearSignContextType {
   SOLANA_TOKEN = "solanaToken",
   SOLANA_LIFI = "solanaLifi",
   SOLANA_TRUSTED_NAME = "solanaTrustedName",
+  SOLANA_TRANSACTION_CHECK = "solanaTransactionCheck",
 }
 
 export type ClearSignContextSuccessType = Exclude<

@@ -39,7 +39,8 @@ export type SolanaTransactionDescriptorList = Record<
 
 export type SolanaContextSuccessType =
   | ClearSignContextType.SOLANA_TOKEN
-  | ClearSignContextType.SOLANA_LIFI;
+  | ClearSignContextType.SOLANA_LIFI
+  | ClearSignContextType.SOLANA_TRANSACTION_CHECK;
 
 export type SolanaContextSuccess<
   T extends SolanaContextSuccessType = SolanaContextSuccessType,
@@ -47,17 +48,16 @@ export type SolanaContextSuccess<
 
 export type SolanaContextError = ClearSignContextError;
 
-export type SolanaContext =
-  | ClearSignContextSuccess<
-      ClearSignContextType.SOLANA_TOKEN | ClearSignContextType.SOLANA_LIFI
-    >
-  | ClearSignContextError;
+export type SolanaContext = SolanaContextSuccess | SolanaContextError;
 
 export type SolanaTokenContextSuccess =
   ClearSignContextSuccess<ClearSignContextType.SOLANA_TOKEN>;
 
 export type SolanaLifiContextSuccess =
   ClearSignContextSuccess<ClearSignContextType.SOLANA_LIFI>;
+
+export type SolanaTransactionCheckContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_TRANSACTION_CHECK>;
 
 export type SolanaTokenContextResult =
   | SolanaTokenContextSuccess
@@ -67,4 +67,11 @@ export type SolanaLifiContextResult =
   | SolanaLifiContextSuccess
   | SolanaContextError;
 
-export type LoaderResult = SolanaTokenContextResult | SolanaLifiContextResult;
+export type SolanaTransactionCheckContextResult =
+  | SolanaTransactionCheckContextSuccess
+  | SolanaContextError;
+
+export type LoaderResult =
+  | SolanaTokenContextResult
+  | SolanaLifiContextResult
+  | SolanaTransactionCheckContextResult;

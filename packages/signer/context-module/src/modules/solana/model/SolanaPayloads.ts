@@ -24,3 +24,7 @@ export type SolanaLifiPayload = {
   descriptors: Record<string, SolanaTransactionDescriptor>;
   instructions: SolanaLifiInstructionMeta[];
 };
+
+export type SolanaTransactionCheckPayload = {
+  descriptor: string;
+};

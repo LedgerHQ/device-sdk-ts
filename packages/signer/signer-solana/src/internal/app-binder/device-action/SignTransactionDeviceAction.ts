@@ -3,7 +3,6 @@ import {
   type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
-  DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
   OpenAppDeviceAction,
@@ -13,7 +12,7 @@ import {
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import { Left, type Maybe, Right } from "purify-ts";
-import { assign, fromPromise, setup } from "xstate";
+import { and, assign, fromPromise, setup } from "xstate";
 
 import {
   type SignTransactionDAError,
@@ -31,8 +30,16 @@ import {
   type UserInputType,
 } from "@api/model/TransactionResolutionContext";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import {
+  GetPubKeyCommand,
+  type GetPubKeyCommandResponse,
+} from "@internal/app-binder/command/GetPubKeyCommand";
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import {
+  Web3CheckOptInCommand,
+  type Web3CheckOptInCommandResponse,
+} from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 import {
   SolanaTransactionTypes,
@@ -40,8 +47,7 @@ import {
 } from "@internal/app-binder/services/TransactionInspector";
 import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 import {
-  SOLANA_APP_SPL_MIN_VERSION,
-  SOLANA_MIN_DELAYED_SIGNING_VERSION,
+  SOLANA_FEATURES,
   SolanaApplicationResolver,
 } from "@internal/app-binder/SolanaApplicationResolver";
 import {
@@ -59,7 +65,7 @@ import { DelayedSignTransactionDeviceAction } from "./DelayedSignTransactionDevi
 
 /**
  * Per-sign `transactionOptions.solanaRPCURL` overrides the builder default
- * (`input.solanaRPCURL`).
+ * (`input.solanaRPCURL`) for inspection and delayed signing.
  */
 function resolveSolanaRpcUrl(
   input: SignTransactionDAInput,
@@ -71,6 +77,15 @@ export type MachineDependencies = {
   readonly getAppConfig: () => Promise<
     CommandResult<AppConfiguration, SolanaAppErrorCodes>
   >;
+  readonly web3CheckOptIn: () => Promise<
+    CommandResult<Web3CheckOptInCommandResponse, SolanaAppErrorCodes>
+  >;
+  readonly getPubKey: (arg0: {
+    input: {
+      derivationPath: string;
+      checkOnDevice: boolean;
+    };
+  }) => Promise<CommandResult<GetPubKeyCommandResponse, SolanaAppErrorCodes>>;
   readonly buildContext: (arg0: {
     input: BuildTransactionContextTaskArgs;
   }) => Promise<SolanaBuildContextResult>;
@@ -117,10 +132,33 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const {
       signTransaction,
       getAppConfig,
+      web3CheckOptIn,
+      getPubKey,
       buildContext,
       provideContext,
       inspectTransaction,
     } = this.extractDependencies(internalApi);
+
+    const logger = this.getLoggerFactory(internalApi)(
+      "SignTransactionDeviceAction",
+    );
+
+    const isSupported = (
+      feature: keyof typeof SOLANA_FEATURES,
+      appConfig: AppConfiguration,
+    ): boolean => {
+      const { minVersion, excludedModels, excludedApps } =
+        SOLANA_FEATURES[feature];
+      return new ApplicationChecker(
+        internalApi.getDeviceSessionState(),
+        appConfig,
+        new SolanaApplicationResolver(),
+      )
+        .withMinVersionInclusive(minVersion)
+        .excludeDeviceModels(...excludedModels)
+        .excludeApps(...excludedApps)
+        .check();
+    };
 
     return setup({
       types: {
@@ -133,6 +171,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
+        web3CheckOptIn: fromPromise(web3CheckOptIn),
+        getPubKey: fromPromise(getPubKey),
         inspectTransaction: fromPromise(
           ({
             input,
@@ -163,37 +203,29 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         noInternalError: ({ context }) => context._internalState.error === null,
         skipOpenApp: ({ context }) =>
           context.input.transactionOptions?.skipOpenApp || false,
+        isSPLSupported: ({ context }) =>
+          isSupported("spl", context._internalState.appConfig!),
         isDelayedRequested: ({ context }) =>
           context.input.transactionOptions?.delayed === true,
-        isSPLSupported: ({ context }) =>
-          new ApplicationChecker(
-            internalApi.getDeviceSessionState(),
-            context._internalState.appConfig!,
-            new SolanaApplicationResolver(),
-          )
-            .excludeDeviceModel(DeviceModelId.NANO_S)
-            .withMinVersionInclusive(SOLANA_APP_SPL_MIN_VERSION)
-            .check(),
-        shouldBuildContext: ({ context }) =>
-          context._internalState.inspectorResult?.transactionType ===
-            SolanaTransactionTypes.SPL ||
-          context._internalState.inspectorResult?.transactionType ===
-            SolanaTransactionTypes.SWAP,
         isDelayedWithConfigAndSupported: ({ context }) =>
           context.input.transactionOptions?.delayed === true &&
           !!(
             resolveSolanaRpcUrl(context.input) ||
             context.input.transactionOptions?.fetchBlockhash
           ) &&
-          new ApplicationChecker(
-            internalApi.getDeviceSessionState(),
-            context._internalState.appConfig!,
-            new SolanaApplicationResolver(),
-          )
-            .withMinVersionInclusive(SOLANA_MIN_DELAYED_SIGNING_VERSION)
-            .check(),
+          isSupported("delayedSigning", context._internalState.appConfig!),
+        shouldBuildContext: ({ context }) =>
+          context._internalState.inspectorResult?.transactionType ===
+            SolanaTransactionTypes.SPL ||
+          context._internalState.inspectorResult?.transactionType ===
+            SolanaTransactionTypes.SWAP,
+        isWeb3ChecksSupported: ({ context }) =>
+          isSupported("web3Checks", context._internalState.appConfig!),
         hasSignature: ({ context }) =>
           context._internalState.signature !== null,
+        shouldOptIn: ({ context }) =>
+          !context._internalState.appConfig!.web3ChecksEnabled &&
+          !context._internalState.appConfig!.web3ChecksOptIn,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -211,9 +243,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             resolveSolanaRpcUrl(context.input) ||
             context.input.transactionOptions?.fetchBlockhash
           );
-          this.logger?.warn(
+          logger.warn(
             hasConfig
-              ? `delayed signing requires Solana app version >= ${SOLANA_MIN_DELAYED_SIGNING_VERSION}; falling back to standard signing`
+              ? `delayed signing requires Solana app version >= ${SOLANA_FEATURES.delayedSigning.minVersion}; falling back to standard signing`
               : "delayed signing requires a Solana RPC URL or a fetchBlockhash callback; falling back to standard signing",
           );
         },
@@ -234,6 +266,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           appConfig: null,
           solanaTransactionContext: null,
           inspectorResult: null,
+          signerAddress: null,
         },
       }),
       states: {
@@ -313,6 +346,79 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         GetAppConfigResultCheck: {
           always: [
+            {
+              target: "Web3ChecksOptIn",
+              guard: and([
+                "noInternalError",
+                "isWeb3ChecksSupported",
+                "shouldOptIn",
+              ]),
+            },
+            { target: "CheckSPLSupported", guard: "noInternalError" },
+            { target: "Error" },
+          ],
+        },
+        Web3ChecksOptIn: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+              step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN,
+            }),
+          }),
+          invoke: {
+            id: "web3CheckOptIn",
+            src: "web3CheckOptIn",
+            onDone: {
+              target: "Web3ChecksOptInResult",
+              actions: [
+                ({ event }) => {
+                  if (!isSuccessCommandResult(event.output)) {
+                    logger.warn(
+                      "[Web3ChecksOptIn] opt-in command returned error, proceeding without web3checks",
+                      { data: { error: event.output } },
+                    );
+                  }
+                },
+                assign({
+                  _internalState: ({ event, context }) => {
+                    if (isSuccessCommandResult(event.output)) {
+                      return {
+                        ...context._internalState,
+                        appConfig: {
+                          ...context._internalState.appConfig!,
+                          web3ChecksEnabled: event.output.data.enabled,
+                        },
+                      };
+                    }
+                    return context._internalState;
+                  },
+                }),
+              ],
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        Web3ChecksOptInResult: {
+          entry: assign(({ context }) => ({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT,
+              result: context._internalState.appConfig!.web3ChecksEnabled!,
+            },
+          })),
+          // Zero-delay self-transition: ensures the entry assign above is
+          // visible to onSnapshot observers before the machine moves on.
+          after: {
+            0: {
+              target: "PostWeb3ChecksOptIn",
+            },
+          },
+        },
+        PostWeb3ChecksOptIn: {
+          always: [
             { target: "CheckSPLSupported", guard: "noInternalError" },
             { target: "Error" },
           ],
@@ -320,7 +426,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         CheckSPLSupported: {
           always: [
             { target: "InspectTransaction", guard: "isSPLSupported" },
-            { target: "CheckDelayed" },
+            { target: "CheckBuildNeeded" },
           ],
         },
         InspectTransaction: {
@@ -356,9 +462,51 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         AfterInspect: {
           always: [
-            { target: "BuildContext", guard: "shouldBuildContext" },
+            { target: "GetPubKey", guard: "shouldBuildContext" },
+            { target: "CheckBuildNeeded" },
+          ],
+        },
+        CheckBuildNeeded: {
+          always: [
+            {
+              target: "GetPubKey",
+              guard: "isWeb3ChecksSupported",
+            },
             { target: "CheckDelayed" },
           ],
+        },
+        GetPubKey: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.GET_PUB_KEY,
+            }),
+          }),
+          invoke: {
+            id: "getPubKey",
+            src: "getPubKey",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              checkOnDevice: false,
+            }),
+            onDone: {
+              target: "BuildContext",
+              actions: assign({
+                _internalState: ({ event, context }) => {
+                  if (isSuccessCommandResult(event.output)) {
+                    return {
+                      ...context._internalState,
+                      signerAddress: event.output.data,
+                    };
+                  }
+                  return context._internalState;
+                },
+              }),
+            },
+            onError: {
+              target: "BuildContext",
+            },
+          },
         },
         BuildContext: {
           entry: assign({
@@ -376,6 +524,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               return {
                 contextModule: context.input.contextModule,
                 loggerFactory: this.getLoggerFactory(internalApi),
+                transactionBytes: context.input.transaction,
+                signerAddress: context._internalState.signerAddress,
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
                   createATA: inspectorData?.createATA,
@@ -475,13 +625,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             onSnapshot: {
               actions: [
                 assign({
-                  intermediateValue: ({ event }) => ({
-                    requiredUserInteraction:
-                      event.snapshot.context.intermediateValue
-                        .requiredUserInteraction,
-                    step: event.snapshot.context.intermediateValue
-                      .step as SignTransactionDAStateStep,
-                  }),
+                  intermediateValue: ({ event }) =>
+                    ({
+                      requiredUserInteraction:
+                        event.snapshot.context.intermediateValue
+                          .requiredUserInteraction,
+                      step: event.snapshot.context.intermediateValue
+                        .step as SignTransactionDAStateStep,
+                    }) as SignTransactionDAIntermediateValue,
                 }),
                 ({ event }) => {
                   const stateValue =
@@ -615,6 +766,22 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfigurationCommand());
 
+    const web3CheckOptIn = async () =>
+      internalApi.sendCommand(new Web3CheckOptInCommand());
+
+    const getPubKey = async (arg0: {
+      input: {
+        derivationPath: string;
+        checkOnDevice: boolean;
+      };
+    }) =>
+      internalApi.sendCommand(
+        new GetPubKeyCommand({
+          derivationPath: arg0.input.derivationPath,
+          checkOnDevice: arg0.input.checkOnDevice,
+        }),
+      );
+
     const buildContext = async (arg0: {
       input: BuildTransactionContextTaskArgs;
     }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
@@ -659,6 +826,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
 
     return {
       getAppConfig,
+      web3CheckOptIn,
+      getPubKey,
       buildContext,
       provideContext,
       signTransaction,

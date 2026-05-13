@@ -2,6 +2,7 @@ import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertifica
 import {
   type SolanaLifiPayload,
   type SolanaTokenData,
+  type SolanaTransactionCheckPayload,
 } from "@/modules/solana/model/SolanaPayloads";
 import {
   type ClearSignContext,
@@ -14,6 +15,7 @@ export type {
   SolanaLifiInstructionMeta,
   SolanaLifiPayload,
   SolanaTokenData,
+  SolanaTransactionCheckPayload,
   SolanaTransactionDescriptor,
 } from "@/modules/solana/model/SolanaPayloads";
 
@@ -34,12 +36,17 @@ export type SolanaPayloadOverrides = {
     payload: Uint8Array;
     certificate?: PkiCertificate;
   };
+  [ClearSignContextType.SOLANA_TRANSACTION_CHECK]: {
+    payload: SolanaTransactionCheckPayload;
+    certificate?: PkiCertificate;
+  };
 };
 
 export const SolanaContextType = {
   TOKEN: ClearSignContextType.SOLANA_TOKEN,
   LIFI: ClearSignContextType.SOLANA_LIFI,
   TRUSTED_NAME: ClearSignContextType.SOLANA_TRUSTED_NAME,
+  TRANSACTION_CHECK: ClearSignContextType.SOLANA_TRANSACTION_CHECK,
 } as const;
 
 /**
@@ -55,7 +62,7 @@ export type SolanaClearSignContextSuccess =
   ClearSignContextSuccess<SolanaClearSignContextSuccessType>;
 
 /**
- * Set of all Solana-relevant ClearSignContextType values.
+ * Set of all Solana-relevant success ClearSignContextType values.
  * Used by the type guard below to filter out non-Solana contexts at runtime.
  */
 export const SOLANA_CLEAR_SIGN_CONTEXT_SUCCESS_TYPES =
