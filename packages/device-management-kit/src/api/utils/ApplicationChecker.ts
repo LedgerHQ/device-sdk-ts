@@ -12,7 +12,7 @@ export class ApplicationChecker {
   private isCompatible: boolean;
   private version: string;
   private modelId: DeviceModelId;
-  private appName: string | undefined;
+  private readonly appName: string | undefined;
 
   constructor(
     deviceState: DeviceSessionState,

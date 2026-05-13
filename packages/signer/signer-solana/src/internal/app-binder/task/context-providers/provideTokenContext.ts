@@ -2,13 +2,10 @@ import {
   type ClearSignContextType,
   type SolanaTokenContextSuccess,
 } from "@ledgerhq/context-module";
-import {
-  isSuccessCommandResult,
-  LoadCertificateCommand,
-} from "@ledgerhq/device-management-kit";
 
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 
+import { loadCertificate } from "./loadCertificate";
 import { type ProvideContextHandler } from "./provideContextTypes";
 
 export const provideTokenContext: ProvideContextHandler<
@@ -21,17 +18,11 @@ export const provideTokenContext: ProvideContextHandler<
 
   if (!tokenMetadataPayload || !tokenMetadataCertificate) return;
 
-  const certResult = await api.sendCommand(
-    new LoadCertificateCommand({
-      certificate: tokenMetadataCertificate.payload,
-      keyUsage: tokenMetadataCertificate.keyUsageNumber,
-    }),
+  await loadCertificate(
+    api,
+    tokenMetadataCertificate,
+    "[SignerSolana] provideTokenContext: Failed to send tokenMetadataCertificate to device, latest firmware version required",
   );
-  if (!isSuccessCommandResult(certResult)) {
-    throw new Error(
-      "[SignerSolana] provideTokenContext: Failed to send tokenMetadataCertificate to device, latest firmware version required",
-    );
-  }
 
   logger.debug("[provideTokenContext] Sending token descriptor");
   await api.sendCommand(

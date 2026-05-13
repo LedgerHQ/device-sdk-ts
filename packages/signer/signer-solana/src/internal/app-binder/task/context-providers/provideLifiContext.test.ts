@@ -84,13 +84,13 @@ describe("provideLifiContext", () => {
     // 1 cert + 2 matched descriptors (B skipped)
     expect(api.sendCommand).toHaveBeenCalledTimes(3);
 
-    expect(api.sendCommand.mock.calls[0]![0]!).toBeInstanceOf(
+    expect(api.sendCommand.mock.calls[0]![0]).toBeInstanceOf(
       LoadCertificateCommand,
     );
-    expect(api.sendCommand.mock.calls[1]![0]!).toBeInstanceOf(
+    expect(api.sendCommand.mock.calls[1]![0]).toBeInstanceOf(
       ProvideInstructionDescriptorCommand,
     );
-    expect(api.sendCommand.mock.calls[2]![0]!).toBeInstanceOf(
+    expect(api.sendCommand.mock.calls[2]![0]).toBeInstanceOf(
       ProvideInstructionDescriptorCommand,
     );
   });
@@ -159,7 +159,7 @@ describe("provideLifiContext", () => {
 
     // no cert, 1 descriptor
     expect(api.sendCommand).toHaveBeenCalledTimes(1);
-    expect(api.sendCommand.mock.calls[0]![0]!).toBeInstanceOf(
+    expect(api.sendCommand.mock.calls[0]![0]).toBeInstanceOf(
       ProvideInstructionDescriptorCommand,
     );
   });

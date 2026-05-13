@@ -19,6 +19,18 @@ import {
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
 
+const APDU_CLA = 0xe0;
+const APDU_INS_GET_APP_CONFIGURATION = 0x04;
+
+const RESPONSE_OFFSET_BLIND_SIGNING = 0;
+const RESPONSE_OFFSET_PUB_KEY_DISPLAY_MODE = 1;
+const RESPONSE_OFFSET_VERSION_MAJOR = 2;
+const RESPONSE_OFFSET_VERSION_MINOR = 3;
+const RESPONSE_OFFSET_VERSION_PATCH = 4;
+const RESPONSE_OFFSET_FEATURE_FLAGS = 5;
+const RESPONSE_BASE_LENGTH = 5;
+const RESPONSE_LENGTH_WITH_FEATURE_FLAGS = 6;
+
 const FEATURE_FLAG_WEB3_CHECKS_ENABLED = 0x10;
 const FEATURE_FLAG_WEB3_CHECKS_OPT_IN = 0x20;
 
@@ -46,8 +58,8 @@ export class GetAppConfigurationCommand
 
   getApdu(): Apdu {
     return new ApduBuilder({
-      cla: 0xe0,
-      ins: 0x04,
+      cla: APDU_CLA,
+      ins: APDU_INS_GET_APP_CONFIGURATION,
       p1: 0x00,
       p2: 0x00,
     }).build();
@@ -60,21 +72,23 @@ export class GetAppConfigurationCommand
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
       const { data } = response;
-      if (data.length < 5) {
+      if (data.length < RESPONSE_BASE_LENGTH) {
         return CommandResultFactory({
           error: new InvalidStatusWordError("Invalid response"),
         });
       }
 
-      const blindSigningEnabled = Boolean(data[0]);
+      const blindSigningEnabled = Boolean(data[RESPONSE_OFFSET_BLIND_SIGNING]);
       const pubKeyDisplayMode =
-        data[1] === 0 ? PublicKeyDisplayMode.LONG : PublicKeyDisplayMode.SHORT;
-      const version = `${data[2]}.${data[3]}.${data[4]}`;
+        data[RESPONSE_OFFSET_PUB_KEY_DISPLAY_MODE] === 0
+          ? PublicKeyDisplayMode.LONG
+          : PublicKeyDisplayMode.SHORT;
+      const version = `${data[RESPONSE_OFFSET_VERSION_MAJOR]}.${data[RESPONSE_OFFSET_VERSION_MINOR]}.${data[RESPONSE_OFFSET_VERSION_PATCH]}`;
 
       let web3ChecksEnabled = false;
       let web3ChecksOptIn = false;
-      if (data.length >= 6) {
-        const featureFlags = data[5]!;
+      if (data.length >= RESPONSE_LENGTH_WITH_FEATURE_FLAGS) {
+        const featureFlags = data[RESPONSE_OFFSET_FEATURE_FLAGS]!;
         web3ChecksEnabled = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_ENABLED);
         web3ChecksOptIn = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_OPT_IN);
       }
