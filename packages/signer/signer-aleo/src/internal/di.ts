@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -13,15 +14,26 @@ import { transactionModuleFactory } from "@internal/use-cases/transaction/di/tra
 type MakeContainerProps = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  contextModule?: ContextModule;
 };
 
-export const makeContainer = ({ dmk, sessionId }: MakeContainerProps) => {
+export const makeContainer = ({
+  dmk,
+  sessionId,
+  contextModule,
+}: MakeContainerProps) => {
   const container = new Container();
 
   container.bind<DeviceManagementKit>(externalTypes.Dmk).toConstantValue(dmk);
   container
     .bind<DeviceSessionId>(externalTypes.SessionId)
     .toConstantValue(sessionId);
+
+  if (contextModule) {
+    container
+      .bind<ContextModule>(externalTypes.ContextModule)
+      .toConstantValue(contextModule);
+  }
 
   container.loadSync(
     appBindingModuleFactory(),

@@ -4,6 +4,8 @@ import {
   type ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
+import { type AleoTransactionContext } from "./shared/model/AleoTransactionContext";
+import { type AleoTransactionContextResult } from "./shared/model/AleoContextTypes";
 import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
 import { type TypedDataClearSignContext } from "./shared/model/TypedDataClearSignContext";
 import { type TypedDataContext } from "./shared/model/TypedDataContext";
@@ -24,5 +26,8 @@ export interface ContextModule {
   getSolanaContext(
     transactionContext: SolanaTransactionContext,
   ): Promise<SolanaTransactionContextResult>;
+  getAleoContext(
+    transactionContext: AleoTransactionContext,
+  ): Promise<AleoTransactionContextResult>;
   report(params: BlindSigningReportParams): Promise<void>;
 }

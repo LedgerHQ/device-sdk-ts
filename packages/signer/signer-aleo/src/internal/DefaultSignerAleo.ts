@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
   type DeviceSessionId,
@@ -27,13 +28,18 @@ import { type SignRootIntentUseCase } from "@internal/use-cases/transaction/Sign
 type DefaultSignerAleoConstructorArgs = {
   dmk: DeviceManagementKit;
   sessionId: DeviceSessionId;
+  contextModule?: ContextModule;
 };
 
 export class DefaultSignerAleo implements SignerAleo {
   private readonly _container: Container;
 
-  constructor({ dmk, sessionId }: DefaultSignerAleoConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId });
+  constructor({
+    dmk,
+    sessionId,
+    contextModule,
+  }: DefaultSignerAleoConstructorArgs) {
+    this._container = makeContainer({ dmk, sessionId, contextModule });
   }
 
   getAppConfig(): GetAppConfigDAReturnType {

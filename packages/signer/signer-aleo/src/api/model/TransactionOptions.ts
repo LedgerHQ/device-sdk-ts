@@ -1,4 +1,5 @@
 export type TransactionOptions = {
   skipOpenApp?: boolean;
-  // Add other options as needed
+  tokenInternalId?: string;
+  programName?: string;
 };

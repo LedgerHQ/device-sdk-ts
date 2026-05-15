@@ -1,3 +1,5 @@
+import { type ContextModule } from "@ledgerhq/context-module";
+import { type AleoTransactionContextResult } from "@ledgerhq/context-module";
 import {
   type CommandErrorResult,
   type ExecuteDeviceActionReturnType,
@@ -21,6 +23,21 @@ type SignRootIntentDARequiredInteraction =
 
 export type SignRootIntentDAIntermediateValue = {
   requiredUserInteraction: SignRootIntentDARequiredInteraction;
+};
+
+export type SignRootIntentDAInput = {
+  derivationPath: string;
+  rootIntent: Uint8Array;
+  skipOpenApp: boolean;
+  tokenInternalId?: string;
+  programName?: string;
+  contextModule?: ContextModule;
+};
+
+export type SignRootIntentDAInternalState = {
+  error: SignRootIntentDAError | null;
+  signature: SignRootIntentCommandResponse | null;
+  aleoTransactionContext: AleoTransactionContextResult | null;
 };
 
 export type SignRootIntentDAReturnType = ExecuteDeviceActionReturnType<

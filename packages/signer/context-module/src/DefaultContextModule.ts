@@ -27,6 +27,13 @@ import {
   ClearSignContextType,
 } from "./shared/model/ClearSignContext";
 import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
+import { aleoTokenTypes } from "./aleoToken/di/aleoTokenTypes";
+import { type AleoTokenContextLoader } from "./aleoToken/domain/AleoTokenContextLoader";
+import { type AleoTransactionContext } from "./shared/model/AleoTransactionContext";
+import {
+  AleoContextTypes,
+  type AleoTransactionContextResult,
+} from "./shared/model/AleoContextTypes";
 import { solanaContextTypes } from "./solana/di/solanaContextTypes";
 import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
 import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
@@ -42,6 +49,7 @@ export class DefaultContextModule implements ContextModule {
   private _loaders: ContextLoader<unknown>[];
   private _typedDataLoader: TypedDataContextLoader;
   private _solanaLoader: SolanaContextLoader;
+  private _aleoTokenContextLoader: Pick<AleoTokenContextLoader, "loadField">;
   private _fieldLoaders: ContextFieldLoader<unknown>[];
   private _blindSigningReporter: BlindSigningReporter;
 
@@ -59,6 +67,7 @@ export class DefaultContextModule implements ContextModule {
     this._typedDataLoader =
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
     this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
+    this._aleoTokenContextLoader = this._getAleoTokenContextLoader();
     this._blindSigningReporter =
       args.customBlindSigningReporter ?? this._getBlindSigningReporter();
   }
@@ -140,6 +149,26 @@ export class DefaultContextModule implements ContextModule {
     }
   }
 
+  private _getAleoTokenContextLoader(): Pick<
+    AleoTokenContextLoader,
+    "loadField"
+  > {
+    try {
+      return this._container.get<AleoTokenContextLoader>(
+        aleoTokenTypes.AleoTokenContextLoader,
+      );
+    } catch {
+      return {
+        loadField: async (_ctx) => ({
+          type: AleoContextTypes.ERROR,
+          error: new Error(
+            "[ContextModule] - DefaultContextModule: no AleoTokenContextLoader bound",
+          ),
+        }),
+      };
+    }
+  }
+
   public async getContexts(
     input: unknown,
     expectedTypes?: ClearSignContextType[],
@@ -194,6 +223,14 @@ export class DefaultContextModule implements ContextModule {
     transactionContext: SolanaTransactionContext,
   ): Promise<SolanaTransactionContextResult> {
     return await this._solanaLoader.load(transactionContext);
+  }
+
+  public async getAleoContext(
+    transactionContext: AleoTransactionContext,
+  ): Promise<AleoTransactionContextResult> {
+    const result =
+      await this._aleoTokenContextLoader.loadField(transactionContext);
+    return { loadersResults: [result] };
   }
 
   public async report(params: BlindSigningReportParams): Promise<void> {

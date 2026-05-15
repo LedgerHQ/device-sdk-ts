@@ -18,6 +18,7 @@ import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
 import { proxyModuleFactory } from "@/proxy/di/proxyModuleFactory";
 import { reporterModuleFactory } from "@/reporter/di/reporterModuleFactory";
 import { safeModuleFactory } from "@/safe/di/safeModuleFactory";
+import { aleoTokenModuleFactory } from "@/aleoToken/di/aleoTokenModuleFactory";
 import { solanaContextModuleFactory } from "@/solana/di/SolanaContextModuleFactory";
 import { solanaLifiModuleFactory } from "@/solanaLifi/di/lifiModuleFactory";
 import { solanaTokenModuleFactory } from "@/solanaToken/di/tokenModuleFactory";
@@ -57,6 +58,7 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     nanoPkiModuleFactory(),
     uniswapModuleFactory(),
     transactionCheckModuleFactory(),
+    aleoTokenModuleFactory(),
     solanaContextModuleFactory(),
     solanaTokenModuleFactory(),
     solanaLifiModuleFactory(),

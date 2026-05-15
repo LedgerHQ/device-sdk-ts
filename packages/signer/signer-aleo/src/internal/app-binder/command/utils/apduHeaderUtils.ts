@@ -11,6 +11,7 @@ export const INS = {
   GET_ADDRESS: 0x05,
   SIGN_INTENT: 0x06,
   GET_VIEW_KEY: 0x07,
+  PROVIDE_TOKEN: 0x08,
 } as const;
 
 export const P1 = {

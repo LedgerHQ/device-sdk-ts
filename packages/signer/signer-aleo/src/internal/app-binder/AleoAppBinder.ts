@@ -1,3 +1,4 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
   CallTaskInAppDeviceAction,
   type DeviceManagementKit,
@@ -5,7 +6,7 @@ import {
   SendCommandInAppDeviceAction,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import { inject, injectable } from "inversify";
+import { inject, injectable, optional } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
@@ -19,15 +20,18 @@ import { externalTypes } from "@internal/externalTypes";
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { GetViewKeyCommand } from "./command/GetViewKeyCommand";
+import { SignRootIntentDeviceAction } from "./device-action/SignRootIntent/SignRootIntentDeviceAction";
 import { SignFeeIntentTask } from "./task/SignFeeIntentTask";
 import { SignNestedCallTask } from "./task/SignNestedCallTask";
-import { SignRootIntentTask } from "./task/SignRootIntentTask";
 
 @injectable()
 export class AleoAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
+    @optional()
+    @inject(externalTypes.ContextModule)
+    private contextModule: ContextModule | undefined,
   ) {}
 
   getAppConfig(args: { skipOpenApp: boolean }): GetAppConfigDAReturnType {
@@ -85,19 +89,19 @@ export class AleoAppBinder {
     derivationPath: string;
     rootIntent: Uint8Array;
     skipOpenApp: boolean;
+    tokenInternalId?: string;
+    programName?: string;
   }): SignRootIntentDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
+      deviceAction: new SignRootIntentDeviceAction({
         input: {
-          task: (internalApi) =>
-            new SignRootIntentTask(internalApi, {
-              derivationPath: args.derivationPath,
-              rootIntent: args.rootIntent,
-            }).run(),
-          appName: APP_NAME,
-          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          derivationPath: args.derivationPath,
+          rootIntent: args.rootIntent,
           skipOpenApp: args.skipOpenApp,
+          tokenInternalId: args.tokenInternalId,
+          programName: args.programName,
+          contextModule: this.contextModule,
         },
       }),
     });

@@ -22,6 +22,8 @@ export class SignRootIntentUseCase {
       derivationPath,
       rootIntent,
       skipOpenApp: options?.skipOpenApp ?? false,
+      tokenInternalId: options?.tokenInternalId,
+      programName: options?.programName,
     });
   }
 }
