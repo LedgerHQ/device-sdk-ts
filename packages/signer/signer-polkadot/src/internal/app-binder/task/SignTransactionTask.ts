@@ -1,12 +1,19 @@
 import {
+  APDU_MAX_PAYLOAD,
   type CommandResult,
   CommandResultFactory,
   type InternalApi,
+  InvalidStatusWordError,
   isSuccessCommandResult,
+  type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 
 import { type Signature } from "@api/model/Signature";
-import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
+import {
+  SignPhase,
+  SignTransactionCommand,
+  type SignTransactionCommandResponse,
+} from "@internal/app-binder/command/SignTransactionCommand";
 import { type PolkadotErrorCodes } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
 
 type SignTransactionTaskArgs = {
@@ -19,29 +26,84 @@ export class SignTransactionTask {
   constructor(
     private api: InternalApi,
     private args: SignTransactionTaskArgs,
+    private logger: LoggerPublisherService,
   ) {}
 
-  async run(): Promise<CommandResult<Signature, PolkadotErrorCodes>> {
-    // TODO: Adapt this implementation to your blockchain's signing protocol
-    // For transactions larger than a single APDU, you may need to:
-    // 1. Split the transaction into chunks
-    // 2. Send each chunk with appropriate first/continue flags
-    // 3. Collect the final signature from the last response
+  async run(): Promise<
+    CommandResult<SignTransactionCommandResponse, PolkadotErrorCodes>
+  > {
+    const { derivationPath, blob, metadata } = this.args;
+    const blobLength = blob.length;
 
-    const result = await this.api.sendCommand(
+    // Concatenate blob + metadata into the full payload
+    const payload = new Uint8Array(blob.length + metadata.length);
+    payload.set(blob, 0);
+    payload.set(metadata, blob.length);
+
+    this.logger.debug("[run] Starting SignTransactionTask", {
+      data: {
+        derivationPath,
+        blobLength,
+        metadataLength: metadata.length,
+        payloadLength: payload.length,
+      },
+    });
+
+    // Send INIT command with derivation path and blobLength
+    const initResult = await this.api.sendCommand(
       new SignTransactionCommand({
-        derivationPath: this.args.derivationPath,
-        blob: this.args.blob,
-        metadata: this.args.metadata,
+        phase: SignPhase.INIT,
+        derivationPath,
+        blobLength,
       }),
     );
 
-    if (!isSuccessCommandResult(result)) {
-      return result;
+    if (!isSuccessCommandResult(initResult)) {
+      this.logger.debug("[run] Failed to sign transaction", {
+        data: { error: initResult.error },
+      });
+      return CommandResultFactory({
+        error: new InvalidStatusWordError("Failed to sign transaction"),
+      });
+    }
+
+    // Loop through payload in APDU_MAX_PAYLOAD chunks
+    for (let offset = 0; offset < payload.length; offset += APDU_MAX_PAYLOAD) {
+      const isLastChunk = offset + APDU_MAX_PAYLOAD >= payload.length;
+      const phase = isLastChunk ? SignPhase.LAST : SignPhase.ADD;
+      const transactionChunk = payload.slice(offset, offset + APDU_MAX_PAYLOAD);
+
+      const result = await this.api.sendCommand(
+        new SignTransactionCommand({
+          phase,
+          transactionChunk,
+        }),
+      );
+
+      if (!isSuccessCommandResult(result)) {
+        this.logger.debug("[run] Failed to sign transaction", {
+          data: {
+            chunkIndex: offset,
+            error: result.error,
+          },
+        });
+        return result;
+      }
+
+      if (isLastChunk) {
+        this.logger.debug("[run] Transaction signed successfully", {
+          data: {
+            signature: result.data,
+          },
+        });
+        return CommandResultFactory({
+          data: result.data as Signature,
+        });
+      }
     }
 
     return CommandResultFactory({
-      data: result.data,
+      error: new InvalidStatusWordError("No signature returned"),
     });
   }
 }
