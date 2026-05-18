@@ -16,11 +16,11 @@ import {
   ConcordiumAppCommandErrorFactory,
   type ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
-import { INS, LEDGER_CLA, P2 } from "@internal/app-binder/constants";
+import { INS, LEDGER_CLA } from "@internal/app-binder/constants";
 
 export type SignTransferCommandArgs = {
-  readonly chunkedData: Uint8Array;
-  readonly isLastChunk: boolean;
+  readonly data: Uint8Array;
+  readonly p2: number;
 };
 
 export type SignTransferCommandResponse = Signature;
@@ -51,10 +51,10 @@ export class SignTransferCommand
       cla: LEDGER_CLA,
       ins: INS.SIGN_TRANSFER,
       p1: 0x00,
-      p2: this.args.isLastChunk ? P2.LAST : P2.MORE,
+      p2: this.args.p2,
     });
 
-    apduBuilder.addBufferToData(this.args.chunkedData);
+    apduBuilder.addBufferToData(this.args.data);
 
     return apduBuilder.build();
   }

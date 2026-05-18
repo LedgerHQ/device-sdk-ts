@@ -76,6 +76,7 @@ export class ConcordiumAppBinder {
   signTransaction(args: {
     derivationPath: string;
     transaction: Uint8Array;
+    maxFee: bigint;
     skipOpenApp?: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({

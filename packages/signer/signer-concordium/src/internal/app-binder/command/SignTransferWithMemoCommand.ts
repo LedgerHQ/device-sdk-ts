@@ -16,10 +16,11 @@ import {
   ConcordiumAppCommandErrorFactory,
   type ConcordiumErrorCodes,
 } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
-import { INS, LEDGER_CLA, P2 } from "@internal/app-binder/constants";
+import { INS, LEDGER_CLA } from "@internal/app-binder/constants";
 
 export type SignTransferWithMemoCommandArgs = {
   readonly p1: number;
+  readonly p2: number;
   readonly data: Uint8Array;
 };
 
@@ -51,7 +52,7 @@ export class SignTransferWithMemoCommand
       cla: LEDGER_CLA,
       ins: INS.SIGN_TRANSFER_WITH_MEMO,
       p1: this.args.p1,
-      p2: P2.NONE,
+      p2: this.args.p2,
     });
 
     apduBuilder.addBufferToData(this.args.data);

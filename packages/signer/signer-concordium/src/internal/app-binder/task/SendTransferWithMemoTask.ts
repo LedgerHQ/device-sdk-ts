@@ -15,11 +15,13 @@ import {
 } from "@internal/app-binder/command/SignTransferWithMemoCommand";
 import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { encodeDerivationPath } from "@internal/app-binder/command/utils/EncodeDerivationPath";
-import { P1 } from "@internal/app-binder/constants";
+import { encodeMaxFeeBigEndian } from "@internal/app-binder/command/utils/EncodeMaxFee";
+import { P1, P2 } from "@internal/app-binder/constants";
 
 // Serialized transaction layout:
 // [sender:32][nonce:8][energy:8][payloadSize:4][expiry:8][type:1] = 61 bytes header
 // [recipient:32][memoLength:2][memo:N][amount:8]
+
 const HEADER_LENGTH = 61;
 const RECIPIENT_LENGTH = 32;
 const MEMO_LENGTH_FIELD = 2;
@@ -28,6 +30,8 @@ const AMOUNT_LENGTH = 8;
 type SendTransferWithMemoTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  maxFee: bigint;
+  supportsFeeDisplay: boolean;
 };
 
 export class SendTransferWithMemoTask {
@@ -44,10 +48,12 @@ export class SendTransferWithMemoTask {
       data: {
         derivationPath: this.args.derivationPath,
         transactionLength: this.args.transaction.length,
+        supportsFeeDisplay: this.args.supportsFeeDisplay,
       },
     });
 
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, transaction, maxFee, supportsFeeDisplay } =
+      this.args;
     const pathBytes = encodeDerivationPath(derivationPath);
 
     const minLength =
@@ -95,12 +101,18 @@ export class SendTransferWithMemoTask {
     // Amount (8 bytes)
     const amount = transaction.slice(offset, offset + AMOUNT_LENGTH);
 
-    // Step 1: Send header payload (path + header + recipient + memoLength)
+    // Step 1: Send header payload (path + header + recipient + memoLength).
+    // Fee suffix is parsed for UI but not hashed by the firmware.
+    const feeSuffix = supportsFeeDisplay
+      ? encodeMaxFeeBigEndian(maxFee)
+      : new Uint8Array(0);
+
     const headerPayload = new Uint8Array(
       pathBytes.length +
         header.length +
         recipient.length +
-        memoLengthBytes.length,
+        memoLengthBytes.length +
+        feeSuffix.length,
     );
 
     if (headerPayload.length > APDU_MAX_PAYLOAD) {
@@ -117,10 +129,18 @@ export class SendTransferWithMemoTask {
       memoLengthBytes,
       pathBytes.length + header.length + recipient.length,
     );
+    headerPayload.set(
+      feeSuffix,
+      pathBytes.length +
+        header.length +
+        recipient.length +
+        memoLengthBytes.length,
+    );
 
     const headerResult = await this.api.sendCommand(
       new SignTransferWithMemoCommand({
         p1: P1.INITIAL_WITH_MEMO,
+        p2: supportsFeeDisplay ? P2.FEE_DISPLAY : P2.NONE,
         data: headerPayload,
       }),
     );
@@ -142,6 +162,7 @@ export class SendTransferWithMemoTask {
       const memoResult = await this.api.sendCommand(
         new SignTransferWithMemoCommand({
           p1: P1.MEMO,
+          p2: P2.NONE,
           data: chunk,
         }),
       );
@@ -158,6 +179,7 @@ export class SendTransferWithMemoTask {
     const amountResult = await this.api.sendCommand(
       new SignTransferWithMemoCommand({
         p1: P1.AMOUNT,
+        p2: P2.NONE,
         data: amount,
       }),
     );
