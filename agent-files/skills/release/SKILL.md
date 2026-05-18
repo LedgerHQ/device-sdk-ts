@@ -1,19 +1,20 @@
+---
+name: release
+description: Release one or more packages from this monorepo using the scripts in agent-files/scripts/release/. Activate when the user says "release", "/release", or asks to release specific packages (e.g. "/release dmk signer-eth").
+---
+
 # Release Packages
 
-Release one or more packages from this monorepo using the scripts in `.cursor/scripts/release/`.
+Release one or more packages from this monorepo using the scripts in `agent-files/scripts/release/`.
 
-## When to use
+## Permission prompts
 
-Activate this skill when the user says "release", "/release", or asks to release specific packages (e.g., "/release dmk signer-eth").
+The following commands need network access, post-install scripts, or the GitHub CLI, so they will trigger a permission prompt (Claude Code) or must be run with `required_permissions: ["all"]` (Cursor):
 
-## Sandbox permissions
-
-The following commands MUST be run with `required_permissions: ["all"]` because they need network access, post-install scripts, or the GitHub CLI:
-
-- `pnpm exec zx .cursor/scripts/release/preflight.cjs` (Step 1 — `gh auth status`)
-- `pnpm exec zx .cursor/scripts/release/changelog.cjs` (Step 7 — GitHub API via `gh`)
+- `pnpm exec zx agent-files/scripts/release/preflight.cjs` (Step 1 — `gh auth status`)
+- `pnpm exec zx agent-files/scripts/release/changelog.cjs` (Step 7 — GitHub API via `gh`)
 - `pnpm install --no-frozen-lockfile` (Step 9 — post-install scripts, native deps)
-- `pnpm exec zx .cursor/scripts/release/create-pr.cjs` (Step 11 — `gh pr create`)
+- `pnpm exec zx agent-files/scripts/release/create-pr.cjs` (Step 11 — `gh pr create`)
 
 All other scripts (`discover`, `set-private`, `pin-deps`, `bump`, `cleanup`) run fine inside the sandbox.
 
@@ -54,7 +55,7 @@ Use these short names in the `--packages` flag. The user may use either aliases 
 
 ## Release flow (step by step)
 
-All scripts live in `.cursor/scripts/release/` and are run with `pnpm exec zx`.
+All scripts live in `agent-files/scripts/release/` and are run with `pnpm exec zx`.
 Replace `<PKGS>` with a comma-separated list of aliases (e.g., `dmk,signer-eth`).
 
 **Important:** Commit after every step that modifies files. This keeps the release branch bisectable and easy to review.
@@ -62,7 +63,7 @@ Replace `<PKGS>` with a comma-separated list of aliases (e.g., `dmk,signer-eth`)
 ### Step 1 -- Preflight
 
 ```bash
-pnpm exec zx .cursor/scripts/release/preflight.cjs
+pnpm exec zx agent-files/scripts/release/preflight.cjs
 ```
 
 - If any check fails, fix the issue before proceeding.
@@ -71,7 +72,7 @@ pnpm exec zx .cursor/scripts/release/preflight.cjs
 ### Step 2 -- Discover & confirm
 
 ```bash
-pnpm exec zx .cursor/scripts/release/discover.cjs --packages <PKGS>
+pnpm exec zx agent-files/scripts/release/discover.cjs --packages <PKGS>
 ```
 
 - `--packages` is required. Pass the same comma-separated aliases the user requested (e.g. `signer-sol,signer-eth`).
@@ -123,7 +124,7 @@ git checkout -b release
 ### Step 4 -- Set release scope
 
 ```bash
-pnpm exec zx .cursor/scripts/release/set-private.cjs --packages <PKGS>
+pnpm exec zx agent-files/scripts/release/set-private.cjs --packages <PKGS>
 ```
 
 - Sets `private:false` on target packages, `private:true` on everything else.
@@ -140,7 +141,7 @@ git commit -m "📦 (release): Set release scope to <packages>"
 ### Step 5 -- Pin workspace deps
 
 ```bash
-pnpm exec zx .cursor/scripts/release/pin-deps.cjs --packages <PKGS>
+pnpm exec zx agent-files/scripts/release/pin-deps.cjs --packages <PKGS>
 ```
 
 - Replaces `workspace:^` with `^<version>` for deps pointing to non-released internal packages.
@@ -156,7 +157,7 @@ git commit -m "🔧 (release): Pin workspace dependencies"
 ### Step 6 -- Bump versions
 
 ```bash
-pnpm exec zx .cursor/scripts/release/bump.cjs
+pnpm exec zx agent-files/scripts/release/bump.cjs
 ```
 
 - Reads changesets and applies semver bumps to `package.json`.
@@ -173,7 +174,7 @@ git commit -m "🔖 (release): Bump versions"
 ### Step 7 -- Generate changelogs
 
 ```bash
-pnpm exec zx .cursor/scripts/release/changelog.cjs
+pnpm exec zx agent-files/scripts/release/changelog.cjs
 ```
 
 - Prepends new entries to each bumped package's `CHANGELOG.md`.
@@ -189,7 +190,7 @@ git commit -m "📝 (release): Generate changelogs"
 ### Step 8 -- Clean up changesets
 
 ```bash
-pnpm exec zx .cursor/scripts/release/cleanup.cjs
+pnpm exec zx agent-files/scripts/release/cleanup.cjs
 ```
 
 - Deletes `.changeset/*.md` files consumed by the release.
@@ -234,7 +235,7 @@ git commit -m "📝 (release): Update getting-started versions"
 ### Step 11 -- Create release PR
 
 ```bash
-pnpm exec zx .cursor/scripts/release/create-pr.cjs
+pnpm exec zx agent-files/scripts/release/create-pr.cjs
 ```
 
 - Opens a PR targeting `main` with a version summary body.
@@ -252,7 +253,7 @@ Perform a documentation health check. This step does not block the release but s
 ## Error handling
 
 - If any script fails, read its stderr output and fix the issue before retrying.
-- If `set-private.cjs` fails on an unknown alias, check the alias table above or `.cursor/scripts/release/config.cjs`.
+- If `set-private.cjs` fails on an unknown alias, check the alias table above or `agent-files/scripts/release/config.cjs`.
 - If `bump.cjs` reports "No changesets found", verify that `.changeset/*.md` files exist for the target packages.
 - If `create-pr.cjs` fails, ensure `gh` CLI is authenticated (`gh auth status`) and the branch is pushed.
 - Never force-push or amend commits that have been pushed to a shared branch.

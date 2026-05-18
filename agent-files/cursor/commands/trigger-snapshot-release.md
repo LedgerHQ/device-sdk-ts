@@ -1,0 +1,1 @@
+../../commands/trigger-snapshot-release.md

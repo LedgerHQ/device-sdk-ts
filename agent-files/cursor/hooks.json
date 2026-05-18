@@ -3,12 +3,12 @@
   "hooks": {
     "afterFileEdit": [
       {
-        "command": "node .cursor/scripts/hooks/format.cjs"
+        "command": "node agent-files/cursor/scripts/hooks/format.cjs"
       }
     ],
     "stop": [
       {
-        "command": "node .cursor/scripts/hooks/post-task-checks.cjs",
+        "command": "node agent-files/cursor/scripts/hooks/post-task-checks.cjs",
         "timeout": 180,
         "loop_limit": 3
       }

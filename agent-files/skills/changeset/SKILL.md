@@ -1,5 +1,6 @@
 ---
-description: How to create a changeset
+name: changeset
+description: How to create a changeset in this monorepo. Use when adding a new changeset, when the user invokes /changeset, or when committing changes that need a version bump.
 alwaysApply: false
 ---
 

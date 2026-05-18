@@ -1,5 +1,6 @@
 ---
-description: How to create a commit
+name: commit
+description: Commit message convention for this repo (gitmoji + scope + capitalized message) enforced by the danger CI bot. Use whenever creating commits, when the user invokes /commit, or when fixing commit messages that failed CI.
 alwaysApply: false
 ---
 
