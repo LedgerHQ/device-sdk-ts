@@ -92,7 +92,7 @@ export class VerifyAddressTask {
           network,
           deviceModelId,
         },
-        [ClearSignContextType.ACCOUNT_OWNERSHIP],
+        [ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP],
       );
     } catch (error) {
       this.logger.error("[run] Context module error", { data: { error } });
@@ -106,8 +106,8 @@ export class VerifyAddressTask {
     const ownershipContext = contexts.find(
       (
         c,
-      ): c is ClearSignContextSuccess<ClearSignContextType.ACCOUNT_OWNERSHIP> =>
-        c.type === ClearSignContextType.ACCOUNT_OWNERSHIP,
+      ): c is ClearSignContextSuccess<ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP> =>
+        c.type === ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
     );
 
     if (!ownershipContext) {

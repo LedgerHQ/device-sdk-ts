@@ -1,13 +1,11 @@
-import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningReporterDatasource";
+import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
 import {
   type ClearSignContext,
   type ClearSignContextType,
 } from "@/shared/model/ClearSignContext";
 
-import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
-import { type TypedDataClearSignContext } from "./shared/model/TypedDataClearSignContext";
-import { type TypedDataContext } from "./shared/model/TypedDataContext";
-import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
+import { type TypedDataClearSignContext } from "./modules/ethereum/model/TypedDataClearSignContext";
+import { type TypedDataContext } from "./modules/ethereum/model/TypedDataContext";
 
 export interface ContextModule {
   getContexts<TInput>(
@@ -21,8 +19,5 @@ export interface ContextModule {
   getTypedDataFilters(
     typedData: TypedDataContext,
   ): Promise<TypedDataClearSignContext>;
-  getSolanaContext(
-    transactionContext: SolanaTransactionContext,
-  ): Promise<SolanaTransactionContextResult>;
   report(params: BlindSigningReportParams): Promise<void>;
 }

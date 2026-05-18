@@ -24,8 +24,8 @@ import { SolanaAppCommandError } from "@internal/app-binder/command/utils/Solana
 import { testDeviceActionStates } from "@internal/app-binder/device-action/__test-utils__/testDeviceActionStates";
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import {
-  SOLANA_APP_SPL_MIN_VERSION,
   SOLANA_MIN_DELAYED_SIGNING_VERSION,
+  SOLANA_MIN_SPL_VERSION,
 } from "@internal/app-binder/SolanaApplicationResolver";
 import { type SolanaBuildContextResult } from "@internal/app-binder/task/BuildTransactionContextTask";
 
@@ -36,20 +36,22 @@ import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 const defaultDerivation = "44'/501'/0'/0'";
 const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 
-function makeAppConfig(version: string): AppConfiguration {
-  return {
-    version,
-    blindSigningEnabled: false,
-    pubKeyDisplayMode: PublicKeyDisplayMode.SHORT,
-  };
-}
+const defaultAppConfig: AppConfiguration = {
+  blindSigningEnabled: true,
+  pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+  version: "2.5.10",
+  web3ChecksEnabled: false,
+  web3ChecksOptIn: false,
+};
 
 const contextModuleStub: ContextModule = {
-  getSolanaContext: vi.fn(),
+  getContexts: vi.fn(),
 } as unknown as ContextModule;
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let getAppConfigMock: ReturnType<typeof vi.fn>;
+let web3CheckOptInMock: ReturnType<typeof vi.fn>;
+let getPubKeyMock: ReturnType<typeof vi.fn>;
 let buildContextMock: ReturnType<typeof vi.fn>;
 let provideContextMock: ReturnType<typeof vi.fn>;
 let signMock: ReturnType<typeof vi.fn>;
@@ -58,6 +60,8 @@ let inspectTransactionMock: ReturnType<typeof vi.fn>;
 function extractDeps() {
   return {
     getAppConfig: getAppConfigMock,
+    web3CheckOptIn: web3CheckOptInMock,
+    getPubKey: getPubKeyMock,
     buildContext: buildContextMock,
     provideContext: provideContextMock,
     signTransaction: signMock,
@@ -69,6 +73,14 @@ describe("SignTransactionDeviceAction (Solana)", () => {
   beforeEach(() => {
     apiMock = makeDeviceActionInternalApiMock();
     getAppConfigMock = vi.fn();
+    web3CheckOptInMock = vi
+      .fn()
+      .mockResolvedValue(CommandResultFactory({ data: { enabled: true } }));
+    getPubKeyMock = vi.fn().mockResolvedValue(
+      CommandResultFactory({
+        data: "So1anaSignerPubKey111111111111111111111111111",
+      }),
+    );
     buildContextMock = vi.fn();
     provideContextMock = vi.fn();
     signMock = vi.fn();
@@ -90,7 +102,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: { version: "1.10.0" } }),
       );
       inspectTransactionMock.mockImplementation(
         async (arg: { rpcUrl?: string }) => {
@@ -167,7 +179,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: defaultAppConfig }),
       );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
@@ -180,6 +192,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array([0x01]),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       };
       buildContextMock.mockResolvedValue(ctx);
       provideContextMock.mockResolvedValue(Nothing);
@@ -215,6 +228,14 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // getPubKey
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -270,7 +291,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: defaultAppConfig }),
       );
 
       // InspectTransaction fails, machine transitions to SignTransaction
@@ -347,7 +368,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: defaultAppConfig }),
       );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
@@ -383,6 +404,14 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // getPubKey
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -430,7 +459,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: defaultAppConfig }),
       );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
@@ -443,6 +472,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array([0x02]),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       };
       buildContextMock.mockResolvedValue(ctx);
 
@@ -478,6 +508,14 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // getPubKey
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -536,7 +574,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: defaultAppConfig }),
       );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
@@ -549,6 +587,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array(),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       });
       provideContextMock.mockResolvedValue(
         Just(
@@ -584,6 +623,14 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // getPubKey
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -639,7 +686,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: defaultAppConfig }),
       );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SWAP,
@@ -653,6 +700,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           payload: new Uint8Array([0x01]),
         },
         loadersResults: [],
+        contextErrorCount: 0,
       };
       buildContextMock.mockResolvedValue(ctx);
       provideContextMock.mockResolvedValue(Nothing);
@@ -691,6 +739,13 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -749,7 +804,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: defaultAppConfig }),
       );
       inspectTransactionMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.SPL,
@@ -786,6 +841,14 @@ describe("SignTransactionDeviceAction (Solana)", () => {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
             step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        // getPubKey
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -833,7 +896,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: { version: "1.10.0" } }),
       );
       inspectTransactionMock.mockRejectedValue(
         new InvalidStatusWordError("inspErr"),
@@ -907,7 +970,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig(belowDelayedVersion) }),
+        CommandResultFactory({ data: { version: "1.10.0" } }),
       );
       inspectTransactionMock.mockRejectedValue(
         new InvalidStatusWordError("inspErr"),
@@ -966,7 +1029,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
     });
   });
 
-  it(`app version strictly below ${SOLANA_APP_SPL_MIN_VERSION} skips SPL pipeline and signs directly`, () =>
+  it(`app version strictly below ${SOLANA_MIN_SPL_VERSION} skips SPL pipeline and signs directly`, () =>
     new Promise<void>((resolve, reject) => {
       apiMock.getDeviceSessionState.mockReturnValue({
         sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
@@ -978,7 +1041,9 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.9.1") }),
+        CommandResultFactory({
+          data: { ...defaultAppConfig, version: "1.9.1" },
+        }),
       );
 
       const sig = new Uint8Array([0xa1, 0xb2]);
@@ -1039,7 +1104,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: { version: "1.10.0" } }),
       );
 
       const sig = new Uint8Array([0xc3, 0xd4]);
@@ -1100,7 +1165,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       });
 
       getAppConfigMock.mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.10.0") }),
+        CommandResultFactory({ data: { version: "1.10.0" } }),
       );
       inspectTransactionMock.mockRejectedValue(
         new InvalidStatusWordError("inspErr"),
@@ -1157,6 +1222,454 @@ describe("SignTransactionDeviceAction (Solana)", () => {
         onError: reject,
       });
     }));
+
+  it("non-SPL web3checks-supported: inspects then routes to getPubKey -> build -> provide -> sign", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "2.0.0" },
+        deviceModelId: DeviceModelId.FLEX,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...defaultAppConfig,
+            version: "2.0.0",
+            web3ChecksEnabled: true,
+            web3ChecksOptIn: true,
+          },
+        }),
+      );
+
+      inspectTransactionMock.mockResolvedValue({
+        transactionType: SolanaTransactionTypes.STANDARD,
+      });
+
+      buildContextMock.mockResolvedValue({
+        loadersResults: [],
+      });
+      provideContextMock.mockResolvedValue(Nothing);
+
+      const sig = new Uint8Array([0xaa, 0xbb]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: {
+            skipOpenApp: true,
+          },
+          contextModule: contextModuleStub,
+        },
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: () => {
+          expect(inspectTransactionMock).toHaveBeenCalledTimes(1);
+          expect(getPubKeyMock).toHaveBeenCalledTimes(1);
+          expect(buildContextMock).toHaveBeenCalledTimes(1);
+          expect(provideContextMock).toHaveBeenCalledTimes(1);
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
+
+  it("non-SPL on unsupported device (NANO_X): skips GetPubKey/BuildContext and signs directly", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "2.0.0" },
+        deviceModelId: DeviceModelId.NANO_X,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...defaultAppConfig,
+            version: "2.0.0",
+            web3ChecksEnabled: true,
+            web3ChecksOptIn: true,
+          },
+        }),
+      );
+
+      inspectTransactionMock.mockResolvedValue({
+        transactionType: SolanaTransactionTypes.STANDARD,
+      });
+
+      const sig = new Uint8Array([0xaa, 0xbb]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: {
+            skipOpenApp: true,
+          },
+          contextModule: contextModuleStub,
+        },
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates(action, expected, apiMock, {
+        onDone: () => {
+          expect(inspectTransactionMock).toHaveBeenCalledTimes(1);
+          expect(getPubKeyMock).not.toHaveBeenCalled();
+          expect(buildContextMock).not.toHaveBeenCalled();
+          expect(provideContextMock).not.toHaveBeenCalled();
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
+
+  it("Flex: Web3Checks opt-in runs before inspect when app requires it", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "2.0.0" },
+        deviceModelId: DeviceModelId.FLEX,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...defaultAppConfig,
+            version: "2.0.0",
+            web3ChecksEnabled: false,
+            web3ChecksOptIn: false,
+          },
+        }),
+      );
+
+      web3CheckOptInMock.mockResolvedValue(
+        CommandResultFactory({ data: { enabled: true } }),
+      );
+
+      inspectTransactionMock.mockResolvedValue({
+        transactionType: SolanaTransactionTypes.STANDARD,
+        data: {},
+      });
+
+      buildContextMock.mockResolvedValue({
+        loadersResults: [],
+      });
+      provideContextMock.mockResolvedValue(Nothing);
+
+      const sig = new Uint8Array([0x01, 0x02]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+            step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT,
+            result: true,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates<
+        Uint8Array,
+        SignTransactionDAInput,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >(action, expected, apiMock, {
+        onDone: () => {
+          expect(web3CheckOptInMock).toHaveBeenCalledTimes(1);
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
+
+  it("Flex: Web3Checks opt-in command error proceeds without web3checks", () =>
+    new Promise<void>((resolve, reject) => {
+      apiMock.getDeviceSessionState.mockReturnValue({
+        sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+        deviceStatus: DeviceStatus.CONNECTED,
+        installedApps: [],
+        currentApp: { name: "Solana", version: "2.0.0" },
+        deviceModelId: DeviceModelId.FLEX,
+        isSecureConnectionAllowed: true,
+      });
+
+      getAppConfigMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            ...defaultAppConfig,
+            version: "2.0.0",
+            web3ChecksEnabled: false,
+            web3ChecksOptIn: false,
+          },
+        }),
+      );
+
+      web3CheckOptInMock.mockResolvedValue(
+        CommandResultFactory({
+          error: new InvalidStatusWordError("user declined opt-in"),
+        }),
+      );
+
+      inspectTransactionMock.mockResolvedValue({
+        transactionType: SolanaTransactionTypes.STANDARD,
+        data: {},
+      });
+
+      buildContextMock.mockResolvedValue({
+        loadersResults: [],
+      });
+      provideContextMock.mockResolvedValue(Nothing);
+
+      const sig = new Uint8Array([0x01, 0x02]);
+      signMock.mockResolvedValue(CommandResultFactory({ data: Just(sig) }));
+
+      const action = new SignTransactionDeviceAction({
+        input: {
+          derivationPath: defaultDerivation,
+          transaction: exampleTx,
+          transactionOptions: { skipOpenApp: true },
+          contextModule: contextModuleStub,
+        },
+      });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      const expected = [
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_APP_CONFIG,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
+            step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT,
+            result: false,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.GET_PUB_KEY,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        {
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.SignTransaction,
+            step: signTransactionDAStateSteps.SIGN_TRANSACTION,
+          },
+          status: DeviceActionStatus.Pending,
+        },
+        { output: sig, status: DeviceActionStatus.Completed },
+      ] as DeviceActionState<
+        Uint8Array,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >[];
+
+      testDeviceActionStates<
+        Uint8Array,
+        SignTransactionDAInput,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      >(action, expected, apiMock, {
+        onDone: () => {
+          expect(web3CheckOptInMock).toHaveBeenCalledTimes(1);
+          resolve();
+        },
+        onError: reject,
+      });
+    }));
 });
 
 describe("SignTransactionDeviceAction – child machine integration", () => {
@@ -1210,9 +1723,7 @@ describe("SignTransactionDeviceAction – child machine integration", () => {
 
     getAppConfigMock = vi
       .fn()
-      .mockResolvedValue(
-        CommandResultFactory({ data: makeAppConfig("1.14.0") }),
-      );
+      .mockResolvedValue(CommandResultFactory({ data: { version: "1.14.0" } }));
     buildContextMock = vi.fn();
     provideContextMock = vi.fn();
     signMock = vi.fn();

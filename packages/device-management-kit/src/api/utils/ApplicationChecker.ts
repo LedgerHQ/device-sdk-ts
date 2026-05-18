@@ -12,6 +12,7 @@ export class ApplicationChecker {
   private isCompatible: boolean;
   private version: string;
   private modelId: DeviceModelId;
+  private readonly appName: string | undefined;
 
   constructor(
     deviceState: DeviceSessionState,
@@ -19,6 +20,8 @@ export class ApplicationChecker {
     resolver: ApplicationResolver,
   ) {
     this.modelId = deviceState.deviceModelId;
+    this.appName =
+      "currentApp" in deviceState ? deviceState.currentApp.name : undefined;
     const resolved = resolver.resolve(deviceState, appConfig);
     this.isCompatible = resolved.isCompatible;
     this.version = resolved.version;
@@ -36,6 +39,21 @@ export class ApplicationChecker {
 
   excludeDeviceModel(modelId: DeviceModelId): ApplicationChecker {
     if (this.modelId === modelId) this.isCompatible = false;
+    return this;
+  }
+
+  excludeDeviceModels(...modelIds: DeviceModelId[]): ApplicationChecker {
+    for (const id of modelIds) this.excludeDeviceModel(id);
+    return this;
+  }
+
+  excludeApp(name: string): ApplicationChecker {
+    if (this.appName === name) this.isCompatible = false;
+    return this;
+  }
+
+  excludeApps(...names: string[]): ApplicationChecker {
+    for (const name of names) this.excludeApp(name);
     return this;
   }
 

@@ -1,4 +1,4 @@
-import { KeyUsage } from "@/pki/model/KeyUsage";
+import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { KeyUsageMapper } from "@/shared/utils/KeyUsageMapper";
 
 describe("KeyUsageMapper", () => {

@@ -3,6 +3,8 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type EthereumClearSignContextSuccess,
+  isEthereumClearSignContextSuccess,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
@@ -24,32 +26,32 @@ import {
 } from "@internal/shared/EthAppVersions";
 
 export const NESTED_CALLDATA_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
-  ClearSignContextType.TRUSTED_NAME,
-  ClearSignContextType.TRANSACTION_INFO,
-  ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-  ClearSignContextType.ENUM,
-  ClearSignContextType.PROXY_INFO,
+  ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+  ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+  ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+  ClearSignContextType.ETHEREUM_ENUM,
+  ClearSignContextType.ETHEREUM_PROXY_INFO,
 ];
 
 export const BASE_CONTEXT_TYPES_FILTER: ClearSignContextType[] = [
-  ClearSignContextType.TRANSACTION_INFO,
-  ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
-  ClearSignContextType.PROXY_INFO,
-  ClearSignContextType.TRANSACTION_CHECK,
-  ClearSignContextType.DYNAMIC_NETWORK,
-  ClearSignContextType.DYNAMIC_NETWORK_ICON,
-  ClearSignContextType.ENUM,
-  ClearSignContextType.TRUSTED_NAME,
-  ClearSignContextType.TOKEN,
-  ClearSignContextType.NFT,
-  ClearSignContextType.PLUGIN,
-  ClearSignContextType.EXTERNAL_PLUGIN,
-  ClearSignContextType.GATED_SIGNING,
+  ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
+  ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
+  ClearSignContextType.ETHEREUM_PROXY_INFO,
+  ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
+  ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+  ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+  ClearSignContextType.ETHEREUM_ENUM,
+  ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+  ClearSignContextType.ETHEREUM_TOKEN,
+  ClearSignContextType.ETHEREUM_NFT,
+  ClearSignContextType.ETHEREUM_PLUGIN,
+  ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
+  ClearSignContextType.ETHEREUM_GATED_SIGNING,
 ];
 
 export type BuildBaseContextsResult = {
-  readonly clearSignContexts: ClearSignContextSuccess[];
-  readonly clearSignContextsOptional: ClearSignContextSuccess[];
+  readonly clearSignContexts: EthereumClearSignContextSuccess[];
+  readonly clearSignContextsOptional: EthereumClearSignContextSuccess[];
   readonly clearSigningType: ClearSigningType;
   readonly contextErrorCount: number;
 };
@@ -116,6 +118,9 @@ export class BuildBaseContexts {
       (context) => context.type !== ClearSignContextType.ERROR,
     );
 
+    const ethContexts: EthereumClearSignContextSuccess[] =
+      contextsSuccess.filter(isEthereumClearSignContextSuccess);
+
     // Remove gating contexts when app does not support them
     const supportsGatedSigning = new ApplicationChecker(
       deviceState,
@@ -126,9 +131,10 @@ export class BuildBaseContexts {
       .excludeDeviceModel(DeviceModelId.NANO_S)
       .check();
     const contextsForSigning = supportsGatedSigning
-      ? contextsSuccess
-      : contextsSuccess.filter(
-          (context) => context.type !== ClearSignContextType.GATED_SIGNING,
+      ? ethContexts
+      : ethContexts.filter(
+          (context) =>
+            context.type !== ClearSignContextType.ETHEREUM_GATED_SIGNING,
         );
 
     if (
@@ -142,17 +148,19 @@ export class BuildBaseContexts {
   }
 
   private _getERC7730Contexts(
-    contexts: ClearSignContextSuccess[],
+    contexts: EthereumClearSignContextSuccess[],
     contextErrorCount: number,
   ): BuildBaseContextsResult {
-    const clearSignContexts: ClearSignContextSuccess[] = contexts
+    const clearSignContexts: EthereumClearSignContextSuccess[] = contexts
       .filter((context) => this._isContextNeededForERC7730ClearSigning(context))
       .sort(
         (a, b) => this._getContextPriority(a) - this._getContextPriority(b),
       );
 
-    const clearSignContextsOptional: ClearSignContextSuccess[] =
-      contexts.filter((context) => context.type === ClearSignContextType.ENUM);
+    const clearSignContextsOptional: EthereumClearSignContextSuccess[] =
+      contexts.filter(
+        (context) => context.type === ClearSignContextType.ETHEREUM_ENUM,
+      );
 
     return {
       clearSignContexts,
@@ -163,10 +171,10 @@ export class BuildBaseContexts {
   }
 
   private _getBasicContexts(
-    contexts: ClearSignContextSuccess[],
+    contexts: EthereumClearSignContextSuccess[],
     contextErrorCount: number,
   ): BuildBaseContextsResult {
-    const clearSignContexts: ClearSignContextSuccess[] = contexts
+    const clearSignContexts: EthereumClearSignContextSuccess[] = contexts
       .filter((context) => this._isContextNeededForBasicClearSigning(context))
       .sort(
         (a, b) => this._getContextPriority(a) - this._getContextPriority(b),
@@ -182,25 +190,24 @@ export class BuildBaseContexts {
 
   private _isContextNeededForBasicClearSigning({
     type,
-  }: ClearSignContextSuccess): boolean {
+  }: EthereumClearSignContextSuccess): boolean {
     switch (type) {
-      case ClearSignContextType.TRANSACTION_CHECK:
-      case ClearSignContextType.PLUGIN:
-      case ClearSignContextType.EXTERNAL_PLUGIN:
-      case ClearSignContextType.DYNAMIC_NETWORK:
-      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
-      case ClearSignContextType.TRUSTED_NAME:
-      case ClearSignContextType.TOKEN:
-      case ClearSignContextType.NFT:
-      case ClearSignContextType.GATED_SIGNING:
-      case ClearSignContextType.PROXY_INFO:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
+      case ClearSignContextType.ETHEREUM_PLUGIN:
+      case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
+      case ClearSignContextType.ETHEREUM_TOKEN:
+      case ClearSignContextType.ETHEREUM_NFT:
+      case ClearSignContextType.ETHEREUM_GATED_SIGNING:
+      case ClearSignContextType.ETHEREUM_PROXY_INFO:
         return true;
-      case ClearSignContextType.TRANSACTION_INFO:
-      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
-      case ClearSignContextType.ENUM:
-      case ClearSignContextType.SAFE:
-      case ClearSignContextType.SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_SAFE:
+      case ClearSignContextType.ETHEREUM_SIGNER:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -211,25 +218,24 @@ export class BuildBaseContexts {
 
   private _isContextNeededForERC7730ClearSigning({
     type,
-  }: ClearSignContextSuccess): boolean {
+  }: EthereumClearSignContextSuccess): boolean {
     switch (type) {
-      case ClearSignContextType.TRANSACTION_INFO:
-      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
-      case ClearSignContextType.PROXY_INFO:
-      case ClearSignContextType.DYNAMIC_NETWORK:
-      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
-      case ClearSignContextType.TRANSACTION_CHECK:
-      case ClearSignContextType.GATED_SIGNING:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ETHEREUM_PROXY_INFO:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
+      case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         return true;
-      case ClearSignContextType.ENUM: // enum is needed but as optional
-      case ClearSignContextType.TRUSTED_NAME:
-      case ClearSignContextType.TOKEN:
-      case ClearSignContextType.NFT:
-      case ClearSignContextType.PLUGIN:
-      case ClearSignContextType.EXTERNAL_PLUGIN:
-      case ClearSignContextType.SAFE:
-      case ClearSignContextType.SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
+      case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
+      case ClearSignContextType.ETHEREUM_TOKEN:
+      case ClearSignContextType.ETHEREUM_NFT:
+      case ClearSignContextType.ETHEREUM_PLUGIN:
+      case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
+      case ClearSignContextType.ETHEREUM_SAFE:
+      case ClearSignContextType.ETHEREUM_SIGNER:
         return false;
       default: {
         const uncoveredType: never = type;
@@ -239,11 +245,12 @@ export class BuildBaseContexts {
   }
 
   private _hasValidTransactionInfo(
-    contexts: ClearSignContextSuccess[],
+    contexts: EthereumClearSignContextSuccess[],
   ): boolean {
     return (
       contexts.find(
-        (context) => context.type === ClearSignContextType.TRANSACTION_INFO,
+        (context) =>
+          context.type === ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
       )?.certificate !== undefined
     );
   }
@@ -269,31 +276,32 @@ export class BuildBaseContexts {
    * @param context The clear sign context to get priority for
    * @returns Priority number (lower = higher priority)
    */
-  private _getContextPriority({ type }: ClearSignContextSuccess): number {
+  private _getContextPriority({
+    type,
+  }: EthereumClearSignContextSuccess): number {
     switch (type) {
-      case ClearSignContextType.PROXY_INFO:
+      case ClearSignContextType.ETHEREUM_PROXY_INFO:
         return 5;
-      case ClearSignContextType.TRANSACTION_CHECK:
-      case ClearSignContextType.GATED_SIGNING:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
+      case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         return 10;
-      case ClearSignContextType.DYNAMIC_NETWORK:
-      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
         return 30;
-      case ClearSignContextType.TRANSACTION_INFO:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
         return 50;
-      case ClearSignContextType.PLUGIN:
-      case ClearSignContextType.EXTERNAL_PLUGIN:
-      case ClearSignContextType.TOKEN:
-      case ClearSignContextType.NFT:
-      case ClearSignContextType.TRUSTED_NAME:
-      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
-      case ClearSignContextType.ENUM:
+      case ClearSignContextType.ETHEREUM_PLUGIN:
+      case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
+      case ClearSignContextType.ETHEREUM_TOKEN:
+      case ClearSignContextType.ETHEREUM_NFT:
+      case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ETHEREUM_ENUM:
         return 70;
 
       /* not used here */
-      case ClearSignContextType.SAFE:
-      case ClearSignContextType.SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
+      case ClearSignContextType.ETHEREUM_SAFE:
+      case ClearSignContextType.ETHEREUM_SIGNER:
         return 90;
 
       default: {

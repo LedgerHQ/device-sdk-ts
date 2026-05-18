@@ -1,4 +1,4 @@
-import { type ClearSignContextSuccess } from "@ledgerhq/context-module";
+import { type EthereumClearSignContextSuccess } from "@ledgerhq/context-module";
 import {
   type DeviceActionStateMachine,
   type InternalApi,
@@ -33,7 +33,7 @@ export type MachineDependencies = {
   }) => Promise<BuildSafeAddressContextTaskResult>;
   readonly provideContexts: (arg0: {
     input: {
-      contexts: ClearSignContextSuccess[];
+      contexts: EthereumClearSignContextSuccess[];
     };
   }) => Promise<Either<VerifySafeAddressDAError, void>>;
 };
@@ -205,7 +205,7 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
             src: "provideContexts",
             input: ({ context }) => ({
               contexts: context._internalState
-                .contexts as ClearSignContextSuccess[],
+                .contexts as EthereumClearSignContextSuccess[],
             }),
             onDone: {
               target: "ProvideContextsResultCheck",
@@ -260,7 +260,7 @@ export class VerifySafeAddressDeviceAction extends XStateDeviceAction<
 
     const provideContexts = async (arg0: {
       input: {
-        contexts: ClearSignContextSuccess[];
+        contexts: EthereumClearSignContextSuccess[];
       };
     }) => {
       for (const context of arg0.input.contexts) {

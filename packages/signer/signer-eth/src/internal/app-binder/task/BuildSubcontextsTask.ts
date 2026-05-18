@@ -5,6 +5,7 @@ import {
   type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type EthereumClearSignContextSuccess,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
@@ -18,8 +19,8 @@ import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCo
 import { type TransactionParserService } from "@internal/transaction/service/parser/TransactionParserService";
 
 export type BuildSubcontextsTaskArgs = {
-  readonly context: ClearSignContextSuccess;
-  readonly contextOptional: ClearSignContextSuccess[];
+  readonly context: EthereumClearSignContextSuccess;
+  readonly contextOptional: EthereumClearSignContextSuccess[];
   readonly transactionParser: TransactionParserService;
   readonly subset: TransactionSubset;
   readonly deviceModelId: DeviceModelId;
@@ -43,33 +44,32 @@ export class BuildSubcontextsTask {
     const type = context.type;
 
     switch (type) {
-      case ClearSignContextType.TRANSACTION_CHECK:
-      case ClearSignContextType.TRANSACTION_INFO:
-      case ClearSignContextType.PLUGIN:
-      case ClearSignContextType.EXTERNAL_PLUGIN:
-      case ClearSignContextType.DYNAMIC_NETWORK:
-      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
-      case ClearSignContextType.ENUM:
-      case ClearSignContextType.TOKEN:
-      case ClearSignContextType.NFT:
-      case ClearSignContextType.SAFE:
-      case ClearSignContextType.SIGNER:
-      case ClearSignContextType.GATED_SIGNING:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
+      case ClearSignContextType.ETHEREUM_PLUGIN:
+      case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_TOKEN:
+      case ClearSignContextType.ETHEREUM_NFT:
+      case ClearSignContextType.ETHEREUM_SAFE:
+      case ClearSignContextType.ETHEREUM_SIGNER:
+      case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         return {
           subcontextCallbacks: [],
         };
-      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
         return {
           subcontextCallbacks: context.reference
             ? this._getSubcontextsFromReference(context.reference)
             : [],
         };
-      case ClearSignContextType.PROXY_INFO:
+      case ClearSignContextType.ETHEREUM_PROXY_INFO:
         return {
           subcontextCallbacks: this._getSubcontextFromProxy(context),
         };
-      case ClearSignContextType.TRUSTED_NAME:
+      case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
         return {
           subcontextCallbacks: this._getSubcontextFromTrustedName(context),
         };
@@ -120,8 +120,8 @@ export class BuildSubcontextsTask {
 
       const expectedType =
         reference.type === ClearSignContextReferenceType.TOKEN
-          ? ClearSignContextType.TOKEN
-          : ClearSignContextType.NFT;
+          ? ClearSignContextType.ETHEREUM_TOKEN
+          : ClearSignContextType.ETHEREUM_NFT;
 
       return [
         () =>
@@ -148,8 +148,8 @@ export class BuildSubcontextsTask {
 
         const expectedType =
           reference.type === ClearSignContextReferenceType.TOKEN
-            ? ClearSignContextType.TOKEN
-            : ClearSignContextType.NFT;
+            ? ClearSignContextType.ETHEREUM_TOKEN
+            : ClearSignContextType.ETHEREUM_NFT;
 
         subcontextCallbacks.push(() =>
           this.args.contextModule.getFieldContext(
@@ -187,7 +187,7 @@ export class BuildSubcontextsTask {
       }
 
       const enumsContext = this.args.contextOptional.filter(
-        (c) => c.type === ClearSignContextType.ENUM,
+        (c) => c.type === ClearSignContextType.ETHEREUM_ENUM,
       );
 
       const subcontext = enumsContext.find(
@@ -241,7 +241,7 @@ export class BuildSubcontextsTask {
               sources: reference.sources,
               deviceModelId: this.args.deviceModelId,
             },
-            ClearSignContextType.TRUSTED_NAME,
+            ClearSignContextType.ETHEREUM_TRUSTED_NAME,
           );
 
           return subcontext;
@@ -253,7 +253,7 @@ export class BuildSubcontextsTask {
   }
 
   private _getSubcontextFromTrustedName(
-    _context: ClearSignContextSuccess<ClearSignContextType.TRUSTED_NAME>,
+    _context: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_TRUSTED_NAME>,
   ): SubcontextCallback[] {
     return [
       async () => {
@@ -276,7 +276,7 @@ export class BuildSubcontextsTask {
             sources: ["ens"],
             deviceModelId: this.args.deviceModelId,
           },
-          ClearSignContextType.TRUSTED_NAME,
+          ClearSignContextType.ETHEREUM_TRUSTED_NAME,
         );
 
         return subcontext;
@@ -285,7 +285,7 @@ export class BuildSubcontextsTask {
   }
 
   private _getSubcontextFromProxy(
-    _context: ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>,
+    _context: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_PROXY_INFO>,
   ): SubcontextCallback[] {
     return [
       async () => {
@@ -314,7 +314,7 @@ export class BuildSubcontextsTask {
             deviceModelId: this.args.deviceModelId,
             challenge: getChallengeResult.data.challenge,
           },
-          ClearSignContextType.PROXY_INFO,
+          ClearSignContextType.ETHEREUM_PROXY_INFO,
         );
 
         return subcontext;

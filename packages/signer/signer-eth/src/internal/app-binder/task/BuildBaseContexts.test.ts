@@ -27,7 +27,6 @@ describe("BuildBaseContexts", () => {
     getFieldContext: vi.fn(),
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
-    getSolanaContext: vi.fn(),
     report: vi.fn(),
   };
   const defaultOptions = {};
@@ -105,28 +104,28 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-1",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-2",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-3",
         id: 1,
         value: 2,
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-4",
       },
     ];
     const expectedTxCheck = {
-      type: ClearSignContextType.TRANSACTION_CHECK,
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
       payload: "transactionCheck",
     };
     contextModuleMock.getContexts.mockResolvedValueOnce([
@@ -166,28 +165,28 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-3",
         id: 1,
         value: 2,
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-4",
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-2",
       },
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-1",
         certificate: defaultCertificate,
       },
     ];
     const expectedTxCheck = {
-      type: ClearSignContextType.TRANSACTION_CHECK,
+      type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
       payload: "transactionCheck",
     };
     contextModuleMock.getContexts.mockResolvedValueOnce([
@@ -227,15 +226,15 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TRANSACTION_CHECK,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
         payload: "transactionCheck",
       },
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.NFT,
+        type: ClearSignContextType.ETHEREUM_NFT,
         payload: "payload-2",
       },
     ];
@@ -265,23 +264,23 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-1",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-2",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-3",
         id: 1,
         value: 2,
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-4",
       },
     ];
@@ -315,12 +314,12 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-1",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.PROXY_INFO,
+        type: ClearSignContextType.ETHEREUM_PROXY_INFO,
         payload: "payload-2",
       },
     ];
@@ -443,7 +442,7 @@ describe("BuildBaseContexts", () => {
         error: new Error("error"),
       },
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
@@ -451,7 +450,7 @@ describe("BuildBaseContexts", () => {
         error: new Error("error"),
       },
       {
-        type: ClearSignContextType.NFT,
+        type: ClearSignContextType.ETHEREUM_NFT,
         payload: "payload-2",
       },
     ];
@@ -481,24 +480,24 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "transaction_info",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "transaction_field",
       },
       {
-        type: ClearSignContextType.NFT,
+        type: ClearSignContextType.ETHEREUM_NFT,
         payload: "payload-2",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "enum",
         id: 1,
         value: 2,
@@ -531,21 +530,21 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "transaction_field",
       },
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "enum",
         id: 1,
         value: 2,
       },
       {
-        type: ClearSignContextType.NFT,
+        type: ClearSignContextType.ETHEREUM_NFT,
         payload: "payload-2",
       },
     ];
@@ -575,24 +574,24 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-2",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.EXTERNAL_PLUGIN,
+        type: ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
         payload: "payload-3",
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-4",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-5",
         id: 1,
         value: 2,
@@ -625,20 +624,20 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-2",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-3",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-4",
         id: 1,
         value: 2,
@@ -671,20 +670,20 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-2",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-3",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-4",
         id: 1,
         value: 2,
@@ -717,20 +716,20 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TOKEN,
+        type: ClearSignContextType.ETHEREUM_TOKEN,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-2",
         certificate: defaultCertificate,
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-3",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-4",
         id: 1,
         value: 2,
@@ -760,15 +759,15 @@ describe("BuildBaseContexts", () => {
     // GIVEN
     const clearSignContexts: ClearSignContext[] = [
       {
-        type: ClearSignContextType.TRANSACTION_INFO,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
         payload: "payload-1",
       },
       {
-        type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+        type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
         payload: "payload-2",
       },
       {
-        type: ClearSignContextType.ENUM,
+        type: ClearSignContextType.ETHEREUM_ENUM,
         payload: "payload-3",
         id: 1,
         value: 2,
@@ -800,15 +799,15 @@ describe("BuildBaseContexts", () => {
     // GIVEN - use mockReturnValue so every getDeviceSessionState() call returns 1.20.0
     // (coverage runs can invoke it more than once)
     const proxyInfoContext = {
-      type: ClearSignContextType.PROXY_INFO,
+      type: ClearSignContextType.ETHEREUM_PROXY_INFO,
       payload: "proxy-info",
     } as ClearSignContext;
     const gatedSigningContext = {
-      type: ClearSignContextType.GATED_SIGNING,
+      type: ClearSignContextType.ETHEREUM_GATED_SIGNING,
       payload: "gated-signing",
     } as ClearSignContext;
     const tokenContext = {
-      type: ClearSignContextType.TOKEN,
+      type: ClearSignContextType.ETHEREUM_TOKEN,
       payload: "token",
     } as ClearSignContext;
     const clearSignContexts: ClearSignContext[] = [
@@ -838,15 +837,15 @@ describe("BuildBaseContexts", () => {
   it("should exclude GATED_SIGNING on Nano S even when app version supports it", async () => {
     // GIVEN
     const proxyInfoContext = {
-      type: ClearSignContextType.PROXY_INFO,
+      type: ClearSignContextType.ETHEREUM_PROXY_INFO,
       payload: "proxy-info",
     } as ClearSignContext;
     const gatedSigningContext = {
-      type: ClearSignContextType.GATED_SIGNING,
+      type: ClearSignContextType.ETHEREUM_GATED_SIGNING,
       payload: "gated-signing",
     } as ClearSignContext;
     const tokenContext = {
-      type: ClearSignContextType.TOKEN,
+      type: ClearSignContextType.ETHEREUM_TOKEN,
       payload: "token",
     } as ClearSignContext;
     const clearSignContexts: ClearSignContext[] = [
@@ -876,15 +875,15 @@ describe("BuildBaseContexts", () => {
   it("should include PROXY_INFO and GATED_SIGNING when app version is 1.22.0 or newer", async () => {
     // GIVEN
     const proxyInfoContext = {
-      type: ClearSignContextType.PROXY_INFO,
+      type: ClearSignContextType.ETHEREUM_PROXY_INFO,
       payload: "proxy-info",
     } as ClearSignContext;
     const gatedSigningContext = {
-      type: ClearSignContextType.GATED_SIGNING,
+      type: ClearSignContextType.ETHEREUM_GATED_SIGNING,
       payload: "gated-signing",
     } as ClearSignContext;
     const tokenContext = {
-      type: ClearSignContextType.TOKEN,
+      type: ClearSignContextType.ETHEREUM_TOKEN,
       payload: "token",
     } as ClearSignContext;
     const clearSignContexts: ClearSignContext[] = [

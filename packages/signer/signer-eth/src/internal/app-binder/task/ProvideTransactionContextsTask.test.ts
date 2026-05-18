@@ -78,7 +78,7 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRANSACTION_INFO,
+                type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
                 payload: "0x00",
               },
               subcontextCallbacks: [],
@@ -129,7 +129,7 @@ describe("ProvideTransactionContextsTask", () => {
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
         expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
           context: {
-            type: ClearSignContextType.TRANSACTION_INFO,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "0x00",
           },
           loggerFactory: mockLoggerFactory,
@@ -142,7 +142,7 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TOKEN,
+                type: ClearSignContextType.ETHEREUM_TOKEN,
                 payload: "payload",
               },
               subcontextCallbacks: [],
@@ -174,13 +174,13 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.PROXY_INFO,
+                type: ClearSignContextType.ETHEREUM_PROXY_INFO,
                 payload: "payload",
               },
               subcontextCallbacks: [
                 () =>
                   Promise.resolve({
-                    type: ClearSignContextType.PROXY_INFO,
+                    type: ClearSignContextType.ETHEREUM_PROXY_INFO,
                     payload: "subcontext payload",
                   }),
               ],
@@ -206,7 +206,7 @@ describe("ProvideTransactionContextsTask", () => {
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
         expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
           context: {
-            type: ClearSignContextType.PROXY_INFO,
+            type: ClearSignContextType.ETHEREUM_PROXY_INFO,
             payload: "subcontext payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -219,13 +219,13 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRUSTED_NAME,
+                type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
                 payload: "main trusted name payload",
               },
               subcontextCallbacks: [
                 () =>
                   Promise.resolve({
-                    type: ClearSignContextType.TRUSTED_NAME,
+                    type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
                     payload: "resolved trusted name payload",
                   }),
               ],
@@ -252,7 +252,7 @@ describe("ProvideTransactionContextsTask", () => {
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
         expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
           context: {
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
             payload: "resolved trusted name payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -265,7 +265,7 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TOKEN,
+                type: ClearSignContextType.ETHEREUM_TOKEN,
                 payload: "payload",
               },
               subcontextCallbacks: [
@@ -298,7 +298,7 @@ describe("ProvideTransactionContextsTask", () => {
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(1);
         expect(provideContextTaskRunMock).toHaveBeenCalledWith(api, {
           context: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -311,14 +311,14 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRANSACTION_INFO,
+                type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
                 payload: "payload1",
               },
               subcontextCallbacks: [],
             },
             {
               context: {
-                type: ClearSignContextType.TRANSACTION_INFO,
+                type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
                 payload: "payload2",
               },
               subcontextCallbacks: [],
@@ -356,13 +356,13 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+                type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
                 payload: "main payload",
               },
               subcontextCallbacks: [
                 () =>
                   Promise.resolve({
-                    type: ClearSignContextType.TOKEN,
+                    type: ClearSignContextType.ETHEREUM_TOKEN,
                     payload: "subcontext payload",
                   }),
               ],
@@ -389,7 +389,7 @@ describe("ProvideTransactionContextsTask", () => {
         // Subcontext should be provided first
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(1, api, {
           context: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "subcontext payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -397,7 +397,7 @@ describe("ProvideTransactionContextsTask", () => {
         // Then main context
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
           context: {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "main payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -410,18 +410,18 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+                type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
                 payload: "main payload",
               },
               subcontextCallbacks: [
                 () =>
                   Promise.resolve({
-                    type: ClearSignContextType.NFT,
+                    type: ClearSignContextType.ETHEREUM_NFT,
                     payload: "subcontext1",
                   }),
                 () =>
                   Promise.resolve({
-                    type: ClearSignContextType.TOKEN,
+                    type: ClearSignContextType.ETHEREUM_TOKEN,
                     payload: "subcontext2",
                   }),
               ],
@@ -447,21 +447,21 @@ describe("ProvideTransactionContextsTask", () => {
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(3);
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(1, api, {
           context: {
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.ETHEREUM_NFT,
             payload: "subcontext1",
           },
           loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
           context: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "subcontext2",
           },
           loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
-            type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
             payload: "main payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -474,13 +474,13 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+                type: ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
                 payload: "main payload",
               },
               subcontextCallbacks: [
                 () =>
                   Promise.resolve({
-                    type: ClearSignContextType.TOKEN,
+                    type: ClearSignContextType.ETHEREUM_TOKEN,
                     payload: "subcontext payload",
                   }),
               ],
@@ -516,21 +516,21 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TOKEN,
+                type: ClearSignContextType.ETHEREUM_TOKEN,
                 payload: "payload1",
               },
               subcontextCallbacks: [],
             },
             {
               context: {
-                type: ClearSignContextType.NFT,
+                type: ClearSignContextType.ETHEREUM_NFT,
                 payload: "payload2",
               },
               subcontextCallbacks: [],
             },
             {
               context: {
-                type: ClearSignContextType.PLUGIN,
+                type: ClearSignContextType.ETHEREUM_PLUGIN,
                 payload: "payload3",
               },
               subcontextCallbacks: [],
@@ -556,21 +556,21 @@ describe("ProvideTransactionContextsTask", () => {
         expect(provideContextTaskRunMock).toHaveBeenCalledTimes(3);
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(1, api, {
           context: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload1",
           },
           loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(2, api, {
           context: {
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.ETHEREUM_NFT,
             payload: "payload2",
           },
           loggerFactory: mockLoggerFactory,
         });
         expect(provideContextTaskRunMock).toHaveBeenNthCalledWith(3, api, {
           context: {
-            type: ClearSignContextType.PLUGIN,
+            type: ClearSignContextType.ETHEREUM_PLUGIN,
             payload: "payload3",
           },
           loggerFactory: mockLoggerFactory,
@@ -585,7 +585,7 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TOKEN,
+                type: ClearSignContextType.ETHEREUM_TOKEN,
                 payload: "payload",
               },
               subcontextCallbacks: [],
@@ -616,14 +616,14 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TOKEN,
+                type: ClearSignContextType.ETHEREUM_TOKEN,
                 payload: "payload1",
               },
               subcontextCallbacks: [],
             },
             {
               context: {
-                type: ClearSignContextType.NFT,
+                type: ClearSignContextType.ETHEREUM_NFT,
                 payload: "payload2",
               },
               subcontextCallbacks: [],
@@ -658,7 +658,7 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TRANSACTION_INFO,
+                type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
                 payload: "payload",
               },
               subcontextCallbacks: [],
@@ -722,7 +722,7 @@ describe("ProvideTransactionContextsTask", () => {
           contexts: [
             {
               context: {
-                type: ClearSignContextType.TOKEN,
+                type: ClearSignContextType.ETHEREUM_TOKEN,
                 payload: "payload",
               },
               subcontextCallbacks: [],

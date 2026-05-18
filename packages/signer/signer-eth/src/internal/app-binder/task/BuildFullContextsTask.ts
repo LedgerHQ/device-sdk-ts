@@ -1,9 +1,9 @@
 import {
   type ClearSignContext,
   ClearSignContextReferenceType,
-  type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type EthereumClearSignContextSuccess,
   type TransactionSubset,
 } from "@ledgerhq/context-module";
 import {
@@ -51,7 +51,7 @@ export type BuildFullContextsTaskArgs = {
 };
 
 export type ContextWithSubContexts = {
-  context: ClearSignContextSuccess;
+  context: EthereumClearSignContextSuccess;
   subcontextCallbacks: (() => Promise<ClearSignContext>)[];
 };
 
@@ -96,7 +96,7 @@ export class BuildFullContextsTask {
 
     // for each context, build the subcontexts
     const contextsWithSubContexts: ContextWithSubContexts[] =
-      clearSignContexts.map((context: ClearSignContextSuccess) => {
+      clearSignContexts.map((context: EthereumClearSignContextSuccess) => {
         const { subcontextCallbacks } = this._buildSubcontextsTaskFactory(
           this._api,
           {
@@ -122,7 +122,7 @@ export class BuildFullContextsTask {
 
       if (
         context.context.type ===
-          ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION &&
+          ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION &&
         context.context.reference?.type ===
           ClearSignContextReferenceType.CALLDATA
       ) {

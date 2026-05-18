@@ -1,4 +1,8 @@
-import { ContextModule, ContextModuleBuilder } from "@ledgerhq/context-module";
+import {
+  ContextModule,
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 import {
   DeviceManagementKit,
   DeviceManagementKitBuilder,
@@ -67,6 +71,7 @@ export class DMKServiceController implements ServiceController {
     })
       .setDatasourceConfig({ proxy: "safe" })
       .setCalConfig(this.calConfig)
+      .setChain(ContextModuleChainID.Ethereum)
       .build();
   }
 

@@ -49,9 +49,14 @@ const signerConcordium = new SignerConcordiumBuilder({
 The builder creates a default `ContextModule` out of the box, which is used by `verifyAddress` to communicate with the trusted metadata service. You can also provide a customized context module:
 
 ```typescript
-import { ContextModuleBuilder } from "@ledgerhq/context-module";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 
-const customContextModule = new ContextModuleBuilder({ originToken }).build();
+const customContextModule = new ContextModuleBuilder({ originToken })
+  .setChain(ContextModuleChainID.Concordium)
+  .build();
 
 const signerConcordium = new SignerConcordiumBuilder({
   dmk,

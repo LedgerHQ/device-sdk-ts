@@ -36,7 +36,7 @@ const CERTIFICATE = {
 function makeSuccessContext(withCertificate = true): ClearSignContext[] {
   return [
     {
-      type: ClearSignContextType.ACCOUNT_OWNERSHIP,
+      type: ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
       payload: DESCRIPTOR_HEX,
       certificate: withCertificate ? CERTIFICATE : undefined,
     },
@@ -124,7 +124,7 @@ describe("VerifyAddressTask", () => {
           network: NETWORK,
           deviceModelId: DeviceModelId.NANO_SP,
         }),
-        [ClearSignContextType.ACCOUNT_OWNERSHIP],
+        [ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP],
       );
     });
 
@@ -310,7 +310,7 @@ describe("VerifyAddressTask", () => {
       );
       vi.spyOn(contextModuleMock, "getContexts").mockResolvedValue([
         {
-          type: ClearSignContextType.ACCOUNT_OWNERSHIP,
+          type: ClearSignContextType.CONCORDIUM_ACCOUNT_OWNERSHIP,
           payload: "",
           certificate: CERTIFICATE,
         },

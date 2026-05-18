@@ -1,7 +1,6 @@
 import {
   type Apdu,
   ApduBuilder,
-  ApduParser,
   type ApduResponse,
   type Command,
   type CommandResult,
@@ -19,6 +18,21 @@ import {
   SolanaAppCommandErrorFactory,
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
+
+const APDU_CLA = 0xe0;
+const APDU_INS_GET_APP_CONFIGURATION = 0x04;
+
+const RESPONSE_OFFSET_BLIND_SIGNING = 0;
+const RESPONSE_OFFSET_PUB_KEY_DISPLAY_MODE = 1;
+const RESPONSE_OFFSET_VERSION_MAJOR = 2;
+const RESPONSE_OFFSET_VERSION_MINOR = 3;
+const RESPONSE_OFFSET_VERSION_PATCH = 4;
+const RESPONSE_OFFSET_FEATURE_FLAGS = 5;
+const RESPONSE_BASE_LENGTH = 5;
+const RESPONSE_LENGTH_WITH_FEATURE_FLAGS = 6;
+
+const FEATURE_FLAG_WEB3_CHECKS_ENABLED = 0x10;
+const FEATURE_FLAG_WEB3_CHECKS_OPT_IN = 0x20;
 
 type GetAppConfigurationCommandArgs = void;
 
@@ -44,8 +58,8 @@ export class GetAppConfigurationCommand
 
   getApdu(): Apdu {
     return new ApduBuilder({
-      cla: 0xe0,
-      ins: 0x04,
+      cla: APDU_CLA,
+      ins: APDU_INS_GET_APP_CONFIGURATION,
       p1: 0x00,
       p2: 0x00,
     }).build();
@@ -57,25 +71,34 @@ export class GetAppConfigurationCommand
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
-      const parser = new ApduParser(response);
-      const buffer = parser.extractFieldByLength(5);
-      if (
-        !buffer ||
-        buffer.length !== 5 ||
-        buffer.some((element) => element === undefined)
-      ) {
+      const { data } = response;
+      if (data.length < RESPONSE_BASE_LENGTH) {
         return CommandResultFactory({
           error: new InvalidStatusWordError("Invalid response"),
         });
       }
 
+      const blindSigningEnabled = Boolean(data[RESPONSE_OFFSET_BLIND_SIGNING]);
+      const pubKeyDisplayMode =
+        data[RESPONSE_OFFSET_PUB_KEY_DISPLAY_MODE] === 0
+          ? PublicKeyDisplayMode.LONG
+          : PublicKeyDisplayMode.SHORT;
+      const version = `${data[RESPONSE_OFFSET_VERSION_MAJOR]}.${data[RESPONSE_OFFSET_VERSION_MINOR]}.${data[RESPONSE_OFFSET_VERSION_PATCH]}`;
+
+      let web3ChecksEnabled = false;
+      let web3ChecksOptIn = false;
+      if (data.length >= RESPONSE_LENGTH_WITH_FEATURE_FLAGS) {
+        const featureFlags = data[RESPONSE_OFFSET_FEATURE_FLAGS]!;
+        web3ChecksEnabled = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_ENABLED);
+        web3ChecksOptIn = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_OPT_IN);
+      }
+
       const config: AppConfiguration = {
-        blindSigningEnabled: Boolean(buffer[0]),
-        pubKeyDisplayMode:
-          buffer[1] === 0
-            ? PublicKeyDisplayMode.LONG
-            : PublicKeyDisplayMode.SHORT,
-        version: `${buffer[2]}.${buffer[3]}.${buffer[4]}`,
+        blindSigningEnabled,
+        pubKeyDisplayMode,
+        version,
+        web3ChecksEnabled,
+        web3ChecksOptIn,
       };
 
       return CommandResultFactory({

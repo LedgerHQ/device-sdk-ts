@@ -1,31 +1,33 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Container } from "inversify";
 
-import { accountOwnershipModuleFactory } from "@/account-ownership/di/accountOwnershipModuleFactory";
-import { calldataModuleFactory } from "@/calldata/di/calldataModuleFactory";
 import { configModuleFactory } from "@/config/di/configModuleFactory";
 import { configTypes } from "@/config/di/configTypes";
 import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
 } from "@/config/model/ContextModuleConfig";
-import { dynamicNetworkModuleFactory } from "@/dynamic-network/di/dynamicNetworkModuleFactory";
-import { externalPluginModuleFactory } from "@/external-plugin/di/externalPluginModuleFactory";
-import { gatedSigningModuleFactory } from "@/gated-signing/di/gatedSigningModuleFactory";
-import { networkModuleFactory } from "@/network/di/networkModuleFactory";
-import { nftModuleFactory } from "@/nft/di/nftModuleFactory";
-import { nanoPkiModuleFactory } from "@/pki/di/pkiModuleFactory";
-import { proxyModuleFactory } from "@/proxy/di/proxyModuleFactory";
-import { reporterModuleFactory } from "@/reporter/di/reporterModuleFactory";
-import { safeModuleFactory } from "@/safe/di/safeModuleFactory";
-import { solanaContextModuleFactory } from "@/solana/di/SolanaContextModuleFactory";
-import { solanaLifiModuleFactory } from "@/solanaLifi/di/lifiModuleFactory";
-import { solanaTokenModuleFactory } from "@/solanaToken/di/tokenModuleFactory";
-import { tokenModuleFactory } from "@/token/di/tokenModuleFactory";
-import { transactionCheckModuleFactory } from "@/transaction-check/di/transactionCheckModuleFactory";
-import { trustedNameModuleFactory } from "@/trusted-name/di/trustedNameModuleFactory";
-import { typedDataModuleFactory } from "@/typed-data/di/typedDataModuleFactory";
-import { uniswapModuleFactory } from "@/uniswap/di/uniswapModuleFactory";
+import { accountOwnershipModuleFactory } from "@/modules/concordium/account-ownership/di/accountOwnershipModuleFactory";
+import { calldataModuleFactory } from "@/modules/ethereum/calldata/di/calldataModuleFactory";
+import { dynamicNetworkModuleFactory } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkModuleFactory";
+import { externalPluginModuleFactory } from "@/modules/ethereum/external-plugin/di/externalPluginModuleFactory";
+import { gatedSigningModuleFactory } from "@/modules/ethereum/gated-signing/di/gatedSigningModuleFactory";
+import { nftModuleFactory } from "@/modules/ethereum/nft/di/nftModuleFactory";
+import { proxyModuleFactory } from "@/modules/ethereum/proxy/di/proxyModuleFactory";
+import { safeModuleFactory } from "@/modules/ethereum/safe/di/safeModuleFactory";
+import { tokenModuleFactory as ethereumTokenModuleFactory } from "@/modules/ethereum/token/di/tokenModuleFactory";
+import { trustedNameModuleFactory } from "@/modules/ethereum/trusted-name/di/trustedNameModuleFactory";
+import { typedDataModuleFactory } from "@/modules/ethereum/typed-data/di/typedDataModuleFactory";
+import { uniswapModuleFactory } from "@/modules/ethereum/uniswap/di/uniswapModuleFactory";
+import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFactory";
+import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
+import { ethereumTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/ethereumTransactionCheckModuleFactory";
+import { solanaTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/solanaTransactionCheckModuleFactory";
+import { lifiModuleFactory } from "@/modules/solana/lifi/di/lifiModuleFactory";
+import { ownerInfoModuleFactory } from "@/modules/solana/owner-info/di/ownerInfoModuleFactory";
+import { tokenModuleFactory as solanaTokenModuleFactory } from "@/modules/solana/token/di/tokenModuleFactory";
+import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
+import { networkModuleFactory } from "@/shared/network/di/networkModuleFactory";
 
 type MakeContainerArgs = {
   config: ContextModuleServiceConfig & ContextModuleLoaderConfig;
@@ -40,28 +42,51 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
     >(configTypes.ContextModuleLoggerFactory)
     .toConstantValue(config.loggerFactory);
 
-  container.loadSync(
-    configModuleFactory(config),
-    networkModuleFactory(config),
-    accountOwnershipModuleFactory(),
-    externalPluginModuleFactory(),
-    dynamicNetworkModuleFactory(),
-    nftModuleFactory(),
-    proxyModuleFactory(config.datasource),
-    safeModuleFactory(),
-    gatedSigningModuleFactory(),
-    tokenModuleFactory(),
-    calldataModuleFactory(),
-    trustedNameModuleFactory(config.customTrustedNameDataSource),
-    typedDataModuleFactory(),
-    nanoPkiModuleFactory(),
-    uniswapModuleFactory(),
-    transactionCheckModuleFactory(),
-    solanaContextModuleFactory(),
-    solanaTokenModuleFactory(),
-    solanaLifiModuleFactory(),
-    reporterModuleFactory(),
-  );
+  const { chain } = config;
+
+  // infrastructure modules needed by all chains
+  container.loadSync(configModuleFactory(config), networkModuleFactory(config));
+
+  switch (chain) {
+    case ContextModuleChainID.Ethereum:
+      container.loadSync(
+        nanoPkiModuleFactory(),
+        reporterModuleFactory(),
+        trustedNameModuleFactory(config.customTrustedNameDataSource),
+        externalPluginModuleFactory(),
+        dynamicNetworkModuleFactory(),
+        nftModuleFactory(),
+        proxyModuleFactory(config.datasource),
+        safeModuleFactory(),
+        gatedSigningModuleFactory(),
+        ethereumTokenModuleFactory(),
+        calldataModuleFactory(),
+        typedDataModuleFactory(),
+        uniswapModuleFactory(),
+        ethereumTransactionCheckModuleFactory(),
+      );
+      break;
+    case ContextModuleChainID.Solana:
+      container.loadSync(
+        nanoPkiModuleFactory(),
+        ownerInfoModuleFactory(),
+        solanaTokenModuleFactory(),
+        lifiModuleFactory(),
+        solanaTransactionCheckModuleFactory(),
+      );
+      break;
+    case ContextModuleChainID.Concordium:
+      container.loadSync(
+        nanoPkiModuleFactory(),
+        accountOwnershipModuleFactory(),
+      );
+      break;
+    default: {
+      // ensure exhaustive check at compile time when new chains are added
+      const exhaustiveCheck: never = chain;
+      void exhaustiveCheck;
+    }
+  }
 
   return container;
 };

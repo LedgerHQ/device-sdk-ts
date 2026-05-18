@@ -113,14 +113,14 @@ describe("SendGetAddressTask", () => {
     });
 
     it("should load dynamic network context and provide contexts when chainId is defined and checkOnDevice is true", async () => {
-      const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.DYNAMIC_NETWORK> =
+      const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK> =
         {
-          type: ClearSignContextType.DYNAMIC_NETWORK,
+          type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
           payload: "0x01",
         };
-      const dynamicNetworkIconContext: ClearSignContextSuccess<ClearSignContextType.DYNAMIC_NETWORK_ICON> =
+      const dynamicNetworkIconContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON> =
         {
-          type: ClearSignContextType.DYNAMIC_NETWORK_ICON,
+          type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
           payload: "0x02",
         };
       contextModuleMock.getContexts.mockResolvedValue([
@@ -179,9 +179,9 @@ describe("SendGetAddressTask", () => {
     });
 
     it("should skip ERROR contexts and only provide success contexts", async () => {
-      const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.DYNAMIC_NETWORK> =
+      const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK> =
         {
-          type: ClearSignContextType.DYNAMIC_NETWORK,
+          type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
           payload: "0x01",
         };
       contextModuleMock.getContexts.mockResolvedValue([
@@ -222,9 +222,9 @@ describe("SendGetAddressTask", () => {
     });
 
     it("should ignore context provision errors and still send GetAddressCommand", async () => {
-      const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.DYNAMIC_NETWORK> =
+      const dynamicNetworkContext: ClearSignContextSuccess<ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK> =
         {
-          type: ClearSignContextType.DYNAMIC_NETWORK,
+          type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
           payload: "0x01",
         };
       contextModuleMock.getContexts.mockResolvedValue([dynamicNetworkContext]);

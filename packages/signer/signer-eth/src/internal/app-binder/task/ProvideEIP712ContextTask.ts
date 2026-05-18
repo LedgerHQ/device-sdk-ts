@@ -1,5 +1,7 @@
 import {
+  type ClearSignContextSuccess,
   type ContextModule,
+  type EthereumClearSignContextSuccess,
   type PkiCertificate,
   type TypedDataCalldataIndex,
   TypedDataCalldataParamPresence,
@@ -8,10 +10,7 @@ import {
   type TypedDataTokenIndex,
   VERIFYING_CONTRACT_TOKEN_INDEX,
 } from "@ledgerhq/context-module";
-import {
-  type ClearSignContextSuccess,
-  ClearSignContextType,
-} from "@ledgerhq/context-module";
+import { ClearSignContextType } from "@ledgerhq/context-module";
 import type {
   CommandResult,
   DeviceModelId,
@@ -86,7 +85,7 @@ export type ProvideEIP712ContextTaskArgs = {
     TypedDataCalldataIndex,
     ContextWithSubContexts[]
   >;
-  additionalContexts: ClearSignContextSuccess[];
+  additionalContexts: EthereumClearSignContextSuccess[];
   loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
@@ -140,10 +139,10 @@ export class ProvideEIP712ContextTask {
     // Send proxy descriptor from clear sign context only if not already
     // provided via additionalContexts (which uses a fresh challenge).
     const alreadyProvidedProxy = this.args.additionalContexts.some(
-      (c) => c.type === ClearSignContextType.PROXY_INFO,
+      (c) => c.type === ClearSignContextType.ETHEREUM_PROXY_INFO,
     );
     const proxyContext:
-      | ClearSignContextSuccess<ClearSignContextType.PROXY_INFO>
+      | ClearSignContextSuccess<ClearSignContextType.ETHEREUM_PROXY_INFO>
       | undefined = this.args.clearSignContext.extract()?.proxy;
     if (proxyContext !== undefined && !alreadyProvidedProxy) {
       await this.provideContext(proxyContext);
@@ -318,7 +317,7 @@ export class ProvideEIP712ContextTask {
     type,
     payload,
     certificate,
-  }: ClearSignContextSuccess) {
+  }: EthereumClearSignContextSuccess) {
     // if a certificate is provided, we load it before sending the command
     if (certificate) {
       await this.api.sendCommand(
@@ -330,7 +329,7 @@ export class ProvideEIP712ContextTask {
     }
 
     switch (type) {
-      case ClearSignContextType.TRANSACTION_CHECK:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_CHECK:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
@@ -340,7 +339,7 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
-      case ClearSignContextType.DYNAMIC_NETWORK:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
@@ -351,7 +350,7 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
-      case ClearSignContextType.DYNAMIC_NETWORK_ICON:
+      case ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
@@ -363,7 +362,7 @@ export class ProvideEIP712ContextTask {
           withPayloadLength: false,
         }).run();
         break;
-      case ClearSignContextType.PROXY_INFO:
+      case ClearSignContextType.ETHEREUM_PROXY_INFO:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
@@ -373,7 +372,7 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
-      case ClearSignContextType.GATED_SIGNING:
+      case ClearSignContextType.ETHEREUM_GATED_SIGNING:
         await new SendPayloadInChunksTask(this.api, {
           payload,
           commandFactory: (args) =>
@@ -383,17 +382,16 @@ export class ProvideEIP712ContextTask {
             }),
         }).run();
         break;
-      case ClearSignContextType.TOKEN:
-      case ClearSignContextType.NFT:
-      case ClearSignContextType.TRUSTED_NAME:
-      case ClearSignContextType.PLUGIN:
-      case ClearSignContextType.EXTERNAL_PLUGIN:
-      case ClearSignContextType.ENUM:
-      case ClearSignContextType.TRANSACTION_INFO:
-      case ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION:
-      case ClearSignContextType.SAFE:
-      case ClearSignContextType.SIGNER:
-      case ClearSignContextType.ACCOUNT_OWNERSHIP:
+      case ClearSignContextType.ETHEREUM_TOKEN:
+      case ClearSignContextType.ETHEREUM_NFT:
+      case ClearSignContextType.ETHEREUM_TRUSTED_NAME:
+      case ClearSignContextType.ETHEREUM_PLUGIN:
+      case ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN:
+      case ClearSignContextType.ETHEREUM_ENUM:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_INFO:
+      case ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION:
+      case ClearSignContextType.ETHEREUM_SAFE:
+      case ClearSignContextType.ETHEREUM_SIGNER:
         throw new Error(
           `Context type ${type} not supported in EIP712 messages`,
         );
@@ -492,9 +490,9 @@ export class ProvideEIP712ContextTask {
             sources: filter.sources,
             deviceModelId: this.args.deviceModelId,
           },
-          ClearSignContextType.TRUSTED_NAME,
+          ClearSignContextType.ETHEREUM_TRUSTED_NAME,
         );
-        if (context.type === ClearSignContextType.TRUSTED_NAME) {
+        if (context.type === ClearSignContextType.ETHEREUM_TRUSTED_NAME) {
           if (context.certificate) {
             await this.api.sendCommand(
               new LoadCertificateCommand({
