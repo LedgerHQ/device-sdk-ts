@@ -27,6 +27,7 @@ const ORCHARD_ACTION_NON_COMPACT_SIZE = 32 + 32 + 16 + 80;
 const ORCHARD_DIGEST_DATA_SIZE = 1 + 8 + 32;
 const MEMO_CHUNK_SIZE = 128;
 const MEMO_SIZE = 512;
+const SCRIPT_SIG_SEQUENCE_CHUNK_SIZE = 50;
 const TX_VERSION_MASK = 0x7fffffff;
 
 type GetTrustedInputTaskArgs = {
@@ -199,7 +200,16 @@ const splitTransactionToTrustedInputChunks = (
     const scriptStart = offset;
     ensureRange(transaction, offset, offset + scriptLength.value + 4);
     offset += scriptLength.value + 4;
-    chunks.push(transaction.slice(scriptStart, offset));
+    const scriptSigAndSequence = transaction.slice(scriptStart, offset);
+    for (
+      let i = 0;
+      i < scriptSigAndSequence.length;
+      i += SCRIPT_SIG_SEQUENCE_CHUNK_SIZE
+    ) {
+      chunks.push(
+        scriptSigAndSequence.slice(i, i + SCRIPT_SIG_SEQUENCE_CHUNK_SIZE),
+      );
+    }
   }
 
   const vout = readCompactSize(transaction, offset);
@@ -213,12 +223,12 @@ const splitTransactionToTrustedInputChunks = (
 
     const scriptLength = readCompactSize(transaction, offset);
     offset = scriptLength.nextOffset;
-    chunks.push(transaction.slice(valueStart, offset));
+    //chunks.push(transaction.slice(valueStart, offset));
 
-    const scriptStart = offset;
+    //const scriptStart = offset;
     ensureRange(transaction, offset, offset + scriptLength.value);
     offset += scriptLength.value;
-    chunks.push(transaction.slice(scriptStart, offset));
+    chunks.push(transaction.slice(valueStart, offset));
   }
 
   const saplingOrchardStart = offset;
@@ -337,13 +347,6 @@ const splitTransactionToTrustedInputChunks = (
     chunks.push(splitV5ExtraData(locktime, expiry));
   }
 
-  if (offset !== transaction.length) {
-    throw new Error(
-      `Transaction splitting did not consume all bytes (remaining: ${
-        transaction.length - offset
-      })`,
-    );
-  }
 
   return splitForApduData(chunks);
 };

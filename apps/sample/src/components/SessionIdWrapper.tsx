@@ -12,7 +12,7 @@ import { ConnectDeviceButtons } from "./ConnectDevice/ConnectDeviceButtons";
  * connect a device.
  */
 export const SessionIdWrapper: React.FC<{
-  ChildComponent: React.FC<{ sessionId: string }>;
+  ChildComponent: React.ComponentType<{ sessionId: string }>;
 }> = ({ ChildComponent }) => {
   const sessionId = useSelector(selectSelectedSessionId);
 

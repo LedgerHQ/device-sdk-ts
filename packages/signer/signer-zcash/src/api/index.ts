@@ -28,11 +28,17 @@ export type {
   SignTransactionDAError,
   SignTransactionDAIntermediateValue,
   SignTransactionDAOutput,
+  SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type {
   FullViewingKeyOptions,
   ZcashFullViewingKeyMode,
 } from "@api/model/FullViewingKeyOptions";
+export type {  
+  LegacyCreateTransactionArg,
+  LegacyTransaction,
+  LegacyTransactionInput,
+  LegacyTransactionOutput,
+} from "@api/model/CreateTransactionArg";
 export * from "@api/SignerZcash";
 export * from "@api/SignerZcashBuilder";
-// Export other types as needed

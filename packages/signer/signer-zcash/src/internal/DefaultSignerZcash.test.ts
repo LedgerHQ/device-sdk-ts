@@ -120,4 +120,33 @@ describe("DefaultSignerZcash", () => {
       }).getApdu(),
     );
   });
+
+  it("should call legacy-compatible signTransaction via device action", () => {
+    const dmk = {
+      executeDeviceAction: vi.fn(),
+    } as unknown as DeviceManagementKit;
+    const sessionId = {} as DeviceSessionId;
+    const signer = new DefaultSignerZcash({ dmk, sessionId });
+
+    signer.signTransaction({
+      inputs: [
+        [
+          {
+            version: new Uint8Array([0x01, 0x00, 0x00, 0x00]),
+            inputs: [],
+            outputs: [],
+            locktime: new Uint8Array([0x00, 0x00, 0x00, 0x00]),
+          },
+          0,
+          undefined,
+          undefined,
+        ],
+      ],
+      associatedKeysets: ["44'/133'/0'/0/0"],
+      outputScriptHex: "00",
+      additionals: ["zcash"],
+    });
+
+    expect(dmk.executeDeviceAction).toHaveBeenCalled();
+  });
 });

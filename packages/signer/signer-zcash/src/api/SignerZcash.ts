@@ -6,6 +6,7 @@ import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceA
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type FullViewingKeyOptions } from "@api/model/FullViewingKeyOptions";
+import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 
 export interface SignerZcash {
@@ -22,8 +23,7 @@ export interface SignerZcash {
   ) => GetFullViewingKeyDAReturnType;
 
   signTransaction: (
-    derivationPath: string,
-    transaction: Uint8Array,
+    args: LegacyCreateTransactionArg,
     options?: TransactionOptions,
   ) => SignTransactionDAReturnType;
 

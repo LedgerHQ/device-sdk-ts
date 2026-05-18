@@ -15,6 +15,7 @@ import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInpu
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
+import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -89,8 +90,7 @@ export class ZcashAppBinder {
   }
 
   signTransaction(args: {
-    derivationPath: string;
-    transaction: Uint8Array;
+    transactionArg: LegacyCreateTransactionArg;
     skipOpenApp?: boolean;
   }): SignTransactionDAReturnType {
     return this.dmk.executeDeviceAction({

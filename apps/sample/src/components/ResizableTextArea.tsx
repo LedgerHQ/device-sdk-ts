@@ -29,6 +29,11 @@ const StyledTextArea = styled.textarea`
   &:focus + div {
     border-color: ${({ theme }) => theme.colors.primary.c80};
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const ResizeHandle = styled.div<{ $isDragging: boolean }>`
@@ -66,6 +71,7 @@ type ResizableTextAreaProps = {
   placeholder?: string;
   initialHeight?: number;
   minHeight?: number;
+  disabled?: boolean;
 };
 
 export const ResizableTextArea: React.FC<ResizableTextAreaProps> = ({
@@ -74,6 +80,7 @@ export const ResizableTextArea: React.FC<ResizableTextAreaProps> = ({
   placeholder,
   initialHeight = 120,
   minHeight = 80,
+  disabled = false,
 }) => {
   const [height, setHeight] = useState(initialHeight);
   const [isDragging, setIsDragging] = useState(false);
@@ -133,8 +140,11 @@ export const ResizableTextArea: React.FC<ResizableTextAreaProps> = ({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
       />
-      <ResizeHandle $isDragging={isDragging} onMouseDown={handleMouseDown} />
+      {!disabled && (
+        <ResizeHandle $isDragging={isDragging} onMouseDown={handleMouseDown} />
+      )}
     </TextAreaWrapper>
   );
 };
