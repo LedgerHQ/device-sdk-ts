@@ -105,7 +105,7 @@ describe("buildActionStructure", () => {
           },
         ],
         grouping: "na",
-        nonce: 1, // Not serialized with this fuction call
+        nonce: 1, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -119,6 +119,39 @@ describe("buildActionStructure", () => {
           "81e50100" + // REDUCE_ONLY
           "81d704" + // ORDER_DETAIL
           "81e60102" + // TIF
+        "81ea0100", // GROUPING
+    },
+    {
+      name: "action type order (create_order) with a cloid",
+      action: {
+        type: "order",
+        orders: [
+          {
+            a: 0,
+            b: true,
+            p: "1",
+            s: "1",
+            r: false,
+            t: { limit: { tif: "Gtc" as const } },
+            c: "0x278da11ed9db4f9cadb8b331488980a5",
+          },
+        ],
+        grouping: "na",
+        nonce: 1, // Not serialized with this function call
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+
+        "81dd32" + // ORDER
+          "81e00100" + // ORDER_TYPE
+          "81d10100" + // ASSET_ID
+          "81e20101" + // BUY_OR_NOT
+          "81e30131" + // PRICE
+          "81e40131" + // SIZE
+          "81e50100" + // REDUCE_ONLY
+          "81d704" + // ORDER_DETAIL
+          "81e60102" + // TIF
+          "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
         "81ea0100", // GROUPING
     },
     {
@@ -191,6 +224,80 @@ describe("buildActionStructure", () => {
           "81ec0164", // BUILDER_FEE
     },
     {
+      name: "action type with multiple orders with a cloid",
+      action: {
+        type: "order",
+        orders: [
+          {
+            a: 5,
+            b: true,
+            p: "95.302",
+            s: "0.16",
+            r: false,
+            t: {
+              limit: {
+                tif: "Ioc",
+              },
+            },
+            c: "0x278da11ed9db4f9cadb8b331488980a5",
+          },
+          {
+            a: 5,
+            b: false,
+            p: "102.78",
+            s: "0.16",
+            r: true,
+            t: {
+              trigger: {
+                isMarket: true,
+                triggerPx: "102.78",
+                tpsl: "tp",
+              },
+            },
+            c: "0x278da11ed9db4f9cadb8b331488980a5",
+          },
+        ],
+        grouping: "normalTpsl",
+        builder: {
+          b: "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
+          f: 100,
+        },
+        nonce: 1773655934209,
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+
+        "81dd3a" + // ORDER
+          "81e00100" + // ORDER_TYPE
+          "81d10105" + // ASSET_ID
+          "81e20101" + // BUY_OR_NOT
+          "81e30639352E333032" + // PRICE
+          "81e404302E3136" + // SIZE
+          "81e50100" + // REDUCE_ONLY
+          "81d704" + // ORDER_DETAIL
+          "81e60101" + // TIF
+          "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+
+
+        "81dd47" + // ORDER
+          "81e00101" + // ORDER_TYPE
+          "81d10105" + // ASSET_ID
+          "81e20100" + // BUY_OR_NOT
+          "81e3063130322E3738" + // PRICE
+          "81e404302E3136" + // SIZE
+          "81e50101" + // REDUCE_ONLY
+          "81d711" + // ORDER_DETAIL
+            "81e70101" + // TRIGGER_MARKET
+            "81e8063130322E3738" + // TRIGGER_PRICE
+            "81e90100" + // TRIGGER_TYPE
+          "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+
+        "81ea0101" + // GROUPING
+        "81eb1b" + // BUILDER_INFO
+          "81d314c0708cdd6cd166d51da264e3f49a0422be26e35b" + // BUILDER_ADDRESS
+          "81ec0164", // BUILDER_FEE
+    },
+    {
       name: "action type batchModify update_order",
       action: {
         type: "batchModify",
@@ -213,7 +320,7 @@ describe("buildActionStructure", () => {
             },
           },
         ],
-        nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
+        nonce: 1773050015814, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -230,6 +337,50 @@ describe("buildActionStructure", () => {
               "81e70101" + // TRIGGER_MARKET
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
+          "81dc080000004FDF6BBE6F", // ORDER_ID
+    },
+    {
+      name: "action type batchModify update_order with cloid",
+      action: {
+        type: "batchModify",
+        modifies: [
+          {
+            oid: 343050796655,
+            order: {
+              a: 0,
+              b: false,
+              p: "85169",
+              s: "0.0005",
+              r: true,
+              t: {
+                trigger: {
+                  isMarket: true,
+                  triggerPx: "85169",
+                  tpsl: "tp" as const,
+                },
+              },
+              c: "0x278da11ed9db4f9cadb8b331488980a5",
+            },
+          },
+        ],
+        nonce: 1773050015814, // Not serialized with this function call
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+
+        "81d855" + // UPDATE_ORDERS
+          "81dd47" + // ORDER
+            "81e00101" + // ORDER_TYPE
+            "81d10100" + // ASSET_ID
+            "81e20100" + // BUY_OR_NOT
+            "81e3053835313639" + // PRICE
+            "81e406302E30303035" + // SIZE
+            "81e50101" + // REDUCE_ONLY
+            "81d710" + // ORDER_DETAIL
+              "81e70101" + // TRIGGER_MARKET
+              "81e8053835313639" + // TRIGGER_PRICE
+              "81e90100" + // TRIGGER_TYPE
+            "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
           "81dc080000004FDF6BBE6F", // ORDER_ID
     },
     {
@@ -272,7 +423,7 @@ describe("buildActionStructure", () => {
             },
           },
         ],
-        nonce: 1773050015814, // Not serialized with this fuction call // Not serialized with this fuction call
+        nonce: 1773050015814, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -305,11 +456,87 @@ describe("buildActionStructure", () => {
           "81dc080000004FDF6BBE6F", // ORDER_ID
     },
     {
+      name: "action type batchModify 2 update_orders with cloid",
+      action: {
+        type: "batchModify",
+        modifies: [
+          {
+            oid: 343050796655,
+            order: {
+              a: 0,
+              b: false,
+              p: "85169",
+              s: "0.0005",
+              r: true,
+              t: {
+                trigger: {
+                  isMarket: true,
+                  triggerPx: "85169",
+                  tpsl: "tp" as const,
+                },
+              },
+              c: "0x278da11ed9db4f9cadb8b331488980a5",
+            },
+          },
+          {
+            oid: 343050796655,
+            order: {
+              a: 0,
+              b: false,
+              p: "85169",
+              s: "0.0005",
+              r: true,
+              t: {
+                trigger: {
+                  isMarket: true,
+                  triggerPx: "85169",
+                  tpsl: "tp" as const,
+                },
+              },
+              c: "0x278da11ed9db4f9cadb8b331488980a5",
+            },
+          },
+        ],
+        nonce: 1773050015814, // Not serialized with this function call
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+
+        "81d855" + // UPDATE_ORDER
+          "81dd47" + // ORDER
+            "81e00101" + // ORDER_TYPE
+            "81d10100" + // ASSET_ID
+            "81e20100" + // BUY_OR_NOT
+            "81e3053835313639" + // PRICE
+            "81e406302E30303035" + // SIZE
+            "81e50101" + // REDUCE_ONLY
+            "81d710" + // ORDER_DETAIL
+              "81e70101" + // TRIGGER_MARKET
+              "81e8053835313639" + // TRIGGER_PRICE
+              "81e90100" + // TRIGGER_TYPE
+            "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+          "81dc080000004FDF6BBE6F" + // ORDER_ID
+        "81d855" + // UPDATE_ORDER 2
+          "81dd47" + // ORDER
+            "81e00101" + // ORDER_TYPE
+            "81d10100" + // ASSET_ID
+            "81e20100" + // BUY_OR_NOT
+            "81e3053835313639" + // PRICE
+            "81e406302E30303035" + // SIZE
+            "81e50101" + // REDUCE_ONLY
+            "81d710" + // ORDER_DETAIL
+              "81e70101" + // TRIGGER_MARKET
+              "81e8053835313639" + // TRIGGER_PRICE
+              "81e90100" + // TRIGGER_TYPE
+            "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+          "81dc080000004FDF6BBE6F", // ORDER_ID
+    },
+    {
       name: "action type cancel",
       action: {
         type: "cancel",
         cancels: [{ a: 0, o: 340574409238 }],
-        nonce: 1772813983827, // Not serialized with this fuction call
+        nonce: 1772813983827, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -326,7 +553,7 @@ describe("buildActionStructure", () => {
           { a: 0, o: 340574409238 },
           { a: 0, o: 340574409238 },
         ],
-        nonce: 1772813983827, // Not serialized with this fuction call
+        nonce: 1772813983827, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         // prettier-ignore
@@ -345,7 +572,7 @@ describe("buildActionStructure", () => {
         asset: 0,
         isCross: false,
         leverage: 10,
-        nonce: 3, // Not serialized with this fuction call
+        nonce: 3, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         "81d10100" + // ASSET_ID
@@ -360,7 +587,7 @@ describe("buildActionStructure", () => {
         signatureChainId: "0xa4b1",
         maxFeeRate: "0.1000%",
         builder: "0xc0708cdd6cd166d51da264e3f49a0422be26e35b",
-        nonce: 1772440978175, // Not serialized with this fuction call
+        nonce: 1772440978175, // Not serialized with this function call
       } satisfies HyperliquidAction,
       expectedHex:
         "2302a4b1" + // CHAIN_ID

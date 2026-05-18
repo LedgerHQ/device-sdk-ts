@@ -32,6 +32,7 @@ export const TLV_TAG = {
   TRIGGER_MARKET: 0xe7,
   TRIGGER_PRICE: 0xe8,
   TRIGGER_TYPE: 0xe9,
+  CLOID: 0xee,
   GROUPING: 0xea,
   BUILDER_INFO: 0xeb,
   BUILDER_FEE: 0xec,
@@ -307,6 +308,11 @@ export function serializeOrderToTlv(order: Order): Uint8Array {
     );
   }
   encodeInTlvFromBuffer(b, TLV_TAG.ORDER_DETAIL, payloadBuilder.build());
+
+  // 0xee CLOID
+  if (order.c) {
+    encodeInTlvFromHexa(b, TLV_TAG.CLOID, order.c);
+  }
 
   return b.build();
 }
