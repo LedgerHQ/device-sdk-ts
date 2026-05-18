@@ -1,14 +1,15 @@
+---
+name: backmerge
+description: Backmerge the release branch into develop after the release PR has been merged to main. Activate when the user says "backmerge", "/backmerge", or asks to backmerge after a release PR merges.
+---
+
 # Backmerge Release
 
 Backmerge the release branch into `develop` after the release PR has been merged to `main`.
 
-## When to use
+## Permission prompts
 
-Activate this skill when the user says "backmerge", "/backmerge", or asks to backmerge after a release PR merges.
-
-## Sandbox permissions
-
-The following commands MUST be run with `required_permissions: ["all"]`:
+The following commands need network access or post-install scripts, so they will trigger a permission prompt (Claude Code) or must be run with `required_permissions: ["all"]` (Cursor):
 
 - `pnpm install` (Step 5 — post-install scripts, native deps)
 - `git push -u origin chore/backmerge` + `gh pr create ...` (Step 7 — network + `gh`)
@@ -17,7 +18,7 @@ All other scripts (`revert-private`, `unpin-deps`) run fine inside the sandbox.
 
 ## Backmerge flow (step by step)
 
-All revert/unpin scripts live in `.cursor/scripts/release/` and are run with `pnpm exec zx`.
+All revert/unpin scripts live in `agent-files/scripts/release/` and are run with `pnpm exec zx`.
 
 ### Step 1 -- Checkout main
 
@@ -36,7 +37,7 @@ git checkout -b chore/backmerge
 ### Step 3 -- Revert private flags
 
 ```bash
-pnpm exec zx .cursor/scripts/release/revert-private.cjs
+pnpm exec zx agent-files/scripts/release/revert-private.cjs
 ```
 
 - Resets `private` flags on all packages to their pre-release state.
@@ -45,7 +46,7 @@ pnpm exec zx .cursor/scripts/release/revert-private.cjs
 ### Step 4 -- Restore workspace deps
 
 ```bash
-pnpm exec zx .cursor/scripts/release/unpin-deps.cjs
+pnpm exec zx agent-files/scripts/release/unpin-deps.cjs
 ```
 
 - Replaces pinned version ranges (e.g., `^1.2.3`) back to `workspace:^` for internal dependencies.

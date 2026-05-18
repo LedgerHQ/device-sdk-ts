@@ -42,3 +42,6 @@ packages/devtools-rozenite/dist
 
 # sbom
 sbom.json
+
+# Claude Code per-developer settings
+agent-files/claude/settings.local.json
