@@ -1,5 +1,17 @@
 # @ledgerhq/device-signer-kit-ethereum
 
+## 1.16.0
+
+### Minor Changes
+
+- [#1471](https://github.com/LedgerHQ/device-sdk-ts/pull/1471) [`2ac3c1e`](https://github.com/LedgerHQ/device-sdk-ts/commit/2ac3c1e6f817348079c0ba2dd64f30a63c9b4b72) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Adaptation to ContextModule 2.0
+
+### Patch Changes
+
+- Updated dependencies [[`95d1bf8`](https://github.com/LedgerHQ/device-sdk-ts/commit/95d1bf8ea5a122dbb46573dea0b7fb315de8bbfb), [`5da4263`](https://github.com/LedgerHQ/device-sdk-ts/commit/5da4263bf6fa73a5803663a8ba0745a7368d4e36)]:
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@1.5.0
+
 ## 1.15.1
 
 ### Patch Changes
