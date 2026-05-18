@@ -15,10 +15,18 @@ import {
 } from "@internal/app-binder/command/SignTransferCommand";
 import { type ConcordiumErrorCodes } from "@internal/app-binder/command/utils/ConcordiumApplicationErrors";
 import { encodeDerivationPath } from "@internal/app-binder/command/utils/EncodeDerivationPath";
+import { encodeMaxFeeBigEndian } from "@internal/app-binder/command/utils/EncodeMaxFee";
+import { P2 } from "@internal/app-binder/constants";
+
+// Serialized transaction layout:
+// [sender:32][nonce:8][energy:8][payloadSize:4][expiry:8][type:1] = 61 bytes header
+// [recipient:32][amount:8]
 
 type SendTransferTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
+  maxFee: bigint;
+  supportsFeeDisplay: boolean;
 };
 
 export class SendTransferTask {
@@ -35,56 +43,54 @@ export class SendTransferTask {
       data: {
         derivationPath: this.args.derivationPath,
         transactionLength: this.args.transaction.length,
+        supportsFeeDisplay: this.args.supportsFeeDisplay,
       },
     });
 
-    const { derivationPath, transaction } = this.args;
+    const { derivationPath, transaction, maxFee, supportsFeeDisplay } =
+      this.args;
     const pathBytes = encodeDerivationPath(derivationPath);
 
-    // Prepend derivation path to the transaction data so the first chunk
-    // contains the path followed by as much transaction data as fits.
-    const fullPayload = new Uint8Array(pathBytes.length + transaction.length);
-    fullPayload.set(pathBytes, 0);
-    fullPayload.set(transaction, pathBytes.length);
+    const feeSuffix = supportsFeeDisplay
+      ? encodeMaxFeeBigEndian(maxFee)
+      : new Uint8Array(0);
 
-    for (
-      let offset = 0;
-      offset < fullPayload.length;
-      offset += APDU_MAX_PAYLOAD
-    ) {
-      const isLastChunk = offset + APDU_MAX_PAYLOAD >= fullPayload.length;
-      const chunkedData = fullPayload.slice(offset, offset + APDU_MAX_PAYLOAD);
+    const payload = new Uint8Array(
+      pathBytes.length + transaction.length + feeSuffix.length,
+    );
+    payload.set(pathBytes, 0);
+    payload.set(transaction, pathBytes.length);
+    payload.set(feeSuffix, pathBytes.length + transaction.length);
 
-      const result = await this.api.sendCommand(
-        new SignTransferCommand({
-          chunkedData,
-          isLastChunk,
-        }),
-      );
-
-      if (!isSuccessCommandResult(result)) {
-        this.logger.debug("[run] Failed to send chunk", {
-          data: {
-            chunkNumber: Math.floor(offset / APDU_MAX_PAYLOAD),
-            chunkOffset: offset,
-            error: result.error,
-          },
-        });
-        return result;
-      }
-
-      if (isLastChunk) {
-        this.logger.debug("[run] All chunks sent successfully", {
-          data: { signature: result.data },
-        });
-        return CommandResultFactory({
-          data: result.data as Signature,
-        });
-      }
+    // The firmware handler for SIGN_TRANSFER is single-shot: the full payload
+    // (path + canonical bytes + optional fee suffix) must fit in one APDU.
+    if (payload.length > APDU_MAX_PAYLOAD) {
+      return CommandResultFactory({
+        error: new InvalidStatusWordError(
+          `Transfer payload exceeds APDU limit: ${payload.length} > ${APDU_MAX_PAYLOAD}`,
+        ),
+      });
     }
 
+    const result = await this.api.sendCommand(
+      new SignTransferCommand({
+        data: payload,
+        p2: supportsFeeDisplay ? P2.FEE_DISPLAY : P2.LAST,
+      }),
+    );
+
+    if (!isSuccessCommandResult(result)) {
+      this.logger.debug("[run] Send failed", {
+        data: { error: result.error },
+      });
+      return result;
+    }
+
+    this.logger.debug("[run] Signed successfully", {
+      data: { signature: result.data },
+    });
     return CommandResultFactory({
-      error: new InvalidStatusWordError("No signature returned"),
+      data: result.data as Signature,
     });
   }
 }

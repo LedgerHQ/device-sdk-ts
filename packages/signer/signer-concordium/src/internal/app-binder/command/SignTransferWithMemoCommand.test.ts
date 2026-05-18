@@ -15,6 +15,7 @@ describe("SignTransferWithMemoCommand", () => {
     it("should build APDU with INS=SIGN_TRANSFER_WITH_MEMO and given P1", () => {
       const command = new SignTransferWithMemoCommand({
         p1: P1.INITIAL_WITH_MEMO,
+        p2: P2.NONE,
         data: new Uint8Array(50).fill(0x01),
       });
 
@@ -29,6 +30,7 @@ describe("SignTransferWithMemoCommand", () => {
     it("should use P1=MEMO for memo chunks", () => {
       const command = new SignTransferWithMemoCommand({
         p1: P1.MEMO,
+        p2: P2.NONE,
         data: new Uint8Array(100).fill(0xcc),
       });
 
@@ -40,6 +42,7 @@ describe("SignTransferWithMemoCommand", () => {
     it("should use P1=AMOUNT for final amount step", () => {
       const command = new SignTransferWithMemoCommand({
         p1: P1.AMOUNT,
+        p2: P2.NONE,
         data: new Uint8Array(8).fill(0x00),
       });
 
@@ -52,6 +55,7 @@ describe("SignTransferWithMemoCommand", () => {
       const data = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
       const command = new SignTransferWithMemoCommand({
         p1: P1.MEMO,
+        p2: P2.NONE,
         data,
       });
 
@@ -65,6 +69,7 @@ describe("SignTransferWithMemoCommand", () => {
     it("should extract signature bytes on success", () => {
       const command = new SignTransferWithMemoCommand({
         p1: P1.AMOUNT,
+        p2: P2.NONE,
         data: new Uint8Array(8),
       });
 
@@ -85,6 +90,7 @@ describe("SignTransferWithMemoCommand", () => {
     it("should return empty data for intermediate step response", () => {
       const command = new SignTransferWithMemoCommand({
         p1: P1.INITIAL_WITH_MEMO,
+        p2: P2.NONE,
         data: new Uint8Array(50),
       });
 
@@ -101,6 +107,7 @@ describe("SignTransferWithMemoCommand", () => {
     it("should return ConcordiumAppCommandError on user rejection", () => {
       const command = new SignTransferWithMemoCommand({
         p1: P1.AMOUNT,
+        p2: P2.NONE,
         data: new Uint8Array(8),
       });
 
@@ -121,6 +128,7 @@ describe("SignTransferWithMemoCommand", () => {
     it("should return ConcordiumAppCommandError on data invalid", () => {
       const command = new SignTransferWithMemoCommand({
         p1: P1.MEMO,
+        p2: P2.NONE,
         data: new Uint8Array(10),
       });
 

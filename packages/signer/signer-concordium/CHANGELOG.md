@@ -1,5 +1,19 @@
 # @ledgerhq/device-signer-kit-concordium
 
+## 0.4.0
+
+### Minor Changes
+
+- [#1471](https://github.com/LedgerHQ/device-sdk-ts/pull/1471) [`2ac3c1e`](https://github.com/LedgerHQ/device-sdk-ts/commit/2ac3c1e6f817348079c0ba2dd64f30a63c9b4b72) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Adaptation to ContextModule 2.0
+
+- [#1479](https://github.com/LedgerHQ/device-sdk-ts/pull/1479) [`cacfa0b`](https://github.com/LedgerHQ/device-sdk-ts/commit/cacfa0bef7c96a2f8d74b7c5627e2017d8141db0) Thanks [@lysyi3m](https://github.com/lysyi3m)! - `signTransaction` now takes a required `maxFee: bigint` (µCCD) as its third positional argument, ahead of `options`. The value is forwarded to the device for display only and is not part of the canonical signed bytes. Requires Concordium app version 5.6.0+ on the device; on older firmware the value is dropped at the wire boundary and signing falls back to the legacy display layout. Invalid `maxFee` values (non-bigint, negative, or above uint64 range) are rejected with `InvalidMaxFeeError` (errorCode `"invalid_max_fee"`).
+
+### Patch Changes
+
+- Updated dependencies [[`95d1bf8`](https://github.com/LedgerHQ/device-sdk-ts/commit/95d1bf8ea5a122dbb46573dea0b7fb315de8bbfb), [`5da4263`](https://github.com/LedgerHQ/device-sdk-ts/commit/5da4263bf6fa73a5803663a8ba0745a7368d4e36)]:
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@1.5.0
+
 ## 0.3.0
 
 ### Minor Changes

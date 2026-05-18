@@ -20,6 +20,7 @@ export interface SignerConcordium {
   signTransaction: (
     derivationPath: string,
     transaction: Uint8Array,
+    maxFee: bigint,
     options?: TransactionOptions,
   ) => SignTransactionDAReturnType;
 

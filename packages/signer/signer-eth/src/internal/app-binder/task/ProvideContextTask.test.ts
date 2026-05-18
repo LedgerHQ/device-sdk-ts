@@ -81,10 +81,13 @@ describe("ProvideContextTask", () => {
 
     describe("contexts with sendCommand", () => {
       it.each([
-        [ClearSignContextType.PLUGIN, SetPluginCommand],
-        [ClearSignContextType.EXTERNAL_PLUGIN, SetExternalPluginCommand],
-        [ClearSignContextType.NFT, ProvideNFTInformationCommand],
-        [ClearSignContextType.TOKEN, ProvideTokenInformationCommand],
+        [ClearSignContextType.ETHEREUM_PLUGIN, SetPluginCommand],
+        [
+          ClearSignContextType.ETHEREUM_EXTERNAL_PLUGIN,
+          SetExternalPluginCommand,
+        ],
+        [ClearSignContextType.ETHEREUM_NFT, ProvideNFTInformationCommand],
+        [ClearSignContextType.ETHEREUM_TOKEN, ProvideTokenInformationCommand],
       ] as const)(
         "should provide context by calling sendCommand for a %s context",
         async (contextType, commandClass) => {
@@ -119,17 +122,20 @@ describe("ProvideContextTask", () => {
     describe("contexts with sendPayloadInChunksTask", () => {
       it.each([
         [
-          ClearSignContextType.TRANSACTION_INFO,
+          ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
           ProvideTransactionInformationCommand,
         ],
-        [ClearSignContextType.TRUSTED_NAME, ProvideTrustedNameCommand],
-        [ClearSignContextType.ENUM, ProvideEnumCommand],
+        [ClearSignContextType.ETHEREUM_TRUSTED_NAME, ProvideTrustedNameCommand],
+        [ClearSignContextType.ETHEREUM_ENUM, ProvideEnumCommand],
         [
-          ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION,
+          ClearSignContextType.ETHEREUM_TRANSACTION_FIELD_DESCRIPTION,
           ProvideTransactionFieldDescriptionCommand,
         ],
-        [ClearSignContextType.TRANSACTION_CHECK, ProvideWeb3CheckCommand],
-        [ClearSignContextType.PROXY_INFO, ProvideProxyInfoCommand],
+        [
+          ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
+          ProvideWeb3CheckCommand,
+        ],
+        [ClearSignContextType.ETHEREUM_PROXY_INFO, ProvideProxyInfoCommand],
       ] as const)(
         "should provide context by calling sendPayloadInChunksTask for a %s context",
         async (contextType, commandClass) => {
@@ -178,7 +184,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.DYNAMIC_NETWORK,
+            type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -218,7 +224,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.DYNAMIC_NETWORK_ICON,
+            type: ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -264,7 +270,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.SAFE,
+            type: ClearSignContextType.ETHEREUM_SAFE,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -304,7 +310,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.SIGNER,
+            type: ClearSignContextType.ETHEREUM_SIGNER,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -346,7 +352,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
             certificate: {
               keyUsageNumber: 1,
@@ -382,7 +388,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.TRANSACTION_INFO,
+            type: ClearSignContextType.ETHEREUM_TRANSACTION_INFO,
             payload: "payload",
             certificate: {
               keyUsageNumber: 2,
@@ -415,7 +421,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -444,7 +450,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.NFT,
+            type: ClearSignContextType.ETHEREUM_NFT,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -467,7 +473,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.TRUSTED_NAME,
+            type: ClearSignContextType.ETHEREUM_TRUSTED_NAME,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -490,7 +496,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: "unsupported" as unknown as ClearSignContextType.TOKEN,
+            type: "unsupported" as unknown as ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,
@@ -520,7 +526,7 @@ describe("ProvideContextTask", () => {
         // GIVEN
         const args: ProvideContextTaskArgs = {
           context: {
-            type: ClearSignContextType.TOKEN,
+            type: ClearSignContextType.ETHEREUM_TOKEN,
             payload: "payload",
           },
           loggerFactory: mockLoggerFactory,

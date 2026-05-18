@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-ethereum",
-  "version": "1.15.1",
+  "version": "1.16.0",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -60,7 +60,7 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/context-module": "^1.17.1",
+    "@ledgerhq/context-module": "workspace:^",
     "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

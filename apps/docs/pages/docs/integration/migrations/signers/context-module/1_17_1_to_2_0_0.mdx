@@ -1,0 +1,85 @@
+# Context Module 1.17.1 → 2.0.0
+
+## Breaking changes
+
+### `setChain()` now required
+
+`ContextModuleBuilder.build()` now throws if `setChain()` has not been called.
+
+Signer builders (`SignerEthBuilder`, `SignerSolanaBuilder`, `SignerConcordiumBuilder`) already call `setChain()` internally — **no change is needed** if you only use those builders with the default context module.
+
+**Who is affected:** any code that calls `new ContextModuleBuilder(...)` directly (for example, to create a custom context module for a specific signer).
+
+#### Before (v1.17.1)
+
+```typescript
+import { ContextModuleBuilder } from "@ledgerhq/context-module";
+
+const contextModule = new ContextModuleBuilder({ originToken }).build();
+```
+
+#### After (v2.0.0)
+
+Pass the chain that matches your signer using `ContextModuleChainID`:
+
+```typescript
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
+
+// Ethereum signer
+const contextModule = new ContextModuleBuilder({ originToken })
+  .setChain(ContextModuleChainID.Ethereum)
+  .build();
+
+// Solana signer
+const contextModule = new ContextModuleBuilder({ originToken })
+  .setChain(ContextModuleChainID.Solana)
+  .build();
+
+// Concordium signer
+const contextModule = new ContextModuleBuilder({ originToken })
+  .setChain(ContextModuleChainID.Concordium)
+  .build();
+```
+
+#### Available chains
+
+| `ContextModuleChainID` | Value          | Signer                    |
+| ---------------------- | -------------- | ------------------------- |
+| `Ethereum`             | `"ethereum"`   | `SignerEthBuilder`        |
+| `Solana`               | `"solana"`     | `SignerSolanaBuilder`     |
+| `Concordium`           | `"concordium"` | `SignerConcordiumBuilder` |
+
+#### Error message
+
+If `setChain()` is omitted, `build()` throws:
+
+```
+[ContextModuleBuilder] setChain() must be called before build()
+```
+
+### `getSolanaContext()` removed from `ContextModule`
+
+The `getSolanaContext()` method has been removed from the `ContextModule` interface and `DefaultContextModule`. Solana context is now fetched through the standard `getContexts()` path like any other chain.
+
+**Who is affected:** any code that calls `contextModule.getSolanaContext()` directly.
+
+#### Before (v1.17.1)
+
+```typescript
+const solanaContext = await contextModule.getSolanaContext(transaction);
+```
+
+#### After (v2.0.0)
+
+```typescript
+const contexts = await contextModule.getContexts(transaction);
+```
+
+## What changed
+
+- The context module is now chain-aware at build time. The DI container loads only the factories relevant to the declared chain.
+- `ContextModuleChainID` enum is now exported from `@ledgerhq/context-module`.
+- Solana and Concordium are now first-class supported chains alongside Ethereum.

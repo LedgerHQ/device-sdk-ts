@@ -1,129 +1,65 @@
-import { type PkiCertificate } from "@/pki/model/PkiCertificate";
-
-import { type GenericPath } from "./GenericPath";
+import { type EthereumPayloadOverrides } from "@/modules/ethereum/model/EthereumClearSignContext";
+import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
+import { type SolanaPayloadOverrides } from "@/modules/solana/model/SolanaClearSignContext";
 
 export enum ClearSignContextType {
-  TOKEN = "token",
-  NFT = "nft",
-  TRUSTED_NAME = "trustedName",
-  PLUGIN = "plugin",
-  EXTERNAL_PLUGIN = "externalPlugin",
-  TRANSACTION_INFO = "transactionInfo",
-  PROXY_INFO = "proxyInfo",
-  ENUM = "enum",
-  TRANSACTION_FIELD_DESCRIPTION = "transactionFieldDescription",
-  TRANSACTION_CHECK = "transactionCheck",
-  DYNAMIC_NETWORK = "dynamicNetwork",
-  DYNAMIC_NETWORK_ICON = "dynamicNetworkIcon",
   ERROR = "error",
-  SAFE = "safe",
-  SIGNER = "signer",
-  GATED_SIGNING = "gatedSigning",
-  ACCOUNT_OWNERSHIP = "accountOwnership",
+  CONCORDIUM_ACCOUNT_OWNERSHIP = "concordiumAccountOwnership",
+  ETHEREUM_TOKEN = "ethereumToken",
+  ETHEREUM_NFT = "ethereumNft",
+  ETHEREUM_TRUSTED_NAME = "ethereumTrustedName",
+  ETHEREUM_PLUGIN = "ethereumPlugin",
+  ETHEREUM_EXTERNAL_PLUGIN = "ethereumExternalPlugin",
+  ETHEREUM_TRANSACTION_INFO = "ethereumTransactionInfo",
+  ETHEREUM_PROXY_INFO = "ethereumProxyInfo",
+  ETHEREUM_ENUM = "ethereumEnum",
+  ETHEREUM_TRANSACTION_FIELD_DESCRIPTION = "ethereumTransactionFieldDescription",
+  ETHEREUM_TRANSACTION_CHECK = "ethereumTransactionCheck",
+  ETHEREUM_DYNAMIC_NETWORK = "ethereumDynamicNetwork",
+  ETHEREUM_DYNAMIC_NETWORK_ICON = "ethereumDynamicNetworkIcon",
+  ETHEREUM_SAFE = "ethereumSafe",
+  ETHEREUM_SIGNER = "ethereumSigner",
+  ETHEREUM_GATED_SIGNING = "ethereumGatedSigning",
+  SOLANA_TOKEN = "solanaToken",
+  SOLANA_LIFI = "solanaLifi",
+  SOLANA_TRUSTED_NAME = "solanaTrustedName",
+  SOLANA_TRANSACTION_CHECK = "solanaTransactionCheck",
 }
-
-export enum ClearSignContextReferenceType {
-  TOKEN = ClearSignContextType.TOKEN,
-  NFT = ClearSignContextType.NFT,
-  TRUSTED_NAME = ClearSignContextType.TRUSTED_NAME,
-  ENUM = ClearSignContextType.ENUM,
-  CALLDATA = "calldata",
-}
-
-type PathOnly = {
-  valuePath: GenericPath;
-  value?: never;
-  callee?: GenericPath;
-  selector?: GenericPath;
-  amount?: GenericPath;
-  spender?: GenericPath;
-  chainId?: GenericPath;
-};
-
-type ValueOnly = {
-  value: string;
-  valuePath?: never;
-};
-
-type PathOrValue = PathOnly | ValueOnly;
-
-// per-type payloads for references
-type ClearSignContextReferencePayloads = {
-  [ClearSignContextReferenceType.ENUM]: {
-    valuePath: GenericPath;
-    id: number; // enum id to reference
-  };
-  [ClearSignContextReferenceType.TRUSTED_NAME]: {
-    valuePath: GenericPath;
-    types: string[];
-    sources: string[];
-  };
-  [ClearSignContextReferenceType.CALLDATA]: {
-    callee: GenericPath;
-    valuePath: GenericPath;
-    selector?: GenericPath;
-    amount?: GenericPath;
-    spender?: GenericPath;
-    chainId?: GenericPath;
-  };
-  [ClearSignContextReferenceType.TOKEN]: PathOrValue;
-  [ClearSignContextReferenceType.NFT]: PathOrValue;
-};
-
-// discriminated union of all reference shapes, built from the payload map
-type ClearSignContextReferenceUnion = {
-  [T in ClearSignContextReferenceType]: {
-    type: T;
-  } & ClearSignContextReferencePayloads[T];
-}[ClearSignContextReferenceType];
-
-export type ClearSignContextReference<
-  T extends ClearSignContextReferenceType = ClearSignContextReferenceType,
-> = Extract<ClearSignContextReferenceUnion, { type: T }>;
 
 export type ClearSignContextSuccessType = Exclude<
   ClearSignContextType,
   ClearSignContextType.ERROR
 >;
 
-// base payload shared by most success contexts
-type ClearSignContextSuccessBase = {
+/**
+ * Base payload shape shared by every success context. Chain modules extend
+ * this via PayloadOverrides for variants that carry typed payloads.
+ */
+export type ClearSignContextSuccessBase = {
   payload: string;
   certificate?: PkiCertificate;
 };
 
-// map from ClearSign success type to payload
 type ClearSignContextSuccessPayloadsBase = {
   [K in ClearSignContextSuccessType]: ClearSignContextSuccessBase;
 };
 
-// special cases overrides for certain context types
-type ClearSignContextSuccessPayloadOverrides = {
-  [ClearSignContextType.ENUM]: ClearSignContextSuccessBase & {
-    id: number;
-    value: number;
-  };
-  [ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION]: ClearSignContextSuccessBase & {
-    reference?: ClearSignContextReference;
-  };
-};
+// Chain modules contribute typed-payload overrides. This file is the
+// integration boundary that assembles them into the cross-chain union.
+type ClearSignContextSuccessPayloadOverrides = EthereumPayloadOverrides &
+  SolanaPayloadOverrides;
 
 type ClearSignContextSuccessPayloads = Omit<
   ClearSignContextSuccessPayloadsBase,
-  ClearSignContextType.ENUM | ClearSignContextType.TRANSACTION_FIELD_DESCRIPTION
+  keyof ClearSignContextSuccessPayloadOverrides
 > &
   ClearSignContextSuccessPayloadOverrides;
 
-// union of all success contexts, built from the payload map.
-type ClearSignContextSuccessUnion = {
-  [T in ClearSignContextSuccessType]: {
-    type: T;
-  } & ClearSignContextSuccessPayloads[T];
-}[ClearSignContextSuccessType];
-
 export type ClearSignContextSuccess<
   T extends ClearSignContextSuccessType = ClearSignContextSuccessType,
-> = Extract<ClearSignContextSuccessUnion, { type: T }>;
+> = T extends ClearSignContextSuccessType
+  ? { type: T } & ClearSignContextSuccessPayloads[T]
+  : never;
 
 export type ClearSignContextError = {
   type: ClearSignContextType.ERROR;

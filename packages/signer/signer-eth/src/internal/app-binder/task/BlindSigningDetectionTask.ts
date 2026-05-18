@@ -15,10 +15,10 @@ import { generateSignatureId } from "@ledgerhq/signer-utils";
 import { type ClearSigningType } from "@api/model/ClearSigningType";
 
 const METADATA_ONLY_CONTEXT_TYPES = new Set<ClearSignContextType>([
-  ClearSignContextType.TRANSACTION_CHECK,
-  ClearSignContextType.DYNAMIC_NETWORK,
-  ClearSignContextType.DYNAMIC_NETWORK_ICON,
-  ClearSignContextType.GATED_SIGNING,
+  ClearSignContextType.ETHEREUM_TRANSACTION_CHECK,
+  ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+  ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
+  ClearSignContextType.ETHEREUM_GATED_SIGNING,
 ]);
 
 export type BlindSigningDetectionInput = {

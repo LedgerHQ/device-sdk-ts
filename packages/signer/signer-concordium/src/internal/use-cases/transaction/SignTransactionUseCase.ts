@@ -18,11 +18,13 @@ export class SignTransactionUseCase {
   execute(
     derivationPath: string,
     transaction: Uint8Array,
+    maxFee: bigint,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._appBinder.signTransaction({
       derivationPath,
       transaction,
+      maxFee,
       skipOpenApp: options?.skipOpenApp,
     });
   }

@@ -1458,8 +1458,8 @@ importers:
         specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
+        specifier: ^1.2.0
+        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -1553,8 +1553,8 @@ importers:
   packages/signer/signer-concordium:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
+        specifier: ^1.2.0
+        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -1700,8 +1700,8 @@ importers:
         specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
+        specifier: ^1.2.0
+        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -1746,8 +1746,8 @@ importers:
         specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
+        specifier: ^1.2.0
+        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       '@solana/spl-token':
         specifier: 'catalog:'
         version: 0.4.13(@solana/web3.js@1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.2)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.2)(utf-8-validate@5.0.10)
@@ -1838,8 +1838,8 @@ importers:
   packages/signer/signer-zcash:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.2.0
-        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)

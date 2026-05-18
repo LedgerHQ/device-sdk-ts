@@ -14,11 +14,11 @@ import {
   type ContextModuleServiceConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "./config/model/ContextModuleConfig";
-import { type BlindSigningReporter } from "./reporter/domain/BlindSigningReporter";
+import { type TrustedNameDataSource } from "./modules/ethereum/trusted-name/data/TrustedNameDataSource";
+import { type TypedDataContextLoader } from "./modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { type BlindSigningReporter } from "./modules/multichain/reporter/domain/BlindSigningReporter";
 import { type ContextLoader } from "./shared/domain/ContextLoader";
-import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
-import { type TrustedNameDataSource } from "./trusted-name/data/TrustedNameDataSource";
-import { type TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
+import { type ContextModuleChainID } from "./shared/domain/ContextModuleChainID";
 import { type ContextModule } from "./ContextModule";
 import { DefaultContextModule } from "./DefaultContextModule";
 
@@ -63,13 +63,17 @@ const DEFAULT_LOADER_CONFIG: ContextModuleLoaderConfig = {
   customLoaders: [],
   customFieldLoaders: [],
   customTypedDataLoader: undefined,
-  customSolanaLoader: undefined,
   customBlindSigningReporter: undefined,
   customTrustedNameDataSource: undefined,
 };
 
+// Internal config type: all ServiceConfig fields except chain (set later via setChain)
+type BuilderConfig = Omit<ContextModuleServiceConfig, "chain"> &
+  Partial<Pick<ContextModuleServiceConfig, "chain">> &
+  ContextModuleLoaderConfig;
+
 export class ContextModuleBuilder {
-  private config: ContextModuleServiceConfig & ContextModuleLoaderConfig;
+  private config: BuilderConfig;
 
   constructor({ originToken, loggerFactory }: ContextModuleConstructorArgs) {
     this.config = {
@@ -79,7 +83,7 @@ export class ContextModuleBuilder {
       customFieldLoaders: [],
       originToken: originToken ?? "",
       loggerFactory: loggerFactory ?? noopLoggerFactory,
-    } as ContextModuleServiceConfig & ContextModuleLoaderConfig;
+    };
   }
 
   /**
@@ -111,17 +115,6 @@ export class ContextModuleBuilder {
    */
   addTypedDataLoader(loader: TypedDataContextLoader) {
     this.config.customTypedDataLoader = loader;
-    return this;
-  }
-
-  /**
-   * Replace the default loader for Solana context
-   *
-   * @param loader loader to use for Solana context
-   * @returns this
-   */
-  addSolanaLoader(loader: SolanaContextLoader) {
-    this.config.customSolanaLoader = loader;
     return this;
   }
 
@@ -227,11 +220,29 @@ export class ContextModuleBuilder {
   }
 
   /**
+   * Set the chain for which this context module is built
+   *
+   * @param chain
+   * @returns this
+   */
+  setChain(chain: ContextModuleChainID) {
+    this.config.chain = chain;
+    return this;
+  }
+
+  /**
    * Build the context module
    *
    * @returns the context module
    */
   build(): ContextModule {
-    return new DefaultContextModule(this.config);
+    if (!this.config.chain) {
+      throw new Error(
+        "[ContextModuleBuilder] setChain() must be called before build()",
+      );
+    }
+    return new DefaultContextModule(
+      this.config as ContextModuleServiceConfig & ContextModuleLoaderConfig,
+    );
   }
 }

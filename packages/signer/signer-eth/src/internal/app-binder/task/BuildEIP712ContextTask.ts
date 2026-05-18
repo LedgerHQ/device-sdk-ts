@@ -1,7 +1,8 @@
 import {
-  type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
+  type EthereumClearSignContextSuccess,
+  isEthereumClearSignContextSuccess,
   type TypedDataCalldataIndex,
   type TypedDataClearSignContextSuccess,
 } from "@ledgerhq/context-module";
@@ -143,7 +144,7 @@ export class BuildEIP712ContextTask {
     deviceState: DeviceSessionState,
     challenge: string | undefined,
   ): Promise<{
-    contexts: ClearSignContextSuccess[];
+    contexts: EthereumClearSignContextSuccess[];
     contextErrorCount: number;
   }> {
     const supportsGatedSigning = new ApplicationChecker(
@@ -158,18 +159,18 @@ export class BuildEIP712ContextTask {
     // Determine context types to be fetched
     const contextTypes: ClearSignContextType[] = [];
     if (supportsGatedSigning) {
-      contextTypes.push(ClearSignContextType.GATED_SIGNING);
+      contextTypes.push(ClearSignContextType.ETHEREUM_GATED_SIGNING);
       if (challenge !== undefined) {
-        contextTypes.push(ClearSignContextType.PROXY_INFO);
+        contextTypes.push(ClearSignContextType.ETHEREUM_PROXY_INFO);
       }
     }
     if (this.appConfig.web3ChecksEnabled) {
-      contextTypes.push(ClearSignContextType.TRANSACTION_CHECK);
+      contextTypes.push(ClearSignContextType.ETHEREUM_TRANSACTION_CHECK);
     }
     if (this.data.domain.chainId !== undefined) {
       contextTypes.push(
-        ClearSignContextType.DYNAMIC_NETWORK,
-        ClearSignContextType.DYNAMIC_NETWORK_ICON,
+        ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK,
+        ClearSignContextType.ETHEREUM_DYNAMIC_NETWORK_ICON,
       );
     }
 
@@ -189,10 +190,9 @@ export class BuildEIP712ContextTask {
       (context) => context.type === ClearSignContextType.ERROR,
     ).length;
 
-    // Filter valid contexts
-    const contexts = allContexts.filter((context) =>
-      contextTypes.includes(context.type),
-    ) as ClearSignContextSuccess[];
+    const contexts = allContexts
+      .filter(isEthereumClearSignContextSuccess)
+      .filter((context) => contextTypes.includes(context.type));
 
     return { contexts, contextErrorCount };
   }
@@ -269,15 +269,16 @@ export class BuildEIP712ContextTask {
         calldataContext.clearSigningType === ClearSigningType.EIP7730 ||
         (calldataContext.clearSigningType === ClearSigningType.BASIC &&
           calldataContext.clearSignContexts.every(
-            ({ context }) => context.type === ClearSignContextType.TRUSTED_NAME,
+            ({ context }) =>
+              context.type === ClearSignContextType.ETHEREUM_TRUSTED_NAME,
           ))
       ) {
         const allContexts = calldataContext.clearSignContexts;
         calldatasPreContexts[calldataIndex] = allContexts.filter(
-          (c) => c.context.type === ClearSignContextType.TRUSTED_NAME,
+          (c) => c.context.type === ClearSignContextType.ETHEREUM_TRUSTED_NAME,
         );
         calldatasPostContexts[calldataIndex] = allContexts.filter(
-          (c) => c.context.type !== ClearSignContextType.TRUSTED_NAME,
+          (c) => c.context.type !== ClearSignContextType.ETHEREUM_TRUSTED_NAME,
         );
       }
     }

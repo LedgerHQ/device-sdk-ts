@@ -1,0 +1,27 @@
+---
+name: changeset
+description: How to create a changeset in this monorepo. Use when adding a new changeset, when the user invokes /changeset, or when committing changes that need a version bump.
+alwaysApply: false
+---
+
+## How to create a changeset
+
+To create an effective changeset in this repo, follow these guidelines:
+
+1. Run `pnpm changeset add --empty` to generate an empty changeset file.
+2. In the newly created file:
+   - Specify the affected package name (one package per changeset).
+   - Choose the correct version bump type:
+     - **Major:** Breaking changes (use only when explicitly required).
+     - **Minor:** New features, additions, or improvements.
+     - **Patch:** Bug fixes or minor, non-breaking modifications.
+3. Write a short, clear summary describing the purpose of the changeset.
+
+## Additional Rules:
+
+- Each changeset must affect only one package. Do not include multiple packages in the same changeset.
+- It is acceptable to use multiple changesets for a single package when necessary (e.g., logically separate changes).
+- Each changeset should be concise and focused on a specific purpose.
+- Avoid creating unnecessary or duplicate changesets.
+
+When in doubt, consult the team or existing changeset history for examples.

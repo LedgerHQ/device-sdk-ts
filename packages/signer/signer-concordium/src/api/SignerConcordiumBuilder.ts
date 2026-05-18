@@ -1,6 +1,7 @@
 import {
   type ContextModule,
   ContextModuleBuilder,
+  ContextModuleChainID,
 } from "@ledgerhq/context-module";
 import {
   type DeviceManagementKit,
@@ -41,7 +42,9 @@ export class SignerConcordiumBuilder {
       new ContextModuleBuilder({
         loggerFactory: (tag: string) =>
           this._dmk.getLoggerFactory()(["ContextModule", tag]),
-      }).build();
+      })
+        .setChain(ContextModuleChainID.Concordium)
+        .build();
 
     return new DefaultSignerConcordium({
       dmk: this._dmk,

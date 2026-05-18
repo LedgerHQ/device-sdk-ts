@@ -1,51 +1,50 @@
 import { type Container } from "inversify";
-import { Left } from "purify-ts";
-
-import { accountOwnershipTypes } from "@/account-ownership/di/accountOwnershipTypes";
-import { calldataTypes } from "@/calldata/di/calldataTypes";
-import { dynamicNetworkTypes } from "@/dynamic-network/di/dynamicNetworkTypes";
-import { type BlindSigningReportParams } from "@/reporter/data/BlindSigningReporterDatasource";
-import { reporterTypes } from "@/reporter/di/reporterTypes";
-import { type BlindSigningReporter } from "@/reporter/domain/BlindSigningReporter";
-import type { TypedDataClearSignContext } from "@/shared/model/TypedDataClearSignContext";
-import type { TypedDataContext } from "@/shared/model/TypedDataContext";
-import { trustedNameTypes } from "@/trusted-name/di/trustedNameTypes";
 
 import {
   type ContextModuleLoaderConfig,
   type ContextModuleServiceConfig,
-} from "./config/model/ContextModuleConfig";
-import { externalPluginTypes } from "./external-plugin/di/externalPluginTypes";
-import { gatedSigningTypes } from "./gated-signing/di/gatedSigningTypes";
-import { nftTypes } from "./nft/di/nftTypes";
-import { proxyTypes } from "./proxy/di/proxyTypes";
-import { safeTypes } from "./safe/di/safeTypes";
-import { type ContextFieldLoader } from "./shared/domain/ContextFieldLoader";
-import { type ContextLoader } from "./shared/domain/ContextLoader";
+} from "@/config/model/ContextModuleConfig";
+import { type ContextModule } from "@/ContextModule";
+import { makeContainer } from "@/di";
+import { accountOwnershipTypes } from "@/modules/concordium/account-ownership/di/accountOwnershipTypes";
+import { calldataTypes } from "@/modules/ethereum/calldata/di/calldataTypes";
+import { dynamicNetworkTypes } from "@/modules/ethereum/dynamic-network/di/dynamicNetworkTypes";
+import { externalPluginTypes } from "@/modules/ethereum/external-plugin/di/externalPluginTypes";
+import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
+import type { TypedDataClearSignContext } from "@/modules/ethereum/model/TypedDataClearSignContext";
+import type { TypedDataContext } from "@/modules/ethereum/model/TypedDataContext";
+import { nftTypes } from "@/modules/ethereum/nft/di/nftTypes";
+import { proxyTypes } from "@/modules/ethereum/proxy/di/proxyTypes";
+import { safeTypes } from "@/modules/ethereum/safe/di/safeTypes";
+import { tokenTypes as ethereumTokenTypes } from "@/modules/ethereum/token/di/tokenTypes";
+import { trustedNameTypes } from "@/modules/ethereum/trusted-name/di/trustedNameTypes";
+import { typedDataTypes } from "@/modules/ethereum/typed-data/di/typedDataTypes";
+import type { TypedDataContextLoader } from "@/modules/ethereum/typed-data/domain/TypedDataContextLoader";
+import { type BlindSigningReportParams } from "@/modules/multichain/reporter/data/BlindSigningReporterDatasource";
+import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
+import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
+import { transactionCheckTypes } from "@/modules/multichain/transaction-check/di/transactionCheckTypes";
+import { lifiTypes } from "@/modules/solana/lifi/di/lifiTypes";
+import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
+import { tokenTypes as solanaTokenTypes } from "@/modules/solana/token/di/tokenTypes";
+import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
+import { type ContextLoader } from "@/shared/domain/ContextLoader";
+import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import {
   type ClearSignContext,
   ClearSignContextType,
-} from "./shared/model/ClearSignContext";
-import { type SolanaTransactionContext } from "./shared/model/SolanaTransactionContext";
-import { solanaContextTypes } from "./solana/di/solanaContextTypes";
-import { type SolanaContextLoader } from "./solana/domain/SolanaContextLoader";
-import { type SolanaTransactionContextResult } from "./solana/domain/solanaContextTypes";
-import { tokenTypes } from "./token/di/tokenTypes";
-import { transactionCheckTypes } from "./transaction-check/di/transactionCheckTypes";
-import { typedDataTypes } from "./typed-data/di/typedDataTypes";
-import type { TypedDataContextLoader } from "./typed-data/domain/TypedDataContextLoader";
-import { type ContextModule } from "./ContextModule";
-import { makeContainer } from "./di";
+} from "@/shared/model/ClearSignContext";
 
 export class DefaultContextModule implements ContextModule {
   private _container: Container;
+  private _config: ContextModuleServiceConfig & ContextModuleLoaderConfig;
   private _loaders: ContextLoader<unknown>[];
   private _typedDataLoader: TypedDataContextLoader;
-  private _solanaLoader: SolanaContextLoader;
   private _fieldLoaders: ContextFieldLoader<unknown>[];
-  private _blindSigningReporter: BlindSigningReporter;
+  private _blindSigningReporter: BlindSigningReporter | null;
 
   constructor(args: ContextModuleServiceConfig & ContextModuleLoaderConfig) {
+    this._config = args;
     this._container = makeContainer({ config: args });
 
     this._loaders = args.defaultLoaders ? this._getDefaultLoaders() : [];
@@ -58,16 +57,16 @@ export class DefaultContextModule implements ContextModule {
 
     this._typedDataLoader =
       args.customTypedDataLoader ?? this._getDefaultTypedDataLoader();
-    this._solanaLoader = args.customSolanaLoader ?? this._getSolanaLoader();
     this._blindSigningReporter =
       args.customBlindSigningReporter ?? this._getBlindSigningReporter();
   }
 
   private _getDefaultFieldLoaders(): ContextFieldLoader[] {
+    if (this._config.chain !== ContextModuleChainID.Ethereum) return [];
     return [
       this._container.get<ContextFieldLoader>(nftTypes.NftContextFieldLoader),
       this._container.get<ContextFieldLoader>(
-        tokenTypes.TokenContextFieldLoader,
+        ethereumTokenTypes.TokenContextFieldLoader,
       ),
       this._container.get<ContextFieldLoader>(
         trustedNameTypes.TrustedNameContextFieldLoader,
@@ -79,65 +78,90 @@ export class DefaultContextModule implements ContextModule {
   }
 
   private _getDefaultLoaders(): ContextLoader<unknown>[] {
-    return [
-      this._container.get<ContextLoader>(
-        accountOwnershipTypes.AccountOwnershipContextLoader,
-      ),
-      this._container.get<ContextLoader>(
-        externalPluginTypes.ExternalPluginContextLoader,
-      ),
-      this._container.get<ContextLoader>(
-        trustedNameTypes.TrustedNameContextLoader,
-      ),
-      this._container.get<ContextLoader>(nftTypes.NftContextLoader),
-      this._container.get<ContextLoader>(tokenTypes.TokenContextLoader),
-      this._container.get<ContextLoader>(calldataTypes.CalldataContextLoader),
-      this._container.get<ContextLoader>(
-        dynamicNetworkTypes.DynamicNetworkContextLoader,
-      ),
-      this._container.get<ContextLoader>(safeTypes.SafeAddressLoader),
-      this._container.get<ContextLoader>(
-        gatedSigningTypes.GatedSigningContextLoader,
-      ),
-      this._container.get<ContextLoader>(
-        gatedSigningTypes.GatedSigningTypedDataContextLoader,
-      ),
-      this._container.get<ContextLoader>(
-        transactionCheckTypes.TransactionCheckContextLoader,
-      ),
-      this._container.get<ContextLoader>(
-        transactionCheckTypes.TypedDataCheckContextLoader,
-      ),
-    ];
+    const { chain } = this._config;
+    switch (chain) {
+      case ContextModuleChainID.Ethereum:
+        return [
+          this._container.get<ContextLoader>(
+            externalPluginTypes.ExternalPluginContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            trustedNameTypes.TrustedNameContextLoader,
+          ),
+          this._container.get<ContextLoader>(nftTypes.NftContextLoader),
+          this._container.get<ContextLoader>(
+            ethereumTokenTypes.TokenContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            calldataTypes.CalldataContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            dynamicNetworkTypes.DynamicNetworkContextLoader,
+          ),
+          this._container.get<ContextLoader>(safeTypes.SafeAddressLoader),
+          this._container.get<ContextLoader>(
+            gatedSigningTypes.GatedSigningContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            gatedSigningTypes.GatedSigningTypedDataContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            transactionCheckTypes.TransactionCheckLoader,
+          ),
+          this._container.get<ContextLoader>(
+            transactionCheckTypes.TypedDataCheckLoader,
+          ),
+        ];
+      case ContextModuleChainID.Solana:
+        return [
+          this._container.get<ContextLoader>(
+            solanaTokenTypes.TokenContextLoader,
+          ),
+          this._container.get<ContextLoader>(lifiTypes.LifiContextLoader),
+          this._container.get<ContextLoader>(
+            ownerInfoTypes.OwnerInfoContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            transactionCheckTypes.TransactionCheckLoader,
+          ),
+        ];
+      case ContextModuleChainID.Concordium:
+        return [
+          this._container.get<ContextLoader>(
+            accountOwnershipTypes.AccountOwnershipContextLoader,
+          ),
+        ];
+      default: {
+        const exhaustiveCheck: never = chain;
+        void exhaustiveCheck;
+        return [];
+      }
+    }
   }
 
   private _getDefaultTypedDataLoader(): TypedDataContextLoader {
+    if (this._config.chain !== ContextModuleChainID.Ethereum) {
+      return {
+        load: () =>
+          Promise.reject(
+            new Error(
+              "[ContextModule] getTypedDataFilters is not supported for this chain",
+            ),
+          ),
+      };
+    }
     return this._container.get<TypedDataContextLoader>(
       typedDataTypes.TypedDataContextLoader,
     );
   }
 
-  private _getBlindSigningReporter(): BlindSigningReporter {
-    return this._container.get<BlindSigningReporter>(
-      reporterTypes.BlindSigningReporter,
-    );
-  }
-
-  private _getSolanaLoader(): SolanaContextLoader {
-    try {
-      return this._container.get<SolanaContextLoader>(
-        solanaContextTypes.SolanaContextLoader,
+  private _getBlindSigningReporter(): BlindSigningReporter | null {
+    if (this._container.isBound(reporterTypes.BlindSigningReporter)) {
+      return this._container.get<BlindSigningReporter>(
+        reporterTypes.BlindSigningReporter,
       );
-    } catch {
-      return {
-        load: async (_ctx) =>
-          Left(
-            new Error(
-              "[ContextModule] - DefaultContextModule: no SolanaContextLoader bound",
-            ),
-          ),
-      };
     }
+    return null;
   }
 
   public async getContexts(
@@ -190,13 +214,7 @@ export class DefaultContextModule implements ContextModule {
     return this._typedDataLoader.load(typedData);
   }
 
-  public async getSolanaContext(
-    transactionContext: SolanaTransactionContext,
-  ): Promise<SolanaTransactionContextResult> {
-    return await this._solanaLoader.load(transactionContext);
-  }
-
   public async report(params: BlindSigningReportParams): Promise<void> {
-    await this._blindSigningReporter.report(params);
+    await this._blindSigningReporter?.report(params);
   }
 }
