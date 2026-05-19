@@ -14,8 +14,8 @@ import { type GetFullViewingKeyDAReturnType } from "@api/app-binder/GetFullViewi
 import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
-import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
+import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
 

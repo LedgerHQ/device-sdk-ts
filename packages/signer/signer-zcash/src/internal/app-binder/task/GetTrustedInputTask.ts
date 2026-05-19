@@ -347,7 +347,6 @@ const splitTransactionToTrustedInputChunks = (
     chunks.push(splitV5ExtraData(locktime, expiry));
   }
 
-
   return splitForApduData(chunks);
 };
 

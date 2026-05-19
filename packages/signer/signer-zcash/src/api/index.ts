@@ -31,14 +31,14 @@ export type {
   SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 export type {
-  FullViewingKeyOptions,
-  ZcashFullViewingKeyMode,
-} from "@api/model/FullViewingKeyOptions";
-export type {  
   LegacyCreateTransactionArg,
   LegacyTransaction,
   LegacyTransactionInput,
   LegacyTransactionOutput,
 } from "@api/model/CreateTransactionArg";
+export type {
+  FullViewingKeyOptions,
+  ZcashFullViewingKeyMode,
+} from "@api/model/FullViewingKeyOptions";
 export * from "@api/SignerZcash";
 export * from "@api/SignerZcashBuilder";

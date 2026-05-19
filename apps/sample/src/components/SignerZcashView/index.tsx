@@ -28,18 +28,17 @@ import { Flex } from "@ledgerhq/react-ui";
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { type ValueSelector } from "@/components/Form";
-import { type FieldType } from "@/hooks/useForm";
-import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { useSignerZcash } from "@/providers/SignerZcashProvider";
 import { Form } from "@/components/Form";
 import { InputHeader } from "@/components/InputHeader";
 import { ResizableTextArea } from "@/components/ResizableTextArea";
+import { type FieldType } from "@/hooks/useForm";
+import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import { useSignerZcash } from "@/providers/SignerZcashProvider";
 
 const fullViewingKeyModeOptions: ValueSelector<FieldType>["mode"] = [
   { label: "UFVK (string, P2=0x00)", value: "ufvk" },
   { label: "Orchard FVK (96 raw bytes, P2=0x01)", value: "orchardFvk" },
 ];
-
 
 const normalizeHex = (value: string): string =>
   value.replace(/^0x/i, "").replace(/\s+/g, "");
