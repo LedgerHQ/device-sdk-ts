@@ -1,10 +1,12 @@
 import {
-  type CommandResult,
-  CommandResultFactory,
+  type CommandErrorResult,
+  type DmkResult,
+  DmkResultFactory,
   type HexaString,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
+  isSuccessDmkResult,
 } from "@ledgerhq/device-management-kit";
 
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
@@ -37,7 +39,10 @@ type SignTransactionTaskArgs = {
   transactionArg: LegacyCreateTransactionArg;
 };
 type SignTransactionTaskError = CommandErrorResult<ZcashErrorCodes>["error"];
-type SignTransactionTaskResult = DmkResult<Signature, SignTransactionTaskError>;
+type SignTransactionTaskResult = DmkResult<
+  HexaString,
+  SignTransactionTaskError
+>;
 
 export class SignTransactionTask {
   constructor(
@@ -45,7 +50,7 @@ export class SignTransactionTask {
     private args: SignTransactionTaskArgs,
   ) {}
 
-  async run(): Promise<CommandResult<HexaString, ZcashErrorCodes>> {
+  async run(): Promise<SignTransactionTaskResult> {
     const defaults = {
       lockTime: DEFAULT_LOCKTIME,
       sigHashType: SIGHASH_ALL,
@@ -65,7 +70,7 @@ export class SignTransactionTask {
     } = signTx;
     const additionals = additionalsRaw.map((item) => item.trim().toLowerCase());
     if (!additionals.includes("zcash")) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidStatusWordError(
           'signTransaction requires additionals to include "zcash" (Zcash transparent signing only).',
         ),
@@ -74,7 +79,7 @@ export class SignTransactionTask {
     const sapling = additionals.includes("sapling");
 
     if (inputs.length !== associatedKeysets.length) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidStatusWordError(
           "Inputs and associatedKeysets lengths mismatch",
         ),
@@ -136,7 +141,7 @@ export class SignTransactionTask {
       if (previousTx.outputs && input[1] <= previousTx.outputs.length - 1) {
         const referencedOutput = previousTx.outputs[input[1]];
         if (!referencedOutput) {
-          return CommandResultFactory({
+          return DmkResultFactory({
             error: new InvalidStatusWordError(
               "Invalid output index in previous transaction",
             ),
@@ -144,7 +149,7 @@ export class SignTransactionTask {
         }
         regularOutputs.push(referencedOutput);
       } else {
-        return CommandResultFactory({
+        return DmkResultFactory({
           error: new InvalidStatusWordError(
             "Invalid output index in previous transaction",
           ),
@@ -183,7 +188,7 @@ export class SignTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(pubKeyResult)) {
-        return pubKeyResult;
+        return DmkResultFactory({ error: pubKeyResult.error });
       }
 
       publicKeys.push(
@@ -208,7 +213,7 @@ export class SignTransactionTask {
           }),
         );
         if (!isSuccessCommandResult(changeAddrResult)) {
-          return changeAddrResult;
+          return DmkResultFactory({ error: changeAddrResult.error });
         }
         ledgerPubForChange = Buffer.from(changeAddrResult.data.publicKey);
       }
@@ -245,7 +250,7 @@ export class SignTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(changePathResult)) {
-        return changePathResult;
+        return DmkResultFactory({ error: changePathResult.error });
       }
     }
 
@@ -263,7 +268,7 @@ export class SignTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(saplingCommitResult)) {
-        return saplingCommitResult;
+        return DmkResultFactory({ error: saplingCommitResult.error });
       }
     }
 
@@ -299,7 +304,7 @@ export class SignTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(signatureResult)) {
-        return signatureResult;
+        return DmkResultFactory({ error: signatureResult.error });
       }
       signatures.push(Buffer.from(signatureResult.data.signature));
     }
@@ -329,7 +334,7 @@ export class SignTransactionTask {
 
     result = Buffer.concat([result, Buffer.from([0x00, 0x00, 0x00])]);
 
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: `0x${result.toString("hex")}` as HexaString,
     });
   }
@@ -338,7 +343,7 @@ export class SignTransactionTask {
     indexLookup: number,
     transaction: InternalTransaction,
     serializedPreviousTransactionOverride?: Uint8Array,
-  ): Promise<string | CommandResult<HexaString, ZcashErrorCodes>> {
+  ): Promise<string | SignTransactionTaskResult> {
     const serializedTransaction =
       serializedPreviousTransactionOverride &&
       serializedPreviousTransactionOverride.length > 0
@@ -348,15 +353,15 @@ export class SignTransactionTask {
       transaction: new Uint8Array(serializedTransaction),
       indexLookup,
     }).run();
-    if (!isSuccessCommandResult(trustedInputResult)) {
-      return trustedInputResult as CommandResult<HexaString, ZcashErrorCodes>;
+    if (!isSuccessDmkResult(trustedInputResult)) {
+      return DmkResultFactory({ error: trustedInputResult.error });
     }
     return Buffer.from(trustedInputResult.data.data).toString("hex");
   }
 
   private async hashOutputFull(
     outputScript: Buffer,
-  ): Promise<CommandResult<HexaString, ZcashErrorCodes> | null> {
+  ): Promise<SignTransactionTaskResult | null> {
     let offset = 0;
     while (offset < outputScript.length) {
       const blockSize =
@@ -371,7 +376,7 @@ export class SignTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(result)) {
-        return result as CommandResult<HexaString, ZcashErrorCodes>;
+        return DmkResultFactory({ error: result.error });
       }
       offset += blockSize;
     }
@@ -386,7 +391,7 @@ export class SignTransactionTask {
       value: Buffer;
       sequence: Buffer;
     }>,
-  ): Promise<CommandResult<HexaString, ZcashErrorCodes> | null> {
+  ): Promise<SignTransactionTaskResult | null> {
     const zCashConsensusBranchId =
       transaction.consensusBranchId || Buffer.alloc(0);
     let header = Buffer.concat([
@@ -405,7 +410,7 @@ export class SignTransactionTask {
       }),
     );
     if (!isSuccessCommandResult(firstHeaderResult)) {
-      return firstHeaderResult as CommandResult<HexaString, ZcashErrorCodes>;
+      return DmkResultFactory({ error: firstHeaderResult.error });
     }
 
     for (let index = 0; index < transaction.inputs.length; index += 1) {
@@ -428,7 +433,7 @@ export class SignTransactionTask {
         }),
       );
       if (!isSuccessCommandResult(inputHeaderResult)) {
-        return inputHeaderResult as CommandResult<HexaString, ZcashErrorCodes>;
+        return DmkResultFactory({ error: inputHeaderResult.error });
       }
 
       const scriptBlocks: Buffer[] = [];
@@ -460,10 +465,7 @@ export class SignTransactionTask {
           }),
         );
         if (!isSuccessCommandResult(scriptBlockResult)) {
-          return scriptBlockResult as CommandResult<
-            HexaString,
-            ZcashErrorCodes
-          >;
+          return DmkResultFactory({ error: scriptBlockResult.error });
         }
       }
     }

@@ -1,8 +1,9 @@
 import {
   CommandResultFactory,
+  DmkResultFactory,
   type InternalApi,
   InvalidStatusWordError,
-  isSuccessCommandResult,
+  isSuccessDmkResult,
 } from "@ledgerhq/device-management-kit";
 import { vi } from "vitest";
 
@@ -201,8 +202,8 @@ describe("SignTransactionTask", () => {
       },
     }).run();
 
-    expect(isSuccessCommandResult(result)).toBe(false);
-    if (!isSuccessCommandResult(result)) {
+    expect(isSuccessDmkResult(result)).toBe(false);
+    if (!isSuccessDmkResult(result)) {
       expect(result.error).toBeInstanceOf(InvalidStatusWordError);
       expect(
         (result.error as InvalidStatusWordError).originalError?.message,
@@ -212,7 +213,7 @@ describe("SignTransactionTask", () => {
 
   it("completes without Sapling output commit when additionals is zcash-only", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x24),
@@ -270,7 +271,7 @@ describe("SignTransactionTask", () => {
       },
     }).run();
 
-    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(isSuccessDmkResult(result)).toBe(true);
     expect(
       commands.some((c) => c instanceof ZcashSaplingOutputCommitCommand),
     ).toBe(false);
@@ -289,7 +290,7 @@ describe("SignTransactionTask", () => {
         ),
       );
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x24),
@@ -370,7 +371,7 @@ describe("SignTransactionTask", () => {
 
   it("returns signed transaction hex for legacy createTransaction-like input", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x42),
@@ -434,15 +435,15 @@ describe("SignTransactionTask", () => {
       },
     }).run();
 
-    expect(isSuccessCommandResult(result)).toBe(true);
-    if (isSuccessCommandResult(result)) {
+    expect(isSuccessDmkResult(result)).toBe(true);
+    if (isSuccessDmkResult(result)) {
       expect(result.data.startsWith("0x")).toBe(true);
     }
   });
 
   it("propagates first command error", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x42),
@@ -478,12 +479,12 @@ describe("SignTransactionTask", () => {
       },
     }).run();
 
-    expect(result).toEqual(CommandResultFactory({ error: expectedError }));
+    expect(result).toEqual(DmkResultFactory({ error: expectedError }));
   });
 
   it("handles zcash sapling createPaymentTransaction vector", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x24),
@@ -552,7 +553,7 @@ describe("SignTransactionTask", () => {
       },
     }).run();
 
-    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(isSuccessDmkResult(result)).toBe(true);
     expect(
       vi
         .mocked(apiMock.sendCommand)
@@ -572,7 +573,7 @@ describe("SignTransactionTask", () => {
 
   it("still sends each prior input's scriptPubKey length when hashing a later input (multi-input regression)", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x24),
@@ -662,7 +663,7 @@ describe("SignTransactionTask", () => {
 
   it("handles zcash Sapling deshielded input vector", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x44),
@@ -732,7 +733,7 @@ describe("SignTransactionTask", () => {
       },
     }).run();
 
-    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(isSuccessDmkResult(result)).toBe(true);
     expect(
       vi
         .mocked(apiMock.sendCommand)
@@ -752,7 +753,7 @@ describe("SignTransactionTask", () => {
 
   it("handles zcash Orchard deshielded input vector", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x55),
@@ -822,7 +823,7 @@ describe("SignTransactionTask", () => {
       },
     }).run();
 
-    expect(isSuccessCommandResult(result)).toBe(true);
+    expect(isSuccessDmkResult(result)).toBe(true);
     expect(
       vi
         .mocked(apiMock.sendCommand)
@@ -852,7 +853,7 @@ describe("SignTransactionTask", () => {
 
     try {
       vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-        CommandResultFactory({
+        DmkResultFactory({
           data: {
             statusCode: new Uint8Array([0x90, 0x00]),
             data: hexToBytes(trustedInputHexFromLogs),
@@ -931,8 +932,8 @@ describe("SignTransactionTask", () => {
         },
       }).run();
 
-      expect(isSuccessCommandResult(result)).toBe(true);
-      if (isSuccessCommandResult(result)) {
+      expect(isSuccessDmkResult(result)).toBe(true);
+      if (isSuccessDmkResult(result)) {
         expect(result.data).toBe(`0x${expectedSignedTransactionHexFromLogs}`);
       }
     } finally {
@@ -944,7 +945,7 @@ describe("SignTransactionTask", () => {
     const getTrustedInputSpy = vi
       .spyOn(GetTrustedInputTask.prototype, "run")
       .mockResolvedValue(
-        CommandResultFactory({
+        DmkResultFactory({
           data: {
             statusCode: new Uint8Array([0x90, 0x00]),
             data: new Uint8Array(64).fill(0x24),
@@ -1018,7 +1019,7 @@ describe("SignTransactionTask", () => {
         transactionArg: { ...txArg },
       }).run();
 
-      expect(isSuccessCommandResult(result)).toBe(true);
+      expect(isSuccessDmkResult(result)).toBe(true);
       expect(getTrustedInputSpy).toHaveBeenCalledTimes(
         expected.getTrustedInputTaskRunCount,
       );
@@ -1057,7 +1058,7 @@ describe("SignTransactionTask", () => {
     const getTrustedInputSpy = vi
       .spyOn(GetTrustedInputTask.prototype, "run")
       .mockResolvedValue(
-        CommandResultFactory({
+        DmkResultFactory({
           data: {
             statusCode: new Uint8Array([0x90, 0x00]),
             data: new Uint8Array(64).fill(0x24),
@@ -1119,7 +1120,7 @@ describe("SignTransactionTask", () => {
         transactionArg: { ...txArg },
       }).run();
 
-      expect(isSuccessCommandResult(result)).toBe(true);
+      expect(isSuccessDmkResult(result)).toBe(true);
       expect(getTrustedInputSpy).toHaveBeenCalledTimes(
         expected.getTrustedInputTaskRunCount,
       );
@@ -1162,7 +1163,7 @@ describe("SignTransactionTask", () => {
 
   it("sends Sapling output commit before per-input SIGN when expiryHeight is omitted", async () => {
     vi.spyOn(GetTrustedInputTask.prototype, "run").mockResolvedValue(
-      CommandResultFactory({
+      DmkResultFactory({
         data: {
           statusCode: new Uint8Array([0x90, 0x00]),
           data: new Uint8Array(64).fill(0x24),
