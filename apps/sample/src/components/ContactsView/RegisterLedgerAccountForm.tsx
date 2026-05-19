@@ -22,6 +22,7 @@ import {
 import styled from "styled-components";
 
 import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
+import { useContactsFormLogger } from "@/providers/ContactsLogs/ContactsLogsContext";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
@@ -121,6 +122,7 @@ export const RegisterLedgerAccountForm: React.FC = () => {
   const dispatch = useDispatch();
   const wallet = useSelector(selectWallet);
   const signer = useSignerEth();
+  const logFormSubmit = useContactsFormLogger();
 
   const [network, setNetwork] = useState<NetworkName>("ethereum");
   const [accountIndex, setAccountIndex] = useState(() =>
@@ -194,6 +196,14 @@ export const RegisterLedgerAccountForm: React.FC = () => {
 
     setStatus({ kind: "running" });
 
+    logFormSubmit("RegisterLedgerAccount", {
+      name: trimmedName,
+      derivationPath: autoPath,
+      chainId,
+      network,
+      accountIndex,
+    });
+
     let observable;
     try {
       ({ observable } = signer.registerLedgerAccount({
@@ -237,7 +247,17 @@ export const RegisterLedgerAccountForm: React.FC = () => {
         setStatus({ kind: "error", message: describeDeviceError(err) });
       },
     });
-  }, [dispatch, signer, name, autoPath, chainId, wallet]);
+  }, [
+    dispatch,
+    signer,
+    name,
+    autoPath,
+    chainId,
+    wallet,
+    network,
+    accountIndex,
+    logFormSubmit,
+  ]);
 
   return (
     <Flex flexDirection="column" rowGap={4}>

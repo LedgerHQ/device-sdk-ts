@@ -17,6 +17,7 @@ import { Button, Flex, Icons, Input, Text } from "@ledgerhq/react-ui";
 
 import { Form, type HintSelector } from "@/components/Form";
 import { InputLabel } from "@/components/InputLabel";
+import { useContactsFormLogger } from "@/providers/ContactsLogs/ContactsLogsContext";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
@@ -148,6 +149,7 @@ export const RegisterExternalAddressForm: React.FC = () => {
   const dispatch = useDispatch();
   const wallet = useSelector(selectWallet);
   const signer = useSignerEth();
+  const logFormSubmit = useContactsFormLogger();
 
   const [contactName, setContactName] = useState("");
   const [addressHex, setAddressHex] = useState("");
@@ -190,6 +192,16 @@ export const RegisterExternalAddressForm: React.FC = () => {
       : undefined;
 
     setStatus({ kind: "running" });
+
+    logFormSubmit("RegisterExternalAddress", {
+      name: contactName,
+      addressHex,
+      scope: values.addressLabel,
+      derivationPath: DEFAULT_DERIVATION_PATH,
+      chainId,
+      network: values.network,
+      isExtension: existing !== undefined,
+    });
 
     let observable;
     try {
@@ -239,7 +251,15 @@ export const RegisterExternalAddressForm: React.FC = () => {
         setStatus({ kind: "error", message: describeDeviceError(err) });
       },
     });
-  }, [dispatch, signer, contactName, addressHex, values, wallet]);
+  }, [
+    dispatch,
+    signer,
+    contactName,
+    addressHex,
+    values,
+    wallet,
+    logFormSubmit,
+  ]);
 
   const hintSelector: HintSelector<FormValues> = {
     addressLabel: (value) => (

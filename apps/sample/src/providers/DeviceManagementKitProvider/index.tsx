@@ -14,6 +14,8 @@ import {
 import { DEFAULT_CLIENT_WS_URL } from "@ledgerhq/device-management-kit-devtools-websocket-common";
 import { DevToolsWebSocketConnector } from "@ledgerhq/device-management-kit-devtools-websocket-connector";
 
+import { ContactsLogsProvider } from "@/providers/ContactsLogs/ContactsLogsContext";
+import { ContactsLogsLogger } from "@/providers/ContactsLogs/ContactsLogsLogger";
 import { type TransportConfig } from "@/state/settings/schema";
 import {
   selectAppProvider,
@@ -31,6 +33,7 @@ const devToolsConnector = DevToolsWebSocketConnector.getInstance().connect({
 });
 const devToolsLogger = new DevToolsLogger(devToolsConnector);
 const logsExporter = new WebLogsExporterLogger();
+const contactsLogsLogger = new ContactsLogsLogger();
 
 function buildDmk(transportConfig: TransportConfig) {
   const { factories, config } = getTransportFactoriesForConfig(transportConfig);
@@ -38,7 +41,8 @@ function buildDmk(transportConfig: TransportConfig) {
   const builder = new DeviceManagementKitBuilder()
     .addLogger(new ConsoleLogger())
     .addLogger(logsExporter)
-    .addLogger(devToolsLogger);
+    .addLogger(devToolsLogger)
+    .addLogger(contactsLogsLogger);
 
   for (const factory of factories) {
     builder.addTransport(factory);
@@ -81,7 +85,9 @@ export const DmkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <DmkContext.Provider value={dmk}>
       <LogsExporterContext.Provider value={logsExporter}>
-        {children}
+        <ContactsLogsProvider logger={contactsLogsLogger}>
+          {children}
+        </ContactsLogsProvider>
       </LogsExporterContext.Provider>
     </DmkContext.Provider>
   );

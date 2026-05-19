@@ -13,6 +13,7 @@ import {
 import { Button, Flex, Input, SelectInput, Text } from "@ledgerhq/react-ui";
 
 import { SelectInputLabel } from "@/components/InputLabel";
+import { useContactsFormLogger } from "@/providers/ContactsLogs/ContactsLogsContext";
 import { useContactsService } from "@/providers/ContactsServiceProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
@@ -58,6 +59,7 @@ export const EditExternalAddressLabelForm: React.FC = () => {
   const dispatch = useDispatch();
   const wallet = useSelector(selectWallet);
   const service = useContactsService();
+  const logFormSubmit = useContactsFormLogger();
 
   const [contactName, setContactName] = useState("");
   const [oldLabel, setOldLabel] = useState<LabelOption | null>(null);
@@ -125,6 +127,16 @@ export const EditExternalAddressLabelForm: React.FC = () => {
 
     setStatus({ kind: "running" });
 
+    logFormSubmit("EditExternalAddressLabel", {
+      contactName,
+      oldLabel: entry.scope,
+      newLabel,
+      addressHex: entry.addressHex,
+      derivationPath: entry.derivationPath,
+      chainId: entry.chainId,
+      groupHandleHex: contact.groupHandleHex,
+    });
+
     let observable;
     try {
       ({ observable } = service.editExternalAddressLabel({
@@ -180,7 +192,15 @@ export const EditExternalAddressLabelForm: React.FC = () => {
         setStatus({ kind: "error", message: describeDeviceError(err) });
       },
     });
-  }, [dispatch, service, wallet, contactName, oldLabel, newLabel]);
+  }, [
+    dispatch,
+    service,
+    wallet,
+    contactName,
+    oldLabel,
+    newLabel,
+    logFormSubmit,
+  ]);
 
   return (
     <Flex flexDirection="column" rowGap={4}>

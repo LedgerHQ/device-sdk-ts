@@ -9,12 +9,15 @@
 //   PREVIOUS_SCOPE (old), GROUP_HANDLE, DERIVATION_PATH, CHAIN_ID,
 //   HMAC_PROOF (hmac_name), HMAC_REST, BLOCKCHAIN_FAMILY=ETH.
 import { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
+import { InvalidStatusWordError } from "@api/command/Errors";
 import {
   type CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
-import { InvalidStatusWordError } from "@api/command/Errors";
-import { isSuccessDmkResult } from "@api/model/DmkResult";
+import {
+  type EditExternalAddressLabelArgs,
+  type EditExternalAddressLabelResult,
+} from "@api/contacts/model/EditExternalAddressLabelArgs";
 import {
   BLOCKCHAIN_FAMILY_ETH,
   CONTACTS_TLV_TAG,
@@ -30,11 +33,7 @@ import {
 import { sendFramedContactsPayload } from "@api/contacts/utils/sendFramedContactsPayload";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-
-import {
-  type EditExternalAddressLabelArgs,
-  type EditExternalAddressLabelResult,
-} from "@api/contacts/model/EditExternalAddressLabelArgs";
+import { isSuccessDmkResult } from "@api/model/DmkResult";
 import { EditScopeCommand } from "@internal/contacts/app-binder/command/EditScopeCommand";
 
 const SUB_CMD_EDIT_SCOPE = 0x04;
@@ -54,20 +53,30 @@ export class SendEditScopeTask {
   }
 
   async run(): Promise<CommandResult<EditExternalAddressLabelResult>> {
-    this._logger.debug("[run] Starting SendEditScopeTask", {
+    const payload = this.buildPayload(this.args);
+
+    this._logger.info("[run] payload built", {
+      tag: "SendEditScopeTask",
       data: {
         contactName: this.args.contactName,
         oldLabel: this.args.oldLabel,
         newLabel: this.args.newLabel,
+        addressHex: this.args.addressHex,
+        chainId: this.args.chainId,
+        derivationPath: this.args.derivationPath,
+        groupHandleHex: this.args.groupHandleHex,
+        hmacProofLen: this.args.hmacProofHex.length / 2,
+        hmacRestLen: this.args.hmacRestHex.length / 2,
+        payloadLen: payload.length,
       },
     });
-
-    const payload = this.buildPayload(this.args);
 
     const result = await sendFramedContactsPayload(this.api, {
       payload,
       p1: SUB_CMD_EDIT_SCOPE,
       makeCommand: (chunk, p2) => new EditScopeCommand({ data: chunk, p2 }),
+      logger: this._logger,
+      commandTag: "editScope",
     });
 
     if (!isSuccessDmkResult(result)) {
@@ -92,7 +101,11 @@ export class SendEditScopeTask {
     const pathBytes = packDerivationPath(segments);
 
     const builder = new ByteArrayBuilder();
-    encodeTlvUInt8(builder, CONTACTS_TLV_TAG.STRUCT_TYPE, STRUCT_TYPE_EDIT_SCOPE);
+    encodeTlvUInt8(
+      builder,
+      CONTACTS_TLV_TAG.STRUCT_TYPE,
+      STRUCT_TYPE_EDIT_SCOPE,
+    );
     encodeTlvUInt8(
       builder,
       CONTACTS_TLV_TAG.STRUCT_VERSION,
