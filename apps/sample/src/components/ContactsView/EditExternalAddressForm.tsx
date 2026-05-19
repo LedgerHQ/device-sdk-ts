@@ -21,6 +21,7 @@ import {
 } from "@ledgerhq/react-ui";
 
 import { SelectInputLabel } from "@/components/InputLabel";
+import { useContactsFormLogger } from "@/providers/ContactsLogs/ContactsLogsContext";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
@@ -69,6 +70,7 @@ export const EditExternalAddressForm: React.FC = () => {
   const dispatch = useDispatch();
   const wallet = useSelector(selectWallet);
   const signer = useSignerEth();
+  const logFormSubmit = useContactsFormLogger();
 
   const [contactName, setContactName] = useState("");
   const [oldEntry, setOldEntry] = useState<EntryOption | null>(null);
@@ -145,6 +147,16 @@ export const EditExternalAddressForm: React.FC = () => {
 
     setStatus({ kind: "running" });
 
+    logFormSubmit("EditExternalAddress", {
+      contactName,
+      oldAddressHex: entry.addressHex,
+      newAddressHex,
+      scope: entry.scope,
+      derivationPath: entry.derivationPath,
+      chainId: entry.chainId,
+      groupHandleHex: contact.groupHandleHex,
+    });
+
     let observable;
     try {
       ({ observable } = signer.editExternalAddress({
@@ -200,7 +212,15 @@ export const EditExternalAddressForm: React.FC = () => {
         setStatus({ kind: "error", message: describeDeviceError(err) });
       },
     });
-  }, [dispatch, signer, wallet, contactName, oldEntry, newAddressHex]);
+  }, [
+    dispatch,
+    signer,
+    wallet,
+    contactName,
+    oldEntry,
+    newAddressHex,
+    logFormSubmit,
+  ]);
 
   return (
     <Flex flexDirection="column" rowGap={4}>

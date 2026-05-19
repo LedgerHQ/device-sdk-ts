@@ -58,20 +58,26 @@ export class SendProvideLedgerAccountTask {
   async run(): Promise<
     CommandResult<ProvideLedgerAccountResult, EthErrorCodes>
   > {
-    this._logger.debug("[run] Starting SendProvideLedgerAccountTask", {
+    const payload = this.buildPayload(this.args);
+
+    this._logger.info("[run] payload built", {
+      tag: "SendProvideLedgerAccountTask",
       data: {
         accountName: this.args.accountName,
         chainId: this.args.chainId,
+        derivationPath: this.args.derivationPath,
+        hmacProofLen: this.args.hmacProofHex.length / 2,
+        payloadLen: payload.length,
       },
     });
-
-    const payload = this.buildPayload(this.args);
 
     const result = (await sendFramedContactsPayload(this.api, {
       payload,
       p1: SUB_CMD_PROVIDE_LEDGER_ACCOUNT_CONTACT,
       makeCommand: (chunk, p2) =>
         new ProvideLedgerAccountCommand({ data: chunk, p2 }),
+      logger: this._logger,
+      commandTag: "provideLedgerAccount",
     })) as CommandResult<ProvideLedgerAccountResult, EthErrorCodes>;
 
     if (!isSuccessCommandResult(result)) {

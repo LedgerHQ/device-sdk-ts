@@ -23,6 +23,7 @@ import { type Observable } from "rxjs";
 import styled from "styled-components";
 
 import { InputLabel, SelectInputLabel } from "@/components/InputLabel";
+import { useContactsFormLogger } from "@/providers/ContactsLogs/ContactsLogsContext";
 import { useSignerEth } from "@/providers/SignerEthProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { selectContactsAutoDecorationDisabled } from "@/state/signerRuntime/selectors";
@@ -285,6 +286,7 @@ export const SendToContactForm: React.FC = () => {
   );
   const signer = useSignerEth();
   const router = useRouter();
+  const logFormSubmit = useContactsFormLogger();
 
   const accountList = useMemo(
     () => Object.values(wallet.accounts),
@@ -495,6 +497,23 @@ export const SendToContactForm: React.FC = () => {
         chainId: recipientChainId,
       });
 
+      logFormSubmit("SendToContact", {
+        fromAccountName: fromAccount?.name ?? null,
+        fromDerivationPath: fromAccount?.derivationPath ?? DEFAULT_FROM_PATH,
+        toKind,
+        toAddressHex: recipientAddressHex,
+        toContactName: toContactEntry?.contact.name ?? null,
+        toContactScope: toContactEntry?.entry.scope ?? null,
+        toSelfAccountName: toSelfAccount?.name ?? null,
+        chainId: recipientChainId,
+        amountEth: amountEth.trim(),
+        gasLimit: gasLimitNum,
+        gasPriceWei: gasPriceWei.toString(),
+        nonce: nonceNum,
+        autoDecorationDisabled,
+        unsignedTxLen: txBytes.length,
+      });
+
       appendTrace({
         kind: "info",
         text: "→ Sign sent — awaiting approval on device…",
@@ -567,6 +586,7 @@ export const SendToContactForm: React.FC = () => {
     gasPriceGwei,
     nonce,
     appendTrace,
+    logFormSubmit,
   ]);
 
   return (

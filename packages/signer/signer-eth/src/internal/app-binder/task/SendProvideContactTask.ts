@@ -53,21 +53,30 @@ export class SendProvideContactTask {
   }
 
   async run(): Promise<CommandResult<ProvideContactResult, EthErrorCodes>> {
-    this._logger.debug("[run] Starting SendProvideContactTask", {
+    const payload = this.buildPayload(this.args);
+
+    this._logger.info("[run] payload built", {
+      tag: "SendProvideContactTask",
       data: {
         contactName: this.args.contactName,
         scope: this.args.scope,
         chainId: this.args.chainId,
+        addressHex: this.args.addressHex,
+        derivationPath: this.args.derivationPath,
+        groupHandleHex: this.args.groupHandleHex,
+        hmacProofLen: this.args.hmacNameHex.length / 2,
+        hmacRestLen: this.args.hmacRestHex.length / 2,
+        payloadLen: payload.length,
       },
     });
-
-    const payload = this.buildPayload(this.args);
 
     const result = (await sendFramedContactsPayload(this.api, {
       payload,
       p1: SUB_CMD_PROVIDE_CONTACT,
       makeCommand: (chunk, p2) =>
         new ProvideContactCommand({ data: chunk, p2 }),
+      logger: this._logger,
+      commandTag: "provideContact",
     })) as CommandResult<ProvideContactResult, EthErrorCodes>;
 
     if (!isSuccessCommandResult(result)) {

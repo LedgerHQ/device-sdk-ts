@@ -16,14 +16,6 @@ import {
   InvalidStatusWordError,
   type LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
-
-import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
-import {
-  RegisterIdentityCommand,
-  type RegisterIdentityCommandResponse,
-} from "@internal/app-binder/command/RegisterIdentityCommand";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 import {
   BLOCKCHAIN_FAMILY_ETH,
   CONTACTS_TLV_TAG,
@@ -36,6 +28,14 @@ import {
   STRUCT_TYPE_REGISTER_IDENTITY,
   STRUCT_VERSION_VALUE,
 } from "@ledgerhq/device-management-kit";
+import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+
+import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
+import {
+  RegisterIdentityCommand,
+  type RegisterIdentityCommandResponse,
+} from "@internal/app-binder/command/RegisterIdentityCommand";
+import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 const APDU_DATA_MAX_BYTES = 255;
 
@@ -56,18 +56,25 @@ export class SendRegisterIdentityTask {
   async run(): Promise<
     CommandResult<RegisterIdentityCommandResponse, EthErrorCodes>
   > {
-    this._logger.debug("[run] Starting SendRegisterIdentityTask", {
+    const payload = this.buildPayload(this.args);
+
+    this._logger.info("[run] payload built", {
+      tag: "SendRegisterIdentityTask",
       data: {
         name: this.args.name,
+        scope: this.args.scope,
         chainId: this.args.chainId,
+        addressHex: this.args.addressHex,
+        derivationPath: this.args.derivationPath,
         isExtension: this.args.extension !== undefined,
+        extensionGroupHandle: this.args.extension?.groupHandleHex,
+        payloadLen: payload.length,
       },
     });
 
-    const payload = this.buildPayload(this.args);
-
     if (payload.length > APDU_DATA_MAX_BYTES) {
       this._logger.error("[run] Payload exceeds APDU data limit", {
+        tag: "SendRegisterIdentityTask",
         data: { length: payload.length, max: APDU_DATA_MAX_BYTES },
       });
       return DmkResultFactory({

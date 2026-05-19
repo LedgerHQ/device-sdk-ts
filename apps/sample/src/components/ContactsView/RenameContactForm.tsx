@@ -12,6 +12,7 @@ import {
 import { Button, Flex, Input, SelectInput, Text } from "@ledgerhq/react-ui";
 
 import { SelectInputLabel } from "@/components/InputLabel";
+import { useContactsFormLogger } from "@/providers/ContactsLogs/ContactsLogsContext";
 import { useContactsService } from "@/providers/ContactsServiceProvider";
 import { selectWallet } from "@/state/contacts/selectors";
 import { setWallet } from "@/state/contacts/slice";
@@ -64,6 +65,7 @@ export const RenameContactForm: React.FC = () => {
   const dispatch = useDispatch();
   const wallet = useSelector(selectWallet);
   const service = useContactsService();
+  const logFormSubmit = useContactsFormLogger();
 
   const [oldName, setOldName] = useState("");
   const [newName, setNewName] = useState("");
@@ -121,6 +123,14 @@ export const RenameContactForm: React.FC = () => {
 
     setStatus({ kind: "running" });
 
+    logFormSubmit("RenameContact", {
+      oldName,
+      newName,
+      groupHandleHex: existing.groupHandleHex,
+      derivationPath: existing.entries[0].derivationPath,
+      entriesCount: existing.entries.length,
+    });
+
     let observable;
     try {
       ({ observable } = service.renameContact({
@@ -164,7 +174,7 @@ export const RenameContactForm: React.FC = () => {
         setStatus({ kind: "error", message: describeDeviceError(err) });
       },
     });
-  }, [dispatch, service, wallet, oldName, newName]);
+  }, [dispatch, service, wallet, oldName, newName, logFormSubmit]);
 
   return (
     <Flex flexDirection="column" rowGap={4}>

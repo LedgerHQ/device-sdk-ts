@@ -43,10 +43,12 @@ export class SendRegisterLedgerAccountTask {
   async run(): Promise<
     CommandResult<RegisterLedgerAccountResult, EthErrorCodes>
   > {
-    this._logger.debug("[run] Starting SendRegisterLedgerAccountTask", {
+    this._logger.info("[run] starting RegisterLedgerAccount sequence", {
+      tag: "SendRegisterLedgerAccountTask",
       data: {
         name: this._args.name,
         chainId: this._args.chainId,
+        derivationPath: this._args.derivationPath,
       },
     });
 

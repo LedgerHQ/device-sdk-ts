@@ -11,8 +11,9 @@
 // parse the device's structured response off the last exchange.
 import type { Command } from "@api/command/Command";
 import type { CommandResult } from "@api/command/model/CommandResult";
-import { isSuccessDmkResult } from "@api/model/DmkResult";
 import type { InternalApi } from "@api/device-action/DeviceAction";
+import type { LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+import { isSuccessDmkResult } from "@api/model/DmkResult";
 
 const MAX_CHUNK_BYTES = 255;
 const P2_FIRST = 0x00;
@@ -28,19 +29,35 @@ export type SendFramedContactsPayloadArgs<Response> = {
     chunk: Uint8Array,
     p2: number,
   ) => Command<Response, unknown, unknown>;
+  /**
+   * Optional per-chunk diagnostic logging. When `logger` is provided the
+   * helper emits one `debug` entry per outgoing chunk (tag = `commandTag ??
+   * "framed-contacts"`), carrying chunk index/total/payload length/P2. Used
+   * by the playground's Contacts log panel to interleave Command-level
+   * context with DMK's auto APDU send/receive log.
+   */
+  readonly logger?: LoggerPublisherService;
+  readonly commandTag?: string;
 };
 
 export async function sendFramedContactsPayload<Response>(
   api: InternalApi,
-  { payload, makeCommand }: SendFramedContactsPayloadArgs<Response>,
+  {
+    payload,
+    makeCommand,
+    logger,
+    commandTag,
+  }: SendFramedContactsPayloadArgs<Response>,
 ): Promise<CommandResult<Response>> {
   const framed = prependFrameLength(payload);
   const chunks = sliceChunks(framed, MAX_CHUNK_BYTES);
+  const tag = commandTag ?? "framed-contacts";
 
   // Intermediate chunks: dispatch and short-circuit on error.
   for (let i = 0; i < chunks.length - 1; i++) {
     const p2 = i === 0 ? P2_FIRST : P2_NEXT;
     const chunk = chunks[i]!;
+    logChunk(logger, tag, i, chunks.length, p2, chunk.length, framed.length);
     const result = (await api.sendCommand(
       makeCommand(chunk, p2),
     )) as CommandResult<Response>;
@@ -52,9 +69,42 @@ export async function sendFramedContactsPayload<Response>(
   const lastIndex = chunks.length - 1;
   const lastP2 = lastIndex === 0 ? P2_FIRST : P2_NEXT;
   const lastChunk = chunks[lastIndex]!;
+  logChunk(
+    logger,
+    tag,
+    lastIndex,
+    chunks.length,
+    lastP2,
+    lastChunk.length,
+    framed.length,
+  );
   return (await api.sendCommand(
     makeCommand(lastChunk, lastP2),
   )) as CommandResult<Response>;
+}
+
+function logChunk(
+  logger: LoggerPublisherService | undefined,
+  tag: string,
+  index: number,
+  total: number,
+  p2: number,
+  chunkLen: number,
+  framedLen: number,
+): void {
+  if (!logger) return;
+  logger.debug(`[chunk ${index + 1}/${total}] sending`, {
+    tag,
+    data: {
+      chunkIndex: index,
+      chunkCount: total,
+      p2: `0x${p2.toString(16).padStart(2, "0")}`,
+      chunkLen,
+      framedPayloadLen: framedLen,
+      isFirst: index === 0,
+      isLast: index === total - 1,
+    },
+  });
 }
 
 function prependFrameLength(payload: Uint8Array): Uint8Array {

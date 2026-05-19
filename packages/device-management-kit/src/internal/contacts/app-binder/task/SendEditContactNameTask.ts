@@ -10,6 +10,7 @@
 import { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 import { InvalidStatusWordError } from "@api/command/Errors";
 import { type CommandResult } from "@api/command/model/CommandResult";
+import { type RenameContactArgs } from "@api/contacts/model/RenameContactArgs";
 import {
   CONTACTS_TLV_TAG,
   encodeTlvAscii,
@@ -21,10 +22,8 @@ import {
   STRUCT_VERSION_VALUE,
 } from "@api/contacts/utils/contactsTlvSerializer";
 import { type InternalApi } from "@api/device-action/DeviceAction";
-import { DmkResultFactory } from "@api/model/DmkResult";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-
-import { type RenameContactArgs } from "@api/contacts/model/RenameContactArgs";
+import { DmkResultFactory } from "@api/model/DmkResult";
 import {
   EditContactNameCommand,
   type EditContactNameCommandResponse,
@@ -47,14 +46,23 @@ export class SendEditContactNameTask {
   }
 
   async run(): Promise<CommandResult<EditContactNameCommandResponse>> {
-    this._logger.debug("[run] Starting SendEditContactNameTask", {
-      data: { oldName: this.args.oldName, newName: this.args.newName },
-    });
-
     const payload = this.buildPayload(this.args);
+
+    this._logger.info("[run] payload built", {
+      tag: "SendEditContactNameTask",
+      data: {
+        oldName: this.args.oldName,
+        newName: this.args.newName,
+        derivationPath: this.args.derivationPath,
+        groupHandleHex: this.args.groupHandleHex,
+        hmacProofLen: this.args.hmacProofHex.length / 2,
+        payloadLen: payload.length,
+      },
+    });
 
     if (payload.length > APDU_DATA_MAX_BYTES) {
       this._logger.error("[run] Payload exceeds APDU data limit", {
+        tag: "SendEditContactNameTask",
         data: { length: payload.length, max: APDU_DATA_MAX_BYTES },
       });
       return DmkResultFactory({
@@ -63,6 +71,11 @@ export class SendEditContactNameTask {
         ),
       });
     }
+
+    this._logger.debug("[send] dispatching EditContactNameCommand", {
+      tag: "editContactName",
+      data: { payloadLen: payload.length },
+    });
 
     return this.api.sendCommand(new EditContactNameCommand({ data: payload }));
   }
