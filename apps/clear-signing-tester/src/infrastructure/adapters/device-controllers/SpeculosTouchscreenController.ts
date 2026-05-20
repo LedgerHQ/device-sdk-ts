@@ -10,7 +10,7 @@ import { DeviceController } from "@root/src/domain/adapters/DeviceController";
 import { type SpeculosConfig } from "@root/src/domain/models/config/SpeculosConfig";
 
 const DEFAULT_DELAY_MS = 5000;
-const FLEX_DELAY_MS = 10000;
+const FLEX_DELAY_MS = 15000;
 const SETTINGS_NAV_DELAY_MS = 1000;
 
 /**
