@@ -84,8 +84,7 @@ describe("BuildTransactionContextTask", () => {
     );
   });
 
-  // TODO-WEB3CHECK: flip this back once transaction-check is ready
-  it.skip("calls contextModule.getContexts with all Solana context types (including transaction-check)", async () => {
+  it("calls contextModule.getContexts with the active Solana context types (transaction-check temporarily disabled)", async () => {
     (contextModuleMock.getContexts as any).mockResolvedValue([
       trustedNameSuccessContext,
     ]);
@@ -107,7 +106,6 @@ describe("BuildTransactionContextTask", () => {
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
         ClearSignContextType.SOLANA_TRUSTED_NAME,
-        ClearSignContextType.SOLANA_TRANSACTION_CHECK,
       ],
     );
   });
@@ -129,7 +127,7 @@ describe("BuildTransactionContextTask", () => {
       expect.objectContaining({
         transactionCheck: {
           from: "So1anaSignerPubKey111111111111111111111111111",
-          rawTx: expect.any(String),
+          transactionBytes: defaultArgs.transactionBytes,
           chain: SolanaTransactionScanChainId.MAINNET,
         },
       }),

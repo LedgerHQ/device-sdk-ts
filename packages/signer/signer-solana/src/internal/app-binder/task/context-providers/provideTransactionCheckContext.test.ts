@@ -79,7 +79,7 @@ describe("provideTransactionCheckContext", () => {
     };
 
     await expect(provideTransactionCheckContext(result, deps)).rejects.toThrow(
-      "Failed to send transaction-check certificate to device",
+      "Failed to send web3-check certificate to device",
     );
   });
 

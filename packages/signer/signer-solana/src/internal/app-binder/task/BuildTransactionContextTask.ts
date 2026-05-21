@@ -14,7 +14,6 @@ import {
 
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
-import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 export type { SolanaTransactionContextResultSuccess as SolanaBuildContextResult };
 
@@ -52,7 +51,7 @@ export class BuildTransactionContextTask {
     const transactionCheck = this.args.signerAddress
       ? {
           from: this.args.signerAddress,
-          rawTx: DefaultBs58Encoder.encode(this.args.transactionBytes),
+          transactionBytes: this.args.transactionBytes,
           chain: SolanaTransactionScanChainId.MAINNET,
         }
       : undefined;
