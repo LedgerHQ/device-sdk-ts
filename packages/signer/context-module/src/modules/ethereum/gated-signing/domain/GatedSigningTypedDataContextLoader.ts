@@ -1,9 +1,11 @@
 import {
   DeviceModelId,
   type HexaString,
+  LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { configTypes } from "@/config/di/configTypes";
 import { type GatedDescriptorDataSource } from "@/modules/ethereum/gated-signing/data/GatedDescriptorDataSource";
 import { gatedSigningTypes } from "@/modules/ethereum/gated-signing/di/gatedSigningTypes";
 import type { TypedDataSchema } from "@/modules/ethereum/model/TypedDataContext";
@@ -71,6 +73,8 @@ function hasTypedDataShape(
 export class GatedSigningTypedDataContextLoader
   implements ContextLoader<GatedSigningTypedDataContextInput>
 {
+  private readonly logger: LoggerPublisherService;
+
   constructor(
     @inject(gatedSigningTypes.GatedDescriptorDataSource)
     private readonly _dataSource: GatedDescriptorDataSource,
@@ -78,7 +82,11 @@ export class GatedSigningTypedDataContextLoader
     private readonly _certificateLoader: PkiCertificateLoader,
     @inject(proxyTypes.ProxyDataSource)
     private readonly _proxyDataSource: ProxyDataSource,
-  ) {}
+    @inject(configTypes.ContextModuleLoggerFactory)
+    loggerFactory: (tag: string) => LoggerPublisherService,
+  ) {
+    this.logger = loggerFactory("GatedSigningTypedDataContextLoader");
+  }
 
   canHandle(
     input: unknown,
@@ -124,6 +132,15 @@ export class GatedSigningTypedDataContextLoader
         keyUsage: KeyUsage.GatedSigning,
         targetDevice: deviceModelId,
       });
+      this.logger.debug("load result", {
+        data: {
+          path: "direct",
+          verifyingContract,
+          schemaHash,
+          chainId,
+          contextTypes: [ClearSignContextType.ETHEREUM_GATED_SIGNING],
+        },
+      });
       return [
         {
           type: ClearSignContextType.ETHEREUM_GATED_SIGNING,
@@ -147,6 +164,19 @@ export class GatedSigningTypedDataContextLoader
       });
 
     if (proxyResult.isLeft()) {
+      const proxyError = proxyResult.extract() as Error;
+      this.logger.warn(
+        "Direct gated descriptor lookup failed and proxy resolution failed",
+        {
+          data: {
+            verifyingContract,
+            schemaHash,
+            chainId,
+            directError: firstError.message,
+            proxyError: proxyError.message,
+          },
+        },
+      );
       return [
         {
           type: ClearSignContextType.ERROR,
@@ -169,6 +199,20 @@ export class GatedSigningTypedDataContextLoader
       });
 
     if (implGatedResult.isLeft()) {
+      const implError = implGatedResult.extract() as Error;
+      this.logger.warn(
+        "No gated descriptor found for proxy implementation address",
+        {
+          data: {
+            verifyingContract,
+            implementationAddress,
+            schemaHash,
+            chainId,
+            directError: firstError.message,
+            implError: implError.message,
+          },
+        },
+      );
       return [
         {
           type: ClearSignContextType.ERROR,
@@ -191,6 +235,19 @@ export class GatedSigningTypedDataContextLoader
       }),
     ]);
 
+    this.logger.debug("load result", {
+      data: {
+        path: "proxy",
+        verifyingContract,
+        implementationAddress,
+        schemaHash,
+        chainId,
+        contextTypes: [
+          ClearSignContextType.ETHEREUM_PROXY_INFO,
+          ClearSignContextType.ETHEREUM_GATED_SIGNING,
+        ],
+      },
+    });
     return [
       {
         type: ClearSignContextType.ETHEREUM_PROXY_INFO,
