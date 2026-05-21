@@ -11,7 +11,6 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  INS,
   P1,
   P2,
   ZCASH_CLA,
@@ -22,6 +21,8 @@ import {
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "./utils/zcashApplicationErrors";
+
+const FINALIZE_INPUT = 0x4a;
 
 export type HashOutputFullCommandArgs = {
   outputChunk: Uint8Array;
@@ -50,7 +51,7 @@ export class HashOutputFullCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS.FINALIZE_INPUT,
+      ins: FINALIZE_INPUT,
       p1: this.args.isLastChunk ? P1.NEXT : P1.FIRST,
       p2: P2.DEFAULT,
     };

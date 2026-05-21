@@ -14,7 +14,6 @@ import {
 import { Maybe } from "purify-ts";
 
 import {
-  INS,
   P1,
   P2,
   ZCASH_CLA,
@@ -25,6 +24,8 @@ import {
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "./utils/zcashApplicationErrors";
+
+const FINALIZE_INPUT = 0x4a;
 
 export type ProvideOutputFullChangePathCommandArgs = {
   derivationPath: string;
@@ -52,7 +53,7 @@ export class ProvideOutputFullChangePathCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS.FINALIZE_INPUT,
+      ins: FINALIZE_INPUT,
       p1: P1.CHANGE_PATH,
       p2: P2.DEFAULT,
     };

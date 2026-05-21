@@ -30,6 +30,7 @@ import {
   type InternalTransactionOutput,
   MAX_SCRIPT_BLOCK,
   parseOutputScriptsFromPaymentOutputBlob,
+  resolveExpiryHeightBytes,
   serializeTransaction,
   SIGHASH_ALL,
   toInternalTransaction,
@@ -90,10 +91,16 @@ export class SignTransactionTask {
     lockTimeBuffer.writeUInt32LE(lockTime, 0);
     const defaultVersion = getZcashDefaultTransactionVersion();
     // Ledger Wallet always passes expiry for v5 txs (often zero); required for BIP143 flow.
-    const expiryHeightBuffer =
-      expiryHeight !== undefined
-        ? Buffer.from(expiryHeight)
-        : Buffer.alloc(4, 0);
+    let expiryHeightBuffer: Buffer;
+    try {
+      expiryHeightBuffer = resolveExpiryHeightBytes(expiryHeight);
+    } catch (error) {
+      return DmkResultFactory({
+        error: new InvalidStatusWordError(
+          error instanceof Error ? error.message : "Invalid expiryHeight",
+        ),
+      });
+    }
 
     const trustedInputs: Array<{
       trustedInput: boolean;
@@ -300,7 +307,6 @@ export class SignTransactionTask {
           lockTime,
           sigHashType,
           expiryHeight: expiryHeightBuffer,
-          additionals,
         }),
       );
       if (!isSuccessCommandResult(signatureResult)) {

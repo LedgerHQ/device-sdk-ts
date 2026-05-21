@@ -5,6 +5,7 @@ import {
   getZcashDefaultTransactionVersion,
   type InternalTransaction,
   parseOutputScriptsFromPaymentOutputBlob,
+  resolveExpiryHeightBytes,
   serializeTransactionOutputs,
 } from "./legacyTransactionUtils";
 
@@ -66,5 +67,29 @@ describe("parseOutputScriptsFromPaymentOutputBlob", () => {
     expect(parseOutputScriptsFromPaymentOutputBlob(Buffer.from([0x01]))).toBe(
       null,
     );
+  });
+});
+
+describe("resolveExpiryHeightBytes", () => {
+  it("returns 4 zero bytes when expiryHeight is omitted", () => {
+    expect(resolveExpiryHeightBytes()).toEqual(Buffer.alloc(4, 0));
+  });
+
+  it("returns 4 zero bytes when expiryHeight is empty", () => {
+    expect(resolveExpiryHeightBytes(new Uint8Array())).toEqual(
+      Buffer.alloc(4, 0),
+    );
+  });
+
+  it("copies a 4-byte expiryHeight", () => {
+    expect(
+      resolveExpiryHeightBytes(new Uint8Array([0x01, 0x02, 0x03, 0x04])),
+    ).toEqual(Buffer.from([0x01, 0x02, 0x03, 0x04]));
+  });
+
+  it("throws when expiryHeight length is not 4 bytes", () => {
+    expect(() =>
+      resolveExpiryHeightBytes(new Uint8Array([0x01, 0x02])),
+    ).toThrow("expiryHeight must be 4 bytes (got 2)");
   });
 });

@@ -11,7 +11,6 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  INS,
   P2,
   ZCASH_CLA,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
@@ -22,10 +21,12 @@ import {
   type ZcashErrorCodes,
 } from "./utils/zcashApplicationErrors";
 
+const SIGN_TRANSACTION = 0x48;
+
 export type ZcashSaplingOutputCommitCommandArgs = {
   lockTime: number;
   sigHashType: number;
-  expiryHeight?: Uint8Array;
+  expiryHeight: Buffer;
 };
 
 export type ZcashSaplingOutputCommitCommandResponse = {
@@ -57,15 +58,11 @@ export class ZcashSaplingOutputCommitCommand
     const { lockTime, sigHashType, expiryHeight } = this.args;
     const lockTimeLe = Buffer.alloc(4);
     lockTimeLe.writeUInt32LE(lockTime, 0);
-    const expiryLe =
-      expiryHeight !== undefined && expiryHeight.byteLength > 0
-        ? Buffer.from(expiryHeight)
-        : Buffer.alloc(4, 0);
     const payload = Buffer.concat([
       lockTimeLe,
       Buffer.from([0x00, 0x00]),
       Buffer.from([sigHashType & 0xff]),
-      expiryLe.subarray(0, 4),
+      expiryHeight,
     ]);
     if (payload.length !== 11) {
       throw new Error("ZcashSaplingOutputCommit: internal payload length");
@@ -73,7 +70,7 @@ export class ZcashSaplingOutputCommitCommand
 
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS.SIGN_TRANSACTION,
+      ins: SIGN_TRANSACTION,
       p1: 0x00,
       p2: P2.DEFAULT,
     };

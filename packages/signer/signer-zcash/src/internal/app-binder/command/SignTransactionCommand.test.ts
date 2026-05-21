@@ -12,8 +12,7 @@ describe("SignTransactionCommand", () => {
       derivationPath: "44'/133'/0'/0/0",
       lockTime: 1,
       sigHashType: 0x01,
-      expiryHeight: new Uint8Array([0x01, 0x02, 0x03, 0x04]),
-      additionals: ["zcash"],
+      expiryHeight: Buffer.from([0x01, 0x02, 0x03, 0x04]),
     });
 
     const apdu = command.getApdu().getRawApdu();
@@ -27,6 +26,7 @@ describe("SignTransactionCommand", () => {
       derivationPath: "44'/133'/0'/0/0",
       lockTime: 0,
       sigHashType: 0x01,
+      expiryHeight: Buffer.alloc(4, 0),
     });
     const response = command.parseResponse(
       new ApduResponse({
@@ -44,11 +44,12 @@ describe("SignTransactionCommand", () => {
     );
   });
 
-  it("appends 4-byte zero expiry when expiryHeight omitted (no additionals required)", () => {
+  it("appends 4-byte expiry height from task-normalized buffer", () => {
     const command = new SignTransactionCommand({
       derivationPath: "44'/133'/0'/1/2",
       lockTime: 0,
       sigHashType: 0x01,
+      expiryHeight: Buffer.alloc(4, 0),
     });
 
     expect(Buffer.from(command.getApdu().getRawApdu()).toString("hex")).toBe(
@@ -61,6 +62,7 @@ describe("SignTransactionCommand", () => {
       derivationPath: "44'/133'/0'/0/0",
       lockTime: 0,
       sigHashType: 0x01,
+      expiryHeight: Buffer.alloc(4, 0),
     });
     const result = command.parseResponse(
       new ApduResponse({

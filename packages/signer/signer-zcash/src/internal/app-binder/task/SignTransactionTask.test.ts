@@ -192,6 +192,27 @@ describe("SignTransactionTask", () => {
     } as unknown as InternalApi;
   });
 
+  it("returns validation error when expiryHeight length is not 4 bytes", async () => {
+    const result = await new SignTransactionTask(apiMock, {
+      transactionArg: {
+        inputs: [[PREVIOUS_TRANSACTION, 0, undefined, undefined]],
+        associatedKeysets: ["44'/133'/0'/0/0"],
+        outputScriptHex: "01",
+        additionals: ["zcash"],
+        expiryHeight: new Uint8Array([0x01, 0x02]),
+      },
+    }).run();
+
+    expect(isSuccessDmkResult(result)).toBe(false);
+    if (!isSuccessDmkResult(result)) {
+      expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+      expect(
+        (result.error as InvalidStatusWordError).originalError?.message,
+      ).toMatch(/expiryHeight must be 4 bytes/);
+    }
+    expect(apiMock.sendCommand).not.toHaveBeenCalled();
+  });
+
   it("returns validation error when additionals does not include zcash", async () => {
     const result = await new SignTransactionTask(apiMock, {
       transactionArg: {

@@ -223,9 +223,7 @@ const splitTransactionToTrustedInputChunks = (
 
     const scriptLength = readCompactSize(transaction, offset);
     offset = scriptLength.nextOffset;
-    //chunks.push(transaction.slice(valueStart, offset));
 
-    //const scriptStart = offset;
     ensureRange(transaction, offset, offset + scriptLength.value);
     offset += scriptLength.value;
     chunks.push(transaction.slice(valueStart, offset));

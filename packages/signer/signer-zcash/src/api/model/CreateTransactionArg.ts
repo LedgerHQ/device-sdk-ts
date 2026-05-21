@@ -15,7 +15,6 @@ export type LegacyTransaction = {
   inputs: LegacyTransactionInput[];
   outputs?: LegacyTransactionOutput[];
   locktime?: Uint8Array;
-  //witness?: Uint8Array;
   timestamp?: Uint8Array;
   nVersionGroupId?: Uint8Array;
   nExpiryHeight?: Uint8Array;

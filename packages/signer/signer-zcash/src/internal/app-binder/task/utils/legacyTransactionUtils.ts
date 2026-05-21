@@ -1,4 +1,5 @@
-import { createHash } from "crypto";
+import { ripemd160 } from "@noble/hashes/ripemd160";
+import { sha256 } from "@noble/hashes/sha256";
 
 import {
   type LegacyTransaction,
@@ -235,13 +236,8 @@ export const compressPublicKey = (publicKey: Buffer): Buffer => {
   return Buffer.concat([Buffer.from([prefix]), publicKey.subarray(1, 33)]);
 };
 
-const sha256 = (buffer: Buffer): Buffer =>
-  createHash("sha256").update(buffer).digest();
-const ripemd160 = (buffer: Buffer): Buffer =>
-  createHash("ripemd160").update(buffer).digest();
-
 export const hashPublicKey = (buffer: Buffer): Buffer =>
-  ripemd160(sha256(buffer));
+  Buffer.from(ripemd160(sha256(buffer)));
 
 /** P2PKH `scriptPubKey` for a transparent Zcash address from a Ledger `GetAddress` pubkey. */
 export const buildP2pkhScriptPubKeyFromLedgerZcashPublicKey = (
@@ -300,3 +296,21 @@ export const getZcashDefaultTransactionVersion = (): Buffer => {
   version.writeUInt32LE(0x80000005, 0);
   return version;
 };
+
+export const EXPIRY_HEIGHT_BYTE_LENGTH = 4;
+
+/**
+ * Zcash SIGN (`0x48`) and v5 transaction serialization require a 4-byte expiry height.
+ * Undefined or empty input is normalized to four zero bytes.
+ */
+export function resolveExpiryHeightBytes(expiryHeight?: Uint8Array): Buffer {
+  if (expiryHeight === undefined || expiryHeight.byteLength === 0) {
+    return Buffer.alloc(EXPIRY_HEIGHT_BYTE_LENGTH, 0);
+  }
+  if (expiryHeight.byteLength !== EXPIRY_HEIGHT_BYTE_LENGTH) {
+    throw new Error(
+      `expiryHeight must be ${EXPIRY_HEIGHT_BYTE_LENGTH} bytes (got ${expiryHeight.byteLength})`,
+    );
+  }
+  return Buffer.from(expiryHeight);
+}

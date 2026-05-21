@@ -28,8 +28,7 @@ export type SignTransactionCommandArgs = {
   derivationPath: string;
   lockTime: number;
   sigHashType: number;
-  expiryHeight?: Uint8Array;
-  additionals?: string[];
+  expiryHeight: Buffer;
 };
 
 export type SignTransactionCommandResponse = {
@@ -59,11 +58,6 @@ export class SignTransactionCommand
     const lockTimeBuffer = Buffer.alloc(4);
     lockTimeBuffer.writeUInt32BE(lockTime, 0);
 
-    const expiryBytes =
-      expiryHeight !== undefined && expiryHeight.byteLength > 0
-        ? Buffer.from(expiryHeight)
-        : null;
-
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
       ins: 0x48,
@@ -81,13 +75,7 @@ export class SignTransactionCommand
       .addBufferToData(lockTimeBuffer)
       .add8BitUIntToData(sigHashType);
 
-    if (expiryBytes) {
-      builder.addBufferToData(expiryBytes);
-    } else {
-      // Zcash app SIGN (`0x48`) always expects 4-byte expiry height after sighash type;
-      // use zero when omitted (6700 WrongLength if callers omit `additionals` / expiry).
-      builder.addBufferToData(Buffer.alloc(4, 0));
-    }
+    builder.addBufferToData(expiryHeight);
     return builder.build();
   }
 

@@ -5,6 +5,7 @@ describe("ZcashSaplingOutputCommitCommand", () => {
     const command = new ZcashSaplingOutputCommitCommand({
       lockTime: 0,
       sigHashType: 1,
+      expiryHeight: Buffer.alloc(4, 0),
     });
 
     expect(Buffer.from(command.getApdu().getRawApdu()).toString("hex")).toBe(

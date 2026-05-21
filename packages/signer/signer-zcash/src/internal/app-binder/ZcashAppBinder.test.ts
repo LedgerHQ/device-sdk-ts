@@ -52,7 +52,7 @@ type ExecuteDeviceActionTaskCallArgs = {
   deviceAction: CallTaskInAppDeviceAction<
     unknown,
     DmkError,
-    UserInteractionRequired.None | UserInteractionRequired.None
+    UserInteractionRequired.None | UserInteractionRequired.SignTransaction
   >;
 };
 

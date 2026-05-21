@@ -11,7 +11,6 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  INS,
   P1,
   P2,
   ZCASH_CLA,
@@ -22,6 +21,8 @@ import {
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "./utils/zcashApplicationErrors";
+
+const START_UNTRUSTED_HASH_TRANSACTION_INPUT = 0x44;
 
 export type StartUntrustedHashTransactionInputCommandArgs = {
   newTransaction: boolean;
@@ -53,7 +54,7 @@ export class StartUntrustedHashTransactionInputCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: INS.START_UNTRUSTED_HASH_TRANSACTION_INPUT,
+      ins: START_UNTRUSTED_HASH_TRANSACTION_INPUT,
       p1: this.args.firstRound ? P1.FIRST : P1.NEXT,
       p2: this.args.newTransaction ? P2.SAPLING : P2.HASH_INPUT_CONTINUE,
     };
