@@ -106,6 +106,7 @@ describe("BuildTransactionContextTask", () => {
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
         ClearSignContextType.SOLANA_TRUSTED_NAME,
+        ClearSignContextType.SOLANA_TRANSACTION_CHECK,
       ],
     );
   });
