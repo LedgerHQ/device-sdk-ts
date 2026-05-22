@@ -49,6 +49,7 @@
     "ts-node": "catalog:"
   },
   "dependencies": {
+    "bs58": "catalog:",
     "crypto-js": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",
