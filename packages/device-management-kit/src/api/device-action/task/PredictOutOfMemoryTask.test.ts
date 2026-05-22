@@ -44,7 +44,7 @@ describe("PredictOutOfMemoryTask", () => {
     const result = new PredictOutOfMemoryTask(apiMock, {
       installPlan: [
         { bytes: 1324 },
-        { bytes: 6559 },
+        { bytes: 6496 },
       ] as unknown as Application[],
     }).run();
 
@@ -76,8 +76,7 @@ describe("PredictOutOfMemoryTask", () => {
     const result = new PredictOutOfMemoryTask(apiMock, {
       installPlan: [
         { bytes: 1324 },
-        { bytes: 6559 },
-        { bytes: 1 },
+        { bytes: 6497 },
       ] as unknown as Application[],
     }).run();
 
@@ -87,7 +86,7 @@ describe("PredictOutOfMemoryTask", () => {
     });
   });
 
-  it("Success enough memory (recent Nano S, 2kB block size)", () => {
+  it("Success not enough memory with no remaining block (recent Nano S, 2kB block size)", () => {
     // GIVEN
     apiMock.getDeviceModel.mockReturnValueOnce({
       memorySize: 12 * 1024,
@@ -119,9 +118,9 @@ describe("PredictOutOfMemoryTask", () => {
     // 6x2kB blocks of total memory (12kB total)
     //  -3*2kB block for firmware (to fit 6kB)
     //  -3*2kB block for install plan (to fit 6kB)
-    //  = 0 blocks left, enough memory
+    //  = 0 blocks left, not enough memory
     expect(result).toStrictEqual({
-      outOfMemory: false,
+      outOfMemory: true,
     });
   });
 
