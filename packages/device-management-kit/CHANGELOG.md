@@ -1,5 +1,15 @@
 # @ledgerhq/device-management-kit
 
+## 1.5.0
+
+### Minor Changes
+
+- [#1481](https://github.com/LedgerHQ/device-sdk-ts/pull/1481) [`5da4263`](https://github.com/LedgerHQ/device-sdk-ts/commit/5da4263bf6fa73a5803663a8ba0745a7368d4e36) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Extend `ApplicationChecker` with app-name aware constraints: track the current running app from the device session state and expose `excludeApp`, `excludeApps`, and `excludeDeviceModels` builder methods.
+
+### Patch Changes
+
+- [#1503](https://github.com/LedgerHQ/device-sdk-ts/pull/1503) [`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix out of memory prediction
+
 ## 1.4.1
 
 ### Patch Changes

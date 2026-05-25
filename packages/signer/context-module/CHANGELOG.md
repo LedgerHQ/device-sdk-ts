@@ -1,5 +1,22 @@
 # @ledgerhq/context-module
 
+## 2.0.0
+
+### Major Changes
+
+- [#1471](https://github.com/LedgerHQ/device-sdk-ts/pull/1471) [`95d1bf8`](https://github.com/LedgerHQ/device-sdk-ts/commit/95d1bf8ea5a122dbb46573dea0b7fb315de8bbfb) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - New multichain support for context module introducing setChain build-time breaking change
+
+### Patch Changes
+
+- [#1497](https://github.com/LedgerHQ/device-sdk-ts/pull/1497) [`5159b42`](https://github.com/LedgerHQ/device-sdk-ts/commit/5159b42fd33f25e5e595c58ced972df170bd925f) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Update default blind signing reporter URL to production endpoint `https://blind-signing.api.ledger.com`
+
+- [#1499](https://github.com/LedgerHQ/device-sdk-ts/pull/1499) [`7c6c065`](https://github.com/LedgerHQ/device-sdk-ts/commit/7c6c06537912fb6c3f746ad75e6541846a07f399) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove CAL endpoint ref
+
+- [#1502](https://github.com/LedgerHQ/device-sdk-ts/pull/1502) [`cf99116`](https://github.com/LedgerHQ/device-sdk-ts/commit/cf991169273d7bf271e37f11eb442e430316ce01) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patch Solana web3check payload
+
+- Updated dependencies [[`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b), [`5da4263`](https://github.com/LedgerHQ/device-sdk-ts/commit/5da4263bf6fa73a5803663a8ba0745a7368d4e36)]:
+  - @ledgerhq/device-management-kit@1.5.0
+
 ## 1.17.1
 
 ### Patch Changes
