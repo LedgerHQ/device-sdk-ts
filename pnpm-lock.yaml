@@ -204,6 +204,9 @@ catalogs:
     eslint:
       specifier: 9.34.0
       version: 9.34.0
+    eslint-plugin-diff:
+      specifier: 2.1.7
+      version: 2.1.7
     eslint-plugin-prettier:
       specifier: 5.5.4
       version: 5.5.4
@@ -1019,6 +1022,9 @@ importers:
       '@eslint/js':
         specifier: 'catalog:'
         version: 9.34.0
+      eslint-plugin-diff:
+        specifier: 'catalog:'
+        version: 2.1.7(eslint@9.34.0(jiti@1.21.6))
       eslint-plugin-prettier:
         specifier: 'catalog:'
         version: 5.5.4(@types/eslint@9.6.1)(eslint-config-prettier@10.1.8(eslint@9.34.0(jiti@1.21.6)))(eslint@9.34.0(jiti@1.21.6))(prettier@3.5.3)
@@ -8057,6 +8063,12 @@ packages:
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
+
+  eslint-plugin-diff@2.1.7:
+    resolution: {integrity: sha512-F0EP5knbELQRPX7A4ogFFty+Pyru6CtUFmt52VSJ+7I84UsOj5s+BtY/ZhQFdvmPkFzKqVy+g5IHP+iiaUu/Aw==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      eslint: '>=6.7.0'
 
   eslint-plugin-prettier@5.5.4:
     resolution: {integrity: sha512-swNtI95SToIz05YINMA6Ox5R057IMAmWZ26GqPxusAp1TZzj+IdY9tXNWWD3vkF/wEqydCONcwjTFpxybBqZsg==}
@@ -20149,6 +20161,10 @@ snapshots:
       source-map: 0.6.1
 
   eslint-config-prettier@10.1.8(eslint@9.34.0(jiti@1.21.6)):
+    dependencies:
+      eslint: 9.34.0(jiti@1.21.6)
+
+  eslint-plugin-diff@2.1.7(eslint@9.34.0(jiti@1.21.6)):
     dependencies:
       eslint: 9.34.0(jiti@1.21.6)
 
