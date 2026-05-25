@@ -27,6 +27,7 @@ import {
   getZcashBranchId,
   getZcashDefaultTransactionVersion,
   type InternalTransaction,
+  type InternalTransactionInput,
   type InternalTransactionOutput,
   MAX_SCRIPT_BLOCK,
   parseOutputScriptsFromPaymentOutputBlob,
@@ -44,6 +45,17 @@ type SignTransactionTaskResult = DmkResult<
   HexaString,
   SignTransactionTaskError
 >;
+
+type TrustedInputEntry = {
+  trustedInput: boolean;
+  value: Buffer;
+  sequence: Buffer;
+};
+
+type CollectInputsResult = {
+  trustedInputs: TrustedInputEntry[];
+  regularOutputs: InternalTransactionOutput[];
+};
 
 export class SignTransactionTask {
   constructor(
@@ -104,22 +116,124 @@ export class SignTransactionTask {
       });
     }
 
-    const trustedInputs: Array<{
-      trustedInput: boolean;
-      value: Buffer;
-      sequence: Buffer;
-    }> = [];
-    const regularOutputs: InternalTransactionOutput[] = [];
-    const signatures: Buffer[] = [];
-    const publicKeys: Buffer[] = [];
-    let provideChangePathBeforeOutputs = false;
+    const outputScript = Buffer.from(outputScriptHex, "hex");
     const nullPrevout = Buffer.alloc(0);
     const targetTransaction: InternalTransaction = {
       inputs: [],
       version: defaultVersion,
       timestamp: Buffer.alloc(0),
     };
-    const outputScript = Buffer.from(outputScriptHex, "hex");
+    // These fields are constant across all inputs — set once before processing.
+    targetTransaction.nVersionGroupId = Buffer.from([0x0a, 0x27, 0xa7, 0x26]);
+    targetTransaction.nExpiryHeight = expiryHeightBuffer;
+    targetTransaction.extraData = sapling
+      ? Buffer.from([
+          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        ])
+      : Buffer.from([0x00]);
+
+    const inputsResult = await this.collectTrustedInputsAndOutputs(inputs);
+    if (!("trustedInputs" in inputsResult)) {
+      return inputsResult;
+    }
+    const { trustedInputs, regularOutputs } = inputsResult;
+
+    targetTransaction.inputs = inputs.map((input, idx) => {
+      const sequence = Buffer.alloc(4);
+      sequence.writeUInt32LE(
+        input.length >= 4 && typeof input[3] === "number"
+          ? input[3]
+          : DEFAULT_SEQUENCE,
+        0,
+      );
+      return {
+        script: regularOutputs[idx]!.script,
+        prevout: nullPrevout,
+        sequence,
+      };
+    });
+
+    const publicKeysResult = await this.collectPublicKeys(associatedKeysets);
+    if (!Array.isArray(publicKeysResult)) {
+      return publicKeysResult;
+    }
+    const publicKeys = publicKeysResult;
+
+    const provideChangeResult = await this.shouldProvideChangePath(
+      changePath,
+      associatedKeysets,
+      publicKeys,
+      outputScript,
+    );
+    if (typeof provideChangeResult !== "boolean") {
+      return provideChangeResult;
+    }
+
+    targetTransaction.consensusBranchId = getZcashBranchId(blockHeight);
+
+    const hashError = await this.executeHashSequence(
+      targetTransaction,
+      trustedInputs,
+      changePath,
+      provideChangeResult,
+      outputScript,
+      sapling,
+      lockTime,
+      sigHashType,
+      expiryHeightBuffer,
+    );
+    if (hashError) {
+      return hashError;
+    }
+
+    const signaturesResult = await this.signEachInput(
+      inputs,
+      associatedKeysets,
+      regularOutputs,
+      targetTransaction,
+      trustedInputs,
+      lockTime,
+      sigHashType,
+      expiryHeightBuffer,
+    );
+    if (!Array.isArray(signaturesResult)) {
+      return signaturesResult;
+    }
+    const signatures = signaturesResult;
+
+    targetTransaction.version = defaultVersion;
+    targetTransaction.consensusBranchId = getZcashBranchId(blockHeight);
+    for (let i = 0; i < inputs.length; i += 1) {
+      targetTransaction.inputs[i]!.script = Buffer.concat([
+        Buffer.from([signatures[i]!.length]),
+        signatures[i]!,
+        Buffer.from([publicKeys[i]!.length]),
+        publicKeys[i]!,
+      ]);
+      const offset = 4;
+      targetTransaction.inputs[i]!.prevout = trustedInputs[i]!.value.subarray(
+        offset,
+        offset + 0x24,
+      );
+    }
+
+    targetTransaction.locktime = lockTimeBuffer;
+    let result = Buffer.concat([
+      serializeTransaction(targetTransaction, targetTransaction.timestamp),
+      outputScript,
+    ]);
+    result = Buffer.concat([result, Buffer.from([0x00, 0x00, 0x00])]);
+
+    return DmkResultFactory({
+      data: `0x${result.toString("hex")}` as HexaString,
+    });
+  }
+
+  private async collectTrustedInputsAndOutputs(
+    inputs: LegacyCreateTransactionArg["inputs"],
+  ): Promise<CollectInputsResult | SignTransactionTaskResult> {
+    const trustedInputs: TrustedInputEntry[] = [];
+    const regularOutputs: InternalTransactionOutput[] = [];
 
     for (const input of inputs) {
       const legacyPrevious = input[0];
@@ -164,83 +278,90 @@ export class SignTransactionTask {
           ),
         });
       }
-
-      targetTransaction.nVersionGroupId = Buffer.from([0x0a, 0x27, 0xa7, 0x26]);
-      targetTransaction.nExpiryHeight = expiryHeightBuffer;
-      targetTransaction.extraData = sapling
-        ? Buffer.from([
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-          ])
-        : Buffer.from([0x00]);
     }
 
-    targetTransaction.inputs = inputs.map((input, idx) => {
-      const sequence = Buffer.alloc(4);
-      sequence.writeUInt32LE(
-        input.length >= 4 && typeof input[3] === "number"
-          ? input[3]
-          : DEFAULT_SEQUENCE,
-        0,
-      );
-      return {
-        script: regularOutputs[idx]!.script,
-        prevout: nullPrevout,
-        sequence,
-      };
-    });
+    return { trustedInputs, regularOutputs };
+  }
 
-    for (let i = 0; i < inputs.length; i += 1) {
+  private async collectPublicKeys(
+    associatedKeysets: string[],
+  ): Promise<Buffer[] | SignTransactionTaskResult> {
+    const publicKeys: Buffer[] = [];
+
+    for (const derivationPath of associatedKeysets) {
       const pubKeyResult = await this.api.sendCommand(
         new GetAddressCommand({
-          derivationPath: associatedKeysets[i]!,
+          derivationPath,
           checkOnDevice: false,
         }),
       );
       if (!isSuccessCommandResult(pubKeyResult)) {
         return DmkResultFactory({ error: pubKeyResult.error });
       }
-
       publicKeys.push(
         compressPublicKey(Buffer.from(pubKeyResult.data.publicKey)),
       );
     }
 
+    return publicKeys;
+  }
+
+  private async shouldProvideChangePath(
+    changePath: string | undefined,
+    associatedKeysets: string[],
+    publicKeys: Buffer[],
+    outputScript: Buffer,
+  ): Promise<boolean | SignTransactionTaskResult> {
     const changePathTrimmed =
       typeof changePath === "string" ? changePath.trim() : "";
-    if (changePathTrimmed !== "") {
-      const reuseIdx = associatedKeysets.indexOf(changePathTrimmed);
-      let ledgerPubForChange: Buffer;
-      if (reuseIdx >= 0) {
-        ledgerPubForChange = publicKeys[reuseIdx]!;
-      } else {
-        const changeAddrResult = await this.api.sendCommand(
-          new GetAddressCommand({
-            derivationPath: changePathTrimmed,
-            checkOnDevice: false,
-          }),
-        );
-        if (!isSuccessCommandResult(changeAddrResult)) {
-          return DmkResultFactory({ error: changeAddrResult.error });
-        }
-        ledgerPubForChange = Buffer.from(changeAddrResult.data.publicKey);
-      }
-      try {
-        const expectedChangeScript =
-          buildP2pkhScriptPubKeyFromLedgerZcashPublicKey(ledgerPubForChange);
-        const outputScripts =
-          parseOutputScriptsFromPaymentOutputBlob(outputScript);
-        /** Multi-output with change: send change-path APDU. Single-output: omit (6986). */
-        provideChangePathBeforeOutputs =
-          outputScripts !== null &&
-          outputScripts.length >= 2 &&
-          outputScripts.some((s) => s.equals(expectedChangeScript));
-      } catch {
-        provideChangePathBeforeOutputs = false;
-      }
+    if (changePathTrimmed === "") {
+      return false;
     }
 
-    targetTransaction.consensusBranchId = getZcashBranchId(blockHeight);
+    const reuseIdx = associatedKeysets.indexOf(changePathTrimmed);
+    let ledgerPubForChange: Buffer;
+    if (reuseIdx >= 0) {
+      ledgerPubForChange = publicKeys[reuseIdx]!;
+    } else {
+      const changeAddrResult = await this.api.sendCommand(
+        new GetAddressCommand({
+          derivationPath: changePathTrimmed,
+          checkOnDevice: false,
+        }),
+      );
+      if (!isSuccessCommandResult(changeAddrResult)) {
+        return DmkResultFactory({ error: changeAddrResult.error });
+      }
+      ledgerPubForChange = Buffer.from(changeAddrResult.data.publicKey);
+    }
 
+    try {
+      const expectedChangeScript =
+        buildP2pkhScriptPubKeyFromLedgerZcashPublicKey(ledgerPubForChange);
+      const outputScripts =
+        parseOutputScriptsFromPaymentOutputBlob(outputScript);
+      /** Multi-output with change: send change-path APDU. Single-output: omit (6986). */
+      return (
+        outputScripts !== null &&
+        outputScripts.length >= 2 &&
+        outputScripts.some((s) => s.equals(expectedChangeScript))
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  private async executeHashSequence(
+    targetTransaction: InternalTransaction,
+    trustedInputs: TrustedInputEntry[],
+    changePath: string | undefined,
+    provideChangePath: boolean,
+    outputScript: Buffer,
+    sapling: boolean,
+    lockTime: number,
+    sigHashType: number,
+    expiryHeightBuffer: Buffer,
+  ): Promise<SignTransactionTaskResult | null> {
     const globalHashInputResult = await this.startUntrustedHashTransactionInput(
       true,
       targetTransaction,
@@ -250,7 +371,7 @@ export class SignTransactionTask {
       return globalHashInputResult;
     }
 
-    if (provideChangePathBeforeOutputs && changePath) {
+    if (provideChangePath && changePath) {
       const changePathResult = await this.api.sendCommand(
         new ProvideOutputFullChangePathCommand({
           derivationPath: changePath,
@@ -279,6 +400,21 @@ export class SignTransactionTask {
       }
     }
 
+    return null;
+  }
+
+  private async signEachInput(
+    inputs: LegacyCreateTransactionArg["inputs"],
+    associatedKeysets: string[],
+    regularOutputs: InternalTransactionOutput[],
+    targetTransaction: InternalTransaction,
+    trustedInputs: TrustedInputEntry[],
+    lockTime: number,
+    sigHashType: number,
+    expiryHeightBuffer: Buffer,
+  ): Promise<Buffer[] | SignTransactionTaskResult> {
+    const signatures: Buffer[] = [];
+
     for (let i = 0; i < inputs.length; i += 1) {
       const input = inputs[i]!;
       const script =
@@ -290,12 +426,11 @@ export class SignTransactionTask {
         ...targetTransaction,
         inputs: [{ ...targetTransaction.inputs[i]!, script }],
       };
-      const pseudoTrustedInputs = [trustedInputs[i]!];
 
       const hashInputResult = await this.startUntrustedHashTransactionInput(
         false,
         pseudoTransaction,
-        pseudoTrustedInputs,
+        [trustedInputs[i]!],
       );
       if (hashInputResult) {
         return hashInputResult;
@@ -315,34 +450,7 @@ export class SignTransactionTask {
       signatures.push(Buffer.from(signatureResult.data.signature));
     }
 
-    targetTransaction.version = defaultVersion;
-    targetTransaction.consensusBranchId = getZcashBranchId(blockHeight);
-    for (let i = 0; i < inputs.length; i += 1) {
-      targetTransaction.inputs[i]!.script = Buffer.concat([
-        Buffer.from([signatures[i]!.length]),
-        signatures[i]!,
-        Buffer.from([publicKeys[i]!.length]),
-        publicKeys[i]!,
-      ]);
-
-      const offset = 4;
-      targetTransaction.inputs[i]!.prevout = trustedInputs[i]!.value.subarray(
-        offset,
-        offset + 0x24,
-      );
-    }
-
-    targetTransaction.locktime = lockTimeBuffer;
-    let result = Buffer.concat([
-      serializeTransaction(targetTransaction, targetTransaction.timestamp),
-      outputScript,
-    ]);
-
-    result = Buffer.concat([result, Buffer.from([0x00, 0x00, 0x00])]);
-
-    return DmkResultFactory({
-      data: `0x${result.toString("hex")}` as HexaString,
-    });
+    return signatures;
   }
 
   private async getTrustedInput(
@@ -389,18 +497,55 @@ export class SignTransactionTask {
     return null;
   }
 
+  private buildScriptBlocks(input: InternalTransactionInput): Buffer[] {
+    if (input.script.length === 0) {
+      return [input.sequence];
+    }
+    const blocks: Buffer[] = [];
+    let offset = 0;
+    while (offset !== input.script.length) {
+      const blockSize = Math.min(
+        MAX_SCRIPT_BLOCK,
+        input.script.length - offset,
+      );
+      const chunk = input.script.subarray(offset, offset + blockSize);
+      blocks.push(
+        offset + blockSize === input.script.length
+          ? Buffer.concat([chunk, input.sequence])
+          : Buffer.from(chunk),
+      );
+      offset += blockSize;
+    }
+    return blocks;
+  }
+
+  private async sendInputBlocks(
+    blocks: Buffer[],
+    newTransaction: boolean,
+  ): Promise<SignTransactionTaskResult | null> {
+    for (const block of blocks) {
+      const result = await this.api.sendCommand(
+        new StartUntrustedHashTransactionInputCommand({
+          newTransaction,
+          firstRound: false,
+          transactionData: new Uint8Array(block),
+        }),
+      );
+      if (!isSuccessCommandResult(result)) {
+        return DmkResultFactory({ error: result.error });
+      }
+    }
+    return null;
+  }
+
   private async startUntrustedHashTransactionInput(
     newTransaction: boolean,
     transaction: InternalTransaction,
-    trustedInputs: Array<{
-      trustedInput: boolean;
-      value: Buffer;
-      sequence: Buffer;
-    }>,
+    trustedInputs: TrustedInputEntry[],
   ): Promise<SignTransactionTaskResult | null> {
     const zCashConsensusBranchId =
       transaction.consensusBranchId || Buffer.alloc(0);
-    let header = Buffer.concat([
+    const header = Buffer.concat([
       transaction.version,
       transaction.timestamp || Buffer.alloc(0),
       transaction.nVersionGroupId || Buffer.alloc(0),
@@ -426,7 +571,7 @@ export class SignTransactionTask {
         ? Buffer.from([0x01, inputValue.length])
         : Buffer.from([0x00]);
 
-      header = Buffer.concat([
+      const inputHeader = Buffer.concat([
         prefix,
         inputValue,
         createVarint(input.script.length),
@@ -435,44 +580,19 @@ export class SignTransactionTask {
         new StartUntrustedHashTransactionInputCommand({
           newTransaction,
           firstRound: false,
-          transactionData: new Uint8Array(header),
+          transactionData: new Uint8Array(inputHeader),
         }),
       );
       if (!isSuccessCommandResult(inputHeaderResult)) {
         return DmkResultFactory({ error: inputHeaderResult.error });
       }
 
-      const scriptBlocks: Buffer[] = [];
-      if (input.script.length === 0) {
-        scriptBlocks.push(input.sequence);
-      } else {
-        let offset = 0;
-        while (offset !== input.script.length) {
-          const blockSize = Math.min(
-            MAX_SCRIPT_BLOCK,
-            input.script.length - offset,
-          );
-          const chunk = input.script.subarray(offset, offset + blockSize);
-          scriptBlocks.push(
-            offset + blockSize === input.script.length
-              ? Buffer.concat([chunk, input.sequence])
-              : Buffer.from(chunk),
-          );
-          offset += blockSize;
-        }
-      }
-
-      for (const block of scriptBlocks) {
-        const scriptBlockResult = await this.api.sendCommand(
-          new StartUntrustedHashTransactionInputCommand({
-            newTransaction,
-            firstRound: false,
-            transactionData: new Uint8Array(block),
-          }),
-        );
-        if (!isSuccessCommandResult(scriptBlockResult)) {
-          return DmkResultFactory({ error: scriptBlockResult.error });
-        }
+      const sendBlocksError = await this.sendInputBlocks(
+        this.buildScriptBlocks(input),
+        newTransaction,
+      );
+      if (sendBlocksError) {
+        return sendBlocksError;
       }
     }
 
