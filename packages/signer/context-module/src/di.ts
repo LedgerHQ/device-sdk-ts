@@ -23,9 +23,15 @@ import { nanoPkiModuleFactory } from "@/modules/multichain/pki/di/pkiModuleFacto
 import { reporterModuleFactory } from "@/modules/multichain/reporter/di/reporterModuleFactory";
 import { ethereumTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/ethereumTransactionCheckModuleFactory";
 import { solanaTransactionCheckModuleFactory } from "@/modules/multichain/transaction-check/di/solanaTransactionCheckModuleFactory";
+import { altResolutionModuleFactory } from "@/modules/solana/alt-resolution/di/altResolutionModuleFactory";
+import { enumVariantModuleFactory } from "@/modules/solana/enum-variant/di/enumVariantModuleFactory";
+import { instructionInfoModuleFactory } from "@/modules/solana/instruction-info/di/instructionInfoModuleFactory";
 import { lifiModuleFactory } from "@/modules/solana/lifi/di/lifiModuleFactory";
 import { ownerInfoModuleFactory } from "@/modules/solana/owner-info/di/ownerInfoModuleFactory";
 import { tokenModuleFactory as solanaTokenModuleFactory } from "@/modules/solana/token/di/tokenModuleFactory";
+import { tokenAccountStateModuleFactory } from "@/modules/solana/token-account-state/di/tokenAccountStateModuleFactory";
+import { tokenInfoModuleFactory } from "@/modules/solana/token-info/di/tokenInfoModuleFactory";
+import { solanaTrustedNameModuleFactory } from "@/modules/solana/trusted-name/di/trustedNameModuleFactory";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
 import { networkModuleFactory } from "@/shared/network/di/networkModuleFactory";
 
@@ -73,6 +79,12 @@ export const makeContainer = ({ config }: MakeContainerArgs) => {
         solanaTokenModuleFactory(),
         lifiModuleFactory(),
         solanaTransactionCheckModuleFactory(),
+        instructionInfoModuleFactory(),
+        enumVariantModuleFactory(),
+        tokenInfoModuleFactory(),
+        tokenAccountStateModuleFactory(),
+        altResolutionModuleFactory(),
+        solanaTrustedNameModuleFactory(),
       );
       break;
     case ContextModuleChainID.Concordium:

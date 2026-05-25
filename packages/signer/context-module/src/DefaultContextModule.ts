@@ -24,9 +24,15 @@ import { type BlindSigningReportParams } from "@/modules/multichain/reporter/dat
 import { reporterTypes } from "@/modules/multichain/reporter/di/reporterTypes";
 import { type BlindSigningReporter } from "@/modules/multichain/reporter/domain/BlindSigningReporter";
 import { transactionCheckTypes } from "@/modules/multichain/transaction-check/di/transactionCheckTypes";
+import { altResolutionTypes } from "@/modules/solana/alt-resolution/di/altResolutionTypes";
+import { enumVariantTypes } from "@/modules/solana/enum-variant/di/enumVariantTypes";
+import { instructionInfoTypes } from "@/modules/solana/instruction-info/di/instructionInfoTypes";
 import { lifiTypes } from "@/modules/solana/lifi/di/lifiTypes";
 import { ownerInfoTypes } from "@/modules/solana/owner-info/di/ownerInfoTypes";
 import { tokenTypes as solanaTokenTypes } from "@/modules/solana/token/di/tokenTypes";
+import { tokenAccountStateTypes } from "@/modules/solana/token-account-state/di/tokenAccountStateTypes";
+import { tokenInfoTypes } from "@/modules/solana/token-info/di/tokenInfoTypes";
+import { solanaTrustedNameTypes } from "@/modules/solana/trusted-name/di/trustedNameTypes";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import { ContextModuleChainID } from "@/shared/domain/ContextModuleChainID";
@@ -123,6 +129,24 @@ export class DefaultContextModule implements ContextModule {
           ),
           this._container.get<ContextLoader>(
             transactionCheckTypes.TransactionCheckLoader,
+          ),
+          this._container.get<ContextLoader>(
+            instructionInfoTypes.InstructionInfoContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            enumVariantTypes.EnumVariantContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            tokenInfoTypes.TokenInfoContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            tokenAccountStateTypes.TokenAccountStateContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            altResolutionTypes.AltResolutionContextLoader,
+          ),
+          this._container.get<ContextLoader>(
+            solanaTrustedNameTypes.SolanaTrustedNameContextLoader,
           ),
         ];
       case ContextModuleChainID.Concordium:

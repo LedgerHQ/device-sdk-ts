@@ -37,6 +37,13 @@ export type SolanaTransactionDescriptorList = Record<
   SolanaTransactionDescriptor
 >;
 
+// TODO SOLANA TX-CHECK
+// IMPORTANT: do not widen this union with the new clear-signing context
+// types (SOLANA_INSTRUCTION_INFO, SOLANA_ENUM_VARIANT, SOLANA_TOKEN_INFO,
+// SOLANA_TOKEN_ACCOUNT_STATE, SOLANA_ALT_RESOLUTION) until the
+// downstream signer registry declares matching handlers. That registry
+// uses a required mapped type over this union, so widening here without
+// adding handlers breaks the signer build.
 export type SolanaContextSuccessType =
   | ClearSignContextType.SOLANA_TOKEN
   | ClearSignContextType.SOLANA_LIFI
