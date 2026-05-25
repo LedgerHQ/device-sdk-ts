@@ -3,13 +3,21 @@ title: Architecture diagrams
 discription: Understand how your application will interact with a device app.
 ---
 
+import KeyTakeaway from "/components/features/key-takeaway";
+
+<KeyTakeaway>
+   ☞   The renaming of "Ledger Live" to "Ledger Wallet" and      "wallet" (in
+  the hardware sense) to "signer" is still in progress.      This page may
+  contain legacy references that will be updated.
+</KeyTakeaway>
+
 # Architecture diagrams
 
 ## Application architecture
 
 ### Architecture Overview
 
-![Ledger Live Prerequisites](/device-interaction/application-architecture.png)
+![Ledger Wallet Prerequisites](/device-interaction/application-architecture.png)
 _Fig. 1: Overall Architecture_
 
 On the client side we have your core application containing your business logic and workflows.
@@ -90,9 +98,9 @@ This diagram demonstrate the sequence of different calls done by each applicatio
 5 different layers are used to handle a transaction:
 
 - **Your Application Core Code:** your software wallet
-- **Ledger JS Transport API:** packages that allow you to implement several kind communication between the software wallet and a Ledger hardware wallet
+- **Ledger JS Transport API:** packages that allow you to implement several kind communication between the software wallet and a Ledger signer
 - **Ledger JS Dedicated App Lib:** packages that allow you to communicate with specific Ledger Embedded Apps
-- **Embedded App:** the application that run on a Ledger hardware wallet to interact with a specific blockchain
+- **Embedded App:** the application that run on a Ledger signer to interact with a specific blockchain
 - **Ledger Device Software:** the operating system of Ledger harware devices
 
 This workflow demonstrate a typical use case of Ledger Device using an Embedded App Lib. If you are planning to integrate with a embedded app with no API, you have to complete all actions done by LedgerJS Dedicated App Lib within your application core code.
