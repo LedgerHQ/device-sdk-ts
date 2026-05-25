@@ -8,6 +8,7 @@ import React, {
   useState,
 } from "react";
 import { useSelector } from "react-redux";
+import { ContextModuleBuilder } from "@ledgerhq/context-module";
 import {
   type SignerAleo,
   SignerAleoBuilder,
@@ -15,6 +16,7 @@ import {
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { selectSelectedSessionId } from "@/state/sessions/selectors";
+import { selectCalConfig } from "@/state/settings/selectors";
 
 type SignerAleoContextType = {
   signer: SignerAleo | null;
@@ -31,6 +33,7 @@ export const SignerAleoProvider: React.FC<PropsWithChildren> = ({
 }) => {
   const dmk = useDmk();
   const sessionId = useSelector(selectSelectedSessionId);
+  const calConfig = useSelector(selectCalConfig);
 
   const [signer, setSigner] = useState<SignerAleo | null>(null);
 
@@ -40,12 +43,21 @@ export const SignerAleoProvider: React.FC<PropsWithChildren> = ({
       return;
     }
 
+    const contextModule = new ContextModuleBuilder({
+      loggerFactory: (tag: string) =>
+        dmk.getLoggerFactory()(["ContextModule", tag]),
+    })
+      .setCalConfig(calConfig)
+      .build();
+
     const newSigner = new SignerAleoBuilder({
       dmk,
       sessionId,
-    }).build();
+    })
+      .withContextModule(contextModule)
+      .build();
     setSigner(newSigner);
-  }, [dmk, sessionId]);
+  }, [calConfig, dmk, sessionId]);
 
   return (
     <SignerAleoContext.Provider

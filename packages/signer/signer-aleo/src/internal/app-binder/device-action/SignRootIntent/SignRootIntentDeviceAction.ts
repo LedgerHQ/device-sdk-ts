@@ -198,9 +198,15 @@ export class SignRootIntentDeviceAction extends XStateDeviceAction<
             onError: {
               target: "Sign",
               actions: assign({
-                _internalState: ({ context }) => ({
-                  ...context._internalState,
-                }),
+                _internalState: ({ context, event }) => {
+                  console.warn(
+                    "[SignRootIntentDeviceAction] BuildContext failed — proceeding to Sign without token context:",
+                    event["error"] instanceof Error
+                      ? event["error"].message
+                      : event["error"],
+                  );
+                  return { ...context._internalState };
+                },
               }),
             },
           },

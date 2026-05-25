@@ -46,6 +46,13 @@ export class ProvideTokenInformationCommand
   getApdu(): Apdu {
     const { dataHex, signatureHex } = this.args;
 
+    console.log(
+      "[ProvideTokenInformationCommand] getApdu called — dataHex length:",
+      dataHex.length / 2,
+      "signatureHex length:",
+      signatureHex.length / 2,
+    );
+
     const sigLen = signatureHex.length / 2;
     if (
       sigLen < DER_SIG_MIN_BYTES ||

@@ -24,12 +24,24 @@ export class ProvideAleoTokenContextTask {
     const { loadersResults } = this.args.aleoTransactionContext;
 
     for (const loaderResult of loadersResults) {
-      if (loaderResult.type !== AleoContextTypes.ALEO_TOKEN) continue;
+      if (loaderResult.type !== AleoContextTypes.ALEO_TOKEN) {
+        console.warn(
+          "[ProvideAleoTokenContextTask] Skipping loader result of type:",
+          loaderResult.type,
+          "error" in loaderResult ? loaderResult.error : "",
+        );
+        continue;
+      }
 
       const { certificate } = loaderResult;
       const { data, signature } = loaderResult.payload.aleoTokenDescriptor;
 
-      if (!certificate) continue;
+      if (!certificate) {
+        console.warn(
+          "[ProvideAleoTokenContextTask] Skipping ALEO_TOKEN entry: no PKI certificate available",
+        );
+        continue;
+      }
 
       const certResult = await this.api.sendCommand(
         new LoadCertificateCommand({

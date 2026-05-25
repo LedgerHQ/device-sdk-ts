@@ -115,7 +115,13 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
       {
         title: "Sign Root Intent",
         description: "Sign a root intent with the device",
-        executeDeviceAction: ({ derivationPath, rootIntent, skipOpenApp }) => {
+        executeDeviceAction: ({
+          derivationPath,
+          rootIntent,
+          skipOpenApp,
+          tokenInternalId,
+          programName,
+        }) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
@@ -132,14 +138,21 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
                   .match(/.{1,2}/g)
                   ?.map((byte) => parseInt(byte, 16)) ?? [],
               );
+          console.log("tokenInternalId", tokenInternalId);
           return signer.signRootIntent(derivationPath, rootIntentBytes, {
             skipOpenApp,
+            tokenInternalId: tokenInternalId || undefined,
+            programName: programName || undefined,
           });
         },
         initialValues: {
           derivationPath: "44'/683'/0'/0'",
-          rootIntent: "",
+          rootIntent:
+            "01012802010181b0040000000081b1040000000081b20b6665655f7072697661746581b30c637265646974732e616c656f81b482016901012902010181c302000181b5136c6467626174636865725f7032382e616c656f81b6127472616e736665725f707269766174655f3281b7010481b9010481b860d5f4b9312020d52c6752cb927e00771b300e8742e7cbe2cffe79a2a9f1641e03f1020000b6a58dc9bd8dc99591a5d1cd0503100019000000000000806381fe03232753113751635f57729543c73e2ab3641901f57fec18b1e560b28b8000000081b9010481b860d5f4b9312020d52c6752cb927e00771b300e8742e7cbe2cffe79a2a9f1641e03f1020000b6a58dc9bd8dc99591a5d1cd0503100019000000000000c0eed4b40239bab0f49f52a8a88613dc6ea6aec32d2d23df9a005edf7d940ecfb98000000081b90302000081b820161c02624f57f184f394f3452bb3be751a1163c19a3ef81a570d0ebd33f3980d81b90302000c81b808c80000000000000081ba010281c420e9fb1007c069e11dda4a4c3f6e1d5a8c6fcbfb0a1f556ff629719f095902e107",
           skipOpenApp: false,
+          tokenInternalId:
+            "hedera/erc20/audd_0x39ceba2b467fa987546000eb5d1373acf1f3a2e1",
+          programName: "",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
@@ -148,6 +161,8 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
           derivationPath: string;
           rootIntent: string;
           skipOpenApp?: boolean;
+          tokenInternalId?: string;
+          programName?: string;
         },
         SignRootIntentDAError,
         SignRootIntentDAIntermediateValue
