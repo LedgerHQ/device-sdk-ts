@@ -1,0 +1,29 @@
+name: "[Koda] Double Approval"
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  double-approval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require 2 approvals on Koda PRs
+        if: github.event.pull_request.user.login == 'koda-apps[bot]'
+        run: |
+          count=$(gh api --paginate repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews \
+            --jq '
+              [.[] | select(.user.login != null)]
+              | sort_by(.submitted_at // "", .id)
+              | reduce .[] as $r ({}; .[$r.user.login] = $r.state)
+              | [.[] | select(. == "APPROVED")] | length
+            ')
+          echo "Approvals: $count"
+          [ "$count" -ge 2 ] || exit 1
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

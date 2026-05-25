@@ -1,0 +1,6 @@
+# koda.yaml
+snapshot: koda-node20
+agentFilesDir: agent-files
+setup: corepack enable && pnpm install
+lint: pnpm lint
+test: pnpm test
