@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.0
+
+### Minor Changes
+
+- [#1470](https://github.com/LedgerHQ/device-sdk-ts/pull/1470) [`7e0694f`](https://github.com/LedgerHQ/device-sdk-ts/commit/7e0694f8db7298bd84c5ea36d9b081d354f6106b) Thanks [@sprohaszka-ledger](https://github.com/sprohaszka-ledger)! - Handle 'cloid' order property
+
+### Patch Changes
+
+- Updated dependencies [[`95d1bf8`](https://github.com/LedgerHQ/device-sdk-ts/commit/95d1bf8ea5a122dbb46573dea0b7fb315de8bbfb), [`5da4263`](https://github.com/LedgerHQ/device-sdk-ts/commit/5da4263bf6fa73a5803663a8ba0745a7368d4e36)]:
+  - @ledgerhq/context-module@2.0.0
+  - @ledgerhq/device-management-kit@1.5.0
+
 ## 1.0.2
 
 ### Patch Changes

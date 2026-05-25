@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-hyperliquid",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@ledgerhq/context-module": "workspace:^",
-    "@ledgerhq/signer-utils": "workspace:^",
+    "@ledgerhq/signer-utils": "^1.2.0",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
