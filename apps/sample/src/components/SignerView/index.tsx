@@ -46,6 +46,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Zcash signer functionality",
     icon: <CryptoIcon ledgerId="zcash" ticker="ZCASH" size={size} />,
   },
+  {
+    title: "Sui",
+    description: "Access Sui signer functionality",
+    icon: <CryptoIcon ledgerId="sui" ticker="SUI" size={size} />,
+  },
 ];
 
 export const SignerView = () => {
