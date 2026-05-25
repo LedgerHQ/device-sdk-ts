@@ -340,7 +340,6 @@ const splitTransactionToTrustedInputChunks = (
 
   if (isTxV4) {
     chunks.push(transaction.slice(offset));
-    offset = transaction.length;
   } else {
     chunks.push(splitV5ExtraData(locktime, expiry));
   }

@@ -69,15 +69,17 @@ export class SignTransactionTask {
       additionals: additionalsRaw,
       expiryHeight,
     } = signTx;
-    const additionals = additionalsRaw.map((item) => item.trim().toLowerCase());
-    if (!additionals.includes("zcash")) {
+    const additionals = new Set(
+      additionalsRaw.map((item) => item.trim().toLowerCase()),
+    );
+    if (!additionals.has("zcash")) {
       return DmkResultFactory({
         error: new InvalidStatusWordError(
           'signTransaction requires additionals to include "zcash" (Zcash transparent signing only).',
         ),
       });
     }
-    const sapling = additionals.includes("sapling");
+    const sapling = additionals.has("sapling");
 
     if (inputs.length !== associatedKeysets.length) {
       return DmkResultFactory({
@@ -206,9 +208,7 @@ export class SignTransactionTask {
     const changePathTrimmed =
       typeof changePath === "string" ? changePath.trim() : "";
     if (changePathTrimmed !== "") {
-      const reuseIdx = associatedKeysets.findIndex(
-        (p) => p === changePathTrimmed,
-      );
+      const reuseIdx = associatedKeysets.indexOf(changePathTrimmed);
       let ledgerPubForChange: Buffer;
       if (reuseIdx >= 0) {
         ledgerPubForChange = publicKeys[reuseIdx]!;
@@ -448,15 +448,15 @@ export class SignTransactionTask {
       } else {
         let offset = 0;
         while (offset !== input.script.length) {
-          const blockSize =
-            input.script.length - offset > MAX_SCRIPT_BLOCK
-              ? MAX_SCRIPT_BLOCK
-              : input.script.length - offset;
+          const blockSize = Math.min(
+            MAX_SCRIPT_BLOCK,
+            input.script.length - offset,
+          );
           const chunk = input.script.subarray(offset, offset + blockSize);
           scriptBlocks.push(
-            offset + blockSize !== input.script.length
-              ? Buffer.from(chunk)
-              : Buffer.concat([chunk, input.sequence]),
+            offset + blockSize === input.script.length
+              ? Buffer.concat([chunk, input.sequence])
+              : Buffer.from(chunk),
           );
           offset += blockSize;
         }

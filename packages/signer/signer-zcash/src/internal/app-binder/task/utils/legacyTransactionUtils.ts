@@ -232,7 +232,7 @@ export const serializeTransaction = (
 };
 
 export const compressPublicKey = (publicKey: Buffer): Buffer => {
-  const prefix = ((publicKey.at(64) ?? 0) & 1) !== 0 ? 0x03 : 0x02;
+  const prefix = ((publicKey.at(64) ?? 0) & 1) === 0 ? 0x02 : 0x03;
   return Buffer.concat([Buffer.from([prefix]), publicKey.subarray(1, 33)]);
 };
 
@@ -243,13 +243,15 @@ export const hashPublicKey = (buffer: Buffer): Buffer =>
 export const buildP2pkhScriptPubKeyFromLedgerZcashPublicKey = (
   ledgerPublicKey: Buffer,
 ): Buffer => {
-  const compressed =
-    ledgerPublicKey.length === 65
-      ? compressPublicKey(ledgerPublicKey)
-      : ledgerPublicKey.length === 33
-        ? ledgerPublicKey
-        : null;
-  if (!compressed || compressed.length !== 33) {
+  let compressed: Buffer | null;
+  if (ledgerPublicKey.length === 65) {
+    compressed = compressPublicKey(ledgerPublicKey);
+  } else if (ledgerPublicKey.length === 33) {
+    compressed = ledgerPublicKey;
+  } else {
+    compressed = null;
+  }
+  if (compressed?.length !== 33) {
     throw new Error(
       "Expected 65-byte uncompressed or 33-byte compressed secp256k1 public key",
     );

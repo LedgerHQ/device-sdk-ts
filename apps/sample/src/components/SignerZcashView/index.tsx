@@ -240,11 +240,15 @@ const sampleSignTransactionFormInitialValues: SignTransactionInput = {
   input3SerializedPreviousTxOverrideHex: "",
 };
 
-const SignTransactionForm: React.FC<{
+const SignTransactionForm = ({
+  initialValues,
+  onChange,
+  disabled,
+}: {
   initialValues: SignTransactionInput;
   onChange: (values: SignTransactionInput) => void;
   disabled?: boolean;
-}> = ({ initialValues, onChange, disabled }) => {
+}) => {
   const initialValuesRef = useRef(initialValues);
   initialValuesRef.current = initialValues;
 
@@ -514,9 +518,7 @@ const buildSignTransactionArg = (
   };
 };
 
-export const SignerZcashView: React.FC<{ sessionId: string }> = ({
-  sessionId,
-}) => {
+export const SignerZcashView = ({ sessionId }: { sessionId: string }) => {
   const dmk = useDmk();
   const signer = useSignerZcash();
 

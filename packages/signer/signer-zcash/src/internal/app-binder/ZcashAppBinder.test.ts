@@ -171,7 +171,11 @@ describe("ZcashAppBinder", () => {
       const binder = new ZcashAppBinder(dmkMock, sessionId);
       const runSpy = vi
         .spyOn(GetFullViewingKeyTask.prototype, "run")
-        .mockResolvedValue({} as never);
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof GetFullViewingKeyTask.prototype.run>
+          >,
+        );
 
       const result = binder.getFullViewingKey({
         derivationPath: "44'/133'/0'/0/0",
@@ -213,7 +217,11 @@ describe("ZcashAppBinder", () => {
       const binder = new ZcashAppBinder(dmkMock, sessionId);
       const runSpy = vi
         .spyOn(GetTrustedInputTask.prototype, "run")
-        .mockResolvedValue({} as never);
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof GetTrustedInputTask.prototype.run>
+          >,
+        );
 
       const result = binder.getTrustedInput(getTrustedInputArgs);
 
@@ -287,7 +295,11 @@ describe("ZcashAppBinder", () => {
       const binder = new ZcashAppBinder(dmkMock, sessionId);
       const runSpy = vi
         .spyOn(SignTransactionTask.prototype, "run")
-        .mockResolvedValue({} as never);
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof SignTransactionTask.prototype.run>
+          >,
+        );
 
       const result = binder.signTransaction({
         transactionArg: signTransactionArg,
