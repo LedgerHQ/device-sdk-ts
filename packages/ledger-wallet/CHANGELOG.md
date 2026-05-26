@@ -1,5 +1,16 @@
 # @ledgerhq/dmk-ledger-wallet
 
+## 0.3.0
+
+### Minor Changes
+
+- [#1411](https://github.com/LedgerHQ/device-sdk-ts/pull/1411) [`36105c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/36105c4b319e9be5983958bed4031efdddefca01) Thanks [@benruseau](https://github.com/benruseau)! - Add backup device action
+
+### Patch Changes
+
+- Updated dependencies [[`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b)]:
+  - @ledgerhq/device-management-kit@1.5.1
+
 ## 0.2.0
 
 ### Minor Changes
