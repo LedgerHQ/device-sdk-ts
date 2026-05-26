@@ -50,7 +50,7 @@ describe("ProvideTokenInformationCommand", () => {
     it("should embed descriptor data bytes before the signature tag", () => {
       const apdu = command.getApdu();
       const raw = apdu.getRawApdu();
-      // raw: [CLA, INS, P1, P2, LC, ...data(4), 0x15, sigLen(70), ...sig(70)]
+      // raw: [CLA, INS, P1, P2, LC, ...data(4), 0x08, sigLen(70), ...sig(70)]
       const lcIndex = 4;
       expect(raw[lcIndex]).toBe(4 + 1 + 1 + 70); // LC = 76
       expect(raw[5]).toBe(0xde);
@@ -59,12 +59,12 @@ describe("ProvideTokenInformationCommand", () => {
       expect(raw[8]).toBe(0xef);
     });
 
-    it("should include 0x15 tag at the correct position", () => {
+    it("should include 0x08 tag at the correct position", () => {
       const apdu = command.getApdu();
       const raw = apdu.getRawApdu();
-      // [CLA, INS, P1, P2, LC, data(4 bytes), 0x15, ...]
+      // [CLA, INS, P1, P2, LC, data(4 bytes), 0x08, ...]
       const tagIndex = 5 + 4; // after header (5) + data bytes (4)
-      expect(raw[tagIndex]).toBe(0x15);
+      expect(raw[tagIndex]).toBe(0x08);
     });
 
     it("should encode signature length byte after the tag", () => {

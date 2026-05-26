@@ -18,6 +18,7 @@ export class SignRootIntentUseCase {
     rootIntent: Uint8Array,
     options?: TransactionOptions,
   ): SignRootIntentDAReturnType {
+    console.log("SignRootIntentUseCase");
     return this._appBinder.signRootIntent({
       derivationPath,
       rootIntent,

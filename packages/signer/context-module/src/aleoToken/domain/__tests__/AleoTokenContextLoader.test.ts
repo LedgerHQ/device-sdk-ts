@@ -1,19 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
-import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
-import { KeyUsage } from "@/pki/model/KeyUsage";
-import { AleoContextTypes } from "@/shared/model/AleoContextTypes";
 import {
   type AleoTokenDataResponse,
   type AleoTokenDataSource,
 } from "@/aleoToken/data/AleoTokenDataSource";
+import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import type { PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/pki/model/KeyId";
+import { KeyUsage } from "@/pki/model/KeyUsage";
+import { AleoContextTypes } from "@/shared/model/AleoContextTypes";
 
 import { AleoTokenContextLoader } from "../AleoTokenContextLoader";
 
@@ -72,29 +71,38 @@ describe("AleoTokenContextLoader", () => {
     it("returns true when expected type is ALEO_TOKEN and tokenInternalId is present", () => {
       const loader = makeLoader("prod");
       expect(
-        loader.canHandle({ tokenInternalId: "aleo:usdc" }, AleoContextTypes.ALEO_TOKEN),
+        loader.canHandle(
+          { tokenInternalId: "aleo:usdc" },
+          AleoContextTypes.ALEO_TOKEN,
+        ),
       ).toBe(true);
     });
 
     it("returns false when expected type is ERROR", () => {
       const loader = makeLoader("prod");
       expect(
-        loader.canHandle({ tokenInternalId: "aleo:usdc" }, AleoContextTypes.ERROR),
+        loader.canHandle(
+          { tokenInternalId: "aleo:usdc" },
+          AleoContextTypes.ERROR,
+        ),
       ).toBe(false);
     });
 
     it("returns false when tokenInternalId is empty string", () => {
       const loader = makeLoader("prod");
       expect(
-        loader.canHandle({ tokenInternalId: "" } as any, AleoContextTypes.ALEO_TOKEN),
+        loader.canHandle(
+          { tokenInternalId: "" } as any,
+          AleoContextTypes.ALEO_TOKEN,
+        ),
       ).toBe(false);
     });
 
     it("returns false when tokenInternalId is missing", () => {
       const loader = makeLoader("prod");
-      expect(
-        loader.canHandle({} as any, AleoContextTypes.ALEO_TOKEN),
-      ).toBe(false);
+      expect(loader.canHandle({} as any, AleoContextTypes.ALEO_TOKEN)).toBe(
+        false,
+      );
     });
 
     it("returns false when field is null", () => {
@@ -122,7 +130,7 @@ describe("AleoTokenContextLoader", () => {
         tokenInternalId: "aleo:usdc",
       });
       expect(mockCertLoader.loadCertificate).toHaveBeenCalledWith({
-        keyId: "token_metadata_key",
+        keyId: KeyId.Erc20MetadataKey,
         keyUsage: KeyUsage.CoinMeta,
         targetDevice: baseCtx.deviceModelId,
       });
@@ -165,7 +173,10 @@ describe("AleoTokenContextLoader", () => {
         payload: bytes,
       });
 
-      const result = await loader.loadField({ ...baseCtx, tokenInternalId: "aleo:usdt" });
+      const result = await loader.loadField({
+        ...baseCtx,
+        tokenInternalId: "aleo:usdt",
+      });
 
       expect(result).toEqual({
         type: AleoContextTypes.ALEO_TOKEN,

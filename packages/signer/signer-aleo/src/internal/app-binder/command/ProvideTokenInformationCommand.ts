@@ -23,7 +23,7 @@ import {
   type AleoErrorCodes,
 } from "./utils/aleoApplicationErrors";
 
-const SIGNATURE_TAG = 0x15;
+const SIGNATURE_TAG = 0x08;
 const DER_SIG_MIN_BYTES = 70;
 const DER_SIG_MAX_BYTES = 72;
 

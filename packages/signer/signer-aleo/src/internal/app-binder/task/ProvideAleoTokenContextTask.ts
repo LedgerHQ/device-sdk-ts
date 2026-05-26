@@ -23,6 +23,11 @@ export class ProvideAleoTokenContextTask {
   async run(): Promise<void> {
     const { loadersResults } = this.args.aleoTransactionContext;
 
+    console.log(
+      "[ProvideAleoTokenContextTask] loadersResults: ",
+      loadersResults,
+    );
+
     for (const loaderResult of loadersResults) {
       if (loaderResult.type !== AleoContextTypes.ALEO_TOKEN) {
         console.warn(
@@ -56,6 +61,9 @@ export class ProvideAleoTokenContextTask {
         );
       }
 
+      console.log(
+        "[ProvideAleoTokenContextTask] Sending ProvideTokenInformationCommand:",
+      );
       await this.api.sendCommand(
         new ProvideTokenInformationCommand({
           dataHex: data,

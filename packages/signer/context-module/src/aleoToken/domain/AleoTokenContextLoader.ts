@@ -1,10 +1,13 @@
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { type AleoTokenDataSource } from "@/aleoToken/data/AleoTokenDataSource";
+import { aleoTokenTypes } from "@/aleoToken/di/aleoTokenTypes";
 import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/pki/model/KeyId";
 import { KeyUsage } from "@/pki/model/KeyUsage";
 import { type ContextFieldLoader } from "@/shared/domain/ContextFieldLoader";
 import {
@@ -12,10 +15,6 @@ import {
   type AleoTokenContextResult,
 } from "@/shared/model/AleoContextTypes";
 import { type AleoTransactionContext } from "@/shared/model/AleoTransactionContext";
-import {
-  type AleoTokenDataSource,
-} from "@/aleoToken/data/AleoTokenDataSource";
-import { aleoTokenTypes } from "@/aleoToken/di/aleoTokenTypes";
 
 @injectable()
 export class AleoTokenContextLoader
@@ -69,7 +68,8 @@ export class AleoTokenContextLoader
     this.logger.debug("[loadField] Loading aleo token context", {
       data: { input: aleoTokenContextInput },
     });
-    const { tokenInternalId, programName, deviceModelId } = aleoTokenContextInput;
+    const { tokenInternalId, programName, deviceModelId } =
+      aleoTokenContextInput;
 
     const payload = await this.dataSource.getTokenInfosPayload({
       tokenInternalId,
@@ -77,7 +77,7 @@ export class AleoTokenContextLoader
     });
 
     const certificate = await this._certificateLoader.loadCertificate({
-      keyId: "token_metadata_key",
+      keyId: KeyId.Erc20MetadataKey,
       keyUsage: KeyUsage.CoinMeta,
       targetDevice: deviceModelId,
     });

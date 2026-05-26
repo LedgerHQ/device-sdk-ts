@@ -28,6 +28,7 @@ describe("BuildBaseContexts", () => {
     getContexts: vi.fn(),
     getTypedDataFilters: vi.fn(),
     getSolanaContext: vi.fn(),
+    getAleoContext: vi.fn(),
     report: vi.fn(),
   };
   const defaultOptions = {};
