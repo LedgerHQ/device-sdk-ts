@@ -27,10 +27,19 @@ describe("GatedSigningTypedDataContextLoader", () => {
     getProxyImplementationAddress: vi.fn(),
   };
 
+  const mockLoggerFactory = () => ({
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    subscribers: [],
+  });
+
   const loader = new GatedSigningTypedDataContextLoader(
     mockGatedDescriptorDataSource,
     mockCertificateLoader,
     mockProxyDataSource,
+    mockLoggerFactory,
   );
 
   const mockCertificate: PkiCertificate = {

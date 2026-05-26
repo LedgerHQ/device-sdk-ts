@@ -4,7 +4,13 @@ import {
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
-import { debounceTime, distinctUntilChanged, tap } from "rxjs";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  tap,
+  throwError,
+  timeout,
+} from "rxjs";
 
 import { TYPES } from "@root/src/di/types";
 import { type SignableInput } from "@root/src/domain/models/SignableInput";
@@ -18,6 +24,7 @@ import { SignTransactionStateHandler } from "@root/src/infrastructure/state-hand
 import { type StateHandlerResult } from "@root/src/infrastructure/state-handlers/StateHandler";
 
 const DEBOUNCE_TIME = 1500;
+const SIGN_INACTIVITY_TIMEOUT_MS = 120_000;
 
 /**
  * Default orchestrator for device signing flows.
@@ -71,6 +78,20 @@ export class DefaultFlowOrchestrator implements FlowOrchestrator {
               prev?.intermediateValue?.requiredUserInteraction ===
                 curr?.intermediateValue?.requiredUserInteraction
             );
+          }),
+          // Fail fast if the signing flow stalls: a healthy signTx should
+          // reach a terminal state well within 2 minutes, so anything beyond
+          // that is treated as a stuck flow (e.g. a user-interaction step
+          // that never resolves) and bubbled up via the error handler.
+          timeout({
+            each: SIGN_INACTIVITY_TIMEOUT_MS,
+            with: () =>
+              throwError(
+                () =>
+                  new Error(
+                    `Signing flow did not progress for ${SIGN_INACTIVITY_TIMEOUT_MS / 1000}s — aborting.`,
+                  ),
+              ),
           }),
         )
         .subscribe({

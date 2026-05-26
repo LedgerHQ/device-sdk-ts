@@ -34,7 +34,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0005,
       usbOnly: true,
       memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
+      getBlockSize: () => 512,
       masks: [0x33100000],
     }),
     [DeviceModelId.NANO_X]: new TransportDeviceModel({
@@ -62,7 +62,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0006,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
+      getBlockSize: () => 512,
       masks: [0x33200000],
       bluetoothSpec: [
         {
@@ -80,7 +80,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0007,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
+      getBlockSize: () => 512,
       masks: [0x33300000],
       bluetoothSpec: [
         {
@@ -98,7 +98,7 @@ export class StaticDeviceModelDataSource implements DeviceModelDataSource {
       bootloaderUsbProductId: 0x0008,
       usbOnly: false,
       memorySize: 1533 * 1024,
-      getBlockSize: () => 32,
+      getBlockSize: () => 512,
       masks: [0x33400000],
       bluetoothSpec: [
         {

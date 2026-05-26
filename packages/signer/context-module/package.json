@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/context-module",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "private": false,
   "license": "Apache-2.0",
   "repository": {
@@ -49,6 +49,7 @@
     "ts-node": "catalog:"
   },
   "dependencies": {
+    "bs58": "catalog:",
     "crypto-js": "catalog:",
     "ethers": "catalog:",
     "inversify": "catalog:",

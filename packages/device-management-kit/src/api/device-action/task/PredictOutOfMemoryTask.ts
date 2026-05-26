@@ -22,6 +22,8 @@ export type PredictOutOfMemoryTaskResult =
       error: UnknownDAError;
     };
 
+const RESERVED_BLOCKS = 1;
+
 export class PredictOutOfMemoryTask {
   private readonly deviceModel: TransportDeviceModel;
 
@@ -74,7 +76,8 @@ export class PredictOutOfMemoryTask {
 
     return {
       outOfMemory:
-        currentMemoryBlocksUsage + installPlanBlocksUsage > totalMemoryBlocks,
+        currentMemoryBlocksUsage + installPlanBlocksUsage >=
+        totalMemoryBlocks - RESERVED_BLOCKS,
     };
   }
 

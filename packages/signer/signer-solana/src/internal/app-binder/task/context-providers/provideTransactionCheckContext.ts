@@ -16,13 +16,13 @@ import { type ProvideContextHandler } from "./provideContextTypes";
 export const provideTransactionCheckContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_TRANSACTION_CHECK
 > = async (result: SolanaTransactionCheckContextSuccess, { api, logger }) => {
-  const { payload, certificate } = result;
+  const { payload, certificate: web3CheckCertificate } = result;
 
-  if (certificate) {
+  if (web3CheckCertificate) {
     await loadCertificate(
       api,
-      certificate,
-      "[SignerSolana] provideTransactionCheckContext: Failed to send transaction-check certificate to device",
+      web3CheckCertificate,
+      "[SignerSolana] provideTransactionCheckContext: Failed to send web3-check certificate to device",
     );
   }
 

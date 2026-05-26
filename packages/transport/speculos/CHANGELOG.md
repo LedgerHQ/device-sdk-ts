@@ -1,5 +1,14 @@
 # @ledgerhq/device-transport-kit-speculos
 
+## 1.2.1
+
+### Patch Changes
+
+- [#1334](https://github.com/LedgerHQ/device-sdk-ts/pull/1334) [`c428276`](https://github.com/LedgerHQ/device-sdk-ts/commit/c42827651315a343eee47061c9751d30c4c379b8) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Replace axios with DmkNetworkClient in the Speculos HTTP data source
+
+- Updated dependencies [[`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b)]:
+  - @ledgerhq/device-management-kit@1.5.1
+
 ## 1.2.0
 
 ### Minor Changes

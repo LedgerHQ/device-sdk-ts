@@ -1,5 +1,16 @@
 # @ledgerhq/device-signer-kit-bitcoin
 
+## 1.3.1
+
+### Patch Changes
+
+- [#1347](https://github.com/LedgerHQ/device-sdk-ts/pull/1347) [`ae31fcc`](https://github.com/LedgerHQ/device-sdk-ts/commit/ae31fcc504186452ed86c18dc6f656ac356998a3) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Extract hardcoded appName string literals into shared APP_NAME constants
+
+- [#1463](https://github.com/LedgerHQ/device-sdk-ts/pull/1463) [`4082737`](https://github.com/LedgerHQ/device-sdk-ts/commit/4082737c4407677f32b191c644fb12cc0d76500a) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Always use protocol version 1 on all Bitcoin APDUs for consistency and to ease future upgrades
+
+- Updated dependencies [[`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b)]:
+  - @ledgerhq/device-management-kit@1.5.1
+
 ## 1.3.0
 
 ### Minor Changes

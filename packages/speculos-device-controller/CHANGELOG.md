@@ -1,5 +1,20 @@
 # @ledgerhq/speculos-device-controller
 
+## 0.3.0
+
+### Minor Changes
+
+- [#1333](https://github.com/LedgerHQ/device-sdk-ts/pull/1333) [`ca4e3fe`](https://github.com/LedgerHQ/device-sdk-ts/commit/ca4e3fe9b6ca3d9487f59cab8c0d2c936af8b6f1) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Add blind signing navigation support to touchscreen device controller
+
+### Patch Changes
+
+- [#1443](https://github.com/LedgerHQ/device-sdk-ts/pull/1443) [`549539a`](https://github.com/LedgerHQ/device-sdk-ts/commit/549539a7778b9dada64468500c986fca371df151) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Use per-device coordinates for the blind signing toggle tap (`enableBlindSigningSettings`). The previous hardcoded `(88%, 51%)` was calibrated for Stax and landed on the wrong row on Flex/Apex.
+
+- [#1334](https://github.com/LedgerHQ/device-sdk-ts/pull/1334) [`c428276`](https://github.com/LedgerHQ/device-sdk-ts/commit/c42827651315a343eee47061c9751d30c4c379b8) Thanks [@mbertin-ledger](https://github.com/mbertin-ledger)! - Replace axios with DmkNetworkClient in the controller HTTP client
+
+- Updated dependencies [[`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b)]:
+  - @ledgerhq/device-management-kit@1.5.1
+
 ## 0.2.3
 
 ### Patch Changes

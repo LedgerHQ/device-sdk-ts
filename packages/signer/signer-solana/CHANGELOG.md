@@ -1,5 +1,15 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.9.1
+
+### Patch Changes
+
+- [#1502](https://github.com/LedgerHQ/device-sdk-ts/pull/1502) [`cf99116`](https://github.com/LedgerHQ/device-sdk-ts/commit/cf991169273d7bf271e37f11eb442e430316ce01) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patch web3check
+
+- Updated dependencies [[`5159b42`](https://github.com/LedgerHQ/device-sdk-ts/commit/5159b42fd33f25e5e595c58ced972df170bd925f), [`7c6c065`](https://github.com/LedgerHQ/device-sdk-ts/commit/7c6c06537912fb6c3f746ad75e6541846a07f399), [`cf99116`](https://github.com/LedgerHQ/device-sdk-ts/commit/cf991169273d7bf271e37f11eb442e430316ce01), [`4883a27`](https://github.com/LedgerHQ/device-sdk-ts/commit/4883a277615d2db18d3e885d42ef7a7c5d788482), [`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b)]:
+  - @ledgerhq/context-module@2.1.0
+  - @ledgerhq/device-management-kit@1.5.1
+
 ## 1.9.0
 
 ### Minor Changes

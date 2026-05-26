@@ -17,6 +17,6 @@ export async function loadCertificate(
     }),
   );
   if (!isSuccessCommandResult(result)) {
-    throw new Error(errorMessage);
+    throw new Error(`${errorMessage} (keyUsage=${certificate.keyUsageNumber})`);
   }
 }

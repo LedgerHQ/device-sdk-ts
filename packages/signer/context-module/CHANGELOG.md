@@ -1,5 +1,22 @@
 # @ledgerhq/context-module
 
+## 2.1.0
+
+### Minor Changes
+
+- [#1506](https://github.com/LedgerHQ/device-sdk-ts/pull/1506) [`4883a27`](https://github.com/LedgerHQ/device-sdk-ts/commit/4883a277615d2db18d3e885d42ef7a7c5d788482) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Improve observability of Ethereum gated signing context loaders: `GatedSigningContextLoader` and `GatedSigningTypedDataContextLoader` now emit a `debug` log with the resulting context types whenever a load succeeds, and a `warn` log with the underlying error messages whenever the direct gated descriptor lookup fails and the proxy fallback also fails, so transient backend issues become attributable instead of being swallowed into a generic context error count.
+
+### Patch Changes
+
+- [#1497](https://github.com/LedgerHQ/device-sdk-ts/pull/1497) [`5159b42`](https://github.com/LedgerHQ/device-sdk-ts/commit/5159b42fd33f25e5e595c58ced972df170bd925f) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Update default blind signing reporter URL to production endpoint `https://blind-signing.api.ledger.com`
+
+- [#1499](https://github.com/LedgerHQ/device-sdk-ts/pull/1499) [`7c6c065`](https://github.com/LedgerHQ/device-sdk-ts/commit/7c6c06537912fb6c3f746ad75e6541846a07f399) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove CAL endpoint ref
+
+- [#1502](https://github.com/LedgerHQ/device-sdk-ts/pull/1502) [`cf99116`](https://github.com/LedgerHQ/device-sdk-ts/commit/cf991169273d7bf271e37f11eb442e430316ce01) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Patch Solana web3check payload
+
+- Updated dependencies [[`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b)]:
+  - @ledgerhq/device-management-kit@1.5.1
+
 ## 2.0.0
 
 ### Major Changes
