@@ -24,6 +24,7 @@ import {
   selectDatasourceConfig,
   selectMetadataServiceConfig,
   selectOriginToken,
+  selectReporterConfig,
   selectWeb3ChecksConfig,
 } from "@/state/settings/selectors";
 
@@ -47,6 +48,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
   const calConfig = useSelector(selectCalConfig);
   const web3ChecksConfig = useSelector(selectWeb3ChecksConfig);
   const metadataServiceConfig = useSelector(selectMetadataServiceConfig);
+  const reporterConfig = useSelector(selectReporterConfig);
   const originToken = useSelector(selectOriginToken);
   const datasourceConfig = useSelector(selectDatasourceConfig);
 
@@ -64,6 +66,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
       .setCalConfig(calConfig)
       .setWeb3ChecksConfig(web3ChecksConfig)
       .setMetadataServiceConfig(metadataServiceConfig)
+      .setReporterConfig(reporterConfig)
       .setDatasourceConfig(datasourceConfig)
       .setAppSource("device-management-kit-playground")
       .setChain(ContextModuleChainID.Ethereum)
@@ -82,6 +85,7 @@ export const SignerEthProvider: React.FC<PropsWithChildren> = ({
     sessionId,
     web3ChecksConfig,
     metadataServiceConfig,
+    reporterConfig,
     originToken,
     datasourceConfig,
   ]);

@@ -107,6 +107,14 @@ export const settingsSlice = createSlice({
       };
     },
 
+    // Reporter config (blind signing tracking)
+    setReporterUrl: (state, action: PayloadAction<{ reporterUrl: string }>) => {
+      state.reporterConfig = {
+        ...state.reporterConfig,
+        url: action.payload.reporterUrl,
+      };
+    },
+
     // Datasource config
     setDatasourceProxy: (
       state,
@@ -141,6 +149,7 @@ export const {
   setOriginToken,
   setWeb3ChecksUrl,
   setMetadataServiceUrl,
+  setReporterUrl,
   setDatasourceProxy,
   hydrateSettings,
 } = settingsSlice.actions;
