@@ -19,9 +19,9 @@ import {
 
 const CLA = 0xe0;
 const P1 = 0x00;
-export const INS = 0x21;
+export const INS = 0x27;
 
-export type ProvideTLVDescriptorCommandArgs = {
+export type ProvideTokenAccountStateCommandArgs = {
   readonly payload: Uint8Array;
   /**
    * Chunking flags following the standard Solana P2_MORE / P2_EXTEND
@@ -33,23 +33,24 @@ export type ProvideTLVDescriptorCommandArgs = {
 };
 
 /**
- * Provides one signed TLV descriptor to the device.
+ * Provides one signed `TOKEN_ACCOUNT_STATE` TLV carrying
+ * `(account, mint, owner, preBalance)`. The caller must issue `GET CHALLENGE`
+ * immediately before this command.
  *
- * The chunking flags `isFirstChunk` / `hasMore` are optional and default to a
- * single-chunk send (P2 = 0x00) so existing single-chunk callers stay
- * byte-compatible. Pass them explicitly when a payload needs more than one
- * APDU.
+ * The caller pre-builds the wire payload (2-byte BE length prefix followed
+ * by the `TOKEN_ACCOUNT_STATE` TLV) and splits it into ≤255-byte chunks.
  */
-export class ProvideTLVDescriptorCommand
-  implements Command<void, ProvideTLVDescriptorCommandArgs, SolanaAppErrorCodes>
+export class ProvideTokenAccountStateCommand
+  implements
+    Command<void, ProvideTokenAccountStateCommandArgs, SolanaAppErrorCodes>
 {
-  readonly name = "provideTLVDescriptor";
+  readonly name = "provideTokenAccountState";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(readonly args: ProvideTLVDescriptorCommandArgs) {}
+  constructor(readonly args: ProvideTokenAccountStateCommandArgs) {}
 
   getApdu(): Apdu {
     const { payload, isFirstChunk = true, hasMore = false } = this.args;

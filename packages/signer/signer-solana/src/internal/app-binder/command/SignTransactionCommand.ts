@@ -15,6 +15,7 @@ import { Just, Maybe, Nothing } from "purify-ts";
 import { type Signature } from "@api/model/Signature";
 import { UserInputType } from "@api/model/TransactionResolutionContext";
 
+import { buildChunkP2 } from "./utils/apduChunking";
 import {
   SOLANA_APP_ERRORS,
   SolanaAppCommandErrorFactory,
@@ -56,9 +57,7 @@ export class SignTransactionCommand
 
   getApdu(): Apdu {
     const { more, extend, serializedTransaction, userInputType } = this.args;
-    let p2 = 0x00;
-    if (more) p2 |= 0x02;
-    if (extend) p2 |= 0x01;
+    let p2 = buildChunkP2(!extend, more);
     if (userInputType === UserInputType.ATA) {
       // `ata` requires the 0x08 flag, `sol` uses the default (no extra flag).
       p2 |= 0x08;

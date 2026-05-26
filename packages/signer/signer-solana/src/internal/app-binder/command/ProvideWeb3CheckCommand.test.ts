@@ -1,13 +1,15 @@
 import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 
 import {
-  P2_EXTEND,
-  P2_MORE,
   ProvideWeb3CheckCommand,
   TRANSACTION_CHECK_CLA,
   TRANSACTION_CHECK_INS,
   TRANSACTION_CHECK_P1_PROVIDE,
 } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import {
+  P2_EXTEND,
+  P2_MORE,
+} from "@internal/app-binder/command/utils/apduChunking";
 
 describe("ProvideWeb3CheckCommand", () => {
   describe("name", () => {

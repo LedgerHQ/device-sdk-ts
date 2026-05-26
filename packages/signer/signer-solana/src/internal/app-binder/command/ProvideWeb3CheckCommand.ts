@@ -10,6 +10,7 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
+import { buildChunkP2 } from "./utils/apduChunking";
 import {
   SOLANA_APP_ERRORS,
   SolanaAppCommandErrorFactory,
@@ -19,8 +20,6 @@ import {
 export const TRANSACTION_CHECK_CLA = 0xe0;
 export const TRANSACTION_CHECK_INS = 0x23;
 export const TRANSACTION_CHECK_P1_PROVIDE = 0x00;
-export const P2_EXTEND = 0x01;
-export const P2_MORE = 0x02;
 
 export type ProvideWeb3CheckCommandArgs = {
   readonly payload: Uint8Array;
@@ -48,9 +47,7 @@ export class ProvideWeb3CheckCommand
   constructor(private readonly args: ProvideWeb3CheckCommandArgs) {}
 
   getApdu(): Apdu {
-    let p2 = 0x00;
-    if (!this.args.isFirstChunk) p2 |= P2_EXTEND;
-    if (this.args.hasMore) p2 |= P2_MORE;
+    const p2 = buildChunkP2(this.args.isFirstChunk, this.args.hasMore);
 
     const apduBuilderArgs: ApduBuilderArgs = {
       cla: TRANSACTION_CHECK_CLA,

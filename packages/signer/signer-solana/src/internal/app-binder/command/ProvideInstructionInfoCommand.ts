@@ -19,9 +19,9 @@ import {
 
 const CLA = 0xe0;
 const P1 = 0x00;
-export const INS = 0x21;
+export const INS = 0x24;
 
-export type ProvideTLVDescriptorCommandArgs = {
+export type ProvideInstructionInfoCommandArgs = {
   readonly payload: Uint8Array;
   /**
    * Chunking flags following the standard Solana P2_MORE / P2_EXTEND
@@ -33,23 +33,24 @@ export type ProvideTLVDescriptorCommandArgs = {
 };
 
 /**
- * Provides one signed TLV descriptor to the device.
+ * Provides one signed `INSTRUCTION_INFO` TLV to the device.
  *
- * The chunking flags `isFirstChunk` / `hasMore` are optional and default to a
- * single-chunk send (P2 = 0x00) so existing single-chunk callers stay
- * byte-compatible. Pass them explicitly when a payload needs more than one
- * APDU.
+ * The caller pre-builds the wire payload (2-byte BE length prefix followed by
+ * the `INSTRUCTION_INFO` TLV) and splits it into ≤255-byte chunks, then sends
+ * each chunk through this command with `isFirstChunk` / `hasMore` flags driving
+ * the standard `P2_MORE` / `P2_EXTEND` chunking convention.
  */
-export class ProvideTLVDescriptorCommand
-  implements Command<void, ProvideTLVDescriptorCommandArgs, SolanaAppErrorCodes>
+export class ProvideInstructionInfoCommand
+  implements
+    Command<void, ProvideInstructionInfoCommandArgs, SolanaAppErrorCodes>
 {
-  readonly name = "provideTLVDescriptor";
+  readonly name = "provideInstructionInfo";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(readonly args: ProvideTLVDescriptorCommandArgs) {}
+  constructor(readonly args: ProvideInstructionInfoCommandArgs) {}
 
   getApdu(): Apdu {
     const { payload, isFirstChunk = true, hasMore = false } = this.args;

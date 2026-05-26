@@ -19,9 +19,20 @@ import {
 
 const CLA = 0xe0;
 const P1 = 0x00;
-export const INS = 0x21;
+export const INS = 0x25;
 
-export type ProvideTLVDescriptorCommandArgs = {
+/**
+ * Substructure-type selector byte. The caller prepends it as the first byte
+ * of the first chunk's payload.
+ */
+export enum SubstructureType {
+  DisplayField = 0x00,
+  ValueFlowPort = 0x01,
+  HideRule = 0x02,
+  AccountReset = 0x03,
+}
+
+export type ProvideInstructionSubstructureCommandArgs = {
   readonly payload: Uint8Array;
   /**
    * Chunking flags following the standard Solana P2_MORE / P2_EXTEND
@@ -33,23 +44,28 @@ export type ProvideTLVDescriptorCommandArgs = {
 };
 
 /**
- * Provides one signed TLV descriptor to the device.
+ * Provides one substructure TLV (DISPLAY_FIELD / VALUE_FLOW_PORT /
+ * HIDE_RULE / ACCOUNT_RESET) referenced by the current `INSTRUCTION_INFO`.
  *
- * The chunking flags `isFirstChunk` / `hasMore` are optional and default to a
- * single-chunk send (P2 = 0x00) so existing single-chunk callers stay
- * byte-compatible. Pass them explicitly when a payload needs more than one
- * APDU.
+ * The caller pre-builds the wire payload — 2-byte BE length prefix, 1-byte
+ * substructure-type selector, then the substructure TLV — and splits it into
+ * ≤255-byte chunks.
  */
-export class ProvideTLVDescriptorCommand
-  implements Command<void, ProvideTLVDescriptorCommandArgs, SolanaAppErrorCodes>
+export class ProvideInstructionSubstructureCommand
+  implements
+    Command<
+      void,
+      ProvideInstructionSubstructureCommandArgs,
+      SolanaAppErrorCodes
+    >
 {
-  readonly name = "provideTLVDescriptor";
+  readonly name = "provideInstructionSubstructure";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(readonly args: ProvideTLVDescriptorCommandArgs) {}
+  constructor(readonly args: ProvideInstructionSubstructureCommandArgs) {}
 
   getApdu(): Apdu {
     const { payload, isFirstChunk = true, hasMore = false } = this.args;
