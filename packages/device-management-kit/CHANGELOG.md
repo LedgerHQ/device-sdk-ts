@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 1.5.1
+
+### Patch Changes
+
+- [#1503](https://github.com/LedgerHQ/device-sdk-ts/pull/1503) [`d26b6c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/d26b6c4717eff4d1c9b4e0c7d197b438e15c010b) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Fix out of memory prediction
+
 ## 1.5.0
 
 ### Minor Changes
