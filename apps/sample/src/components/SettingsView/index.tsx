@@ -15,6 +15,7 @@ import { MockServerToggleSetting } from "./MockServerToggleSetting";
 import { MockServerUrlSetting } from "./MockServerUrlSetting";
 import { OriginTokenSetting } from "./OriginTokenSetting";
 import { PollingIntervalSetting } from "./PollingIntervalSetting";
+import { ReporterUrlSetting } from "./ReporterUrlSetting";
 import { SectionTitle } from "./SectionTitle";
 import { SpeculosDeviceModelSetting } from "./SpeculosDeviceModelSetting";
 import { SpeculosToggleSetting } from "./SpeculosToggleSetting";
@@ -65,6 +66,11 @@ export const SettingsView: React.FC = () => {
         <SectionContainer>
           <SectionTitle>Web3Checks</SectionTitle>
           <Web3ChecksUrlSetting />
+        </SectionContainer>
+
+        <SectionContainer>
+          <SectionTitle>Blind Signing Reporter</SectionTitle>
+          <ReporterUrlSetting />
         </SectionContainer>
 
         <SectionContainer>
