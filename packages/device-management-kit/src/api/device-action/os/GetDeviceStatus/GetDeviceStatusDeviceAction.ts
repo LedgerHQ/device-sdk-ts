@@ -119,7 +119,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
 
     const updateSessionFromOsVersion = (data: GetOsVersionResponse) => {
       const currentState = getDeviceSessionState();
-      if (currentState.sessionStateType === DeviceSessionStateType.Connected) {
+      if (!("firmwareVersion" in currentState)) {
         return;
       }
       setDeviceSessionState({
@@ -132,7 +132,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
 
     const getCachedOnboardingMetadata = () => {
       const state = getDeviceSessionState();
-      if (state.sessionStateType === DeviceSessionStateType.Connected) {
+      if (!("firmwareVersion" in state)) {
         return undefined;
       }
       return state.firmwareVersion?.metadata;
