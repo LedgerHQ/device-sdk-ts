@@ -1,8 +1,7 @@
 import {
-  type Apdu,
-  ApduBuilder,
-  type ApduBuilderArgs,
+  Apdu,
   type ApduResponse,
+  ByteArrayBuilder,
   type Command,
   type CommandResult,
   CommandResultFactory,
@@ -47,17 +46,22 @@ export class SendActionCommand
   constructor(readonly args: SendActionCommandArgs) {}
 
   getApdu(): Apdu {
-    const sendActionArgs: ApduBuilderArgs = {
-      cla: CLA,
-      ins: INS,
-      p1: P1,
-      p2: P2,
-    };
+    const builder = new ByteArrayBuilder().add8BitUIntToData(0x00);
 
-    return new ApduBuilder(sendActionArgs)
-      .add8BitUIntToData(0x00)
-      .encodeInLVFromBuffer(this.args.serializedAction)
-      .build();
+    const payload = this.args.serializedAction;
+    const length = payload.length;
+    if (length < 0x80) {
+      builder.add8BitUIntToData(length);
+    } else if (length <= 0xff) {
+      builder.add8BitUIntToData(0x81);
+      builder.add8BitUIntToData(length);
+    } else {
+      builder.add8BitUIntToData(0x82);
+      builder.add16BitUIntToData(length);
+    }
+    builder.addBufferToData(payload);
+
+    return new Apdu(CLA, INS, P1, P2, builder.build());
   }
 
   parseResponse(
