@@ -3,23 +3,22 @@ import {
   type CommandResult,
   type InternalApi,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  type CommandFactory,
+  DerivationPathUtils,
+  SendCommandInChunksTask,
+} from "@ledgerhq/signer-utils";
 import { type Maybe } from "purify-ts";
 
 import { type Signature } from "@api/model/Signature";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
-
-import {
-  type CommandFactory,
-  SendCommandInChunksTask,
-} from "./SendCommandInChunksTask";
 
 const PATH_SIZE = 4;
 
 type SignDataTaskArgs = {
   sendingData: Uint8Array;
   derivationPath: string;
-  commandFactory: CommandFactory<Maybe<Signature>>;
+  commandFactory: CommandFactory<Maybe<Signature>, SolanaAppErrorCodes>;
 };
 
 export class SignDataTask {
@@ -44,9 +43,12 @@ export class SignDataTask {
     builder.addBufferToData(sendingData);
     const buffer = builder.build();
 
-    return await new SendCommandInChunksTask<Maybe<Signature>>(this.api, {
-      data: buffer,
-      commandFactory,
-    }).run();
+    return await new SendCommandInChunksTask<Maybe<Signature>, SolanaAppErrorCodes>(
+      this.api,
+      {
+        data: buffer,
+        commandFactory,
+      },
+    ).run();
   }
 }

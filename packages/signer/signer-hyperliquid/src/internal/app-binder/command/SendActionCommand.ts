@@ -1,13 +1,17 @@
 import {
-  Apdu,
+  type Apdu,
+  ApduBuilder,
+  type ApduBuilderArgs,
   type ApduResponse,
-  ByteArrayBuilder,
   type Command,
   type CommandResult,
   CommandResultFactory,
   InvalidResponseFormatError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import {
+  type ChunkableCommandArgs,
+  CommandErrorHelper,
+} from "@ledgerhq/signer-utils";
 
 import {
   HYPERLIQUID_ERRORS,
@@ -15,16 +19,14 @@ import {
   type HyperliquidErrorCodes,
 } from "./utils/hyperliquidApplicationErrors";
 
-/** Set action to sign — APDU CLA/INS per specs.md */
+/** SET_ACTION — APDU framing per app-hyperliquid APP_SPECIFICATION.md */
 const CLA = 0xe0;
 const INS = 0x03;
-const P1 = 0x01;
+const P1_FIRST_CHUNK = 0x01;
+const P1_FOLLOWING_CHUNK = 0x00;
 const P2 = 0x00;
 
-export type SendActionCommandArgs = {
-  /** TLV-serialized action (specs.md "Set action to sign" data format) */
-  serializedAction: Uint8Array;
-};
+export type SendActionCommandArgs = ChunkableCommandArgs;
 
 export type SendActionCommandResponse = void;
 
@@ -46,22 +48,18 @@ export class SendActionCommand
   constructor(readonly args: SendActionCommandArgs) {}
 
   getApdu(): Apdu {
-    const builder = new ByteArrayBuilder().add8BitUIntToData(0x00);
+    const p1 = this.args.extend ? P1_FOLLOWING_CHUNK : P1_FIRST_CHUNK;
 
-    const payload = this.args.serializedAction;
-    const length = payload.length;
-    if (length < 0x80) {
-      builder.add8BitUIntToData(length);
-    } else if (length <= 0xff) {
-      builder.add8BitUIntToData(0x81);
-      builder.add8BitUIntToData(length);
-    } else {
-      builder.add8BitUIntToData(0x82);
-      builder.add16BitUIntToData(length);
-    }
-    builder.addBufferToData(payload);
+    const sendActionArgs: ApduBuilderArgs = {
+      cla: CLA,
+      ins: INS,
+      p1,
+      p2: P2,
+    };
 
-    return new Apdu(CLA, INS, P1, P2, builder.build());
+    return new ApduBuilder(sendActionArgs)
+      .addBufferToData(this.args.chunkedData)
+      .build();
   }
 
   parseResponse(
