@@ -585,6 +585,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
             onError: {
               target: "CheckDelayed",
+              actions: ({ event }) => {
+                this.logger?.error(
+                  "[ProvideContext] Failed to provide transaction context, falling back to blind signing",
+                  {
+                    data: { error: event.error },
+                  },
+                );
+              },
             },
           },
         },
