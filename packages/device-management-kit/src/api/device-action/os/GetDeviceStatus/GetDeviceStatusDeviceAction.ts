@@ -130,14 +130,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       });
     };
 
-    const getCachedOnboardingMetadata = () => {
-      const state = getDeviceSessionState();
-      if (!("firmwareVersion" in state)) {
-        return undefined;
-      }
-      return state.firmwareVersion?.metadata;
-    };
-
     return setup({
       types: {
         input: {
@@ -152,16 +144,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         waitForDeviceUnlock: fromObservable(waitForDeviceUnlock),
       },
       guards: {
-        isOnboardedFromCachedMetadata: () => {
-          const metadata = getCachedOnboardingMetadata();
-          return metadata?.secureElementFlags.isOnboarded === true;
-        },
-        isNotOnboardedFromCachedMetadata: () => {
-          const metadata = getCachedOnboardingMetadata();
-          return (
-            metadata !== undefined && !metadata.secureElementFlags.isOnboarded
-          );
-        },
         isCurrentAppBolos: ({ context }) =>
           context._internalState.currentApp === "BOLOS",
         isOnboardedFromOsVersion: ({ context }) =>
@@ -340,21 +322,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         },
         OnboardingCheck: {
           always: [
-            {
-              guard: "isOnboardedFromCachedMetadata",
-              target: "Success",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  onboarded: true,
-                }),
-              }),
-            },
-            {
-              guard: "isNotOnboardedFromCachedMetadata",
-              target: "Error",
-              actions: "assignErrorDeviceNotOnboarded",
-            },
             {
               // The OS version (and thus the onboarding flag) can only be read
               // on the dashboard. If we are inside an application, fetching it

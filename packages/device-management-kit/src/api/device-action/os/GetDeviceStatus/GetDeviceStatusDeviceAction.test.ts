@@ -614,67 +614,6 @@ describe("GetDeviceStatusDeviceAction", () => {
         );
       }));
 
-    it("should end in an error if cached metadata says the device is not onboarded", () =>
-      new Promise<void>((resolve, reject) => {
-        const osVersionData = getOsVersionCommandResponseMockBuilder(
-          DeviceModelId.NANO_X,
-          {
-            secureElementFlags: {
-              ...getOsVersionCommandResponseMockBuilder().secureElementFlags,
-              isOnboarded: false,
-            },
-          },
-        );
-        getDeviceSessionStateMock.mockReturnValue({
-          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-          deviceStatus: DeviceStatus.CONNECTED,
-          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-          installedApps: [],
-          deviceModelId: DeviceModelId.NANO_X,
-          isSecureConnectionAllowed: false,
-          firmwareVersion: {
-            mcu: osVersionData.mcuSephVersion,
-            bootloader: osVersionData.mcuBootloaderVersion,
-            os: osVersionData.seVersion,
-            metadata: osVersionData,
-          },
-        });
-
-        getAppAndVersionMock.mockResolvedValue(
-          appAndVersionResult("BOLOS", "1.0.0"),
-        );
-
-        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-          input: { unlockTimeout: 500 },
-        });
-
-        vi.spyOn(
-          getDeviceStateDeviceAction,
-          "extractDependencies",
-        ).mockReturnValue(extractDependenciesMock());
-
-        const expectedStates: Array<GetDeviceStatusDAState> = [
-          onboardCheckPendingState(),
-          {
-            error: new DeviceNotOnboardedError(),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(
-          getDeviceStateDeviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onDone: () => {
-              expect(getOsVersionMock).not.toHaveBeenCalled();
-              resolve();
-            },
-            onError: reject,
-          },
-        );
-      }));
-
     it("should end in an error if the device is locked and the user does not unlock", () =>
       new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
