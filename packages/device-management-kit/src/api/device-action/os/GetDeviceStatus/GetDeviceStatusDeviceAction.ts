@@ -119,7 +119,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
 
     const updateSessionFromOsVersion = (data: GetOsVersionResponse) => {
       const currentState = getDeviceSessionState();
-      if (!("firmwareVersion" in currentState)) {
+      if (currentState.sessionStateType === DeviceSessionStateType.Connected) {
         return;
       }
       setDeviceSessionState({
@@ -162,7 +162,8 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             metadata !== undefined && !metadata.secureElementFlags.isOnboarded
           );
         },
-        needsOsVersionFetch: () => getCachedOnboardingMetadata() === undefined,
+        isCurrentAppBolos: ({ context }) =>
+          context._internalState.currentApp === "BOLOS",
         isOnboardedFromOsVersion: ({ context }) =>
           context._internalState.osVersionMetadata?.secureElementFlags
             .isOnboarded === true,
@@ -240,108 +241,14 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       states: {
         DeviceReady: {
           always: {
-            target: "OnboardingCheck",
-          },
-        },
-        OnboardingCheck: {
-          always: [
-            {
-              guard: "isOnboardedFromCachedMetadata",
-              target: "AppAndVersionCheck",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  onboarded: true,
-                }),
-              }),
-            },
-            {
-              guard: "isNotOnboardedFromCachedMetadata",
-              target: "Error",
-              actions: "assignErrorDeviceNotOnboarded",
-            },
-            {
-              guard: "needsOsVersionFetch",
-              target: "GetOsVersion",
-            },
-          ],
-        },
-        GetOsVersion: {
-          invoke: {
-            src: "getOsVersion",
-            onDone: {
-              target: "OnboardingResultCheck",
-              actions: assign({
-                _internalState: (_) => {
-                  if (isSuccessCommandResult(_.event.output)) {
-                    updateSessionFromOsVersion(_.event.output.data);
-                    return {
-                      ..._.context._internalState,
-                      osVersionMetadata: _.event.output.data,
-                    };
-                  }
-                  return {
-                    ..._.context._internalState,
-                    error: _.event.output.error,
-                  };
-                },
-              }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
-            },
-          },
-        },
-        OnboardingResultCheck: {
-          always: [
-            {
-              guard: "hasError",
-              target: "Error",
-            },
-            {
-              guard: "isOnboardedFromOsVersion",
-              target: "AppAndVersionCheck",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  onboarded: true,
-                }),
-              }),
-            },
-            {
-              target: "Error",
-              actions: "assignErrorDeviceNotOnboarded",
-            },
-          ],
-        },
-        UserActionUnlockDevice: {
-          // we wait for the device to be unlocked (default timeout is 15s)
-          entry: "assignUserActionUnlockNeeded",
-          exit: "assignNoUserActionNeeded",
-          invoke: {
-            id: "UserActionUnlockDevice",
-            src: "waitForDeviceUnlock",
-            input: (_) => ({
-              unlockTimeout,
-            }),
-            onDone: {
-              target: "AppAndVersionCheck",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  locked: false,
-                }),
-              }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorDeviceLocked",
-            },
+            target: "AppAndVersionCheck",
           },
         },
         AppAndVersionCheck: {
-          // We check the current app and version using the getAppAndVersion command
+          // We check the current app and version using the getAppAndVersion
+          // command. This command is supported both on the dashboard (BOLOS)
+          // and inside applications, so it is used to determine the currently
+          // running app before deciding whether to read the OS version.
           invoke: {
             src: "getAppAndVersion",
             onDone: {
@@ -360,9 +267,9 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                         currentApp: _.event.output.data,
                       });
                     } else {
-                      const osVersionMetadata =
-                        _.context._internalState.osVersionMetadata;
-                      // The device can be set to Ready if GetAppAndVersionCommand was successful
+                      // The device can be set to Ready if GetAppAndVersionCommand was successful.
+                      // The firmware version and secure connection flag are enriched later from
+                      // the OS version, which can only be read on the dashboard.
                       setDeviceSessionState({
                         deviceModelId: state.deviceModelId,
                         sessionStateType:
@@ -370,15 +277,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                         deviceStatus: DeviceStatus.CONNECTED,
                         currentApp: _.event.output.data,
                         installedApps: [],
-                        isSecureConnectionAllowed:
-                          osVersionMetadata?.secureElementFlags
-                            .isSecureConnectionAllowed ?? false,
-                        ...(osVersionMetadata !== null
-                          ? {
-                              firmwareVersion:
-                                firmwareVersionFromOsVersion(osVersionMetadata),
-                            }
-                          : {}),
+                        isSecureConnectionAllowed: false,
                       });
                     }
                     return {
@@ -435,9 +334,121 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
               guard: "isDeviceLocked",
             },
             {
-              target: "Success",
+              target: "OnboardingCheck",
             },
           ],
+        },
+        OnboardingCheck: {
+          always: [
+            {
+              guard: "isOnboardedFromCachedMetadata",
+              target: "Success",
+              actions: assign({
+                _internalState: (_) => ({
+                  ..._.context._internalState,
+                  onboarded: true,
+                }),
+              }),
+            },
+            {
+              guard: "isNotOnboardedFromCachedMetadata",
+              target: "Error",
+              actions: "assignErrorDeviceNotOnboarded",
+            },
+            {
+              // The OS version (and thus the onboarding flag) can only be read
+              // on the dashboard. If we are inside an application, fetching it
+              // would fail, so we only fetch it when the current app is BOLOS.
+              guard: "isCurrentAppBolos",
+              target: "GetOsVersion",
+            },
+            {
+              // A non-BOLOS application can only run on an onboarded device, so
+              // if an app is open we can safely consider the device onboarded
+              // without reading the OS version.
+              target: "Success",
+              actions: assign({
+                _internalState: (_) => ({
+                  ..._.context._internalState,
+                  onboarded: true,
+                }),
+              }),
+            },
+          ],
+        },
+        GetOsVersion: {
+          invoke: {
+            src: "getOsVersion",
+            onDone: {
+              target: "OnboardingResultCheck",
+              actions: assign({
+                _internalState: (_) => {
+                  if (isSuccessCommandResult(_.event.output)) {
+                    updateSessionFromOsVersion(_.event.output.data);
+                    return {
+                      ..._.context._internalState,
+                      osVersionMetadata: _.event.output.data,
+                    };
+                  }
+                  return {
+                    ..._.context._internalState,
+                    error: _.event.output.error,
+                  };
+                },
+              }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        OnboardingResultCheck: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
+            },
+            {
+              guard: "isOnboardedFromOsVersion",
+              target: "Success",
+              actions: assign({
+                _internalState: (_) => ({
+                  ..._.context._internalState,
+                  onboarded: true,
+                }),
+              }),
+            },
+            {
+              target: "Error",
+              actions: "assignErrorDeviceNotOnboarded",
+            },
+          ],
+        },
+        UserActionUnlockDevice: {
+          // we wait for the device to be unlocked (default timeout is 15s)
+          entry: "assignUserActionUnlockNeeded",
+          exit: "assignNoUserActionNeeded",
+          invoke: {
+            id: "UserActionUnlockDevice",
+            src: "waitForDeviceUnlock",
+            input: (_) => ({
+              unlockTimeout,
+            }),
+            onDone: {
+              target: "AppAndVersionCheck",
+              actions: assign({
+                _internalState: (_) => ({
+                  ..._.context._internalState,
+                  locked: false,
+                }),
+              }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorDeviceLocked",
+            },
+          },
         },
         Success: {
           type: "final",
