@@ -78,9 +78,7 @@ export class BuildTransactionContextTask {
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
         ClearSignContextType.SOLANA_TRUSTED_NAME,
-        // !! TODO-WEB3CHECK FLIP THIS BACK ONCE TRANSACTION CHECK IS READY,
-        // TO BE KEEPT OFF FOR NOW
-        //ClearSignContextType.SOLANA_TRANSACTION_CHECK,
+        ClearSignContextType.SOLANA_TRANSACTION_CHECK,
       ],
     );
 
