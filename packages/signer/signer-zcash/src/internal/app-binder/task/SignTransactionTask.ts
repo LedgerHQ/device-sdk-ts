@@ -1,8 +1,10 @@
 import {
+  bufferToHexaString,
   type CommandErrorResult,
   type DmkResult,
   DmkResultFactory,
   type HexaString,
+  hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -36,6 +38,9 @@ import {
   SIGHASH_ALL,
   toInternalTransaction,
 } from "@internal/app-binder/task/utils/legacyTransactionUtils";
+import { areBytesEqual } from "@internal/utils/areBytesEqual";
+import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
+import { uint32ToBytesLE } from "@internal/utils/numberToBytes";
 
 type SignTransactionTaskArgs = {
   transactionArg: LegacyCreateTransactionArg;
@@ -48,8 +53,8 @@ type SignTransactionTaskResult = DmkResult<
 
 type TrustedInputEntry = {
   trustedInput: boolean;
-  value: Buffer;
-  sequence: Buffer;
+  value: Uint8Array;
+  sequence: Uint8Array;
 };
 
 type CollectInputsResult = {
@@ -101,13 +106,12 @@ export class SignTransactionTask {
       });
     }
 
-    const lockTimeBuffer = Buffer.alloc(4);
-    lockTimeBuffer.writeUInt32LE(lockTime, 0);
+    const lockTimeBytes = uint32ToBytesLE(lockTime);
     const defaultVersion = getZcashDefaultTransactionVersion();
     // Ledger Wallet always passes expiry for v5 txs (often zero); required for BIP143 flow.
-    let expiryHeightBuffer: Buffer;
+    let expiryHeightBytes: Uint8Array;
     try {
-      expiryHeightBuffer = resolveExpiryHeightBytes(expiryHeight);
+      expiryHeightBytes = resolveExpiryHeightBytes(expiryHeight);
     } catch (error) {
       return DmkResultFactory({
         error: new InvalidStatusWordError(
@@ -116,21 +120,20 @@ export class SignTransactionTask {
       });
     }
 
-    const outputScript = Buffer.from(outputScriptHex, "hex");
-    const nullPrevout = Buffer.alloc(0);
+    const outputScript =
+      hexaStringToBuffer(outputScriptHex) ?? new Uint8Array();
+    const nullPrevout = new Uint8Array(0);
     const targetTransaction: InternalTransaction = {
       inputs: [],
       version: defaultVersion,
-      timestamp: Buffer.alloc(0),
+      timestamp: new Uint8Array(0),
     };
     // These fields are constant across all inputs — set once before processing.
-    targetTransaction.nVersionGroupId = Buffer.from([0x0a, 0x27, 0xa7, 0x26]);
-    targetTransaction.nExpiryHeight = expiryHeightBuffer;
+    targetTransaction.nVersionGroupId = Uint8Array.of(0x0a, 0x27, 0xa7, 0x26);
+    targetTransaction.nExpiryHeight = expiryHeightBytes;
     targetTransaction.extraData = sapling
-      ? Buffer.from([
-          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        ])
-      : Buffer.from([0x00]);
+      ? new Uint8Array(11)
+      : Uint8Array.of(0x00);
 
     const inputsResult = await this.collectTrustedInputsAndOutputs(inputs);
     if (!("trustedInputs" in inputsResult)) {
@@ -139,12 +142,10 @@ export class SignTransactionTask {
     const { trustedInputs, regularOutputs } = inputsResult;
 
     targetTransaction.inputs = inputs.map((input, idx) => {
-      const sequence = Buffer.alloc(4);
-      sequence.writeUInt32LE(
+      const sequence = uint32ToBytesLE(
         input.length >= 4 && typeof input[3] === "number"
           ? input[3]
           : DEFAULT_SEQUENCE,
-        0,
       );
       return {
         script: regularOutputs[idx]!.script,
@@ -180,7 +181,7 @@ export class SignTransactionTask {
       sapling,
       lockTime,
       sigHashType,
-      expiryHeightBuffer,
+      expiryHeightBytes,
     );
     if (hashError) {
       return hashError;
@@ -194,7 +195,7 @@ export class SignTransactionTask {
       trustedInputs,
       lockTime,
       sigHashType,
-      expiryHeightBuffer,
+      expiryHeightBytes,
     );
     if (!Array.isArray(signaturesResult)) {
       return signaturesResult;
@@ -204,12 +205,12 @@ export class SignTransactionTask {
     targetTransaction.version = defaultVersion;
     targetTransaction.consensusBranchId = getZcashBranchId(blockHeight);
     for (let i = 0; i < inputs.length; i += 1) {
-      targetTransaction.inputs[i]!.script = Buffer.concat([
-        Buffer.from([signatures[i]!.length]),
+      targetTransaction.inputs[i]!.script = concatUint8Arrays(
+        Uint8Array.of(signatures[i]!.length),
         signatures[i]!,
-        Buffer.from([publicKeys[i]!.length]),
+        Uint8Array.of(publicKeys[i]!.length),
         publicKeys[i]!,
-      ]);
+      );
       const offset = 4;
       targetTransaction.inputs[i]!.prevout = trustedInputs[i]!.value.subarray(
         offset,
@@ -217,15 +218,15 @@ export class SignTransactionTask {
       );
     }
 
-    targetTransaction.locktime = lockTimeBuffer;
-    let result = Buffer.concat([
+    targetTransaction.locktime = lockTimeBytes;
+    const result = concatUint8Arrays(
       serializeTransaction(targetTransaction, targetTransaction.timestamp),
       outputScript,
-    ]);
-    result = Buffer.concat([result, Buffer.from([0x00, 0x00, 0x00])]);
+      Uint8Array.of(0x00, 0x00, 0x00),
+    );
 
     return DmkResultFactory({
-      data: `0x${result.toString("hex")}` as HexaString,
+      data: bufferToHexaString(result, true),
     });
   }
 
@@ -248,16 +249,14 @@ export class SignTransactionTask {
         return trustedInputResult;
       }
 
-      const sequence = Buffer.alloc(4);
-      sequence.writeUInt32LE(
+      const sequence = uint32ToBytesLE(
         input.length >= 4 && typeof input[3] === "number"
           ? input[3]
           : DEFAULT_SEQUENCE,
-        0,
       );
       trustedInputs.push({
         trustedInput: true,
-        value: Buffer.from(trustedInputResult, "hex"),
+        value: hexaStringToBuffer(trustedInputResult) ?? new Uint8Array(),
         sequence,
       });
 
@@ -285,8 +284,8 @@ export class SignTransactionTask {
 
   private async collectPublicKeys(
     associatedKeysets: string[],
-  ): Promise<Buffer[] | SignTransactionTaskResult> {
-    const publicKeys: Buffer[] = [];
+  ): Promise<Uint8Array[] | SignTransactionTaskResult> {
+    const publicKeys: Uint8Array[] = [];
 
     for (const derivationPath of associatedKeysets) {
       const pubKeyResult = await this.api.sendCommand(
@@ -298,9 +297,7 @@ export class SignTransactionTask {
       if (!isSuccessCommandResult(pubKeyResult)) {
         return DmkResultFactory({ error: pubKeyResult.error });
       }
-      publicKeys.push(
-        compressPublicKey(Buffer.from(pubKeyResult.data.publicKey)),
-      );
+      publicKeys.push(compressPublicKey(pubKeyResult.data.publicKey));
     }
 
     return publicKeys;
@@ -309,8 +306,8 @@ export class SignTransactionTask {
   private async shouldProvideChangePath(
     changePath: string | undefined,
     associatedKeysets: string[],
-    publicKeys: Buffer[],
-    outputScript: Buffer,
+    publicKeys: Uint8Array[],
+    outputScript: Uint8Array,
   ): Promise<boolean | SignTransactionTaskResult> {
     const changePathTrimmed =
       typeof changePath === "string" ? changePath.trim() : "";
@@ -319,7 +316,7 @@ export class SignTransactionTask {
     }
 
     const reuseIdx = associatedKeysets.indexOf(changePathTrimmed);
-    let ledgerPubForChange: Buffer;
+    let ledgerPubForChange: Uint8Array;
     if (reuseIdx >= 0) {
       ledgerPubForChange = publicKeys[reuseIdx]!;
     } else {
@@ -332,7 +329,7 @@ export class SignTransactionTask {
       if (!isSuccessCommandResult(changeAddrResult)) {
         return DmkResultFactory({ error: changeAddrResult.error });
       }
-      ledgerPubForChange = Buffer.from(changeAddrResult.data.publicKey);
+      ledgerPubForChange = changeAddrResult.data.publicKey;
     }
 
     try {
@@ -344,7 +341,7 @@ export class SignTransactionTask {
       return (
         outputScripts !== null &&
         outputScripts.length >= 2 &&
-        outputScripts.some((s) => s.equals(expectedChangeScript))
+        outputScripts.some((s) => areBytesEqual(s, expectedChangeScript))
       );
     } catch {
       return false;
@@ -356,11 +353,11 @@ export class SignTransactionTask {
     trustedInputs: TrustedInputEntry[],
     changePath: string | undefined,
     provideChangePath: boolean,
-    outputScript: Buffer,
+    outputScript: Uint8Array,
     sapling: boolean,
     lockTime: number,
     sigHashType: number,
-    expiryHeightBuffer: Buffer,
+    expiryHeightBytes: Uint8Array,
   ): Promise<SignTransactionTaskResult | null> {
     const globalHashInputResult = await this.startUntrustedHashTransactionInput(
       true,
@@ -392,7 +389,7 @@ export class SignTransactionTask {
         new ZcashSaplingOutputCommitCommand({
           lockTime,
           sigHashType,
-          expiryHeight: expiryHeightBuffer,
+          expiryHeight: expiryHeightBytes,
         }),
       );
       if (!isSuccessCommandResult(saplingCommitResult)) {
@@ -411,15 +408,15 @@ export class SignTransactionTask {
     trustedInputs: TrustedInputEntry[],
     lockTime: number,
     sigHashType: number,
-    expiryHeightBuffer: Buffer,
-  ): Promise<Buffer[] | SignTransactionTaskResult> {
-    const signatures: Buffer[] = [];
+    expiryHeightBytes: Uint8Array,
+  ): Promise<Uint8Array[] | SignTransactionTaskResult> {
+    const signatures: Uint8Array[] = [];
 
     for (let i = 0; i < inputs.length; i += 1) {
       const input = inputs[i]!;
       const script =
         input.length >= 3 && typeof input[2] === "string"
-          ? Buffer.from(input[2], "hex")
+          ? (hexaStringToBuffer(input[2]) ?? new Uint8Array())
           : regularOutputs[i]!.script;
 
       const pseudoTransaction: InternalTransaction = {
@@ -441,13 +438,13 @@ export class SignTransactionTask {
           derivationPath: associatedKeysets[i]!,
           lockTime,
           sigHashType,
-          expiryHeight: expiryHeightBuffer,
+          expiryHeight: expiryHeightBytes,
         }),
       );
       if (!isSuccessCommandResult(signatureResult)) {
         return DmkResultFactory({ error: signatureResult.error });
       }
-      signatures.push(Buffer.from(signatureResult.data.signature));
+      signatures.push(signatureResult.data.signature);
     }
 
     return signatures;
@@ -461,20 +458,20 @@ export class SignTransactionTask {
     const serializedTransaction =
       serializedPreviousTransactionOverride &&
       serializedPreviousTransactionOverride.length > 0
-        ? Buffer.from(serializedPreviousTransactionOverride)
+        ? serializedPreviousTransactionOverride
         : serializeTransaction(transaction, transaction.timestamp);
     const trustedInputResult = await new GetTrustedInputTask(this.api, {
-      transaction: new Uint8Array(serializedTransaction),
+      transaction: serializedTransaction,
       indexLookup,
     }).run();
     if (!isSuccessDmkResult(trustedInputResult)) {
       return DmkResultFactory({ error: trustedInputResult.error });
     }
-    return Buffer.from(trustedInputResult.data.data).toString("hex");
+    return bufferToHexaString(trustedInputResult.data.data, false);
   }
 
   private async hashOutputFull(
-    outputScript: Buffer,
+    outputScript: Uint8Array,
   ): Promise<SignTransactionTaskResult | null> {
     let offset = 0;
     while (offset < outputScript.length) {
@@ -485,7 +482,7 @@ export class SignTransactionTask {
       const chunk = outputScript.subarray(offset, offset + blockSize);
       const result = await this.api.sendCommand(
         new HashOutputFullCommand({
-          outputChunk: new Uint8Array(chunk),
+          outputChunk: chunk,
           isLastChunk: offset + blockSize === outputScript.length,
         }),
       );
@@ -497,11 +494,11 @@ export class SignTransactionTask {
     return null;
   }
 
-  private buildScriptBlocks(input: InternalTransactionInput): Buffer[] {
+  private buildScriptBlocks(input: InternalTransactionInput): Uint8Array[] {
     if (input.script.length === 0) {
       return [input.sequence];
     }
-    const blocks: Buffer[] = [];
+    const blocks: Uint8Array[] = [];
     let offset = 0;
     while (offset !== input.script.length) {
       const blockSize = Math.min(
@@ -511,8 +508,8 @@ export class SignTransactionTask {
       const chunk = input.script.subarray(offset, offset + blockSize);
       blocks.push(
         offset + blockSize === input.script.length
-          ? Buffer.concat([chunk, input.sequence])
-          : Buffer.from(chunk),
+          ? concatUint8Arrays(chunk, input.sequence)
+          : Uint8Array.from(chunk),
       );
       offset += blockSize;
     }
@@ -520,7 +517,7 @@ export class SignTransactionTask {
   }
 
   private async sendInputBlocks(
-    blocks: Buffer[],
+    blocks: Uint8Array[],
     newTransaction: boolean,
   ): Promise<SignTransactionTaskResult | null> {
     for (const block of blocks) {
@@ -528,7 +525,7 @@ export class SignTransactionTask {
         new StartUntrustedHashTransactionInputCommand({
           newTransaction,
           firstRound: false,
-          transactionData: new Uint8Array(block),
+          transactionData: block,
         }),
       );
       if (!isSuccessCommandResult(result)) {
@@ -544,20 +541,20 @@ export class SignTransactionTask {
     trustedInputs: TrustedInputEntry[],
   ): Promise<SignTransactionTaskResult | null> {
     const zCashConsensusBranchId =
-      transaction.consensusBranchId || Buffer.alloc(0);
-    const header = Buffer.concat([
+      transaction.consensusBranchId || new Uint8Array(0);
+    const header = concatUint8Arrays(
       transaction.version,
-      transaction.timestamp || Buffer.alloc(0),
-      transaction.nVersionGroupId || Buffer.alloc(0),
+      transaction.timestamp || new Uint8Array(0),
+      transaction.nVersionGroupId || new Uint8Array(0),
       zCashConsensusBranchId,
       createVarint(transaction.inputs.length),
-    ]);
+    );
 
     const firstHeaderResult = await this.api.sendCommand(
       new StartUntrustedHashTransactionInputCommand({
         newTransaction,
         firstRound: true,
-        transactionData: new Uint8Array(header),
+        transactionData: header,
       }),
     );
     if (!isSuccessCommandResult(firstHeaderResult)) {
@@ -568,19 +565,19 @@ export class SignTransactionTask {
       const input = transaction.inputs[index]!;
       const inputValue = trustedInputs[index]!.value;
       const prefix = trustedInputs[index]!.trustedInput
-        ? Buffer.from([0x01, inputValue.length])
-        : Buffer.from([0x00]);
+        ? Uint8Array.of(0x01, inputValue.length)
+        : Uint8Array.of(0x00);
 
-      const inputHeader = Buffer.concat([
+      const inputHeader = concatUint8Arrays(
         prefix,
         inputValue,
         createVarint(input.script.length),
-      ]);
+      );
       const inputHeaderResult = await this.api.sendCommand(
         new StartUntrustedHashTransactionInputCommand({
           newTransaction,
           firstRound: false,
-          transactionData: new Uint8Array(inputHeader),
+          transactionData: inputHeader,
         }),
       );
       if (!isSuccessCommandResult(inputHeaderResult)) {

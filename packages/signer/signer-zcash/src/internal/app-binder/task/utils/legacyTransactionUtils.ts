@@ -6,6 +6,8 @@ import {
   type LegacyTransactionInput,
   type LegacyTransactionOutput,
 } from "@api/model/CreateTransactionArg";
+import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
+import { uint32ToBytesLE } from "@internal/utils/numberToBytes";
 
 export const MAX_SCRIPT_BLOCK = 50;
 export const DEFAULT_LOCKTIME = 0;
@@ -28,98 +30,104 @@ const ZCASH_ACTIVATION_HEIGHTS = {
 } as const;
 
 export type InternalTransactionInput = {
-  prevout: Buffer;
-  script: Buffer;
-  sequence: Buffer;
-  tree?: Buffer;
+  prevout: Uint8Array;
+  script: Uint8Array;
+  sequence: Uint8Array;
+  tree?: Uint8Array;
 };
 
 export type InternalTransactionOutput = {
-  amount: Buffer;
-  script: Buffer;
+  amount: Uint8Array;
+  script: Uint8Array;
 };
 
 export type InternalTransaction = {
-  version: Buffer;
+  version: Uint8Array;
   inputs: InternalTransactionInput[];
   outputs?: InternalTransactionOutput[];
-  locktime?: Buffer;
-  timestamp?: Buffer;
-  nVersionGroupId?: Buffer;
-  nExpiryHeight?: Buffer;
-  extraData?: Buffer;
-  consensusBranchId?: Buffer;
+  locktime?: Uint8Array;
+  timestamp?: Uint8Array;
+  nVersionGroupId?: Uint8Array;
+  nExpiryHeight?: Uint8Array;
+  extraData?: Uint8Array;
+  consensusBranchId?: Uint8Array;
 };
 
-export const toBuffer = (value: Uint8Array): Buffer => Buffer.from(value);
+const copyBytes = (value: Uint8Array): Uint8Array => Uint8Array.from(value);
+
+const readUint16LE = (buf: Uint8Array, offset: number): number =>
+  new DataView(buf.buffer, buf.byteOffset, buf.byteLength).getUint16(
+    offset,
+    true,
+  );
+
+const readUint32LE = (buf: Uint8Array, offset: number): number =>
+  new DataView(buf.buffer, buf.byteOffset, buf.byteLength).getUint32(
+    offset,
+    true,
+  );
 
 const toInternalInput = (
   input: LegacyTransactionInput,
 ): InternalTransactionInput => ({
-  prevout: toBuffer(input.prevout),
-  script: toBuffer(input.script),
-  sequence: toBuffer(input.sequence),
-  tree: input.tree ? toBuffer(input.tree) : undefined,
+  prevout: copyBytes(input.prevout),
+  script: copyBytes(input.script),
+  sequence: copyBytes(input.sequence),
+  tree: input.tree ? copyBytes(input.tree) : undefined,
 });
 
 const toInternalOutput = (
   output: LegacyTransactionOutput,
 ): InternalTransactionOutput => ({
-  amount: toBuffer(output.amount),
-  script: toBuffer(output.script),
+  amount: copyBytes(output.amount),
+  script: copyBytes(output.script),
 });
 
 export const toInternalTransaction = (
   transaction: LegacyTransaction,
 ): InternalTransaction => ({
-  version: toBuffer(transaction.version),
+  version: copyBytes(transaction.version),
   inputs: transaction.inputs.map(toInternalInput),
   outputs: transaction.outputs?.map(toInternalOutput),
-  locktime: transaction.locktime ? toBuffer(transaction.locktime) : undefined,
+  locktime: transaction.locktime ? copyBytes(transaction.locktime) : undefined,
   timestamp: transaction.timestamp
-    ? toBuffer(transaction.timestamp)
+    ? copyBytes(transaction.timestamp)
     : undefined,
   nVersionGroupId: transaction.nVersionGroupId
-    ? toBuffer(transaction.nVersionGroupId)
+    ? copyBytes(transaction.nVersionGroupId)
     : undefined,
   nExpiryHeight: transaction.nExpiryHeight
-    ? toBuffer(transaction.nExpiryHeight)
+    ? copyBytes(transaction.nExpiryHeight)
     : undefined,
   extraData: transaction.extraData
-    ? toBuffer(transaction.extraData)
+    ? copyBytes(transaction.extraData)
     : undefined,
   consensusBranchId: transaction.consensusBranchId
-    ? toBuffer(transaction.consensusBranchId)
+    ? copyBytes(transaction.consensusBranchId)
     : undefined,
 });
 
-export const createVarint = (value: number): Buffer => {
+export const createVarint = (value: number): Uint8Array => {
   if (value < 0xfd) {
-    const buffer = Buffer.alloc(1);
-    buffer[0] = value;
-    return buffer;
+    return Uint8Array.of(value);
   }
 
   if (value <= 0xffff) {
-    const buffer = Buffer.alloc(3);
-    buffer[0] = 0xfd;
-    buffer[1] = value & 0xff;
-    buffer[2] = (value >> 8) & 0xff;
-    return buffer;
+    return Uint8Array.of(0xfd, value & 0xff, (value >> 8) & 0xff);
   }
 
-  const buffer = Buffer.alloc(5);
-  buffer[0] = 0xfe;
-  buffer[1] = value & 0xff;
-  buffer[2] = (value >> 8) & 0xff;
-  buffer[3] = (value >> 16) & 0xff;
-  buffer[4] = (value >> 24) & 0xff;
-  return buffer;
+  return Uint8Array.of(
+    0xfe,
+    value & 0xff,
+    (value >> 8) & 0xff,
+    (value >> 16) & 0xff,
+    (value >> 24) & 0xff,
+  );
 };
 
 /** Reads a Bitcoin-style varint compatible with {@link createVarint}. */
 export const readVarint = (
-  buf: Buffer,
+  buf: Uint8Array,
   offset: number,
 ): [value: number, nextOffset: number] | null => {
   if (offset >= buf.length) return null;
@@ -129,16 +137,16 @@ export const readVarint = (
   }
   if (first === 0xfd) {
     if (offset + 3 > buf.length) return null;
-    return [buf.readUInt16LE(offset + 1), offset + 3];
+    return [readUint16LE(buf, offset + 1), offset + 3];
   }
   if (first === 0xfe) {
     if (offset + 5 > buf.length) return null;
-    return [buf.readUInt32LE(offset + 1) >>> 0, offset + 5];
+    return [readUint32LE(buf, offset + 1) >>> 0, offset + 5];
   }
   if (first === 0xff) {
     if (offset + 9 > buf.length) return null;
-    const lo = buf.readUInt32LE(offset + 1);
-    const hi = buf.readUInt32LE(offset + 5);
+    const lo = readUint32LE(buf, offset + 1);
+    const hi = readUint32LE(buf, offset + 5);
     if (hi !== 0) return null;
     return [lo, offset + 9];
   }
@@ -151,14 +159,14 @@ export const readVarint = (
  * length + script)*.
  */
 export const parseOutputScriptsFromPaymentOutputBlob = (
-  blob: Buffer,
-): Buffer[] | null => {
+  blob: Uint8Array,
+): Uint8Array[] | null => {
   if (blob.length === 0) return null;
   const head = readVarint(blob, 0);
   if (head === null || head[0] < 0) return null;
   const outputCount = head[0];
   let offset = head[1];
-  const scripts: Buffer[] = [];
+  const scripts: Uint8Array[] = [];
   for (let i = 0; i < outputCount; i += 1) {
     if (offset + 8 > blob.length) return null;
     offset += 8;
@@ -175,18 +183,21 @@ export const parseOutputScriptsFromPaymentOutputBlob = (
 
 export const serializeTransactionOutputs = ({
   outputs,
-}: InternalTransaction): Buffer => {
-  let outputBuffer = Buffer.alloc(0);
+}: InternalTransaction): Uint8Array => {
+  let outputBuffer: Uint8Array = new Uint8Array(0);
 
   if (outputs) {
-    outputBuffer = Buffer.concat([outputBuffer, createVarint(outputs.length)]);
+    outputBuffer = concatUint8Arrays(
+      outputBuffer,
+      createVarint(outputs.length),
+    );
     outputs.forEach((output) => {
-      outputBuffer = Buffer.concat([
+      outputBuffer = concatUint8Arrays(
         outputBuffer,
         output.amount,
         createVarint(output.script.length),
         output.script,
-      ]);
+      );
     });
   }
 
@@ -195,55 +206,55 @@ export const serializeTransactionOutputs = ({
 
 export const serializeTransaction = (
   transaction: InternalTransaction,
-  timestampOverride?: Buffer,
-): Buffer => {
-  let inputBuffer = Buffer.alloc(0);
+  timestampOverride?: Uint8Array,
+): Uint8Array => {
+  let inputBuffer: Uint8Array = new Uint8Array(0);
 
   transaction.inputs.forEach((input) => {
-    inputBuffer = Buffer.concat([
+    inputBuffer = concatUint8Arrays(
       inputBuffer,
       input.prevout,
       createVarint(input.script.length),
       input.script,
       input.sequence,
-    ]);
+    );
   });
 
-  let outputBuffer = serializeTransactionOutputs(transaction);
+  let outputBuffer: Uint8Array = serializeTransactionOutputs(transaction);
   if (transaction.outputs && transaction.locktime) {
-    outputBuffer = Buffer.concat([
+    outputBuffer = concatUint8Arrays(
       outputBuffer,
-      Buffer.alloc(3, 0),
-      transaction.extraData || Buffer.alloc(0),
-    ]);
+      new Uint8Array(3),
+      transaction.extraData || new Uint8Array(0),
+    );
   }
 
-  return Buffer.concat([
+  return concatUint8Arrays(
     transaction.version,
-    timestampOverride ?? transaction.timestamp ?? Buffer.alloc(0),
-    transaction.nVersionGroupId || Buffer.alloc(0),
-    transaction.consensusBranchId || Buffer.alloc(0),
-    transaction.locktime || Buffer.alloc(0),
-    transaction.nExpiryHeight || Buffer.alloc(0),
+    timestampOverride ?? transaction.timestamp ?? new Uint8Array(0),
+    transaction.nVersionGroupId || new Uint8Array(0),
+    transaction.consensusBranchId || new Uint8Array(0),
+    transaction.locktime || new Uint8Array(0),
+    transaction.nExpiryHeight || new Uint8Array(0),
     createVarint(transaction.inputs.length),
     inputBuffer,
     outputBuffer,
-  ]);
+  );
 };
 
-export const compressPublicKey = (publicKey: Buffer): Buffer => {
+export const compressPublicKey = (publicKey: Uint8Array): Uint8Array => {
   const prefix = ((publicKey.at(64) ?? 0) & 1) === 0 ? 0x02 : 0x03;
-  return Buffer.concat([Buffer.from([prefix]), publicKey.subarray(1, 33)]);
+  return concatUint8Arrays(Uint8Array.of(prefix), publicKey.subarray(1, 33));
 };
 
-export const hashPublicKey = (buffer: Buffer): Buffer =>
-  Buffer.from(ripemd160(sha256(buffer)));
+export const hashPublicKey = (buffer: Uint8Array): Uint8Array =>
+  ripemd160(sha256(buffer));
 
 /** P2PKH `scriptPubKey` for a transparent Zcash address from a Ledger `GetAddress` pubkey. */
 export const buildP2pkhScriptPubKeyFromLedgerZcashPublicKey = (
-  ledgerPublicKey: Buffer,
-): Buffer => {
-  let compressed: Buffer | null;
+  ledgerPublicKey: Uint8Array,
+): Uint8Array => {
+  let compressed: Uint8Array | null;
   if (ledgerPublicKey.length === 65) {
     compressed = compressPublicKey(ledgerPublicKey);
   } else if (ledgerPublicKey.length === 33) {
@@ -257,47 +268,42 @@ export const buildP2pkhScriptPubKeyFromLedgerZcashPublicKey = (
     );
   }
   const pubHash = hashPublicKey(compressed);
-  return Buffer.concat([
-    Buffer.from([OP_DUP, OP_HASH160, HASH_SIZE]),
+  return concatUint8Arrays(
+    Uint8Array.of(OP_DUP, OP_HASH160, HASH_SIZE),
     pubHash,
-    Buffer.from([OP_EQUALVERIFY, OP_CHECKSIG]),
-  ]);
+    Uint8Array.of(OP_EQUALVERIFY, OP_CHECKSIG),
+  );
 };
 
 export const getZcashBranchId = (
   blockHeight: number | null | undefined,
-): Buffer => {
-  const branchId = Buffer.alloc(4);
+): Uint8Array => {
   if (
     blockHeight === null ||
     blockHeight === undefined ||
     blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_1
   ) {
-    branchId.writeUInt32LE(0x4dec4df0, 0);
+    return uint32ToBytesLE(0x4dec4df0);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6) {
-    branchId.writeUInt32LE(0xc8e71055, 0);
+    return uint32ToBytesLE(0xc8e71055);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU5) {
-    branchId.writeUInt32LE(0xc2d6d0b4, 0);
+    return uint32ToBytesLE(0xc2d6d0b4);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.CANOPY) {
-    branchId.writeUInt32LE(0xe9ff75a6, 0);
+    return uint32ToBytesLE(0xe9ff75a6);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.HEARTWOOD) {
-    branchId.writeUInt32LE(0xf5b9230b, 0);
+    return uint32ToBytesLE(0xf5b9230b);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.BLOSSOM) {
-    branchId.writeUInt32LE(0x2bb40e60, 0);
+    return uint32ToBytesLE(0x2bb40e60);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.SAPLING) {
-    branchId.writeUInt32LE(0x76b809bb, 0);
+    return uint32ToBytesLE(0x76b809bb);
   } else {
-    branchId.writeUInt32LE(0x5ba81b19, 0);
+    return uint32ToBytesLE(0x5ba81b19);
   }
-  return branchId;
 };
 
 /** Zcash transparent v5 transaction version used with the Zcash Ledger app. */
-export const getZcashDefaultTransactionVersion = (): Buffer => {
-  const version = Buffer.alloc(4);
-  version.writeUInt32LE(0x80000005, 0);
-  return version;
-};
+export const getZcashDefaultTransactionVersion = (): Uint8Array =>
+  uint32ToBytesLE(0x80000005);
 
 export const EXPIRY_HEIGHT_BYTE_LENGTH = 4;
 
@@ -305,14 +311,16 @@ export const EXPIRY_HEIGHT_BYTE_LENGTH = 4;
  * Zcash SIGN (`0x48`) and v5 transaction serialization require a 4-byte expiry height.
  * Undefined or empty input is normalized to four zero bytes.
  */
-export function resolveExpiryHeightBytes(expiryHeight?: Uint8Array): Buffer {
+export function resolveExpiryHeightBytes(
+  expiryHeight?: Uint8Array,
+): Uint8Array {
   if (expiryHeight === undefined || expiryHeight.byteLength === 0) {
-    return Buffer.alloc(EXPIRY_HEIGHT_BYTE_LENGTH, 0);
+    return new Uint8Array(EXPIRY_HEIGHT_BYTE_LENGTH);
   }
   if (expiryHeight.byteLength !== EXPIRY_HEIGHT_BYTE_LENGTH) {
     throw new Error(
       `expiryHeight must be ${EXPIRY_HEIGHT_BYTE_LENGTH} bytes (got ${expiryHeight.byteLength})`,
     );
   }
-  return Buffer.from(expiryHeight);
+  return copyBytes(expiryHeight);
 }

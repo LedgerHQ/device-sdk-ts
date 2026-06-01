@@ -17,6 +17,7 @@ import {
   P2,
   ZCASH_CLA,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { uint32ToBytesBE } from "@internal/utils/numberToBytes";
 
 import {
   ZCASH_APP_ERRORS,
@@ -28,7 +29,7 @@ export type SignTransactionCommandArgs = {
   derivationPath: string;
   lockTime: number;
   sigHashType: number;
-  expiryHeight: Buffer;
+  expiryHeight: Uint8Array;
 };
 
 export type SignTransactionCommandResponse = {
@@ -55,8 +56,7 @@ export class SignTransactionCommand
   getApdu(): Apdu {
     const { derivationPath, expiryHeight, lockTime, sigHashType } = this.args;
     const path = DerivationPathUtils.splitPath(derivationPath);
-    const lockTimeBuffer = Buffer.alloc(4);
-    lockTimeBuffer.writeUInt32BE(lockTime, 0);
+    const lockTimeBytes = uint32ToBytesBE(lockTime);
 
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
@@ -72,7 +72,7 @@ export class SignTransactionCommand
 
     builder
       .add8BitUIntToData(0x00)
-      .addBufferToData(lockTimeBuffer)
+      .addBufferToData(lockTimeBytes)
       .add8BitUIntToData(sigHashType);
 
     builder.addBufferToData(expiryHeight);

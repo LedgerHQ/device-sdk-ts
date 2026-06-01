@@ -14,6 +14,8 @@ import {
   P2,
   ZCASH_CLA,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { concatUint8Arrays } from "@internal/utils/concatUint8Arrays";
+import { uint32ToBytesLE } from "@internal/utils/numberToBytes";
 
 import {
   ZCASH_APP_ERRORS,
@@ -26,7 +28,7 @@ const SIGN_TRANSACTION = 0x48;
 export type ZcashSaplingOutputCommitCommandArgs = {
   lockTime: number;
   sigHashType: number;
-  expiryHeight: Buffer;
+  expiryHeight: Uint8Array;
 };
 
 export type ZcashSaplingOutputCommitCommandResponse = {
@@ -56,14 +58,12 @@ export class ZcashSaplingOutputCommitCommand
 
   getApdu(): Apdu {
     const { lockTime, sigHashType, expiryHeight } = this.args;
-    const lockTimeLe = Buffer.alloc(4);
-    lockTimeLe.writeUInt32LE(lockTime, 0);
-    const payload = Buffer.concat([
-      lockTimeLe,
-      Buffer.from([0x00, 0x00]),
-      Buffer.from([sigHashType & 0xff]),
+    const payload = concatUint8Arrays(
+      uint32ToBytesLE(lockTime),
+      Uint8Array.of(0x00, 0x00),
+      Uint8Array.of(sigHashType & 0xff),
       expiryHeight,
-    ]);
+    );
     if (payload.length !== 11) {
       throw new Error("ZcashSaplingOutputCommit: internal payload length");
     }
@@ -74,9 +74,7 @@ export class ZcashSaplingOutputCommitCommand
       p1: 0x00,
       p2: P2.DEFAULT,
     };
-    return new ApduBuilder(apduArgs)
-      .addBufferToData(new Uint8Array(payload))
-      .build();
+    return new ApduBuilder(apduArgs).addBufferToData(payload).build();
   }
 
   parseResponse(
