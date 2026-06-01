@@ -114,7 +114,11 @@ export class SolanaTransactionCheckLoader
     const txCheck = await this.transactionCheckDataSource.check({
       path: TransactionCheckPaths.SOLANA_TRANSACTION,
       body: { tx: { from, raw: rawTx }, chain },
-      headers: { "x-ledger-forced-provider": "cyvers" },
+      headers: {
+        "x-ledger-forced-provider": "cyvers",
+        "x-ledger-client-origin":
+          "1e55ba3959f4543af24809d9066a2120bd2ac9246e626e26a1ff77eb109ca0e5",
+      },
     });
 
     const context = await txCheck.caseOf<Promise<ClearSignContext>>({
