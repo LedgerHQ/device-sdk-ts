@@ -3,6 +3,7 @@ import { type Either } from "purify-ts";
 export type TransactionCheckParams = {
   path: string;
   body: unknown;
+  headers?: Record<string, string>;
 };
 
 export type TransactionCheckResult = {

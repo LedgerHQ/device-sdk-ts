@@ -54,8 +54,9 @@ describe("HttpTransactionCheckDataSource", () => {
 
       // THEN
       expect(httpMock.post).toHaveBeenCalledWith(
-        `${config.web3checks.url}${path}`,
+        `https://web3checks-backend.api.ledger-test.com/v3${path}`,
         body,
+        undefined,
       );
     });
 

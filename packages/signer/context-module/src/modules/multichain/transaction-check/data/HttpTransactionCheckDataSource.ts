@@ -19,7 +19,7 @@ export class HttpTransactionCheckDataSource
 {
   constructor(
     @inject(configTypes.Config)
-    private readonly config: ContextModuleServiceConfig,
+    _config: ContextModuleServiceConfig,
     @inject(networkTypes.NetworkClient)
     private readonly http: DmkNetworkClient,
   ) {}
@@ -27,12 +27,14 @@ export class HttpTransactionCheckDataSource
   public async check({
     path,
     body,
+    headers,
   }: TransactionCheckParams): Promise<Either<Error, TransactionCheckResult>> {
     let dto: TransactionCheckResponseDto;
     try {
       dto = (await this.http.post(
-        `${this.config.web3checks.url}${path}`,
+        `https://web3checks-backend.api.ledger-test.com/v3${path}`,
         body,
+        headers ? { headers } : undefined,
       )) as TransactionCheckResponseDto;
     } catch (_error) {
       return Left(
