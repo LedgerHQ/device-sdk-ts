@@ -26,6 +26,7 @@ import { SettingsGate } from "@/providers/SettingsGate";
 import { SignerAleoProvider } from "@/providers/SignerAleoProvider";
 import { SignerCosmosProvider } from "@/providers/SignerCosmosProvider";
 import { SignerEthProvider } from "@/providers/SignerEthProvider";
+import { SignerPolkadotProvider } from "@/providers/SignerPolkadotProvider";
 import { SignerZcashProvider } from "@/providers/SignerZcashProvider";
 import { store } from "@/state/store";
 import { GlobalStyle } from "@/styles/globalstyles";
@@ -76,21 +77,23 @@ const ClientRootLayout: React.FC<PropsWithChildren> = ({ children }) => {
             <DmkProvider>
               <LedgerKeyringProtocolProvider>
                 <SignerEthProvider>
-                  <SignerZcashProvider>
-                    <SignerAleoProvider>
-                      <SignerCosmosProvider>
-                        <CalInterceptorProvider>
-                          <GlobalStyle />
-                          <head>
-                            <link rel="shortcut icon" href="../favicon.png" />
-                          </head>
-                          <body>
-                            <RootApp>{children}</RootApp>
-                          </body>
-                        </CalInterceptorProvider>
-                      </SignerCosmosProvider>
-                    </SignerAleoProvider>
-                  </SignerZcashProvider>
+                  <SignerPolkadotProvider>
+                    <SignerZcashProvider>
+                      <SignerAleoProvider>
+                        <SignerCosmosProvider>
+                          <CalInterceptorProvider>
+                            <GlobalStyle />
+                            <head>
+                              <link rel="shortcut icon" href="../favicon.png" />
+                            </head>
+                            <body>
+                              <RootApp>{children}</RootApp>
+                            </body>
+                          </CalInterceptorProvider>
+                        </SignerCosmosProvider>
+                      </SignerAleoProvider>
+                    </SignerZcashProvider>
+                  </SignerPolkadotProvider>
                 </SignerEthProvider>
               </LedgerKeyringProtocolProvider>
             </DmkProvider>

@@ -46,6 +46,11 @@ const SUPPORTED_SIGNERS = [
     description: "Access Zcash signer functionality",
     icon: <CryptoIcon ledgerId="zcash" ticker="ZCASH" size={size} />,
   },
+  {
+    title: "Polkadot",
+    description: "Access Polkadot signer functionality",
+    icon: <CryptoIcon ledgerId="polkadot" ticker="POLKADOT" size={size} />,
+  },
 ];
 
 export const SignerView = () => {
