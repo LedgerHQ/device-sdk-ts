@@ -33,13 +33,16 @@ describe("OpenAppDeviceAction", () => {
   const closeAppMock = vi.fn();
   const getDeviceSessionStateMock = vi.fn();
   const setDeviceSessionStateMock = vi.fn();
+  const isDeviceOnboardedMock = vi.fn();
 
   function extractDependenciesMock() {
     return {
       getDeviceSessionState: getDeviceSessionStateMock,
       setDeviceSessionState: setDeviceSessionStateMock,
+      getAppAndVersion: getAppAndVersionMock,
       openApp: openAppMock,
       closeApp: closeAppMock,
+      isDeviceOnboarded: isDeviceOnboardedMock,
     };
   }
 
@@ -48,6 +51,7 @@ describe("OpenAppDeviceAction", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    isDeviceOnboardedMock.mockReturnValue(true);
   });
 
   describe("without overriding `extractDependencies`", () => {
@@ -419,35 +423,22 @@ describe("OpenAppDeviceAction", () => {
   describe("errors cases", () => {
     it("should end in an error if the device is not onboarded", () =>
       new Promise<void>((resolve, reject) => {
-        apiGetDeviceSessionStateMock.mockReturnValue({
+        getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
           currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-          installedApps: [],
-          deviceModelId: DeviceModelId.NANO_X,
-          isSecureConnectionAllowed: false,
         });
-        setupGetDeviceStatusMock([new DeviceNotOnboardedError()]);
+        isDeviceOnboardedMock.mockReturnValue(false);
 
         const openAppDeviceAction = new OpenAppDeviceAction({
           input: { appName: "Bitcoin" },
         });
 
+        vi.spyOn(openAppDeviceAction, "extractDependencies").mockReturnValue(
+          extractDependenciesMock(),
+        );
+
         const expectedStates: Array<OpenAppDAState> = [
-          {
-            status: DeviceActionStatus.Pending,
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: openAppDAStateStep.GET_DEVICE_STATUS,
-            },
-          },
-          {
-            status: DeviceActionStatus.Pending,
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
-            },
-          },
           {
             error: new DeviceNotOnboardedError(),
             status: DeviceActionStatus.Error,

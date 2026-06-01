@@ -1,8 +1,6 @@
 import { interval, Observable } from "rxjs";
 
 import { CommandResultFactory } from "@api/command/model/CommandResult";
-import { getOsVersionCommandResponseMockBuilder } from "@api/command/os/__mocks__/GetOsVersionCommand";
-import { type GetOsVersionResponse } from "@api/command/os/GetOsVersionCommand";
 import {
   GLOBAL_ERRORS,
   GlobalCommandError,
@@ -26,42 +24,20 @@ import {
   getDeviceStatusDAStateStep,
 } from "./types";
 
-const osVersionCommandResult = (
-  props: Partial<GetOsVersionResponse> = {},
-  deviceModelId: DeviceModelId = DeviceModelId.NANO_X,
-) =>
-  CommandResultFactory({
-    data: getOsVersionCommandResponseMockBuilder(deviceModelId, props),
-  });
-
-const onboardCheckPendingState = (): GetDeviceStatusDAState => ({
-  intermediateValue: {
-    requiredUserInteraction: UserInteractionRequired.None,
-    step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
-  },
-  status: DeviceActionStatus.Pending,
-});
-
-const onboardCheckPendingStatesWithOsVersionFetch =
-  (): Array<GetDeviceStatusDAState> => [
-    onboardCheckPendingState(),
-    onboardCheckPendingState(),
-  ];
-
 describe("GetDeviceStatusDeviceAction", () => {
   const getAppAndVersionMock = vi.fn();
-  const getOsVersionMock = vi.fn();
   const getDeviceSessionStateMock = vi.fn();
   const waitForDeviceUnlockMock = vi.fn();
   const setDeviceSessionState = vi.fn();
+  const isDeviceOnboardedMock = vi.fn();
 
   function extractDependenciesMock() {
     return {
       getAppAndVersion: getAppAndVersionMock,
-      getOsVersion: getOsVersionMock,
       getDeviceSessionState: getDeviceSessionStateMock,
       waitForDeviceUnlock: waitForDeviceUnlockMock,
       setDeviceSessionState: setDeviceSessionState,
+      isDeviceOnboarded: isDeviceOnboardedMock,
     };
   }
 
@@ -72,7 +48,7 @@ describe("GetDeviceStatusDeviceAction", () => {
   } = makeDeviceActionInternalApiMock();
   beforeEach(() => {
     vi.resetAllMocks();
-    getOsVersionMock.mockResolvedValue(osVersionCommandResult());
+    isDeviceOnboardedMock.mockReturnValue(true);
   });
 
   describe("without overriding `extractDependencies`", () => {
@@ -88,19 +64,23 @@ describe("GetDeviceStatusDeviceAction", () => {
           deviceModelId: DeviceModelId.NANO_X,
         });
 
-        sendCommandMock
-          .mockResolvedValueOnce(osVersionCommandResult())
-          .mockResolvedValue(
-            CommandResultFactory({
-              data: {
-                name: "BOLOS",
-                version: "1.0.0",
-              },
-            }),
-          );
+        sendCommandMock.mockResolvedValue(
+          CommandResultFactory({
+            data: {
+              name: "BOLOS",
+              version: "1.0.0",
+            },
+          }),
+        );
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             output: {
               currentApp: "BOLOS",
@@ -137,7 +117,6 @@ describe("GetDeviceStatusDeviceAction", () => {
         });
 
         sendCommandMock
-          .mockResolvedValueOnce(osVersionCommandResult())
           .mockResolvedValueOnce(
             CommandResultFactory({
               error: new GlobalCommandError({
@@ -156,7 +135,13 @@ describe("GetDeviceStatusDeviceAction", () => {
           );
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
@@ -207,7 +192,6 @@ describe("GetDeviceStatusDeviceAction", () => {
         });
 
         sendCommandMock
-          .mockResolvedValueOnce(osVersionCommandResult())
           .mockResolvedValueOnce(
             CommandResultFactory({
               error: new GlobalCommandError({
@@ -226,7 +210,13 @@ describe("GetDeviceStatusDeviceAction", () => {
           );
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
@@ -263,19 +253,23 @@ describe("GetDeviceStatusDeviceAction", () => {
           deviceModelId: DeviceModelId.NANO_X,
         });
 
-        sendCommandMock
-          .mockResolvedValueOnce(osVersionCommandResult())
-          .mockResolvedValue(
-            CommandResultFactory({
-              error: new GlobalCommandError({
-                ...GLOBAL_ERRORS["6e00"],
-                errorCode: "6e00",
-              }),
+        sendCommandMock.mockResolvedValue(
+          CommandResultFactory({
+            error: new GlobalCommandError({
+              ...GLOBAL_ERRORS["6e00"],
+              errorCode: "6e00",
             }),
-          );
+          }),
+        );
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             output: {
               currentApp: "BOLOS",
@@ -325,7 +319,13 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             status: DeviceActionStatus.Completed,
             output: {
@@ -363,7 +363,6 @@ describe("GetDeviceStatusDeviceAction", () => {
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.Connected,
           deviceStatus: DeviceStatus.CONNECTED,
-          deviceModelId: DeviceModelId.NANO_X,
         });
 
         getAppAndVersionMock.mockResolvedValue(
@@ -384,11 +383,14 @@ describe("GetDeviceStatusDeviceAction", () => {
           "extractDependencies",
         ).mockReturnValue(extractDependenciesMock());
 
-        const osVersionData = getOsVersionCommandResponseMockBuilder(
-          DeviceModelId.NANO_X,
-        );
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             status: DeviceActionStatus.Completed,
             output: {
@@ -406,7 +408,6 @@ describe("GetDeviceStatusDeviceAction", () => {
             onDone: () => {
               // Session should be set as ready if GetAppAndVersionCommand was successful
               expect(setDeviceSessionState).toHaveBeenCalledWith({
-                deviceModelId: DeviceModelId.NANO_X,
                 sessionStateType:
                   DeviceSessionStateType.ReadyWithoutSecureChannel,
                 deviceStatus: DeviceStatus.CONNECTED,
@@ -415,14 +416,7 @@ describe("GetDeviceStatusDeviceAction", () => {
                   version: "1.0.0",
                 },
                 installedApps: [],
-                isSecureConnectionAllowed:
-                  osVersionData.secureElementFlags.isSecureConnectionAllowed,
-                firmwareVersion: {
-                  mcu: osVersionData.mcuSephVersion,
-                  bootloader: osVersionData.mcuBootloaderVersion,
-                  os: osVersionData.seVersion,
-                  metadata: osVersionData,
-                },
+                isSecureConnectionAllowed: false,
               });
               resolve();
             },
@@ -503,7 +497,13 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
@@ -546,18 +546,8 @@ describe("GetDeviceStatusDeviceAction", () => {
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.LOCKED,
           currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-          installedApps: [],
-          deviceModelId: DeviceModelId.NANO_X,
-          isSecureConnectionAllowed: false,
         });
-        getOsVersionMock.mockResolvedValue(
-          osVersionCommandResult({
-            secureElementFlags: {
-              ...getOsVersionCommandResponseMockBuilder().secureElementFlags,
-              isOnboarded: false,
-            },
-          }),
-        );
+        isDeviceOnboardedMock.mockReturnValue(false);
 
         const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
           input: { unlockTimeout: 500 },
@@ -569,7 +559,6 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          onboardCheckPendingState(),
           {
             error: new DeviceNotOnboardedError(),
             status: DeviceActionStatus.Error,
@@ -582,62 +571,6 @@ describe("GetDeviceStatusDeviceAction", () => {
           makeDeviceActionInternalApiMock(),
           {
             onDone: resolve,
-            onError: reject,
-          },
-        );
-      }));
-
-    it("should end in an error if cached metadata says the device is not onboarded", () =>
-      new Promise<void>((resolve, reject) => {
-        const osVersionData = getOsVersionCommandResponseMockBuilder(
-          DeviceModelId.NANO_X,
-          {
-            secureElementFlags: {
-              ...getOsVersionCommandResponseMockBuilder().secureElementFlags,
-              isOnboarded: false,
-            },
-          },
-        );
-        getDeviceSessionStateMock.mockReturnValue({
-          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-          deviceStatus: DeviceStatus.CONNECTED,
-          currentApp: { name: "mockedCurrentApp", version: "1.0.0" },
-          installedApps: [],
-          deviceModelId: DeviceModelId.NANO_X,
-          isSecureConnectionAllowed: false,
-          firmwareVersion: {
-            mcu: osVersionData.mcuSephVersion,
-            bootloader: osVersionData.mcuBootloaderVersion,
-            os: osVersionData.seVersion,
-            metadata: osVersionData,
-          },
-        });
-
-        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-          input: { unlockTimeout: 500 },
-        });
-
-        vi.spyOn(
-          getDeviceStateDeviceAction,
-          "extractDependencies",
-        ).mockReturnValue(extractDependenciesMock());
-
-        const expectedStates: Array<GetDeviceStatusDAState> = [
-          {
-            error: new DeviceNotOnboardedError(),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(
-          getDeviceStateDeviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onDone: () => {
-              expect(getOsVersionMock).not.toHaveBeenCalled();
-              resolve();
-            },
             onError: reject,
           },
         );
@@ -693,7 +626,13 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.UnlockDevice,
@@ -779,7 +718,13 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             error,
             status: DeviceActionStatus.Error,
@@ -826,7 +771,13 @@ describe("GetDeviceStatusDeviceAction", () => {
         ).mockReturnValue(extractDependenciesMock());
 
         const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            },
+            status: DeviceActionStatus.Pending,
+          },
           {
             error: new UnknownDAError("error"),
             status: DeviceActionStatus.Error,
@@ -856,23 +807,27 @@ describe("GetDeviceStatusDeviceAction", () => {
         isSecureConnectionAllowed: false,
       });
 
-      sendCommandMock
-        .mockResolvedValueOnce(osVersionCommandResult())
-        .mockResolvedValue(
-          CommandResultFactory({
-            data: {
-              name: "BOLOS",
-              version: "1.0.0",
-            },
-          }),
-        );
+      sendCommandMock.mockResolvedValue(
+        CommandResultFactory({
+          data: {
+            name: "BOLOS",
+            version: "1.0.0",
+          },
+        }),
+      );
 
       const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
         input: { unlockTimeout: 500 },
       });
 
       const expectedStates: Array<GetDeviceStatusDAState> = [
-        onboardCheckPendingState(),
+        {
+          status: DeviceActionStatus.Pending, // get app and version
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+          },
+        },
         {
           status: DeviceActionStatus.Stopped,
         },

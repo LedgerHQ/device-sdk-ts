@@ -79,7 +79,6 @@ export const getOsVersionCommandResponseMockBuilder = (
         isMcuCodeSigned: true,
         isInRecoveryMode: false,
       },
-      ...props,
     },
     [DeviceModelId.STAX]: {
       isBootloader: false,

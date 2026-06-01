@@ -13,6 +13,7 @@ import {
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
+import { DeviceNotOnboardedError } from "@api/device-action/os/Errors";
 import { GetDeviceStatusDeviceAction } from "@api/device-action/os/GetDeviceStatus/GetDeviceStatusDeviceAction";
 import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
@@ -46,6 +47,7 @@ export type MachineDependencies = {
   }) => Promise<OpenAppCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly setDeviceSessionState: (state: DeviceSessionState) => void;
+  readonly isDeviceOnboarded: () => boolean;
 };
 
 export type ExtractMachineDependencies = (
@@ -94,8 +96,13 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       OpenAppStateMachineInternalState
     >;
 
-    const { closeApp, openApp, getDeviceSessionState, setDeviceSessionState } =
-      this.extractDependencies(internalApi);
+    const {
+      closeApp,
+      openApp,
+      getDeviceSessionState,
+      isDeviceOnboarded,
+      setDeviceSessionState,
+    } = this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
 
@@ -117,6 +124,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         getDeviceStatus: getDeviceStatusMachine,
       },
       guards: {
+        isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
         isRequestedAppOpen: ({ context }: { context: types["context"] }) => {
           if (context._internalState.currentlyRunningApp === null) return false;
           return (
@@ -135,6 +143,12 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
         hasError: ({ context }) => context._internalState.error !== null,
       },
       actions: {
+        assignErrorDeviceNotOnboarded: assign({
+          _internalState: (_) => ({
+            ..._.context._internalState,
+            error: new DeviceNotOnboardedError(),
+          }),
+        }),
         assignUserActionNeededOpenApp: assign({
           intermediateValue: (_) =>
             ({
@@ -187,9 +201,26 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       },
       states: {
         DeviceReady: {
+          // check device capabilities & status known
           always: {
-            target: "GetDeviceStatus",
+            target: "OnboardingCheck",
           },
+        },
+
+        OnboardingCheck: {
+          // check onboarding status provided by device session
+          always: [
+            {
+              target: "GetDeviceStatus",
+              guard: {
+                type: "isDeviceOnboarded",
+              },
+            },
+            {
+              target: "Error",
+              actions: "assignErrorDeviceNotOnboarded",
+            },
+          ],
         },
 
         GetDeviceStatus: {
@@ -411,6 +442,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
       setDeviceSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
+      isDeviceOnboarded: () => true, // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
     };
   }
 }

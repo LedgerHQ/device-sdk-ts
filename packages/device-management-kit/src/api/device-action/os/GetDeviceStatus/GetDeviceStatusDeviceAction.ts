@@ -17,11 +17,6 @@ import {
   GetAppAndVersionCommand,
   type GetAppAndVersionCommandResult,
 } from "@api/command/os/GetAppAndVersionCommand";
-import {
-  GetOsVersionCommand,
-  type GetOsVersionCommandResult,
-  type GetOsVersionResponse,
-} from "@api/command/os/GetOsVersionCommand";
 import { DeviceStatus } from "@api/device/DeviceStatus";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
@@ -38,7 +33,6 @@ import {
 import {
   type DeviceSessionState,
   DeviceSessionStateType,
-  type FirmwareVersion,
 } from "@api/device-session/DeviceSessionState";
 
 import {
@@ -54,13 +48,11 @@ type GetDeviceStatusMachineInternalState = {
   readonly locked: boolean;
   readonly currentApp: string | null;
   readonly currentAppVersion: string | null;
-  readonly osVersionMetadata: GetOsVersionResponse | null;
   readonly error: GetDeviceStatusDAError | null;
 };
 
 export type MachineDependencies = {
   readonly getAppAndVersion: () => Promise<GetAppAndVersionCommandResult>;
-  readonly getOsVersion: () => Promise<GetOsVersionCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
   readonly waitForDeviceUnlock: (args: {
     input: { unlockTimeout: number };
@@ -68,16 +60,8 @@ export type MachineDependencies = {
   readonly setDeviceSessionState: (
     state: DeviceSessionState,
   ) => DeviceSessionState;
+  readonly isDeviceOnboarded: () => boolean;
 };
-
-const firmwareVersionFromOsVersion = (
-  data: GetOsVersionResponse,
-): FirmwareVersion => ({
-  mcu: data.mcuSephVersion,
-  bootloader: data.mcuBootloaderVersion,
-  os: data.seVersion,
-  metadata: data,
-});
 
 export type ExtractMachineDependencies = (
   internalApi: InternalApi,
@@ -109,34 +93,13 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
 
     const {
       getAppAndVersion,
-      getOsVersion,
       getDeviceSessionState,
       setDeviceSessionState,
       waitForDeviceUnlock,
+      isDeviceOnboarded,
     } = this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
-
-    const updateSessionFromOsVersion = (data: GetOsVersionResponse) => {
-      const currentState = getDeviceSessionState();
-      if (!("firmwareVersion" in currentState)) {
-        return;
-      }
-      setDeviceSessionState({
-        ...currentState,
-        firmwareVersion: firmwareVersionFromOsVersion(data),
-        isSecureConnectionAllowed:
-          data.secureElementFlags.isSecureConnectionAllowed,
-      });
-    };
-
-    const getCachedOnboardingMetadata = () => {
-      const state = getDeviceSessionState();
-      if (!("firmwareVersion" in state)) {
-        return undefined;
-      }
-      return state.firmwareVersion?.metadata;
-    };
 
     return setup({
       types: {
@@ -148,24 +111,10 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       },
       actors: {
         getAppAndVersion: fromPromise(getAppAndVersion),
-        getOsVersion: fromPromise(getOsVersion),
         waitForDeviceUnlock: fromObservable(waitForDeviceUnlock),
       },
       guards: {
-        isOnboardedFromCachedMetadata: () => {
-          const metadata = getCachedOnboardingMetadata();
-          return metadata?.secureElementFlags.isOnboarded === true;
-        },
-        isNotOnboardedFromCachedMetadata: () => {
-          const metadata = getCachedOnboardingMetadata();
-          return (
-            metadata !== undefined && !metadata.secureElementFlags.isOnboarded
-          );
-        },
-        needsOsVersionFetch: () => getCachedOnboardingMetadata() === undefined,
-        isOnboardedFromOsVersion: ({ context }) =>
-          context._internalState.osVersionMetadata?.secureElementFlags
-            .isOnboarded === true,
+        isDeviceOnboarded: () => isDeviceOnboarded(), // TODO: we don't have this info for now, this can be derived from the "flags" obtained in the getVersion command
         isDeviceLocked: ({ context }) => context._internalState.locked,
         hasError: ({ context }) => context._internalState.error !== null,
       },
@@ -224,7 +173,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
           },
           _internalState: {
-            onboarded: false,
+            onboarded: false, // we don't know how to check yet
             locked: false,
             currentApp:
               sessionStateType ===
@@ -232,7 +181,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                 ? sessionState.currentApp.name
                 : null,
             currentAppVersion: null,
-            osVersionMetadata: null,
             error: null,
           },
         };
@@ -244,63 +192,12 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
         },
         OnboardingCheck: {
+          // TODO: we don't have this info for now
           always: [
             {
-              guard: "isOnboardedFromCachedMetadata",
-              target: "AppAndVersionCheck",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  onboarded: true,
-                }),
-              }),
-            },
-            {
-              guard: "isNotOnboardedFromCachedMetadata",
-              target: "Error",
-              actions: "assignErrorDeviceNotOnboarded",
-            },
-            {
-              guard: "needsOsVersionFetch",
-              target: "GetOsVersion",
-            },
-          ],
-        },
-        GetOsVersion: {
-          invoke: {
-            src: "getOsVersion",
-            onDone: {
-              target: "OnboardingResultCheck",
-              actions: assign({
-                _internalState: (_) => {
-                  if (isSuccessCommandResult(_.event.output)) {
-                    updateSessionFromOsVersion(_.event.output.data);
-                    return {
-                      ..._.context._internalState,
-                      osVersionMetadata: _.event.output.data,
-                    };
-                  }
-                  return {
-                    ..._.context._internalState,
-                    error: _.event.output.error,
-                  };
-                },
-              }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
-            },
-          },
-        },
-        OnboardingResultCheck: {
-          always: [
-            {
-              guard: "hasError",
-              target: "Error",
-            },
-            {
-              guard: "isOnboardedFromOsVersion",
+              guard: {
+                type: "isDeviceOnboarded",
+              },
               target: "AppAndVersionCheck",
               actions: assign({
                 _internalState: (_) => ({
@@ -360,8 +257,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                         currentApp: _.event.output.data,
                       });
                     } else {
-                      const osVersionMetadata =
-                        _.context._internalState.osVersionMetadata;
                       // The device can be set to Ready if GetAppAndVersionCommand was successful
                       setDeviceSessionState({
                         deviceModelId: state.deviceModelId,
@@ -370,15 +265,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                         deviceStatus: DeviceStatus.CONNECTED,
                         currentApp: _.event.output.data,
                         installedApps: [],
-                        isSecureConnectionAllowed:
-                          osVersionMetadata?.secureElementFlags
-                            .isSecureConnectionAllowed ?? false,
-                        ...(osVersionMetadata !== null
-                          ? {
-                              firmwareVersion:
-                                firmwareVersionFromOsVersion(osVersionMetadata),
-                            }
-                          : {}),
+                        isSecureConnectionAllowed: false,
                       });
                     }
                     return {
@@ -491,11 +378,11 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
 
     return {
       getAppAndVersion,
-      getOsVersion: () => internalApi.sendCommand(new GetOsVersionCommand()),
       waitForDeviceUnlock,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
       setDeviceSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),
+      isDeviceOnboarded: () => true, // TODO: we don't have this info for now
     };
   }
 }
