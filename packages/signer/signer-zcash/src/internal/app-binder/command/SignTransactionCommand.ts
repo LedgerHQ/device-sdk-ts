@@ -1,23 +1,39 @@
 import {
   type Apdu,
+  ApduBuilder,
+  type ApduBuilderArgs,
   type ApduResponse,
   type Command,
   type CommandResult,
+  CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
+import {
+  CommandErrorHelper,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
+import { Maybe } from "purify-ts";
 
-import { type ZcashErrorCodes } from "./utils/zcashApplicationErrors";
+import {
+  P2,
+  ZCASH_CLA,
+} from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { uint32ToBytesBE } from "@internal/utils/numberToBytes";
+
+import {
+  ZCASH_APP_ERRORS,
+  ZcashAppCommandErrorFactory,
+  type ZcashErrorCodes,
+} from "./utils/zcashApplicationErrors";
 
 export type SignTransactionCommandArgs = {
   derivationPath: string;
-  transaction: Uint8Array;
+  lockTime: number;
+  sigHashType: number;
+  expiryHeight: Uint8Array;
 };
 
 export type SignTransactionCommandResponse = {
-  signature: {
-    r: string;
-    s: string;
-    v?: number;
-  };
+  signature: Uint8Array;
 };
 
 export class SignTransactionCommand
@@ -30,27 +46,52 @@ export class SignTransactionCommand
 {
   readonly name = "SignTransaction";
 
-  private readonly args: SignTransactionCommandArgs;
+  private readonly errorHelper = new CommandErrorHelper<
+    SignTransactionCommandResponse,
+    ZcashErrorCodes
+  >(ZCASH_APP_ERRORS, ZcashAppCommandErrorFactory);
 
-  constructor(args: SignTransactionCommandArgs) {
-    this.args = args;
-  }
+  constructor(private readonly args: SignTransactionCommandArgs) {}
 
   getApdu(): Apdu {
-    // TODO: Implement APDU construction based on your blockchain's protocol
-    // Example structure:
-    // const builder = new ApduBuilder({ cla: 0xe0, ins: 0x02, p1: 0x00, p2: 0x00 });
-    // Add derivation path and other data to builder
-    // return builder.build();
-    console.log(this.args);
-    throw new Error("SignTransactionCommand.getApdu() not implemented");
+    const { derivationPath, expiryHeight, lockTime, sigHashType } = this.args;
+    const path = DerivationPathUtils.splitPath(derivationPath);
+    const lockTimeBytes = uint32ToBytesBE(lockTime);
+
+    const apduArgs: ApduBuilderArgs = {
+      cla: ZCASH_CLA,
+      ins: 0x48,
+      p2: P2.DEFAULT,
+      p1: 0x00,
+    };
+    const builder = new ApduBuilder(apduArgs);
+    builder.add8BitUIntToData(path.length);
+    path.forEach((element) => {
+      builder.add32BitUIntToData(element);
+    });
+
+    builder
+      .add8BitUIntToData(0x00)
+      .addBufferToData(lockTimeBytes)
+      .add8BitUIntToData(sigHashType);
+
+    builder.addBufferToData(expiryHeight);
+    return builder.build();
   }
 
   parseResponse(
-    _apduResponse: ApduResponse,
+    apduResponse: ApduResponse,
   ): CommandResult<SignTransactionCommandResponse, ZcashErrorCodes> {
-    // TODO: Implement response parsing based on your blockchain's protocol
-    // return CommandResultFactory({ data: { ... } });
-    throw new Error("SignTransactionCommand.parseResponse() not implemented");
+    return Maybe.fromNullable(
+      this.errorHelper.getError(apduResponse),
+    ).orDefaultLazy(() => {
+      const signature = new Uint8Array(apduResponse.data);
+      if (signature.length > 0) {
+        signature[0] = 0x30;
+      }
+      return CommandResultFactory({
+        data: { signature },
+      });
+    });
   }
 }

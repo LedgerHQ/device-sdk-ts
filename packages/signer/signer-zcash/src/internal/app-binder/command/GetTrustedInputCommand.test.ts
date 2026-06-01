@@ -33,7 +33,7 @@ describe("GetTrustedInputCommand", () => {
       expect(apdu.getRawApdu()).toEqual(
         new Uint8Array([
           0xe0, // CLA
-          0x42, // INS.GET_TRUSTED_INPUT
+          0x42, // GET_TRUSTED_INPUT
           0x80, // P1.NEXT
           0x00, // P2.DEFAULT
           0x03, // data length

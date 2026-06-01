@@ -11,6 +11,7 @@ import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInpu
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type FullViewingKeyOptions } from "@api/model/FullViewingKeyOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerZcash } from "@api/SignerZcash";
@@ -63,13 +64,12 @@ export class DefaultSignerZcash implements SignerZcash {
   }
 
   signTransaction(
-    derivationPath: string,
-    transaction: Uint8Array,
+    args: LegacyCreateTransactionArg,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._container
       .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
-      .execute(derivationPath, transaction, options);
+      .execute(args, options);
   }
 
   signMessage(

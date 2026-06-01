@@ -1889,6 +1889,9 @@ importers:
       '@ledgerhq/signer-utils':
         specifier: workspace:^
         version: link:../signer-utils
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)

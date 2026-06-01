@@ -18,6 +18,12 @@ import {
   type GetAddressDAOutput,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
 import {
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+} from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
+import {
   GetAddressCommand,
   type GetAddressCommandArgs,
   type GetAddressCommandResponse,
@@ -26,6 +32,7 @@ import type { ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashAp
 import { APP_NAME } from "@internal/app-binder/constants";
 import { GetFullViewingKeyTask } from "@internal/app-binder/task/GetFullViewingKeyTask";
 import { GetTrustedInputTask } from "@internal/app-binder/task/GetTrustedInputTask";
+import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 import { ZcashAppBinder } from "@internal/app-binder/ZcashAppBinder";
 
 type ZcashGetAddressSendCommandAction = SendCommandInAppDeviceAction<
@@ -45,7 +52,7 @@ type ExecuteDeviceActionTaskCallArgs = {
   deviceAction: CallTaskInAppDeviceAction<
     unknown,
     DmkError,
-    UserInteractionRequired.None
+    UserInteractionRequired.None | UserInteractionRequired.SignTransaction
   >;
 };
 
@@ -164,7 +171,11 @@ describe("ZcashAppBinder", () => {
       const binder = new ZcashAppBinder(dmkMock, sessionId);
       const runSpy = vi
         .spyOn(GetFullViewingKeyTask.prototype, "run")
-        .mockResolvedValue({} as never);
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof GetFullViewingKeyTask.prototype.run>
+          >,
+        );
 
       const result = binder.getFullViewingKey({
         derivationPath: "44'/133'/0'/0/0",
@@ -206,7 +217,11 @@ describe("ZcashAppBinder", () => {
       const binder = new ZcashAppBinder(dmkMock, sessionId);
       const runSpy = vi
         .spyOn(GetTrustedInputTask.prototype, "run")
-        .mockResolvedValue({} as never);
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof GetTrustedInputTask.prototype.run>
+          >,
+        );
 
       const result = binder.getTrustedInput(getTrustedInputArgs);
 
@@ -244,6 +259,113 @@ describe("ZcashAppBinder", () => {
       const args = executeDeviceActionMock.mock
         .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
       expect(args.deviceAction.input.skipOpenApp).toBe(true);
+    });
+  });
+
+  describe("signTransaction", () => {
+    const signTransactionArg = {
+      inputs: [
+        [
+          {
+            version: new Uint8Array([0x05, 0x00, 0x00, 0x80]),
+            inputs: [],
+            outputs: [],
+            locktime: new Uint8Array([0x00, 0x00, 0x00, 0x00]),
+          },
+          0,
+          undefined,
+          undefined,
+        ],
+      ],
+      associatedKeysets: ["44'/133'/0'/0/0"],
+      outputScriptHex: "01",
+      additionals: ["zcash"],
+    } satisfies LegacyCreateTransactionArg;
+
+    it("should call dmk.executeDeviceAction with CallTaskInAppDeviceAction and default skipOpenApp to false", async () => {
+      const sessionId = "test-session-id";
+      const expectedResult = {
+        observable: from([]),
+        cancel: vi.fn(),
+      };
+      const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, sessionId);
+      const runSpy = vi
+        .spyOn(SignTransactionTask.prototype, "run")
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof SignTransactionTask.prototype.run>
+          >,
+        );
+
+      const result = binder.signTransaction({
+        transactionArg: signTransactionArg,
+      });
+
+      expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
+      expect(args.sessionId).toBe(sessionId);
+      expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+      expect(args.deviceAction.input.appName).toBe(APP_NAME);
+      expect(args.deviceAction.input.requiredUserInteraction).toBe(
+        UserInteractionRequired.SignTransaction,
+      );
+      expect(args.deviceAction.input.skipOpenApp).toBe(false);
+      expect(result).toBe(expectedResult);
+
+      await args.deviceAction.input.task({} as InternalApi);
+      expect(runSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should keep provided skipOpenApp value", () => {
+      const executeDeviceActionMock = vi.fn().mockReturnValue({
+        observable: from([]),
+        cancel: vi.fn(),
+      });
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, "sessionId");
+
+      binder.signTransaction({
+        transactionArg: signTransactionArg,
+        skipOpenApp: true,
+      });
+
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
+      expect(args.deviceAction.input.skipOpenApp).toBe(true);
+    });
+
+    it("should return the result from executeDeviceAction", () => {
+      const expectedResult: ExecuteDeviceActionReturnType<
+        SignTransactionDAOutput,
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
+      > = {
+        observable: from([
+          {
+            status: DeviceActionStatus.Completed as const,
+            output: "0x01" as SignTransactionDAOutput,
+          },
+        ]),
+        cancel: vi.fn(),
+      };
+      const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, "sessionId");
+
+      const result = binder.signTransaction({
+        transactionArg: signTransactionArg,
+      });
+
+      expect(result).toBe(expectedResult);
     });
   });
 });
