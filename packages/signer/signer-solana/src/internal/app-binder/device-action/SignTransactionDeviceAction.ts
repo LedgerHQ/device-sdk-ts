@@ -41,6 +41,7 @@ import {
   type Web3CheckOptInCommandResponse,
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 import {
   SolanaTransactionTypes,
   TransactionInspector,
@@ -103,6 +104,9 @@ export type MachineDependencies = {
       serializedTransaction: Uint8Array;
     };
   }) => Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>>;
+  readonly zeroBlockhashFn: (arg0: {
+    input: { transaction: Uint8Array };
+  }) => Promise<Uint8Array>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -137,6 +141,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       buildContext,
       provideContext,
       inspectTransaction,
+      zeroBlockhashFn,
     } = this.extractDependencies(internalApi);
 
     const logger = this.getLoggerFactory(internalApi)(
@@ -192,6 +197,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         buildContext: fromPromise(buildContext),
         provideContext: fromPromise(provideContext),
         signTransaction: fromPromise(signTransaction),
+        zeroBlockhashFn: fromPromise(zeroBlockhashFn),
         delayedSignStateMachine: new DelayedSignTransactionDeviceAction({
           input: {
             derivationPath: "",
@@ -267,6 +273,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           solanaTransactionContext: null,
           inspectorResult: null,
           signerAddress: null,
+          zeroedTransaction: null,
         },
       }),
       states: {
@@ -354,7 +361,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 "shouldOptIn",
               ]),
             },
-            { target: "CheckSPLSupported", guard: "noInternalError" },
+            { target: "CheckDelayedForZero", guard: "noInternalError" },
             { target: "Error" },
           ],
         },
@@ -419,9 +426,45 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         },
         PostWeb3ChecksOptIn: {
           always: [
-            { target: "CheckSPLSupported", guard: "noInternalError" },
+            { target: "CheckDelayedForZero", guard: "noInternalError" },
             { target: "Error" },
           ],
+        },
+        CheckDelayedForZero: {
+          always: [
+            {
+              target: "ZeroBlockhash",
+              guard: "isDelayedWithConfigAndSupported",
+            },
+            { target: "CheckSPLSupported" },
+          ],
+        },
+        ZeroBlockhash: {
+          entry: assign({
+            intermediateValue: () => ({
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signTransactionDAStateSteps.ZERO_BLOCKHASH,
+            }),
+          }),
+          invoke: {
+            id: "zeroBlockhashFn",
+            src: "zeroBlockhashFn",
+            input: ({ context }) => ({
+              transaction: context.input.transaction,
+            }),
+            onDone: {
+              target: "CheckSPLSupported",
+              actions: assign({
+                _internalState: ({ event, context }) => ({
+                  ...context._internalState,
+                  zeroedTransaction: event.output,
+                }),
+              }),
+            },
+            onError: {
+              target: "CheckSPLSupported",
+            },
+          },
         },
         CheckSPLSupported: {
           always: [
@@ -524,7 +567,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               return {
                 contextModule: context.input.contextModule,
                 loggerFactory: this.getLoggerFactory(internalApi),
-                transactionBytes: context.input.transaction,
+                transactionBytes:
+                  context._internalState.zeroedTransaction ??
+                  context.input.transaction,
                 signerAddress: context._internalState.signerAddress,
                 options: {
                   tokenAddress: inspectorData?.tokenAddress,
@@ -621,6 +666,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 context.input.transactionOptions?.transactionResolutionContext
                   ?.userInputType,
               blockhashService: context.input.blockhashService,
+              zeroedTransaction:
+                context._internalState.zeroedTransaction ?? undefined,
             }),
             onSnapshot: {
               actions: [
@@ -824,6 +871,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         sendingData: arg0.input.serializedTransaction,
       }).run();
 
+    const blockhashService = new BlockhashService();
+    const zeroBlockhashFn = async (arg0: {
+      input: { transaction: Uint8Array };
+    }) =>
+      Promise.resolve(blockhashService.zeroBlockhash(arg0.input.transaction));
+
     return {
       getAppConfig,
       web3CheckOptIn,
@@ -832,6 +885,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       provideContext,
       signTransaction,
       inspectTransaction,
+      zeroBlockhashFn,
     };
   }
 }

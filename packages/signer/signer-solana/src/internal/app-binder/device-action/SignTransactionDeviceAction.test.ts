@@ -56,6 +56,7 @@ let buildContextMock: ReturnType<typeof vi.fn>;
 let provideContextMock: ReturnType<typeof vi.fn>;
 let signMock: ReturnType<typeof vi.fn>;
 let inspectTransactionMock: ReturnType<typeof vi.fn>;
+let zeroBlockhashMock: ReturnType<typeof vi.fn>;
 
 function extractDeps() {
   return {
@@ -66,6 +67,7 @@ function extractDeps() {
     provideContext: provideContextMock,
     signTransaction: signMock,
     inspectTransaction: inspectTransactionMock,
+    zeroBlockhashFn: zeroBlockhashMock,
   };
 }
 
@@ -88,6 +90,7 @@ describe("SignTransactionDeviceAction (Solana)", () => {
       transactionType: SolanaTransactionTypes.SPL,
       data: { tokenAddress: null, createATA: false },
     });
+    zeroBlockhashMock = vi.fn();
   });
 
   it("passes transactionOptions.solanaRPCURL to inspectTransaction when it overrides builder solanaRPCURL", () =>
@@ -1730,6 +1733,8 @@ describe("SignTransactionDeviceAction – child machine integration", () => {
     inspectTransactionMock = vi
       .fn()
       .mockRejectedValue(new InvalidStatusWordError("inspErr"));
+
+    zeroBlockhashMock = vi.fn().mockResolvedValue(zeroedTx);
 
     childPreviewMock = vi.fn();
     childDelayedSignMock = vi.fn();

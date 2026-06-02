@@ -120,6 +120,8 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
         noInternalError: ({ context }) => context._internalState.error === null,
         isPreviewFallback: ({ context }) =>
           context._internalState.previewFallback,
+        hasZeroedTransaction: ({ context }) =>
+          context._internalState.zeroedTransaction !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -135,7 +137,7 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
       },
     }).createMachine({
       id: "DelayedSignTransactionDeviceAction",
-      initial: "ZeroBlockhash",
+      initial: "MaybeZeroBlockhash",
       context: ({ input }) => ({
         input,
         intermediateValue: {
@@ -145,13 +147,22 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
         _internalState: {
           error: null,
           signature: null,
-          zeroedTransaction: null,
+          zeroedTransaction: input.zeroedTransaction ?? null,
           freshBlockhash: null,
           patchedTransaction: null,
           previewFallback: false,
         },
       }),
       states: {
+        MaybeZeroBlockhash: {
+          always: [
+            {
+              target: "PreviewTransaction",
+              guard: "hasZeroedTransaction",
+            },
+            { target: "ZeroBlockhash" },
+          ],
+        },
         ZeroBlockhash: {
           entry: assign({
             intermediateValue: () => ({

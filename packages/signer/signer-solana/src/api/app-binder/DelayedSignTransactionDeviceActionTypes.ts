@@ -33,6 +33,7 @@ export type DelayedSignDAInput = {
   readonly fetchBlockhash?: () => Promise<Uint8Array>;
   readonly userInputType?: UserInputType;
   readonly blockhashService?: BlockhashService;
+  readonly zeroedTransaction?: Uint8Array;
 };
 
 export type DelayedSignDAError =

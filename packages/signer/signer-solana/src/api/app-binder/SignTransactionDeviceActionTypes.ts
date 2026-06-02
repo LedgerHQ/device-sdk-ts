@@ -26,6 +26,7 @@ export const signTransactionDAStateSteps = Object.freeze({
   GET_APP_CONFIG: "signer.sol.steps.getAppConfig",
   WEB3_CHECKS_OPT_IN: "signer.sol.steps.web3ChecksOptIn",
   WEB3_CHECKS_OPT_IN_RESULT: "signer.sol.steps.web3ChecksOptInResult",
+  ZERO_BLOCKHASH: "signer.sol.steps.zeroBlockhash",
   INSPECT_TRANSACTION: "signer.sol.steps.inspectTransaction",
   GET_PUB_KEY: "signer.sol.steps.getPubKey",
   BUILD_TRANSACTION_CONTEXT: "signer.sol.steps.buildTransactionContext",
@@ -84,6 +85,7 @@ export type SignTransactionDAInternalState = {
   readonly solanaTransactionContext: SolanaTransactionContextResultSuccess | null;
   readonly inspectorResult: TxInspectorResult | null;
   readonly signerAddress: string | null;
+  readonly zeroedTransaction: Uint8Array | null;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<
