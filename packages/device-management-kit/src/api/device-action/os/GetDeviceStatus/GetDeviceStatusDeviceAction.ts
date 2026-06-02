@@ -40,6 +40,7 @@ import {
   DeviceSessionStateType,
   type FirmwareVersion,
 } from "@api/device-session/DeviceSessionState";
+import { isDashboardName, LEDGER_OS_NAME } from "@api/utils/AppName";
 
 import {
   type GetDeviceStatusDAError,
@@ -145,7 +146,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       },
       guards: {
         isCurrentAppBolos: ({ context }) =>
-          context._internalState.currentApp === "BOLOS",
+          isDashboardName(context._internalState.currentApp),
         isOnboardedFromOsVersion: ({ context }) =>
           context._internalState.osVersionMetadata?.secureElementFlags
             .isOnboarded === true,
@@ -287,7 +288,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                       return {
                         ..._.context._internalState,
                         locked: false,
-                        currentApp: "BOLOS",
+                        currentApp: LEDGER_OS_NAME,
                         currentAppVersion: "0.0.0",
                       };
                     }

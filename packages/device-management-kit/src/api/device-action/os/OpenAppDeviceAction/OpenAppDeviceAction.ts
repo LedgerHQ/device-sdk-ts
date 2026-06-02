@@ -24,7 +24,7 @@ import {
   DeviceSessionStateType,
 } from "@api/device-session/DeviceSessionState";
 import { DeviceDisconnectedWhileSendingError } from "@api/transport/model/Errors";
-import { isDashboardName } from "@api/utils/AppName";
+import { isDashboardName, LEDGER_OS_NAME } from "@api/utils/AppName";
 
 import {
   type OpenAppDAError,
@@ -348,7 +348,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
                   if (isSuccessCommandResult(_.event.output)) {
                     return {
                       ..._.context._internalState,
-                      currentlyRunningApp: "BOLOS",
+                      currentlyRunningApp: LEDGER_OS_NAME,
                     };
                   } else {
                     return {
