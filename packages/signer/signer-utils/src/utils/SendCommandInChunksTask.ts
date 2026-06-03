@@ -29,7 +29,7 @@ export type ChunkableCommandArgs = {
 export class SendCommandInChunksTask<T, ErrorCodes extends string> {
   constructor(
     private api: InternalApi,
-    private args: SendCommandInChunksTaskArgs<T, ErrorCodes>,
+    private readonly args: SendCommandInChunksTaskArgs<T, ErrorCodes>,
   ) {}
 
   async run(): Promise<CommandResult<T, ErrorCodes>> {

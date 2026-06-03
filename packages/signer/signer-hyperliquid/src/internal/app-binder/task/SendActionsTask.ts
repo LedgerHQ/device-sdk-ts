@@ -17,8 +17,8 @@ export type SendActionsTaskArgs = {
 
 /**
  * Sends a list of actions to the device by serializing each action to TLV,
- * framing the result (0x00 + DER length + payload) and streaming it to the
- * device via the shared chunking task.
+ * framing the result with a 2-byte big-endian length prefix and streaming it
+ * to the device via the shared chunking task.
  */
 export class SendActionsTask {
   constructor(
@@ -56,6 +56,11 @@ export class SendActionsTask {
  */
 export function buildSendActionPayload(serialized: Uint8Array): Uint8Array {
   const length = serialized.length;
+  if (length > 0xffff) {
+    throw new RangeError(
+      `Serialized action too large to frame with a 2-byte length prefix: ${length} bytes`,
+    );
+  }
   const framed = new Uint8Array(2 + length);
   framed[0] = (length >> 8) & 0xff;
   framed[1] = length & 0xff;
