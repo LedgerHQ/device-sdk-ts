@@ -12,7 +12,12 @@ export class DefaultSolanaMessageNormaliser implements SolanaMessageNormaliser {
   ) {}
 
   async normaliseMessage(rawBytes: Uint8Array): Promise<NormalizedMessage> {
-    const { message } = await this.parser.parse(rawBytes);
-    return message;
+    const parsed = await this.parser.parse(rawBytes).run();
+    return parsed.caseOf({
+      Left: (err) => {
+        throw err.originalError ?? new Error(err._tag);
+      },
+      Right: ({ message }) => message,
+    });
   }
 }

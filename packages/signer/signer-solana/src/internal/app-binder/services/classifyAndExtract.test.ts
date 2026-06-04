@@ -55,6 +55,7 @@ function buildMessage(
   const compiledInstructions = instructions.map((ix) => ({
     programIdIndex: intern(ix.programId),
     accountKeyIndexes: ix.accounts.map(intern),
+    accountWritable: ix.accounts.map(() => false),
     data: ix.data,
   }));
 
@@ -319,6 +320,7 @@ describe("classify", () => {
           {
             programIdIndex: 99, // out of range
             accountKeyIndexes: [],
+            accountWritable: [],
             data: new Uint8Array([3]),
           },
         ],
