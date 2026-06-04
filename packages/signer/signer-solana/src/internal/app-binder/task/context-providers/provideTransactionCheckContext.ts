@@ -6,9 +6,10 @@ import {
   hexaStringToBuffer,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
+import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
-import { SendCommandInChunksTask } from "@internal/app-binder/task/SendCommandInChunksTask";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
 import { type ProvideContextHandler } from "./provideContextTypes";
@@ -34,7 +35,10 @@ export const provideTransactionCheckContext: ProvideContextHandler<
     return;
   }
 
-  const chunkResult = await new SendCommandInChunksTask(api, {
+  const chunkResult = await new SendCommandInChunksTask<
+    void,
+    SolanaAppErrorCodes
+  >(api, {
     data: descriptorBytes,
     commandFactory: (args) =>
       new ProvideWeb3CheckCommand({

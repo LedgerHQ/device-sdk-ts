@@ -8,7 +8,10 @@ import {
   CommandResultFactory,
   InvalidResponseFormatError,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import {
+  type ChunkableCommandArgs,
+  CommandErrorHelper,
+} from "@ledgerhq/signer-utils";
 
 import {
   HYPERLIQUID_ERRORS,
@@ -16,16 +19,14 @@ import {
   type HyperliquidErrorCodes,
 } from "./utils/hyperliquidApplicationErrors";
 
-/** Set action to sign — APDU CLA/INS per specs.md */
+/** SET_ACTION — APDU framing per app-hyperliquid APP_SPECIFICATION.md */
 const CLA = 0xe0;
 const INS = 0x03;
-const P1 = 0x01;
+const P1_FIRST_CHUNK = 0x01;
+const P1_FOLLOWING_CHUNK = 0x00;
 const P2 = 0x00;
 
-export type SendActionCommandArgs = {
-  /** TLV-serialized action (specs.md "Set action to sign" data format) */
-  serializedAction: Uint8Array;
-};
+export type SendActionCommandArgs = ChunkableCommandArgs;
 
 export type SendActionCommandResponse = void;
 
@@ -47,16 +48,17 @@ export class SendActionCommand
   constructor(readonly args: SendActionCommandArgs) {}
 
   getApdu(): Apdu {
+    const p1 = this.args.extend ? P1_FOLLOWING_CHUNK : P1_FIRST_CHUNK;
+
     const sendActionArgs: ApduBuilderArgs = {
       cla: CLA,
       ins: INS,
-      p1: P1,
+      p1,
       p2: P2,
     };
 
     return new ApduBuilder(sendActionArgs)
-      .add8BitUIntToData(0x00)
-      .encodeInLVFromBuffer(this.args.serializedAction)
+      .addBufferToData(this.args.chunkedData)
       .build();
   }
 

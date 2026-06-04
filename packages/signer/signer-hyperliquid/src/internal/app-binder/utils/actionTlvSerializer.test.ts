@@ -298,6 +298,103 @@ describe("buildActionStructure", () => {
           "81ec0164", // BUILDER_FEE
     },
     {
+      name: "action type order with 3 orders (limit Ioc + trigger tp + trigger sl) with cloid and builder",
+      action: {
+        type: "order",
+        orders: [
+          {
+            a: 0,
+            b: true,
+            p: "77537",
+            s: "0.00017",
+            r: false,
+            t: { limit: { tif: "Ioc" as const } },
+            c: "0x614cb6c28c875ff64c2237d3c3bba694",
+          },
+          {
+            a: 0,
+            b: false,
+            p: "83614",
+            s: "0.00017",
+            r: true,
+            t: {
+              trigger: {
+                isMarket: true,
+                triggerPx: "83614",
+                tpsl: "tp" as const,
+              },
+            },
+            c: "0xd4e9b848a55c745ad1f2c030630cff62",
+          },
+          {
+            a: 0,
+            b: false,
+            p: "72212",
+            s: "0.00017",
+            r: true,
+            t: {
+              trigger: {
+                isMarket: true,
+                triggerPx: "72212",
+                tpsl: "sl" as const,
+              },
+            },
+            c: "0xd0c4974ab1dce46c5508930a9a5db95d",
+          },
+        ],
+        grouping: "normalTpsl",
+        builder: {
+          b: "0x14c1cf26360f42681105a03137cf6951bddb1293",
+          f: 100,
+        },
+        nonce: 1779870545049,
+      } satisfies HyperliquidAction,
+      expectedHex:
+        // prettier-ignore
+
+        "81dd3c" + // ORDER
+          "81e00100" + // ORDER_TYPE
+          "81d10100" + // ASSET_ID
+          "81e20101" + // BUY_OR_NOT
+          "81e3053737353337" + // PRICE
+          "81e407302E3030303137" + // SIZE
+          "81e50100" + // REDUCE_ONLY
+          "81d704" + // ORDER_DETAIL
+            "81e60101" + // TIF
+          "81ee10614cb6c28c875ff64c2237d3c3bba694" + // CLOID
+
+        "81dd48" + // ORDER 2
+          "81e00101" + // ORDER_TYPE
+          "81d10100" + // ASSET_ID
+          "81e20100" + // BUY_OR_NOT
+          "81e3053833363134" + // PRICE
+          "81e407302E3030303137" + // SIZE
+          "81e50101" + // REDUCE_ONLY
+          "81d710" + // ORDER_DETAIL
+            "81e70101" + // TRIGGER_MARKET
+            "81e8053833363134" + // TRIGGER_PRICE
+            "81e90100" + // TRIGGER_TYPE
+          "81ee10d4e9b848a55c745ad1f2c030630cff62" + // CLOID
+
+        "81dd48" + // ORDER 3
+          "81e00101" + // ORDER_TYPE
+          "81d10100" + // ASSET_ID
+          "81e20100" + // BUY_OR_NOT
+          "81e3053732323132" + // PRICE
+          "81e407302E3030303137" + // SIZE
+          "81e50101" + // REDUCE_ONLY
+          "81d710" + // ORDER_DETAIL
+            "81e70101" + // TRIGGER_MARKET
+            "81e8053732323132" + // TRIGGER_PRICE
+            "81e90101" + // TRIGGER_TYPE
+          "81ee10d0c4974ab1dce46c5508930a9a5db95d" + // CLOID
+
+        "81ea0101" + // GROUPING
+        "81eb1b" + // BUILDER_INFO
+          "81d31414c1cf26360f42681105a03137cf6951bddb1293" + // BUILDER_ADDRESS
+          "81ec0164", // BUILDER_FEE
+    },
+    {
       name: "action type batchModify update_order",
       action: {
         type: "batchModify",

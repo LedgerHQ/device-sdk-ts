@@ -7,10 +7,11 @@ import {
   type CommandResult,
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import {
+  type ChunkableCommandArgs,
+  CommandErrorHelper,
+} from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
-
-import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
 
 import {
   SOLANA_APP_ERRORS,
