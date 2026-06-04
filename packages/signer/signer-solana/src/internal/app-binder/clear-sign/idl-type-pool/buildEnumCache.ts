@@ -1,5 +1,10 @@
 import { type Either, Left, Right } from "purify-ts";
 
+import {
+  readTlvEntries,
+  TlvParseError,
+} from "@internal/app-binder/clear-sign/tlv";
+
 import * as K from "./kinds";
 import { parseInlinePayload } from "./parsePool";
 import {
@@ -24,48 +29,6 @@ const TAG_EV_PAYLOAD = 0x25;
 
 const textDecoder = new TextDecoder("utf-8");
 
-type TlvRecord = { tag: number; value: Uint8Array };
-
-/** Decode a DER-encoded length at `offset`. Returns `[length, newOffset]`. */
-function decodeLength(buf: Uint8Array, offset: number): [number, number] {
-  if (offset >= buf.length) {
-    fail(new TruncatedDataError("truncated TLV length byte"));
-  }
-  const head = buf[offset]!;
-  offset += 1;
-  if (head < 0x80) {
-    return [head, offset];
-  }
-  const lengthSize = head & 0x7f;
-  if (lengthSize === 0) {
-    fail(new TruncatedDataError("indefinite-length form not allowed in DER"));
-  }
-  if (offset + lengthSize > buf.length) {
-    fail(new TruncatedDataError("truncated extended TLV length"));
-  }
-  let length = 0;
-  for (let i = 0; i < lengthSize; i++) {
-    length = length * 256 + buf[offset + i]!;
-  }
-  return [length, offset + lengthSize];
-}
-
-/** Parse every `(tag, value)` record in `buf` in stream order. */
-function readTlvRecords(buf: Uint8Array): TlvRecord[] {
-  const records: TlvRecord[] = [];
-  let offset = 0;
-  while (offset < buf.length) {
-    const tag = buf[offset]!;
-    const [length, afterLen] = decodeLength(buf, offset + 1);
-    if (afterLen + length > buf.length) {
-      fail(new TruncatedDataError("truncated TLV value"));
-    }
-    records.push({ tag, value: buf.subarray(afterLen, afterLen + length) });
-    offset = afterLen + length;
-  }
-  return records;
-}
-
 function readBE(buf: Uint8Array, size: number): number {
   let value = 0;
   for (let i = 0; i < size; i++) {
@@ -77,7 +40,7 @@ function readBE(buf: Uint8Array, size: number): number {
 function buildOne(
   tlv: Uint8Array,
 ): { key: string; variant: CachedVariant } | null {
-  const records = readTlvRecords(tlv);
+  const records = readTlvEntries(tlv);
   let enumId: string | undefined;
   let variantIndex: number | undefined;
   let variantName: string | undefined;
@@ -175,6 +138,9 @@ export function buildEnumCache(
   } catch (error) {
     if (error instanceof TypePoolDecoderThrow) {
       return Left(error.error);
+    }
+    if (error instanceof TlvParseError) {
+      return Left(new TruncatedDataError(error.message));
     }
     return Left(
       new InvalidVariantPayloadError(
