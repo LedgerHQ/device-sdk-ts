@@ -54,12 +54,6 @@ The Device Management Kit (DMK) is a TypeScript library that provides easy commu
 - App installation and management
 - 🔜 OS updates
 
-⚠️
-<mark>
-** The Device Management Kit is in alpha stage and is subject to significant changes!!!**
-</mark>
-⚠️
-
 ## How it works
 
 The Device Management Kit features an interface for applications to handle any Ledger device (a.k. hardware wallets). It converts intention into
