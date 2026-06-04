@@ -15,15 +15,32 @@ export enum SolanaTransactionTypes {
   SWAP = "Swap",
 }
 
-export type NormalizedCompiledIx = {
+export type NormalisedCompiledIx = {
   programIdIndex: number;
   accountKeyIndexes: number[];
+  /** Parallel to `accountKeyIndexes`; `true` when the account is writable in this instruction. */
+  accountWritable: boolean[];
   data: Uint8Array;
 };
 
+/**
+ * Raw `(altAddress, entryIndex)` reference preserved on the parsed output
+ * when no `AddressLookupTableResolver` is provided.
+ */
+export type AddressLookupRef = {
+  altAddress: PublicKey;
+  entryIndex: number;
+};
+
 export type NormalizedMessage = {
-  compiledInstructions: NormalizedCompiledIx[];
+  compiledInstructions: NormalisedCompiledIx[];
   allKeys: PublicKey[];
+  /**
+   * Parallel to `allKeys`. `undefined` for static keys and resolver-resolved
+   * ALT entries; set to the raw `(altAddress, entryIndex)` for unresolved ALT
+   * entries, whose matching `allKeys[i]` is then a placeholder zero pubkey.
+   */
+  addressLookupRefs?: ReadonlyArray<AddressLookupRef | undefined>;
 };
 
 export type TxInspectorResult = {
@@ -118,12 +135,22 @@ export class TransactionInspector {
       return { transactionType: SolanaTransactionTypes.SWAP, data: {} };
     }
 
-    try {
-      const { message } = await this.parser.parse(rawTransactionBytes);
-      return classify(message, tokenAddress, createATA);
-    } catch {
-      return { transactionType: SolanaTransactionTypes.STANDARD, data: {} };
-    }
+    const standard: TxInspectorResult = {
+      transactionType: SolanaTransactionTypes.STANDARD,
+      data: {},
+    };
+
+    const parsed = await this.parser.parse(rawTransactionBytes).run();
+    return parsed.caseOf<TxInspectorResult>({
+      Left: () => standard,
+      Right: ({ message }) => {
+        try {
+          return classify(message, tokenAddress, createATA);
+        } catch {
+          return standard;
+        }
+      },
+    });
   }
 }
 
