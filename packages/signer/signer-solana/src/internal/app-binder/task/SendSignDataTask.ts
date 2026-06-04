@@ -43,12 +43,12 @@ export class SignDataTask {
     builder.addBufferToData(sendingData);
     const buffer = builder.build();
 
-    return await new SendCommandInChunksTask<Maybe<Signature>, SolanaAppErrorCodes>(
-      this.api,
-      {
-        data: buffer,
-        commandFactory,
-      },
-    ).run();
+    return await new SendCommandInChunksTask<
+      Maybe<Signature>,
+      SolanaAppErrorCodes
+    >(this.api, {
+      data: buffer,
+      commandFactory,
+    }).run();
   }
 }
