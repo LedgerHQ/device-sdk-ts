@@ -17,24 +17,30 @@ export type DatasourceProxy = NonNullable<
   ContextModuleDatasourceConfig["proxy"]
 >;
 
-export type TransportType = "default" | "speculos" | "mockserver";
+export type TransportConfig = {
+  speculos: { url: string; deviceModelId: DeviceModelId } | null;
+  mockServer: { url: string } | null;
+};
 
-export type TransportConfig =
-  | { type: "default" }
-  | { type: "speculos"; url: string; deviceModelId: DeviceModelId }
-  | { type: "mockserver"; url: string };
+type TransportFlags = {
+  speculosEnabled: boolean;
+  mockServerEnabled: boolean;
+};
 
-function getInitialTransportType(): TransportType {
+function getInitialTransportFlags(): TransportFlags {
   const envTransport = process.env.DMK_CONFIG_TRANSPORT;
-  if (envTransport === "speculos" || envTransport === "mockserver") {
-    return envTransport;
-  }
-  return "default";
+  const enabled = (envTransport ?? "").split(",").map((value) => value.trim());
+  const isTest = enabled.includes("test") || enabled.includes("both");
+  return {
+    speculosEnabled: isTest || enabled.includes("speculos"),
+    mockServerEnabled: isTest || enabled.includes("mockserver"),
+  };
 }
 
 export type SettingsState = {
   // Transport settings
-  transportType: TransportType;
+  speculosEnabled: boolean;
+  mockServerEnabled: boolean;
   mockServerUrl: string;
   speculosUrl: string;
   speculosVncUrl: string;
@@ -54,9 +60,12 @@ export type SettingsState = {
   datasourceConfig: ContextModuleDatasourceConfig;
 };
 
+const initialTransportFlags = getInitialTransportFlags();
+
 export const initialState: SettingsState = {
   // Transport settings
-  transportType: getInitialTransportType(),
+  speculosEnabled: initialTransportFlags.speculosEnabled,
+  mockServerEnabled: initialTransportFlags.mockServerEnabled,
   mockServerUrl: "http://127.0.0.1:8080/",
   speculosUrl: DEFAULT_SPECULOS_URL,
   speculosVncUrl: DEFAULT_SPECULOS_VNC_URL,

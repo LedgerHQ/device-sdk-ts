@@ -14,8 +14,8 @@ import styled from "styled-components";
 
 import { VncViewer } from "@/components/VncViewer";
 import {
+  selectSpeculosEnabled,
   selectSpeculosVncUrl,
-  selectTransportType,
 } from "@/state/settings/selectors";
 
 const CONSTANTS = {
@@ -96,7 +96,7 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
   onDragStart,
   onDragEnd,
 }) => {
-  const transportType = useSelector(selectTransportType);
+  const speculosEnabled = useSelector(selectSpeculosEnabled);
   const speculosVncUrl = useSelector(selectSpeculosVncUrl);
 
   const [position, setPosition] = useState<Position>(
@@ -244,7 +244,7 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, [calculateBounds, isVncOpen]);
 
-  if (transportType !== "speculos") {
+  if (!speculosEnabled) {
     return null;
   }
 

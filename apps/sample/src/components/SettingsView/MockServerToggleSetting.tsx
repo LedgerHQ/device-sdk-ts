@@ -2,29 +2,26 @@ import React, { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Flex, Switch } from "@ledgerhq/react-ui";
 
-import { type TransportType } from "@/state/settings/schema";
-import { selectTransportType } from "@/state/settings/selectors";
-import { setTransportType } from "@/state/settings/slice";
+import { selectMockServerEnabled } from "@/state/settings/selectors";
+import { setMockServerEnabled } from "@/state/settings/slice";
 
 import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
 export const MockServerToggleSetting: React.FC = () => {
-  const transportType = useSelector(selectTransportType);
+  const mockServerEnabled = useSelector(selectMockServerEnabled);
   const dispatch = useDispatch();
 
-  const mockServerEnabled = transportType === "mockserver";
-
-  const setTransportTypeFn = useCallback(
-    (value: TransportType) => {
-      dispatch(setTransportType({ transportType: value }));
+  const setMockServerEnabledFn = useCallback(
+    (value: boolean) => {
+      dispatch(setMockServerEnabled({ mockServerEnabled: value }));
     },
     [dispatch],
   );
 
   const onToggle = useCallback(() => {
-    setTransportTypeFn(mockServerEnabled ? "default" : "mockserver");
-  }, [setTransportTypeFn, mockServerEnabled]);
+    setMockServerEnabledFn(!mockServerEnabled);
+  }, [setMockServerEnabledFn, mockServerEnabled]);
 
   return (
     <SettingBox>
@@ -38,8 +35,8 @@ export const MockServerToggleSetting: React.FC = () => {
         />
       </Flex>
       <ResetSettingCTA
-        stateSelector={selectTransportType}
-        setStateAction={setTransportTypeFn}
+        stateSelector={selectMockServerEnabled}
+        setStateAction={setMockServerEnabledFn}
       />
     </SettingBox>
   );

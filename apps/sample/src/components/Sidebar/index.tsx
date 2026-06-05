@@ -20,24 +20,16 @@ import {
 } from "@/state/sessions/selectors";
 import { setSelectedSession } from "@/state/sessions/slice";
 import {
+  selectMockServerEnabled,
   selectPollingInterval,
-  selectTransportType,
 } from "@/state/settings/selectors";
 import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
 
 const Root = styled(Flex).attrs({ py: 8, px: 6, rowGap: 6 })`
   flex-direction: column;
   width: 280px;
-  background-color: ${({
-    theme,
-    mockServerEnabled,
-  }: {
-    theme: DefaultTheme;
-    mockServerEnabled: boolean;
-  }) =>
-    mockServerEnabled
-      ? theme.colors.constant.purple
-      : theme.colors.background.card};
+  background-color: ${({ theme }: { theme: DefaultTheme }) =>
+    theme.colors.background.card};
   overflow-y: auto;
 `;
 
@@ -64,7 +56,7 @@ export const Sidebar: React.FC = () => {
   const orderedConnectedDevices = useSelector(selectOrderedConnectedDevices);
   const selectedSessionId = useSelector(selectSelectedSessionId);
   const dispatch = useDispatch();
-  const transportType = useSelector(selectTransportType);
+  const mockServerEnabled = useSelector(selectMockServerEnabled);
   const pollingInterval = useSelector(selectPollingInterval);
 
   const selectSession = useCallback(
@@ -113,7 +105,7 @@ export const Sidebar: React.FC = () => {
 
   const router = useRouter();
   return (
-    <Root mockServerEnabled={transportType === "mockserver"}>
+    <Root>
       <Link
         onClick={() => router.push("/")}
         mb={8}
@@ -123,7 +115,7 @@ export const Sidebar: React.FC = () => {
         }}
       >
         Ledger Device Management Kit
-        {transportType === "mockserver" && <span> (MOCKED)</span>}
+        {mockServerEnabled && <span> (MOCKED)</span>}
       </Link>
 
       <Flex data-testid="container_devices" rowGap={4} flexDirection="column">

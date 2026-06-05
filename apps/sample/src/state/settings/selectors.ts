@@ -5,8 +5,10 @@ import { type RootState } from "@/state/store";
 import { type TransportConfig } from "./schema";
 
 // Transport settings selectors
-export const selectTransportType = (state: RootState) =>
-  state.settings.transportType;
+export const selectSpeculosEnabled = (state: RootState) =>
+  state.settings.speculosEnabled;
+export const selectMockServerEnabled = (state: RootState) =>
+  state.settings.mockServerEnabled;
 export const selectMockServerUrl = (state: RootState) =>
   state.settings.mockServerUrl;
 export const selectSpeculosUrl = (state: RootState) =>
@@ -19,30 +21,24 @@ export const selectSpeculosDeviceModel = (state: RootState) =>
 // Derived transport config selector (memoized to avoid creating new objects on every render)
 export const selectTransportConfig = createSelector(
   [
-    selectTransportType,
+    selectSpeculosEnabled,
+    selectMockServerEnabled,
     selectMockServerUrl,
     selectSpeculosUrl,
     selectSpeculosDeviceModel,
   ],
   (
-    transportType,
+    speculosEnabled,
+    mockServerEnabled,
     mockServerUrl,
     speculosUrl,
     speculosDeviceModel,
-  ): TransportConfig => {
-    switch (transportType) {
-      case "speculos":
-        return {
-          type: "speculos",
-          url: speculosUrl,
-          deviceModelId: speculosDeviceModel,
-        };
-      case "mockserver":
-        return { type: "mockserver", url: mockServerUrl };
-      default:
-        return { type: "default" };
-    }
-  },
+  ): TransportConfig => ({
+    speculos: speculosEnabled
+      ? { url: speculosUrl, deviceModelId: speculosDeviceModel }
+      : null,
+    mockServer: mockServerEnabled ? { url: mockServerUrl } : null,
+  }),
 );
 
 // DMK settings selectors

@@ -4,12 +4,12 @@ import { type DmkError } from "@ledgerhq/device-management-kit";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import {
+  getTransportOptions,
   type TransportOption,
-  transportOptionsMap,
 } from "@/providers/DeviceManagementKitProvider/transportConfig";
 import {
   selectPollingInterval,
-  selectTransportType,
+  selectTransportConfig,
 } from "@/state/settings/selectors";
 import { setDisplayedError } from "@/state/ui/slice";
 import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
@@ -26,7 +26,7 @@ type UseConnectDeviceResult = {
 export function useConnectDevice(): UseConnectDeviceResult {
   const dispatch = useDispatch();
 
-  const transportType = useSelector(selectTransportType);
+  const transportConfig = useSelector(selectTransportConfig);
   const pollingInterval = useSelector(selectPollingInterval);
   const dmk = useDmk();
 
@@ -37,7 +37,7 @@ export function useConnectDevice(): UseConnectDeviceResult {
     [dispatch],
   );
 
-  const transportOptions = transportOptionsMap[transportType];
+  const transportOptions = getTransportOptions(transportConfig);
 
   const connectWithTransport = useCallback(
     (transportIdentifier: string) => {

@@ -8,7 +8,6 @@ import {
   type DatasourceProxy,
   initialState,
   type SettingsState,
-  type TransportType,
 } from "./schema";
 
 export const settingsSlice = createSlice({
@@ -17,11 +16,17 @@ export const settingsSlice = createSlice({
   initialState,
   reducers: {
     // Transport settings
-    setTransportType: (
+    setSpeculosEnabled: (
       state,
-      action: PayloadAction<{ transportType: TransportType }>,
+      action: PayloadAction<{ speculosEnabled: boolean }>,
     ) => {
-      state.transportType = action.payload.transportType;
+      state.speculosEnabled = action.payload.speculosEnabled;
+    },
+    setMockServerEnabled: (
+      state,
+      action: PayloadAction<{ mockServerEnabled: boolean }>,
+    ) => {
+      state.mockServerEnabled = action.payload.mockServerEnabled;
     },
     setMockServerUrl: (
       state,
@@ -134,7 +139,8 @@ export const settingsSlice = createSlice({
 });
 
 export const {
-  setTransportType,
+  setSpeculosEnabled,
+  setMockServerEnabled,
   setMockServerUrl,
   setSpeculosUrl,
   setSpeculosVncUrl,
