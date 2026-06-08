@@ -1,15 +1,11 @@
-import { type CommandErrorResult } from "@api/command/model/CommandResult";
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-import {
-  type DeviceLockedError,
-  type DeviceNotOnboardedError,
-  type UnknownDAError,
-} from "@api/device-action/os/Errors";
+import { type DeviceNotOnboardedError } from "@api/device-action/os/Errors";
+import { type WaitForAppAndVersionDAError } from "@api/device-action/os/WaitForAppAndVersion/types";
 
 export const getDeviceStatusDAStateStep = Object.freeze({
+  WAIT_FOR_APP_AND_VERSION: "os.getDeviceStatus.steps.waitForAppAndVersion",
   ONBOARD_CHECK: "os.getDeviceStatus.steps.onboardCheck",
-  UNLOCK_DEVICE: "os.getDeviceStatus.steps.unlockDevice",
 } as const);
 
 export type GetDeviceStatusDAStateStep =
@@ -24,10 +20,8 @@ export type GetDeviceStatusDAInput = {
 };
 
 export type GetDeviceStatusDAError =
-  | DeviceNotOnboardedError
-  | DeviceLockedError
-  | UnknownDAError
-  | CommandErrorResult["error"];
+  | WaitForAppAndVersionDAError
+  | DeviceNotOnboardedError;
 
 export type GetDeviceStatusDARequiredInteraction =
   | UserInteractionRequired.None
