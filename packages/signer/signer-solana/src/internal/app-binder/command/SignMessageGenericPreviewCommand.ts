@@ -17,47 +17,40 @@ import {
   type SolanaAppErrorCodes,
 } from "./utils/SolanaApplicationErrors";
 
-const CLA = 0xe0;
-const P1 = 0x00;
-export const INS = 0x21;
+export const CLA = 0xe0;
+export const INS = 0x0a;
+export const P1 = 0x01;
 
-export type ProvideTLVDescriptorCommandArgs = {
-  readonly payload: Uint8Array;
-  /**
-   * Chunking flags following the standard Solana P2_MORE / P2_EXTEND
-   * convention. Default to a single-chunk send (P2 = 0x00) so callers that
-   * fit their payload in one APDU don't need to pass them.
-   */
-  readonly isFirstChunk?: boolean;
-  readonly hasMore?: boolean;
+export type SignMessageGenericPreviewCommandArgs = {
+  readonly serializedMessage: Uint8Array;
+  readonly isFirstChunk: boolean;
+  readonly hasMore: boolean;
 };
 
 /**
- * Provides one signed TLV descriptor to the device.
- *
- * The chunking flags `isFirstChunk` / `hasMore` are optional and default to a
- * single-chunk send (P2 = 0x00) so existing single-chunk callers stay
- * byte-compatible. Pass them explicitly when a payload needs more than one
- * APDU.
+ * Sends the serialized message to the device in chunks — the first chunk
+ * carries the derivation path — using the `isFirstChunk` / `hasMore` flags to
+ * drive the P2 chunking. Returns no data.
  */
-export class ProvideTLVDescriptorCommand
-  implements Command<void, ProvideTLVDescriptorCommandArgs, SolanaAppErrorCodes>
+export class SignMessageGenericPreviewCommand
+  implements
+    Command<void, SignMessageGenericPreviewCommandArgs, SolanaAppErrorCodes>
 {
-  readonly name = "provideTLVDescriptor";
+  readonly name = "signMessageGenericPreview";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(readonly args: ProvideTLVDescriptorCommandArgs) {}
+  constructor(readonly args: SignMessageGenericPreviewCommandArgs) {}
 
   getApdu(): Apdu {
-    const { payload, isFirstChunk = true, hasMore = false } = this.args;
-    assertChunkSize(payload, INS);
+    const { serializedMessage, isFirstChunk, hasMore } = this.args;
+    assertChunkSize(serializedMessage, INS);
     const p2 = buildChunkP2(isFirstChunk, hasMore);
 
     return new ApduBuilder({ cla: CLA, ins: INS, p1: P1, p2 })
-      .addBufferToData(payload)
+      .addBufferToData(serializedMessage)
       .build();
   }
 
