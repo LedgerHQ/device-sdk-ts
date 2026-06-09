@@ -23,8 +23,8 @@ export interface MockServerApp {
 const DEFAULT_SWEEP_INTERVAL_MS = 60 * 1000;
 
 /**
- * Build the Express application implementing the device mock server contract
- * (ADR 001 / ADR 002 Solution 3). Exported separately from {@link main} so it
+ * Build the Express application implementing the device mock server contract.
+ * Exported separately from {@link main} so it
  * can be exercised in tests without binding a port.
  */
 export function createMockServer(

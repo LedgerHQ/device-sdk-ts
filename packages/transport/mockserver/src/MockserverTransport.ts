@@ -165,7 +165,7 @@ export class MockTransport implements Transport {
  * @param mockUrl Optional mock server URL. When omitted, `config.mockUrl` from
  *   the DMK configuration is used.
  * @param sessionToken Optional bearer token to share an existing session
- *   (ADR 003). When omitted, the client self-provisions a session via /auth.
+ *   When omitted, the client self-provisions a session via /auth.
  */
 export const mockserverTransportFactory =
   (mockUrl?: string, sessionToken?: string): TransportFactory =>

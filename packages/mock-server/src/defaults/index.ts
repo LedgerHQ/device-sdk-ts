@@ -2,7 +2,7 @@ import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
 /**
  * The device every freshly created session is seeded with, so the standalone
- * sample app can connect without any prior configuration (ADR 003).
+ * sample app can connect without any prior configuration.
  *
  * `device_type` is a `DeviceModelId` enum value so the transport reports the
  * right model to DMK.

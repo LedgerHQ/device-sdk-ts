@@ -30,7 +30,7 @@ interface SessionRecord {
 }
 
 /**
- * In-memory store of bearer-token sessions (ADR 002, Solution 3).
+ * In-memory store of bearer-token sessions.
  *
  * Each session owns its devices and mocks. Sessions expire on a sliding TTL or
  * a hard lifetime cap; {@link sweep} removes expired ones.

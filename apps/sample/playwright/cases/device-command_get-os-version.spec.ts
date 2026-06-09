@@ -17,7 +17,7 @@ import {
 // (start it manually: `pnpm --filter @ledgerhq/device-mock-server serve`).
 // start-servers.sh creates one session up front and shares its bearer token with
 // the sample app via NEXT_PUBLIC_MOCK_SERVER_SESSION_TOKEN; we read that same
-// token here so the spec and the app operate on the same session (ADR 003).
+// token here so the spec and the app operate on the same session.
 const MOCK_SERVER_URL = "http://127.0.0.1:8080";
 const TOKEN_FILE = path.resolve(__dirname, "../.mock-session-token");
 

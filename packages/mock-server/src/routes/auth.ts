@@ -4,7 +4,7 @@ import { logger } from "../logger";
 import { type SessionStore } from "../store/SessionStore";
 
 /**
- * POST /auth — create a session and return a bearer token (ADR 002 / ADR 003).
+ * POST /auth — create a session and return a bearer token.
  */
 export function authRouter(store: SessionStore): Router {
   const router = Router();

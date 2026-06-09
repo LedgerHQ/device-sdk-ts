@@ -4,7 +4,7 @@ import { type Device, deviceCodec } from "./Device";
 
 /**
  * Response of POST /auth: an opaque bearer token identifying a session and its
- * expiry timestamp (epoch ms). See ADR 002 (Solution 3) and ADR 003.
+ * expiry timestamp (epoch ms).
  */
 export interface AuthResponse {
   readonly token: string;

@@ -11,7 +11,7 @@ const BEARER_PREFIX = "Bearer ";
 
 /**
  * Resolve the session from the `Authorization: Bearer <token>` header and attach
- * it to the request (ADR 002, Solution 3). Responds 401 when the token is
+ * it to the request. Responds 401 when the token is
  * missing, unknown or expired.
  */
 export function bearerAuth(store: SessionStore) {

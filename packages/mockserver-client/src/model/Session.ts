@@ -3,7 +3,7 @@ import { array, Codec, number, string } from "purify-ts";
 import { type Device, deviceCodec } from "./Device";
 
 /**
- * A mock server session, resolved from a bearer token (ADR 002 / ADR 003).
+ * A mock server session, resolved from a bearer token.
  *
  * All devices and mocks are scoped to the session that owns the token.
  */

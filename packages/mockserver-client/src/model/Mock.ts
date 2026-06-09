@@ -4,7 +4,7 @@ import { Codec, string } from "purify-ts";
  * A canned APDU response registered against a session.
  *
  * The mock server returns {@link Mock.response} whenever an incoming APDU starts
- * with {@link Mock.prefix} (hex). Mocks are session-scoped (ADR 002, Solution 3).
+ * with {@link Mock.prefix} (hex). Mocks are session-scoped.
  */
 export interface Mock {
   readonly id: string;

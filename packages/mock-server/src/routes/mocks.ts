@@ -8,7 +8,7 @@ import {
 } from "../middleware/bearerAuth";
 import { type SessionStore } from "../store/SessionStore";
 
-/** Session-scoped canned APDU response resource (ADR 002, Solution 3). */
+/** Session-scoped canned APDU response resource. */
 export function mocksRouter(store: SessionStore): Router {
   const router = Router();
   router.use(bearerAuth(store));

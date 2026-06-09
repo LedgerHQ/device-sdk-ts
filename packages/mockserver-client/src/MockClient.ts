@@ -21,7 +21,7 @@ export interface MockClientOptions {
   /**
    * An existing mock server session token. When provided the client operates
    * within that session; when omitted the client lazily creates its own session
-   * through POST /auth (ADR 003, Option 1).
+   * through POST /auth.
    */
   readonly token?: string;
   /** Inject a custom network client (mainly for testing). */
@@ -31,10 +31,10 @@ export interface MockClientOptions {
 /**
  * HTTP client for the device mock server.
  *
- * Implements the bearer-token contract from ADR 002 (Solution 3): the session is
+ * Implements the bearer-token contract: the session is
  * resolved from an `Authorization: Bearer <token>` header rather than a
  * `session_id` header, and sessions, devices and mocks are exposed as REST
- * resources. The token can be injected (ADR 003) or self-provisioned via /auth.
+ * resources. The token can be injected or self-provisioned via /auth.
  */
 export class MockClient {
   private readonly client: DmkNetworkClient;

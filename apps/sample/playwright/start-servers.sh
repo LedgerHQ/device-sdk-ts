@@ -11,7 +11,7 @@ rm -f "$TOKEN_FILE"
 # http://127.0.0.1:8080, e.g. `pnpm --filter @ledgerhq/device-mock-server serve`.
 
 # Create one session up front and share its bearer token with both the sample
-# app and the Playwright specs (ADR 003), so they all operate on the same
+# app and the Playwright specs, so they all operate on the same
 # authenticated mock server session.
 echo "Creating mock server session..."
 TOKEN=$(curl -s -X POST "$MOCK_SERVER_URL/auth" | sed -E 's/.*"token":"([^"]+)".*/\1/')

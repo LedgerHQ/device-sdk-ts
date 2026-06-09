@@ -12,7 +12,7 @@ import { type SessionStore } from "../store/SessionStore";
 
 /**
  * Device resource routes: discovery, lifecycle, connection state and APDU
- * simulation (ADR 002, Solution 3). All scoped to the bearer-token session.
+ * simulation. All scoped to the bearer-token session.
  */
 export function devicesRouter(store: SessionStore): Router {
   const router = Router();

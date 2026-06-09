@@ -15,7 +15,7 @@ export const deviceAppCodec = Codec.interface({
 /**
  * A mocked device attached to a session.
  *
- * Following ADR 002 (Solution 3), the device exposes rich metadata (firmware
+ * The device exposes rich metadata (firmware
  * version, installed applications, memory masks) so DMK can build a realistic
  * device session.
  */
