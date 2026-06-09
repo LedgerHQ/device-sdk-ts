@@ -1,14 +1,17 @@
 {
-  "name": "@ledgerhq/device-mockserver-client",
-  "private": false,
-  "version": "1.1.0",
+  "name": "@ledgerhq/device-mock-server",
+  "version": "0.1.0",
+  "private": true,
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/LedgerHQ/device-sdk-ts.git"
   },
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "lib/cjs/index.js",
+  "types": "lib/types/index.d.ts",
+  "bin": {
+    "device-mock-server": "./lib/cjs/main.js"
+  },
   "exports": {
     ".": {
       "types": "./lib/types/index.d.ts",
@@ -27,9 +30,9 @@
   "scripts": {
     "prebuild": "rimraf lib",
     "build": "pnpm ldmk-tool build --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
-    "dev": "concurrently \"pnpm watch:builds\" \"pnpm watch:types\"",
-    "watch:builds": "pnpm ldmk-tool watch --entryPoints index.ts,src/**/*.ts --tsconfig tsconfig.prod.json",
-    "watch:types": "concurrently \"tsc --watch -p tsconfig.prod.json\" \"tsc-alias --watch -p tsconfig.prod.json\"",
+    "start": "node lib/cjs/main.js",
+    "dev": "tsx watch src/main.ts",
+    "serve": "tsx src/main.ts",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
     "prettier": "prettier . --check",
@@ -40,17 +43,16 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "purify-ts": "catalog:"
+    "express": "catalog:"
   },
   "devDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
+    "@ledgerhq/device-mockserver-client": "workspace:^",
     "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
-    "@ledgerhq/vitest-config-dmk": "workspace:^"
-  },
-  "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/vitest-config-dmk": "workspace:^",
+    "@types/express": "catalog:",
+    "tsx": "catalog:"
   }
 }

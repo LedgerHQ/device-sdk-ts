@@ -8,6 +8,7 @@
 
 # testing
 /coverage
+playwright/.mock-session-token
 
 # next.js
 /.next/

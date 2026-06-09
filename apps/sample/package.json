@@ -14,7 +14,8 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test:playwright": "pnpm playwright test"
+    "test:playwright": "pnpm playwright test",
+    "test:playwright:ui": "pnpm playwright test --ui"
   },
   "dependencies": {
     "@ledgerhq/cal-interceptor": "workspace:*",
@@ -57,6 +58,7 @@
     "styled-components": "catalog:"
   },
   "devDependencies": {
+    "@ledgerhq/device-mock-server": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",

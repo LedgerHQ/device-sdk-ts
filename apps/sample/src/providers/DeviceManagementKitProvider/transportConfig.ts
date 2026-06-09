@@ -64,7 +64,12 @@ export function getTransportFactoriesForConfig(
       };
     case "mockserver":
       return {
-        factories: [mockserverTransportFactory],
+        factories: [
+          mockserverTransportFactory(
+            transportConfig.url,
+            transportConfig.sessionToken,
+          ),
+        ],
         config: { mockUrl: transportConfig.url },
       };
     default:

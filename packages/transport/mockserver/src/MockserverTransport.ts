@@ -5,10 +5,10 @@ import {
   type DeviceModelId,
   DisconnectError,
   type DisconnectHandler,
-  type DmkConfig,
   type DmkError,
   formatApduReceivedLog,
   formatApduSentLog,
+  hexaStringToBuffer,
   type LoggerPublisherService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
@@ -22,12 +22,13 @@ import {
   type CommandResponse,
   type Device,
   MockClient,
-  type Session,
 } from "@ledgerhq/device-mockserver-client";
 import { type Either, Left, Right } from "purify-ts";
 import { from, mergeMap, type Observable } from "rxjs";
 
 export const mockserverIdentifier: TransportIdentifier = "MOCKSERVER";
+
+const DEFAULT_MASKS = [0x31100000];
 
 export class MockTransport implements Transport {
   private logger: LoggerPublisherService;
@@ -36,10 +37,11 @@ export class MockTransport implements Transport {
 
   constructor(
     loggerServiceFactory: (tag: string) => LoggerPublisherService,
-    config: DmkConfig,
+    mockUrl: string,
+    sessionToken?: string,
   ) {
     this.logger = loggerServiceFactory("MockTransport");
-    this.mockClient = new MockClient(config.mockUrl);
+    this.mockClient = new MockClient(mockUrl, { token: sessionToken });
   }
 
   isSupported(): boolean {
@@ -57,24 +59,13 @@ export class MockTransport implements Transport {
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     this.logger.debug("startDiscovering");
     return from(
-      this.mockClient.scan().then((devices: Device[]) => {
-        return devices.map((device: Device) => ({
+      this.mockClient.listDevices().then((devices: Device[]) =>
+        devices.map((device: Device) => ({
           id: device.id,
-          deviceModel: {
-            id: device.device_type as DeviceModelId,
-            productName: device.name,
-            usbProductId: 0x10,
-            bootloaderUsbProductId: 0x0001,
-            getBlockSize() {
-              return 32;
-            },
-            usbOnly: true,
-            memorySize: 320 * 1024,
-            masks: [0x31100000],
-          },
+          deviceModel: this.buildDeviceModel(device),
           transport: this.identifier,
-        }));
-      }),
+        })),
+      ),
     ).pipe(mergeMap((device) => device));
   }
 
@@ -88,33 +79,15 @@ export class MockTransport implements Transport {
     onDisconnect: DisconnectHandler;
   }): Promise<Either<ConnectError, TransportConnectedDevice>> {
     this.logger.debug("connect");
-    const sessionId: string = params.deviceId;
+    const deviceId: string = params.deviceId;
     try {
-      const session: Session = await this.mockClient.connect(sessionId);
+      const { device } = await this.mockClient.connect(deviceId);
       const connectedDevice = {
-        sendApdu: (apdu) => {
-          return this.sendApdu(
-            sessionId,
-            params.deviceId,
-            params.onDisconnect,
-            apdu,
-          );
-        },
-        deviceModel: {
-          id: session.device.device_type,
-          productName: session.device.name,
-          usbProductId: 0x10,
-          legacyUsbProductId: 0x0001,
-          bootloaderUsbProductId: 0x10,
-          getBlockSize() {
-            return 32;
-          },
-          usbOnly: true,
-          memorySize: 320 * 1024,
-          masks: [0x31100000],
-        },
+        sendApdu: (apdu) =>
+          this.sendApdu(deviceId, params.deviceId, params.onDisconnect, apdu),
+        deviceModel: this.buildDeviceModel(device),
         id: params.deviceId,
-        type: session.device.connectivity_type,
+        type: device.connectivity_type,
         transport: this.identifier,
       } as TransportConnectedDevice;
       return Right(connectedDevice);
@@ -127,12 +100,12 @@ export class MockTransport implements Transport {
     connectedDevice: TransportConnectedDevice;
   }): Promise<Either<DmkError, void>> {
     this.logger.debug("disconnect");
-    const sessionId: string = params.connectedDevice.id;
+    const deviceId: string = params.connectedDevice.id;
     try {
-      const success: boolean = await this.mockClient.disconnect(sessionId);
+      const success: boolean = await this.mockClient.disconnect(deviceId);
       if (!success) {
         return Left(
-          new DisconnectError(new Error(`Failed to disconnect ${sessionId}`)),
+          new DisconnectError(new Error(`Failed to disconnect ${deviceId}`)),
         );
       }
       return Right(undefined);
@@ -142,39 +115,63 @@ export class MockTransport implements Transport {
   }
 
   async sendApdu(
-    sessionId: string,
-    deviceId: DeviceId,
+    deviceId: string,
+    onDisconnectDeviceId: DeviceId,
     onDisconnect: DisconnectHandler,
     apdu: Uint8Array,
   ): Promise<Either<DmkError, ApduResponse>> {
     this.logger.debug("send");
     try {
-      const response: CommandResponse = await this.mockClient.send(
-        sessionId,
+      const response: CommandResponse = await this.mockClient.sendApdu(
+        deviceId,
         apdu,
       );
       this.logger.debug(formatApduSentLog(apdu));
       const apduResponse = {
-        statusCode: this.mockClient.fromHexString(
-          response.response.substring(
-            response.response.length - 4,
-            response.response.length,
-          ),
-        ),
-        data: this.mockClient.fromHexString(
-          response.response.substring(0, response.response.length - 4),
-        ),
+        statusCode:
+          hexaStringToBuffer(response.response.slice(-4)) ?? new Uint8Array(),
+        data:
+          hexaStringToBuffer(response.response.slice(0, -4)) ??
+          new Uint8Array(),
       } as ApduResponse;
       this.logger.debug(formatApduReceivedLog(apduResponse));
       return Right(apduResponse);
     } catch (error) {
-      onDisconnect(deviceId);
+      onDisconnect(onDisconnectDeviceId);
       return Left(new NoAccessibleDeviceError(error as Error));
     }
   }
+
+  private buildDeviceModel(device: Device) {
+    return {
+      id: device.device_type as DeviceModelId,
+      productName: device.name,
+      usbProductId: 0x10,
+      legacyUsbProductId: 0x0001,
+      bootloaderUsbProductId: 0x0001,
+      getBlockSize() {
+        return 32;
+      },
+      usbOnly: true,
+      memorySize: 320 * 1024,
+      masks: device.masks ?? DEFAULT_MASKS,
+    };
+  }
 }
 
-export const mockserverTransportFactory: TransportFactory = ({
-  config,
-  loggerServiceFactory,
-}) => new MockTransport(loggerServiceFactory, config);
+/**
+ * Build a mock-server transport factory.
+ *
+ * @param mockUrl Optional mock server URL. When omitted, `config.mockUrl` from
+ *   the DMK configuration is used.
+ * @param sessionToken Optional bearer token to share an existing session
+ *   (ADR 003). When omitted, the client self-provisions a session via /auth.
+ */
+export const mockserverTransportFactory =
+  (mockUrl?: string, sessionToken?: string): TransportFactory =>
+  ({ config, loggerServiceFactory }) =>
+    new MockTransport(
+      loggerServiceFactory,
+      mockUrl ?? config.mockUrl,
+      sessionToken,
+    );

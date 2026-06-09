@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 import {
+  type Device,
   type Mock,
   type MockClient,
-  type Session,
 } from "@ledgerhq/device-mockserver-client";
 import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
@@ -11,7 +11,7 @@ import { MockItem } from "@/components/MockView/MockItem";
 import { StyledDrawer } from "@/components/StyledDrawer";
 
 type MockDeviceDrawerProps = {
-  currentSession: Session | null;
+  currentDevice: Device | null;
   isOpen: boolean;
   onClose: () => void;
   client: MockClient;
@@ -27,7 +27,7 @@ const MockButton = styled(Button).attrs({
 const inputContainerProps = { style: { borderRadius: 4 } };
 
 export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
-  currentSession,
+  currentDevice,
   isOpen,
   onClose,
   client,
@@ -38,53 +38,42 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
   const [currentResponse, setCurrentResponse] = useState<string>("6700");
   const [editMockIndex, setEditMockIndex] = useState<number>(-1);
 
-  const fetchMocks = useCallback(
-    async (session: Session) => {
-      try {
-        const response = await client.getMocks(session.id);
-        setMocks(response);
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    [client],
-  );
+  const fetchMocks = useCallback(async () => {
+    try {
+      const response = await client.listMocks();
+      setMocks(response);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [client]);
+
   const sendMock = useCallback(
     async (prefix: string, response: string) => {
-      if (!currentSession) {
-        return;
-      }
       try {
-        const resp = await client.addMock(currentSession.id, prefix, response);
+        const resp = await client.addMock({ prefix, response });
         setEditMockIndex(-1);
         if (!resp) {
           console.log("Failed to add the mock");
         } else {
-          await fetchMocks(currentSession);
+          await fetchMocks();
         }
       } catch (error) {
         console.error(error);
       }
     },
-    [currentSession, client, fetchMocks],
+    [client, fetchMocks],
   );
   const handleAddMockClick = useCallback(async () => {
-    if (!currentSession) {
-      return;
-    }
     await sendMock(currentPrefix, currentResponse);
-  }, [currentPrefix, currentResponse, currentSession, sendMock]);
+  }, [currentPrefix, currentResponse, sendMock]);
 
   const handleRemoveMocksClick = async () => {
-    if (!currentSession) {
-      return;
-    }
     try {
-      const response = await client.deleteMocks(currentSession.id);
+      const response = await client.clearMocks();
       if (!response) {
         console.log("Failed to delete the mocks");
       } else {
-        fetchMocks(currentSession).catch(console.error);
+        fetchMocks().catch(console.error);
       }
     } catch (error) {
       console.error(error);
@@ -92,9 +81,9 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
   };
 
   const handleRemoveDeviceClick = useCallback(
-    async (sessionId: string) => {
+    async (deviceId: string) => {
       try {
-        const response = await client.disconnect(sessionId);
+        const response = await client.disconnect(deviceId);
         if (!response) {
           console.log("Failed to disconnect device");
         } else {
@@ -108,17 +97,17 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
   );
 
   useEffect(() => {
-    if (isOpen && currentSession) {
-      fetchMocks(currentSession);
+    if (isOpen && currentDevice) {
+      fetchMocks();
     }
-  }, [isOpen, currentSession, fetchMocks]);
+  }, [isOpen, currentDevice, fetchMocks]);
 
   return (
     <StyledDrawer
       isOpen={isOpen}
       onClose={onClose}
       big
-      title={currentSession?.device?.name || "No device"}
+      title={currentDevice?.name || "No device"}
     >
       <Flex flexDirection="column" flex={2} justifyContent="space-between">
         <div>
@@ -198,7 +187,7 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
           </MockButton>
           <MockButton
             onClick={() =>
-              currentSession ? handleRemoveDeviceClick(currentSession.id) : null
+              currentDevice ? handleRemoveDeviceClick(currentDevice.id) : null
             }
           >
             <Text color="neutral.c00">Remove device</Text>

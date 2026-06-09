@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { type Session } from "@ledgerhq/device-mockserver-client";
+import { type Device } from "@ledgerhq/device-mockserver-client";
 import { Button, Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
@@ -8,7 +8,10 @@ import { ClickableListItem } from "@/components/ClickableListItem";
 import { MockDeviceDrawer } from "@/components/MockView/MockDeviceDrawer";
 import { PageWithHeader } from "@/components/PageWithHeader";
 import { useMockClient } from "@/hooks/useMockClient";
-import { selectMockServerUrl } from "@/state/settings/selectors";
+import {
+  selectMockServerSessionToken,
+  selectMockServerUrl,
+} from "@/state/settings/selectors";
 
 const MockButton = styled(Button).attrs({
   variant: "main",
@@ -17,32 +20,29 @@ const MockButton = styled(Button).attrs({
 })``;
 
 export const MockView: React.FC = () => {
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
 
-  const [currentSession, setCurrentSession] = useState<Session | null>(null);
+  const [currentDevice, setCurrentDevice] = useState<Device | null>(null);
   const [drawerVisible, setDrawerVisibility] = useState<boolean>(false);
 
   const mockServerUrl = useSelector(selectMockServerUrl);
+  const mockServerSessionToken = useSelector(selectMockServerSessionToken);
 
-  const client = useMockClient(mockServerUrl);
+  const client = useMockClient(mockServerUrl, mockServerSessionToken);
 
-  const fetchSessions = useCallback(async () => {
+  const fetchDevices = useCallback(async () => {
     try {
-      const response = await client.getConnected();
-      setSessions(response);
-      setCurrentSession(null);
+      const response = await client.listDevices();
+      setDevices(response);
+      setCurrentDevice(null);
     } catch (error) {
       console.error(error);
     }
   }, [client]);
 
-  const handleSessionClick = useCallback(async (session: Session) => {
-    try {
-      setCurrentSession(session);
-      setDrawerVisibility(true);
-    } catch (error) {
-      console.error(error);
-    }
+  const handleDeviceClick = useCallback((device: Device) => {
+    setCurrentDevice(device);
+    setDrawerVisibility(true);
   }, []);
 
   const handleRemoveDevicesClick = async () => {
@@ -51,7 +51,7 @@ export const MockView: React.FC = () => {
       if (!response) {
         console.log("Failed to disconnect all devices");
       } else {
-        fetchSessions().catch(console.error);
+        fetchDevices().catch(console.error);
       }
     } catch (error) {
       console.error(error);
@@ -59,19 +59,21 @@ export const MockView: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchSessions().catch(console.error);
-  }, [fetchSessions]);
+    fetchDevices().catch(console.error);
+  }, [fetchDevices]);
 
   return (
     <PageWithHeader title="Mock server">
       <Flex flexDirection="column" flex={2} justifyContent="space-between">
         <div style={{ maxHeight: 500, overflow: "scroll" }}>
-          {sessions.map((session) => (
+          {devices.map((device) => (
             <ClickableListItem
-              key={session.id}
-              title={session.device.name}
-              description={`Created at: ${new Date(session.created_at).toUTCString()}`}
-              onClick={() => handleSessionClick(session)}
+              key={device.id}
+              title={device.name}
+              description={`${device.connectivity_type} · ${
+                device.connected ? "connected" : "disconnected"
+              }`}
+              onClick={() => handleDeviceClick(device)}
               my={2}
             />
           ))}
@@ -86,8 +88,8 @@ export const MockView: React.FC = () => {
       <MockDeviceDrawer
         isOpen={drawerVisible}
         onClose={() => setDrawerVisibility(false)}
-        onDeviceDeleted={fetchSessions}
-        currentSession={currentSession}
+        onDeviceDeleted={fetchDevices}
+        currentDevice={currentDevice}
         client={client}
       />
     </PageWithHeader>

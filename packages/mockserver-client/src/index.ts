@@ -1,5 +1,12 @@
+export type { MockClientOptions } from "./MockClient";
 export { MockClient } from "./MockClient";
-export { CommandResponse } from "./model/CommandResponse";
-export { Device } from "./model/Device";
-export { Mock } from "./model/Mock";
-export { Session } from "./model/Session";
+export type { AuthResponse, ConnectionState } from "./model/Auth";
+export type { CommandResponse } from "./model/CommandResponse";
+export type {
+  Device,
+  DeviceApp,
+  DeviceConfig,
+  DeviceConnectivityType,
+} from "./model/Device";
+export type { Mock, MockConfig } from "./model/Mock";
+export type { Session } from "./model/Session";
