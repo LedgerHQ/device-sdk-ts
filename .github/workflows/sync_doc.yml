@@ -37,9 +37,9 @@ jobs:
 
       - name: Copy files
         run: |
-          rm -rf portal/pages/docs/device-interaction
-          mkdir -p portal/pages/docs/device-interaction
-          cp -r ldmk/apps/docs/pages/docs/* portal/pages/docs/device-interaction
+          rm -rf portal/content/docs/device-interaction
+          mkdir -p portal/content/docs/device-interaction
+          cp -r ldmk/apps/docs/pages/docs/* portal/content/docs/device-interaction
 
 
       - name:  Set branch name in outputs
@@ -53,7 +53,7 @@ jobs:
           cd portal
           # add timestamp to commit message
           git checkout -b ${{ steps.branch-name.outputs.BRANCH_NAME }}
-          git add pages/docs/device-interaction
+          git add content/docs/device-interaction
           git commit -m "doc: add new changes from device management kit to portal"
 
       - name: Create pull request

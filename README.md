@@ -54,12 +54,6 @@ The Device Management Kit (DMK) is a TypeScript library that provides easy commu
 - App installation and management
 - 🔜 OS updates
 
-⚠️
-<mark>
-** The Device Management Kit is in alpha stage and is subject to significant changes!!!**
-</mark>
-⚠️
-
 ## How it works
 
 The Device Management Kit features an interface for applications to handle any Ledger device (a.k. hardware wallets). It converts intention into
@@ -104,13 +98,13 @@ A brief overview of this project's packages:
 
 ### Signer Packages
 
-| Name                                    | Path                               | Description                                    |
-| --------------------------------------- | ---------------------------------- | ---------------------------------------------- |
-| @ledgerhq/device-signer-kit-bitcoin     | packages/signer/signer-btc         | Bitcoin coin application dedicated handlers    |
-| @ledgerhq/device-signer-kit-concordium  | packages/signer/signer-concordium  | Concordium coin application dedicated handlers |
-| @ledgerhq/device-signer-kit-ethereum    | packages/signer/signer-eth         | Ethereum coin application dedicated handlers   |
-| @ledgerhq/device-signer-kit-hyperliquid | packages/signer/signer-hyperliquid | HyperLiquid application dedicated handlers     |
-| @ledgerhq/device-signer-kit-solana      | packages/signer/signer-solana      | Solana coin application dedicated handlers     |
+| Name                                    | Path                               | Description                                  |
+| --------------------------------------- | ---------------------------------- | -------------------------------------------- |
+| @ledgerhq/device-signer-kit-bitcoin     | packages/signer/signer-btc         | Bitcoin coin application dedicated handlers  |
+| @ledgerhq/device-signer-kit-ethereum    | packages/signer/signer-eth         | Ethereum coin application dedicated handlers |
+| @ledgerhq/device-signer-kit-hyperliquid | packages/signer/signer-hyperliquid | HyperLiquid application dedicated handlers   |
+| @ledgerhq/device-signer-kit-solana      | packages/signer/signer-solana      | Solana coin application dedicated handlers   |
+| @ledgerhq/device-signer-kit-zcash       | packages/signer/signer-zcash       | Zcash coin application dedicated handlers    |
 
 ### Trusted Apps
 

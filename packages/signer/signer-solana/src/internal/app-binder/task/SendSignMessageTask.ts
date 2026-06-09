@@ -6,7 +6,11 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  type CommandFactory,
+  DerivationPathUtils,
+  SendCommandInChunksTask,
+} from "@ledgerhq/signer-utils";
 
 import { SignMessageVersion } from "@api/model/MessageOptions";
 import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
@@ -26,11 +30,6 @@ import {
   OFFCHAINMSG_MAX_V0_LEN,
   OFFCHAINMSG_MAX_V1_LEN,
 } from "@internal/app-binder/services/OffchainMessageBuilder";
-
-import {
-  type CommandFactory,
-  SendCommandInChunksTask,
-} from "./SendCommandInChunksTask";
 
 export { MessageFormat } from "@internal/app-binder/services/OffchainMessageBuilder";
 
@@ -309,16 +308,17 @@ export class SendSignMessageTask {
   private async _sendInChunks(
     apduPayload: Uint8Array,
   ): Promise<CommandResult<SignOffChainRawResponse, SolanaAppErrorCodes>> {
-    const commandFactory: CommandFactory<SignOffChainRawResponse> = (
-      chunkArgs,
-    ) => new SignOffChainMessageCommand(chunkArgs);
+    const commandFactory: CommandFactory<
+      SignOffChainRawResponse,
+      SolanaAppErrorCodes
+    > = (chunkArgs) => new SignOffChainMessageCommand(chunkArgs);
 
-    return await new SendCommandInChunksTask<SignOffChainRawResponse>(
-      this.api,
-      {
-        data: apduPayload,
-        commandFactory,
-      },
-    ).run();
+    return await new SendCommandInChunksTask<
+      SignOffChainRawResponse,
+      SolanaAppErrorCodes
+    >(this.api, {
+      data: apduPayload,
+      commandFactory,
+    }).run();
   }
 }

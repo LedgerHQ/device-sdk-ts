@@ -5,14 +5,15 @@ import {
   InvalidStatusWordError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
-import { DerivationPathUtils } from "@ledgerhq/signer-utils";
+import {
+  type ChunkableCommandArgs,
+  DerivationPathUtils,
+} from "@ledgerhq/signer-utils";
 import { Just, Nothing } from "purify-ts";
 
 import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-action/__test-utils__/makeInternalApi";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
-
-import { type ChunkableCommandArgs } from "./SendCommandInChunksTask";
 
 const DERIVATION_PATH = "44'/501'/0'/0'";
 const PATH_SIZE = 4;

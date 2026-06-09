@@ -130,6 +130,15 @@ export { ListAppsWithMetadataDeviceAction } from "@api/device-action/os/ListApps
 export { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 export { OpenAppWithDependenciesDeviceAction } from "@api/device-action/os/OpenAppWithDependencies/OpenAppWithDependenciesDeviceAction";
 export { SendCommandInAppDeviceAction } from "@api/device-action/os/SendCommandInAppDeviceAction/SendCommandInAppDeviceAction";
+export type {
+  WaitForAppAndVersionDAError,
+  WaitForAppAndVersionDAInput,
+  WaitForAppAndVersionDAIntermediateValue,
+  WaitForAppAndVersionDAOutput,
+  WaitForAppAndVersionDARequiredInteraction,
+  WaitForAppAndVersionDAState,
+} from "@api/device-action/os/WaitForAppAndVersion/types";
+export { WaitForAppAndVersionDeviceAction } from "@api/device-action/os/WaitForAppAndVersion/WaitForAppAndVersionDeviceAction";
 export { BackupAppStorageTask } from "@api/device-action/task/BackupAppStorageTask";
 export {
   GetApplicationsMetadataTaskError,

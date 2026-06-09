@@ -907,6 +907,9 @@ importers:
       '@ledgerhq/device-signer-kit-hyperliquid':
         specifier: workspace:^
         version: link:../../packages/signer/signer-hyperliquid
+      '@ledgerhq/device-signer-kit-polkadot':
+        specifier: workspace:^
+        version: link:../../packages/signer/signer-polkadot
       '@ledgerhq/device-signer-kit-solana':
         specifier: workspace:^
         version: link:../../packages/signer/signer-solana
@@ -1354,8 +1357,8 @@ importers:
   packages/ledger-wallet:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.2.0
-        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer/signer-utils
       pako:
         specifier: ^2.1.0
         version: 2.1.0
@@ -1602,8 +1605,8 @@ importers:
   packages/signer/signer-cosmos:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.2.0
-        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -1743,14 +1746,57 @@ importers:
         specifier: 'catalog:'
         version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
+  packages/signer/signer-polkadot:
+    dependencies:
+      '@ledgerhq/signer-utils':
+        specifier: workspace:^
+        version: link:../signer-utils
+      inversify:
+        specifier: 'catalog:'
+        version: 7.5.1(reflect-metadata@0.2.2)
+      purify-ts:
+        specifier: 'catalog:'
+        version: 2.1.0
+      reflect-metadata:
+        specifier: 'catalog:'
+        version: 0.2.2
+      xstate:
+        specifier: 'catalog:'
+        version: 5.19.2
+    devDependencies:
+      '@ledgerhq/device-management-kit':
+        specifier: workspace:^
+        version: link:../../device-management-kit
+      '@ledgerhq/eslint-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/eslint
+      '@ledgerhq/ldmk-tool':
+        specifier: workspace:^
+        version: link:../../tools/ldmk-tool
+      '@ledgerhq/prettier-config-dsdk':
+        specifier: workspace:^
+        version: link:../../config/prettier
+      '@ledgerhq/tsconfig-dsdk':
+        specifier: workspace:^
+        version: link:../../config/typescript
+      '@ledgerhq/vitest-config-dmk':
+        specifier: workspace:^
+        version: link:../../config/vitest
+      rxjs:
+        specifier: 'catalog:'
+        version: 7.8.2
+      ts-node:
+        specifier: 'catalog:'
+        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+
   packages/signer/signer-solana:
     dependencies:
       '@ledgerhq/context-module':
         specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: ^1.2.0
-        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       '@solana/spl-token':
         specifier: 'catalog:'
         version: 0.4.13(@solana/web3.js@1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.2)(utf-8-validate@5.0.10))(bufferutil@4.0.9)(encoding@0.1.13)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.2)(utf-8-validate@5.0.10)
@@ -1843,6 +1889,9 @@ importers:
       '@ledgerhq/signer-utils':
         specifier: workspace:^
         version: link:../signer-utils
+      '@noble/hashes':
+        specifier: ^1.8.0
+        version: 1.8.0
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -4343,11 +4392,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/signer-utils@1.2.0':
-    resolution: {integrity: sha512-Ek4/NXGt6gfiZUmiAFE19534f8wnlQSHvZMsjmqCEktbJd/mYbzvTrvYeo0+PQPw2D/kTYD1fRC6ADKQRSBeGw==}
-    peerDependencies:
-      '@ledgerhq/device-management-kit': ^1.2.0
 
   '@ledgerhq/ui-shared@0.2.2':
     resolution: {integrity: sha512-3ASYnyqnZFMRnySADZziM3IIJ2SRQ7lKrRPwpihhf+SsyP7TIo6o4UXMY8eYOupdTARlElS4Qpk4nRL/Ln62Ng==}
@@ -15359,11 +15403,6 @@ snapshots:
       - react-native
       - react-native-svg
       - supports-color
-
-  '@ledgerhq/signer-utils@1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)':
-    dependencies:
-      '@ledgerhq/device-management-kit': link:packages/device-management-kit
-      semver: 7.7.2
 
   '@ledgerhq/ui-shared@0.2.2': {}
 

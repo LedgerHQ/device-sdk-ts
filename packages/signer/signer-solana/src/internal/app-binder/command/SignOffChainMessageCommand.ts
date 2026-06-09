@@ -7,11 +7,13 @@ import {
   type CommandResult,
   CommandResultFactory,
 } from "@ledgerhq/device-management-kit";
-import { CommandErrorHelper } from "@ledgerhq/signer-utils";
+import {
+  type ChunkableCommandArgs,
+  CommandErrorHelper,
+} from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import { type ChunkableCommandArgs } from "@internal/app-binder/task/SendCommandInChunksTask";
-
+import { buildChunkP2 } from "./utils/apduChunking";
 import {
   SOLANA_APP_ERRORS,
   SolanaAppCommandErrorFactory,
@@ -23,12 +25,6 @@ export const INS = 0x07;
 export const P1 = 0x01;
 
 const SIGNATURE_LENGTH = 64;
-
-export const SOL_P2 = {
-  INIT: 0x00,
-  EXTEND: 0x01,
-  MORE: 0x02,
-};
 
 export type SignOffChainRawResponse = Uint8Array;
 
@@ -45,9 +41,7 @@ export class SignOffChainMessageCommand
   constructor(readonly args: ChunkableCommandArgs) {}
 
   getApdu(): Apdu {
-    const p2 =
-      (this.args.extend ? SOL_P2.EXTEND : SOL_P2.INIT) |
-      (this.args.more ? SOL_P2.MORE : 0);
+    const p2 = buildChunkP2(!this.args.extend, this.args.more);
 
     return new ApduBuilder({
       cla: CLA,

@@ -1,82 +1,154 @@
 import {
-  CommandResultFactory,
-  InvalidStatusWordError,
+  ApduResponse,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
+import { P2_EXTEND, P2_MORE } from "./utils/apduChunking";
+import { ChunkTooLargeError } from "./utils/Errors";
 import { ProvideTLVDescriptorCommand } from "./ProvideTLVDescriptorCommand";
 
-const CLA = 0xe0;
-const INS = 0x21;
-const P1 = 0x00;
-const P2 = 0x00;
-
-const EXPECTED_APDU = Uint8Array.from([
-  CLA,
-  INS,
-  P1,
-  P2,
-  0x04,
-  0xde,
-  0xad,
-  0xbe,
-  0xef,
+const LEGACY_EXPECTED_APDU = Uint8Array.from([
+  0xe0, 0x21, 0x00, 0x00, 0x04, 0xde, 0xad, 0xbe, 0xef,
 ]);
 
 describe("ProvideTLVDescriptorCommand", () => {
-  let command: ProvideTLVDescriptorCommand;
-
-  beforeEach(() => {
-    command = new ProvideTLVDescriptorCommand({
-      payload: Uint8Array.from([0xde, 0xad, 0xbe, 0xef]),
-    });
-  });
+  const payload = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
 
   describe("name", () => {
     it("should be 'provideTLVDescriptor'", () => {
+      const command = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: true,
+        hasMore: false,
+      });
       expect(command.name).toBe("provideTLVDescriptor");
     });
   });
 
   describe("getApdu", () => {
-    it("should construct the correct APDU", () => {
-      const apdu = command.getApdu();
-      expect(apdu.getRawApdu()).toStrictEqual(EXPECTED_APDU);
+    it("uses CLA=0xE0, INS=0x21, P1=0x00 and carries the payload", () => {
+      const apdu = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: true,
+        hasMore: false,
+      }).getApdu();
+
+      expect(apdu.cla).toBe(0xe0);
+      expect(apdu.ins).toBe(0x21);
+      expect(apdu.p1).toBe(0x00);
+      expect(apdu.data).toStrictEqual(payload);
+    });
+
+    it("single chunk: P2 = 0x00 (no EXTEND, no MORE)", () => {
+      const apdu = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: true,
+        hasMore: false,
+      }).getApdu();
+
+      expect(apdu.p2).toBe(0x00);
+    });
+
+    it("first of many: P2 = P2_MORE", () => {
+      const apdu = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: true,
+        hasMore: true,
+      }).getApdu();
+
+      expect(apdu.p2).toBe(P2_MORE);
+    });
+
+    it("middle chunk: P2 = P2_MORE | P2_EXTEND", () => {
+      const apdu = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: false,
+        hasMore: true,
+      }).getApdu();
+
+      expect(apdu.p2).toBe(P2_MORE | P2_EXTEND);
+    });
+
+    it("last chunk: P2 = P2_EXTEND", () => {
+      const apdu = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: false,
+        hasMore: false,
+      }).getApdu();
+
+      expect(apdu.p2).toBe(P2_EXTEND);
+    });
+
+    it("defaults the chunking flags to a single-chunk send (P2 = 0x00)", () => {
+      const apdu = new ProvideTLVDescriptorCommand({ payload }).getApdu();
+
+      expect(apdu.p2).toBe(0x00);
+    });
+
+    it("produces the same APDU bytes as the pre-chunking implementation when called without flags", () => {
+      const apdu = new ProvideTLVDescriptorCommand({ payload }).getApdu();
+
+      expect(apdu.getRawApdu()).toStrictEqual(LEGACY_EXPECTED_APDU);
+    });
+
+    it("throws ChunkTooLargeError if the chunk exceeds APDU_MAX_PAYLOAD", () => {
+      const command = new ProvideTLVDescriptorCommand({
+        payload: new Uint8Array(256),
+        isFirstChunk: true,
+        hasMore: false,
+      });
+
+      expect(() => command.getApdu()).toThrow(ChunkTooLargeError);
     });
   });
 
   describe("parseResponse", () => {
-    it("should return success when status is 0x9000 and no data", () => {
-      const LNX_RESPONSE_GOOD = {
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array(),
-      };
+    it("should return success on 0x9000 with empty payload", () => {
+      const command = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: true,
+        hasMore: false,
+      });
+      const result = command.parseResponse(
+        new ApduResponse({
+          statusCode: Uint8Array.from([0x90, 0x00]),
+          data: new Uint8Array(),
+        }),
+      );
 
-      const parsed = command.parseResponse(LNX_RESPONSE_GOOD);
-      expect(parsed).toStrictEqual(CommandResultFactory({ data: undefined }));
-      expect(isSuccessCommandResult(parsed)).toBe(true);
+      expect(isSuccessCommandResult(result)).toBe(true);
     });
 
-    it("should return an error if the status code is not 0x9000", () => {
-      const LNX_RESPONSE_ERROR = {
-        statusCode: Uint8Array.from([0x6a, 0x80]),
-        data: new Uint8Array(),
-      };
+    it("should return error on unexpected response data", () => {
+      const command = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: true,
+        hasMore: false,
+      });
+      const result = command.parseResponse(
+        new ApduResponse({
+          statusCode: Uint8Array.from([0x90, 0x00]),
+          data: Uint8Array.from([0x01]),
+        }),
+      );
 
-      const result = command.parseResponse(LNX_RESPONSE_ERROR);
       expect(isSuccessCommandResult(result)).toBe(false);
     });
 
-    it("should return an error if response contains unexpected data", () => {
-      const LNX_RESPONSE_EXTRA = {
-        statusCode: Uint8Array.from([0x90, 0x00]),
-        data: Uint8Array.from([0x01]),
-      };
+    it("should return error on non-success status", () => {
+      const command = new ProvideTLVDescriptorCommand({
+        payload,
+        isFirstChunk: true,
+        hasMore: false,
+      });
+      const result = command.parseResponse(
+        new ApduResponse({
+          statusCode: Uint8Array.from([0x6a, 0x80]),
+          data: new Uint8Array(),
+        }),
+      );
 
-      const result = command.parseResponse(LNX_RESPONSE_EXTRA);
       expect(isSuccessCommandResult(result)).toBe(false);
-      // @ts-expect-error response is not typed
-      expect(result.error).toBeInstanceOf(InvalidStatusWordError);
     });
   });
 });

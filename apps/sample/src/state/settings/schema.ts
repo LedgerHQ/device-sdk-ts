@@ -4,6 +4,7 @@ import {
   type ContextModuleCalMode,
   type ContextModuleDatasourceConfig,
   type ContextModuleMetadataServiceConfig,
+  type ContextModuleReporterConfig,
   type ContextModuleWeb3ChecksConfig,
 } from "@ledgerhq/context-module";
 import { DeviceModelId } from "@ledgerhq/device-management-kit";
@@ -48,6 +49,7 @@ export type SettingsState = {
   calConfig: ContextModuleCalConfig;
   web3ChecksConfig: ContextModuleWeb3ChecksConfig;
   metadataServiceConfig: ContextModuleMetadataServiceConfig;
+  reporterConfig: ContextModuleReporterConfig;
   originToken: string;
   datasourceConfig: ContextModuleDatasourceConfig;
 };
@@ -76,6 +78,9 @@ export const initialState: SettingsState = {
   },
   metadataServiceConfig: {
     url: "https://nft.api.live.ledger.com",
+  },
+  reporterConfig: {
+    url: "https://blind-signing.api.ledger.com/ingest/v1",
   },
   originToken: process.env.NEXT_PUBLIC_GATING_TOKEN || "origin-token",
   datasourceConfig: {

@@ -7,4 +7,5 @@ export default {
   aleo: "Signer Aleo",
   concordium: "Signer Concordium",
   zcash: "Signer Zcash",
+  polkadot: "Signer Polkadot",
 };

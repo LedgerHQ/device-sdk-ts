@@ -7,12 +7,18 @@ export default defineConfig({
   test: {
     ...baseConfig.test,
     include: ["src/**/*.test.ts"],
+    exclude: [...(baseConfig.test?.exclude ?? []), "src/**/*.integ.test.ts"],
     setupFiles: ["./vitest.setup.mjs"],
     coverage: {
       provider: "istanbul",
       reporter: ["lcov", "text"],
       include: ["src/**/*.ts"],
-      exclude: ["src/**/*.stub.ts", "src/index.ts", "src/api/index.ts"],
+      exclude: [
+        "src/**/*.stub.ts",
+        "src/**/*.integ.test.ts",
+        "src/index.ts",
+        "src/api/index.ts",
+      ],
     },
   },
   resolve: {

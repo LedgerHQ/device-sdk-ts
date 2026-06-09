@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@ledgerhq/signer-utils": "workspace:^",
+    "@noble/hashes": "^1.8.0",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",

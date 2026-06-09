@@ -1,6 +1,7 @@
 import { inject, injectable } from "inversify";
 
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { appBinderTypes } from "@internal/app-binder/di/appBinderTypes";
 import { ZcashAppBinder } from "@internal/app-binder/ZcashAppBinder";
@@ -14,13 +15,11 @@ export class SignTransactionUseCase {
   }
 
   execute(
-    derivationPath: string,
-    transaction: Uint8Array,
+    args: LegacyCreateTransactionArg,
     options?: TransactionOptions,
   ): SignTransactionDAReturnType {
     return this._appBinder.signTransaction({
-      derivationPath,
-      transaction,
+      transactionArg: args,
       skipOpenApp: options?.skipOpenApp,
     });
   }

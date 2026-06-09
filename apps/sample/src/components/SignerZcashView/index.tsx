@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type GetAddressDAError,
@@ -13,6 +13,8 @@ import {
   type GetTrustedInputDAError,
   type GetTrustedInputDAIntermediateValue,
   type GetTrustedInputDAOutput,
+  type LegacyCreateTransactionArg,
+  type LegacyTransaction,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
@@ -21,10 +23,14 @@ import {
   type SignTransactionDAOutput,
   type ZcashFullViewingKeyMode,
 } from "@ledgerhq/device-signer-kit-zcash";
+import { Flex } from "@ledgerhq/react-ui";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { type ValueSelector } from "@/components/Form";
+import { Form } from "@/components/Form";
+import { InputHeader } from "@/components/InputHeader";
+import { ResizableTextArea } from "@/components/ResizableTextArea";
 import { type FieldType } from "@/hooks/useForm";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
 import { useSignerZcash } from "@/providers/SignerZcashProvider";
@@ -34,9 +40,485 @@ const fullViewingKeyModeOptions: ValueSelector<FieldType>["mode"] = [
   { label: "Orchard FVK (96 raw bytes, P2=0x01)", value: "orchardFvk" },
 ];
 
-export const SignerZcashView: React.FC<{ sessionId: string }> = ({
-  sessionId,
+const normalizeHex = (value: string): string =>
+  value.replace(/^0x/i, "").replace(/\s+/g, "");
+
+const parseHexBytes = (value: string, fieldName: string): Uint8Array => {
+  const normalized = normalizeHex(value);
+  if (normalized.length === 0) {
+    throw new Error(`${fieldName} is required`);
+  }
+  const parsed = hexaStringToBuffer(normalized);
+  if (!parsed) {
+    throw new Error(`Invalid hex value for ${fieldName}`);
+  }
+  return parsed;
+};
+
+const parseOptionalHexBytes = (value: string): Uint8Array | undefined => {
+  const normalized = normalizeHex(value);
+  if (!normalized) {
+    return undefined;
+  }
+  return parseHexBytes(normalized, "optional hex");
+};
+
+const parsePreviousTransaction = (value: string): LegacyTransaction => {
+  try {
+    const parsed = JSON.parse(value) as {
+      version: string;
+      inputs: Array<{
+        prevout: string;
+        script: string;
+        sequence: string;
+        tree?: string;
+      }>;
+      outputs?: Array<{ amount: string; script: string }>;
+      locktime?: string;
+      timestamp?: string;
+      nVersionGroupId?: string;
+      nExpiryHeight?: string;
+      extraData?: string;
+      consensusBranchId?: string;
+      /** Full Zcash v5 wire hex for GET_TRUSTED_INPUT (same as Ledger `splitTransaction.transactionHex`). */
+      serializedPreviousTransactionOverrideHex?: string;
+    };
+
+    const serializedPreviousTransactionOverride =
+      parsed.serializedPreviousTransactionOverrideHex &&
+      normalizeHex(parsed.serializedPreviousTransactionOverrideHex).length > 0
+        ? parseHexBytes(
+            parsed.serializedPreviousTransactionOverrideHex,
+            "previousTx.serializedPreviousTransactionOverrideHex",
+          )
+        : undefined;
+
+    return {
+      version: parseHexBytes(parsed.version, "previousTx.version"),
+      inputs: parsed.inputs.map((input, inputIndex) => ({
+        prevout: parseHexBytes(
+          input.prevout,
+          `previousTx.inputs[${inputIndex}].prevout`,
+        ),
+        script: parseOptionalHexBytes(input.script) ?? new Uint8Array(),
+        sequence: parseHexBytes(
+          input.sequence,
+          `previousTx.inputs[${inputIndex}].sequence`,
+        ),
+        tree: parseOptionalHexBytes(input.tree ?? ""),
+      })),
+      outputs: parsed.outputs?.map((output, outputIndex) => ({
+        amount: parseHexBytes(
+          output.amount,
+          `previousTx.outputs[${outputIndex}].amount`,
+        ),
+        script: parseHexBytes(
+          output.script,
+          `previousTx.outputs[${outputIndex}].script`,
+        ),
+      })),
+      locktime: parseOptionalHexBytes(parsed.locktime ?? ""),
+      timestamp: parseOptionalHexBytes(parsed.timestamp ?? ""),
+      nVersionGroupId: parseOptionalHexBytes(parsed.nVersionGroupId ?? ""),
+      nExpiryHeight: parseOptionalHexBytes(parsed.nExpiryHeight ?? ""),
+      extraData: parseOptionalHexBytes(parsed.extraData ?? ""),
+      consensusBranchId: parseOptionalHexBytes(parsed.consensusBranchId ?? ""),
+      ...(serializedPreviousTransactionOverride
+        ? { serializedPreviousTransactionOverride }
+        : {}),
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Invalid previous transaction JSON: ${error.message}`);
+    }
+    throw new Error("Invalid previous transaction JSON");
+  }
+};
+
+type SignTransactionInput = {
+  associatedKeysetsCsv: string;
+  outputScriptHex: string;
+  changePath: string;
+  additionalsCsv: string;
+  lockTime: number;
+  blockHeight: number;
+  sigHashType: number;
+  useExpiryHeight: boolean;
+  expiryHeightHex: string;
+  skipOpenApp: boolean;
+  input1Enabled: boolean;
+  input1PreviousTxJson: string;
+  input1OutputIndex: number;
+  input1ScriptHex: string;
+  input1Sequence: number;
+  input1UseBranchHeight: boolean;
+  input1BranchHeight: number;
+  input1SerializedPreviousTxOverrideHex: string;
+  input2Enabled: boolean;
+  input2PreviousTxJson: string;
+  input2OutputIndex: number;
+  input2ScriptHex: string;
+  input2Sequence: number;
+  input2UseBranchHeight: boolean;
+  input2BranchHeight: number;
+  input2SerializedPreviousTxOverrideHex: string;
+  input3Enabled: boolean;
+  input3PreviousTxJson: string;
+  input3OutputIndex: number;
+  input3ScriptHex: string;
+  input3Sequence: number;
+  input3UseBranchHeight: boolean;
+  input3BranchHeight: number;
+  input3SerializedPreviousTxOverrideHex: string;
+};
+
+const SIGN_TX_FORM_KEYS: (keyof SignTransactionInput)[] = [
+  "associatedKeysetsCsv",
+  "outputScriptHex",
+  "changePath",
+  "additionalsCsv",
+  "lockTime",
+  "blockHeight",
+  "sigHashType",
+  "useExpiryHeight",
+  "expiryHeightHex",
+  "skipOpenApp",
+  "input1Enabled",
+  "input1OutputIndex",
+  "input1ScriptHex",
+  "input1Sequence",
+  "input1UseBranchHeight",
+  "input1BranchHeight",
+  "input2Enabled",
+  "input2OutputIndex",
+  "input2ScriptHex",
+  "input2Sequence",
+  "input2UseBranchHeight",
+  "input2BranchHeight",
+  "input3Enabled",
+  "input3OutputIndex",
+  "input3ScriptHex",
+  "input3Sequence",
+  "input3UseBranchHeight",
+  "input3BranchHeight",
+];
+
+const sampleSignTransactionFormInitialValues: SignTransactionInput = {
+  associatedKeysetsCsv: "",
+  outputScriptHex: "",
+  changePath: "",
+  additionalsCsv: "",
+  lockTime: 0,
+  blockHeight: 0,
+  sigHashType: 0,
+  useExpiryHeight: false,
+  expiryHeightHex: "",
+  skipOpenApp: false,
+  input1Enabled: false,
+  input1PreviousTxJson: "",
+  input1OutputIndex: 0,
+  input1ScriptHex: "",
+  input1Sequence: 0,
+  input1UseBranchHeight: false,
+  input1BranchHeight: 0,
+  input1SerializedPreviousTxOverrideHex: "",
+  input2Enabled: false,
+  input2PreviousTxJson: "",
+  input2OutputIndex: 0,
+  input2ScriptHex: "",
+  input2Sequence: 0,
+  input2UseBranchHeight: false,
+  input2BranchHeight: 0,
+  input2SerializedPreviousTxOverrideHex: "",
+  input3Enabled: false,
+  input3PreviousTxJson: "",
+  input3OutputIndex: 0,
+  input3ScriptHex: "",
+  input3Sequence: 0,
+  input3UseBranchHeight: false,
+  input3BranchHeight: 0,
+  input3SerializedPreviousTxOverrideHex: "",
+};
+
+const SignTransactionForm = ({
+  initialValues,
+  onChange,
+  disabled,
+}: {
+  initialValues: SignTransactionInput;
+  onChange: (values: SignTransactionInput) => void;
+  disabled?: boolean;
 }) => {
+  const initialValuesRef = useRef(initialValues);
+  initialValuesRef.current = initialValues;
+
+  const formValues = Object.fromEntries(
+    SIGN_TX_FORM_KEYS.map((key) => [key, initialValues[key]]),
+  ) as Pick<SignTransactionInput, (typeof SIGN_TX_FORM_KEYS)[number]>;
+
+  const handleFormChange = useCallback(
+    (values: typeof formValues) =>
+      onChange({
+        ...initialValuesRef.current,
+        ...values,
+      }),
+    [onChange],
+  );
+
+  const handlePreviousTxChange = useCallback(
+    (
+      key:
+        | "input1PreviousTxJson"
+        | "input2PreviousTxJson"
+        | "input3PreviousTxJson",
+      value: string,
+    ) =>
+      onChange({
+        ...initialValuesRef.current,
+        [key]: value,
+      }),
+    [onChange],
+  );
+
+  const handleSerializedOverrideChange = useCallback(
+    (
+      key:
+        | "input1SerializedPreviousTxOverrideHex"
+        | "input2SerializedPreviousTxOverrideHex"
+        | "input3SerializedPreviousTxOverrideHex",
+      value: string,
+    ) =>
+      onChange({
+        ...initialValuesRef.current,
+        [key]: value,
+      }),
+    [onChange],
+  );
+
+  return (
+    <Flex flexDirection="column" rowGap={5}>
+      <Form
+        initialValues={formValues}
+        onChange={handleFormChange}
+        disabled={disabled}
+      />
+
+      {initialValues.input1Enabled && (
+        <Flex flexDirection="column" rowGap={2}>
+          <InputHeader hint='JSON of the source transaction. Required fields: "version", "inputs". Hex-encode all byte fields. You may add "serializedPreviousTransactionOverrideHex" instead of using the separate raw hex field below.'>
+            Trusted input #1 previous transaction
+          </InputHeader>
+          <ResizableTextArea
+            value={initialValues.input1PreviousTxJson}
+            onChange={(value) =>
+              handlePreviousTxChange("input1PreviousTxJson", value)
+            }
+            initialHeight={180}
+            disabled={disabled}
+          />
+          <InputHeader hint="Optional. Full Zcash v5 previous-transaction hex for GET_TRUSTED_INPUT (Ledger Wallet splitTransaction.transactionHex). Overrides transparent-only serialization when non-empty.">
+            Trusted input #1 raw previous tx hex (optional)
+          </InputHeader>
+          <ResizableTextArea
+            value={initialValues.input1SerializedPreviousTxOverrideHex}
+            onChange={(value) =>
+              handleSerializedOverrideChange(
+                "input1SerializedPreviousTxOverrideHex",
+                value,
+              )
+            }
+            initialHeight={72}
+            disabled={disabled}
+          />
+        </Flex>
+      )}
+
+      {initialValues.input2Enabled && (
+        <Flex flexDirection="column" rowGap={2}>
+          <InputHeader hint='JSON of the source transaction. Required fields: "version", "inputs". Hex-encode all byte fields. You may add "serializedPreviousTransactionOverrideHex" instead of using the separate raw hex field below.'>
+            Trusted input #2 previous transaction
+          </InputHeader>
+          <ResizableTextArea
+            value={initialValues.input2PreviousTxJson}
+            onChange={(value) =>
+              handlePreviousTxChange("input2PreviousTxJson", value)
+            }
+            initialHeight={180}
+            disabled={disabled}
+          />
+          <InputHeader hint="Optional. Full Zcash v5 previous-transaction hex for GET_TRUSTED_INPUT (Ledger Wallet splitTransaction.transactionHex). Required when the previous tx includes Sapling/Orchard data not described in the JSON above.">
+            Trusted input #2 raw previous tx hex (optional)
+          </InputHeader>
+          <ResizableTextArea
+            value={initialValues.input2SerializedPreviousTxOverrideHex}
+            onChange={(value) =>
+              handleSerializedOverrideChange(
+                "input2SerializedPreviousTxOverrideHex",
+                value,
+              )
+            }
+            initialHeight={120}
+            disabled={disabled}
+          />
+        </Flex>
+      )}
+
+      {initialValues.input3Enabled && (
+        <Flex flexDirection="column" rowGap={2}>
+          <InputHeader hint='JSON of the source transaction. Required fields: "version", "inputs". Hex-encode all byte fields. You may add "serializedPreviousTransactionOverrideHex" instead of using the separate raw hex field below.'>
+            Trusted input #3 previous transaction
+          </InputHeader>
+          <ResizableTextArea
+            value={initialValues.input3PreviousTxJson}
+            onChange={(value) =>
+              handlePreviousTxChange("input3PreviousTxJson", value)
+            }
+            initialHeight={180}
+            disabled={disabled}
+          />
+          <InputHeader hint="Optional. Full Zcash v5 previous-transaction hex for GET_TRUSTED_INPUT (Ledger Wallet splitTransaction.transactionHex).">
+            Trusted input #3 raw previous tx hex (optional)
+          </InputHeader>
+          <ResizableTextArea
+            value={initialValues.input3SerializedPreviousTxOverrideHex}
+            onChange={(value) =>
+              handleSerializedOverrideChange(
+                "input3SerializedPreviousTxOverrideHex",
+                value,
+              )
+            }
+            initialHeight={72}
+            disabled={disabled}
+          />
+        </Flex>
+      )}
+    </Flex>
+  );
+};
+
+const buildSignTransactionArg = (
+  values: SignTransactionInput,
+): LegacyCreateTransactionArg => {
+  const inputs: LegacyCreateTransactionArg["inputs"] = [];
+  const addInput = ({
+    previousTxJson,
+    serializedPreviousTxOverrideHex,
+    outputIndex,
+    scriptHexRaw,
+    sequence,
+    useBranchHeight,
+    branchHeight,
+  }: {
+    previousTxJson: string;
+    serializedPreviousTxOverrideHex: string;
+    outputIndex: number;
+    scriptHexRaw: string;
+    sequence: number;
+    useBranchHeight: boolean;
+    branchHeight: number;
+  }): void => {
+    let previousTx = parsePreviousTransaction(previousTxJson);
+    const overrideHex = normalizeHex(serializedPreviousTxOverrideHex.trim());
+    if (overrideHex.length > 0) {
+      previousTx = {
+        ...previousTx,
+        serializedPreviousTransactionOverride: parseHexBytes(
+          overrideHex,
+          "serializedPreviousTxOverrideHex",
+        ),
+      };
+    }
+    const inputTuple: LegacyCreateTransactionArg["inputs"][number] = [
+      previousTx,
+      Number(outputIndex),
+      scriptHexRaw ? normalizeHex(scriptHexRaw) : undefined,
+      Number(sequence),
+      useBranchHeight ? Number(branchHeight) : undefined,
+    ];
+    inputs.push(inputTuple);
+  };
+
+  if (values.input1Enabled) {
+    addInput({
+      previousTxJson: values.input1PreviousTxJson,
+      serializedPreviousTxOverrideHex:
+        values.input1SerializedPreviousTxOverrideHex,
+      outputIndex: values.input1OutputIndex,
+      scriptHexRaw: values.input1ScriptHex.trim(),
+      sequence: values.input1Sequence,
+      useBranchHeight: values.input1UseBranchHeight,
+      branchHeight: values.input1BranchHeight,
+    });
+  }
+  if (values.input2Enabled) {
+    addInput({
+      previousTxJson: values.input2PreviousTxJson,
+      serializedPreviousTxOverrideHex:
+        values.input2SerializedPreviousTxOverrideHex,
+      outputIndex: values.input2OutputIndex,
+      scriptHexRaw: values.input2ScriptHex.trim(),
+      sequence: values.input2Sequence,
+      useBranchHeight: values.input2UseBranchHeight,
+      branchHeight: values.input2BranchHeight,
+    });
+  }
+  if (values.input3Enabled) {
+    addInput({
+      previousTxJson: values.input3PreviousTxJson,
+      serializedPreviousTxOverrideHex:
+        values.input3SerializedPreviousTxOverrideHex,
+      outputIndex: values.input3OutputIndex,
+      scriptHexRaw: values.input3ScriptHex.trim(),
+      sequence: values.input3Sequence,
+      useBranchHeight: values.input3UseBranchHeight,
+      branchHeight: values.input3BranchHeight,
+    });
+  }
+  if (inputs.length === 0) {
+    throw new Error("At least one trusted input must be enabled");
+  }
+
+  const associatedKeysets = values.associatedKeysetsCsv
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (associatedKeysets.length === 0) {
+    throw new Error("At least one associated keyset is required");
+  }
+  const normalizedAssociatedKeysets =
+    associatedKeysets.length === 1 && inputs.length > 1
+      ? Array.from({ length: inputs.length }, () => associatedKeysets[0]!)
+      : associatedKeysets;
+  if (normalizedAssociatedKeysets.length !== inputs.length) {
+    throw new Error(
+      "associatedKeysetsCsv must provide one keyset per enabled input (or exactly one keyset to reuse)",
+    );
+  }
+
+  const additionals = values.additionalsCsv
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  if (additionals.length === 0) {
+    throw new Error("At least one additional is required (for example: zcash)");
+  }
+
+  return {
+    inputs,
+    associatedKeysets: normalizedAssociatedKeysets,
+    changePath: values.changePath.trim() ? values.changePath.trim() : undefined,
+    outputScriptHex: normalizeHex(values.outputScriptHex),
+    lockTime: Number(values.lockTime),
+    blockHeight: Number(values.blockHeight),
+    sigHashType: Number(values.sigHashType),
+    additionals,
+    expiryHeight: values.useExpiryHeight
+      ? parseHexBytes(values.expiryHeightHex, "expiryHeightHex")
+      : undefined,
+  };
+};
+
+export const SignerZcashView = ({ sessionId }: { sessionId: string }) => {
   const dmk = useDmk();
   const signer = useSignerZcash();
 
@@ -81,7 +563,7 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          derivationPath: "44'/133'/0'/0/0",
+          derivationPath: "",
           checkOnDevice: false,
           skipOpenApp: false,
         },
@@ -135,32 +617,69 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
       >,
       {
         title: "Sign Transaction",
-        description: "Sign a transaction with the device",
-        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+        description: "Craft and sign a transaction with up to 3 trusted inputs",
+        executeDeviceAction: (values) => {
           if (!signer) {
             throw new Error("Signer not initialized");
           }
-          const txBytes = hexaStringToBuffer(transaction);
-          if (!txBytes) {
-            throw new Error("Invalid transaction hex string");
-          }
-          return signer.signTransaction(derivationPath, txBytes, {
-            skipOpenApp,
+          const args = buildSignTransactionArg(values);
+          return signer.signTransaction(args, {
+            skipOpenApp: values.skipOpenApp,
           });
         },
-        initialValues: {
-          derivationPath: "44'/133'/0'/0/0",
-          transaction: "",
-          skipOpenApp: false,
+        initialValues: sampleSignTransactionFormInitialValues,
+        validateValues: (values) => {
+          try {
+            buildSignTransactionArg(values);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        InputValuesComponent: SignTransactionForm,
+        labelSelector: {
+          associatedKeysetsCsv: "Associated keysets (comma-separated)",
+          outputScriptHex: "Output script hex",
+          changePath: "Change derivation path",
+          additionalsCsv: "Additionals (comma-separated)",
+          lockTime: "Lock time",
+          blockHeight: "Block height",
+          sigHashType: "SigHash type",
+          useExpiryHeight: "Use expiry height",
+          expiryHeightHex: "Expiry height hex (4 bytes)",
+          skipOpenApp: "Skip open app",
+          input1Enabled: "Enable trusted input #1",
+          input1PreviousTxJson: "Trusted input #1 previous tx JSON",
+          input1OutputIndex: "Trusted input #1 output index",
+          input1ScriptHex: "Trusted input #1 script override (hex)",
+          input1Sequence: "Trusted input #1 sequence",
+          input1UseBranchHeight: "Trusted input #1 use branch height",
+          input1BranchHeight: "Trusted input #1 branch height",
+          input1SerializedPreviousTxOverrideHex:
+            "Trusted input #1 raw previous tx hex (optional)",
+          input2Enabled: "Enable trusted input #2",
+          input2PreviousTxJson: "Trusted input #2 previous tx JSON",
+          input2OutputIndex: "Trusted input #2 output index",
+          input2ScriptHex: "Trusted input #2 script override (hex)",
+          input2Sequence: "Trusted input #2 sequence",
+          input2UseBranchHeight: "Trusted input #2 use branch height",
+          input2BranchHeight: "Trusted input #2 branch height",
+          input2SerializedPreviousTxOverrideHex:
+            "Trusted input #2 raw previous tx hex (optional)",
+          input3Enabled: "Enable trusted input #3",
+          input3PreviousTxJson: "Trusted input #3 previous tx JSON",
+          input3OutputIndex: "Trusted input #3 output index",
+          input3ScriptHex: "Trusted input #3 script override (hex)",
+          input3Sequence: "Trusted input #3 sequence",
+          input3UseBranchHeight: "Trusted input #3 use branch height",
+          input3BranchHeight: "Trusted input #3 branch height",
+          input3SerializedPreviousTxOverrideHex:
+            "Trusted input #3 raw previous tx hex (optional)",
         },
         deviceModelId,
       } satisfies DeviceActionProps<
         SignTransactionDAOutput,
-        {
-          derivationPath: string;
-          transaction: string;
-          skipOpenApp?: boolean;
-        },
+        SignTransactionInput,
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
       >,
@@ -214,8 +733,8 @@ export const SignerZcashView: React.FC<{ sessionId: string }> = ({
           return signer.signMessage(derivationPath, message);
         },
         initialValues: {
-          derivationPath: "44'/133'/0'/0/0",
-          message: "Hello World",
+          derivationPath: "",
+          message: "",
         },
         deviceModelId,
       } satisfies DeviceActionProps<

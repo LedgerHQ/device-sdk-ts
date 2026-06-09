@@ -1,4 +1,5 @@
 import {
+  APDU_MAX_PAYLOAD,
   CommandResultFactory,
   hexaStringToBuffer,
   UnknownDeviceExchangeError,
@@ -10,6 +11,19 @@ import { makeDeviceActionInternalApiMock } from "@internal/app-binder/device-act
 import type { HyperliquidAction } from "@internal/app-binder/di/appBinderTypes";
 
 import { SendActionsTask } from "./SendActionsTask";
+
+// Per APP_SPECIFICATION.md (SET_ACTION) the first chunk's data field is
+// [lenH, lenL] (big-endian length of the serialized ACTION struct) followed
+// by the start of the struct itself. Following chunks carry the rest of the
+// struct with no extra prefix.
+function frameAction(serialized: Uint8Array): Uint8Array {
+  const length = serialized.length;
+  const framed = new Uint8Array(2 + length);
+  framed[0] = (length >> 8) & 0xff;
+  framed[1] = length & 0xff;
+  framed.set(serialized, 2);
+  return framed;
+}
 
 describe("SendActionsTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
@@ -154,9 +168,13 @@ describe("SendActionsTask", () => {
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(1);
 
       const expectedBytes = hexaStringToBuffer(expectedSerialization)!;
+      const framed = frameAction(expectedBytes);
+      expect(framed.length).toBeLessThanOrEqual(APDU_MAX_PAYLOAD);
       expect(apiMock.sendCommand).toHaveBeenCalledWith(
         new SendActionCommand({
-          serializedAction: expectedBytes,
+          chunkedData: framed,
+          more: false,
+          extend: false,
         }),
       );
     },
@@ -274,28 +292,18 @@ describe("SendActionsTask", () => {
       // THEN
       expect(apiMock.sendCommand).toHaveBeenCalledTimes(actions.length);
 
-      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-        1,
-        new SendActionCommand({
-          serializedAction: expectedSerializations[0]!,
-        }),
-      );
-
-      expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-        2,
-        new SendActionCommand({
-          serializedAction: expectedSerializations[1]!,
-        }),
-      );
-
-      if (expectedSerializations[2]) {
+      expectedSerializations.forEach((serialized, index) => {
+        const framed = frameAction(serialized);
+        expect(framed.length).toBeLessThanOrEqual(APDU_MAX_PAYLOAD);
         expect(apiMock.sendCommand).toHaveBeenNthCalledWith(
-          3,
+          index + 1,
           new SendActionCommand({
-            serializedAction: expectedSerializations[2]!,
+            chunkedData: framed,
+            more: false,
+            extend: false,
           }),
         );
-      }
+      });
     },
   );
 
@@ -338,6 +346,82 @@ describe("SendActionsTask", () => {
     // THEN
     expect(result).toStrictEqual(errorResult);
     expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+  });
+
+  it("splits a real-world order action (3 orders with cloid + builder) into chunks with the proper EXTEND/MORE flags", async () => {
+    // Same action as the original test case in SendActionCommand.test.ts —
+    // its TLV serialization is 270 bytes, so framed it exceeds APDU_MAX_PAYLOAD
+    // and must be split into two chunks.
+    const action: HyperliquidAction = {
+      type: "order",
+      orders: [
+        {
+          a: 0,
+          b: true,
+          p: "77537",
+          s: "0.00017",
+          r: false,
+          t: { limit: { tif: "Ioc" } },
+          c: "0x614cb6c28c875ff64c2237d3c3bba694",
+        },
+        {
+          a: 0,
+          b: false,
+          p: "83614",
+          s: "0.00017",
+          r: true,
+          t: {
+            trigger: {
+              isMarket: true,
+              triggerPx: "83614",
+              tpsl: "tp",
+            },
+          },
+          c: "0xd4e9b848a55c745ad1f2c030630cff62",
+        },
+        {
+          a: 0,
+          b: false,
+          p: "72212",
+          s: "0.00017",
+          r: true,
+          t: {
+            trigger: {
+              isMarket: true,
+              triggerPx: "72212",
+              tpsl: "sl",
+            },
+          },
+          c: "0xd0c4974ab1dce46c5508930a9a5db95d",
+        },
+      ],
+      grouping: "normalTpsl",
+      builder: {
+        b: "0x14c1cf26360f42681105a03137cf6951bddb1293",
+        f: 100,
+      },
+      nonce: 1779870545049,
+    };
+
+    const task = new SendActionsTask(apiMock, { actions: [action] });
+    await task.run();
+
+    // Framed payload is > APDU_MAX_PAYLOAD; expect exactly 2 chunks.
+    expect(apiMock.sendCommand).toHaveBeenCalledTimes(2);
+
+    const firstCall = apiMock.sendCommand.mock
+      .calls[0]?.[0] as SendActionCommand;
+    expect(firstCall.args.extend).toBe(false);
+    expect(firstCall.args.more).toBe(true);
+    expect(firstCall.args.chunkedData.length).toBe(APDU_MAX_PAYLOAD);
+
+    const lastCall = apiMock.sendCommand.mock
+      .calls[1]?.[0] as SendActionCommand;
+    expect(lastCall.args.extend).toBe(true);
+    expect(lastCall.args.more).toBe(false);
+    expect(lastCall.args.chunkedData.length).toBeLessThanOrEqual(
+      APDU_MAX_PAYLOAD,
+    );
   });
 
   it("returns success when actions is empty", async () => {

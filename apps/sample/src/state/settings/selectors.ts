@@ -75,6 +75,12 @@ export const selectMetadataServiceConfig = (state: RootState) =>
 export const selectMetadataServiceUrl = (state: RootState) =>
   state.settings.metadataServiceConfig.url;
 
+// Reporter selectors (blind signing tracking)
+export const selectReporterConfig = (state: RootState) =>
+  state.settings.reporterConfig;
+export const selectReporterUrl = (state: RootState) =>
+  state.settings.reporterConfig.url;
+
 // Datasource config selectors
 export const selectDatasourceConfig = (state: RootState) =>
   state.settings.datasourceConfig;
