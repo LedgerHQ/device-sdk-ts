@@ -18,6 +18,7 @@ export default defineConfig({
         "src/**/*.integ.test.ts",
         "src/index.ts",
         "src/api/index.ts",
+        "**/*.kt",
       ],
     },
   },

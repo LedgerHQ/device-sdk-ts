@@ -16,6 +16,7 @@ export default defineConfig({
         "src/index.ts",
         "src/api/index.ts",
         "src/api/model/Errors.ts",
+        "**/*.kt",
       ],
     },
   },

@@ -12,7 +12,7 @@ export default defineConfig({
       provider: "istanbul",
       reporter: ["lcov", "text"],
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.stub.ts", "src/index.ts", "index.ts"],
+      exclude: ["src/**/*.stub.ts", "src/index.ts", "index.ts", "**/*.kt"],
     },
   },
 });
