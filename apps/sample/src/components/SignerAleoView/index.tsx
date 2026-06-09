@@ -6,6 +6,9 @@ import {
   type GetAppConfigDAError,
   type GetAppConfigDAIntermediateValue,
   type GetAppConfigDAOutput,
+  type GetTvkDAError,
+  type GetTvkDAIntermediateValue,
+  type GetTvkDAOutput,
   type GetViewKeyDAError,
   type GetViewKeyDAIntermediateValue,
   type GetViewKeyDAOutput,
@@ -111,6 +114,42 @@ export const SignerAleoView: React.FC<{ sessionId: string }> = ({
         },
         GetViewKeyDAError,
         GetViewKeyDAIntermediateValue
+      >,
+      {
+        title: "Get TVK",
+        description: "Get transition view key from the device",
+        executeDeviceAction: ({
+          derivationPath,
+          transitionIndex,
+          skipOpenApp,
+        }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          const index =
+            transitionIndex !== "" && transitionIndex !== undefined
+              ? Number(transitionIndex)
+              : undefined;
+          return signer.getTvk(derivationPath, {
+            transitionIndex: index,
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: "44'/683'/0",
+          transitionIndex: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        GetTvkDAOutput,
+        {
+          derivationPath: string;
+          transitionIndex: number | string;
+          skipOpenApp?: boolean;
+        },
+        GetTvkDAError,
+        GetTvkDAIntermediateValue
       >,
       {
         title: "Sign Root Intent",
