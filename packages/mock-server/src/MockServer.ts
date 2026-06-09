@@ -5,6 +5,7 @@ import { authRouter } from "./routes/auth";
 import { devicesRouter } from "./routes/devices";
 import { mocksRouter } from "./routes/mocks";
 import { sessionsRouter } from "./routes/sessions";
+import { transferRouter } from "./routes/transfer";
 import { SessionStore, type SessionStoreOptions } from "./store/SessionStore";
 import { logger } from "./logger";
 
@@ -74,6 +75,7 @@ export function createMockServer(
   app.use(sessionsRouter(store));
   app.use(devicesRouter(store));
   app.use(mocksRouter(store));
+  app.use(transferRouter(store));
 
   const sweepInterval = options.sweepIntervalMs ?? DEFAULT_SWEEP_INTERVAL_MS;
   const timer =

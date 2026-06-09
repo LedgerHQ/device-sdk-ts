@@ -120,4 +120,64 @@ describe("SessionStore", () => {
     });
     expect(store.consumeResponse(record, reAdded)).toBe("aa");
   });
+
+  it("exports devices and mocks as a config-only snapshot", () => {
+    const store = new SessionStore();
+    const { token } = store.createSession();
+    const record = store.touch(token)!;
+
+    store.clearMocks(record);
+    store.addDevice(record, { name: "Ledger Stax", device_type: "stax" });
+    store.addMock(record, { prefix: "ff", responses: ["aa", "bb"] });
+
+    const snapshot = store.exportSession(record);
+    expect(snapshot.devices).toHaveLength(1);
+    expect(snapshot.devices[0]).toMatchObject({
+      name: "Ledger Stax",
+      device_type: "stax",
+    });
+    // Runtime fields are stripped.
+    expect(snapshot.devices[0]).not.toHaveProperty("id");
+    expect(snapshot.devices[0]).not.toHaveProperty("connected");
+    expect(snapshot.mocks).toEqual([{ prefix: "ff", responses: ["aa", "bb"] }]);
+  });
+
+  it("imports a snapshot, replacing devices, mocks and cursors", () => {
+    const store = new SessionStore();
+    const { token } = store.createSession();
+    const record = store.touch(token)!;
+
+    store.addDevice(record, { name: "Old", device_type: "nanoX" });
+    const stale = store.addMock(record, { prefix: "aa", responses: ["00"] });
+    store.consumeResponse(record, stale);
+
+    const result = store.importSession(record, {
+      devices: [{ name: "Imported", device_type: "flex" }],
+      mocks: [{ prefix: "ff", responses: ["11", "22"] }],
+    });
+
+    const devices = store.listDevices(record);
+    expect(devices).toHaveLength(1);
+    expect(devices[0]?.name).toBe("Imported");
+
+    const mocks = store.listMocks(record);
+    expect(mocks).toHaveLength(1);
+    // Fresh cursor: the imported sequence starts from the beginning.
+    expect(store.consumeResponse(record, mocks[0]!)).toBe("11");
+
+    expect(result.mocks).toEqual([{ prefix: "ff", responses: ["11", "22"] }]);
+  });
+
+  it("normalizes the single-response shorthand on import", () => {
+    const store = new SessionStore();
+    const { token } = store.createSession();
+    const record = store.touch(token)!;
+
+    const result = store.importSession(record, {
+      devices: [],
+      mocks: [{ prefix: "ff", response: "9000" }],
+    });
+
+    expect(result.mocks).toEqual([{ prefix: "ff", responses: ["9000"] }]);
+  });
 });

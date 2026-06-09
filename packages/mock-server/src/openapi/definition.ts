@@ -25,6 +25,7 @@ export const openapiDefinition: OAS3Definition = {
     { name: "Sessions", description: "Current session resource" },
     { name: "Devices", description: "Mocked devices and their lifecycle" },
     { name: "Mocks", description: "Canned APDU responses" },
+    { name: "Transfer", description: "Import/export of session state" },
     { name: "Health", description: "Liveness probe" },
   ],
   components: {
@@ -128,6 +129,23 @@ export const openapiDefinition: OAS3Definition = {
           },
         },
         required: ["prefix"],
+      },
+      SessionExport: {
+        type: "object",
+        description:
+          "Portable snapshot of a session's devices and mocks, produced by " +
+          "GET /export and consumed by POST /import.",
+        properties: {
+          devices: {
+            type: "array",
+            items: { $ref: "#/components/schemas/DeviceConfig" },
+          },
+          mocks: {
+            type: "array",
+            items: { $ref: "#/components/schemas/MockConfig" },
+          },
+        },
+        required: ["devices", "mocks"],
       },
       Session: {
         type: "object",

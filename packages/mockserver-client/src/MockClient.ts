@@ -16,6 +16,7 @@ import {
 import { type Device, deviceCodec, type DeviceConfig } from "./model/Device";
 import { type Mock, mockCodec, type MockConfig } from "./model/Mock";
 import { type Session, sessionCodec } from "./model/Session";
+import { type SessionExport, sessionExportCodec } from "./model/SessionExport";
 
 export interface MockClientOptions {
   /**
@@ -198,6 +199,27 @@ export class MockClient {
     this.token = undefined;
     this.authPromise = undefined;
     return true;
+  }
+
+  // --- Import / Export ------------------------------------------------------
+
+  /** Export the session's devices and mocks as a portable snapshot. */
+  async exportSession(): Promise<SessionExport> {
+    const data = await this.client.get("export", {
+      headers: await this.authHeaders(),
+    });
+    return this.decode(sessionExportCodec, data);
+  }
+
+  /**
+   * Replace the session's devices and mocks with a previously exported
+   * snapshot, returning the resulting (normalized) state.
+   */
+  async importSession(snapshot: SessionExport): Promise<SessionExport> {
+    const data = await this.client.post("import", snapshot, {
+      headers: await this.authHeaders(),
+    });
+    return this.decode(sessionExportCodec, data);
   }
 
   // --- Helpers --------------------------------------------------------------

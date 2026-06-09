@@ -6,6 +6,7 @@ import {
   type Mock,
   type MockConfig,
   type Session,
+  type SessionExport,
 } from "@ledgerhq/device-mockserver-client";
 
 import { DEFAULT_DEVICE, DEFAULT_MOCKS } from "../defaults";
@@ -187,6 +188,36 @@ export class SessionStore {
     return mock.responses[index % mock.responses.length] ?? "";
   }
 
+  // --- Import / Export ------------------------------------------------------
+
+  /** Serialize the session's devices and mocks as a portable snapshot. */
+  exportSession(record: SessionRecord): SessionExport {
+    return {
+      devices: [...record.devices.values()].map(toDeviceConfig),
+      mocks: [...record.mocks.values()].map((mock) => ({
+        prefix: mock.prefix,
+        responses: [...mock.responses],
+      })),
+    };
+  }
+
+  /**
+   * Replace the session's devices and mocks with the given snapshot, resetting
+   * connection state and response cursors. Returns the re-exported state.
+   */
+  importSession(record: SessionRecord, snapshot: SessionExport): SessionExport {
+    record.devices.clear();
+    record.mocks.clear();
+    record.mockCursors.clear();
+    for (const device of snapshot.devices) {
+      this.addDevice(record, device);
+    }
+    for (const mock of snapshot.mocks) {
+      this.addMock(record, mock);
+    }
+    return this.exportSession(record);
+  }
+
   // --- Lifecycle ------------------------------------------------------------
 
   /** Remove every expired session. Returns the number of sessions removed. */
@@ -246,6 +277,18 @@ function normalizeResponses(config: MockConfig): string[] {
     return [...config.responses];
   }
   return config.response !== undefined ? [config.response] : [];
+}
+
+/** Strip runtime fields (id, connection state) from a device for export. */
+function toDeviceConfig(device: Device): DeviceConfig {
+  return {
+    name: device.name,
+    device_type: device.device_type,
+    connectivity_type: device.connectivity_type,
+    firmware_version: device.firmware_version,
+    apps: device.apps,
+    masks: device.masks,
+  };
 }
 
 export type { SessionRecord };

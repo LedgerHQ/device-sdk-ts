@@ -10,3 +10,4 @@ export type {
 } from "./model/Device";
 export type { Mock, MockConfig } from "./model/Mock";
 export type { Session } from "./model/Session";
+export type { SessionExport } from "./model/SessionExport";

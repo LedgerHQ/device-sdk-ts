@@ -21,6 +21,8 @@ tags:
     description: Mocked devices and their lifecycle
   - name: Mocks
     description: Canned APDU responses
+  - name: Transfer
+    description: Import/export of session state
   - name: Health
     description: Liveness probe
 components:
@@ -113,27 +115,60 @@ components:
           type: string
           description: APDU prefix (hex).
           example: b0010000
-        response:
-          type: string
-          description: APDU response (hex), status word included.
-          example: 0105424f4c4f5309312e342e302d7263329000
+        responses:
+          type: array
+          description:
+            Ordered APDU responses (hex, status word included). Served one per
+            matching APDU, looping back to the start once exhausted.
+          items:
+            type: string
+          example:
+            - 0105424f4c4f5309312e342e302d7263329000
       required:
         - id
         - prefix
-        - response
+        - responses
     MockConfig:
       type: object
-      description: Payload to create (POST) or edit (PATCH) a mock.
+      description:
+        Payload to create (POST) or edit (PATCH) a mock. Provide either a
+        single `response` or an ordered `responses` list.
       properties:
         prefix:
           type: string
           example: b0010000
         response:
           type: string
+          description: "Single-response shorthand for `responses: [response]`."
           example: "9000"
+        responses:
+          type: array
+          description: Ordered APDU responses served one per matching APDU.
+          items:
+            type: string
+          example:
+            - "9000"
+            - "6985"
+            - "9000"
       required:
         - prefix
-        - response
+    SessionExport:
+      type: object
+      description:
+        Portable snapshot of a session's devices and mocks, produced by GET
+        /export and consumed by POST /import.
+      properties:
+        devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/DeviceConfig"
+        mocks:
+          type: array
+          items:
+            $ref: "#/components/schemas/MockConfig"
+      required:
+        - devices
+        - mocks
     Session:
       type: object
       properties:
@@ -221,6 +256,46 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
 paths:
+  /export:
+    get:
+      tags:
+        - Transfer
+      summary: Export the session's devices and mocks
+      responses:
+        "200":
+          description: A portable snapshot of the session.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionExport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /import:
+    post:
+      tags:
+        - Transfer
+      summary: Replace the session's devices and mocks with a snapshot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionExport"
+      responses:
+        "200":
+          description: The resulting (normalized) snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionExport"
+        "400":
+          description: Malformed snapshot.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /sessions/current:
     get:
       tags:
@@ -278,7 +353,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Mock"
         "400":
-          description: prefix and response are required.
+          description: prefix and a response (or non-empty responses) are required.
           content:
             application/json:
               schema:
