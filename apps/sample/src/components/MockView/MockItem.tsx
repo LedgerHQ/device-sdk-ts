@@ -15,7 +15,9 @@ export const MockItem: React.FC<MockItemProps> = ({
   onEdit,
   onSubmit,
 }) => {
-  const [currentResponse, setCurrentResponse] = useState(mock.response);
+  const [currentResponse, setCurrentResponse] = useState(
+    mock.responses[0] ?? "",
+  );
   const [currentPrefix, setCurrentPrefix] = useState(mock.prefix);
 
   return (
@@ -63,7 +65,7 @@ export const MockItem: React.FC<MockItemProps> = ({
             {mock.prefix}
           </Text>
           <Text variant="body" style={{ flex: 2 }} textAlign="center">
-            {mock.response}
+            {mock.responses.join(", ")}
           </Text>
         </>
       )}

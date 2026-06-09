@@ -55,7 +55,7 @@ describe("MockClient", () => {
       const http = httpClientStubBuilder().mockResponse({
         method: "post",
         endpoint: "mocks",
-        response: { id: "m1", prefix: "e0010000", response: "9000" },
+        response: { id: "m1", prefix: "e0010000", responses: ["9000"] },
       });
       const client = new MockClient("http://localhost:8080", {
         token: "tok",

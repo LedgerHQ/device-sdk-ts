@@ -244,12 +244,16 @@ export function devicesRouter(store: SessionStore): Router {
       return;
     }
     const apdu = String(req.body?.apdu ?? "");
-    const response = matchApdu(apdu, store.listMocks(session));
-    if (response === UNKNOWN_APDU_RESPONSE) {
-      logger.warn(`APDU [${id}] ${apdu} -> ${response} (no matching mock)`);
-    } else {
-      logger.info(`APDU [${id}] ${apdu} -> ${response}`);
+    const mock = matchApdu(apdu, store.listMocks(session));
+    if (!mock) {
+      logger.warn(
+        `APDU [${id}] ${apdu} -> ${UNKNOWN_APDU_RESPONSE} (no matching mock)`,
+      );
+      res.json({ response: UNKNOWN_APDU_RESPONSE });
+      return;
     }
+    const response = store.consumeResponse(session, mock);
+    logger.info(`APDU [${id}] ${apdu} -> ${response}`);
     res.json({ response });
   });
 

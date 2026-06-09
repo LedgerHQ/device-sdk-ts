@@ -28,7 +28,8 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
-      description: "Session token returned by `POST /auth`, sent as `Authorization:
+      description:
+        "Session token returned by `POST /auth`, sent as `Authorization:
         Bearer <token>`."
   schemas:
     Error:

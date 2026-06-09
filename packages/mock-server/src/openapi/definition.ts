@@ -96,22 +96,38 @@ export const openapiDefinition: OAS3Definition = {
             description: "APDU prefix (hex).",
             example: "b0010000",
           },
-          response: {
-            type: "string",
-            description: "APDU response (hex), status word included.",
-            example: "0105424f4c4f5309312e342e302d7263329000",
+          responses: {
+            type: "array",
+            description:
+              "Ordered APDU responses (hex, status word included). Served " +
+              "one per matching APDU, looping back to the start once exhausted.",
+            items: { type: "string" },
+            example: ["0105424f4c4f5309312e342e302d7263329000"],
           },
         },
-        required: ["id", "prefix", "response"],
+        required: ["id", "prefix", "responses"],
       },
       MockConfig: {
         type: "object",
-        description: "Payload to create (POST) or edit (PATCH) a mock.",
+        description:
+          "Payload to create (POST) or edit (PATCH) a mock. Provide either a " +
+          "single `response` or an ordered `responses` list.",
         properties: {
           prefix: { type: "string", example: "b0010000" },
-          response: { type: "string", example: "9000" },
+          response: {
+            type: "string",
+            description:
+              "Single-response shorthand for `responses: [response]`.",
+            example: "9000",
+          },
+          responses: {
+            type: "array",
+            description: "Ordered APDU responses served one per matching APDU.",
+            items: { type: "string" },
+            example: ["9000", "6985", "9000"],
+          },
         },
-        required: ["prefix", "response"],
+        required: ["prefix"],
       },
       Session: {
         type: "object",

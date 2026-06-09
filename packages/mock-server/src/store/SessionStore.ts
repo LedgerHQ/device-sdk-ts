@@ -27,6 +27,8 @@ interface SessionRecord {
   lastSeenAt: number;
   devices: Map<string, Device>;
   mocks: Map<string, Mock>;
+  /** Next response index to serve per mock id (advanced by consumeResponse). */
+  mockCursors: Map<string, number>;
 }
 
 /**
@@ -54,6 +56,7 @@ export class SessionStore {
       lastSeenAt: now,
       devices: new Map(),
       mocks: new Map(),
+      mockCursors: new Map(),
     };
     this.seedDefaults(record);
     this.sessions.set(record.token, record);
@@ -139,7 +142,7 @@ export class SessionStore {
     const mock: Mock = {
       id: randomUUID(),
       prefix: config.prefix,
-      response: config.response,
+      responses: normalizeResponses(config),
     };
     record.mocks.set(mock.id, mock);
     return mock;
@@ -152,17 +155,36 @@ export class SessionStore {
   ): Mock | undefined {
     const current = record.mocks.get(mockId);
     if (!current) return undefined;
-    const updated: Mock = { ...current, ...config, id: current.id };
+    const updated: Mock = {
+      ...current,
+      ...config,
+      id: current.id,
+      responses: normalizeResponses(config),
+    };
     record.mocks.set(mockId, updated);
+    // Editing a mock restarts its response sequence.
+    record.mockCursors.delete(mockId);
     return updated;
   }
 
   deleteMock(record: SessionRecord, mockId: string): boolean {
+    record.mockCursors.delete(mockId);
     return record.mocks.delete(mockId);
   }
 
   clearMocks(record: SessionRecord): void {
     record.mocks.clear();
+    record.mockCursors.clear();
+  }
+
+  /**
+   * Return the response a mock should serve for the current matching APDU,
+   * advancing its cursor and looping back to the start once exhausted.
+   */
+  consumeResponse(record: SessionRecord, mock: Mock): string {
+    const index = record.mockCursors.get(mock.id) ?? 0;
+    record.mockCursors.set(mock.id, index + 1);
+    return mock.responses[index % mock.responses.length] ?? "";
   }
 
   // --- Lifecycle ------------------------------------------------------------
@@ -213,6 +235,17 @@ export class SessionStore {
   private isExpired(record: SessionRecord): boolean {
     return Date.now() > this.expiresAt(record);
   }
+}
+
+/**
+ * Resolve a mock config's ordered response list, accepting either an explicit
+ * `responses` array or the single-response `response` shorthand.
+ */
+function normalizeResponses(config: MockConfig): string[] {
+  if (config.responses && config.responses.length > 0) {
+    return [...config.responses];
+  }
+  return config.response !== undefined ? [config.response] : [];
 }
 
 export type { SessionRecord };

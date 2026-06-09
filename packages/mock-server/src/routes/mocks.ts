@@ -47,7 +47,7 @@ export function mocksRouter(store: SessionStore): Router {
    *             schema:
    *               $ref: '#/components/schemas/Mock'
    *       400:
-   *         description: prefix and response are required.
+   *         description: prefix and a response (or non-empty responses) are required.
    *         content:
    *           application/json:
    *             schema:
@@ -68,13 +68,25 @@ export function mocksRouter(store: SessionStore): Router {
   });
 
   router.post("/mocks", (req: AuthedRequest, res: Response) => {
-    const { prefix, response } = req.body ?? {};
-    if (typeof prefix !== "string" || typeof response !== "string") {
-      res.status(400).json({ error: "prefix and response are required" });
+    const { prefix, response, responses } = req.body ?? {};
+    const hasResponse = typeof response === "string";
+    const hasResponses =
+      Array.isArray(responses) &&
+      responses.length > 0 &&
+      responses.every((entry) => typeof entry === "string");
+    if (typeof prefix !== "string" || (!hasResponse && !hasResponses)) {
+      res.status(400).json({
+        error:
+          "prefix and a response or non-empty responses array are required",
+      });
       return;
     }
-    const mock = store.addMock(getSession(req), { prefix, response });
-    logger.info(`Mock added: ${mock.prefix} -> ${mock.response}`);
+    const mock = store.addMock(getSession(req), {
+      prefix,
+      response,
+      responses,
+    });
+    logger.info(`Mock added: ${mock.prefix} -> ${mock.responses.join(",")}`);
     res.status(201).json(mock);
   });
 

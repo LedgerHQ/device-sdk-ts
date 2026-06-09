@@ -137,7 +137,7 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
             {mocks.map((mock, index) => (
               <MockItem
                 mock={mock}
-                key={`${index}-${mock.prefix}-${mock.response}`}
+                key={`${index}-${mock.prefix}-${mock.responses.join("-")}`}
                 editable={editMockIndex === index}
                 onEdit={() => setEditMockIndex(index)}
                 onSubmit={sendMock}
