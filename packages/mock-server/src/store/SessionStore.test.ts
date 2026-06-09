@@ -1,17 +1,13 @@
-import { DEFAULT_DEVICE_ID, DEFAULT_MOCKS } from "../defaults";
+import { DEFAULT_MOCKS } from "../defaults";
 import { SessionStore } from "./SessionStore";
 
 describe("SessionStore", () => {
-  it("seeds a default device and the handshake mocks on session creation", () => {
+  it("seeds the handshake mocks and no device on session creation", () => {
     const store = new SessionStore();
     const { token } = store.createSession();
     const record = store.touch(token)!;
 
-    const devices = store.listDevices(record);
-    expect(devices).toHaveLength(1);
-    expect(devices[0]?.id).toBe(DEFAULT_DEVICE_ID);
-    expect(devices[0]?.device_type).toBe("nanoX");
-
+    expect(store.listDevices(record)).toHaveLength(0);
     expect(store.listMocks(record)).toHaveLength(DEFAULT_MOCKS.length);
   });
 
@@ -35,10 +31,12 @@ describe("SessionStore", () => {
     const { token } = store.createSession();
     const record = store.touch(token)!;
 
-    const connected = store.setConnected(record, DEFAULT_DEVICE_ID, true);
+    const device = store.addDevice(record, { device_type: "nanoX" });
+
+    const connected = store.setConnected(record, device.id, true);
     expect(connected?.connected).toBe(true);
 
-    const disconnected = store.setConnected(record, DEFAULT_DEVICE_ID, false);
+    const disconnected = store.setConnected(record, device.id, false);
     expect(disconnected?.connected).toBe(false);
   });
 

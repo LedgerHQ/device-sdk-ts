@@ -8,7 +8,7 @@ import {
   type Session,
 } from "@ledgerhq/device-mockserver-client";
 
-import { DEFAULT_DEVICE, DEFAULT_DEVICE_ID, DEFAULT_MOCKS } from "../defaults";
+import { DEFAULT_DEVICE, DEFAULT_MOCKS } from "../defaults";
 
 export interface SessionStoreOptions {
   /** Sliding inactivity timeout in ms (refreshed on every authed request). */
@@ -184,8 +184,6 @@ export class SessionStore {
   }
 
   private seedDefaults(record: SessionRecord): void {
-    const device = this.buildDevice(DEFAULT_DEVICE_ID, DEFAULT_DEVICE);
-    record.devices.set(device.id, device);
     for (const mock of DEFAULT_MOCKS) {
       this.addMock(record, mock);
     }

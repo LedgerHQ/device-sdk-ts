@@ -29,6 +29,12 @@ export const settingsSlice = createSlice({
     ) => {
       state.mockServerUrl = action.payload.mockServerUrl;
     },
+    setMockServerSessionToken: (
+      state,
+      action: PayloadAction<{ mockServerSessionToken: string }>,
+    ) => {
+      state.mockServerSessionToken = action.payload.mockServerSessionToken;
+    },
     setSpeculosUrl: (state, action: PayloadAction<{ speculosUrl: string }>) => {
       state.speculosUrl = action.payload.speculosUrl;
     },
@@ -136,6 +142,7 @@ export const settingsSlice = createSlice({
 export const {
   setTransportType,
   setMockServerUrl,
+  setMockServerSessionToken,
   setSpeculosUrl,
   setSpeculosVncUrl,
   setSpeculosDeviceModel,

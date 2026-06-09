@@ -11,7 +11,7 @@ export function authRouter(store: SessionStore): Router {
 
   router.post("/auth", (_req: Request, res: Response) => {
     const { token, expiresAt } = store.createSession();
-    logger.info(`Session created (${store.size()} active)`);
+    logger.info(`Session created: ${token} (${store.size()} active)`);
     res.status(201).json({ token, expires_at: expiresAt });
   });
 

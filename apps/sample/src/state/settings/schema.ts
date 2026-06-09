@@ -59,9 +59,7 @@ export const initialState: SettingsState = {
   // Transport settings
   transportType: getInitialTransportType(),
   mockServerUrl: "http://127.0.0.1:8080/",
-  // Injected by the Playwright Node layer for shared-session E2E tests.
-  mockServerSessionToken:
-    process.env.NEXT_PUBLIC_MOCK_SERVER_SESSION_TOKEN || "",
+  mockServerSessionToken: "",
   speculosUrl: DEFAULT_SPECULOS_URL,
   speculosVncUrl: DEFAULT_SPECULOS_VNC_URL,
   speculosDeviceModel: DeviceModelId.STAX,

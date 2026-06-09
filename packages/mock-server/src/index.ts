@@ -1,7 +1,6 @@
 export { matchApdu } from "./apdu/matcher";
 export {
   DEFAULT_DEVICE,
-  DEFAULT_DEVICE_ID,
   DEFAULT_MOCKS,
   UNKNOWN_APDU_RESPONSE,
 } from "./defaults";

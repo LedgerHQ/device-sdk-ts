@@ -1,14 +1,12 @@
 import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
 /**
- * The device every freshly created session is seeded with, so the standalone
- * sample app can connect without any prior configuration.
+ * Fallback device field values applied when a device is added without
+ * specifying them.
  *
  * `device_type` is a `DeviceModelId` enum value so the transport reports the
  * right model to DMK.
  */
-export const DEFAULT_DEVICE_ID = "mock-device-1";
-
 export const DEFAULT_DEVICE: Required<
   Pick<DeviceConfig, "name" | "device_type" | "connectivity_type">
 > &
