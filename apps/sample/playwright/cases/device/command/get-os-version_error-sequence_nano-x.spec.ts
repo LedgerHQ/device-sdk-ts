@@ -1,0 +1,133 @@
+/* eslint-disable no-restricted-imports */
+import {
+  type DeviceConfig,
+  type MockClient,
+} from "@ledgerhq/device-mockserver-client";
+import { expect, type Page, test } from "@playwright/test";
+
+import { setupMockServerSession } from "../../../utils/setup";
+import { getLastDeviceResponseContent } from "../../../utils/utils";
+
+// GetAppAndVersion (b0 01 00 00) -> BOLOS dashboard, used by the connection
+// handshake DMK runs when connecting the device.
+const GET_APP_AND_VERSION_PREFIX = "b0010000";
+// GetOsVersion (e0 01 00 00).
+const GET_OS_VERSION_PREFIX = "e0010000";
+
+const RESPONSE_ITEMS = '[data-testid="box_device-commands-responses"] > *';
+
+const bolosResponse = (version: string): string => {
+  const versionHex = Buffer.from(version, "ascii").toString("hex");
+  const versionLen = (version.length & 0xff).toString(16).padStart(2, "0");
+  // format(01) | len "BOLOS" "BOLOS" | len version version | 9000
+  return `0105424f4c4f53${versionLen}${versionHex}9000`;
+};
+
+const NANO_X: DeviceConfig = {
+  name: "Ledger Nano X",
+  device_type: "nanoX",
+  connectivity_type: "USB",
+  firmware_version: "2.2.3",
+  apps: [{ name: "BOLOS", version: "1.5.0" }],
+  masks: [0x33000000],
+};
+
+const APP_VERSION = "1.5.0";
+const OK_RESPONSE =
+  "3300000405322e322e3304e600000004322e333004312e31360100010001009000";
+// Locked device status word: any non-9000 status makes GetOsVersion fail.
+const ERROR_RESPONSE = "5515";
+const EXPECTED_SE_VERSION = "2.2.3";
+
+interface GetOsVersionResponse {
+  status: string;
+  data?: {
+    seVersion: string;
+    targetId: number;
+  };
+  error?: object;
+  pending?: object;
+}
+
+/** Click Send once and read the freshly appended (resolved) response. */
+async function executeGetOsVersion(
+  page: Page,
+  expectedCount: number,
+): Promise<GetOsVersionResponse> {
+  await page.getByTestId("CTA_send-device-command").click();
+  await expect
+    .poll(() => page.locator(RESPONSE_ITEMS).count())
+    .toBe(expectedCount);
+  return (await getLastDeviceResponseContent(
+    page,
+    "span",
+  )) as GetOsVersionResponse;
+}
+
+test.describe("device command: get OS version error sequence", () => {
+  let client: MockClient;
+
+  test.beforeEach(async ({ page }) => {
+    client = await setupMockServerSession(page);
+
+    await client.addDevice(NANO_X);
+    await client.addMock({
+      prefix: GET_APP_AND_VERSION_PREFIX,
+      response: bolosResponse(APP_VERSION),
+    });
+    // The connection handshake only issues GetAppAndVersion, so each Send of
+    // the GetOsVersion command consumes one entry of this sequence in order,
+    // looping back to the start once exhausted.
+    await client.addMock({
+      prefix: GET_OS_VERSION_PREFIX,
+      responses: [OK_RESPONSE, OK_RESPONSE, ERROR_RESPONSE],
+    });
+
+    await page.goto("http://localhost:3000/");
+  });
+
+  test.afterEach(async () => {
+    await client.disposeSession();
+  });
+
+  test("device should fail to get OS version only on the third execution", async ({
+    page,
+  }) => {
+    await test.step("Given the device is connected", async () => {
+      await page.getByTestId("CTA_select-device-MOCKSERVER").click();
+
+      await expect(
+        page.getByTestId("text_device-connection-status").first(),
+      ).toContainText("CONNECTED");
+    });
+
+    await test.step("When the Get OS version command is executed four times", async () => {
+      await page.getByTestId("CTA_route-to-/commands").click();
+      await page.waitForURL("http://localhost:3000/commands");
+      // Open the command drawer; subsequent executions just click Send again.
+      await page.getByTestId("CTA_command-Get OS version").click();
+    });
+
+    await test.step("Then the first two executions succeed", async () => {
+      const first = await executeGetOsVersion(page, 1);
+      expect(first.status).toBe("SUCCESS");
+      expect(first.data?.seVersion).toBe(EXPECTED_SE_VERSION);
+
+      const second = await executeGetOsVersion(page, 2);
+      expect(second.status).toBe("SUCCESS");
+      expect(second.data?.seVersion).toBe(EXPECTED_SE_VERSION);
+    });
+
+    await test.step("And the third execution fails", async () => {
+      const third = await executeGetOsVersion(page, 3);
+      expect(third.status).toBe("ERROR");
+      expect(third.data).toBeUndefined();
+    });
+
+    await test.step("And the sequence loops back to success on the fourth", async () => {
+      const fourth = await executeGetOsVersion(page, 4);
+      expect(fourth.status).toBe("SUCCESS");
+      expect(fourth.data?.seVersion).toBe(EXPECTED_SE_VERSION);
+    });
+  });
+});
