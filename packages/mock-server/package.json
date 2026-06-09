@@ -33,6 +33,7 @@
     "start": "node lib/cjs/main.js",
     "dev": "tsx watch src/main.ts",
     "serve": "tsx src/main.ts",
+    "generate:openapi": "tsx scripts/generate-openapi.ts",
     "lint": "eslint",
     "lint:fix": "pnpm lint --fix",
     "prettier": "prettier . --check",
@@ -47,12 +48,15 @@
   },
   "devDependencies": {
     "@ledgerhq/device-mockserver-client": "workspace:^",
-    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
+    "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@types/express": "catalog:",
-    "tsx": "catalog:"
+    "@types/swagger-jsdoc": "^6.0.4",
+    "swagger-jsdoc": "^6.3.0",
+    "tsx": "catalog:",
+    "yaml": "^2.7.0"
   }
 }

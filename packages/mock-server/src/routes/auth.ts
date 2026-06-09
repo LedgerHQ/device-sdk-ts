@@ -9,6 +9,22 @@ import { type SessionStore } from "../store/SessionStore";
 export function authRouter(store: SessionStore): Router {
   const router = Router();
 
+  /**
+   * @openapi
+   * /auth:
+   *   post:
+   *     tags: [Auth]
+   *     summary: Create a session
+   *     description: Creates an in-memory session and returns its bearer token.
+   *     security: []
+   *     responses:
+   *       201:
+   *         description: Session created.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/AuthResponse'
+   */
   router.post("/auth", (_req: Request, res: Response) => {
     const { token, expiresAt } = store.createSession();
     logger.info(`Session created: ${token} (${store.size()} active)`);

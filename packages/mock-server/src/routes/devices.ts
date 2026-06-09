@@ -18,6 +18,41 @@ export function devicesRouter(store: SessionStore): Router {
   const router = Router();
   router.use(bearerAuth(store));
 
+  /**
+   * @openapi
+   * /devices:
+   *   get:
+   *     tags: [Devices]
+   *     summary: List devices
+   *     responses:
+   *       200:
+   *         description: Devices owned by the session.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items:
+   *                 $ref: '#/components/schemas/Device'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *   post:
+   *     tags: [Devices]
+   *     summary: Attach a device
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/DeviceConfig'
+   *     responses:
+   *       201:
+   *         description: Device created.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Device'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   */
   router.get("/devices", (req: AuthedRequest, res: Response) => {
     res.json(store.listDevices(getSession(req)));
   });
@@ -27,6 +62,59 @@ export function devicesRouter(store: SessionStore): Router {
     res.status(201).json(device);
   });
 
+  /**
+   * @openapi
+   * /devices/{id}:
+   *   get:
+   *     tags: [Devices]
+   *     summary: Get a device
+   *     parameters:
+   *       - { name: id, in: path, required: true, schema: { type: string } }
+   *     responses:
+   *       200:
+   *         description: The device.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Device'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *   patch:
+   *     tags: [Devices]
+   *     summary: Edit a device
+   *     parameters:
+   *       - { name: id, in: path, required: true, schema: { type: string } }
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/DeviceConfig'
+   *     responses:
+   *       200:
+   *         description: The updated device.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Device'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *   delete:
+   *     tags: [Devices]
+   *     summary: Remove a device
+   *     parameters:
+   *       - { name: id, in: path, required: true, schema: { type: string } }
+   *     responses:
+   *       204:
+   *         description: Device removed.
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   */
   router.get("/devices/:id", (req: AuthedRequest, res: Response) => {
     const id = req.params["id"] ?? "";
     const device = store.getDevice(getSession(req), id);
@@ -56,6 +144,26 @@ export function devicesRouter(store: SessionStore): Router {
     res.status(204).end();
   });
 
+  /**
+   * @openapi
+   * /devices/{id}/connect:
+   *   post:
+   *     tags: [Devices]
+   *     summary: Connect a device
+   *     parameters:
+   *       - { name: id, in: path, required: true, schema: { type: string } }
+   *     responses:
+   *       200:
+   *         description: Connection state.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ConnectionState'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   */
   router.post("/devices/:id/connect", (req: AuthedRequest, res: Response) => {
     const id = req.params["id"] ?? "";
     const device = store.setConnected(getSession(req), id, true);
@@ -67,6 +175,26 @@ export function devicesRouter(store: SessionStore): Router {
     res.json({ device, connected: true });
   });
 
+  /**
+   * @openapi
+   * /devices/{id}/disconnect:
+   *   post:
+   *     tags: [Devices]
+   *     summary: Disconnect a device
+   *     parameters:
+   *       - { name: id, in: path, required: true, schema: { type: string } }
+   *     responses:
+   *       200:
+   *         description: Connection state.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ConnectionState'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   */
   router.post(
     "/devices/:id/disconnect",
     (req: AuthedRequest, res: Response) => {
@@ -81,6 +209,32 @@ export function devicesRouter(store: SessionStore): Router {
     },
   );
 
+  /**
+   * @openapi
+   * /devices/{id}/apdu:
+   *   post:
+   *     tags: [Devices]
+   *     summary: Send an APDU to a device
+   *     description: Returns the response of the first matching mock, or `6d00`.
+   *     parameters:
+   *       - { name: id, in: path, required: true, schema: { type: string } }
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             $ref: '#/components/schemas/ApduRequest'
+   *     responses:
+   *       200:
+   *         description: APDU response.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/ApduResponse'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   */
   router.post("/devices/:id/apdu", (req: AuthedRequest, res: Response) => {
     const id = req.params["id"] ?? "";
     const session = getSession(req);

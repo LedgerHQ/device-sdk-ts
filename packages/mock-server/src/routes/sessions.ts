@@ -13,6 +13,30 @@ export function sessionsRouter(store: SessionStore): Router {
   const router = Router();
   router.use(bearerAuth(store));
 
+  /**
+   * @openapi
+   * /sessions/current:
+   *   get:
+   *     tags: [Sessions]
+   *     summary: Get the current session
+   *     responses:
+   *       200:
+   *         description: The session resolved from the bearer token.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Session'
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *   delete:
+   *     tags: [Sessions]
+   *     summary: Dispose the current session
+   *     responses:
+   *       204:
+   *         description: Session disposed.
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   */
   router.get("/sessions/current", (req: AuthedRequest, res: Response) => {
     res.json(store.toSession(getSession(req)));
   });

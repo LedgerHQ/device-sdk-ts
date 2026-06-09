@@ -51,6 +51,21 @@ export function createMockServer(
     next();
   });
 
+  /**
+   * @openapi
+   * /health:
+   *   get:
+   *     tags: [Health]
+   *     summary: Liveness probe
+   *     security: []
+   *     responses:
+   *       200:
+   *         description: Server is up.
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Health'
+   */
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", sessions: store.size() });
   });
