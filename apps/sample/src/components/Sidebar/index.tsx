@@ -10,6 +10,7 @@ import { AvailableDevices } from "@/components/AvailableDevices";
 import { ConnectDeviceMenuDropdown } from "@/components/ConnectDevice/ConnectDeviceMenuDropdown";
 import { Device } from "@/components/Device";
 import { Menu } from "@/components/Menu";
+import { useMockServerSession } from "@/hooks/useMockServerSession";
 import {
   useDmk,
   useExportLogsCallback,
@@ -28,16 +29,8 @@ import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
 const Root = styled(Flex).attrs({ py: 8, px: 6, rowGap: 6 })`
   flex-direction: column;
   width: 280px;
-  background-color: ${({
-    theme,
-    mockServerEnabled,
-  }: {
-    theme: DefaultTheme;
-    mockServerEnabled: boolean;
-  }) =>
-    mockServerEnabled
-      ? theme.colors.constant.purple
-      : theme.colors.background.card};
+  background-color: ${({ theme }: { theme: DefaultTheme }) =>
+    theme.colors.background.card};
   overflow-y: auto;
 `;
 
@@ -56,6 +49,53 @@ const BottomContainer = styled(Flex)`
 const VersionText = styled(Text)`
   color: ${({ theme }: { theme: DefaultTheme }) => theme.colors.neutral.c50};
 `;
+
+const SessionStatusRow = styled(Flex)`
+  align-items: center;
+  column-gap: 6px;
+`;
+
+const StatusDot = styled.span<{ $active: boolean }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background-color: ${({
+    theme,
+    $active,
+  }: {
+    theme: DefaultTheme;
+    $active: boolean;
+  }) => ($active ? theme.colors.success.c50 : theme.colors.error.c50)};
+`;
+
+const MockServerSessionIndicator: React.FC = () => {
+  const { status, session, shared } = useMockServerSession();
+
+  if (status === "disabled") return null;
+
+  const expiresInMinutes = session
+    ? Math.max(0, Math.round((session.expires_at - Date.now()) / 60000))
+    : 0;
+
+  const label =
+    status === "checking"
+      ? "Mock session: checking…"
+      : status === "active" && session
+        ? `Mock session: ${session.id.slice(0, 8)} · ${expiresInMinutes}m · ${
+            shared ? "shared" : "auto"
+          }`
+        : "Mock session: none (server unreachable)";
+
+  return (
+    <SessionStatusRow>
+      <StatusDot $active={status === "active"} />
+      <Text variant="tiny" color="neutral.c70">
+        {label}
+      </Text>
+    </SessionStatusRow>
+  );
+};
 
 export const Sidebar: React.FC = () => {
   const [version, setVersion] = useState("");
@@ -113,7 +153,7 @@ export const Sidebar: React.FC = () => {
 
   const router = useRouter();
   return (
-    <Root mockServerEnabled={transportType === "mockserver"}>
+    <Root>
       <Link
         onClick={() => router.push("/")}
         mb={8}
@@ -125,6 +165,8 @@ export const Sidebar: React.FC = () => {
         Ledger Device Management Kit
         {transportType === "mockserver" && <span> (MOCKED)</span>}
       </Link>
+
+      <MockServerSessionIndicator />
 
       <Flex data-testid="container_devices" rowGap={4} flexDirection="column">
         <Text variant={"tiny"}>

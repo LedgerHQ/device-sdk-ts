@@ -7,6 +7,7 @@ type MockItemProps = {
   editable: boolean;
   onEdit: () => void;
   onSubmit: (prefix: string, response: string) => void;
+  onDelete: () => void;
 };
 
 export const MockItem: React.FC<MockItemProps> = ({
@@ -14,9 +15,10 @@ export const MockItem: React.FC<MockItemProps> = ({
   editable,
   onEdit,
   onSubmit,
+  onDelete,
 }) => {
   const [currentResponse, setCurrentResponse] = useState(
-    mock.responses[0] ?? "",
+    mock.responses.join(", "),
   );
   const [currentPrefix, setCurrentPrefix] = useState(mock.prefix);
 
@@ -69,7 +71,7 @@ export const MockItem: React.FC<MockItemProps> = ({
           </Text>
         </>
       )}
-      <Flex flex={1} justifyContent="center">
+      <Flex flex={1} justifyContent="center" columnGap={2}>
         <Button
           variant="shade"
           outline
@@ -78,6 +80,13 @@ export const MockItem: React.FC<MockItemProps> = ({
           onClick={
             editable ? () => onSubmit(currentPrefix, currentResponse) : onEdit
           }
+        />
+        <Button
+          variant="shade"
+          outline
+          iconButton
+          Icon={() => <Icons.Trash />}
+          onClick={onDelete}
         />
       </Flex>
     </Flex>

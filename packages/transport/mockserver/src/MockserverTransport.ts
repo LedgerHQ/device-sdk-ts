@@ -24,11 +24,23 @@ import {
   MockClient,
 } from "@ledgerhq/device-mockserver-client";
 import { type Either, Left, Right } from "purify-ts";
-import { from, mergeMap, type Observable } from "rxjs";
+import {
+  catchError,
+  from,
+  map,
+  mergeMap,
+  type Observable,
+  of,
+  switchMap,
+  timer,
+} from "rxjs";
 
 export const mockserverIdentifier: TransportIdentifier = "MOCKSERVER";
 
 const DEFAULT_MASKS = [0x31100000];
+
+/** Interval (ms) at which the mock server is polled for available devices. */
+const DISCOVERY_POLL_INTERVAL_MS = 1000;
 
 export class MockTransport implements Transport {
   private logger: LoggerPublisherService;
@@ -53,20 +65,25 @@ export class MockTransport implements Transport {
   }
 
   listenToAvailableDevices(): Observable<TransportDiscoveredDevice[]> {
-    return from([]);
+    this.logger.debug("listenToAvailableDevices");
+    return timer(0, DISCOVERY_POLL_INTERVAL_MS).pipe(
+      switchMap(() => from(this.mockClient.listDevices())),
+      map((devices) => this.mapToDiscoveredDevices(devices)),
+      catchError((error) => {
+        this.logger.error("listenToAvailableDevices failed", {
+          data: { error },
+        });
+        return of([]);
+      }),
+    );
   }
 
   startDiscovering(): Observable<TransportDiscoveredDevice> {
     this.logger.debug("startDiscovering");
-    return from(
-      this.mockClient.listDevices().then((devices: Device[]) =>
-        devices.map((device: Device) => ({
-          id: device.id,
-          deviceModel: this.buildDeviceModel(device),
-          transport: this.identifier,
-        })),
-      ),
-    ).pipe(mergeMap((device) => device));
+    return from(this.mockClient.listDevices()).pipe(
+      map((devices) => this.mapToDiscoveredDevices(devices)),
+      mergeMap((devices) => from(devices)),
+    );
   }
 
   stopDiscovering(): void {
@@ -140,6 +157,16 @@ export class MockTransport implements Transport {
       onDisconnect(onDisconnectDeviceId);
       return Left(new NoAccessibleDeviceError(error as Error));
     }
+  }
+
+  private mapToDiscoveredDevices(
+    devices: Device[],
+  ): TransportDiscoveredDevice[] {
+    return devices.map((device) => ({
+      id: device.id,
+      deviceModel: this.buildDeviceModel(device),
+      transport: this.identifier,
+    }));
   }
 
   private buildDeviceModel(device: Device) {
