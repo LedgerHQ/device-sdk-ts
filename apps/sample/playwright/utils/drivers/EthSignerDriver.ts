@@ -1,0 +1,50 @@
+import { expect, type Page } from "@playwright/test";
+
+const RESPONSE_ITEMS = '[data-testid="box_device-commands-responses"] > *';
+
+export interface DeviceActionResult<Output> {
+  status: string; // "completed" | "error" | "pending" | ...
+  output?: Output;
+  error?: unknown;
+}
+
+/**
+ * Drives the Ethereum signer view: navigating to it, executing device actions
+ * and reading back the emitted device-action states.
+ */
+export class EthSignerDriver {
+  constructor(private readonly page: Page) {}
+
+  /** Navigate Signer Kits -> Ethereum. */
+  async open(): Promise<void> {
+    await this.page.getByTestId("CTA_route-to-/signers").click();
+    await this.page.waitForURL("http://localhost:3000/signers");
+    await this.page.getByTestId("CTA_command-Ethereum").click();
+    await this.page.waitForURL("http://localhost:3000/signers/ethereum");
+    await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Open the Get address action and Execute it with the current (default)
+   * inputs.
+   */
+  async getAddress(): Promise<void> {
+    await this.page.getByTestId("CTA_command-Get address").click();
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
+   * Wait for the last emitted device-action state to be terminal and return it
+   * parsed.
+   */
+  async lastResult<Output>({
+    timeout = 90_000,
+  }: { timeout?: number } = {}): Promise<DeviceActionResult<Output>> {
+    const last = this.page.locator(RESPONSE_ITEMS).last();
+    await expect(last).toContainText(/"status": "(completed|error)"/, {
+      timeout,
+    });
+    const body = last.locator("span", { hasText: '"status"' }).last();
+    return JSON.parse(await body.innerText()) as DeviceActionResult<Output>;
+  }
+}

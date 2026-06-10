@@ -1,16 +1,7 @@
 /* eslint-disable no-restricted-imports */
-import {
-  type DeviceConfig,
-  type MockClient,
-} from "@ledgerhq/device-mockserver-client";
-import { expect, test } from "@playwright/test";
+import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
-import { setupMockServerSession } from "../../../utils/setup";
-import { getLastDeviceResponseContent } from "../../../utils/utils";
-import {
-  whenExecuteDeviceCommand,
-  whenNavigateTo,
-} from "../../../utils/whenHandlers";
+import { expect, test } from "../../../fixtures";
 
 interface DeviceScenario {
   device: DeviceConfig;
@@ -60,42 +51,22 @@ interface GetAppAndVersionResponse {
 test.describe("device command: get app and version", () => {
   for (const scenario of SCENARIOS) {
     test.describe(scenario.device.device_type!, () => {
-      let client: MockClient;
-
-      test.beforeEach(async ({ page }) => {
-        client = await setupMockServerSession(page);
-
-        await client.addDevice(scenario.device);
-
-        await page.goto("http://localhost:3000/");
-      });
-
-      test.afterEach(async () => {
-        await client.disposeSession();
-      });
-
       test(`device should get app and version on ${scenario.device.device_type}`, async ({
-        page,
+        device,
+        commands,
       }) => {
         await test.step("Given the device is connected", async () => {
-          await page.getByTestId("CTA_select-device-MOCKSERVER").click();
-
-          await expect(
-            page.getByTestId("text_device-connection-status").first(),
-          ).toContainText("CONNECTED");
+          await device.addAndConnect(scenario.device);
         });
 
         await test.step("When the Get app and version command is executed", async () => {
-          await whenNavigateTo(page, "/commands");
-
-          await whenExecuteDeviceCommand(page, "Get app and version");
+          await commands.goto();
+          await commands.execute("Get app and version");
         });
 
         await test.step("Then the dashboard app and version are returned", async () => {
-          const response = (await getLastDeviceResponseContent(
-            page,
-            "span",
-          )) as GetAppAndVersionResponse;
+          const response =
+            await commands.lastResponse<GetAppAndVersionResponse>();
 
           expect(response.status).toBe("SUCCESS");
           expect(response?.data?.name).toBe(scenario.expectedName);

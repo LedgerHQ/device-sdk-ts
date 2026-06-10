@@ -1,18 +1,7 @@
 /* eslint-disable no-restricted-imports */
-import {
-  type DeviceConfig,
-  type MockClient,
-} from "@ledgerhq/device-mockserver-client";
-import { expect, test } from "@playwright/test";
+import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
-import { setupMockServerSession } from "../../../utils/setup";
-import { getLastDeviceResponseContent } from "../../../utils/utils";
-import {
-  whenExecuteDeviceCommand,
-  whenNavigateTo,
-} from "../../../utils/whenHandlers";
-
-const RESPONSE_ITEMS = '[data-testid="box_device-commands-responses"] > *';
+import { expect, test } from "../../../fixtures";
 
 interface OpenAppScenario {
   title: string;
@@ -98,54 +87,27 @@ interface OpenAppResponse {
 test.describe("device command: open app", () => {
   for (const scenario of SCENARIOS) {
     test.describe(scenario.device.device_type!, () => {
-      let client: MockClient;
-
-      test.beforeEach(async ({ page }) => {
-        client = await setupMockServerSession(page);
-
-        await client.addDevice(scenario.device);
-
-        await page.goto("http://localhost:3000/");
-      });
-
-      test.afterEach(async () => {
-        await client.disposeSession();
-      });
-
-      test(scenario.title, async ({ page }) => {
+      test(scenario.title, async ({ device, commands }) => {
         // Opening an installed app provisions a real Speculos instance, which can
         // take a while to become ready.
         test.setTimeout(120_000);
 
         await test.step("Given the device is connected", async () => {
-          await page.getByTestId("CTA_select-device-MOCKSERVER").click();
-
-          await expect(
-            page.getByTestId("text_device-connection-status").first(),
-          ).toContainText("CONNECTED");
+          await device.addAndConnect(scenario.device);
         });
 
         await test.step(`When the Open app command is executed for "${scenario.appName}"`, async () => {
-          await whenNavigateTo(page, "/commands");
-
-          await whenExecuteDeviceCommand(page, "Open app", {
+          await commands.goto();
+          await commands.execute("Open app", {
             inputField: "input-text_appName",
             inputValue: scenario.appName,
           });
         });
 
         await test.step("Then the expected result is returned", async () => {
-          // Wait for the command to resolve: the rendered JSON contains "status"
-          // only once the (possibly slow, Speculos-backed) response is settled.
-          await expect(page.locator(RESPONSE_ITEMS).last()).toContainText(
-            '"status"',
-            { timeout: 90_000 },
-          );
-
-          const response = (await getLastDeviceResponseContent(
-            page,
-            "span",
-          )) as OpenAppResponse;
+          const response = await commands.lastResponse<OpenAppResponse>({
+            timeout: 90_000,
+          });
 
           expect(response.status).toBe(
             scenario.expectError ? "ERROR" : "SUCCESS",

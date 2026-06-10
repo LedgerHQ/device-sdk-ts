@@ -1,16 +1,7 @@
 /* eslint-disable no-restricted-imports */
-import {
-  type DeviceConfig,
-  type MockClient,
-} from "@ledgerhq/device-mockserver-client";
-import { expect, test } from "@playwright/test";
+import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
-import { setupMockServerSession } from "../../../utils/setup";
-import { getLastDeviceResponseContent } from "../../../utils/utils";
-import {
-  whenExecuteDeviceCommand,
-  whenNavigateTo,
-} from "../../../utils/whenHandlers";
+import { expect, test } from "../../../fixtures";
 
 interface DeviceScenario {
   device: DeviceConfig;
@@ -59,43 +50,22 @@ interface GetOsVersionResponse {
 
 test.describe("device command: get OS version", () => {
   for (const scenario of SCENARIOS) {
-    test.describe(scenario.device.device_type, () => {
-      let client: MockClient;
-
-      test.beforeEach(async ({ page }) => {
-        client = await setupMockServerSession(page);
-
-        await client.addDevice(scenario.device);
-
-        await page.goto("http://localhost:3000/");
-      });
-
-      test.afterEach(async () => {
-        await client.disposeSession();
-      });
-
+    test.describe(scenario.device.device_type!, () => {
       test(`device should get OS version on ${scenario.device.device_type}`, async ({
-        page,
+        device,
+        commands,
       }) => {
         await test.step("Given the device is connected", async () => {
-          await page.getByTestId("CTA_select-device-MOCKSERVER").click();
-
-          await expect(
-            page.getByTestId("text_device-connection-status").first(),
-          ).toContainText("CONNECTED");
+          await device.addAndConnect(scenario.device);
         });
 
         await test.step("When the Get OS version command is executed", async () => {
-          await whenNavigateTo(page, "/commands");
-
-          await whenExecuteDeviceCommand(page, "Get OS version");
+          await commands.goto();
+          await commands.execute("Get OS version");
         });
 
         await test.step("Then the mocked firmware version is returned", async () => {
-          const response = (await getLastDeviceResponseContent(
-            page,
-            "span",
-          )) as GetOsVersionResponse;
+          const response = await commands.lastResponse<GetOsVersionResponse>();
 
           expect(response.status).toBe("SUCCESS");
           expect(response?.data?.seVersion).toBe(scenario.expectedSeVersion);

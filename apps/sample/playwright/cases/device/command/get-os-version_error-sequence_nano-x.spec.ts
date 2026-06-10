@@ -1,17 +1,11 @@
 /* eslint-disable no-restricted-imports */
-import {
-  type DeviceConfig,
-  type MockClient,
-} from "@ledgerhq/device-mockserver-client";
-import { expect, type Page, test } from "@playwright/test";
+import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
-import { setupMockServerSession } from "../../../utils/setup";
-import { getLastDeviceResponseContent } from "../../../utils/utils";
+import { type CommandsDriver } from "../../../utils/drivers/CommandsDriver";
+import { expect, test } from "../../../fixtures";
 
 // GetOsVersion (e0 01 00 00).
 const GET_OS_VERSION_PREFIX = "e0010000";
-
-const RESPONSE_ITEMS = '[data-testid="box_device-commands-responses"] > *';
 
 const NANO_X: DeviceConfig = {
   name: "Ledger Nano X",
@@ -40,77 +34,56 @@ interface GetOsVersionResponse {
 
 /** Click Send once and read the freshly appended (resolved) response. */
 async function executeGetOsVersion(
-  page: Page,
+  commands: CommandsDriver,
   expectedCount: number,
 ): Promise<GetOsVersionResponse> {
-  await page.getByTestId("CTA_send-device-command").click();
-  await expect
-    .poll(() => page.locator(RESPONSE_ITEMS).count())
-    .toBe(expectedCount);
-  return (await getLastDeviceResponseContent(
-    page,
-    "span",
-  )) as GetOsVersionResponse;
+  await commands.send();
+  await commands.waitForResponseCount(expectedCount);
+  return commands.lastResponse<GetOsVersionResponse>();
 }
 
 test.describe("device command: get OS version error sequence", () => {
-  let client: MockClient;
-
-  test.beforeEach(async ({ page }) => {
-    client = await setupMockServerSession(page);
-
-    const device = await client.addDevice(NANO_X);
-    // The connection handshake only issues GetAppAndVersion, so each Send of
-    // the GetOsVersion command consumes one entry of this sequence in order,
-    // looping back to the start once exhausted.
-    await client.addMock(device.id, {
-      prefix: GET_OS_VERSION_PREFIX,
-      responses: [OK_RESPONSE, OK_RESPONSE, ERROR_RESPONSE],
-    });
-
-    await page.goto("http://localhost:3000/");
-  });
-
-  test.afterEach(async () => {
-    await client.disposeSession();
-  });
-
   test("device should fail to get OS version only on the third execution", async ({
-    page,
+    mockClient,
+    device,
+    commands,
   }) => {
-    await test.step("Given the device is connected", async () => {
-      await page.getByTestId("CTA_select-device-MOCKSERVER").click();
-
-      await expect(
-        page.getByTestId("text_device-connection-status").first(),
-      ).toContainText("CONNECTED");
+    await test.step("Given the device is connected with a sequenced OS version mock", async () => {
+      const added = await device.add(NANO_X);
+      // The connection handshake only issues GetAppAndVersion, so each Send of
+      // the GetOsVersion command consumes one entry of this sequence in order,
+      // looping back to the start once exhausted.
+      await mockClient.addMock(added.id, {
+        prefix: GET_OS_VERSION_PREFIX,
+        responses: [OK_RESPONSE, OK_RESPONSE, ERROR_RESPONSE],
+      });
+      await device.connect();
     });
 
     await test.step("When the Get OS version command is executed four times", async () => {
-      await page.getByTestId("CTA_route-to-/commands").click();
-      await page.waitForURL("http://localhost:3000/commands");
+      await commands.goto();
       // Open the command drawer; subsequent executions just click Send again.
-      await page.getByTestId("CTA_command-Get OS version").click();
+      await commands.open("Get OS version");
     });
 
     await test.step("Then the first two executions succeed", async () => {
-      const first = await executeGetOsVersion(page, 1);
+      const first = await executeGetOsVersion(commands, 1);
       expect(first.status).toBe("SUCCESS");
       expect(first.data?.seVersion).toBe(EXPECTED_SE_VERSION);
 
-      const second = await executeGetOsVersion(page, 2);
+      const second = await executeGetOsVersion(commands, 2);
       expect(second.status).toBe("SUCCESS");
       expect(second.data?.seVersion).toBe(EXPECTED_SE_VERSION);
     });
 
     await test.step("And the third execution fails", async () => {
-      const third = await executeGetOsVersion(page, 3);
+      const third = await executeGetOsVersion(commands, 3);
       expect(third.status).toBe("ERROR");
       expect(third.data).toBeUndefined();
     });
 
     await test.step("And the sequence loops back to success on the fourth", async () => {
-      const fourth = await executeGetOsVersion(page, 4);
+      const fourth = await executeGetOsVersion(commands, 4);
       expect(fourth.status).toBe("SUCCESS");
       expect(fourth.data?.seVersion).toBe(EXPECTED_SE_VERSION);
     });
