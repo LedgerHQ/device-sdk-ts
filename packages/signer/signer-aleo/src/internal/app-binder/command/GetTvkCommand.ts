@@ -54,7 +54,7 @@ export class GetTvkCommand
 
   private assertValidTransitionIndex(index: number): void {
     if (!Number.isInteger(index) || index < 1 || index > 31) {
-      throw new Error(
+      throw new InvalidResponseFormatError(
         `transitionIndex must be an integer in [1, 31], got ${index}`,
       );
     }

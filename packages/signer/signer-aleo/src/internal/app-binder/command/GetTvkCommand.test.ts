@@ -67,9 +67,16 @@ describe("GetTvkCommand", () => {
           derivationPath,
           transitionIndex: index,
         });
-        expect(() => command.getApdu()).toThrow(
-          /transitionIndex must be an integer in \[1, 31\]/,
-        );
+        let error: unknown;
+        try {
+          command.getApdu();
+        } catch (e) {
+          error = e;
+        }
+        expect(error).toBeInstanceOf(InvalidResponseFormatError);
+        expect(
+          (error as InvalidResponseFormatError).originalError.message,
+        ).toMatch(/transitionIndex must be an integer in \[1, 31\]/);
       });
     });
   });
