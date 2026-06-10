@@ -9,6 +9,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { Flex, Icons, Tag, Text, Tooltip } from "@ledgerhq/react-ui";
 import styled from "styled-components";
+// eslint-disable-next-line no-restricted-imports -- Next.js polyfills util.inspect in client bundles.
 import { inspect } from "util";
 
 import { type FieldType } from "@/hooks/useForm";

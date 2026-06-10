@@ -4,6 +4,7 @@ import { useForm } from "_hooks/useForm";
 import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
 import { Icons, InfiniteLoader, Popin, Text } from "@ledgerhq/native-ui";
 import styled from "styled-components/native";
+// eslint-disable-next-line no-restricted-imports -- React Native provides a util.inspect polyfill.
 import { inspect } from "util";
 
 type SendDeviceActionModalProps = {
