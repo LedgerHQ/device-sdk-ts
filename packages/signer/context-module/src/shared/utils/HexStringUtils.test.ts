@@ -33,6 +33,36 @@ describe("HexStringUtils", () => {
     });
   });
 
+  describe("hexToBytes", () => {
+    it("decodes a plain hex string into Uint8Array", () => {
+      expect(HexStringUtils.hexToBytes("deadbeef")).toEqual(
+        new Uint8Array([0xde, 0xad, 0xbe, 0xef]),
+      );
+    });
+
+    it("strips a 0x prefix", () => {
+      expect(HexStringUtils.hexToBytes("0xCAFEBABE")).toEqual(
+        new Uint8Array([0xca, 0xfe, 0xba, 0xbe]),
+      );
+    });
+
+    it("throws on the empty string", () => {
+      expect(() => HexStringUtils.hexToBytes("")).toThrow(/empty hex string/);
+    });
+
+    it("throws on a bare `0x` prefix with no payload", () => {
+      expect(() => HexStringUtils.hexToBytes("0x")).toThrow(/empty hex string/);
+    });
+
+    it("throws on odd-length input", () => {
+      expect(() => HexStringUtils.hexToBytes("abc")).toThrow(/odd-length/);
+    });
+
+    it("throws on non-hex characters", () => {
+      expect(() => HexStringUtils.hexToBytes("zzzz")).toThrow(/non-hex/);
+    });
+  });
+
   describe("stringToHex", () => {
     it("should convert string to hex", () => {
       // GIVEN
