@@ -83,7 +83,7 @@ export class GetTvkCommand
       builder.add32BitUIntToData(element);
     });
 
-    if (isIndexed) {
+    if (transitionIndex !== undefined) {
       builder.add8BitUIntToData(transitionIndex);
     }
 
