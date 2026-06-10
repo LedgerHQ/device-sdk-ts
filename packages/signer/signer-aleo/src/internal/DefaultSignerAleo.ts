@@ -6,16 +6,19 @@ import { type Container } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type GetTvkDAReturnType } from "@api/app-binder/GetTvkDeviceActionTypes";
 import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
 import { type SignNestedCallDAReturnType } from "@api/app-binder/SignNestedCallDeviceActionTypes";
 import { type SignRootIntentDAReturnType } from "@api/app-binder/SignRootIntentDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
+import { type GetTvkOptions } from "@api/model/GetTvkOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerAleo } from "@api/SignerAleo";
 import { makeContainer } from "@internal/di";
 import { addressTypes } from "@internal/use-cases/address/di/addressTypes";
 import { type GetAddressUseCase } from "@internal/use-cases/address/GetAddressUseCase";
+import { type GetTvkUseCase } from "@internal/use-cases/address/GetTvkUseCase";
 import { type GetViewKeyUseCase } from "@internal/use-cases/address/GetViewKeyUseCase";
 import { configTypes } from "@internal/use-cases/config/di/configTypes";
 import { type GetAppConfigUseCase } from "@internal/use-cases/config/GetAppConfigUseCase";
@@ -57,6 +60,12 @@ export class DefaultSignerAleo implements SignerAleo {
   ): GetViewKeyDAReturnType {
     return this._container
       .get<GetViewKeyUseCase>(addressTypes.GetViewKeyUseCase)
+      .execute(derivationPath, options);
+  }
+
+  getTvk(derivationPath: string, options?: GetTvkOptions): GetTvkDAReturnType {
+    return this._container
+      .get<GetTvkUseCase>(addressTypes.GetTvkUseCase)
       .execute(derivationPath, options);
   }
 

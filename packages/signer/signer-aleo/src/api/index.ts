@@ -9,6 +9,12 @@ export type {
   GetAppConfigDAOutput,
 } from "@api/app-binder/GetAppConfigDeviceActionTypes";
 export type {
+  GetTvkDAError,
+  GetTvkDAIntermediateValue,
+  GetTvkDAOutput,
+  GetTvkDAReturnType,
+} from "@api/app-binder/GetTvkDeviceActionTypes";
+export type {
   GetViewKeyDAError,
   GetViewKeyDAIntermediateValue,
   GetViewKeyDAOutput,
@@ -28,6 +34,7 @@ export type {
   SignRootIntentDAIntermediateValue,
   SignRootIntentDAOutput,
 } from "@api/app-binder/SignRootIntentDeviceActionTypes";
+export type { GetTvkOptions } from "@api/model/GetTvkOptions";
 export * from "@api/SignerAleo";
 export * from "@api/SignerAleoBuilder";
 // Export other types as needed
