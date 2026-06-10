@@ -52,8 +52,21 @@ export class GetTvkCommand
     this.args = args;
   }
 
+  private assertValidTransitionIndex(index: number): void {
+    if (!Number.isInteger(index) || index < 1 || index > 31) {
+      throw new Error(
+        `transitionIndex must be an integer in [1, 31], got ${index}`,
+      );
+    }
+  }
+
   getApdu(): Apdu {
-    const isIndexed = this.args.transitionIndex !== undefined;
+    const { transitionIndex } = this.args;
+    const isIndexed = transitionIndex !== undefined;
+
+    if (transitionIndex !== undefined) {
+      this.assertValidTransitionIndex(transitionIndex);
+    }
 
     const getTvkArgs: ApduBuilderArgs = {
       cla: ALEO_CLA,
@@ -71,7 +84,7 @@ export class GetTvkCommand
     });
 
     if (isIndexed) {
-      builder.add8BitUIntToData(this.args.transitionIndex!);
+      builder.add8BitUIntToData(transitionIndex);
     }
 
     return builder.build();

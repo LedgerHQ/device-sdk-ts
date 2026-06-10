@@ -53,6 +53,25 @@ describe("GetTvkCommand", () => {
         GET_TVK_INDEXED_APDU,
       );
     });
+
+    describe("should throw when transitionIndex is invalid", () => {
+      it.each([
+        ["zero", 0],
+        ["negative", -1],
+        ["above max (32)", 32],
+        ["above max (255)", 255],
+        ["float", 1.5],
+        ["NaN", NaN],
+      ])("%s", (_label, index) => {
+        const command = new GetTvkCommand({
+          derivationPath,
+          transitionIndex: index,
+        });
+        expect(() => command.getApdu()).toThrow(
+          /transitionIndex must be an integer in \[1, 31\]/,
+        );
+      });
+    });
   });
 
   describe("parseResponse", () => {

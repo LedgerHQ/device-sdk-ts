@@ -36,7 +36,7 @@ export class DefaultSignerAleo implements SignerAleo {
   private readonly _container: Container;
 
   constructor({ dmk, sessionId }: DefaultSignerAleoConstructorArgs) {
-    this._container = makeContainer({ dmk, sessionId })
+    this._container = makeContainer({ dmk, sessionId });
   }
 
   getAppConfig(): GetAppConfigDAReturnType {
