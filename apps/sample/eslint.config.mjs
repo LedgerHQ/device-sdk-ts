@@ -1,8 +1,9 @@
-import baseConfig from "@ledgerhq/eslint-config-dsdk";
+import baseConfig, { webRuntimeOverrides } from "@ledgerhq/eslint-config-dsdk";
 import globals from "globals";
 
 export default [
   ...baseConfig,
+  ...webRuntimeOverrides,
   {
     ignores: [".next"],
   },
@@ -19,6 +20,13 @@ export default [
       parserOptions: {
         project: null,
       },
+    },
+  },
+  {
+    files: ["playwright.config.ts"],
+    rules: {
+      "no-restricted-globals": "off",
+      "no-restricted-imports": "off",
     },
   },
   {
