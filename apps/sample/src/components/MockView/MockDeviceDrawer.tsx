@@ -7,6 +7,7 @@ import { Button, Divider, Flex, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import {
+  cleanApps,
   DeviceForm,
   type DeviceFormValues,
 } from "@/components/MockView/DeviceForm";
@@ -27,10 +28,10 @@ const MockButton = styled(Button).attrs({
 })``;
 
 const toFormValues = (device: Device): DeviceFormValues => ({
-  name: device.name,
   deviceType: device.device_type,
   connectivityType: device.connectivity_type,
   firmwareVersion: device.firmware_version ?? "",
+  apps: device.apps ?? [],
 });
 
 export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
@@ -41,10 +42,10 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
   onDeviceChanged,
 }) => {
   const [values, setValues] = useState<DeviceFormValues>({
-    name: "",
     deviceType: "nanoX",
     connectivityType: "USB",
     firmwareVersion: "",
+    apps: [],
   });
 
   useEffect(() => {
@@ -57,10 +58,10 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
     if (!currentDevice) return;
     try {
       await client.editDevice(currentDevice.id, {
-        name: values.name,
         device_type: values.deviceType,
         connectivity_type: values.connectivityType,
         firmware_version: values.firmwareVersion || undefined,
+        apps: cleanApps(values.apps),
       });
       onDeviceChanged();
     } catch (error) {
@@ -91,7 +92,7 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
           <DeviceForm values={values} onChange={setValues} />
           <Divider my={2} />
           <Flex flexDirection="row">
-            <MockButton onClick={handleSave} disabled={!values.name}>
+            <MockButton onClick={handleSave} disabled={!values.deviceType}>
               <Text color="neutral.c00">Save changes</Text>
             </MockButton>
           </Flex>

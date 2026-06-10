@@ -17,29 +17,92 @@ import {
   selectMockServerUrl,
 } from "@/state/settings/selectors";
 
-const MockButton = styled(Button).attrs({
-  variant: "main",
-  color: "neutral.c00",
-  mx: 5,
-})``;
-
-const DeviceRow = styled(Flex)`
+const Toolbar = styled(Flex)`
+  flex-direction: row;
+  flex-wrap: wrap;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 10px;
+  row-gap: 10px;
 `;
 
-const DeviceItem = styled(Flex)`
-  flex: 1;
+const SectionTitle = styled(Text).attrs({ variant: "small" })`
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${({ theme }) => theme.colors.neutral.c70};
+`;
+
+const DeviceList = styled(Flex)`
   flex-direction: column;
+  row-gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+`;
+
+const DeviceCard = styled(Flex)<{ selected?: boolean }>`
+  flex-direction: row;
+  align-items: center;
+  column-gap: 14px;
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: 12px;
   background-color: ${({ theme }) => theme.colors.background.card};
+  border: 1px solid
+    ${({ theme, selected }) =>
+      selected ? theme.colors.primary.c70 : theme.colors.neutral.c30};
+  box-shadow: ${({ selected, theme }) =>
+    selected ? `0 0 0 1px ${theme.colors.primary.c70}` : "none"};
   cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 
   &:hover {
-    background-color: ${({ theme }) => theme.colors.neutral.c30};
+    border-color: ${({ theme }) => theme.colors.neutral.c50};
   }
 `;
+
+const IconBadge = styled(Flex)`
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  background-color: ${({ theme }) => theme.colors.neutral.c30};
+  flex-shrink: 0;
+`;
+
+const Tag = styled(Text).attrs({ variant: "tiny" })`
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: ${({ theme }) => theme.colors.neutral.c30};
+  color: ${({ theme }) => theme.colors.neutral.c80};
+  letter-spacing: 0.04em;
+`;
+
+const StatusDot = styled.span<{ $connected?: boolean }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: ${({ theme, $connected }) =>
+    $connected ? theme.colors.success.c50 : theme.colors.neutral.c50};
+`;
+
+/** Icon component for a device type (Nano variants share the Nano icon). */
+const deviceTypeIcon = (deviceType: string): typeof Icons.Nano => {
+  switch (deviceType.toLowerCase()) {
+    case "stax":
+      return Icons.Stax;
+    case "flex":
+      return Icons.Flex;
+    case "apex":
+      return Icons.Apex;
+    case "nanos":
+    case "nanosp":
+    case "nanox":
+      return Icons.Nano;
+    default:
+      return Icons.Devices;
+  }
+};
 
 export const MockView: React.FC = () => {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -70,7 +133,13 @@ export const MockView: React.FC = () => {
     }
   }, [client]);
 
-  const handleDeviceClick = useCallback((device: Device) => {
+  // Selecting a device binds the inline Mocks panel to it.
+  const handleSelectDevice = useCallback((device: Device) => {
+    setCurrentDevice(device);
+  }, []);
+
+  // The edit button opens the device drawer.
+  const handleEditDevice = useCallback((device: Device) => {
     setCurrentDevice(device);
     setDrawerVisibility(true);
   }, []);
@@ -90,10 +159,11 @@ export const MockView: React.FC = () => {
   const handleResetSession = useCallback(async () => {
     try {
       const currentDevices = await client.listDevices();
+      // Deleting devices removes their (device-scoped) mocks too.
       await Promise.all(
         currentDevices.map((device) => client.deleteDevice(device.id)),
       );
-      await client.clearMocks();
+      setCurrentDevice(null);
       await fetchDevices();
       setMocksReloadToken((token) => token + 1);
     } catch (error) {
@@ -141,20 +211,39 @@ export const MockView: React.FC = () => {
 
   return (
     <PageWithHeader title="Mock server">
-      <Flex flexDirection="column" flex={2} rowGap={5}>
-        <Flex flexDirection="row" flexWrap="wrap" rowGap={3}>
-          <MockButton onClick={() => setAddDeviceVisibility(true)}>
-            <Text color="neutral.c00">Add device</Text>
-          </MockButton>
-          <MockButton onClick={handleResetSession}>
-            <Text color="neutral.c00">Reset session</Text>
-          </MockButton>
-          <MockButton onClick={handleExport}>
-            <Text color="neutral.c00">Export</Text>
-          </MockButton>
-          <MockButton onClick={() => importInputRef.current?.click()}>
-            <Text color="neutral.c00">Import</Text>
-          </MockButton>
+      <Flex flexDirection="column" flex={2} rowGap={6}>
+        <Toolbar>
+          <Button
+            variant="main"
+            Icon={() => <Icons.Plus size="S" />}
+            onClick={() => setAddDeviceVisibility(true)}
+          >
+            Add device
+          </Button>
+          <Button
+            variant="shade"
+            outline
+            Icon={() => <Icons.Refresh size="S" />}
+            onClick={handleResetSession}
+          >
+            Reset session
+          </Button>
+          <Button
+            variant="shade"
+            outline
+            Icon={() => <Icons.FileDownload size="S" />}
+            onClick={handleExport}
+          >
+            Export
+          </Button>
+          <Button
+            variant="shade"
+            outline
+            Icon={() => <Icons.CloudUpload size="S" />}
+            onClick={() => importInputRef.current?.click()}
+          >
+            Import
+          </Button>
           <input
             ref={importInputRef}
             type="file"
@@ -162,41 +251,84 @@ export const MockView: React.FC = () => {
             style={{ display: "none" }}
             onChange={handleImportFile}
           />
-        </Flex>
+        </Toolbar>
 
-        <Text variant="h5">Devices</Text>
-        <div style={{ maxHeight: 360, overflow: "scroll" }}>
+        <Flex flexDirection="column" rowGap={3}>
+          <SectionTitle>{`Devices (${devices.length})`}</SectionTitle>
           {devices.length === 0 ? (
             <Text variant="body" color="neutral.c70">
-              No device. Use &quot;Add device&quot; or &quot;Import&quot; to
+              No device yet. Use &quot;Add device&quot; or &quot;Import&quot; to
               create one.
             </Text>
           ) : (
-            devices.map((device) => (
-              <DeviceRow key={device.id} my={2}>
-                <DeviceItem onClick={() => handleDeviceClick(device)}>
-                  <Text variant="large" fontWeight="semiBold">
-                    {device.name}
-                  </Text>
-                  <Text variant="body" color="neutral.c70">
-                    {`${device.connectivity_type} · ${
-                      device.connected ? "connected" : "disconnected"
-                    }`}
-                  </Text>
-                </DeviceItem>
-                <Button
-                  variant="shade"
-                  outline
-                  iconButton
-                  Icon={() => <Icons.Trash />}
-                  onClick={() => handleDeleteDevice(device.id)}
-                />
-              </DeviceRow>
-            ))
+            <DeviceList>
+              {devices.map((device) => {
+                const DeviceTypeIcon = deviceTypeIcon(device.device_type);
+                const selected = currentDevice?.id === device.id;
+                return (
+                  <DeviceCard
+                    key={device.id}
+                    selected={selected}
+                    onClick={() => handleSelectDevice(device)}
+                  >
+                    <IconBadge>
+                      <DeviceTypeIcon size="S" />
+                    </IconBadge>
+                    <Flex flexDirection="column" rowGap={1} flex={1}>
+                      <Text variant="large" fontWeight="semiBold">
+                        {device.name}
+                      </Text>
+                      <Flex
+                        flexDirection="row"
+                        alignItems="center"
+                        columnGap={3}
+                      >
+                        <Tag>{device.connectivity_type}</Tag>
+                        <Flex
+                          flexDirection="row"
+                          alignItems="center"
+                          columnGap={2}
+                        >
+                          <StatusDot $connected={device.connected} />
+                          <Text variant="small" color="neutral.c70">
+                            {device.connected ? "Connected" : "Disconnected"}
+                          </Text>
+                        </Flex>
+                      </Flex>
+                    </Flex>
+                    <Flex
+                      flexDirection="row"
+                      columnGap={2}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Button
+                        variant="shade"
+                        outline
+                        iconButton
+                        Icon={() => <Icons.PenEdit />}
+                        onClick={() => handleEditDevice(device)}
+                      />
+                      <Button
+                        variant="shade"
+                        outline
+                        iconButton
+                        Icon={() => <Icons.Trash />}
+                        onClick={() => handleDeleteDevice(device.id)}
+                      />
+                    </Flex>
+                  </DeviceCard>
+                );
+              })}
+            </DeviceList>
           )}
-        </div>
+        </Flex>
 
-        <MocksSection client={client} reloadToken={mocksReloadToken} />
+        <MocksSection
+          client={client}
+          deviceId={currentDevice?.id ?? null}
+          deviceName={currentDevice?.name}
+          reloadToken={mocksReloadToken}
+        />
       </Flex>
 
       <AddDeviceDrawer
@@ -204,6 +336,7 @@ export const MockView: React.FC = () => {
         onClose={() => setAddDeviceVisibility(false)}
         onDeviceAdded={fetchDevices}
         client={client}
+        devices={devices}
       />
 
       <MockDeviceDrawer

@@ -1,9 +1,9 @@
 export { matchApdu } from "./apdu/matcher";
+export { DEFAULT_DEVICE, UNKNOWN_APDU_RESPONSE } from "./defaults";
 export {
-  DEFAULT_DEVICE,
-  DEFAULT_MOCKS,
-  UNKNOWN_APDU_RESPONSE,
-} from "./defaults";
+  deriveGetAppAndVersion,
+  deriveGetOsVersion,
+} from "./derived/osCommands";
 export type { MockServerApp, MockServerOptions } from "./MockServer";
 export { createMockServer } from "./MockServer";
 export {

@@ -24,9 +24,15 @@ function isValidMock(entry: MockEntry): boolean {
   return hasResponse || hasResponses;
 }
 
+/** A device entry is valid when its (optional) nested mocks are all valid. */
+function hasValidMocks(device: { mocks?: unknown }): boolean {
+  if (device.mocks === undefined) return true;
+  return Array.isArray(device.mocks) && device.mocks.every(isValidMock);
+}
+
 /**
- * Session-scoped import/export of the devices and mocks snapshot, so complex
- * scenarios can be saved and restored.
+ * Session-scoped import/export of the devices snapshot (each device carrying
+ * its own mocks), so complex scenarios can be saved and restored.
  */
 export function transferRouter(store: SessionStore): Router {
   const router = Router();
@@ -81,20 +87,24 @@ export function transferRouter(store: SessionStore): Router {
    *         $ref: '#/components/responses/Unauthorized'
    */
   router.post("/import", (req: AuthedRequest, res: Response) => {
-    const { devices, mocks } = req.body ?? {};
-    if (!Array.isArray(devices) || !Array.isArray(mocks)) {
-      res.status(400).json({ error: "devices and mocks arrays are required" });
+    const { devices } = req.body ?? {};
+    if (!Array.isArray(devices)) {
+      res.status(400).json({ error: "a devices array is required" });
       return;
     }
-    if (!mocks.every(isValidMock)) {
+    if (!devices.every(hasValidMocks)) {
       res.status(400).json({
-        error: "each mock requires a prefix and a response or responses",
+        error: "each device mock requires a prefix and a response or responses",
       });
       return;
     }
-    const result = store.importSession(getSession(req), { devices, mocks });
+    const result = store.importSession(getSession(req), { devices });
+    const mockCount = result.devices.reduce(
+      (total, device) => total + (device.mocks?.length ?? 0),
+      0,
+    );
     logger.info(
-      `Session imported: ${result.devices.length} device(s), ${result.mocks.length} mock(s)`,
+      `Session imported: ${result.devices.length} device(s), ${mockCount} mock(s)`,
     );
     res.json(result);
   });

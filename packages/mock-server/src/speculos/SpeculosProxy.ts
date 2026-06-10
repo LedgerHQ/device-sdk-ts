@@ -2,6 +2,12 @@ import { type Device } from "@ledgerhq/device-mockserver-client";
 
 import { matchApdu } from "../apdu/matcher";
 import { UNKNOWN_APDU_RESPONSE } from "../defaults";
+import {
+  deriveGetAppAndVersion,
+  deriveGetOsVersion,
+  GET_APP_AND_VERSION_PREFIX,
+  GET_OS_VERSION_PREFIX,
+} from "../derived/osCommands";
 import { logger } from "../logger";
 import { type SessionRecord, type SessionStore } from "../store/SessionStore";
 import {
@@ -63,21 +69,35 @@ export async function resolveApdu(params: ResolveApduParams): Promise<string> {
     }
   }
 
-  // 2. Mock match (existing behavior; an explicit mock always wins).
-  const mock = matchApdu(apdu, store.listMocks(record));
+  // 2. Explicit per-device mock (always wins, so handshakes can be overridden).
+  const mock = matchApdu(apdu, store.listMocks(record, device.id) ?? []);
   if (mock) {
-    const response = store.consumeResponse(record, mock);
+    const response = store.consumeResponse(record, device.id, mock);
     logger.info(`APDU [${device.id}] ${apdu} -> ${response}`);
     return response;
   }
 
-  // 3. Unmatched Open App: spin up a real Speculos instance.
+  // 3. Derived handshake responses, synthesized from the device metadata.
+  if (apdu.startsWith(GET_OS_VERSION_PREFIX)) {
+    const response = deriveGetOsVersion(device);
+    if (response) {
+      logger.info(`APDU [${device.id}] ${apdu} -> ${response} (derived)`);
+      return response;
+    }
+  }
+  if (apdu.startsWith(GET_APP_AND_VERSION_PREFIX)) {
+    const response = deriveGetAppAndVersion(device);
+    logger.info(`APDU [${device.id}] ${apdu} -> ${response} (derived)`);
+    return response;
+  }
+
+  // 4. Unmatched Open App: spin up a real Speculos instance.
   const appName = parseOpenApp(apdu);
   if (appName !== null && client) {
     return openAppViaSpeculos(params, appName);
   }
 
-  // 4. Fallback.
+  // 5. Fallback.
   logger.warn(
     `APDU [${device.id}] ${apdu} -> ${UNKNOWN_APDU_RESPONSE} (no matching mock)`,
   );

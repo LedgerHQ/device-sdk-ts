@@ -20,7 +20,6 @@ const setup = () => {
   const store = new SessionStore();
   const { token } = store.createSession();
   const record = store.touch(token) as SessionRecord;
-  store.clearMocks(record); // drop the handshake mocks for focused assertions
   const device = store.addDevice(record, {
     device_type: "nanoX",
     firmware_version: "1.3.0",
@@ -65,7 +64,7 @@ describe("resolveApdu", () => {
     expect(open).toBe("9000");
     expect(client.acquire).toHaveBeenCalledWith(
       {
-        coin_app: "btc",
+        coin_app: "Bitcoin",
         coin_app_version: "2.1.0",
         device: "nanox",
         device_os_version: "1.3.0",
@@ -115,7 +114,10 @@ describe("resolveApdu", () => {
 
   it("lets an explicit mock win over open-app interception", async () => {
     const { store, record, device } = setup();
-    store.addMock(record, { prefix: OPEN_BITCOIN, response: "abcd9000" });
+    store.addMock(record, device.id, {
+      prefix: OPEN_BITCOIN,
+      response: "abcd9000",
+    });
     const client = makeClient();
 
     const response = await resolveApdu({
@@ -130,7 +132,48 @@ describe("resolveApdu", () => {
     expect(client.acquire).not.toHaveBeenCalled();
   });
 
-  it("falls back to 6d00 for an unmatched non-open-app APDU", async () => {
+  it("derives the handshake responses from the device when unmocked", async () => {
+    const { store, record, device } = setup(); // nanoX, fw 1.3.0
+    const client = makeClient();
+
+    const osVersion = await resolveApdu({
+      store,
+      record,
+      device,
+      apduHex: "e0010000",
+      client,
+    });
+    const appAndVersion = await resolveApdu({
+      store,
+      record,
+      device,
+      apduHex: "b0010000",
+      client,
+    });
+
+    expect(osVersion.startsWith("33000004")).toBe(true); // Nano X target id
+    expect(osVersion.endsWith("9000")).toBe(true);
+    // 01 | 05 "BOLOS" | 05 "1.3.0" | 9000
+    expect(appAndVersion).toBe("0105424f4c4f5305312e332e309000");
+  });
+
+  it("lets an explicit mock override a derived handshake response", async () => {
+    const { store, record, device } = setup();
+    store.addMock(record, device.id, {
+      prefix: "e0010000",
+      response: "deadbeef9000",
+    });
+    const response = await resolveApdu({
+      store,
+      record,
+      device,
+      apduHex: "e0010000",
+      client: makeClient(),
+    });
+    expect(response).toBe("deadbeef9000");
+  });
+
+  it("falls back to 6d00 for an unmatched non-derivable APDU", async () => {
     const { store, record, device } = setup();
     const response = await resolveApdu({
       store,

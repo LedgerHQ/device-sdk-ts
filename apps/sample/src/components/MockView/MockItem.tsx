@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { type Mock } from "@ledgerhq/device-mockserver-client";
 import { Button, Flex, Icons, Input, Text } from "@ledgerhq/react-ui";
+import styled from "styled-components";
 
 type MockItemProps = {
   mock: Mock;
@@ -9,6 +10,23 @@ type MockItemProps = {
   onSubmit: (prefix: string, response: string) => void;
   onDelete: () => void;
 };
+
+const inputContainerProps = { style: { borderRadius: 8 } };
+
+const MockCard = styled(Flex)`
+  flex-direction: row;
+  align-items: center;
+  column-gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid ${({ theme }) => theme.colors.neutral.c30};
+  background-color: ${({ theme }) => theme.colors.neutral.c20};
+`;
+
+const Mono = styled(Text).attrs({ variant: "body" })`
+  font-family: "PassGeist Mono", monospace;
+  word-break: break-all;
+`;
 
 export const MockItem: React.FC<MockItemProps> = ({
   mock,
@@ -23,39 +41,21 @@ export const MockItem: React.FC<MockItemProps> = ({
   const [currentPrefix, setCurrentPrefix] = useState(mock.prefix);
 
   return (
-    <Flex
-      flexDirection="row"
-      flex={5}
-      alignItems="center"
-      justifyContent="space-between"
-      my={7}
-    >
+    <MockCard>
       {editable ? (
         <>
-          <Flex
-            flex={2}
-            flexDirection="column"
-            justifyContent="center"
-            alignItems="center"
-          >
+          <Flex flex={2}>
             <Input
-              style={{ width: "32px" }}
-              name="Mock response"
-              containerProps={{ style: { borderRadius: 4 } }}
+              name="Mock prefix"
+              containerProps={inputContainerProps}
               value={currentPrefix}
               onChange={setCurrentPrefix}
             />
           </Flex>
-          <Flex
-            flex={2}
-            flexDirection="column"
-            justifyContent="center"
-            alignItems="center"
-          >
+          <Flex flex={4}>
             <Input
-              style={{ width: "32px" }}
               name="Mock response"
-              containerProps={{ style: { borderRadius: 4 } }}
+              containerProps={inputContainerProps}
               value={currentResponse}
               onChange={setCurrentResponse}
             />
@@ -63,15 +63,13 @@ export const MockItem: React.FC<MockItemProps> = ({
         </>
       ) : (
         <>
-          <Text variant="body" style={{ flex: 2 }} textAlign="center">
-            {mock.prefix}
-          </Text>
-          <Text variant="body" style={{ flex: 2 }} textAlign="center">
+          <Mono style={{ flex: 2 }}>{mock.prefix}</Mono>
+          <Mono style={{ flex: 4 }} color="neutral.c80">
             {mock.responses.join(", ")}
-          </Text>
+          </Mono>
         </>
       )}
-      <Flex flex={1} justifyContent="center" columnGap={2}>
+      <Flex flexDirection="row" columnGap={2} style={{ width: 96 }}>
         <Button
           variant="shade"
           outline
@@ -89,6 +87,6 @@ export const MockItem: React.FC<MockItemProps> = ({
           onClick={onDelete}
         />
       </Flex>
-    </Flex>
+    </MockCard>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { type Mock, type MockClient } from "@ledgerhq/device-mockserver-client";
-import { Button, Divider, Flex, Input, Text } from "@ledgerhq/react-ui";
+import { Button, Flex, Icons, Input, Text } from "@ledgerhq/react-ui";
 import styled from "styled-components";
 
 import { MockItem } from "@/components/MockView/MockItem";
@@ -8,20 +8,55 @@ import { parseResponses } from "@/components/MockView/utils";
 
 type MocksSectionProps = {
   client: MockClient;
+  /** Device whose mocks are shown/edited; null when none is selected. */
+  deviceId: string | null;
+  /** Name of the selected device, for the section header. */
+  deviceName?: string;
   /** Bumped by the parent (after reset/import) to force a refetch. */
   reloadToken: number;
 };
 
-const MockButton = styled(Button).attrs({
-  variant: "main",
-  color: "neutral.c00",
-  mx: 5,
-})``;
+const inputContainerProps = { style: { borderRadius: 8 } };
 
-const inputContainerProps = { style: { borderRadius: 4 } };
+const Panel = styled(Flex)`
+  flex-direction: column;
+  row-gap: 16px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.colors.neutral.c30};
+  background-color: ${({ theme }) => theme.colors.background.card};
+`;
+
+const SectionTitle = styled(Text).attrs({ variant: "small" })`
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: ${({ theme }) => theme.colors.neutral.c70};
+`;
+
+const ColumnHeader = styled(Text).attrs({ variant: "tiny" })`
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: ${({ theme }) => theme.colors.neutral.c60};
+`;
+
+const Divider = styled.div`
+  height: 1px;
+  background-color: ${({ theme }) => theme.colors.neutral.c30};
+`;
+
+const AddRow = styled(Flex)`
+  flex-direction: row;
+  align-items: flex-end;
+  column-gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: ${({ theme }) => theme.colors.neutral.c20};
+`;
 
 export const MocksSection: React.FC<MocksSectionProps> = ({
   client,
+  deviceId,
+  deviceName,
   reloadToken,
 }) => {
   const [mocks, setMocks] = useState<Mock[]>([]);
@@ -30,18 +65,23 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
   const [editMockIndex, setEditMockIndex] = useState<number>(-1);
 
   const fetchMocks = useCallback(async () => {
+    if (!deviceId) {
+      setMocks([]);
+      return;
+    }
     try {
-      const response = await client.listMocks();
+      const response = await client.listMocks(deviceId);
       setMocks(response);
     } catch (error) {
       console.error(error);
     }
-  }, [client]);
+  }, [client, deviceId]);
 
   const sendMock = useCallback(
     async (prefix: string, response: string) => {
+      if (!deviceId) return;
       try {
-        const resp = await client.addMock({
+        const resp = await client.addMock(deviceId, {
           prefix,
           responses: parseResponses(response),
         });
@@ -55,7 +95,7 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
         console.error(error);
       }
     },
-    [client, fetchMocks],
+    [client, deviceId, fetchMocks],
   );
 
   const handleAddMockClick = useCallback(async () => {
@@ -64,19 +104,21 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
 
   const handleDeleteMock = useCallback(
     async (mockId: string) => {
+      if (!deviceId) return;
       try {
-        await client.deleteMock(mockId);
+        await client.deleteMock(deviceId, mockId);
         await fetchMocks();
       } catch (error) {
         console.error(error);
       }
     },
-    [client, fetchMocks],
+    [client, deviceId, fetchMocks],
   );
 
   const handleRemoveMocksClick = useCallback(async () => {
+    if (!deviceId) return;
     try {
-      const response = await client.clearMocks();
+      const response = await client.clearMocks(deviceId);
       if (!response) {
         console.log("Failed to delete the mocks");
       } else {
@@ -85,65 +127,83 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
     } catch (error) {
       console.error(error);
     }
-  }, [client, fetchMocks]);
+  }, [client, deviceId, fetchMocks]);
 
   useEffect(() => {
     fetchMocks().catch(console.error);
   }, [fetchMocks, reloadToken]);
 
+  if (!deviceId) {
+    return (
+      <Panel>
+        <SectionTitle>Mocks</SectionTitle>
+        <Text variant="body" color="neutral.c70">
+          Select a device above to view and edit its mocks.
+        </Text>
+      </Panel>
+    );
+  }
+
   return (
-    <Flex flexDirection="column" rowGap={4}>
+    <Panel>
       <Flex
         flexDirection="row"
         justifyContent="space-between"
         alignItems="center"
       >
-        <Text variant="h5">Mocks (session-scoped)</Text>
-        <MockButton onClick={handleRemoveMocksClick}>
-          <Text color="neutral.c00">Remove all mocks</Text>
-        </MockButton>
-      </Flex>
-
-      <Flex flexDirection="row" flex={5} alignItems="center">
-        <Text style={{ flex: 2 }} textAlign="center" variant="h5">
-          Prefix
-        </Text>
-        <Text style={{ flex: 2 }} textAlign="center" variant="h5">
-          Responses
-        </Text>
-        <Flex style={{ flex: 1 }} />
-      </Flex>
-      <Divider my={2} />
-
-      <div
-        className="no-scrollbar"
-        style={{ overflowY: "scroll", maxHeight: "320px" }}
-      >
-        {mocks.length === 0 ? (
-          <Text variant="body" color="neutral.c70">
-            No mock yet. Add one below or import a session.
+        <Flex flexDirection="row" alignItems="center" columnGap={3}>
+          <SectionTitle>{`Mocks for ${deviceName ?? "device"}`}</SectionTitle>
+          <Text variant="tiny" color="neutral.c60">
+            {`${mocks.length} mock${mocks.length === 1 ? "" : "s"}`}
           </Text>
-        ) : (
-          mocks.map((mock, index) => (
-            <MockItem
-              mock={mock}
-              key={`${index}-${mock.prefix}-${mock.responses.join("-")}`}
-              editable={editMockIndex === index}
-              onEdit={() => setEditMockIndex(index)}
-              onSubmit={sendMock}
-              onDelete={() => handleDeleteMock(mock.id)}
-            />
-          ))
-        )}
-      </div>
-
-      <Flex flexDirection="row" justifyContent="space-between" flex={5}>
-        <Flex
-          flexDirection="column"
-          flex={2}
-          justifyContent="center"
-          alignItems="center"
+        </Flex>
+        <Button
+          variant="shade"
+          outline
+          disabled={mocks.length === 0}
+          Icon={() => <Icons.Trash size="S" />}
+          onClick={handleRemoveMocksClick}
         >
+          Remove all
+        </Button>
+      </Flex>
+
+      {mocks.length > 0 && (
+        <Flex flexDirection="column" rowGap={2}>
+          <Flex flexDirection="row" alignItems="center" px={3}>
+            <ColumnHeader style={{ flex: 2 }}>Prefix</ColumnHeader>
+            <ColumnHeader style={{ flex: 4 }}>Responses</ColumnHeader>
+            <span style={{ width: 96 }} />
+          </Flex>
+          <Divider />
+          <Flex
+            flexDirection="column"
+            rowGap={2}
+            style={{ maxHeight: 320, overflowY: "auto" }}
+          >
+            {mocks.map((mock, index) => (
+              <MockItem
+                mock={mock}
+                key={mock.id}
+                editable={editMockIndex === index}
+                onEdit={() => setEditMockIndex(index)}
+                onSubmit={sendMock}
+                onDelete={() => handleDeleteMock(mock.id)}
+              />
+            ))}
+          </Flex>
+        </Flex>
+      )}
+
+      {mocks.length === 0 && (
+        <Text variant="body" color="neutral.c70">
+          No mock yet. Add one below, or import a session.
+        </Text>
+      )}
+
+      <AddRow>
+        <Flex flexDirection="column" rowGap={2} flex={2}>
+          <ColumnHeader>APDU prefix</ColumnHeader>
           <Input
             name="APDU Prefix"
             placeholder="b001"
@@ -152,12 +212,8 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
             onChange={setCurrentPrefix}
           />
         </Flex>
-        <Flex
-          flexDirection="column"
-          flex={2}
-          justifyContent="center"
-          alignItems="center"
-        >
+        <Flex flexDirection="column" rowGap={2} flex={4}>
+          <ColumnHeader>Responses (comma-separated)</ColumnHeader>
           <Input
             name="Mock responses"
             placeholder="aa9000, aa9000, 5515"
@@ -166,12 +222,15 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
             onChange={setCurrentResponse}
           />
         </Flex>
-        <Flex flex={1} alignItems="center">
-          <MockButton onClick={handleAddMockClick}>
-            <Text color="neutral.c00">Add</Text>
-          </MockButton>
-        </Flex>
-      </Flex>
-    </Flex>
+        <Button
+          variant="main"
+          Icon={() => <Icons.Plus size="S" />}
+          disabled={!currentPrefix || !currentResponse}
+          onClick={handleAddMockClick}
+        >
+          Add
+        </Button>
+      </AddRow>
+    </Panel>
   );
 };

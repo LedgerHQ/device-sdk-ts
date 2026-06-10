@@ -27,3 +27,23 @@ export const connectivityTypeOptions: Option[] = [
   { label: "USB", value: "USB" },
   { label: "BLE", value: "BLE" },
 ];
+
+/** Human label for a device type value (e.g. "nanoX" -> "Nano X"). */
+export const deviceTypeLabel = (deviceType: string): string =>
+  deviceTypeOptions.find((option) => option.value === deviceType)?.label ??
+  deviceType;
+
+/**
+ * Auto-generate a device name from its type and the existing devices, e.g.
+ * "Mock Nano X 1", "Mock Nano X 2". The index is the next available slot for
+ * that device type.
+ */
+export const nextDeviceName = (
+  deviceType: string,
+  existingNames: string[],
+): string => {
+  const base = `Mock ${deviceTypeLabel(deviceType)}`;
+  let index = 1;
+  while (existingNames.includes(`${base} ${index}`)) index += 1;
+  return `${base} ${index}`;
+};

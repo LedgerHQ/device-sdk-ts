@@ -1,12 +1,12 @@
-import { array, Codec, string } from "purify-ts";
+import { array, Codec, optional, string } from "purify-ts";
 
 /**
- * A canned APDU response registered against a session.
+ * A canned APDU response registered against a device.
  *
  * Whenever an incoming APDU starts with {@link Mock.prefix} (hex), the mock
  * server returns the next entry of {@link Mock.responses}, advancing one entry
  * per matching APDU and looping back to the start once the list is exhausted.
- * Mocks are session-scoped.
+ * Mocks are device-scoped: each device owns its own independent mock table.
  */
 export interface Mock {
   readonly id: string;
@@ -31,3 +31,9 @@ export interface MockConfig {
   readonly response?: string;
   readonly responses?: string[];
 }
+
+export const mockConfigCodec = Codec.interface({
+  prefix: string,
+  response: optional(string),
+  responses: optional(array(string)),
+});

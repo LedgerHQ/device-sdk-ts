@@ -148,38 +148,46 @@ export class MockClient {
     return this.decode(commandResponseCodec, data);
   }
 
-  // --- Mocks ----------------------------------------------------------------
+  // --- Mocks (device-scoped) ------------------------------------------------
 
-  async listMocks(): Promise<Mock[]> {
-    const data = await this.client.get("mocks", {
+  async listMocks(deviceId: string): Promise<Mock[]> {
+    const data = await this.client.get(`devices/${deviceId}/mocks`, {
       headers: await this.authHeaders(),
     });
     return this.decode(array(mockCodec), data);
   }
 
-  async addMock(config: MockConfig): Promise<Mock> {
-    const data = await this.client.post("mocks", config, {
+  async addMock(deviceId: string, config: MockConfig): Promise<Mock> {
+    const data = await this.client.post(`devices/${deviceId}/mocks`, config, {
       headers: await this.authHeaders(),
     });
     return this.decode(mockCodec, data);
   }
 
-  async editMock(mockId: string, config: MockConfig): Promise<Mock> {
-    const data = await this.client.patch(`mocks/${mockId}`, config, {
-      headers: await this.authHeaders(),
-    });
+  async editMock(
+    deviceId: string,
+    mockId: string,
+    config: MockConfig,
+  ): Promise<Mock> {
+    const data = await this.client.patch(
+      `devices/${deviceId}/mocks/${mockId}`,
+      config,
+      { headers: await this.authHeaders() },
+    );
     return this.decode(mockCodec, data);
   }
 
-  async deleteMock(mockId: string): Promise<boolean> {
-    await this.client.delete(`mocks/${mockId}`, {
+  async deleteMock(deviceId: string, mockId: string): Promise<boolean> {
+    await this.client.delete(`devices/${deviceId}/mocks/${mockId}`, {
       headers: await this.authHeaders(),
     });
     return true;
   }
 
-  async clearMocks(): Promise<boolean> {
-    await this.client.delete("mocks", { headers: await this.authHeaders() });
+  async clearMocks(deviceId: string): Promise<boolean> {
+    await this.client.delete(`devices/${deviceId}/mocks`, {
+      headers: await this.authHeaders(),
+    });
     return true;
   }
 

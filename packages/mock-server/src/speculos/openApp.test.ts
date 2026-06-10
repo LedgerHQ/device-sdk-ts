@@ -27,13 +27,13 @@ describe("parseOpenApp", () => {
 });
 
 describe("mapCoinApp", () => {
-  it("maps known BOLOS names to their Speculos coin id", () => {
-    expect(mapCoinApp("Bitcoin")).toBe("btc");
-    expect(mapCoinApp("ethereum")).toBe("eth");
+  it("passes the BOLOS app name through verbatim (coin-apps dir name)", () => {
+    expect(mapCoinApp("Ethereum")).toBe("Ethereum");
+    expect(mapCoinApp("Bitcoin")).toBe("Bitcoin");
   });
 
-  it("falls back to a lower-cased, space-stripped name", () => {
-    expect(mapCoinApp("My App")).toBe("myapp");
+  it("trims surrounding whitespace", () => {
+    expect(mapCoinApp("  Ethereum  ")).toBe("Ethereum");
   });
 });
 

@@ -3,7 +3,6 @@ import express, { type Express, type Request, type Response } from "express";
 import { requestLogger } from "./middleware/requestLogger";
 import { authRouter } from "./routes/auth";
 import { devicesRouter } from "./routes/devices";
-import { mocksRouter } from "./routes/mocks";
 import { sessionsRouter } from "./routes/sessions";
 import { transferRouter } from "./routes/transfer";
 import {
@@ -93,7 +92,6 @@ export function createMockServer(
   app.use(authRouter(store));
   app.use(sessionsRouter(store));
   app.use(devicesRouter(store, client));
-  app.use(mocksRouter(store));
   app.use(transferRouter(store));
 
   const sweepInterval = options.sweepIntervalMs ?? DEFAULT_SWEEP_INTERVAL_MS;

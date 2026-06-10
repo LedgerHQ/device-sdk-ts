@@ -1,5 +1,7 @@
 import { array, boolean, Codec, number, optional, string } from "purify-ts";
 
+import { type MockConfig, mockConfigCodec } from "./Mock";
+
 export type DeviceConnectivityType = "USB" | "BLE";
 
 export interface DeviceApp {
@@ -52,4 +54,16 @@ export interface DeviceConfig {
   readonly firmware_version?: string;
   readonly apps?: DeviceApp[];
   readonly masks?: number[];
+  /** Device-scoped APDU mocks, used when attaching (POST) or importing a device. */
+  readonly mocks?: MockConfig[];
 }
+
+export const deviceConfigCodec = Codec.interface({
+  name: optional(string),
+  device_type: optional(string),
+  connectivity_type: optional(string),
+  firmware_version: optional(string),
+  apps: optional(array(deviceAppCodec)),
+  masks: optional(array(number)),
+  mocks: optional(array(mockConfigCodec)),
+});

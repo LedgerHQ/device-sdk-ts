@@ -51,10 +51,10 @@ describe("MockClient", () => {
   });
 
   describe("mocks", () => {
-    it("creates a session-scoped mock", async () => {
+    it("creates a device-scoped mock", async () => {
       const http = httpClientStubBuilder().mockResponse({
         method: "post",
-        endpoint: "mocks",
+        endpoint: "devices/dev-1/mocks",
         response: { id: "m1", prefix: "e0010000", responses: ["9000"] },
       });
       const client = new MockClient("http://localhost:8080", {
@@ -62,7 +62,7 @@ describe("MockClient", () => {
         httpClient: http,
       });
 
-      const mock = await client.addMock({
+      const mock = await client.addMock("dev-1", {
         prefix: "e0010000",
         response: "9000",
       });
@@ -70,7 +70,7 @@ describe("MockClient", () => {
       expect(mock.id).toBe("m1");
       expect(http.calls).toContainEqual({
         method: "post",
-        endpoint: "mocks",
+        endpoint: "devices/dev-1/mocks",
         body: { prefix: "e0010000", response: "9000" },
       });
     });
@@ -79,8 +79,13 @@ describe("MockClient", () => {
   describe("import/export", () => {
     it("exports the session snapshot", async () => {
       const snapshot = {
-        devices: [{ name: "Ledger Stax", device_type: "stax" }],
-        mocks: [{ prefix: "ff", responses: ["9000"] }],
+        devices: [
+          {
+            name: "Ledger Stax",
+            device_type: "stax",
+            mocks: [{ prefix: "ff", responses: ["9000"] }],
+          },
+        ],
       };
       const http = httpClientStubBuilder().mockResponse({
         method: "get",
@@ -99,8 +104,13 @@ describe("MockClient", () => {
 
     it("posts a snapshot to the import endpoint", async () => {
       const snapshot = {
-        devices: [{ name: "Ledger Flex", device_type: "flex" }],
-        mocks: [{ prefix: "e0010000", responses: ["aa9000", "5515"] }],
+        devices: [
+          {
+            name: "Ledger Flex",
+            device_type: "flex",
+            mocks: [{ prefix: "e0010000", responses: ["aa9000", "5515"] }],
+          },
+        ],
       };
       const http = httpClientStubBuilder().mockResponse({
         method: "post",

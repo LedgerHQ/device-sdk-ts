@@ -9,7 +9,7 @@ import {
   type SessionExport,
 } from "@ledgerhq/device-mockserver-client";
 
-import { DEFAULT_DEVICE, DEFAULT_MOCKS } from "../defaults";
+import { DEFAULT_DEVICE } from "../defaults";
 
 export interface SessionStoreOptions {
   /** Sliding inactivity timeout in ms (refreshed on every authed request). */
@@ -40,9 +40,10 @@ interface SessionRecord {
   createdAt: number;
   lastSeenAt: number;
   devices: Map<string, Device>;
-  mocks: Map<string, Mock>;
-  /** Next response index to serve per mock id (advanced by consumeResponse). */
-  mockCursors: Map<string, number>;
+  /** Per-device mock table: deviceId -> (mockId -> Mock). */
+  deviceMocks: Map<string, Map<string, Mock>>;
+  /** Per-device response cursors: deviceId -> (mockId -> next index). */
+  deviceMockCursors: Map<string, Map<string, number>>;
   /** Active Speculos proxy per device id. */
   speculos: Map<string, SpeculosProxySession>;
 }
@@ -50,8 +51,9 @@ interface SessionRecord {
 /**
  * In-memory store of bearer-token sessions.
  *
- * Each session owns its devices and mocks. Sessions expire on a sliding TTL or
- * a hard lifetime cap; {@link sweep} removes expired ones.
+ * Each session owns its devices, and each device owns its own mock table.
+ * Sessions expire on a sliding TTL or a hard lifetime cap; {@link sweep} removes
+ * expired ones.
  */
 export class SessionStore {
   private readonly sessions = new Map<string, SessionRecord>();
@@ -78,11 +80,10 @@ export class SessionStore {
       createdAt: now,
       lastSeenAt: now,
       devices: new Map(),
-      mocks: new Map(),
-      mockCursors: new Map(),
+      deviceMocks: new Map(),
+      deviceMockCursors: new Map(),
       speculos: new Map(),
     };
-    this.seedDefaults(record);
     this.sessions.set(record.token, record);
     return { token: record.token, expiresAt: this.expiresAt(record) };
   }
@@ -125,6 +126,14 @@ export class SessionStore {
     const id = randomUUID();
     const device = this.buildDevice(id, config);
     record.devices.set(id, device);
+    record.deviceMocks.set(id, new Map());
+    record.deviceMockCursors.set(id, new Map());
+    // No default mocks: the handshake (GetOsVersion / GetAppAndVersion) is
+    // derived from the device metadata at APDU-resolution time. Callers may
+    // still seed explicit mocks via config (used by import).
+    for (const mock of config.mocks ?? []) {
+      this.addMock(record, id, mock);
+    }
     return device;
   }
 
@@ -150,6 +159,8 @@ export class SessionStore {
       this.onEvict?.([proxy]);
       record.speculos.delete(deviceId);
     }
+    record.deviceMocks.delete(deviceId);
+    record.deviceMockCursors.delete(deviceId);
     return record.devices.delete(deviceId);
   }
 
@@ -196,87 +207,99 @@ export class SessionStore {
     return session;
   }
 
-  // --- Mocks ----------------------------------------------------------------
+  // --- Mocks (device-scoped) ------------------------------------------------
 
-  listMocks(record: SessionRecord): Mock[] {
-    return [...record.mocks.values()];
+  /** List a device's mocks, or `undefined` when the device does not exist. */
+  listMocks(record: SessionRecord, deviceId: string): Mock[] | undefined {
+    return record.deviceMocks.has(deviceId)
+      ? [...record.deviceMocks.get(deviceId)!.values()]
+      : undefined;
   }
 
-  addMock(record: SessionRecord, config: MockConfig): Mock {
+  addMock(
+    record: SessionRecord,
+    deviceId: string,
+    config: MockConfig,
+  ): Mock | undefined {
+    const mocks = record.deviceMocks.get(deviceId);
+    if (!mocks) return undefined;
     const mock: Mock = {
       id: randomUUID(),
       prefix: config.prefix,
       responses: normalizeResponses(config),
     };
-    record.mocks.set(mock.id, mock);
+    mocks.set(mock.id, mock);
     return mock;
   }
 
   editMock(
     record: SessionRecord,
+    deviceId: string,
     mockId: string,
     config: MockConfig,
   ): Mock | undefined {
-    const current = record.mocks.get(mockId);
-    if (!current) return undefined;
+    const mocks = record.deviceMocks.get(deviceId);
+    const current = mocks?.get(mockId);
+    if (!mocks || !current) return undefined;
     const updated: Mock = {
       ...current,
       ...config,
       id: current.id,
       responses: normalizeResponses(config),
     };
-    record.mocks.set(mockId, updated);
+    mocks.set(mockId, updated);
     // Editing a mock restarts its response sequence.
-    record.mockCursors.delete(mockId);
+    record.deviceMockCursors.get(deviceId)?.delete(mockId);
     return updated;
   }
 
-  deleteMock(record: SessionRecord, mockId: string): boolean {
-    record.mockCursors.delete(mockId);
-    return record.mocks.delete(mockId);
+  deleteMock(record: SessionRecord, deviceId: string, mockId: string): boolean {
+    record.deviceMockCursors.get(deviceId)?.delete(mockId);
+    return record.deviceMocks.get(deviceId)?.delete(mockId) ?? false;
   }
 
-  clearMocks(record: SessionRecord): void {
-    record.mocks.clear();
-    record.mockCursors.clear();
+  clearMocks(record: SessionRecord, deviceId: string): void {
+    record.deviceMocks.get(deviceId)?.clear();
+    record.deviceMockCursors.get(deviceId)?.clear();
   }
 
   /**
    * Return the response a mock should serve for the current matching APDU,
    * advancing its cursor and looping back to the start once exhausted.
    */
-  consumeResponse(record: SessionRecord, mock: Mock): string {
-    const index = record.mockCursors.get(mock.id) ?? 0;
-    record.mockCursors.set(mock.id, index + 1);
+  consumeResponse(record: SessionRecord, deviceId: string, mock: Mock): string {
+    const cursors = record.deviceMockCursors.get(deviceId);
+    const index = cursors?.get(mock.id) ?? 0;
+    cursors?.set(mock.id, index + 1);
     return mock.responses[index % mock.responses.length] ?? "";
   }
 
   // --- Import / Export ------------------------------------------------------
 
-  /** Serialize the session's devices and mocks as a portable snapshot. */
+  /** Serialize the session's devices and their mocks as a portable snapshot. */
   exportSession(record: SessionRecord): SessionExport {
     return {
-      devices: [...record.devices.values()].map(toDeviceConfig),
-      mocks: [...record.mocks.values()].map((mock) => ({
-        prefix: mock.prefix,
-        responses: [...mock.responses],
+      devices: [...record.devices.entries()].map(([id, device]) => ({
+        ...toDeviceConfig(device),
+        mocks: [...(record.deviceMocks.get(id)?.values() ?? [])].map(
+          (mock) => ({ prefix: mock.prefix, responses: [...mock.responses] }),
+        ),
       })),
     };
   }
 
   /**
-   * Replace the session's devices and mocks with the given snapshot, resetting
-   * connection state and response cursors. Returns the re-exported state.
+   * Replace the session's devices (and their mocks) with the given snapshot,
+   * resetting connection state and response cursors. Returns the re-exported
+   * state.
    */
   importSession(record: SessionRecord, snapshot: SessionExport): SessionExport {
     record.devices.clear();
-    record.mocks.clear();
-    record.mockCursors.clear();
+    record.deviceMocks.clear();
+    record.deviceMockCursors.clear();
+    record.speculos.clear();
     for (const device of snapshot.devices) {
       this.addDevice(record, device);
-    }
-    for (const mock of snapshot.mocks) {
-      this.addMock(record, mock);
     }
     return this.exportSession(record);
   }
@@ -300,12 +323,6 @@ export class SessionStore {
 
   size(): number {
     return this.sessions.size;
-  }
-
-  private seedDefaults(record: SessionRecord): void {
-    for (const mock of DEFAULT_MOCKS) {
-      this.addMock(record, mock);
-    }
   }
 
   private buildDevice(id: string, config: DeviceConfig): Device {

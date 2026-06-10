@@ -20,29 +20,6 @@ export const SW_UNKNOWN_APP = "6807";
 export const SW_PROXY_ERROR = "6d00";
 
 /**
- * Built-in BOLOS app name -> Speculos `coin_app` identifier map. The Open App
- * APDU carries the human BOLOS name (e.g. "Bitcoin") while Speculinho expects
- * the short ELF id (e.g. "btc"). Extend as needed; unmapped names fall back to
- * the lower-cased, space-stripped name.
- */
-const COIN_APP_BY_NAME: Record<string, string> = {
-  bitcoin: "btc",
-  "bitcoin legacy": "btc-legacy",
-  ethereum: "eth",
-  "ethereum classic": "etc",
-  litecoin: "ltc",
-  dogecoin: "doge",
-  ripple: "xrp",
-  solana: "sol",
-  cardano: "ada",
-  polkadot: "dot",
-  tron: "trx",
-  stellar: "xlm",
-  tezos: "xtz",
-  cosmos: "atom",
-};
-
-/**
  * Map a DMK `device_type` (DeviceModelId enum value) to the Speculinho `device`
  * model identifier. Returns `null` for models Speculos does not support.
  */
@@ -75,10 +52,17 @@ export function parseOpenApp(apduHex: string): string | null {
   return name;
 }
 
-/** Resolve the Speculinho `coin_app` id for a BOLOS application name. */
+/**
+ * Resolve the Speculinho `coin_app` for a BOLOS application name.
+ *
+ * Speculinho builds the ELF path as
+ * `/apps/{device}/{os}/{coin_app}/app_{version}.elf`, where `{coin_app}` is the
+ * coin-apps directory name — which is the BOLOS app name itself (e.g.
+ * "Ethereum", not "eth"). The operator strips spaces for the ELF path, so the
+ * name is passed through verbatim (trimmed).
+ */
 export function mapCoinApp(appName: string): string {
-  const key = appName.trim().toLowerCase();
-  return COIN_APP_BY_NAME[key] ?? key.replace(/\s+/g, "");
+  return appName.trim();
 }
 
 /** Resolve the Speculinho `device` model id, or `null` if unsupported. */

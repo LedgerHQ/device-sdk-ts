@@ -86,6 +86,11 @@ export const openapiDefinition: OAS3Definition = {
             items: { $ref: "#/components/schemas/DeviceApp" },
           },
           masks: { type: "array", items: { type: "integer" } },
+          mocks: {
+            type: "array",
+            description: "Device-scoped APDU mocks (used on attach / import).",
+            items: { $ref: "#/components/schemas/MockConfig" },
+          },
         },
       },
       Mock: {
@@ -133,19 +138,15 @@ export const openapiDefinition: OAS3Definition = {
       SessionExport: {
         type: "object",
         description:
-          "Portable snapshot of a session's devices and mocks, produced by " +
-          "GET /export and consumed by POST /import.",
+          "Portable snapshot of a session's devices (each carrying its own " +
+          "mocks), produced by GET /export and consumed by POST /import.",
         properties: {
           devices: {
             type: "array",
             items: { $ref: "#/components/schemas/DeviceConfig" },
           },
-          mocks: {
-            type: "array",
-            items: { $ref: "#/components/schemas/MockConfig" },
-          },
         },
-        required: ["devices", "mocks"],
+        required: ["devices"],
       },
       Session: {
         type: "object",

@@ -20,25 +20,11 @@ export const DEFAULT_DEVICE: Required<
 };
 
 /**
- * Canned APDU responses seeded on session creation. They cover the connection
- * handshake DMK performs on connect (GetAppAndVersion, GetOsVersion) so a
- * device can reach the CONNECTED state out of the box.
+ * Status word returned when no mock matches an incoming APDU and it is not a
+ * derivable handshake command.
  *
- * Keyed by APDU prefix (hex). Responses end with the two-byte status word.
+ * Note: the connection handshake (GetAppAndVersion, GetOsVersion) is no longer
+ * seeded as mocks — it is derived per device from its metadata in
+ * {@link file://./../derived/osCommands.ts}.
  */
-export const DEFAULT_MOCKS: { prefix: string; response: string }[] = [
-  {
-    // GetAppAndVersion (b0 01 00 00) -> BOLOS 1.4.0-rc2
-    prefix: "b0010000",
-    response: "0105424f4c4f5309312e342e302d7263329000",
-  },
-  {
-    // GetOsVersion (e0 01 00 00) -> Nano X, seVersion 2.2.3
-    prefix: "e0010000",
-    response:
-      "3300000405322e322e3304e600000004322e333004312e31360100010001009000",
-  },
-];
-
-/** Status word returned when no mock matches an incoming APDU. */
 export const UNKNOWN_APDU_RESPONSE = "6d00";
