@@ -1,7 +1,7 @@
 import {
   ApduResponse,
   CommandResultFactory,
-  InvalidStatusWordError,
+  InvalidResponseFormatError,
   isSuccessCommandResult,
 } from "@ledgerhq/device-management-kit";
 
@@ -105,7 +105,7 @@ describe("GetTvkCommand", () => {
         if (isSuccessCommandResult(result)) {
           throw new Error("Expected an error");
         }
-        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+        expect(result.error).toBeInstanceOf(InvalidResponseFormatError);
         expect(result.error.originalError).toEqual(
           new Error("Aleo TVK length is missing"),
         );
@@ -121,7 +121,7 @@ describe("GetTvkCommand", () => {
         if (isSuccessCommandResult(result)) {
           throw new Error("Expected an error");
         }
-        expect(result.error).toBeInstanceOf(InvalidStatusWordError);
+        expect(result.error).toBeInstanceOf(InvalidResponseFormatError);
         expect(result.error.originalError).toEqual(new Error("TVK is missing"));
       });
     });

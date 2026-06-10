@@ -7,7 +7,7 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
-  InvalidStatusWordError,
+  InvalidResponseFormatError,
 } from "@ledgerhq/device-management-kit";
 import {
   CommandErrorHelper,
@@ -101,20 +101,20 @@ export class GetTvkCommand
       const tvkLength = parser.extract8BitUInt();
       if (tvkLength === undefined) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("Aleo TVK length is missing"),
+          error: new InvalidResponseFormatError("Aleo TVK length is missing"),
         });
       }
 
       if (parser.testMinimalLength(tvkLength) === false) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("TVK is missing"),
+          error: new InvalidResponseFormatError("TVK is missing"),
         });
       }
 
       const tvk = parser.extractFieldByLength(tvkLength);
       if (tvk === undefined) {
         return CommandResultFactory({
-          error: new InvalidStatusWordError("Unable to extract TVK"),
+          error: new InvalidResponseFormatError("Unable to extract TVK"),
         });
       }
 
