@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { DmkNetworkClientError } from "@ledgerhq/device-management-kit";
 import { type Session } from "@ledgerhq/device-mockserver-client";
 
 import { useMockClient } from "@/hooks/useMockClient";
@@ -55,17 +56,22 @@ export function useMockServerSession(): MockServerSessionState {
 
     let cancelled = false;
 
+    // Provision a fresh session and share its token through settings so the
+    // transport and the Mock view use the same session. The settings change
+    // recreates the client and re-runs this effect with the new token.
+    const provisionSession = async () => {
+      const provisioned = await client.authenticate();
+      if (cancelled) return;
+      dispatch(
+        setMockServerSessionToken({ mockServerSessionToken: provisioned }),
+      );
+    };
+
     const ensureAndFetch = async () => {
       try {
         if (!token) {
-          // Provision a session once and share it through settings so the
-          // transport and the Mock view use the same session.
-          const provisioned = await client.authenticate();
-          if (cancelled) return;
-          dispatch(
-            setMockServerSessionToken({ mockServerSessionToken: provisioned }),
-          );
-          return; // effect re-runs with the new token
+          await provisionSession();
+          return;
         }
         const current = await client.getSession();
         if (cancelled) return;
@@ -73,7 +79,23 @@ export function useMockServerSession(): MockServerSessionState {
         setStatus("active");
       } catch (error) {
         if (cancelled) return;
-        console.error(error);
+        // A stale or expired token (the in-memory mock server lost the session,
+        // e.g. after a restart) surfaces as 401/404. Re-provision a session
+        // instead of spamming failed /sessions/current polls.
+        const isStaleSession =
+          error instanceof DmkNetworkClientError &&
+          (error.status === 401 || error.status === 404);
+        if (isStaleSession) {
+          try {
+            await provisionSession();
+            return;
+          } catch (reauthError) {
+            if (cancelled) return;
+            console.error(reauthError);
+          }
+        } else {
+          console.error(error);
+        }
         setSession(null);
         setStatus("none");
       }
