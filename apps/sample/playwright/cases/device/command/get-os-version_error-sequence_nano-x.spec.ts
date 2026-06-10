@@ -8,20 +8,10 @@ import { expect, type Page, test } from "@playwright/test";
 import { setupMockServerSession } from "../../../utils/setup";
 import { getLastDeviceResponseContent } from "../../../utils/utils";
 
-// GetAppAndVersion (b0 01 00 00) -> BOLOS dashboard, used by the connection
-// handshake DMK runs when connecting the device.
-const GET_APP_AND_VERSION_PREFIX = "b0010000";
 // GetOsVersion (e0 01 00 00).
 const GET_OS_VERSION_PREFIX = "e0010000";
 
 const RESPONSE_ITEMS = '[data-testid="box_device-commands-responses"] > *';
-
-const bolosResponse = (version: string): string => {
-  const versionHex = Buffer.from(version, "ascii").toString("hex");
-  const versionLen = (version.length & 0xff).toString(16).padStart(2, "0");
-  // format(01) | len "BOLOS" "BOLOS" | len version version | 9000
-  return `0105424f4c4f53${versionLen}${versionHex}9000`;
-};
 
 const NANO_X: DeviceConfig = {
   name: "Ledger Nano X",
@@ -32,7 +22,6 @@ const NANO_X: DeviceConfig = {
   masks: [0x33000000],
 };
 
-const APP_VERSION = "1.5.0";
 const OK_RESPONSE =
   "3300000405322e322e3304e600000004322e333004312e31360100010001009000";
 // Locked device status word: any non-9000 status makes GetOsVersion fail.
@@ -70,15 +59,11 @@ test.describe("device command: get OS version error sequence", () => {
   test.beforeEach(async ({ page }) => {
     client = await setupMockServerSession(page);
 
-    await client.addDevice(NANO_X);
-    await client.addMock({
-      prefix: GET_APP_AND_VERSION_PREFIX,
-      response: bolosResponse(APP_VERSION),
-    });
+    const device = await client.addDevice(NANO_X);
     // The connection handshake only issues GetAppAndVersion, so each Send of
     // the GetOsVersion command consumes one entry of this sequence in order,
     // looping back to the start once exhausted.
-    await client.addMock({
+    await client.addMock(device.id, {
       prefix: GET_OS_VERSION_PREFIX,
       responses: [OK_RESPONSE, OK_RESPONSE, ERROR_RESPONSE],
     });
