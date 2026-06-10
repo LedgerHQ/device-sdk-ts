@@ -7,6 +7,7 @@ import {
 export type AleoErrorCodes =
   | "69f0"
   | "6985"
+  | "6a80"
   | "6a86"
   | "6a87"
   | "6d00"
@@ -25,6 +26,7 @@ export type AleoErrorCodes =
 export const ALEO_APP_ERRORS: CommandErrors<AleoErrorCodes> = {
   "69f0": { message: "Denied by user" },
   "6985": { message: "Condition not satisfied" },
+  "6a80": { message: "Incorrect data" },
   "6a86": { message: "Incorrect P1 or P2" },
   "6a87": { message: "Wrong LC or length of APDU command less than 5" },
   "6d00": { message: "Unknown command with this INS" },
