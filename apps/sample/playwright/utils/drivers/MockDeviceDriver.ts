@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-imports */
 import {
   type Device,
   type DeviceConfig,
@@ -9,10 +8,10 @@ import { expect, type Page } from "@playwright/test";
 const BASE_URL = "http://localhost:3000";
 
 /**
- * Drives device-level interactions: attaching a mocked device to the session and
+ * Drives the mocked device: attaching a mocked device to the session and
  * connecting to it from the sample app.
  */
-export class DeviceDriver {
+export class MockDeviceDriver {
   constructor(
     private readonly page: Page,
     private readonly client: MockClient,

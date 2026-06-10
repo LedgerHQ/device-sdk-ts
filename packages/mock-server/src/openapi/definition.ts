@@ -25,6 +25,10 @@ export const openapiDefinition: OAS3Definition = {
     { name: "Sessions", description: "Current session resource" },
     { name: "Devices", description: "Mocked devices and their lifecycle" },
     { name: "Mocks", description: "Canned APDU responses" },
+    {
+      name: "Speculos",
+      description: "Control of the device-linked Speculos emulator",
+    },
     { name: "Transfer", description: "Import/export of session state" },
     { name: "Health", description: "Liveness probe" },
   ],

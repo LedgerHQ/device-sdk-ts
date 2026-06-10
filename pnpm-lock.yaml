@@ -946,6 +946,9 @@ importers:
       '@ledgerhq/solana-tools':
         specifier: workspace:^
         version: link:../../packages/tools/solana-tools
+      '@ledgerhq/speculos-device-controller':
+        specifier: workspace:^
+        version: link:../../packages/speculos-device-controller
       '@noble/secp256k1':
         specifier: ^2.3.0
         version: 2.3.0

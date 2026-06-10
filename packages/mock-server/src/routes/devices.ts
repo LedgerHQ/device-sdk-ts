@@ -433,5 +433,106 @@ export function devicesRouter(
     res.status(204).end();
   });
 
+  // --- Speculos control (device-linked emulator) ----------------------------
+
+  /**
+   * Resolve the live Speculos instance backing a device, writing the
+   * appropriate error response when the device or its proxy is missing.
+   */
+  const resolveSpeculos = (req: AuthedRequest, res: Response) => {
+    const id = req.params["id"] ?? "";
+    const session = getSession(req);
+    const device = store.getDevice(session, id);
+    if (!device) {
+      res.status(404).json({ error: "Device not found" });
+      return undefined;
+    }
+    const proxy = store.getProxy(session, id);
+    if (!proxy) {
+      res
+        .status(409)
+        .json({ error: "No active Speculos instance for this device" });
+      return undefined;
+    }
+    return { device, proxy };
+  };
+
+  /**
+   * @openapi
+   * /devices/{id}/speculos:
+   *   get:
+   *     tags: [Speculos]
+   *     summary: Get the device's live Speculos instance
+   *     description: >-
+   *       Returns the Speculinho run id, the emulator URL and the device model
+   *       for the Speculos instance currently proxying the device's APDUs.
+   *     parameters:
+   *       - { name: id, in: path, required: true, schema: { type: string } }
+   *     responses:
+   *       200: { description: The active Speculos instance. }
+   *       401:
+   *         $ref: '#/components/responses/Unauthorized'
+   *       404:
+   *         $ref: '#/components/responses/NotFound'
+   *       409: { description: No active Speculos instance for the device. }
+   */
+  router.get("/devices/:id/speculos", (req: AuthedRequest, res: Response) => {
+    const resolved = resolveSpeculos(req, res);
+    if (!resolved) return;
+    res.json({
+      run_id: resolved.proxy.runId,
+      speculos_url: resolved.proxy.speculosUrl,
+      model: resolved.device.device_type,
+    });
+  });
+
+  /**
+   * @openapi
+   * /devices/{id}/speculos/{path}:
+   *   parameters:
+   *     - { name: id, in: path, required: true, schema: { type: string } }
+   *     - { name: path, in: path, required: true, schema: { type: string } }
+   *   get:
+   *     tags: [Speculos]
+   *     summary: Proxy a request to the device's Speculos instance
+   *     description: >-
+   *       Transparent passthrough to the live emulator (any method). Used to
+   *       drive the device — e.g. POST `/button/{key}` or `/finger` — without
+   *       exposing the emulator URL directly.
+   *     responses:
+   *       200: { description: The emulator response. }
+   *       409: { description: No active Speculos instance for the device. }
+   */
+  router.all(
+    "/devices/:id/speculos/*",
+    async (req: AuthedRequest, res: Response) => {
+      const resolved = resolveSpeculos(req, res);
+      if (!resolved) return;
+      const subPath = req.params[0] ?? "";
+      const base = resolved.proxy.speculosUrl.replace(/\/+$/, "");
+      const query = req.originalUrl.includes("?")
+        ? `?${req.originalUrl.split("?")[1]}`
+        : "";
+      const url = `${base}/${subPath}${query}`;
+      const hasBody = req.method !== "GET" && req.method !== "HEAD";
+      try {
+        const upstream = await fetch(url, {
+          method: req.method,
+          headers: hasBody ? { "Content-Type": "application/json" } : undefined,
+          body: hasBody ? JSON.stringify(req.body ?? {}) : undefined,
+        });
+        const body = await upstream.text();
+        const contentType = upstream.headers.get("content-type");
+        if (contentType) res.set("Content-Type", contentType);
+        res.status(upstream.status).send(body);
+      } catch (error) {
+        logger.error(
+          `Speculos proxy [${req.params["id"]}] ${req.method} ${subPath} failed: ${String(error)}`,
+        );
+        res.status(502).json({ error: "Speculos proxy failed" });
+      }
+    },
+  );
+
   return router;
 }

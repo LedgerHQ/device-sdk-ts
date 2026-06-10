@@ -1,8 +1,8 @@
 /* eslint-disable no-restricted-imports */
 import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
-import { type CommandsDriver } from "../../../utils/drivers/CommandsDriver";
 import { expect, test } from "../../../fixtures";
+import { type CommandsDriver } from "../../../utils/drivers/CommandsDriver";
 
 // GetOsVersion (e0 01 00 00).
 const GET_OS_VERSION_PREFIX = "e0010000";

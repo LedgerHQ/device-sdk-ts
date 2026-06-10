@@ -1,19 +1,24 @@
-/* eslint-disable no-restricted-imports */
-import { type MockClient } from "@ledgerhq/device-mockserver-client";
+import {
+  type Device,
+  type MockClient,
+} from "@ledgerhq/device-mockserver-client";
 import { test as base } from "@playwright/test";
 
 import { CommandsDriver } from "./utils/drivers/CommandsDriver";
-import { DeviceDriver } from "./utils/drivers/DeviceDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
+import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
+import { SpeculosDriver } from "./utils/drivers/SpeculosDriver";
 import { setupMockServerSession } from "./utils/setup";
 
 type Fixtures = {
   mockClient: MockClient;
-  device: DeviceDriver;
+  device: MockDeviceDriver;
   commands: CommandsDriver;
   settings: SettingsDriver;
   ethSigner: EthSignerDriver;
+  /** Build a Speculos driver for a connected device (its app must be opened). */
+  speculos: (device: Device) => SpeculosDriver;
 };
 
 /**
@@ -31,7 +36,7 @@ export const test = base.extend<Fixtures>({
     await client.disposeSession();
   },
   device: async ({ page, mockClient }, use) => {
-    await use(new DeviceDriver(page, mockClient));
+    await use(new MockDeviceDriver(page, mockClient));
   },
   commands: async ({ page }, use) => {
     await use(new CommandsDriver(page));
@@ -41,6 +46,9 @@ export const test = base.extend<Fixtures>({
   },
   ethSigner: async ({ page }, use) => {
     await use(new EthSignerDriver(page));
+  },
+  speculos: async ({ mockClient }, use) => {
+    await use((device: Device) => new SpeculosDriver(mockClient, device.id));
   },
 });
 

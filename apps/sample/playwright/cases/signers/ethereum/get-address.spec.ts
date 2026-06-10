@@ -47,4 +47,37 @@ test.describe("signer ethereum: get address", () => {
       expect(isValidEthereumAddress(result.output!.address)).toBe(true);
     });
   });
+
+  test("validates the address on the device screen", async ({
+    device,
+    ethSigner,
+    speculos,
+  }) => {
+    // Opening the Ethereum app provisions a real Speculos instance and the
+    // address must be approved on screen, so this flow is slow.
+    test.setTimeout(120_000);
+
+    let dev!: Awaited<ReturnType<typeof device.addAndConnect>>;
+    await test.step("Given the device with the Ethereum app is connected", async () => {
+      dev = await device.addAndConnect(STAX_WITH_ETH);
+    });
+
+    await test.step("When Get address is executed with on-device verification", async () => {
+      await ethSigner.open();
+      await ethSigner.getAddress({ checkOnDevice: true });
+    });
+
+    await test.step("And the address is approved on the Speculos screen", async () => {
+      const emulator = speculos(dev);
+      await emulator.waitReady();
+      await emulator.approve();
+    });
+
+    await test.step("Then a valid Ethereum address is returned", async () => {
+      const result = await ethSigner.lastResult<GetAddressOutput>();
+
+      expect(result.status).toBe("completed");
+      expect(isValidEthereumAddress(result.output!.address)).toBe(true);
+    });
+  });
 });

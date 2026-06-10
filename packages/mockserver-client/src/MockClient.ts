@@ -17,6 +17,10 @@ import { type Device, deviceCodec, type DeviceConfig } from "./model/Device";
 import { type Mock, mockCodec, type MockConfig } from "./model/Mock";
 import { type Session, sessionCodec } from "./model/Session";
 import { type SessionExport, sessionExportCodec } from "./model/SessionExport";
+import {
+  type SpeculosInstance,
+  speculosInstanceCodec,
+} from "./model/Speculos";
 
 export interface MockClientOptions {
   /**
@@ -189,6 +193,19 @@ export class MockClient {
       headers: await this.authHeaders(),
     });
     return true;
+  }
+
+  // --- Speculos -------------------------------------------------------------
+
+  /**
+   * Resolve the live Speculos instance backing a device (the one currently
+   * proxying its APDUs). Throws if the device has no active instance.
+   */
+  async getSpeculos(deviceId: string): Promise<SpeculosInstance> {
+    const data = await this.client.get(`devices/${deviceId}/speculos`, {
+      headers: await this.authHeaders(),
+    });
+    return this.decode(speculosInstanceCodec, data);
   }
 
   // --- Session --------------------------------------------------------------

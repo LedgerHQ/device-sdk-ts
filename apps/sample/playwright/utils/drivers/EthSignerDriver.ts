@@ -25,11 +25,17 @@ export class EthSignerDriver {
   }
 
   /**
-   * Open the Get address action and Execute it with the current (default)
-   * inputs.
+   * Open the Get address action and Execute it. When `checkOnDevice` is set, the
+   * address is verified on the device screen (the action stays pending until the
+   * user approves on Speculos).
    */
-  async getAddress(): Promise<void> {
+  async getAddress({
+    checkOnDevice = false,
+  }: { checkOnDevice?: boolean } = {}): Promise<void> {
     await this.page.getByTestId("CTA_command-Get address").click();
+    if (checkOnDevice) {
+      await this.page.getByTestId("input-switch_checkOnDevice").click();
+    }
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
