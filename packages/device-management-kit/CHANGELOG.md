@@ -1,5 +1,19 @@
 # @ledgerhq/device-management-kit
 
+## 1.6.0
+
+### Minor Changes
+
+- [#1532](https://github.com/LedgerHQ/device-sdk-ts/pull/1532) [`1f782a0`](https://github.com/LedgerHQ/device-sdk-ts/commit/1f782a095fb932cd4f0be912c547fbbb9ba91930) Thanks [@benruseau](https://github.com/benruseau)! - Add WaitForAppAndVersionDeviceAction
+
+- [#1521](https://github.com/LedgerHQ/device-sdk-ts/pull/1521) [`a8136e3`](https://github.com/LedgerHQ/device-sdk-ts/commit/a8136e3dbe312c5be4277ea19e0b72eba3b40543) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Detect onboarded device status from `GetOsVersionCommand` (`secureElementFlags.isOnboarded`) in `GetDeviceStatusDeviceAction`. The action now returns `Left(DeviceNotOnboardedError)` for unseeded devices instead of a stubbed `true`. `OpenAppDeviceAction` no longer runs a separate stubbed onboarding check and inherits the real one from its child machine. On success in a ready state, `firmwareVersion` (with `metadata`) and `isSecureConnectionAllowed` are persisted in the session state so consumers can read onboarding without an extra command.
+
+### Patch Changes
+
+- [#1525](https://github.com/LedgerHQ/device-sdk-ts/pull/1525) [`258f64b`](https://github.com/LedgerHQ/device-sdk-ts/commit/258f64b011768c33a04c640a1e29ec5736c4b950) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Fix `GetDeviceStatusDeviceAction` breaking when connecting while a non-BOLOS app is open. The OS version (used to read the onboarding flag) can only be fetched on the dashboard, so the current app is now determined first and `GetOsVersionCommand` is only sent when the device is on the dashboard (BOLOS). A device running an application is considered onboarded without reading the OS version.
+
+- [#1527](https://github.com/LedgerHQ/device-sdk-ts/pull/1527) [`c9a9b99`](https://github.com/LedgerHQ/device-sdk-ts/commit/c9a9b99eee66370b3bd1448637505be1477f75e0) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Replace hardcoded `"BOLOS"` strings with the exported `LEDGER_OS_NAME` constant and make `isDashboardName` null-safe.
+
 ## 1.5.1
 
 ### Patch Changes
