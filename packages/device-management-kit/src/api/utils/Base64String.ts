@@ -8,6 +8,34 @@ export function isBase64String(value: string): boolean {
   );
 }
 
+/**
+ * Prefer `window.atob` in browser runtimes where Base64 helpers are exposed on
+ * `window`; fall back to global `atob` for runtimes such as Hermes.
+ */
+function getAtob(): ((data: string) => string) | undefined {
+  if (typeof window !== "undefined" && typeof window.atob === "function") {
+    return window.atob.bind(window);
+  }
+  if (typeof atob === "function") {
+    return atob;
+  }
+  return undefined;
+}
+
+/**
+ * Prefer `window.btoa` in browser runtimes where Base64 helpers are exposed on
+ * `window`; fall back to global `btoa` for runtimes such as Hermes.
+ */
+function getBtoa(): ((data: string) => string) | undefined {
+  if (typeof window !== "undefined" && typeof window.btoa === "function") {
+    return window.btoa.bind(window);
+  }
+  if (typeof btoa === "function") {
+    return btoa;
+  }
+  return undefined;
+}
+
 export function base64StringToBuffer(value: string): Uint8Array | null {
   if (value.length === 0) {
     return new Uint8Array();
@@ -15,27 +43,28 @@ export function base64StringToBuffer(value: string): Uint8Array | null {
   if (!isBase64String(value)) {
     return null;
   }
-  try {
-    // Use the browser implementation of atob
-    const base64Decoded = atob(value);
+  const atobFn = getAtob();
+
+  if (atobFn) {
+    const base64Decoded = atobFn(value);
     const buffer = new Uint8Array(base64Decoded.length);
     for (let i = 0; i < base64Decoded.length; i++) {
       buffer[i] = base64Decoded.charCodeAt(i);
     }
     return buffer;
-  } catch (_error: unknown) {
-    // Use the implementation of Buffer for environments such as node
-    return Uint8Array.from(Buffer.from(value, "base64"));
   }
+
+  if (typeof globalThis.Buffer !== "undefined") {
+    return Uint8Array.from(globalThis.Buffer.from(value, "base64"));
+  }
+
+  throw new Error("No Base64 decoder available in this environment.");
 }
 
 export function bufferToBase64String(bytes: Uint8Array): string {
-  const g = globalThis as typeof globalThis & {
-    Buffer?: typeof Buffer;
-    btoa?: (data: string) => string;
-  };
+  const btoaFn = getBtoa();
 
-  if (typeof g.btoa === "function") {
+  if (btoaFn) {
     // convert bytes to a binary string for btoa
     let binary = "";
     for (let i = 0; i < bytes.length; i++) {
@@ -45,12 +74,11 @@ export function bufferToBase64String(bytes: Uint8Array): string {
       }
       binary += String.fromCharCode(byte);
     }
-    return g.btoa(binary);
+    return btoaFn(binary);
   }
 
-  const Buf = g.Buffer;
-  if (typeof Buf !== "undefined") {
-    return Buf.from(bytes).toString("base64");
+  if (typeof globalThis.Buffer !== "undefined") {
+    return globalThis.Buffer.from(bytes).toString("base64");
   }
 
   throw new Error("No Base64 encoder available in this environment.");

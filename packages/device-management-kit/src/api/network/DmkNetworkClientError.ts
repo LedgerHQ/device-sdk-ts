@@ -17,8 +17,9 @@ export type DmkNetworkClientErrorParams = {
  *   raw text body (best effort).
  * - When the request timed out via the client's `timeoutMs`,
  *   {@link isTimeout} is `true`.
- * - When the request was aborted through the caller's `signal`,
- *   {@link isAbort} is `true`.
+ * - When a fetch implementation rejects with an abort error unrelated to
+ *   `timeoutMs`, {@link isAbort} is `false` and the message is
+ *   `"Request aborted"`.
  * - For other fetch/network failures, {@link cause} carries the original
  *   error.
  */

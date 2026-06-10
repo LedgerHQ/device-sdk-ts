@@ -275,6 +275,10 @@ describe("DmkNetworkClient", () => {
   });
 
   describe("timeout", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it("should pass an AbortSignal when timeoutMs is configured", async () => {
       const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
       const client = new DmkNetworkClient({ fetch: fetchMock });
@@ -295,6 +299,37 @@ describe("DmkNetworkClient", () => {
       expect(init.signal).toBeUndefined();
     });
 
+    it("GIVEN a successful request with timeout WHEN fetch resolves THEN it clears the timeout", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ ok: true }));
+      const client = new DmkNetworkClient({ fetch: fetchMock });
+
+      await client.get("https://api.example.com/items", { timeoutMs: 1000 });
+      const init = fetchMock.mock.calls[0]![1] as RequestInit;
+
+      vi.advanceTimersByTime(1000);
+
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      expect(init.signal?.aborted).toBe(false);
+    });
+
+    it("GIVEN a failed request with timeout WHEN fetch rejects THEN it clears the timeout", async () => {
+      vi.useFakeTimers();
+      const cause = new TypeError("network down");
+      const fetchMock = vi.fn().mockRejectedValue(cause);
+      const client = new DmkNetworkClient({ fetch: fetchMock });
+
+      await client
+        .get("https://api.example.com/items", { timeoutMs: 1000 })
+        .catch(() => undefined);
+      const init = fetchMock.mock.calls[0]![1] as RequestInit;
+
+      vi.advanceTimersByTime(1000);
+
+      expect(init.signal).toBeInstanceOf(AbortSignal);
+      expect(init.signal?.aborted).toBe(false);
+    });
+
     it("should mark the error as a timeout when fetch rejects with TimeoutError", async () => {
       const timeoutError = new Error("The operation was aborted");
       timeoutError.name = "TimeoutError";
@@ -308,25 +343,6 @@ describe("DmkNetworkClient", () => {
       expect(error).toBeInstanceOf(DmkNetworkClientError);
       expect((error as DmkNetworkClientError).isTimeout).toBe(true);
       expect((error as DmkNetworkClientError).isAbort).toBe(false);
-    });
-
-    it("should mark the error as an abort when the caller signal is aborted", async () => {
-      const abortController = new AbortController();
-      abortController.abort();
-      const abortError = new Error("aborted");
-      abortError.name = "AbortError";
-      const fetchMock = vi.fn().mockRejectedValue(abortError);
-      const client = new DmkNetworkClient({ fetch: fetchMock });
-
-      const error = await client
-        .get("https://api.example.com/items", {
-          signal: abortController.signal,
-        })
-        .catch((e: unknown) => e);
-
-      expect(error).toBeInstanceOf(DmkNetworkClientError);
-      expect((error as DmkNetworkClientError).isAbort).toBe(true);
-      expect((error as DmkNetworkClientError).isTimeout).toBe(false);
     });
   });
 

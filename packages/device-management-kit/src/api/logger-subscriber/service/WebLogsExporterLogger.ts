@@ -90,8 +90,10 @@ export class WebLogsExporterLogger implements LoggerSubscriberService {
    */
   public exportLogsToJSON(): void {
     const logs = this.formatLogsToJSON();
+    /* eslint-disable no-restricted-globals -- Browser-only log export path uses Blob URLs to trigger a JSON file download. */
     const blob = new Blob([logs], { type: "application/json" });
     const url = URL.createObjectURL(blob);
+    /* eslint-enable no-restricted-globals */
     const a = document.createElement("a");
     a.href = url;
     a.download = `ledger-device-management-kit-logs-${new Date().toISOString()}.json`;

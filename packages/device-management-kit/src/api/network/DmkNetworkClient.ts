@@ -28,11 +28,6 @@ export type DmkRequestConfig = {
    */
   timeoutMs?: number;
   /**
-   * External abort signal. Composed with the internal timeout signal, so
-   * either one firing will abort the request.
-   */
-  signal?: AbortSignal;
-  /**
    * How to parse the response body. Defaults to `"json"`, except for `head`
    * which always resolves to `void`.
    */
@@ -82,7 +77,7 @@ type InternalRequestConfig = DmkRequestConfig & {
  * - URL composition (base URL + relative path + query params from an object)
  * - Automatic JSON body encoding and `Content-Type` header
  * - Default and per-request headers merging
- * - Request timeout via `AbortSignal.timeout`, composable with a caller signal
+ * - Request timeout via `AbortController`
  * - Automatic `response.ok` check with a typed {@link DmkNetworkClientError}
  * - Typed JSON / text / blob / arrayBuffer response parsing
  *
@@ -178,47 +173,50 @@ export class DmkNetworkClient {
       defaultHeaders: this.defaultHeaders,
       perRequestHeaders: config.headers,
     });
-    const signal = buildSignal({
+    const { signal, cleanup } = buildSignal({
       timeoutMs: config.timeoutMs,
-      externalSignal: config.signal,
     });
     const throwOnHttpError = config.throwOnHttpError ?? true;
     const responseType: DmkResponseType = config.responseType ?? "json";
 
-    let response: Response;
     try {
-      response = await this.getFetch()(url, {
-        method: config.method,
-        headers,
-        body,
-        signal,
-      });
-    } catch (cause) {
-      throw wrapFetchError({
-        cause,
-        externalSignal: config.signal,
-        timeoutMs: config.timeoutMs,
-      });
-    }
+      let response: Response;
+      try {
+        response = await this.getFetch()(url, {
+          method: config.method,
+          headers,
+          body,
+          signal,
+        });
+      } catch (cause) {
+        throw wrapFetchError({
+          cause,
+          timeoutMs: config.timeoutMs,
+        });
+      }
 
-    if (!response.ok && throwOnHttpError) {
-      const responseBody = await safeReadText(response);
-      throw new DmkNetworkClientError({
-        message: `HTTP error ${response.status} ${response.statusText}`.trim(),
+      if (!response.ok && throwOnHttpError) {
+        const responseBody = await safeReadText(response);
+        throw new DmkNetworkClientError({
+          message:
+            `HTTP error ${response.status} ${response.statusText}`.trim(),
+          status: response.status,
+          statusText: response.statusText,
+          responseBody,
+        });
+      }
+
+      const data = await parseBody(response, responseType);
+
+      return {
+        data,
         status: response.status,
         statusText: response.statusText,
-        responseBody,
-      });
+        headers: response.headers,
+        ok: response.ok,
+      };
+    } finally {
+      cleanup();
     }
-
-    const data = await parseBody(response, responseType);
-
-    return {
-      data,
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-      ok: response.ok,
-    };
   }
 }
