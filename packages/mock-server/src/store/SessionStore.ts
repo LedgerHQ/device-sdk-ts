@@ -21,6 +21,19 @@ export interface SessionStoreOptions {
 const DEFAULT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const DEFAULT_MAX_LIFETIME_MS = 4 * 60 * 60 * 1000; // 4 hours
 
+/**
+ * A device that has opened an app and is now proxying its APDUs to a live
+ * Speculos instance managed by the Speculinho operator.
+ */
+export interface SpeculosProxySession {
+  /** Speculinho `run_id` owning the Speculos pod. */
+  readonly runId: string;
+  /** Per-pod Speculos base URL handed back by Speculinho. */
+  readonly speculosUrl: string;
+  /** BOLOS app name that opened the proxy. */
+  readonly appName: string;
+}
+
 interface SessionRecord {
   id: string;
   token: string;
@@ -30,6 +43,8 @@ interface SessionRecord {
   mocks: Map<string, Mock>;
   /** Next response index to serve per mock id (advanced by consumeResponse). */
   mockCursors: Map<string, number>;
+  /** Active Speculos proxy per device id. */
+  speculos: Map<string, SpeculosProxySession>;
 }
 
 /**
@@ -42,6 +57,13 @@ export class SessionStore {
   private readonly sessions = new Map<string, SessionRecord>();
   private readonly ttlMs: number;
   private readonly maxLifetimeMs: number;
+
+  /**
+   * Invoked with the Speculos proxy sessions discarded when a session or device
+   * is evicted (disposed, deleted or swept), so the owner can release the
+   * underlying Speculos instances. Kept as a hook to keep the store IO-free.
+   */
+  onEvict?: (sessions: SpeculosProxySession[]) => void;
 
   constructor(options: SessionStoreOptions = {}) {
     this.ttlMs = options.ttlMs ?? DEFAULT_TTL_MS;
@@ -58,6 +80,7 @@ export class SessionStore {
       devices: new Map(),
       mocks: new Map(),
       mockCursors: new Map(),
+      speculos: new Map(),
     };
     this.seedDefaults(record);
     this.sessions.set(record.token, record);
@@ -76,6 +99,10 @@ export class SessionStore {
   }
 
   deleteSession(token: string): void {
+    const record = this.sessions.get(token);
+    if (record && record.speculos.size > 0) {
+      this.onEvict?.([...record.speculos.values()]);
+    }
     this.sessions.delete(token);
   }
 
@@ -118,6 +145,11 @@ export class SessionStore {
   }
 
   deleteDevice(record: SessionRecord, deviceId: string): boolean {
+    const proxy = record.speculos.get(deviceId);
+    if (proxy) {
+      this.onEvict?.([proxy]);
+      record.speculos.delete(deviceId);
+    }
     return record.devices.delete(deviceId);
   }
 
@@ -131,6 +163,37 @@ export class SessionStore {
     const updated: Device = { ...current, connected };
     record.devices.set(deviceId, updated);
     return updated;
+  }
+
+  // --- Speculos proxy -------------------------------------------------------
+
+  getProxy(
+    record: SessionRecord,
+    deviceId: string,
+  ): SpeculosProxySession | undefined {
+    return record.speculos.get(deviceId);
+  }
+
+  setProxy(
+    record: SessionRecord,
+    deviceId: string,
+    session: SpeculosProxySession,
+  ): void {
+    record.speculos.set(deviceId, session);
+  }
+
+  /**
+   * Forget a device's Speculos proxy. Does not release the instance — callers
+   * that intercept Close App / disconnect release it directly; {@link onEvict}
+   * covers implicit eviction.
+   */
+  deleteProxy(
+    record: SessionRecord,
+    deviceId: string,
+  ): SpeculosProxySession | undefined {
+    const session = record.speculos.get(deviceId);
+    record.speculos.delete(deviceId);
+    return session;
   }
 
   // --- Mocks ----------------------------------------------------------------
@@ -225,6 +288,9 @@ export class SessionStore {
     let removed = 0;
     for (const [token, record] of this.sessions) {
       if (this.isExpired(record)) {
+        if (record.speculos.size > 0) {
+          this.onEvict?.([...record.speculos.values()]);
+        }
         this.sessions.delete(token);
         removed += 1;
       }

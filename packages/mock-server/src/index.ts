@@ -6,5 +6,14 @@ export {
 } from "./defaults";
 export type { MockServerApp, MockServerOptions } from "./MockServer";
 export { createMockServer } from "./MockServer";
-export type { SessionRecord, SessionStoreOptions } from "./store/SessionStore";
+export {
+  DEFAULT_SPECULOS_SEED,
+  SpeculinhoClient,
+  type SpeculinhoClientOptions,
+} from "./speculos/SpeculinhoClient";
+export type {
+  SessionRecord,
+  SessionStoreOptions,
+  SpeculosProxySession,
+} from "./store/SessionStore";
 export { SessionStore } from "./store/SessionStore";

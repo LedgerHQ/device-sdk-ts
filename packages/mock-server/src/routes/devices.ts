@@ -1,20 +1,26 @@
 import { type Response, Router } from "express";
 
-import { matchApdu } from "../apdu/matcher";
-import { UNKNOWN_APDU_RESPONSE } from "../defaults";
 import { logger } from "../logger";
 import {
   type AuthedRequest,
   bearerAuth,
   getSession,
 } from "../middleware/bearerAuth";
+import { type SpeculinhoClient } from "../speculos/SpeculinhoClient";
+import { resolveApdu } from "../speculos/SpeculosProxy";
 import { type SessionStore } from "../store/SessionStore";
 
 /**
  * Device resource routes: discovery, lifecycle, connection state and APDU
  * simulation. All scoped to the bearer-token session.
+ *
+ * When a {@link SpeculinhoClient} is provided, an unmatched Open App APDU spins
+ * up a real Speculos instance and the device proxies subsequent APDUs to it.
  */
-export function devicesRouter(store: SessionStore): Router {
+export function devicesRouter(
+  store: SessionStore,
+  client?: SpeculinhoClient,
+): Router {
   const router = Router();
   router.use(bearerAuth(store));
 
@@ -199,11 +205,14 @@ export function devicesRouter(store: SessionStore): Router {
     "/devices/:id/disconnect",
     (req: AuthedRequest, res: Response) => {
       const id = req.params["id"] ?? "";
-      const device = store.setConnected(getSession(req), id, false);
+      const session = getSession(req);
+      const device = store.setConnected(session, id, false);
       if (!device) {
         res.status(404).json({ error: "Device not found" });
         return;
       }
+      const proxy = store.deleteProxy(session, id);
+      if (proxy && client) void client.release(proxy.runId);
       logger.info(`Device disconnected: ${device.name} (${id})`);
       res.json({ device, connected: false });
     },
@@ -235,27 +244,32 @@ export function devicesRouter(store: SessionStore): Router {
    *       404:
    *         $ref: '#/components/responses/NotFound'
    */
-  router.post("/devices/:id/apdu", (req: AuthedRequest, res: Response) => {
-    const id = req.params["id"] ?? "";
-    const session = getSession(req);
-    const device = store.getDevice(session, id);
-    if (!device) {
-      res.status(404).json({ error: "Device not found" });
-      return;
-    }
-    const apdu = String(req.body?.apdu ?? "");
-    const mock = matchApdu(apdu, store.listMocks(session));
-    if (!mock) {
-      logger.warn(
-        `APDU [${id}] ${apdu} -> ${UNKNOWN_APDU_RESPONSE} (no matching mock)`,
-      );
-      res.json({ response: UNKNOWN_APDU_RESPONSE });
-      return;
-    }
-    const response = store.consumeResponse(session, mock);
-    logger.info(`APDU [${id}] ${apdu} -> ${response}`);
-    res.json({ response });
-  });
+  router.post(
+    "/devices/:id/apdu",
+    async (req: AuthedRequest, res: Response) => {
+      const id = req.params["id"] ?? "";
+      const session = getSession(req);
+      const device = store.getDevice(session, id);
+      if (!device) {
+        res.status(404).json({ error: "Device not found" });
+        return;
+      }
+      const apdu = String(req.body?.apdu ?? "");
+      try {
+        const response = await resolveApdu({
+          store,
+          record: session,
+          device,
+          apduHex: apdu,
+          client,
+        });
+        res.json({ response });
+      } catch (error) {
+        logger.error(`APDU [${id}] ${apdu} failed: ${String(error)}`);
+        res.status(500).json({ error: "APDU resolution failed" });
+      }
+    },
+  );
 
   return router;
 }

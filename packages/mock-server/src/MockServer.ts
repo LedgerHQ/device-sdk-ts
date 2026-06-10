@@ -6,12 +6,22 @@ import { devicesRouter } from "./routes/devices";
 import { mocksRouter } from "./routes/mocks";
 import { sessionsRouter } from "./routes/sessions";
 import { transferRouter } from "./routes/transfer";
+import {
+  SpeculinhoClient,
+  type SpeculinhoClientOptions,
+} from "./speculos/SpeculinhoClient";
 import { SessionStore, type SessionStoreOptions } from "./store/SessionStore";
 import { logger } from "./logger";
 
 export interface MockServerOptions extends SessionStoreOptions {
   /** Interval in ms for the expired-session sweeper. Set to 0 to disable. */
   readonly sweepIntervalMs?: number;
+  /**
+   * Speculinho operator configuration. When set, an unmatched Open App APDU
+   * starts a real Speculos instance and the device proxies APDUs to it. When
+   * omitted, the server behaves as a pure mock.
+   */
+  readonly speculos?: SpeculinhoClientOptions;
 }
 
 export interface MockServerApp {
@@ -32,6 +42,15 @@ export function createMockServer(
   options: MockServerOptions = {},
 ): MockServerApp {
   const store = new SessionStore(options);
+  const client = options.speculos
+    ? new SpeculinhoClient(options.speculos)
+    : undefined;
+  if (client) {
+    // Release Speculos instances backing evicted sessions/devices.
+    store.onEvict = (sessions) => {
+      for (const proxy of sessions) void client.release(proxy.runId);
+    };
+  }
   const app = express();
 
   app.use(requestLogger());
@@ -73,7 +92,7 @@ export function createMockServer(
 
   app.use(authRouter(store));
   app.use(sessionsRouter(store));
-  app.use(devicesRouter(store));
+  app.use(devicesRouter(store, client));
   app.use(mocksRouter(store));
   app.use(transferRouter(store));
 
