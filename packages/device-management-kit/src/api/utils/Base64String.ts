@@ -16,7 +16,9 @@ function getAtob(): ((data: string) => string) | undefined {
   if (typeof window !== "undefined" && typeof window.atob === "function") {
     return window.atob.bind(window);
   }
+  // eslint-disable-next-line no-restricted-globals
   if (typeof atob === "function") {
+    // eslint-disable-next-line no-restricted-globals
     return atob;
   }
   return undefined;
@@ -30,7 +32,9 @@ function getBtoa(): ((data: string) => string) | undefined {
   if (typeof window !== "undefined" && typeof window.btoa === "function") {
     return window.btoa.bind(window);
   }
+  // eslint-disable-next-line no-restricted-globals
   if (typeof btoa === "function") {
+    // eslint-disable-next-line no-restricted-globals
     return btoa;
   }
   return undefined;
