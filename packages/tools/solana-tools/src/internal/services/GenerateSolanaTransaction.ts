@@ -1,3 +1,4 @@
+import { bufferToBase64String } from "@ledgerhq/device-management-kit";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createTransferCheckedInstruction,
@@ -111,15 +112,6 @@ export class GenerateSolanaTransaction {
   }
 
   private toBase64(bytes: Uint8Array): string {
-    let bin = "";
-    for (const b of bytes) {
-      if (typeof b !== "number") throw new Error("Invalid byte value");
-      bin += String.fromCharCode(b);
-    }
-    try {
-      return btoa(bin);
-    } catch {
-      return Buffer.from(bytes).toString("base64");
-    }
+    return bufferToBase64String(bytes);
   }
 }
