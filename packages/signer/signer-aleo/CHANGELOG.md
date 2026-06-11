@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- [#1545](https://github.com/LedgerHQ/device-sdk-ts/pull/1545) [`407aa67`](https://github.com/LedgerHQ/device-sdk-ts/commit/407aa67c4879071fee6ce7f49925ccf3754c64f5) Thanks [@0xMM-L](https://github.com/0xMM-L)! - Add GET_TVK command (INS=0x08) to retrieve transition view keys from the device, supporting both root (P1=0x00) and indexed (P1=0x01) modes as specified in ADR005.
+
 ## 0.3.0
 
 ### Minor Changes
