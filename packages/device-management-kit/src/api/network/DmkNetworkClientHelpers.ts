@@ -241,7 +241,6 @@ export function wrapFetchError(args: {
     return new DmkNetworkClientError({
       message: timedOut ? `Request timed out` : "Request aborted",
       isTimeout: timedOut,
-      isAbort: false,
       cause,
     });
   }

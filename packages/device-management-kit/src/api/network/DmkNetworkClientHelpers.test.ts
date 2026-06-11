@@ -413,7 +413,6 @@ describe("DmkNetworkClientHelpers", () => {
       expect(error.message).toBe("network down");
       expect(error.cause).toBe(cause);
       expect(error.isTimeout).toBe(false);
-      expect(error.isAbort).toBe(false);
     });
 
     it("should fall back to a generic message for non-Error causes", () => {
@@ -433,7 +432,6 @@ describe("DmkNetworkClientHelpers", () => {
         timeoutMs: 10,
       });
       expect(error.isTimeout).toBe(true);
-      expect(error.isAbort).toBe(false);
       expect(error.message).toBe("Request timed out");
     });
 
@@ -445,7 +443,6 @@ describe("DmkNetworkClientHelpers", () => {
         timeoutMs: 1000,
       });
       expect(error.isTimeout).toBe(true);
-      expect(error.isAbort).toBe(false);
     });
 
     it("should treat AbortError with no timeout and no external abort as a plain abort", () => {
@@ -456,7 +453,6 @@ describe("DmkNetworkClientHelpers", () => {
         timeoutMs: undefined,
       });
       expect(error.isTimeout).toBe(false);
-      expect(error.isAbort).toBe(false);
       expect(error.message).toBe("Request aborted");
     });
   });

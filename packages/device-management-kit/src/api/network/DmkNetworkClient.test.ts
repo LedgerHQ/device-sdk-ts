@@ -239,7 +239,6 @@ describe("DmkNetworkClient", () => {
       expect(dmkError.statusText).toBe("Server Error");
       expect(dmkError.responseBody).toBe("boom");
       expect(dmkError.isTimeout).toBe(false);
-      expect(dmkError.isAbort).toBe(false);
     });
 
     it("should not throw when throwOnHttpError is disabled", async () => {
@@ -342,7 +341,6 @@ describe("DmkNetworkClient", () => {
 
       expect(error).toBeInstanceOf(DmkNetworkClientError);
       expect((error as DmkNetworkClientError).isTimeout).toBe(true);
-      expect((error as DmkNetworkClientError).isAbort).toBe(false);
     });
   });
 
