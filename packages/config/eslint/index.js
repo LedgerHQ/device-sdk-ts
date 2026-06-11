@@ -99,29 +99,60 @@ const abortSignalPropertyRestrictions = [
   },
 ];
 
-const nodeBuiltinImportRestrictions = [
-  "crypto",
-  "stream",
-  "fs",
-  "path",
+const nodeBuiltinImportNames = [
+  "assert",
+  "async_hooks",
   "buffer",
-  "os",
-  "util",
-  "events",
-  "http",
-  "https",
-  "zlib",
   "child_process",
-  "net",
-  "tls",
+  "cluster",
+  "console",
+  "crypto",
+  "dgram",
+  "diagnostics_channel",
   "dns",
-].map((name) => ({
+  "domain",
+  "events",
+  "fs",
+  "http",
+  "http2",
+  "https",
+  "inspector",
+  "module",
+  "net",
+  "os",
+  "path",
+  "perf_hooks",
+  "process",
+  "punycode",
+  "querystring",
+  "readline",
+  "repl",
+  "stream",
+  "string_decoder",
+  "timers",
+  "tls",
+  "trace_events",
+  "tty",
+  "url",
+  "util",
+  "v8",
+  "vm",
+  "wasi",
+  "worker_threads",
+  "zlib",
+];
+
+const nodeBuiltinImportRestrictions = nodeBuiltinImportNames.map((name) => ({
   name,
   message: `Node built-in "${name}" is not portable. Use @noble/hashes for hashing, Uint8Array/DataView for bytes.`,
 }));
 
 const portableImportRestrictions = {
-  patterns: [...relativeImportRestrictions.patterns, "node:*"],
+  patterns: [
+    ...relativeImportRestrictions.patterns,
+    "node:*",
+    ...nodeBuiltinImportNames.map((name) => `${name}/*`),
+  ],
   paths: nodeBuiltinImportRestrictions,
 };
 
