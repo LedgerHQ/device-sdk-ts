@@ -39,6 +39,23 @@ const processGlobalRestriction = {
   message: "Node-only global; not available in browser/RN/Hermes.",
 };
 
+// `atob`/`btoa` exist in browsers, Node and Hermes, but each runtime exposes a
+// different preferred entry point (window.atob, Buffer, the bare global...).
+// Rather than special-casing every runtime, route all Base64 work through the
+// shared, portable helpers, which pick the right implementation internally.
+const base64GlobalRestrictions = [
+  {
+    name: "atob",
+    message:
+      "Not portable. Decode Base64 via base64StringToBuffer from @ledgerhq/device-management-kit (returns Uint8Array | null).",
+  },
+  {
+    name: "btoa",
+    message:
+      "Not portable. Encode bytes via bufferToBase64String from @ledgerhq/device-management-kit.",
+  },
+];
+
 const problematicWebGlobalRestrictions = [
   {
     name: "URL",
@@ -270,6 +287,7 @@ export default [
         ...nodeOnlyGlobalRestrictions,
         processGlobalRestriction,
         ...problematicWebGlobalRestrictions,
+        ...base64GlobalRestrictions,
       ],
       "no-restricted-properties": ["error", ...abortSignalPropertyRestrictions],
       "no-restricted-imports": ["error", portableImportRestrictions],
@@ -302,7 +320,9 @@ export const nodeRuntimeOverrides = [
   {
     files: productionSourceFiles,
     rules: {
-      "no-restricted-globals": "off",
+      // Node globals are allowed, but `atob`/`btoa` stay banned so Base64 work
+      // keeps going through the shared, portable helpers.
+      "no-restricted-globals": ["error", ...base64GlobalRestrictions],
       "no-restricted-properties": "off",
       "no-restricted-imports": ["error", relativeImportRestrictions],
     },
@@ -318,7 +338,11 @@ export const webRuntimeOverrides = [
     rules: {
       // Browser/app packages can use Web globals at the application boundary.
       // `process.env` is also common in web app toolchains at build time.
-      "no-restricted-globals": ["error", ...nodeOnlyGlobalRestrictions],
+      "no-restricted-globals": [
+        "error",
+        ...nodeOnlyGlobalRestrictions,
+        ...base64GlobalRestrictions,
+      ],
       "no-restricted-properties": "off",
       "no-restricted-imports": ["error", portableImportRestrictions],
     },
