@@ -319,6 +319,7 @@ export default [
 export const nodeRuntimeOverrides = [
   {
     files: productionSourceFiles,
+    ignores: productionSourceIgnores,
     rules: {
       // Node globals are allowed, but `atob`/`btoa` stay banned so Base64 work
       // keeps going through the shared, portable helpers.
@@ -335,6 +336,7 @@ export const nodeRuntimeOverrides = [
 export const webRuntimeOverrides = [
   {
     files: productionSourceFiles,
+    ignores: productionSourceIgnores,
     rules: {
       // Browser/app packages can use Web globals at the application boundary.
       // `process.env` is also common in web app toolchains at build time.
