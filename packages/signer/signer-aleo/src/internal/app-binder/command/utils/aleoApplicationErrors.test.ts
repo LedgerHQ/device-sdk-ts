@@ -75,6 +75,38 @@ describe("AleoAppCommandError", () => {
     expect(error).toBeInstanceOf(DeviceExchangeError);
   });
 
+  describe("6a80 - Incorrect data", () => {
+    it("should be defined in ALEO_APP_ERRORS with message 'Incorrect data'", () => {
+      expect(ALEO_APP_ERRORS["6a80"]).toBeDefined();
+      expect(ALEO_APP_ERRORS["6a80"].message).toBe("Incorrect data");
+    });
+
+    it("should map error code 6a80 to 'Incorrect data' via AleoAppCommandError", () => {
+      const errorCode: AleoErrorCodes = "6a80";
+      const expectedMessage = ALEO_APP_ERRORS[errorCode].message;
+
+      const error = new AleoAppCommandError({
+        message: expectedMessage,
+        errorCode,
+      });
+
+      expect(error.errorCode).toBe("6a80");
+      expect(error.message).toBe("Incorrect data");
+      expect(error).toBeInstanceOf(DeviceExchangeError);
+    });
+
+    it("should create a 6a80 error via AleoAppCommandErrorFactory", () => {
+      const error = AleoAppCommandErrorFactory({
+        message: ALEO_APP_ERRORS["6a80"].message,
+        errorCode: "6a80",
+      });
+
+      expect(error).toBeInstanceOf(AleoAppCommandError);
+      expect(error.errorCode).toBe("6a80");
+      expect(error.message).toBe("Incorrect data");
+    });
+  });
+
   describe("AleoAppCommandErrorFactory", () => {
     it("should create an instance of AleoAppCommandError", () => {
       const error = AleoAppCommandErrorFactory({

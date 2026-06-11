@@ -11,6 +11,7 @@ export const INS = {
   GET_ADDRESS: 0x05,
   SIGN_INTENT: 0x06,
   GET_VIEW_KEY: 0x07,
+  GET_TVK: 0x08,
 } as const;
 
 export const P1 = {
@@ -19,6 +20,8 @@ export const P1 = {
   SIGN_MODE_FEE: 0x02,
   CHECK_ON_DEVICE: 0x01,
   NO_CHECK: 0x00,
+  GET_TVK_ROOT: 0x00,
+  GET_TVK_INDEXED: 0x01,
 } as const;
 
 export const APDU_SECTION_LENGTH = {

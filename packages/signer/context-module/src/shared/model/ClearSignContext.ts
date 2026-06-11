@@ -24,6 +24,11 @@ export enum ClearSignContextType {
   SOLANA_LIFI = "solanaLifi",
   SOLANA_TRUSTED_NAME = "solanaTrustedName",
   SOLANA_TRANSACTION_CHECK = "solanaTransactionCheck",
+  SOLANA_INSTRUCTION_INFO = "solanaInstructionInfo",
+  SOLANA_ENUM_VARIANT = "solanaEnumVariant",
+  SOLANA_TOKEN_INFO = "solanaTokenInfo",
+  SOLANA_TOKEN_ACCOUNT_STATE = "solanaTokenAccountState",
+  SOLANA_ALT_RESOLUTION = "solanaAltResolution",
 }
 
 export type ClearSignContextSuccessType = Exclude<

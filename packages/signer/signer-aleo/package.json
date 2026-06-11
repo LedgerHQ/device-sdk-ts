@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-signer-kit-aleo",
-  "version": "0.3.0",
-  "private": true,
+  "version": "0.4.0",
+  "private": false,
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -38,12 +38,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "workspace:^",
+    "@ledgerhq/signer-utils": "^1.2.0",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
     "xstate": "catalog:",
-    "@ledgerhq/context-module": "workspace:^"
+    "@ledgerhq/context-module": "^2.1.0"
   },
   "devDependencies": {
     "@ledgerhq/device-management-kit": "workspace:^",
@@ -57,7 +57,7 @@
     "@ledgerhq/context-module": "workspace:^"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^",
-    "@ledgerhq/context-module": "workspace:^"
+    "@ledgerhq/device-management-kit": "^1.6.0",
+    "@ledgerhq/context-module": "^2.1.0"
   }
 }

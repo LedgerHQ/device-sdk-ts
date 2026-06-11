@@ -1,9 +1,9 @@
 import {
-  DeviceModelId,
+  type DeviceModelId,
   LoggerPublisherService,
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
-import { Codec, exactly, number, oneOf, string } from "purify-ts";
+import { Codec, number, string } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
@@ -21,6 +21,7 @@ import {
   type Bs58Encoder,
   DefaultBs58Encoder,
 } from "@/shared/utils/bs58Encoder";
+import { deviceModelIdCodec } from "@/shared/utils/deviceModelIdCodec";
 import { uint8ArrayCodec } from "@/shared/utils/uint8ArrayCodec";
 
 export type SolanaTransactionCheckRequest = {
@@ -46,12 +47,7 @@ const SHORTVEC_DATA_MASK = 0x7f;
 const SHORTVEC_DATA_BITS = 7;
 
 const solanaTransactionCheckInputCodec = Codec.interface({
-  deviceModelId: oneOf([
-    exactly(DeviceModelId.NANO_X),
-    exactly(DeviceModelId.NANO_SP),
-    exactly(DeviceModelId.STAX),
-    exactly(DeviceModelId.FLEX),
-  ]),
+  deviceModelId: deviceModelIdCodec,
   transactionCheck: Codec.interface({
     from: string,
     transactionBytes: uint8ArrayCodec,

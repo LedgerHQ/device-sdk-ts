@@ -4,6 +4,7 @@ export enum KeyId {
   LedgerRootV3 = "ledger_root_v3",
   PluginSelectorKey = "plugin_selector_key",
   NftMetadataKey = "nft_metadata_key",
+  TokenMetadataKey = "token_metadata_key",
   PartnerMetadataKey = "partner_metadata_key",
   Erc20MetadataKey = "erc20_metadata_key",
   DomainMetadataKey = "domain_metadata_key",

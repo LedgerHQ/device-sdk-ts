@@ -5,6 +5,7 @@ import { configTypes } from "@/config/di/configTypes";
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { KeyId } from "@/modules/multichain/pki/model/KeyId";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import {
@@ -109,7 +110,7 @@ export class TokenContextLoader
 
     const certificate: PkiCertificate | undefined =
       await this._certificateLoader.loadCertificate({
-        keyId: "token_metadata_key",
+        keyId: KeyId.TokenMetadataKey,
         keyUsage: KeyUsage.CoinMeta,
         targetDevice: deviceModelId,
       });

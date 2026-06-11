@@ -9,6 +9,7 @@ import { inject, injectable } from "inversify";
 
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDeviceActionTypes";
+import { type GetTvkDAReturnType } from "@api/app-binder/GetTvkDeviceActionTypes";
 import { type GetViewKeyDAReturnType } from "@api/app-binder/GetViewKeyDeviceActionTypes";
 import { type SignFeeIntentDAReturnType } from "@api/app-binder/SignFeeIntentDeviceActionTypes";
 import { type SignNestedCallDAReturnType } from "@api/app-binder/SignNestedCallDeviceActionTypes";
@@ -18,6 +19,7 @@ import { externalTypes } from "@internal/externalTypes";
 
 import { GetAddressCommand } from "./command/GetAddressCommand";
 import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
+import { GetTvkCommand } from "./command/GetTvkCommand";
 import { GetViewKeyCommand } from "./command/GetViewKeyCommand";
 import { SignFeeIntentTask } from "./task/SignFeeIntentTask";
 import { SignNestedCallTask } from "./task/SignNestedCallTask";
@@ -58,6 +60,24 @@ export class AleoAppBinder {
           requiredUserInteraction: args.checkOnDevice
             ? UserInteractionRequired.VerifyAddress
             : UserInteractionRequired.None,
+          skipOpenApp: args.skipOpenApp,
+        },
+      }),
+    });
+  }
+
+  getTvk(args: {
+    derivationPath: string;
+    transitionIndex?: number;
+    skipOpenApp: boolean;
+  }): GetTvkDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new SendCommandInAppDeviceAction({
+        input: {
+          command: new GetTvkCommand(args),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.None,
           skipOpenApp: args.skipOpenApp,
         },
       }),

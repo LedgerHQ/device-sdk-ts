@@ -1,7 +1,12 @@
 import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
 import {
+  type SolanaAltResolutionPayload,
+  type SolanaEnumVariantPayload,
+  type SolanaInstructionInfoPayload,
   type SolanaLifiPayload,
+  type SolanaTokenAccountStatePayload,
   type SolanaTokenData,
+  type SolanaTokenInfoPayload,
   type SolanaTransactionCheckPayload,
 } from "@/modules/solana/model/SolanaPayloads";
 import {
@@ -12,12 +17,20 @@ import {
 
 // Re-export Solana payload types so consumers can import from this file
 export type {
+  SolanaAltResolutionPayload,
+  SolanaEnumVariantPayload,
+  SolanaInstructionInfoPayload,
+  SolanaInstructionSubstructure,
   SolanaLifiInstructionMeta,
   SolanaLifiPayload,
+  SolanaSignedDescriptor,
+  SolanaTokenAccountStatePayload,
   SolanaTokenData,
+  SolanaTokenInfoPayload,
   SolanaTransactionCheckPayload,
   SolanaTransactionDescriptor,
 } from "@/modules/solana/model/SolanaPayloads";
+export { SolanaInstructionSubstructureKind } from "@/modules/solana/model/SolanaPayloads";
 
 /**
  * Solana-specific payload overrides — contributed to the shared
@@ -40,6 +53,26 @@ export type SolanaPayloadOverrides = {
     payload: SolanaTransactionCheckPayload;
     certificate?: PkiCertificate;
   };
+  [ClearSignContextType.SOLANA_INSTRUCTION_INFO]: {
+    payload: SolanaInstructionInfoPayload;
+    certificate?: PkiCertificate;
+  };
+  [ClearSignContextType.SOLANA_ENUM_VARIANT]: {
+    payload: SolanaEnumVariantPayload;
+    certificate?: PkiCertificate;
+  };
+  [ClearSignContextType.SOLANA_TOKEN_INFO]: {
+    payload: SolanaTokenInfoPayload;
+    certificate?: PkiCertificate;
+  };
+  [ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE]: {
+    payload: SolanaTokenAccountStatePayload;
+    certificate?: PkiCertificate;
+  };
+  [ClearSignContextType.SOLANA_ALT_RESOLUTION]: {
+    payload: SolanaAltResolutionPayload;
+    certificate?: PkiCertificate;
+  };
 };
 
 export const SolanaContextType = {
@@ -47,6 +80,11 @@ export const SolanaContextType = {
   LIFI: ClearSignContextType.SOLANA_LIFI,
   TRUSTED_NAME: ClearSignContextType.SOLANA_TRUSTED_NAME,
   TRANSACTION_CHECK: ClearSignContextType.SOLANA_TRANSACTION_CHECK,
+  INSTRUCTION_INFO: ClearSignContextType.SOLANA_INSTRUCTION_INFO,
+  ENUM_VARIANT: ClearSignContextType.SOLANA_ENUM_VARIANT,
+  TOKEN_INFO: ClearSignContextType.SOLANA_TOKEN_INFO,
+  TOKEN_ACCOUNT_STATE: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+  ALT_RESOLUTION: ClearSignContextType.SOLANA_ALT_RESOLUTION,
 } as const;
 
 /**
