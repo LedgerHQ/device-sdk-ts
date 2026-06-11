@@ -7,3 +7,8 @@ export const INS = {
   SIGN_TRANSACTION: 0x02,
   SIGN_RAW: 0x03,
 } as const;
+
+export const P2 = {
+  ED25519: 0x00,
+  ECDSA: 0x02,
+} as const;
