@@ -1,7 +1,8 @@
-import config from "@ledgerhq/eslint-config-dsdk";
+import config, { webRuntimeOverrides } from "@ledgerhq/eslint-config-dsdk";
 
 export default [
   ...config,
+  ...webRuntimeOverrides,
   {
     ignores: ["eslint.config.mjs", "vitest.*.mjs", "scripts/*.mjs", "lib/*"],
     languageOptions: {

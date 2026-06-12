@@ -989,9 +989,19 @@ node_modules/
 `);
 
     // Generate eslint.config.mjs
-    writeFile(`${baseDir}/eslint.config.mjs`, `import { eslintConfigDmk } from "@ledgerhq/eslint-config-dsdk";
+    writeFile(`${baseDir}/eslint.config.mjs`, `import config from "@ledgerhq/eslint-config-dsdk";
 
-export default eslintConfigDmk;
+export default [
+  ...config,
+  {
+    ignores: ["eslint.config.mjs", "lib/*", "vitest.*.mjs"],
+    languageOptions: {
+      parserOptions: {
+        project: "./tsconfig.json",
+      },
+    },
+  },
+];
 `);
 
     // Generate src/index.ts

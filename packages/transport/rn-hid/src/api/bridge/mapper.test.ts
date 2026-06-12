@@ -327,6 +327,23 @@ describe("mapper", () => {
       ).toEqual(expectedSendApduResult);
     });
 
+    test("GIVEN a native success response with base64 line break WHEN mapping THEN it decodes the APDU", () => {
+      const resultApduString = "AQIDkAA=\n";
+      const nativeSendApduResult: NativeSendApduResult = {
+        success: true,
+        apdu: resultApduString,
+      };
+      const expectedSendApduResult: SendApduResult = Right(
+        new ApduResponse({
+          data: new Uint8Array([0x01, 0x02, 0x03]),
+          statusCode: new Uint8Array([0x90, 0x00]),
+        }),
+      );
+      expect(
+        mapNativeSendApduResultToSendApduResult(nativeSendApduResult),
+      ).toEqual(expectedSendApduResult);
+    });
+
     test("failure", () => {
       const nativeSendApduResult: NativeSendApduResult = {
         success: false,

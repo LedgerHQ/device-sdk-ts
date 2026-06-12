@@ -43,7 +43,6 @@
     "purify-ts": "catalog:",
     "reflect-metadata": "catalog:",
     "semver": "catalog:",
-    "url": "catalog:",
     "uuid": "catalog:",
     "ws": "catalog:",
     "xstate": "catalog:"
