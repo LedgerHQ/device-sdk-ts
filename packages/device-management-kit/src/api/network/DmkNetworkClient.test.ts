@@ -329,6 +329,31 @@ describe("DmkNetworkClient", () => {
       expect(init.signal?.aborted).toBe(false);
     });
 
+    it("GIVEN a pending request with timeout WHEN the timeout signal aborts fetch THEN it throws a timeout error", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi.fn(
+        (_url: string | URL | Request, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              const abortError = new Error("The operation was aborted");
+              abortError.name = "AbortError";
+              reject(abortError);
+            });
+          }),
+      );
+      const client = new DmkNetworkClient({ fetch: fetchMock });
+
+      const request = client
+        .get("https://api.example.com/items", { timeoutMs: 1000 })
+        .catch((e: unknown) => e);
+
+      await vi.advanceTimersByTimeAsync(1000);
+      const error = await request;
+
+      expect(error).toBeInstanceOf(DmkNetworkClientError);
+      expect((error as DmkNetworkClientError).isTimeout).toBe(true);
+    });
+
     it("should mark the error as a timeout when fetch rejects with TimeoutError", async () => {
       const timeoutError = new Error("The operation was aborted");
       timeoutError.name = "TimeoutError";
