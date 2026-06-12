@@ -54,6 +54,17 @@ describe("Base64String", () => {
       expect(result).toBeTruthy();
     });
 
+    it("GIVEN a base64 string with whitespace WHEN validating THEN it returns true", () => {
+      // GIVEN
+      const value = "AQID\nkAA=";
+
+      // WHEN
+      const result = isBase64String(value);
+
+      // THEN
+      expect(result).toBeTruthy();
+    });
+
     it("should return false for an invalid base64 string", () => {
       // GIVEN
       const value = "invalid base64 string";
@@ -126,6 +137,19 @@ describe("Base64String", () => {
 
       // THEN
       expect(result).toStrictEqual(null);
+    });
+
+    it("GIVEN a base64 string with whitespace WHEN decoding THEN it ignores the whitespace", () => {
+      // GIVEN
+      const value = "AQID\nkAA=";
+
+      // WHEN
+      const result = base64StringToBuffer(value);
+
+      // THEN
+      expect(result).toStrictEqual(
+        Uint8Array.from([0x01, 0x02, 0x03, 0x90, 0x00]),
+      );
     });
 
     describe("runtime compatibility fallbacks", () => {
