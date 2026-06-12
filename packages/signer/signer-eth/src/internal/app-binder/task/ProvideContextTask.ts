@@ -36,6 +36,8 @@ import {
   SendPayloadInChunksTask,
   type SendPayloadInChunksTaskArgs,
 } from "./SendPayloadInChunksTask";
+import { SendProvideContactTask } from "./SendProvideContactTask";
+import { SendProvideLedgerAccountTask } from "./SendProvideLedgerAccountTask";
 
 export type ProvideContextTaskArgs = {
   /**
@@ -218,6 +220,20 @@ export class ProvideContextTask {
               isFirstChunk: args.isFirstChunk,
             }),
         }).run();
+      case ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL: {
+        const { decoration } = this._args.context;
+        return await new SendProvideContactTask(this._api, {
+          ...decoration,
+          logger: this._logger,
+        }).run();
+      }
+      case ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT: {
+        const { decoration } = this._args.context;
+        return await new SendProvideLedgerAccountTask(this._api, {
+          ...decoration,
+          logger: this._logger,
+        }).run();
+      }
       default: {
         const uncoveredType: never = type;
         return CommandResultFactory({

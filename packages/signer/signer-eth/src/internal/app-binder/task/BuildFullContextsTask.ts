@@ -1,6 +1,7 @@
 import {
   type ClearSignContext,
   ClearSignContextReferenceType,
+  type ClearSignContextSuccess,
   ClearSignContextType,
   type ContextModule,
   type EthereumClearSignContextSuccess,
@@ -81,11 +82,20 @@ export class BuildFullContextsTask {
 
     // get the base contexts
     const {
-      clearSignContexts,
+      clearSignContexts: rawClearSignContexts,
       clearSigningType,
       clearSignContextsOptional,
       contextErrorCount,
     } = await this._buildBaseContextsTaskFactory(this._api, this._args).run();
+
+    // Contacts wins on collision: drop TRUSTED_NAME (ENS, etc.)
+    // entries whose target address is also covered by a CONTACT_*
+    // entry, so the device renders the user-chosen friendly name
+    // rather than the trusted-name source. TrustedName loaders only
+    // resolve `subset.to`, so the check reduces to "is `subset.to`
+    // covered by a CONTACT_*?".
+    const clearSignContexts =
+      this._dropTrustedNameSupersededByContact(rawClearSignContexts);
 
     this._logger.debug("[run] Base contexts built", {
       data: {
@@ -170,5 +180,33 @@ export class BuildFullContextsTask {
       clearSigningType,
       contextErrorCount,
     };
+  }
+
+  private _dropTrustedNameSupersededByContact(
+    contexts: EthereumClearSignContextSuccess[],
+  ): EthereumClearSignContextSuccess[] {
+    const addressesCoveredByContacts = new Set(
+      contexts
+        .filter(
+          (c) =>
+            c.type === ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL ||
+            c.type === ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT,
+        )
+        .map((c) =>
+          (
+            c as ClearSignContextSuccess<
+              | ClearSignContextType.ETHEREUM_CONTACT_EXTERNAL
+              | ClearSignContextType.ETHEREUM_CONTACT_LEDGER_ACCOUNT
+            >
+          ).address.toLowerCase(),
+        ),
+    );
+    const toAddress = this._args.subset.to?.toLowerCase();
+    if (!toAddress || !addressesCoveredByContacts.has(toAddress)) {
+      return contexts;
+    }
+    return contexts.filter(
+      (c) => c.type !== ClearSignContextType.ETHEREUM_TRUSTED_NAME,
+    );
   }
 }
