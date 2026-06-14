@@ -2,6 +2,10 @@
 // ~/dev/ledger-contacts-playground/docs/fixtures/apdu-traces.json
 //   - edit_external_address_label  (Alice / Eth main → Eth cold, single APDU)
 import { CommandResultStatus } from "@api/command/model/CommandResult";
+import {
+  CONTACT_SEED_MISMATCH_ERROR_CODE,
+  ContactsCommandError,
+} from "@api/contacts/ContactsErrors";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 import { EditScopeCommand } from "./EditScopeCommand";
@@ -124,7 +128,7 @@ describe("EditScopeCommand", () => {
       expect(result.status).toBe(CommandResultStatus.Error);
     });
 
-    it("surfaces a non-9000 SW via the global error handler", () => {
+    it("surfaces a non-9000 SW as a contacts/global error", () => {
       const command = new EditScopeCommand({
         data: new Uint8Array(),
         p2: 0x00,
@@ -136,6 +140,28 @@ describe("EditScopeCommand", () => {
       });
 
       expect(result.status).toBe(CommandResultStatus.Error);
+    });
+
+    it("maps SW=0x6982 to a seed-mismatch ContactsCommandError", () => {
+      // 0x6982 from an edit-scope operation means the seed-bound HMAC
+      // verification failed — the entry was registered with a different seed.
+      const command = new EditScopeCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
+
+      const result = command.parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x69, 0x82]),
+      });
+
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(ContactsCommandError);
+        expect((result.error as ContactsCommandError).errorCode).toBe(
+          CONTACT_SEED_MISMATCH_ERROR_CODE,
+        );
+      }
     });
   });
 });

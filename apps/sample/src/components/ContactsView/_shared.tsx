@@ -95,7 +95,15 @@ export function describeDeviceError(error: unknown): string {
       }).`;
     }
     if (code === "6982") {
-      return `HMAC mismatch (${codeTag}) — the device cannot verify the proof your wallet supplied. Likely cause: the contact was registered against a different firmware/app build than what is on the device now (the K_identity derivation can shift across firmware versions; reset the contact book and re-register).`;
+      // Seed-bound address book: 0x6982 means the device's HMAC / group-handle
+      // verification failed — the entry was registered with a different seed.
+      // DMK now surfaces this as a typed ContactsCommandError with a clear
+      // message, so prefer it and fall back to a stable sentence.
+      const seedMismatch =
+        message && message !== "UnknownError"
+          ? message
+          : "This address-book entry was registered with a different seed. Connect the Ledger device that registered it to modify this contact.";
+      return `${seedMismatch} (${codeTag}).`;
     }
     return message && message !== "UnknownError"
       ? `${message} (${codeTag}).`

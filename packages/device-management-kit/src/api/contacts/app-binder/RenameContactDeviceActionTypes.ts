@@ -1,3 +1,6 @@
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
+import { type ContactsErrorCodes } from "@api/contacts/ContactsErrors";
+import { type RenameContactResult } from "@api/contacts/model/RenameContactArgs";
 import { type ExecuteDeviceActionReturnType } from "@api/device-action/DeviceAction";
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
@@ -6,11 +9,11 @@ import {
   type OpenAppDARequiredInteraction,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 
-import { type RenameContactResult } from "@api/contacts/model/RenameContactArgs";
-
 export type RenameContactDAOutput = RenameContactResult;
 
-export type RenameContactDAError = OpenAppDAError;
+export type RenameContactDAError =
+  | OpenAppDAError
+  | CommandErrorResult<ContactsErrorCodes>["error"];
 
 type RenameContactDARequiredInteraction =
   | OpenAppDARequiredInteraction

@@ -1,8 +1,12 @@
 // Byte-level parity with the playground fixture at
 // ~/dev/ledger-contacts-playground/docs/fixtures/apdu-traces.json
 //   - edit_external_address  (Alice / Eth main address swap, single APDU)
-import { CommandResultStatus } from "@ledgerhq/device-management-kit";
-import { type ApduResponse } from "@ledgerhq/device-management-kit";
+import {
+  type ApduResponse,
+  CommandResultStatus,
+  CONTACT_SEED_MISMATCH_ERROR_CODE,
+  ContactsCommandError,
+} from "@ledgerhq/device-management-kit";
 
 import { EditIdentifierCommand } from "./EditIdentifierCommand";
 
@@ -124,7 +128,7 @@ describe("EditIdentifierCommand", () => {
       expect(result.status).toBe(CommandResultStatus.Error);
     });
 
-    it("surfaces a non-9000 SW via the eth-app error helper", () => {
+    it("surfaces a non-9000 SW via the contacts error helper", () => {
       const command = new EditIdentifierCommand({
         data: new Uint8Array(),
         p2: 0x00,
@@ -136,6 +140,28 @@ describe("EditIdentifierCommand", () => {
       });
 
       expect(result.status).toBe(CommandResultStatus.Error);
+    });
+
+    it("maps SW=0x6982 to a seed-mismatch ContactsCommandError", () => {
+      // The device returns 0x6982 only when the seed-bound HMAC / group-handle
+      // verification fails — i.e. the entry was registered with another seed.
+      const command = new EditIdentifierCommand({
+        data: new Uint8Array(),
+        p2: 0x00,
+      });
+
+      const result = command.parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x69, 0x82]),
+      });
+
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(ContactsCommandError);
+        expect((result.error as ContactsCommandError).errorCode).toBe(
+          CONTACT_SEED_MISMATCH_ERROR_CODE,
+        );
+      }
     });
   });
 });

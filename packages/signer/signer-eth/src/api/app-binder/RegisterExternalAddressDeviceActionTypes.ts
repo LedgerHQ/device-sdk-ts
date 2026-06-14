@@ -1,5 +1,6 @@
 import {
   type CommandErrorResult,
+  type ContactsErrorCodes,
   type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
@@ -8,13 +9,12 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { type RegisterExternalAddressResult } from "@api/model/RegisterExternalAddressArgs";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 export type RegisterExternalAddressDAOutput = RegisterExternalAddressResult;
 
 export type RegisterExternalAddressDAError =
   | OpenAppDAError
-  | CommandErrorResult<EthErrorCodes>["error"];
+  | CommandErrorResult<ContactsErrorCodes>["error"];
 
 type RegisterExternalAddressDARequiredInteraction =
   | OpenAppDARequiredInteraction

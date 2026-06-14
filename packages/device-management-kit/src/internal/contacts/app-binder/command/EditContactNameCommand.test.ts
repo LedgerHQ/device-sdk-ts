@@ -2,6 +2,10 @@
 // ~/dev/ledger-contacts-playground/docs/fixtures/apdu-traces.json
 //   - rename_contact_one_apdu  (Alice → Alicia, single APDU)
 import { CommandResultStatus } from "@api/command/model/CommandResult";
+import {
+  CONTACT_SEED_MISMATCH_ERROR_CODE,
+  ContactsCommandError,
+} from "@api/contacts/ContactsErrors";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 import { EditContactNameCommand } from "./EditContactNameCommand";
@@ -67,7 +71,7 @@ describe("EditContactNameCommand", () => {
       expect(result.status).toBe(CommandResultStatus.Error);
     });
 
-    it("surfaces a non-9000 SW via the global error handler", () => {
+    it("surfaces a non-9000 SW as a contacts/global error", () => {
       const command = new EditContactNameCommand({ data: new Uint8Array() });
 
       const result = command.parseResponse({
@@ -76,6 +80,26 @@ describe("EditContactNameCommand", () => {
       });
 
       expect(result.status).toBe(CommandResultStatus.Error);
+    });
+
+    it("maps SW=0x6982 to a seed-mismatch ContactsCommandError", () => {
+      // The device returns 0x6982 (before showing any UI) only when the
+      // seed-bound HMAC verification fails — i.e. the contact was registered
+      // with a different seed. Previously this surfaced as an UnknownError.
+      const command = new EditContactNameCommand({ data: new Uint8Array() });
+
+      const result = command.parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x69, 0x82]),
+      });
+
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(ContactsCommandError);
+        expect((result.error as ContactsCommandError).errorCode).toBe(
+          CONTACT_SEED_MISMATCH_ERROR_CODE,
+        );
+      }
     });
   });
 });

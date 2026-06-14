@@ -12,6 +12,14 @@ export {
   type RenameContactDAReturnType,
   type RenameContactDAState,
 } from "@api/contacts/app-binder/RenameContactDeviceActionTypes";
+export {
+  CONTACT_SEED_MISMATCH_ERROR_CODE,
+  CONTACTS_APP_ERRORS,
+  ContactsCommandError,
+  contactsCommandErrorFactory,
+  type ContactsErrorCodes,
+  getContactsCommandError,
+} from "@api/contacts/ContactsErrors";
 export { type ContactsService } from "@api/contacts/ContactsService";
 export { ContactsServiceBuilder } from "@api/contacts/ContactsServiceBuilder";
 export {

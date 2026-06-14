@@ -14,6 +14,7 @@ import {
   type CommandResult,
   CommandResultFactory,
   CONTACTS_TLV_TAG,
+  type ContactsErrorCodes,
   encodeTlvAscii,
   encodeTlvBuffer,
   encodeTlvChainId,
@@ -35,7 +36,6 @@ import {
   type EditExternalAddressResult,
 } from "@api/model/EditExternalAddressArgs";
 import { EditIdentifierCommand } from "@internal/app-binder/command/EditIdentifierCommand";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 const SUB_CMD_EDIT_IDENTIFIER = 0x03;
 
@@ -54,7 +54,7 @@ export class SendEditIdentifierTask {
   }
 
   async run(): Promise<
-    CommandResult<EditExternalAddressResult, EthErrorCodes>
+    CommandResult<EditExternalAddressResult, ContactsErrorCodes>
   > {
     this._logger.debug("[run] Starting SendEditIdentifierTask", {
       data: {
@@ -71,10 +71,7 @@ export class SendEditIdentifierTask {
       p1: SUB_CMD_EDIT_IDENTIFIER,
       makeCommand: (chunk, p2) =>
         new EditIdentifierCommand({ data: chunk, p2 }),
-    })) as CommandResult<
-      { readonly hmacRestHex?: string },
-      EthErrorCodes
-    >;
+    })) as CommandResult<{ readonly hmacRestHex?: string }, ContactsErrorCodes>;
 
     if (!isSuccessCommandResult(result)) {
       return result;
