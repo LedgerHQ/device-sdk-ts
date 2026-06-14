@@ -17,17 +17,14 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
+  CONTACTS_APP_ERRORS,
+  contactsCommandErrorFactory,
+  type ContactsErrorCodes,
   InvalidStatusWordError,
   STRUCT_TYPE_EDIT_IDENTIFIER,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
-
-import {
-  ETH_APP_ERRORS,
-  EthAppCommandErrorFactory,
-  type EthErrorCodes,
-} from "./utils/ethAppErrors";
 
 export type EditIdentifierCommandArgs = {
   /** One framed chunk built by sendFramedContactsPayload. */
@@ -53,14 +50,18 @@ const HMAC_REST_BYTES = 32;
 
 export class EditIdentifierCommand
   implements
-    Command<EditIdentifierCommandResponse, EditIdentifierCommandArgs, EthErrorCodes>
+    Command<
+      EditIdentifierCommandResponse,
+      EditIdentifierCommandArgs,
+      ContactsErrorCodes
+    >
 {
   readonly name = "editIdentifier";
   readonly args: EditIdentifierCommandArgs;
   private readonly errorHelper = new CommandErrorHelper<
     EditIdentifierCommandResponse,
-    EthErrorCodes
-  >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
+    ContactsErrorCodes
+  >(CONTACTS_APP_ERRORS, contactsCommandErrorFactory);
 
   constructor(args: EditIdentifierCommandArgs) {
     this.args = args;
@@ -79,7 +80,7 @@ export class EditIdentifierCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<EditIdentifierCommandResponse, EthErrorCodes> {
+  ): CommandResult<EditIdentifierCommandResponse, ContactsErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {

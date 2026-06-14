@@ -11,6 +11,7 @@
 import {
   ByteArrayBuilder,
   type CommandResult,
+  type ContactsErrorCodes,
   DmkResultFactory,
   type InternalApi,
   InvalidStatusWordError,
@@ -35,7 +36,6 @@ import {
   RegisterIdentityCommand,
   type RegisterIdentityCommandResponse,
 } from "@internal/app-binder/command/RegisterIdentityCommand";
-import { type EthErrorCodes } from "@internal/app-binder/command/utils/ethAppErrors";
 
 const APDU_DATA_MAX_BYTES = 255;
 
@@ -54,7 +54,7 @@ export class SendRegisterIdentityTask {
   }
 
   async run(): Promise<
-    CommandResult<RegisterIdentityCommandResponse, EthErrorCodes>
+    CommandResult<RegisterIdentityCommandResponse, ContactsErrorCodes>
   > {
     const payload = this.buildPayload(this.args);
 

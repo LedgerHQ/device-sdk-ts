@@ -5,6 +5,8 @@
 import {
   type ApduResponse,
   CommandResultStatus,
+  CONTACT_SEED_MISMATCH_ERROR_CODE,
+  ContactsCommandError,
 } from "@ledgerhq/device-management-kit";
 
 import { RegisterIdentityCommand } from "./RegisterIdentityCommand";
@@ -113,7 +115,7 @@ describe("RegisterIdentityCommand", () => {
       expect(result.status).toBe(CommandResultStatus.Error);
     });
 
-    it("maps a known SW (0x6985 user-cancel) to an EthAppCommandError", () => {
+    it("maps a known SW (0x6985) to a ContactsCommandError", () => {
       const command = new RegisterIdentityCommand({ data: new Uint8Array() });
 
       const result = command.parseResponse({
@@ -122,6 +124,29 @@ describe("RegisterIdentityCommand", () => {
       });
 
       expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(ContactsCommandError);
+        expect((result.error as ContactsCommandError).errorCode).toBe("6985");
+      }
+    });
+
+    it("maps SW=0x6982 to a seed-mismatch ContactsCommandError", () => {
+      // Reached when extending an existing contact whose group handle was
+      // registered with another seed (once the app verifies before the UI).
+      const command = new RegisterIdentityCommand({ data: new Uint8Array() });
+
+      const result = command.parseResponse({
+        data: Buffer.from([]),
+        statusCode: Buffer.from([0x69, 0x82]),
+      });
+
+      expect(result.status).toBe(CommandResultStatus.Error);
+      if (result.status === CommandResultStatus.Error) {
+        expect(result.error).toBeInstanceOf(ContactsCommandError);
+        expect((result.error as ContactsCommandError).errorCode).toBe(
+          CONTACT_SEED_MISMATCH_ERROR_CODE,
+        );
+      }
     });
   });
 });

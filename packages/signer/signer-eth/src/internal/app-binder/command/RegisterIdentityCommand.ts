@@ -11,16 +11,13 @@ import {
   type Command,
   type CommandResult,
   CommandResultFactory,
+  CONTACTS_APP_ERRORS,
+  contactsCommandErrorFactory,
+  type ContactsErrorCodes,
   InvalidStatusWordError,
 } from "@ledgerhq/device-management-kit";
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
-
-import {
-  ETH_APP_ERRORS,
-  EthAppCommandErrorFactory,
-  type EthErrorCodes,
-} from "./utils/ethAppErrors";
 
 export type RegisterIdentityCommandArgs = {
   /** Pre-assembled TLV payload (≤ 255 bytes). Built by SendRegisterIdentityTask. */
@@ -48,15 +45,15 @@ export class RegisterIdentityCommand
     Command<
       RegisterIdentityCommandResponse,
       RegisterIdentityCommandArgs,
-      EthErrorCodes
+      ContactsErrorCodes
     >
 {
   readonly name = "registerIdentity";
   readonly args: RegisterIdentityCommandArgs;
   private readonly errorHelper = new CommandErrorHelper<
     RegisterIdentityCommandResponse,
-    EthErrorCodes
-  >(ETH_APP_ERRORS, EthAppCommandErrorFactory);
+    ContactsErrorCodes
+  >(CONTACTS_APP_ERRORS, contactsCommandErrorFactory);
 
   constructor(args: RegisterIdentityCommandArgs) {
     this.args = args;
@@ -75,7 +72,7 @@ export class RegisterIdentityCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<RegisterIdentityCommandResponse, EthErrorCodes> {
+  ): CommandResult<RegisterIdentityCommandResponse, ContactsErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {

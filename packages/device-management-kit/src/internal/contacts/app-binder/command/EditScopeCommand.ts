@@ -14,14 +14,17 @@ import { type Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { type Command } from "@api/command/Command";
+import { InvalidStatusWordError } from "@api/command/Errors";
 import {
   type CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
-import { InvalidStatusWordError } from "@api/command/Errors";
-import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
-import { type ApduResponse } from "@api/device-session/ApduResponse";
+import {
+  type ContactsErrorCodes,
+  getContactsCommandError,
+} from "@api/contacts/ContactsErrors";
 import { STRUCT_TYPE_EDIT_SCOPE } from "@api/contacts/utils/contactsTlvSerializer";
+import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 export type EditScopeCommandArgs = {
   /** One framed chunk built by sendFramedContactsPayload. */
@@ -46,7 +49,8 @@ const EDIT_SCOPE_P1 = 0x04;
 const HMAC_REST_BYTES = 32;
 
 export class EditScopeCommand
-  implements Command<EditScopeCommandResponse, EditScopeCommandArgs>
+  implements
+    Command<EditScopeCommandResponse, EditScopeCommandArgs, ContactsErrorCodes>
 {
   readonly name = "editScope";
   readonly args: EditScopeCommandArgs;
@@ -68,11 +72,11 @@ export class EditScopeCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<EditScopeCommandResponse> {
+  ): CommandResult<EditScopeCommandResponse, ContactsErrorCodes> {
     const sw = response.statusCode;
     if (sw[0] !== 0x90 || sw[1] !== 0x00) {
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        error: getContactsCommandError(response),
       });
     }
 

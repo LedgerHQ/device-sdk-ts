@@ -10,6 +10,7 @@
 import { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 import { InvalidStatusWordError } from "@api/command/Errors";
 import { type CommandResult } from "@api/command/model/CommandResult";
+import { type ContactsErrorCodes } from "@api/contacts/ContactsErrors";
 import { type RenameContactArgs } from "@api/contacts/model/RenameContactArgs";
 import {
   CONTACTS_TLV_TAG,
@@ -45,7 +46,9 @@ export class SendEditContactNameTask {
     this._logger = args.logger;
   }
 
-  async run(): Promise<CommandResult<EditContactNameCommandResponse>> {
+  async run(): Promise<
+    CommandResult<EditContactNameCommandResponse, ContactsErrorCodes>
+  > {
     const payload = this.buildPayload(this.args);
 
     this._logger.info("[run] payload built", {

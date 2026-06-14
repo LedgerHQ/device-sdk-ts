@@ -1,5 +1,8 @@
 // Typed-only in M3 (the method is stubbed in DefaultContactsService);
 // fully wired in M4.
+import { type CommandErrorResult } from "@api/command/model/CommandResult";
+import { type ContactsErrorCodes } from "@api/contacts/ContactsErrors";
+import { type EditExternalAddressLabelResult } from "@api/contacts/model/EditExternalAddressLabelArgs";
 import { type ExecuteDeviceActionReturnType } from "@api/device-action/DeviceAction";
 import { type DeviceActionState } from "@api/device-action/model/DeviceActionState";
 import { type UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
@@ -8,11 +11,11 @@ import {
   type OpenAppDARequiredInteraction,
 } from "@api/device-action/os/OpenAppDeviceAction/types";
 
-import { type EditExternalAddressLabelResult } from "@api/contacts/model/EditExternalAddressLabelArgs";
-
 export type EditExternalAddressLabelDAOutput = EditExternalAddressLabelResult;
 
-export type EditExternalAddressLabelDAError = OpenAppDAError;
+export type EditExternalAddressLabelDAError =
+  | OpenAppDAError
+  | CommandErrorResult<ContactsErrorCodes>["error"];
 
 type EditExternalAddressLabelDARequiredInteraction =
   | OpenAppDARequiredInteraction
@@ -28,8 +31,9 @@ export type EditExternalAddressLabelDAState = DeviceActionState<
   EditExternalAddressLabelDAIntermediateValue
 >;
 
-export type EditExternalAddressLabelDAReturnType = ExecuteDeviceActionReturnType<
-  EditExternalAddressLabelDAOutput,
-  EditExternalAddressLabelDAError,
-  EditExternalAddressLabelDAIntermediateValue
->;
+export type EditExternalAddressLabelDAReturnType =
+  ExecuteDeviceActionReturnType<
+    EditExternalAddressLabelDAOutput,
+    EditExternalAddressLabelDAError,
+    EditExternalAddressLabelDAIntermediateValue
+  >;

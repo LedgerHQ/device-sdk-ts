@@ -11,12 +11,15 @@ import { type Apdu } from "@api/apdu/model/Apdu";
 import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { type Command } from "@api/command/Command";
+import { InvalidStatusWordError } from "@api/command/Errors";
 import {
   type CommandResult,
   CommandResultFactory,
 } from "@api/command/model/CommandResult";
-import { InvalidStatusWordError } from "@api/command/Errors";
-import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
+import {
+  type ContactsErrorCodes,
+  getContactsCommandError,
+} from "@api/contacts/ContactsErrors";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 
 export type EditContactNameCommandArgs = {
@@ -37,7 +40,12 @@ const RESPONSE_STRUCT_TYPE = 0x2e;
 const HMAC_NAME_BYTES = 32;
 
 export class EditContactNameCommand
-  implements Command<EditContactNameCommandResponse, EditContactNameCommandArgs>
+  implements
+    Command<
+      EditContactNameCommandResponse,
+      EditContactNameCommandArgs,
+      ContactsErrorCodes
+    >
 {
   readonly name = "editContactName";
   readonly args: EditContactNameCommandArgs;
@@ -59,11 +67,11 @@ export class EditContactNameCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<EditContactNameCommandResponse> {
+  ): CommandResult<EditContactNameCommandResponse, ContactsErrorCodes> {
     const sw = response.statusCode;
     if (sw[0] !== 0x90 || sw[1] !== 0x00) {
       return CommandResultFactory({
-        error: GlobalCommandErrorHandler.handle(response),
+        error: getContactsCommandError(response),
       });
     }
 
