@@ -518,13 +518,13 @@ importers:
         version: 9.1.0
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
       tsx:
         specifier: 'catalog:'
         version: 4.19.2
       vitest:
         specifier: 'catalog:'
-        version: 3.2.4(@types/debug@4.1.12)(@types/node@24.3.0)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
+        version: 3.2.4(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
 
   apps/devtools:
     dependencies:
@@ -828,7 +828,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -1129,7 +1129,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/devtools/core:
     devDependencies:
@@ -1392,7 +1392,7 @@ importers:
         version: 2.0.4
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/mockserver-client:
     devDependencies:
@@ -1456,7 +1456,7 @@ importers:
         version: 4.2.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-aleo:
     dependencies:
@@ -1502,7 +1502,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-btc:
     dependencies:
@@ -1554,7 +1554,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-concordium:
     dependencies:
@@ -1600,7 +1600,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-cosmos:
     dependencies:
@@ -1643,7 +1643,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-eth:
     dependencies:
@@ -1698,7 +1698,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-hyperliquid:
     dependencies:
@@ -1744,7 +1744,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-polkadot:
     dependencies:
@@ -1787,7 +1787,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-solana:
     dependencies:
@@ -1851,7 +1851,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-utils:
     dependencies:
@@ -1882,7 +1882,7 @@ importers:
         version: 7.7.0
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/signer/signer-zcash:
     dependencies:
@@ -1928,7 +1928,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/speculos-device-controller:
     dependencies:
@@ -1956,7 +1956,7 @@ importers:
         version: link:../config/vitest
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/tools/cal-interceptor:
     devDependencies:
@@ -2079,7 +2079,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/transport/node-hid:
     dependencies:
@@ -2125,7 +2125,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/transport/rn-ble:
     dependencies:
@@ -2165,7 +2165,7 @@ importers:
         version: 10.0.0
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 5.0.1(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 5.0.1(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       react-native:
         specifier: 'catalog:'
         version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
@@ -2177,10 +2177,10 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
       vitest-react-native:
         specifier: 'catalog:'
-        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
 
   packages/transport/rn-hid:
     dependencies:
@@ -2254,7 +2254,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/transport/web-ble:
     dependencies:
@@ -2297,7 +2297,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/transport/web-hid:
     dependencies:
@@ -2340,7 +2340,7 @@ importers:
         version: 7.8.2
       ts-node:
         specifier: 'catalog:'
-        version: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
+        version: 10.9.2(@types/node@22.10.1)(typescript@5.9.2)
 
   packages/trusted-apps/ledger-keyring-protocol:
     dependencies:
@@ -6310,6 +6310,7 @@ packages:
 
   '@ungap/structured-clone@1.2.0':
     resolution: {integrity: sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@vitejs/plugin-react@4.7.0':
     resolution: {integrity: sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==}
@@ -6434,6 +6435,7 @@ packages:
   '@xmldom/xmldom@0.8.11':
     resolution: {integrity: sha512-cQzWCtO6C8TQiYl1ruKNn2U6Ao4o4WBBcbL61yJl84x+j5sOWWFU9X7DpND8XZG3daDppSsigMdfAIl2upQBRw==}
     engines: {node: '>=10.0.0'}
+    deprecated: this version has critical issues, please update to the latest version
 
   '@xtuc/ieee754@1.2.0':
     resolution: {integrity: sha512-DX8nKgqcGwsc0eJSqYt5lwP4DH5FlHnmuWWBRy7X0NcaGR0ZtuyeESgMwTYVEtxmsNGY+qit4QYT/MIYTOTPeA==}
@@ -6848,6 +6850,7 @@ packages:
   basic-ftp@5.0.4:
     resolution: {integrity: sha512-8PzkB0arJFV4jJWSGOYR+OEic6aeKMu/osRhBULN6RY0ykby6LKhbmuQ5ublvaas5BOwboah5D87nrHyuh8PPA==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   bech32@2.0.0:
     resolution: {integrity: sha512-LcknSilhIGatDAsY1ak2I8VtGaHNhgMSYVxFrGLXv+xLHytaKZKcaUJJUE7qmBr7h33o5YQwP55pMI0xmkpJwg==}
@@ -12744,10 +12747,12 @@ packages:
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   v8-compile-cache-lib@3.0.1:
@@ -16406,7 +16411,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -16415,9 +16420,7 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -17832,18 +17835,6 @@ snapshots:
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
       vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@vitejs/plugin-react@5.0.1(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
-    dependencies:
-      '@babel/core': 7.28.3
-      '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.3)
-      '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.28.3)
-      '@rolldown/pluginutils': 1.0.0-beta.32
-      '@types/babel__core': 7.20.5
-      react-refresh: 0.17.0
-      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -25721,25 +25712,6 @@ snapshots:
       typescript: 5.9.2
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
-    optional: true
-
-  ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2):
-    dependencies:
-      '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.9
-      '@tsconfig/node12': 1.0.11
-      '@tsconfig/node14': 1.0.3
-      '@tsconfig/node16': 1.0.4
-      '@types/node': 24.3.0
-      acorn: 8.15.0
-      acorn-walk: 8.3.1
-      arg: 4.1.3
-      create-require: 1.1.1
-      diff: 4.0.2
-      make-error: 1.3.6
-      typescript: 5.9.2
-      v8-compile-cache-lib: 3.0.1
-      yn: 3.1.1
 
   tsc-alias@1.8.10:
     dependencies:
@@ -26124,13 +26096,13 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  vite-node@3.2.4(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
+  vite-node@3.2.4(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3(supports-color@5.5.0)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -26145,13 +26117,13 @@ snapshots:
       - tsx
       - yaml
 
-  vite-node@3.2.4(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
+  vite-node@3.2.4(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3(supports-color@5.5.0)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
+      vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -26189,6 +26161,22 @@ snapshots:
     dependencies:
       flow-remove-types: 2.295.0
 
+  vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
+    dependencies:
+      esbuild: 0.25.12
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
+      postcss: 8.5.6
+      rollup: 4.55.1
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 22.10.1
+      fsevents: 2.3.3
+      jiti: 1.21.6
+      terser: 5.43.1
+      tsx: 4.19.2
+      yaml: 2.7.0
+
   vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
     dependencies:
       esbuild: 0.25.12
@@ -26203,22 +26191,6 @@ snapshots:
       jiti: 1.21.6
       terser: 5.43.1
       tsx: 4.20.3
-      yaml: 2.7.0
-
-  vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
-    dependencies:
-      esbuild: 0.25.12
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
-      postcss: 8.5.6
-      rollup: 4.55.1
-      tinyglobby: 0.2.15
-    optionalDependencies:
-      '@types/node': 24.3.0
-      fsevents: 2.3.3
-      jiti: 1.21.6
-      terser: 5.43.1
-      tsx: 4.19.2
       yaml: 2.7.0
 
   vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
@@ -26237,7 +26209,7 @@ snapshots:
       tsx: 4.20.3
       yaml: 2.7.0
 
-  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
+  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
     dependencies:
       '@bunchtogether/vite-plugin-flow': 1.0.2
       '@react-native/polyfills': 2.0.0
@@ -26247,7 +26219,50 @@ snapshots:
       react: 18.3.1
       react-native: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
       regenerator-runtime: 0.13.11
-      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+
+  vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
+    dependencies:
+      '@types/chai': 5.2.2
+      '@vitest/expect': 3.2.4
+      '@vitest/mocker': 3.2.4(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+      '@vitest/pretty-format': 3.2.4
+      '@vitest/runner': 3.2.4
+      '@vitest/snapshot': 3.2.4
+      '@vitest/spy': 3.2.4
+      '@vitest/utils': 3.2.4
+      chai: 5.2.0
+      debug: 4.4.3(supports-color@5.5.0)
+      expect-type: 1.2.1
+      magic-string: 0.30.17
+      pathe: 2.0.3
+      picomatch: 4.0.3
+      std-env: 3.9.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.15
+      tinypool: 1.1.1
+      tinyrainbow: 2.0.0
+      vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
+      vite-node: 3.2.4(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@types/debug': 4.1.12
+      '@types/node': 22.10.1
+      jsdom: 26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+    transitivePeerDependencies:
+      - jiti
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
 
   vitest@3.2.4(@types/debug@4.1.12)(@types/node@22.10.1)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
     dependencies:
@@ -26277,49 +26292,6 @@ snapshots:
     optionalDependencies:
       '@types/debug': 4.1.12
       '@types/node': 22.10.1
-      jsdom: 26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-    transitivePeerDependencies:
-      - jiti
-      - less
-      - lightningcss
-      - msw
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
-      - tsx
-      - yaml
-
-  vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.3.0)(jiti@1.21.6)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
-    dependencies:
-      '@types/chai': 5.2.2
-      '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
-      '@vitest/pretty-format': 3.2.4
-      '@vitest/runner': 3.2.4
-      '@vitest/snapshot': 3.2.4
-      '@vitest/spy': 3.2.4
-      '@vitest/utils': 3.2.4
-      chai: 5.2.0
-      debug: 4.4.3(supports-color@5.5.0)
-      expect-type: 1.2.1
-      magic-string: 0.30.17
-      pathe: 2.0.3
-      picomatch: 4.0.3
-      std-env: 3.9.0
-      tinybench: 2.9.0
-      tinyexec: 0.3.2
-      tinyglobby: 0.2.15
-      tinypool: 1.1.1
-      tinyrainbow: 2.0.0
-      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
-      vite-node: 3.2.4(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
-      why-is-node-running: 2.3.0
-    optionalDependencies:
-      '@types/debug': 4.1.12
-      '@types/node': 24.3.0
       jsdom: 26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - jiti
