@@ -9,6 +9,7 @@ import { UserInteractionRequired } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
 import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
+import { type EditLedgerAccountDAReturnType } from "@api/app-binder/EditLedgerAccountDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
@@ -18,6 +19,7 @@ import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactio
 import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDeviceActionTypes";
 import { VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
+import { type EditLedgerAccountArgs } from "@api/model/EditLedgerAccountArgs";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { type RegisterLedgerAccountArgs } from "@api/model/RegisterLedgerAccountArgs";
 import { SafeAddressOptions } from "@api/model/SafeAddressOptions";
@@ -34,6 +36,7 @@ import { type TypedDataParserService } from "@internal/typed-data/service/TypedD
 import { SignTransactionDeviceAction } from "./device-action/SignTransaction/SignTransactionDeviceAction";
 import { VerifySafeAddressDeviceAction } from "./device-action/VerifySafeAddress/VerifySafeAddress";
 import { SendEditIdentifierTask } from "./task/SendEditIdentifierTask";
+import { SendEditLedgerAccountTask } from "./task/SendEditLedgerAccountTask";
 import { SendGetAddressTask } from "./task/SendGetAddressTask";
 import { SendRegisterIdentityTask } from "./task/SendRegisterIdentityTask";
 import { SendRegisterLedgerAccountTask } from "./task/SendRegisterLedgerAccountTask";
@@ -211,6 +214,28 @@ export class EthAppBinder {
           skipOpenApp: false,
         },
         logger: this.dmkLoggerFactory("SendRegisterLedgerAccountTask"),
+      }),
+    });
+  }
+
+  editLedgerAccount(
+    args: EditLedgerAccountArgs,
+  ): EditLedgerAccountDAReturnType {
+    const taskLogger = this.dmkLoggerFactory("SendEditLedgerAccountTask");
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi) =>
+            new SendEditLedgerAccountTask(internalApi, {
+              ...args,
+              logger: taskLogger,
+            }).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.RegisterWallet,
+          skipOpenApp: false,
+        },
+        logger: this.dmkLoggerFactory("SendEditLedgerAccountTask"),
       }),
     });
   }

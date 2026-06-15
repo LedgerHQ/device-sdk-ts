@@ -5,6 +5,14 @@ export {
   type EditExternalAddressDAReturnType,
   type EditExternalAddressDAState,
 } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
+export {
+  type EditLedgerAccountDAError,
+  type EditLedgerAccountDAInput,
+  type EditLedgerAccountDAIntermediateValue,
+  type EditLedgerAccountDAOutput,
+  type EditLedgerAccountDAReturnType,
+  type EditLedgerAccountDAState,
+} from "@api/app-binder/EditLedgerAccountDeviceActionTypes";
 export { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
 export {
   type GetAddressDAError,
@@ -65,6 +73,7 @@ export {
 export * from "@api/model/Address";
 export * from "@api/model/AddressOptions";
 export * from "@api/model/EditExternalAddressArgs";
+export * from "@api/model/EditLedgerAccountArgs";
 export * from "@api/model/RegisterExternalAddressArgs";
 export * from "@api/model/RegisterLedgerAccountArgs";
 export * from "@api/model/Signature";
