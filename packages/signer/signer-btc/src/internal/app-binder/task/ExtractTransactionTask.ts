@@ -55,7 +55,7 @@ export class ExtractTransactionTask {
       transaction.addBufferToData(
         psbt
           .getInputValue(i, PsbtIn.PREVIOUS_TXID)
-          .mapOrDefault((v) => v.data, Buffer.from([])),
+          .mapOrDefault((v) => v.data, new Uint8Array()),
       );
       const outputIndex = psbt
         .getInputValue(i, PsbtIn.OUTPUT_INDEX)
@@ -91,7 +91,7 @@ export class ExtractTransactionTask {
         .orDefault(0n);
       const script = psbt
         .getOutputValue(o, PsbtOut.SCRIPT)
-        .mapOrDefault((v) => v.data, Buffer.from([]));
+        .mapOrDefault((v) => v.data, new Uint8Array());
       transaction.add64BitIntToData(amount, false);
       transaction.addBufferToData(encodeVarint(script.length).extract()!);
       transaction.addBufferToData(script);

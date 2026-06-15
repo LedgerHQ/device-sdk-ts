@@ -327,6 +327,28 @@ describe("TransactionParser", () => {
     });
   });
 
+  describe("compiled instructions", () => {
+    it("GIVEN instruction data as a base64 string WHEN building compiled instructions THEN it decodes bytes", () => {
+      // GIVEN
+      const compiledInstructions = [
+        {
+          programIdIndex: 0,
+          accountKeyIndexes: [0],
+          data: "AQID/w==" as unknown as Uint8Array,
+        },
+      ];
+
+      // WHEN
+      const result = buildCompiledInstructions(compiledInstructions, [true], 1);
+
+      // THEN
+      expect(result.isRight()).toBe(true);
+      expect(result.unsafeCoerce()[0]?.data).toStrictEqual(
+        Uint8Array.from([1, 2, 3, 255]),
+      );
+    });
+  });
+
   describe("address lookup tables", () => {
     it("resolves ALT entries when a resolver is provided (existing behaviour)", async () => {
       const payer = Keypair.generate();

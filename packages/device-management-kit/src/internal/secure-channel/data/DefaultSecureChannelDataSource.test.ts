@@ -25,7 +25,7 @@ describe("Secure Channel Data Source", () => {
       vi.clearAllMocks();
     });
 
-    it("should return an error if the WebSocket connection fails", () => {
+    it("should return a WebSocket if the WebSocket connection succeeds", () => {
       // given
       const api = new DefaultSecureChannelDataSource({
         webSocketUrl: "wss://test-websocket-url",
@@ -83,6 +83,30 @@ describe("Secure Channel Data Source", () => {
         (api as DefaultSecureChannelDataSource)._connectWebSocket,
       ).toHaveBeenCalledWith(
         "wss://test-websocket-url/genuine?targetId=targetId&perso=perso",
+      );
+    });
+
+    it("GIVEN a trailing slash base URL and special query characters WHEN genuineCheck connects THEN it builds one encoded URL string", () => {
+      // given
+      api = new DefaultSecureChannelDataSource({
+        webSocketUrl: "wss://test-websocket-url/",
+      } as DmkConfig);
+      vi.spyOn(
+        api as DefaultSecureChannelDataSource,
+        "_connectWebSocket",
+      ).mockReturnValue(Right({} as WebSocket));
+
+      // when
+      api.genuineCheck({
+        targetId: "target id",
+        perso: "perso&value",
+      });
+
+      // then
+      expect(
+        (api as DefaultSecureChannelDataSource)._connectWebSocket,
+      ).toHaveBeenCalledWith(
+        "wss://test-websocket-url/genuine?targetId=target%20id&perso=perso%26value",
       );
     });
 

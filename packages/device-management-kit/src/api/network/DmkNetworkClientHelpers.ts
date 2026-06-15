@@ -93,12 +93,14 @@ export function isRawBody(body: unknown): body is BodyInit {
   if (typeof body === "string") return true;
   if (body instanceof ArrayBuffer) return true;
   if (ArrayBuffer.isView(body)) return true;
+  /* eslint-disable no-restricted-globals -- Each Web global is guarded so the checks are safe when the global is missing in RN/Hermes. */
   if (typeof Blob !== "undefined" && body instanceof Blob) return true;
   if (typeof FormData !== "undefined" && body instanceof FormData) return true;
   if (typeof URLSearchParams !== "undefined" && body instanceof URLSearchParams)
     return true;
   if (typeof ReadableStream !== "undefined" && body instanceof ReadableStream)
     return true;
+  /* eslint-enable no-restricted-globals */
   return false;
 }
 
@@ -133,23 +135,38 @@ export function buildBodyAndHeaders(args: {
   return { body: JSON.stringify(body), headers };
 }
 
+export type TimeoutSignal = {
+  signal: AbortSignal | undefined;
+  cleanup: () => void;
+};
+
 /**
- * Composes the effective abort signal for a request. If both a timeout and an
- * external signal are present, they are merged via `AbortSignal.any` so that
- * either one firing aborts the request.
+ * Builds an abort signal for request timeouts using `AbortController`.
+ *
+ * `AbortSignal.timeout` is intentionally avoided because React Native/Hermes
+ * does not reliably provide that static helper.
  */
 export function buildSignal(args: {
   timeoutMs: number | undefined;
-  externalSignal: AbortSignal | undefined;
-}): AbortSignal | undefined {
-  const { timeoutMs, externalSignal } = args;
-  const timeoutSignal =
-    timeoutMs && timeoutMs > 0 ? AbortSignal.timeout(timeoutMs) : undefined;
+}): TimeoutSignal {
+  const { timeoutMs } = args;
 
-  if (timeoutSignal && externalSignal) {
-    return AbortSignal.any([externalSignal, timeoutSignal]);
+  if (!timeoutMs || timeoutMs <= 0) {
+    return {
+      signal: undefined,
+      cleanup: () => {},
+    };
   }
-  return timeoutSignal ?? externalSignal;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeoutMs);
+
+  return {
+    signal: controller.signal,
+    cleanup: () => clearTimeout(timeoutId),
+  };
 }
 
 /**
@@ -207,27 +224,23 @@ export async function safeReadText(
 
 /**
  * Wraps a `fetch` rejection into a typed {@link DmkNetworkClientError},
- * discriminating between external aborts, timeouts and generic failures.
+ * discriminating between request timeouts and generic failures.
  */
 export function wrapFetchError(args: {
   cause: unknown;
-  externalSignal: AbortSignal | undefined;
   timeoutMs: number | undefined;
 }): DmkNetworkClientError {
-  const { cause, externalSignal, timeoutMs } = args;
+  const { cause, timeoutMs } = args;
   const hasTimeout = Boolean(timeoutMs && timeoutMs > 0);
   const isAbortError =
     cause instanceof Error &&
     (cause.name === "AbortError" || cause.name === "TimeoutError");
 
   if (isAbortError) {
-    const externallyAborted = externalSignal?.aborted ?? false;
-    const timedOut =
-      !externallyAborted && (cause.name === "TimeoutError" || hasTimeout);
+    const timedOut = cause.name === "TimeoutError" || hasTimeout;
     return new DmkNetworkClientError({
       message: timedOut ? `Request timed out` : "Request aborted",
       isTimeout: timedOut,
-      isAbort: externallyAborted,
       cause,
     });
   }

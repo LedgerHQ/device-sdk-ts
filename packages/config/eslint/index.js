@@ -7,6 +7,155 @@ import eslintPluginReact from "eslint-plugin-react";
 import eslintPluginReactHooks from "eslint-plugin-react-hooks";
 import { fixupPluginRules } from "@eslint/compat";
 
+const productionSourceFiles = ["**/*.ts", "**/*.tsx"];
+
+const productionSourceIgnores = [
+  "**/*.test.ts",
+  "**/*.test.tsx",
+  "**/__tests__/**",
+  "**/__mocks__/**",
+  "**/__fixtures__/**",
+];
+
+const relativeImportRestrictions = { patterns: ["../*"] };
+
+const nodeOnlyGlobalRestrictions = [
+  {
+    name: "Buffer",
+    message:
+      "Not portable. Use Uint8Array + byte/hex helpers (see signer-utils).",
+  },
+  { name: "__dirname", message: "Node-only." },
+  { name: "__filename", message: "Node-only." },
+  { name: "global", message: "Use globalThis if truly needed." },
+  {
+    name: "setImmediate",
+    message: "Node-only; use queueMicrotask/setTimeout.",
+  },
+];
+
+const processGlobalRestriction = {
+  name: "process",
+  message: "Node-only global; not available in browser/RN/Hermes.",
+};
+
+// `atob`/`btoa` exist in browsers, Node and Hermes, but each runtime exposes a
+// different preferred entry point (window.atob, Buffer, the bare global...).
+// Rather than special-casing every runtime, route all Base64 work through the
+// shared, portable helpers, which pick the right implementation internally.
+const base64GlobalRestrictions = [
+  {
+    name: "atob",
+    message:
+      "Not portable. Decode Base64 via base64StringToBuffer from @ledgerhq/device-management-kit (returns Uint8Array | null).",
+  },
+  {
+    name: "btoa",
+    message:
+      "Not portable. Encode bytes via bufferToBase64String from @ledgerhq/device-management-kit.",
+  },
+];
+
+const problematicWebGlobalRestrictions = [
+  {
+    name: "URL",
+    message:
+      "React Native URL.toString() appends a stray trailing slash (#1484); build URL strings manually.",
+  },
+  {
+    name: "URLSearchParams",
+    message:
+      "URLSearchParams.set missing on some React Native versions (#1467); serialize manually.",
+  },
+  {
+    name: "Blob",
+    message:
+      "Not guaranteed in React Native/Hermes; guard with typeof before use.",
+  },
+  {
+    name: "FormData",
+    message:
+      "Not guaranteed in React Native/Hermes; guard with typeof before use.",
+  },
+  {
+    name: "ReadableStream",
+    message:
+      "Not guaranteed in React Native/Hermes; guard with typeof before use.",
+  },
+];
+
+const abortSignalPropertyRestrictions = [
+  {
+    object: "AbortSignal",
+    property: "timeout",
+    message:
+      "Not guaranteed in React Native/Hermes; build the signal using AbortController.",
+  },
+  {
+    object: "AbortSignal",
+    property: "any",
+    message:
+      "Not guaranteed in React Native/Hermes; build the signal using AbortController.",
+  },
+];
+
+const nodeBuiltinImportNames = [
+  "assert",
+  "async_hooks",
+  "buffer",
+  "child_process",
+  "cluster",
+  "console",
+  "crypto",
+  "dgram",
+  "diagnostics_channel",
+  "dns",
+  "domain",
+  "events",
+  "fs",
+  "http",
+  "http2",
+  "https",
+  "inspector",
+  "module",
+  "net",
+  "os",
+  "path",
+  "perf_hooks",
+  "process",
+  "punycode",
+  "querystring",
+  "readline",
+  "repl",
+  "stream",
+  "string_decoder",
+  "timers",
+  "tls",
+  "trace_events",
+  "tty",
+  "url",
+  "util",
+  "v8",
+  "vm",
+  "wasi",
+  "worker_threads",
+  "zlib",
+];
+
+const nodeBuiltinImportRestrictions = nodeBuiltinImportNames.map((name) => ({
+  name,
+  message: `Node built-in "${name}" is not portable. Use @noble/hashes for hashing, Uint8Array/DataView for bytes.`,
+}));
+
+const portableImportRestrictions = {
+  patterns: [
+    ...relativeImportRestrictions.patterns,
+    "node:*",
+    ...nodeBuiltinImportNames.map((name) => `${name}/*`),
+  ],
+  paths: nodeBuiltinImportRestrictions,
+};
+
 export default [
   {
     ignores: [
@@ -153,6 +302,29 @@ export default [
     },
   },
 
+  // Portable-runtime API ban: shared/runtime packages
+  // must not rely on Node-only or proven-problematic Web globals/imports, so
+  // packages stay consumable across Node, browsers, React Native and Hermes.
+  // Node-only packages/apps opt out via `nodeRuntimeOverrides` (see below).
+  {
+    files: productionSourceFiles,
+    ignores: productionSourceIgnores,
+    // Re-declared in full: flat config replaces (not merges) rule options for
+    // the most specific matching block, so the base `../*` ban must be repeated
+    // here alongside the portable-runtime bans.
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        ...nodeOnlyGlobalRestrictions,
+        processGlobalRestriction,
+        ...problematicWebGlobalRestrictions,
+        ...base64GlobalRestrictions,
+      ],
+      "no-restricted-properties": ["error", ...abortSignalPropertyRestrictions],
+      "no-restricted-imports": ["error", portableImportRestrictions],
+    },
+  },
+
   {
     files: ["**/*.tsx"],
     plugins: {
@@ -167,6 +339,45 @@ export default [
       react: {
         version: "detect",
       },
+    },
+  },
+];
+
+// Opt-out for Node-only packages/apps (transports, CLIs, build tools, servers,
+// and environment-specific apps). Spread this AFTER the default config to
+// disable the portable-runtime API ban while keeping the base `../*` import
+// restriction in place.
+export const nodeRuntimeOverrides = [
+  {
+    files: productionSourceFiles,
+    ignores: productionSourceIgnores,
+    rules: {
+      // Node globals are allowed, but `atob`/`btoa` stay banned so Base64 work
+      // keeps going through the shared, portable helpers.
+      "no-restricted-globals": ["error", ...base64GlobalRestrictions],
+      "no-restricted-properties": "off",
+      "no-restricted-imports": ["error", relativeImportRestrictions],
+    },
+  },
+];
+
+// Opt-out for browser/app packages where platform globals are expected at the
+// application boundary (for example sample apps and devtools UI). Shared
+// runtime packages should not use this override.
+export const webRuntimeOverrides = [
+  {
+    files: productionSourceFiles,
+    ignores: productionSourceIgnores,
+    rules: {
+      // Browser/app packages can use Web globals at the application boundary.
+      // `process.env` is also common in web app toolchains at build time.
+      "no-restricted-globals": [
+        "error",
+        ...nodeOnlyGlobalRestrictions,
+        ...base64GlobalRestrictions,
+      ],
+      "no-restricted-properties": "off",
+      "no-restricted-imports": ["error", portableImportRestrictions],
     },
   },
 ];
