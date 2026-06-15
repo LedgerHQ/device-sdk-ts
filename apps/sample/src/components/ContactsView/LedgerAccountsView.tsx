@@ -6,6 +6,7 @@ import { PageWithHeader } from "@/components/PageWithHeader";
 import { SectionTitle } from "@/components/SettingsView/SectionTitle";
 
 import { BackToContactsLink } from "./_shared";
+import { EditLedgerAccountForm } from "./EditLedgerAccountForm";
 import { RegisterLedgerAccountForm } from "./RegisterLedgerAccountForm";
 
 export const LedgerAccountsView: React.FC = () => {
@@ -16,6 +17,10 @@ export const LedgerAccountsView: React.FC = () => {
         <Block>
           <SectionTitle>Register Ledger account</SectionTitle>
           <RegisterLedgerAccountForm />
+        </Block>
+        <Block>
+          <SectionTitle>Edit Ledger account</SectionTitle>
+          <EditLedgerAccountForm />
         </Block>
       </Flex>
     </PageWithHeader>

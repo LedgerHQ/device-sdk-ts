@@ -1,4 +1,5 @@
 import { type EditExternalAddressDAReturnType } from "@api/app-binder/EditExternalAddressDeviceActionTypes";
+import { type EditLedgerAccountDAReturnType } from "@api/app-binder/EditLedgerAccountDeviceActionTypes";
 import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { type RegisterExternalAddressDAReturnType } from "@api/app-binder/RegisterExternalAddressDeviceActionTypes";
 import { type RegisterLedgerAccountDAReturnType } from "@api/app-binder/RegisterLedgerAccountDeviceActionTypes";
@@ -9,6 +10,7 @@ import { type SignTypedDataDAReturnType } from "@api/app-binder/SignTypedDataDev
 import { type VerifySafeAddressDAReturnType } from "@api/app-binder/VerifySafeAddressDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type EditExternalAddressArgs } from "@api/model/EditExternalAddressArgs";
+import { type EditLedgerAccountArgs } from "@api/model/EditLedgerAccountArgs";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type RegisterExternalAddressArgs } from "@api/model/RegisterExternalAddressArgs";
 import { type RegisterLedgerAccountArgs } from "@api/model/RegisterLedgerAccountArgs";
@@ -65,4 +67,7 @@ export interface SignerEth {
   registerLedgerAccount: (
     args: RegisterLedgerAccountArgs,
   ) => RegisterLedgerAccountDAReturnType;
+  editLedgerAccount: (
+    args: EditLedgerAccountArgs,
+  ) => EditLedgerAccountDAReturnType;
 }
