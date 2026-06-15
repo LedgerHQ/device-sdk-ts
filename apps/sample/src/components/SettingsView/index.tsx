@@ -11,6 +11,7 @@ import { CalModeSetting } from "./CalModeSetting";
 import { CalUrlSetting } from "./CalUrlSetting";
 import { DatasourceProxySetting } from "./DatasourceProxySetting";
 import { MetadataServiceUrlSetting } from "./MetadataServiceUrlSetting";
+import { MockServerSessionTokenSetting } from "./MockServerSessionTokenSetting";
 import { MockServerToggleSetting } from "./MockServerToggleSetting";
 import { MockServerUrlSetting } from "./MockServerUrlSetting";
 import { OriginTokenSetting } from "./OriginTokenSetting";
@@ -48,6 +49,7 @@ export const SettingsView: React.FC = () => {
           <SectionTitle>Mock server</SectionTitle>
           <MockServerToggleSetting />
           <MockServerUrlSetting />
+          <MockServerSessionTokenSetting />
         </SectionContainer>
 
         <SectionContainer>

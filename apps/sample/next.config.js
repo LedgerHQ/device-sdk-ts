@@ -11,10 +11,13 @@ const nextConfig = {
     styledComponents: true,
   },
   env: {
-    SDK_CONFIG_TRANSPORT:
-      process.env.npm_lifecycle_event === "dev:default-mock"
-        ? "MOCK_SERVER"
-        : "",
+    // Expose the transport selector to the browser bundle. Defaults to the mock
+    // server transport when the app is started via `dev:default-mock`.
+    DMK_CONFIG_TRANSPORT:
+      process.env.DMK_CONFIG_TRANSPORT ||
+      (process.env.npm_lifecycle_event === "dev:default-mock"
+        ? "mockserver"
+        : ""),
   },
   rewrites: async () => {
     return [
