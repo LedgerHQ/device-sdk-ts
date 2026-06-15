@@ -15,9 +15,9 @@ import {
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
-export type { SolanaTransactionContextResultSuccess as SolanaBuildContextResult };
+export type { SolanaTransactionContextResultSuccess as ShallowClearSignContext };
 
-export type BuildTransactionContextTaskArgs = {
+export type BuildShallowClearSignContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionResolutionContext;
   readonly transactionBytes: Uint8Array;
@@ -25,17 +25,17 @@ export type BuildTransactionContextTaskArgs = {
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
-export class BuildTransactionContextTask {
+export class BuildShallowClearSignContextTask {
   private readonly _logger: LoggerPublisherService;
   constructor(
     private readonly api: InternalApi,
-    private readonly args: BuildTransactionContextTaskArgs,
+    private readonly args: BuildShallowClearSignContextTaskArgs,
   ) {
-    this._logger = args.loggerFactory("BuildTransactionContextTask");
+    this._logger = args.loggerFactory("BuildShallowClearSignContextTask");
   }
 
   async run(): Promise<SolanaTransactionContextResultSuccess> {
-    this._logger.debug("[run] Starting BuildTransactionContextTask");
+    this._logger.debug("[run] Starting BuildShallowClearSignContextTask");
     const { contextModule, options } = this.args;
     const deviceState = this.api.getDeviceSessionState();
 
@@ -105,7 +105,7 @@ export class BuildTransactionContextTask {
     const ownerInfoRequired = !!(options.tokenAddress || options.createATA);
     if (ownerInfoRequired && trustedNameCtx === undefined) {
       throw new Error(
-        "[SignerSolana] BuildTransactionContextTask: owner info was required but could not be resolved",
+        "[SignerSolana] BuildShallowClearSignContextTask: owner info was required but could not be resolved",
       );
     }
 

@@ -15,28 +15,27 @@ import {
 } from "@internal/app-binder/services/utils/DefaultSolanaMessageNormaliser";
 
 import { dispatchProvideContext } from "./context-providers/provideContextRegistry";
-import { type SolanaBuildContextResult } from "./BuildTransactionContextTask";
+import { type ShallowClearSignContext } from "./BuildShallowClearSignContextTask";
 
-export type ProvideSolanaTransactionContextTaskArgs =
-  SolanaBuildContextResult & {
-    readonly transactionBytes: Uint8Array;
-    readonly loggerFactory: (tag: string) => LoggerPublisherService;
-    readonly normaliser?: SolanaMessageNormaliser;
-  };
+export type ProvideShallowClearSignContextTaskArgs = ShallowClearSignContext & {
+  readonly transactionBytes: Uint8Array;
+  readonly loggerFactory: (tag: string) => LoggerPublisherService;
+  readonly normaliser?: SolanaMessageNormaliser;
+};
 
-export class ProvideSolanaTransactionContextTask {
+export class ProvideShallowClearSignContextTask {
   private readonly _logger: LoggerPublisherService;
   private readonly _normaliser: SolanaMessageNormaliser;
   constructor(
     private readonly api: InternalApi,
-    private readonly args: ProvideSolanaTransactionContextTaskArgs,
+    private readonly args: ProvideShallowClearSignContextTaskArgs,
   ) {
-    this._logger = args.loggerFactory("ProvideSolanaTransactionContextTask");
+    this._logger = args.loggerFactory("ProvideShallowClearSignContextTask");
     this._normaliser = args.normaliser ?? new DefaultSolanaMessageNormaliser();
   }
 
   async run(): Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>> {
-    this._logger.debug("[run] Starting ProvideSolanaTransactionContextTask");
+    this._logger.debug("[run] Starting ProvideShallowClearSignContextTask");
     const {
       tlvDescriptor,
       trustedNamePKICertificate,

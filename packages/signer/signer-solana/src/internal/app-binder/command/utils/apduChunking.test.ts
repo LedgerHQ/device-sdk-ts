@@ -3,6 +3,7 @@ import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 import {
   assertChunkSize,
   buildChunkP2,
+  frameClearSignPayload,
   P2_EXTEND,
   P2_MORE,
 } from "./apduChunking";
@@ -79,6 +80,34 @@ describe("apduChunking", () => {
         expect(e._tag).toBe("ChunkTooLargeError");
         expect(e.message).toMatch(/INS=0x25/);
       }
+    });
+  });
+
+  describe("frameClearSignPayload", () => {
+    it("prepends a 2-byte big-endian length of the TLV", () => {
+      expect(frameClearSignPayload(new Uint8Array([0xaa, 0xbb]))).toStrictEqual(
+        new Uint8Array([0x00, 0x02, 0xaa, 0xbb]),
+      );
+    });
+
+    it("counts the type byte in the length and places it first (substructures)", () => {
+      expect(
+        frameClearSignPayload(new Uint8Array([0xcc, 0xdd]), 0x01),
+      ).toStrictEqual(new Uint8Array([0x00, 0x03, 0x01, 0xcc, 0xdd]));
+    });
+
+    it("encodes lengths > 255 across both prefix bytes", () => {
+      const tlv = new Uint8Array(258).fill(0x7);
+      const framed = frameClearSignPayload(tlv);
+      expect(framed[0]).toBe(0x01);
+      expect(framed[1]).toBe(0x02);
+      expect(framed.length).toBe(260);
+    });
+
+    it("handles an empty TLV", () => {
+      expect(frameClearSignPayload(new Uint8Array([]))).toStrictEqual(
+        new Uint8Array([0x00, 0x00]),
+      );
     });
   });
 });

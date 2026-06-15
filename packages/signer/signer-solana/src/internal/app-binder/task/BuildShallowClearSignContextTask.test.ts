@@ -14,9 +14,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
 import {
-  BuildTransactionContextTask,
-  type SolanaBuildContextResult,
-} from "./BuildTransactionContextTask";
+  BuildShallowClearSignContextTask,
+  type ShallowClearSignContext,
+} from "./BuildShallowClearSignContextTask";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -55,7 +55,7 @@ const trustedNameSuccessContext = {
 
 let apiMock: InternalApi;
 
-describe("BuildTransactionContextTask", () => {
+describe("BuildShallowClearSignContextTask", () => {
   beforeEach(() => {
     vi.resetAllMocks();
 
@@ -76,7 +76,7 @@ describe("BuildTransactionContextTask", () => {
       trustedNameSuccessContext,
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
     await task.run();
 
     expect(apiMock.sendCommand).toHaveBeenCalledWith(
@@ -89,7 +89,7 @@ describe("BuildTransactionContextTask", () => {
       trustedNameSuccessContext,
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
     await task.run();
 
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
@@ -120,7 +120,7 @@ describe("BuildTransactionContextTask", () => {
       signerAddress: "So1anaSignerPubKey111111111111111111111111111",
     };
 
-    const task = new BuildTransactionContextTask(apiMock, argsWithSigner);
+    const task = new BuildShallowClearSignContextTask(apiMock, argsWithSigner);
     await task.run();
 
     expect(contextModuleMock.getContexts).toHaveBeenCalledWith(
@@ -140,10 +140,10 @@ describe("BuildTransactionContextTask", () => {
       trustedNameSuccessContext,
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
-    expect(result).toEqual<SolanaBuildContextResult>({
+    expect(result).toEqual<ShallowClearSignContext>({
       tlvDescriptor: trustedNamePayload,
       trustedNamePKICertificate: trustedNameCert,
       loadersResults: [],
@@ -162,7 +162,7 @@ describe("BuildTransactionContextTask", () => {
       txCheckContext,
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
     expect(result.loadersResults).toEqual([txCheckContext]);
@@ -186,7 +186,7 @@ describe("BuildTransactionContextTask", () => {
       lifiContext,
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
     expect(result.loadersResults).toEqual([tokenContext, lifiContext]);
@@ -199,7 +199,7 @@ describe("BuildTransactionContextTask", () => {
       }),
     );
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
 
     await expect(task.run()).rejects.toThrow(
       "Failed to get challenge from device",
@@ -213,7 +213,7 @@ describe("BuildTransactionContextTask", () => {
       { type: ClearSignContextType.ERROR, error },
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
     const result = await task.run();
 
     expect(result.trustedNamePKICertificate).toEqual(trustedNameCert);
@@ -234,7 +234,10 @@ describe("BuildTransactionContextTask", () => {
       { type: ClearSignContextType.ERROR, error },
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, argsWithoutOwnerInfo);
+    const task = new BuildShallowClearSignContextTask(
+      apiMock,
+      argsWithoutOwnerInfo,
+    );
     const result = await task.run();
 
     expect(result.trustedNamePKICertificate).toBeUndefined();
@@ -253,20 +256,20 @@ describe("BuildTransactionContextTask", () => {
       },
     ]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
 
     await expect(task.run()).rejects.toThrow(
-      "[SignerSolana] BuildTransactionContextTask: owner info was required but could not be resolved",
+      "[SignerSolana] BuildShallowClearSignContextTask: owner info was required but could not be resolved",
     );
   });
 
   it("throws when owner info is required but contextModule returns an empty array", async () => {
     (contextModuleMock.getContexts as any).mockResolvedValue([]);
 
-    const task = new BuildTransactionContextTask(apiMock, defaultArgs);
+    const task = new BuildShallowClearSignContextTask(apiMock, defaultArgs);
 
     await expect(task.run()).rejects.toThrow(
-      "[SignerSolana] BuildTransactionContextTask: owner info was required but could not be resolved",
+      "[SignerSolana] BuildShallowClearSignContextTask: owner info was required but could not be resolved",
     );
   });
 });

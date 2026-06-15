@@ -9,16 +9,16 @@ import { Just, Nothing } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  type DelayedSignDAError,
-  type DelayedSignDAInput,
-  type DelayedSignDAIntermediateValue,
-  delayedSignDAStateSteps,
-} from "@api/app-binder/DelayedSignTransactionDeviceActionTypes";
+  type SigningOperationsDAError,
+  type SigningOperationsDAInput,
+  type SigningOperationsDAIntermediateValue,
+  signingOperationsDAStateSteps,
+} from "@api/app-binder/SigningOperationsDeviceActionTypes";
 import { SolanaAppCommandError } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "./__test-utils__/testDeviceActionStates";
-import { DelayedSignTransactionDeviceAction } from "./DelayedSignTransactionDeviceAction";
+import { SigningOperationsDeviceAction } from "./SigningOperationsDeviceAction";
 
 const defaultDerivation = "44'/501'/0'/0'";
 const exampleTx = new Uint8Array([0xde, 0xad, 0xbe, 0xef]);
@@ -31,7 +31,7 @@ const patchedTx = new Uint8Array([0x01, 0x02, 0x03, 0x04]);
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let previewMock: ReturnType<typeof vi.fn>;
 let delayedSignMock: ReturnType<typeof vi.fn>;
-let fallbackSignMock: ReturnType<typeof vi.fn>;
+let signMock: ReturnType<typeof vi.fn>;
 let fetchBlockhashMock: ReturnType<typeof vi.fn>;
 let zeroBlockhashMock: ReturnType<typeof vi.fn>;
 let patchBlockhashMock: ReturnType<typeof vi.fn>;
@@ -40,19 +40,19 @@ function extractDeps() {
   return {
     previewTransaction: previewMock,
     delayedSignTransaction: delayedSignMock,
-    fallbackSignTransaction: fallbackSignMock,
+    signTransaction: signMock,
     fetchBlockhashFn: fetchBlockhashMock,
     zeroBlockhashFn: zeroBlockhashMock,
     patchBlockhashFn: patchBlockhashMock,
   };
 }
 
-describe("DelayedSignTransactionDeviceAction", () => {
+describe("SigningOperationsDeviceAction", () => {
   beforeEach(() => {
     apiMock = makeDeviceActionInternalApiMock();
     previewMock = vi.fn();
     delayedSignMock = vi.fn();
-    fallbackSignMock = vi.fn();
+    signMock = vi.fn();
     fetchBlockhashMock = vi.fn();
     zeroBlockhashMock = vi.fn().mockResolvedValue(zeroedTx);
     patchBlockhashMock = vi.fn().mockResolvedValue(patchedTx);
@@ -66,68 +66,68 @@ describe("DelayedSignTransactionDeviceAction", () => {
         CommandResultFactory({ data: Just(exampleSignature) }),
       );
 
-      const input: DelayedSignDAInput = {
+      const input: SigningOperationsDAInput = {
         derivationPath: defaultDerivation,
         transaction: exampleTx,
         rpcUrl: "https://api.devnet.solana.com",
       };
 
-      const action = new DelayedSignTransactionDeviceAction({ input });
+      const action = new SigningOperationsDeviceAction({ input });
       vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
 
       const expected = [
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.FETCH_BLOCKHASH,
+            step: signingOperationsDAStateSteps.FETCH_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.PATCH_TRANSACTION,
+            step: signingOperationsDAStateSteps.PATCH_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.DELAYED_SIGN,
+            step: signingOperationsDAStateSteps.DELAYED_SIGN,
           },
           status: DeviceActionStatus.Pending,
         },
         { output: exampleSignature, status: DeviceActionStatus.Completed },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates<
         Uint8Array,
-        DelayedSignDAInput,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAInput,
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >(action, expected, apiMock, {
         onDone: () => {
           expect(previewMock).toHaveBeenCalledTimes(1);
           expect(delayedSignMock).toHaveBeenCalledTimes(1);
-          expect(fallbackSignMock).not.toHaveBeenCalled();
+          expect(signMock).not.toHaveBeenCalled();
           resolve();
         },
         onError: reject,
@@ -145,11 +145,11 @@ describe("DelayedSignTransactionDeviceAction", () => {
         }),
       );
       fetchBlockhashMock.mockResolvedValue(exampleBlockhash);
-      fallbackSignMock.mockResolvedValue(
+      signMock.mockResolvedValue(
         CommandResultFactory({ data: Just(exampleSignature) }),
       );
 
-      const action = new DelayedSignTransactionDeviceAction({
+      const action = new SigningOperationsDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
@@ -162,49 +162,49 @@ describe("DelayedSignTransactionDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.FETCH_BLOCKHASH,
+            step: signingOperationsDAStateSteps.FETCH_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.PATCH_TRANSACTION,
+            step: signingOperationsDAStateSteps.PATCH_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.FALLBACK_TO_NON_DELAYED_SIGN,
+            step: signingOperationsDAStateSteps.FALLBACK_TO_NON_DELAYED_SIGN,
           },
           status: DeviceActionStatus.Pending,
         },
         { output: exampleSignature, status: DeviceActionStatus.Completed },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates(action, expected, apiMock, {
         onDone: () => {
           expect(delayedSignMock).not.toHaveBeenCalled();
-          expect(fallbackSignMock).toHaveBeenCalledTimes(1);
+          expect(signMock).toHaveBeenCalledTimes(1);
           resolve();
         },
         onError: reject,
@@ -222,7 +222,7 @@ describe("DelayedSignTransactionDeviceAction", () => {
         }),
       );
 
-      const action = new DelayedSignTransactionDeviceAction({
+      const action = new SigningOperationsDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
@@ -235,14 +235,14 @@ describe("DelayedSignTransactionDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -254,14 +254,14 @@ describe("DelayedSignTransactionDeviceAction", () => {
         },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates(action, expected, apiMock, {
         onDone: () => {
           expect(delayedSignMock).not.toHaveBeenCalled();
-          expect(fallbackSignMock).not.toHaveBeenCalled();
+          expect(signMock).not.toHaveBeenCalled();
           expect(fetchBlockhashMock).not.toHaveBeenCalled();
           resolve();
         },
@@ -280,7 +280,7 @@ describe("DelayedSignTransactionDeviceAction", () => {
         }),
       );
 
-      const action = new DelayedSignTransactionDeviceAction({
+      const action = new SigningOperationsDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
@@ -293,14 +293,14 @@ describe("DelayedSignTransactionDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -312,14 +312,14 @@ describe("DelayedSignTransactionDeviceAction", () => {
         },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates(action, expected, apiMock, {
         onDone: () => {
           expect(delayedSignMock).not.toHaveBeenCalled();
-          expect(fallbackSignMock).not.toHaveBeenCalled();
+          expect(signMock).not.toHaveBeenCalled();
           expect(fetchBlockhashMock).not.toHaveBeenCalled();
           resolve();
         },
@@ -335,11 +335,11 @@ describe("DelayedSignTransactionDeviceAction", () => {
         }),
       );
       fetchBlockhashMock.mockResolvedValue(exampleBlockhash);
-      fallbackSignMock.mockResolvedValue(
+      signMock.mockResolvedValue(
         CommandResultFactory({ data: Just(exampleSignature) }),
       );
 
-      const action = new DelayedSignTransactionDeviceAction({
+      const action = new SigningOperationsDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
@@ -352,60 +352,63 @@ describe("DelayedSignTransactionDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.FETCH_BLOCKHASH,
+            step: signingOperationsDAStateSteps.FETCH_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.PATCH_TRANSACTION,
+            step: signingOperationsDAStateSteps.PATCH_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.FALLBACK_TO_NON_DELAYED_SIGN,
+            step: signingOperationsDAStateSteps.FALLBACK_TO_NON_DELAYED_SIGN,
           },
           status: DeviceActionStatus.Pending,
         },
         { output: exampleSignature, status: DeviceActionStatus.Completed },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates(action, expected, apiMock, {
         onDone: () => {
-          expect(fallbackSignMock).toHaveBeenCalledTimes(1);
+          expect(signMock).toHaveBeenCalledTimes(1);
           resolve();
         },
         onError: reject,
       });
     }));
 
-  it("fetch blockhash failure -> error", () =>
+  it("fetch blockhash failure -> signs the original tx (best-effort, no patch)", () =>
     new Promise<void>((resolve, reject) => {
       previewMock.mockResolvedValue(CommandResultFactory({ data: Nothing }));
       fetchBlockhashMock.mockRejectedValue(new Error("network error"));
+      delayedSignMock.mockResolvedValue(
+        CommandResultFactory({ data: Just(exampleSignature) }),
+      );
 
-      const action = new DelayedSignTransactionDeviceAction({
+      const action = new SigningOperationsDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
@@ -418,38 +421,51 @@ describe("DelayedSignTransactionDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.FETCH_BLOCKHASH,
+            step: signingOperationsDAStateSteps.FETCH_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
-          error: expect.objectContaining({
-            _tag: "UnknownDAError",
-          }),
-          status: DeviceActionStatus.Error,
+          intermediateValue: {
+            requiredUserInteraction: UserInteractionRequired.None,
+            step: signingOperationsDAStateSteps.DELAYED_SIGN,
+          },
+          status: DeviceActionStatus.Pending,
         },
+        { output: exampleSignature, status: DeviceActionStatus.Completed },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates(action, expected, apiMock, {
-        onDone: resolve,
+        onDone: () => {
+          // No patch happened; the original transaction is signed.
+          expect(patchBlockhashMock).not.toHaveBeenCalled();
+          expect(delayedSignMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+              input: expect.objectContaining({
+                serializedTransaction: exampleTx,
+              }),
+            }),
+          );
+          resolve();
+        },
         onError: reject,
       });
     }));
@@ -467,7 +483,7 @@ describe("DelayedSignTransactionDeviceAction", () => {
         }),
       );
 
-      const action = new DelayedSignTransactionDeviceAction({
+      const action = new SigningOperationsDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
@@ -480,35 +496,35 @@ describe("DelayedSignTransactionDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.FETCH_BLOCKHASH,
+            step: signingOperationsDAStateSteps.FETCH_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.PATCH_TRANSACTION,
+            step: signingOperationsDAStateSteps.PATCH_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.DELAYED_SIGN,
+            step: signingOperationsDAStateSteps.DELAYED_SIGN,
           },
           status: DeviceActionStatus.Pending,
         },
@@ -520,8 +536,8 @@ describe("DelayedSignTransactionDeviceAction", () => {
         },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates(action, expected, apiMock, {
@@ -539,7 +555,7 @@ describe("DelayedSignTransactionDeviceAction", () => {
         CommandResultFactory({ data: Just(exampleSignature) }),
       );
 
-      const action = new DelayedSignTransactionDeviceAction({
+      const action = new SigningOperationsDeviceAction({
         input: {
           derivationPath: defaultDerivation,
           transaction: exampleTx,
@@ -565,43 +581,43 @@ describe("DelayedSignTransactionDeviceAction", () => {
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+            step: signingOperationsDAStateSteps.ZERO_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.SignTransaction,
-            step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+            step: signingOperationsDAStateSteps.PREVIEW_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.FETCH_BLOCKHASH,
+            step: signingOperationsDAStateSteps.FETCH_BLOCKHASH,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.PATCH_TRANSACTION,
+            step: signingOperationsDAStateSteps.PATCH_TRANSACTION,
           },
           status: DeviceActionStatus.Pending,
         },
         {
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: delayedSignDAStateSteps.DELAYED_SIGN,
+            step: signingOperationsDAStateSteps.DELAYED_SIGN,
           },
           status: DeviceActionStatus.Pending,
         },
         { output: exampleSignature, status: DeviceActionStatus.Completed },
       ] as DeviceActionState<
         Uint8Array,
-        DelayedSignDAError,
-        DelayedSignDAIntermediateValue
+        SigningOperationsDAError,
+        SigningOperationsDAIntermediateValue
       >[];
 
       testDeviceActionStates(action, expected, apiMock, {
@@ -611,5 +627,169 @@ describe("DelayedSignTransactionDeviceAction", () => {
         },
         onError: reject,
       });
+    }));
+
+  it("alreadyArmed with RPC: skips the preview, refreshes the blockhash, delayed-signs", () =>
+    new Promise<void>((resolve, reject) => {
+      fetchBlockhashMock.mockResolvedValue(exampleBlockhash);
+      delayedSignMock.mockResolvedValue(
+        CommandResultFactory({ data: Just(exampleSignature) }),
+      );
+
+      const input: SigningOperationsDAInput = {
+        derivationPath: defaultDerivation,
+        transaction: exampleTx,
+        rpcUrl: "https://api.devnet.solana.com",
+        alreadyArmed: true,
+      };
+
+      const action = new SigningOperationsDeviceAction({ input });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      testDeviceActionStates(
+        action,
+        [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signingOperationsDAStateSteps.FETCH_BLOCKHASH,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signingOperationsDAStateSteps.PATCH_TRANSACTION,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signingOperationsDAStateSteps.DELAYED_SIGN,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          { output: exampleSignature, status: DeviceActionStatus.Completed },
+        ] as DeviceActionState<
+          Uint8Array,
+          SigningOperationsDAError,
+          SigningOperationsDAIntermediateValue
+        >[],
+        apiMock,
+        {
+          onDone: () => {
+            expect(previewMock).not.toHaveBeenCalled();
+            expect(zeroBlockhashMock).not.toHaveBeenCalled();
+            expect(fetchBlockhashMock).toHaveBeenCalledTimes(1);
+            expect(delayedSignMock).toHaveBeenCalledTimes(1);
+            resolve();
+          },
+          onError: reject,
+        },
+      );
+    }));
+
+  it("alreadyArmed without RPC: signs the original transaction (no preview, no fetch)", () =>
+    new Promise<void>((resolve, reject) => {
+      delayedSignMock.mockResolvedValue(
+        CommandResultFactory({ data: Just(exampleSignature) }),
+      );
+
+      const input: SigningOperationsDAInput = {
+        derivationPath: defaultDerivation,
+        transaction: exampleTx,
+        alreadyArmed: true,
+      };
+
+      const action = new SigningOperationsDeviceAction({ input });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      testDeviceActionStates(
+        action,
+        [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: signingOperationsDAStateSteps.DELAYED_SIGN,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          { output: exampleSignature, status: DeviceActionStatus.Completed },
+        ] as DeviceActionState<
+          Uint8Array,
+          SigningOperationsDAError,
+          SigningOperationsDAIntermediateValue
+        >[],
+        apiMock,
+        {
+          onDone: () => {
+            expect(previewMock).not.toHaveBeenCalled();
+            expect(fetchBlockhashMock).not.toHaveBeenCalled();
+            expect(patchBlockhashMock).not.toHaveBeenCalled();
+            // Signs the original transaction as-is.
+            expect(delayedSignMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: expect.objectContaining({
+                  serializedTransaction: exampleTx,
+                }),
+              }),
+            );
+            resolve();
+          },
+          onError: reject,
+        },
+      );
+    }));
+
+  it("not armed, no RPC: primary one-shot sign (0x06, SIGN_TRANSACTION step)", () =>
+    new Promise<void>((resolve, reject) => {
+      signMock.mockResolvedValue(
+        CommandResultFactory({ data: Just(exampleSignature) }),
+      );
+
+      const input: SigningOperationsDAInput = {
+        derivationPath: defaultDerivation,
+        transaction: exampleTx,
+      };
+
+      const action = new SigningOperationsDeviceAction({ input });
+      vi.spyOn(action, "extractDependencies").mockReturnValue(extractDeps());
+
+      testDeviceActionStates(
+        action,
+        [
+          {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signingOperationsDAStateSteps.SIGN_TRANSACTION,
+            },
+            status: DeviceActionStatus.Pending,
+          },
+          { output: exampleSignature, status: DeviceActionStatus.Completed },
+        ] as DeviceActionState<
+          Uint8Array,
+          SigningOperationsDAError,
+          SigningOperationsDAIntermediateValue
+        >[],
+        apiMock,
+        {
+          onDone: () => {
+            // No preview, no fetch/patch, no delayed sign — just the one-shot.
+            expect(previewMock).not.toHaveBeenCalled();
+            expect(fetchBlockhashMock).not.toHaveBeenCalled();
+            expect(delayedSignMock).not.toHaveBeenCalled();
+            expect(signMock).toHaveBeenCalledWith(
+              expect.objectContaining({
+                input: expect.objectContaining({
+                  serializedTransaction: exampleTx,
+                }),
+              }),
+            );
+            resolve();
+          },
+          onError: reject,
+        },
+      );
     }));
 });
