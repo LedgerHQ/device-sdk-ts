@@ -35,6 +35,7 @@ describe("WebHidApduSender", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockDevice.close = vi.fn().mockResolvedValue(undefined);
     const mockLoggerFactory = vi
       .fn()
       .mockReturnValue(mockLogger as unknown as LoggerPublisherService);
@@ -79,23 +80,33 @@ describe("WebHidApduSender", () => {
     expect(mockDevice.oninputreport).toBeDefined();
   });
 
-  it("should handle setup connection error", async () => {
+  it("GIVEN WebHID rejects open WHEN setting up the connection THEN it throws", async () => {
+    // GIVEN
     const error = new Error("Failed to open device");
     mockDevice.open = vi.fn().mockRejectedValue(error);
-    expect(webHidApduSender.setupConnection()).rejects.toThrowError();
+
+    // WHEN / THEN
+    await expect(webHidApduSender.setupConnection()).rejects.toThrowError();
   });
 
-  it("should close connection", () => {
+  it("WHEN closing the connection THEN it closes the WebHID device", () => {
+    // WHEN
     webHidApduSender.closeConnection();
+
+    // THEN
     expect(mockDevice.close).toHaveBeenCalled();
   });
 
-  it("should handle close connection error", () => {
+  it("GIVEN WebHID rejects close WHEN closing the connection THEN it logs the error", async () => {
+    // GIVEN
     const error = new Error("Failed to close device");
-    mockDevice.close = vi.fn().mockImplementation(() => {
-      throw error;
-    });
+    mockDevice.close = vi.fn().mockRejectedValue(error);
+
+    // WHEN
     webHidApduSender.closeConnection();
+    await Promise.resolve();
+
+    // THEN
     expect(mockLogger.error).toHaveBeenCalledWith(
       "Error while closing device",
       {

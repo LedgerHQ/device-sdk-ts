@@ -155,12 +155,10 @@ export class WebHidApduSender
 
   public closeConnection() {
     this.logger.info("🔚 Disconnect");
-    try {
-      this.dependencies.device.close();
-    } catch (error) {
+    this.dependencies.device.close().catch((error) => {
       this.logger.error("Error while closing device", {
         data: { device: this.dependencies.device, error },
       });
-    }
+    });
   }
 }
