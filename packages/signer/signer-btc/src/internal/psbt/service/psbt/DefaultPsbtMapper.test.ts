@@ -116,7 +116,7 @@ describe("DefaultPsbtMapper tests", () => {
     const mapper = new DefaultPsbtMapper(mockSerializer, mockNormalizer);
 
     // When
-    const mapped = mapper.map("some random string");
+    const mapped = mapper.map("some non base64 string!");
 
     // Then
     expect(mapped.isRight()).toStrictEqual(false);
