@@ -7,6 +7,12 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { GetTrustedInputCommand } from "@internal/app-binder/command/GetTrustedInputCommand";
+import { signTransactionFromLedgerWalletLogs20260615 } from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-06-15";
+import {
+  getZcashBranchId,
+  serializeTransaction,
+  toInternalTransaction,
+} from "@internal/app-binder/task/utils/legacyTransactionUtils";
 
 import { GetTrustedInputTask } from "./GetTrustedInputTask";
 
@@ -124,6 +130,39 @@ describe("GetTrustedInputTask", () => {
     expect(bytesToHex(lastChunkData ?? new Uint8Array())).toBe(
       "000000000f000000000000000000000000000000000000",
     );
+  });
+
+  it("frames a v4/Sapling previous transaction with the input count right after the branch id (regression: 2026-06-15 device 6a80)", async () => {
+    vi.mocked(apiMock.sendCommand).mockResolvedValue(
+      CommandResultFactory({ data: makeSuccessResponse(0x01) }),
+    );
+
+    // Reproduce SignTransactionTask's prep for input[0]: the v4/Sapling prev tx
+    // with a (valid) consensus branch id attached, then serialized for GetTrustedInput.
+    const [legacyPrevTx, , , , branchHeight] =
+      signTransactionFromLedgerWalletLogs20260615.transactionArg.inputs[0]!;
+    const prevTx = toInternalTransaction(legacyPrevTx);
+    prevTx.consensusBranchId = getZcashBranchId(branchHeight);
+    const serialized = serializeTransaction(prevTx, prevTx.timestamp);
+
+    await new GetTrustedInputTask(apiMock, {
+      transaction: serialized,
+      indexLookup: 0,
+    }).run();
+
+    const firstChunkData = vi
+      .mocked(apiMock.sendCommand)
+      .mock.calls[0]?.[0] as GetTrustedInputCommand;
+    const header = bytesToHex(
+      firstChunkData.getApdu().getRawApdu().slice(5),
+    );
+
+    // indexLookup(00000000) | version(04000080) | vgid(85202f89) | branchId | vin_count.
+    // The prev tx has 3 transparent inputs, so the count MUST be 03.
+    // Before the fix, serializeTransaction put locktime/expiry in the v4 header,
+    // so the chunker read the count off the locktime byte → "...f04dec4d00" (0 inputs)
+    // → the device misparsed the stream and returned 6a80.
+    expect(header).toBe("000000000400008085202f89f04dec4d03");
   });
 
   it("throws for malformed transaction input before sending any command", async () => {

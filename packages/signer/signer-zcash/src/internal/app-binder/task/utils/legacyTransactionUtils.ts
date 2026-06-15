@@ -20,6 +20,8 @@ export const OP_EQUALVERIFY = 0x88;
 export const OP_CHECKSIG = 0xac;
 
 const ZCASH_ACTIVATION_HEIGHTS = {
+  // https://z.cash/upgrade/nu6.2/
+  NU6_2: 3364600,
   NU6_1: 3146400,
   NU6: 2726400,
   NU5: 1687104,
@@ -220,6 +222,38 @@ export const serializeTransaction = (
     );
   });
 
+  const isTxV4 =
+    transaction.version.length >= 4 &&
+    (readUint32LE(transaction.version, 0) & 0x7fffffff) === 4;
+
+  if (isTxV4) {
+    // v4 (Sapling) GET_TRUSTED_INPUT framing expected by the Zcash device app:
+    //   version | nVersionGroupId | consensusBranchId | varint(vin) | inputs |
+    //   varint(vout) | outputs | <3 shielded routing counts> |
+    //   locktime | varint(4 + extraData) | nExpiryHeight | extraData
+    // Unlike v5, locktime/nExpiryHeight are NOT in the header — they trail the
+    // outputs. Emitting them in the header (v5 layout) shifts the input count
+    // onto the locktime byte, so the device reads 0 inputs and rejects the
+    // stream with 6a80 (IncorrectData).
+    const locktime = transaction.locktime || new Uint8Array(0);
+    const expiry = transaction.nExpiryHeight || new Uint8Array(0);
+    const extraData = transaction.extraData || new Uint8Array(0);
+
+    return concatUint8Arrays(
+      transaction.version,
+      transaction.nVersionGroupId || new Uint8Array(0),
+      transaction.consensusBranchId || new Uint8Array(0),
+      createVarint(transaction.inputs.length),
+      inputBuffer,
+      serializeTransactionOutputs(transaction),
+      new Uint8Array(3),
+      locktime,
+      createVarint(expiry.length + extraData.length),
+      expiry,
+      extraData,
+    );
+  }
+
   let outputBuffer: Uint8Array = serializeTransactionOutputs(transaction);
   if (transaction.outputs && transaction.locktime) {
     outputBuffer = concatUint8Arrays(
@@ -281,8 +315,11 @@ export const getZcashBranchId = (
   if (
     blockHeight === null ||
     blockHeight === undefined ||
-    blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_1
+    blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_2
   ) {
+    // NOTE: null and undefined should default to the latest version
+    return uint32ToBytesLE(0x5437f330);
+  } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6_1) {
     return uint32ToBytesLE(0x4dec4df0);
   } else if (blockHeight >= ZCASH_ACTIVATION_HEIGHTS.NU6) {
     return uint32ToBytesLE(0xc8e71055);
