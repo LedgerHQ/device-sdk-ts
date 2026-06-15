@@ -14,7 +14,8 @@
     "prettier": "prettier . --check",
     "prettier:fix": "prettier . --write",
     "typecheck": "tsc --noEmit",
-    "test:playwright": "pnpm playwright test"
+    "test:playwright": "pnpm playwright test",
+    "test:playwright:ui": "pnpm playwright test --ui"
   },
   "dependencies": {
     "@ledgerhq/cal-interceptor": "workspace:*",
@@ -39,6 +40,7 @@
     "@ledgerhq/device-transport-kit-web-hid": "workspace:^",
     "@ledgerhq/device-trusted-app-kit-ledger-keyring-protocol": "workspace:^",
     "@ledgerhq/dmk-ledger-wallet": "workspace:^",
+    "@ledgerhq/speculos-device-controller": "workspace:^",
     "@ledgerhq/react-ui": "catalog:",
     "@ledgerhq/solana-tools": "workspace:^",
     "@noble/secp256k1": "^2.3.0",
@@ -57,6 +59,7 @@
     "styled-components": "catalog:"
   },
   "devDependencies": {
+    "@ledgerhq/device-mock-server": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
