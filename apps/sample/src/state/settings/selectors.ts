@@ -9,6 +9,8 @@ export const selectTransportType = (state: RootState) =>
   state.settings.transportType;
 export const selectMockServerUrl = (state: RootState) =>
   state.settings.mockServerUrl;
+export const selectMockServerSessionToken = (state: RootState) =>
+  state.settings.mockServerSessionToken;
 export const selectSpeculosUrl = (state: RootState) =>
   state.settings.speculosUrl;
 export const selectSpeculosVncUrl = (state: RootState) =>
@@ -21,12 +23,14 @@ export const selectTransportConfig = createSelector(
   [
     selectTransportType,
     selectMockServerUrl,
+    selectMockServerSessionToken,
     selectSpeculosUrl,
     selectSpeculosDeviceModel,
   ],
   (
     transportType,
     mockServerUrl,
+    mockServerSessionToken,
     speculosUrl,
     speculosDeviceModel,
   ): TransportConfig => {
@@ -38,7 +42,11 @@ export const selectTransportConfig = createSelector(
           deviceModelId: speculosDeviceModel,
         };
       case "mockserver":
-        return { type: "mockserver", url: mockServerUrl };
+        return {
+          type: "mockserver",
+          url: mockServerUrl,
+          sessionToken: mockServerSessionToken || undefined,
+        };
       default:
         return { type: "default" };
     }
