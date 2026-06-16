@@ -12,11 +12,23 @@ import { useSelector } from "react-redux";
 import { Icons } from "@ledgerhq/react-ui/index";
 import styled from "styled-components";
 
+import { MockServerScreenViewer } from "@/components/MockServerScreenViewer";
 import { VncViewer } from "@/components/VncViewer";
+import { useDeviceSessionState } from "@/hooks/useDeviceSessionState";
 import {
+  selectOrderedConnectedDevices,
+  selectSelectedSessionId,
+} from "@/state/sessions/selectors";
+import {
+  selectMockServerSessionToken,
+  selectMockServerUrl,
   selectSpeculosVncUrl,
   selectTransportType,
 } from "@/state/settings/selectors";
+
+// "BOLOS" is the legacy internal name of Ledger OS: when the current app is
+// BOLOS, the device is on the dashboard (no app open).
+const LEDGER_OS_NAME = "BOLOS";
 
 const CONSTANTS = {
   BUTTON_SIZE: 56,
@@ -98,6 +110,18 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
 }) => {
   const transportType = useSelector(selectTransportType);
   const speculosVncUrl = useSelector(selectSpeculosVncUrl);
+  const mockServerUrl = useSelector(selectMockServerUrl);
+  const mockServerSessionToken = useSelector(selectMockServerSessionToken);
+  const selectedSessionId = useSelector(selectSelectedSessionId);
+  const connectedDevices = useSelector(selectOrderedConnectedDevices);
+  const selectedDevice = connectedDevices.find(
+    ({ sessionId }) => sessionId === selectedSessionId,
+  )?.connectedDevice;
+  const sessionState = useDeviceSessionState(selectedSessionId ?? "");
+  const isDashboard =
+    sessionState !== undefined &&
+    "currentApp" in sessionState &&
+    sessionState.currentApp.name === LEDGER_OS_NAME;
 
   const [position, setPosition] = useState<Position>(
     initialPosition || CONSTANTS.DEFAULT_POSITION,
@@ -244,7 +268,7 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
     return () => window.removeEventListener("resize", handleResize);
   }, [calculateBounds, isVncOpen]);
 
-  if (transportType !== "speculos") {
+  if (transportType !== "speculos" && transportType !== "mockserver") {
     return null;
   }
 
@@ -263,11 +287,23 @@ export const FloatingIcon: React.FC<FloatingIconProps> = ({
         </IconContent>
       </FloatingContainer>
 
-      <VncViewer
-        isOpen={isVncOpen}
-        url={speculosVncUrl || ""}
-        position={getVncPosition()}
-      />
+      {transportType === "speculos" ? (
+        <VncViewer
+          isOpen={isVncOpen}
+          url={speculosVncUrl || ""}
+          position={getVncPosition()}
+        />
+      ) : (
+        <MockServerScreenViewer
+          isOpen={isVncOpen}
+          position={getVncPosition()}
+          mockServerUrl={mockServerUrl}
+          token={mockServerSessionToken || undefined}
+          deviceId={selectedDevice?.id}
+          deviceModel={selectedDevice?.modelId}
+          isDashboard={isDashboard}
+        />
+      )}
     </>
   );
 };
