@@ -47,8 +47,10 @@ export class DeviceSessionRefresher {
     if (this._refresherOptions.isRefresherDisabled) return;
     if (this._refresherSubscription) return;
 
-    const pollingInterval =
-      this.getValidPollingInterval(this._refresherOptions, this._logger) * 2;
+    const pollingInterval = this.getValidPollingInterval(
+      this._refresherOptions,
+      this._logger,
+    );
 
     const isBusy$ = this._sessionEventDispatcher.listen().pipe(
       filter(
