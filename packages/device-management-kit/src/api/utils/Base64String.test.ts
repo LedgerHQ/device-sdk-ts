@@ -54,6 +54,17 @@ describe("Base64String", () => {
       expect(result).toBeTruthy();
     });
 
+    it("GIVEN a base64 string with whitespace WHEN validating THEN it returns true", () => {
+      // GIVEN
+      const value = "AQID\nkAA=";
+
+      // WHEN
+      const result = isBase64String(value);
+
+      // THEN
+      expect(result).toBeTruthy();
+    });
+
     it("should return false for an invalid base64 string", () => {
       // GIVEN
       const value = "invalid base64 string";
@@ -89,8 +100,21 @@ describe("Base64String", () => {
   });
 
   describe("base64StringToBuffer function", () => {
+    const originalAtob = (globalThis as any).atob;
+    const originalBuffer = (globalThis as any).Buffer;
+    const originalWindow = (globalThis as any).window;
+
     beforeEach(() => {
-      vi.resetAllMocks();
+      vi.restoreAllMocks();
+      (globalThis as any).atob = originalAtob;
+      (globalThis as any).Buffer = originalBuffer;
+      (globalThis as any).window = undefined;
+    });
+
+    afterAll(() => {
+      (globalThis as any).atob = originalAtob;
+      (globalThis as any).Buffer = originalBuffer;
+      (globalThis as any).window = originalWindow;
     });
 
     it("should convert empty input to empty buffer", () => {
@@ -115,39 +139,91 @@ describe("Base64String", () => {
       expect(result).toStrictEqual(null);
     });
 
-    it("should convert a base64 string to a buffer using browser's atob", () => {
+    it("GIVEN a base64 string with whitespace WHEN decoding THEN it ignores the whitespace", () => {
       // GIVEN
-      const value = "Zmlyc3QgdGVzdCBzdHJpbmc=";
+      const value = "AQID\nkAA=";
 
       // WHEN
       const result = base64StringToBuffer(value);
 
       // THEN
       expect(result).toStrictEqual(
-        Uint8Array.from([
-          0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74, 0x65, 0x73, 0x74, 0x20,
-          0x73, 0x74, 0x72, 0x69, 0x6e, 0x67,
-        ]),
+        Uint8Array.from([0x01, 0x02, 0x03, 0x90, 0x00]),
       );
     });
 
-    it("should convert a base64 string to a buffer using Buffer", () => {
-      // GIVEN
-      vi.spyOn(global, "atob").mockImplementation(() => {
-        throw new Error("atob is not defined");
+    describe("runtime compatibility fallbacks", () => {
+      it("GIVEN window.atob is available WHEN decoding THEN it uses window.atob", () => {
+        // GIVEN
+        const value = "Zmlyc3QgdGVzdCBzdHJpbmc=";
+        const windowAtob = vi.fn(() => "first test string");
+        const globalAtob = vi.fn(() => "unexpected");
+        (globalThis as any).window = { atob: windowAtob };
+        (globalThis as any).atob = globalAtob;
+
+        // WHEN
+        const result = base64StringToBuffer(value);
+
+        // THEN
+        expect(result).toStrictEqual(
+          Uint8Array.from([
+            0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74, 0x65, 0x73, 0x74, 0x20,
+            0x73, 0x74, 0x72, 0x69, 0x6e, 0x67,
+          ]),
+        );
+        expect(windowAtob).toHaveBeenCalledWith(value);
+        expect(globalAtob).not.toHaveBeenCalled();
       });
-      const value = "Zmlyc3QgdGVzdCBzdHJpbmc=";
 
-      // WHEN
-      const result = base64StringToBuffer(value);
+      it("GIVEN global atob is available WHEN decoding THEN it uses global atob", () => {
+        // GIVEN
+        const value = "Zmlyc3QgdGVzdCBzdHJpbmc=";
+        const globalAtob = vi.fn(() => "first test string");
+        (globalThis as any).atob = globalAtob;
 
-      // THEN
-      expect(result).toStrictEqual(
-        Uint8Array.from([
-          0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74, 0x65, 0x73, 0x74, 0x20,
-          0x73, 0x74, 0x72, 0x69, 0x6e, 0x67,
-        ]),
-      );
+        // WHEN
+        const result = base64StringToBuffer(value);
+
+        // THEN
+        expect(result).toStrictEqual(
+          Uint8Array.from([
+            0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74, 0x65, 0x73, 0x74, 0x20,
+            0x73, 0x74, 0x72, 0x69, 0x6e, 0x67,
+          ]),
+        );
+        expect(globalAtob).toHaveBeenCalledWith(value);
+      });
+
+      it("GIVEN atob is not available WHEN decoding THEN it uses Buffer", () => {
+        // GIVEN
+        (globalThis as any).atob = undefined;
+        const value = "Zmlyc3QgdGVzdCBzdHJpbmc=";
+        const bufferFromSpy = vi.spyOn(Buffer, "from");
+
+        // WHEN
+        const result = base64StringToBuffer(value);
+
+        // THEN
+        expect(result).toStrictEqual(
+          Uint8Array.from([
+            0x66, 0x69, 0x72, 0x73, 0x74, 0x20, 0x74, 0x65, 0x73, 0x74, 0x20,
+            0x73, 0x74, 0x72, 0x69, 0x6e, 0x67,
+          ]),
+        );
+        expect(bufferFromSpy).toHaveBeenCalledWith(value, "base64");
+      });
+
+      it("GIVEN no decoder is available WHEN decoding THEN it throws", () => {
+        // GIVEN
+        (globalThis as any).atob = undefined;
+        (globalThis as any).Buffer = undefined;
+        const value = "Zmlyc3QgdGVzdCBzdHJpbmc=";
+
+        // WHEN / THEN
+        expect(() => base64StringToBuffer(value)).toThrowError(
+          "No Base64 decoder available in this environment.",
+        );
+      });
     });
   });
 });
@@ -155,16 +231,19 @@ describe("Base64String", () => {
 describe("bufferToBase64String", () => {
   const originalBtoa = (globalThis as any).btoa;
   const originalBuffer = (globalThis as any).Buffer;
+  const originalWindow = (globalThis as any).window;
 
   beforeEach(() => {
     vi.restoreAllMocks();
     (globalThis as any).btoa = originalBtoa;
     (globalThis as any).Buffer = originalBuffer;
+    (globalThis as any).window = undefined;
   });
 
   afterAll(() => {
     (globalThis as any).btoa = originalBtoa;
     (globalThis as any).Buffer = originalBuffer;
+    (globalThis as any).window = originalWindow;
   });
 
   it("should encode an empty buffer to an empty base64 string when btoa is available", () => {
@@ -184,53 +263,73 @@ describe("bufferToBase64String", () => {
     expect(globalThis.btoa).toHaveBeenCalledTimes(1);
   });
 
-  it("should encode a buffer to base64 using btoa when available", () => {
-    // GIVEN
-    const text = "first testing str";
-    const bytes = Uint8Array.from(text.split("").map((c) => c.charCodeAt(0)));
+  describe("runtime compatibility fallbacks", () => {
+    it("GIVEN global btoa is available WHEN encoding THEN it uses global btoa", () => {
+      // GIVEN
+      const text = "first testing str";
+      const bytes = Uint8Array.from(text.split("").map((c) => c.charCodeAt(0)));
 
-    (globalThis as any).btoa = vi.fn((input: string) => {
-      expect(input).toBe(text);
-      return "Zmlyc3QgdGVzdGluZyBzdHI=";
+      (globalThis as any).btoa = vi.fn((input: string) => {
+        expect(input).toBe(text);
+        return "Zmlyc3QgdGVzdGluZyBzdHI=";
+      });
+
+      // WHEN
+      const result = bufferToBase64String(bytes);
+
+      // THEN
+      expect(result).toBe("Zmlyc3QgdGVzdGluZyBzdHI=");
+      expect(globalThis.btoa).toHaveBeenCalledTimes(1);
     });
 
-    // WHEN
-    const result = bufferToBase64String(bytes);
+    it("GIVEN window.btoa is available WHEN encoding THEN it uses window.btoa", () => {
+      // GIVEN
+      const text = "first testing str";
+      const bytes = Uint8Array.from(text.split("").map((c) => c.charCodeAt(0)));
+      const windowBtoa = vi.fn(() => "Zmlyc3QgdGVzdGluZyBzdHI=");
+      const globalBtoa = vi.fn(() => "unexpected");
+      (globalThis as any).window = { btoa: windowBtoa };
+      (globalThis as any).btoa = globalBtoa;
 
-    // THEN
-    expect(result).toBe("Zmlyc3QgdGVzdGluZyBzdHI=");
-    expect(globalThis.btoa).toHaveBeenCalledTimes(1);
-  });
+      // WHEN
+      const result = bufferToBase64String(bytes);
 
-  it("should encode a buffer to base64 using Buffer when btoa is not available", () => {
-    // GIVEN
-    (globalThis as any).btoa = undefined;
+      // THEN
+      expect(result).toBe("Zmlyc3QgdGVzdGluZyBzdHI=");
+      expect(windowBtoa).toHaveBeenCalledWith(text);
+      expect(globalBtoa).not.toHaveBeenCalled();
+    });
 
-    const text = "testing str";
-    const expectedBase64 = Buffer.from(text, "binary").toString("base64");
-    const bytes = Uint8Array.from(text.split("").map((c) => c.charCodeAt(0)));
+    it("GIVEN btoa is not available WHEN encoding THEN it uses Buffer", () => {
+      // GIVEN
+      (globalThis as any).btoa = undefined;
 
-    const bufferFromSpy = vi.spyOn(Buffer, "from");
+      const text = "testing str";
+      const expectedBase64 = Buffer.from(text, "binary").toString("base64");
+      const bytes = Uint8Array.from(text.split("").map((c) => c.charCodeAt(0)));
 
-    // WHEN
-    const result = bufferToBase64String(bytes);
+      const bufferFromSpy = vi.spyOn(Buffer, "from");
 
-    // THEN
-    expect(result).toBe(expectedBase64);
-    expect(bufferFromSpy).toHaveBeenCalledTimes(1);
-  });
+      // WHEN
+      const result = bufferToBase64String(bytes);
 
-  it("should throw an error when no Base64 encoder is available", () => {
-    // GIVEN
-    (globalThis as any).btoa = undefined;
-    (globalThis as any).Buffer = undefined;
+      // THEN
+      expect(result).toBe(expectedBase64);
+      expect(bufferFromSpy).toHaveBeenCalledTimes(1);
+    });
 
-    const bytes = Uint8Array.from([0x01, 0x02, 0x03]);
+    it("GIVEN no encoder is available WHEN encoding THEN it throws", () => {
+      // GIVEN
+      (globalThis as any).btoa = undefined;
+      (globalThis as any).Buffer = undefined;
 
-    // WHEN / THEN
-    expect(() => bufferToBase64String(bytes)).toThrowError(
-      "No Base64 encoder available in this environment.",
-    );
+      const bytes = Uint8Array.from([0x01, 0x02, 0x03]);
+
+      // WHEN / THEN
+      expect(() => bufferToBase64String(bytes)).toThrowError(
+        "No Base64 encoder available in this environment.",
+      );
+    });
   });
 
   it("should throw if an undefined byte is encountered (defensive check)", () => {

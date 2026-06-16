@@ -21,6 +21,7 @@ import {
   trustedInputHexFromLogs,
 } from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-05-11";
 import { signTransactionFromLedgerWalletLogs20260512 } from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-05-12";
+import { signTransactionFromLedgerWalletLogs20260615 } from "@internal/app-binder/task/__fixtures__/signTransactionFromLedgerWalletLogs2026-06-15";
 import { GetTrustedInputTask } from "@internal/app-binder/task/GetTrustedInputTask";
 import * as legacyTransactionUtils from "@internal/app-binder/task/utils/legacyTransactionUtils";
 
@@ -1266,5 +1267,108 @@ describe("SignTransactionTask", () => {
           .getRawApdu(),
       ).toString("hex"),
     ).toBe("e04800000b0000000000000100000000");
+  });
+
+  // NOTE: independent invariant — the *spending* tx header is always v5 (NU5)
+  // regardless of input versions. (The 2026-06-15 6a80 was a separate bug in the
+  // v4 *previous*-tx framing for GET_TRUSTED_INPUT; see GetTrustedInputTask.test.ts.)
+  it("pins the v5 (NU5) spending-transaction header even when the first input UTXO is a v4/Sapling transaction", async () => {
+    const getTrustedInputSpy = vi
+      .spyOn(GetTrustedInputTask.prototype, "run")
+      .mockResolvedValue(
+        DmkResultFactory({
+          data: {
+            statusCode: new Uint8Array([0x90, 0x00]),
+            data: new Uint8Array(64).fill(0x24),
+          },
+        }) as never,
+      );
+
+    vi.mocked(apiMock.sendCommand).mockImplementation((command: unknown) => {
+      if (command instanceof GetAddressCommand) {
+        return Promise.resolve(
+          CommandResultFactory({
+            data: {
+              publicKey: new Uint8Array(65).fill(0x04),
+              address: "t1sapling",
+              chainCode: new Uint8Array(32).fill(0x03),
+            },
+          }) as never,
+        );
+      }
+      if (
+        command instanceof StartUntrustedHashTransactionInputCommand ||
+        command instanceof ProvideOutputFullChangePathCommand ||
+        command instanceof HashOutputFullCommand
+      ) {
+        return Promise.resolve(
+          CommandResultFactory({
+            data: {
+              statusCode: new Uint8Array([0x90, 0x00]),
+              data: new Uint8Array([]),
+            },
+          }) as never,
+        );
+      }
+      if (command instanceof SignTransactionCommand) {
+        return Promise.resolve(
+          CommandResultFactory({
+            data: {
+              signature: new Uint8Array([0x30, 0x44, 0x02, 0x20, 0x01]),
+            },
+          }) as never,
+        );
+      }
+      if (command instanceof ZcashSaplingOutputCommitCommand) {
+        return Promise.resolve(
+          CommandResultFactory({ data: { committed: true } }) as never,
+        );
+      }
+      return Promise.reject(new Error("Unexpected command"));
+    });
+
+    const { transactionArg, regression } =
+      signTransactionFromLedgerWalletLogs20260615;
+
+    // Guard the fixture itself: the first input really is a v4/Sapling source tx,
+    // which is exactly the shape that produced 6a80 in the deployed build.
+    const firstInputSourceTx = transactionArg.inputs[0]![0];
+    expect(Buffer.from(firstInputSourceTx.version).toString("hex")).toBe(
+      regression.firstInputSourceVersionHex,
+    );
+    expect(
+      Buffer.from(firstInputSourceTx.nVersionGroupId!).toString("hex"),
+    ).toBe(regression.firstInputSourceVersionGroupIdHex);
+
+    try {
+      const result = await new SignTransactionTask(apiMock, {
+        transactionArg: { ...transactionArg },
+      }).run();
+
+      expect(isSuccessDmkResult(result)).toBe(true);
+
+      const startHashCommands = vi
+        .mocked(apiMock.sendCommand)
+        .mock.calls.map((call: SendCommandCall) => call[0])
+        .filter(
+          (c) => c instanceof StartUntrustedHashTransactionInputCommand,
+        ) as StartUntrustedHashTransactionInputCommand[];
+
+      // The first START is the global header carrying the spending-tx version.
+      const header = startHashCommands[0]!.getApdu().getRawApdu();
+      // APDU = [CLA, INS, P1, P2, Lc, version(4) | nVersionGroupId(4) | branchId(4) | count].
+      const version = Buffer.from(header.slice(5, 9)).toString("hex");
+      const versionGroupId = Buffer.from(header.slice(9, 13)).toString("hex");
+
+      // Must be pinned to v5 / NU5 — NOT inherited from the v4/Sapling input.
+      expect(version).toBe(regression.pinnedTransactionVersionHex);
+      expect(versionGroupId).toBe(regression.pinnedVersionGroupIdHex);
+      expect(version).not.toBe(regression.firstInputSourceVersionHex);
+      expect(versionGroupId).not.toBe(
+        regression.firstInputSourceVersionGroupIdHex,
+      );
+    } finally {
+      getTrustedInputSpy.mockRestore();
+    }
   });
 });

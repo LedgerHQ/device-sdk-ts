@@ -351,9 +351,6 @@ catalogs:
     typescript-eslint:
       specifier: 8.41.0
       version: 8.41.0
-    url:
-      specifier: ^0.11.4
-      version: 0.11.4
     usb:
       specifier: ^2.16.0
       version: 2.17.0
@@ -1084,9 +1081,6 @@ importers:
       semver:
         specifier: 'catalog:'
         version: 7.7.2
-      url:
-        specifier: 'catalog:'
-        version: 0.11.4
       uuid:
         specifier: 'catalog:'
         version: 11.0.3
@@ -1461,11 +1455,11 @@ importers:
   packages/signer/signer-aleo:
     dependencies:
       '@ledgerhq/context-module':
-        specifier: ^2.1.0
-        version: 2.1.0(@ledgerhq/device-management-kit@packages+device-management-kit)(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        specifier: workspace:^
+        version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: ^1.2.0
-        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       inversify:
         specifier: 'catalog:'
         version: 7.5.1(reflect-metadata@0.2.2)
@@ -4322,11 +4316,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@ledgerhq/context-module@2.1.0':
-    resolution: {integrity: sha512-t5mIA6DcxGafYF1xEHwAj6RyxvmTY5ZfnC/qxVf3PEF65+3J11qcw5Xs3pYWz49mSXQxjTiGKWs0JINiZagGWA==}
-    peerDependencies:
-      '@ledgerhq/device-management-kit': ^1.5.1
-
   '@ledgerhq/crypto-icons-ui@1.8.0':
     resolution: {integrity: sha512-lWU9SmXtOnv9Q2GCpczTfLfOU9wl/V3+Dwwkwe/W9YqbdwRG91eRWSlJSWcVmFYsOKbaE+QszmZ/Ld5ydhTmUA==}
     peerDependencies:
@@ -4397,11 +4386,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/signer-utils@1.2.0':
-    resolution: {integrity: sha512-Ek4/NXGt6gfiZUmiAFE19534f8wnlQSHvZMsjmqCEktbJd/mYbzvTrvYeo0+PQPw2D/kTYD1fRC6ADKQRSBeGw==}
-    peerDependencies:
-      '@ledgerhq/device-management-kit': ^1.2.0
 
   '@ledgerhq/ui-shared@0.2.2':
     resolution: {integrity: sha512-3ASYnyqnZFMRnySADZziM3IIJ2SRQ7lKrRPwpihhf+SsyP7TIo6o4UXMY8eYOupdTARlElS4Qpk4nRL/Ln62Ng==}
@@ -10946,9 +10930,6 @@ packages:
   pump@3.0.3:
     resolution: {integrity: sha512-todwxLMY7/heScKmntwQG8CXVkWUOdYxIvY2s0VWAAMh/nd8SoYiRaKjlr7+iCs984f2P8zvrfWcDDYVb73NfA==}
 
-  punycode@1.4.1:
-    resolution: {integrity: sha512-jmYNElW7yvO7TV33CjSmvSiE2yco3bV2czu/OzDKdMNVZQWfxCblURLhf+47syQRBntjfLdd/H0egrzIG+oaFQ==}
-
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
@@ -12703,10 +12684,6 @@ packages:
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
-
-  url@0.11.4:
-    resolution: {integrity: sha512-oCwdVC7mTuWiPyjLUz/COz5TLk6wgp0RCsN+wHZ2Ekneac9w8uuV0njcbbie2ME+Vs+d6duwmYuR3HgQXs1fOg==}
-    engines: {node: '>= 0.4'}
 
   usb@2.17.0:
     resolution: {integrity: sha512-UuFgrlglgDn5ll6d5l7kl3nDb2Yx43qLUGcDq+7UNLZLtbNug0HZBb2Xodhgx2JZB1LqvU+dOGqLEeYUeZqsHg==}
@@ -15332,19 +15309,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
-  '@ledgerhq/context-module@2.1.0(@ledgerhq/device-management-kit@packages+device-management-kit)(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
-    dependencies:
-      '@ledgerhq/device-management-kit': link:packages/device-management-kit
-      bs58: 6.0.0
-      crypto-js: 4.2.0
-      ethers: 6.14.1(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      inversify: 7.5.1(reflect-metadata@0.2.2)
-      purify-ts: 2.1.0
-      reflect-metadata: 0.2.2
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
   '@ledgerhq/crypto-icons-ui@1.8.0(@types/react@18.3.12)(react-native-svg@15.11.1(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1))(react@18.3.1)(styled-components@5.3.11(@babel/core@7.28.3)(react-dom@18.3.1(react@18.3.1))(react-is@18.3.1)(react@18.3.1))(styled-system@5.1.5)':
     dependencies:
       react: 18.3.1
@@ -15426,11 +15390,6 @@ snapshots:
       - react-native
       - react-native-svg
       - supports-color
-
-  '@ledgerhq/signer-utils@1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)':
-    dependencies:
-      '@ledgerhq/device-management-kit': link:packages/device-management-kit
-      semver: 7.7.2
 
   '@ledgerhq/ui-shared@0.2.2': {}
 
@@ -23815,8 +23774,6 @@ snapshots:
       end-of-stream: 1.4.5
       once: 1.4.0
 
-  punycode@1.4.1: {}
-
   punycode@2.3.1: {}
 
   pupa@3.1.0:
@@ -26067,11 +26024,6 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
-
-  url@0.11.4:
-    dependencies:
-      punycode: 1.4.1
-      qs: 6.14.1
 
   usb@2.17.0:
     dependencies:

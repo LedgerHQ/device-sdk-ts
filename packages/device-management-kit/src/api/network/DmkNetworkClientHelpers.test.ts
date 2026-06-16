@@ -266,61 +266,71 @@ describe("DmkNetworkClientHelpers", () => {
   });
 
   describe("buildSignal", () => {
-    it("should return undefined when no timeout and no external signal", () => {
-      expect(
-        buildSignal({
-          timeoutMs: undefined,
-          externalSignal: undefined,
-        }),
-      ).toBeUndefined();
+    afterEach(() => {
+      vi.useRealTimers();
     });
 
-    it("should return undefined when timeout is zero and no external signal", () => {
-      expect(
-        buildSignal({
-          timeoutMs: 0,
-          externalSignal: undefined,
-        }),
-      ).toBeUndefined();
-    });
-
-    it("should return the external signal alone when no timeout is configured", () => {
-      const controller = new AbortController();
-      const signal = buildSignal({
+    it("GIVEN no timeout WHEN building a signal THEN it returns no signal", () => {
+      const result = buildSignal({
         timeoutMs: undefined,
-        externalSignal: controller.signal,
       });
-      expect(signal).toBe(controller.signal);
+
+      expect(result.signal).toBeUndefined();
+      expect(result.cleanup).toEqual(expect.any(Function));
     });
 
-    it("should return a timeout signal when only a timeout is configured", () => {
-      const signal = buildSignal({
+    it("GIVEN a zero timeout WHEN building a signal THEN it returns no signal", () => {
+      const result = buildSignal({
+        timeoutMs: 0,
+      });
+
+      expect(result.signal).toBeUndefined();
+      expect(result.cleanup).toEqual(expect.any(Function));
+    });
+
+    it("GIVEN a negative timeout WHEN building a signal THEN it returns no signal", () => {
+      const result = buildSignal({
+        timeoutMs: -1,
+      });
+
+      expect(result.signal).toBeUndefined();
+      expect(result.cleanup).toEqual(expect.any(Function));
+    });
+
+    it("GIVEN a positive timeout WHEN building a signal THEN it returns an AbortSignal", () => {
+      const { signal, cleanup } = buildSignal({
         timeoutMs: 1000,
-        externalSignal: undefined,
       });
+
       expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal?.aborted).toBe(false);
+      cleanup();
     });
 
-    it("should use the provided timeout value for AbortSignal.timeout", () => {
-      const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
-      buildSignal({
-        timeoutMs: 50,
-        externalSignal: undefined,
+    it("GIVEN a positive timeout WHEN the delay elapses THEN it aborts the signal", () => {
+      vi.useFakeTimers();
+      const { signal, cleanup } = buildSignal({
+        timeoutMs: 1000,
       });
-      expect(timeoutSpy).toHaveBeenCalledWith(50);
-      timeoutSpy.mockRestore();
+
+      expect(signal?.aborted).toBe(false);
+      vi.advanceTimersByTime(999);
+      expect(signal?.aborted).toBe(false);
+      vi.advanceTimersByTime(1);
+      expect(signal?.aborted).toBe(true);
+      cleanup();
     });
 
-    it("should compose both signals with AbortSignal.any when both are set", () => {
-      const anySpy = vi.spyOn(AbortSignal, "any");
-      const controller = new AbortController();
-      const signal = buildSignal({
+    it("GIVEN a timeout signal WHEN cleanup runs before the delay THEN it does not abort", () => {
+      vi.useFakeTimers();
+      const { signal, cleanup } = buildSignal({
         timeoutMs: 100,
-        externalSignal: controller.signal,
       });
-      expect(signal).toBeInstanceOf(AbortSignal);
-      expect(anySpy).toHaveBeenCalledTimes(1);
-      anySpy.mockRestore();
+
+      cleanup();
+      vi.advanceTimersByTime(100);
+
+      expect(signal?.aborted).toBe(false);
     });
   });
 
@@ -397,20 +407,17 @@ describe("DmkNetworkClientHelpers", () => {
       const cause = new TypeError("network down");
       const error = wrapFetchError({
         cause,
-        externalSignal: undefined,
         timeoutMs: undefined,
       });
       expect(error).toBeInstanceOf(DmkNetworkClientError);
       expect(error.message).toBe("network down");
       expect(error.cause).toBe(cause);
       expect(error.isTimeout).toBe(false);
-      expect(error.isAbort).toBe(false);
     });
 
     it("should fall back to a generic message for non-Error causes", () => {
       const error = wrapFetchError({
         cause: "something",
-        externalSignal: undefined,
         timeoutMs: undefined,
       });
       expect(error.message).toBe("Network request failed");
@@ -422,11 +429,9 @@ describe("DmkNetworkClientHelpers", () => {
       cause.name = "TimeoutError";
       const error = wrapFetchError({
         cause,
-        externalSignal: undefined,
         timeoutMs: 10,
       });
       expect(error.isTimeout).toBe(true);
-      expect(error.isAbort).toBe(false);
       expect(error.message).toBe("Request timed out");
     });
 
@@ -435,26 +440,9 @@ describe("DmkNetworkClientHelpers", () => {
       cause.name = "AbortError";
       const error = wrapFetchError({
         cause,
-        externalSignal: undefined,
         timeoutMs: 1000,
       });
       expect(error.isTimeout).toBe(true);
-      expect(error.isAbort).toBe(false);
-    });
-
-    it("should flag AbortError as an external abort when the caller signal is aborted", () => {
-      const controller = new AbortController();
-      controller.abort();
-      const cause = new Error("aborted");
-      cause.name = "AbortError";
-      const error = wrapFetchError({
-        cause,
-        externalSignal: controller.signal,
-        timeoutMs: undefined,
-      });
-      expect(error.isAbort).toBe(true);
-      expect(error.isTimeout).toBe(false);
-      expect(error.message).toBe("Request aborted");
     });
 
     it("should treat AbortError with no timeout and no external abort as a plain abort", () => {
@@ -462,11 +450,9 @@ describe("DmkNetworkClientHelpers", () => {
       cause.name = "AbortError";
       const error = wrapFetchError({
         cause,
-        externalSignal: undefined,
         timeoutMs: undefined,
       });
       expect(error.isTimeout).toBe(false);
-      expect(error.isAbort).toBe(false);
       expect(error.message).toBe("Request aborted");
     });
   });

@@ -1,5 +1,14 @@
 # @ledgerhq/device-transport-kit-react-native-hid
 
+## 1.0.4
+
+### Patch Changes
+
+- [#1547](https://github.com/LedgerHQ/device-sdk-ts/pull/1547) [`27f257e`](https://github.com/LedgerHQ/device-sdk-ts/commit/27f257ea6c79a0a97da428fdfba60bd8f3a7e4a2) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Encode and decode Base64 through the shared portable Device Management Kit helpers (`bufferToBase64String`/`base64StringToBuffer`) instead of the bare `btoa`/`atob` globals.
+
+- Updated dependencies [[`32071d9`](https://github.com/LedgerHQ/device-sdk-ts/commit/32071d9d38bc965befb83c4f7341793117dc9873)]:
+  - @ledgerhq/device-management-kit@1.7.0
+
 ## 1.0.3
 
 ### Patch Changes

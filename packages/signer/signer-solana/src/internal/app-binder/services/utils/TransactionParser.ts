@@ -1,3 +1,4 @@
+import { base64StringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type Message,
   type MessageV0,
@@ -6,7 +7,6 @@ import {
   VersionedMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
-import { Buffer } from "buffer";
 import { type Either, EitherAsync, Left, Right } from "purify-ts";
 
 import {
@@ -317,7 +317,7 @@ export function buildCompiledInstructions(
       ci.data instanceof Uint8Array
         ? ci.data
         : typeof ci.data === "string"
-          ? Buffer.from(ci.data, "base64")
+          ? (base64StringToBuffer(ci.data) ?? new Uint8Array())
           : Uint8Array.from(ci.data ?? []);
 
     out.push({

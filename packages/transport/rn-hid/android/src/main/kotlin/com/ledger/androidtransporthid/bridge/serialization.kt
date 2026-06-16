@@ -88,7 +88,7 @@ internal fun SendApduResult.toWritableMap(): WritableMap {
         is SendApduResult.Success -> {
             return Arguments.createMap().apply {
                 putBoolean("success", true)
-                putString("apdu", Base64.encodeToString(apdu, Base64.DEFAULT))
+                putString("apdu", Base64.encodeToString(apdu, Base64.NO_WRAP))
             }
         }
         is SendApduResult.Failure -> {
