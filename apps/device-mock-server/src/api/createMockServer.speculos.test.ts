@@ -29,6 +29,12 @@ const fakeResponse = (
     json: () => Promise.resolve(body),
     text: () =>
       Promise.resolve(typeof body === "string" ? body : JSON.stringify(body)),
+    arrayBuffer: () =>
+      Promise.resolve(
+        Uint8Array.from(
+          Buffer.from(typeof body === "string" ? body : JSON.stringify(body)),
+        ).buffer as ArrayBuffer,
+      ),
   }) as unknown as Response;
 
 let server: Server;

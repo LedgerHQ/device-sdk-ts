@@ -20,7 +20,9 @@ const makeOperator = (
   release: vi.fn(() => EitherAsync.liftEither(Right(undefined))),
   forwardApdu: vi.fn(() => EitherAsync.liftEither(Right("deadbeef9000"))),
   proxyRequest: vi.fn(() =>
-    EitherAsync.liftEither(Right({ status: 200, contentType: null, body: "" })),
+    EitherAsync.liftEither(
+      Right({ status: 200, contentType: null, body: Buffer.from("") }),
+    ),
   ),
   ...overrides,
 });

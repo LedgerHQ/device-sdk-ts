@@ -22,7 +22,11 @@ const makeOperator = (
   forwardApdu: vi.fn(() => EitherAsync.liftEither(Right("deadbeef9000"))),
   proxyRequest: vi.fn(() =>
     EitherAsync.liftEither(
-      Right({ status: 200, contentType: "application/json", body: "{}" }),
+      Right({
+        status: 200,
+        contentType: "application/json",
+        body: Buffer.from("{}"),
+      }),
     ),
   ),
   ...overrides,

@@ -202,7 +202,7 @@ export class HttpSpeculosOperatorDataSource
         return {
           status: upstream.status,
           contentType: upstream.headers.get("content-type"),
-          body: await upstream.text(),
+          body: Buffer.from(await upstream.arrayBuffer()),
         };
       } catch (error) {
         return throwE(

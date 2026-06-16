@@ -48,7 +48,11 @@ export interface SpeculosProxyRequest {
 export interface SpeculosProxyResponse {
   readonly status: number;
   readonly contentType: string | null;
-  readonly body: string;
+  /**
+   * Raw response bytes. Kept as a Buffer (not a string) so binary payloads such
+   * as PNG screenshots are relayed verbatim without UTF-8 corruption.
+   */
+  readonly body: Buffer;
 }
 
 /** Why opening an app via Speculos failed. */

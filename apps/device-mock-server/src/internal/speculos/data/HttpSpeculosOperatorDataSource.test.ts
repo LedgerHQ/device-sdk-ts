@@ -124,7 +124,10 @@ describe("HttpSpeculosOperatorDataSource", () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
       status: 200,
       headers: { get: () => "image/png" },
-      text: () => Promise.resolve("PNG-BYTES"),
+      arrayBuffer: () =>
+        Promise.resolve(
+          Uint8Array.from(Buffer.from("PNG-BYTES")).buffer as ArrayBuffer,
+        ),
     } as unknown as Response);
 
     const result = await newOperator()
@@ -140,7 +143,7 @@ describe("HttpSpeculosOperatorDataSource", () => {
     expect(result.extract()).toEqual({
       status: 200,
       contentType: "image/png",
-      body: "PNG-BYTES",
+      body: Buffer.from("PNG-BYTES"),
     });
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe("https://r.speculos.test/button/right?delay=0");
