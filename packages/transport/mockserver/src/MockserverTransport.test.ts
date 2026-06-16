@@ -223,7 +223,11 @@ describe("mockserverTransportFactory", () => {
       });
 
       expect(result.unsafeCoerce().deviceModel.masks).toEqual([0x31100000]);
-      expect(result.unsafeCoerce().deviceModel.getBlockSize()).toBe(32);
+      expect(
+        result.unsafeCoerce().deviceModel.getBlockSize({
+          firmwareVersion: "1.0.0",
+        }),
+      ).toBe(32);
     });
 
     it("returns an OpeningConnectionError when the client throws", async () => {
