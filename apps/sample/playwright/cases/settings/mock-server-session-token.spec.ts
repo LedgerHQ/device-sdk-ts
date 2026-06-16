@@ -1,4 +1,4 @@
-import { test } from "../../fixtures";
+import { test } from "@root/playwright/fixtures";
 
 // Verifies that seeding the sample app's persisted settings (localStorage) with
 // a mock server session token before the app loads correctly populates the
