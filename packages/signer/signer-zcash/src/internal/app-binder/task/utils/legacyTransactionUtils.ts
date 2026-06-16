@@ -235,8 +235,11 @@ export const serializeTransaction = (
     // outputs. Emitting them in the header (v5 layout) shifts the input count
     // onto the locktime byte, so the device reads 0 inputs and rejects the
     // stream with 6a80 (IncorrectData).
-    const locktime = transaction.locktime || new Uint8Array(0);
-    const expiry = transaction.nExpiryHeight || new Uint8Array(0);
+    const locktime =
+      transaction.locktime && transaction.locktime.byteLength > 0
+        ? transaction.locktime
+        : new Uint8Array(4);
+    const expiry = resolveExpiryHeightBytes(transaction.nExpiryHeight);
     const extraData = transaction.extraData || new Uint8Array(0);
 
     return concatUint8Arrays(
@@ -263,13 +266,19 @@ export const serializeTransaction = (
     );
   }
 
+  const locktime =
+    transaction.locktime && transaction.locktime.byteLength > 0
+      ? transaction.locktime
+      : new Uint8Array(4);
+  const expiry = resolveExpiryHeightBytes(transaction.nExpiryHeight);
+
   return concatUint8Arrays(
     transaction.version,
     timestampOverride ?? transaction.timestamp ?? new Uint8Array(0),
     transaction.nVersionGroupId || new Uint8Array(0),
     transaction.consensusBranchId || new Uint8Array(0),
-    transaction.locktime || new Uint8Array(0),
-    transaction.nExpiryHeight || new Uint8Array(0),
+    locktime,
+    expiry,
     createVarint(transaction.inputs.length),
     inputBuffer,
     outputBuffer,
