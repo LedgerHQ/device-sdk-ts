@@ -1,5 +1,13 @@
 # @ledgerhq/device-management-kit
 
+## 1.7.0
+
+### Minor Changes
+
+- [#1547](https://github.com/LedgerHQ/device-sdk-ts/pull/1547) [`32071d9`](https://github.com/LedgerHQ/device-sdk-ts/commit/32071d9d38bc965befb83c4f7341793117dc9873) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Remove request `signal` support and the now-unused `isAbort` error field from `DmkNetworkClient`, implement portable timeout handling with `AbortController`, and remove Node `url` usage from secure-channel WebSocket URL formatting.
+
+Make the Base64 helpers (`base64StringToBuffer`, `bufferToBase64String`, `isBase64String`) portable across runtimes: prefer `window.atob`/`window.btoa` in browsers, fall back to the global `atob`/`btoa` (e.g. Hermes) and then to `Buffer` (Node). Decoding and validation now tolerate MIME-style whitespace (e.g. line breaks), so Base64 emitted by native encoders decodes correctly.
+
 ## 1.6.0
 
 ### Minor Changes

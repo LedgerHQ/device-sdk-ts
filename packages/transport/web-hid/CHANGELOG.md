@@ -1,5 +1,14 @@
 # @ledgerhq/device-transport-kit-web-hid
 
+## 1.2.4
+
+### Patch Changes
+
+- [#1555](https://github.com/LedgerHQ/device-sdk-ts/pull/1555) [`51a898b`](https://github.com/LedgerHQ/device-sdk-ts/commit/51a898be3af4ae2d9b1f7d572cfb7419aec8351c) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Catch asynchronous WebHID close failures during device disconnects.
+
+- Updated dependencies [[`32071d9`](https://github.com/LedgerHQ/device-sdk-ts/commit/32071d9d38bc965befb83c4f7341793117dc9873)]:
+  - @ledgerhq/device-management-kit@1.7.0
+
 ## 1.2.3
 
 ### Patch Changes
