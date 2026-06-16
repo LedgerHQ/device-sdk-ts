@@ -24,10 +24,10 @@ describe("getZcashBranchId", () => {
 
   it("returns latest branch id when block height is unknown", () => {
     expect(getZcashBranchId(undefined)).toEqual(
-      Uint8Array.of(0xf0, 0x4d, 0xec, 0x4d),
+      Uint8Array.of(0x30, 0xf3, 0x37, 0x54),
     );
     expect(getZcashBranchId(null)).toEqual(
-      Uint8Array.of(0xf0, 0x4d, 0xec, 0x4d),
+      Uint8Array.of(0x30, 0xf3, 0x37, 0x54),
     );
   });
 
