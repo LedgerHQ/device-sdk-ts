@@ -1,5 +1,14 @@
 # @ledgerhq/device-signer-kit-bitcoin
 
+## 1.3.2
+
+### Patch Changes
+
+- [#1547](https://github.com/LedgerHQ/device-sdk-ts/pull/1547) [`2ea9e75`](https://github.com/LedgerHQ/device-sdk-ts/commit/2ea9e75b6d98439e3d85302c7f900318a82964b1) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Replace Node `Buffer` empty-byte fallbacks with `Uint8Array` in transaction extraction.
+
+- Updated dependencies [[`32071d9`](https://github.com/LedgerHQ/device-sdk-ts/commit/32071d9d38bc965befb83c4f7341793117dc9873)]:
+  - @ledgerhq/device-management-kit@1.7.0
+
 ## 1.3.1
 
 ### Patch Changes
