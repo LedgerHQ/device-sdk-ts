@@ -1,5 +1,11 @@
 # @ledgerhq/device-management-kit
 
+## 1.7.1
+
+### Patch Changes
+
+- [#1565](https://github.com/LedgerHQ/device-sdk-ts/pull/1565) [`64bdd28`](https://github.com/LedgerHQ/device-sdk-ts/commit/64bdd28fc7dc9b85fa763d891fbcaf03d48da24f) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Allow non-onboarded devices to pass the device status check by default, with an opt-out option for stricter consumers.
+
 ## 1.7.0
 
 ### Minor Changes

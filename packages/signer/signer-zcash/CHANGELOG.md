@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0
+
+### Minor Changes
+
+- [#1498](https://github.com/LedgerHQ/device-sdk-ts/pull/1498) [`514c3a8`](https://github.com/LedgerHQ/device-sdk-ts/commit/514c3a825962b7c391247858969fd5d617a1853a) Thanks [@may01](https://github.com/may01)! - Implement transparent Zcash payment signing (`signTransaction`) with Ledger Wallet–compatible `LegacyCreateTransactionArg`, trusted-input flow, Sapling output commit, and signed transaction assembly. Add commands, task wiring, Vitest coverage, and README usage docs.
+
+### Patch Changes
+
+- [#1557](https://github.com/LedgerHQ/device-sdk-ts/pull/1557) [`e9f8d36`](https://github.com/LedgerHQ/device-sdk-ts/commit/e9f8d36c10c7ab0dbbef4d7ea420f4d65d3847ab) Thanks [@may01](https://github.com/may01)! - Add NU6.2 consensus branch id and fix v4 GET_TRUSTED_INPUT framing
+
+- Updated dependencies [[`64bdd28`](https://github.com/LedgerHQ/device-sdk-ts/commit/64bdd28fc7dc9b85fa763d891fbcaf03d48da24f)]:
+  - @ledgerhq/device-management-kit@1.7.1
+
 ## 0.2.0
 
 ### Minor Changes
