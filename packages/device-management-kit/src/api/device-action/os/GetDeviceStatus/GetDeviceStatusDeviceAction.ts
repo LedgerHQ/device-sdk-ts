@@ -117,8 +117,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
     } = this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
-    const allowNonOnboardedRecoveryDevice =
-      this.input.allowNonOnboardedRecoveryDevice ?? true;
+    const allowNonOnboardedDevice = this.input.allowNonOnboardedDevice ?? true;
 
     const updateSessionFromOsVersion = (data: GetOsVersionResponse) => {
       const currentState = getDeviceSessionState();
@@ -137,7 +136,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       types: {
         input: {
           unlockTimeout,
-          allowNonOnboardedRecoveryDevice,
+          allowNonOnboardedDevice,
         } as types["input"],
         context: {} as types["context"],
         output: {} as types["output"],
@@ -153,13 +152,11 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         isOnboardedFromOsVersion: ({ context }) =>
           context._internalState.osVersionMetadata?.secureElementFlags
             .isOnboarded === true,
-        isAllowedNonOnboardedRecoveryDevice: ({ context }) => {
+        isAllowedNonOnboardedDevice: ({ context }) => {
           const secureElementFlags =
             context._internalState.osVersionMetadata?.secureElementFlags;
           return (
-            allowNonOnboardedRecoveryDevice &&
-            secureElementFlags?.isOnboarded === false &&
-            secureElementFlags.isInRecoveryMode
+            allowNonOnboardedDevice && secureElementFlags?.isOnboarded === false
           );
         },
         isDeviceLocked: ({ context }) => context._internalState.locked,
@@ -214,8 +211,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         return {
           input: {
             unlockTimeout: _.input.unlockTimeout,
-            allowNonOnboardedRecoveryDevice:
-              _.input.allowNonOnboardedRecoveryDevice ?? true,
+            allowNonOnboardedDevice: _.input.allowNonOnboardedDevice ?? true,
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -402,7 +398,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
               }),
             },
             {
-              guard: "isAllowedNonOnboardedRecoveryDevice",
+              guard: "isAllowedNonOnboardedDevice",
               target: "Success",
             },
             {

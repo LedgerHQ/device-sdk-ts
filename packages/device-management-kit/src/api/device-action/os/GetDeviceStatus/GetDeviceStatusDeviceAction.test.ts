@@ -478,7 +478,7 @@ describe("GetDeviceStatusDeviceAction", () => {
         );
       }));
 
-    it("GIVEN a non-onboarded recovery device WHEN checking the device status THEN it returns the device status by default", () =>
+    it("GIVEN a non-onboarded device WHEN checking the device status THEN it returns the device status by default", () =>
       new Promise<void>((resolve, reject) => {
         // GIVEN
         getDeviceSessionStateMock.mockReturnValue({
@@ -497,7 +497,6 @@ describe("GetDeviceStatusDeviceAction", () => {
             secureElementFlags: {
               ...getOsVersionCommandResponseMockBuilder().secureElementFlags,
               isOnboarded: false,
-              isInRecoveryMode: true,
             },
           }),
         );
@@ -619,8 +618,9 @@ describe("GetDeviceStatusDeviceAction", () => {
   });
 
   describe("errors cases", () => {
-    it("should end in an error if the device is not onboarded", () =>
+    it("GIVEN a non-onboarded device and the non-onboarded allowance is disabled WHEN checking the device status THEN it returns a not-onboarded error", () =>
       new Promise<void>((resolve, reject) => {
+        // GIVEN
         getDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -644,61 +644,9 @@ describe("GetDeviceStatusDeviceAction", () => {
         );
 
         const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
-          input: { unlockTimeout: 500 },
-        });
-
-        vi.spyOn(
-          getDeviceStateDeviceAction,
-          "extractDependencies",
-        ).mockReturnValue(extractDependenciesMock());
-
-        const expectedStates: Array<GetDeviceStatusDAState> = [
-          ...onboardCheckPendingStatesWithOsVersionFetch(),
-          {
-            error: new DeviceNotOnboardedError(),
-            status: DeviceActionStatus.Error,
-          },
-        ];
-
-        testDeviceActionStates(
-          getDeviceStateDeviceAction,
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          {
-            onDone: resolve,
-            onError: reject,
-          },
-        );
-      }));
-
-    it("GIVEN a non-onboarded recovery device and the recovery allowance is disabled WHEN checking the device status THEN it returns a not-onboarded error", () =>
-      new Promise<void>((resolve, reject) => {
-        // GIVEN
-        getDeviceSessionStateMock.mockReturnValue({
-          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
-          deviceStatus: DeviceStatus.CONNECTED,
-          currentApp: { name: "BOLOS", version: "1.0.0" },
-          installedApps: [],
-          deviceModelId: DeviceModelId.NANO_X,
-          isSecureConnectionAllowed: false,
-        });
-        getAppAndVersionMock.mockResolvedValue(
-          appAndVersionResult("BOLOS", "1.0.0"),
-        );
-        getOsVersionMock.mockResolvedValue(
-          osVersionCommandResult({
-            secureElementFlags: {
-              ...getOsVersionCommandResponseMockBuilder().secureElementFlags,
-              isOnboarded: false,
-              isInRecoveryMode: true,
-            },
-          }),
-        );
-
-        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
           input: {
             unlockTimeout: 500,
-            allowNonOnboardedRecoveryDevice: false,
+            allowNonOnboardedDevice: false,
           },
         });
 
