@@ -102,6 +102,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
     const getDeviceStatusMachine = new GetDeviceStatusDeviceAction({
       input: {
         unlockTimeout,
+        allowNonOnboardedDevice: false,
       },
     }).makeStateMachine(internalApi);
 
@@ -199,6 +200,7 @@ export class OpenAppDeviceAction extends XStateDeviceAction<
             src: "getDeviceStatus",
             input: (_) => ({
               unlockTimeout: _.context.input.unlockTimeout,
+              allowNonOnboardedDevice: false,
             }),
             onSnapshot: {
               actions: assign({

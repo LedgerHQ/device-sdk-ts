@@ -156,7 +156,8 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           const secureElementFlags =
             context._internalState.osVersionMetadata?.secureElementFlags;
           return (
-            allowNonOnboardedDevice && secureElementFlags?.isOnboarded === false
+            context.input.allowNonOnboardedDevice === true &&
+            secureElementFlags?.isOnboarded === false
           );
         },
         isDeviceLocked: ({ context }) => context._internalState.locked,
