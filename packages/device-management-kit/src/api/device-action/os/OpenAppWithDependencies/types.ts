@@ -36,7 +36,10 @@ export type OpenAppWithDependenciesDAOutput = {
   installResult: InstallOrUpdateAppsDAOutput;
 };
 
-export type OpenAppWithDependenciesDAInput = GetDeviceStatusDAInput & {
+export type OpenAppWithDependenciesDAInput = Omit<
+  GetDeviceStatusDAInput,
+  "allowNonOnboardedDevice"
+> & {
   readonly application: ApplicationDependency;
   readonly dependencies: ApplicationDependency[];
   readonly requireLatestFirmware?: boolean;

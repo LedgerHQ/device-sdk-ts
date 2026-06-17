@@ -117,6 +117,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
     } = this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
+    const allowNonOnboardedDevice = this.input.allowNonOnboardedDevice ?? true;
 
     const updateSessionFromOsVersion = (data: GetOsVersionResponse) => {
       const currentState = getDeviceSessionState();
@@ -135,6 +136,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       types: {
         input: {
           unlockTimeout,
+          allowNonOnboardedDevice,
         } as types["input"],
         context: {} as types["context"],
         output: {} as types["output"],
@@ -150,6 +152,14 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         isOnboardedFromOsVersion: ({ context }) =>
           context._internalState.osVersionMetadata?.secureElementFlags
             .isOnboarded === true,
+        isAllowedNonOnboardedDevice: ({ context }) => {
+          const secureElementFlags =
+            context._internalState.osVersionMetadata?.secureElementFlags;
+          return (
+            context.input.allowNonOnboardedDevice === true &&
+            secureElementFlags?.isOnboarded === false
+          );
+        },
         isDeviceLocked: ({ context }) => context._internalState.locked,
         hasError: ({ context }) => context._internalState.error !== null,
       },
@@ -202,6 +212,7 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         return {
           input: {
             unlockTimeout: _.input.unlockTimeout,
+            allowNonOnboardedDevice: _.input.allowNonOnboardedDevice ?? true,
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
@@ -386,6 +397,10 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
                   onboarded: true,
                 }),
               }),
+            },
+            {
+              guard: "isAllowedNonOnboardedDevice",
+              target: "Success",
             },
             {
               target: "Error",

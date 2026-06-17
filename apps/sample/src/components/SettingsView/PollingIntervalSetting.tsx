@@ -3,20 +3,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { Flex, Input } from "@ledgerhq/react-ui";
 
 import { InputLabel } from "@/components/InputLabel";
-import { useDebounce } from "@/hooks/useDebounce";
 import { selectPollingInterval } from "@/state/settings/selectors";
 import { setPollingInterval } from "@/state/settings/slice";
 
 import { ResetSettingCTA } from "./ResetSetting";
 import { SettingBox } from "./SettingBox";
 
-const DEBOUNCE_DELAY_MS = 500;
-
 export const PollingIntervalSetting: React.FC = () => {
   const pollingInterval = useSelector(selectPollingInterval);
   const dispatch = useDispatch();
   const [localValue, setLocalValue] = useState(String(pollingInterval));
-  const debouncedValue = useDebounce(localValue, DEBOUNCE_DELAY_MS);
 
   // Sync local value when redux state changes externally (e.g., reset)
   useEffect(() => {
@@ -30,16 +26,17 @@ export const PollingIntervalSetting: React.FC = () => {
     [dispatch],
   );
 
-  // Update redux state when debounced value changes
-  useEffect(() => {
-    const parsed = parseInt(debouncedValue, 10);
-    if (isNaN(parsed) || parsed === pollingInterval) return;
-    setPollingIntervalFn(parsed);
-  }, [debouncedValue, pollingInterval, setPollingIntervalFn]);
+  const onValueChange = useCallback(
+    (value: string) => {
+      setLocalValue(value);
 
-  const onValueChange = useCallback((value: string) => {
-    setLocalValue(value);
-  }, []);
+      const parsed = parseInt(value, 10);
+      if (!isNaN(parsed) && parsed >= 0) {
+        setPollingIntervalFn(parsed);
+      }
+    },
+    [setPollingIntervalFn],
+  );
 
   return (
     <SettingBox>

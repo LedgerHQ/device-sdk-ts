@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Flex, Input } from "@ledgerhq/react-ui";
 
@@ -12,6 +12,11 @@ import { SettingBox } from "./SettingBox";
 export const AppProviderSetting: React.FC = () => {
   const appProvider = useSelector(selectAppProvider);
   const dispatch = useDispatch();
+  const [input, setInput] = useState(String(appProvider));
+
+  useEffect(() => {
+    setInput(String(appProvider));
+  }, [appProvider]);
 
   const setAppProviderFn = useCallback(
     (value: number) => {
@@ -22,6 +27,8 @@ export const AppProviderSetting: React.FC = () => {
 
   const onValueChange = useCallback(
     (value: string) => {
+      setInput(value);
+
       const parsed = parseInt(value, 10);
       if (!isNaN(parsed) && parsed >= 1) {
         setAppProviderFn(parsed);
@@ -35,7 +42,7 @@ export const AppProviderSetting: React.FC = () => {
       <Flex flex={1} flexDirection="column" alignItems="stretch">
         <Input
           renderLeft={<InputLabel>App Provider ID (must be ≥ 1)</InputLabel>}
-          value={String(appProvider)}
+          value={input}
           onChange={onValueChange}
           type="number"
           placeholder="Provider ID"

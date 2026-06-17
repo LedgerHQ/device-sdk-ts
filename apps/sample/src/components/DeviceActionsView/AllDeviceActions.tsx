@@ -169,9 +169,12 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         title: "Get device status",
         description:
           "Perform various checks on the device to determine its status",
-        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+        executeDeviceAction: (
+          { unlockTimeout, allowNonOnboardedDevice },
+          inspect,
+        ) => {
           const deviceAction = new GetDeviceStatusDeviceAction({
-            input: { unlockTimeout },
+            input: { unlockTimeout, allowNonOnboardedDevice },
             inspect,
           });
           return dmk.executeDeviceAction({
@@ -179,7 +182,10 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
             deviceAction,
           });
         },
-        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        initialValues: {
+          unlockTimeout: UNLOCK_TIMEOUT,
+          allowNonOnboardedDevice: true,
+        },
         deviceModelId,
       } satisfies DeviceActionProps<
         GetDeviceStatusDAOutput,
