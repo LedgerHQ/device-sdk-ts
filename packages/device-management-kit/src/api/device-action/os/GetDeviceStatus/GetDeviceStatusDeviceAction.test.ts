@@ -478,6 +478,63 @@ describe("GetDeviceStatusDeviceAction", () => {
         );
       }));
 
+    it("GIVEN a non-onboarded recovery device WHEN checking the device status THEN it returns the device status by default", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          currentApp: { name: "BOLOS", version: "1.0.0" },
+          installedApps: [],
+          deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
+        });
+        getAppAndVersionMock.mockResolvedValue(
+          appAndVersionResult("BOLOS", "1.0.0"),
+        );
+        getOsVersionMock.mockResolvedValue(
+          osVersionCommandResult({
+            secureElementFlags: {
+              ...getOsVersionCommandResponseMockBuilder().secureElementFlags,
+              isOnboarded: false,
+              isInRecoveryMode: true,
+            },
+          }),
+        );
+
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: { unlockTimeout: undefined },
+        });
+
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            status: DeviceActionStatus.Completed,
+            output: {
+              currentApp: "BOLOS",
+              currentAppVersion: "1.0.0",
+            },
+          },
+        ];
+
+        // WHEN
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            // THEN
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
     it("should return the device status if the device is locked and the user unlocks the device", () =>
       new Promise<void>((resolve, reject) => {
         getDeviceSessionStateMock.mockReturnValue({
@@ -608,6 +665,63 @@ describe("GetDeviceStatusDeviceAction", () => {
           expectedStates,
           makeDeviceActionInternalApiMock(),
           {
+            onDone: resolve,
+            onError: reject,
+          },
+        );
+      }));
+
+    it("GIVEN a non-onboarded recovery device and the recovery allowance is disabled WHEN checking the device status THEN it returns a not-onboarded error", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        getDeviceSessionStateMock.mockReturnValue({
+          sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
+          deviceStatus: DeviceStatus.CONNECTED,
+          currentApp: { name: "BOLOS", version: "1.0.0" },
+          installedApps: [],
+          deviceModelId: DeviceModelId.NANO_X,
+          isSecureConnectionAllowed: false,
+        });
+        getAppAndVersionMock.mockResolvedValue(
+          appAndVersionResult("BOLOS", "1.0.0"),
+        );
+        getOsVersionMock.mockResolvedValue(
+          osVersionCommandResult({
+            secureElementFlags: {
+              ...getOsVersionCommandResponseMockBuilder().secureElementFlags,
+              isOnboarded: false,
+              isInRecoveryMode: true,
+            },
+          }),
+        );
+
+        const getDeviceStateDeviceAction = new GetDeviceStatusDeviceAction({
+          input: {
+            unlockTimeout: 500,
+            allowNonOnboardedRecoveryDevice: false,
+          },
+        });
+
+        vi.spyOn(
+          getDeviceStateDeviceAction,
+          "extractDependencies",
+        ).mockReturnValue(extractDependenciesMock());
+
+        const expectedStates: Array<GetDeviceStatusDAState> = [
+          ...onboardCheckPendingStatesWithOsVersionFetch(),
+          {
+            error: new DeviceNotOnboardedError(),
+            status: DeviceActionStatus.Error,
+          },
+        ];
+
+        // WHEN
+        testDeviceActionStates(
+          getDeviceStateDeviceAction,
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          {
+            // THEN
             onDone: resolve,
             onError: reject,
           },

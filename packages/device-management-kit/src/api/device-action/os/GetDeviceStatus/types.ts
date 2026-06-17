@@ -21,6 +21,7 @@ export type GetDeviceStatusDAOutput = {
 };
 export type GetDeviceStatusDAInput = {
   readonly unlockTimeout?: number;
+  readonly allowNonOnboardedRecoveryDevice?: boolean;
 };
 
 export type GetDeviceStatusDAError =
