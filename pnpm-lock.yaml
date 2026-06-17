@@ -1881,8 +1881,8 @@ importers:
   packages/signer/signer-zcash:
     dependencies:
       '@ledgerhq/signer-utils':
-        specifier: ^1.2.0
-        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
+        specifier: workspace:^
+        version: link:../signer-utils
       '@noble/hashes':
         specifier: ^1.8.0
         version: 1.8.0
@@ -4386,11 +4386,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  '@ledgerhq/signer-utils@1.2.0':
-    resolution: {integrity: sha512-Ek4/NXGt6gfiZUmiAFE19534f8wnlQSHvZMsjmqCEktbJd/mYbzvTrvYeo0+PQPw2D/kTYD1fRC6ADKQRSBeGw==}
-    peerDependencies:
-      '@ledgerhq/device-management-kit': ^1.2.0
 
   '@ledgerhq/ui-shared@0.2.2':
     resolution: {integrity: sha512-3ASYnyqnZFMRnySADZziM3IIJ2SRQ7lKrRPwpihhf+SsyP7TIo6o4UXMY8eYOupdTARlElS4Qpk4nRL/Ln62Ng==}
@@ -15396,11 +15391,6 @@ snapshots:
       - react-native-svg
       - supports-color
 
-  '@ledgerhq/signer-utils@1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)':
-    dependencies:
-      '@ledgerhq/device-management-kit': link:packages/device-management-kit
-      semver: 7.7.2
-
   '@ledgerhq/ui-shared@0.2.2': {}
 
   '@ledgerhq/ui-shared@0.3.0': {}
@@ -17875,6 +17865,14 @@ snapshots:
       magic-string: 0.30.17
     optionalDependencies:
       vite: 7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+
+  '@vitest/mocker@3.2.4(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))':
+    dependencies:
+      '@vitest/spy': 3.2.4
+      estree-walker: 3.0.3
+      magic-string: 0.30.17
+    optionalDependencies:
+      vite: 7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -26286,7 +26284,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(vite@7.1.6(@types/node@22.10.1)(jiti@1.21.6)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+      '@vitest/mocker': 3.2.4(vite@7.1.6(@types/node@24.3.0)(jiti@1.21.6)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.2.4
       '@vitest/snapshot': 3.2.4
