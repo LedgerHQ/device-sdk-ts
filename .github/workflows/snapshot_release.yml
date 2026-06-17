@@ -93,7 +93,7 @@ jobs:
           path: dist
 
       - name: Publish snapshot packages to JFrog
-        uses: LedgerHQ/device-sdk-ts/.github/actions/publish-to-jfrog-composite@develop
+        uses: ./.github/actions/publish-to-jfrog-composite
         with:
           npm-registry: ${{ env.NPM_REGISTRY }}
           dist-path: dist

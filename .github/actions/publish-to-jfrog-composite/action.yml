@@ -49,6 +49,8 @@ runs:
         cd "$DIST_PATH"
         shopt -s nullglob
         published=0
+        published_packages="$(mktemp)"
+        unpublished_packages="$(mktemp)"
 
         # Build publish command with optional tag
         publish_cmd="pnpm publish \"\$tarball\" --registry https://\${NPM_REGISTRY}/ --no-git-checks"
@@ -56,13 +58,90 @@ runs:
           publish_cmd="$publish_cmd --tag $NPM_TAG"
         fi
 
+        package_metadata() {
+          local tarball="$1"
+          node - "$tarball" <<'NODE'
+        const { execFileSync } = require("node:child_process");
+
+        const tarball = process.argv[2];
+        const packageJson = JSON.parse(
+          execFileSync("tar", ["-xOf", tarball, "package/package.json"], {
+            encoding: "utf8",
+          }),
+        );
+
+        process.stdout.write(`${packageJson.name}\t${packageJson.version}`);
+        NODE
+        }
+
+        npm_link() {
+          local name="$1"
+          local version="$2"
+          local link
+
+          link="$(npm view "${name}@${version}" dist.tarball --registry "https://${NPM_REGISTRY}/" 2>/dev/null || true)"
+
+          if [ -z "$link" ]; then
+            link="$(node -e 'const [registry, name] = process.argv.slice(1); console.log(`https://${registry.replace(/\/$/, "")}/${encodeURIComponent(name)}`);' "$NPM_REGISTRY" "$name")"
+          fi
+
+          printf "%s" "$link"
+        }
+
+        write_package_summary() {
+          if [ -z "$NPM_TAG" ] || [ -z "${GITHUB_STEP_SUMMARY:-}" ]; then
+            return
+          fi
+
+          {
+            echo "## Snapshot packages"
+            echo ""
+            echo "### Released"
+            echo ""
+
+            if [ -s "$published_packages" ]; then
+              echo "| Package | Version | npm link |"
+              echo "| --- | --- | --- |"
+              while IFS=$'\t' read -r name version link; do
+                echo "| \`${name}\` | \`${version}\` | [npm](${link}) |"
+              done < "$published_packages"
+            else
+              echo "_No packages were released._"
+            fi
+
+            echo ""
+            echo "### Not Released"
+            echo ""
+
+            if [ -s "$unpublished_packages" ]; then
+              echo "| Package | Version | Reason |"
+              echo "| --- | --- | --- |"
+              while IFS=$'\t' read -r name version reason; do
+                echo "| \`${name}\` | \`${version}\` | ${reason} |"
+              done < "$unpublished_packages"
+            else
+              echo "_All packages were released._"
+            fi
+
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+        }
+
         for tarball in *.tgz; do
+          metadata="$(package_metadata "$tarball")"
+          name="${metadata%%$'\t'*}"
+          version="${metadata#*$'\t'}"
+
           if eval "$publish_cmd"; then
             published=$((published + 1))
+            printf "%s\t%s\t%s\n" "$name" "$version" "$(npm_link "$name" "$version")" >> "$published_packages"
           else
             echo "⚠️ Failed to publish $tarball"
+            printf "%s\t%s\t%s\n" "$name" "$version" "Publish command failed" >> "$unpublished_packages"
           fi
         done
+
+        write_package_summary
 
         if [ $published -eq 0 ]; then
           echo "❌ No packages were successfully published"
