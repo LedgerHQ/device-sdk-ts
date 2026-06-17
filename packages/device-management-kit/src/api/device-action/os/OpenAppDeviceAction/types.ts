@@ -26,7 +26,10 @@ export type OpenAppDAStateStep =
 
 export type OpenAppDAOutput = void;
 
-export type OpenAppDAInput = GetDeviceStatusDAInput & {
+export type OpenAppDAInput = Omit<
+  GetDeviceStatusDAInput,
+  "allowNonOnboardedDevice"
+> & {
   readonly appName: string;
 };
 

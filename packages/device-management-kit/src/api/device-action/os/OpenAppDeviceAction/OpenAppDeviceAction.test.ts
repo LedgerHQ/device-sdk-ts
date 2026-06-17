@@ -417,8 +417,9 @@ describe("OpenAppDeviceAction", () => {
   });
 
   describe("errors cases", () => {
-    it("should end in an error if the device is not onboarded", () =>
+    it("GIVEN a non-onboarded device WHEN opening an app THEN it blocks the app flow", () =>
       new Promise<void>((resolve, reject) => {
+        // GIVEN
         apiGetDeviceSessionStateMock.mockReturnValue({
           sessionStateType: DeviceSessionStateType.ReadyWithoutSecureChannel,
           deviceStatus: DeviceStatus.CONNECTED,
@@ -454,11 +455,13 @@ describe("OpenAppDeviceAction", () => {
           },
         ];
 
+        // WHEN
         testDeviceActionStates(
           openAppDeviceAction,
           expectedStates,
           makeDeviceActionInternalApiMock(),
           {
+            // THEN
             onDone: resolve,
             onError: reject,
           },
