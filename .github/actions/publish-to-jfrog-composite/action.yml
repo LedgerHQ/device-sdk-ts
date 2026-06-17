@@ -77,15 +77,8 @@ runs:
         npm_link() {
           local name="$1"
           local version="$2"
-          local link
 
-          link="$(npm view "${name}@${version}" dist.tarball --registry "https://${NPM_REGISTRY}/" 2>/dev/null || true)"
-
-          if [ -z "$link" ]; then
-            link="$(node -e 'const [registry, name] = process.argv.slice(1); console.log(`https://${registry.replace(/\/$/, "")}/${encodeURIComponent(name)}`);' "$NPM_REGISTRY" "$name")"
-          fi
-
-          printf "%s" "$link"
+          node -e 'const [name, version] = process.argv.slice(1); console.log(`https://www.npmjs.com/package/${encodeURIComponent(name)}/v/${encodeURIComponent(version)}`);' "$name" "$version"
         }
 
         write_package_summary() {
