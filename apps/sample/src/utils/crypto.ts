@@ -25,3 +25,14 @@ export function genIdentity() {
   const clientName = `DMK Playground-${bufferToHexaString(pub).slice(0, 6)}`;
   return { clientName, privateKey: bufferToHexaString(priv) };
 }
+
+// Playground-only: fill address inputs with a syntactically valid 0x address
+// without typing one out. The Contacts forms never broadcast a transaction —
+// the device just signs over the bytes — so 20 random bytes are enough.
+export function randomEthAddressHex(): string {
+  const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
+  return (
+    "0x" + Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")
+  );
+}

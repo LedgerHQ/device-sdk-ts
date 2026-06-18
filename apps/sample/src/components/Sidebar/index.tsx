@@ -28,6 +28,7 @@ import { buildSessionRefresherOptions } from "@/utils/sessionRefresherOptions";
 const Root = styled(Flex).attrs({ py: 8, px: 6, rowGap: 6 })`
   flex-direction: column;
   width: 280px;
+  flex-shrink: 0;
   background-color: ${({
     theme,
     mockServerEnabled,

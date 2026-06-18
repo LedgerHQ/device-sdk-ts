@@ -16,6 +16,7 @@ export {
   CommandResultStatus,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
+export * from "@api/contacts";
 export {
   BackupStorageCommand,
   type BackupStorageCommandErrorCodes,
