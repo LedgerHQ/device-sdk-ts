@@ -59,8 +59,8 @@ export const AddDeviceDrawer: React.FC<AddDeviceDrawerProps> = ({
       });
       onDeviceAdded();
       onClose();
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to add device");
     }
   }, [client, values, devices, onDeviceAdded, onClose]);
 

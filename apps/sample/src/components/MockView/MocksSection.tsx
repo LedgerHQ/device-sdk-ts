@@ -72,8 +72,8 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
     try {
       const response = await client.listMocks(deviceId);
       setMocks(response);
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to fetch mocks");
     }
   }, [client, deviceId]);
 
@@ -91,8 +91,8 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
         } else {
           await fetchMocks();
         }
-      } catch (error) {
-        console.error(error);
+      } catch (_) {
+        console.error("Failed to add mock");
       }
     },
     [client, deviceId, fetchMocks],
@@ -108,8 +108,8 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
       try {
         await client.deleteMock(deviceId, mockId);
         await fetchMocks();
-      } catch (error) {
-        console.error(error);
+      } catch (_) {
+        console.error("Failed to delete mock");
       }
     },
     [client, deviceId, fetchMocks],
@@ -124,13 +124,13 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
       } else {
         await fetchMocks();
       }
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to delete mocks");
     }
   }, [client, deviceId, fetchMocks]);
 
   useEffect(() => {
-    fetchMocks().catch(console.error);
+    fetchMocks().catch(() => console.error("Failed to fetch mocks"));
   }, [fetchMocks, reloadToken]);
 
   if (!deviceId) {

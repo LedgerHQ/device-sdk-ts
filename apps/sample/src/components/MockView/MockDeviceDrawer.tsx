@@ -64,8 +64,8 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
         apps: cleanApps(values.apps),
       });
       onDeviceChanged();
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to save device");
     }
   }, [client, currentDevice, values, onDeviceChanged]);
 
@@ -75,8 +75,8 @@ export const MockDeviceDrawer: React.FC<MockDeviceDrawerProps> = ({
       await client.deleteDevice(currentDevice.id);
       onDeviceChanged();
       onClose();
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to remove device");
     }
   }, [client, currentDevice, onDeviceChanged, onClose]);
 

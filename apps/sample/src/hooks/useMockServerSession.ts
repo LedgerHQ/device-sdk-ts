@@ -94,7 +94,7 @@ export function useMockServerSession(): MockServerSessionState {
             console.error(reauthError);
           }
         } else {
-          console.error(error);
+          console.error("Failed to get session");
         }
         setSession(null);
         setStatus("none");

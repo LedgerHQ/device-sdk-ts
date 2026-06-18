@@ -128,8 +128,8 @@ export const MockView: React.FC = () => {
           ? (response.find((device) => device.id === current.id) ?? null)
           : null,
       );
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to fetch devices");
     }
   }, [client]);
 
@@ -149,8 +149,8 @@ export const MockView: React.FC = () => {
       try {
         await client.deleteDevice(deviceId);
         await fetchDevices();
-      } catch (error) {
-        console.error(error);
+      } catch (_) {
+        console.error("Failed to delete device");
       }
     },
     [client, fetchDevices],
@@ -166,8 +166,8 @@ export const MockView: React.FC = () => {
       setCurrentDevice(null);
       await fetchDevices();
       setMocksReloadToken((token) => token + 1);
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to reset session");
     }
   }, [client, fetchDevices]);
 
@@ -183,8 +183,8 @@ export const MockView: React.FC = () => {
       anchor.download = "mock-session.json";
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error(error);
+    } catch (_) {
+      console.error("Failed to export session");
     }
   }, [client]);
 
@@ -198,15 +198,15 @@ export const MockView: React.FC = () => {
         await client.importSession(snapshot);
         await fetchDevices();
         setMocksReloadToken((token) => token + 1);
-      } catch (error) {
-        console.error(error);
+      } catch (_) {
+        console.error("Failed to import session");
       }
     },
     [client, fetchDevices],
   );
 
   useEffect(() => {
-    fetchDevices().catch(console.error);
+    fetchDevices().catch(() => console.error("Failed to fetch devices"));
   }, [fetchDevices]);
 
   return (
