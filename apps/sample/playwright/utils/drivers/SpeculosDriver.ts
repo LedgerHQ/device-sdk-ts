@@ -121,8 +121,13 @@ export class SpeculosDriver {
     matcher: string | RegExp,
     { timeoutMs = 30_000, intervalMs = 500 }: WaitOptions = {},
   ): Promise<string> {
-    const regex =
-      typeof matcher === "string" ? new RegExp(matcher, "i") : matcher;
+    // String matchers are treated as case-insensitive substrings rather than
+    // being compiled into a RegExp, to avoid ReDoS from non-literal patterns.
+    const matches =
+      typeof matcher === "string"
+        ? (screen: string) =>
+            screen.toLowerCase().includes(matcher.toLowerCase())
+        : (screen: string) => matcher.test(screen);
     const deadline = Date.now() + timeoutMs;
     let last = "";
     for (;;) {
@@ -131,10 +136,10 @@ export class SpeculosDriver {
         console.log(`[speculos ${this.label}] screen: ${screen}`);
         last = screen;
       }
-      if (regex.test(screen)) return screen;
+      if (matches(screen)) return screen;
       if (Date.now() >= deadline) {
         throw new Error(
-          `Speculos screen never matched ${String(regex)} (last seen: "${last}")`,
+          `Speculos screen never matched ${String(matcher)} (last seen: "${last}")`,
         );
       }
       await sleep(intervalMs);
