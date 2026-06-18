@@ -356,10 +356,10 @@ describe("mockserverTransportFactory", () => {
     it("prefers an explicit url over the config mock url", () => {
       mockClientImpl();
 
-      mockserverTransportFactory("http://explicit:9090")(transportArgs);
+      mockserverTransportFactory("https://explicit:9090")(transportArgs);
 
       expect(MockClient).toHaveBeenCalledWith(
-        "http://explicit:9090",
+        "https://explicit:9090",
         expect.anything(),
       );
     });

@@ -383,7 +383,7 @@ describe("MockClient", () => {
         endpoint: "devices/dev-1/speculos",
         response: {
           run_id: "run-1",
-          speculos_url: "http://speculos:5000",
+          speculos_url: "https://speculos:5000",
           model: "stax",
         },
       });
@@ -396,7 +396,7 @@ describe("MockClient", () => {
 
       expect(instance).toEqual({
         run_id: "run-1",
-        speculos_url: "http://speculos:5000",
+        speculos_url: "https://speculos:5000",
         model: "stax",
       });
     });
