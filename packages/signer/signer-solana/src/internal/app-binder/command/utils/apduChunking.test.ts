@@ -1,12 +1,18 @@
 import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 
 import {
+  appendSignatureTlv,
   assertChunkSize,
   buildChunkP2,
+  CLEAR_SIGN_SIGNATURE_TAG,
+  frameClearSignPayload,
   P2_EXTEND,
   P2_MORE,
 } from "./apduChunking";
-import { ChunkTooLargeError } from "./Errors";
+import {
+  ChunkTooLargeError,
+  PayloadTooLargeForLengthPrefixError,
+} from "./Errors";
 
 describe("apduChunking", () => {
   describe("constants", () => {
@@ -79,6 +85,94 @@ describe("apduChunking", () => {
         expect(e._tag).toBe("ChunkTooLargeError");
         expect(e.message).toMatch(/INS=0x25/);
       }
+    });
+  });
+
+  describe("frameClearSignPayload", () => {
+    it("prepends a 2-byte big-endian length of the TLV", () => {
+      expect(frameClearSignPayload(new Uint8Array([0xaa, 0xbb]))).toStrictEqual(
+        new Uint8Array([0x00, 0x02, 0xaa, 0xbb]),
+      );
+    });
+
+    it("counts the type byte in the length and places it first (substructures)", () => {
+      expect(
+        frameClearSignPayload(new Uint8Array([0xcc, 0xdd]), 0x01),
+      ).toStrictEqual(new Uint8Array([0x00, 0x03, 0x01, 0xcc, 0xdd]));
+    });
+
+    it("encodes lengths > 255 across both prefix bytes", () => {
+      const tlv = new Uint8Array(258).fill(0x7);
+      const framed = frameClearSignPayload(tlv);
+      expect(framed[0]).toBe(0x01);
+      expect(framed[1]).toBe(0x02);
+      expect(framed.length).toBe(260);
+    });
+
+    it("handles an empty TLV", () => {
+      expect(frameClearSignPayload(new Uint8Array([]))).toStrictEqual(
+        new Uint8Array([0x00, 0x00]),
+      );
+    });
+
+    it("frames a body of exactly 0xFFFF bytes", () => {
+      const tlv = new Uint8Array(0xffff).fill(0x7);
+      const framed = frameClearSignPayload(tlv);
+      expect(framed[0]).toBe(0xff);
+      expect(framed[1]).toBe(0xff);
+      expect(framed.length).toBe(2 + 0xffff);
+    });
+
+    it("throws when the body cannot fit the u16 length prefix (> 0xFFFF)", () => {
+      const tlv = new Uint8Array(0x10000).fill(0x7);
+      expect(() => frameClearSignPayload(tlv)).toThrow(
+        PayloadTooLargeForLengthPrefixError,
+      );
+    });
+
+    it("counts the type byte when checking the u16 limit", () => {
+      // 0xFFFF TLV bytes + 1 type byte = 0x10000 body, over the limit.
+      const tlv = new Uint8Array(0xffff).fill(0x7);
+      expect(() => frameClearSignPayload(tlv, 0x01)).toThrow(
+        PayloadTooLargeForLengthPrefixError,
+      );
+    });
+  });
+
+  describe("appendSignatureTlv", () => {
+    it("appends a DER short-form SIGNATURE (0x15) record after the TLV", () => {
+      const signed = appendSignatureTlv(
+        new Uint8Array([0xaa, 0xbb]),
+        new Uint8Array([0xcc, 0xdd]),
+      );
+      expect(signed).toStrictEqual(
+        new Uint8Array([
+          0xaa,
+          0xbb,
+          CLEAR_SIGN_SIGNATURE_TAG,
+          0x02,
+          0xcc,
+          0xdd,
+        ]),
+      );
+    });
+
+    it("encodes a realistic 72-byte DER signature with a short-form length", () => {
+      const signature = new Uint8Array(72).fill(0x11);
+      const signed = appendSignatureTlv(new Uint8Array([0xaa]), signature);
+      expect(signed[1]).toBe(CLEAR_SIGN_SIGNATURE_TAG);
+      expect(signed[2]).toBe(72); // < 0x80, single length byte
+      expect(signed.length).toBe(1 + 2 + 72);
+    });
+
+    it("uses DER long-form length for payloads of 0x80 bytes or more", () => {
+      const signature = new Uint8Array(0x80).fill(0x11);
+      const signed = appendSignatureTlv(new Uint8Array([]), signature);
+      // tag, 0x81 (long-form, 1 length byte), 0x80, then the value
+      expect(signed[0]).toBe(CLEAR_SIGN_SIGNATURE_TAG);
+      expect(signed[1]).toBe(0x81);
+      expect(signed[2]).toBe(0x80);
+      expect(signed.length).toBe(1 + 2 + 0x80);
     });
   });
 });

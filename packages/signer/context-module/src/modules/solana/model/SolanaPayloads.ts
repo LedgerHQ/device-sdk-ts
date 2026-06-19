@@ -41,14 +41,29 @@ export type SolanaSignedDescriptor = {
 };
 
 /**
+ * One enum-variant descriptor bundled with an instruction descriptor by CAL.
+ * The signed TLV (`descriptor.data`) feeds the host-side type-pool decode
+ * cache, `enumId`/`variantIndex` identify which variant it describes (and let
+ * the host stream the selected variant's signed descriptor to the device).
+ */
+export type SolanaInstructionEnumVariant = {
+  enumId: string;
+  variantIndex: number;
+  descriptor: SolanaSignedDescriptor;
+};
+
+/**
  * Payload for ClearSignContextType.SOLANA_INSTRUCTION_INFO: one signed
- * INSTRUCTION_INFO descriptor plus its substructures.
+ * INSTRUCTION_INFO descriptor, its substructures, and the enum-variant
+ * descriptors CAL bundles for the program's enums (used to build the host
+ * decode cache).
  */
 export type SolanaInstructionInfoPayload = {
   programId: string;
   discriminator: string;
   instructionInfo: SolanaSignedDescriptor;
   substructures: SolanaInstructionSubstructure[];
+  enumVariants: SolanaInstructionEnumVariant[];
 };
 
 export enum SolanaInstructionSubstructureKind {
