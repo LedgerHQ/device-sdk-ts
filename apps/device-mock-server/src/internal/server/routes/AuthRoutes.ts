@@ -34,8 +34,9 @@ export class AuthRoutes {
      */
     router.post("/auth", (_req: Request, res: Response) => {
       const { token, expiresAt } = this.repository.createSession();
+      const tag = token.slice(0, 8);
       logger.info(
-        `Session created: ${token} (${this.repository.size()} active)`,
+        `Session created: <${tag}> (${this.repository.size()} active)`,
       );
       res.status(201).json({ token, expires_at: expiresAt });
     });

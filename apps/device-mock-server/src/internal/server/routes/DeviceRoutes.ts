@@ -9,7 +9,10 @@ import {
   bearerAuth,
   getSession,
 } from "@internal/server/middleware/bearerAuth";
-import { decodeMockConfig } from "@internal/server/validation/requests";
+import {
+  decodeDeviceConfig,
+  decodeMockConfig,
+} from "@internal/server/validation/requests";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
 import { type SpeculosOperatorDataSource } from "@internal/speculos/data/SpeculosOperatorDataSource";
@@ -72,8 +75,13 @@ export class DeviceRoutes {
     });
 
     router.post("/devices", (req: AuthedRequest, res: Response) => {
-      const device = this.repository.addDevice(getSession(req), req.body ?? {});
-      res.status(201).json(device);
+      decodeDeviceConfig(req.body ?? {}).caseOf({
+        Left: (error) => res.status(400).json({ error }),
+        Right: (config) => {
+          const device = this.repository.addDevice(getSession(req), config);
+          return res.status(201).json(device);
+        },
+      });
     });
 
     /**
@@ -119,11 +127,16 @@ export class DeviceRoutes {
     });
 
     router.patch("/devices/:id", (req: AuthedRequest, res: Response) => {
-      const device = this.repository
-        .editDevice(getSession(req), req.params["id"] ?? "", req.body ?? {})
-        .extract();
-      if (!device) return this.notFound(res, "Device not found");
-      res.json(device);
+      decodeDeviceConfig(req.body ?? {}).caseOf({
+        Left: (error) => res.status(400).json({ error }),
+        Right: (config) => {
+          const device = this.repository
+            .editDevice(getSession(req), req.params["id"] ?? "", config)
+            .extract();
+          if (!device) return this.notFound(res, "Device not found");
+          return res.json(device);
+        },
+      });
     });
 
     router.delete("/devices/:id", (req: AuthedRequest, res: Response) => {
@@ -319,16 +332,21 @@ export class DeviceRoutes {
     router.patch(
       "/devices/:id/mocks/:mockId",
       (req: AuthedRequest, res: Response) => {
-        const mock = this.repository
-          .editMock(
-            getSession(req),
-            req.params["id"] ?? "",
-            req.params["mockId"] ?? "",
-            req.body ?? {},
-          )
-          .extract();
-        if (!mock) return this.notFound(res, "Mock not found");
-        res.json(mock);
+        decodeMockConfig(req.body).caseOf({
+          Left: (error) => res.status(400).json({ error }),
+          Right: (config) => {
+            const mock = this.repository
+              .editMock(
+                getSession(req),
+                req.params["id"] ?? "",
+                req.params["mockId"] ?? "",
+                config,
+              )
+              .extract();
+            if (!mock) return this.notFound(res, "Mock not found");
+            return res.json(mock);
+          },
+        });
       },
     );
 

@@ -1,4 +1,6 @@
 import {
+  type DeviceConfig,
+  deviceConfigCodec,
   type MockConfig,
   mockConfigCodec,
   type SessionExport,
@@ -13,6 +15,13 @@ const MOCK_RESPONSE_REQUIRED =
 const hasResponse = (config: MockConfig): boolean =>
   typeof config.response === "string" ||
   (Array.isArray(config.responses) && config.responses.length > 0);
+
+/** Decode + validate a `POST /devices` or `PATCH /devices/:id` body. */
+export function decodeDeviceConfig(
+  body: unknown,
+): Either<string, DeviceConfig> {
+  return deviceConfigCodec.decode(body);
+}
 
 /** Decode + validate a `POST /devices/:id/mocks` body. */
 export function decodeMockConfig(body: unknown): Either<string, MockConfig> {

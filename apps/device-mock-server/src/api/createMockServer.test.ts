@@ -138,6 +138,17 @@ describe("createMockServer (HTTP contract)", () => {
       expect(res.status).toBe(404);
     });
 
+    it("rejects a malformed device payload (400)", async () => {
+      const token = await authenticate();
+      const res = await api(
+        "/devices",
+        { method: "POST", body: JSON.stringify({ device_type: 123 }) },
+        token,
+      );
+      expect(res.status).toBe(400);
+      expect((await res.json()) as { error: string }).toHaveProperty("error");
+    });
+
     it("connects and disconnects a device", async () => {
       const token = await authenticate();
       const { id } = await addDevice(token);
@@ -231,6 +242,29 @@ describe("createMockServer (HTTP contract)", () => {
       const res = await api(
         `/devices/${id}/mocks`,
         { method: "POST", body: JSON.stringify({ prefix: "e0010000" }) },
+        token,
+      );
+      expect(res.status).toBe(400);
+      expect((await res.json()) as { error: string }).toHaveProperty("error");
+    });
+
+    it("rejects editing a mock with no response (400)", async () => {
+      const token = await authenticate();
+      const { id } = await addDevice(token);
+      const created = (await (
+        await api(
+          `/devices/${id}/mocks`,
+          {
+            method: "POST",
+            body: JSON.stringify({ prefix: "e0010000", response: "9000" }),
+          },
+          token,
+        )
+      ).json()) as { id: string };
+
+      const res = await api(
+        `/devices/${id}/mocks/${created.id}`,
+        { method: "PATCH", body: JSON.stringify({ prefix: "e0010000" }) },
         token,
       );
       expect(res.status).toBe(400);

@@ -98,6 +98,23 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
     [client, deviceId, fetchMocks],
   );
 
+  const handleEditMock = useCallback(
+    async (mockId: string, prefix: string, response: string) => {
+      if (!deviceId) return;
+      try {
+        await client.editMock(deviceId, mockId, {
+          prefix,
+          responses: parseResponses(response),
+        });
+        setEditMockIndex(-1);
+        await fetchMocks();
+      } catch (_) {
+        console.error("Failed to edit mock");
+      }
+    },
+    [client, deviceId, fetchMocks],
+  );
+
   const handleAddMockClick = useCallback(async () => {
     await sendMock(currentPrefix, currentResponse);
   }, [currentPrefix, currentResponse, sendMock]);
@@ -187,7 +204,9 @@ export const MocksSection: React.FC<MocksSectionProps> = ({
                 key={mock.id}
                 editable={editMockIndex === index}
                 onEdit={() => setEditMockIndex(index)}
-                onSubmit={sendMock}
+                onSubmit={(prefix, response) =>
+                  handleEditMock(mock.id, prefix, response)
+                }
                 onDelete={() => handleDeleteMock(mock.id)}
               />
             ))}
