@@ -18,6 +18,7 @@ import {
 } from "@/modules/solana/instruction-info/data/InstructionInfoDto";
 import { instructionInfoTypes } from "@/modules/solana/instruction-info/di/instructionInfoTypes";
 import {
+  type SolanaInstructionEnumVariant,
   type SolanaInstructionInfoPayload,
   type SolanaInstructionSubstructure,
   SolanaInstructionSubstructureKind,
@@ -29,6 +30,7 @@ import {
 } from "@/shared/model/ClearSignContext";
 import { loadCertificateResult } from "@/shared/utils/certificateResult";
 import { deviceModelIdCodec } from "@/shared/utils/deviceModelIdCodec";
+import { u16Codec } from "@/shared/utils/uIntCodec";
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_INSTRUCTION_INFO,
@@ -259,6 +261,35 @@ export class InstructionInfoContextLoader
       })),
     ];
 
+    // Flatten the CAL-bundled enum variants (keyed enumId to variantIndex) into
+    // a flat list. The signed TLV feeds the host's type-pool decode cache, the
+    // signature is best-effort (only needed when streaming the selected
+    // variant, not for decoding).
+    const enumVariants: SolanaInstructionEnumVariant[] = [];
+    for (const [enumId, variants] of Object.entries(dto.enum_variants ?? {})) {
+      for (const [variantIndex, variant] of Object.entries(variants)) {
+        // CAL keys variants by their stringified u16 index. Validate through
+        // the codec so malformed keys ("7abc", "-1", "1e10") are skipped rather
+        // than leaking NaN/out-of-range indices into the payload (matches
+        // EnumVariantContextLoader).
+        const index = Number(variantIndex);
+        if (u16Codec.decode(index).isLeft()) {
+          this.logger.warn("[load] skipping malformed enum variant index", {
+            data: { programId: info.program_id, enumId, variantIndex },
+          });
+          continue;
+        }
+        enumVariants.push({
+          enumId,
+          variantIndex: index,
+          descriptor: {
+            data: variant.data,
+            signature: this.pickSignature(variant.signatures) ?? "",
+          },
+        });
+      }
+    }
+
     const payload: SolanaInstructionInfoPayload = {
       programId: info.program_id,
       discriminator,
@@ -267,6 +298,7 @@ export class InstructionInfoContextLoader
         signature,
       },
       substructures,
+      enumVariants,
     };
 
     return {
