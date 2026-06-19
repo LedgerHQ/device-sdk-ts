@@ -18,6 +18,7 @@ import {
 } from "@/modules/solana/instruction-info/data/InstructionInfoDto";
 import { instructionInfoTypes } from "@/modules/solana/instruction-info/di/instructionInfoTypes";
 import {
+  type SolanaInstructionEnumVariant,
   type SolanaInstructionInfoPayload,
   type SolanaInstructionSubstructure,
   SolanaInstructionSubstructureKind,
@@ -259,6 +260,24 @@ export class InstructionInfoContextLoader
       })),
     ];
 
+    // Flatten the CAL-bundled enum variants (keyed enumId to variantIndex) into
+    // a flat list. The signed TLV feeds the host's type-pool decode cache, the
+    // signature is best-effort (only needed when streaming the selected
+    // variant, not for decoding).
+    const enumVariants: SolanaInstructionEnumVariant[] = [];
+    for (const [enumId, variants] of Object.entries(dto.enum_variants ?? {})) {
+      for (const [variantIndex, variant] of Object.entries(variants)) {
+        enumVariants.push({
+          enumId,
+          variantIndex: Number(variantIndex),
+          descriptor: {
+            data: variant.data,
+            signature: this.pickSignature(variant.signatures) ?? "",
+          },
+        });
+      }
+    }
+
     const payload: SolanaInstructionInfoPayload = {
       programId: info.program_id,
       discriminator,
@@ -267,6 +286,7 @@ export class InstructionInfoContextLoader
         signature,
       },
       substructures,
+      enumVariants,
     };
 
     return {

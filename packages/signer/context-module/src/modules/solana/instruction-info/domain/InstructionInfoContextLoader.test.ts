@@ -263,6 +263,44 @@ describe("InstructionInfoContextLoader", () => {
       ).toHaveLength(0);
     });
 
+    it("bundles CAL enum_variants into the SOLANA_INSTRUCTION_INFO payload (host decode cache)", async () => {
+      const loader = makeLoader();
+      const jupiter = makeJupiterRouteResult();
+      const descriptor = jupiter.descriptors["e517cb977ae3ad2a"];
+      if (!descriptor) throw new Error("fixture: descriptor must exist");
+      descriptor.enum_variants = {
+        swap: {
+          "46": {
+            variant_name: "raydiumCP",
+            data: "01_raydium_tlv",
+            signatures: { prod: "prodsig_v46", test: "testsig_v46" },
+          },
+        },
+      };
+      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
+        Right(jupiter),
+      );
+
+      const result = await loader.load({
+        deviceModelId: DeviceModelId.NANO_X,
+        instructions: [
+          { programId: JUPITER_PROGRAM, discriminator: "e517cb977ae3ad2a" },
+        ],
+      });
+
+      const infoCtx = result.find(
+        (c) => c.type === ClearSignContextType.SOLANA_INSTRUCTION_INFO,
+      );
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((infoCtx as any).payload.enumVariants).toEqual([
+        {
+          enumId: "swap",
+          variantIndex: 46,
+          descriptor: { data: "01_raydium_tlv", signature: "prodsig_v46" },
+        },
+      ]);
+    });
+
     it("filters descriptors by requested discriminator", async () => {
       const loader = makeLoader();
       const result: InstructionInfoResult = {

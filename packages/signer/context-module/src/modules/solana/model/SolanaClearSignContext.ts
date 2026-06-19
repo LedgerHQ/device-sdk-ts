@@ -19,6 +19,7 @@ import {
 export type {
   SolanaAltResolutionPayload,
   SolanaEnumVariantPayload,
+  SolanaInstructionEnumVariant,
   SolanaInstructionInfoPayload,
   SolanaInstructionSubstructure,
   SolanaLifiInstructionMeta,
