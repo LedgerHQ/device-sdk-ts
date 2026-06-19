@@ -2,6 +2,7 @@ import { Left, Right } from "purify-ts";
 import { type Mock } from "vitest";
 import { assign, createMachine } from "xstate";
 
+import { type GetAppAndVersionResponse } from "@api/command/os/GetAppAndVersionCommand";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { UnknownDAError } from "@api/device-action/os/Errors";
 import { GetDeviceMetadataDeviceAction } from "@api/device-action/os/GetDeviceMetadata/GetDeviceMetadataDeviceAction";
@@ -22,6 +23,8 @@ import { ListAppsDeviceAction } from "@api/device-action/os/ListApps/ListAppsDev
 import { listAppsDAStateStep } from "@api/device-action/os/ListApps/types";
 import { OpenAppDeviceAction } from "@api/device-action/os/OpenAppDeviceAction/OpenAppDeviceAction";
 import { openAppDAStateStep } from "@api/device-action/os/OpenAppDeviceAction/types";
+import { waitForAppAndVersionDAStateStep } from "@api/device-action/os/WaitForAppAndVersion/types";
+import { WaitForAppAndVersionDeviceAction } from "@api/device-action/os/WaitForAppAndVersion/WaitForAppAndVersionDeviceAction";
 import { type DmkError } from "@api/Error";
 import { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
 import { type InstalledApp } from "@api/secure-channel/device-action/ListInstalledApps/types";
@@ -272,4 +275,43 @@ export const setupListInstalledAppsMock = (
       }),
     ),
   }));
+};
+
+export const setupWaitForAppAndVersionMock = (
+  output: GetAppAndVersionResponse | DmkError,
+  requiredUserInteraction: UserInteractionRequired = UserInteractionRequired.None,
+) => {
+  (WaitForAppAndVersionDeviceAction as unknown as Mock).mockImplementation(
+    () => ({
+      makeStateMachine: vi.fn().mockImplementation(() =>
+        createMachine({
+          id: "MockWaitForAppAndVersionDeviceAction",
+          initial: "ready",
+          context: {
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: waitForAppAndVersionDAStateStep.GET_APP_AND_VERSION,
+            },
+          },
+          states: {
+            ready: {
+              after: {
+                0: "done",
+              },
+              entry: assign({
+                intermediateValue: () => ({
+                  requiredUserInteraction,
+                  step: waitForAppAndVersionDAStateStep.GET_APP_AND_VERSION,
+                }),
+              }),
+            },
+            done: {
+              type: "final",
+            },
+          },
+          output: () => ("_tag" in output ? Left(output) : Right(output)),
+        }),
+      ),
+    }),
+  );
 };
