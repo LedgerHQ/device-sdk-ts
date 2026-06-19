@@ -152,14 +152,14 @@ export class SpeculosDriver {
   }
 
   /** Fetch a PNG screenshot of the current screen, or null on failure. */
-  async screenshot(): Promise<Buffer | null> {
+  async screenshot(): Promise<Uint8Array | null> {
     if (!this.speculosUrl || typeof fetch === "undefined") return null;
     try {
       const res = await fetch(`${this.speculosUrl}/screenshot`, {
         headers: { Accept: "image/png" },
       });
       if (!res.ok) return null;
-      return Buffer.from(await res.arrayBuffer());
+      return new Uint8Array(await res.arrayBuffer());
     } catch {
       return null;
     }
@@ -172,7 +172,10 @@ export class SpeculosDriver {
     if (!png) return;
     const index = String(this.shotCounter++).padStart(2, "0");
     await this.testInfo.attach(`speculos-${this.label}-${index}-${label}.png`, {
-      body: png,
+      // Playwright's attach body only accepts string | Buffer; this is
+      // Node-only test code, so wrap the Uint8Array in a Buffer here.
+      // eslint-disable-next-line no-restricted-globals
+      body: Buffer.from(png),
       contentType: "image/png",
     });
   }
