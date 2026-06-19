@@ -5,14 +5,13 @@ import {
   CommandResultFactory,
   LoadCertificateCommand,
 } from "@ledgerhq/device-management-kit";
-import { Nothing } from "purify-ts";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
 import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
 
-import { ProvideSolanaTransactionContextTask } from "./ProvideTransactionContextTask";
+import { ProvideBasicClearSignContextTask } from "./ProvideBasicClearSignContextTask";
 
 const mockLoggerFactory = () => ({
   debug: vi.fn(),
@@ -25,7 +24,7 @@ const mockLoggerFactory = () => ({
 const buildNormaliser = (message: any) =>
   ({ normaliseMessage: vi.fn(async () => message) }) as const;
 
-describe("ProvideSolanaTransactionContextTask", () => {
+describe("ProvideBasicClearSignContextTask", () => {
   let api: { sendCommand: Mock };
   const success = CommandResultFactory({ data: undefined });
 
@@ -60,7 +59,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
         .mockResolvedValueOnce(success)
         .mockResolvedValueOnce(success);
 
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: baseCert,
@@ -73,7 +72,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toStrictEqual(Nothing);
+      expect(result).toBeUndefined();
       expect(api.sendCommand).toHaveBeenCalledTimes(2);
 
       const certCmd = api.sendCommand.mock.calls[0]![0]!;
@@ -87,7 +86,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
     });
 
     it("skips base context APDUs when trustedNamePKICertificate is missing", async () => {
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: undefined,
@@ -100,14 +99,14 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toStrictEqual(Nothing);
+      expect(result).toBeUndefined();
       expect(api.sendCommand).not.toHaveBeenCalled();
     });
 
     it("propagates errors thrown by sendCommand", async () => {
       api.sendCommand.mockRejectedValueOnce(new Error("transport fail"));
 
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: baseCert,
@@ -124,7 +123,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
   describe("loaders dispatch", () => {
     it("returns Nothing when loadersResults is empty", async () => {
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: undefined,
@@ -137,12 +136,12 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toStrictEqual(Nothing);
+      expect(result).toBeUndefined();
       expect(api.sendCommand).not.toHaveBeenCalled();
     });
 
     it("skips ERROR loader results without sending APDUs", async () => {
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: undefined,
@@ -160,7 +159,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
 
       const result = await task.run();
 
-      expect(result).toStrictEqual(Nothing);
+      expect(result).toBeUndefined();
       expect(api.sendCommand).not.toHaveBeenCalled();
     });
 
@@ -171,7 +170,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
         .mockResolvedValueOnce(success) // token cert
         .mockResolvedValueOnce(success); // token descriptor
 
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: baseCert,
@@ -209,7 +208,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
         .mockResolvedValueOnce(success) // tx-check cert
         .mockResolvedValueOnce(success); // descriptor chunk
 
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: undefined,
@@ -248,7 +247,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
         .mockResolvedValueOnce(success) // tx-check cert
         .mockResolvedValueOnce(success); // tx-check descriptor
 
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: baseCert,
@@ -281,7 +280,7 @@ describe("ProvideSolanaTransactionContextTask", () => {
         .mockResolvedValueOnce(success) // tx-check cert
         .mockResolvedValueOnce(success); // tx-check descriptor
 
-      const task = new ProvideSolanaTransactionContextTask(
+      const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
           trustedNamePKICertificate: undefined,

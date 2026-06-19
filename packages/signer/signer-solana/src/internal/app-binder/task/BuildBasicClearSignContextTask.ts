@@ -4,7 +4,6 @@ import {
   type ContextModule,
   type LoaderResult,
   type SolanaTransactionContextResultSuccess,
-  SolanaTransactionScanChainId,
 } from "@ledgerhq/context-module";
 import {
   type InternalApi,
@@ -15,27 +14,26 @@ import {
 import { type TransactionResolutionContext } from "@api/model/TransactionResolutionContext";
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 
-export type { SolanaTransactionContextResultSuccess as SolanaBuildContextResult };
+export type { SolanaTransactionContextResultSuccess as BasicClearSignContext };
 
-export type BuildTransactionContextTaskArgs = {
+export type BuildBasicClearSignContextTaskArgs = {
   readonly contextModule: ContextModule;
   readonly options: TransactionResolutionContext;
   readonly transactionBytes: Uint8Array;
-  readonly signerAddress: string | null;
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
 };
 
-export class BuildTransactionContextTask {
+export class BuildBasicClearSignContextTask {
   private readonly _logger: LoggerPublisherService;
   constructor(
     private readonly api: InternalApi,
-    private readonly args: BuildTransactionContextTaskArgs,
+    private readonly args: BuildBasicClearSignContextTaskArgs,
   ) {
-    this._logger = args.loggerFactory("BuildTransactionContextTask");
+    this._logger = args.loggerFactory("BuildBasicClearSignContextTask");
   }
 
   async run(): Promise<SolanaTransactionContextResultSuccess> {
-    this._logger.debug("[run] Starting BuildTransactionContextTask");
+    this._logger.debug("[run] Starting BuildBasicClearSignContextTask");
     const { contextModule, options } = this.args;
     const deviceState = this.api.getDeviceSessionState();
 
@@ -48,14 +46,6 @@ export class BuildTransactionContextTask {
       throw new Error("Failed to get challenge from device");
     }
 
-    const transactionCheck = this.args.signerAddress
-      ? {
-          from: this.args.signerAddress,
-          transactionBytes: this.args.transactionBytes,
-          chain: SolanaTransactionScanChainId.MAINNET,
-        }
-      : undefined;
-
     const contextModuleGetSolanaContextArgs = {
       deviceModelId: deviceState.deviceModelId,
       tokenAddress: options.tokenAddress,
@@ -63,7 +53,6 @@ export class BuildTransactionContextTask {
       createATA: options.createATA,
       tokenInternalId: options.tokenInternalId,
       templateId: options.templateId,
-      transactionCheck,
     };
     // get Solana context
     this._logger.debug("[run] Calling contextModule.getContexts for Solana", {
@@ -78,9 +67,6 @@ export class BuildTransactionContextTask {
         ClearSignContextType.SOLANA_TOKEN,
         ClearSignContextType.SOLANA_LIFI,
         ClearSignContextType.SOLANA_TRUSTED_NAME,
-        // !! TODO-WEB3CHECK FLIP THIS BACK ONCE TRANSACTION CHECK IS READY,
-        // TO BE KEEPT OFF FOR NOW
-        //ClearSignContextType.SOLANA_TRANSACTION_CHECK,
       ],
     );
 
@@ -105,7 +91,7 @@ export class BuildTransactionContextTask {
     const ownerInfoRequired = !!(options.tokenAddress || options.createATA);
     if (ownerInfoRequired && trustedNameCtx === undefined) {
       throw new Error(
-        "[SignerSolana] BuildTransactionContextTask: owner info was required but could not be resolved",
+        "[SignerSolana] BuildBasicClearSignContextTask: owner info was required but could not be resolved",
       );
     }
 
@@ -113,9 +99,7 @@ export class BuildTransactionContextTask {
       (contextResponseItem): contextResponseItem is LoaderResult =>
         contextResponseItem.type === ClearSignContextType.ERROR ||
         contextResponseItem.type === ClearSignContextType.SOLANA_TOKEN ||
-        contextResponseItem.type === ClearSignContextType.SOLANA_LIFI ||
-        contextResponseItem.type ===
-          ClearSignContextType.SOLANA_TRANSACTION_CHECK,
+        contextResponseItem.type === ClearSignContextType.SOLANA_LIFI,
     );
 
     return {
