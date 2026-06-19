@@ -176,6 +176,7 @@ export class ProvideGenericClearSignContextTask {
           isFirstChunk: !chunkArgs.extend,
           hasMore: chunkArgs.more,
         }),
+      loggerFactory: this.args.loggerFactory,
     }).run();
 
     if (!isSuccessCommandResult(result)) {

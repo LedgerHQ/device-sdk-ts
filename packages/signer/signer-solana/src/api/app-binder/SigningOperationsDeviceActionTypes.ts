@@ -1,32 +1,41 @@
 import {
-  type DeviceActionState,
-  type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
   type SendCommandInAppDAError,
   type UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
 
-import { type Signature } from "@api/model/Signature";
 import { type UserInputType } from "@api/model/TransactionResolutionContext";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type BlockhashService } from "@internal/app-binder/services/BlockhashService";
 
-export const delayedSignDAStateSteps = Object.freeze({
+/**
+ * Steps shared by the two terminal signing machines
+ * (`SignGenericClearSignDeviceAction` and
+ * `SignBasicClearSignDeviceAction`) and the shared
+ * `RefreshBlockhashDeviceAction` child.
+ */
+export const signingOperationsDAStateSteps = Object.freeze({
   ZERO_BLOCKHASH: "signer.sol.steps.zeroBlockhash",
   PREVIEW_TRANSACTION: "signer.sol.steps.previewTransaction",
   FETCH_BLOCKHASH: "signer.sol.steps.fetchBlockhash",
   PATCH_TRANSACTION: "signer.sol.steps.patchTransaction",
+  PROMPT_UI_DISPLAY: "signer.sol.steps.promptUiDisplay",
   DELAYED_SIGN: "signer.sol.steps.delayedSign",
+  SIGN_TRANSACTION: "signer.sol.steps.signTransaction",
   FALLBACK_TO_NON_DELAYED_SIGN: "signer.sol.steps.fallbackToNonDelayedSign",
 } as const);
 
-export type DelayedSignDAStateStep =
-  (typeof delayedSignDAStateSteps)[keyof typeof delayedSignDAStateSteps];
+export type SigningOperationsDAStateStep =
+  (typeof signingOperationsDAStateSteps)[keyof typeof signingOperationsDAStateSteps];
 
-export type DelayedSignDAOutput = Signature;
-
-export type DelayedSignDAInput = {
+/**
+ * Input shared by both terminal signing machines. The blockhash source
+ * (`rpcUrl` / `fetchBlockhash`) is only populated by the caller when a delayed
+ * blockhash refresh is allowed; when withheld, the original transaction is
+ * signed as-is.
+ */
+export type SigningOperationsDAInput = {
   readonly derivationPath: string;
   readonly transaction: Uint8Array;
   readonly rpcUrl?: string;
@@ -35,36 +44,15 @@ export type DelayedSignDAInput = {
   readonly blockhashService?: BlockhashService;
 };
 
-export type DelayedSignDAError =
+export type SigningOperationsDAError =
   | OpenAppDAError
   | SendCommandInAppDAError<SolanaAppErrorCodes>;
 
-type DelayedSignDARequiredInteraction =
+type SigningOperationsDARequiredInteraction =
   | UserInteractionRequired
   | OpenAppDARequiredInteraction;
 
-export type DelayedSignDAIntermediateValue = {
-  requiredUserInteraction: DelayedSignDARequiredInteraction;
-  step: DelayedSignDAStateStep;
+export type SigningOperationsDAIntermediateValue = {
+  requiredUserInteraction: SigningOperationsDARequiredInteraction;
+  step: SigningOperationsDAStateStep;
 };
-
-export type DelayedSignDAState = DeviceActionState<
-  DelayedSignDAOutput,
-  DelayedSignDAError,
-  DelayedSignDAIntermediateValue
->;
-
-export type DelayedSignDAInternalState = {
-  readonly error: DelayedSignDAError | null;
-  readonly signature: Signature | null;
-  readonly zeroedTransaction: Uint8Array | null;
-  readonly freshBlockhash: Uint8Array | null;
-  readonly patchedTransaction: Uint8Array | null;
-  readonly previewFallback: boolean;
-};
-
-export type DelayedSignDAReturnType = ExecuteDeviceActionReturnType<
-  DelayedSignDAOutput,
-  DelayedSignDAError,
-  DelayedSignDAIntermediateValue
->;

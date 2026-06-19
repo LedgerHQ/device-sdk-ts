@@ -1,9 +1,5 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
-  type ContextModule,
-  type SolanaTransactionContextResultSuccess,
-} from "@ledgerhq/context-module";
-import {
-  type DeviceActionState,
   type ExecuteDeviceActionReturnType,
   type OpenAppDAError,
   type OpenAppDARequiredInteraction,
@@ -17,26 +13,41 @@ import { type SolanaTransactionOptionalConfig } from "@api/model/SolanaTransacti
 import { type Transaction } from "@api/model/Transaction";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { type BlockhashService } from "@internal/app-binder/services/BlockhashService";
-import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
 
-import { type DelayedSignDAStateStep } from "./DelayedSignTransactionDeviceActionTypes";
+import { type SigningOperationsDAStateStep } from "./SigningOperationsDeviceActionTypes";
 
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
   GET_APP_CONFIG: "signer.sol.steps.getAppConfig",
   WEB3_CHECKS_OPT_IN: "signer.sol.steps.web3ChecksOptIn",
   WEB3_CHECKS_OPT_IN_RESULT: "signer.sol.steps.web3ChecksOptInResult",
+  WEB3_CHECKS_PROVIDE: "signer.sol.steps.web3ChecksProvide",
   INSPECT_TRANSACTION: "signer.sol.steps.inspectTransaction",
   GET_PUB_KEY: "signer.sol.steps.getPubKey",
-  BUILD_TRANSACTION_CONTEXT: "signer.sol.steps.buildTransactionContext",
-  PROVIDE_TRANSACTION_CONTEXT: "signer.sol.steps.provideTransactionContext",
+  BUILD_BASIC_CLEAR_SIGN_CONTEXT: "signer.sol.steps.buildBasicClearSignContext",
+  PROVIDE_BASIC_CLEAR_SIGN_CONTEXT:
+    "signer.sol.steps.provideBasicClearSignContext",
+  BUILD_GENERIC_CLEAR_SIGN_CONTEXT:
+    "signer.sol.steps.buildGenericClearSignContext",
+  PROVIDE_GENERIC_CLEAR_SIGN_CONTEXT:
+    "signer.sol.steps.provideGenericClearSignContext",
+  FINALIZE_GENERIC_CLEAR_SIGN: "signer.sol.steps.finalizeGenericClearSign",
+  PROMPT_UI_DISPLAY: "signer.sol.steps.promptUiDisplay",
   SIGN_TRANSACTION: "signer.sol.steps.signTransaction",
   DELAYED_SIGN: "signer.sol.steps.delayedSign",
 } as const);
 
+/**
+ * Which clear-signing path produced the signature.
+ * `full` = device ran the merge engine
+ * `srfc39-only` = partial CAL coverage, device auto-rendered per-instruction without merge
+ * `none` = blind/legacy fallback (no instruction recognised or capability absent).
+ */
+export type ClearSignMode = "full" | "srfc39-only" | "none";
+
 export type SignTransactionDAStateStep =
   | (typeof signTransactionDAStateSteps)[keyof typeof signTransactionDAStateSteps]
-  | DelayedSignDAStateStep;
+  | SigningOperationsDAStateStep;
 
 export type SignTransactionDAOutput = Signature;
 
@@ -57,33 +68,36 @@ type SignTransactionDARequiredInteraction =
   | UserInteractionRequired
   | OpenAppDARequiredInteraction;
 
+/**
+ * The intermediate value shared by every sign-transaction step except the
+ * WEB3_CHECKS_OPT_IN_RESULT branch (which carries an extra `result`). The
+ * clear-sign child machines emit exactly this shape, so the parent can fold
+ * their snapshots into its own intermediate value without a cast.
+ */
+export type SignTransactionDASimpleIntermediateValue = {
+  requiredUserInteraction: SignTransactionDARequiredInteraction;
+  step: Exclude<
+    SignTransactionDAStateStep,
+    typeof signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT
+  >;
+};
+
 export type SignTransactionDAIntermediateValue =
-  | {
-      requiredUserInteraction: SignTransactionDARequiredInteraction;
-      step: Exclude<
-        SignTransactionDAStateStep,
-        typeof signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT
-      >;
-    }
+  | SignTransactionDASimpleIntermediateValue
   | {
       requiredUserInteraction: UserInteractionRequired.None;
       step: typeof signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT;
       result: boolean;
     };
 
-export type SignTransactionDAState = DeviceActionState<
-  SignTransactionDAOutput,
-  SignTransactionDAError,
-  SignTransactionDAIntermediateValue
->;
-
 export type SignTransactionDAInternalState = {
   readonly error: SignTransactionDAError | null;
   readonly signature: Signature | null;
   readonly appConfig: AppConfiguration | null;
-  readonly solanaTransactionContext: SolanaTransactionContextResultSuccess | null;
-  readonly inspectorResult: TxInspectorResult | null;
-  readonly signerAddress: string | null;
+  // Set when the generic clear-sign path streamed + FINALIZE-validated the
+  // descriptors, so the terminal sign runs the generic PROMPT UI DISPLAY flow
+  // instead of the legacy preview.
+  readonly clearSignPrepared: boolean;
 };
 
 export type SignTransactionDAReturnType = ExecuteDeviceActionReturnType<

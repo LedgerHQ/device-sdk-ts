@@ -1,6 +1,5 @@
+import { type ContextModule } from "@ledgerhq/context-module";
 import {
-  ApplicationChecker,
-  type CommandErrorResult,
   type CommandResult,
   type DeviceActionStateMachine,
   type InternalApi,
@@ -11,7 +10,7 @@ import {
   UserInteractionRequired,
   XStateDeviceAction,
 } from "@ledgerhq/device-management-kit";
-import { Left, type Maybe, Right } from "purify-ts";
+import { Left, Right } from "purify-ts";
 import { and, assign, fromPromise, setup } from "xstate";
 
 import {
@@ -20,21 +19,11 @@ import {
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAInternalState,
   type SignTransactionDAOutput,
-  type SignTransactionDAStateStep,
   signTransactionDAStateSteps,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AppConfiguration } from "@api/model/AppConfiguration";
-import { type Signature } from "@api/model/Signature";
-import {
-  type TransactionResolutionContext,
-  type UserInputType,
-} from "@api/model/TransactionResolutionContext";
+import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
-import {
-  GetPubKeyCommand,
-  type GetPubKeyCommandResponse,
-} from "@internal/app-binder/command/GetPubKeyCommand";
-import { SignTransactionCommand } from "@internal/app-binder/command/SignTransactionCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
   Web3CheckOptInCommand,
@@ -42,26 +31,15 @@ import {
 } from "@internal/app-binder/command/Web3CheckOptInCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 import {
-  SolanaTransactionTypes,
-  TransactionInspector,
-} from "@internal/app-binder/services/TransactionInspector";
-import { type TxInspectorResult } from "@internal/app-binder/services/TransactionInspector";
-import {
-  SOLANA_FEATURES,
-  SolanaApplicationResolver,
+  isSolanaFeatureSupported,
+  type SOLANA_FEATURES,
 } from "@internal/app-binder/SolanaApplicationResolver";
-import {
-  BuildTransactionContextTask,
-  type BuildTransactionContextTaskArgs,
-  type SolanaBuildContextResult,
-} from "@internal/app-binder/task/BuildTransactionContextTask";
-import {
-  ProvideSolanaTransactionContextTask,
-  type ProvideSolanaTransactionContextTaskArgs,
-} from "@internal/app-binder/task/ProvideTransactionContextTask";
-import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
+import { ProvideWeb3CheckTask } from "@internal/app-binder/task/ProvideWeb3CheckTask";
 
-import { DelayedSignTransactionDeviceAction } from "./DelayedSignTransactionDeviceAction";
+import { ProvisionBasicClearSignDeviceAction } from "./ProvisionBasicClearSignDeviceAction";
+import { ProvisionGenericClearSignDeviceAction } from "./ProvisionGenericClearSignDeviceAction";
+import { SignBasicClearSignDeviceAction } from "./SignBasicClearSignDeviceAction";
+import { SignGenericClearSignDeviceAction } from "./SignGenericClearSignDeviceAction";
 
 /**
  * Per-sign `transactionOptions.solanaRPCURL` overrides the builder default
@@ -80,29 +58,13 @@ export type MachineDependencies = {
   readonly web3CheckOptIn: () => Promise<
     CommandResult<Web3CheckOptInCommandResponse, SolanaAppErrorCodes>
   >;
-  readonly getPubKey: (arg0: {
+  readonly provideWeb3Check: (arg0: {
     input: {
       derivationPath: string;
-      checkOnDevice: boolean;
+      transaction: Uint8Array;
+      contextModule: ContextModule;
     };
-  }) => Promise<CommandResult<GetPubKeyCommandResponse, SolanaAppErrorCodes>>;
-  readonly buildContext: (arg0: {
-    input: BuildTransactionContextTaskArgs;
-  }) => Promise<SolanaBuildContextResult>;
-  readonly provideContext: (arg0: {
-    input: ProvideSolanaTransactionContextTaskArgs;
-  }) => Promise<Maybe<CommandErrorResult<SolanaAppErrorCodes>>>;
-  readonly inspectTransaction: (arg0: {
-    serializedTransaction: Uint8Array;
-    resolutionContext?: TransactionResolutionContext;
-    rpcUrl?: string;
-  }) => Promise<TxInspectorResult>;
-  readonly signTransaction: (arg0: {
-    input: {
-      derivationPath: string;
-      serializedTransaction: Uint8Array;
-    };
-  }) => Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>>;
+  }) => Promise<void>;
 };
 
 export class SignTransactionDeviceAction extends XStateDeviceAction<
@@ -129,15 +91,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const {
-      signTransaction,
-      getAppConfig,
-      web3CheckOptIn,
-      getPubKey,
-      buildContext,
-      provideContext,
-      inspectTransaction,
-    } = this.extractDependencies(internalApi);
+    const { getAppConfig, web3CheckOptIn, provideWeb3Check } =
+      this.extractDependencies(internalApi);
 
     const logger = this.getLoggerFactory(internalApi)(
       "SignTransactionDeviceAction",
@@ -146,18 +101,28 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const isSupported = (
       feature: keyof typeof SOLANA_FEATURES,
       appConfig: AppConfiguration,
-    ): boolean => {
-      const { minVersion, excludedModels, excludedApps } =
-        SOLANA_FEATURES[feature];
-      return new ApplicationChecker(
-        internalApi.getDeviceSessionState(),
-        appConfig,
-        new SolanaApplicationResolver(),
-      )
-        .withMinVersionInclusive(minVersion)
-        .excludeDeviceModels(...excludedModels)
-        .excludeApps(...excludedApps)
-        .check();
+    ): boolean => isSolanaFeatureSupported(internalApi, feature, appConfig);
+
+    // Blockhash refresh is opt-in and shared by both terminal-sign machines:
+    // only when `delayed: true` is requested, a blockhash source exists, and
+    // the app supports delayed signing. When it isn't allowed we withhold the
+    // source so the signing machine signs the original transaction.
+    const resolveRefreshSource = (
+      context: types["context"],
+    ): {
+      rpcUrl: string | undefined;
+      fetchBlockhash: (() => Promise<Uint8Array>) | undefined;
+    } => {
+      const rpcUrl = resolveSolanaRpcUrl(context.input);
+      const fetchBlockhash = context.input.transactionOptions?.fetchBlockhash;
+      const refreshBlockhash =
+        context.input.transactionOptions?.delayed === true &&
+        !!(rpcUrl || fetchBlockhash) &&
+        isSupported("delayedSigning", context._internalState.appConfig!);
+      return {
+        rpcUrl: refreshBlockhash ? rpcUrl : undefined,
+        fetchBlockhash: refreshBlockhash ? fetchBlockhash : undefined,
+      };
     };
 
     return setup({
@@ -172,31 +137,43 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
         web3CheckOptIn: fromPromise(web3CheckOptIn),
-        getPubKey: fromPromise(getPubKey),
-        inspectTransaction: fromPromise(
-          ({
-            input,
-          }: {
+        provideWeb3Check: fromPromise(provideWeb3Check),
+        provisionGenericClearSignStateMachine:
+          new ProvisionGenericClearSignDeviceAction({
             input: {
-              serializedTransaction: Uint8Array;
-              resolutionContext?: TransactionResolutionContext;
-              rpcUrl?: string;
-            };
-          }) =>
-            inspectTransaction({
-              serializedTransaction: input.serializedTransaction,
-              resolutionContext: input.resolutionContext,
-              rpcUrl: input.rpcUrl,
-            }),
-        ),
-        buildContext: fromPromise(buildContext),
-        provideContext: fromPromise(provideContext),
-        signTransaction: fromPromise(signTransaction),
-        delayedSignStateMachine: new DelayedSignTransactionDeviceAction({
+              derivationPath: this.input.derivationPath,
+              transaction: this.input.transaction,
+              contextModule: this.input.contextModule,
+            },
+            loggerFactory: this.getLoggerFactory(internalApi),
+          }).makeStateMachine(internalApi),
+        provisionBasicClearSignStateMachine:
+          new ProvisionBasicClearSignDeviceAction({
+            input: {
+              derivationPath: this.input.derivationPath,
+              transaction: this.input.transaction,
+              contextModule: this.input.contextModule,
+              appConfig: {
+                blindSigningEnabled: false,
+                pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+                version: "0.0.0",
+              },
+            },
+            loggerFactory: this.getLoggerFactory(internalApi),
+          }).makeStateMachine(internalApi),
+        signGenericClearSignStateMachine: new SignGenericClearSignDeviceAction({
           input: {
-            derivationPath: "",
-            transaction: new Uint8Array(),
+            derivationPath: this.input.derivationPath,
+            transaction: this.input.transaction,
           },
+          loggerFactory: this.getLoggerFactory(internalApi),
+        }).makeStateMachine(internalApi),
+        signBasicClearSignStateMachine: new SignBasicClearSignDeviceAction({
+          input: {
+            derivationPath: this.input.derivationPath,
+            transaction: this.input.transaction,
+          },
+          loggerFactory: this.getLoggerFactory(internalApi),
         }).makeStateMachine(internalApi),
       },
       guards: {
@@ -205,27 +182,27 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context.input.transactionOptions?.skipOpenApp || false,
         isSPLSupported: ({ context }) =>
           isSupported("spl", context._internalState.appConfig!),
-        isDelayedRequested: ({ context }) =>
-          context.input.transactionOptions?.delayed === true,
-        isDelayedWithConfigAndSupported: ({ context }) =>
-          context.input.transactionOptions?.delayed === true &&
-          !!(
-            resolveSolanaRpcUrl(context.input) ||
-            context.input.transactionOptions?.fetchBlockhash
-          ) &&
-          isSupported("delayedSigning", context._internalState.appConfig!),
-        shouldBuildContext: ({ context }) =>
-          context._internalState.inspectorResult?.transactionType ===
-            SolanaTransactionTypes.SPL ||
-          context._internalState.inspectorResult?.transactionType ===
-            SolanaTransactionTypes.SWAP,
         isWeb3ChecksSupported: ({ context }) =>
           isSupported("web3Checks", context._internalState.appConfig!),
-        hasSignature: ({ context }) =>
-          context._internalState.signature !== null,
+        // The device only runs the scan when the feature is enabled (fresh
+        // opt-in this run, or already enabled for a returning user).
+        web3ChecksEnabled: ({ context }) =>
+          context._internalState.appConfig!.web3ChecksEnabled === true,
+        // Generic clear-signing terminates via SIGN MESSAGE DELAYED (0x09) on
+        // the original message, so it only needs the capability bit — no RPC /
+        // blockhash prerequisite.
+        isGenericClearSignAvailable: ({ context }) =>
+          isSupported("genericClearSign", context._internalState.appConfig!),
         shouldOptIn: ({ context }) =>
           !context._internalState.appConfig!.web3ChecksEnabled &&
           !context._internalState.appConfig!.web3ChecksOptIn,
+        // Generic clear-sign child streamed + finalized the descriptors (its
+        // Right("prepared") outcome was folded into the context by the
+        // GenericClearSign onDone).
+        isClearSignPrepared: ({ context }) =>
+          context._internalState.clearSignPrepared,
+        hasSignature: ({ context }) =>
+          context._internalState.signature !== null,
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -238,20 +215,9 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             ),
           }),
         }),
-        logDelayedFallbackWarning: ({ context }) => {
-          const hasConfig = !!(
-            resolveSolanaRpcUrl(context.input) ||
-            context.input.transactionOptions?.fetchBlockhash
-          );
-          logger.warn(
-            hasConfig
-              ? `delayed signing requires Solana app version >= ${SOLANA_FEATURES.delayedSigning.minVersion}; falling back to standard signing`
-              : "delayed signing requires a Solana RPC URL or a fetchBlockhash callback; falling back to standard signing",
-          );
-        },
       },
     }).createMachine({
-      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EAJgCMADg4BWAGw7jAGhABPRHr3SA7Bx0BONwGYALNOPfvUz1jHQBfUOs0TFwCIjYqWgYmVnIqbl5+IRExKT15JBBlVVSMDW0EfSMzC2s7BDdvHQ5pby9ff0DgsIiQKOx8QhISxMYWeM4AeUUwDGZFRRHk8fEIKjAOVAw6CgBrdYpp2fnhUTAAWRIAC02wGXylFTUqMsQnN1MON2lzK1tEN0MJicOicTlMoM8LXe4Ui6H6sSG7EWYxKHAAwpcwMQdlMZnMFvRRil2AAlOAAVwEpCkcg0RSepQK5T0nmMRmkwR+tX+3iMgVM0mc+j0OgM3Vh0QGcWGhKWqIxWJxh3xyOJVDJsEp1MkeTpjxKLwQLLZzU5NT+CAMeg4rTcBneLN8bx8MN6cJig3GqvGHAA4mBSPi0VQAGboFZrDZbXbrGCB+bBjBhqB3PXFdRM+wGUzeVymaq-OqOMWfe0BHyeNxOPSmV19D3SpGylHsP0BoOh8NgHA4Cg4DiKASiEN9gC2HDjHaT6FTBXpBszRuzuZ0+a5Fr0Hk+HjL2YsLNMtZ69aliISzbVnH98cUieTGq1CuxNPuhX1GdA5R0nh0TRapgMJxC3sBwmgMMVwU8QC3l5Yw63dU8vQvH1ryne8KSpJ8dlyV95w-LRdB-P9AkA4CEB8a0qxzYwnE8H5jW8eDJQRJCkhbNIeFgaYyAbM8MAjDB1k2bY9ijLisVIXjxlnB502eRdRS+Dgc2+c0i2kBoODBUUDA0ytqyPCV4U9GU2MvdJxJ4xCSnEbte37QdhzHMTuMk6z2Bkt85MZT9dHtaRlN8dc6kCALvDBbwzA0jTwqApjjMbc8zJ9ZgQzEHBONcl80wZQ0fyCLSKyA7kjRZa1+UFYFQLFeKpNMokUrS7tMoknCcoXXzyNXa1aO8Txio3SFjC0jwfD8AIghCWr3KShrUVS9KWrIKQdFw995M6-KeqKsiBSaSLIUMYwvgaUFppY+q5VbAAhclUAECBEzETRqVWQSoxE9YACM7oep6wBezy8I2gjyKcbMbQMPqBqLBxPA4HxzD0RpaKhQy3WYkym2S1Fbvux6qGe6k7L7Ach1IEccHHH78f+wHaTndafNB-qId5aGyOBAK3GMQ7aM3KD9HOrHZqutIAAVewYCAwDp17I2EmMByl1AZbloGmcNPrRQRr5gpA8EOHA1daOghoDDg48EIu7G5tbSWKGl2XCYB4me1JxyKecxQVbVl36bW7ytZ-IxK1Usi90+dwaLtAWxT0YXEpoZDUQdp25YfTDMWfDWg8XcKeYR47+rIhwgOaVoxo6SbxQxhK+O9VPfedjAicz0gsLaxm886gvhtZLwYfsQVcz15HvzjoWrcxpPG9bE8baoAShOjUTVBnvjc9yxdeZ0XN-AAoejVXIxVx0vSqxrROG5T+frZF-iSYc8nKfHdf6+khnZO3zrd-3kij6gXhkFZGjhwpWhzNfVids0gLwfu3TuW8OqgxjsNNwlRAGeAcAjMUTgOQjwAryKBl12KcDgUnBB2dsI6kDj-FBbw0EYNLqufuuDpCsnATWRiroMAUBlvAAo5Cb443wsDZm5QAC0pgSpSOaIKeRCiFFOGIbbMWnAeBqEECcMQ7V8LlEaCVRwhs3heErCCSErR0ZCOgWojguIjgEhESDMRWtBSfHDiVMsrhRpmNRpYlRotSHoiofYlUt91QYVILokGzJ-zKVIiVBoAV3CmPQX46E08P4kPMqhBMnYoDRPEfYfwRhB6lyhMpH8wIALHQtpbIydVVFBNybefJlDFSFMNDoIUrhDCALAVpGsgpi6XysffWe4T1GEFco05xmsFLGBFJ8Q+5SnC5lMPlap3xBYGACcnJxnAFrNWmRJTpi4sE1kKhzQxIo3CDIFH4Lwoy9lzzSHjP6-sondzoeUHwUMjYinKV4XpDyRkGU8C8yZHA06qxbkTM5m0PC5muRuBwPUfFpIsRkhpM19kwM4DCv2rdXbtOxAi0GB0Pg7RuYeI2EEtkbLFLszJsy8W2Oscglx+c7QfFFICwxe8jAshNqubZTLIUHI4By0kkSsLkvKMYXeJhDGQnhvoY6e9FU82cGMjeNignIHJMQJgsABHf2QeUAUtKoYlxVdIUOEEPC0QuW4CV+KOAAFF3Y4HlYgK1HwbWAL3vDMwkVumRV0ofcI4QgA */
+      /** @xstate-layout N4IgpgJg5mDOIC5QGUCWUB2AVATgQw1jwGMAXVAewwBEwA3VYsAQTMowDoBJDVcvADbJSeUmADEAbQAMAXUSgADhVh92CkAA9EARgDsAZg4AOAJzSAbAYAsOgKymdN08YA0IAJ67LxjnbvWxjoW-kGGxgC+Ee5omLgERGxUtAxMrORU3Lz8QiJiUjrySCDKqhkYGtoI+kZmljb2js5unojmRgbS1haG0o5OllEx6Nj4hCTlKYwsSZwA8opgGMyKilNps+IQVGAcqBh0FADWuxSLy6vComAAsiQAFvtgMkVKKmpUlYh6dgBMHL8bJ0LKY7AZOr87O4vAhjHpTCZfkEDHo+nprL8ekMQLFRgkJux1jNyhwFksVooAEpwACuAlIAGF7mBiEcpHINKUPhVilUdL9gn5TCjfr9rNJ+X8WjDzAi9AKDGLwb94RZrNjcfFxrMiel2KTzhTqbA6YzmayCq8Su9yl9qgKLEKRWKJZCkdDEEE-NIffLAX8LPUNSMtYlJvRpnrMgBxMCkCkMqgAM3QWx2ewOx12MHjq0TGBTUBenJt6l5uj9JmsBjhxjhdn0pg91S61gB1kCPT0aosxiRwbiYzDhIjGxJsdzinzhfEYBwOAoOA4igEoiTi4Athwcwnk+hi8Uubby9VK8Zq7X643m78fRwfT7+fCxQ2B3jteHUsT9RPdwX0MappMiybIHm8ZRlqAVQCuYHAWJClj8qYSpQq0LZ6HoHA2D2PpwuCphvqGBLJKO34xnGf6FoB9LARakiFCWEGfCeMHSHBCEWEhKHNt2dj3ghdh9FYgLGHYhFDsRNCkVGnC-nme5QNRZogVIvxWkekFaIgrHsYJnG-Mh1aoTCDQcKYvG9sYaIuJE0Q4iGEk6tJswcAA6mAABGBi0UcsALKQPBphguz7IcJwcAA7p53nmkc-k8GB1pMTyUHaRh-zdHCpjVtInSic2dZGH8gmoi4lmQuJ+JOV+MludFPl+YoAUYLO86Lsuq6kOuOBblFXk+fFGCJRpzGpQgKryhwmXwjleXGd4k3WGCOhWd29g-BYlUfiONUue5-WxY1zVKeImiwHkux4EmYg4AAFNIACU4iao5n6Rnt9WHYNSnDaWo1aQgiqQhwqqmNlxUqrlzaOAi1h6H2KLLZCK1bcOJG7SSPmxsFOCMAyAhgHgOC4sgNKrIuYgQOy6l-SlAMGBYgYg6YjM-NYoLSGC80IMh-yBgYwTwqJ5l2HoqOSbqLlY0sc54wTRMk2Tyg4JTlqMdydoM0zqo9AEHNc82elTd28F1qtnTouL1XvZjsXY7LxD44TxMjKT5Mq5Aqk08lmuM2xOts-rBjc90bFwyEZvgh2KpiXZL1VW9Y4-jLuOO-LLuYEFIWZuFMA43LzskxddzEI8wW-T7J4YmDJjooYir2DY0OdMbjNiuiGIqgRccOQnO028n+dp4XIxZxmYXZinBcK67xcPE89HexrVcGQicJw8qjfWM28FtuZjOBOY1borZwyDn36MD+RQ9OzPmfbMF49ZtuU-D3fGBXGIJdl88anq8eY1q5rzrpvME280J1n+PvUWDgVril+FbROZFZKv1vhnFqc4FxLhXGuTcL8b7pyLtcb+C8OSHlpnaIBtcN4NzATxeGAJMRWF7EqCUBhEH9yTpkZA9xBACAoBFNBuIx6hWfrAXhAh+GCMIbPYh89y5kPAsvMaxUdB+G6I4eEAtpB1m5kEXwDMXDaN7HoHQwQOGXy4ZwHhfCBFCNHpg9qOCup4PEbY6RI9MCf1uPI54iikrKIBqo9RIJGzaN0fQtixgQTw1FBiXRYse7n22pY5BHAsBzg3PsQQwiH7ZwnhwVQmB9hQDJPgcosBvEkIUUvABQTsqYWkBhdENhzxql+DxUEcFqyr26Bibs3cz7vjRlJDG+p44pIwEpHy1N-6aSqCEQUQIGbymMOCMEBVgZgjVNEkELNuixyGURa2ViOATJGdM2KatyGVzGosx0yyehInWQYehCJtkdkZn8YO0Soh2QwBQCAcANDnIls5OpI06ZVAALQWGbLC+8D4kXIrVBY0ZV9OA8DUDki6cz-pVAxM2HQlg2I1hmtIES61Bn2WSSMyWJIyQXDWOCzSkLNZ2EdICasAs-imIMKCAq-g-ABHgv0Wwok0X0v1Iyo0tIaKxTxVC7wFL7z2EEsEUWcNuzQwlMKjewozDNJ0JKll5FJzTnQIqu0OhxSYQbKLLogJ4agleWhYlxKTB1iaYZDsARDk0uGWCsZZrKIATlcpVkVqTw6GFP7FmoIBQrTWToIllg+LmRtaiTmqJlQmuDZwfaMUQJHR4FGsaYonAg1yhCBs2VGapv5feFm-K4lOA3nmjFdUDrFu+uGstAMDJmA4MS8GQRRSKnMgVbKZl4Z9H5KKJEgQO2nOlgQzxH8lYU0gP2qoUc+JjvZhKZC8E4VoX6Iw5EfY4nVmNUkwNJy0n21TvYzAO7EA1jWdQn4GEzD6HlAVOEJgwS3lwvG9hd7jlINqjYyRdiZGvpuYEglok+Iit3lYfoKa0ImzMsBroyF9BxOXWkjJPVslCBGG+hA-gGz3lncLMUBlXUwnhm2Qx0SNrBHMtS0FD7oO90mZckCVH4J-DMgKeUIQwHswKvoLCeyJQbXgvKYj0GaTECYLAeAiG6kLPlJhTEgR5QNxVMxz0oo-AM26PBYI-KzGqZcgAUTajgET+mAQ7OMwKUzzYlqYXDhytZ6q8Lqj+UAA */
       id: "SignTransactionDeviceAction",
       initial: "InitialState",
       context: ({ input }) => ({
@@ -264,9 +230,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           error: null,
           signature: null,
           appConfig: null,
-          solanaTransactionContext: null,
-          inspectorResult: null,
-          signerAddress: null,
+          clearSignPrepared: false,
         },
       }),
       states: {
@@ -296,7 +260,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               }),
             },
             onDone: {
-              target: "CheckOpenAppDeviceActionResult",
+              target: "OpenAppResultCheck",
               actions: assign({
                 _internalState: ({ event, context }) =>
                   event.output.caseOf({
@@ -310,7 +274,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        CheckOpenAppDeviceActionResult: {
+        OpenAppResultCheck: {
           always: [
             { target: "GetAppConfig", guard: "noInternalError" },
             { target: "Error" },
@@ -354,7 +318,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                 "shouldOptIn",
               ]),
             },
-            { target: "CheckSPLSupported", guard: "noInternalError" },
+            // When the opt-in isn't run, jump straight to the web3-check gate
+            // (the opt-in path rejoins it after Web3ChecksOptInResult).
+            {
+              target: "Web3Checks",
+              guard: "noInternalError",
+            },
             { target: "Error" },
           ],
         },
@@ -396,8 +365,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "Web3ChecksOptInResult",
+              actions: ({ event }) =>
+                logger.info(
+                  "[Web3ChecksOptIn] opt-in threw; proceeding without web3checks",
+                  { data: { error: event.error } },
+                ),
             },
           },
         },
@@ -409,345 +382,245 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               result: context._internalState.appConfig!.web3ChecksEnabled!,
             },
           })),
-          // Zero-delay self-transition: ensures the entry assign above is
-          // visible to onSnapshot observers before the machine moves on.
+          // Zero-delay transition: ensures the entry assign above is visible to
+          // onSnapshot observers before the machine moves on to the gate.
           after: {
             0: {
-              target: "PostWeb3ChecksOptIn",
+              target: "Web3Checks",
             },
           },
         },
-        PostWeb3ChecksOptIn: {
-          always: [
-            { target: "CheckSPLSupported", guard: "noInternalError" },
-            { target: "Error" },
-          ],
-        },
-        CheckSPLSupported: {
-          always: [
-            { target: "InspectTransaction", guard: "isSPLSupported" },
-            { target: "CheckBuildNeeded" },
-          ],
-        },
-        InspectTransaction: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.INSPECT_TRANSACTION,
-            }),
-          }),
-          invoke: {
-            id: "inspectTransaction",
-            src: "inspectTransaction",
-
-            input: ({ context }) => ({
-              serializedTransaction: context.input.transaction,
-              resolutionContext:
-                context.input.transactionOptions?.transactionResolutionContext,
-              rpcUrl: resolveSolanaRpcUrl(context.input),
-            }),
-            onDone: {
-              target: "AfterInspect",
-              actions: assign({
-                _internalState: ({ context, event }) => ({
-                  ...context._internalState,
-                  inspectorResult: event.output,
-                }),
-              }),
-            },
-            onError: {
-              target: "CheckDelayed",
-            },
-          },
-        },
-        AfterInspect: {
-          always: [
-            { target: "GetPubKey", guard: "shouldBuildContext" },
-            { target: "CheckBuildNeeded" },
-          ],
-        },
-        CheckBuildNeeded: {
+        // Web3-checks (transaction scan) provisioning runs here — before the
+        // clear-sign branch — so it applies to every sign path (generic,
+        // basic, blind) and never disturbs a generic-armed fingerprint.
+        Web3Checks: {
           always: [
             {
-              target: "GetPubKey",
-              guard: "isWeb3ChecksSupported",
+              target: "Web3ChecksProvide",
+              guard: and(["isWeb3ChecksSupported", "web3ChecksEnabled"]),
             },
-            { target: "CheckDelayed" },
+            { target: "CheckGenericClearSignSupported" },
           ],
         },
-        GetPubKey: {
+        Web3ChecksProvide: {
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.GET_PUB_KEY,
+              step: signTransactionDAStateSteps.WEB3_CHECKS_PROVIDE,
             }),
           }),
           invoke: {
-            id: "getPubKey",
-            src: "getPubKey",
-            input: ({ context }) => ({
-              derivationPath: context.input.derivationPath,
-              checkOnDevice: false,
-            }),
-            onDone: {
-              target: "BuildContext",
-              actions: assign({
-                _internalState: ({ event, context }) => {
-                  if (isSuccessCommandResult(event.output)) {
-                    return {
-                      ...context._internalState,
-                      signerAddress: event.output.data,
-                    };
-                  }
-                  return context._internalState;
-                },
-              }),
-            },
-            onError: {
-              target: "BuildContext",
-            },
-          },
-        },
-        BuildContext: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.BUILD_TRANSACTION_CONTEXT,
-            }),
-          }),
-          invoke: {
-            id: "buildContext",
-            src: "buildContext",
-            input: ({ context }) => {
-              const inspectorData =
-                context._internalState.inspectorResult?.data;
-              return {
-                contextModule: context.input.contextModule,
-                loggerFactory: this.getLoggerFactory(internalApi),
-                transactionBytes: context.input.transaction,
-                signerAddress: context._internalState.signerAddress,
-                options: {
-                  tokenAddress: inspectorData?.tokenAddress,
-                  createATA: inspectorData?.createATA,
-                  tokenInternalId:
-                    context.input.transactionOptions
-                      ?.transactionResolutionContext?.tokenInternalId,
-                  templateId:
-                    context.input.transactionOptions
-                      ?.transactionResolutionContext?.templateId,
-                },
-              };
-            },
-            onDone: {
-              target: "ProvideContext",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  solanaTransactionContext: {
-                    tlvDescriptor: event.output.tlvDescriptor,
-                    trustedNamePKICertificate:
-                      event.output.trustedNamePKICertificate,
-                    loadersResults: event.output.loadersResults,
-                    contextErrorCount: event.output.contextErrorCount,
-                  },
-                }),
-              }),
-            },
-            onError: {
-              target: "CheckDelayed",
-            },
-          },
-        },
-        ProvideContext: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.PROVIDE_TRANSACTION_CONTEXT,
-            }),
-          }),
-          invoke: {
-            id: "provideContext",
-            src: "provideContext",
-            input: ({ context }) => {
-              if (!context._internalState.solanaTransactionContext) {
-                throw new UnknownDAError(
-                  "Solana transaction context is not available",
-                );
-              }
-              return {
-                ...context._internalState.solanaTransactionContext,
-                transactionBytes: context.input.transaction,
-                loggerFactory: this.getLoggerFactory(internalApi),
-              };
-            },
-            onDone: {
-              target: "CheckDelayed",
-            },
-            onError: {
-              target: "CheckDelayed",
-              actions: ({ event }) => {
-                this.logger?.error(
-                  "[ProvideContext] Failed to provide transaction context, falling back to blind signing",
-                  {
-                    data: { error: event.error },
-                  },
-                );
-              },
-            },
-          },
-        },
-        CheckDelayed: {
-          always: [
-            {
-              target: "InvokeDelayedSign",
-              guard: "isDelayedWithConfigAndSupported",
-            },
-            {
-              target: "SignTransaction",
-              guard: "isDelayedRequested",
-              actions: "logDelayedFallbackWarning",
-            },
-            { target: "SignTransaction" },
-          ],
-        },
-        InvokeDelayedSign: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.DELAYED_SIGN,
-            }),
-          }),
-          invoke: {
-            id: "delayedSignStateMachine",
-            src: "delayedSignStateMachine",
+            id: "provideWeb3Check",
+            src: "provideWeb3Check",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
               transaction: context.input.transaction,
-              rpcUrl: resolveSolanaRpcUrl(context.input),
-              fetchBlockhash: context.input.transactionOptions?.fetchBlockhash,
-              userInputType:
-                context.input.transactionOptions?.transactionResolutionContext
-                  ?.userInputType,
-              blockhashService: context.input.blockhashService,
+              contextModule: context.input.contextModule,
+            }),
+            // Best-effort: a failed scan-descriptor stream never blocks signing.
+            onDone: { target: "CheckGenericClearSignSupported" },
+            onError: {
+              target: "CheckGenericClearSignSupported",
+              actions: ({ event }) =>
+                logger.info("[Web3Checks] provisioning failed; proceeding", {
+                  data: { error: event.error },
+                }),
+            },
+          },
+        },
+        CheckGenericClearSignSupported: {
+          always: [
+            {
+              target: "GenericClearSign",
+              guard: and(["noInternalError", "isGenericClearSignAvailable"]),
+            },
+            { target: "BasicClearSign", guard: "noInternalError" },
+            { target: "Error" },
+          ],
+        },
+        // Generic clear-sign child: streams + validates the descriptors (no
+        // signing, no UI). `"prepared"` runs the generic terminal sign;
+        // `"degraded"` falls back to legacy basic provisioning.
+        GenericClearSign: {
+          invoke: {
+            id: "provisionGenericClearSignStateMachine",
+            src: "provisionGenericClearSignStateMachine",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              transaction: context.input.transaction,
+              contextModule: context.input.contextModule,
             }),
             onSnapshot: {
-              actions: [
-                assign({
-                  intermediateValue: ({ event }) =>
-                    ({
-                      requiredUserInteraction:
-                        event.snapshot.context.intermediateValue
-                          .requiredUserInteraction,
-                      step: event.snapshot.context.intermediateValue
-                        .step as SignTransactionDAStateStep,
-                    }) as SignTransactionDAIntermediateValue,
-                }),
-                ({ event }) => {
-                  const stateValue =
-                    typeof event.snapshot.value === "string"
-                      ? event.snapshot.value
-                      : JSON.stringify(event.snapshot.value);
-                  this.logger?.debug(
-                    `[DelayedSign] Child state: ${stateValue}`,
-                    {
-                      data: {
-                        internalState: event.snapshot.context._internalState,
-                        intermediateValue:
-                          event.snapshot.context.intermediateValue,
-                      },
-                    },
-                  );
-                },
-              ],
+              actions: assign({
+                intermediateValue: ({ event }) =>
+                  event.snapshot.context.intermediateValue,
+              }),
             },
+            // Fold the child's Either output into the context here (where
+            // xstate types `event.output`), then branch on the context in
+            // CheckGenericClearSignResult — no event cast in the guards.
             onDone: {
-              target: "CheckDelayedResult",
+              target: "CheckGenericClearSignResult",
               actions: assign({
                 _internalState: ({ event, context }) =>
-                  event.output.caseOf({
-                    Right: (signature: Uint8Array) => ({
+                  event.output.caseOf<SignTransactionDAInternalState>({
+                    // Right("prepared") / Right("degraded").
+                    Right: (outcome) => ({
                       ...context._internalState,
-                      signature,
+                      clearSignPrepared: outcome === "prepared",
                     }),
-                    Left: (error) => {
-                      if (error instanceof UnknownDAError) {
-                        this.logger?.debug(
-                          "Delayed signing failed, falling back to legacy signing",
-                          {
-                            data: {
-                              error: error.originalError?.message,
-                            },
+                    // Left never occurs (the prepare phase has no UI), but stay
+                    // defensive and surface it.
+                    Left: (error) => ({ ...context._internalState, error }),
+                  }),
+              }),
+            },
+            onError: {
+              target: "BasicClearSign",
+              actions: ({ event }) =>
+                logger.info(
+                  "[ClearSign] generic clear-sign threw; falling back to legacy",
+                  { data: { error: event.error } },
+                ),
+            },
+          },
+        },
+        CheckGenericClearSignResult: {
+          always: [
+            // Prepared: run the generic terminal sign (prompt + refresh +
+            // delayed sign).
+            {
+              target: "GenericTerminalSign",
+              guard: and(["noInternalError", "isClearSignPrepared"]),
+            },
+            // Degraded (Right("degraded")): fall back to the legacy path.
+            { target: "BasicClearSign", guard: "noInternalError" },
+            // Defensive: surface an unexpected Left.
+            { target: "Error" },
+          ],
+        },
+        // Generic terminal sign: prompt + best-effort blockhash refresh +
+        // delayed sign. A user cancel / signing failure surfaces; a non-cancel
+        // prompt failure resolves to `"degraded"` and falls back to the legacy
+        // basic path.
+        GenericTerminalSign: {
+          invoke: {
+            id: "signGenericClearSignStateMachine",
+            src: "signGenericClearSignStateMachine",
+            input: ({ context }) => {
+              const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
+              return {
+                derivationPath: context.input.derivationPath,
+                transaction: context.input.transaction,
+                rpcUrl,
+                fetchBlockhash,
+                userInputType:
+                  context.input.transactionOptions?.transactionResolutionContext
+                    ?.userInputType,
+                blockhashService: context.input.blockhashService,
+              };
+            },
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: ({ event }) =>
+                  event.snapshot.context.intermediateValue,
+              }),
+            },
+            onDone: {
+              target: "CheckGenericTerminalSignResult",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  event.output.caseOf<SignTransactionDAInternalState>({
+                    // Right(Signature) on success; Right("degraded") when the
+                    // prompt failed for a non-cancel reason (leave signature
+                    // unset so the result check falls back to legacy).
+                    Right: (signatureOrDegraded) =>
+                      signatureOrDegraded === "degraded"
+                        ? context._internalState
+                        : {
+                            ...context._internalState,
+                            signature: signatureOrDegraded,
                           },
-                        );
-                        return context._internalState;
-                      }
-                      return {
-                        ...context._internalState,
-                        error,
-                      };
-                    },
+                    // Left: the user cancelled or signing failed; surface it.
+                    Left: (error) => ({ ...context._internalState, error }),
                   }),
               }),
             },
           },
         },
-        CheckDelayedResult: {
+        CheckGenericTerminalSignResult: {
           always: [
+            // Signed: done.
             { target: "SignTransactionResultCheck", guard: "hasSignature" },
-            { target: "SignTransaction", guard: "noInternalError" },
+            // Degraded (no signature, no error): fall back to the legacy path.
+            { target: "BasicClearSign", guard: "noInternalError" },
+            // User cancel / signing failure: surface.
             { target: "Error" },
           ],
         },
-        SignTransaction: {
-          entry: assign({
-            intermediateValue: {
-              requiredUserInteraction: UserInteractionRequired.SignTransaction,
-              step: signTransactionDAStateSteps.SIGN_TRANSACTION,
-            },
-          }),
+        // Legacy SPL / token provisioning child (best-effort, never signs). It
+        // streams descriptors; control always proceeds to the basic terminal
+        // sign.
+        BasicClearSign: {
           invoke: {
-            id: "signTransaction",
-            src: "signTransaction",
+            id: "provisionBasicClearSignStateMachine",
+            src: "provisionBasicClearSignStateMachine",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              transaction: context.input.transaction,
+              contextModule: context.input.contextModule,
+              appConfig: context._internalState.appConfig!,
+              rpcUrl: resolveSolanaRpcUrl(context.input),
+              resolutionContext:
+                context.input.transactionOptions?.transactionResolutionContext,
+            }),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: ({ event }) =>
+                  event.snapshot.context.intermediateValue,
+              }),
+            },
+            onDone: { target: "BasicTerminalSign" },
+            onError: { target: "BasicTerminalSign" },
+          },
+        },
+        // Basic terminal sign: the legacy preview/one-shot path. It decides
+        // delayed-vs-one-shot from the blockhash source (opt-in refresh).
+        BasicTerminalSign: {
+          invoke: {
+            id: "signBasicClearSignStateMachine",
+            src: "signBasicClearSignStateMachine",
             input: ({ context }) => {
+              const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
               return {
                 derivationPath: context.input.derivationPath,
-                serializedTransaction: context.input.transaction,
+                transaction: context.input.transaction,
+                rpcUrl,
+                fetchBlockhash,
                 userInputType:
                   context.input.transactionOptions?.transactionResolutionContext
                     ?.userInputType,
+                blockhashService: context.input.blockhashService,
               };
+            },
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: ({ event }) =>
+                  event.snapshot.context.intermediateValue,
+              }),
             },
             onDone: {
               target: "SignTransactionResultCheck",
               actions: assign({
-                _internalState: ({ event, context }) => {
-                  if (!isSuccessCommandResult(event.output))
-                    return {
+                _internalState: ({ event, context }) =>
+                  event.output.caseOf<SignTransactionDAInternalState>({
+                    Right: (signature) => ({
                       ...context._internalState,
-                      error: event.output.error,
-                    };
-
-                  const data = event.output.data.extract();
-                  if (event.output.data.isJust() && data instanceof Uint8Array)
-                    return {
-                      ...context._internalState,
-                      signature: data,
-                    };
-
-                  return {
-                    ...context._internalState,
-                    error: new UnknownDAError("No Signature available"),
-                  };
-                },
-                intermediateValue: {
-                  requiredUserInteraction: UserInteractionRequired.None,
-                  step: signTransactionDAStateSteps.SIGN_TRANSACTION,
-                },
+                      signature,
+                    }),
+                    Left: (error) => ({ ...context._internalState, error }),
+                  }),
               }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
             },
           },
         },
@@ -777,69 +650,24 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const web3CheckOptIn = async () =>
       internalApi.sendCommand(new Web3CheckOptInCommand());
 
-    const getPubKey = async (arg0: {
+    const provideWeb3Check = async (arg0: {
       input: {
         derivationPath: string;
-        checkOnDevice: boolean;
+        transaction: Uint8Array;
+        contextModule: ContextModule;
       };
     }) =>
-      internalApi.sendCommand(
-        new GetPubKeyCommand({
-          derivationPath: arg0.input.derivationPath,
-          checkOnDevice: arg0.input.checkOnDevice,
-        }),
-      );
-
-    const buildContext = async (arg0: {
-      input: BuildTransactionContextTaskArgs;
-    }) => new BuildTransactionContextTask(internalApi, arg0.input).run();
-
-    const provideContext = async (arg0: {
-      input: ProvideSolanaTransactionContextTaskArgs;
-    }) =>
-      new ProvideSolanaTransactionContextTask(internalApi, arg0.input).run();
-
-    const inspectTransaction = async (arg0: {
-      serializedTransaction: Uint8Array;
-      resolutionContext?: TransactionResolutionContext;
-      rpcUrl?: string;
-    }) =>
-      Promise.resolve(
-        new TransactionInspector(arg0.rpcUrl).inspectTransactionType(
-          arg0.serializedTransaction,
-          arg0.resolutionContext?.tokenAddress,
-          arg0.resolutionContext?.createATA,
-          arg0.resolutionContext?.templateId,
-        ),
-      );
-
-    const signTransaction = async (arg0: {
-      input: {
-        derivationPath: string;
-        serializedTransaction: Uint8Array;
-        userInputType?: UserInputType;
-      };
-    }) =>
-      new SignDataTask(internalApi, {
-        commandFactory: (args) =>
-          new SignTransactionCommand({
-            serializedTransaction: args.chunkedData,
-            more: args.more,
-            extend: args.extend,
-            userInputType: arg0.input.userInputType,
-          }),
+      new ProvideWeb3CheckTask(internalApi, {
         derivationPath: arg0.input.derivationPath,
-        sendingData: arg0.input.serializedTransaction,
+        transactionBytes: arg0.input.transaction,
+        contextModule: arg0.input.contextModule,
+        loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 
     return {
       getAppConfig,
       web3CheckOptIn,
-      getPubKey,
-      buildContext,
-      provideContext,
-      signTransaction,
-      inspectTransaction,
+      provideWeb3Check,
     };
   }
 }
