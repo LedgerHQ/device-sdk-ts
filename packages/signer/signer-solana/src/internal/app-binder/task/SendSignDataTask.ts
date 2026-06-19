@@ -15,19 +15,19 @@ import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/Sol
 
 const PATH_SIZE = 4;
 
-type SignDataTaskArgs = {
+type SignDataTaskArgs<T = Maybe<Signature>> = {
   sendingData: Uint8Array;
   derivationPath: string;
-  commandFactory: CommandFactory<Maybe<Signature>, SolanaAppErrorCodes>;
+  commandFactory: CommandFactory<T, SolanaAppErrorCodes>;
 };
 
-export class SignDataTask {
+export class SignDataTask<T = Maybe<Signature>> {
   constructor(
     private api: InternalApi,
-    private args: SignDataTaskArgs,
+    private args: SignDataTaskArgs<T>,
   ) {}
 
-  async run(): Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>> {
+  async run(): Promise<CommandResult<T, SolanaAppErrorCodes>> {
     const { sendingData, derivationPath, commandFactory } = this.args;
 
     const paths = DerivationPathUtils.splitPath(derivationPath);
@@ -43,10 +43,7 @@ export class SignDataTask {
     builder.addBufferToData(sendingData);
     const buffer = builder.build();
 
-    return await new SendCommandInChunksTask<
-      Maybe<Signature>,
-      SolanaAppErrorCodes
-    >(this.api, {
+    return await new SendCommandInChunksTask<T, SolanaAppErrorCodes>(this.api, {
       data: buffer,
       commandFactory,
     }).run();
