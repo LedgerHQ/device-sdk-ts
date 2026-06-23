@@ -1,11 +1,15 @@
-export type CommandResponseArgs = {
-  readonly response: string;
-};
+import { Codec, string } from "purify-ts";
 
-export class CommandResponse {
+/**
+ * The result of simulating an APDU exchange (POST /devices/:id/apdu).
+ *
+ * {@link CommandResponse.response} is the full response hex, data followed by the
+ * two-byte status word.
+ */
+export interface CommandResponse {
   readonly response: string;
-
-  constructor({ response }: CommandResponseArgs) {
-    this.response = response;
-  }
 }
+
+export const commandResponseCodec = Codec.interface({
+  response: string,
+});
