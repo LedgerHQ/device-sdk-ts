@@ -102,6 +102,27 @@ describe("GetAppConfigurationCommand", () => {
       );
     });
 
+    it("should parse the 7-byte transaction-check (txc) layout (version shifted to bytes 4-6)", () => {
+      // Real device bytes: [blind][pubkey][txCheckOptIn][txCheckEnable][maj][min][patch]
+      // 00 00 01 01 01 10 00 => v1.16.0, tx-check opt-in + enabled.
+      const response = new ApduResponse({
+        statusCode: Uint8Array.from([0x90, 0x00]),
+        data: new Uint8Array([0x00, 0x00, 0x01, 0x01, 0x01, 0x10, 0x00]),
+      });
+      const parsed = command.parseResponse(response);
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            blindSigningEnabled: false,
+            pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+            version: "1.16.0",
+            web3ChecksEnabled: true,
+            web3ChecksOptIn: true,
+          },
+        }),
+      );
+    });
+
     describe("error handling", () => {
       it("should return error if response is not success", () => {
         const response = new ApduResponse({
