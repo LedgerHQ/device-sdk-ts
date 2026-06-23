@@ -64,6 +64,11 @@ import {
   type UninstallAppDAIntermediateValue,
   type UninstallAppDAOutput,
   UninstallAppDeviceAction,
+  type WaitForAppAndVersionDAError,
+  type WaitForAppAndVersionDAInput,
+  type WaitForAppAndVersionDAIntermediateValue,
+  type WaitForAppAndVersionDAOutput,
+  WaitForAppAndVersionDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import {
   type BackupDAError,
@@ -213,6 +218,28 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GoToDashboardDAInput,
         GoToDashboardDAError,
         GoToDashboardDAIntermediateValue
+      >,
+      {
+        title: "Wait for app and version",
+        description:
+          "Wait until the device is unlocked and return the current app and version",
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new WaitForAppAndVersionDeviceAction({
+            input: { unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        WaitForAppAndVersionDAOutput,
+        WaitForAppAndVersionDAInput,
+        WaitForAppAndVersionDAError,
+        WaitForAppAndVersionDAIntermediateValue
       >,
       {
         title: "Install language package",

@@ -3,6 +3,7 @@ import { injectable } from "inversify";
 
 import {
   deriveGetAppAndVersion,
+  deriveGetBatteryStatus,
   deriveGetOsVersion,
 } from "@internal/derived/service/osCommands";
 
@@ -20,5 +21,10 @@ export class DerivedOsCommandsService {
   /** Derived GetAppAndVersion response (dashboard / BOLOS). */
   getAppAndVersion(device: Device): string {
     return deriveGetAppAndVersion(device);
+  }
+
+  /** Derived GetBatteryStatus response, or `undefined` when unsupported. */
+  getBatteryStatus(device: Device, apdu: string): string | undefined {
+    return deriveGetBatteryStatus(device, apdu);
   }
 }
