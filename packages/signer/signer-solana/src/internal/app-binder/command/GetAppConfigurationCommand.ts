@@ -22,17 +22,17 @@ import {
 const APDU_CLA = 0xe0;
 const APDU_INS_GET_APP_CONFIGURATION = 0x04;
 
+// Base layout (5 bytes):  [blind][pubkey][major][minor][patch]
+// TXC layout  (7 bytes):  [blind][pubkey][major][minor][patch][txCheckOptIn][txCheckEnable]
 const RESPONSE_OFFSET_BLIND_SIGNING = 0;
 const RESPONSE_OFFSET_PUB_KEY_DISPLAY_MODE = 1;
 const RESPONSE_OFFSET_VERSION_MAJOR = 2;
 const RESPONSE_OFFSET_VERSION_MINOR = 3;
 const RESPONSE_OFFSET_VERSION_PATCH = 4;
-const RESPONSE_OFFSET_FEATURE_FLAGS = 5;
 const RESPONSE_BASE_LENGTH = 5;
-const RESPONSE_LENGTH_WITH_FEATURE_FLAGS = 6;
-
-const FEATURE_FLAG_WEB3_CHECKS_ENABLED = 0x10;
-const FEATURE_FLAG_WEB3_CHECKS_OPT_IN = 0x20;
+const TXC_RESPONSE_LENGTH = 7;
+const TXC_OFFSET_TX_CHECK_OPT_IN = 5;
+const TXC_OFFSET_TX_CHECK_ENABLE = 6;
 
 type GetAppConfigurationCommandArgs = void;
 
@@ -78,28 +78,21 @@ export class GetAppConfigurationCommand
         });
       }
 
-      const blindSigningEnabled = Boolean(data[RESPONSE_OFFSET_BLIND_SIGNING]);
-      const pubKeyDisplayMode =
-        data[RESPONSE_OFFSET_PUB_KEY_DISPLAY_MODE] === 0
-          ? PublicKeyDisplayMode.LONG
-          : PublicKeyDisplayMode.SHORT;
-      const version = `${data[RESPONSE_OFFSET_VERSION_MAJOR]}.${data[RESPONSE_OFFSET_VERSION_MINOR]}.${data[RESPONSE_OFFSET_VERSION_PATCH]}`;
-
-      let web3ChecksEnabled = false;
-      let web3ChecksOptIn = false;
-      if (data.length >= RESPONSE_LENGTH_WITH_FEATURE_FLAGS) {
-        const featureFlags = data[RESPONSE_OFFSET_FEATURE_FLAGS]!;
-        web3ChecksEnabled = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_ENABLED);
-        web3ChecksOptIn = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_OPT_IN);
-      }
-
       const config: AppConfiguration = {
-        blindSigningEnabled,
-        pubKeyDisplayMode,
-        version,
-        web3ChecksEnabled,
-        web3ChecksOptIn,
+        blindSigningEnabled: Boolean(data[RESPONSE_OFFSET_BLIND_SIGNING]),
+        pubKeyDisplayMode:
+          data[RESPONSE_OFFSET_PUB_KEY_DISPLAY_MODE] === 0
+            ? PublicKeyDisplayMode.LONG
+            : PublicKeyDisplayMode.SHORT,
+        version: `${data[RESPONSE_OFFSET_VERSION_MAJOR]}.${data[RESPONSE_OFFSET_VERSION_MINOR]}.${data[RESPONSE_OFFSET_VERSION_PATCH]}`,
+        web3ChecksEnabled: false,
+        web3ChecksOptIn: false,
       };
+
+      if (data.length >= TXC_RESPONSE_LENGTH) {
+        config.web3ChecksOptIn = Boolean(data[TXC_OFFSET_TX_CHECK_OPT_IN]);
+        config.web3ChecksEnabled = Boolean(data[TXC_OFFSET_TX_CHECK_ENABLE]);
+      }
 
       return CommandResultFactory({
         data: config,

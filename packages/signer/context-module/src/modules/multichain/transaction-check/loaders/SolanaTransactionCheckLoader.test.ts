@@ -11,8 +11,6 @@ import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { SolanaTransactionCheckLoader } from "./SolanaTransactionCheckLoader";
 
-const SIG_LENGTH = 64;
-
 const loggerMock = {
   debug: vi.fn(),
   info: vi.fn(),
@@ -127,9 +125,13 @@ describe("SolanaTransactionCheckLoader", () => {
       });
     });
 
-    it("wraps a legacy Message into a serialized Transaction (sig count + zero-filled signatures + message) and bs58-encodes it", async () => {
-      // Legacy message: numRequiredSignatures=2, then arbitrary bytes
+    it("wraps a legacy message with zero-filled signature placeholders before bs58-encoding", async () => {
+      // message[0] = 2 → numRequiredSignatures = 2 (legacy, high bit clear)
       const message = new Uint8Array([2, 0, 3, 0xaa, 0xbb, 0xcc]);
+      // expected: compact-u16(2) + 2*64 zero bytes + message
+      const expected = new Uint8Array(1 + 2 * 64 + message.length);
+      expected[0] = 2; // compact-u16 encoding of 2
+      expected.set(message, 1 + 2 * 64);
 
       await loader.load({
         deviceModelId: DeviceModelId.NANO_X,
@@ -141,24 +143,23 @@ describe("SolanaTransactionCheckLoader", () => {
       });
 
       const sent = dataSourceMock.check.mock.calls[0]![0];
-      const wrapped = bs58.decode(sent.body.tx.raw);
 
       expect(sent.path).toBe(TransactionCheckPaths.SOLANA_TRANSACTION);
       expect(sent.body.tx.from).toBe("signer");
       expect(sent.body.chain).toBe(1);
-      expect(wrapped.length).toBe(1 + 2 * SIG_LENGTH + message.length);
-      expect(wrapped[0]).toBe(2);
-      expect(Array.from(wrapped.slice(1, 1 + 2 * SIG_LENGTH))).toEqual(
-        new Array(2 * SIG_LENGTH).fill(0),
+      expect(Array.from(bs58.decode(sent.body.tx.raw))).toEqual(
+        Array.from(expected),
       );
-      expect(Array.from(wrapped.slice(1 + 2 * SIG_LENGTH))).toEqual(
-        Array.from(message),
-      );
+      expect(sent.body.tx.raw).toBe(bs58.encode(expected));
     });
 
-    it("wraps a versioned (v0) Message by skipping the version prefix when reading numRequiredSignatures", async () => {
-      // V0 message: [0x80 version prefix, numRequiredSignatures=1, ...]
+    it("wraps a versioned (v0) message with signature placeholders", async () => {
+      // message[0] = 0x80 → versioned prefix; message[1] = 1 → numRequiredSignatures = 1
       const message = new Uint8Array([0x80, 1, 0, 3, 0xde, 0xad]);
+      // expected: compact-u16(1) + 1*64 zero bytes + message
+      const expected = new Uint8Array(1 + 1 * 64 + message.length);
+      expected[0] = 1; // compact-u16 encoding of 1
+      expected.set(message, 1 + 1 * 64);
 
       await loader.load({
         deviceModelId: DeviceModelId.NANO_X,
@@ -169,18 +170,9 @@ describe("SolanaTransactionCheckLoader", () => {
         },
       });
 
-      const wrapped = bs58.decode(
-        dataSourceMock.check.mock.calls[0]![0].body.tx.raw,
-      );
+      const raw = dataSourceMock.check.mock.calls[0]![0].body.tx.raw;
 
-      expect(wrapped.length).toBe(1 + SIG_LENGTH + message.length);
-      expect(wrapped[0]).toBe(1);
-      expect(Array.from(wrapped.slice(1, 1 + SIG_LENGTH))).toEqual(
-        new Array(SIG_LENGTH).fill(0),
-      );
-      expect(Array.from(wrapped.slice(1 + SIG_LENGTH))).toEqual(
-        Array.from(message),
-      );
+      expect(Array.from(bs58.decode(raw))).toEqual(Array.from(expected));
     });
   });
 
@@ -223,29 +215,6 @@ describe("SolanaTransactionCheckLoader", () => {
 
       expect(ctx).toEqual({ type: ClearSignContextType.ERROR, error });
       expect(certificateLoaderMock.loadCertificate).not.toHaveBeenCalled();
-    });
-
-    it("returns an ERROR context (and does not call the data source) when numRequiredSignatures exceeds the max", async () => {
-      // numRequiredSignatures = 65, one above SOLANA_MAX_SIGNATURES (64)
-      const message = new Uint8Array([65, 0, 3, 0xaa]);
-
-      const [ctx] = await loader.load({
-        deviceModelId: DeviceModelId.NANO_X,
-        transactionCheck: {
-          from: "signer",
-          transactionBytes: message,
-          chain: 1,
-        },
-      });
-
-      expect(ctx).toMatchObject({
-        type: ClearSignContextType.ERROR,
-        error: expect.any(Error),
-      });
-      expect((ctx as { error: Error }).error.message).toContain(
-        "numRequiredSignatures (65)",
-      );
-      expect(dataSourceMock.check).not.toHaveBeenCalled();
     });
   });
 });

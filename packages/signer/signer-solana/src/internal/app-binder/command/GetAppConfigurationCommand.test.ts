@@ -83,10 +83,11 @@ describe("GetAppConfigurationCommand", () => {
       );
     });
 
-    it("should parse extended feature flags from a 6th byte", () => {
+    it("should be backward-compatible with the 5-byte layout (no txc bytes)", () => {
+      // Oldest firmware: [blind][pubkey][major][minor][patch] — no web3 checks.
       const response = new ApduResponse({
         statusCode: Uint8Array.from([0x90, 0x00]),
-        data: new Uint8Array([0x01, 0x00, 0x02, 0x05, 0x0a, 0x30]),
+        data: new Uint8Array([0x01, 0x00, 0x01, 0x05, 0x0a]),
       });
       const parsed = command.parseResponse(response);
       expect(parsed).toStrictEqual(
@@ -94,7 +95,28 @@ describe("GetAppConfigurationCommand", () => {
           data: {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
-            version: "2.5.10",
+            version: "1.5.10",
+            web3ChecksEnabled: false,
+            web3ChecksOptIn: false,
+          },
+        }),
+      );
+    });
+
+    it("should parse the 7-byte transaction-check (txc) layout (tx-check flags appended after version)", () => {
+      // [blind][pubkey][maj][min][patch][txCheckOptIn][txCheckEnable]
+      // 00 00 01 10 00 01 01 => v1.16.0, tx-check opt-in + enabled.
+      const response = new ApduResponse({
+        statusCode: Uint8Array.from([0x90, 0x00]),
+        data: new Uint8Array([0x00, 0x00, 0x01, 0x10, 0x00, 0x01, 0x01]),
+      });
+      const parsed = command.parseResponse(response);
+      expect(parsed).toStrictEqual(
+        CommandResultFactory({
+          data: {
+            blindSigningEnabled: false,
+            pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
+            version: "1.16.0",
             web3ChecksEnabled: true,
             web3ChecksOptIn: true,
           },
