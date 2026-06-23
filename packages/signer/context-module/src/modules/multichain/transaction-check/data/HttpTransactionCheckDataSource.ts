@@ -3,7 +3,7 @@ import { inject, injectable } from "inversify";
 import { Either, Left, Right } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+//import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 
 import { TransactionCheckResponseDto } from "./dto/TransactionCheckResponseDto";
@@ -13,13 +13,18 @@ import {
   TransactionCheckResult,
 } from "./TransactionCheckDataSource";
 
+// TODO(test): temporary hardcoded web3-checks test backend base URL for Solana
+// only (see check()). Revert before merge.
+const WEB3CHECKS_TEST_BASE_URL =
+  "https://web3checks-backend.api.ledger-test.com/v3";
+
 @injectable()
 export class HttpTransactionCheckDataSource
   implements TransactionCheckDataSource
 {
   constructor(
     @inject(configTypes.Config)
-    private readonly config: ContextModuleServiceConfig,
+    //private readonly config: ContextModuleServiceConfig,
     @inject(networkTypes.NetworkClient)
     private readonly http: DmkNetworkClient,
   ) {}
@@ -28,10 +33,11 @@ export class HttpTransactionCheckDataSource
     path,
     body,
   }: TransactionCheckParams): Promise<Either<Error, TransactionCheckResult>> {
+    //this.config.web3checks.url;
     let dto: TransactionCheckResponseDto;
     try {
       dto = (await this.http.post(
-        `${this.config.web3checks.url}${path}`,
+        `${WEB3CHECKS_TEST_BASE_URL}${path}`,
         body,
       )) as TransactionCheckResponseDto;
     } catch (_error) {
