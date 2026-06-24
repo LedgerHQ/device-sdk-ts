@@ -5,6 +5,8 @@ import { ResponsesDriver } from "./ResponsesDriver";
 export type DeviceCommandParams = {
   inputField?: string;
   inputValue?: string;
+  /** Enum option label for SelectInput fields (e.g. "BATTERY_PERCENTAGE"). */
+  selectOption?: string;
 };
 
 /**
@@ -80,12 +82,21 @@ export class CommandsDriver {
     params: DeviceCommandParams | DeviceCommandParams[],
   ): Promise<void> {
     const list = Array.isArray(params) ? params : [params];
-    for (const { inputField, inputValue } of list) {
+    for (const { inputField, inputValue, selectOption } of list) {
+      if (selectOption) {
+        await this.selectOption(selectOption);
+      }
       if (inputField && inputValue) {
         const input = this.page.getByTestId(inputField);
         await input.waitFor({ state: "visible" });
         await input.fill(inputValue);
       }
     }
+  }
+
+  private async selectOption(optionLabel: string): Promise<void> {
+    const form = this.page.getByTestId("form_device-command");
+    await form.locator('[class*="control"]').first().click();
+    await this.page.getByRole("option", { name: optionLabel }).click();
   }
 }

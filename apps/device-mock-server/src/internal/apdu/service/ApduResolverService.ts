@@ -7,6 +7,7 @@ import { derivedTypes } from "@internal/derived/di/derivedTypes";
 import { type DerivedOsCommandsService } from "@internal/derived/service/DerivedOsCommandsService";
 import {
   GET_APP_AND_VERSION_PREFIX,
+  GET_BATTERY_STATUS_PREFIX,
   GET_OS_VERSION_PREFIX,
 } from "@internal/derived/service/osCommands";
 import { logger } from "@internal/logger/logger";
@@ -108,6 +109,13 @@ export class ApduResolverService {
       const response = this.derived.getAppAndVersion(device);
       logger.info(`APDU [${device.id}] ${apdu} -> ${response} (derived)`);
       return response;
+    }
+    if (apdu.startsWith(GET_BATTERY_STATUS_PREFIX)) {
+      const response = this.derived.getBatteryStatus(device, apdu);
+      if (response) {
+        logger.info(`APDU [${device.id}] ${apdu} -> ${response} (derived)`);
+        return response;
+      }
     }
 
     // 4. Unmatched Open App: spin up a real Speculos instance.

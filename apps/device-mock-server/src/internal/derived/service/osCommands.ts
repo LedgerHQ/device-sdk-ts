@@ -14,6 +14,8 @@ import { type Device } from "@ledgerhq/device-mockserver-client";
 /** APDU prefixes (cla+ins+p1+p2, hex) for the two handshake commands. */
 export const GET_OS_VERSION_PREFIX = "e0010000";
 export const GET_APP_AND_VERSION_PREFIX = "b0010000";
+/** GetBatteryStatus (cla=0xe0, ins=0x10); p2 encodes {@link BatteryStatusType}. */
+export const GET_BATTERY_STATUS_PREFIX = "e01000";
 
 const STATUS_OK = "9000";
 
@@ -158,4 +160,27 @@ export function deriveGetOsVersion(device: Device): string | undefined {
 export function deriveGetAppAndVersion(device: Device): string {
   const version = device.firmware_version ?? "0.0.0";
   return "01" + lvAscii("BOLOS") + lvAscii(version) + STATUS_OK;
+}
+
+const BATTERY_CAPABLE_MODELS = new Set(["stax", "flex", "apex"]);
+
+/**
+ * GetBatteryStatus response for battery-capable touch devices. Unsupported models
+ * return `undefined` so the resolver falls through to {@link UNKNOWN_APDU_RESPONSE}.
+ */
+export function deriveGetBatteryStatus(
+  device: Device,
+  apdu: string,
+): string | undefined {
+  if (!apdu.startsWith(GET_BATTERY_STATUS_PREFIX)) return undefined;
+  const model = normalizeModel(device.device_type ?? "");
+  if (!BATTERY_CAPABLE_MODELS.has(model)) return undefined;
+
+  const statusType = apdu.slice(6, 8);
+  switch (statusType) {
+    case "00": // BatteryStatusType.BATTERY_PERCENTAGE
+      return toHexByte(100) + STATUS_OK;
+    default:
+      return undefined;
+  }
 }

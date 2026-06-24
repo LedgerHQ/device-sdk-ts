@@ -6,6 +6,7 @@ import { test as base } from "@playwright/test";
 
 import { BtcSignerDriver } from "./utils/drivers/BtcSignerDriver";
 import { CommandsDriver } from "./utils/drivers/CommandsDriver";
+import { DeviceActionsDriver } from "./utils/drivers/DeviceActionsDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
 import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
@@ -17,6 +18,7 @@ type Fixtures = {
   mockClient: MockClient;
   device: MockDeviceDriver;
   commands: CommandsDriver;
+  deviceActions: DeviceActionsDriver;
   settings: SettingsDriver;
   sidebar: SidebarDriver;
   ethSigner: EthSignerDriver;
@@ -44,6 +46,9 @@ export const test = base.extend<Fixtures>({
   },
   commands: async ({ page }, use) => {
     await use(new CommandsDriver(page));
+  },
+  deviceActions: async ({ page }, use) => {
+    await use(new DeviceActionsDriver(page));
   },
   settings: async ({ page }, use) => {
     await use(new SettingsDriver(page));

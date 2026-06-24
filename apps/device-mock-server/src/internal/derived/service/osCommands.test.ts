@@ -1,6 +1,10 @@
 import { type Device } from "@ledgerhq/device-mockserver-client";
 
-import { deriveGetAppAndVersion, deriveGetOsVersion } from "./osCommands";
+import {
+  deriveGetAppAndVersion,
+  deriveGetBatteryStatus,
+  deriveGetOsVersion,
+} from "./osCommands";
 
 const device = (overrides: Partial<Device>): Device => ({
   id: "d1",
@@ -63,5 +67,33 @@ describe("deriveGetAppAndVersion", () => {
     expect(deriveGetAppAndVersion(device({ firmware_version: "2.2.3" }))).toBe(
       "0105424f4c4f5305322e322e339000",
     );
+  });
+});
+
+describe("deriveGetBatteryStatus", () => {
+  const percentageApdu = "e010000000";
+
+  it("returns 100% for Stax BATTERY_PERCENTAGE", () => {
+    expect(
+      deriveGetBatteryStatus(
+        device({ device_type: "stax", firmware_version: "1.9.1" }),
+        percentageApdu,
+      ),
+    ).toBe("649000");
+  });
+
+  it("returns undefined for models without a battery", () => {
+    expect(
+      deriveGetBatteryStatus(
+        device({ device_type: "nanoS", firmware_version: "1.9.1" }),
+        percentageApdu,
+      ),
+    ).toBeUndefined();
+    expect(
+      deriveGetBatteryStatus(
+        device({ device_type: "nanoX", firmware_version: "2.2.3" }),
+        percentageApdu,
+      ),
+    ).toBeUndefined();
   });
 });
