@@ -21,30 +21,31 @@ export const TRANSACTION_CHECK_CLA = 0xe0;
 export const TRANSACTION_CHECK_INS = 0x23;
 export const TRANSACTION_CHECK_P1_PROVIDE = 0x00;
 
-export type ProvideWeb3CheckCommandArgs = {
+export type ProvideTransactionCheckCommandArgs = {
   readonly payload: Uint8Array;
   readonly isFirstChunk: boolean;
   readonly hasMore: boolean;
 };
 
 /**
- * Sends a chunk of the Web3Checks transaction-check descriptor to the Solana app.
+ * Sends a chunk of the TransactionChecks transaction-check descriptor to the Solana app.
  * P2 uses the standard EXTEND/MORE chunking protocol:
  *   - Single chunk:  P2 = 0x00
  *   - First of many: P2 = 0x02 (MORE)
  *   - Middle:        P2 = 0x03 (MORE | EXTEND)
  *   - Last:          P2 = 0x01 (EXTEND)
  */
-export class ProvideWeb3CheckCommand
-  implements Command<void, ProvideWeb3CheckCommandArgs, SolanaAppErrorCodes>
+export class ProvideTransactionCheckCommand
+  implements
+    Command<void, ProvideTransactionCheckCommandArgs, SolanaAppErrorCodes>
 {
-  readonly name = "provideWeb3Check";
+  readonly name = "provideTransactionCheck";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(private readonly args: ProvideWeb3CheckCommandArgs) {}
+  constructor(private readonly args: ProvideTransactionCheckCommandArgs) {}
 
   getApdu(): Apdu {
     const p2 = buildChunkP2(this.args.isFirstChunk, this.args.hasMore);

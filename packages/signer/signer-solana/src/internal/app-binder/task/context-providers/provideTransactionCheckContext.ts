@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTransactionCheckCommand } from "@internal/app-binder/command/ProvideTransactionCheckCommand";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
@@ -17,13 +17,13 @@ import { type ProvideContextHandler } from "./provideContextTypes";
 export const provideTransactionCheckContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_TRANSACTION_CHECK
 > = async (result: SolanaTransactionCheckContextSuccess, { api, logger }) => {
-  const { payload, certificate: web3CheckCertificate } = result;
+  const { payload, certificate: transactionCheckCertificate } = result;
 
-  if (web3CheckCertificate) {
+  if (transactionCheckCertificate) {
     await loadCertificate(
       api,
-      web3CheckCertificate,
-      "[SignerSolana] provideTransactionCheckContext: Failed to send web3-check certificate to device",
+      transactionCheckCertificate,
+      "[SignerSolana] provideTransactionCheckContext: Failed to send transaction-check certificate to device",
     );
   }
 
@@ -41,7 +41,7 @@ export const provideTransactionCheckContext: ProvideContextHandler<
   >(api, {
     data: descriptorBytes,
     commandFactory: (args) =>
-      new ProvideWeb3CheckCommand({
+      new ProvideTransactionCheckCommand({
         payload: args.chunkedData,
         isFirstChunk: !args.extend,
         hasMore: args.more,

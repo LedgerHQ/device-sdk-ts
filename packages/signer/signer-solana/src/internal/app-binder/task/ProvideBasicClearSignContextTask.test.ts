@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
 import { ProvideTLVTransactionInstructionDescriptorCommand } from "@internal/app-binder/command/ProvideTLVTransactionInstructionDescriptorCommand";
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTransactionCheckCommand } from "@internal/app-binder/command/ProvideTransactionCheckCommand";
 
 import { ProvideBasicClearSignContextTask } from "./ProvideBasicClearSignContextTask";
 
@@ -203,7 +203,7 @@ describe("ProvideBasicClearSignContextTask", () => {
       expect(tokenDescCmd.args.signatureHex).toBe(tokenDescriptor.signature);
     });
 
-    it("dispatches SOLANA_TRANSACTION_CHECK result to the web3-check handler", async () => {
+    it("dispatches SOLANA_TRANSACTION_CHECK result to the transaction-check handler", async () => {
       api.sendCommand
         .mockResolvedValueOnce(success) // tx-check cert
         .mockResolvedValueOnce(success); // descriptor chunk
@@ -234,8 +234,10 @@ describe("ProvideBasicClearSignContextTask", () => {
       expect(certCmd.args.certificate).toStrictEqual(txCheckCert.payload);
       expect(certCmd.args.keyUsage).toBe(txCheckCert.keyUsageNumber);
 
-      const web3Cmd = api.sendCommand.mock.calls[1]![0]!;
-      expect(web3Cmd).toBeInstanceOf(ProvideWeb3CheckCommand);
+      const transactionCheckCmd = api.sendCommand.mock.calls[1]![0]!;
+      expect(transactionCheckCmd).toBeInstanceOf(
+        ProvideTransactionCheckCommand,
+      );
     });
 
     it("dispatches multiple loader results in order", async () => {
@@ -308,7 +310,7 @@ describe("ProvideBasicClearSignContextTask", () => {
         LoadCertificateCommand,
       );
       expect(api.sendCommand.mock.calls[1]![0]).toBeInstanceOf(
-        ProvideWeb3CheckCommand,
+        ProvideTransactionCheckCommand,
       );
     });
   });

@@ -16,7 +16,7 @@ import { DefaultSolanaMessageNormaliser } from "@internal/app-binder/services/ut
 import { dispatchProvideContext } from "@internal/app-binder/task/context-providers/provideContextRegistry";
 import { type ProvideContextDeps } from "@internal/app-binder/task/context-providers/provideContextTypes";
 
-export type ProvideWeb3CheckTaskArgs = {
+export type ProvideTransactionCheckTaskArgs = {
   readonly derivationPath: string;
   readonly transactionBytes: Uint8Array;
   readonly contextModule: ContextModule;
@@ -24,18 +24,18 @@ export type ProvideWeb3CheckTaskArgs = {
 };
 
 /**
- * Fetches and streams the web3-checks (transaction scan) descriptor to the
+ * Fetches and streams the transaction-checks (transaction scan) descriptor to the
  * device, independently of the clear-sign path taken. Best-effort: any failure
  * is logged and skipped so signing still proceeds.
  */
-export class ProvideWeb3CheckTask {
+export class ProvideTransactionCheckTask {
   private readonly logger: LoggerPublisherService;
 
   constructor(
     private readonly api: InternalApi,
-    private readonly args: ProvideWeb3CheckTaskArgs,
+    private readonly args: ProvideTransactionCheckTaskArgs,
   ) {
-    this.logger = args.loggerFactory("ProvideWeb3CheckTask");
+    this.logger = args.loggerFactory("ProvideTransactionCheckTask");
   }
 
   async run(): Promise<void> {
@@ -46,7 +46,9 @@ export class ProvideWeb3CheckTask {
       }),
     );
     if (!isSuccessCommandResult(pubKeyResult)) {
-      this.logger.warn("[run] could not get public key; skipping web3-check");
+      this.logger.warn(
+        "[run] could not get public key; skipping transaction-check",
+      );
       return;
     }
 
@@ -54,7 +56,9 @@ export class ProvideWeb3CheckTask {
       new GetChallengeCommand(),
     );
     if (!isSuccessCommandResult(challengeResult)) {
-      this.logger.warn("[run] GET CHALLENGE failed; skipping web3-check");
+      this.logger.warn(
+        "[run] GET CHALLENGE failed; skipping transaction-check",
+      );
       return;
     }
 

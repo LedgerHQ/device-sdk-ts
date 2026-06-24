@@ -24,17 +24,17 @@ import {
 import { type AppConfiguration } from "@api/model/AppConfiguration";
 import { PublicKeyDisplayMode } from "@api/model/PublicKeyDisplayMode";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
-import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import {
-  Web3CheckOptInCommand,
-  type Web3CheckOptInCommandResponse,
-} from "@internal/app-binder/command/Web3CheckOptInCommand";
+  TransactionCheckOptInCommand,
+  type TransactionCheckOptInCommandResponse,
+} from "@internal/app-binder/command/TransactionCheckOptInCommand";
+import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 import {
   isSolanaFeatureSupported,
   type SOLANA_FEATURES,
 } from "@internal/app-binder/SolanaApplicationResolver";
-import { ProvideWeb3CheckTask } from "@internal/app-binder/task/ProvideWeb3CheckTask";
+import { ProvideTransactionCheckTask } from "@internal/app-binder/task/ProvideTransactionCheckTask";
 
 import { ProvisionBasicClearSignDeviceAction } from "./ProvisionBasicClearSignDeviceAction";
 import { ProvisionGenericClearSignDeviceAction } from "./ProvisionGenericClearSignDeviceAction";
@@ -55,10 +55,10 @@ export type MachineDependencies = {
   readonly getAppConfig: () => Promise<
     CommandResult<AppConfiguration, SolanaAppErrorCodes>
   >;
-  readonly web3CheckOptIn: () => Promise<
-    CommandResult<Web3CheckOptInCommandResponse, SolanaAppErrorCodes>
+  readonly transactionCheckOptIn: () => Promise<
+    CommandResult<TransactionCheckOptInCommandResponse, SolanaAppErrorCodes>
   >;
-  readonly provideWeb3Check: (arg0: {
+  readonly provideTransactionCheck: (arg0: {
     input: {
       derivationPath: string;
       transaction: Uint8Array;
@@ -91,7 +91,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
       SignTransactionDAInternalState
     >;
 
-    const { getAppConfig, web3CheckOptIn, provideWeb3Check } =
+    const { getAppConfig, transactionCheckOptIn, provideTransactionCheck } =
       this.extractDependencies(internalApi);
 
     const logger = this.getLoggerFactory(internalApi)(
@@ -136,8 +136,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           input: { appName: APP_NAME },
         }).makeStateMachine(internalApi),
         getAppConfig: fromPromise(getAppConfig),
-        web3CheckOptIn: fromPromise(web3CheckOptIn),
-        provideWeb3Check: fromPromise(provideWeb3Check),
+        transactionCheckOptIn: fromPromise(transactionCheckOptIn),
+        provideTransactionCheck: fromPromise(provideTransactionCheck),
         provisionGenericClearSignStateMachine:
           new ProvisionGenericClearSignDeviceAction({
             input: {
@@ -182,20 +182,20 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           context.input.transactionOptions?.skipOpenApp || false,
         isSPLSupported: ({ context }) =>
           isSupported("spl", context._internalState.appConfig!),
-        isWeb3ChecksSupported: ({ context }) =>
-          isSupported("web3Checks", context._internalState.appConfig!),
+        isTransactionChecksSupported: ({ context }) =>
+          isSupported("transactionChecks", context._internalState.appConfig!),
         // The device only runs the scan when the feature is enabled (fresh
         // opt-in this run, or already enabled for a returning user).
-        web3ChecksEnabled: ({ context }) =>
-          context._internalState.appConfig!.web3ChecksEnabled === true,
+        transactionChecksEnabled: ({ context }) =>
+          context._internalState.appConfig!.transactionChecksEnabled === true,
         // Generic clear-signing terminates via SIGN MESSAGE DELAYED (0x09) on
         // the original message, so it only needs the capability bit — no RPC /
         // blockhash prerequisite.
         isGenericClearSignAvailable: ({ context }) =>
           isSupported("genericClearSign", context._internalState.appConfig!),
         shouldOptIn: ({ context }) =>
-          !context._internalState.appConfig!.web3ChecksEnabled &&
-          !context._internalState.appConfig!.web3ChecksOptIn,
+          !context._internalState.appConfig!.transactionChecksEnabled &&
+          !context._internalState.appConfig!.transactionChecksOptIn,
         // Generic clear-sign child streamed + finalized the descriptors (its
         // Right("prepared") outcome was folded into the context by the
         // GenericClearSign onDone).
@@ -311,39 +311,39 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         GetAppConfigResultCheck: {
           always: [
             {
-              target: "Web3ChecksOptIn",
+              target: "TransactionChecksOptIn",
               guard: and([
                 "noInternalError",
-                "isWeb3ChecksSupported",
+                "isTransactionChecksSupported",
                 "shouldOptIn",
               ]),
             },
-            // When the opt-in isn't run, jump straight to the web3-check gate
-            // (the opt-in path rejoins it after Web3ChecksOptInResult).
+            // When the opt-in isn't run, jump straight to the transaction-check gate
+            // (the opt-in path rejoins it after TransactionChecksOptInResult).
             {
-              target: "Web3Checks",
+              target: "TransactionChecks",
               guard: "noInternalError",
             },
             { target: "Error" },
           ],
         },
-        Web3ChecksOptIn: {
+        TransactionChecksOptIn: {
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.Web3ChecksOptIn,
-              step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN,
+              step: signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN,
             }),
           }),
           invoke: {
-            id: "web3CheckOptIn",
-            src: "web3CheckOptIn",
+            id: "transactionCheckOptIn",
+            src: "transactionCheckOptIn",
             onDone: {
-              target: "Web3ChecksOptInResult",
+              target: "TransactionChecksOptInResult",
               actions: [
                 ({ event }) => {
                   if (!isSuccessCommandResult(event.output)) {
                     logger.warn(
-                      "[Web3ChecksOptIn] opt-in command returned error, proceeding without web3checks",
+                      "[TransactionChecksOptIn] opt-in command returned error, proceeding without transactionchecks",
                       { data: { error: event.output } },
                     );
                   }
@@ -355,7 +355,7 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
                         ...context._internalState,
                         appConfig: {
                           ...context._internalState.appConfig!,
-                          web3ChecksEnabled: event.output.data.enabled,
+                          transactionChecksEnabled: event.output.data.enabled,
                         },
                       };
                     }
@@ -365,53 +365,57 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
               ],
             },
             onError: {
-              target: "Web3ChecksOptInResult",
+              target: "TransactionChecksOptInResult",
               actions: ({ event }) =>
                 logger.info(
-                  "[Web3ChecksOptIn] opt-in threw; proceeding without web3checks",
+                  "[TransactionChecksOptIn] opt-in threw; proceeding without transactionchecks",
                   { data: { error: event.error } },
                 ),
             },
           },
         },
-        Web3ChecksOptInResult: {
+        TransactionChecksOptInResult: {
           entry: assign(({ context }) => ({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT,
-              result: context._internalState.appConfig!.web3ChecksEnabled!,
+              step: signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN_RESULT,
+              result:
+                context._internalState.appConfig!.transactionChecksEnabled!,
             },
           })),
           // Zero-delay transition: ensures the entry assign above is visible to
           // onSnapshot observers before the machine moves on to the gate.
           after: {
             0: {
-              target: "Web3Checks",
+              target: "TransactionChecks",
             },
           },
         },
-        // Web3-checks (transaction scan) provisioning runs here — before the
+        // Transaction-checks (transaction scan) provisioning runs here — before the
         // clear-sign branch — so it applies to every sign path (generic,
         // basic, blind) and never disturbs a generic-armed fingerprint.
-        Web3Checks: {
+        TransactionChecks: {
           always: [
             {
-              target: "Web3ChecksProvide",
-              guard: and(["isWeb3ChecksSupported", "web3ChecksEnabled"]),
+              target: "TransactionChecksProvide",
+              guard: and([
+                "isTransactionChecksSupported",
+                "transactionChecksEnabled",
+              ]),
             },
             { target: "CheckGenericClearSignSupported" },
           ],
         },
-        Web3ChecksProvide: {
+        TransactionChecksProvide: {
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: signTransactionDAStateSteps.WEB3_CHECKS_PROVIDE,
+              step: signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
             }),
           }),
           invoke: {
-            id: "provideWeb3Check",
-            src: "provideWeb3Check",
+            id: "provideTransactionCheck",
+            src: "provideTransactionCheck",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
               transaction: context.input.transaction,
@@ -422,9 +426,12 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
             onError: {
               target: "CheckGenericClearSignSupported",
               actions: ({ event }) =>
-                logger.info("[Web3Checks] provisioning failed; proceeding", {
-                  data: { error: event.error },
-                }),
+                logger.info(
+                  "[TransactionChecks] provisioning failed; proceeding",
+                  {
+                    data: { error: event.error },
+                  },
+                ),
             },
           },
         },
@@ -647,17 +654,17 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     const getAppConfig = async () =>
       internalApi.sendCommand(new GetAppConfigurationCommand());
 
-    const web3CheckOptIn = async () =>
-      internalApi.sendCommand(new Web3CheckOptInCommand());
+    const transactionCheckOptIn = async () =>
+      internalApi.sendCommand(new TransactionCheckOptInCommand());
 
-    const provideWeb3Check = async (arg0: {
+    const provideTransactionCheck = async (arg0: {
       input: {
         derivationPath: string;
         transaction: Uint8Array;
         contextModule: ContextModule;
       };
     }) =>
-      new ProvideWeb3CheckTask(internalApi, {
+      new ProvideTransactionCheckTask(internalApi, {
         derivationPath: arg0.input.derivationPath,
         transactionBytes: arg0.input.transaction,
         contextModule: arg0.input.contextModule,
@@ -666,8 +673,8 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
 
     return {
       getAppConfig,
-      web3CheckOptIn,
-      provideWeb3Check,
+      transactionCheckOptIn,
+      provideTransactionCheck,
     };
   }
 }

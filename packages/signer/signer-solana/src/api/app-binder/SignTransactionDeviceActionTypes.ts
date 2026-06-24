@@ -19,9 +19,10 @@ import { type SigningOperationsDAStateStep } from "./SigningOperationsDeviceActi
 export const signTransactionDAStateSteps = Object.freeze({
   OPEN_APP: "signer.sol.steps.openApp",
   GET_APP_CONFIG: "signer.sol.steps.getAppConfig",
-  WEB3_CHECKS_OPT_IN: "signer.sol.steps.web3ChecksOptIn",
-  WEB3_CHECKS_OPT_IN_RESULT: "signer.sol.steps.web3ChecksOptInResult",
-  WEB3_CHECKS_PROVIDE: "signer.sol.steps.web3ChecksProvide",
+  TRANSACTION_CHECKS_OPT_IN: "signer.sol.steps.transactionChecksOptIn",
+  TRANSACTION_CHECKS_OPT_IN_RESULT:
+    "signer.sol.steps.transactionChecksOptInResult",
+  TRANSACTION_CHECKS_PROVIDE: "signer.sol.steps.transactionChecksProvide",
   INSPECT_TRANSACTION: "signer.sol.steps.inspectTransaction",
   GET_PUB_KEY: "signer.sol.steps.getPubKey",
   BUILD_BASIC_CLEAR_SIGN_CONTEXT: "signer.sol.steps.buildBasicClearSignContext",
@@ -70,7 +71,7 @@ type SignTransactionDARequiredInteraction =
 
 /**
  * The intermediate value shared by every sign-transaction step except the
- * WEB3_CHECKS_OPT_IN_RESULT branch (which carries an extra `result`). The
+ * TRANSACTION_CHECKS_OPT_IN_RESULT branch (which carries an extra `result`). The
  * clear-sign child machines emit exactly this shape, so the parent can fold
  * their snapshots into its own intermediate value without a cast.
  */
@@ -78,7 +79,7 @@ export type SignTransactionDASimpleIntermediateValue = {
   requiredUserInteraction: SignTransactionDARequiredInteraction;
   step: Exclude<
     SignTransactionDAStateStep,
-    typeof signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT
+    typeof signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN_RESULT
   >;
 };
 
@@ -86,7 +87,7 @@ export type SignTransactionDAIntermediateValue =
   | SignTransactionDASimpleIntermediateValue
   | {
       requiredUserInteraction: UserInteractionRequired.None;
-      step: typeof signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN_RESULT;
+      step: typeof signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN_RESULT;
       result: boolean;
     };
 

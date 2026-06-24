@@ -59,8 +59,8 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
             version: "2.5.10",
-            web3ChecksEnabled: false,
-            web3ChecksOptIn: false,
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
           },
         }),
       );
@@ -76,8 +76,8 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.SHORT,
             version: "2.5.10",
-            web3ChecksEnabled: false,
-            web3ChecksOptIn: false,
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
           },
         }),
       );
@@ -95,8 +95,8 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
             version: "2.5.10",
-            web3ChecksEnabled: true,
-            web3ChecksOptIn: true,
+            transactionChecksEnabled: true,
+            transactionChecksOptIn: true,
           },
         }),
       );

@@ -8,7 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTransactionCheckCommand } from "@internal/app-binder/command/ProvideTransactionCheckCommand";
 
 import { type ProvideContextDeps } from "./provideContextTypes";
 import { provideTransactionCheckContext } from "./provideTransactionCheckContext";
@@ -42,7 +42,7 @@ describe("provideTransactionCheckContext", () => {
     };
   });
 
-  it("sends certificate then ProvideWeb3CheckCommand", async () => {
+  it("sends certificate then ProvideTransactionCheckCommand", async () => {
     api.sendCommand
       .mockResolvedValueOnce(success)
       .mockResolvedValueOnce(success);
@@ -62,8 +62,8 @@ describe("provideTransactionCheckContext", () => {
     expect(certCmd.args.certificate).toStrictEqual(txCheckCert.payload);
     expect(certCmd.args.keyUsage).toBe(txCheckCert.keyUsageNumber);
 
-    const web3Cmd = api.sendCommand.mock.calls[1]![0]!;
-    expect(web3Cmd).toBeInstanceOf(ProvideWeb3CheckCommand);
+    const transactionCheckCmd = api.sendCommand.mock.calls[1]![0]!;
+    expect(transactionCheckCmd).toBeInstanceOf(ProvideTransactionCheckCommand);
   });
 
   it("throws when certificate load fails", async () => {
@@ -79,7 +79,7 @@ describe("provideTransactionCheckContext", () => {
     };
 
     await expect(provideTransactionCheckContext(result, deps)).rejects.toThrow(
-      "Failed to send web3-check certificate to device",
+      "Failed to send transaction-check certificate to device",
     );
   });
 
@@ -96,8 +96,8 @@ describe("provideTransactionCheckContext", () => {
 
     expect(api.sendCommand).toHaveBeenCalledTimes(1);
 
-    const web3Cmd = api.sendCommand.mock.calls[0]![0]!;
-    expect(web3Cmd).toBeInstanceOf(ProvideWeb3CheckCommand);
+    const transactionCheckCmd = api.sendCommand.mock.calls[0]![0]!;
+    expect(transactionCheckCmd).toBeInstanceOf(ProvideTransactionCheckCommand);
   });
 
   it("chunks large descriptors across multiple APDU calls", async () => {
@@ -117,11 +117,11 @@ describe("provideTransactionCheckContext", () => {
     expect(api.sendCommand.mock.calls.length).toBeGreaterThanOrEqual(2);
 
     const allCmds = api.sendCommand.mock.calls.map(
-      (c: any[]) => c[0] as ProvideWeb3CheckCommand,
+      (c: any[]) => c[0] as ProvideTransactionCheckCommand,
     );
-    expect(allCmds.every((cmd) => cmd instanceof ProvideWeb3CheckCommand)).toBe(
-      true,
-    );
+    expect(
+      allCmds.every((cmd) => cmd instanceof ProvideTransactionCheckCommand),
+    ).toBe(true);
   });
 
   it("throws when descriptor sending fails", async () => {

@@ -23,7 +23,7 @@ import { SolanaAppCommandError } from "@internal/app-binder/command/utils/Solana
 import { SolanaTransactionTypes } from "@internal/app-binder/services/TransactionInspector";
 import {
   SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION,
-  SOLANA_MIN_WEB3_CHECKS_VERSION,
+  SOLANA_MIN_TRANSACTION_CHECKS_VERSION,
 } from "@internal/app-binder/SolanaApplicationResolver";
 
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
@@ -35,7 +35,7 @@ import { SignGenericClearSignDeviceAction } from "./SignGenericClearSignDeviceAc
 import { SignTransactionDeviceAction } from "./SignTransactionDeviceAction";
 
 /**
- * The parent is a thin orchestrator: setup (open app / config / web3 opt-in),
+ * The parent is a thin orchestrator: setup (open app / config / transaction-check opt-in),
  * then the gate, then the generic clear-sign machine and/or basic clear-sign
  * machine, then the (delayed) terminal-sign machine. These tests cover the
  * orchestration only;
@@ -48,7 +48,7 @@ const signature = new Uint8Array([0xaa, 0xbb]);
 const armedSig = new Uint8Array([0x77, 0x88]);
 
 // Below the generic-clear-sign min version, so the gate routes to the basic
-// path; still supports spl / delayed / web3.
+// path; still supports spl / delayed / transaction-check.
 const legacyVersion = "1.15.5";
 
 const contextModuleStub = {
@@ -57,8 +57,8 @@ const contextModuleStub = {
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let getAppConfigMock: ReturnType<typeof vi.fn>;
-let web3CheckOptInMock: ReturnType<typeof vi.fn>;
-let provideWeb3CheckMock: ReturnType<typeof vi.fn>;
+let transactionCheckOptInMock: ReturnType<typeof vi.fn>;
+let provideTransactionCheckMock: ReturnType<typeof vi.fn>;
 
 // Generic clear-sign (prepare) child deps
 let buildGenericMock: ReturnType<typeof vi.fn>;
@@ -89,8 +89,8 @@ function appConfig(version: string): AppConfiguration {
     blindSigningEnabled: true,
     pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
     version,
-    web3ChecksEnabled: false,
-    web3ChecksOptIn: false,
+    transactionChecksEnabled: false,
+    transactionChecksOptIn: false,
   };
 }
 
@@ -161,8 +161,8 @@ function run(
   const action = new SignTransactionDeviceAction({ input });
   parentSpy = vi.spyOn(action, "extractDependencies").mockReturnValue({
     getAppConfig: getAppConfigMock,
-    web3CheckOptIn: web3CheckOptInMock,
-    provideWeb3Check: provideWeb3CheckMock,
+    transactionCheckOptIn: transactionCheckOptInMock,
+    provideTransactionCheck: provideTransactionCheckMock,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as unknown as ReturnType<typeof vi.spyOn>;
   const { observable } = action._execute(apiMock);
@@ -223,10 +223,10 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       .mockResolvedValue(
         CommandResultFactory({ data: appConfig(legacyVersion) }),
       );
-    web3CheckOptInMock = vi
+    transactionCheckOptInMock = vi
       .fn()
       .mockResolvedValue(CommandResultFactory({ data: { enabled: true } }));
-    provideWeb3CheckMock = vi.fn().mockResolvedValue(undefined);
+    provideTransactionCheckMock = vi.fn().mockResolvedValue(undefined);
 
     // Generic child: degrades by default (no instruction recognised).
     buildGenericMock = vi.fn().mockResolvedValue({
@@ -575,18 +575,18 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("runs Web3Checks opt-in before clear-sign when the app requires it", () =>
+  it("runs TransactionChecks opt-in before clear-sign when the app requires it", () =>
     new Promise<void>((resolve, reject) => {
-      // Flex on an app version that supports web3-checks; opt-in not yet done.
+      // Flex on an app version that supports transaction-checks; opt-in not yet done.
       apiMock.getDeviceSessionState.mockReturnValue(
-        session(SOLANA_MIN_WEB3_CHECKS_VERSION, DeviceModelId.FLEX),
+        session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
       );
       getAppConfigMock.mockResolvedValue(
         CommandResultFactory({
           data: {
-            ...appConfig(SOLANA_MIN_WEB3_CHECKS_VERSION),
-            web3ChecksEnabled: false,
-            web3ChecksOptIn: false,
+            ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
           },
         }),
       );
@@ -594,11 +594,11 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         baseInput,
         (states) => {
           try {
-            expect(web3CheckOptInMock).toHaveBeenCalled();
+            expect(transactionCheckOptInMock).toHaveBeenCalled();
             // Opt-in must precede the terminal sign in the emitted sequence.
             const steps = stepSequence(states);
             const optInIdx = steps.indexOf(
-              signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN,
+              signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN,
             );
             const signIdx = steps.indexOf(
               signingOperationsDAStateSteps.SIGN_TRANSACTION,
@@ -617,32 +617,34 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("does not block signing when the web3-checks opt-in throws (best-effort)", () =>
+  it("does not block signing when the transaction-checks opt-in throws (best-effort)", () =>
     new Promise<void>((resolve, reject) => {
-      // Flex on an app version that supports web3-checks; opt-in not yet done.
+      // Flex on an app version that supports transaction-checks; opt-in not yet done.
       apiMock.getDeviceSessionState.mockReturnValue(
-        session(SOLANA_MIN_WEB3_CHECKS_VERSION, DeviceModelId.FLEX),
+        session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
       );
       getAppConfigMock.mockResolvedValue(
         CommandResultFactory({
           data: {
-            ...appConfig(SOLANA_MIN_WEB3_CHECKS_VERSION),
-            web3ChecksEnabled: false,
-            web3ChecksOptIn: false,
+            ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
           },
         }),
       );
       // The opt-in actor throws (not a CommandResult error): must proceed.
-      web3CheckOptInMock.mockRejectedValue(new Error("opt-in transport error"));
+      transactionCheckOptInMock.mockRejectedValue(
+        new Error("opt-in transport error"),
+      );
       run(
         baseInput,
         (states) => {
           try {
-            expect(web3CheckOptInMock).toHaveBeenCalled();
+            expect(transactionCheckOptInMock).toHaveBeenCalled();
             // It still reaches the terminal sign and completes successfully.
             const steps = stepSequence(states);
             const optInIdx = steps.indexOf(
-              signTransactionDAStateSteps.WEB3_CHECKS_OPT_IN,
+              signTransactionDAStateSteps.TRANSACTION_CHECKS_OPT_IN,
             );
             const signIdx = steps.indexOf(
               signingOperationsDAStateSteps.SIGN_TRANSACTION,
@@ -661,18 +663,18 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       );
     }));
 
-  it("provides web3-checks before the clear-sign branch, independent of the path taken", () =>
+  it("provides transaction-checks before the clear-sign branch, independent of the path taken", () =>
     new Promise<void>((resolve, reject) => {
-      // Flex on a web3-supported version, already enabled (no opt-in needed).
+      // Flex on a transaction-check-supported version, already enabled (no opt-in needed).
       apiMock.getDeviceSessionState.mockReturnValue(
-        session(SOLANA_MIN_WEB3_CHECKS_VERSION, DeviceModelId.FLEX),
+        session(SOLANA_MIN_TRANSACTION_CHECKS_VERSION, DeviceModelId.FLEX),
       );
       getAppConfigMock.mockResolvedValue(
         CommandResultFactory({
           data: {
-            ...appConfig(SOLANA_MIN_WEB3_CHECKS_VERSION),
-            web3ChecksEnabled: true,
-            web3ChecksOptIn: true,
+            ...appConfig(SOLANA_MIN_TRANSACTION_CHECKS_VERSION),
+            transactionChecksEnabled: true,
+            transactionChecksOptIn: true,
           },
         }),
       );
@@ -680,17 +682,17 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
         baseInput,
         (states) => {
           try {
-            expect(provideWeb3CheckMock).toHaveBeenCalled();
+            expect(provideTransactionCheckMock).toHaveBeenCalled();
             const steps = stepSequence(states);
-            const web3Idx = steps.indexOf(
-              signTransactionDAStateSteps.WEB3_CHECKS_PROVIDE,
+            const transactionCheckIdx = steps.indexOf(
+              signTransactionDAStateSteps.TRANSACTION_CHECKS_PROVIDE,
             );
             // It runs, and before any clear-sign / sign step.
-            expect(web3Idx).toBeGreaterThanOrEqual(0);
+            expect(transactionCheckIdx).toBeGreaterThanOrEqual(0);
             const signIdx = steps.indexOf(
               signingOperationsDAStateSteps.SIGN_TRANSACTION,
             );
-            expect(signIdx).toBeGreaterThan(web3Idx);
+            expect(signIdx).toBeGreaterThan(transactionCheckIdx);
             expect(states[states.length - 1]!.status).toBe(
               DeviceActionStatus.Completed,
             );

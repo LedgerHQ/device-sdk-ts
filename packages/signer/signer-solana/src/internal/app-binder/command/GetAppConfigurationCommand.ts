@@ -31,8 +31,8 @@ const RESPONSE_OFFSET_FEATURE_FLAGS = 5;
 const RESPONSE_BASE_LENGTH = 5;
 const RESPONSE_LENGTH_WITH_FEATURE_FLAGS = 6;
 
-const FEATURE_FLAG_WEB3_CHECKS_ENABLED = 0x10;
-const FEATURE_FLAG_WEB3_CHECKS_OPT_IN = 0x20;
+const FEATURE_FLAG_TRANSACTION_CHECKS_ENABLED = 0x10;
+const FEATURE_FLAG_TRANSACTION_CHECKS_OPT_IN = 0x20;
 
 type GetAppConfigurationCommandArgs = void;
 
@@ -85,20 +85,24 @@ export class GetAppConfigurationCommand
           : PublicKeyDisplayMode.SHORT;
       const version = `${data[RESPONSE_OFFSET_VERSION_MAJOR]}.${data[RESPONSE_OFFSET_VERSION_MINOR]}.${data[RESPONSE_OFFSET_VERSION_PATCH]}`;
 
-      let web3ChecksEnabled = false;
-      let web3ChecksOptIn = false;
+      let transactionChecksEnabled = false;
+      let transactionChecksOptIn = false;
       if (data.length >= RESPONSE_LENGTH_WITH_FEATURE_FLAGS) {
         const featureFlags = data[RESPONSE_OFFSET_FEATURE_FLAGS]!;
-        web3ChecksEnabled = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_ENABLED);
-        web3ChecksOptIn = !!(featureFlags & FEATURE_FLAG_WEB3_CHECKS_OPT_IN);
+        transactionChecksEnabled = !!(
+          featureFlags & FEATURE_FLAG_TRANSACTION_CHECKS_ENABLED
+        );
+        transactionChecksOptIn = !!(
+          featureFlags & FEATURE_FLAG_TRANSACTION_CHECKS_OPT_IN
+        );
       }
 
       const config: AppConfiguration = {
         blindSigningEnabled,
         pubKeyDisplayMode,
         version,
-        web3ChecksEnabled,
-        web3ChecksOptIn,
+        transactionChecksEnabled,
+        transactionChecksOptIn,
       };
 
       return CommandResultFactory({
