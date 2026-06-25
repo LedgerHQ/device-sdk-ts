@@ -2,7 +2,7 @@ export default {
   index: {
     title: "Home",
     theme: {
-      layout: "raw",
+      layout: "full",
     },
     display: "hidden",
   },
