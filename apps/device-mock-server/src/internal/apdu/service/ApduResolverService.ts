@@ -3,14 +3,11 @@ import { inject, injectable, optional } from "inversify";
 
 import { matchApdu } from "@internal/apdu/service/matcher";
 import { UNKNOWN_APDU_RESPONSE } from "@internal/defaults";
-import { derivedTypes } from "@internal/derived/di/derivedTypes";
-import { type DerivedOsCommandsService } from "@internal/derived/service/DerivedOsCommandsService";
-import {
-  GET_APP_AND_VERSION_PREFIX,
-  GET_BATTERY_STATUS_PREFIX,
-  GET_OS_VERSION_PREFIX,
-} from "@internal/derived/service/osCommands";
 import { logger } from "@internal/logger/logger";
+import { osTypes } from "@internal/os/di/osTypes";
+import { type OsApduService } from "@internal/os/service/OsApduService";
+import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import { type SecureChannelApduService } from "@internal/secure-channel/service/SecureChannelApduService";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
 import { type SessionRecord } from "@internal/session/model/SessionModels";
@@ -31,7 +28,8 @@ import {
  * 1. explicit per-device mock (wins even while a Speculos proxy is active, so a
  *    mock can override an app response — e.g. force GetAppAndVersion to 5515),
  * 2. active Speculos proxy -> forward (Close App releases and reverts to mock),
- * 3. derived handshake (GetOsVersion / GetAppAndVersion),
+ * 3. derived handshake (GetOsVersion / GetAppAndVersion) and relayed
+ *    secure-channel APDUs (permission / GetCertificate / install block),
  * 4. unmatched Open App -> provision a Speculos instance,
  * 5. {@link UNKNOWN_APDU_RESPONSE}.
  */
@@ -40,8 +38,10 @@ export class ApduResolverService {
   constructor(
     @inject(sessionTypes.Repository)
     private readonly repository: SessionRepository,
-    @inject(derivedTypes.Service)
-    private readonly derived: DerivedOsCommandsService,
+    @inject(osTypes.ApduService)
+    private readonly os: OsApduService,
+    @inject(secureChannelTypes.ApduService)
+    private readonly secureChannel: SecureChannelApduService,
     @optional()
     @inject(speculosTypes.OpenAppUseCase)
     private readonly openApp?: OpenAppViaSpeculosUseCase,
@@ -97,25 +97,18 @@ export class ApduResolverService {
       });
     }
 
-    // 3. Derived handshake responses synthesized from the device metadata.
-    if (apdu.startsWith(GET_OS_VERSION_PREFIX)) {
-      const response = this.derived.getOsVersion(device);
-      if (response) {
-        logger.info(`APDU [${device.id}] ${apdu} -> ${response} (derived)`);
-        return response;
-      }
+    // 3. Derived OS responses synthesized from the device metadata.
+    const osResponse = this.os.resolve(device, apdu);
+    if (osResponse) {
+      logger.info(`APDU [${device.id}] ${apdu} -> ${osResponse} (os)`);
+      return osResponse;
     }
-    if (apdu.startsWith(GET_APP_AND_VERSION_PREFIX)) {
-      const response = this.derived.getAppAndVersion(device);
-      logger.info(`APDU [${device.id}] ${apdu} -> ${response} (derived)`);
-      return response;
-    }
-    if (apdu.startsWith(GET_BATTERY_STATUS_PREFIX)) {
-      const response = this.derived.getBatteryStatus(device, apdu);
-      if (response) {
-        logger.info(`APDU [${device.id}] ${apdu} -> ${response} (derived)`);
-        return response;
-      }
+    const secureChannelResponse = this.secureChannel.resolve(apdu);
+    if (secureChannelResponse) {
+      logger.info(
+        `APDU [${device.id}] ${apdu} -> ${secureChannelResponse} (secure channel)`,
+      );
+      return secureChannelResponse;
     }
 
     // 4. Unmatched Open App: spin up a real Speculos instance.

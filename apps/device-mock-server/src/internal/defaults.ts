@@ -25,6 +25,6 @@ export const DEFAULT_DEVICE: Required<
  *
  * Note: the connection handshake (GetAppAndVersion, GetOsVersion) is no longer
  * seeded as mocks — it is derived per device from its metadata in
- * {@link file://./../derived/osCommands.ts}.
+ * {@link file://./os/service/osApdus.ts}.
  */
 export const UNKNOWN_APDU_RESPONSE = "6d00";

@@ -1,3 +1,5 @@
+import { type Server } from "node:http";
+
 import { type Express } from "express";
 
 import { type SpeculosOperatorConfig } from "@internal/speculos/model/SpeculosModels";
@@ -23,4 +25,9 @@ export interface MockServerApp {
   readonly app: Express;
   /** Stop the background sweeper. */
   readonly close: () => void;
+  /**
+   * Attach the mock ScriptRunner secure-channel WebSocket server to the running
+   * HTTP server (the one returned by `app.listen`). Call once after listening.
+   */
+  readonly attachWebSocket: (server: Server) => void;
 }

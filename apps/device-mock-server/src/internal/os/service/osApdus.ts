@@ -1,7 +1,7 @@
 import { type Device } from "@ledgerhq/device-mockserver-client";
 
 /**
- * Synthesizes the two OS-handshake APDU responses from a device's metadata, so
+ * Synthesizes the OS-handshake APDU responses from a device's metadata, so
  * a device connects without any seeded mock. These are produced only when no
  * explicit mock matches; an explicit per-device mock overrides them.
  *
@@ -183,4 +183,26 @@ export function deriveGetBatteryStatus(
     default:
       return undefined;
   }
+}
+
+/**
+ * Derived default response for an OS-handshake APDU (GetOsVersion /
+ * GetAppAndVersion / GetBatteryStatus) synthesized from the device metadata, or
+ * `undefined` when the APDU is not one of them (or the model is unsupported).
+ * The three prefixes are mutually exclusive, so the first match wins.
+ */
+export function deriveOsApduResponse(
+  device: Device,
+  apdu: string,
+): string | undefined {
+  if (apdu.startsWith(GET_OS_VERSION_PREFIX)) {
+    return deriveGetOsVersion(device);
+  }
+  if (apdu.startsWith(GET_APP_AND_VERSION_PREFIX)) {
+    return deriveGetAppAndVersion(device);
+  }
+  if (apdu.startsWith(GET_BATTERY_STATUS_PREFIX)) {
+    return deriveGetBatteryStatus(device, apdu);
+  }
+  return undefined;
 }
