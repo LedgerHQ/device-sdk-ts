@@ -4,7 +4,8 @@ import {
   deriveGetAppAndVersion,
   deriveGetBatteryStatus,
   deriveGetOsVersion,
-} from "./osCommands";
+  deriveOsApduResponse,
+} from "./osApdus";
 
 const device = (overrides: Partial<Device>): Device => ({
   id: "d1",
@@ -95,5 +96,34 @@ describe("deriveGetBatteryStatus", () => {
         percentageApdu,
       ),
     ).toBeUndefined();
+  });
+});
+
+describe("deriveOsApduResponse", () => {
+  it("dispatches GetOsVersion (0xE0 0x01)", () => {
+    expect(
+      deriveOsApduResponse(device({ device_type: "nanoX" }), "e0010000"),
+    ).toBe(
+      "3300000405322e322e3304e600000004322e333004312e31360100010001009000",
+    );
+  });
+
+  it("dispatches GetAppAndVersion (0xB0 0x01)", () => {
+    expect(
+      deriveOsApduResponse(device({ firmware_version: "2.2.3" }), "b0010000"),
+    ).toBe("0105424f4c4f5305322e322e339000");
+  });
+
+  it("dispatches GetBatteryStatus (0xE0 0x10)", () => {
+    expect(
+      deriveOsApduResponse(
+        device({ device_type: "stax", firmware_version: "1.9.1" }),
+        "e010000000",
+      ),
+    ).toBe("649000");
+  });
+
+  it("returns undefined for a non-OS APDU", () => {
+    expect(deriveOsApduResponse(device({}), "e0f1000000")).toBeUndefined();
   });
 });
