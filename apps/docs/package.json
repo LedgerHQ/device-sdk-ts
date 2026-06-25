@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "pagefind --site .next/server/app --output-path public/_pagefind",
     "start": "next start",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
@@ -22,9 +23,7 @@
     "nextra-theme-docs": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-medium-image-zoom": "catalog:",
-    "tailwindcss": "catalog:",
-    "tailwind-merge": "catalog:"
+    "react-medium-image-zoom": "catalog:"
   },
   "devDependencies": {
     "autoprefixer": "catalog:",
@@ -33,6 +32,7 @@
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "globals": "catalog:"
+    "globals": "catalog:",
+    "pagefind": "catalog:"
   }
 }
