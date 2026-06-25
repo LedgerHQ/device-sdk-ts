@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { ResponsesDriver } from "./ResponsesDriver";
+
 export interface DeviceActionResult<Output> {
   status: string;
   output?: Output;
@@ -9,19 +11,50 @@ export interface DeviceActionResult<Output> {
 const RESPONSE_ITEMS = '[data-testid="box_device-commands-responses"] > *';
 
 /**
- * Drives the Device actions view: navigating to it, executing device actions
- * and reading back the emitted device-action states.
+ * Drives the Device Actions view: navigating to it, selecting and executing a
+ * device action (including the secure-channel ones such as Genuine Check) and
+ * reading back the emitted device-action states.
  */
 export class DeviceActionsDriver {
-  constructor(private readonly page: Page) {}
+  private readonly responses: ResponsesDriver;
 
-  /** Navigate Device actions -> Device actions list. */
+  constructor(private readonly page: Page) {
+    this.responses = new ResponsesDriver(page);
+  }
+
+  /** Navigate to the /device-actions route. */
   async goto(): Promise<void> {
     await this.page.getByTestId("CTA_route-to-/device-actions").click();
     await this.page.waitForURL("http://localhost:3000/device-actions", {
       timeout: 10_000,
     });
     await this.page.waitForLoadState("networkidle");
+  }
+
+  /**
+   * Open a device action by its (partial) title, then click Execute. Matching by
+   * text avoids depending on the emoji-prefixed test id of secure-channel rows.
+   */
+  async execute(title: string): Promise<void> {
+    await this.open(title);
+    await this.send();
+  }
+
+  /** Open a device action row without executing it. */
+  async open(title: string): Promise<void> {
+    await this.page
+      .locator('[data-testid^="CTA_command-"]', { hasText: title })
+      .first()
+      .click();
+  }
+
+  /** Open the Install App action, fill the app name, and Execute it. */
+  async installApp(appName: string): Promise<void> {
+    await this.open("Install App");
+    const input = this.page.getByTestId("input-text_appName");
+    await input.waitFor({ state: "visible" });
+    await input.fill(appName);
+    await this.send();
   }
 
   /**
@@ -41,6 +74,11 @@ export class DeviceActionsDriver {
       await input.waitFor({ state: "visible" });
       await input.fill(String(unlockTimeout));
     }
+    await this.send();
+  }
+
+  /** Click Execute on the currently open device action. */
+  async send(): Promise<void> {
     await this.page.getByTestId("CTA_send-device-action").click();
   }
 
@@ -57,6 +95,47 @@ export class DeviceActionsDriver {
       `"requiredUserInteraction": "${interaction}"`,
       { timeout },
     );
+  }
+
+  /**
+   * Wait for the last response to contain `until` (defaults to any `"status"`)
+   * and return it parsed. Pass a more specific marker (e.g. `"completed"`) to
+   * wait for a terminal device-action state.
+   */
+  async lastResponse<T>({
+    until = '"status"',
+    timeout = 30_000,
+  }: { until?: string | RegExp; timeout?: number } = {}): Promise<T> {
+    return this.responses.lastJson<T>(until, { timeout });
+  }
+
+  /**
+   * Wait until any emitted (intermediate or terminal) device-action state
+   * renders the given text. Useful to assert on a transient value such as a
+   * progress update that is later replaced by a terminal state.
+   */
+  async expectAnyResponseContains(
+    text: string,
+    { timeout = 30_000 }: { timeout?: number } = {},
+  ): Promise<void> {
+    await expect(
+      this.page.locator(RESPONSE_ITEMS).filter({ hasText: text }).first(),
+    ).toBeVisible({ timeout });
+  }
+
+  /**
+   * Wait until the last emitted device-action state renders the given terminal
+   * error and return its text. Errors are rendered via `util.inspect` (not JSON),
+   * so they are matched by their `_tag` (e.g. `RefusedByUserDAError`) rather than
+   * a `"status"` field.
+   */
+  async expectError(
+    errorTag: string,
+    { timeout = 30_000 }: { timeout?: number } = {},
+  ): Promise<string> {
+    const last = this.page.locator(RESPONSE_ITEMS).last();
+    await expect(last).toContainText(errorTag, { timeout });
+    return last.innerText();
   }
 
   /**
