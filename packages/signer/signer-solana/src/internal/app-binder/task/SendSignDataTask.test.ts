@@ -17,6 +17,9 @@ import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
 const DERIVATION_PATH = "44'/501'/0'/0'";
 const PATH_SIZE = 4;
+const mockLoggerFactory = () =>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) as any;
 
 describe("SignDataTask", () => {
   const apiMock = makeDeviceActionInternalApiMock();
@@ -49,6 +52,7 @@ describe("SignDataTask", () => {
 
       const args = {
         derivationPath: DERIVATION_PATH,
+        loggerFactory: mockLoggerFactory,
         sendingData: SIMPLE_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({
@@ -110,6 +114,7 @@ describe("SignDataTask", () => {
 
       const args = {
         derivationPath: DERIVATION_PATH,
+        loggerFactory: mockLoggerFactory,
         sendingData: BIG_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({
@@ -185,6 +190,7 @@ describe("SignDataTask", () => {
 
       const args = {
         derivationPath: DERIVATION_PATH,
+        loggerFactory: mockLoggerFactory,
         sendingData: SIMPLE_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({
@@ -225,6 +231,7 @@ describe("SignDataTask", () => {
 
       const args = {
         derivationPath: DERIVATION_PATH,
+        loggerFactory: mockLoggerFactory,
         sendingData: BIG_TRANSACTION,
         commandFactory: (chunkArgs: ChunkableCommandArgs) =>
           new SignTransactionCommand({

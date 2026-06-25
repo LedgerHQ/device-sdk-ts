@@ -31,7 +31,7 @@ export type BuildRequirementsOptions = {
   bs58Encoder?: Bs58Encoder;
 };
 
-/** TX-derived `MINT_ASSOC` bindings: token-account address → mint address. */
+/** TX-derived `MINT_ASSOC` bindings: token-account address to mint address. */
 function buildMintBindings(
   matched: MatchedInstruction[],
   parsed: ParsedInstruction[],

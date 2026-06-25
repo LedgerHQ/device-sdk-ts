@@ -28,8 +28,7 @@ import {
  *   TOKEN_INFO. The reference may be a mint directly, or — when a TX-derived
  *   MINT_ASSOC binding covers it — a token account whose bound mint is used
  *   instead. (The chain-only token-account case where no binding exists is out
- *   of scope: DMK has no RPC to resolve such a mint, mirroring the POC, which
- *   only resolves it from on-chain balances.)
+ *   of scope: DMK has no RPC to resolve such a mint from on-chain balances.)
  *
  * `mintBindings` maps a token-account address to its TX-derived mint address.
  */

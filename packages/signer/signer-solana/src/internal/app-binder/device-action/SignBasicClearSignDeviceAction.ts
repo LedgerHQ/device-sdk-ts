@@ -12,13 +12,13 @@ import { Left, type Maybe, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
 import {
-  type DelayedSignDAError,
-  type DelayedSignDAInput,
-  type DelayedSignDAIntermediateValue,
-  type DelayedSignDAInternalState,
-  type DelayedSignDAOutput,
-  delayedSignDAStateSteps,
-} from "@api/app-binder/DelayedSignTransactionDeviceActionTypes";
+  type SignBasicClearSignDAError,
+  type SignBasicClearSignDAInput,
+  type SignBasicClearSignDAIntermediateValue,
+  type SignBasicClearSignDAInternalState,
+  type SignBasicClearSignDAOutput,
+} from "@api/app-binder/SignBasicClearSignDeviceActionTypes";
+import { signClearSignDAStateSteps } from "@api/app-binder/SignClearSignDeviceActionTypes";
 import { type Signature } from "@api/model/Signature";
 import { type UserInputType } from "@api/model/TransactionResolutionContext";
 import { DelayedSignTransactionCommand } from "@internal/app-binder/command/DelayedSignTransactionCommand";
@@ -29,6 +29,7 @@ import {
   type SolanaAppErrorCodes,
 } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
+import { RefreshBlockhashTask } from "@internal/app-binder/task/RefreshBlockhashTask";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
 export type MachineDependencies = {
@@ -39,6 +40,13 @@ export type MachineDependencies = {
       userInputType?: UserInputType;
     };
   }) => Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>>;
+  readonly refreshBlockhash: (arg0: {
+    input: {
+      transaction: Uint8Array;
+      rpcUrl?: string;
+      fetchBlockhash?: () => Promise<Uint8Array>;
+    };
+  }) => Promise<Uint8Array>;
   readonly delayedSignTransaction: (arg0: {
     input: {
       derivationPath: string;
@@ -46,61 +54,80 @@ export type MachineDependencies = {
       userInputType?: UserInputType;
     };
   }) => Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>>;
-  readonly fallbackSignTransaction: (arg0: {
+  readonly signTransaction: (arg0: {
     input: {
       derivationPath: string;
       serializedTransaction: Uint8Array;
       userInputType?: UserInputType;
     };
   }) => Promise<CommandResult<Maybe<Signature>, SolanaAppErrorCodes>>;
-  readonly fetchBlockhashFn: (arg0: {
-    input: {
-      rpcUrl?: string;
-      fetchBlockhash?: () => Promise<Uint8Array>;
-    };
-  }) => Promise<Uint8Array>;
   readonly zeroBlockhashFn: (arg0: {
     input: { transaction: Uint8Array };
-  }) => Promise<Uint8Array>;
-  readonly patchBlockhashFn: (arg0: {
-    input: { transaction: Uint8Array; freshBlockhash: Uint8Array };
   }) => Promise<Uint8Array>;
 };
 
 const USER_REJECTION_CODE: SolanaAppErrorCodes = "6985";
 
-export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
-  DelayedSignDAOutput,
-  DelayedSignDAInput,
-  DelayedSignDAError,
-  DelayedSignDAIntermediateValue,
-  DelayedSignDAInternalState
+/** Fold a sign command result into the internal state (signature or error). */
+function applySignatureResult(
+  internalState: SignBasicClearSignDAInternalState,
+  result: CommandResult<Maybe<Signature>, SolanaAppErrorCodes>,
+): SignBasicClearSignDAInternalState {
+  if (!isSuccessCommandResult(result)) {
+    return { ...internalState, error: result.error };
+  }
+  const data = result.data.extract();
+  if (result.data.isJust() && data instanceof Uint8Array) {
+    return { ...internalState, signature: data };
+  }
+  return {
+    ...internalState,
+    error: new UnknownDAError("No signature available"),
+  };
+}
+
+/**
+ * Terminal sign for the legacy (non-generic) path. With a blockhash source it
+ * runs the two-step delayed flow — `ZeroBlockhash` then `PreviewTransaction`
+ * (0x08) to arm, a best-effort blockhash refresh (shared
+ * `RefreshBlockhashTask`), then `DelayedSign` (0x09). Without a source (or when
+ * arming degrades) it falls back to a one-shot `Sign` (0x06).
+ */
+export class SignBasicClearSignDeviceAction extends XStateDeviceAction<
+  SignBasicClearSignDAOutput,
+  SignBasicClearSignDAInput,
+  SignBasicClearSignDAError,
+  SignBasicClearSignDAIntermediateValue,
+  SignBasicClearSignDAInternalState
 > {
   makeStateMachine(
     internalApi: InternalApi,
   ): DeviceActionStateMachine<
-    DelayedSignDAOutput,
-    DelayedSignDAInput,
-    DelayedSignDAError,
-    DelayedSignDAIntermediateValue,
-    DelayedSignDAInternalState
+    SignBasicClearSignDAOutput,
+    SignBasicClearSignDAInput,
+    SignBasicClearSignDAError,
+    SignBasicClearSignDAIntermediateValue,
+    SignBasicClearSignDAInternalState
   > {
     type types = StateMachineTypes<
-      DelayedSignDAOutput,
-      DelayedSignDAInput,
-      DelayedSignDAError,
-      DelayedSignDAIntermediateValue,
-      DelayedSignDAInternalState
+      SignBasicClearSignDAOutput,
+      SignBasicClearSignDAInput,
+      SignBasicClearSignDAError,
+      SignBasicClearSignDAIntermediateValue,
+      SignBasicClearSignDAInternalState
     >;
 
     const {
       previewTransaction,
+      refreshBlockhash,
       delayedSignTransaction,
-      fallbackSignTransaction,
-      fetchBlockhashFn,
+      signTransaction,
       zeroBlockhashFn,
-      patchBlockhashFn,
     } = this.extractDependencies(internalApi);
+
+    const logger = this.getLoggerFactory(internalApi)(
+      "SignBasicClearSignDeviceAction",
+    );
 
     return setup({
       types: {
@@ -110,16 +137,17 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
       },
       actors: {
         previewTransaction: fromPromise(previewTransaction),
+        refreshBlockhash: fromPromise(refreshBlockhash),
         delayedSignTransaction: fromPromise(delayedSignTransaction),
-        fallbackSignTransaction: fromPromise(fallbackSignTransaction),
-        fetchBlockhashFn: fromPromise(fetchBlockhashFn),
+        signTransaction: fromPromise(signTransaction),
         zeroBlockhashFn: fromPromise(zeroBlockhashFn),
-        patchBlockhashFn: fromPromise(patchBlockhashFn),
       },
       guards: {
         noInternalError: ({ context }) => context._internalState.error === null,
         isPreviewFallback: ({ context }) =>
           context._internalState.previewFallback,
+        hasBlockhashSource: ({ context }) =>
+          !!(context.input.rpcUrl || context.input.fetchBlockhash),
       },
       actions: {
         assignErrorFromEvent: assign({
@@ -134,29 +162,36 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      id: "DelayedSignTransactionDeviceAction",
-      initial: "ZeroBlockhash",
+      id: "SignBasicClearSignDeviceAction",
+      initial: "Entry",
       context: ({ input }) => ({
         input,
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
-          step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+          step: signClearSignDAStateSteps.ZERO_BLOCKHASH,
         },
         _internalState: {
           error: null,
           signature: null,
           zeroedTransaction: null,
-          freshBlockhash: null,
-          patchedTransaction: null,
           previewFallback: false,
+          transactionToSign: null,
         },
       }),
       states: {
+        // - source: preview (0x08) to arm, refresh, then SIGN DELAYED (0x09)
+        // - no source: one-shot SIGN (0x06) on the original transaction
+        Entry: {
+          always: [
+            { target: "ZeroBlockhash", guard: "hasBlockhashSource" },
+            { target: "Sign" },
+          ],
+        },
         ZeroBlockhash: {
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: delayedSignDAStateSteps.ZERO_BLOCKHASH,
+              step: signClearSignDAStateSteps.ZERO_BLOCKHASH,
             }),
           }),
           invoke: {
@@ -174,9 +209,15 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
                 }),
               }),
             },
+            // Best-effort: a host-side zeroing failure must not block signing;
+            // degrade to a plain one-shot sign of the original transaction.
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "Sign",
+              actions: ({ event }) =>
+                logger.info(
+                  "[SigningOps] blockhash zeroing failed, signing original transaction",
+                  { data: { error: event.error } },
+                ),
             },
           },
         },
@@ -184,7 +225,7 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
-              step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+              step: signClearSignDAStateSteps.PREVIEW_TRANSACTION,
             },
           }),
           invoke: {
@@ -219,77 +260,54 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
                 },
                 intermediateValue: {
                   requiredUserInteraction: UserInteractionRequired.None,
-                  step: delayedSignDAStateSteps.PREVIEW_TRANSACTION,
+                  step: signClearSignDAStateSteps.PREVIEW_TRANSACTION,
                 },
               }),
             },
+            // Best-effort: a preview throw (vs a user rejection, handled in
+            // onDone) must not block signing; degrade to a plain one-shot sign
+            // of the original transaction.
             onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
+              target: "Sign",
+              actions: ({ event }) =>
+                logger.info(
+                  "[SigningOps] preview threw, signing original transaction",
+                  { data: { error: event.error } },
+                ),
             },
           },
         },
         PreviewResultCheck: {
           always: [
-            { guard: "noInternalError", target: "FetchBlockhash" },
+            { guard: "noInternalError", target: "RefreshBlockhash" },
             { target: "Error" },
           ],
         },
-        FetchBlockhash: {
+        RefreshBlockhash: {
           entry: assign({
             intermediateValue: () => ({
               requiredUserInteraction: UserInteractionRequired.None,
-              step: delayedSignDAStateSteps.FETCH_BLOCKHASH,
+              step: signClearSignDAStateSteps.FETCH_BLOCKHASH,
             }),
           }),
           invoke: {
-            id: "fetchBlockhashFn",
-            src: "fetchBlockhashFn",
+            id: "refreshBlockhash",
+            src: "refreshBlockhash",
             input: ({ context }) => ({
+              transaction: context.input.transaction,
               rpcUrl: context.input.rpcUrl,
               fetchBlockhash: context.input.fetchBlockhash,
             }),
-            onDone: {
-              target: "PatchTransaction",
-              actions: assign({
-                _internalState: ({ event, context }) => ({
-                  ...context._internalState,
-                  freshBlockhash: event.output,
-                }),
-              }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
-            },
-          },
-        },
-        PatchTransaction: {
-          entry: assign({
-            intermediateValue: () => ({
-              requiredUserInteraction: UserInteractionRequired.None,
-              step: delayedSignDAStateSteps.PATCH_TRANSACTION,
-            }),
-          }),
-          invoke: {
-            id: "patchBlockhashFn",
-            src: "patchBlockhashFn",
-            input: ({ context }) => ({
-              transaction: context.input.transaction,
-              freshBlockhash: context._internalState.freshBlockhash!,
-            }),
+            // The refresh task is best-effort and never rejects; it resolves to
+            // the bytes to sign (patched on success, original otherwise).
             onDone: {
               target: "PatchResultCheck",
               actions: assign({
                 _internalState: ({ event, context }) => ({
                   ...context._internalState,
-                  patchedTransaction: event.output,
+                  transactionToSign: event.output,
                 }),
               }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorFromEvent",
             },
           },
         },
@@ -303,7 +321,7 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.None,
-              step: delayedSignDAStateSteps.DELAYED_SIGN,
+              step: signClearSignDAStateSteps.DELAYED_SIGN,
             },
           }),
           invoke: {
@@ -311,31 +329,16 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
             src: "delayedSignTransaction",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              serializedTransaction: context._internalState.patchedTransaction!,
+              serializedTransaction:
+                context._internalState.transactionToSign ??
+                context.input.transaction,
               userInputType: context.input.userInputType,
             }),
             onDone: {
               target: "ResultCheck",
               actions: assign({
-                _internalState: ({ event, context }) => {
-                  if (!isSuccessCommandResult(event.output))
-                    return {
-                      ...context._internalState,
-                      error: event.output.error,
-                    };
-
-                  const data = event.output.data.extract();
-                  if (event.output.data.isJust() && data instanceof Uint8Array)
-                    return {
-                      ...context._internalState,
-                      signature: data,
-                    };
-
-                  return {
-                    ...context._internalState,
-                    error: new UnknownDAError("No signature available"),
-                  };
-                },
+                _internalState: ({ event, context }) =>
+                  applySignatureResult(context._internalState, event.output),
               }),
             },
             onError: {
@@ -344,43 +347,61 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        FallbackSign: {
+        // Primary one-shot sign (no blockhash refresh): the device shows the
+        // review and signs in a single pass (0x06).
+        Sign: {
           entry: assign({
             intermediateValue: {
               requiredUserInteraction: UserInteractionRequired.SignTransaction,
-              step: delayedSignDAStateSteps.FALLBACK_TO_NON_DELAYED_SIGN,
+              step: signClearSignDAStateSteps.SIGN_TRANSACTION,
             },
           }),
           invoke: {
-            id: "fallbackSignTransaction",
-            src: "fallbackSignTransaction",
+            id: "signTransaction",
+            src: "signTransaction",
             input: ({ context }) => ({
               derivationPath: context.input.derivationPath,
-              serializedTransaction: context._internalState.patchedTransaction!,
+              serializedTransaction: context.input.transaction,
               userInputType: context.input.userInputType,
             }),
             onDone: {
               target: "ResultCheck",
               actions: assign({
-                _internalState: ({ event, context }) => {
-                  if (!isSuccessCommandResult(event.output))
-                    return {
-                      ...context._internalState,
-                      error: event.output.error,
-                    };
-
-                  const data = event.output.data.extract();
-                  if (event.output.data.isJust() && data instanceof Uint8Array)
-                    return {
-                      ...context._internalState,
-                      signature: data,
-                    };
-
-                  return {
-                    ...context._internalState,
-                    error: new UnknownDAError("No signature available"),
-                  };
-                },
+                _internalState: ({ event, context }) =>
+                  applySignatureResult(context._internalState, event.output),
+              }),
+            },
+            onError: {
+              target: "Error",
+              actions: "assignErrorFromEvent",
+            },
+          },
+        },
+        // Fallback sign (0x06): the 0x08 preview was unsupported, so we sign the
+        // (blockhash-patched) transaction non-delayed.
+        FallbackSign: {
+          entry: assign({
+            intermediateValue: {
+              requiredUserInteraction: UserInteractionRequired.SignTransaction,
+              step: signClearSignDAStateSteps.FALLBACK_TO_NON_DELAYED_SIGN,
+            },
+          }),
+          invoke: {
+            id: "fallbackSign",
+            src: "signTransaction",
+            input: ({ context }) => ({
+              derivationPath: context.input.derivationPath,
+              // No patch (fetch failed): sign the original tx.
+              serializedTransaction:
+                context._internalState.transactionToSign ??
+                context.input.transaction,
+              userInputType: context.input.userInputType,
+            }),
+            onDone: {
+              target: "ResultCheck",
+              actions: assign({
+                _internalState: ({ event, context }) =>
+                  applySignatureResult(context._internalState, event.output),
               }),
             },
             onError: {
@@ -412,6 +433,8 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
     const blockhashService =
       this.input.blockhashService ?? new BlockhashService();
 
+    const loggerFactory = this.getLoggerFactory(internalApi);
+
     const previewTransaction = async (arg0: {
       input: {
         derivationPath: string;
@@ -429,6 +452,7 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
+        loggerFactory,
       }).run();
 
     const delayedSignTransaction = async (arg0: {
@@ -448,9 +472,10 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
+        loggerFactory,
       }).run();
 
-    const fallbackSignTransaction = async (arg0: {
+    const signTransaction = async (arg0: {
       input: {
         derivationPath: string;
         serializedTransaction: Uint8Array;
@@ -467,45 +492,35 @@ export class DelayedSignTransactionDeviceAction extends XStateDeviceAction<
           }),
         derivationPath: arg0.input.derivationPath,
         sendingData: arg0.input.serializedTransaction,
+        loggerFactory,
       }).run();
-
-    const fetchBlockhashFn = async (arg0: {
-      input: {
-        rpcUrl?: string;
-        fetchBlockhash?: () => Promise<Uint8Array>;
-      };
-    }) => {
-      if (arg0.input.fetchBlockhash) {
-        return arg0.input.fetchBlockhash();
-      }
-      if (!arg0.input.rpcUrl) {
-        throw new Error("No rpcUrl or fetchBlockhash callback provided");
-      }
-      return blockhashService.fetchLatestBlockhash(arg0.input.rpcUrl);
-    };
 
     const zeroBlockhashFn = async (arg0: {
       input: { transaction: Uint8Array };
     }) =>
       Promise.resolve(blockhashService.zeroBlockhash(arg0.input.transaction));
 
-    const patchBlockhashFn = async (arg0: {
-      input: { transaction: Uint8Array; freshBlockhash: Uint8Array };
+    const refreshBlockhash = async (arg0: {
+      input: {
+        transaction: Uint8Array;
+        rpcUrl?: string;
+        fetchBlockhash?: () => Promise<Uint8Array>;
+      };
     }) =>
-      Promise.resolve(
-        blockhashService.patchBlockhash(
-          arg0.input.transaction,
-          arg0.input.freshBlockhash,
-        ),
-      );
+      new RefreshBlockhashTask({
+        transaction: arg0.input.transaction,
+        rpcUrl: arg0.input.rpcUrl,
+        fetchBlockhash: arg0.input.fetchBlockhash,
+        blockhashService,
+        loggerFactory,
+      }).run();
 
     return {
       previewTransaction,
+      refreshBlockhash,
       delayedSignTransaction,
-      fallbackSignTransaction,
-      fetchBlockhashFn,
+      signTransaction,
       zeroBlockhashFn,
-      patchBlockhashFn,
     };
   }
 }
