@@ -6,23 +6,12 @@ import { inject, injectable } from "inversify";
 import { array, Codec, optional, string } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { KeyId } from "@/modules/multichain/pki/model/KeyId";
 import { KeyUsage } from "@/modules/multichain/pki/model/KeyUsage";
 import { type InstructionInfoDataSource } from "@/modules/solana/instruction-info/data/InstructionInfoDataSource";
-import {
-  type CalInstructionDescriptorDto,
-  type CalSignatures,
-} from "@/modules/solana/instruction-info/data/InstructionInfoDto";
 import { instructionInfoTypes } from "@/modules/solana/instruction-info/di/instructionInfoTypes";
-import {
-  type SolanaInstructionEnumVariant,
-  type SolanaInstructionInfoPayload,
-  type SolanaInstructionSubstructure,
-  SolanaInstructionSubstructureKind,
-} from "@/modules/solana/model/SolanaPayloads";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
@@ -30,7 +19,6 @@ import {
 } from "@/shared/model/ClearSignContext";
 import { loadCertificateResult } from "@/shared/utils/certificateResult";
 import { deviceModelIdCodec } from "@/shared/utils/deviceModelIdCodec";
-import { u16Codec } from "@/shared/utils/uIntCodec";
 
 const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_INSTRUCTION_INFO,
@@ -79,8 +67,6 @@ export class InstructionInfoContextLoader
   constructor(
     @inject(instructionInfoTypes.InstructionInfoDataSource)
     private readonly dataSource: InstructionInfoDataSource,
-    @inject(configTypes.Config)
-    private readonly config: ContextModuleServiceConfig,
     @inject(pkiTypes.PkiCertificateLoader)
     private readonly certificateLoader: PkiCertificateLoader,
     @inject(configTypes.ContextModuleLoggerFactory)
@@ -179,7 +165,7 @@ export class InstructionInfoContextLoader
             input.instructions,
           );
 
-          for (const [discriminator, dto] of Object.entries(
+          for (const [discriminator, result] of Object.entries(
             value.descriptors,
           )) {
             if (
@@ -189,7 +175,19 @@ export class InstructionInfoContextLoader
               continue;
             }
             contexts.push(
-              this.toInstructionInfoContext(discriminator, dto, certificate),
+              result.caseOf<ClearSignContext>({
+                Left: (error) => {
+                  this.logger.warn("[load] INSTRUCTION_INFO descriptor error", {
+                    data: { programId, discriminator, error: error.message },
+                  });
+                  return { type: ClearSignContextType.ERROR, error };
+                },
+                Right: (payload) => ({
+                  type: ClearSignContextType.SOLANA_INSTRUCTION_INFO,
+                  payload,
+                  certificate,
+                }),
+              }),
             );
           }
         },
@@ -223,93 +221,5 @@ export class InstructionInfoContextLoader
       }
     }
     return hasUnconstrained ? null : set;
-  }
-
-  private toInstructionInfoContext(
-    discriminator: string,
-    dto: CalInstructionDescriptorDto,
-    certificate: Awaited<ReturnType<PkiCertificateLoader["loadCertificate"]>>,
-  ): ClearSignContext {
-    const info = dto.instruction_info;
-    const signature = this.pickSignature(info.descriptor.signatures);
-    if (!signature) {
-      const error = new Error(
-        `[ContextModule] InstructionInfoContextLoader: missing '${this.config.cal.mode ?? "prod"}' signature for (${info.program_id}, ${discriminator})`,
-      );
-      this.logger.warn("[load] INSTRUCTION_INFO missing signature", {
-        data: { programId: info.program_id, discriminator },
-      });
-      return { type: ClearSignContextType.ERROR, error };
-    }
-
-    const substructures: SolanaInstructionSubstructure[] = [
-      ...(dto.display_fields ?? []).map((s) => ({
-        kind: SolanaInstructionSubstructureKind.DISPLAY_FIELD,
-        data: s.descriptor,
-      })),
-      ...(dto.value_flow_ports ?? []).map((s) => ({
-        kind: SolanaInstructionSubstructureKind.VALUE_FLOW_PORT,
-        data: s.descriptor,
-      })),
-      ...(dto.hide_rules ?? []).map((s) => ({
-        kind: SolanaInstructionSubstructureKind.HIDE_RULE,
-        data: s.descriptor,
-      })),
-      ...(dto.account_resets ?? []).map((s) => ({
-        kind: SolanaInstructionSubstructureKind.ACCOUNT_RESET,
-        data: s.descriptor,
-      })),
-    ];
-
-    // Flatten the CAL-bundled enum variants (keyed enumId to variantIndex) into
-    // a flat list. The signed TLV feeds the host's type-pool decode cache, the
-    // signature is best-effort (only needed when streaming the selected
-    // variant, not for decoding).
-    const enumVariants: SolanaInstructionEnumVariant[] = [];
-    for (const [enumId, variants] of Object.entries(dto.enum_variants ?? {})) {
-      for (const [variantIndex, variant] of Object.entries(variants)) {
-        // CAL keys variants by their stringified u16 index. Validate through
-        // the codec so malformed keys ("7abc", "-1", "1e10") are skipped rather
-        // than leaking NaN/out-of-range indices into the payload (matches
-        // EnumVariantContextLoader).
-        const index = Number(variantIndex);
-        if (u16Codec.decode(index).isLeft()) {
-          this.logger.warn("[load] skipping malformed enum variant index", {
-            data: { programId: info.program_id, enumId, variantIndex },
-          });
-          continue;
-        }
-        enumVariants.push({
-          enumId,
-          variantIndex: index,
-          descriptor: {
-            data: variant.data,
-            signature: this.pickSignature(variant.signatures) ?? "",
-          },
-        });
-      }
-    }
-
-    const payload: SolanaInstructionInfoPayload = {
-      programId: info.program_id,
-      discriminator,
-      instructionInfo: {
-        data: info.descriptor.data,
-        signature,
-      },
-      substructures,
-      enumVariants,
-    };
-
-    return {
-      type: ClearSignContextType.SOLANA_INSTRUCTION_INFO,
-      payload,
-      certificate,
-    };
-  }
-
-  private pickSignature(signatures: CalSignatures): string | undefined {
-    const mode = this.config.cal.mode ?? "prod";
-    return signatures[mode];
   }
 }

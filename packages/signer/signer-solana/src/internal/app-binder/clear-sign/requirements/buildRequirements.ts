@@ -13,7 +13,6 @@ import { RequirementAccumulator } from "./RequirementAccumulator";
 import {
   RequirementsDecodeError,
   type RequirementsError,
-  RequirementsThrow,
 } from "./RequirementsError";
 import {
   applyAltResolutionRule,
@@ -105,9 +104,7 @@ export function buildRequirements(
 
     return Right(accumulator.build());
   } catch (error) {
-    if (error instanceof RequirementsThrow) {
-      return Left(error.error);
-    }
+    // Parsers (e.g. poolFromJson) signal malformed descriptors by throwing.
     return Left(
       new RequirementsDecodeError(
         error instanceof Error ? error.message : String(error),

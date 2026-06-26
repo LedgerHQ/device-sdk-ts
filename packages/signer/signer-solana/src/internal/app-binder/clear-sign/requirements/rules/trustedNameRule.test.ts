@@ -15,7 +15,7 @@ function run(
   addresses: (string | undefined)[],
 ) {
   const parsed: ParsedInstruction = {
-    info: { typePool: new Uint8Array(), rootType: 0, mintAssociations: [] },
+    info: { typePool: [], rootType: 0, mintAssociations: [] },
     valueFlowPorts: [],
     accountResets: [],
     displayFields,

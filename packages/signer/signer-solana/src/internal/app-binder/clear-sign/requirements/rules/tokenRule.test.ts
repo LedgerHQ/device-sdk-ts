@@ -17,7 +17,7 @@ import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 import { applyTokenRule } from "./tokenRule";
 
 const EMPTY_INFO = {
-  typePool: new Uint8Array(),
+  typePool: [],
   rootType: 0,
   mintAssociations: [],
 };

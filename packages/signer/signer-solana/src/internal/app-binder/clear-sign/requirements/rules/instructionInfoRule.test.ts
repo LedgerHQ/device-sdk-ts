@@ -9,8 +9,11 @@ describe("applyInstructionInfoRule", () => {
       instruction: { programId: "P", accounts: [], data: new Uint8Array() },
       descriptor: {
         discriminator: "ab",
-        instructionInfo: new Uint8Array(),
-        substructures: [],
+        idlDescriptor: { type_pool: [], root_type: 0 },
+        mintAssociations: [],
+        valueFlowPorts: [],
+        accountResets: [],
+        displayFields: [],
         enumCache: new Map(),
       },
     } satisfies MatchedInstruction;

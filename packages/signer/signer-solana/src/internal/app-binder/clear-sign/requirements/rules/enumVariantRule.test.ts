@@ -1,6 +1,9 @@
 import { Left, Right } from "purify-ts";
 
-import { type SelectedEnumVariant } from "@internal/app-binder/clear-sign/idl-type-pool";
+import {
+  type Entry,
+  type SelectedEnumVariant,
+} from "@internal/app-binder/clear-sign/idl-type-pool";
 import { type MatchedInstruction } from "@internal/app-binder/clear-sign/requirements/model";
 import { RequirementAccumulator } from "@internal/app-binder/clear-sign/requirements/RequirementAccumulator";
 import { RequirementsDecodeError } from "@internal/app-binder/clear-sign/requirements/RequirementsError";
@@ -14,11 +17,16 @@ const matched: MatchedInstruction = {
   instruction: { programId: "P", accounts: [], data: Uint8Array.of(1, 2) },
   descriptor: {
     discriminator: "00",
-    instructionInfo: new Uint8Array(),
-    substructures: [],
+    idlDescriptor: { type_pool: [], root_type: 0 },
+    mintAssociations: [],
+    valueFlowPorts: [],
+    accountResets: [],
+    displayFields: [],
     enumCache: new Map(),
   },
 };
+
+const POOL: Entry[] = [{ kind: 0x01, refs: [] }];
 
 describe("applyEnumVariantRule", () => {
   it("records each selected variant keyed by the instruction's programId", () => {
@@ -29,13 +37,7 @@ describe("applyEnumVariantRule", () => {
       ] as SelectedEnumVariant[]);
     const accumulator = new RequirementAccumulator();
 
-    const result = applyEnumVariantRule(
-      matched,
-      accumulator,
-      selector,
-      new Uint8Array(),
-      0,
-    );
+    const result = applyEnumVariantRule(matched, accumulator, selector, [], 0);
 
     expect(result.isRight()).toBe(true);
     expect(accumulator.build().enumVariants).toEqual([
@@ -53,12 +55,12 @@ describe("applyEnumVariantRule", () => {
       matched,
       new RequirementAccumulator(),
       selector,
-      Uint8Array.of(9),
+      POOL,
       3,
     );
     expect(calls).toEqual([
       {
-        typePool: Uint8Array.of(9),
+        typePool: POOL,
         rootType: 3,
         cache: matched.descriptor.enumCache,
         data: matched.instruction.data,
@@ -73,7 +75,7 @@ describe("applyEnumVariantRule", () => {
       matched,
       new RequirementAccumulator(),
       selector,
-      new Uint8Array(),
+      [],
       0,
     );
     expect(result.isLeft()).toBe(true);

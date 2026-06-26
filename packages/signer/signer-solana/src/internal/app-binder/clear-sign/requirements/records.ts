@@ -1,3 +1,5 @@
+import { type Entry } from "@internal/app-binder/clear-sign/idl-type-pool";
+
 /** Where a VALUE is sourced from (`VALUE.SOURCE`). */
 export enum ValueSource {
   ARGUMENT_PATH = 0x00,
@@ -70,7 +72,8 @@ export type ParsedDisplayField = {
 export type MintAssociation = { accountIndex: number; mintIndex: number };
 
 export type ParsedInstructionInfo = {
-  typePool: Uint8Array;
+  /** The IDL type pool, built from CAL's `type_pool` JSON (see `poolFromJson`). */
+  typePool: Entry[];
   rootType: number;
   mintAssociations: MintAssociation[];
 };

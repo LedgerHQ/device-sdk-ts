@@ -15,7 +15,6 @@ import { Buffer } from "buffer";
 import { Right } from "purify-ts";
 import { describe, expect, it, vi } from "vitest";
 
-import { instructionInfo as buildInstructionInfoTlv } from "@internal/app-binder/clear-sign/requirements/__tests__/fixtures/tlvBuilders";
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import {
@@ -33,10 +32,14 @@ const UNKNOWN_PROGRAM = new PublicKey(
   "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr",
 );
 
-// Minimal-but-valid INSTRUCTION_INFO TLV so buildRequirements returns Right.
-const INFO_HEX = Buffer.from(
-  buildInstructionInfoTlv({ typePool: new Uint8Array([0x00]), rootType: 0 }),
-).toString("hex");
+// Dummy signed TLV hex (streamed to the device; not parsed host-side).
+const INFO_HEX = "0001";
+
+// Minimal-but-valid decoded type pool so buildRequirements returns Right.
+const MIN_IDL_DESCRIPTOR = {
+  typePool: [{ index: 0, kind: "STRUCT", refs: [] }],
+  rootType: 0,
+};
 
 function makeIx(programId: PublicKey, data: number[]): TransactionInstruction {
   return new TransactionInstruction({
@@ -74,6 +77,11 @@ function instructionInfoContext(
       instructionInfo: { data: INFO_HEX, signature: "00" },
       substructures: [],
       enumVariants: [],
+      idlDescriptor: MIN_IDL_DESCRIPTOR,
+      mintAssociations: [],
+      valueFlowPorts: [],
+      accountResets: [],
+      displayFields: [],
     },
   } as any;
 }

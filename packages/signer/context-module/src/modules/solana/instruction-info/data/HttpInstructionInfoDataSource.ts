@@ -23,6 +23,11 @@ import {
   type CalInstructionDescriptorDto,
   calInstructionDescriptorsCodec,
 } from "./InstructionInfoDto";
+import {
+  type CalMode,
+  toInstructionInfoPayload,
+  toProgramEnumVariants,
+} from "./InstructionInfoMapper";
 
 // Validates the outer envelope shape only. Per-discriminator descriptor
 // content is validated downstream by the loader before being consumed.
@@ -91,13 +96,12 @@ export class HttpInstructionInfoDataSource
             );
           }
 
-          // Validate the inner descriptor shape so the loaders can dereference
+          // Validate the inner descriptor shape so the mapper can dereference
           // `instruction_info.descriptor` / `enum_variants` without
           // runtime-throwing on a malformed CAL payload. A malformed descriptor
           // degrades the whole program to a per-program ERROR rather than
-          // rejecting the batch. On success we pass the original (full) object
-          // through — the cast is now justified because the consumed shape has
-          // been validated.
+          // rejecting the batch. On success we transform each validated DTO into
+          // the core payload so the loader never sees the CAL DTO shapes.
           return calInstructionDescriptorsCodec
             .decode(descriptors)
             .caseOf<Either<Error, InstructionInfoResult>>({
@@ -107,14 +111,32 @@ export class HttpInstructionInfoDataSource
                     `[ContextModule] HttpInstructionInfoDataSource: malformed descriptors for program ${programId}: ${error}`,
                   ),
                 ),
-              Right: () =>
-                Right({
+              // The codec only validates the consumed shape and strips
+              // undeclared fields, so we transform the original (full) object —
+              // the cast is justified now that the shape has been validated.
+              Right: () => {
+                const mode: CalMode = this.config.cal.mode ?? "prod";
+                const validatedDescriptors = descriptors as Record<
+                  string,
+                  CalInstructionDescriptorDto
+                >;
+                const mapped = Object.fromEntries(
+                  Object.entries(validatedDescriptors).map(
+                    ([discriminator, dto]) => [
+                      discriminator,
+                      toInstructionInfoPayload(discriminator, dto, mode),
+                    ],
+                  ),
+                );
+                return Right({
                   programId,
-                  descriptors: descriptors as Record<
-                    string,
-                    CalInstructionDescriptorDto
-                  >,
-                }),
+                  descriptors: mapped,
+                  enumVariants: toProgramEnumVariants(
+                    validatedDescriptors,
+                    mode,
+                  ),
+                });
+              },
             });
         },
       });

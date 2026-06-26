@@ -18,6 +18,41 @@ export type CalSignedDescriptorDto = {
   signatures: CalSignatures;
 };
 
+// Decoded CAL JSON shapes (snake_case mirrors the CAL response) that drive
+// host-side requirement building.
+
+export type CalValueDto = {
+  source: string;
+  account_index?: number;
+  data?: string;
+  path?: { steps: number[] };
+};
+
+export type CalTokenValueDto = {
+  kind: string;
+  value?: CalValueDto;
+  account_index?: number;
+};
+
+export type CalMintAssociationDto = {
+  account_index: number;
+  mint_index: number;
+};
+
+export type CalTypePoolEntryDto = {
+  index: number;
+  kind: string;
+  refs?: number[];
+  size?: number;
+  encoding?: number;
+  len_kind?: string;
+  flag_kind?: string;
+  sentinel?: string;
+  disc_kind?: string;
+  total_variants?: number;
+  enum_id?: string;
+};
+
 export type CalInstructionInfoDto = {
   version: number;
   program_id: string;
@@ -27,10 +62,10 @@ export type CalInstructionInfoDto = {
   program_name?: string;
   descriptor: CalSignedDescriptorDto;
   idl_descriptor?: {
-    type_pool?: unknown;
+    type_pool?: CalTypePoolEntryDto[];
     root_type?: number;
   };
-  mint_association?: unknown;
+  mint_association?: CalMintAssociationDto;
   owner_association?: unknown;
 };
 
@@ -41,8 +76,26 @@ export type CalEnumVariantDto = {
   signatures: CalSignatures;
 };
 
+/** A substructure CAL serves only as opaque TLV (e.g. HIDE_RULE). */
 export type CalSubstructureDto = {
   descriptor: string;
+};
+
+export type CalValueFlowPortDto = CalSubstructureDto & {
+  account_indices?: number[];
+  account_index?: number;
+  optional_account_strategy?: string;
+  token_value?: CalTokenValueDto;
+};
+
+export type CalAccountResetDto = CalSubstructureDto & {
+  account_index?: number;
+  require_pre_balance_zero?: boolean;
+};
+
+export type CalDisplayFieldDto = CalSubstructureDto & {
+  name?: string;
+  param?: { type: string; value?: CalValueDto; token?: CalValueDto };
 };
 
 export type CalInstructionDescriptorDto = {
@@ -52,10 +105,10 @@ export type CalInstructionDescriptorDto = {
   version?: string;
   instruction_info: CalInstructionInfoDto;
   enum_variants?: Record<string, Record<string, CalEnumVariantDto>>;
-  display_fields?: CalSubstructureDto[];
-  value_flow_ports?: CalSubstructureDto[];
+  display_fields?: CalDisplayFieldDto[];
+  value_flow_ports?: CalValueFlowPortDto[];
   hide_rules?: CalSubstructureDto[];
-  account_resets?: CalSubstructureDto[];
+  account_resets?: CalAccountResetDto[];
 };
 
 // Outer shape: array containing one envelope object keyed by program_id
