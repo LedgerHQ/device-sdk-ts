@@ -4,7 +4,7 @@ import globals from "globals";
 export default [
   ...baseConfig,
   {
-    ignores: [".next", "**/_meta.js"],
+    ignores: [".next", "public/_pagefind", "**/_meta.js"],
   },
   {
     languageOptions: {
@@ -22,12 +22,7 @@ export default [
     },
   },
   {
-    files: [
-      "next.config.mjs",
-      "postcss.config.js",
-      "tailwind.config.js",
-      "theme.config.tsx",
-    ],
+    files: ["next.config.mjs", "postcss.config.js"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -35,6 +30,15 @@ export default [
     },
     rules: {
       "@typescript-eslint/no-var-requires": "off",
+    },
+  },
+  {
+    // Next.js App Router entrypoints require default exports and import the
+    // global stylesheet via a relative path.
+    files: ["app/**/*.{js,jsx,ts,tsx}", "mdx-components.js"],
+    rules: {
+      "no-restricted-syntax": "off",
+      "no-restricted-imports": "off",
     },
   },
 ];

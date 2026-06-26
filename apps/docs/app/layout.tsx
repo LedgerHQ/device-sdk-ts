@@ -1,11 +1,11 @@
-import "../style.css";
-import "nextra-theme-docs/style.css";
-
+import React from "react";
 import type { Metadata } from "next";
-import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import { Head } from "nextra/components";
 import { getPageMap } from "nextra/page-map";
-import React from "react";
+import { Footer, Layout, Navbar } from "nextra-theme-docs";
+
+import "../style.css";
+import "nextra-theme-docs/style.css";
 
 export const metadata: Metadata = {
   title: {
@@ -85,7 +85,10 @@ export default async function RootLayout({
           pageMap={pageMap}
           docsRepositoryBase="https://github.com/LedgerHQ/device-sdk-ts/tree/main/apps/docs"
           editLink="Edit this page on GitHub →"
-          feedback={{ content: "Question? Give us feedback →", labels: "feedback" }}
+          feedback={{
+            content: "Question? Give us feedback →",
+            labels: "feedback",
+          }}
           sidebar={{ defaultMenuCollapseLevel: 1 }}
         >
           {children}

@@ -87,5 +87,10 @@
   "engines": {
     "node": ">=20"
   },
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@10.28.2",
+  "pnpm": {
+    "overrides": {
+      "zod@>=4.4.0": "4.3.6"
+    }
+  }
 }
