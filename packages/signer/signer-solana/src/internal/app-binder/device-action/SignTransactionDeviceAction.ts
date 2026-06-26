@@ -62,6 +62,7 @@ export type MachineDependencies = {
       derivationPath: string;
       transaction: Uint8Array;
       contextModule: ContextModule;
+      isBlockhashRefreshNeeded: boolean;
     };
   }) => Promise<void>;
 };
@@ -408,11 +409,19 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
           invoke: {
             id: "provideWeb3Check",
             src: "provideWeb3Check",
-            input: ({ context }) => ({
-              derivationPath: context.input.derivationPath,
-              transaction: context.input.transaction,
-              contextModule: context.input.contextModule,
-            }),
+            input: ({ context }) => {
+              // The scan descriptor must hash the same message the device will
+              // sign. The terminal sign only zeroes the blockhash when it
+              // refreshes it (delayed signing); otherwise it signs the original.
+              const { rpcUrl, fetchBlockhash } = resolveRefreshSource(context);
+              return {
+                derivationPath: context.input.derivationPath,
+                transaction: context.input.transaction,
+                contextModule: context.input.contextModule,
+                isBlockhashRefreshNeeded:
+                  rpcUrl !== undefined || fetchBlockhash !== undefined,
+              };
+            },
             // Best-effort: a failed scan-descriptor stream never blocks signing.
             onDone: { target: "CheckGenericClearSignSupported" },
             onError: {
@@ -651,12 +660,14 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
         derivationPath: string;
         transaction: Uint8Array;
         contextModule: ContextModule;
+        isBlockhashRefreshNeeded: boolean;
       };
     }) =>
       new ProvideWeb3CheckTask(internalApi, {
         derivationPath: arg0.input.derivationPath,
         transactionBytes: arg0.input.transaction,
         contextModule: arg0.input.contextModule,
+        isBlockhashRefreshNeeded: arg0.input.isBlockhashRefreshNeeded,
         loggerFactory: this.getLoggerFactory(internalApi),
       }).run();
 

@@ -46,6 +46,7 @@ const txCheckContext = {
 function makeTask(
   getContexts: Mock = vi.fn(async () => [txCheckContext]),
   transactionBytes: Uint8Array = TX,
+  isBlockhashRefreshNeeded = true,
 ) {
   const api = {
     sendCommand: vi.fn(async (cmd: unknown) => {
@@ -62,6 +63,7 @@ function makeTask(
     derivationPath: "44'/501'/0'",
     transactionBytes,
     contextModule,
+    isBlockhashRefreshNeeded,
     loggerFactory: () =>
       ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }) as any,
   });
@@ -98,14 +100,14 @@ describe("ProvideWeb3CheckTask", () => {
     expect(sent.some((c) => c instanceof ProvideWeb3CheckCommand)).toBe(true);
   });
 
-  it("fetches the scan descriptor over the blockhash-zeroed message", async () => {
-    // The device fingerprints the transaction with the blockhash zeroed, so the
-    // backend must scan the same bytes — otherwise the verdict can't be matched
-    // on-device and it shows "Transaction Check unavailable".
+  it("zeroes the blockhash when the sign will refresh it (delayed path)", async () => {
+    // The delayed path previews a blockhash-zeroed message, so the backend must
+    // scan the same bytes — otherwise the verdict can't be matched on-device and
+    // it shows "Transaction Check unavailable".
     const message = buildLegacyMessage();
     const expected = new BlockhashService().zeroBlockhash(message);
     const getContexts = vi.fn(async () => [txCheckContext]);
-    const { task } = makeTask(getContexts, message);
+    const { task } = makeTask(getContexts, message, true);
 
     await task.run();
 
@@ -114,6 +116,20 @@ describe("ProvideWeb3CheckTask", () => {
     expect(sentBytes).toEqual(expected);
     // The original (non-zeroed) message must not be forwarded as-is.
     expect(sentBytes).not.toEqual(message);
+  });
+
+  it("keeps the original blockhash when the sign will not refresh it (one-shot path)", async () => {
+    // The one-shot path signs the original message, so the device fingerprints
+    // the real blockhash; zeroing it here would make the verdict unmatchable.
+    const message = buildLegacyMessage();
+    const getContexts = vi.fn(async () => [txCheckContext]);
+    const { task } = makeTask(getContexts, message, false);
+
+    await task.run();
+
+    const sentBytes = (getContexts.mock.calls[0] as any)[0].transactionCheck
+      .transactionBytes as Uint8Array;
+    expect(sentBytes).toEqual(message);
   });
 
   it("skips (best-effort) when the public key cannot be read", async () => {
