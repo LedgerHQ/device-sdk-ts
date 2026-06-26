@@ -8,12 +8,6 @@ packages:
   - packages/transport/*
   - packages/trusted-apps/*
 
-overrides:
-  # zod 4.4.x has a regression where a missing `z.custom` key in a strict object
-  # fails validation, which breaks nextra-theme-docs' Layout (see nextra#5008).
-  # Pin transitive zod below 4.4 until the upstream fix is released.
-  'zod@>=4.4.0': 4.3.6
-
 catalog:
   '@babel/core': ^7.25.2
   '@babel/preset-env': ^7.25.3
