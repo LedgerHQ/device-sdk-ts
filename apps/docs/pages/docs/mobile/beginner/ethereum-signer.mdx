@@ -17,13 +17,13 @@ For transaction signing, the Signer integrates with the [Context Module](./conte
 ## Installation
 
 <Callout type="info" emoji="ℹ️">
-  This module is not standalone: it depends on the `device-management` module,
+  This module is not standalone: it depends on the `device-management-kit` module,
   which must be installed first.
 </Callout>
 
 The module is published as:
 
-- **Android**: `com.ledger:signer-eth` (Maven/Gradle)
+- **Android**: `io.github.ledgerhq:device-signer-kit-ethereum` (Maven/Gradle)
 - **iOS**: `SignerEth` (XCFramework / Swift Package Manager)
 
 ### Android
@@ -36,7 +36,7 @@ Add the Ledger SDK version catalog to your `settings.gradle.kts`:
 dependencyResolutionManagement {
     versionCatalogs {
         create("ledger") {
-            from("com.ledgerhq:sdk-version-catalog:<version>")
+            from("io.github.ledgerhq:sdk-version-catalog:<version>")
         }
     }
 }
@@ -47,8 +47,8 @@ Then in your module's `build.gradle.kts`:
 ```kotlin
 dependencies {
     implementation(platform(ledger.bom))
-    implementation(ledger.device.management)
-    implementation(ledger.signer.eth)
+    implementation(ledger.device.management.kit)
+    implementation(ledger.device.signer.kit.ethereum)
 }
 ```
 
@@ -56,9 +56,9 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation(platform("com.ledgerhq:sdk-bom:<version>"))
-    implementation("com.ledger:device-management")
-    implementation("com.ledger:signer-eth")
+    implementation(platform("io.github.ledgerhq:sdk-bom:<version>"))
+    implementation("io.github.ledgerhq:device-management-kit")
+    implementation("io.github.ledgerhq:device-signer-kit-ethereum")
 }
 ```
 
@@ -66,8 +66,8 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("com.ledger:device-management:<version>")
-    implementation("com.ledger:signer-eth:<version>")
+    implementation("io.github.ledgerhq:device-management-kit:<version>")
+    implementation("io.github.ledgerhq:device-signer-kit-ethereum:<version>")
 }
 ```
 

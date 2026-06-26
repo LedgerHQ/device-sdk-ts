@@ -14,7 +14,7 @@ Add the Ledger SDK version catalog to your `settings.gradle.kts`:
 dependencyResolutionManagement {
     versionCatalogs {
         create("ledger") {
-            from("com.ledgerhq:sdk-version-catalog:<version>")
+            from("io.github.ledgerhq:sdk-version-catalog:<version>")
         }
     }
 }
@@ -29,7 +29,7 @@ dependencyResolutionManagement {
 ```kotlin
 dependencies {
     implementation(platform(ledger.bom))
-    implementation(ledger.device.management)
+    implementation(ledger.device.management.kit)
 }
 ```
 
@@ -37,8 +37,8 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation(platform("com.ledgerhq:sdk-bom:<version>"))
-    implementation("com.ledger:device-management")
+    implementation(platform("io.github.ledgerhq:sdk-bom:<version>"))
+    implementation("io.github.ledgerhq:device-management-kit")
 }
 ```
 
@@ -46,7 +46,7 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("com.ledger:device-management:<version>")
+    implementation("io.github.ledgerhq:device-management-kit:<version>")
 }
 ```
 
@@ -59,7 +59,7 @@ Add the `LedgerDMK` XCFramework to your Xcode project or `Package.swift`.
 ### Ethereum Signer
 
 <Callout type="info" emoji="ℹ️">
-  This module depends on the `device-management` module, which must be installed
+  This module depends on the `device-management-kit` module, which must be installed
   first.
 </Callout>
 
@@ -68,8 +68,8 @@ Add the `LedgerDMK` XCFramework to your Xcode project or `Package.swift`.
 ```kotlin
 dependencies {
     implementation(platform(ledger.bom))
-    implementation(ledger.device.management)
-    implementation(ledger.signer.eth)
+    implementation(ledger.device.management.kit)
+    implementation(ledger.device.signer.kit.ethereum)
 }
 ```
 
@@ -77,9 +77,9 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation(platform("com.ledgerhq:sdk-bom:<version>"))
-    implementation("com.ledger:device-management")
-    implementation("com.ledger:signer-eth")
+    implementation(platform("io.github.ledgerhq:sdk-bom:<version>"))
+    implementation("io.github.ledgerhq:device-management-kit")
+    implementation("io.github.ledgerhq:device-signer-kit-ethereum")
 }
 ```
 
@@ -87,8 +87,8 @@ dependencies {
 
 ```kotlin
 dependencies {
-    implementation("com.ledger:device-management:<version>")
-    implementation("com.ledger:signer-eth:<version>")
+    implementation("io.github.ledgerhq:device-management-kit:<version>")
+    implementation("io.github.ledgerhq:device-signer-kit-ethereum:<version>")
 }
 ```
 
