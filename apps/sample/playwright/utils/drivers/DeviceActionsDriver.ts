@@ -86,6 +86,18 @@ export class DeviceActionsDriver {
   }
 
   /**
+   * Open the Install or update applications action, set the comma-separated app
+   * names, and Execute it.
+   */
+  async installOrUpdateApps(applications: string): Promise<void> {
+    await this.open("Install or update applications");
+    const input = this.page.getByTestId("input-text_applications");
+    await input.waitFor({ state: "visible" });
+    await input.fill(applications);
+    await this.send();
+  }
+
+  /**
    * Open the Wait for app and version action and Execute it.
    */
   async waitForAppAndVersion({
