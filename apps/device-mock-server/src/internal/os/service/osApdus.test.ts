@@ -4,6 +4,7 @@ import {
   deriveGetAppAndVersion,
   deriveGetBatteryStatus,
   deriveGetOsVersion,
+  deriveListApps,
   deriveOsApduResponse,
 } from "./osApdus";
 
@@ -125,5 +126,55 @@ describe("deriveOsApduResponse", () => {
 
   it("returns undefined for a non-OS APDU", () => {
     expect(deriveOsApduResponse(device({}), "e0f1000000")).toBeUndefined();
+  });
+
+  it("dispatches ListApps (0xE0 0xDE)", () => {
+    expect(
+      deriveOsApduResponse(
+        device({ apps: [{ name: "BOLOS", version: "1.5.0" }] }),
+        "e0de000000",
+      ),
+    ).toBe("9000");
+  });
+});
+
+describe("deriveListApps", () => {
+  it("encodes the installed apps (excluding BOLOS) for the initial command", () => {
+    const response = deriveListApps(
+      device({
+        apps: [
+          { name: "BOLOS", version: "1.5.0" },
+          { name: "Bitcoin", version: "2.1.0" },
+        ],
+      }),
+      "e0de000000",
+    );
+    // 01 (format byte) + 4c (entry length) + 0001 (blocks) + 0000 (flags)
+    // + 32-byte code hash + 32-byte full hash + 07"Bitcoin" + 9000.
+    expect(response).toBe(
+      "014c00010000" + "0".repeat(128) + "07426974636f696e" + "9000",
+    );
+  });
+
+  it("returns a bare success when only BOLOS is installed", () => {
+    expect(
+      deriveListApps(
+        device({ apps: [{ name: "BOLOS", version: "1.5.0" }] }),
+        "e0de000000",
+      ),
+    ).toBe("9000");
+  });
+
+  it("returns a bare success for the continue command", () => {
+    expect(
+      deriveListApps(
+        device({ apps: [{ name: "Bitcoin", version: "2.1.0" }] }),
+        "e0df000000",
+      ),
+    ).toBe("9000");
+  });
+
+  it("returns undefined for an unrelated APDU", () => {
+    expect(deriveListApps(device({}), "e0010000")).toBeUndefined();
   });
 });

@@ -166,7 +166,7 @@ describe("ApduResolverService", () => {
   it("falls back to 6d00 for an unmatched non-derivable APDU", async () => {
     const { repo, record, device, os, secureChannel } = setup();
     const resolver = new ApduResolverService(repo, os, secureChannel);
-    expect(await resolver.resolve(record, device, "e0de000000")).toBe("6d00");
+    expect(await resolver.resolve(record, device, "e0bb000000")).toBe("6d00");
   });
 
   it("does not intercept open app without an operator/use-case", async () => {
