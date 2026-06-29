@@ -31,7 +31,7 @@ import {
 } from "@api/transport/model/Errors";
 import { type TransportConnectedDevice } from "@api/transport/model/TransportConnectedDevice";
 import {
-  formatApduReceivedLog,
+  formatApduExchangeLog,
   formatApduSendingLog,
 } from "@api/utils/apduLogs";
 import { DEVICE_SESSION_REFRESHER_DEFAULT_OPTIONS } from "@internal/device-session/data/DeviceSessionRefresherConst";
@@ -246,7 +246,12 @@ export class DeviceSession {
 
     return result
       .ifRight((response: ApduResponse) => {
-        this._logger.debug(formatApduReceivedLog(response));
+        const { message, data } = formatApduExchangeLog(
+          this._id,
+          rawApdu,
+          response,
+        );
+        this._logger.debug(message, { data });
         if (CommandUtils.isLockedDeviceResponse(response)) {
           this._sessionEventDispatcher.dispatch({
             eventName: SessionEvents.DEVICE_STATE_UPDATE_LOCKED,
