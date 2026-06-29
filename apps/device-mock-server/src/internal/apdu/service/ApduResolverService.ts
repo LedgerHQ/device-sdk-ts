@@ -60,18 +60,22 @@ export class ApduResolverService {
     apduHex: string,
   ): Promise<string> {
     const response = await this.resolveResponse(record, device, apduHex);
-    // A real device only holds the new app once it acknowledges the final
-    // install block; mirror that by committing the armed install when the
-    // commit APDU resolves to success (so a failed install never adds it).
+    // A real device only applies the app change once it acknowledges the final
+    // install block; mirror that by applying the armed install/uninstall when the
+    // commit APDU resolves to success (so a failed operation never changes state).
     if (
       apduHex.toLowerCase() === INSTALL_COMMIT_APDU &&
       response.toLowerCase().endsWith(SW_OK)
     ) {
       this.repository
-        .commitPendingInstall(record, device.id)
+        .commitPendingAppOperation(record, device.id)
         .ifJust((updated) =>
           logger.info(
-            `Install committed on ${updated.id}: ${updated.apps?.at(-1)?.name}`,
+            `App operation committed on ${updated.id}; installed: ${(
+              updated.apps ?? []
+            )
+              .map((app) => app.name)
+              .join(", ")}`,
           ),
         );
     }

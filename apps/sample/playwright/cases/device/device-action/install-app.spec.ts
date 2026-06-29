@@ -157,3 +157,42 @@ test.describe("device action: install app", () => {
     });
   });
 });
+
+test.describe("device action: uninstall app", () => {
+  test("uninstalls Bitcoin successfully via the secure channel", async ({
+    device,
+    deviceActions,
+  }) => {
+    // Uninstall first resolves the app from the device's installed list (by its
+    // Manager-API hash). Rather than seed that hash, install Bitcoin first so the
+    // device context holds it with the real hash, then uninstall it.
+    await test.step("Given a connected device with Bitcoin installed", async () => {
+      await device.addAndConnect(NANO_X);
+      await deviceActions.goto();
+      await deviceActions.installApp(APP_TO_INSTALL);
+      const installed = await deviceActions.lastResponse<InstallAppResponse>({
+        until: '"completed"',
+        timeout: 60_000,
+      });
+      expect(installed.status).toBe("completed");
+    });
+
+    await test.step("When the Uninstall App device action is executed for Bitcoin", async () => {
+      // Selecting Install App hid the action rows; go back to the list first.
+      await deviceActions.backToList();
+      await deviceActions.uninstallApp(APP_TO_INSTALL);
+    });
+
+    await test.step("Then the uninstall completes successfully", async () => {
+      // Symmetric to install: the action re-lists the installed apps and only
+      // completes once the device context no longer reports Bitcoin; otherwise it
+      // keeps looping. The mock removes the app when the install endpoint runs for
+      // an already-installed app, so the confirmation terminates.
+      const response = await deviceActions.lastResponse<InstallAppResponse>({
+        until: '"completed"',
+        timeout: 60_000,
+      });
+      expect(response.status).toBe("completed");
+    });
+  });
+});

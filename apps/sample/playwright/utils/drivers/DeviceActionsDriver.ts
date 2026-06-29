@@ -40,6 +40,19 @@ export class DeviceActionsDriver {
     await this.send();
   }
 
+  /**
+   * Return to the device-actions list. Selecting an action replaces the row list
+   * with its tester, so navigate away and back to remount the view and show the
+   * rows again (e.g. to run a second action after a first one completed).
+   */
+  async backToList(): Promise<void> {
+    await this.page.getByTestId("CTA_route-to-/commands").click();
+    await this.page.waitForURL("http://localhost:3000/commands", {
+      timeout: 10_000,
+    });
+    await this.goto();
+  }
+
   /** Open a device action row without executing it. */
   async open(title: string): Promise<void> {
     await this.page
@@ -51,6 +64,15 @@ export class DeviceActionsDriver {
   /** Open the Install App action, fill the app name, and Execute it. */
   async installApp(appName: string): Promise<void> {
     await this.open("Install App");
+    const input = this.page.getByTestId("input-text_appName");
+    await input.waitFor({ state: "visible" });
+    await input.fill(appName);
+    await this.send();
+  }
+
+  /** Open the Uninstall App action, fill the app name, and Execute it. */
+  async uninstallApp(appName: string): Promise<void> {
+    await this.open("Uninstall App");
     const input = this.page.getByTestId("input-text_appName");
     await input.waitFor({ state: "visible" });
     await input.fill(appName);

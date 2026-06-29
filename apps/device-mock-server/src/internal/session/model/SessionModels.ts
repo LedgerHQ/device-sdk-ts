@@ -32,6 +32,9 @@ export interface SessionRecord {
   speculos: Map<string, SpeculosProxySession>;
   /** Installable apps known to the mock "app store", keyed by install hash. */
   catalog: Map<string, CatalogApp>;
-  /** App armed by an install flow, awaiting commit on the next list: deviceId -> app. */
-  pendingInstalls: Map<string, CatalogApp>;
+  /**
+   * App targeted by an in-flight secure-channel install/uninstall, awaiting
+   * commit when the final install block is acknowledged: deviceId -> app.
+   */
+  pendingAppOperations: Map<string, CatalogApp>;
 }
