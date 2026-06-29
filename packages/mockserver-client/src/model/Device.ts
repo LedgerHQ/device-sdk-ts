@@ -7,9 +7,28 @@ export type DeviceConnectivityType = "USB" | "BLE";
 export interface DeviceApp {
   readonly name: string;
   readonly version: string;
+  readonly hash?: string;
 }
 
 export const deviceAppCodec = Codec.interface({
+  name: string,
+  version: string,
+  hash: optional(string),
+});
+
+/**
+ * An installable app known to the mock "app store", keyed by its install
+ * `hash`. The secure-channel install flow resolves the hash sent by DMK to one
+ * of these entries to learn which app is being installed.
+ */
+export interface CatalogApp {
+  readonly hash: string;
+  readonly name: string;
+  readonly version: string;
+}
+
+export const catalogAppCodec = Codec.interface({
+  hash: string,
   name: string,
   version: string,
 });
@@ -56,6 +75,8 @@ export interface DeviceConfig {
   readonly masks?: number[];
   /** Device-scoped APDU mocks, used when attaching (POST) or importing a device. */
   readonly mocks?: MockConfig[];
+  /** Installable apps the mock "app store" can resolve from an install hash. */
+  readonly catalog?: CatalogApp[];
 }
 
 export const deviceConfigCodec = Codec.interface({
@@ -66,4 +87,5 @@ export const deviceConfigCodec = Codec.interface({
   apps: optional(array(deviceAppCodec)),
   masks: optional(array(number)),
   mocks: optional(array(mockConfigCodec)),
+  catalog: optional(array(catalogAppCodec)),
 });

@@ -3,6 +3,8 @@ export { MockClient } from "./MockClient";
 export type { AuthResponse, ConnectionState } from "./model/Auth";
 export type { CommandResponse } from "./model/CommandResponse";
 export {
+  type CatalogApp,
+  catalogAppCodec,
   type Device,
   type DeviceApp,
   type DeviceConfig,

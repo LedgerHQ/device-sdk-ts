@@ -3,11 +3,18 @@ import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
 import { expect, test } from "../../../fixtures";
 
+const APP_TO_INSTALL = "Bitcoin";
+
 // Install runs the secure-channel `install` flow (handshake + a bulk stream of
 // install APDUs). The mock server derives the bulk APDUs (0xE0 0xF0) to success
 // by default; an explicit mock overrides them to inject a device error. The app
 // catalog is still fetched from the live Manager API, so this must be a real
 // firmware + a real, not-yet-installed app.
+//
+// On a successful install the mock resolves the install hash to the app via the
+// Manager API (the way the real ScriptRunner backend does) and adds it to the
+// device's installed apps, so the post-install re-list reports Bitcoin and the
+// action completes — no per-test catalog seeding required.
 const NANO_X: DeviceConfig = {
   name: "Ledger Nano X",
   device_type: "nanoX",
@@ -17,9 +24,74 @@ const NANO_X: DeviceConfig = {
   masks: [0x33000000],
 };
 
-const APP_TO_INSTALL = "Bitcoin";
+// A Stax device on firmware 1.9.1 with only the dashboard installed. The
+// target-id mask is derived from the model (stax -> 0x33200000), so it doesn't
+// need to be set explicitly.
+const STAX: DeviceConfig = {
+  name: "Ledger Stax",
+  device_type: "stax",
+  connectivity_type: "BLE",
+  firmware_version: "1.9.1",
+  apps: [{ name: "BOLOS", version: "1.9.1" }],
+};
+
+const ETH_APP_TO_INSTALL = "Ethereum";
+
+interface InstallAppResponse {
+  status: string;
+}
 
 test.describe("device action: install app", () => {
+  test("installs Bitcoin successfully via the secure channel", async ({
+    device,
+    deviceActions,
+  }) => {
+    await test.step("Given a connected device without Bitcoin installed", async () => {
+      await device.addAndConnect(NANO_X);
+    });
+
+    await test.step("When the Install App device action is executed for Bitcoin", async () => {
+      await deviceActions.goto();
+      await deviceActions.installApp(APP_TO_INSTALL);
+    });
+
+    await test.step("Then the install completes successfully", async () => {
+      // Once the install bulk stream succeeds the device action re-lists the
+      // installed apps to confirm the new app is present. This only terminates
+      // if the device context now reflects Bitcoin as installed; otherwise the
+      // action keeps looping and never reaches a completed state.
+      const response = await deviceActions.lastResponse<InstallAppResponse>({
+        until: '"completed"',
+        timeout: 60_000,
+      });
+      expect(response.status).toBe("completed");
+    });
+  });
+
+  test("installs Ethereum successfully on a Stax via the secure channel", async ({
+    device,
+    deviceActions,
+  }) => {
+    await test.step("Given a connected Stax without Ethereum installed", async () => {
+      await device.addAndConnect(STAX);
+    });
+
+    await test.step("When the Install App device action is executed for Ethereum", async () => {
+      await deviceActions.goto();
+      await deviceActions.installApp(ETH_APP_TO_INSTALL);
+    });
+
+    await test.step("Then the install completes successfully", async () => {
+      // Same confirmation loop as the Nano X case: the action only completes if
+      // the device context reflects Ethereum as installed after the bulk stream.
+      const response = await deviceActions.lastResponse<InstallAppResponse>({
+        until: '"completed"',
+        timeout: 60_000,
+      });
+      expect(response.status).toBe("completed");
+    });
+  });
+
   test("fails with OutOfMemoryDAError when the device runs out of memory", async ({
     device,
     deviceActions,

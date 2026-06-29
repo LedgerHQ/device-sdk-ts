@@ -176,4 +176,40 @@ describe("InMemorySessionRepository", () => {
       { prefix: "ff", responses: ["11", "22"] },
     ]);
   });
+
+  // --- App store (catalog) / pending installs --------------------------------
+
+  const BTC = { hash: "abc123", name: "Bitcoin", version: "2.1.0" };
+
+  it("seeds the app store catalog from the device config (exact hash lookup)", () => {
+    const { repo, record } = newSession();
+    repo.addDevice(record, { device_type: "nanoX", catalog: [BTC] });
+    expect(repo.findCatalogAppByHash(record, "abc123").extract()).toEqual(BTC);
+    expect(repo.findCatalogAppByHash(record, "unknown").isNothing()).toBe(true);
+  });
+
+  it("commits a pending install into the device app registry, idempotently", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, {
+      device_type: "nanoX",
+      apps: [{ name: "BOLOS", version: "1.5.0" }],
+    });
+
+    // Nothing pending: no-op.
+    expect(repo.commitPendingInstall(record, device.id).isNothing()).toBe(true);
+
+    repo.setPendingInstall(record, device.id, BTC);
+    const updated = repo.commitPendingInstall(record, device.id).unsafeCoerce();
+    expect(updated.apps).toEqual([
+      { name: "BOLOS", version: "1.5.0" },
+      { name: "Bitcoin", version: "2.1.0", hash: "abc123" },
+    ]);
+
+    // Pending was cleared, and committing the same app again is a no-op.
+    expect(repo.commitPendingInstall(record, device.id).isNothing()).toBe(true);
+    repo.setPendingInstall(record, device.id, BTC);
+    expect(
+      repo.commitPendingInstall(record, device.id).unsafeCoerce().apps,
+    ).toHaveLength(2);
+  });
 });

@@ -48,6 +48,14 @@ export const INSTALL_BLOCK_APDUS: readonly string[] = [
 ];
 
 /**
+ * The final install block (the commit/flush, P1 `05`). A real device only holds
+ * the new app once this last command is acknowledged, so the mock commits the
+ * pending install into the device's registry when this APDU resolves to success.
+ */
+export const INSTALL_COMMIT_APDU =
+  INSTALL_BLOCK_APDUS[INSTALL_BLOCK_APDUS.length - 1]!;
+
+/**
  * GetCertificate response: a length-value encoded empty header followed by a
  * length-value encoded public key (`aabbccdd`), so DMK's `extractPublicKey`
  * yields a non-null key and emits a device id.

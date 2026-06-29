@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import {
+  type CatalogApp,
   type Device,
   type DeviceConfig,
   type Mock,
@@ -50,6 +51,8 @@ export class InMemorySessionRepository implements SessionRepository {
       deviceMocks: new Map(),
       deviceMockCursors: new Map(),
       speculos: new Map(),
+      catalog: new Map(),
+      pendingInstalls: new Map(),
     };
     this.sessions.set(record.token, record);
     return { token: record.token, expiresAt: this.expiresAt(record) };
@@ -108,6 +111,11 @@ export class InMemorySessionRepository implements SessionRepository {
     record.devices.set(id, device);
     record.deviceMocks.set(id, new Map());
     record.deviceMockCursors.set(id, new Map());
+    // Seed the session-wide app store with the installable apps the client may
+    // later install (resolved from their install hash by the secure channel).
+    for (const app of config.catalog ?? []) {
+      record.catalog.set(app.hash, app);
+    }
     // No default mocks: the handshake (GetOsVersion / GetAppAndVersion) is
     // derived from device metadata at APDU-resolution time. Callers may still
     // seed explicit mocks via config (used by import).
@@ -151,6 +159,43 @@ export class InMemorySessionRepository implements SessionRepository {
   ): Maybe<Device> {
     return this.findDevice(record, deviceId).map((current) => {
       const updated: Device = { ...current, connected };
+      record.devices.set(deviceId, updated);
+      return updated;
+    });
+  }
+
+  // --- App store (catalog) / pending installs -------------------------------
+
+  findCatalogAppByHash(record: SessionRecord, hash: string): Maybe<CatalogApp> {
+    return Maybe.fromNullable(record.catalog.get(hash));
+  }
+
+  setPendingInstall(
+    record: SessionRecord,
+    deviceId: string,
+    app: CatalogApp,
+  ): void {
+    record.pendingInstalls.set(deviceId, app);
+  }
+
+  commitPendingInstall(record: SessionRecord, deviceId: string): Maybe<Device> {
+    const app = record.pendingInstalls.get(deviceId);
+    if (!app) {
+      return Maybe.empty();
+    }
+    record.pendingInstalls.delete(deviceId);
+    return this.findDevice(record, deviceId).map((device) => {
+      const apps = device.apps ?? [];
+      if (apps.some((existing) => existing.name === app.name)) {
+        return device; // already installed: nothing to add
+      }
+      const updated: Device = {
+        ...device,
+        apps: [
+          ...apps,
+          { name: app.name, version: app.version, hash: app.hash },
+        ],
+      };
       record.devices.set(deviceId, updated);
       return updated;
     });
@@ -262,6 +307,8 @@ export class InMemorySessionRepository implements SessionRepository {
     record.deviceMocks.clear();
     record.deviceMockCursors.clear();
     record.speculos.clear();
+    record.catalog.clear();
+    record.pendingInstalls.clear();
     for (const device of snapshot.devices) {
       this.addDevice(record, device);
     }
