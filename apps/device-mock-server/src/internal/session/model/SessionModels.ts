@@ -1,4 +1,8 @@
-import { type Device, type Mock } from "@ledgerhq/device-mockserver-client";
+import {
+  type CatalogApp,
+  type Device,
+  type Mock,
+} from "@ledgerhq/device-mockserver-client";
 
 /**
  * A device that has opened an app and is now proxying its APDUs to a live
@@ -26,4 +30,8 @@ export interface SessionRecord {
   deviceMockCursors: Map<string, Map<string, number>>;
   /** Active Speculos proxy per device id. */
   speculos: Map<string, SpeculosProxySession>;
+  /** Installable apps known to the mock "app store", keyed by install hash. */
+  catalog: Map<string, CatalogApp>;
+  /** App armed by an install flow, awaiting commit on the next list: deviceId -> app. */
+  pendingInstalls: Map<string, CatalogApp>;
 }

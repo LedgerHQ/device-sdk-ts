@@ -28,7 +28,10 @@ const api = (path: string, init: RequestInit = {}, token?: string) =>
     },
   });
 
-const setupSession = async (apps?: { name: string; version: string }[]) => {
+const setupSession = async (
+  apps?: { name: string; version: string }[],
+  catalog?: { hash: string; name: string; version: string }[],
+) => {
   const token = (
     (await (await api("/auth", { method: "POST" })).json()) as { token: string }
   ).token;
@@ -41,6 +44,7 @@ const setupSession = async (apps?: { name: string; version: string }[]) => {
           device_type: "nanoX",
           firmware_version: "2.2.3",
           ...(apps ? { apps } : {}),
+          ...(catalog ? { catalog } : {}),
         }),
       },
       token,
@@ -219,6 +223,47 @@ describe("secure channel WebSocket", () => {
       data: "6a84",
       processed: 4,
     });
+  });
+});
+
+/**
+ * The install flow adds the installed app to the device context the way a real
+ * device does: the app is armed from the install hash, then committed into the
+ * device's installed apps once the final install block is acknowledged. The
+ * post-install `apps/list` then reports it (DMK confirms the install by name).
+ */
+describe("secure channel WebSocket: install commits the app to the device context", () => {
+  const BOLOS = [{ name: "BOLOS", version: "1.5.0" }];
+  const BTC = { hash: "abc123", name: "Bitcoin", version: "2.1.0" };
+
+  it("adds the installed app so the post-install list reports it", async () => {
+    const { token, id } = await setupSession(BOLOS, [BTC]);
+
+    // Before install, Bitcoin is not in the device context.
+    const before = await drive(token, id, "apps/list");
+    expect(before.data).toEqual([]);
+
+    // Install resolves the hash to Bitcoin and streams the bulk to success.
+    const install = await drive(token, id, `install?hash=${BTC.hash}`);
+    expect(install.type).toBe("bulk");
+
+    // The device context now reflects Bitcoin, with its install hash.
+    const after = await drive(token, id, "apps/list");
+    expect(after.data).toEqual([
+      { flags: 0, hash: BTC.hash, hash_code_data: "", name: "Bitcoin" },
+    ]);
+  });
+
+  it("does not add the app when the install fails on a device error", async () => {
+    const { token, id } = await setupSession(BOLOS, [BTC]);
+    // Out-of-memory on the install blocks: the commit block is never acked.
+    await addMock(token, id, "e0f0", "6a84");
+
+    const install = await drive(token, id, `install?hash=${BTC.hash}`);
+    expect(install).toMatchObject({ type: "error", data: "6a84" });
+
+    const after = await drive(token, id, "apps/list");
+    expect(after.data).toEqual([]);
   });
 });
 

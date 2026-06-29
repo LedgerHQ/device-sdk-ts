@@ -7,6 +7,7 @@ import { logger } from "@internal/logger/logger";
 import { osTypes } from "@internal/os/di/osTypes";
 import { type OsApduService } from "@internal/os/service/OsApduService";
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import { INSTALL_COMMIT_APDU } from "@internal/secure-channel/service/secureChannelApdus";
 import { type SecureChannelApduService } from "@internal/secure-channel/service/SecureChannelApduService";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
@@ -54,6 +55,30 @@ export class ApduResolverService {
   ) {}
 
   async resolve(
+    record: SessionRecord,
+    device: Device,
+    apduHex: string,
+  ): Promise<string> {
+    const response = await this.resolveResponse(record, device, apduHex);
+    // A real device only holds the new app once it acknowledges the final
+    // install block; mirror that by committing the armed install when the
+    // commit APDU resolves to success (so a failed install never adds it).
+    if (
+      apduHex.toLowerCase() === INSTALL_COMMIT_APDU &&
+      response.toLowerCase().endsWith(SW_OK)
+    ) {
+      this.repository
+        .commitPendingInstall(record, device.id)
+        .ifJust((updated) =>
+          logger.info(
+            `Install committed on ${updated.id}: ${updated.apps?.at(-1)?.name}`,
+          ),
+        );
+    }
+    return response;
+  }
+
+  private async resolveResponse(
     record: SessionRecord,
     device: Device,
     apduHex: string,

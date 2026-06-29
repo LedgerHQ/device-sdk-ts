@@ -7,6 +7,8 @@ import { inject, injectable } from "inversify";
 import { type WebSocket, WebSocketServer } from "ws";
 
 import { logger } from "@internal/logger/logger";
+import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import { type InstallAppResolver } from "@internal/secure-channel/service/InstallAppResolver";
 import {
   buildSecureChannelScript,
   type SecureChannelEndpoint,
@@ -43,6 +45,8 @@ export class SecureChannelWebSocket {
   constructor(
     @inject(sessionTypes.Repository)
     private readonly repository: SessionRepository,
+    @inject(secureChannelTypes.InstallAppResolver)
+    private readonly installResolver: InstallAppResolver,
   ) {}
 
   /** Attach the secure-channel WebSocket handler to an HTTP server. */
@@ -56,7 +60,12 @@ export class SecureChannelWebSocket {
         return;
       }
       wss.handleUpgrade(request, socket, head, (ws) => {
-        void this.handleConnection(ws, parsed.token, parsed.endpoint);
+        void this.handleConnection(
+          ws,
+          parsed.token,
+          parsed.endpoint,
+          parsed.hash,
+        );
       });
     });
 
@@ -67,6 +76,7 @@ export class SecureChannelWebSocket {
     ws: WebSocket,
     token: string,
     endpoint: SecureChannelEndpoint,
+    hash?: string,
   ): Promise<void> {
     const record = this.repository.findByToken(token).extract();
     if (!record) {
@@ -77,6 +87,17 @@ export class SecureChannelWebSocket {
     if (!device) {
       closeWithError(ws, "No device in session");
       return;
+    }
+
+    // Faithful to a real device: `install` arms the app identified by its hash
+    // (resolved from the Manager API, like the real ScriptRunner backend) before
+    // the bulk is streamed; the APDU layer then commits it once the final install
+    // block is acknowledged, so the post-install `apps/list` reflects it.
+    if (endpoint === "install" && hash) {
+      const app = await this.installResolver.resolve(record, hash);
+      app.ifJust((resolved) =>
+        this.repository.setPendingInstall(record, device.id, resolved),
+      );
     }
 
     logger.info(`Secure channel [${endpoint}] opened for device ${device.id}`);
@@ -97,11 +118,14 @@ export class SecureChannelWebSocket {
   }
 }
 
-/** Extract `{ token, endpoint }` from a `/secure-channel/...` upgrade path. */
+/**
+ * Extract `{ token, endpoint, hash? }` from a `/secure-channel/...` upgrade
+ * path. The install `hash` query param identifies which app is being installed.
+ */
 function parsePath(
   url: string,
-): { token: string; endpoint: SecureChannelEndpoint } | null {
-  const pathname = url.split("?")[0] ?? "";
+): { token: string; endpoint: SecureChannelEndpoint; hash?: string } | null {
+  const [pathname = "", query = ""] = url.split("?");
   if (!pathname.startsWith(PATH_PREFIX)) {
     return null;
   }
@@ -114,7 +138,11 @@ function parsePath(
   }
   const token = segments[0]!;
   const endpoint = ENDPOINTS[segments.slice(1).join("/")];
-  return endpoint ? { token, endpoint } : null;
+  if (!endpoint) {
+    return null;
+  }
+  const hash = new URLSearchParams(query).get("hash") ?? undefined;
+  return { token, endpoint, hash };
 }
 
 /** Run the scripted message sequence, relaying `exchange` APDUs to the client. */

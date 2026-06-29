@@ -1,4 +1,5 @@
 import {
+  type CatalogApp,
   type Device,
   type DeviceConfig,
   type Mock,
@@ -50,6 +51,25 @@ export interface SessionRepository {
     deviceId: string,
     connected: boolean,
   ): Maybe<Device>;
+
+  // --- App store (catalog) / pending installs -------------------------------
+  /**
+   * Exact lookup of a seeded catalog app by its install hash. Used as an offline
+   * override; unknown hashes are resolved via the Manager API by the install
+   * resolver instead.
+   */
+  findCatalogAppByHash(record: SessionRecord, hash: string): Maybe<CatalogApp>;
+  /** Arm an app for a device, to be committed on its next list. */
+  setPendingInstall(
+    record: SessionRecord,
+    deviceId: string,
+    app: CatalogApp,
+  ): void;
+  /**
+   * Commit a device's pending install into its app registry and clear it.
+   * Idempotent and a no-op when nothing is pending.
+   */
+  commitPendingInstall(record: SessionRecord, deviceId: string): Maybe<Device>;
 
   // --- Speculos proxy -------------------------------------------------------
   findProxy(

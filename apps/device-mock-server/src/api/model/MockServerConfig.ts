@@ -13,6 +13,12 @@ export interface MockServerConfig {
   /** Interval in ms for the expired-session sweeper. Set to 0 to disable. */
   readonly sweepIntervalMs?: number;
   /**
+   * Manager API base URL used to resolve an install hash to its app (name +
+   * version), the way the real ScriptRunner backend knows apps by hash. Defaults
+   * to the production Manager API.
+   */
+  readonly managerApiUrl?: string;
+  /**
    * Speculinho operator configuration. When set, an unmatched Open App APDU
    * starts a real Speculos instance and the device proxies APDUs to it. When
    * omitted, the server behaves as a pure mock.

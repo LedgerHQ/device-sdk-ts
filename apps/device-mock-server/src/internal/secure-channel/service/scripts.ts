@@ -64,7 +64,7 @@ export function deriveInstalledApps(device: Device): InstalledAppEntry[] {
     .filter((app) => app.name.toUpperCase() !== "BOLOS")
     .map((app) => ({
       flags: 0,
-      hash: "",
+      hash: app.hash ?? "",
       hash_code_data: "",
       name: app.name,
     }));
