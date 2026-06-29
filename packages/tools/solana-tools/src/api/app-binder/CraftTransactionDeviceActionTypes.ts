@@ -8,9 +8,6 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type SolanaAppErrorCodes } from "@ledgerhq/device-signer-kit-solana";
 
-import { type AltResolverService } from "@internal/services/AltResolverService";
-import { type TransactionFetcherService } from "@internal/services/TransactionFetcherService";
-
 export type CraftTransactionDAOutput = string;
 
 export type CraftTransactionDAInput = {
@@ -19,11 +16,9 @@ export type CraftTransactionDAInput = {
   readonly transactionSignature?: string;
   readonly rpcUrl?: string;
   readonly skipOpenApp?: boolean;
-  readonly transactionFetcherService: TransactionFetcherService;
-  // Mirrors transactionFetcherService. Optional here so existing callers keep
-  // compiling; the wiring that resolves lookup tables passes it through.
-  readonly altResolverService?: AltResolverService;
-  // Optional explicit old to new address map, base58 keyed.
+  // Optional explicit old to new address map, base58 keyed. When set, these
+  // pairs are applied verbatim and override the auto-detected payer and ATA
+  // entries on a key collision.
   readonly replacements?: Readonly<Record<string, string>>;
 };
 

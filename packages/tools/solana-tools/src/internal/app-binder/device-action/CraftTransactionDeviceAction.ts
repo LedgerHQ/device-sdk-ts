@@ -24,6 +24,10 @@ import {
   type CraftTransactionDAInternalState,
   type CraftTransactionDAOutput,
 } from "@api/app-binder/CraftTransactionDeviceActionTypes";
+import { Web3SolanaTransactionDataSource } from "@internal/data-source/Web3SolanaTransactionDataSource";
+import { deserializeToMessage } from "@internal/services/crafter/deserialize";
+import { DefaultAltResolverService } from "@internal/services/DefaultAltResolverService";
+import { DefaultTransactionFetcherService } from "@internal/services/DefaultTransactionFetcherService";
 import { TransactionCrafterService } from "@internal/services/TransactionCrafterService";
 
 export type MachineDependencies = {
@@ -283,6 +287,8 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
                 context.context._internalState.fetchedTransaction ??
                 context.context.input.serialisedTransaction ??
                 "",
+              rpcUrl: context.context.input.rpcUrl,
+              replacements: context.context.input.replacements,
             }),
             onDone: {
               target: "CraftTransactionResultCheck",
@@ -327,6 +333,17 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
+    // The RPC I/O collaborators are constructed here rather than threaded
+    // through the device-action input: the input carries request data, not
+    // service implementations. The datasource is the single web3.js seam, so
+    // the fetcher and resolver share one instance. Unit tests stub this whole
+    // method, so the concrete wiring never runs there.
+    const dataSource = new Web3SolanaTransactionDataSource();
+    const transactionFetcherService = new DefaultTransactionFetcherService(
+      dataSource,
+    );
+    const altResolverService = new DefaultAltResolverService(dataSource);
+
     const getPublicKey = async (arg0: {
       input: { derivationPath: string; checkOnDevice: boolean };
     }) => internalApi.sendCommand(new GetPubKeyCommand(arg0.input));
@@ -334,18 +351,49 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
     const fetchTransaction = async (arg0: {
       input: { transactionSignature: string; rpcUrl?: string };
     }) => {
-      return this.input.transactionFetcherService.fetchTransaction(
+      return transactionFetcherService.fetchTransaction(
         arg0.input.transactionSignature,
         arg0.input.rpcUrl,
       );
     };
 
     const craftTransaction = async (arg0: {
-      input: { publicKey: string; serialisedTransaction: string };
+      input: {
+        publicKey: string;
+        serialisedTransaction: string;
+        rpcUrl?: string;
+        replacements?: Readonly<Record<string, string>>;
+      };
     }) => {
+      const { publicKey, serialisedTransaction, rpcUrl, replacements } =
+        arg0.input;
+
+      // Deserialize once to resolve the transaction's lookup tables. Legacy and
+      // no-ALT messages resolve to an empty list, so this path is safe for every
+      // transaction kind, not only v0 transactions with lookup tables.
+      const message = deserializeToMessage(serialisedTransaction);
+      const addressLookupTableAccounts =
+        await altResolverService.resolveAddressLookupTables(message, rpcUrl);
+
+      // A single device can only produce one signature. When the source needs
+      // more than one signer, the crafted message still requires the other
+      // signatures, so it cannot be fully co-signed here. The message stays
+      // usable for display and clear-sign testing.
+      if (message.header.numRequiredSignatures > 1) {
+        internalApi
+          .loggerFactory?.("CraftTransactionDeviceAction")
+          .warn(
+            "Transaction requires multiple signatures. A single device can sign for only one of them, so the crafted transaction cannot be fully co-signed.",
+          );
+      }
+
       const crafter = new TransactionCrafterService();
-      return crafter.getCraftedTransaction(arg0.input.serialisedTransaction, {
-        payer: arg0.input.publicKey,
+      return crafter.getCraftedTransaction(serialisedTransaction, {
+        payer: publicKey,
+        replacements: replacements
+          ? new Map(Object.entries(replacements))
+          : undefined,
+        addressLookupTableAccounts,
       });
     };
 

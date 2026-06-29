@@ -306,6 +306,18 @@ describe("TransactionCrafterService", () => {
       expect(keys).toContain(override.toBase58());
       expect(keys).not.toContain(newPayer.toBase58());
     });
+
+    it("should apply a replacement whose key has surrounding whitespace", () => {
+      const crafted = craft(legacyTransferMessage(), {
+        replacements: new Map([
+          [`  ${oldPayer.toBase58()}\n`, newPayer.toBase58()],
+        ]),
+      });
+
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(newPayer.toBase58());
+      expect(keys).not.toContain(oldPayer.toBase58());
+    });
   });
 
   describe("full transaction input", () => {

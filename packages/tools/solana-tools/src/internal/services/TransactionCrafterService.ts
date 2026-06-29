@@ -36,6 +36,19 @@ export type CraftOptions = {
 const PACKET_DATA_SIZE = 1232;
 const SIGNATURE_LENGTH = 64;
 
+// Length in bytes of the shortvec (compact-u16) encoding of a count. Solana
+// prefixes the signature vector with this encoding, so it is 1 byte for counts
+// up to 127 and grows by a byte for every further 7 bits.
+function shortVecLength(count: number): number {
+  let length = 1;
+  let remaining = count;
+  while (remaining >= 0x80) {
+    remaining >>= 7;
+    length += 1;
+  }
+  return length;
+}
+
 export class TransactionCrafterService {
   /**
    * Re-point the chosen accounts of a fetched transaction to new addresses and
@@ -92,11 +105,12 @@ export class TransactionCrafterService {
 
     const serialized = crafted.serialize();
 
-    // The full transaction is the message plus its signature section. Check it
-    // against the packet limit so an oversized craft fails here rather than on
-    // the device.
+    // The full transaction is the message plus its signature section: a
+    // shortvec-encoded signature count followed by one 64-byte slot per
+    // required signature. Check it against the packet limit so an oversized
+    // craft fails here rather than on the device.
     const transactionSize =
-      1 +
+      shortVecLength(crafted.header.numRequiredSignatures) +
       crafted.header.numRequiredSignatures * SIGNATURE_LENGTH +
       serialized.length;
     if (transactionSize > PACKET_DATA_SIZE) {
@@ -128,9 +142,12 @@ export class TransactionCrafterService {
     // account (including user-seeded PDAs) can be re-pointed this way.
     if (options.replacements) {
       for (const [oldKey, newKey] of options.replacements) {
-        // Validate both ends so a bad pair fails here with a clear message.
-        this.decodePublicKey(oldKey);
-        replacements.set(oldKey, this.decodePublicKey(newKey));
+        // Decode both ends so a bad pair fails here with a clear message, and
+        // key the map by the canonical base58. Lookups use toBase58(), so a key
+        // passed with whitespace or in a non-canonical form would otherwise
+        // validate but never match.
+        const oldPublicKey = this.decodePublicKey(oldKey);
+        replacements.set(oldPublicKey.toBase58(), this.decodePublicKey(newKey));
       }
     }
 

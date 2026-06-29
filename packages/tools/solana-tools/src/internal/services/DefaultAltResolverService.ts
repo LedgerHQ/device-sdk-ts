@@ -1,17 +1,21 @@
 import {
   AddressLookupTableAccount,
-  Connection,
   type PublicKey,
   type VersionedMessage,
 } from "@solana/web3.js";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 
+import { type SolanaTransactionDataSource } from "@internal/data-source/SolanaTransactionDataSource";
 import { type AltResolverService } from "@internal/services/AltResolverService";
-
-const DEFAULT_RPC_URL = "https://solana.coin.ledger.com";
+import { servicesTypes } from "@internal/services/di/servicesTypes";
 
 @injectable()
 export class DefaultAltResolverService implements AltResolverService {
+  constructor(
+    @inject(servicesTypes.SolanaTransactionDataSource)
+    private readonly dataSource: SolanaTransactionDataSource,
+  ) {}
+
   async resolveAddressLookupTables(
     message: VersionedMessage,
     rpcUrl?: string,
@@ -29,25 +33,23 @@ export class DefaultAltResolverService implements AltResolverService {
       return [];
     }
 
-    const connection = new Connection(rpcUrl ?? DEFAULT_RPC_URL, "confirmed");
-
-    // One batched request keeps every referenced table on the same RPC
-    // roundtrip. getMultipleAccountsInfo preserves the requested order, so the
-    // result aligns with tableKeys index by index.
-    const accountInfos = await connection.getMultipleAccountsInfo(tableKeys);
+    const accountsData = await this.dataSource.getAccountsData(
+      tableKeys,
+      rpcUrl,
+    );
 
     return tableKeys.map((key, index) => {
-      const accountInfo = accountInfos[index];
-      // A null account means the table was never created, was closed, or has
-      // been deactivated and garbage collected. The referenced addresses are
-      // gone, so the message can no longer be resolved or recompiled.
-      if (!accountInfo) {
+      const data = accountsData[index];
+      // Null data means the table was never created, was closed, or has been
+      // deactivated and garbage collected. The referenced addresses are gone,
+      // so the message can no longer be resolved or recompiled.
+      if (!data) {
         throw new Error(
           `Address lookup table not found or closed: ${key.toBase58()}`,
         );
       }
 
-      return this.buildLookupTableAccount(key, accountInfo.data);
+      return this.buildLookupTableAccount(key, data);
     });
   }
 
