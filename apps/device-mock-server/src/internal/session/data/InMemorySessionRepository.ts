@@ -52,7 +52,7 @@ export class InMemorySessionRepository implements SessionRepository {
       deviceMockCursors: new Map(),
       speculos: new Map(),
       catalog: new Map(),
-      pendingInstalls: new Map(),
+      pendingAppOperations: new Map(),
     };
     this.sessions.set(record.token, record);
     return { token: record.token, expiresAt: this.expiresAt(record) };
@@ -164,37 +164,40 @@ export class InMemorySessionRepository implements SessionRepository {
     });
   }
 
-  // --- App store (catalog) / pending installs -------------------------------
+  // --- App store (catalog) / pending app operations -------------------------
 
   findCatalogAppByHash(record: SessionRecord, hash: string): Maybe<CatalogApp> {
     return Maybe.fromNullable(record.catalog.get(hash));
   }
 
-  setPendingInstall(
+  setPendingAppOperation(
     record: SessionRecord,
     deviceId: string,
     app: CatalogApp,
   ): void {
-    record.pendingInstalls.set(deviceId, app);
+    record.pendingAppOperations.set(deviceId, app);
   }
 
-  commitPendingInstall(record: SessionRecord, deviceId: string): Maybe<Device> {
-    const app = record.pendingInstalls.get(deviceId);
+  commitPendingAppOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<Device> {
+    const app = record.pendingAppOperations.get(deviceId);
     if (!app) {
       return Maybe.empty();
     }
-    record.pendingInstalls.delete(deviceId);
+    record.pendingAppOperations.delete(deviceId);
     return this.findDevice(record, deviceId).map((device) => {
       const apps = device.apps ?? [];
-      if (apps.some((existing) => existing.name === app.name)) {
-        return device; // already installed: nothing to add
-      }
+      // The secure-channel `install` endpoint backs both install and uninstall,
+      // and they are indistinguishable from the request, so toggle by presence:
+      // remove the app when already installed (uninstall), add it otherwise.
+      const installed = apps.some((existing) => existing.name === app.name);
       const updated: Device = {
         ...device,
-        apps: [
-          ...apps,
-          { name: app.name, version: app.version, hash: app.hash },
-        ],
+        apps: installed
+          ? apps.filter((existing) => existing.name !== app.name)
+          : [...apps, { name: app.name, version: app.version, hash: app.hash }],
       };
       record.devices.set(deviceId, updated);
       return updated;
@@ -308,7 +311,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.deviceMockCursors.clear();
     record.speculos.clear();
     record.catalog.clear();
-    record.pendingInstalls.clear();
+    record.pendingAppOperations.clear();
     for (const device of snapshot.devices) {
       this.addDevice(record, device);
     }

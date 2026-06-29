@@ -177,7 +177,7 @@ describe("InMemorySessionRepository", () => {
     ]);
   });
 
-  // --- App store (catalog) / pending installs --------------------------------
+  // --- App store (catalog) / pending app operations --------------------------
 
   const BTC = { hash: "abc123", name: "Bitcoin", version: "2.1.0" };
 
@@ -188,7 +188,7 @@ describe("InMemorySessionRepository", () => {
     expect(repo.findCatalogAppByHash(record, "unknown").isNothing()).toBe(true);
   });
 
-  it("commits a pending install into the device app registry, idempotently", () => {
+  it("toggles a pending app operation: install when absent, uninstall when present", () => {
     const { repo, record } = newSession();
     const device = repo.addDevice(record, {
       device_type: "nanoX",
@@ -196,20 +196,30 @@ describe("InMemorySessionRepository", () => {
     });
 
     // Nothing pending: no-op.
-    expect(repo.commitPendingInstall(record, device.id).isNothing()).toBe(true);
+    expect(repo.commitPendingAppOperation(record, device.id).isNothing()).toBe(
+      true,
+    );
 
-    repo.setPendingInstall(record, device.id, BTC);
-    const updated = repo.commitPendingInstall(record, device.id).unsafeCoerce();
-    expect(updated.apps).toEqual([
+    // Bitcoin absent -> install (add).
+    repo.setPendingAppOperation(record, device.id, BTC);
+    const installed = repo
+      .commitPendingAppOperation(record, device.id)
+      .unsafeCoerce();
+    expect(installed.apps).toEqual([
       { name: "BOLOS", version: "1.5.0" },
       { name: "Bitcoin", version: "2.1.0", hash: "abc123" },
     ]);
 
-    // Pending was cleared, and committing the same app again is a no-op.
-    expect(repo.commitPendingInstall(record, device.id).isNothing()).toBe(true);
-    repo.setPendingInstall(record, device.id, BTC);
-    expect(
-      repo.commitPendingInstall(record, device.id).unsafeCoerce().apps,
-    ).toHaveLength(2);
+    // Pending was cleared.
+    expect(repo.commitPendingAppOperation(record, device.id).isNothing()).toBe(
+      true,
+    );
+
+    // Bitcoin present -> uninstall (remove).
+    repo.setPendingAppOperation(record, device.id, BTC);
+    const uninstalled = repo
+      .commitPendingAppOperation(record, device.id)
+      .unsafeCoerce();
+    expect(uninstalled.apps).toEqual([{ name: "BOLOS", version: "1.5.0" }]);
   });
 });

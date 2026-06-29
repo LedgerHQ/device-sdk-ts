@@ -29,7 +29,7 @@ const api = (path: string, init: RequestInit = {}, token?: string) =>
   });
 
 const setupSession = async (
-  apps?: { name: string; version: string }[],
+  apps?: { name: string; version: string; hash?: string }[],
   catalog?: { hash: string; name: string; version: string }[],
 ) => {
   const token = (
@@ -261,6 +261,26 @@ describe("secure channel WebSocket: install commits the app to the device contex
 
     const install = await drive(token, id, `install?hash=${BTC.hash}`);
     expect(install).toMatchObject({ type: "error", data: "6a84" });
+
+    const after = await drive(token, id, "apps/list");
+    expect(after.data).toEqual([]);
+  });
+
+  it("removes an installed app when the install endpoint runs for it (uninstall)", async () => {
+    // The device already has Bitcoin installed; the `install` endpoint backs the
+    // uninstall flow too, so running it for an installed app removes it.
+    const { token, id } = await setupSession(
+      [...BOLOS, { name: BTC.name, version: BTC.version, hash: BTC.hash }],
+      [BTC],
+    );
+
+    const before = await drive(token, id, "apps/list");
+    expect(before.data).toEqual([
+      { flags: 0, hash: BTC.hash, hash_code_data: "", name: "Bitcoin" },
+    ]);
+
+    const uninstall = await drive(token, id, `install?hash=${BTC.hash}`);
+    expect(uninstall.type).toBe("bulk");
 
     const after = await drive(token, id, "apps/list");
     expect(after.data).toEqual([]);

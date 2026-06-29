@@ -52,24 +52,31 @@ export interface SessionRepository {
     connected: boolean,
   ): Maybe<Device>;
 
-  // --- App store (catalog) / pending installs -------------------------------
+  // --- App store (catalog) / pending app operations -------------------------
   /**
    * Exact lookup of a seeded catalog app by its install hash. Used as an offline
    * override; unknown hashes are resolved via the Manager API by the install
    * resolver instead.
    */
   findCatalogAppByHash(record: SessionRecord, hash: string): Maybe<CatalogApp>;
-  /** Arm an app for a device, to be committed on its next list. */
-  setPendingInstall(
+  /**
+   * Arm the app a secure-channel install/uninstall targets, to be applied to the
+   * device registry when the final install block is acknowledged.
+   */
+  setPendingAppOperation(
     record: SessionRecord,
     deviceId: string,
     app: CatalogApp,
   ): void;
   /**
-   * Commit a device's pending install into its app registry and clear it.
-   * Idempotent and a no-op when nothing is pending.
+   * Apply a device's pending app operation and clear it: removes the app when it
+   * is already installed (uninstall), adds it otherwise (install). Idempotent and
+   * a no-op when nothing is pending.
    */
-  commitPendingInstall(record: SessionRecord, deviceId: string): Maybe<Device>;
+  commitPendingAppOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<Device>;
 
   // --- Speculos proxy -------------------------------------------------------
   findProxy(

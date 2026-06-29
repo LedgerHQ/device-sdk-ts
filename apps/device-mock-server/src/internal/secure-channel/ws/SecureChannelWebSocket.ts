@@ -89,14 +89,15 @@ export class SecureChannelWebSocket {
       return;
     }
 
-    // Faithful to a real device: `install` arms the app identified by its hash
-    // (resolved from the Manager API, like the real ScriptRunner backend) before
-    // the bulk is streamed; the APDU layer then commits it once the final install
-    // block is acknowledged, so the post-install `apps/list` reflects it.
+    // Faithful to a real device: the `install` endpoint (which backs both install
+    // and uninstall) arms the app identified by its hash (resolved from the
+    // Manager API, like the real ScriptRunner backend) before the bulk is
+    // streamed; the APDU layer then applies it once the final install block is
+    // acknowledged, so the follow-up `apps/list` reflects the change.
     if (endpoint === "install" && hash) {
       const app = await this.installResolver.resolve(record, hash);
       app.ifJust((resolved) =>
-        this.repository.setPendingInstall(record, device.id, resolved),
+        this.repository.setPendingAppOperation(record, device.id, resolved),
       );
     }
 
