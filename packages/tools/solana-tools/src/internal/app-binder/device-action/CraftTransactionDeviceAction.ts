@@ -344,10 +344,9 @@ export class CraftTransactionDeviceAction extends XStateDeviceAction<
       input: { publicKey: string; serialisedTransaction: string };
     }) => {
       const crafter = new TransactionCrafterService();
-      return crafter.getCraftedTransaction(
-        arg0.input.serialisedTransaction,
-        arg0.input.publicKey,
-      );
+      return crafter.getCraftedTransaction(arg0.input.serialisedTransaction, {
+        payer: arg0.input.publicKey,
+      });
     };
 
     return {
