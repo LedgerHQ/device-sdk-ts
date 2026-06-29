@@ -219,7 +219,7 @@ describe("createMockServer (HTTP contract)", () => {
       expect((await sendApdu(token, id, "e0aa0000")).body.response).toBe(
         "cafe9000",
       );
-      expect((await sendApdu(token, id, "e0de000000")).body.response).toBe(
+      expect((await sendApdu(token, id, "e0bb000000")).body.response).toBe(
         "6d00",
       );
     });
