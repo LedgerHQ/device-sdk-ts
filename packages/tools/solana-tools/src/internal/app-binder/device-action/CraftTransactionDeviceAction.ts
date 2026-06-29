@@ -34,7 +34,12 @@ export type MachineDependencies = {
     input: { transactionSignature: string; rpcUrl?: string };
   }) => Promise<string>;
   readonly craftTransaction: (arg0: {
-    input: { publicKey: string; serialisedTransaction: string };
+    input: {
+      publicKey: string;
+      serialisedTransaction: string;
+      rpcUrl?: string;
+      replacements?: Readonly<Record<string, string>>;
+    };
   }) => Promise<string>;
 };
 

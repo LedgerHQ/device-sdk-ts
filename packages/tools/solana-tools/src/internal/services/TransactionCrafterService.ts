@@ -7,8 +7,26 @@ import {
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
+import { type AddressLookupTableAccount, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
+
+export type CraftOptions = {
+  /**
+   * base58 payer. When set, seeds auto-detect: the old payer maps to this
+   * payer, and the old payer's ATAs map to this payer's ATAs.
+   */
+  readonly payer?: string;
+  /**
+   * base58 old to new pairs, applied verbatim. Overrides any auto-detect entry
+   * on a key collision.
+   */
+  readonly replacements?: ReadonlyMap<string, string>;
+  /**
+   * Fully-resolved lookup tables from the resolver. Empty for legacy or no-ALT
+   * messages.
+   */
+  readonly addressLookupTableAccounts?: readonly AddressLookupTableAccount[];
+};
 
 type MessageDetection = {
   accountKeysStart: number;

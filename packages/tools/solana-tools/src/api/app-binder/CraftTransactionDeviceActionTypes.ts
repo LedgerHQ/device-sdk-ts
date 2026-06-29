@@ -8,6 +8,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type SolanaAppErrorCodes } from "@ledgerhq/device-signer-kit-solana";
 
+import { type AltResolverService } from "@internal/services/AltResolverService";
 import { type TransactionFetcherService } from "@internal/services/TransactionFetcherService";
 
 export type CraftTransactionDAOutput = string;
@@ -19,6 +20,11 @@ export type CraftTransactionDAInput = {
   readonly rpcUrl?: string;
   readonly skipOpenApp?: boolean;
   readonly transactionFetcherService: TransactionFetcherService;
+  // Mirrors transactionFetcherService. Optional here so existing callers keep
+  // compiling; the wiring that resolves lookup tables passes it through.
+  readonly altResolverService?: AltResolverService;
+  // Optional explicit old to new address map, base58 keyed.
+  readonly replacements?: Readonly<Record<string, string>>;
 };
 
 export type CraftTransactionDAError =
