@@ -79,6 +79,12 @@ export class DeviceActionsDriver {
     await this.send();
   }
 
+  /** Open the List Installed App action and Execute it. */
+  async listInstalledApps(): Promise<void> {
+    await this.open("List Installed App");
+    await this.send();
+  }
+
   /**
    * Open the Wait for app and version action and Execute it.
    */

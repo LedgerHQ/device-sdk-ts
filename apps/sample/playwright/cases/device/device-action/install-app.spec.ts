@@ -196,3 +196,46 @@ test.describe("device action: uninstall app", () => {
     });
   });
 });
+
+const NANO_X_WITH_BITCOIN: DeviceConfig = {
+  ...NANO_X,
+  apps: [
+    { name: "BOLOS", version: "1.5.0" },
+    { name: "Bitcoin", version: "2.1.0" },
+  ],
+};
+
+interface ListInstalledAppsResponse {
+  status: string;
+  output?: { installedApps: { name: string }[] };
+}
+
+test.describe("device action: list installed apps", () => {
+  test("lists the apps installed on the device", async ({
+    device,
+    deviceActions,
+  }) => {
+    await test.step("Given a connected device with Bitcoin installed", async () => {
+      await device.addAndConnect(NANO_X_WITH_BITCOIN);
+    });
+
+    await test.step("When the List Installed App device action is executed", async () => {
+      await deviceActions.goto();
+      await deviceActions.listInstalledApps();
+    });
+
+    await test.step("Then it completes and reports Bitcoin among the installed apps", async () => {
+      // The action lists the apps derived from the device context (BOLOS is
+      // excluded as the dashboard), so Bitcoin must appear.
+      const response =
+        await deviceActions.lastResponse<ListInstalledAppsResponse>({
+          until: '"completed"',
+          timeout: 60_000,
+        });
+      expect(response.status).toBe("completed");
+      expect(response.output?.installedApps.map((app) => app.name)).toContain(
+        "Bitcoin",
+      );
+    });
+  });
+});
