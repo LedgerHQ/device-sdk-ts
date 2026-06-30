@@ -1,18 +1,4 @@
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  createAssociatedTokenAccountInstruction,
-  createCloseAccountInstruction,
-  createInitializeAccount2Instruction,
-  createInitializeAccount3Instruction,
-  createInitializeAccountInstruction,
-  createSyncNativeInstruction,
-  createTransferCheckedInstruction,
-  createTransferInstruction,
-  getAssociatedTokenAddressSync,
-  TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import {
   Keypair,
   SystemProgram,
   Transaction,
@@ -21,7 +7,23 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@internal/app-binder/services/utils/splToken";
 
+import {
+  createAssociatedTokenAccountInstruction,
+  createCloseAccountInstruction,
+  createInitializeAccount2Instruction,
+  createInitializeAccount3Instruction,
+  createInitializeAccountInstruction,
+  createSyncNativeInstruction,
+  createTransferCheckedInstruction,
+  createTransferInstruction,
+} from "./splTokenTestBuilders";
 import {
   SolanaTransactionTypes,
   TransactionInspector,

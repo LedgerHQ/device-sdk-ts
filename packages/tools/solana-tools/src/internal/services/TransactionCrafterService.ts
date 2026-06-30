@@ -6,7 +6,7 @@ import {
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+} from "@ledgerhq/device-signer-kit-solana/internal/app-binder/services/utils/splToken.js";
 import { PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 

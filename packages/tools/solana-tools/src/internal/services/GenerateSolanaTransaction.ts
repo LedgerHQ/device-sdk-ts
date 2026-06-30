@@ -4,7 +4,7 @@ import {
   createTransferCheckedInstruction,
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
+} from "@ledgerhq/device-signer-kit-solana/internal/app-binder/services/utils/splToken.js";
 import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 
 export const COIN_DATA = {
