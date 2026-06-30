@@ -7,7 +7,7 @@ category: how-to
 
 This guide walks you through migrating from the LedgerJS Ethereum package (`@ledgerhq/hw-app-eth`) to the DMK Ethereum signer (`@ledgerhq/device-signer-kit-ethereum`).
 
-> **Warning:** Starting in September 2025, the Ethereum app will no longer support `signEIP712HashedMessage` due to a breaking change in EIP-712 signing. Any code that calls this method must migrate to `signTypedData` before that date. All other `hw-app-eth` methods will also stop working because `hw-app-eth` itself is deprecated.
+> **Warning:** `hw-app-eth` will stop working with the Ethereum app after September 2026. Complete this migration before that date.
 
 Before reading this guide, complete the [general LedgerJS → DMK migration](../../ledgerjs-to-dmk) to set up the DMK, register a transport, and create a session.
 
@@ -15,7 +15,7 @@ Before reading this guide, complete the [general LedgerJS → DMK migration](../
 
 | Feature | `hw-app-eth` (LedgerJS) | `device-signer-kit-ethereum` (DMK) |
 | --- | --- | --- |
-| **EIP-712 support** | `signEIP712HashedMessage` deprecated in September 2025 | `signTypedData` (full structured-data signing) |
+| **EIP-712 support** | `signEIP712HashedMessage` (hashed data) and `signEIP712Message` (structured data) | `signTypedData` (full structured-data signing) |
 | **API style** | Promise-based | Observable-based, with cancellation |
 | **Transport management** | Manual: you create and manage the `Transport` | Automatic: DMK manages discovery, connection, reconnection |
 | **App lifecycle** | Manual: you open the Ethereum app yourself | Automatic: the signer opens the Ethereum app for you |
@@ -227,8 +227,6 @@ observable.subscribe({
 
 ### `signEIP712Message` → `signTypedData`
 
-This is the migration required before September 2025.
-
 #### Before
 
 ```typescript
@@ -308,17 +306,17 @@ observable.subscribe({
 
 ---
 
-### `signEIP712HashedMessage`: no direct equivalent
+### `signEIP712HashedMessage` → `signTypedData`
 
-`signEIP712HashedMessage` accepted a pre-computed domain separator hash and message hash (blind signing of hashed EIP-712 data). The Ethereum app is removing support for this in September 2025.
+The `SignerEth` interface does not have a `signEIP712HashedMessage` method. The only EIP-712 signing method in the DMK is `signTypedData`, which takes the full structured data, not pre-computed hashes. When migrating, you must move to `signTypedData`.
 
-**You must migrate to `signTypedData`.** Pass the full structured data instead of the hashes:
+This is an upgrade: instead of computing `domainHash` and `messageHash` yourself and doing blind signing, you pass the original typed data and the DMK handles the hashing. It also tries clear signing first (so the device can display human-readable field values), and automatically falls back to the hash-based APDU if clear signing is unavailable.
 
 ```typescript
-// Before: you computed hashes yourself and passed them
-// await eth.signEIP712HashedMessage(path, domainSeparatorHex, hashStructMessageHex);
+// Before: manually computed hashes, blind-signed
+await eth.signEIP712HashedMessage(path, domainSeparatorHex, hashStructMessageHex);
 
-// After: pass the original TypedData (the app computes the hashes itself)
+// After: pass the structured data — the DMK hashes and signs
 const { observable } = signerEth.signTypedData(path, {
   domain: { /* original domain object */ },
   types: { /* original types */ },
@@ -327,7 +325,7 @@ const { observable } = signerEth.signTypedData(path, {
 });
 ```
 
-If you do not have access to the original structured data (only the hashes), you cannot use `signTypedData`. In that case, you need to modify your application to preserve the structured data before hashing.
+If your code only holds the pre-computed hashes and no longer has access to the original `TypedData`, you will need to retrieve or reconstruct it before you can migrate.
 
 ---
 
@@ -361,7 +359,7 @@ If you want to migrate incrementally, use the `toPromise` helper from the [gener
 | `clearSignTransaction(path, rawTxHex, config)` | `signTransaction(path, txBytes)` | Resolution is automatic |
 | `signPersonalMessage(path, messageHex)` | `signMessage(path, message: string \| Uint8Array, { skipOpenApp? }?)` | Input: hex string → plain string |
 | `signEIP712Message(path, typedData, fullImplem?)` | `signTypedData(path, typedData: TypedData, { skipOpenApp? }?)` | Same data structure |
-| `signEIP712HashedMessage(path, domainHex, msgHex)` | **No equivalent** (migrate to `signTypedData`) | **Required before September 2025** |
+| `signEIP712HashedMessage(path, domainHex, msgHex)` | Use `signTypedData` when structured data is available | EIP-712 APDU refactor in progress |
 | `getChallenge()` | No equivalent | Handled internally |
 | `getAppConfiguration()` | No equivalent | Use `dmk.sendCommand()` for raw access |
 | *(none)* | `signDelegationAuthorization(path, chainId, contractAddress, nonce)` | New in DMK (EIP-7702) |
@@ -376,6 +374,6 @@ If you want to migrate incrementally, use the `toPromise` helper from the [gener
 | Observable never reaches `Completed` | The device may be waiting for user confirmation. Check `state.intermediateValue.requiredUserInteraction` in the `Pending` state. |
 | `rxjs` not found | Run `npm install rxjs` (it is a peer dependency of the DMK). |
 | Transaction bytes rejected | Ensure you are passing a `Uint8Array` (or `Buffer`), not a hex string. `Buffer.from(rawTxHex, "hex")` converts correctly. |
-| `signEIP712HashedMessage` stopped working | Migrate to `signTypedData`; see [the section above](#signeip712hashedmessage-no-direct-equivalent). |
+| `signEIP712HashedMessage` not available in DMK | The DMK does not expose a hashed-message signing API. Use `signTypedData` if you have the full structured data. |
 | No Transaction Checks shown on device | Pass an `originToken` to `SignerEthBuilder`. Contact Ledger to obtain one. |
 | Device shows "blind signing" warning | Transaction Checks require an `originToken` and a supported transaction type. |
