@@ -15,9 +15,19 @@ import {
   type GetTrustedInputDAOutput,
   type LegacyCreateTransactionArg,
   type LegacyTransaction,
+  type PcztBip32Derivation,
+  type PcztGlobal,
+  type PcztOrchardAction,
+  type PcztOrchardBundle,
+  type PcztTransaction,
+  type PcztTransparentInput,
+  type PcztTransparentOutput,
   type SignMessageDAError,
   type SignMessageDAIntermediateValue,
   type SignMessageDAOutput,
+  type SignPcztTransactionDAError,
+  type SignPcztTransactionDAIntermediateValue,
+  type SignPcztTransactionDAOutput,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -518,6 +528,352 @@ const buildSignTransactionArg = (
   };
 };
 
+// --- PCZT (Orchard shielded) signing ---------------------------------------
+
+type SignPcztInput = {
+  pcztJson: string;
+  skipOpenApp: boolean;
+};
+
+const fillHex = (length: number, fill: number): string =>
+  fill.toString(16).padStart(2, "0").repeat(length);
+
+/**
+ * Default PCZT payload: the real Orchard→transparent vector from app-zcash
+ * `tests/standalone/test_pczt.py::test_pczt_sign_tx_v5_orchard_to_transparent_simple`
+ * (one Orchard spend into one transparent output). Unlike synthetic fill-byte
+ * fixtures — which the device accepts on the transparent path but rejects on the
+ * Orchard path (`0x6a80`, the Orchard notes are cryptographically validated) —
+ * this vector signs successfully on a real/Speculos device. With Speculos run as
+ * the functional tests do (`--deterministic-rng zcash-standalone-tests`), the
+ * returned `spendAuthSig` is exactly
+ * `c9c9c463…0820`.
+ */
+const DEFAULT_PCZT_JSON = JSON.stringify(
+  {
+    global: {
+      txVersion: 5,
+      versionGroupId: 0x26a7270a,
+      consensusBranchId: 0xc2d6d0b4,
+      fallbackLockTime: 0,
+      expiryHeight: 0,
+      coinType: 133,
+      txModifiable: 0,
+    },
+    transparentInputs: [],
+    transparentOutputs: [
+      {
+        value: "290000",
+        scriptPubKey: "76a914424242424242424242424242424242424242424288ac",
+        derivation: null,
+      },
+    ],
+    orchardBundle: {
+      actions: [
+        {
+          cvNet:
+            "24631b59abdde690d7e6b62cfeac6619efb7753dc873d9dbfdd4af58f0c50e98",
+          nullifier:
+            "2e552e9315c89ecbf8016a8dfaa325ef90dedc59df4b0a42e5ff5cee0bbed821",
+          // rk consistent with alpha = (1).to_bytes(32, "little")
+          rk: "e95982b73ab0c2137ec354cce448a75ef39ec0cbdf6907be6df3495297834f89",
+          spendRecipient:
+            "4a6414bb6f09e4a89469663a081fc2646c083708f552597d524b2f1812272e472d2b28f7414ece124ddf02",
+          spendValue: "300000",
+          spendRho:
+            "0400000000000000000000000000000000000000000000000000000000000000",
+          spendRseed:
+            "1800000000000000000000000000000000000000000000000000000000000000",
+          alpha:
+            "0100000000000000000000000000000000000000000000000000000000000000",
+          signingPath: "32'/133'/0'",
+          seedFingerprint: fillHex(32, 0x00),
+          cmx: "f4f6493954ecd47be87e5fdebb99db614dfaf1825717f23c4b0438688d831a04",
+          ephemeralKey: fillHex(32, 0x00),
+          encCiphertext: fillHex(580, 0x00),
+          outCiphertext: fillHex(80, 0x00),
+          recipient:
+            "ede3d2ce08c11d8c5c7bfe6814cedafd96c160c3d879cb270946f1ab6fdf442a15648d7c0b3c9fd052e20a",
+          value: "0",
+          rseed:
+            "2c00000000000000000000000000000000000000000000000000000000000000",
+          rcv: "4000000000000000000000000000000000000000000000000000000000000000",
+        },
+      ],
+      flags: 3,
+      valueBalance: "300000",
+      anchor:
+        "699c780066f179ff12b26a5ec5b1af3d418eb0eadec3d3b18f10c91d97b33109",
+    },
+  },
+  null,
+  2,
+);
+
+const parseBigint = (value: string | number, fieldName: string): bigint => {
+  try {
+    return BigInt(value);
+  } catch {
+    throw new Error(`Invalid integer for ${fieldName}`);
+  }
+};
+
+const toNumberOrNull = (value: number | null | undefined): number | null =>
+  value === null || value === undefined ? null : Number(value);
+
+const parseDerivation = (
+  raw: { signingPath: string; pubkey: string; seedFingerprint?: string },
+  prefix: string,
+): PcztBip32Derivation => ({
+  signingPath: raw.signingPath,
+  pubkey: parseHexBytes(raw.pubkey, `${prefix}.pubkey`),
+  ...(raw.seedFingerprint
+    ? {
+        seedFingerprint: parseHexBytes(
+          raw.seedFingerprint,
+          `${prefix}.seedFingerprint`,
+        ),
+      }
+    : {}),
+});
+
+type RawPcztDerivation = {
+  signingPath: string;
+  pubkey: string;
+  seedFingerprint?: string;
+};
+
+type RawPcztTransparentInput = {
+  prevoutTxid: string;
+  prevoutIndex: number | string;
+  sequence?: number | null;
+  value: number | string;
+  scriptPubKey: string;
+  sighashType: number | string;
+  derivation: RawPcztDerivation;
+};
+
+type RawPcztTransparentOutput = {
+  value: number | string;
+  scriptPubKey: string;
+  derivation?: RawPcztDerivation | null;
+};
+
+type RawPcztOrchardAction = {
+  cvNet: string;
+  nullifier: string;
+  rk: string;
+  spendRecipient: string;
+  spendValue: number | string;
+  spendRho: string;
+  spendRseed: string;
+  alpha: string;
+  signingPath: string;
+  seedFingerprint?: string;
+  cmx: string;
+  ephemeralKey: string;
+  encCiphertext: string;
+  outCiphertext: string;
+  recipient: string;
+  value: number | string;
+  rseed: string;
+  rcv: string;
+};
+
+type RawPcztJson = {
+  global?: {
+    txVersion?: number | string;
+    versionGroupId?: number | string;
+    consensusBranchId?: number | string;
+    fallbackLockTime?: number | null;
+    expiryHeight?: number | string;
+    coinType?: number | string;
+    txModifiable?: number | string;
+  };
+  transparentInputs?: RawPcztTransparentInput[];
+  transparentOutputs?: RawPcztTransparentOutput[];
+  orchardBundle?: {
+    actions?: RawPcztOrchardAction[];
+    flags: number | string;
+    valueBalance: number | string;
+    anchor: string;
+  } | null;
+};
+
+const parsePcztTransaction = (value: string): PcztTransaction => {
+  let parsed: RawPcztJson;
+  try {
+    parsed = JSON.parse(value) as RawPcztJson;
+  } catch (error) {
+    throw new Error(
+      `Invalid PCZT JSON: ${
+        error instanceof Error ? error.message : "parse error"
+      }`,
+    );
+  }
+
+  const g = parsed.global ?? {};
+  const global: PcztGlobal = {
+    txVersion: Number(g.txVersion),
+    versionGroupId: Number(g.versionGroupId),
+    consensusBranchId: Number(g.consensusBranchId),
+    fallbackLockTime: toNumberOrNull(g.fallbackLockTime),
+    expiryHeight: Number(g.expiryHeight),
+    coinType: Number(g.coinType),
+    txModifiable: Number(g.txModifiable),
+  };
+
+  const transparentInputs: PcztTransparentInput[] = (
+    parsed.transparentInputs ?? []
+  ).map((input, i) => ({
+    prevoutTxid: parseHexBytes(
+      input.prevoutTxid,
+      `transparentInputs[${i}].prevoutTxid`,
+    ),
+    prevoutIndex: Number(input.prevoutIndex),
+    sequence: toNumberOrNull(input.sequence),
+    value: parseBigint(input.value, `transparentInputs[${i}].value`),
+    scriptPubKey: parseHexBytes(
+      input.scriptPubKey,
+      `transparentInputs[${i}].scriptPubKey`,
+    ),
+    sighashType: Number(input.sighashType),
+    derivation: parseDerivation(
+      input.derivation,
+      `transparentInputs[${i}].derivation`,
+    ),
+  }));
+
+  const transparentOutputs: PcztTransparentOutput[] = (
+    parsed.transparentOutputs ?? []
+  ).map((output, i) => ({
+    value: parseBigint(output.value, `transparentOutputs[${i}].value`),
+    scriptPubKey: parseHexBytes(
+      output.scriptPubKey,
+      `transparentOutputs[${i}].scriptPubKey`,
+    ),
+    derivation: output.derivation
+      ? parseDerivation(
+          output.derivation,
+          `transparentOutputs[${i}].derivation`,
+        )
+      : null,
+  }));
+
+  const orchardBundle: PcztOrchardBundle | null = parsed.orchardBundle
+    ? {
+        actions: (parsed.orchardBundle.actions ?? []).map(
+          (action, i): PcztOrchardAction => ({
+            cvNet: parseHexBytes(action.cvNet, `orchard[${i}].cvNet`),
+            nullifier: parseHexBytes(
+              action.nullifier,
+              `orchard[${i}].nullifier`,
+            ),
+            rk: parseHexBytes(action.rk, `orchard[${i}].rk`),
+            spendRecipient: parseHexBytes(
+              action.spendRecipient,
+              `orchard[${i}].spendRecipient`,
+            ),
+            spendValue: parseBigint(
+              action.spendValue,
+              `orchard[${i}].spendValue`,
+            ),
+            spendRho: parseHexBytes(action.spendRho, `orchard[${i}].spendRho`),
+            spendRseed: parseHexBytes(
+              action.spendRseed,
+              `orchard[${i}].spendRseed`,
+            ),
+            alpha: parseHexBytes(action.alpha, `orchard[${i}].alpha`),
+            signingPath: action.signingPath,
+            ...(action.seedFingerprint
+              ? {
+                  seedFingerprint: parseHexBytes(
+                    action.seedFingerprint,
+                    `orchard[${i}].seedFingerprint`,
+                  ),
+                }
+              : {}),
+            cmx: parseHexBytes(action.cmx, `orchard[${i}].cmx`),
+            ephemeralKey: parseHexBytes(
+              action.ephemeralKey,
+              `orchard[${i}].ephemeralKey`,
+            ),
+            encCiphertext: parseHexBytes(
+              action.encCiphertext,
+              `orchard[${i}].encCiphertext`,
+            ),
+            outCiphertext: parseHexBytes(
+              action.outCiphertext,
+              `orchard[${i}].outCiphertext`,
+            ),
+            recipient: parseHexBytes(
+              action.recipient,
+              `orchard[${i}].recipient`,
+            ),
+            value: parseBigint(action.value, `orchard[${i}].value`),
+            rseed: parseHexBytes(action.rseed, `orchard[${i}].rseed`),
+            rcv: parseHexBytes(action.rcv, `orchard[${i}].rcv`),
+          }),
+        ),
+        flags: Number(parsed.orchardBundle.flags),
+        valueBalance: parseBigint(
+          parsed.orchardBundle.valueBalance,
+          "orchardBundle.valueBalance",
+        ),
+        anchor: parseHexBytes(
+          parsed.orchardBundle.anchor,
+          "orchardBundle.anchor",
+        ),
+      }
+    : null;
+
+  return { global, transparentInputs, transparentOutputs, orchardBundle };
+};
+
+const SIGN_PCZT_FORM_KEYS: (keyof SignPcztInput)[] = ["skipOpenApp"];
+
+const SignPcztForm = ({
+  initialValues,
+  onChange,
+  disabled,
+}: {
+  initialValues: SignPcztInput;
+  onChange: (values: SignPcztInput) => void;
+  disabled?: boolean;
+}) => {
+  const initialValuesRef = useRef(initialValues);
+  initialValuesRef.current = initialValues;
+
+  const formValues = Object.fromEntries(
+    SIGN_PCZT_FORM_KEYS.map((key) => [key, initialValues[key]]),
+  ) as Pick<SignPcztInput, (typeof SIGN_PCZT_FORM_KEYS)[number]>;
+
+  return (
+    <Flex flexDirection="column" rowGap={5}>
+      <Form
+        initialValues={formValues}
+        onChange={(values) =>
+          onChange({ ...initialValuesRef.current, ...values })
+        }
+        disabled={disabled}
+      />
+      <Flex flexDirection="column" rowGap={2}>
+        <InputHeader hint="Structured PCZT as JSON. Byte fields are hex strings; value/spendValue/valueBalance are decimal strings (zatoshis). Set orchardBundle to null for transparent-only. Defaults to the app-zcash public→private test fixture.">
+          PCZT (JSON)
+        </InputHeader>
+        <ResizableTextArea
+          value={initialValues.pcztJson}
+          onChange={(value) =>
+            onChange({ ...initialValuesRef.current, pcztJson: value })
+          }
+          initialHeight={260}
+          disabled={disabled}
+        />
+      </Flex>
+    </Flex>
+  );
+};
+
 export const SignerZcashView = ({ sessionId }: { sessionId: string }) => {
   const dmk = useDmk();
   const signer = useSignerZcash();
@@ -745,6 +1101,41 @@ export const SignerZcashView = ({ sessionId }: { sessionId: string }) => {
         },
         SignMessageDAError,
         SignMessageDAIntermediateValue
+      >,
+      {
+        title: "Sign PCZT Transaction",
+        description:
+          "Sign an Orchard shielded (PCZT) transaction. Returns one spendAuthSig per Orchard action plus one signature per transparent input; the binding signature and final assembly are host-side.",
+        executeDeviceAction: ({ pcztJson, skipOpenApp }) => {
+          if (!signer) {
+            throw new Error("Signer not initialized");
+          }
+          const transaction = parsePcztTransaction(pcztJson);
+          return signer.signPcztTransaction(transaction, { skipOpenApp });
+        },
+        initialValues: {
+          pcztJson: DEFAULT_PCZT_JSON,
+          skipOpenApp: false,
+        },
+        validateValues: (values) => {
+          try {
+            parsePcztTransaction(values.pcztJson);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        InputValuesComponent: SignPcztForm,
+        labelSelector: {
+          pcztJson: "PCZT (JSON)",
+          skipOpenApp: "Skip open app",
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignPcztTransactionDAOutput,
+        SignPcztInput,
+        SignPcztTransactionDAError,
+        SignPcztTransactionDAIntermediateValue
       >,
     ],
     [deviceModelId, signer],
