@@ -36,7 +36,6 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@solana/spl-token": "catalog:",
     "@solana/web3.js": "catalog:",
     "bs58": "catalog:",
     "buffer": "catalog:",
