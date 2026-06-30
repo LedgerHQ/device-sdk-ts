@@ -13,6 +13,7 @@ import { SplitView } from "./components/SplitView";
 import { useConnectorMessages } from "./hooks/useConnectorMessages";
 import { Inspector } from "./screens/inspector";
 import { Logger } from "./screens/logger";
+import { MockCapture } from "./screens/mock-capture";
 import { ErrorBoundary } from "./ErrorBoundary";
 
 const DashboardContainer = styled.div`
@@ -43,8 +44,13 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     isInspectorConnected,
     providerValue,
     apduResponses,
+    apduExchanges,
+    isRecordingExchanges,
     sendMessage,
     clearLogs,
+    startRecordingExchanges,
+    stopRecordingExchanges,
+    clearRecordedExchanges,
     startListening,
     stopListening,
     startDiscovering,
@@ -86,12 +92,27 @@ const Dashboard: React.FC<{ connector: Connector }> = ({ connector }) => {
     />
   );
 
+  const mockCapture = (
+    <MockCapture
+      apduExchanges={apduExchanges}
+      isRecording={isRecordingExchanges}
+      isConnected={isLoggerConnected}
+      startRecording={startRecordingExchanges}
+      stopRecording={stopRecordingExchanges}
+      clearRecorded={clearRecordedExchanges}
+      sessionStates={sessionStates}
+      connectedDevices={connectedDevices}
+    />
+  );
+
   const content = (() => {
     switch (currentScreen) {
       case DashboardScreen.logs:
         return logger;
       case DashboardScreen.inspector:
         return inspector;
+      case DashboardScreen.mockCapture:
+        return mockCapture;
       case DashboardScreen.splitHorizontal:
         return (
           <SplitView direction="horizontal" first={logger} second={inspector} />
