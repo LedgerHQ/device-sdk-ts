@@ -1,0 +1,379 @@
+---
+title: "Migrate from hw-app-eth to device-signer-kit-ethereum"
+category: how-to
+---
+
+# Migrate from hw-app-eth to device-signer-kit-ethereum
+
+This guide walks you through migrating from the LedgerJS Ethereum package (`@ledgerhq/hw-app-eth`) to the DMK Ethereum signer (`@ledgerhq/device-signer-kit-ethereum`).
+
+> **Warning:** `hw-app-eth` will stop working with the Ethereum app after September 2026. Complete this migration before that date.
+
+Before reading this guide, complete the [general LedgerJS → DMK migration](../../ledgerjs-to-dmk) to set up the DMK, register a transport, and create a session.
+
+## Why migrate?
+
+| Feature | `hw-app-eth` (LedgerJS) | `device-signer-kit-ethereum` (DMK) |
+| --- | --- | --- |
+| **EIP-712 support** | `signEIP712HashedMessage` (hashed data) and `signEIP712Message` (structured data) | `signTypedData` (full structured-data signing) |
+| **API style** | Promise-based | Observable-based, with cancellation |
+| **Transport management** | Manual: you create and manage the `Transport` | Automatic: DMK manages discovery, connection, reconnection |
+| **App lifecycle** | Manual: you open the Ethereum app yourself | Automatic: the signer opens the Ethereum app for you |
+| **Clear signing** | Manual: `ledgerService.resolveTransaction()` before every `signTransaction` | Automatic: the context module resolves metadata during signing |
+| **Device state** | No visibility | Observable state machine with `requiredUserInteraction` |
+| **Cancellation** | Not supported | Built-in `cancel()` on every operation |
+| **EIP-7702** | Not supported | `signDelegationAuthorization` |
+| **Safe address** | Not supported | `verifySafeAddress` |
+
+---
+
+## Step 1: Update your dependencies
+
+```diff
+- npm install @ledgerhq/hw-app-eth @ledgerhq/hw-transport-webhid
++ npm install @ledgerhq/device-signer-kit-ethereum @ledgerhq/device-management-kit @ledgerhq/device-transport-kit-web-hid
+```
+
+`rxjs` is a peer dependency; install it if it is not already in your project:
+
+```bash
+npm install rxjs
+```
+
+---
+
+## Step 2: Update initialization
+
+If you haven't already, follow [Steps 2–3 of the general migration guide](../../ledgerjs-to-dmk#step-2-initialize-the-dmk) to build the DMK instance and obtain a `sessionId`. Then create the Ethereum signer:
+
+### Before
+
+```typescript
+import Eth from "@ledgerhq/hw-app-eth";
+
+const eth = new Eth(transport);
+```
+
+### After
+
+```typescript
+import { SignerEthBuilder } from "@ledgerhq/device-signer-kit-ethereum";
+
+const signerEth = new SignerEthBuilder({ dmk, sessionId }).build();
+```
+
+### With an origin token (recommended for Transaction Checks)
+
+```typescript
+const signerEth = new SignerEthBuilder({
+  dmk,
+  sessionId,
+  originToken: "your-origin-token",
+}).build();
+```
+
+`originToken` enables Ledger's Transaction Checks service, which shows users whether a transaction is potentially malicious. Without it, clear signing still works but Transaction Checks are not available. Contact Ledger to obtain a token for your application.
+
+---
+
+## Step 3: Migrate API calls
+
+All methods now return `{ observable, cancel }` instead of a `Promise`.
+
+```typescript
+import { DeviceActionStatus } from "@ledgerhq/device-management-kit";
+```
+
+---
+
+### `getAddress`
+
+#### Before
+
+```typescript
+// boolDisplay: show address on device for verification
+// boolChaincode: return the chain code
+// chainId: optional, displayed on Stax/Flex
+const result = await eth.getAddress(
+  "44'/60'/0'/0/0",
+  boolDisplay,
+  boolChaincode,
+  chainId,
+);
+// result.publicKey: string (hex, no 0x prefix)
+// result.address: string ('0x...')
+// result.chainCode?: string
+```
+
+#### After
+
+```typescript
+const { observable, cancel } = signerEth.getAddress("44'/60'/0'/0/0", {
+  checkOnDevice: boolDisplay,   // was boolDisplay
+  returnChainCode: boolChaincode, // was boolChaincode
+  chainId: 1,                   // was chainId (number, not string)
+});
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const { publicKey, address, chainCode } = state.output;
+      // publicKey: string
+      // address: `0x${string}`
+      // chainCode?: string
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- Parameters move from positional arguments to a named options object.
+- `chainId` is now a `number` (was a `string` in LedgerJS).
+- A new `skipOpenApp` boolean option lets you skip the automatic app-open step if the Ethereum app is already running.
+
+---
+
+### `signTransaction`
+
+#### Before
+
+```typescript
+import { ledgerService } from "@ledgerhq/hw-app-eth";
+
+// rawTxHex is the hex-encoded RLP of the unsigned transaction (no 0x prefix)
+const resolution = await ledgerService.resolveTransaction(rawTxHex, {}, {});
+const sig = await eth.signTransaction("44'/60'/0'/0/0", rawTxHex, resolution);
+// sig.r: string (hex, no 0x prefix)
+// sig.s: string (hex, no 0x prefix)
+// sig.v: string (decimal)
+```
+
+#### After
+
+```typescript
+// The DMK expects a Uint8Array, not a hex string
+const txBytes = Buffer.from(rawTxHex, "hex"); // Buffer extends Uint8Array
+
+const { observable, cancel } = signerEth.signTransaction(
+  "44'/60'/0'/0/0",
+  txBytes,
+);
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const { r, s, v } = state.output;
+      // r: `0x${string}`
+      // s: `0x${string}`
+      // v: number
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- `ledgerService.resolveTransaction` is gone. The context module resolves ERC-20 tokens, NFT metadata, and plugin data automatically during the signing flow.
+- The transaction input changes from a hex string to a `Uint8Array` (use `Buffer.from(rawTxHex, "hex")` to convert).
+- The signature's `v` field changes type: LedgerJS returns it as a decimal string, the DMK returns it as a `number`.
+- The signature's `r` and `s` fields now include the `0x` prefix.
+
+---
+
+### `signPersonalMessage` → `signMessage`
+
+#### Before
+
+```typescript
+// messageHex is the hex-encoded message bytes
+const sig = await eth.signPersonalMessage(
+  "44'/60'/0'/0/0",
+  Buffer.from("Hello, Ledger!").toString("hex"),
+);
+// sig.v: number
+// sig.r: string (hex, no 0x prefix)
+// sig.s: string (hex, no 0x prefix)
+```
+
+#### After
+
+```typescript
+// Pass the message as a plain string or Uint8Array
+const { observable, cancel } = signerEth.signMessage(
+  "44'/60'/0'/0/0",
+  "Hello, Ledger!",
+);
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const { r, s, v } = state.output;
+      // r: `0x${string}`
+      // s: `0x${string}`
+      // v: number
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- Method renamed from `signPersonalMessage` to `signMessage`.
+- Input changes from a hex-encoded string to a plain `string` or `Uint8Array`. If you were passing `Buffer.from(text).toString("hex")`, pass `text` directly.
+- The signature's `r` and `s` fields now include the `0x` prefix.
+
+---
+
+### `signEIP712Message` → `signTypedData`
+
+#### Before
+
+```typescript
+const sig = await eth.signEIP712Message("44'/60'/0'/0/0", {
+  domain: {
+    name: "My App",
+    version: "1",
+    chainId: 1,
+    verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+  },
+  types: {
+    EIP712Domain: [
+      { name: "name", type: "string" },
+      { name: "version", type: "string" },
+      { name: "chainId", type: "uint256" },
+      { name: "verifyingContract", type: "address" },
+    ],
+    Mail: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "contents", type: "string" },
+    ],
+  },
+  primaryType: "Mail",
+  message: { from: "0x...", to: "0x...", contents: "Hello!" },
+});
+// sig.v: number
+// sig.r: string (hex, no 0x prefix)
+// sig.s: string (hex, no 0x prefix)
+```
+
+#### After
+
+```typescript
+const { observable, cancel } = signerEth.signTypedData("44'/60'/0'/0/0", {
+  domain: {
+    name: "My App",
+    version: "1",
+    chainId: 1,
+    verifyingContract: "0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC",
+  },
+  types: {
+    EIP712Domain: [
+      { name: "name", type: "string" },
+      { name: "version", type: "string" },
+      { name: "chainId", type: "uint256" },
+      { name: "verifyingContract", type: "address" },
+    ],
+    Mail: [
+      { name: "from", type: "address" },
+      { name: "to", type: "address" },
+      { name: "contents", type: "string" },
+    ],
+  },
+  primaryType: "Mail",
+  message: { from: "0x...", to: "0x...", contents: "Hello!" },
+});
+
+observable.subscribe({
+  next: (state) => {
+    if (state.status === DeviceActionStatus.Completed) {
+      const { r, s, v } = state.output;
+      // r: `0x${string}`
+      // s: `0x${string}`
+      // v: number
+    }
+  },
+});
+```
+
+**Key differences:**
+
+- Method renamed from `signEIP712Message` to `signTypedData`.
+- The `TypedData` structure (`domain`, `types`, `primaryType`, `message`) is identical; no changes to the data you pass.
+- The `fullImplem` boolean parameter is gone; the DMK always uses the full implementation.
+- The signature's `r` and `s` fields now include the `0x` prefix.
+
+---
+
+### `signEIP712HashedMessage` → `signTypedData`
+
+The `SignerEth` interface does not have a `signEIP712HashedMessage` method. The only EIP-712 signing method in the DMK is `signTypedData`, which takes the full structured data, not pre-computed hashes. When migrating, you must move to `signTypedData`.
+
+This is an upgrade: instead of computing `domainHash` and `messageHash` yourself and doing blind signing, you pass the original typed data and the DMK handles the hashing. It also tries clear signing first (so the device can display human-readable field values), and automatically falls back to the hash-based APDU if clear signing is unavailable.
+
+```typescript
+// Before: manually computed hashes, blind-signed
+await eth.signEIP712HashedMessage(path, domainSeparatorHex, hashStructMessageHex);
+
+// After: pass the structured data — the DMK hashes and signs
+const { observable } = signerEth.signTypedData(path, {
+  domain: { /* original domain object */ },
+  types: { /* original types */ },
+  primaryType: "...",
+  message: { /* original message */ },
+});
+```
+
+If your code only holds the pre-computed hashes and no longer has access to the original `TypedData`, you will need to retrieve or reconstruct it before you can migrate.
+
+---
+
+### `getChallenge`: no equivalent
+
+`getChallenge` was a low-level method used internally as part of some clear-signing flows. It has no public equivalent in the DMK signer. The context module handles this internally.
+
+---
+
+### `getAppConfiguration`: no equivalent
+
+`getAppConfiguration` returned the Ethereum app version and feature flags (arbitrary data, Stark support, etc.). There is no equivalent method on the DMK `SignerEth` interface.
+
+If you need the app version, you can send the underlying APDU directly using `dmk.sendCommand()`. See [Build a custom command](../../../how_to/build_custom_command).
+
+---
+
+## Step 4: Converting from promises to observables
+
+If you want to migrate incrementally, use the `toPromise` helper from the [general migration guide](../../ledgerjs-to-dmk#step-5-migrate-api-calls-from-promises-to-observables). This lets you keep `await` call sites unchanged while the rest of your code catches up.
+
+---
+
+## Quick reference: API mapping
+
+| `hw-app-eth` | `device-signer-kit-ethereum` | Notes |
+| --- | --- | --- |
+| `new Eth(transport)` | `new SignerEthBuilder({ dmk, sessionId, originToken? }).build()` | |
+| `getAddress(path, display?, chaincode?, chainId?)` | `getAddress(path, { checkOnDevice?, returnChainCode?, skipOpenApp?, chainId? })` | `chainId` is now a `number` |
+| `signTransaction(path, rawTxHex, resolution?)` | `signTransaction(path, txBytes: Uint8Array, { skipOpenApp? }?)` | Input: hex string → `Uint8Array`; `resolution` removed |
+| `clearSignTransaction(path, rawTxHex, config)` | `signTransaction(path, txBytes)` | Resolution is automatic |
+| `signPersonalMessage(path, messageHex)` | `signMessage(path, message: string \| Uint8Array, { skipOpenApp? }?)` | Input: hex string → plain string |
+| `signEIP712Message(path, typedData, fullImplem?)` | `signTypedData(path, typedData: TypedData, { skipOpenApp? }?)` | Same data structure |
+| `signEIP712HashedMessage(path, domainHex, msgHex)` | Use `signTypedData` when structured data is available | EIP-712 APDU refactor in progress |
+| `getChallenge()` | No equivalent | Handled internally |
+| `getAppConfiguration()` | No equivalent | Use `dmk.sendCommand()` for raw access |
+| *(none)* | `signDelegationAuthorization(path, chainId, contractAddress, nonce)` | New in DMK (EIP-7702) |
+| *(none)* | `verifySafeAddress(safeAddress, { chainId, skipOpenApp? })` | New in DMK |
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+| --- | --- |
+| Observable never reaches `Completed` | The device may be waiting for user confirmation. Check `state.intermediateValue.requiredUserInteraction` in the `Pending` state. |
+| `rxjs` not found | Run `npm install rxjs` (it is a peer dependency of the DMK). |
+| Transaction bytes rejected | Ensure you are passing a `Uint8Array` (or `Buffer`), not a hex string. `Buffer.from(rawTxHex, "hex")` converts correctly. |
+| `signEIP712HashedMessage` not available in DMK | The DMK does not expose a hashed-message signing API. Use `signTypedData` if you have the full structured data. |
+| No Transaction Checks shown on device | Pass an `originToken` to `SignerEthBuilder`. Contact Ledger to obtain one. |
+| Device shows "blind signing" warning | Transaction Checks require an `originToken` and a supported transaction type. |
