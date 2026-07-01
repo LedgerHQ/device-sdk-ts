@@ -17,7 +17,7 @@ export const P2 = {
  *
  * Source of truth: `LedgerHQ/app-zcash` (branch `develop`) `src/consts.rs`,
  * `docs/APDU.md` and `docs/PCZT_APDU.md`. Kept separate from the legacy
- * transparent P1/P2 above so the DMK-01 transparent path is untouched.
+ * transparent P1/P2 above so the legacy transparent path is untouched.
  */
 
 /** P1 packet-sequence framing for a single multi-packet PCZT bundle command. */

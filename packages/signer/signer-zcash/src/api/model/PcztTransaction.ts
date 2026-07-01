@@ -1,6 +1,6 @@
 /**
  * Structured PCZT (Partially Constructed Zcash Transaction) input for
- * Orchard shielded signing — DMK-02.
+ * Orchard shielded signing.
  *
  * The shapes mirror, field-for-field, the compact PCZT subset the device
  * parses (see `LedgerHQ/app-zcash` `docs/PCZT_APDU.md`, branch `develop`).

@@ -329,7 +329,7 @@ type SignPcztTransactionResult = {
 };
 ```
 
-  There is no `bindingSig` in the result — it is computed host-side from `bsk = Σ rcv`. On `Pending`, `requiredUserInteraction` is `UserInteractionRequired.SignTransaction`.
+There is no `bindingSig` in the result — it is computed host-side from `bsk = Σ rcv`. On `Pending`, `requiredUserInteraction` is `UserInteractionRequired.SignTransaction`.
 
 - `cancel` A function to cancel the action on the Ledger device.
 

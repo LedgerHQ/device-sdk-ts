@@ -1,5 +1,5 @@
 /**
- * Result types for PCZT (Orchard shielded) signing — DMK-02.
+ * Result types for PCZT (Orchard shielded) signing.
  *
  * These are intentionally distinct from the legacy transparent/ECDSA
  * {@link Signature} (`{ r, s, v }`): the Orchard signature is a RedPallas
