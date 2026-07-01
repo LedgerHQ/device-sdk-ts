@@ -98,6 +98,26 @@ export class DeviceActionsDriver {
   }
 
   /**
+   * Open the Open app with dependencies action, set the target app and the
+   * comma-separated dependencies, and Execute it. The final open step provisions
+   * a real Speculos instance via the mock server's Speculinho proxy, so this
+   * requires access to that backend (unlike the pure-mock secure-channel flows).
+   */
+  async openAppWithDependencies(
+    appName: string,
+    dependencies: string,
+  ): Promise<void> {
+    await this.open("Open app with dependencies");
+    const appNameInput = this.page.getByTestId("input-text_appName");
+    await appNameInput.waitFor({ state: "visible" });
+    await appNameInput.fill(appName);
+    const dependenciesInput = this.page.getByTestId("input-text_dependencies");
+    await dependenciesInput.waitFor({ state: "visible" });
+    await dependenciesInput.fill(dependencies);
+    await this.send();
+  }
+
+  /**
    * Open the Wait for app and version action and Execute it.
    */
   async waitForAppAndVersion({
