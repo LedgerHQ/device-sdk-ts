@@ -195,6 +195,65 @@ test.describe("device action: uninstall app", () => {
       expect(response.status).toBe("completed");
     });
   });
+
+  test("fails to uninstall an app that another installed app depends on", async ({
+    device,
+    deviceActions,
+  }) => {
+    // Installing the 1inch plugin also installs its Ethereum parent, so the
+    // device ends up with both — 1inch depends on Ethereum.
+    await test.step("Given a connected device with Ethereum and its 1inch plugin installed", async () => {
+      await device.addAndConnect(NANO_X);
+      await deviceActions.goto();
+      await deviceActions.installOrUpdateApps("1inch");
+      const installed = await deviceActions.lastResponse<InstallAppResponse>({
+        until: '"completed"',
+        timeout: 90_000,
+      });
+      expect(installed.status).toBe("completed");
+    });
+
+    await test.step("When the Uninstall App device action is executed for Ethereum", async () => {
+      await deviceActions.backToList();
+      await deviceActions.uninstallApp("Ethereum");
+    });
+
+    await test.step("Then it fails because the installed 1inch plugin depends on Ethereum", async () => {
+      // The uninstall guard rejects removing an app that is the parent of another
+      // installed app (here 1inch.parentName === "Ethereum").
+      const error = await deviceActions.expectError(
+        "App to uninstall is a dependency of another installed app",
+        { timeout: 60_000 },
+      );
+      expect(error).toContain(
+        "App to uninstall is a dependency of another installed app",
+      );
+    });
+  });
+
+  test("completes as a no-op when the app to uninstall is not installed", async ({
+    device,
+    deviceActions,
+  }) => {
+    await test.step("Given a connected device without Ethereum installed", async () => {
+      await device.addAndConnect(NANO_X);
+    });
+
+    await test.step("When the Uninstall App device action is executed for Ethereum", async () => {
+      await deviceActions.goto();
+      await deviceActions.uninstallApp("Ethereum");
+    });
+
+    await test.step("Then it completes without uninstalling anything", async () => {
+      // The action lists installed apps, sees Ethereum is absent and terminates
+      // successfully without touching the device.
+      const response = await deviceActions.lastResponse<InstallAppResponse>({
+        until: '"completed"',
+        timeout: 60_000,
+      });
+      expect(response.status).toBe("completed");
+    });
+  });
 });
 
 const NANO_X_WITH_BITCOIN: DeviceConfig = {
