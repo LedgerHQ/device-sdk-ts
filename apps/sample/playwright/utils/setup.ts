@@ -1,7 +1,7 @@
 import { MockClient } from "@ledgerhq/device-mockserver-client";
 import { type Page } from "@playwright/test";
 
-const MOCK_SERVER_URL = "http://127.0.0.1:8080";
+const MOCK_SERVER_URL = "http://127.0.0.1:9752";
 const SETTINGS_STORAGE_KEY = "dmk-sample-settings";
 
 /**

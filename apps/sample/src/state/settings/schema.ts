@@ -58,7 +58,7 @@ export type SettingsState = {
 export const initialState: SettingsState = {
   // Transport settings
   transportType: getInitialTransportType(),
-  mockServerUrl: "http://127.0.0.1:8080/",
+  mockServerUrl: "http://127.0.0.1:9752/",
   mockServerSessionToken: "",
   speculosUrl: DEFAULT_SPECULOS_URL,
   speculosVncUrl: DEFAULT_SPECULOS_VNC_URL,

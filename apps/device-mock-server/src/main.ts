@@ -5,7 +5,7 @@ import { type MockServerConfig } from "@api/model/MockServerConfig";
 import { logger } from "@internal/logger/logger";
 import { DEFAULT_SPECULOS_SEED } from "@internal/speculos/model/SpeculosModels";
 
-const port = Number(process.env["PORT"] ?? 8080);
+const port = Number(process.env["PORT"] ?? 9752);
 
 /**
  * Speculinho is enabled by default against the labs operator; set
