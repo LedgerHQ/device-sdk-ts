@@ -12,7 +12,6 @@ import {
   type CraftTransactionDAInput,
   type CraftTransactionDAIntermediateValue,
 } from "@api/app-binder/CraftTransactionDeviceActionTypes";
-import { type TransactionFetcherService } from "@internal/services/TransactionFetcherService";
 
 import { makeDeviceActionInternalApiMock } from "./__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "./__test-utils__/testDeviceActionStates";
@@ -28,10 +27,6 @@ const testCraftedTransaction = "base64-crafted-output";
 const testTransactionSignature =
   "4bFbdzYqrc5n8nTf4keT4FMRgGMnavYnJ2wMkrZi8RZUzstopVa69ihJrygvdSmWFFzXGjWZ9wf4qG8YgEBGJTbG";
 const testFetchedTransaction = "base64-fetched-from-network";
-
-const mockTransactionFetcherService: TransactionFetcherService = {
-  fetchTransaction: vi.fn(),
-};
 
 let apiMock: ReturnType<typeof makeDeviceActionInternalApiMock>;
 let getPublicKeyMock: ReturnType<typeof vi.fn>;
@@ -65,7 +60,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         serialisedTransaction: testSerialisedTransaction,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -118,7 +112,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         serialisedTransaction: testSerialisedTransaction,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -167,7 +160,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         serialisedTransaction: testSerialisedTransaction,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -222,7 +214,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         serialisedTransaction: testSerialisedTransaction,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -291,7 +282,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         serialisedTransaction: testSerialisedTransaction,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -348,7 +338,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         transactionSignature: testTransactionSignature,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -409,7 +398,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         transactionSignature: testTransactionSignature,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -460,7 +448,6 @@ describe("CraftTransactionDeviceAction", () => {
         derivationPath: defaultDerivation,
         transactionSignature: testTransactionSignature,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -525,7 +512,6 @@ describe("CraftTransactionDeviceAction", () => {
         transactionSignature: testTransactionSignature,
         rpcUrl: testRpcUrl,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });
@@ -580,6 +566,7 @@ describe("CraftTransactionDeviceAction", () => {
               input: {
                 publicKey: testPublicKey,
                 serialisedTransaction: testFetchedTransaction,
+                rpcUrl: testRpcUrl,
               },
             }),
           );
@@ -594,7 +581,6 @@ describe("CraftTransactionDeviceAction", () => {
       const input: CraftTransactionDAInput = {
         derivationPath: defaultDerivation,
         skipOpenApp: true,
-        transactionFetcherService: mockTransactionFetcherService,
       };
 
       const action = new CraftTransactionDeviceAction({ input });

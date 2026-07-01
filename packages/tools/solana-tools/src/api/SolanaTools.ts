@@ -13,5 +13,8 @@ export interface SolanaTools {
     transactionSignature?: string;
     rpcUrl?: string;
     skipOpenApp?: boolean;
+    // Optional explicit old to new address map, base58 keyed. Overrides the
+    // auto-detected payer and ATA entries on a key collision.
+    replacements?: Readonly<Record<string, string>>;
   }): CraftTransactionDAReturnType;
 }

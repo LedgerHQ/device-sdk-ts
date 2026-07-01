@@ -1,3 +1,3 @@
 export const servicesTypes = {
-  TransactionFetcherService: Symbol.for("TransactionFetcherService"),
+  SolanaTransactionDataSource: Symbol.for("SolanaTransactionDataSource"),
 };
