@@ -58,6 +58,24 @@ describe("PCZT bundle commands", () => {
         .getRawApdu();
       expect(apduHex(apdu)).toBe("e053010002" + "0102");
     });
+
+    it("maps the success status word to a successful result", () => {
+      const result = new PcztTransparentInputCommand({
+        data: DATA,
+        p1: PCZT_P1.FIRST,
+        p2: PCZT_P2.CONTINUE,
+      }).parseResponse(success);
+      expect(isSuccessCommandResult(result)).toBe(true);
+    });
+
+    it("surfaces a device error status word", () => {
+      const result = new PcztTransparentInputCommand({
+        data: DATA,
+        p1: PCZT_P1.FIRST,
+        p2: PCZT_P2.CONTINUE,
+      }).parseResponse(rejected);
+      expect(isSuccessCommandResult(result)).toBe(false);
+    });
   });
 
   describe("PcztTransparentOutputCommand", () => {
@@ -70,6 +88,24 @@ describe("PCZT bundle commands", () => {
         .getApdu()
         .getRawApdu();
       expect(apduHex(apdu)).toBe("e054800002" + "0102");
+    });
+
+    it("maps the success status word to a successful result", () => {
+      const result = new PcztTransparentOutputCommand({
+        data: DATA,
+        p1: PCZT_P1.FIRST,
+        p2: PCZT_P2.CONTINUE,
+      }).parseResponse(success);
+      expect(isSuccessCommandResult(result)).toBe(true);
+    });
+
+    it("surfaces a device error status word", () => {
+      const result = new PcztTransparentOutputCommand({
+        data: DATA,
+        p1: PCZT_P1.FIRST,
+        p2: PCZT_P2.CONTINUE,
+      }).parseResponse(rejected);
+      expect(isSuccessCommandResult(result)).toBe(false);
     });
   });
 

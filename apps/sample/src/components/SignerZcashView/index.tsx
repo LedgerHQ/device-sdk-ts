@@ -618,6 +618,20 @@ const parseBigint = (value: string | number, fieldName: string): bigint => {
   }
 };
 
+const parseRequiredNumber = (
+  value: number | string | undefined | null,
+  fieldName: string,
+): number => {
+  if (value === undefined || value === null) {
+    throw new Error(`${fieldName} is required`);
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n)) {
+    throw new Error(`Invalid number for ${fieldName}: ${String(value)}`);
+  }
+  return n;
+};
+
 const toNumberOrNull = (value: number | null | undefined): number | null =>
   value === null || value === undefined ? null : Number(value);
 
@@ -714,13 +728,19 @@ const parsePcztTransaction = (value: string): PcztTransaction => {
 
   const g = parsed.global ?? {};
   const global: PcztGlobal = {
-    txVersion: Number(g.txVersion),
-    versionGroupId: Number(g.versionGroupId),
-    consensusBranchId: Number(g.consensusBranchId),
+    txVersion: parseRequiredNumber(g.txVersion, "global.txVersion"),
+    versionGroupId: parseRequiredNumber(
+      g.versionGroupId,
+      "global.versionGroupId",
+    ),
+    consensusBranchId: parseRequiredNumber(
+      g.consensusBranchId,
+      "global.consensusBranchId",
+    ),
     fallbackLockTime: toNumberOrNull(g.fallbackLockTime),
-    expiryHeight: Number(g.expiryHeight),
-    coinType: Number(g.coinType),
-    txModifiable: Number(g.txModifiable),
+    expiryHeight: parseRequiredNumber(g.expiryHeight, "global.expiryHeight"),
+    coinType: parseRequiredNumber(g.coinType, "global.coinType"),
+    txModifiable: parseRequiredNumber(g.txModifiable, "global.txModifiable"),
   };
 
   const transparentInputs: PcztTransparentInput[] = (
@@ -730,14 +750,20 @@ const parsePcztTransaction = (value: string): PcztTransaction => {
       input.prevoutTxid,
       `transparentInputs[${i}].prevoutTxid`,
     ),
-    prevoutIndex: Number(input.prevoutIndex),
+    prevoutIndex: parseRequiredNumber(
+      input.prevoutIndex,
+      `transparentInputs[${i}].prevoutIndex`,
+    ),
     sequence: toNumberOrNull(input.sequence),
     value: parseBigint(input.value, `transparentInputs[${i}].value`),
     scriptPubKey: parseHexBytes(
       input.scriptPubKey,
       `transparentInputs[${i}].scriptPubKey`,
     ),
-    sighashType: Number(input.sighashType),
+    sighashType: parseRequiredNumber(
+      input.sighashType,
+      `transparentInputs[${i}].sighashType`,
+    ),
     derivation: parseDerivation(
       input.derivation,
       `transparentInputs[${i}].derivation`,
@@ -815,7 +841,10 @@ const parsePcztTransaction = (value: string): PcztTransaction => {
             rcv: parseHexBytes(action.rcv, `orchard[${i}].rcv`),
           }),
         ),
-        flags: Number(parsed.orchardBundle.flags),
+        flags: parseRequiredNumber(
+          parsed.orchardBundle.flags,
+          "orchardBundle.flags",
+        ),
         valueBalance: parseBigint(
           parsed.orchardBundle.valueBalance,
           "orchardBundle.valueBalance",
