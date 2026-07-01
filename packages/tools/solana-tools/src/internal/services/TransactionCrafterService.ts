@@ -1,14 +1,15 @@
 import { bufferToBase64String } from "@ledgerhq/device-management-kit";
 import {
-  getAssociatedTokenAddressSync,
-  TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import {
   type AddressLookupTableAccount,
   PublicKey,
   TransactionMessage,
 } from "@solana/web3.js";
+
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@internal/services/utils/splToken";
 
 import { deserializeToMessage } from "./crafter/deserialize";
 

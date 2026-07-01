@@ -1,9 +1,4 @@
 import {
-  getAssociatedTokenAddressSync,
-  TOKEN_2022_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import {
   AddressLookupTableAccount,
   ComputeBudgetProgram,
   PublicKey,
@@ -13,6 +8,12 @@ import {
   VersionedMessage,
   VersionedTransaction,
 } from "@solana/web3.js";
+
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@internal/services/utils/splToken";
 
 function toBase64(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString("base64");

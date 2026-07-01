@@ -1,12 +1,12 @@
+import { Connection, type PublicKey } from "@solana/web3.js";
+
+import { RpcAddressLookupTableResolver } from "@internal/app-binder/services/utils/AddressLookupTableResolver";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { Connection, type PublicKey } from "@solana/web3.js";
-
-import { RpcAddressLookupTableResolver } from "@internal/app-binder/services/utils/AddressLookupTableResolver";
+} from "@internal/app-binder/services/utils/splToken";
 import { TransactionParser } from "@internal/app-binder/services/utils/TransactionParser";
 
 export enum SolanaTransactionTypes {
@@ -236,7 +236,7 @@ export function extractValidatedATA(
     const derivedClassic = getAssociatedTokenAddressSync(
       mint,
       owner,
-      true, // allowOwnerOffCurve
+      true,
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID,
     );
