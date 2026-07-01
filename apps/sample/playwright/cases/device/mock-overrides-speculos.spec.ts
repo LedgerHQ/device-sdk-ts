@@ -33,6 +33,10 @@ interface GetAppAndVersionResponse {
 }
 
 test.describe("device: explicit mock overrides the live Speculos proxy", () => {
+  // This test exercises the refresher polling GetAppAndVersion, so polling must
+  // be enabled (overrides the default disablePolling: true fixture).
+  test.use({ disablePolling: false });
+
   test("locks the device by mocking GetAppAndVersion while Ethereum is open", async ({
     device,
     commands,
