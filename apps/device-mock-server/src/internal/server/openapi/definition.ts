@@ -19,7 +19,7 @@ export const openapiDefinition: OAS3Definition = {
       "and mock is scoped to a bearer-token session obtained from `POST /auth`.",
     license: { name: "Apache-2.0" },
   },
-  servers: [{ url: "http://127.0.0.1:8080", description: "Local dev server" }],
+  servers: [{ url: "http://127.0.0.1:9752", description: "Local dev server" }],
   security: [{ bearerAuth: [] }],
   tags: [
     { name: "Auth", description: "Session creation" },

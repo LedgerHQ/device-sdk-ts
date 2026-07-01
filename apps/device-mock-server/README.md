@@ -180,10 +180,10 @@ pnpm build
 pnpm start        # node lib/cjs/main.js
 ```
 
-By default it listens on port `8080`. Verify it is up:
+By default it listens on port `9752`. Verify it is up:
 
 ```bash
-curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:9752/health
 # {"status":"ok","sessions":0}
 ```
 
@@ -193,7 +193,7 @@ The standalone server (`src/main.ts`) reads environment variables:
 
 | Variable                    | Default                             | Description                                                                                                         |
 | --------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                      | `8080`                              | HTTP port.                                                                                                          |
+| `PORT`                      | `9752`                              | HTTP port.                                                                                                          |
 | `SPECULINHO_URL`            | `https://speculinho.ledgerlabs.net` | Speculinho operator base URL. Set to empty (`SPECULINHO_URL=`) to run as a **pure mock** with no Speculos proxying. |
 | `SPECULOS_SEED`             | built-in default seed               | BIP39 seed used for provisioned emulators.                                                                          |
 | `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                             |
