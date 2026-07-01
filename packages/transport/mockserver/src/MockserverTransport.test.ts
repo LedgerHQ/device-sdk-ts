@@ -339,6 +339,59 @@ describe("mockserverTransportFactory", () => {
       expect(result.isLeft()).toBe(true);
       expect(onDisconnect).toHaveBeenCalledWith("device-1");
     });
+
+    it("returns an empty data buffer when the response is only a status word", async () => {
+      const sendApdu = vi.fn(() => Promise.resolve({ response: "9000" }));
+      const transport = buildConnectedTransport(sendApdu);
+      const connected = (
+        await transport.connect({ deviceId: "device-1", onDisconnect: vi.fn() })
+      ).unsafeCoerce();
+
+      const result = await connected.sendApdu(
+        Uint8Array.from([0xe0, 0x01, 0x00, 0x00]),
+      );
+
+      expect(result.isRight()).toBe(true);
+      const apduResponse = result.unsafeCoerce();
+      expect(Array.from(apduResponse.data)).toEqual([]);
+      expect(Array.from(apduResponse.statusCode)).toEqual([0x90, 0x00]);
+    });
+
+    it("falls back to an empty status code when the status word hex is invalid", async () => {
+      // slice(-4) = "XXYY" is not valid hex -> hexaStringToBuffer returns null.
+      const sendApdu = vi.fn(() => Promise.resolve({ response: "aabbXXYY" }));
+      const transport = buildConnectedTransport(sendApdu);
+      const connected = (
+        await transport.connect({ deviceId: "device-1", onDisconnect: vi.fn() })
+      ).unsafeCoerce();
+
+      const result = await connected.sendApdu(
+        Uint8Array.from([0xe0, 0x01, 0x00, 0x00]),
+      );
+
+      expect(result.isRight()).toBe(true);
+      const apduResponse = result.unsafeCoerce();
+      expect(Array.from(apduResponse.statusCode)).toEqual([]);
+      expect(Array.from(apduResponse.data)).toEqual([0xaa, 0xbb]);
+    });
+
+    it("falls back to an empty data buffer when the data hex is invalid", async () => {
+      // slice(0, -4) = "ZZZZ" is not valid hex -> hexaStringToBuffer returns null.
+      const sendApdu = vi.fn(() => Promise.resolve({ response: "ZZZZ9000" }));
+      const transport = buildConnectedTransport(sendApdu);
+      const connected = (
+        await transport.connect({ deviceId: "device-1", onDisconnect: vi.fn() })
+      ).unsafeCoerce();
+
+      const result = await connected.sendApdu(
+        Uint8Array.from([0xe0, 0x01, 0x00, 0x00]),
+      );
+
+      expect(result.isRight()).toBe(true);
+      const apduResponse = result.unsafeCoerce();
+      expect(Array.from(apduResponse.data)).toEqual([]);
+      expect(Array.from(apduResponse.statusCode)).toEqual([0x90, 0x00]);
+    });
   });
 
   describe("mockserverTransportFactory", () => {
