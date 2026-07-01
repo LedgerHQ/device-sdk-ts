@@ -12,6 +12,7 @@ import {
   type LoggerPublisherService,
   NoAccessibleDeviceError,
   OpeningConnectionError,
+  StaticDeviceModelDataSource,
   type Transport,
   type TransportConnectedDevice,
   type TransportDiscoveredDevice,
@@ -38,6 +39,14 @@ import {
 export const mockserverIdentifier: TransportIdentifier = "MOCKSERVER";
 
 const DEFAULT_MASKS = [0x31100000];
+
+/**
+ * Real per-model memory constants (memory size, block size, masks) so mock
+ * devices report the same values as physical ones. Without this, memory-aware
+ * device actions (e.g. install/update apps, which run {@link PredictOutOfMemoryTask})
+ * compute against wrong constants and wrongly report out-of-memory.
+ */
+const deviceModelDataSource = new StaticDeviceModelDataSource();
 
 /** Interval (ms) at which the mock server is polled for available devices. */
 const DISCOVERY_POLL_INTERVAL_MS = 1000;
@@ -170,17 +179,21 @@ export class MockTransport implements Transport {
   }
 
   private buildDeviceModel(device: Device) {
+    const id = device.device_type as DeviceModelId;
+    // Resolve the real model to mirror a physical device's memory constants;
+    // fall back to legacy defaults for an unknown device type.
+    const knownModel = deviceModelDataSource
+      .getAllDeviceModels()
+      .find((model) => model.id === id);
     return {
-      id: device.device_type as DeviceModelId,
+      id,
       productName: device.name,
       usbProductId: 0x10,
       legacyUsbProductId: 0x0001,
       bootloaderUsbProductId: 0x0001,
-      getBlockSize() {
-        return 32;
-      },
+      getBlockSize: knownModel ? knownModel.getBlockSize : () => 32,
       usbOnly: true,
-      memorySize: 320 * 1024,
+      memorySize: knownModel?.memorySize ?? 320 * 1024,
       masks: device.masks ?? DEFAULT_MASKS,
     };
   }

@@ -223,11 +223,12 @@ describe("mockserverTransportFactory", () => {
       });
 
       expect(result.unsafeCoerce().deviceModel.masks).toEqual([0x31100000]);
+      // A known model (nanoX) reports its real block size, not the legacy default.
       expect(
         result.unsafeCoerce().deviceModel.getBlockSize({
           firmwareVersion: "1.0.0",
         }),
-      ).toBe(32);
+      ).toBe(4 * 1024);
     });
 
     it("returns an OpeningConnectionError when the client throws", async () => {
