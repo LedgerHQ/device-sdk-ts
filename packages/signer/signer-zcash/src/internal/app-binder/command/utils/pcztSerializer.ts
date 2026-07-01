@@ -174,6 +174,14 @@ export const serializeOrchardActions = (
 ): Uint8Array[] => {
   const packets: Uint8Array[] = [createVarint(bundle.actions.length)];
 
+  // No trailer when there are zero actions: this is *not* a missing field. The
+  // device parser finalizes the Orchard bundle the moment it reads a count of 0
+  // (`app-zcash` `src/parser/pczt/orchard.rs`: `if action_count == 0 {
+  // finalize_orchard_actions(..) }`) and never reads flags/value_sum/anchor.
+  // The contract spells this out in `docs/PCZT_APDU.md`: "Bundle trailer
+  // packet, only when Orchard action count is greater than 0." Emitting a
+  // trailer here would leave unexpected bytes and fail the parser's group-end
+  // check on the transparent-only flow.
   if (bundle.actions.length === 0) {
     return packets;
   }
@@ -224,8 +232,16 @@ export const serializeOrchardActions = (
 /**
  * P1 framing for packet `index` of a `total`-packet command:
  * `FIRST` for the first (or only) packet, `LAST` for the last, else `NEXT`.
+ *
+ * A one-packet command (e.g. an empty section's count-0 packet) resolves to
+ * `FIRST`, never `LAST` — this is correct, not a missed case. `docs/PCZT_APDU.md`
+ * states "A one-packet command uses P1_FIRST", and the device only runs its
+ * "ended before all parsed" completeness check when the `LAST` flag is set
+ * (`app-zcash` `src/handlers/pczt.rs`), so a lone `FIRST` packet is accepted.
  */
 export const pcztP1 = (index: number, total: number): number => {
+  // `index === 0` is taken before the `index === total - 1` branch, so the
+  // single-packet case (index 0, total 1) intentionally returns FIRST.
   if (index === 0) {
     return PCZT_P1.FIRST;
   }

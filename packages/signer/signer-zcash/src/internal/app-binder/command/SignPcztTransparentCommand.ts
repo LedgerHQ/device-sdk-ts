@@ -12,7 +12,6 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  PCZT_INS,
   PCZT_P1,
   ZCASH_CLA,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
@@ -22,6 +21,12 @@ import {
   type ZcashErrorCodes,
 } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { SIGHASH_ALL } from "@internal/app-binder/task/utils/legacyTransactionUtils";
+
+/**
+ * `INS_PCZT_SIGN_TRANSPARENT`: signs one transparent input. P2 = input index;
+ * returns DER sig + sighash byte. Mirrors `LedgerHQ/app-zcash` `src/consts.rs`.
+ */
+export const INS_PCZT_SIGN_TRANSPARENT = 0x55;
 
 export type SignPcztTransparentCommandArgs = {
   /** Transparent input index to sign (carried in P2). */
@@ -62,7 +67,7 @@ export class SignPcztTransparentCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: PCZT_INS.SIGN_TRANSPARENT,
+      ins: INS_PCZT_SIGN_TRANSPARENT,
       p1: PCZT_P1.FIRST,
       p2: this.args.inputIndex,
     };

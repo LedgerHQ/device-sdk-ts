@@ -118,7 +118,13 @@ export class SignPcztTransactionTask {
         new PcztOrchardActionCommand({
           data: orchardPackets[i]!,
           p1: pcztP1(i, orchardPackets.length),
-          // The last Orchard packet finalizes the whole PCZT payload.
+          // `finished: true` here is correct for every flow, including the
+          // transparent-only one where the Orchard section is a single count-0
+          // packet: `pcztP2` only sets `FINISHED` on the *last* Orchard packet,
+          // and `ORCHARD_ACTION` is always the final bundle command, so the
+          // marker lands exactly where the device expects it. The device
+          // accepts signing commands only after seeing `FINISHED`
+          // (`app-zcash` `src/handlers/pczt.rs::finish_pczt_if_requested`).
           p2: pcztP2(i, orchardPackets.length, true),
         }),
       );

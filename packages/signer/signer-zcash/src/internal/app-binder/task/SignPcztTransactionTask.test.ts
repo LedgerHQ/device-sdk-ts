@@ -7,10 +7,13 @@ import {
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type PcztTransaction } from "@api/model/PcztTransaction";
-import {
-  PCZT_INS,
-  PCZT_P2,
-} from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { INS_PCZT_HEADER } from "@internal/app-binder/command/PcztHeaderCommand";
+import { INS_PCZT_ORCHARD_ACTION } from "@internal/app-binder/command/PcztOrchardActionCommand";
+import { INS_PCZT_TRANSPARENT_INPUT } from "@internal/app-binder/command/PcztTransparentInputCommand";
+import { INS_PCZT_TRANSPARENT_OUTPUT } from "@internal/app-binder/command/PcztTransparentOutputCommand";
+import { INS_PCZT_SIGN_ORCHARD } from "@internal/app-binder/command/SignPcztOrchardCommand";
+import { INS_PCZT_SIGN_TRANSPARENT } from "@internal/app-binder/command/SignPcztTransparentCommand";
+import { PCZT_P2 } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
   privateToPrivateTransaction,
   privateToPublicTransaction,
@@ -67,19 +70,19 @@ describe("SignPcztTransactionTask", () => {
     const bundleIns = calls
       .filter((c) =>
         [
-          PCZT_INS.HEADER,
-          PCZT_INS.TRANSPARENT_INPUT,
-          PCZT_INS.TRANSPARENT_OUTPUT,
-          PCZT_INS.ORCHARD_ACTION,
+          INS_PCZT_HEADER,
+          INS_PCZT_TRANSPARENT_INPUT,
+          INS_PCZT_TRANSPARENT_OUTPUT,
+          INS_PCZT_ORCHARD_ACTION,
         ].includes(c.ins as never),
       )
       .map((c) => c.ins);
 
     // header first; the three bundle sections strictly increasing INS groups.
-    expect(bundleIns[0]).toBe(PCZT_INS.HEADER);
-    const firstInput = bundleIns.indexOf(PCZT_INS.TRANSPARENT_INPUT);
-    const firstOutput = bundleIns.indexOf(PCZT_INS.TRANSPARENT_OUTPUT);
-    const firstOrchard = bundleIns.indexOf(PCZT_INS.ORCHARD_ACTION);
+    expect(bundleIns[0]).toBe(INS_PCZT_HEADER);
+    const firstInput = bundleIns.indexOf(INS_PCZT_TRANSPARENT_INPUT);
+    const firstOutput = bundleIns.indexOf(INS_PCZT_TRANSPARENT_OUTPUT);
+    const firstOrchard = bundleIns.indexOf(INS_PCZT_ORCHARD_ACTION);
     expect(firstInput).toBeLessThan(firstOutput);
     expect(firstOutput).toBeLessThan(firstOrchard);
   });
@@ -88,7 +91,7 @@ describe("SignPcztTransactionTask", () => {
     await run(privateToPrivateTransaction());
 
     const orchardPackets = calls.filter(
-      (c) => c.ins === PCZT_INS.ORCHARD_ACTION,
+      (c) => c.ins === INS_PCZT_ORCHARD_ACTION,
     );
     const finished = orchardPackets.filter((c) => c.p2 === PCZT_P2.FINISHED);
     expect(finished).toHaveLength(1);
@@ -113,10 +116,12 @@ describe("SignPcztTransactionTask", () => {
       expect(result.data.transparentInputSigs).toHaveLength(0);
     }
     // SIGN_ORCHARD issued once, with P2 = action index 0.
-    const orchardSigns = calls.filter((c) => c.ins === PCZT_INS.SIGN_ORCHARD);
+    const orchardSigns = calls.filter(
+      (c) => c.ins === INS_PCZT_SIGN_ORCHARD,
+    );
     expect(orchardSigns).toHaveLength(1);
     expect(orchardSigns[0]!.p2).toBe(0);
-    expect(calls.some((c) => c.ins === PCZT_INS.SIGN_TRANSPARENT)).toBe(false);
+    expect(calls.some((c) => c.ins === INS_PCZT_SIGN_TRANSPARENT)).toBe(false);
   });
 
   it("collects one secp256k1 signature per transparent input", async () => {
@@ -131,7 +136,7 @@ describe("SignPcztTransactionTask", () => {
       expect(result.data.orchard).toHaveLength(0);
     }
     const transparentSigns = calls.filter(
-      (c) => c.ins === PCZT_INS.SIGN_TRANSPARENT,
+      (c) => c.ins === INS_PCZT_SIGN_TRANSPARENT,
     );
     expect(transparentSigns).toHaveLength(1);
     expect(transparentSigns[0]!.p2).toBe(0);
@@ -171,7 +176,7 @@ describe("SignPcztTransactionTask", () => {
     expect(isSuccessDmkResult(result)).toBe(false);
     // failed on the very first command (HEADER); nothing else streamed.
     expect(calls).toHaveLength(1);
-    expect(calls[0]!.ins).toBe(PCZT_INS.HEADER);
+    expect(calls[0]!.ins).toBe(INS_PCZT_HEADER);
   });
 
   it("surfaces a device rejection during Orchard signing", async () => {

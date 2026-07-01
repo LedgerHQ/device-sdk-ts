@@ -10,15 +10,18 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import {
-  PCZT_INS,
-  ZCASH_CLA,
-} from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { ZCASH_CLA } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
   ZCASH_APP_ERRORS,
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+
+/**
+ * `INS_PCZT_TRANSPARENT_INPUT`: streams the transparent input bundle (always
+ * sent, count 0 when empty). Mirrors `LedgerHQ/app-zcash` `src/consts.rs`.
+ */
+export const INS_PCZT_TRANSPARENT_INPUT = 0x53;
 
 export type PcztTransparentInputCommandArgs = {
   /** One serialized packet of the transparent-input bundle. */
@@ -48,7 +51,7 @@ export class PcztTransparentInputCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: PCZT_INS.TRANSPARENT_INPUT,
+      ins: INS_PCZT_TRANSPARENT_INPUT,
       p1: this.args.p1,
       p2: this.args.p2,
     };

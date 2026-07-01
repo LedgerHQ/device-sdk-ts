@@ -20,22 +20,6 @@ export const P2 = {
  * transparent P1/P2 above so the DMK-01 transparent path is untouched.
  */
 
-/** PCZT instruction opcodes (`INS_PCZT_*`). */
-export const PCZT_INS = {
-  /** Resets the tx context and opens a new PCZT payload. Sent exactly once. */
-  HEADER: 0x52,
-  /** Streams the transparent input bundle (always sent, count 0 when empty). */
-  TRANSPARENT_INPUT: 0x53,
-  /** Streams the transparent output bundle (always sent, count 0 when empty). */
-  TRANSPARENT_OUTPUT: 0x54,
-  /** Signs one transparent input. P2 = input index; DER sig + sighash byte. */
-  SIGN_TRANSPARENT: 0x55,
-  /** Streams the Orchard action bundle (always sent, count 0 when empty). */
-  ORCHARD_ACTION: 0x56,
-  /** Signs one Orchard action. P2 = action index; returns spendAuthSig[64]. */
-  SIGN_ORCHARD: 0x57,
-} as const;
-
 /** P1 packet-sequence framing for a single multi-packet PCZT bundle command. */
 export const PCZT_P1 = {
   /** First (or only) APDU packet of the command. */

@@ -11,7 +11,6 @@ import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
 import {
-  PCZT_INS,
   PCZT_P1,
   PCZT_P2,
   ZCASH_CLA,
@@ -21,6 +20,12 @@ import {
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+
+/**
+ * `INS_PCZT_HEADER`: resets the tx context and opens a new PCZT payload. Sent
+ * exactly once. Mirrors `LedgerHQ/app-zcash` `src/consts.rs`.
+ */
+export const INS_PCZT_HEADER = 0x52;
 
 export type PcztHeaderCommandArgs = {
   /** Serialized `PCZT_HEADER` payload (magic + version + `common::Global`). */
@@ -43,7 +48,7 @@ export class PcztHeaderCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: PCZT_INS.HEADER,
+      ins: INS_PCZT_HEADER,
       p1: PCZT_P1.FIRST,
       p2: PCZT_P2.CONTINUE,
     };

@@ -13,7 +13,6 @@ import { Maybe } from "purify-ts";
 
 import { type OrchardActionSignature } from "@api/model/PcztSignature";
 import {
-  PCZT_INS,
   PCZT_P1,
   ZCASH_CLA,
 } from "@internal/app-binder/command/utils/apduHeaderUtils";
@@ -22,6 +21,12 @@ import {
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+
+/**
+ * `INS_PCZT_SIGN_ORCHARD`: signs one Orchard action. P2 = action index; returns
+ * `spendAuthSig[64]`. Mirrors `LedgerHQ/app-zcash` `src/consts.rs`.
+ */
+export const INS_PCZT_SIGN_ORCHARD = 0x57;
 
 /** RedPallas spend-authorization signature length. */
 const SPEND_AUTH_SIG_LENGTH = 64;
@@ -54,7 +59,7 @@ export class SignPcztOrchardCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: PCZT_INS.SIGN_ORCHARD,
+      ins: INS_PCZT_SIGN_ORCHARD,
       p1: PCZT_P1.FIRST,
       p2: this.args.actionIndex,
     };

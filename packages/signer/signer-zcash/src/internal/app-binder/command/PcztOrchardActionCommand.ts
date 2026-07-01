@@ -10,15 +10,18 @@ import {
 import { CommandErrorHelper } from "@ledgerhq/signer-utils";
 import { Maybe } from "purify-ts";
 
-import {
-  PCZT_INS,
-  ZCASH_CLA,
-} from "@internal/app-binder/command/utils/apduHeaderUtils";
+import { ZCASH_CLA } from "@internal/app-binder/command/utils/apduHeaderUtils";
 import {
   ZCASH_APP_ERRORS,
   ZcashAppCommandErrorFactory,
   type ZcashErrorCodes,
 } from "@internal/app-binder/command/utils/zcashApplicationErrors";
+
+/**
+ * `INS_PCZT_ORCHARD_ACTION`: streams the Orchard action bundle (always sent,
+ * count 0 when empty). Mirrors `LedgerHQ/app-zcash` `src/consts.rs`.
+ */
+export const INS_PCZT_ORCHARD_ACTION = 0x56;
 
 export type PcztOrchardActionCommandArgs = {
   /** One serialized packet of the Orchard action bundle. */
@@ -52,7 +55,7 @@ export class PcztOrchardActionCommand
   getApdu(): Apdu {
     const apduArgs: ApduBuilderArgs = {
       cla: ZCASH_CLA,
-      ins: PCZT_INS.ORCHARD_ACTION,
+      ins: INS_PCZT_ORCHARD_ACTION,
       p1: this.args.p1,
       p2: this.args.p2,
     };
