@@ -116,9 +116,7 @@ describe("SignPcztTransactionTask", () => {
       expect(result.data.transparentInputSigs).toHaveLength(0);
     }
     // SIGN_ORCHARD issued once, with P2 = action index 0.
-    const orchardSigns = calls.filter(
-      (c) => c.ins === INS_PCZT_SIGN_ORCHARD,
-    );
+    const orchardSigns = calls.filter((c) => c.ins === INS_PCZT_SIGN_ORCHARD);
     expect(orchardSigns).toHaveLength(1);
     expect(orchardSigns[0]!.p2).toBe(0);
     expect(calls.some((c) => c.ins === INS_PCZT_SIGN_TRANSPARENT)).toBe(false);
