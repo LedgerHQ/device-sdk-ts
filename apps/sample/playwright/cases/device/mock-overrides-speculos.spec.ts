@@ -3,7 +3,7 @@ import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
 import { expect, test } from "../../fixtures";
 
-// Stax with the Ethereum app installed — the known-good combo provisioned via
+// Stax with the Ethereum app installed - the known-good combo provisioned via
 // Speculinho in open-app.spec.ts.
 const STAX_ETH: DeviceConfig = {
   name: "Ledger Stax",

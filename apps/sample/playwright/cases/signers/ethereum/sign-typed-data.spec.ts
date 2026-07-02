@@ -74,7 +74,7 @@ test.describe("signer ethereum: sign typed message", () => {
     const emulator = speculos(dev);
     await test.step("And blind signing is enabled on the device", async () => {
       // Open the app first (via Get address) so its settings are reachable, then
-      // enable blind signing — the EIP-712 message has no clear-signing context.
+      // enable blind signing - the EIP-712 message has no clear-signing context.
       await ethSigner.open();
       await ethSigner.getAddress();
       await ethSigner.lastResult();
