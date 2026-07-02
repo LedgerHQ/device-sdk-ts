@@ -20,7 +20,7 @@ jobs:
     name: Setup toolchain and dependencies
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
 
@@ -29,7 +29,7 @@ jobs:
     needs: [setup]
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
@@ -49,7 +49,7 @@ jobs:
           - test:solana:spl-token2022
           - test:solana:stake
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/cs-tester-composite
         with:
           runner: cs-tester:solana
@@ -81,7 +81,7 @@ jobs:
           - test:solana:program:spl-token
           - test:solana:program:token-2022
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/cs-tester-composite
         with:
           runner: cs-tester:solana
@@ -104,7 +104,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/slack-notify-composite
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
