@@ -132,7 +132,7 @@ catalog:
   usb: ^2.16.0
   util: ^0.12.5
   uuid: 11.0.3
-  vite: 7.1.6
+  vite: 7.3.5
   vitest: 3.2.4
   vitest-react-native: ^0.1.5
   ws: ^8.18.0
