@@ -96,8 +96,17 @@ export class SecureChannelWebSocket {
     // acknowledged, so the follow-up `apps/list` reflects the change.
     if (endpoint === "install" && hash) {
       const app = await this.installResolver.resolve(record, hash);
-      app.ifJust((resolved) =>
-        this.repository.setPendingAppOperation(record, device.id, resolved),
+      if (app.isNothing()) {
+        // Without a resolved app the bulk would "succeed" while the device
+        // context never changes, making the client's confirming re-list loop or
+        // hang; fail fast with a terminal error instead.
+        closeWithError(ws, `Unknown install hash: ${hash}`);
+        return;
+      }
+      this.repository.setPendingAppOperation(
+        record,
+        device.id,
+        app.unsafeCoerce(),
       );
     }
 

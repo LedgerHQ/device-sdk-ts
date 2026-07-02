@@ -147,7 +147,10 @@ const drive = (
   });
 
 beforeEach(async () => {
-  const built = createMockServer();
+  // Pin the Manager API to a refused local address so an unseeded install hash
+  // resolves to Nothing offline (no live network). Tests that install a known
+  // app seed the catalog, so they never reach this fallback.
+  const built = createMockServer({ managerApiUrl: "http://127.0.0.1:1" });
   close = built.close;
   await new Promise<void>((resolve) => {
     server = built.app.listen(0, resolve);
@@ -252,6 +255,19 @@ describe("secure channel WebSocket: install commits the app to the device contex
     expect(after.data).toEqual([
       { flags: 0, hash: BTC.hash, hash_code_data: "", name: "Bitcoin" },
     ]);
+  });
+
+  it("fails with a terminal error when the install hash cannot be resolved", async () => {
+    // Seed a catalog for a different hash so the requested one misses locally
+    // and the Manager API fallback (pinned to a refused address) returns Nothing.
+    const { token, id } = await setupSession(BOLOS, [BTC]);
+
+    const install = await drive(token, id, "install?hash=unknownhash");
+    expect(install.type).toBe("error");
+
+    // The device context is untouched: the phantom app was never armed.
+    const after = await drive(token, id, "apps/list");
+    expect(after.data).toEqual([]);
   });
 
   it("does not add the app when the install fails on a device error", async () => {
