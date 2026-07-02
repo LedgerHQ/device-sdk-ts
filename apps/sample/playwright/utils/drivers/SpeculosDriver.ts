@@ -190,7 +190,7 @@ export class SpeculosDriver {
 
   /**
    * Log the on-screen text to the test output by polling the current screen
-   * (one-shot requests — no long-lived connection that would keep the worker
+   * (one-shot requests - no long-lived connection that would keep the worker
    * alive). Stopped by {@link dispose}.
    */
   private startScreenLog(): void {
@@ -237,9 +237,9 @@ export class SpeculosDriver {
   /**
    * Approve a signing review (transaction or typed message) on touch devices,
    * mirroring the clear-signing-tester flow: wait for the review to start, page
-   * through to the last screen — handling the "continue to blind signing" /
+   * through to the last screen - handling the "continue to blind signing" /
    * "blind signing ahead" screens, and rejecting if blind signing is blocked
-   * ("Go to settings") — then hold to sign on the last page.
+   * ("Go to settings") - then hold to sign on the last page.
    */
   async approveSigning(): Promise<void> {
     if (!this.isTouch()) {
@@ -277,7 +277,7 @@ export class SpeculosDriver {
       } else if (includesAny(screen, BLIND_WARNING_MARKERS)) {
         await touch.acceptBlindSigning();
       } else if (screen === "" || includesAny(screen, HOME_MARKERS)) {
-        // Transient idle screen while the host builds clear-signing contexts —
+        // Transient idle screen while the host builds clear-signing contexts -
         // wait for the review to (re)appear rather than tapping blindly.
       } else {
         await touch.navigateNext();
@@ -296,7 +296,7 @@ export class SpeculosDriver {
 
   /**
    * Enable blind signing in the app settings (touch devices). Call from the app
-   * home screen — e.g. after a first action has opened the app — so the
+   * home screen - e.g. after a first action has opened the app - so the
    * transaction review can proceed without clear-signing context.
    */
   async enableBlindSigning(): Promise<void> {
@@ -334,7 +334,7 @@ export class SpeculosDriver {
 
   private ready(): DeviceControllerClient {
     if (!this.controller) {
-      throw new Error("SpeculosDriver not ready — call waitReady() first");
+      throw new Error("SpeculosDriver not ready - call waitReady() first");
     }
     return this.controller;
   }
