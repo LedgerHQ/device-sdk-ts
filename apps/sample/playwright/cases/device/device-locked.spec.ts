@@ -17,6 +17,10 @@ const GET_APP_AND_VERSION_PREFIX = "b0010000";
 const LOCKED_RESPONSE = "5515";
 
 test.describe("device status: locked", () => {
+  // This test exercises the refresher polling GetAppAndVersion, so polling must
+  // be enabled (overrides the default disablePolling: true fixture).
+  test.use({ disablePolling: false });
+
   test("reports LOCKED on 5515 and CONNECTED again once cleared", async ({
     device,
     mockClient,

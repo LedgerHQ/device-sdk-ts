@@ -1,7 +1,7 @@
 import { type Device } from "@ledgerhq/device-mockserver-client";
 
 /**
- * Synthesizes the two OS-handshake APDU responses from a device's metadata, so
+ * Synthesizes the OS-handshake APDU responses from a device's metadata, so
  * a device connects without any seeded mock. These are produced only when no
  * explicit mock matches; an explicit per-device mock overrides them.
  *
@@ -16,6 +16,17 @@ export const GET_OS_VERSION_PREFIX = "e0010000";
 export const GET_APP_AND_VERSION_PREFIX = "b0010000";
 /** GetBatteryStatus (cla=0xe0, ins=0x10); p2 encodes {@link BatteryStatusType}. */
 export const GET_BATTERY_STATUS_PREFIX = "e01000";
+/** ListApps (cla=0xe0, ins=0xde) and its continue variant (ins=0xdf). */
+export const LIST_APPS_PREFIX = "e0de0000";
+export const LIST_APPS_CONTINUE_PREFIX = "e0df0000";
+/**
+ * GetDeviceName (cla=0xe0, ins=0xd2). `getDeviceName` first sends a legacy
+ * "cleaning" APDU (cla=0xe0, ins=0x50) whose reply it ignores, then reads the
+ * name from the 0xd2 response's data as UTF-8 (see `parseGetDeviceNameResponse`
+ * in ledger-live). Both are part of the connect/listApps handshake.
+ */
+export const GET_DEVICE_NAME_CLEANING_PREFIX = "e0500000";
+export const GET_DEVICE_NAME_PREFIX = "e0d20000";
 
 const STATUS_OK = "9000";
 
@@ -36,14 +47,18 @@ const normalizeModel = (deviceType: string): string => deviceType.toLowerCase();
 const toHexByte = (n: number): string =>
   (n & 0xff).toString(16).padStart(2, "0");
 
-/** Length-value encode an ASCII string: `<len><bytes>` (hex). */
-const lvAscii = (value: string): string => {
+/** Encode an ASCII string as raw bytes (no length prefix), hex. */
+const asciiHex = (value: string): string => {
   let hex = "";
   for (let i = 0; i < value.length; i += 1) {
     hex += toHexByte(value.charCodeAt(i));
   }
-  return toHexByte(value.length) + hex;
+  return hex;
 };
+
+/** Length-value encode an ASCII string: `<len><bytes>` (hex). */
+const lvAscii = (value: string): string =>
+  toHexByte(value.length) + asciiHex(value);
 
 /** Length-value encode raw bytes given as a hex string. */
 const lvHex = (hex: string): string => toHexByte(hex.length / 2) + hex;
@@ -162,6 +177,59 @@ export function deriveGetAppAndVersion(device: Device): string {
   return "01" + lvAscii("BOLOS") + lvAscii(version) + STATUS_OK;
 }
 
+/** 32-byte zero hash used as the code/full hash placeholder in ListApps. */
+const ZERO_HASH_32 = "00".repeat(32);
+
+/**
+ * One ListApps entry: `<entryLen><sizeInBlocks(2)><flags(2)><codeHash(32)>`
+ * `<fullHash(32)><nameLV>`, where `entryLen` counts the bytes after itself.
+ * The hashes are not exercised by the parser's consumers, so they are zeroed.
+ */
+const listAppEntry = (name: string): string => {
+  const body =
+    "0001" + // appSizeInBlocks
+    "0000" + // flags (skipped by the DMK parser)
+    ZERO_HASH_32 + // appCodeHash
+    ZERO_HASH_32 + // appFullHash
+    lvAscii(name); // appName (length-value)
+  return toHexByte(body.length / 2) + body;
+};
+
+/**
+ * ListApps (`0xE0 0xDE`) response derived from the device's installed apps,
+ * excluding the BOLOS dashboard. The leading byte is a version/format byte the
+ * DMK parser skips. The continue command (`0xE0 0xDF`) and an empty list both
+ * return a bare success (no entries), which DMK reads as "no more apps".
+ */
+export function deriveListApps(
+  device: Device,
+  apdu: string,
+): string | undefined {
+  if (apdu.startsWith(LIST_APPS_CONTINUE_PREFIX)) {
+    return STATUS_OK;
+  }
+  if (!apdu.startsWith(LIST_APPS_PREFIX)) {
+    return undefined;
+  }
+  const apps = (device.apps ?? []).filter(
+    (app) => app.name.toUpperCase() !== "BOLOS",
+  );
+  if (apps.length === 0) {
+    return STATUS_OK;
+  }
+  const entries = apps.map((app) => listAppEntry(app.name)).join("");
+  return "01" + entries + STATUS_OK;
+}
+
+/**
+ * GetDeviceName (`0xE0 0xD2`) response: the device name as raw UTF-8 bytes
+ * followed by a success SW, mirroring what `parseGetDeviceNameResponse` reads
+ * (it decodes the whole data field, no length prefix).
+ */
+export function deriveGetDeviceName(device: Device): string {
+  return asciiHex(device.name ?? "") + STATUS_OK;
+}
+
 const BATTERY_CAPABLE_MODELS = new Set(["stax", "flex", "apex"]);
 
 /**
@@ -183,4 +251,41 @@ export function deriveGetBatteryStatus(
     default:
       return undefined;
   }
+}
+
+/**
+ * Derived default response for an OS-handshake APDU (GetOsVersion /
+ * GetAppAndVersion / GetBatteryStatus) synthesized from the device metadata, or
+ * `undefined` when the APDU is not one of them (or the model is unsupported).
+ * The three prefixes are mutually exclusive, so the first match wins.
+ */
+export function deriveOsApduResponse(
+  device: Device,
+  apdu: string,
+): string | undefined {
+  if (apdu.startsWith(GET_OS_VERSION_PREFIX)) {
+    return deriveGetOsVersion(device);
+  }
+  if (apdu.startsWith(GET_APP_AND_VERSION_PREFIX)) {
+    return deriveGetAppAndVersion(device);
+  }
+  if (apdu.startsWith(GET_BATTERY_STATUS_PREFIX)) {
+    return deriveGetBatteryStatus(device, apdu);
+  }
+  if (
+    apdu.startsWith(LIST_APPS_PREFIX) ||
+    apdu.startsWith(LIST_APPS_CONTINUE_PREFIX)
+  ) {
+    return deriveListApps(device, apdu);
+  }
+  // The legacy cleaning APDU (`0xE0 0x50`) sent before GetDeviceName: its reply
+  // is ignored by the caller, so a bare success is enough to avoid a spurious
+  // error status.
+  if (apdu.startsWith(GET_DEVICE_NAME_CLEANING_PREFIX)) {
+    return STATUS_OK;
+  }
+  if (apdu.startsWith(GET_DEVICE_NAME_PREFIX)) {
+    return deriveGetDeviceName(device);
+  }
+  return undefined;
 }

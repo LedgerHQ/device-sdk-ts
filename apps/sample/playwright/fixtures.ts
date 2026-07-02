@@ -15,6 +15,12 @@ import { SpeculosDriver } from "./utils/drivers/SpeculosDriver";
 import { setupMockServerSession } from "./utils/setup";
 
 type Fixtures = {
+  /**
+   * Disable the device-session refresher polling (default: true) so its periodic
+   * APDU polling does not pollute the logs. Override per file with
+   * `test.use({ disablePolling: false })` for tests that exercise polling.
+   */
+  disablePolling: boolean;
   mockClient: MockClient;
   device: MockDeviceDriver;
   commands: CommandsDriver;
@@ -36,8 +42,9 @@ type Fixtures = {
  * depending on it) never provisions a session.
  */
 export const test = base.extend<Fixtures>({
-  mockClient: async ({ page }, use) => {
-    const client = await setupMockServerSession(page);
+  disablePolling: [true, { option: true }],
+  mockClient: async ({ page, disablePolling }, use) => {
+    const client = await setupMockServerSession(page, { disablePolling });
     await use(client);
     await client.disposeSession();
   },

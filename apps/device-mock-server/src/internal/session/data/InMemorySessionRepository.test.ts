@@ -176,4 +176,50 @@ describe("InMemorySessionRepository", () => {
       { prefix: "ff", responses: ["11", "22"] },
     ]);
   });
+
+  // --- App store (catalog) / pending app operations --------------------------
+
+  const BTC = { hash: "abc123", name: "Bitcoin", version: "2.1.0" };
+
+  it("seeds the app store catalog from the device config (exact hash lookup)", () => {
+    const { repo, record } = newSession();
+    repo.addDevice(record, { device_type: "nanoX", catalog: [BTC] });
+    expect(repo.findCatalogAppByHash(record, "abc123").extract()).toEqual(BTC);
+    expect(repo.findCatalogAppByHash(record, "unknown").isNothing()).toBe(true);
+  });
+
+  it("toggles a pending app operation: install when absent, uninstall when present", () => {
+    const { repo, record } = newSession();
+    const device = repo.addDevice(record, {
+      device_type: "nanoX",
+      apps: [{ name: "BOLOS", version: "1.5.0" }],
+    });
+
+    // Nothing pending: no-op.
+    expect(repo.commitPendingAppOperation(record, device.id).isNothing()).toBe(
+      true,
+    );
+
+    // Bitcoin absent -> install (add).
+    repo.setPendingAppOperation(record, device.id, BTC);
+    const installed = repo
+      .commitPendingAppOperation(record, device.id)
+      .unsafeCoerce();
+    expect(installed.apps).toEqual([
+      { name: "BOLOS", version: "1.5.0" },
+      { name: "Bitcoin", version: "2.1.0", hash: "abc123" },
+    ]);
+
+    // Pending was cleared.
+    expect(repo.commitPendingAppOperation(record, device.id).isNothing()).toBe(
+      true,
+    );
+
+    // Bitcoin present -> uninstall (remove).
+    repo.setPendingAppOperation(record, device.id, BTC);
+    const uninstalled = repo
+      .commitPendingAppOperation(record, device.id)
+      .unsafeCoerce();
+    expect(uninstalled.apps).toEqual([{ name: "BOLOS", version: "1.5.0" }]);
+  });
 });

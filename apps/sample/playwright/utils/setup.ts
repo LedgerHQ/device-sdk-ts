@@ -14,9 +14,15 @@ const GATING_TOKEN = process.env["NEXT_PUBLIC_GATING_TOKEN"];
 /**
  * Setup a mock server session and inject the session token (and the gating
  * token, when provided) into the page's localStorage.
+ *
+ * When `disablePolling` is true (the default), the device-session refresher is
+ * turned off (pollingInterval 0) so its periodic GetOsVersion/GetAppAndVersion
+ * polling does not pollute the APDU logs. Tests that exercise polling behaviour
+ * (e.g. wait-for-app-and-version) can opt out via the `disablePolling` fixture.
  */
 export const setupMockServerSession = async (
   page: Page,
+  { disablePolling = true }: { disablePolling?: boolean } = {},
 ): Promise<MockClient> => {
   const client = new MockClient(MOCK_SERVER_URL);
   const sessionToken = await client.authenticate();
@@ -25,6 +31,9 @@ export const setupMockServerSession = async (
     transportType: "mockserver",
     mockServerSessionToken: sessionToken,
   };
+  if (disablePolling) {
+    settings["pollingInterval"] = 0;
+  }
   // Only override the app default when a token is configured, so local runs
   // without the env var keep the built-in default.
   if (GATING_TOKEN) {

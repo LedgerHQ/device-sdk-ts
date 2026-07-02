@@ -2,6 +2,9 @@ import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
 import { expect, test } from "@root/playwright/fixtures";
 
+// This action is driven by device-session polling, so keep the refresher on.
+test.use({ disablePolling: false });
+
 const STAX: DeviceConfig = {
   name: "Ledger Stax",
   device_type: "stax",

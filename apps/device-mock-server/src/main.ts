@@ -25,13 +25,18 @@ const speculos: MockServerConfig["speculos"] = speculinhoUrl
     }
   : undefined;
 
-const { app } = createMockServer({ speculos });
+const { app, attachWebSocket } = createMockServer({ speculos });
 
-app.listen(port, () => {
+const server = app.listen(port, () => {
   const baseUrl = `http://127.0.0.1:${port}`;
   logger.info(`Device mock server listening on ${baseUrl}`);
   logger.info(`Health check available at ${baseUrl}/health`);
+  logger.info(
+    `Secure channel WebSocket at ws://127.0.0.1:${port}/secure-channel`,
+  );
   if (speculos) {
     logger.info(`Speculos proxy via Speculinho at ${speculos.baseUrl}`);
   }
 });
+
+attachWebSocket(server);

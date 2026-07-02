@@ -5,6 +5,8 @@ import {
   type MockServerConfig,
 } from "@api/model/MockServerConfig";
 import { makeContainer } from "@internal/di/container";
+import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import { type SecureChannelWebSocket } from "@internal/secure-channel/ws/SecureChannelWebSocket";
 import { serverTypes } from "@internal/server/di/serverTypes";
 import { type HttpAppFactory } from "@internal/server/HttpAppFactory";
 import { sessionTypes } from "@internal/session/di/sessionTypes";
@@ -21,5 +23,12 @@ export function createMockServer(config: MockServerConfig = {}): MockServerApp {
   const stopSweeper = container
     .get<SessionSweeperService>(sessionTypes.Sweeper)
     .start();
-  return { app, close: () => stopSweeper() };
+  const secureChannelWs = container.get<SecureChannelWebSocket>(
+    secureChannelTypes.WebSocket,
+  );
+  return {
+    app,
+    close: () => stopSweeper(),
+    attachWebSocket: (server) => void secureChannelWs.attach(server),
+  };
 }
