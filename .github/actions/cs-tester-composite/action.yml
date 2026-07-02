@@ -65,7 +65,7 @@ runs:
 
     - name: Generate token
       id: generate-token
-      uses: actions/create-github-app-token@v2
+      uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
       with:
         app-id: ${{ inputs.gh-bot-app-id }}
         private-key: ${{ inputs.gh-bot-private-key }}
@@ -73,7 +73,7 @@ runs:
         repositories: coin-apps
 
     - name: Retrieving coin apps
-      uses: actions/checkout@v6
+      uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       with:
         ref: master
         repository: LedgerHQ/coin-apps
@@ -171,7 +171,7 @@ runs:
 
     - name: Upload logs
       if: always()
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
       with:
         name: ${{ steps.artifact.outputs.name }}
         path: /tmp/logs/

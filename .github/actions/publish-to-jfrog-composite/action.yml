@@ -25,7 +25,7 @@ runs:
   steps:
     - name: Login to internal JFrog registry
       id: jfrog-login
-      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+      uses: LedgerHQ/actions-security/actions/jfrog-login@3868be0ef1ec8722fbdb2c6cda90f739cbfc742d # actions/jfrog-login-1
 
     - name: Setup npm config for JFrog
       shell: bash
