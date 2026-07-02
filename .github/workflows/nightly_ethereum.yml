@@ -20,18 +20,18 @@ jobs:
     name: Setup toolchain and dependencies
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
   build-libraries:
     name: Build libraries
     needs: [setup]
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
   erc7730-calldata-tests:
     needs: [build-libraries]
@@ -56,7 +56,7 @@ jobs:
           - velora
           - yieldxyz
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
           runner: cs-tester
@@ -96,7 +96,7 @@ jobs:
           - uniswap
           - velora
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
           runner: cs-tester
@@ -124,7 +124,7 @@ jobs:
       matrix:
         device: [stax, flex]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - uses: ./.github/actions/cs-tester-composite
         with:
           runner: cs-tester
@@ -147,7 +147,7 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
       - uses: ./.github/actions/slack-notify-composite
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}

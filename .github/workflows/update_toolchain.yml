@@ -13,11 +13,11 @@ jobs:
     name: "Update Toolchain"
     runs-on: ["ledgerhq-device-sdk"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           ref: develop
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
       - name: Setup git and branch
         run: |
@@ -59,7 +59,7 @@ jobs:
           git add pnpm-lock.yaml
 
       - name: Commit and sign
-        uses: planetscale/ghcommit-action@v0.2.20
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
         with:
           commit_message: "🔧 (repo): Update toolchain"
           repo: ${{ github.repository }}
