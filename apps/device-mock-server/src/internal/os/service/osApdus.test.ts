@@ -3,6 +3,7 @@ import { type Device } from "@ledgerhq/device-mockserver-client";
 import {
   deriveGetAppAndVersion,
   deriveGetBatteryStatus,
+  deriveGetDeviceName,
   deriveGetOsVersion,
   deriveListApps,
   deriveOsApduResponse,
@@ -100,6 +101,19 @@ describe("deriveGetBatteryStatus", () => {
   });
 });
 
+describe("deriveGetDeviceName", () => {
+  it("encodes the device name as UTF-8 bytes followed by a success SW", () => {
+    // "Ledger" = 4c 65 64 67 65 72
+    expect(deriveGetDeviceName(device({ name: "Ledger" }))).toBe(
+      "4c6564676572" + "9000",
+    );
+  });
+
+  it("returns a bare success for an empty name", () => {
+    expect(deriveGetDeviceName(device({ name: "" }))).toBe("9000");
+  });
+});
+
 describe("deriveOsApduResponse", () => {
   it("dispatches GetOsVersion (0xE0 0x01)", () => {
     expect(
@@ -122,6 +136,16 @@ describe("deriveOsApduResponse", () => {
         "e010000000",
       ),
     ).toBe("649000");
+  });
+
+  it("dispatches the GetDeviceName cleaning APDU (0xE0 0x50) as a bare success", () => {
+    expect(deriveOsApduResponse(device({}), "e0500000")).toBe("9000");
+  });
+
+  it("dispatches GetDeviceName (0xE0 0xD2)", () => {
+    expect(deriveOsApduResponse(device({ name: "Ledger" }), "e0d20000")).toBe(
+      "4c6564676572" + "9000",
+    );
   });
 
   it("returns undefined for a non-OS APDU", () => {

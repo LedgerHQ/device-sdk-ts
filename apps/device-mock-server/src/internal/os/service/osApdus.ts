@@ -19,6 +19,14 @@ export const GET_BATTERY_STATUS_PREFIX = "e01000";
 /** ListApps (cla=0xe0, ins=0xde) and its continue variant (ins=0xdf). */
 export const LIST_APPS_PREFIX = "e0de0000";
 export const LIST_APPS_CONTINUE_PREFIX = "e0df0000";
+/**
+ * GetDeviceName (cla=0xe0, ins=0xd2). `getDeviceName` first sends a legacy
+ * "cleaning" APDU (cla=0xe0, ins=0x50) whose reply it ignores, then reads the
+ * name from the 0xd2 response's data as UTF-8 (see `parseGetDeviceNameResponse`
+ * in ledger-live). Both are part of the connect/listApps handshake.
+ */
+export const GET_DEVICE_NAME_CLEANING_PREFIX = "e0500000";
+export const GET_DEVICE_NAME_PREFIX = "e0d20000";
 
 const STATUS_OK = "9000";
 
@@ -39,14 +47,18 @@ const normalizeModel = (deviceType: string): string => deviceType.toLowerCase();
 const toHexByte = (n: number): string =>
   (n & 0xff).toString(16).padStart(2, "0");
 
-/** Length-value encode an ASCII string: `<len><bytes>` (hex). */
-const lvAscii = (value: string): string => {
+/** Encode an ASCII string as raw bytes (no length prefix), hex. */
+const asciiHex = (value: string): string => {
   let hex = "";
   for (let i = 0; i < value.length; i += 1) {
     hex += toHexByte(value.charCodeAt(i));
   }
-  return toHexByte(value.length) + hex;
+  return hex;
 };
+
+/** Length-value encode an ASCII string: `<len><bytes>` (hex). */
+const lvAscii = (value: string): string =>
+  toHexByte(value.length) + asciiHex(value);
 
 /** Length-value encode raw bytes given as a hex string. */
 const lvHex = (hex: string): string => toHexByte(hex.length / 2) + hex;
@@ -209,6 +221,15 @@ export function deriveListApps(
   return "01" + entries + STATUS_OK;
 }
 
+/**
+ * GetDeviceName (`0xE0 0xD2`) response: the device name as raw UTF-8 bytes
+ * followed by a success SW, mirroring what `parseGetDeviceNameResponse` reads
+ * (it decodes the whole data field, no length prefix).
+ */
+export function deriveGetDeviceName(device: Device): string {
+  return asciiHex(device.name ?? "") + STATUS_OK;
+}
+
 const BATTERY_CAPABLE_MODELS = new Set(["stax", "flex", "apex"]);
 
 /**
@@ -256,6 +277,15 @@ export function deriveOsApduResponse(
     apdu.startsWith(LIST_APPS_CONTINUE_PREFIX)
   ) {
     return deriveListApps(device, apdu);
+  }
+  // The legacy cleaning APDU (`0xE0 0x50`) sent before GetDeviceName: its reply
+  // is ignored by the caller, so a bare success is enough to avoid a spurious
+  // error status.
+  if (apdu.startsWith(GET_DEVICE_NAME_CLEANING_PREFIX)) {
+    return STATUS_OK;
+  }
+  if (apdu.startsWith(GET_DEVICE_NAME_PREFIX)) {
+    return deriveGetDeviceName(device);
   }
   return undefined;
 }
