@@ -1,7 +1,7 @@
 import { type DmkError } from "@ledgerhq/device-management-kit";
 
-export class LookForBackupError implements DmkError {
-  readonly _tag = "LookForBackupError";
+export class GetLanguageIdError implements DmkError {
+  readonly _tag = "GetLanguageIdError";
   readonly originalError?: unknown;
 
   constructor(originalError?: unknown) {
@@ -9,8 +9,8 @@ export class LookForBackupError implements DmkError {
   }
 }
 
-export class GetLanguageIdError implements DmkError {
-  readonly _tag = "GetLanguageIdError";
+export class GetIsOnboardedError implements DmkError {
+  readonly _tag = "GetIsOnboardedError";
   readonly originalError?: unknown;
 
   constructor(originalError?: unknown) {
@@ -27,17 +27,7 @@ export class BackupAppsStorageError implements DmkError {
   }
 }
 
-export class SaveBackupError implements DmkError {
-  readonly _tag = "SaveBackupError";
-  readonly originalError?: unknown;
-
-  constructor(originalError?: unknown) {
-    this.originalError = originalError;
-  }
-}
-
-export type BackupDeviceActionErrors =
-  | LookForBackupError
+export type CreateBackupDeviceActionErrors =
   | GetLanguageIdError
-  | BackupAppsStorageError
-  | SaveBackupError;
+  | GetIsOnboardedError
+  | BackupAppsStorageError;

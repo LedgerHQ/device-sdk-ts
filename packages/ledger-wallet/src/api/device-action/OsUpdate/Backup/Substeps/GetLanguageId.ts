@@ -5,7 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts/Either";
 
-import { GetLanguageIdError } from "@api/device-action/OsUpdate/Backup/BackupDeviceActionErrors";
+import { GetLanguageIdError } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 
 type GetLanguageIdHandlerResponse = Promise<
   Either<GetLanguageIdError, number | undefined>
