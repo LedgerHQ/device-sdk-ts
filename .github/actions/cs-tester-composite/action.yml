@@ -61,7 +61,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+    - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
     - name: Generate token
       id: generate-token
