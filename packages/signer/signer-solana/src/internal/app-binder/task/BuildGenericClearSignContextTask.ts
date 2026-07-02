@@ -3,7 +3,6 @@ import {
   ClearSignContextType,
   type ContextModule,
   type SolanaInstructionInfoPayload,
-  type SolanaInstructionSubstructure,
 } from "@ledgerhq/context-module";
 import {
   type DeviceModelId,
@@ -23,8 +22,6 @@ import {
   type InstructionDescriptor,
   type MatchedInstruction,
   type RequirementAccount,
-  type SubstructureDescriptor,
-  SubstructureKind,
 } from "@internal/app-binder/clear-sign/requirements";
 import { type NormalizedMessage } from "@internal/app-binder/services/TransactionInspector";
 import { TransactionParser } from "@internal/app-binder/services/utils/TransactionParser";
@@ -40,13 +37,6 @@ export const COMPUTE_BUDGET_PROGRAM_ID =
 
 export const DEFAULT_NETWORK = "solana-mainnet";
 const EMPTY_ENUM_CACHE: VariantCache = new Map();
-
-const SUBSTRUCTURE_KIND_BY_VALUE: Record<number, SubstructureKind> = {
-  [SubstructureKind.DISPLAY_FIELD]: SubstructureKind.DISPLAY_FIELD,
-  [SubstructureKind.VALUE_FLOW_PORT]: SubstructureKind.VALUE_FLOW_PORT,
-  [SubstructureKind.HIDE_RULE]: SubstructureKind.HIDE_RULE,
-  [SubstructureKind.ACCOUNT_RESET]: SubstructureKind.ACCOUNT_RESET,
-};
 
 /** Challenge-bound requirements, fetched one at a time in the provide phase. */
 export type ChallengeBoundRequirements = Pick<
@@ -319,18 +309,17 @@ export class BuildGenericClearSignContextTask {
 
   private toInstructionDescriptor(
     payload: SolanaInstructionInfoPayload,
-  ): InstructionDescriptor | null {
-    const instructionInfo = hexaStringToBuffer(payload.instructionInfo.data);
-    if (!instructionInfo) return null;
-    const substructures: SubstructureDescriptor[] = [];
-    for (const sub of payload.substructures) {
-      const mapped = this.toSubstructure(sub);
-      if (mapped) substructures.push(mapped);
-    }
+  ): InstructionDescriptor {
     return {
       discriminator: payload.discriminator,
-      instructionInfo,
-      substructures,
+      idlDescriptor: {
+        type_pool: payload.idlDescriptor.typePool,
+        root_type: payload.idlDescriptor.rootType,
+      },
+      mintAssociations: payload.mintAssociations,
+      valueFlowPorts: payload.valueFlowPorts,
+      accountResets: payload.accountResets,
+      displayFields: payload.displayFields,
       enumCache: this.toEnumCache(payload.enumVariants),
     };
   }
@@ -348,15 +337,6 @@ export class BuildGenericClearSignContextTask {
       Left: () => EMPTY_ENUM_CACHE,
       Right: (cache) => cache,
     });
-  }
-
-  private toSubstructure(
-    sub: SolanaInstructionSubstructure,
-  ): SubstructureDescriptor | null {
-    const kind = SUBSTRUCTURE_KIND_BY_VALUE[sub.kind];
-    const data = hexaStringToBuffer(sub.data);
-    if (kind === undefined || !data) return null;
-    return { kind, data };
   }
 
   private toRequirementAccounts(

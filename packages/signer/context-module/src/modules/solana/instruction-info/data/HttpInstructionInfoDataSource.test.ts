@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { type DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -78,18 +77,29 @@ describe("HttpInstructionInfoDataSource", () => {
     );
   });
 
-  it("returns Right with the unwrapped descriptors map on success", async () => {
+  it("returns Right with each descriptor transformed into the core payload on success", async () => {
     httpMock.get.mockResolvedValue(successResponse);
 
     const result = await datasource.getInstructionInfo({ programId, network });
 
-    const [firstResponse] = successResponse;
-    if (!firstResponse)
-      throw new Error("fixture: successResponse must be non-empty");
     expect(result).toEqual(
       Right({
         programId,
-        descriptors: (firstResponse.descriptors_instruction as any)[programId],
+        descriptors: {
+          "00000000": Right({
+            programId,
+            discriminator: "00000000",
+            instructionInfo: { data: "00010101", signature: "prodsig" },
+            substructures: [],
+            enumVariants: [],
+            idlDescriptor: { typePool: [], rootType: 0 },
+            mintAssociations: [],
+            valueFlowPorts: [],
+            accountResets: [],
+            displayFields: [],
+          }),
+        },
+        enumVariants: [],
       }),
     );
   });
