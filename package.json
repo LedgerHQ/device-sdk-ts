@@ -84,7 +84,7 @@
     "zx": "catalog:"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
-  "packageManager": "pnpm@10.28.2"
+  "packageManager": "pnpm@10.34.4"
 }
