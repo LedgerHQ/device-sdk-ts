@@ -9,10 +9,12 @@ import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDevic
 import { type GetFullViewingKeyDAReturnType } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
 import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignPcztTransactionDAReturnType } from "@api/app-binder/SignPcztTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type FullViewingKeyOptions } from "@api/model/FullViewingKeyOptions";
+import { type PcztTransaction } from "@api/model/PcztTransaction";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
 import { type SignerZcash } from "@api/SignerZcash";
 import { makeContainer } from "@internal/di";
@@ -25,6 +27,7 @@ import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
 import { type SignMessageUseCase } from "@internal/use-cases/message/SignMessageUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
 import { type GetTrustedInputUseCase } from "@internal/use-cases/transaction/GetTrustedInputUseCase";
+import { type SignPcztTransactionUseCase } from "@internal/use-cases/transaction/SignPcztTransactionUseCase";
 import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
 
 type DefaultSignerZcashConstructorArgs = {
@@ -70,6 +73,17 @@ export class DefaultSignerZcash implements SignerZcash {
     return this._container
       .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
       .execute(args, options);
+  }
+
+  signPcztTransaction(
+    transaction: PcztTransaction,
+    options?: TransactionOptions,
+  ): SignPcztTransactionDAReturnType {
+    return this._container
+      .get<SignPcztTransactionUseCase>(
+        transactionTypes.SignPcztTransactionUseCase,
+      )
+      .execute(transaction, options);
   }
 
   signMessage(
