@@ -373,8 +373,8 @@ catalogs:
       specifier: ^0.1.5
       version: 0.1.5
     ws:
-      specifier: ^8.18.0
-      version: 8.18.0
+      specifier: ^6.2.4
+      version: 6.2.4
     xstate:
       specifier: 5.19.2
       version: 5.19.2
@@ -542,7 +542,7 @@ importers:
         version: 0.2.2
       ws:
         specifier: 'catalog:'
-        version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     devDependencies:
       '@ledgerhq/device-mockserver-client':
         specifier: workspace:^
@@ -1135,7 +1135,7 @@ importers:
         version: 7.5.1(reflect-metadata@0.2.2)
       isomorphic-ws:
         specifier: 'catalog:'
-        version: 5.0.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+        version: 5.0.0(ws@6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       purify-ts:
         specifier: 'catalog:'
         version: 2.1.0
@@ -1150,7 +1150,7 @@ importers:
         version: 11.0.3
       ws:
         specifier: 'catalog:'
-        version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       xstate:
         specifier: 'catalog:'
         version: 5.19.2
@@ -1172,7 +1172,7 @@ importers:
         version: link:../config/vitest
       '@statelyai/inspect':
         specifier: 'catalog:'
-        version: 0.4.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)
+        version: 0.4.0(ws@6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)
       '@types/semver':
         specifier: 'catalog:'
         version: 7.7.0
@@ -1388,7 +1388,7 @@ importers:
         version: 7.8.2
       ws:
         specifier: 'catalog:'
-        version: 8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+        version: 6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
     devDependencies:
       '@ledgerhq/device-management-kit':
         specifier: workspace:^
@@ -13236,6 +13236,17 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@6.2.4:
+    resolution: {integrity: sha512-PNIUUyLI5YpkJZj60YBzX1o0ByQ4ovvfmq9N/Kig/PAYbVlGyz4R6G0SEWrD0O9acc0sT2+IdMBVLFv8FSi0Nw==}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   ws@7.5.10:
     resolution: {integrity: sha512-+dbF1tHwZpXcbOJdVOkzLDxZP1ailvSxM6ZweXTegylPny803bFhA+vqBYw4s31NSAk4S2Qz+AKXK9a4wkdjcQ==}
     engines: {node: '>=8.3.0'}
@@ -17299,10 +17310,10 @@ snapshots:
 
   '@standard-schema/utils@0.3.0': {}
 
-  '@statelyai/inspect@0.4.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)':
+  '@statelyai/inspect@0.4.0(ws@6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10))(xstate@5.19.2)':
     dependencies:
       fast-safe-stringify: 2.1.1
-      isomorphic-ws: 5.0.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))
+      isomorphic-ws: 5.0.0(ws@6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10))
       partysocket: 0.0.25
       safe-stable-stringify: 2.4.3
       superjson: 1.13.3
@@ -21730,6 +21741,10 @@ snapshots:
   isomorphic-ws@4.0.1(ws@7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
       ws: 7.5.10(bufferutil@4.0.9)(utf-8-validate@5.0.10)
+
+  isomorphic-ws@5.0.0(ws@6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
+    dependencies:
+      ws: 6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10)
 
   isomorphic-ws@5.0.0(ws@8.18.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)):
     dependencies:
@@ -26580,6 +26595,13 @@ snapshots:
       signal-exit: 3.0.7
 
   ws@6.2.3(bufferutil@4.0.9)(utf-8-validate@5.0.10):
+    dependencies:
+      async-limiter: 1.0.1
+    optionalDependencies:
+      bufferutil: 4.0.9
+      utf-8-validate: 5.0.10
+
+  ws@6.2.4(bufferutil@4.0.9)(utf-8-validate@5.0.10):
     dependencies:
       async-limiter: 1.0.1
     optionalDependencies:
