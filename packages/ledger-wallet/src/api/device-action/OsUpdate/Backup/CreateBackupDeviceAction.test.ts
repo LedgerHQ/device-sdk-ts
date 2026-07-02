@@ -5,41 +5,41 @@ import {
   UnknownDAError,
   UserInteractionRequired,
 } from "@ledgerhq/device-management-kit";
-import { type KeyValueStorage } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 import { assign, createMachine } from "xstate";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { testDeviceActionStates } from "@api/device-action/__test-utils__/testDeviceActionStates";
-import { BackupDeviceAction } from "@api/device-action/OsUpdate/Backup/BackupDeviceAction";
+import { CreateBackupDeviceAction } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceAction";
 import {
   BackupAppsStorageError,
   GetLanguageIdError,
-  LookForBackupError,
-  SaveBackupError,
-} from "@api/device-action/OsUpdate/Backup/BackupDeviceActionErrors";
+} from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 import { backupAppsStorage } from "@api/device-action/OsUpdate/Backup/Substeps/BackupAppsStorage";
 import { downloadCustomLockScreenDevice } from "@api/device-action/OsUpdate/Backup/Substeps/DownloadCustomLockScreen";
+import { getIsOnboarded } from "@api/device-action/OsUpdate/Backup/Substeps/GetIsOnboarded";
 import { getLanguageId } from "@api/device-action/OsUpdate/Backup/Substeps/GetLanguageId";
+import { goToDashboard } from "@api/device-action/OsUpdate/Backup/Substeps/GoToDashboard";
 import { listInstalledApps } from "@api/device-action/OsUpdate/Backup/Substeps/ListInstalledApps";
-import { lookForBackup } from "@api/device-action/OsUpdate/Backup/Substeps/LookForBackup";
-import { saveBackup } from "@api/device-action/OsUpdate/Backup/Substeps/SaveBackup";
+import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Backup/Substeps/WaitForAppAndVersion";
 import {
-  type BackupDAError,
-  type BackupDAState,
-  BackupSteps,
+  type Backup,
+  type CreateBackupDAError,
+  type CreateBackupDAState,
+  CreateBackupSteps,
 } from "@api/device-action/OsUpdate/Backup/types";
 
-vi.mock("@api/device-action/OsUpdate/Backup/Substeps/LookForBackup");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/GetLanguageId");
+vi.mock("@api/device-action/OsUpdate/Backup/Substeps/GetIsOnboarded");
+vi.mock("@api/device-action/OsUpdate/Backup/Substeps/GoToDashboard");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/ListInstalledApps");
+vi.mock("@api/device-action/OsUpdate/Backup/Substeps/WaitForAppAndVersion");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/DownloadCustomLockScreen");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/BackupAppsStorage");
-vi.mock("@api/device-action/OsUpdate/Backup/Substeps/SaveBackup");
 
 // ─── State builders ───────────────────────────────────────────────────────────
 
-const pendingState = (step: BackupSteps): BackupDAState => ({
+const pendingState = (step: CreateBackupSteps): CreateBackupDAState => ({
   status: DeviceActionStatus.Pending,
   intermediateValue: {
     requiredUserInteraction: UserInteractionRequired.None,
@@ -47,12 +47,17 @@ const pendingState = (step: BackupSteps): BackupDAState => ({
   },
 });
 
-const completedState = (): BackupDAState => ({
+const completedState = (
+  output: Omit<Backup, "createdAt">,
+): CreateBackupDAState => ({
   status: DeviceActionStatus.Completed,
-  output: undefined,
+  output: {
+    ...output,
+    createdAt: expect.any(Date) as Date,
+  },
 });
 
-const errorState = (error: BackupDAError): BackupDAState => ({
+const errorState = (error: CreateBackupDAError): CreateBackupDAState => ({
   status: DeviceActionStatus.Error,
   error,
 });
@@ -63,7 +68,9 @@ const errorState = (error: BackupDAError): BackupDAState => ({
 // the given Either output.  The machine exposes the `intermediateValue` shape
 // required by the parent's `onSnapshot` handler.
 
-const createMockActorMachine = (output: Either<unknown, unknown>) =>
+const createMockActorMachineFromOutput = (
+  output: () => Either<unknown, unknown>,
+) =>
   createMachine({
     initial: "ready",
     states: {
@@ -77,18 +84,13 @@ const createMockActorMachine = (output: Either<unknown, unknown>) =>
       },
       done: { type: "final" },
     },
-    output: () => output,
+    output,
   });
 
+const createMockActorMachine = (output: Either<unknown, unknown>) =>
+  createMockActorMachineFromOutput(() => output);
+
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
-
-const DEVICE_ID = "device123";
-
-const storage: KeyValueStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-};
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
@@ -102,10 +104,41 @@ describe("BackupDeviceAction", () => {
 
   // ─── Setup helpers ──────────────────────────────────────────────────────────
 
-  const setupNoExistingBackup = () =>
+  const setupWaitForAppAndVersion = (appName = "BOLOS") =>
+    vi.mocked(waitForAppAndVersion).mockReturnValue(
+      createMockActorMachine(
+        Right({
+          name: appName,
+          version: "1.0.0",
+        }),
+      ) as unknown as ReturnType<typeof waitForAppAndVersion>,
+    );
+
+  const setupWaitForAppAndVersionSequence = (appNames: string[]) => {
+    const remainingAppNames = [...appNames];
+    vi.mocked(waitForAppAndVersion).mockReturnValue(
+      createMockActorMachineFromOutput(() =>
+        Right({
+          name: remainingAppNames.shift() ?? "BOLOS",
+          version: "1.0.0",
+        }),
+      ) as unknown as ReturnType<typeof waitForAppAndVersion>,
+    );
+  };
+
+  const setupGoToDashboard = () =>
     vi
-      .mocked(lookForBackup)
-      .mockReturnValue(() => Promise.resolve(Right(false)));
+      .mocked(goToDashboard)
+      .mockReturnValue(
+        createMockActorMachine(Right(undefined)) as unknown as ReturnType<
+          typeof goToDashboard
+        >,
+      );
+
+  const setupGetIsOnboarded = (isDeviceOnboarded = true) =>
+    vi
+      .mocked(getIsOnboarded)
+      .mockReturnValue(() => Promise.resolve(Right(isDeviceOnboarded)));
 
   const setupGetLanguageId = () =>
     vi.mocked(getLanguageId).mockReturnValue(() => Promise.resolve(Right(1)));
@@ -137,11 +170,6 @@ describe("BackupDeviceAction", () => {
         ) as unknown as ReturnType<typeof downloadCustomLockScreenDevice>,
       );
 
-  const setupSaveBackup = () =>
-    vi
-      .mocked(saveBackup)
-      .mockReturnValue(() => Promise.resolve(Right(undefined)));
-
   const setupStaxModel = () =>
     getDeviceModelMock.mockReturnValue({
       id: DeviceModelId.STAX,
@@ -152,12 +180,9 @@ describe("BackupDeviceAction", () => {
       id: DeviceModelId.NANO_X,
     } as TransportDeviceModel);
 
-  const makeDeviceAction = (isDeviceOnboarded = true) =>
-    new BackupDeviceAction({
+  const makeDeviceAction = () =>
+    new CreateBackupDeviceAction({
       input: {
-        isDeviceOnboarded,
-        deviceId: DEVICE_ID,
-        storage,
         unlockTimeout: 30_000,
       },
     });
@@ -167,48 +192,33 @@ describe("BackupDeviceAction", () => {
   describe("Success", () => {
     it("should complete the full backup flow for a CLS-supported device", () =>
       new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupGetIsOnboarded();
         setupGetLanguageId();
         setupListInstalledApps();
         setupBackupAppsStorage();
         setupDownloadCls();
-        setupSaveBackup();
         setupStaxModel();
 
         // State transitions:
-        // GetBackupIfExist → GetLanguage → ListInstalledApps (×2: enter + onSnapshot)
-        // → BackupAppsStorage → DownloadCustomLockScreen (×2: enter + onSnapshot)
-        // → SaveBackup → Success
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.BackupAppsStorage),
-          pendingState(BackupSteps.DownloadCustomLockScreen),
-          pendingState(BackupSteps.DownloadCustomLockScreen),
-          pendingState(BackupSteps.SaveBackup),
-          completedState(),
-        ];
-
-        testDeviceActionStates(
-          makeDeviceAction(),
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          { onDone: resolve, onError: reject },
-        );
-      }));
-
-    it("should complete immediately when a valid backup already exists", () =>
-      new Promise<void>((resolve, reject) => {
-        vi.mocked(lookForBackup).mockReturnValue(() =>
-          Promise.resolve(Right(true)),
-        );
-
-        // CheckIfBackupExist.hasBackup → immediately transitions to Success
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          completedState(),
+        // GetLanguage → ListInstalledApps (×2: enter + onSnapshot)
+        // → BackupAppsStorage → DownloadCustomLockScreen (×2: enter + onSnapshot) → Success
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.BackupAppsStorage),
+          pendingState(CreateBackupSteps.DownloadCustomLockScreen),
+          pendingState(CreateBackupSteps.DownloadCustomLockScreen),
+          completedState({
+            languageId: 1,
+            installedApps: [{ appName: "TestApp", data: "appData" }],
+            clsHexImage: "0x0102",
+          }),
         ];
 
         testDeviceActionStates(
@@ -221,23 +231,29 @@ describe("BackupDeviceAction", () => {
 
     it("should skip ListInstalledApps and DownloadCustomLockScreen when device is unseeded", () =>
       new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupGetIsOnboarded(false);
         setupGetLanguageId();
         setupListInstalledApps(); // registered in actors but never invoked (always guard fires first)
         setupBackupAppsStorage(); // registered in actors but never invoked
         setupDownloadCls(); // registered in actors but never invoked
-        setupSaveBackup();
 
-        // ListInstalledApps.always isDeviceUnseeded → jumps directly to SaveBackup
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
-          pendingState(BackupSteps.SaveBackup),
-          completedState(),
+        // CheckIfDeviceIsOnboarded.isDeviceOnboarded false → jumps directly to Success
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
+          completedState({
+            languageId: 1,
+            installedApps: [],
+            clsHexImage: undefined,
+          }),
         ];
 
         testDeviceActionStates(
-          makeDeviceAction(false /* isDeviceOnboarded */),
+          makeDeviceAction(),
           expectedStates,
           makeDeviceActionInternalApiMock(),
           { onDone: resolve, onError: reject },
@@ -246,23 +262,67 @@ describe("BackupDeviceAction", () => {
 
     it("should skip DownloadCustomLockScreen for devices that do not support CLS", () =>
       new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupGetIsOnboarded();
         setupGetLanguageId();
         setupListInstalledApps();
         setupBackupAppsStorage();
         setupDownloadCls(); // registered in actors but never invoked (always guard fires first)
-        setupSaveBackup();
         setupNanoXModel();
 
-        // DownloadCustomLockScreen.always isCustomLockScreenFeatureNotSupported → SaveBackup
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.BackupAppsStorage),
-          pendingState(BackupSteps.SaveBackup),
-          completedState(),
+        // CheckIfDeviceSupportCustomLockScreenFeature.isCustomLockScreenFeatureSupported false → Success
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.BackupAppsStorage),
+          completedState({
+            languageId: 1,
+            installedApps: [{ appName: "TestApp", data: "appData" }],
+            clsHexImage: undefined,
+          }),
+        ];
+
+        testDeviceActionStates(
+          makeDeviceAction(),
+          expectedStates,
+          makeDeviceActionInternalApiMock(),
+          { onDone: resolve, onError: reject },
+        );
+      }));
+
+    it("should go to dashboard and wait for app and version again when an app is open", () =>
+      new Promise<void>((resolve, reject) => {
+        setupWaitForAppAndVersionSequence(["Bitcoin", "BOLOS"]);
+        setupGoToDashboard();
+        setupGetIsOnboarded();
+        setupGetLanguageId();
+        setupListInstalledApps();
+        setupBackupAppsStorage();
+        setupDownloadCls(); // registered in actors but never invoked (always guard fires first)
+        setupNanoXModel();
+
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GoToDashboard),
+          pendingState(CreateBackupSteps.GoToDashboard),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.BackupAppsStorage),
+          completedState({
+            languageId: 1,
+            installedApps: [{ appName: "TestApp", data: "appData" }],
+            clsHexImage: undefined,
+          }),
         ];
 
         testDeviceActionStates(
@@ -277,61 +337,23 @@ describe("BackupDeviceAction", () => {
   // ─── Error ──────────────────────────────────────────────────────────────────
 
   describe("Error", () => {
-    it("should go to Error when lookForBackup returns Left", () =>
-      new Promise<void>((resolve, reject) => {
-        const error = new LookForBackupError(new Error("data storage failed"));
-        vi.mocked(lookForBackup).mockReturnValue(() =>
-          Promise.resolve(Left(error)),
-        );
-
-        // CheckIfBackupExist.hasError → Error
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          errorState(error),
-        ];
-
-        testDeviceActionStates(
-          makeDeviceAction(),
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          { onDone: resolve, onError: reject },
-        );
-      }));
-
-    it("should go to Error when lookForBackup promise rejects", () =>
-      new Promise<void>((resolve, reject) => {
-        const thrownError = new Error("unexpected crash");
-        vi.mocked(lookForBackup).mockReturnValue(() =>
-          Promise.reject(thrownError),
-        );
-
-        // onError → assignErrorFromEvent → Error
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          errorState(thrownError as unknown as BackupDAError),
-        ];
-
-        testDeviceActionStates(
-          makeDeviceAction(),
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          { onDone: resolve, onError: reject },
-        );
-      }));
-
     it("should go to Error when getLanguageId returns Left", () =>
       new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupGetIsOnboarded();
         setupListInstalledApps(); // registered in actors but never invoked (always hasError guard fires first)
         const error = new GetLanguageIdError(new Error("command failed"));
         vi.mocked(getLanguageId).mockReturnValue(() =>
           Promise.resolve(Left(error)),
         );
 
-        // getLanguageId Left → ListInstalledApps.always hasError → Error
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
+        // getLanguageId Left → CheckIfDeviceIsOnboarded.hasError → Error
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
           errorState(error),
         ];
 
@@ -345,7 +367,9 @@ describe("BackupDeviceAction", () => {
 
     it("should go to Error when listInstalledApps returns Left", () =>
       new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupGetIsOnboarded();
         setupGetLanguageId();
         const error = new UnknownDAError("listInstalledApps failed");
         vi.mocked(listInstalledApps).mockReturnValue(
@@ -355,11 +379,13 @@ describe("BackupDeviceAction", () => {
         );
 
         // listInstalledApps Left → BackupAppsStorage.always hasError → Error
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.ListInstalledApps),
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.ListInstalledApps),
           errorState(error),
         ];
 
@@ -373,7 +399,9 @@ describe("BackupDeviceAction", () => {
 
     it("should go to Error when backupAppsStorage returns Left", () =>
       new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupGetIsOnboarded();
         setupGetLanguageId();
         setupListInstalledApps();
         setupDownloadCls(); // registered in actors but never invoked (always hasError guard fires first)
@@ -382,13 +410,15 @@ describe("BackupDeviceAction", () => {
           Promise.resolve(Left(error)),
         );
 
-        // backupAppsStorage Left → DownloadCustomLockScreen.always hasError → Error
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.BackupAppsStorage),
+        // backupAppsStorage Left → CheckIfDeviceSupportCustomLockScreenFeature.hasError → Error
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.BackupAppsStorage),
           errorState(error),
         ];
 
@@ -402,7 +432,9 @@ describe("BackupDeviceAction", () => {
 
     it("should go to Error when downloadCustomLockScreenDevice returns Left", () =>
       new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
+        setupWaitForAppAndVersion();
+        setupGoToDashboard();
+        setupGetIsOnboarded();
         setupGetLanguageId();
         setupListInstalledApps();
         setupBackupAppsStorage();
@@ -414,49 +446,17 @@ describe("BackupDeviceAction", () => {
           >,
         );
 
-        // downloadCustomLockScreen Left → SaveBackup.always hasError → Error
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.BackupAppsStorage),
-          pendingState(BackupSteps.DownloadCustomLockScreen),
-          pendingState(BackupSteps.DownloadCustomLockScreen),
-          errorState(error),
-        ];
-
-        testDeviceActionStates(
-          makeDeviceAction(),
-          expectedStates,
-          makeDeviceActionInternalApiMock(),
-          { onDone: resolve, onError: reject },
-        );
-      }));
-
-    it("should go to Error when saveBackup returns Left", () =>
-      new Promise<void>((resolve, reject) => {
-        setupNoExistingBackup();
-        setupGetLanguageId();
-        setupListInstalledApps();
-        setupBackupAppsStorage();
-        setupDownloadCls();
-        setupStaxModel();
-        const error = new SaveBackupError(new Error("save failed"));
-        vi.mocked(saveBackup).mockReturnValue(() =>
-          Promise.resolve(Left(error)),
-        );
-
-        // saveBackup Left → CheckSaveBackup.always hasError → Error
-        const expectedStates: BackupDAState[] = [
-          pendingState(BackupSteps.Idle),
-          pendingState(BackupSteps.GetLanguage),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.ListInstalledApps),
-          pendingState(BackupSteps.BackupAppsStorage),
-          pendingState(BackupSteps.DownloadCustomLockScreen),
-          pendingState(BackupSteps.DownloadCustomLockScreen),
-          pendingState(BackupSteps.SaveBackup),
+        // downloadCustomLockScreen Left → CheckDownloadCustomLockScreen.hasError → Error
+        const expectedStates: CreateBackupDAState[] = [
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.WaitForAppAndVersion),
+          pendingState(CreateBackupSteps.GetIsOnboarded),
+          pendingState(CreateBackupSteps.GetLanguage),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.ListInstalledApps),
+          pendingState(CreateBackupSteps.BackupAppsStorage),
+          pendingState(CreateBackupSteps.DownloadCustomLockScreen),
+          pendingState(CreateBackupSteps.DownloadCustomLockScreen),
           errorState(error),
         ];
 

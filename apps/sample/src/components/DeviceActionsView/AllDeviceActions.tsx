@@ -71,15 +71,14 @@ import {
   WaitForAppAndVersionDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import {
-  type BackupDAError,
-  type BackupDAInput,
-  type BackupDAIntermediateValue,
-  type BackupDAOutput,
-  BackupDeviceAction,
+  type CreateBackupDAError,
+  type CreateBackupDAInput,
+  type CreateBackupDAIntermediateValue,
+  type CreateBackupDAOutput,
+  CreateBackupDeviceAction,
 } from "@ledgerhq/dmk-ledger-wallet";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { LocalStorage } from "@/utils/os-update/localStorage";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
 import { type DeviceActionProps } from "./DeviceActionTester";
@@ -463,18 +462,12 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         UninstallAppDAIntermediateValue
       >,
       {
-        title: `${SECURE_CHANNEL_ICON} OS Update Backup`,
+        title: `${SECURE_CHANNEL_ICON} Create Backup`,
         description:
           "Perform all the actions necessary to backup the device data before an OS update",
-        executeDeviceAction: (
-          { isDeviceOnboarded, deviceId, unlockTimeout },
-          inspect,
-        ) => {
-          const deviceAction = new BackupDeviceAction({
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new CreateBackupDeviceAction({
             input: {
-              isDeviceOnboarded,
-              deviceId,
-              storage: new LocalStorage(),
               unlockTimeout,
             },
             inspect,
@@ -485,16 +478,14 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          isDeviceOnboarded: true,
-          deviceId: "12345",
           unlockTimeout: UNLOCK_TIMEOUT,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
-        BackupDAOutput,
-        Omit<BackupDAInput, "storage">,
-        BackupDAError,
-        BackupDAIntermediateValue
+        CreateBackupDAOutput,
+        CreateBackupDAInput,
+        CreateBackupDAError,
+        CreateBackupDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],

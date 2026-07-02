@@ -3,6 +3,7 @@ import {
   type DeviceActionStateMachine,
   DeviceModelId,
   type InternalApi,
+  isDashboardName,
   type StateMachineTypes,
   UserInteractionRequired,
   XStateDeviceAction,
@@ -10,48 +11,45 @@ import {
 import { Left, Right } from "purify-ts";
 import { assign, fromPromise, setup } from "xstate";
 
-import { DeviceBackupStorage } from "@api/device-action/OsUpdate/Backup/Storage/DeviceBackupStorage";
 import { backupAppsStorage } from "@api/device-action/OsUpdate/Backup/Substeps/BackupAppsStorage";
 import { downloadCustomLockScreenDevice } from "@api/device-action/OsUpdate/Backup/Substeps/DownloadCustomLockScreen";
+import { getIsOnboarded } from "@api/device-action/OsUpdate/Backup/Substeps/GetIsOnboarded";
 import { getLanguageId } from "@api/device-action/OsUpdate/Backup/Substeps/GetLanguageId";
+import { goToDashboard } from "@api/device-action/OsUpdate/Backup/Substeps/GoToDashboard";
 import { listInstalledApps } from "@api/device-action/OsUpdate/Backup/Substeps/ListInstalledApps";
-import { lookForBackup } from "@api/device-action/OsUpdate/Backup/Substeps/LookForBackup";
-import { saveBackup } from "@api/device-action/OsUpdate/Backup/Substeps/SaveBackup";
+import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Backup/Substeps/WaitForAppAndVersion";
 import {
-  type BackupDAError,
-  type BackupDAInput,
-  type BackupDAIntermediateValue,
-  type BackupDAInternalState,
-  type BackupDAOutput,
-  BackupSteps,
+  type CreateBackupDAError,
+  type CreateBackupDAInput,
+  type CreateBackupDAIntermediateValue,
+  type CreateBackupDAInternalState,
+  type CreateBackupDAOutput,
+  CreateBackupSteps,
 } from "@api/device-action/OsUpdate/Backup/types";
 
-export class BackupDeviceAction extends XStateDeviceAction<
-  BackupDAOutput,
-  BackupDAInput,
-  BackupDAError,
-  BackupDAIntermediateValue,
-  BackupDAInternalState
+export class CreateBackupDeviceAction extends XStateDeviceAction<
+  CreateBackupDAOutput,
+  CreateBackupDAInput,
+  CreateBackupDAError,
+  CreateBackupDAIntermediateValue,
+  CreateBackupDAInternalState
 > {
   protected override makeStateMachine(
     internalAPI: InternalApi,
   ): DeviceActionStateMachine<
-    BackupDAOutput,
-    BackupDAInput,
-    BackupDAError,
-    BackupDAIntermediateValue,
-    BackupDAInternalState
+    CreateBackupDAOutput,
+    CreateBackupDAInput,
+    CreateBackupDAError,
+    CreateBackupDAIntermediateValue,
+    CreateBackupDAInternalState
   > {
     type types = StateMachineTypes<
-      BackupDAOutput,
-      BackupDAInput,
-      BackupDAError,
-      BackupDAIntermediateValue,
-      BackupDAInternalState
+      CreateBackupDAOutput,
+      CreateBackupDAInput,
+      CreateBackupDAError,
+      CreateBackupDAIntermediateValue,
+      CreateBackupDAInternalState
     >;
-
-    const { storage } = this.input;
-    const deviceBackupStorage = new DeviceBackupStorage(storage);
 
     return setup({
       types: {
@@ -60,7 +58,12 @@ export class BackupDeviceAction extends XStateDeviceAction<
         context: {} as types["context"],
       } as types,
       actors: {
-        lookForBackup: fromPromise(lookForBackup(deviceBackupStorage)),
+        waitForAppAndVersion: waitForAppAndVersion(
+          internalAPI,
+          this.input.unlockTimeout,
+        ),
+        goToDashboard: goToDashboard(internalAPI, this.input.unlockTimeout),
+        getIsOnboarded: fromPromise(getIsOnboarded(internalAPI)),
         getLanguageId: fromPromise(getLanguageId(internalAPI)),
         listInstalledApps: listInstalledApps(
           internalAPI,
@@ -74,12 +77,12 @@ export class BackupDeviceAction extends XStateDeviceAction<
         backupAppsStorage: fromPromise(
           backupAppsStorage(internalAPI, this.getLoggerFactory(internalAPI)),
         ),
-        saveBackup: fromPromise(saveBackup(deviceBackupStorage)),
       },
       guards: {
-        hasBackup: ({ context }) =>
-          context._internalState.backupAlreadyExist === true,
-        isDeviceOnboarded: ({ context }) => context.input.isDeviceOnboarded,
+        isDeviceOnDashboard: ({ context }) =>
+          isDashboardName(context._internalState.currentApp),
+        isDeviceOnboarded: ({ context }) =>
+          context._internalState.isDeviceOnboarded,
         isCustomLockScreenFeatureSupported: () =>
           [DeviceModelId.APEX, DeviceModelId.FLEX, DeviceModelId.STAX].includes(
             internalAPI.getDeviceModel().id,
@@ -95,51 +98,63 @@ export class BackupDeviceAction extends XStateDeviceAction<
         }),
       },
     }).createMachine({
-      id: "BackupDeviceAction",
-      initial: "LookForBackup",
+      id: "CreateBackupDeviceAction",
+      initial: "WaitForAppAndVersion",
       context: ({ input }) => ({
         input: {
-          isDeviceOnboarded: input.isDeviceOnboarded,
-          deviceId: input.deviceId,
-          storage: input.storage,
           unlockTimeout: input.unlockTimeout,
         },
         intermediateValue: {
           requiredUserInteraction: UserInteractionRequired.None,
-          step: BackupSteps.Idle,
+          step: CreateBackupSteps.Idle,
         },
         _internalState: {
           error: null,
+          currentApp: null,
+          isDeviceOnboarded: false,
           languageId: undefined,
           installedApps: [],
           backupApps: [],
           clsHexImage: undefined,
-          backupAlreadyExist: false,
         },
       }),
       states: {
-        LookForBackup: {
-          invoke: {
-            src: "lookForBackup",
-            input: ({ context }) => ({
-              deviceId: context.input.deviceId,
+        WaitForAppAndVersion: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: CreateBackupSteps.WaitForAppAndVersion,
             }),
+          }),
+          invoke: {
+            src: "waitForAppAndVersion",
+            input: ({ context }) => ({
+              unlockTimeout: context.input.unlockTimeout,
+            }),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: _.context.intermediateValue.step,
+                }),
+              }),
+            },
             onDone: {
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf<BackupDAInternalState>({
+                  return _.event.output.caseOf<CreateBackupDAInternalState>({
                     Left: (error) => ({
                       ..._.context._internalState,
                       error,
                     }),
-                    Right: (backupAlreadyExist) => ({
+                    Right: (output) => ({
                       ..._.context._internalState,
-                      backupAlreadyExist,
+                      currentApp: output.name,
                     }),
                   });
                 },
               }),
-              target: "CheckIfBackupExist",
+              target: "CheckIfDeviceIsOnDashboard",
             },
             onError: {
               actions: "assignErrorFromEvent",
@@ -147,15 +162,109 @@ export class BackupDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        CheckIfBackupExist: {
+        CheckIfDeviceIsOnDashboard: {
           always: [
             {
               guard: "hasError",
               target: "Error",
             },
             {
-              guard: "hasBackup",
-              target: "Success",
+              guard: "isDeviceOnDashboard",
+              target: "GetIsOnboarded",
+            },
+            {
+              target: "GoToDashboard",
+            },
+          ],
+        },
+        GoToDashboard: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: CreateBackupSteps.GoToDashboard,
+            }),
+          }),
+          invoke: {
+            src: "goToDashboard",
+            input: ({ context }) => ({
+              unlockTimeout: context.input.unlockTimeout,
+            }),
+            onSnapshot: {
+              actions: assign({
+                intermediateValue: (_) => ({
+                  ..._.event.snapshot.context.intermediateValue,
+                  step: _.context.intermediateValue.step,
+                }),
+              }),
+            },
+            onDone: {
+              actions: assign({
+                _internalState: (_) => {
+                  return _.event.output.caseOf<CreateBackupDAInternalState>({
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                    Right: () => _.context._internalState,
+                  });
+                },
+              }),
+              target: "CheckGoToDashboard",
+            },
+            onError: {
+              actions: "assignErrorFromEvent",
+              target: "Error",
+            },
+          },
+        },
+        CheckGoToDashboard: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
+            },
+            {
+              target: "WaitForAppAndVersion",
+            },
+          ],
+        },
+        GetIsOnboarded: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              step: CreateBackupSteps.GetIsOnboarded,
+            }),
+          }),
+          invoke: {
+            src: "getIsOnboarded",
+            onDone: {
+              actions: assign({
+                _internalState: (_) => {
+                  return _.event.output.caseOf<CreateBackupDAInternalState>({
+                    Left: (error) => ({
+                      ..._.context._internalState,
+                      error,
+                    }),
+                    Right: (isDeviceOnboarded) => ({
+                      ..._.context._internalState,
+                      isDeviceOnboarded,
+                    }),
+                  });
+                },
+              }),
+              target: "CheckGetIsOnboarded",
+            },
+            onError: {
+              actions: "assignErrorFromEvent",
+              target: "Error",
+            },
+          },
+        },
+        CheckGetIsOnboarded: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
             },
             {
               target: "GetLanguage",
@@ -166,7 +275,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: (_) => ({
               ..._.context.intermediateValue,
-              step: BackupSteps.GetLanguage,
+              step: CreateBackupSteps.GetLanguage,
             }),
           }),
           invoke: {
@@ -174,7 +283,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
             onDone: {
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf<BackupDAInternalState>({
+                  return _.event.output.caseOf<CreateBackupDAInternalState>({
                     Left: (error) => ({
                       ..._.context._internalState,
                       error,
@@ -186,7 +295,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
                   });
                 },
               }),
-              target: "CheckIfDeviceIsOnboarded",
+              target: "CheckGetLanguage",
             },
             onError: {
               actions: "assignErrorFromEvent",
@@ -194,18 +303,25 @@ export class BackupDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        CheckIfDeviceIsOnboarded: {
+        CheckGetLanguage: {
           always: [
             {
               guard: "hasError",
               target: "Error",
             },
             {
+              target: "CheckIfDeviceIsOnboarded",
+            },
+          ],
+        },
+        CheckIfDeviceIsOnboarded: {
+          always: [
+            {
               guard: "isDeviceOnboarded",
               target: "ListInstalledApps",
             },
             {
-              target: "SaveBackup",
+              target: "Success",
             },
           ],
         },
@@ -213,7 +329,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: (_) => ({
               ..._.context.intermediateValue,
-              step: BackupSteps.ListInstalledApps,
+              step: CreateBackupSteps.ListInstalledApps,
             }),
           }),
           invoke: {
@@ -232,7 +348,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
             onDone: {
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf<BackupDAInternalState>({
+                  return _.event.output.caseOf<CreateBackupDAInternalState>({
                     Left: (error) => ({
                       ..._.context._internalState,
                       error,
@@ -246,7 +362,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
                   });
                 },
               }),
-              target: "BackupAppsStorage",
+              target: "CheckListInstalledApps",
             },
             onError: {
               actions: "assignErrorFromEvent",
@@ -254,15 +370,22 @@ export class BackupDeviceAction extends XStateDeviceAction<
             },
           },
         },
+        CheckListInstalledApps: {
+          always: [
+            {
+              guard: "hasError",
+              target: "Error",
+            },
+            {
+              target: "BackupAppsStorage",
+            },
+          ],
+        },
         BackupAppsStorage: {
-          always: {
-            guard: "hasError",
-            target: "Error",
-          },
           entry: assign({
             intermediateValue: (_) => ({
               ..._.context.intermediateValue,
-              step: BackupSteps.BackupAppsStorage,
+              step: CreateBackupSteps.BackupAppsStorage,
             }),
           }),
           invoke: {
@@ -273,7 +396,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
             onDone: {
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf<BackupDAInternalState>({
+                  return _.event.output.caseOf<CreateBackupDAInternalState>({
                     Left: (error) => ({
                       ..._.context._internalState,
                       error,
@@ -285,7 +408,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
                   });
                 },
               }),
-              target: "CheckIfDeviceSupportCustomLockScreenFeature",
+              target: "CheckBackupAppsStorage",
             },
             onError: {
               actions: "assignErrorFromEvent",
@@ -293,18 +416,25 @@ export class BackupDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        CheckIfDeviceSupportCustomLockScreenFeature: {
+        CheckBackupAppsStorage: {
           always: [
             {
               guard: "hasError",
               target: "Error",
             },
             {
+              target: "CheckIfDeviceSupportCustomLockScreenFeature",
+            },
+          ],
+        },
+        CheckIfDeviceSupportCustomLockScreenFeature: {
+          always: [
+            {
               guard: "isCustomLockScreenFeatureSupported",
               target: "DownloadCustomLockScreen",
             },
             {
-              target: "SaveBackup",
+              target: "Success",
             },
           ],
         },
@@ -312,7 +442,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
           entry: assign({
             intermediateValue: (_) => ({
               ..._.context.intermediateValue,
-              step: BackupSteps.DownloadCustomLockScreen,
+              step: CreateBackupSteps.DownloadCustomLockScreen,
             }),
           }),
           invoke: {
@@ -332,7 +462,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
             onDone: {
               actions: assign({
                 _internalState: (_) => {
-                  return _.event.output.caseOf<BackupDAInternalState>({
+                  return _.event.output.caseOf<CreateBackupDAInternalState>({
                     Left: (error) => ({
                       ..._.context._internalState,
                       error,
@@ -347,7 +477,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
                   });
                 },
               }),
-              target: "SaveBackup",
+              target: "CheckDownloadCustomLockScreen",
             },
             onError: {
               actions: "assignErrorFromEvent",
@@ -355,51 +485,7 @@ export class BackupDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        SaveBackup: {
-          always: {
-            guard: "hasError",
-            target: "Error",
-          },
-          entry: assign({
-            intermediateValue: (_) => ({
-              ..._.context.intermediateValue,
-              step: BackupSteps.SaveBackup,
-            }),
-          }),
-          invoke: {
-            src: "saveBackup",
-            input: ({ context }) => ({
-              deviceId: context.input.deviceId,
-              backup: {
-                languageId: context._internalState.languageId,
-                installedApps: context._internalState.backupApps,
-                clsHexImage: context._internalState.clsHexImage,
-                createdAt: new Date(),
-              },
-            }),
-            onDone: {
-              actions: assign({
-                _internalState: (_) => {
-                  return _.event.output.caseOf<BackupDAInternalState>({
-                    Left: (error) => ({
-                      ..._.context._internalState,
-                      error,
-                    }),
-                    Right: () => ({
-                      ..._.context._internalState,
-                    }),
-                  });
-                },
-              }),
-              target: "CheckSaveBackup",
-            },
-            onError: {
-              actions: "assignErrorFromEvent",
-              target: "Error",
-            },
-          },
-        },
-        CheckSaveBackup: {
+        CheckDownloadCustomLockScreen: {
           always: [
             {
               guard: "hasError",
@@ -421,7 +507,12 @@ export class BackupDeviceAction extends XStateDeviceAction<
         if (context._internalState.error !== null) {
           return Left(context._internalState.error);
         }
-        return Right(undefined);
+        return Right({
+          languageId: context._internalState.languageId,
+          installedApps: context._internalState.backupApps,
+          clsHexImage: context._internalState.clsHexImage,
+          createdAt: new Date(),
+        });
       },
     });
   }
