@@ -85,7 +85,7 @@ jobs:
         run: pnpm danger:ci
 
   build-libraries:
-    name: Build libraries
+    name: Build libraries and apps
     needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
@@ -93,20 +93,19 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
-  build-apps:
-    name: Build apps
-    needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+      # Cache the sample app production build so the sample-integration job can
+      # reuse it instead of rebuilding before the Playwright run.
+      - name: Cache sample app build
+        uses: actions/cache@v4
+        with:
+          path: apps/sample/.next
+          key: ${{ runner.os }}-sample-next-${{ github.sha }}
 
       - name: Build apps
         run: pnpm build
 
-  health-check:
-    name: Run health check
+  prettier:
+    name: Run prettier
     needs: [build-libraries]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
@@ -114,9 +113,35 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
-      - name: Health check
-        id: health-check
-        run: pnpm health-check
+      - name: Prettier
+        id: prettier
+        run: pnpm prettier
+
+  lint:
+    name: Run lint
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Lint
+        id: lint
+        run: pnpm lint
+
+  typecheck:
+    name: Run typecheck
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Typecheck
+        id: typecheck
+        run: pnpm typecheck
 
   tests:
     name: Run unit tests
@@ -138,6 +163,55 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  sample-integration:
+    name: Run playwright
+    needs: [build-libraries]
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      # Reuse the sample app build produced by build-libraries; start-servers.sh
+      # then skips the build and starts the prebuilt app directly.
+      - name: Restore sample app build
+        uses: actions/cache/restore@v4
+        with:
+          path: apps/sample/.next
+          key: ${{ runner.os }}-sample-next-${{ github.sha }}
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @ledgerhq/device-management-kit-sample exec playwright install --with-deps chromium
+
+      - name: Run sample Playwright tests
+        # The Playwright webServer (start-servers.sh) starts both the device mock
+        # server and the sample app, so neither is launched here.
+        run: pnpm --filter @ledgerhq/device-management-kit-sample test:playwright
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: sample-playwright-traces
+          path: apps/sample/test-results
+          if-no-files-found: ignore
+          retention-days: 7
+
+  health-check:
+    name: Run health check
+    # Aggregates the split checks and tests into a single required status so
+    # branch protection only needs to require "Run health check".
+    needs: [build-libraries, prettier, lint, typecheck, tests, sample-integration]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check results
+        run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
+            echo "One or more required checks failed."
+            exit 1
+          fi
+          echo "All required checks passed."
 
   cs-tester:
     needs: [build-libraries, detect-changes]

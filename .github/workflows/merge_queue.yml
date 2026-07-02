@@ -18,8 +18,8 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
-  health-check:
-    name: Run health check
+  prettier:
+    name: Run prettier
     needs: [build-libraries]
     runs-on: "ledgerhq-device-sdk"
     steps:
@@ -27,9 +27,35 @@ jobs:
 
       - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
 
-      - name: Health check
-        id: health-check
-        run: pnpm health-check
+      - name: Prettier
+        id: prettier
+        run: pnpm prettier
+
+  lint:
+    name: Run lint
+    needs: [build-libraries]
+    runs-on: "ledgerhq-device-sdk"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Lint
+        id: lint
+        run: pnpm lint
+
+  typecheck:
+    name: Run typecheck
+    needs: [build-libraries]
+    runs-on: "ledgerhq-device-sdk"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+
+      - name: Typecheck
+        id: typecheck
+        run: pnpm typecheck
 
   tests:
     name: Run unit tests
@@ -43,3 +69,19 @@ jobs:
       - name: Tests
         id: unit-tests
         run: pnpm test
+
+  health-check:
+    name: Run health check
+    # Aggregates the split checks and tests into a single required status so
+    # branch protection only needs to require "Run health check".
+    needs: [build-libraries, prettier, lint, typecheck, tests]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check results
+        run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
+            echo "One or more required checks failed."
+            exit 1
+          fi
+          echo "All required checks passed."

@@ -41,9 +41,6 @@
     },
     "@ledgerhq/ledger-dmk-docs#typecheck": {
       "dependsOn": ["build", "^typecheck"]
-    },
-    "health-check": {
-      "dependsOn": ["build", "prettier", "lint", "typecheck"]
     }
   }
 }
