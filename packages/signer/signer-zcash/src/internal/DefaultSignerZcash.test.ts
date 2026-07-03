@@ -17,6 +17,7 @@ import {
   zcashFvkP2FromMode,
 } from "@internal/app-binder/command/GetFullViewingKeyCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { privateToPrivateTransaction } from "@internal/app-binder/task/__fixtures__/pcztFixtures";
 
 import { DefaultSignerZcash } from "./DefaultSignerZcash";
 
@@ -146,6 +147,18 @@ describe("DefaultSignerZcash", () => {
       outputScriptHex: "00",
       additionals: ["zcash"],
     });
+
+    expect(dmk.executeDeviceAction).toHaveBeenCalled();
+  });
+
+  it("should call signPcztTransaction via device action", () => {
+    const dmk = {
+      executeDeviceAction: vi.fn(),
+    } as unknown as DeviceManagementKit;
+    const sessionId = {} as DeviceSessionId;
+    const signer = new DefaultSignerZcash({ dmk, sessionId });
+
+    signer.signPcztTransaction(privateToPrivateTransaction());
 
     expect(dmk.executeDeviceAction).toHaveBeenCalled();
   });
