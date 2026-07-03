@@ -497,6 +497,9 @@ importers:
       semver:
         specifier: 'catalog:'
         version: 7.7.2
+      undici:
+        specifier: ^8.5.0
+        version: 8.6.0
     devDependencies:
       '@ledgerhq/eslint-config-dsdk':
         specifier: workspace:^
@@ -12735,6 +12738,10 @@ packages:
     resolution: {integrity: sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==}
     engines: {node: '>=18.17'}
 
+  undici@8.6.0:
+    resolution: {integrity: sha512-l2FlC6I510GawyEd1qgcE/okihKrzy+BRTEBlu6T0fdbM9m5yxtIH5Oa3ysRsH0zC4EhmWUEaSDsy2QngBeRlw==}
+    engines: {node: '>=22.19.0'}
+
   unicode-canonical-property-names-ecmascript@2.0.1:
     resolution: {integrity: sha512-dA8WbNeb2a6oQzAQ55YlT5vQAWGV9WXOsi3SskE3bcCdM0P4SDd+24zS/OCacdRq5BkdsRj9q3Pg6YyQoxIGqg==}
     engines: {node: '>=4'}
@@ -18044,14 +18051,6 @@ snapshots:
       '@vitest/utils': 3.2.4
       chai: 5.2.0
       tinyrainbow: 2.0.0
-
-  '@vitest/mocker@3.2.4(vite@7.1.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))':
-    dependencies:
-      '@vitest/spy': 3.2.4
-      estree-walker: 3.0.3
-      magic-string: 0.30.17
-    optionalDependencies:
-      vite: 7.1.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
 
   '@vitest/mocker@3.2.4(vite@7.1.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
     dependencies:
@@ -25983,6 +25982,8 @@ snapshots:
 
   undici@6.27.0: {}
 
+  undici@8.6.0: {}
+
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 
   unicode-match-property-ecmascript@2.0.0:
@@ -26356,7 +26357,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.2
       '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(vite@7.1.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0))
+      '@vitest/mocker': 3.2.4(vite@7.1.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.2.4
       '@vitest/snapshot': 3.2.4

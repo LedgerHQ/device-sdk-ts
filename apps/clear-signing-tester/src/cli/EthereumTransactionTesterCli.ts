@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import "@root/src/setup/installUndici";
+
 import { type LoggerPublisherService } from "@ledgerhq/device-management-kit";
 import { Command } from "commander";
 import { type Container } from "inversify";
