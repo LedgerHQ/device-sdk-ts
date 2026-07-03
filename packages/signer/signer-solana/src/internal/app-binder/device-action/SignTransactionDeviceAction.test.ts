@@ -240,8 +240,6 @@ describe("SignTransactionDeviceAction (Solana) – orchestration", () => {
       .fn()
       .mockResolvedValue({ transactionType: SolanaTransactionTypes.STANDARD });
     buildBasicMock = vi.fn().mockResolvedValue({
-      tlvDescriptor: new Uint8Array([1]),
-      trustedNamePKICertificate: null,
       loadersResults: [],
       contextErrorCount: 0,
     });

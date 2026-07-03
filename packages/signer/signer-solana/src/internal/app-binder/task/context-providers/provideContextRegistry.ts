@@ -5,6 +5,7 @@ import {
 } from "@ledgerhq/context-module";
 
 import { provideAltResolutionContext } from "./provideAltResolutionContext";
+import { provideBasicTrustedNameContext } from "./provideBasicTrustedNameContext";
 import {
   type ProvideContextDeps,
   type ProvideContextHandler,
@@ -37,6 +38,8 @@ const PROVIDE_CONTEXT_REGISTRY: {
     provideTokenAccountStateContext,
   [ClearSignContextType.SOLANA_ALT_RESOLUTION]: provideAltResolutionContext,
   [ClearSignContextType.SOLANA_TRUSTED_NAME]: provideTrustedNameContext,
+  [ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME]:
+    provideBasicTrustedNameContext,
 };
 
 type DiscriminatedSolanaContextSuccess = {

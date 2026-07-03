@@ -212,13 +212,7 @@ export class ProvisionBasicClearSignDeviceAction extends XStateDeviceAction<
               actions: assign({
                 _internalState: ({ event, context }) => ({
                   ...context._internalState,
-                  solanaTransactionContext: {
-                    tlvDescriptor: event.output.tlvDescriptor,
-                    trustedNamePKICertificate:
-                      event.output.trustedNamePKICertificate,
-                    loadersResults: event.output.loadersResults,
-                    contextErrorCount: event.output.contextErrorCount,
-                  },
+                  solanaTransactionContext: event.output,
                 }),
               }),
             },
