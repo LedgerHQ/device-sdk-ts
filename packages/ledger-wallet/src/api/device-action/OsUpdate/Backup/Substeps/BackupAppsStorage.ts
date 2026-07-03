@@ -7,7 +7,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { type Either, Left, Right } from "purify-ts";
 
-import { BackupAppsStorageError } from "@api/device-action/OsUpdate/Backup/BackupDeviceActionErrors";
+import { BackupAppsStorageError } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 import { type BackupApp } from "@api/device-action/OsUpdate/Backup/types";
 
 const EMPTY_STORAGE = "0x";
