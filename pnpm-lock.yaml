@@ -364,8 +364,8 @@ catalogs:
       specifier: 11.0.3
       version: 11.0.3
     vite:
-      specifier: 7.3.5
-      version: 7.3.5
+      specifier: 7.3.6
+      version: 7.3.6
     vitest:
       specifier: 3.2.4
       version: 3.2.4
@@ -628,7 +628,7 @@ importers:
         version: 18.3.1
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 5.0.1(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 5.0.1(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       electron:
         specifier: 'catalog:'
         version: 38.1.2
@@ -637,7 +637,7 @@ importers:
         version: 26.15.3(electron-builder-squirrel-windows@26.15.3)
       electron-vite:
         specifier: 'catalog:'
-        version: 4.0.1(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 4.0.1(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       eslint:
         specifier: 'catalog:'
         version: 9.34.0(jiti@2.7.0)
@@ -664,7 +664,7 @@ importers:
         version: 5.9.2
       vite:
         specifier: 'catalog:'
-        version: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+        version: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
 
   apps/docs:
     dependencies:
@@ -883,7 +883,7 @@ importers:
         version: 0.76.6
       '@react-native/metro-config':
         specifier: 'catalog:'
-        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
+        version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       '@react-native/typescript-config':
         specifier: 'catalog:'
         version: 0.76.6
@@ -1230,7 +1230,7 @@ importers:
         version: link:../core
       '@rozenite/vite-plugin':
         specifier: 'catalog:'
-        version: 1.1.0(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 1.1.0(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       '@types/react':
         specifier: 'catalog:'
         version: 18.3.12
@@ -1254,7 +1254,7 @@ importers:
         version: 5.9.2
       vite:
         specifier: 'catalog:'
-        version: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+        version: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
 
   packages/devtools/ui:
     dependencies:
@@ -2227,7 +2227,7 @@ importers:
         version: 10.0.0
       '@vitejs/plugin-react':
         specifier: 'catalog:'
-        version: 5.0.1(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 5.0.1(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       react-native:
         specifier: 'catalog:'
         version: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
@@ -2242,7 +2242,7 @@ importers:
         version: 10.9.2(@types/node@24.13.2)(typescript@5.9.2)
       vitest-react-native:
         specifier: 'catalog:'
-        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+        version: 0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
 
   packages/transport/rn-hid:
     dependencies:
@@ -13015,6 +13015,46 @@ packages:
       yaml:
         optional: true
 
+  vite@7.3.6:
+    resolution: {integrity: sha512-4XP60spRGjSZFf1qYH+dJIkK2znL3zQfl9KkOV9MkkRR/3Dls0dxaBsQPTloEc5BLXWPL9vsOxopxyKoMmDueg==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    hasBin: true
+    peerDependencies:
+      '@types/node': ^20.19.0 || >=22.12.0
+      jiti: '>=1.21.0'
+      less: ^4.0.0
+      lightningcss: ^1.21.0
+      sass: ^1.70.0
+      sass-embedded: ^1.70.0
+      stylus: '>=0.54.8'
+      sugarss: ^5.0.0
+      terser: ^5.16.0
+      tsx: ^4.8.1
+      yaml: ^2.4.2
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+      jiti:
+        optional: true
+      less:
+        optional: true
+      lightningcss:
+        optional: true
+      sass:
+        optional: true
+      sass-embedded:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+      tsx:
+        optional: true
+      yaml:
+        optional: true
+
   vitest-react-native@0.1.5:
     resolution: {integrity: sha512-sgwLyoxhC8lddZV6nQQjJYpAVoa6Hxicw14rGZv7KJ4KuavA7QB4CaNOxTVZnD/1OMh+n5q6tnwWvjFORXyA4g==}
     peerDependencies:
@@ -16614,7 +16654,7 @@ snapshots:
       - '@babel/preset-env'
       - supports-color
 
-  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))':
+  '@react-native/metro-config@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
       '@react-native/js-polyfills': 0.76.6
       '@react-native/metro-babel-transformer': 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))
@@ -16623,7 +16663,9 @@ snapshots:
     transitivePeerDependencies:
       - '@babel/core'
       - '@babel/preset-env'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -16942,12 +16984,12 @@ snapshots:
 
   '@rozenite/tools@1.1.0': {}
 
-  '@rozenite/vite-plugin@1.1.0(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
+  '@rozenite/vite-plugin@1.1.0(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
     dependencies:
-      '@vitejs/plugin-react': 4.7.0(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+      '@vitejs/plugin-react': 4.7.0(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       ejs: 3.1.10
-      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
-      vite-plugin-dts: 4.5.4(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
+      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite-plugin-dts: 4.5.4(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))
       vite-plugin-react-native-web: 2.5.0
     transitivePeerDependencies:
       - '@types/node'
@@ -17955,7 +17997,7 @@ snapshots:
 
   '@ungap/structured-clone@1.3.2': {}
 
-  '@vitejs/plugin-react@4.7.0(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
+  '@vitejs/plugin-react@4.7.0(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
     dependencies:
       '@babel/core': 7.28.3
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.3)
@@ -17963,11 +18005,11 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
-  '@vitejs/plugin-react@5.0.1(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
+  '@vitejs/plugin-react@5.0.1(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0))':
     dependencies:
       '@babel/core': 7.28.3
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.3)
@@ -17975,7 +18017,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.32
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -19902,7 +19944,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron-vite@4.0.1(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
+  electron-vite@4.0.1(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
     dependencies:
       '@babel/core': 7.28.3
       '@babel/plugin-transform-arrow-functions': 7.27.1(@babel/core@7.28.3)
@@ -19910,7 +19952,7 @@ snapshots:
       esbuild: 0.25.12
       magic-string: 0.30.17
       picocolors: 1.1.1
-      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -26159,7 +26201,7 @@ snapshots:
       debug: 4.4.3(supports-color@5.5.0)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.1.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
+      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -26180,7 +26222,7 @@ snapshots:
       debug: 4.4.3(supports-color@5.5.0)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.1.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -26195,7 +26237,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite-plugin-dts@4.5.4(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
+  vite-plugin-dts@4.5.4(@types/node@24.13.2)(rollup@4.55.1)(typescript@5.9.2)(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
     dependencies:
       '@microsoft/api-extractor': 7.55.2(@types/node@24.13.2)
       '@rollup/pluginutils': 5.3.0(rollup@4.55.1)
@@ -26208,7 +26250,7 @@ snapshots:
       magic-string: 0.30.17
       typescript: 5.9.2
     optionalDependencies:
-      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
       - rollup
@@ -26250,6 +26292,22 @@ snapshots:
       tsx: 4.20.3
       yaml: 2.7.0
 
+  vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
+    dependencies:
+      esbuild: 0.27.7
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
+      postcss: 8.5.6
+      rollup: 4.55.1
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 24.13.2
+      fsevents: 2.3.3
+      jiti: 2.7.0
+      terser: 5.43.1
+      tsx: 4.19.2
+      yaml: 2.7.0
+
   vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
     dependencies:
       esbuild: 0.27.7
@@ -26266,7 +26324,23 @@ snapshots:
       tsx: 4.20.3
       yaml: 2.7.0
 
-  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
+  vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0):
+    dependencies:
+      esbuild: 0.27.7
+      fdir: 6.5.0(picomatch@4.0.3)
+      picomatch: 4.0.3
+      postcss: 8.5.6
+      rollup: 4.55.1
+      tinyglobby: 0.2.15
+    optionalDependencies:
+      '@types/node': 24.13.2
+      fsevents: 2.3.3
+      jiti: 2.7.0
+      terser: 5.43.1
+      tsx: 4.20.3
+      yaml: 2.7.0
+
+  vitest-react-native@0.1.5(react-native@0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10))(react@18.3.1)(vite@7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)):
     dependencies:
       '@bunchtogether/vite-plugin-flow': 1.0.2
       '@react-native/polyfills': 2.0.0
@@ -26276,7 +26350,7 @@ snapshots:
       react: 18.3.1
       react-native: 0.76.6(@babel/core@7.28.3)(@babel/preset-env@7.26.9(@babel/core@7.28.3))(@react-native-community/cli-server-api@15.0.1(bufferutil@4.0.9)(utf-8-validate@5.0.10))(@types/react@18.3.12)(bufferutil@4.0.9)(encoding@0.1.13)(react@18.3.1)(utf-8-validate@5.0.10)
       regenerator-runtime: 0.13.11
-      vite: 7.3.5(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
+      vite: 7.3.6(@types/node@24.13.2)(jiti@2.7.0)(terser@5.43.1)(tsx@4.20.3)(yaml@2.7.0)
 
   vitest@3.2.4(@types/debug@4.1.12)(@types/node@24.13.2)(jiti@2.7.0)(jsdom@26.0.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(terser@5.43.1)(tsx@4.19.2)(yaml@2.7.0):
     dependencies:
