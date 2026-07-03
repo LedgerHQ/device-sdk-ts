@@ -50,7 +50,8 @@
     "ethers": "catalog:",
     "inversify": "catalog:",
     "rxjs": "catalog:",
-    "semver": "catalog:"
+    "semver": "catalog:",
+    "undici": "^8.5.0"
   },
   "devDependencies": {
     "@ledgerhq/vitest-config-dmk": "workspace:^",
