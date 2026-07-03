@@ -135,7 +135,7 @@ catalog:
   vite: 7.3.6
   vitest: 3.2.4
   vitest-react-native: ^0.1.5
-  ws: ^8.18.0
+  ws: ^6.2.4
   xstate: 5.19.2
   zx: 8.5.3
 
