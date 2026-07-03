@@ -33,6 +33,9 @@ import {
   type OpenAppArgs,
   OpenAppCommand,
   type OpenAppErrorCodes,
+  RequestMasterConsentCommand,
+  type RequestMasterConsentCommandArgs,
+  type RequestMasterConsentCommandErrorCodes,
 } from "@ledgerhq/device-management-kit";
 import { Grid } from "@ledgerhq/react-ui";
 
@@ -163,6 +166,37 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         void,
         BackupAppStorageCommandResponse,
         BackupAppStorageCommandErrorCodes
+      >,
+      {
+        title: "Request master consent",
+        description: "Request master consent for the device",
+        sendCommand: ({
+          languagePackConsentEnabled,
+          lockScreenPictureConsentEnabled,
+          appNumber,
+          appStorageNumber,
+        }) => {
+          const command = new RequestMasterConsentCommand({
+            languagePackConsentEnabled,
+            lockScreenPictureConsentEnabled,
+            appNumber,
+            appStorageNumber,
+          });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: {
+          languagePackConsentEnabled: true,
+          lockScreenPictureConsentEnabled: true,
+          appNumber: 1,
+          appStorageNumber: 1,
+        },
+      } satisfies CommandProps<
+        RequestMasterConsentCommandArgs,
+        void,
+        RequestMasterConsentCommandErrorCodes
       >,
       {
         title: "Init restore app storage",
