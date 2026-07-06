@@ -21,7 +21,7 @@ const WEB3CHECKS_TEST_BASE_URL =
 // TODO(test): force the scan provider via X-Ledger-Forced-Provider
 // ("blockaid" | "cyvers"). Remove before merge.
 const FORCED_PROVIDER_HEADER = "X-Ledger-Forced-Provider";
-const FORCED_PROVIDER = "blockaid";
+const FORCED_PROVIDER = "cyvers";
 
 @injectable()
 export class HttpTransactionCheckDataSource
