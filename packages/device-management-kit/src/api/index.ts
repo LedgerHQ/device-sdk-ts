@@ -59,6 +59,13 @@ export {
   type GetOsVersionResponse,
 } from "@api/command/os/GetOsVersionCommand";
 export {
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  InitRestoreAppStorageCommandError,
+  type InitRestoreAppStorageCommandErrorCodes,
+  type InitRestoreAppStorageCommandResult,
+} from "@api/command/os/InitRestoreAppStorageCommand";
+export {
   type ListAppsArgs,
   ListAppsCommand,
   type ListAppsErrorCodes,

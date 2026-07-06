@@ -19,6 +19,9 @@ import {
   type GetBatteryStatusResponse,
   GetOsVersionCommand,
   type GetOsVersionResponse,
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  type InitRestoreAppStorageCommandErrorCodes,
   type ListAppsArgs,
   ListAppsCommand,
   type ListAppsErrorCodes,
@@ -160,6 +163,26 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         void,
         BackupStorageCommandResponse,
         BackupStorageCommandErrorCodes
+      >,
+      {
+        title: "Init restore app storage",
+        description:
+          "Initialize the restore of a previously backed up app storage",
+        sendCommand: ({ appName, backupLength }) => {
+          const command = new InitRestoreAppStorageCommand({
+            appName,
+            backupLength,
+          });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { appName: "", backupLength: 0 },
+      } satisfies CommandProps<
+        InitRestoreAppStorageCommandArgs,
+        void,
+        InitRestoreAppStorageCommandErrorCodes
       >,
       {
         title: "List language packs",
