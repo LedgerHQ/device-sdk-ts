@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import {
-  BackupStorageCommand,
-  type BackupStorageCommandErrorCodes,
-  type BackupStorageCommandResponse,
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
   BatteryStatusType,
   CloseAppCommand,
   DeleteLanguagePackCommand,
@@ -152,7 +152,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         title: "Backup app storage",
         description: "Backup the app storage of the device",
         sendCommand: () => {
-          const command = new BackupStorageCommand();
+          const command = new BackupAppStorageCommand();
           return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
@@ -161,24 +161,24 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         initialValues: undefined,
       } satisfies CommandProps<
         void,
-        BackupStorageCommandResponse,
-        BackupStorageCommandErrorCodes
+        BackupAppStorageCommandResponse,
+        BackupAppStorageCommandErrorCodes
       >,
       {
         title: "Init restore app storage",
         description:
           "Initialize the restore of a previously backed up app storage",
-        sendCommand: ({ appName, backupLength }) => {
+        sendCommand: ({ appName, appStorageDataLength }) => {
           const command = new InitRestoreAppStorageCommand({
             appName,
-            backupLength,
+            appStorageDataLength,
           });
           return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
           });
         },
-        initialValues: { appName: "", backupLength: 0 },
+        initialValues: { appName: "", appStorageDataLength: 0 },
       } satisfies CommandProps<
         InitRestoreAppStorageCommandArgs,
         void,

@@ -3,9 +3,9 @@ import {
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 import {
-  BackupStorageCommand,
-  type BackupStorageCommandErrorCodes,
-} from "@api/command/os/BackupStorageCommand";
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+} from "@api/command/os/BackupAppStorageCommand";
 import {
   GetAppStorageInfoCommand,
   type GetAppStorageInfoCommandErrorCodes,
@@ -25,11 +25,11 @@ export type BackupAppStorageTaskResponse = {
 
 export type BackupAppStorageTaskErrorCodes =
   | GetAppStorageInfoCommandErrorCodes
-  | BackupStorageCommandErrorCodes;
+  | BackupAppStorageCommandErrorCodes;
 
 export type BackupAppStorageTaskError =
   | CommandErrorResult<GetAppStorageInfoCommandErrorCodes>["error"]
-  | CommandErrorResult<BackupStorageCommandErrorCodes>["error"];
+  | CommandErrorResult<BackupAppStorageCommandErrorCodes>["error"];
 
 export class BackupAppStorageTask {
   constructor(
@@ -70,7 +70,7 @@ export class BackupAppStorageTask {
 
     while (offset < storageSize) {
       const backupStorage = await this.api.sendCommand(
-        new BackupStorageCommand(),
+        new BackupAppStorageCommand(),
       );
       if (!isSuccessCommandResult(backupStorage)) {
         this.logger.debug("[run] Failed to backup app storage", {

@@ -1,4 +1,4 @@
-import { BackupStorageCommandError } from "@api/command/os/BackupStorageCommand";
+import { BackupAppStorageCommandError } from "@api/command/os/BackupAppStorageCommand";
 import { GetAppStorageInfoCommandError } from "@api/command/os/GetAppStorageInfoCommand";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import {
@@ -128,7 +128,7 @@ describe("BackupAppStorageTask", () => {
         )
         .mockResolvedValueOnce(
           CommandResultFactory({
-            error: new BackupStorageCommandError({
+            error: new BackupAppStorageCommandError({
               message: "Failed to backup app storage data.",
               errorCode: "541c",
             }),
@@ -141,10 +141,10 @@ describe("BackupAppStorageTask", () => {
       // ASSERT
       expect(isSuccessDmkResult(result)).toBe(false);
       expect(
-        (result as { error: BackupStorageCommandError }).error,
-      ).toBeInstanceOf(BackupStorageCommandError);
+        (result as { error: BackupAppStorageCommandError }).error,
+      ).toBeInstanceOf(BackupAppStorageCommandError);
       expect(
-        (result as { error: BackupStorageCommandError }).error.message,
+        (result as { error: BackupAppStorageCommandError }).error.message,
       ).toBe("Failed to backup app storage data.");
     });
   });

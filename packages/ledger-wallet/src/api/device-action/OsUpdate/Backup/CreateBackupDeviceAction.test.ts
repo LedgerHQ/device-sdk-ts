@@ -158,7 +158,7 @@ describe("BackupDeviceAction", () => {
     vi
       .mocked(backupAppsStorage)
       .mockReturnValue(() =>
-        Promise.resolve(Right([{ appName: "TestApp", data: "appData" }])),
+        Promise.resolve(Right([{ appName: "TestApp", data: "0xappData" }])),
       );
 
   const setupDownloadCls = () =>
@@ -216,7 +216,7 @@ describe("BackupDeviceAction", () => {
           pendingState(CreateBackupSteps.DownloadCustomLockScreen),
           completedState({
             languageId: 1,
-            installedApps: [{ appName: "TestApp", data: "appData" }],
+            installedApps: [{ appName: "TestApp", data: "0xappData" }],
             clsHexImage: "0x0102",
           }),
         ];
@@ -282,7 +282,7 @@ describe("BackupDeviceAction", () => {
           pendingState(CreateBackupSteps.BackupAppsStorage),
           completedState({
             languageId: 1,
-            installedApps: [{ appName: "TestApp", data: "appData" }],
+            installedApps: [{ appName: "TestApp", data: "0xappData" }],
             clsHexImage: undefined,
           }),
         ];
@@ -320,7 +320,7 @@ describe("BackupDeviceAction", () => {
           pendingState(CreateBackupSteps.BackupAppsStorage),
           completedState({
             languageId: 1,
-            installedApps: [{ appName: "TestApp", data: "appData" }],
+            installedApps: [{ appName: "TestApp", data: "0xappData" }],
             clsHexImage: undefined,
           }),
         ];
