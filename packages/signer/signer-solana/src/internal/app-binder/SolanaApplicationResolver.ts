@@ -18,7 +18,7 @@ const DEFAULT_VERSION = "0.0.1";
 export const SOLANA_MIN_SPL_VERSION = "1.9.2";
 export const SOLANA_MIN_DELAYED_SIGNING_VERSION = "1.14.0";
 
-export const SOLANA_MIN_WEB3_CHECKS_VERSION = "1.16.0";
+export const SOLANA_MIN_TRANSACTION_CHECKS_VERSION = "1.16.0";
 export const SOLANA_MIN_GENERIC_CLEAR_SIGN_VERSION = UNRELEASED_MIN_VERSION;
 
 export const SOLANA_FEATURES = {
@@ -27,8 +27,8 @@ export const SOLANA_FEATURES = {
     excludedModels: [DeviceModelId.NANO_S],
     excludedApps: [] as string[],
   },
-  web3Checks: {
-    minVersion: SOLANA_MIN_WEB3_CHECKS_VERSION,
+  transactionChecks: {
+    minVersion: SOLANA_MIN_TRANSACTION_CHECKS_VERSION,
     excludedModels: [
       DeviceModelId.NANO_S,
       DeviceModelId.NANO_SP,

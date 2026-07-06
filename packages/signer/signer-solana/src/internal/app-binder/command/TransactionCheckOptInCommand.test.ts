@@ -3,23 +3,23 @@ import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 import {
   TRANSACTION_CHECK_CLA,
   TRANSACTION_CHECK_INS,
-} from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+} from "@internal/app-binder/command/ProvideTransactionCheckCommand";
 import {
   TRANSACTION_CHECK_P1_OPT_IN,
-  Web3CheckOptInCommand,
-} from "@internal/app-binder/command/Web3CheckOptInCommand";
+  TransactionCheckOptInCommand,
+} from "@internal/app-binder/command/TransactionCheckOptInCommand";
 
-describe("Web3CheckOptInCommand", () => {
+describe("TransactionCheckOptInCommand", () => {
   describe("name", () => {
-    it("should be 'web3CheckOptIn'", () => {
-      const command = new Web3CheckOptInCommand();
-      expect(command.name).toBe("web3CheckOptIn");
+    it("should be 'transactionCheckOptIn'", () => {
+      const command = new TransactionCheckOptInCommand();
+      expect(command.name).toBe("transactionCheckOptIn");
     });
   });
 
   describe("getApdu", () => {
     it("should return the raw APDU with correct header and dummy payload", () => {
-      const command = new Web3CheckOptInCommand();
+      const command = new TransactionCheckOptInCommand();
       const apdu = command.getApdu();
       const raw = apdu.getRawApdu();
 
@@ -39,7 +39,7 @@ describe("Web3CheckOptInCommand", () => {
         statusCode: Uint8Array.from([0x90, 0x00]),
         data: new Uint8Array([0x01]),
       };
-      const result = new Web3CheckOptInCommand().parseResponse(response);
+      const result = new TransactionCheckOptInCommand().parseResponse(response);
       if (isSuccessCommandResult(result)) {
         expect(result.data).toStrictEqual({ enabled: true });
       } else {
@@ -52,7 +52,7 @@ describe("Web3CheckOptInCommand", () => {
         statusCode: Uint8Array.from([0x90, 0x00]),
         data: new Uint8Array([0x00]),
       };
-      const result = new Web3CheckOptInCommand().parseResponse(response);
+      const result = new TransactionCheckOptInCommand().parseResponse(response);
       if (isSuccessCommandResult(result)) {
         expect(result.data).toStrictEqual({ enabled: false });
       } else {
@@ -65,7 +65,7 @@ describe("Web3CheckOptInCommand", () => {
         statusCode: Uint8Array.from([0x90, 0x00]),
         data: new Uint8Array([]),
       };
-      const result = new Web3CheckOptInCommand().parseResponse(response);
+      const result = new TransactionCheckOptInCommand().parseResponse(response);
       if (isSuccessCommandResult(result)) {
         expect(result.data).toStrictEqual({ enabled: false });
       } else {

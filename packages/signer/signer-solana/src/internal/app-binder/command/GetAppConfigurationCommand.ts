@@ -85,13 +85,17 @@ export class GetAppConfigurationCommand
             ? PublicKeyDisplayMode.LONG
             : PublicKeyDisplayMode.SHORT,
         version: `${data[RESPONSE_OFFSET_VERSION_MAJOR]}.${data[RESPONSE_OFFSET_VERSION_MINOR]}.${data[RESPONSE_OFFSET_VERSION_PATCH]}`,
-        web3ChecksEnabled: false,
-        web3ChecksOptIn: false,
+        transactionChecksEnabled: false,
+        transactionChecksOptIn: false,
       };
 
       if (data.length >= TXC_RESPONSE_LENGTH) {
-        config.web3ChecksOptIn = Boolean(data[TXC_OFFSET_TX_CHECK_OPT_IN]);
-        config.web3ChecksEnabled = Boolean(data[TXC_OFFSET_TX_CHECK_ENABLE]);
+        config.transactionChecksOptIn = Boolean(
+          data[TXC_OFFSET_TX_CHECK_OPT_IN],
+        );
+        config.transactionChecksEnabled = Boolean(
+          data[TXC_OFFSET_TX_CHECK_ENABLE],
+        );
       }
 
       return CommandResultFactory({
