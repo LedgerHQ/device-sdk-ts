@@ -1,6 +1,5 @@
 import { type ContextModule } from "@ledgerhq/context-module";
 import {
-  CallTaskInAppDeviceAction,
   DeviceManagementKit,
   type DeviceSessionId,
   LoggerPublisherService,
@@ -9,18 +8,18 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
+import { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+import { SignMessageDeviceActionFactory } from "@api/app-binder/SignMessageDeviceActionFactory";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignMessageVersion } from "@api/model/MessageOptions";
 import { SolanaTransactionOptionalConfig } from "@api/model/SolanaTransactionOptionalConfig";
 import { Transaction } from "@api/model/Transaction";
-import { SendSignMessageTask } from "@internal/app-binder/task/SendSignMessageTask";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
-import { GetPubKeyCommand } from "./command/GetPubKeyCommand";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { appBinderTypes } from "./di/appBinderTypes";
 import { BlockhashService } from "./services/BlockhashService";
@@ -47,15 +46,10 @@ export class SolanaAppBinder {
   }): GetAddressDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new SendCommandInAppDeviceAction({
-        input: {
-          command: new GetPubKeyCommand(args),
-          appName: APP_NAME,
-          requiredUserInteraction: args.checkOnDevice
-            ? UserInteractionRequired.VerifyAddress
-            : UserInteractionRequired.None,
-          skipOpenApp: args.skipOpenApp,
-        },
+      deviceAction: GetAddressDeviceActionFactory({
+        derivationPath: args.derivationPath,
+        checkOnDevice: args.checkOnDevice,
+        skipOpenApp: args.skipOpenApp,
         logger: this.dmkLoggerFactory("GetPubKeyCommand"),
       }),
     });
@@ -92,20 +86,13 @@ export class SolanaAppBinder {
   }): SignMessageDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
-      deviceAction: new CallTaskInAppDeviceAction({
-        input: {
-          task: async (internalApi) =>
-            new SendSignMessageTask(internalApi, {
-              derivationPath: args.derivationPath,
-              sendingData: args.message,
-              version: args.version,
-              appDomain: args.appDomain,
-              signers: args.signers,
-            }).run(),
-          appName: APP_NAME,
-          requiredUserInteraction: UserInteractionRequired.SignPersonalMessage,
-          skipOpenApp: args.skipOpenApp,
-        },
+      deviceAction: SignMessageDeviceActionFactory({
+        derivationPath: args.derivationPath,
+        message: args.message,
+        skipOpenApp: args.skipOpenApp,
+        version: args.version,
+        appDomain: args.appDomain,
+        signers: args.signers,
         logger: this.dmkLoggerFactory("SendSignMessageTask"),
       }),
     });
