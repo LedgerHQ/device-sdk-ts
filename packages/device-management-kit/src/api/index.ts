@@ -24,6 +24,12 @@ export {
 } from "@api/command/os/BackupStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
+  CommitRestoreAppStorageCommand,
+  CommitRestoreAppStorageCommandError,
+  type CommitRestoreAppStorageCommandErrorCodes,
+  type CommitRestoreAppStorageCommandResult,
+} from "@api/command/os/CommitRestoreAppStorageCommand";
+export {
   DeleteLanguagePackCommand,
   type DeleteLanguagePackCommandArgs,
   DeleteLanguagePackCommandError,
