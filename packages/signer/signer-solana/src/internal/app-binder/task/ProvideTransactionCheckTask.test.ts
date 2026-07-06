@@ -12,10 +12,10 @@ import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 import { GetChallengeCommand } from "@internal/app-binder/command/GetChallengeCommand";
 import { GetPubKeyCommand } from "@internal/app-binder/command/GetPubKeyCommand";
-import { ProvideWeb3CheckCommand } from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+import { ProvideTransactionCheckCommand } from "@internal/app-binder/command/ProvideTransactionCheckCommand";
 import { BlockhashService } from "@internal/app-binder/services/BlockhashService";
 
-import { ProvideWeb3CheckTask } from "./ProvideWeb3CheckTask";
+import { ProvideTransactionCheckTask } from "./ProvideTransactionCheckTask";
 
 const SIGNER = "So1anaSignerPubKey111111111111111111111111111";
 const TX = new Uint8Array([1, 2, 3]);
@@ -59,7 +59,7 @@ function makeTask(
     getDeviceSessionState: vi.fn(() => ({ deviceModelId: DeviceModelId.STAX })),
   };
   const contextModule = { getContexts } as any;
-  const task = new ProvideWeb3CheckTask(api as any, {
+  const task = new ProvideTransactionCheckTask(api as any, {
     derivationPath: "44'/501'/0'",
     transactionBytes,
     contextModule,
@@ -70,7 +70,7 @@ function makeTask(
   return { task, api, getContexts };
 }
 
-describe("ProvideWeb3CheckTask", () => {
+describe("ProvideTransactionCheckTask", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("fetches the scan descriptor (pubkey + fresh challenge) and streams it", async () => {
@@ -97,7 +97,9 @@ describe("ProvideWeb3CheckTask", () => {
     );
     // Descriptor was dispatched to the device.
     const sent = api.sendCommand.mock.calls.map((c) => c[0]);
-    expect(sent.some((c) => c instanceof ProvideWeb3CheckCommand)).toBe(true);
+    expect(sent.some((c) => c instanceof ProvideTransactionCheckCommand)).toBe(
+      true,
+    );
   });
 
   it("zeroes the blockhash when the sign will refresh it (delayed path)", async () => {

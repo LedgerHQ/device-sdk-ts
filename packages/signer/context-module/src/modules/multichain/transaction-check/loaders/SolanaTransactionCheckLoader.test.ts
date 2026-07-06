@@ -7,6 +7,7 @@ import { Left, Right } from "purify-ts";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import { type TransactionCheckDataSource } from "@/modules/multichain/transaction-check/data/TransactionCheckDataSource";
 import { TransactionCheckPaths } from "@/modules/multichain/transaction-check/utils/constants";
+import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { SolanaTransactionCheckLoader } from "./SolanaTransactionCheckLoader";
@@ -138,7 +139,7 @@ describe("SolanaTransactionCheckLoader", () => {
         transactionCheck: {
           from: "signer",
           transactionBytes: message,
-          chain: 1,
+          chain: SolanaTransactionScanChainId.MAINNET,
         },
       });
 
@@ -146,7 +147,7 @@ describe("SolanaTransactionCheckLoader", () => {
 
       expect(sent.path).toBe(TransactionCheckPaths.SOLANA_TRANSACTION);
       expect(sent.body.tx.from).toBe("signer");
-      expect(sent.body.chain).toBe(1);
+      expect(sent.body.chain).toBe(SolanaTransactionScanChainId.MAINNET);
       expect(Array.from(bs58.decode(sent.body.tx.raw))).toEqual(
         Array.from(expected),
       );
@@ -166,7 +167,7 @@ describe("SolanaTransactionCheckLoader", () => {
         transactionCheck: {
           from: "signer",
           transactionBytes: message,
-          chain: 1,
+          chain: SolanaTransactionScanChainId.MAINNET,
         },
       });
 
@@ -189,7 +190,7 @@ describe("SolanaTransactionCheckLoader", () => {
         transactionCheck: {
           from: "signer",
           transactionBytes: new Uint8Array([1, 0, 3, 0xaa]),
-          chain: 1,
+          chain: SolanaTransactionScanChainId.MAINNET,
         },
       });
 
@@ -209,12 +210,34 @@ describe("SolanaTransactionCheckLoader", () => {
         transactionCheck: {
           from: "signer",
           transactionBytes: new Uint8Array([1, 0, 3, 0xaa]),
-          chain: 1,
+          chain: SolanaTransactionScanChainId.MAINNET,
         },
       });
 
       expect(ctx).toEqual({ type: ClearSignContextType.ERROR, error });
       expect(certificateLoaderMock.loadCertificate).not.toHaveBeenCalled();
+    });
+
+    it("returns an ERROR context when numRequiredSignatures exceeds the 64-signature limit", async () => {
+      // message[0] = 65 → numRequiredSignatures = 65 (legacy, high bit clear), which exceeds SOLANA_MAX_SIGNATURES
+      const message = new Uint8Array([65, 0, 3, 0xaa]);
+
+      const [ctx] = await loader.load({
+        deviceModelId: DeviceModelId.NANO_X,
+        transactionCheck: {
+          from: "signer",
+          transactionBytes: message,
+          chain: SolanaTransactionScanChainId.MAINNET,
+        },
+      });
+
+      expect(ctx).toMatchObject({
+        type: ClearSignContextType.ERROR,
+        error: expect.objectContaining({
+          message: expect.stringContaining("exceeds SOLANA_MAX_SIGNATURES"),
+        }),
+      });
+      expect(dataSourceMock.check).not.toHaveBeenCalled();
     });
   });
 });

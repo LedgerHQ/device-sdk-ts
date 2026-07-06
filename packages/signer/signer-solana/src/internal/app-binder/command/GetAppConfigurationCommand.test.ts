@@ -59,8 +59,8 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
             version: "2.5.10",
-            web3ChecksEnabled: false,
-            web3ChecksOptIn: false,
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
           },
         }),
       );
@@ -76,15 +76,15 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.SHORT,
             version: "2.5.10",
-            web3ChecksEnabled: false,
-            web3ChecksOptIn: false,
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
           },
         }),
       );
     });
 
     it("should be backward-compatible with the 5-byte layout (no txc bytes)", () => {
-      // Oldest firmware: [blind][pubkey][major][minor][patch] — no web3 checks.
+      // Oldest firmware: [blind][pubkey][major][minor][patch] — no transaction checks.
       const response = new ApduResponse({
         statusCode: Uint8Array.from([0x90, 0x00]),
         data: new Uint8Array([0x01, 0x00, 0x01, 0x05, 0x0a]),
@@ -96,8 +96,8 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: true,
             pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
             version: "1.5.10",
-            web3ChecksEnabled: false,
-            web3ChecksOptIn: false,
+            transactionChecksEnabled: false,
+            transactionChecksOptIn: false,
           },
         }),
       );
@@ -117,8 +117,8 @@ describe("GetAppConfigurationCommand", () => {
             blindSigningEnabled: false,
             pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
             version: "1.16.0",
-            web3ChecksEnabled: true,
-            web3ChecksOptIn: true,
+            transactionChecksEnabled: true,
+            transactionChecksOptIn: true,
           },
         }),
       );
