@@ -61,7 +61,7 @@ jobs:
 
   setup:
     name: Setup toolchain and dependencies
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -87,7 +87,7 @@ jobs:
   build-libraries:
     name: Build libraries and apps
     needs: [setup]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -120,7 +120,7 @@ jobs:
   prettier:
     name: Run prettier
     needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -133,7 +133,7 @@ jobs:
   lint:
     name: Run lint
     needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -146,7 +146,7 @@ jobs:
   typecheck:
     name: Run typecheck
     needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -159,7 +159,7 @@ jobs:
   tests:
     name: Run unit tests
     needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -180,7 +180,7 @@ jobs:
   sample-integration:
     name: Run playwright
     needs: [build-libraries]
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
@@ -230,7 +230,7 @@ jobs:
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-ethereum-cs-tester == 'true'
     name: Ethereum Clear Signing Test (${{ matrix.device }} - ${{ matrix.test }})
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
     strategy:
@@ -260,7 +260,7 @@ jobs:
     needs: [build-libraries, detect-changes]
     if: needs.detect-changes.outputs.should-run-solana-cs-tester == 'true'
     name: Solana Fixture Test (${{ matrix.device }} - ${{ matrix.test }})
-    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
     strategy:
