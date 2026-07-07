@@ -1,7 +1,10 @@
-import { InvalidStatusWordError } from "@api/command/Errors";
-import { isSuccessCommandResult } from "@api/command/model/CommandResult";
-import { GetAppStorageInfoCommand } from "@api/command/os/GetAppStorageInfoCommand";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import {
+  ApduResponse,
+  InvalidStatusWordError,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
+
+import { GetAppStorageInfoCommand } from "./GetAppStorageInfoCommand";
 
 describe("GetAppStorageInfoCommand", () => {
   describe("Name", () => {

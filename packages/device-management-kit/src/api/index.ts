@@ -16,19 +16,7 @@ export {
   CommandResultStatus,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
-export {
-  BackupAppStorageCommand,
-  type BackupAppStorageCommandErrorCodes,
-  type BackupAppStorageCommandResponse,
-  type BackupAppStorageCommandResult,
-} from "@api/command/os/BackupAppStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
-export {
-  CommitRestoreAppStorageCommand,
-  CommitRestoreAppStorageCommandError,
-  type CommitRestoreAppStorageCommandErrorCodes,
-  type CommitRestoreAppStorageCommandResult,
-} from "@api/command/os/CommitRestoreAppStorageCommand";
 export {
   DeleteLanguagePackCommand,
   type DeleteLanguagePackCommandArgs,
@@ -40,13 +28,6 @@ export {
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
 } from "@api/command/os/GetAppAndVersionCommand";
-export {
-  GetAppStorageInfoCommand,
-  type GetAppStorageInfoCommandArgs,
-  type GetAppStorageInfoCommandErrorCodes,
-  type GetAppStorageInfoCommandResponse,
-  type GetAppStorageInfoCommandResult,
-} from "@api/command/os/GetAppStorageInfoCommand";
 export {
   GetBackgroundImageSizeCommand,
   GetBackgroundImageSizeCommandError,
@@ -64,13 +45,6 @@ export {
   GetOsVersionCommand,
   type GetOsVersionResponse,
 } from "@api/command/os/GetOsVersionCommand";
-export {
-  InitRestoreAppStorageCommand,
-  type InitRestoreAppStorageCommandArgs,
-  InitRestoreAppStorageCommandError,
-  type InitRestoreAppStorageCommandErrorCodes,
-  type InitRestoreAppStorageCommandResult,
-} from "@api/command/os/InitRestoreAppStorageCommand";
 export {
   type ListAppsArgs,
   ListAppsCommand,
@@ -94,19 +68,6 @@ export {
   type OpenAppArgs,
   OpenAppCommand,
 } from "@api/command/os/OpenAppCommand";
-export {
-  RequestMasterConsentCommand,
-  type RequestMasterConsentCommandArgs,
-  type RequestMasterConsentCommandErrorCodes,
-  type RequestMasterConsentCommandResult,
-} from "@api/command/os/RequestMasterConsentCommand";
-export {
-  RestoreAppStorageCommand,
-  type RestoreAppStorageCommandArgs,
-  RestoreAppStorageCommandError,
-  type RestoreAppStorageCommandErrorCodes,
-  type RestoreAppStorageCommandResult,
-} from "@api/command/os/RestoreAppStorageCommand";
 export { isCommandErrorCode } from "@api/command/utils/CommandErrors";
 export { CommandUtils } from "@api/command/utils/CommandUtils";
 export {
@@ -165,16 +126,10 @@ export type {
   WaitForAppAndVersionDAState,
 } from "@api/device-action/os/WaitForAppAndVersion/types";
 export { WaitForAppAndVersionDeviceAction } from "@api/device-action/os/WaitForAppAndVersion/WaitForAppAndVersionDeviceAction";
-export { BackupAppStorageTask } from "@api/device-action/task/BackupAppStorageTask";
 export {
   GetApplicationsMetadataTaskError,
   InvalidGetFirmwareMetadataResponseError,
 } from "@api/device-action/task/Errors";
-export {
-  RestoreAppStorageTask,
-  type RestoreAppStorageTaskArgs,
-  type RestoreAppStorageTaskError,
-} from "@api/device-action/task/RestoreAppStorageTask";
 export {
   type DeviceActionStateMachine,
   XStateDeviceAction,

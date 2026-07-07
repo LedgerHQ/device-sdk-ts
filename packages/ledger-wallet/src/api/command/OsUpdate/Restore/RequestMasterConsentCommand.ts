@@ -1,21 +1,20 @@
-import { type Apdu } from "@api/apdu/model/Apdu";
-import { ApduBuilder, type ApduBuilderArgs } from "@api/apdu/utils/ApduBuilder";
-import { ApduParser } from "@api/apdu/utils/ApduParser";
-import { CommandResultFactory } from "@api/command/model/CommandResult";
-import { isCommandErrorCode } from "@api/command/utils/CommandErrors";
-import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
-import { type ApduResponse } from "@api/device-session/ApduResponse";
 import {
-  type CommandErrorArgs,
-  DeviceExchangeError,
-  InvalidArgumentError,
-} from "@api/Error";
-import {
+  type Apdu,
+  ApduBuilder,
+  type ApduBuilderArgs,
+  ApduParser,
+  type ApduResponse,
   type Command,
+  type CommandErrorArgs,
   type CommandErrors,
   type CommandResult,
-} from "@api/types";
+  CommandResultFactory,
+  CommandUtils,
+  DeviceExchangeError,
+  GlobalCommandErrorHandler,
+  InvalidArgumentError,
+  isCommandErrorCode,
+} from "@ledgerhq/device-management-kit";
 
 export type RequestMasterConsentCommandArgs = {
   languagePackConsentEnabled: boolean;

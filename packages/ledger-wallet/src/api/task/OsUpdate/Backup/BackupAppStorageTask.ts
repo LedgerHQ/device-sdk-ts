@@ -1,19 +1,22 @@
 import {
+  bufferToHexaString,
   type CommandErrorResult,
+  type DmkResult,
+  DmkResultFactory,
+  type HexaString,
+  type InternalApi,
   isSuccessCommandResult,
-} from "@api/command/model/CommandResult";
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+
 import {
   BackupAppStorageCommand,
   type BackupAppStorageCommandErrorCodes,
-} from "@api/command/os/BackupAppStorageCommand";
+} from "@api/command/OsUpdate/Backup/BackupAppStorageCommand";
 import {
   GetAppStorageInfoCommand,
   type GetAppStorageInfoCommandErrorCodes,
-} from "@api/command/os/GetAppStorageInfoCommand";
-import { type InternalApi } from "@api/device-action/DeviceAction";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { type DmkResult, DmkResultFactory } from "@api/model/DmkResult";
-import { bufferToHexaString, type HexaString } from "@api/utils/HexaString";
+} from "@api/command/OsUpdate/Backup/GetAppStorageInfoCommand";
 
 export type BackupAppStorageTaskArgs = {
   appName: string;

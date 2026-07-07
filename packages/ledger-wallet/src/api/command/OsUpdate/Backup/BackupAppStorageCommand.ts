@@ -1,20 +1,19 @@
-import { type Apdu } from "@api/apdu/model/Apdu";
-import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
-import { ApduParser } from "@api/apdu/utils/ApduParser";
-import { type Command } from "@api/command/Command";
-import { InvalidStatusWordError } from "@api/command/Errors";
 import {
+  type Apdu,
+  ApduBuilder,
+  ApduParser,
+  type ApduResponse,
+  type Command,
+  type CommandErrorArgs,
+  type CommandErrors,
   type CommandResult,
   CommandResultFactory,
-} from "@api/command/model/CommandResult";
-import {
-  type CommandErrors,
+  CommandUtils,
+  DeviceExchangeError,
+  GlobalCommandErrorHandler,
+  InvalidStatusWordError,
   isCommandErrorCode,
-} from "@api/command/utils/CommandErrors";
-import { CommandUtils } from "@api/command/utils/CommandUtils";
-import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError";
-import { type ApduResponse } from "@api/device-session/ApduResponse";
-import { type CommandErrorArgs, DeviceExchangeError } from "@api/Error";
+} from "@ledgerhq/device-management-kit";
 
 export type BackupAppStorageCommandResponse = {
   chunkData: Uint8Array;

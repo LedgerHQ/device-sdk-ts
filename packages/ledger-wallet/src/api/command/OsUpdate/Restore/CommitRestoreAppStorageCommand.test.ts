@@ -1,6 +1,9 @@
-import { isSuccessCommandResult } from "@api/command/model/CommandResult";
-import { CommitRestoreAppStorageCommand } from "@api/command/os/CommitRestoreAppStorageCommand";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import {
+  ApduResponse,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
+
+import { CommitRestoreAppStorageCommand } from "./CommitRestoreAppStorageCommand";
 
 describe("CommitRestoreAppStorageCommand", () => {
   describe("Name", () => {
