@@ -4,10 +4,10 @@ description: "Setup toolchain, restore pnpm dependencies cache, and restore buil
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@develop
+    - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
     - name: Setup build cache
-      uses: actions/cache@v4
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
         path: |
           **/lib

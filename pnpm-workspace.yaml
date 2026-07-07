@@ -42,14 +42,13 @@ catalog:
   '@rozenite/vite-plugin': 1.1.0
   '@sentry/minimal': 6.19.7
   '@sentry/nextjs': ^9.33.0
-  '@solana/spl-token': ^0.4.13
   '@solana/web3.js': ^1.98.2
   '@statelyai/inspect': ^0.4.0
   '@tsconfig/react-native': ^3.0.5
   '@tsconfig/recommended': ^1.0.8
   '@types/crypto-js': ^4.2.0
   '@types/express': ^4.17.21
-  '@types/node': 22.10.1
+  '@types/node': 24.13.2
   '@types/react': 18.3.12
   '@types/react-dom': 18.3.1
   '@types/react-test-renderer': ^18.0.0
@@ -73,7 +72,7 @@ catalog:
   crypto-js: ^4.2.0
   danger: 13.0.4
   electron: 38.1.2
-  electron-builder: 25.1.8
+  electron-builder: 26.15.3
   electron-vite: 4.0.1
   esbuild: 0.25.4
   esbuild-node-externals: 1.18.0
@@ -133,7 +132,7 @@ catalog:
   usb: ^2.16.0
   util: ^0.12.5
   uuid: 11.0.3
-  vite: 7.1.6
+  vite: 7.3.6
   vitest: 3.2.4
   vitest-react-native: ^0.1.5
   ws: ^8.18.0

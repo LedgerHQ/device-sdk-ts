@@ -1,11 +1,12 @@
+import { Keypair, type PublicKey, SystemProgram } from "@solana/web3.js";
+import { describe, expect, it } from "vitest";
+
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { Keypair, type PublicKey, SystemProgram } from "@solana/web3.js";
-import { describe, expect, it } from "vitest";
+} from "@internal/app-binder/services/utils/splToken";
 
 import {
   classify,

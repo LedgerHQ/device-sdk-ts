@@ -30,8 +30,10 @@ import {
 } from "@internal/app-binder/command/GetAddressCommand";
 import type { ZcashErrorCodes } from "@internal/app-binder/command/utils/zcashApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
+import { privateToPrivateTransaction } from "@internal/app-binder/task/__fixtures__/pcztFixtures";
 import { GetFullViewingKeyTask } from "@internal/app-binder/task/GetFullViewingKeyTask";
 import { GetTrustedInputTask } from "@internal/app-binder/task/GetTrustedInputTask";
+import { SignPcztTransactionTask } from "@internal/app-binder/task/SignPcztTransactionTask";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 import { ZcashAppBinder } from "@internal/app-binder/ZcashAppBinder";
 
@@ -366,6 +368,67 @@ describe("ZcashAppBinder", () => {
       });
 
       expect(result).toBe(expectedResult);
+    });
+  });
+
+  describe("signPcztTransaction", () => {
+    it("should call executeDeviceAction with CallTaskInAppDeviceAction and run SignPcztTransactionTask", async () => {
+      const sessionId = "test-session-id";
+      const expectedResult = {
+        observable: from([]),
+        cancel: vi.fn(),
+      };
+      const executeDeviceActionMock = vi.fn().mockReturnValue(expectedResult);
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, sessionId);
+      const runSpy = vi
+        .spyOn(SignPcztTransactionTask.prototype, "run")
+        .mockResolvedValue(
+          {} as unknown as Awaited<
+            ReturnType<typeof SignPcztTransactionTask.prototype.run>
+          >,
+        );
+
+      const result = binder.signPcztTransaction({
+        transaction: privateToPrivateTransaction(),
+      });
+
+      expect(executeDeviceActionMock).toHaveBeenCalledTimes(1);
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
+      expect(args.sessionId).toBe(sessionId);
+      expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+      expect(args.deviceAction.input.appName).toBe(APP_NAME);
+      expect(args.deviceAction.input.requiredUserInteraction).toBe(
+        UserInteractionRequired.SignTransaction,
+      );
+      expect(args.deviceAction.input.skipOpenApp).toBe(false);
+      expect(result).toBe(expectedResult);
+
+      await args.deviceAction.input.task({} as InternalApi);
+      expect(runSpy).toHaveBeenCalledOnce();
+    });
+
+    it("should keep provided skipOpenApp value", () => {
+      const executeDeviceActionMock = vi.fn().mockReturnValue({
+        observable: from([]),
+        cancel: vi.fn(),
+      });
+      const dmkMock = {
+        executeDeviceAction: executeDeviceActionMock,
+      } as unknown as DeviceManagementKit;
+      const binder = new ZcashAppBinder(dmkMock, "sessionId");
+
+      binder.signPcztTransaction({
+        transaction: privateToPrivateTransaction(),
+        skipOpenApp: true,
+      });
+
+      const args = executeDeviceActionMock.mock
+        .calls[0]![0] as ExecuteDeviceActionTaskCallArgs;
+      expect(args.deviceAction.input.skipOpenApp).toBe(true);
     });
   });
 });

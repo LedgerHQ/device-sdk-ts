@@ -2,7 +2,8 @@ import { EitherAsync, Left, Right } from "purify-ts";
 import { vi } from "vitest";
 
 import { ApduResolverService } from "@internal/apdu/service/ApduResolverService";
-import { DerivedOsCommandsService } from "@internal/derived/service/DerivedOsCommandsService";
+import { OsApduService } from "@internal/os/service/OsApduService";
+import { SecureChannelApduService } from "@internal/secure-channel/service/SecureChannelApduService";
 import { InMemorySessionRepository } from "@internal/session/data/InMemorySessionRepository";
 import { type SpeculosOperatorDataSource } from "@internal/speculos/data/SpeculosOperatorDataSource";
 import { SpeculosError } from "@internal/speculos/model/SpeculosModels";
@@ -37,13 +38,14 @@ const setup = () => {
     firmware_version: "1.3.0",
     apps: [{ name: "Bitcoin", version: "2.1.0" }],
   });
-  const derived = new DerivedOsCommandsService();
-  return { repo, record, device, derived };
+  const os = new OsApduService();
+  const secureChannel = new SecureChannelApduService();
+  return { repo, record, device, os, secureChannel };
 };
 
 describe("ApduResolverService", () => {
   it("forwards APDUs while a speculos proxy is active", async () => {
-    const { repo, record, device, derived } = setup();
+    const { repo, record, device, os, secureChannel } = setup();
     repo.setProxy(record, device.id, {
       runId: "run-1",
       speculosUrl: "https://x.test",
@@ -52,7 +54,8 @@ describe("ApduResolverService", () => {
     const operator = makeOperator();
     const resolver = new ApduResolverService(
       repo,
-      derived,
+      os,
+      secureChannel,
       undefined,
       new ForwardApduUseCase(operator),
       new CloseAppUseCase(operator, repo),
@@ -62,7 +65,7 @@ describe("ApduResolverService", () => {
   });
 
   it("releases and reverts to mock mode on close app", async () => {
-    const { repo, record, device, derived } = setup();
+    const { repo, record, device, os, secureChannel } = setup();
     repo.setProxy(record, device.id, {
       runId: "run-1",
       speculosUrl: "https://x.test",
@@ -71,7 +74,8 @@ describe("ApduResolverService", () => {
     const operator = makeOperator();
     const resolver = new ApduResolverService(
       repo,
-      derived,
+      os,
+      secureChannel,
       undefined,
       new ForwardApduUseCase(operator),
       new CloseAppUseCase(operator, repo),
@@ -83,7 +87,7 @@ describe("ApduResolverService", () => {
   });
 
   it("lets an explicit mock override the active speculos proxy", async () => {
-    const { repo, record, device, derived } = setup();
+    const { repo, record, device, os, secureChannel } = setup();
     repo.setProxy(record, device.id, {
       runId: "run-1",
       speculosUrl: "https://x.test",
@@ -94,7 +98,8 @@ describe("ApduResolverService", () => {
     const operator = makeOperator();
     const resolver = new ApduResolverService(
       repo,
-      derived,
+      os,
+      secureChannel,
       undefined,
       new ForwardApduUseCase(operator),
       new CloseAppUseCase(operator, repo),
@@ -108,21 +113,21 @@ describe("ApduResolverService", () => {
     expect(repo.findProxy(record, device.id).isJust()).toBe(true);
   });
 
-  it("serves an explicit mock over the derived handshake", async () => {
-    const { repo, record, device, derived } = setup();
+  it("serves an explicit mock over the derived OS handshake", async () => {
+    const { repo, record, device, os, secureChannel } = setup();
     repo.addMock(record, device.id, {
       prefix: "e0010000",
       response: "deadbeef9000",
     });
-    const resolver = new ApduResolverService(repo, derived);
+    const resolver = new ApduResolverService(repo, os, secureChannel);
     expect(await resolver.resolve(record, device, "e0010000")).toBe(
       "deadbeef9000",
     );
   });
 
   it("derives the handshake responses when unmocked", async () => {
-    const { repo, record, device, derived } = setup();
-    const resolver = new ApduResolverService(repo, derived);
+    const { repo, record, device, os, secureChannel } = setup();
+    const resolver = new ApduResolverService(repo, os, secureChannel);
     const osVersion = await resolver.resolve(record, device, "e0010000");
     const appAndVersion = await resolver.resolve(record, device, "b0010000");
     expect(osVersion.startsWith("33000004")).toBe(true);
@@ -130,7 +135,7 @@ describe("ApduResolverService", () => {
   });
 
   it("maps open-app outcomes to status words", async () => {
-    const { repo, record, device, derived } = setup();
+    const { repo, record, device, os, secureChannel } = setup();
     const openApp = {
       execute: vi.fn(() =>
         EitherAsync.liftEither(
@@ -142,7 +147,7 @@ describe("ApduResolverService", () => {
         ),
       ),
     } as unknown as OpenAppViaSpeculosUseCase;
-    const resolver = new ApduResolverService(repo, derived, openApp);
+    const resolver = new ApduResolverService(repo, os, secureChannel, openApp);
     expect(await resolver.resolve(record, device, OPEN_BITCOIN)).toBe("9000");
 
     (openApp.execute as ReturnType<typeof vi.fn>).mockReturnValueOnce(
@@ -159,14 +164,14 @@ describe("ApduResolverService", () => {
   });
 
   it("falls back to 6d00 for an unmatched non-derivable APDU", async () => {
-    const { repo, record, device, derived } = setup();
-    const resolver = new ApduResolverService(repo, derived);
-    expect(await resolver.resolve(record, device, "e0de000000")).toBe("6d00");
+    const { repo, record, device, os, secureChannel } = setup();
+    const resolver = new ApduResolverService(repo, os, secureChannel);
+    expect(await resolver.resolve(record, device, "e0bb000000")).toBe("6d00");
   });
 
   it("does not intercept open app without an operator/use-case", async () => {
-    const { repo, record, device, derived } = setup();
-    const resolver = new ApduResolverService(repo, derived);
+    const { repo, record, device, os, secureChannel } = setup();
+    const resolver = new ApduResolverService(repo, os, secureChannel);
     expect(await resolver.resolve(record, device, OPEN_BITCOIN)).toBe("6d00");
   });
 });

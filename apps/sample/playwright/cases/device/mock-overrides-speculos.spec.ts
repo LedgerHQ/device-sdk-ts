@@ -3,7 +3,7 @@ import { type DeviceConfig } from "@ledgerhq/device-mockserver-client";
 
 import { expect, test } from "../../fixtures";
 
-// Stax with the Ethereum app installed — the known-good combo provisioned via
+// Stax with the Ethereum app installed - the known-good combo provisioned via
 // Speculinho in open-app.spec.ts.
 const STAX_ETH: DeviceConfig = {
   name: "Ledger Stax",
@@ -33,6 +33,10 @@ interface GetAppAndVersionResponse {
 }
 
 test.describe("device: explicit mock overrides the live Speculos proxy", () => {
+  // This test exercises the refresher polling GetAppAndVersion, so polling must
+  // be enabled (overrides the default disablePolling: true fixture).
+  test.use({ disablePolling: false });
+
   test("locks the device by mocking GetAppAndVersion while Ethereum is open", async ({
     device,
     commands,

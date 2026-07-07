@@ -14,32 +14,74 @@ jobs:
     name: Build libraries
     runs-on: "ledgerhq-device-sdk"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
-  health-check:
-    name: Run health check
+  prettier:
+    name: Run prettier
     needs: [build-libraries]
     runs-on: "ledgerhq-device-sdk"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
-      - name: Health check
-        id: health-check
-        run: pnpm health-check
+      - name: Prettier
+        id: prettier
+        run: pnpm prettier
+
+  lint:
+    name: Run lint
+    needs: [build-libraries]
+    runs-on: "ledgerhq-device-sdk"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+
+      - name: Lint
+        id: lint
+        run: pnpm lint
+
+  typecheck:
+    name: Run typecheck
+    needs: [build-libraries]
+    runs-on: "ledgerhq-device-sdk"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+
+      - name: Typecheck
+        id: typecheck
+        run: pnpm typecheck
 
   tests:
     name: Run unit tests
     needs: [build-libraries]
     runs-on: "ledgerhq-device-sdk"
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
       - name: Tests
         id: unit-tests
         run: pnpm test
+
+  health-check:
+    name: Run health check
+    # Aggregates the split checks and tests into a single required status so
+    # branch protection only needs to require "Run health check".
+    needs: [build-libraries, prettier, lint, typecheck, tests]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check results
+        run: |
+          if ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}; then
+            echo "One or more required checks failed."
+            exit 1
+          fi
+          echo "All required checks passed."

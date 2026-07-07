@@ -64,17 +64,21 @@ import {
   type UninstallAppDAIntermediateValue,
   type UninstallAppDAOutput,
   UninstallAppDeviceAction,
+  type WaitForAppAndVersionDAError,
+  type WaitForAppAndVersionDAInput,
+  type WaitForAppAndVersionDAIntermediateValue,
+  type WaitForAppAndVersionDAOutput,
+  WaitForAppAndVersionDeviceAction,
 } from "@ledgerhq/device-management-kit";
 import {
-  type BackupDAError,
-  type BackupDAInput,
-  type BackupDAIntermediateValue,
-  type BackupDAOutput,
-  BackupDeviceAction,
+  type CreateBackupDAError,
+  type CreateBackupDAInput,
+  type CreateBackupDAIntermediateValue,
+  type CreateBackupDAOutput,
+  CreateBackupDeviceAction,
 } from "@ledgerhq/dmk-ledger-wallet";
 
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
-import { LocalStorage } from "@/utils/os-update/localStorage";
 
 import { DeviceActionsList, UNLOCK_TIMEOUT } from "./DeviceActionsList";
 import { type DeviceActionProps } from "./DeviceActionTester";
@@ -213,6 +217,28 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         GoToDashboardDAInput,
         GoToDashboardDAError,
         GoToDashboardDAIntermediateValue
+      >,
+      {
+        title: "Wait for app and version",
+        description:
+          "Wait until the device is unlocked and return the current app and version",
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new WaitForAppAndVersionDeviceAction({
+            input: { unlockTimeout },
+            inspect,
+          });
+          return dmk.executeDeviceAction({
+            sessionId,
+            deviceAction,
+          });
+        },
+        initialValues: { unlockTimeout: UNLOCK_TIMEOUT },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        WaitForAppAndVersionDAOutput,
+        WaitForAppAndVersionDAInput,
+        WaitForAppAndVersionDAError,
+        WaitForAppAndVersionDAIntermediateValue
       >,
       {
         title: "Install language package",
@@ -436,18 +462,12 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
         UninstallAppDAIntermediateValue
       >,
       {
-        title: `${SECURE_CHANNEL_ICON} OS Update Backup`,
+        title: `${SECURE_CHANNEL_ICON} Create Backup`,
         description:
           "Perform all the actions necessary to backup the device data before an OS update",
-        executeDeviceAction: (
-          { isDeviceOnboarded, deviceId, unlockTimeout },
-          inspect,
-        ) => {
-          const deviceAction = new BackupDeviceAction({
+        executeDeviceAction: ({ unlockTimeout }, inspect) => {
+          const deviceAction = new CreateBackupDeviceAction({
             input: {
-              isDeviceOnboarded,
-              deviceId,
-              storage: new LocalStorage(),
               unlockTimeout,
             },
             inspect,
@@ -458,16 +478,14 @@ export const AllDeviceActions: React.FC<{ sessionId: string }> = ({
           });
         },
         initialValues: {
-          isDeviceOnboarded: true,
-          deviceId: "12345",
           unlockTimeout: UNLOCK_TIMEOUT,
         },
         deviceModelId,
       } satisfies DeviceActionProps<
-        BackupDAOutput,
-        Omit<BackupDAInput, "storage">,
-        BackupDAError,
-        BackupDAIntermediateValue
+        CreateBackupDAOutput,
+        CreateBackupDAInput,
+        CreateBackupDAError,
+        CreateBackupDAIntermediateValue
       >,
     ],
     [deviceModelId, dmk, sessionId],

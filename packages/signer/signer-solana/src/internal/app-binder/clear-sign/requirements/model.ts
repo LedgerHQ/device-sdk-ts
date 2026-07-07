@@ -1,12 +1,12 @@
 import { type VariantCache } from "@internal/app-binder/clear-sign/idl-type-pool";
 
-/** Kind byte tagging an INSTRUCTION_INFO substructure descriptor. */
-export enum SubstructureKind {
-  DISPLAY_FIELD = 0x00,
-  VALUE_FLOW_PORT = 0x01,
-  HIDE_RULE = 0x02,
-  ACCOUNT_RESET = 0x03,
-}
+import {
+  type CalAccountReset,
+  type CalDisplayField,
+  type CalIdlDescriptor,
+  type CalMintAssociation,
+  type CalValueFlowPort,
+} from "./calTypes";
 
 /** A `(altAddress, entryIndex)` reference into an Address Lookup Table. */
 export type AltEntryKey = { altAddress: string; entryIndex: number };
@@ -28,17 +28,17 @@ export type RequirementInstruction = {
   data: Uint8Array;
 };
 
-/** One substructure descriptor as delivered by CAL (opaque TLV bytes). */
-export type SubstructureDescriptor = {
-  kind: SubstructureKind;
-  data: Uint8Array;
-};
-
-/** The matched CAL descriptor for one instruction. */
+/**
+ * The matched CAL descriptor for one instruction, as decoded JSON. These fields
+ * drive host-side requirement building only (see {@link parseInstructionDescriptor}).
+ */
 export type InstructionDescriptor = {
   discriminator: string;
-  instructionInfo: Uint8Array;
-  substructures: SubstructureDescriptor[];
+  idlDescriptor: CalIdlDescriptor;
+  mintAssociations: CalMintAssociation[];
+  valueFlowPorts: CalValueFlowPort[];
+  accountResets: CalAccountReset[];
+  displayFields: CalDisplayField[];
   enumCache: VariantCache;
 };
 

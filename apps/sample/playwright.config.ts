@@ -18,7 +18,8 @@ export const config: PlaywrightTestConfig = {
   webServer: {
     command: `sh ${path.join(__dirname, "playwright/start-servers.sh")}`,
     port: 3000,
-    timeout: 120 * 1000,
+    // start-servers.sh now runs a production `next build` before `next start`.
+    timeout: 300 * 1000,
     reuseExistingServer: !process.env.CI,
   },
 };

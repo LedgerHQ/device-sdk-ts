@@ -6,6 +6,7 @@ import { test as base } from "@playwright/test";
 
 import { BtcSignerDriver } from "./utils/drivers/BtcSignerDriver";
 import { CommandsDriver } from "./utils/drivers/CommandsDriver";
+import { DeviceActionsDriver } from "./utils/drivers/DeviceActionsDriver";
 import { EthSignerDriver } from "./utils/drivers/EthSignerDriver";
 import { MockDeviceDriver } from "./utils/drivers/MockDeviceDriver";
 import { SettingsDriver } from "./utils/drivers/SettingsDriver";
@@ -14,9 +15,16 @@ import { SpeculosDriver } from "./utils/drivers/SpeculosDriver";
 import { setupMockServerSession } from "./utils/setup";
 
 type Fixtures = {
+  /**
+   * Disable the device-session refresher polling (default: true) so its periodic
+   * APDU polling does not pollute the logs. Override per file with
+   * `test.use({ disablePolling: false })` for tests that exercise polling.
+   */
+  disablePolling: boolean;
   mockClient: MockClient;
   device: MockDeviceDriver;
   commands: CommandsDriver;
+  deviceActions: DeviceActionsDriver;
   settings: SettingsDriver;
   sidebar: SidebarDriver;
   ethSigner: EthSignerDriver;
@@ -34,8 +42,9 @@ type Fixtures = {
  * depending on it) never provisions a session.
  */
 export const test = base.extend<Fixtures>({
-  mockClient: async ({ page }, use) => {
-    const client = await setupMockServerSession(page);
+  disablePolling: [true, { option: true }],
+  mockClient: async ({ page, disablePolling }, use) => {
+    const client = await setupMockServerSession(page, { disablePolling });
     await use(client);
     await client.disposeSession();
   },
@@ -44,6 +53,9 @@ export const test = base.extend<Fixtures>({
   },
   commands: async ({ page }, use) => {
     await use(new CommandsDriver(page));
+  },
+  deviceActions: async ({ page }, use) => {
+    await use(new DeviceActionsDriver(page));
   },
   settings: async ({ page }, use) => {
     await use(new SettingsDriver(page));

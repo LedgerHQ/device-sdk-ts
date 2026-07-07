@@ -16,7 +16,6 @@ import {
   type GenerateTransactionDAIntermediateValue,
   type GenerateTransactionDAOutput,
 } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
-import { type TransactionFetcherService } from "@internal/services/TransactionFetcherService";
 
 import { SolanaToolsAppBinder } from "./SolanaToolsAppBinder";
 
@@ -24,10 +23,6 @@ describe("SolanaToolsAppBinder", () => {
   const mockedDmk: DeviceManagementKit = {
     executeDeviceAction: vi.fn(),
   } as unknown as DeviceManagementKit;
-
-  const mockTransactionFetcherService: TransactionFetcherService = {
-    fetchTransaction: vi.fn(),
-  };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -37,7 +32,6 @@ describe("SolanaToolsAppBinder", () => {
     const binder = new SolanaToolsAppBinder(
       {} as DeviceManagementKit,
       "" as DeviceSessionId,
-      mockTransactionFetcherService,
     );
     expect(binder).toBeDefined();
   });
@@ -61,11 +55,7 @@ describe("SolanaToolsAppBinder", () => {
           cancel: vi.fn(),
         });
 
-        const appBinder = new SolanaToolsAppBinder(
-          mockedDmk,
-          "sessionId",
-          mockTransactionFetcherService,
-        );
+        const appBinder = new SolanaToolsAppBinder(mockedDmk, "sessionId");
         const { observable } = appBinder.generateTransaction({
           derivationPath: "44'/501'/0'/0'",
           skipOpenApp: false,
@@ -100,11 +90,7 @@ describe("SolanaToolsAppBinder", () => {
       }));
 
     it("should call executeDeviceAction with the correct params", () => {
-      const appBinder = new SolanaToolsAppBinder(
-        mockedDmk,
-        "sessionId",
-        mockTransactionFetcherService,
-      );
+      const appBinder = new SolanaToolsAppBinder(mockedDmk, "sessionId");
       appBinder.generateTransaction({
         derivationPath: "44'/501'/0'/0'",
         skipOpenApp: false,
@@ -143,11 +129,7 @@ describe("SolanaToolsAppBinder", () => {
           cancel: vi.fn(),
         });
 
-        const appBinder = new SolanaToolsAppBinder(
-          mockedDmk,
-          "sessionId",
-          mockTransactionFetcherService,
-        );
+        const appBinder = new SolanaToolsAppBinder(mockedDmk, "sessionId");
         const { observable } = appBinder.craftTransaction({
           derivationPath: "44'/501'/0'/0'",
           serialisedTransaction: "serialised-tx-input",
@@ -182,11 +164,7 @@ describe("SolanaToolsAppBinder", () => {
       }));
 
     it("should call executeDeviceAction with the correct params", () => {
-      const appBinder = new SolanaToolsAppBinder(
-        mockedDmk,
-        "sessionId",
-        mockTransactionFetcherService,
-      );
+      const appBinder = new SolanaToolsAppBinder(mockedDmk, "sessionId");
       appBinder.craftTransaction({
         derivationPath: "44'/501'/0'/0'",
         serialisedTransaction: "serialised-tx-input",
@@ -199,7 +177,6 @@ describe("SolanaToolsAppBinder", () => {
             input: expect.objectContaining({
               derivationPath: "44'/501'/0'/0'",
               serialisedTransaction: "serialised-tx-input",
-              transactionFetcherService: mockTransactionFetcherService,
             }),
           }),
         }),

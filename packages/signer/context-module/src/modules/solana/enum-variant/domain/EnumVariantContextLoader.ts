@@ -15,9 +15,11 @@ import {
   type InstructionInfoDataSource,
   type InstructionInfoResult,
 } from "@/modules/solana/instruction-info/data/InstructionInfoDataSource";
-import { type CalSignatures } from "@/modules/solana/instruction-info/data/InstructionInfoDto";
 import { instructionInfoTypes } from "@/modules/solana/instruction-info/di/instructionInfoTypes";
-import { type SolanaEnumVariantPayload } from "@/modules/solana/model/SolanaPayloads";
+import {
+  type SolanaEnumVariantPayload,
+  type SolanaInstructionEnumVariant,
+} from "@/modules/solana/model/SolanaPayloads";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
 import {
   type ClearSignContext,
@@ -200,8 +202,9 @@ export class EnumVariantContextLoader
             return { type: ClearSignContextType.ERROR, error };
           }
 
-          const signature = variant.signatures[mode];
-          if (!signature) {
+          // The mapper already picked the signature for the configured mode (or
+          // left it empty when CAL has none for that mode).
+          if (!variant.descriptor.signature) {
             const error = new Error(
               `[ContextModule] EnumVariantContextLoader: missing '${mode}' signature for (${selection.programId}, ${selection.enumId}, ${selection.variantIndex})`,
             );
@@ -220,10 +223,7 @@ export class EnumVariantContextLoader
             programId: selection.programId,
             enumId: selection.enumId,
             variantIndex: selection.variantIndex,
-            descriptor: {
-              data: variant.data,
-              signature,
-            },
+            descriptor: variant.descriptor,
           };
           return {
             type: ClearSignContextType.SOLANA_ENUM_VARIANT,
@@ -236,29 +236,19 @@ export class EnumVariantContextLoader
   }
 
   /**
-   * Find the CAL enum variant entry for a selection. CAL nests
-   * `enum_variants` inside each instruction descriptor, so we scan every
-   * descriptor for the program looking for a matching `(enumId, variantIndex)`
-   * — CAL guarantees uniqueness of this key across a program's instructions.
+   * Find the decoded enum variant for a selection. The data source flattens
+   * `enum_variants` across all of the program's descriptors into a single list
+   * (malformed `u16` keys already dropped), and CAL guarantees `(enumId,
+   * variantIndex)` is unique across a program's instructions.
    */
   private lookupVariant(
     result: InstructionInfoResult,
     selection: SolanaEnumVariantSelection,
-  ): { data: string; signatures: CalSignatures } | undefined {
-    for (const dto of Object.values(result.descriptors)) {
-      const variants = dto.enum_variants?.[selection.enumId];
-      if (!variants) continue;
-      // CAL keys variants by their stringified u16 index. Iterate then check
-      // u16 equality through the codec so malformed keys ("7abc", "-1",
-      // "1e10") are rejected rather than silently truncated by parseInt.
-      for (const [indexStr, variant] of Object.entries(variants)) {
-        const parsed = u16Codec.decode(Number(indexStr));
-        if (parsed.isLeft()) continue;
-        if (parsed.extract() === selection.variantIndex) {
-          return variant;
-        }
-      }
-    }
-    return undefined;
+  ): SolanaInstructionEnumVariant | undefined {
+    return result.enumVariants.find(
+      (variant) =>
+        variant.enumId === selection.enumId &&
+        variant.variantIndex === selection.variantIndex,
+    );
   }
 }

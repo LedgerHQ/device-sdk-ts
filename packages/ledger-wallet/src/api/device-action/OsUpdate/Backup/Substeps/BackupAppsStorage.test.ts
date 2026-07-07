@@ -6,7 +6,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { BackupAppsStorageError } from "@api/device-action/OsUpdate/Backup/BackupDeviceActionErrors";
+import { BackupAppsStorageError } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 import { backupAppsStorage } from "@api/device-action/OsUpdate/Backup/Substeps/BackupAppsStorage";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {

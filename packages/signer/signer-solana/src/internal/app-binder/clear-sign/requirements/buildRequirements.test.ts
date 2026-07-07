@@ -7,22 +7,25 @@ import {
 import { DefaultBs58Encoder } from "@internal/app-binder/services/bs58Encoder";
 
 import {
+  accountPathValue,
   accountReset,
   bytes,
-  instructionInfo,
+  constantValue,
+  idlDescriptor,
+  mintAssociation,
   tokenValue,
   trustedNameDisplayField,
-  value,
   valueFlowPort,
-} from "./__tests__/fixtures/tlvBuilders";
+} from "./__tests__/fixtures/calBuilders";
 import { buildRequirements } from "./buildRequirements";
+import { type CalValue, type CalValueFlowPort } from "./calTypes";
 import {
+  type InstructionDescriptor,
   type MatchedInstruction,
   type RequirementAccount,
-  SubstructureKind,
 } from "./model";
-import { TokenKind, ValueSource } from "./records";
-import { MissingInstructionFieldError } from "./RequirementsError";
+import { TokenKind } from "./records";
+import { RequirementsDecodeError } from "./RequirementsError";
 import { type EnumVariantSelector } from "./rules";
 
 const EMPTY_CACHE: VariantCache = new Map();
@@ -40,19 +43,17 @@ function port(
   opts: {
     accountIndex?: number;
     tokenAccountIndex?: number;
-    value?: Uint8Array;
+    value?: CalValue;
   } = {},
-) {
-  return {
-    kind: SubstructureKind.VALUE_FLOW_PORT,
-    data: valueFlowPort({
-      accountIndex: opts.accountIndex ?? 0,
-      tokenValue: tokenValue(kind, {
-        accountIndex: opts.tokenAccountIndex,
-        value: opts.value,
-      }),
+): CalValueFlowPort {
+  const kindName = (["DIRECT", "RESOLVE", "NULL", "NATIVE"] as const)[kind]!;
+  return valueFlowPort({
+    accountIndex: opts.accountIndex ?? 0,
+    tokenValue: tokenValue(kindName, {
+      accountIndex: opts.tokenAccountIndex,
+      value: opts.value,
     }),
-  };
+  });
 }
 
 function matched(opts: {
@@ -60,11 +61,7 @@ function matched(opts: {
   discriminator?: string;
   accounts: RequirementAccount[];
   data?: Uint8Array;
-  typePool?: Uint8Array;
-  rootType?: number;
-  mintAssociations?: { accountIndex: number; mintIndex: number }[];
-  substructures?: { kind: SubstructureKind; data: Uint8Array }[];
-  enumCache?: VariantCache;
+  descriptor?: Partial<InstructionDescriptor>;
 }): MatchedInstruction {
   return {
     instruction: {
@@ -74,13 +71,13 @@ function matched(opts: {
     },
     descriptor: {
       discriminator: opts.discriminator ?? "00",
-      instructionInfo: instructionInfo({
-        typePool: opts.typePool ?? bytes(0x00),
-        rootType: opts.rootType ?? 0,
-        mintAssociations: opts.mintAssociations,
-      }),
-      substructures: opts.substructures ?? [],
-      enumCache: opts.enumCache ?? EMPTY_CACHE,
+      idlDescriptor: idlDescriptor({}),
+      mintAssociations: [],
+      valueFlowPorts: [],
+      accountResets: [],
+      displayFields: [],
+      enumCache: EMPTY_CACHE,
+      ...opts.descriptor,
     },
   };
 }
@@ -98,7 +95,9 @@ describe("buildRequirements", () => {
         programId: "11111111111111111111111111111111",
         discriminator: "02000000",
         accounts: [account("from"), account("to")],
-        substructures: [port(TokenKind.NATIVE, { accountIndex: 0 })],
+        descriptor: {
+          valueFlowPorts: [port(TokenKind.NATIVE, { accountIndex: 0 })],
+        },
       }),
     ]);
     expect(result.instructionInfos).toEqual([
@@ -116,11 +115,11 @@ describe("buildRequirements", () => {
     const result = run([
       matched({
         accounts: [account("a")],
-        substructures: [
-          port(TokenKind.DIRECT, {
-            value: value(ValueSource.CONSTANT, mintBytes),
-          }),
-        ],
+        descriptor: {
+          valueFlowPorts: [
+            port(TokenKind.DIRECT, { value: constantValue(mintBytes) }),
+          ],
+        },
       }),
     ]);
     expect(result.tokenInfos).toEqual([DefaultBs58Encoder.encode(mintBytes)]);
@@ -130,11 +129,11 @@ describe("buildRequirements", () => {
     const result = run([
       matched({
         accounts: [account("tokenAcct"), account("theMint")],
-        substructures: [
-          port(TokenKind.DIRECT, {
-            value: value(ValueSource.ACCOUNT_PATH, bytes(1)),
-          }),
-        ],
+        descriptor: {
+          valueFlowPorts: [
+            port(TokenKind.DIRECT, { value: accountPathValue(1) }),
+          ],
+        },
       }),
     ]);
     expect(result.tokenInfos).toEqual(["theMint"]);
@@ -144,23 +143,43 @@ describe("buildRequirements", () => {
     const result = run([
       matched({
         accounts: [account("userAta")],
-        substructures: [
-          port(TokenKind.RESOLVE, { accountIndex: 0, tokenAccountIndex: 0 }),
-        ],
+        descriptor: {
+          valueFlowPorts: [
+            port(TokenKind.RESOLVE, { accountIndex: 0, tokenAccountIndex: 0 }),
+          ],
+        },
       }),
     ]);
     expect(result.tokenAccountStates).toEqual(["userAta"]);
     expect(result.tokenInfos).toEqual([]);
   });
 
+  it("RESOLVE port with CAL's singular account_index resolves the token account", () => {
+    const result = run([
+      matched({
+        accounts: [account("userAta")],
+        descriptor: {
+          // Live CAL emits a single `account_index` (not the spec's
+          // `account_indices` list); it must still resolve.
+          valueFlowPorts: [
+            { account_index: 0, token_value: { kind: "RESOLVE" } },
+          ],
+        },
+      }),
+    ]);
+    expect(result.tokenAccountStates).toEqual(["userAta"]);
+  });
+
   it("RESOLVE port covered by MINT_ASSOC: emits TOKEN_INFO, skips account-state", () => {
     const result = run([
       matched({
         accounts: [account("createdAta"), account("theMint")],
-        mintAssociations: [{ accountIndex: 0, mintIndex: 1 }],
-        substructures: [
-          port(TokenKind.RESOLVE, { accountIndex: 0, tokenAccountIndex: 0 }),
-        ],
+        descriptor: {
+          mintAssociations: [mintAssociation(0, 1)],
+          valueFlowPorts: [
+            port(TokenKind.RESOLVE, { accountIndex: 0, tokenAccountIndex: 0 }),
+          ],
+        },
       }),
     ]);
     expect(result.tokenAccountStates).toEqual([]);
@@ -171,7 +190,7 @@ describe("buildRequirements", () => {
     const result = run([
       matched({
         accounts: [account("x")],
-        substructures: [port(TokenKind.NULL)],
+        descriptor: { valueFlowPorts: [port(TokenKind.NULL)] },
       }),
     ]);
     expect(result.tokenInfos).toEqual([]);
@@ -182,15 +201,11 @@ describe("buildRequirements", () => {
     const result = run([
       matched({
         accounts: [account("ata")],
-        substructures: [
-          {
-            kind: SubstructureKind.ACCOUNT_RESET,
-            data: accountReset({
-              accountIndex: 0,
-              requirePreBalanceZero: true,
-            }),
-          },
-        ],
+        descriptor: {
+          accountResets: [
+            accountReset({ accountIndex: 0, requirePreBalanceZero: true }),
+          ],
+        },
       }),
     ]);
     expect(result.tokenAccountStates).toEqual(["ata"]);
@@ -200,12 +215,7 @@ describe("buildRequirements", () => {
     const result = run([
       matched({
         accounts: [account("ata")],
-        substructures: [
-          {
-            kind: SubstructureKind.ACCOUNT_RESET,
-            data: accountReset({ accountIndex: 0 }),
-          },
-        ],
+        descriptor: { accountResets: [accountReset({ accountIndex: 0 })] },
       }),
     ]);
     expect(result.tokenAccountStates).toEqual([]);
@@ -230,20 +240,12 @@ describe("buildRequirements", () => {
     const result = run([
       matched({
         accounts: [account("ignored"), account("namedAccount")],
-        substructures: [
-          {
-            kind: SubstructureKind.DISPLAY_FIELD,
-            data: trustedNameDisplayField(
-              value(ValueSource.ACCOUNT_PATH, bytes(1)),
-            ),
-          },
-          {
-            kind: SubstructureKind.DISPLAY_FIELD,
-            data: trustedNameDisplayField(
-              value(ValueSource.CONSTANT, constantAddr),
-            ),
-          },
-        ],
+        descriptor: {
+          displayFields: [
+            trustedNameDisplayField(accountPathValue(1)),
+            trustedNameDisplayField(constantValue(constantAddr)),
+          ],
+        },
       }),
     ]);
     expect(result.trustedNames).toEqual([
@@ -254,25 +256,22 @@ describe("buildRequirements", () => {
 
   it("decodes selected enum variants via the default decoder", () => {
     // pool: [0] STRUCT{ref 1}, [1] ENUM disc=U8 enum_id="k"; data selects variant 2.
-    const typePool = bytes(
-      2,
-      0x20,
-      0x01,
-      0x01,
-      0x28,
-      0x01,
-      0x00,
-      0x01,
-      0x01,
-      0x6b,
-    );
+    const typePool = [
+      { index: 0, kind: "STRUCT", refs: [1] },
+      {
+        index: 1,
+        kind: "ENUM",
+        disc_kind: "U8",
+        total_variants: 9,
+        enum_id: "k",
+      },
+    ];
     const result = buildRequirements([
       matched({
         programId: "P",
         accounts: [],
         data: bytes(2),
-        typePool,
-        rootType: 0,
+        descriptor: { idlDescriptor: idlDescriptor({ typePool, rootType: 0 }) },
       }),
     ]).unsafeCoerce();
     expect(result.enumVariants).toEqual([
@@ -287,9 +286,11 @@ describe("buildRequirements", () => {
         programId: "P",
         discriminator: "01",
         accounts: [account("a")],
-        substructures: [
-          port(TokenKind.DIRECT, { value: value(ValueSource.CONSTANT, usdc) }),
-        ],
+        descriptor: {
+          valueFlowPorts: [
+            port(TokenKind.DIRECT, { value: constantValue(usdc) }),
+          ],
+        },
       });
     const result = run([direct(), direct()]);
     expect(result.instructionInfos).toEqual([
@@ -313,16 +314,18 @@ describe("buildRequirements", () => {
             account("outputAta"),
             account(undefined, { altAddress: "ALT", entryIndex: 7 }),
           ],
-          substructures: [
-            port(TokenKind.DIRECT, {
-              accountIndex: 0,
-              value: value(ValueSource.CONSTANT, inMint),
-            }),
-            port(TokenKind.DIRECT, {
-              accountIndex: 1,
-              value: value(ValueSource.CONSTANT, outMint),
-            }),
-          ],
+          descriptor: {
+            valueFlowPorts: [
+              port(TokenKind.DIRECT, {
+                accountIndex: 0,
+                value: constantValue(inMint),
+              }),
+              port(TokenKind.DIRECT, {
+                accountIndex: 1,
+                value: constantValue(outMint),
+              }),
+            ],
+          },
         }),
       ],
       selector,
@@ -339,22 +342,23 @@ describe("buildRequirements", () => {
     ]);
   });
 
-  it("surfaces a malformed INSTRUCTION_INFO as a typed Left", () => {
-    const broken: MatchedInstruction = {
-      instruction: { programId: "P", accounts: [], data: new Uint8Array() },
+  it("surfaces a malformed type pool as a typed Left", () => {
+    const broken = matched({
+      programId: "P",
+      accounts: [],
       descriptor: {
-        discriminator: "00",
-        instructionInfo: bytes(0x07, 0x01, 0x00), // root type only, no type pool
-        substructures: [],
-        enumCache: EMPTY_CACHE,
+        idlDescriptor: {
+          type_pool: [{ index: 0, kind: "NOT_A_KIND" }],
+          root_type: 0,
+        },
       },
-    };
+    });
     const result: Either<unknown, unknown> = buildRequirements([broken], {
       selectEnumVariants: NO_ENUMS,
     });
     expect(result.isLeft()).toBe(true);
     result.ifLeft((error) =>
-      expect(error).toBeInstanceOf(MissingInstructionFieldError),
+      expect(error).toBeInstanceOf(RequirementsDecodeError),
     );
   });
 });

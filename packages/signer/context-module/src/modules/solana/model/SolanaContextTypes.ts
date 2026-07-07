@@ -37,17 +37,20 @@ export type SolanaTransactionDescriptorList = Record<
   SolanaTransactionDescriptor
 >;
 
-// TODO SOLANA TX-CHECK
-// IMPORTANT: do not widen this union with the new clear-signing context
-// types (SOLANA_INSTRUCTION_INFO, SOLANA_ENUM_VARIANT, SOLANA_TOKEN_INFO,
-// SOLANA_TOKEN_ACCOUNT_STATE, SOLANA_ALT_RESOLUTION) until the
-// downstream signer registry declares matching handlers. That registry
-// uses a required mapped type over this union, so widening here without
-// adding handlers breaks the signer build.
+// The signer registry (`provideContextRegistry.ts`) uses a required mapped
+// type over this union, so every member listed here MUST have a matching
+// provide handler in the signer. The generic clear-signing types below are
+// declared together with their handlers
 export type SolanaContextSuccessType =
   | ClearSignContextType.SOLANA_TOKEN
   | ClearSignContextType.SOLANA_LIFI
-  | ClearSignContextType.SOLANA_TRANSACTION_CHECK;
+  | ClearSignContextType.SOLANA_TRANSACTION_CHECK
+  | ClearSignContextType.SOLANA_INSTRUCTION_INFO
+  | ClearSignContextType.SOLANA_ENUM_VARIANT
+  | ClearSignContextType.SOLANA_TOKEN_INFO
+  | ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE
+  | ClearSignContextType.SOLANA_ALT_RESOLUTION
+  | ClearSignContextType.SOLANA_TRUSTED_NAME;
 
 export type SolanaContextSuccess<
   T extends SolanaContextSuccessType = SolanaContextSuccessType,
@@ -65,6 +68,24 @@ export type SolanaLifiContextSuccess =
 
 export type SolanaTransactionCheckContextSuccess =
   ClearSignContextSuccess<ClearSignContextType.SOLANA_TRANSACTION_CHECK>;
+
+export type SolanaInstructionInfoContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_INSTRUCTION_INFO>;
+
+export type SolanaEnumVariantContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_ENUM_VARIANT>;
+
+export type SolanaTokenInfoContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_TOKEN_INFO>;
+
+export type SolanaTokenAccountStateContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE>;
+
+export type SolanaAltResolutionContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_ALT_RESOLUTION>;
+
+export type SolanaTrustedNameContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_TRUSTED_NAME>;
 
 export type SolanaTokenContextResult =
   | SolanaTokenContextSuccess

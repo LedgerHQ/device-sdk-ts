@@ -25,3 +25,29 @@ export function formatApduSentLog(apdu: Uint8Array): string {
 export function formatApduReceivedLog(apduResponse: ApduResponse): string {
   return `[exchange] <= ${bufferToHexaString(apduResponse.data, false)}${bufferToHexaString(apduResponse.statusCode, false)}`;
 }
+
+export const APDU_EXCHANGE_LOG = "apdu-exchange";
+
+export type ApduExchangeLog = {
+  type: typeof APDU_EXCHANGE_LOG;
+  sessionId: string;
+  apdu: string;
+  response: string;
+};
+
+/**
+ * Formats the log message and builds the structured `data` payload for a completed APDU exchange
+ * (request + response).
+ */
+export function formatApduExchangeLog(
+  sessionId: string,
+  apdu: Uint8Array,
+  apduResponse: ApduResponse,
+): { message: string; data: ApduExchangeLog } {
+  const request = bufferToHexaString(apdu, false);
+  const response = `${bufferToHexaString(apduResponse.data, false)}${bufferToHexaString(apduResponse.statusCode, false)}`;
+  return {
+    message: formatApduReceivedLog(apduResponse),
+    data: { type: APDU_EXCHANGE_LOG, sessionId, apdu: request, response },
+  };
+}

@@ -37,7 +37,7 @@ class TypePoolDecoder {
   private readonly leaves: Leaf[] = [];
   private readonly selectedEnumVariants: SelectedEnumVariant[] = [];
 
-  /** Kind byte → per-kind decode handler. Built once per decode. */
+  /** Kind byte to per-kind decode handler. Built once per decode. */
   private readonly handlers: ReadonlyMap<number, KindHandler>;
 
   constructor(

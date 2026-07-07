@@ -40,6 +40,7 @@ export class DefaultSolanaTools implements SolanaTools {
     transactionSignature?: string;
     rpcUrl?: string;
     skipOpenApp?: boolean;
+    replacements?: Readonly<Record<string, string>>;
   }): CraftTransactionDAReturnType {
     return this._container
       .get<CraftTransactionUseCase>(useCasesTypes.CraftTransactionUseCase)

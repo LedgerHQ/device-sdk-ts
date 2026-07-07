@@ -18,7 +18,15 @@ import {
 // Re-export Solana payload types so consumers can import from this file
 export type {
   SolanaAltResolutionPayload,
+  SolanaCalAccountReset,
+  SolanaCalDisplayField,
+  SolanaCalMintAssociation,
+  SolanaCalTokenValue,
+  SolanaCalTypePoolEntry,
+  SolanaCalValue,
+  SolanaCalValueFlowPort,
   SolanaEnumVariantPayload,
+  SolanaInstructionEnumVariant,
   SolanaInstructionInfoPayload,
   SolanaInstructionSubstructure,
   SolanaLifiInstructionMeta,

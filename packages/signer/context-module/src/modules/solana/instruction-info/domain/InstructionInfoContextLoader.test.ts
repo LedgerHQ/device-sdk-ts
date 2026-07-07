@@ -4,12 +4,12 @@ import { DeviceModelId } from "@ledgerhq/device-management-kit";
 import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
 import {
   type InstructionInfoDataSource,
   type InstructionInfoResult,
 } from "@/modules/solana/instruction-info/data/InstructionInfoDataSource";
+import { type SolanaInstructionInfoPayload } from "@/modules/solana/model/SolanaPayloads";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { InstructionInfoContextLoader } from "./InstructionInfoContextLoader";
@@ -27,64 +27,57 @@ const mockCertificate = {
   payload: new Uint8Array([0x42]),
 };
 
-const mockConfig = {
-  cal: {
-    url: "https://crypto-assets-service.api.ledger.com/v1",
-    mode: "prod",
-    branch: "main",
-  },
-} as ContextModuleServiceConfig;
-
 const SYSTEM_PROGRAM = "11111111111111111111111111111111";
 const JUPITER_PROGRAM = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 
-function makeSystemCreateAccountResult(): InstructionInfoResult {
+// The data source hands the loader fully-decoded core payloads.
+function makeSystemPayload(): SolanaInstructionInfoPayload {
   return {
     programId: SYSTEM_PROGRAM,
-    descriptors: {
-      "00000000": {
-        type: "instruction",
-        instruction_info: {
-          version: 1,
-          program_id: SYSTEM_PROGRAM,
-          discriminator: "00000000",
-          hash: "feedface",
-          descriptor: {
-            data: "0001sys_data",
-            signatures: { prod: "prodsig_sys", test: "testsig_sys" },
-          },
-        },
-        display_fields: [{ descriptor: "df1" }, { descriptor: "df2" }],
-        value_flow_ports: [{ descriptor: "vfp1" }],
-        hide_rules: [],
-        account_resets: [],
-      },
-    },
+    discriminator: "00000000",
+    instructionInfo: { data: "0001sys_data", signature: "prodsig_sys" },
+    substructures: [
+      { kind: 0x00, data: "df1" },
+      { kind: 0x00, data: "df2" },
+      { kind: 0x01, data: "vfp1" },
+    ],
+    enumVariants: [],
+    idlDescriptor: { typePool: [], rootType: 0 },
+    mintAssociations: [],
+    valueFlowPorts: [],
+    accountResets: [],
+    displayFields: [],
   };
 }
 
-function makeJupiterRouteResult(): InstructionInfoResult {
+function makeSystemResult(): InstructionInfoResult {
+  return {
+    programId: SYSTEM_PROGRAM,
+    descriptors: { "00000000": Right(makeSystemPayload()) },
+    enumVariants: [],
+  };
+}
+
+function makeJupiterPayload(): SolanaInstructionInfoPayload {
   return {
     programId: JUPITER_PROGRAM,
-    descriptors: {
-      e517cb977ae3ad2a: {
-        type: "instruction",
-        instruction_info: {
-          version: 1,
-          program_id: JUPITER_PROGRAM,
-          discriminator: "e517cb977ae3ad2a",
-          hash: "deadbeef",
-          descriptor: {
-            data: "0001jup_data",
-            signatures: { prod: "prodsig_jup", test: "testsig_jup" },
-          },
-        },
-        display_fields: [],
-        value_flow_ports: [{ descriptor: "vfp_in" }, { descriptor: "vfp_out" }],
-        hide_rules: [],
-        account_resets: [],
-      },
-    },
+    discriminator: "e517cb977ae3ad2a",
+    instructionInfo: { data: "0001jup_data", signature: "prodsig_jup" },
+    substructures: [],
+    enumVariants: [],
+    idlDescriptor: { typePool: [], rootType: 0 },
+    mintAssociations: [],
+    valueFlowPorts: [],
+    accountResets: [],
+    displayFields: [],
+  };
+}
+
+function makeJupiterResult(): InstructionInfoResult {
+  return {
+    programId: JUPITER_PROGRAM,
+    descriptors: { e517cb977ae3ad2a: Right(makeJupiterPayload()) },
+    enumVariants: [],
   };
 }
 
@@ -102,10 +95,9 @@ describe("InstructionInfoContextLoader", () => {
     };
   });
 
-  const makeLoader = (config = mockConfig) =>
+  const makeLoader = () =>
     new InstructionInfoContextLoader(
       dataSource,
-      config,
       certificateLoader,
       mockLoggerFactory,
     );
@@ -154,10 +146,8 @@ describe("InstructionInfoContextLoader", () => {
       const spy = vi
         .spyOn(dataSource, "getInstructionInfo")
         .mockImplementation(async ({ programId }) => {
-          if (programId === SYSTEM_PROGRAM)
-            return Right(makeSystemCreateAccountResult());
-          if (programId === JUPITER_PROGRAM)
-            return Right(makeJupiterRouteResult());
+          if (programId === SYSTEM_PROGRAM) return Right(makeSystemResult());
+          if (programId === JUPITER_PROGRAM) return Right(makeJupiterResult());
           return Left(new Error("unknown program"));
         });
 
@@ -181,8 +171,6 @@ describe("InstructionInfoContextLoader", () => {
         network: "solana-mainnet",
       });
 
-      // Only INSTRUCTION_INFO contexts now — enum variants moved to
-      // EnumVariantContextLoader.
       expect(
         result.every(
           (c) =>
@@ -197,10 +185,10 @@ describe("InstructionInfoContextLoader", () => {
       ).toHaveLength(2);
     });
 
-    it("emits one SOLANA_INSTRUCTION_INFO per matching (programId, discriminator) with substructures and certificate bundled", async () => {
+    it("emits one SOLANA_INSTRUCTION_INFO per matching (programId, discriminator), passing the decoded payload through with the certificate", async () => {
       const loader = makeLoader();
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
-        Right(makeSystemCreateAccountResult()),
+        Right(makeSystemResult()),
       );
 
       const result = await loader.load({
@@ -218,49 +206,8 @@ describe("InstructionInfoContextLoader", () => {
         type: ClearSignContextType.SOLANA_INSTRUCTION_INFO,
         certificate: mockCertificate,
       });
-      expect((infoCtx as any).payload).toMatchObject({
-        programId: SYSTEM_PROGRAM,
-        discriminator: "00000000",
-        instructionInfo: { data: "0001sys_data", signature: "prodsig_sys" },
-        substructures: [
-          { kind: 0x00, data: "df1" },
-          { kind: 0x00, data: "df2" },
-          { kind: 0x01, data: "vfp1" },
-        ],
-      });
-    });
-
-    it("does NOT emit SOLANA_ENUM_VARIANT contexts (those come from EnumVariantContextLoader)", async () => {
-      const loader = makeLoader();
-      const jupiter = makeJupiterRouteResult();
-      // Stuff an enum_variants entry into the descriptor to confirm it's ignored.
-      const descriptor = jupiter.descriptors["e517cb977ae3ad2a"];
-      if (!descriptor) throw new Error("fixture: descriptor must exist");
-      descriptor.enum_variants = {
-        swap: {
-          "46": {
-            variant_name: "raydiumCP",
-            data: "01_raydium_tlv",
-            signatures: { prod: "prodsig_v46", test: "testsig_v46" },
-          },
-        },
-      };
-      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
-        Right(jupiter),
-      );
-
-      const result = await loader.load({
-        deviceModelId: DeviceModelId.NANO_X,
-        instructions: [
-          { programId: JUPITER_PROGRAM, discriminator: "e517cb977ae3ad2a" },
-        ],
-      });
-
-      expect(
-        result.filter(
-          (c) => c.type === ClearSignContextType.SOLANA_ENUM_VARIANT,
-        ),
-      ).toHaveLength(0);
+      // The loader does not transform — it forwards the data source's payload.
+      expect((infoCtx as any).payload).toEqual(makeSystemPayload());
     });
 
     it("filters descriptors by requested discriminator", async () => {
@@ -268,22 +215,14 @@ describe("InstructionInfoContextLoader", () => {
       const result: InstructionInfoResult = {
         programId: SYSTEM_PROGRAM,
         descriptors: {
-          ...makeSystemCreateAccountResult().descriptors,
-          "00000001": {
-            type: "instruction",
-            instruction_info: {
-              version: 1,
-              program_id: SYSTEM_PROGRAM,
-              discriminator: "00000001",
-              hash: "feedface2",
-              descriptor: {
-                data: "0001other",
-                signatures: { prod: "p", test: "t" },
-              },
-            },
-            display_fields: [{ descriptor: "shouldnotappear" }],
-          },
+          "00000000": Right(makeSystemPayload()),
+          "00000001": Right({
+            ...makeSystemPayload(),
+            discriminator: "00000001",
+            instructionInfo: { data: "0001other", signature: "p" },
+          }),
         },
+        enumVariants: [],
       };
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
         Right(result),
@@ -303,12 +242,36 @@ describe("InstructionInfoContextLoader", () => {
       expect((infos[0] as any).payload.discriminator).toBe("00000000");
     });
 
+    it("emits an ERROR context for a descriptor the data source could not decode", async () => {
+      const loader = makeLoader();
+      const result: InstructionInfoResult = {
+        programId: SYSTEM_PROGRAM,
+        descriptors: {
+          "00000000": Left(new Error("missing 'test' signature")),
+        },
+        enumVariants: [],
+      };
+      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
+        Right(result),
+      );
+
+      const out = await loader.load({
+        deviceModelId: DeviceModelId.NANO_X,
+        instructions: [
+          { programId: SYSTEM_PROGRAM, discriminator: "00000000" },
+        ],
+      });
+
+      expect(out).toHaveLength(1);
+      expect(out[0]?.type).toBe(ClearSignContextType.ERROR);
+      expect((out[0] as any).error.message).toMatch(/missing 'test' signature/);
+    });
+
     it("emits one ERROR context when CAL fails for a program but keeps processing the others", async () => {
       const loader = makeLoader();
       vi.spyOn(dataSource, "getInstructionInfo").mockImplementation(
         async ({ programId }) => {
-          if (programId === SYSTEM_PROGRAM)
-            return Right(makeSystemCreateAccountResult());
+          if (programId === SYSTEM_PROGRAM) return Right(makeSystemResult());
           return Left(new Error("upstream-500"));
         },
       );
@@ -329,43 +292,12 @@ describe("InstructionInfoContextLoader", () => {
       expect(infos).toHaveLength(1);
     });
 
-    it("emits ERROR (not empty signature) when configured CAL mode signature is missing", async () => {
-      const loader = new InstructionInfoContextLoader(
-        dataSource,
-        { ...mockConfig, cal: { ...mockConfig.cal, mode: "test" } } as any,
-        certificateLoader,
-        mockLoggerFactory,
-      );
-      // Only prod signature in CAL response; loader is configured for test.
-      const result = makeJupiterRouteResult();
-      const descriptor = result.descriptors["e517cb977ae3ad2a"];
-      if (!descriptor) throw new Error("fixture: descriptor must exist");
-      delete (descriptor.instruction_info.descriptor.signatures as any).test;
-      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
-        Right(result),
-      );
-
-      const out = await loader.load({
-        deviceModelId: DeviceModelId.NANO_X,
-        instructions: [
-          { programId: JUPITER_PROGRAM, discriminator: "e517cb977ae3ad2a" },
-        ],
-      });
-
-      expect(out).toHaveLength(1);
-      expect(out[0]?.type).toBe(ClearSignContextType.ERROR);
-      expect((out[0] as any).error.message).toMatch(/missing 'test' signature/);
-    });
-
     it("degrades every program to ERROR when certificate loading fails", async () => {
       vi.spyOn(certificateLoader, "loadCertificate").mockRejectedValue(
         new Error("pki-down"),
       );
-      // Data fetches happen in parallel with the cert load, so they may run
-      // before the cert rejection settles. Resolve them so allSettled-like
-      // logic doesn't dangle.
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
-        Right(makeSystemCreateAccountResult()),
+        Right(makeSystemResult()),
       );
       const loader = makeLoader();
 
@@ -388,7 +320,7 @@ describe("InstructionInfoContextLoader", () => {
         undefined,
       );
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
-        Right(makeSystemCreateAccountResult()),
+        Right(makeSystemResult()),
       );
       const loader = makeLoader();
 
@@ -407,37 +339,11 @@ describe("InstructionInfoContextLoader", () => {
       expect((out[0] as any).error.message).toMatch(/certificate is missing/);
     });
 
-    it("selects signatures based on config.cal.mode (test)", async () => {
-      const loader = new InstructionInfoContextLoader(
-        dataSource,
-        { ...mockConfig, cal: { ...mockConfig.cal, mode: "test" } } as any,
-        certificateLoader,
-        mockLoggerFactory,
-      );
-      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
-        Right(makeJupiterRouteResult()),
-      );
-
-      const out = await loader.load({
-        deviceModelId: DeviceModelId.NANO_X,
-        instructions: [
-          { programId: JUPITER_PROGRAM, discriminator: "e517cb977ae3ad2a" },
-        ],
-      });
-
-      const info = out.find(
-        (c) => c.type === ClearSignContextType.SOLANA_INSTRUCTION_INFO,
-      );
-      expect((info as any).payload.instructionInfo.signature).toBe(
-        "testsig_jup",
-      );
-    });
-
     it("falls back to default network when input.network is omitted or empty string", async () => {
       const loader = makeLoader();
       const spy = vi
         .spyOn(dataSource, "getInstructionInfo")
-        .mockResolvedValue(Right(makeSystemCreateAccountResult()));
+        .mockResolvedValue(Right(makeSystemResult()));
 
       await loader.load({
         deviceModelId: DeviceModelId.NANO_X,

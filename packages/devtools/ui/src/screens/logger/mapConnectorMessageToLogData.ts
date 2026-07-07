@@ -1,16 +1,8 @@
-import { LOGGER_MESSAGE_TYPES } from "@ledgerhq/device-management-kit-devtools-core";
-
 import type { DevToolsLog, LogData } from "./types";
 
-export function mapConnectorMessageToLogData(connectorMessage: {
-  type: string;
-  payload: string;
-}): LogData | null {
-  if (connectorMessage.type !== LOGGER_MESSAGE_TYPES.ADD_LOG) {
-    return null;
-  }
+export function mapConnectorMessageToLogData(payload: string): LogData | null {
   const { timestamp, tag, verbosity, message, payloadJSON } = JSON.parse(
-    connectorMessage.payload,
+    payload,
   ) as DevToolsLog;
   return {
     timestamp,

@@ -1,11 +1,12 @@
 import { bufferToBase64String } from "@ledgerhq/device-management-kit";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   createTransferCheckedInstruction,
   getAssociatedTokenAddressSync,
   TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+} from "@internal/services/utils/splToken";
 
 export const COIN_DATA = {
   USDC: {

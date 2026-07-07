@@ -47,7 +47,8 @@
     "express": "catalog:",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
-    "reflect-metadata": "catalog:"
+    "reflect-metadata": "catalog:",
+    "ws": "catalog:"
   },
   "devDependencies": {
     "@ledgerhq/device-mockserver-client": "workspace:^",
@@ -58,6 +59,7 @@
     "@ledgerhq/vitest-config-dmk": "workspace:^",
     "@types/express": "catalog:",
     "@types/swagger-jsdoc": "^6.0.4",
+    "@types/ws": "catalog:",
     "swagger-jsdoc": "^6.3.0",
     "tsx": "catalog:",
     "yaml": "^2.7.0"

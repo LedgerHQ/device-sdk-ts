@@ -1,26 +1,29 @@
 import { bufferToBase64String } from "@ledgerhq/device-management-kit";
-import { Connection } from "@solana/web3.js";
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 
+import { type SolanaTransactionDataSource } from "@internal/data-source/SolanaTransactionDataSource";
+import { servicesTypes } from "@internal/services/di/servicesTypes";
 import { type TransactionFetcherService } from "@internal/services/TransactionFetcherService";
-
-const DEFAULT_RPC_URL = "https://solana.coin.ledger.com";
 
 @injectable()
 export class DefaultTransactionFetcherService
   implements TransactionFetcherService
 {
+  constructor(
+    @inject(servicesTypes.SolanaTransactionDataSource)
+    private readonly dataSource: SolanaTransactionDataSource,
+  ) {}
+
   async fetchTransaction(signature: string, rpcUrl?: string): Promise<string> {
-    const connection = new Connection(rpcUrl ?? DEFAULT_RPC_URL, "confirmed");
+    const message = await this.dataSource.getTransactionMessage(
+      signature,
+      rpcUrl,
+    );
 
-    const response = await connection.getTransaction(signature, {
-      maxSupportedTransactionVersion: 0,
-    });
-
-    if (!response) {
+    if (!message) {
       throw new Error(`Transaction not found: ${signature}`);
     }
 
-    return bufferToBase64String(response.transaction.message.serialize());
+    return bufferToBase64String(message);
   }
 }
