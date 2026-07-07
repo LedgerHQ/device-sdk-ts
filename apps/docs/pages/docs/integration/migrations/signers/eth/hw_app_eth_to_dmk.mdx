@@ -109,9 +109,9 @@ const result = await eth.getAddress(
 
 ```typescript
 const { observable, cancel } = signerEth.getAddress("44'/60'/0'/0/0", {
-  checkOnDevice: boolDisplay, // was boolDisplay
+  checkOnDevice: boolDisplay,   // was boolDisplay
   returnChainCode: boolChaincode, // was boolChaincode
-  chainId: 1, // was chainId (number, not string)
+  chainId: 1,                   // was chainId (number, not string)
 });
 
 observable.subscribe({
