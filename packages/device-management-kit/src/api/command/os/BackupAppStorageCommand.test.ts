@@ -1,18 +1,18 @@
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
-import { BackupStorageCommand } from "@api/command/os/BackupStorageCommand";
+import { BackupAppStorageCommand } from "@api/command/os/BackupAppStorageCommand";
 import { ApduResponse } from "@api/device-session/ApduResponse";
 
-describe("BackupStorageCommand", () => {
+describe("BackupAppStorageCommand", () => {
   describe("Name", () => {
-    it("name should be 'BackupStorage'", () => {
+    it("name should be 'BackupAppStorage'", () => {
       // ARRANGE
-      const command = new BackupStorageCommand();
+      const command = new BackupAppStorageCommand();
 
       // ACT
       const name = command.name;
 
       // ASSERT
-      expect(name).toBe("BackupStorage");
+      expect(name).toBe("BackupAppStorage");
     });
   });
 
@@ -22,7 +22,7 @@ describe("BackupStorageCommand", () => {
       const expectedApdu = Uint8Array.from([0xe0, 0x6b, 0x00, 0x00, 0x00]);
 
       // ACT
-      const apdu = new BackupStorageCommand().getApdu();
+      const apdu = new BackupAppStorageCommand().getApdu();
 
       // ASSERT
       expect(apdu.getRawApdu()).toEqual(expectedApdu);
@@ -39,7 +39,7 @@ describe("BackupStorageCommand", () => {
       });
 
       // ACT
-      const result = new BackupStorageCommand().parseResponse(response);
+      const result = new BackupAppStorageCommand().parseResponse(response);
 
       // ASSERT
       expect(isSuccessCommandResult(result)).toBe(true);
@@ -106,7 +106,7 @@ describe("BackupStorageCommand", () => {
         });
 
         // ACT
-        const result = new BackupStorageCommand().parseResponse(response);
+        const result = new BackupAppStorageCommand().parseResponse(response);
 
         // ASSERT
         expect(isSuccessCommandResult(result)).toBe(false);

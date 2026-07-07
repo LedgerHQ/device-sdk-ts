@@ -8,7 +8,7 @@ describe("InitRestoreAppStorageCommand", () => {
       // ARRANGE
       const command = new InitRestoreAppStorageCommand({
         appName: "MyApp",
-        backupLength: 10,
+        appStorageDataLength: 10,
       });
 
       // ACT
@@ -30,7 +30,7 @@ describe("InitRestoreAppStorageCommand", () => {
       // ACT
       const apdu = new InitRestoreAppStorageCommand({
         appName: "MyApp",
-        backupLength: 10,
+        appStorageDataLength: 10,
       }).getApdu();
 
       // ASSERT
@@ -49,7 +49,7 @@ describe("InitRestoreAppStorageCommand", () => {
       // ACT
       const result = new InitRestoreAppStorageCommand({
         appName: "MyApp",
-        backupLength: 10,
+        appStorageDataLength: 10,
       }).parseResponse(response);
 
       // ASSERT
@@ -111,7 +111,7 @@ describe("InitRestoreAppStorageCommand", () => {
         // ACT
         const result = new InitRestoreAppStorageCommand({
           appName: "MyApp",
-          backupLength: 10,
+          appStorageDataLength: 10,
         }).parseResponse(response);
 
         // ASSERT

@@ -16,12 +16,12 @@ import { GlobalCommandErrorHandler } from "@api/command/utils/GlobalCommandError
 import { type ApduResponse } from "@api/device-session/ApduResponse";
 import { type CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
-export type BackupStorageCommandResponse = {
+export type BackupAppStorageCommandResponse = {
   chunkData: Uint8Array;
   chunkSize: number;
 };
 
-export type BackupStorageCommandErrorCodes =
+export type BackupAppStorageCommandErrorCodes =
   | "5123"
   | "5419"
   | "541a"
@@ -30,7 +30,7 @@ export type BackupStorageCommandErrorCodes =
   | "622f"
   | "6642";
 
-export const BACKUP_STORAGE_ERRORS: CommandErrors<BackupStorageCommandErrorCodes> =
+export const BACKUP_APP_STORAGE_ERRORS: CommandErrors<BackupAppStorageCommandErrorCodes> =
   {
     "5123": { message: "Invalid context. Get info must be called." },
     "5419": { message: "Failed to generate AES key." },
@@ -41,22 +41,26 @@ export const BACKUP_STORAGE_ERRORS: CommandErrors<BackupStorageCommandErrorCodes
     "6642": { message: "Invalid backup state, backup already performed." },
   };
 
-export class BackupStorageCommandError extends DeviceExchangeError<BackupStorageCommandErrorCodes> {
-  constructor(args: CommandErrorArgs<BackupStorageCommandErrorCodes>) {
-    super({ tag: "BackupStorageCommandError", ...args });
+export class BackupAppStorageCommandError extends DeviceExchangeError<BackupAppStorageCommandErrorCodes> {
+  constructor(args: CommandErrorArgs<BackupAppStorageCommandErrorCodes>) {
+    super({ tag: "BackupAppStorageCommandError", ...args });
   }
 }
 
-export type BackupStorageCommandResult = CommandResult<
-  BackupStorageCommandResponse,
-  BackupStorageCommandErrorCodes
+export type BackupAppStorageCommandResult = CommandResult<
+  BackupAppStorageCommandResponse,
+  BackupAppStorageCommandErrorCodes
 >;
 
-export class BackupStorageCommand
+export class BackupAppStorageCommand
   implements
-    Command<BackupStorageCommandResponse, void, BackupStorageCommandErrorCodes>
+    Command<
+      BackupAppStorageCommandResponse,
+      void,
+      BackupAppStorageCommandErrorCodes
+    >
 {
-  readonly name = "BackupStorage";
+  readonly name = "BackupAppStorage";
 
   private readonly header = {
     cla: 0xe0,
@@ -69,15 +73,15 @@ export class BackupStorageCommand
     return new ApduBuilder(this.header).build();
   }
 
-  parseResponse(apduResponse: ApduResponse): BackupStorageCommandResult {
+  parseResponse(apduResponse: ApduResponse): BackupAppStorageCommandResult {
     const parser = new ApduParser(apduResponse);
 
     if (!CommandUtils.isSuccessResponse(apduResponse)) {
       const errorCode = parser.encodeToHexaString(apduResponse.statusCode);
-      if (isCommandErrorCode(errorCode, BACKUP_STORAGE_ERRORS)) {
+      if (isCommandErrorCode(errorCode, BACKUP_APP_STORAGE_ERRORS)) {
         return CommandResultFactory({
-          error: new BackupStorageCommandError({
-            ...BACKUP_STORAGE_ERRORS[errorCode],
+          error: new BackupAppStorageCommandError({
+            ...BACKUP_APP_STORAGE_ERRORS[errorCode],
             errorCode,
           }),
         });

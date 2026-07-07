@@ -17,11 +17,11 @@ export {
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 export {
-  BackupStorageCommand,
-  type BackupStorageCommandErrorCodes,
-  type BackupStorageCommandResponse,
-  type BackupStorageCommandResult,
-} from "@api/command/os/BackupStorageCommand";
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
+  type BackupAppStorageCommandResult,
+} from "@api/command/os/BackupAppStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
   DeleteLanguagePackCommand,

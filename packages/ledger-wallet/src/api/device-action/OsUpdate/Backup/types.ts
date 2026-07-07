@@ -3,6 +3,7 @@ import {
   type GoToDashboardDAError,
   type GoToDashboardDAIntermediateValue,
   type GoToDashboardDARequiredInteraction,
+  type HexaString,
   type InstalledApp,
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAIntermediateValue,
@@ -78,7 +79,7 @@ export enum CreateBackupSteps {
 
 export type BackupApp = {
   appName: string;
-  data: string | undefined;
+  data: HexaString | undefined;
 };
 
 export type Backup = {

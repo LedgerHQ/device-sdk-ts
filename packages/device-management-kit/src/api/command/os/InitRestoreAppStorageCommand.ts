@@ -17,7 +17,7 @@ import { type CommandErrorArgs, DeviceExchangeError } from "@api/Error";
 
 export type InitRestoreAppStorageCommandArgs = {
   appName: string;
-  backupLength: number;
+  appStorageDataLength: number;
 };
 
 export type InitRestoreAppStorageCommandErrorCodes =
@@ -69,9 +69,9 @@ export class InitRestoreAppStorageCommand
   constructor(private readonly args: InitRestoreAppStorageCommandArgs) {}
 
   getApdu(): Apdu {
-    const { appName, backupLength } = this.args;
+    const { appName, appStorageDataLength } = this.args;
     return new ApduBuilder(this.header)
-      .add32BitUIntToData(backupLength)
+      .add32BitUIntToData(appStorageDataLength)
       .addAsciiStringToData(appName)
       .build();
   }
