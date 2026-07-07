@@ -16,7 +16,20 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: ./.github/actions/setup-with-cache-composite
+
+      - name: Build libraries
+        run: pnpm build:libs
+
+      - name: Upload build outputs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: build-outputs
+          path: |
+            packages/**/lib
+            apps/**/lib
+            node_modules/.cache/turbo
+          retention-days: 1
 
   prettier:
     name: Run prettier
@@ -25,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: ./.github/actions/setup-with-build-cache-composite
 
       - name: Prettier
         id: prettier
@@ -38,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: ./.github/actions/setup-with-build-cache-composite
 
       - name: Lint
         id: lint
@@ -51,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: ./.github/actions/setup-with-build-cache-composite
 
       - name: Typecheck
         id: typecheck
@@ -64,7 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: ./.github/actions/setup-with-build-cache-composite
 
       - name: Tests
         id: unit-tests
