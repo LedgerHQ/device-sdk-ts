@@ -1,25 +1,25 @@
 import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 
 import {
-  ProvideWeb3CheckCommand,
+  ProvideTransactionCheckCommand,
   TRANSACTION_CHECK_CLA,
   TRANSACTION_CHECK_INS,
   TRANSACTION_CHECK_P1_PROVIDE,
-} from "@internal/app-binder/command/ProvideWeb3CheckCommand";
+} from "@internal/app-binder/command/ProvideTransactionCheckCommand";
 import {
   P2_EXTEND,
   P2_MORE,
 } from "@internal/app-binder/command/utils/apduChunking";
 
-describe("ProvideWeb3CheckCommand", () => {
+describe("ProvideTransactionCheckCommand", () => {
   describe("name", () => {
-    it("should be 'provideWeb3Check'", () => {
-      const command = new ProvideWeb3CheckCommand({
+    it("should be 'provideTransactionCheck'", () => {
+      const command = new ProvideTransactionCheckCommand({
         payload: new Uint8Array([0xaa]),
         isFirstChunk: true,
         hasMore: false,
       });
-      expect(command.name).toBe("provideWeb3Check");
+      expect(command.name).toBe("provideTransactionCheck");
     });
   });
 
@@ -27,7 +27,7 @@ describe("ProvideWeb3CheckCommand", () => {
     const payload = new Uint8Array([0xaa, 0xbb, 0xcc]);
 
     it("single chunk: P2 = 0x00 (no EXTEND, no MORE)", () => {
-      const command = new ProvideWeb3CheckCommand({
+      const command = new ProvideTransactionCheckCommand({
         payload,
         isFirstChunk: true,
         hasMore: false,
@@ -43,7 +43,7 @@ describe("ProvideWeb3CheckCommand", () => {
     });
 
     it("first of many: P2 = P2_MORE", () => {
-      const command = new ProvideWeb3CheckCommand({
+      const command = new ProvideTransactionCheckCommand({
         payload,
         isFirstChunk: true,
         hasMore: true,
@@ -54,7 +54,7 @@ describe("ProvideWeb3CheckCommand", () => {
     });
 
     it("middle chunk: P2 = P2_MORE | P2_EXTEND", () => {
-      const command = new ProvideWeb3CheckCommand({
+      const command = new ProvideTransactionCheckCommand({
         payload,
         isFirstChunk: false,
         hasMore: true,
@@ -65,7 +65,7 @@ describe("ProvideWeb3CheckCommand", () => {
     });
 
     it("last chunk: P2 = P2_EXTEND", () => {
-      const command = new ProvideWeb3CheckCommand({
+      const command = new ProvideTransactionCheckCommand({
         payload,
         isFirstChunk: false,
         hasMore: false,
@@ -78,7 +78,7 @@ describe("ProvideWeb3CheckCommand", () => {
 
   describe("parseResponse", () => {
     it("should return success on 0x9000", () => {
-      const command = new ProvideWeb3CheckCommand({
+      const command = new ProvideTransactionCheckCommand({
         payload: new Uint8Array([0xaa]),
         isFirstChunk: true,
         hasMore: false,
@@ -91,7 +91,7 @@ describe("ProvideWeb3CheckCommand", () => {
     });
 
     it("should return error on non-success status", () => {
-      const command = new ProvideWeb3CheckCommand({
+      const command = new ProvideTransactionCheckCommand({
         payload: new Uint8Array([0xaa]),
         isFirstChunk: true,
         hasMore: false,

@@ -19,23 +19,24 @@ import {
 import {
   TRANSACTION_CHECK_CLA,
   TRANSACTION_CHECK_INS,
-} from "./ProvideWeb3CheckCommand";
+} from "./ProvideTransactionCheckCommand";
 
 export const TRANSACTION_CHECK_P1_OPT_IN = 0x01;
 
-export type Web3CheckOptInCommandResponse = {
+export type TransactionCheckOptInCommandResponse = {
   enabled: boolean;
 };
 
 /**
- * Triggers Web3Checks opt-in on the Solana app.
+ * Triggers TransactionChecks opt-in on the Solana app.
  */
-export class Web3CheckOptInCommand
-  implements Command<Web3CheckOptInCommandResponse, void, SolanaAppErrorCodes>
+export class TransactionCheckOptInCommand
+  implements
+    Command<TransactionCheckOptInCommandResponse, void, SolanaAppErrorCodes>
 {
-  readonly name = "web3CheckOptIn";
+  readonly name = "transactionCheckOptIn";
   private readonly errorHelper = new CommandErrorHelper<
-    Web3CheckOptInCommandResponse,
+    TransactionCheckOptInCommandResponse,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
@@ -54,7 +55,7 @@ export class Web3CheckOptInCommand
 
   parseResponse(
     response: ApduResponse,
-  ): CommandResult<Web3CheckOptInCommandResponse, SolanaAppErrorCodes> {
+  ): CommandResult<TransactionCheckOptInCommandResponse, SolanaAppErrorCodes> {
     return Maybe.fromNullable(
       this.errorHelper.getError(response),
     ).orDefaultLazy(() => {
