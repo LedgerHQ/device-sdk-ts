@@ -26,7 +26,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.ref }}
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@6b560f16b9e9773608c544fbcf7469f2d8b6d942
 
       - name: Set Up JDK
         uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5
