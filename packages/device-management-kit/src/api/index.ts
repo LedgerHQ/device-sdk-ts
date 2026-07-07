@@ -95,6 +95,12 @@ export {
   OpenAppCommand,
 } from "@api/command/os/OpenAppCommand";
 export {
+  RequestMasterConsentCommand,
+  type RequestMasterConsentCommandArgs,
+  type RequestMasterConsentCommandErrorCodes,
+  type RequestMasterConsentCommandResult,
+} from "@api/command/os/RequestMasterConsentCommand";
+export {
   RestoreAppStorageCommand,
   type RestoreAppStorageCommandArgs,
   RestoreAppStorageCommandError,
