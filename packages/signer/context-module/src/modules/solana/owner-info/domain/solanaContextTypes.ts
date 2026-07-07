@@ -1,5 +1,4 @@
-import { type PkiCertificate } from "@/modules/multichain/pki/model/PkiCertificate";
-import { type LoaderResult } from "@/modules/solana/model/SolanaContextTypes";
+import { type SolanaContext } from "@/modules/solana/model/SolanaContextTypes";
 
 export type {
   SolanaSPLOwnerInfo,
@@ -7,8 +6,6 @@ export type {
 } from "@/modules/solana/model/SolanaTransactionContext";
 
 export type SolanaTransactionContextResultSuccess = {
-  trustedNamePKICertificate?: PkiCertificate;
-  tlvDescriptor?: Uint8Array;
-  loadersResults: LoaderResult[];
+  loadersResults: SolanaContext[];
   contextErrorCount: number;
 };

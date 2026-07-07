@@ -33,11 +33,6 @@ const appConfig: AppConfiguration = {
 
 const contextModuleStub = { getContexts: vi.fn() } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 const basicContext = {
-  tlvDescriptor: new Uint8Array([1]),
-  trustedNamePKICertificate: {
-    keyUsageNumber: 0,
-    payload: new Uint8Array([1]),
-  },
   loadersResults: [],
   contextErrorCount: 0,
 };

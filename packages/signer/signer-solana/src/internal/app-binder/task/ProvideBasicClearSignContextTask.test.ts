@@ -53,8 +53,8 @@ describe("ProvideBasicClearSignContextTask", () => {
     api = { sendCommand: vi.fn() };
   });
 
-  describe("base context (trusted-name)", () => {
-    it("sends PKI certificate then TLV descriptor when both are provided", async () => {
+  describe("trusted-name context via registry", () => {
+    it("sends PKI certificate then TLV descriptor when SOLANA_BASIC_TRUSTED_NAME is in loadersResults", async () => {
       api.sendCommand
         .mockResolvedValueOnce(success)
         .mockResolvedValueOnce(success);
@@ -62,9 +62,13 @@ describe("ProvideBasicClearSignContextTask", () => {
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: baseCert,
-          tlvDescriptor,
-          loadersResults: [],
+          loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              certificate: baseCert,
+            },
+          ],
           transactionBytes: new Uint8Array([0xf0]),
           loggerFactory: mockLoggerFactory,
         } as any,
@@ -85,12 +89,10 @@ describe("ProvideBasicClearSignContextTask", () => {
       expect(tlvCmd.args.payload).toStrictEqual(tlvDescriptor);
     });
 
-    it("skips base context APDUs when trustedNamePKICertificate is missing", async () => {
+    it("skips trusted-name APDUs when SOLANA_BASIC_TRUSTED_NAME is absent from loadersResults", async () => {
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: undefined,
-          tlvDescriptor: undefined,
           loadersResults: [],
           transactionBytes: new Uint8Array([0xf0]),
           loggerFactory: mockLoggerFactory,
@@ -103,15 +105,19 @@ describe("ProvideBasicClearSignContextTask", () => {
       expect(api.sendCommand).not.toHaveBeenCalled();
     });
 
-    it("propagates errors thrown by sendCommand", async () => {
+    it("propagates errors thrown by sendCommand during trusted-name provisioning", async () => {
       api.sendCommand.mockRejectedValueOnce(new Error("transport fail"));
 
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: baseCert,
-          tlvDescriptor,
-          loadersResults: [],
+          loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              certificate: baseCert,
+            },
+          ],
           transactionBytes: new Uint8Array([0xca]),
           loggerFactory: mockLoggerFactory,
         } as any,
@@ -126,8 +132,6 @@ describe("ProvideBasicClearSignContextTask", () => {
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: undefined,
-          tlvDescriptor: undefined,
           loadersResults: [],
           transactionBytes: new Uint8Array([0xf0]),
           loggerFactory: mockLoggerFactory,
@@ -144,8 +148,6 @@ describe("ProvideBasicClearSignContextTask", () => {
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: undefined,
-          tlvDescriptor: undefined,
           loadersResults: [
             {
               type: ClearSignContextType.ERROR,
@@ -165,17 +167,20 @@ describe("ProvideBasicClearSignContextTask", () => {
 
     it("dispatches SOLANA_TOKEN result to the token handler (cert + descriptor APDUs)", async () => {
       api.sendCommand
-        .mockResolvedValueOnce(success) // base PKI
-        .mockResolvedValueOnce(success) // TLV descriptor
+        .mockResolvedValueOnce(success) // trusted-name cert
+        .mockResolvedValueOnce(success) // trusted-name TLV descriptor
         .mockResolvedValueOnce(success) // token cert
         .mockResolvedValueOnce(success); // token descriptor
 
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: baseCert,
-          tlvDescriptor,
           loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              certificate: baseCert,
+            },
             {
               type: ClearSignContextType.SOLANA_TOKEN as const,
               payload: { solanaTokenDescriptor: tokenDescriptor },
@@ -211,8 +216,6 @@ describe("ProvideBasicClearSignContextTask", () => {
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: undefined,
-          tlvDescriptor: undefined,
           loadersResults: [
             {
               type: ClearSignContextType.SOLANA_TRANSACTION_CHECK as const,
@@ -240,8 +243,8 @@ describe("ProvideBasicClearSignContextTask", () => {
 
     it("dispatches multiple loader results in order", async () => {
       api.sendCommand
-        .mockResolvedValueOnce(success) // base PKI
-        .mockResolvedValueOnce(success) // TLV descriptor
+        .mockResolvedValueOnce(success) // trusted-name cert
+        .mockResolvedValueOnce(success) // trusted-name TLV descriptor
         .mockResolvedValueOnce(success) // token cert
         .mockResolvedValueOnce(success) // token descriptor
         .mockResolvedValueOnce(success) // tx-check cert
@@ -250,9 +253,12 @@ describe("ProvideBasicClearSignContextTask", () => {
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: baseCert,
-          tlvDescriptor,
           loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              certificate: baseCert,
+            },
             {
               type: ClearSignContextType.SOLANA_TOKEN as const,
               payload: { solanaTokenDescriptor: tokenDescriptor },
@@ -275,6 +281,58 @@ describe("ProvideBasicClearSignContextTask", () => {
       expect(api.sendCommand).toHaveBeenCalledTimes(6);
     });
 
+    it("provisions SOLANA_BASIC_TRUSTED_NAME first even when TOKEN appears first in loadersResults", async () => {
+      api.sendCommand
+        .mockResolvedValueOnce(success) // trusted-name cert
+        .mockResolvedValueOnce(success) // trusted-name TLV descriptor
+        .mockResolvedValueOnce(success) // token cert
+        .mockResolvedValueOnce(success); // token descriptor
+
+      const task = new ProvideBasicClearSignContextTask(
+        api as any,
+        {
+          loadersResults: [
+            {
+              type: ClearSignContextType.SOLANA_TOKEN as const,
+              payload: { solanaTokenDescriptor: tokenDescriptor },
+              certificate: tokenCert,
+            },
+            {
+              type: ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME as const,
+              payload: tlvDescriptor,
+              certificate: baseCert,
+            },
+          ],
+          transactionBytes: new Uint8Array([0x1a]),
+          loggerFactory: mockLoggerFactory,
+        } as any,
+      );
+
+      await task.run();
+
+      expect(api.sendCommand).toHaveBeenCalledTimes(4);
+      // First two calls must be trusted-name (cert + descriptor), not token
+      expect(api.sendCommand.mock.calls[0]![0]).toBeInstanceOf(
+        LoadCertificateCommand,
+      );
+      expect(api.sendCommand.mock.calls[0]![0].args.certificate).toStrictEqual(
+        baseCert.payload,
+      );
+      expect(api.sendCommand.mock.calls[1]![0]).toBeInstanceOf(
+        ProvideTLVDescriptorCommand,
+      );
+      expect(api.sendCommand.mock.calls[1]![0].args.payload).toStrictEqual(
+        tlvDescriptor,
+      );
+      // Calls 2-3 are for token
+      expect(api.sendCommand.mock.calls[2]![0]).toBeInstanceOf(
+        LoadCertificateCommand,
+      );
+      expect(api.sendCommand.mock.calls[2]![0].args.certificate).toStrictEqual(
+        tokenCert.payload,
+      );
+    });
+
     it("ignores ERROR entries while still dispatching subsequent success entries", async () => {
       api.sendCommand
         .mockResolvedValueOnce(success) // tx-check cert
@@ -283,8 +341,6 @@ describe("ProvideBasicClearSignContextTask", () => {
       const task = new ProvideBasicClearSignContextTask(
         api as any,
         {
-          trustedNamePKICertificate: undefined,
-          tlvDescriptor: undefined,
           loadersResults: [
             {
               type: ClearSignContextType.ERROR,
