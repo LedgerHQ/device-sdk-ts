@@ -88,6 +88,13 @@ export {
   type OpenAppArgs,
   OpenAppCommand,
 } from "@api/command/os/OpenAppCommand";
+export {
+  RestoreAppStorageCommand,
+  type RestoreAppStorageCommandArgs,
+  RestoreAppStorageCommandError,
+  type RestoreAppStorageCommandErrorCodes,
+  type RestoreAppStorageCommandResult,
+} from "@api/command/os/RestoreAppStorageCommand";
 export { isCommandErrorCode } from "@api/command/utils/CommandErrors";
 export { CommandUtils } from "@api/command/utils/CommandUtils";
 export {
@@ -151,6 +158,11 @@ export {
   GetApplicationsMetadataTaskError,
   InvalidGetFirmwareMetadataResponseError,
 } from "@api/device-action/task/Errors";
+export {
+  RestoreAppStorageTask,
+  type RestoreAppStorageTaskArgs,
+  type RestoreAppStorageTaskError,
+} from "@api/device-action/task/RestoreAppStorageTask";
 export {
   type DeviceActionStateMachine,
   XStateDeviceAction,
