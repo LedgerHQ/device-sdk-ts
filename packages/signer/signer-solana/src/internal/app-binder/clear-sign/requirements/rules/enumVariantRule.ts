@@ -1,6 +1,7 @@
 import { type Either } from "purify-ts";
 
 import {
+  type Entry,
   type SelectedEnumVariant,
   type VariantCache,
 } from "@internal/app-binder/clear-sign/idl-type-pool";
@@ -17,7 +18,7 @@ import {
  * stays testable without a full decode.
  */
 export type EnumVariantSelector = (
-  typePool: Uint8Array,
+  typePool: Entry[],
   rootType: number,
   enumCache: VariantCache,
   data: Uint8Array,
@@ -28,7 +29,7 @@ export function applyEnumVariantRule(
   matched: MatchedInstruction,
   accumulator: RequirementAccumulator,
   selectEnumVariants: EnumVariantSelector,
-  parsedTypePool: Uint8Array,
+  parsedTypePool: Entry[],
   parsedRootType: number,
 ): Either<RequirementsError, void> {
   const { programId } = matched.instruction;

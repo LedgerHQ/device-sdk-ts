@@ -41,14 +41,40 @@ export type SolanaSignedDescriptor = {
 };
 
 /**
- * Payload for ClearSignContextType.SOLANA_INSTRUCTION_INFO: one signed
- * INSTRUCTION_INFO descriptor plus its substructures.
+ * One enum-variant descriptor bundled with an instruction descriptor by CAL.
+ * The signed TLV (`descriptor.data`) feeds the host-side type-pool decode
+ * cache, `enumId`/`variantIndex` identify which variant it describes (and let
+ * the host stream the selected variant's signed descriptor to the device).
+ */
+export type SolanaInstructionEnumVariant = {
+  enumId: string;
+  variantIndex: number;
+  descriptor: SolanaSignedDescriptor;
+};
+
+/**
+ * Payload for ClearSignContextType.SOLANA_INSTRUCTION_INFO.
+ *
+ * `instructionInfo` + `substructures` are the signed TLVs streamed to the
+ * device, and `enumVariants` are the signed enum-variant descriptors CAL
+ * bundles for the program's enums (used to build the host decode cache). The
+ * remaining fields are CAL's decoded JSON consumed host-side by the
+ * requirement builder.
  */
 export type SolanaInstructionInfoPayload = {
   programId: string;
   discriminator: string;
   instructionInfo: SolanaSignedDescriptor;
   substructures: SolanaInstructionSubstructure[];
+  enumVariants: SolanaInstructionEnumVariant[];
+  idlDescriptor: {
+    typePool: SolanaCalTypePoolEntry[];
+    rootType: number;
+  };
+  mintAssociations: SolanaCalMintAssociation[];
+  valueFlowPorts: SolanaCalValueFlowPort[];
+  accountResets: SolanaCalAccountReset[];
+  displayFields: SolanaCalDisplayField[];
 };
 
 export enum SolanaInstructionSubstructureKind {
@@ -62,6 +88,62 @@ export type SolanaInstructionSubstructure = {
   kind: SolanaInstructionSubstructureKind;
   // TLV payload (hex string) for the substructure.
   data: string;
+};
+
+// --- Decoded CAL JSON (snake_case mirrors the CAL response) ---
+
+export type SolanaCalValue = {
+  source: string;
+  /** ACCOUNT_PATH: index into the instruction's accounts. */
+  account_index?: number;
+  /** CONSTANT: hex-encoded bytes. */
+  data?: string;
+  /** ARGUMENT_PATH: decoded steps. */
+  path?: { steps: number[] };
+};
+
+export type SolanaCalTokenValue = {
+  kind: string;
+  value?: SolanaCalValue;
+  account_index?: number;
+};
+
+export type SolanaCalValueFlowPort = {
+  /** Ordered candidate list (spec form). */
+  account_indices?: number[];
+  /** Single-account form currently emitted by CAL; treated as a 1-element list. */
+  account_index?: number;
+  optional_account_strategy?: string;
+  token_value?: SolanaCalTokenValue;
+};
+
+export type SolanaCalAccountReset = {
+  account_index: number;
+  require_pre_balance_zero?: boolean;
+};
+
+export type SolanaCalDisplayField = {
+  name?: string;
+  param: { type: string; value?: SolanaCalValue; token?: SolanaCalValue };
+};
+
+export type SolanaCalTypePoolEntry = {
+  index: number;
+  kind: string;
+  refs?: number[];
+  size?: number;
+  encoding?: number;
+  len_kind?: string;
+  flag_kind?: string;
+  sentinel?: string;
+  disc_kind?: string;
+  total_variants?: number;
+  enum_id?: string;
+};
+
+export type SolanaCalMintAssociation = {
+  account_index: number;
+  mint_index: number;
 };
 
 /**

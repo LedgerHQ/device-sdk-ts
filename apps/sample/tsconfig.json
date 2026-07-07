@@ -7,7 +7,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@root/*": ["./*"]
     },
     "strictNullChecks": true,
     "module": "esnext"

@@ -13,9 +13,11 @@ import { type GetAppConfigDAReturnType } from "@api/app-binder/GetAppConfigDevic
 import { type GetFullViewingKeyDAReturnType } from "@api/app-binder/GetFullViewingKeyDeviceActionTypes";
 import { type GetTrustedInputDAReturnType } from "@api/app-binder/GetTrustedInputActionTypes";
 import { type SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
+import { type SignPcztTransactionDAReturnType } from "@api/app-binder/SignPcztTransactionDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type LegacyCreateTransactionArg } from "@api/model/CreateTransactionArg";
 import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
+import { type PcztTransaction } from "@api/model/PcztTransaction";
 import { APP_NAME } from "@internal/app-binder/constants";
 import { externalTypes } from "@internal/externalTypes";
 
@@ -24,6 +26,7 @@ import { GetAppConfigCommand } from "./command/GetAppConfigCommand";
 import { SignMessageCommand } from "./command/SignMessageCommand";
 import { GetFullViewingKeyTask } from "./task/GetFullViewingKeyTask";
 import { GetTrustedInputTask } from "./task/GetTrustedInputTask";
+import { SignPcztTransactionTask } from "./task/SignPcztTransactionTask";
 import { SignTransactionTask } from "./task/SignTransactionTask";
 
 @injectable()
@@ -99,6 +102,26 @@ export class ZcashAppBinder {
         input: {
           task: async (internalApi: InternalApi) =>
             new SignTransactionTask(internalApi, args).run(),
+          appName: APP_NAME,
+          requiredUserInteraction: UserInteractionRequired.SignTransaction,
+          skipOpenApp: args.skipOpenApp ?? false,
+        },
+      }),
+    });
+  }
+
+  signPcztTransaction(args: {
+    transaction: PcztTransaction;
+    skipOpenApp?: boolean;
+  }): SignPcztTransactionDAReturnType {
+    return this.dmk.executeDeviceAction({
+      sessionId: this.sessionId,
+      deviceAction: new CallTaskInAppDeviceAction({
+        input: {
+          task: async (internalApi: InternalApi) =>
+            new SignPcztTransactionTask(internalApi, {
+              transaction: args.transaction,
+            }).run(),
           appName: APP_NAME,
           requiredUserInteraction: UserInteractionRequired.SignTransaction,
           skipOpenApp: args.skipOpenApp ?? false,

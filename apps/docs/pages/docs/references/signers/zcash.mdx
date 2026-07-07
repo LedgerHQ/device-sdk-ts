@@ -18,7 +18,8 @@ This module provides the implementation of the Ledger zcash signer of the Device
    - [Get Address](#use-case-2-get-address)
    - [Get Full Viewing Key](#use-case-3-get-full-viewing-key)
    - [Sign Transaction](#use-case-4-sign-transaction)
-   - [Sign Message](#use-case-5-sign-message)
+   - [Sign PCZT Transaction](#use-case-5-sign-pczt-transaction)
+   - [Sign Message](#use-case-6-sign-message)
 5. [Observable Behavior](#-observable-behavior)
 6. [Example](#-example)
 
@@ -232,7 +233,109 @@ type Signature = {
 
 ---
 
-### Use Case 5: Sign Message
+### Use Case 5: Sign PCZT Transaction
+
+This method signs an Orchard **shielded** transaction expressed as a PCZT (Partially Constructed Zcash Transaction). The host (zcash-utils) builds the PCZT and passes the structured `PcztTransaction` to the signer, which streams the header, transparent inputs/outputs, and Orchard actions to the device. The device returns the raw per-action Orchard `spendAuthSig`s and per-input transparent signatures; the binding signature and final transaction assembly are computed host-side and never involve the device. The legacy transparent `signTransaction` path is unchanged.
+
+```typescript
+const { observable, cancel } = signerZcash.signPcztTransaction(
+  transaction,
+  options,
+);
+```
+
+#### **Parameters**
+
+- `transaction`
+
+  - **Required**
+  - **Type:** `PcztTransaction`
+  - The structured PCZT to sign. Transparent sections are always streamed (count `0` when empty); `orchardBundle` may be `null` (treated as an empty Orchard bundle). All multi-byte integer fields are little-endian on the wire, except derivation-path components (big-endian `Bip32Path`).
+
+    ```typescript
+    type PcztTransaction = {
+      global: PcztGlobal;
+      transparentInputs: PcztTransparentInput[];
+      transparentOutputs: PcztTransparentOutput[];
+      orchardBundle: PcztOrchardBundle | null;
+    };
+
+    type PcztGlobal = {
+      txVersion: number; // V5 = 5
+      versionGroupId: number;
+      consensusBranchId: number;
+      fallbackLockTime: number | null; // Option<u32>; null = absent
+      expiryHeight: number;
+      coinType: number; // 133 mainnet, 1 testnet
+      txModifiable: number;
+    };
+
+    type PcztBip32Derivation = {
+      signingPath: string;
+      pubkey: Uint8Array; // compressed secp256k1, 33 bytes
+      seedFingerprint?: Uint8Array; // ZIP-32, 32 bytes
+    };
+
+    type PcztTransparentInput = {
+      prevoutTxid: Uint8Array; // 32 bytes
+      prevoutIndex: number;
+      sequence: number | null; // Option<u32>; null = absent
+      value: bigint; // zatoshis
+      scriptPubKey: Uint8Array;
+      sighashType: number; // must be SIGHASH_ALL (0x01)
+      derivation: PcztBip32Derivation;
+    };
+
+    type PcztTransparentOutput = {
+      value: bigint; // zatoshis
+      scriptPubKey: Uint8Array;
+      derivation?: PcztBip32Derivation | null; // entry count 0 or 1
+    };
+
+    type PcztOrchardBundle = {
+      actions: PcztOrchardAction[];
+      flags: number;
+      valueBalance: bigint; // net value balance, zatoshis (signed)
+      anchor: Uint8Array; // commitment-tree anchor, 32 bytes
+    };
+    ```
+
+    Each `PcztOrchardAction` carries the spend and output halves of one Orchard action (value/nullifier/rk commitments, spent- and output-note fields, the host-supplied spend-auth randomizer `alpha`, the signing `signingPath`, and the randomized commitment value `rcv`). See the `PcztOrchardAction` type exported from `@ledgerhq/device-signer-kit-zcash` for the full field list.
+
+- `options`
+
+  - Optional
+  - Type: `TransactionOptions`
+
+    ```typescript
+    type TransactionOptions = {
+      skipOpenApp?: boolean;
+    };
+    ```
+
+  - `skipOpenApp`: An optional boolean indicating whether to skip opening the zcash app automatically (`true`) or not (`false`).
+
+#### **Returns**
+
+- `observable` Emits DeviceActionState updates. The final output is:
+
+```typescript
+type SignPcztTransactionResult = {
+  // one spendAuthSig per Orchard action, in action order
+  orchard: Array<{ spendAuthSig: Uint8Array }>; // RedPallas sig, 64 bytes each
+  // one signature per transparent input, in input order:
+  // DER-encoded secp256k1 signature + trailing sighash_type byte (0x01)
+  transparentInputSigs: Uint8Array[];
+};
+```
+
+There is no `bindingSig` in the result — it is computed host-side from `bsk = Σ rcv`. On `Pending`, `requiredUserInteraction` is `UserInteractionRequired.SignTransaction`.
+
+- `cancel` A function to cancel the action on the Ledger device.
+
+---
+
+### Use Case 6: Sign Message
 
 This method allows users to sign a text string that is displayed on Ledger devices.
 

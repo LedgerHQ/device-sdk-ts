@@ -37,38 +37,24 @@ const mockConfig = {
 const JUPITER_PROGRAM = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4";
 const OTHER_PROGRAM = "OtherProgram111111111111111111111111111111";
 
+// The data source flattens enum variants into core models, with the signature
+// already picked for the configured mode.
 function makeJupiterWithVariants(): InstructionInfoResult {
   return {
     programId: JUPITER_PROGRAM,
-    descriptors: {
-      e517cb977ae3ad2a: {
-        type: "instruction",
-        instruction_info: {
-          version: 1,
-          program_id: JUPITER_PROGRAM,
-          discriminator: "e517cb977ae3ad2a",
-          hash: "deadbeef",
-          descriptor: {
-            data: "jup_route_tlv",
-            signatures: { prod: "psig_jup", test: "tsig_jup" },
-          },
-        },
-        enum_variants: {
-          swap: {
-            "46": {
-              variant_name: "raydiumCP",
-              data: "01_raydium_tlv",
-              signatures: { prod: "prodsig_v46", test: "testsig_v46" },
-            },
-            "12": {
-              variant_name: "orcaWhirlpool",
-              data: "01_orca_tlv",
-              signatures: { prod: "prodsig_v12", test: "testsig_v12" },
-            },
-          },
-        },
+    descriptors: {},
+    enumVariants: [
+      {
+        enumId: "swap",
+        variantIndex: 46,
+        descriptor: { data: "01_raydium_tlv", signature: "prodsig_v46" },
       },
-    },
+      {
+        enumId: "swap",
+        variantIndex: 12,
+        descriptor: { data: "01_orca_tlv", signature: "prodsig_v12" },
+      },
+    ],
   };
 }
 
@@ -226,30 +212,14 @@ describe("EnumVariantContextLoader", () => {
     it("resolves a variant index > 255 (u16, disc_kind U16 enums)", async () => {
       const result: InstructionInfoResult = {
         programId: JUPITER_PROGRAM,
-        descriptors: {
-          e517cb977ae3ad2a: {
-            type: "instruction",
-            instruction_info: {
-              version: 1,
-              program_id: JUPITER_PROGRAM,
-              discriminator: "e517cb977ae3ad2a",
-              hash: "deadbeef",
-              descriptor: {
-                data: "jup_route_tlv",
-                signatures: { prod: "psig", test: "tsig" },
-              },
-            },
-            enum_variants: {
-              swap: {
-                "300": {
-                  variant_name: "bigEnumVariant",
-                  data: "01_big_tlv",
-                  signatures: { prod: "prodsig_v300", test: "testsig_v300" },
-                },
-              },
-            },
+        descriptors: {},
+        enumVariants: [
+          {
+            enumId: "swap",
+            variantIndex: 300,
+            descriptor: { data: "01_big_tlv", signature: "prodsig_v300" },
           },
-        },
+        ],
       };
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
         Right(result),
@@ -304,11 +274,18 @@ describe("EnumVariantContextLoader", () => {
     });
 
     it("emits ERROR when configured signature mode is missing", async () => {
-      const result = makeJupiterWithVariants();
-      const variant =
-        result.descriptors["e517cb977ae3ad2a"]?.enum_variants?.["swap"]?.["46"];
-      if (!variant) throw new Error("fixture: variant must exist");
-      delete (variant.signatures as any).test;
+      // The mapper leaves the signature empty when CAL has none for the mode.
+      const result: InstructionInfoResult = {
+        programId: JUPITER_PROGRAM,
+        descriptors: {},
+        enumVariants: [
+          {
+            enumId: "swap",
+            variantIndex: 46,
+            descriptor: { data: "01_raydium_tlv", signature: "" },
+          },
+        ],
+      };
       vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
         Right(result),
       );

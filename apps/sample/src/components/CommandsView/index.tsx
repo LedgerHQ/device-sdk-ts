@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import {
-  BackupStorageCommand,
-  type BackupStorageCommandErrorCodes,
-  type BackupStorageCommandResponse,
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
   BatteryStatusType,
   CloseAppCommand,
   DeleteLanguagePackCommand,
@@ -19,6 +19,9 @@ import {
   type GetBatteryStatusResponse,
   GetOsVersionCommand,
   type GetOsVersionResponse,
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  type InitRestoreAppStorageCommandErrorCodes,
   type ListAppsArgs,
   ListAppsCommand,
   type ListAppsErrorCodes,
@@ -149,7 +152,7 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         title: "Backup app storage",
         description: "Backup the app storage of the device",
         sendCommand: () => {
-          const command = new BackupStorageCommand();
+          const command = new BackupAppStorageCommand();
           return dmk.sendCommand({
             sessionId: selectedSessionId,
             command,
@@ -158,8 +161,28 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         initialValues: undefined,
       } satisfies CommandProps<
         void,
-        BackupStorageCommandResponse,
-        BackupStorageCommandErrorCodes
+        BackupAppStorageCommandResponse,
+        BackupAppStorageCommandErrorCodes
+      >,
+      {
+        title: "Init restore app storage",
+        description:
+          "Initialize the restore of a previously backed up app storage",
+        sendCommand: ({ appName, appStorageDataLength }) => {
+          const command = new InitRestoreAppStorageCommand({
+            appName,
+            appStorageDataLength,
+          });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: { appName: "", appStorageDataLength: 0 },
+      } satisfies CommandProps<
+        InitRestoreAppStorageCommandArgs,
+        void,
+        InitRestoreAppStorageCommandErrorCodes
       >,
       {
         title: "List language packs",

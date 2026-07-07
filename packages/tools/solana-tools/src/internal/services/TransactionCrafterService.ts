@@ -1,353 +1,233 @@
+import { bufferToBase64String } from "@ledgerhq/device-management-kit";
 import {
-  base64StringToBuffer,
-  bufferToBase64String,
-} from "@ledgerhq/device-management-kit";
+  type AddressLookupTableAccount,
+  PublicKey,
+  TransactionMessage,
+} from "@solana/web3.js";
+
 import {
   getAssociatedTokenAddressSync,
   TOKEN_2022_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
-import bs58 from "bs58";
+} from "@internal/services/utils/splToken";
 
-type MessageDetection = {
-  accountKeysStart: number;
-  accountCount: number;
-  kind: "legacyMessage" | "v0Message";
-} | null;
+import { deserializeToMessage } from "./crafter/deserialize";
 
-type TransactionDetection = {
-  accountKeysStart: number;
-  accountCount: number;
-  signatureSectionStart: number;
-  signatureCount: number;
-  kind: "legacyTx" | "v0Tx";
-} | null;
+export type CraftOptions = {
+  /**
+   * base58 payer. When set, seeds auto-detect: the old payer maps to this
+   * payer, and the old payer's ATAs map to this payer's ATAs.
+   */
+  readonly payer?: string;
+  /**
+   * base58 old to new pairs, applied verbatim. Overrides any auto-detect entry
+   * on a key collision.
+   */
+  readonly replacements?: ReadonlyMap<string, string>;
+  /**
+   * Fully-resolved lookup tables from the resolver. Empty for legacy or no-ALT
+   * messages.
+   */
+  readonly addressLookupTableAccounts?: readonly AddressLookupTableAccount[];
+};
 
-const PUBLIC_KEY_LENGTH = 32;
+// Solana caps a serialized transaction at this many bytes. A crafted message is
+// never broadcast, but the device rejects anything over the limit, so promoting
+// too many ALT-supplied accounts to static keys is surfaced as a clear error.
+const PACKET_DATA_SIZE = 1232;
 const SIGNATURE_LENGTH = 64;
-const MAX_SIGNATURES = 64;
-const MAX_ACCOUNTS = 256;
+
+// Length in bytes of the shortvec (compact-u16) encoding of a count. Solana
+// prefixes the signature vector with this encoding, so it is 1 byte for counts
+// up to 127 and grows by a byte for every further 7 bits.
+function shortVecLength(count: number): number {
+  let length = 1;
+  let remaining = count;
+  while (remaining >= 0x80) {
+    remaining >>= 7;
+    length += 1;
+  }
+  return length;
+}
 
 export class TransactionCrafterService {
+  /**
+   * Re-point the chosen accounts of a fetched transaction to new addresses and
+   * return the crafted message as base64.
+   *
+   * The input is either a serialized message or a full serialized transaction
+   * (signatures are dropped). The message is decompiled with the supplied
+   * lookup tables, the replacement set is applied on real public keys, and the
+   * message is recompiled. Replaced ALT-supplied accounts fall out of their
+   * tables and are promoted into the static keys; untouched accounts keep using
+   * their tables. The original recent blockhash is reused verbatim so that
+   * durable-nonce values are preserved.
+   *
+   * Synchronous and side-effect free: it never touches the network. Resolved
+   * lookup tables must be passed in via options.addressLookupTableAccounts.
+   */
   public getCraftedTransaction(
     transactionBase64: string,
-    newPayerBase58: string,
+    options: CraftOptions,
   ): string {
-    const rawInput = base64StringToBuffer(transactionBase64);
-    if (rawInput === null) {
-      throw new Error("Input is not a valid base64 string.");
+    const message = deserializeToMessage(transactionBase64);
+    const addressLookupTableAccounts = [
+      ...(options.addressLookupTableAccounts ?? []),
+    ];
+    const isLegacy = message.version === "legacy";
+
+    const txMessage = TransactionMessage.decompile(message, {
+      addressLookupTableAccounts,
+    });
+
+    const oldPayer = txMessage.payerKey;
+    const replacements = this.buildReplacements(txMessage, oldPayer, options);
+
+    for (const instruction of txMessage.instructions) {
+      for (const account of instruction.keys) {
+        const replacement = replacements.get(account.pubkey.toBase58());
+        if (replacement) {
+          // Only the address is swapped. The signer and writable flags are left
+          // untouched on purpose: decompile reconstructed them from the header
+          // and recompile recomputes the header and account ordering.
+          account.pubkey = replacement;
+        }
+      }
     }
 
-    let newPayer: Uint8Array;
-    try {
-      newPayer = bs58.decode(String(newPayerBase58).trim());
-    } catch {
-      throw new Error("Failed to decode public key from base58.");
+    const newPayer = replacements.get(oldPayer.toBase58());
+    if (newPayer) {
+      txMessage.payerKey = newPayer;
     }
 
-    if (newPayer.length !== PUBLIC_KEY_LENGTH) {
+    const crafted = isLegacy
+      ? txMessage.compileToLegacyMessage()
+      : txMessage.compileToV0Message(addressLookupTableAccounts);
+
+    const serialized = crafted.serialize();
+
+    // The full transaction is the message plus its signature section: a
+    // shortvec-encoded signature count followed by one 64-byte slot per
+    // required signature. Check it against the packet limit so an oversized
+    // craft fails here rather than on the device.
+    const transactionSize =
+      shortVecLength(crafted.header.numRequiredSignatures) +
+      crafted.header.numRequiredSignatures * SIGNATURE_LENGTH +
+      serialized.length;
+    if (transactionSize > PACKET_DATA_SIZE) {
       throw new Error(
-        `Provided public key is not ${PUBLIC_KEY_LENGTH} bytes after base58 decode.`,
+        `Crafted transaction is ${transactionSize} bytes, over the ${PACKET_DATA_SIZE}-byte limit. Re-pointing fewer ALT-supplied accounts keeps more of them in their lookup tables.`,
       );
     }
 
-    const output = new Uint8Array(rawInput.length);
-    output.set(rawInput);
-
-    const transactionInfo = this.detectTransaction(rawInput);
-    if (transactionInfo) {
-      this.applyReplacements(
-        output,
-        rawInput,
-        transactionInfo.accountKeysStart,
-        transactionInfo.accountCount,
-        newPayer,
-      );
-      output.fill(
-        0,
-        transactionInfo.signatureSectionStart,
-        transactionInfo.signatureSectionStart +
-          transactionInfo.signatureCount * SIGNATURE_LENGTH,
-      );
-      return bufferToBase64String(output);
-    }
-
-    const msgInfo = this.detectMessage(rawInput);
-    if (msgInfo) {
-      this.applyReplacements(
-        output,
-        rawInput,
-        msgInfo.accountKeysStart,
-        msgInfo.accountCount,
-        newPayer,
-      );
-      return bufferToBase64String(output);
-    }
-
-    throw new Error(
-      "Input is neither a valid legacy/v0 message nor a legacy/v0 transaction.",
-    );
+    return bufferToBase64String(serialized);
   }
 
-  private applyReplacements(
-    output: Uint8Array,
-    rawInput: Uint8Array,
-    accountKeysStart: number,
-    accountCount: number,
-    newPayer: Uint8Array,
-  ): void {
-    const accountKeys: Uint8Array[] = [];
-    for (let i = 0; i < accountCount; i++) {
-      const start = accountKeysStart + i * PUBLIC_KEY_LENGTH;
-      accountKeys.push(rawInput.slice(start, start + PUBLIC_KEY_LENGTH));
+  private buildReplacements(
+    txMessage: TransactionMessage,
+    oldPayer: PublicKey,
+    options: CraftOptions,
+  ): Map<string, PublicKey> {
+    const replacements = new Map<string, PublicKey>();
+
+    // Auto-detect mode seeds the map from the payer: the old payer and its ATAs
+    // point at the new payer and its ATAs.
+    if (options.payer !== undefined) {
+      const newPayer = this.decodePublicKey(options.payer);
+      replacements.set(oldPayer.toBase58(), newPayer);
+      this.seedAtaReplacements(txMessage, oldPayer, newPayer, replacements);
     }
 
-    const oldPayerBytes = accountKeys[0]!;
-    const oldPayerPK = new PublicKey(oldPayerBytes);
-    const newPayerPK = new PublicKey(newPayer);
+    // Explicit pairs are applied verbatim and override auto-detect entries on a
+    // key collision. The caller supplies the new address directly, so any
+    // account (including user-seeded PDAs) can be re-pointed this way.
+    if (options.replacements) {
+      for (const [oldKey, newKey] of options.replacements) {
+        // Decode both ends so a bad pair fails here with a clear message, and
+        // key the map by the canonical base58. Lookups use toBase58(), so a key
+        // passed with whitespace or in a non-canonical form would otherwise
+        // validate but never match.
+        const oldPublicKey = this.decodePublicKey(oldKey);
+        replacements.set(oldPublicKey.toBase58(), this.decodePublicKey(newKey));
+      }
+    }
 
-    const replacements: Map<number, Uint8Array> = new Map();
+    return replacements;
+  }
 
-    for (let i = 0; i < accountCount; i++) {
-      const offset = accountKeysStart + i * PUBLIC_KEY_LENGTH;
-      const key = accountKeys[i]!;
+  private seedAtaReplacements(
+    txMessage: TransactionMessage,
+    oldPayer: PublicKey,
+    newPayer: PublicKey,
+    replacements: Map<string, PublicKey>,
+  ): void {
+    const accounts = this.collectAccounts(txMessage);
 
-      if (this.bytesEqual(key, oldPayerBytes)) {
-        replacements.set(offset, newPayer);
+    for (const account of accounts) {
+      if (account.equals(oldPayer)) {
+        continue;
+      }
+      if (replacements.has(account.toBase58())) {
         continue;
       }
 
-      this.detectAndReplaceATA(
-        key,
-        offset,
-        accountKeys,
-        oldPayerPK,
-        newPayerPK,
-        replacements,
-      );
-    }
-
-    for (const [offset, bytes] of replacements) {
-      output.set(bytes, offset);
-    }
-  }
-
-  private detectAndReplaceATA(
-    key: Uint8Array,
-    offset: number,
-    accountKeys: Uint8Array[],
-    oldPayer: PublicKey,
-    newPayer: PublicKey,
-    replacements: Map<number, Uint8Array>,
-  ): void {
-    const keyPK = new PublicKey(key);
-    for (const candidateMintBytes of accountKeys) {
-      const candidateMint = new PublicKey(candidateMintBytes);
-      for (const tokenProgram of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
-        try {
-          const expectedATA = getAssociatedTokenAddressSync(
-            candidateMint,
-            oldPayer,
-            true,
-            tokenProgram,
-          );
-          if (expectedATA.equals(keyPK)) {
-            const newATA = getAssociatedTokenAddressSync(
-              candidateMint,
-              newPayer,
+      // Test every account as a candidate mint, for both token programs: an ATA
+      // of the old payer for a referenced mint is re-pointed to the new payer's
+      // ATA for that same mint.
+      for (const mint of accounts) {
+        for (const tokenProgram of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]) {
+          try {
+            const oldAta = getAssociatedTokenAddressSync(
+              mint,
+              oldPayer,
               true,
               tokenProgram,
             );
-            replacements.set(offset, newATA.toBytes());
-            return;
+            if (oldAta.equals(account)) {
+              const newAta = getAssociatedTokenAddressSync(
+                mint,
+                newPayer,
+                true,
+                tokenProgram,
+              );
+              replacements.set(account.toBase58(), newAta);
+            }
+          } catch {
+            // Not a valid ATA derivation for this mint and token program.
           }
-        } catch {
-          /* not a valid derivation for this combo */
         }
       }
     }
   }
 
-  private bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) return false;
-    }
-    return true;
-  }
+  private collectAccounts(txMessage: TransactionMessage): PublicKey[] {
+    const seen = new Set<string>();
+    const accounts: PublicKey[] = [];
 
-  decodeShortVec(
-    bytes: Uint8Array,
-    offset: number,
-  ): { length: number; size: number } {
-    let value = 0;
-    let size = 0;
-    let shift = 0;
-
-    while (true) {
-      const byte = bytes[offset + size];
-      if (byte === undefined) {
-        throw new Error("shortvec decode overflow");
+    const add = (publicKey: PublicKey): void => {
+      const key = publicKey.toBase58();
+      if (!seen.has(key)) {
+        seen.add(key);
+        accounts.push(publicKey);
       }
+    };
 
-      value |= (byte & 0x7f) << shift;
-      size += 1;
-
-      if ((byte & 0x80) === 0) {
-        break;
-      }
-
-      shift += 7;
-
-      if (shift >= 35) {
-        throw new Error("shortvec too long");
+    add(txMessage.payerKey);
+    for (const instruction of txMessage.instructions) {
+      add(instruction.programId);
+      for (const account of instruction.keys) {
+        add(account.pubkey);
       }
     }
 
-    return { length: value, size };
+    return accounts;
   }
 
-  private tryDecodeShortVec(
-    bytes: Uint8Array,
-    offset: number,
-  ): { length: number; size: number } | null {
+  private decodePublicKey(value: string): PublicKey {
     try {
-      return this.decodeShortVec(bytes, offset);
+      return new PublicKey(value.trim());
     } catch {
-      return null;
+      throw new Error("Failed to decode public key from base58.");
     }
-  }
-
-  private locatePayerInMessage(
-    bytes: Uint8Array,
-    messageOffset: number,
-    opts: { versioned: boolean },
-  ) {
-    let cursor = messageOffset;
-
-    if (opts.versioned) {
-      const versionByte = bytes[cursor];
-      if (versionByte === undefined || (versionByte & 0x80) === 0) return null;
-
-      const version = versionByte & 0x7f;
-      if (version !== 0) return null;
-
-      cursor += 1;
-    } else {
-      const first = bytes[cursor];
-      if (first === undefined) return null;
-
-      if ((first & 0x80) !== 0) return null;
-    }
-
-    if (cursor + 3 > bytes.length) return null;
-
-    const requiredSignatures = bytes[cursor];
-    const numReadonlySigned = bytes[cursor + 1];
-    const numReadonlyUnsigned = bytes[cursor + 2];
-
-    if (requiredSignatures === undefined) return null;
-
-    if (requiredSignatures < 1) return null;
-
-    cursor += 3;
-
-    const accountCountInfo = this.tryDecodeShortVec(bytes, cursor);
-    if (!accountCountInfo) return null;
-
-    const { length: accountCount, size: accountLenSize } = accountCountInfo;
-
-    if (accountCount < 1 || accountCount > MAX_ACCOUNTS) return null;
-
-    if (requiredSignatures > accountCount) return null;
-
-    cursor += accountLenSize;
-
-    const accountKeysStart = cursor;
-    const accountKeysBytes = accountCount * PUBLIC_KEY_LENGTH;
-
-    if (
-      accountKeysStart + accountKeysBytes + PUBLIC_KEY_LENGTH >
-      bytes.length
-    ) {
-      return null;
-    }
-
-    return {
-      payerOffset: accountKeysStart,
-      requiredSignatures,
-      numReadonlySigned,
-      numReadonlyUnsigned,
-      accountCount,
-    };
-  }
-
-  private locateMessageInfo(bytes: Uint8Array, messageOffset: number) {
-    const v0 = this.locatePayerInMessage(bytes, messageOffset, {
-      versioned: true,
-    });
-    if (v0) {
-      return {
-        accountKeysStart: v0.payerOffset,
-        accountCount: v0.accountCount,
-        kind: "v0" as const,
-      };
-    }
-
-    const legacy = this.locatePayerInMessage(bytes, messageOffset, {
-      versioned: false,
-    });
-    if (legacy) {
-      return {
-        accountKeysStart: legacy.payerOffset,
-        accountCount: legacy.accountCount,
-        kind: "legacy" as const,
-      };
-    }
-
-    return null;
-  }
-
-  private detectMessage(bytes: Uint8Array): MessageDetection {
-    const info = this.locateMessageInfo(bytes, 0);
-    if (!info) return null;
-    return {
-      accountKeysStart: info.accountKeysStart,
-      accountCount: info.accountCount,
-      kind: info.kind === "v0" ? "v0Message" : "legacyMessage",
-    };
-  }
-
-  private detectTransaction(bytes: Uint8Array): TransactionDetection {
-    let cursor = 0;
-
-    const signatureInfo = this.tryDecodeShortVec(bytes, cursor);
-    if (!signatureInfo) return null;
-
-    const { length: signatureCount, size: signatureLengthSize } = signatureInfo;
-
-    if (signatureCount < 1 || signatureCount > MAX_SIGNATURES) {
-      return null;
-    }
-
-    cursor += signatureLengthSize;
-
-    const signaturesStart = cursor;
-    const signaturesBytes = signatureCount * SIGNATURE_LENGTH;
-    const messageOffset = signaturesStart + signaturesBytes;
-
-    if (messageOffset > bytes.length) return null;
-
-    const info = this.locateMessageInfo(bytes, messageOffset);
-    if (!info) return null;
-
-    return {
-      accountKeysStart: info.accountKeysStart,
-      accountCount: info.accountCount,
-      signatureSectionStart: signaturesStart,
-      signatureCount,
-      kind: info.kind === "v0" ? "v0Tx" : "legacyTx",
-    };
   }
 }

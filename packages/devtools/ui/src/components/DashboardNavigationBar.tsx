@@ -4,6 +4,7 @@ import styled from "styled-components";
 export enum DashboardScreen {
   logs = "logs",
   inspector = "inspector",
+  mockCapture = "mockCapture",
   splitHorizontal = "splitHorizontal",
   splitVertical = "splitVertical",
 }
@@ -134,6 +135,14 @@ export const DashboardNavigationBar: React.FC<DashboardNavigationBarProps> = ({
         >
           <ConnectionIndicator $connected={isInspectorConnected} />
           Inspector
+        </NavButton>
+        <NavButton
+          $isActive={currentScreen === DashboardScreen.mockCapture}
+          $isConnected={isLoggerConnected}
+          onClick={() => onScreenChange(DashboardScreen.mockCapture)}
+        >
+          <ConnectionIndicator $connected={isLoggerConnected} />
+          Mock Capture
         </NavButton>
       </NavGroup>
 

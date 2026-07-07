@@ -19,17 +19,17 @@ jobs:
     name: Run tests and Sonar scan
     runs-on: ledgerhq-device-sdk
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           fetch-depth: 0
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@develop
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
       - name: Tests
         id: unit-tests
         run: pnpm test:coverage
 
-      - uses: sonarsource/sonarqube-scan-action@v7
+      - uses: sonarsource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
         if: ${{ steps.unit-tests.conclusion == 'success' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

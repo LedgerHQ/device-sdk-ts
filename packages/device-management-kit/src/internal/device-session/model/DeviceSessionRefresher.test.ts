@@ -163,7 +163,7 @@ describe("DeviceSessionRefresher", () => {
     // Trigger NEW_STATE event to start the refresher timer
     subject.next({ eventName: SessionEvents.NEW_STATE });
 
-    const timerInterval = validInterval * 2;
+    const timerInterval = validInterval;
 
     vi.advanceTimersByTime(timerInterval * 3);
 

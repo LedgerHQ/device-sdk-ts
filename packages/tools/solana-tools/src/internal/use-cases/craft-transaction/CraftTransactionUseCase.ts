@@ -17,6 +17,7 @@ export class CraftTransactionUseCase {
     transactionSignature?: string;
     rpcUrl?: string;
     skipOpenApp?: boolean;
+    replacements?: Readonly<Record<string, string>>;
   }): CraftTransactionDAReturnType {
     return this.appBinder.craftTransaction(args);
   }

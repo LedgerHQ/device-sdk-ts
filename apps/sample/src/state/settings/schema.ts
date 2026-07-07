@@ -22,7 +22,7 @@ export type TransportType = "default" | "speculos" | "mockserver";
 export type TransportConfig =
   | { type: "default" }
   | { type: "speculos"; url: string; deviceModelId: DeviceModelId }
-  | { type: "mockserver"; url: string };
+  | { type: "mockserver"; url: string; sessionToken?: string };
 
 function getInitialTransportType(): TransportType {
   const envTransport = process.env.DMK_CONFIG_TRANSPORT;
@@ -36,6 +36,7 @@ export type SettingsState = {
   // Transport settings
   transportType: TransportType;
   mockServerUrl: string;
+  mockServerSessionToken: string;
   speculosUrl: string;
   speculosVncUrl: string;
   speculosDeviceModel: DeviceModelId;
@@ -57,7 +58,8 @@ export type SettingsState = {
 export const initialState: SettingsState = {
   // Transport settings
   transportType: getInitialTransportType(),
-  mockServerUrl: "http://127.0.0.1:8080/",
+  mockServerUrl: "http://127.0.0.1:9752/",
+  mockServerSessionToken: "",
   speculosUrl: DEFAULT_SPECULOS_URL,
   speculosVncUrl: DEFAULT_SPECULOS_VNC_URL,
   speculosDeviceModel: DeviceModelId.STAX,

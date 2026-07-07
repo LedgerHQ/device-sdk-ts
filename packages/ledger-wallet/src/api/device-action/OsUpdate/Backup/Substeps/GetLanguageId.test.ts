@@ -5,7 +5,7 @@ import {
 } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { GetLanguageIdError } from "@api/device-action/OsUpdate/Backup/BackupDeviceActionErrors";
+import { GetLanguageIdError } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 import { getLanguageId } from "@api/device-action/OsUpdate/Backup/Substeps/GetLanguageId";
 
 describe("GetLanguageId", () => {

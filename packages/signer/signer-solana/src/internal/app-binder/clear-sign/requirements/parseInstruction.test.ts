@@ -1,80 +1,70 @@
 import {
   accountReset,
-  bytes,
-  instructionInfo,
+  constantValue,
+  descriptor,
+  tokenAmountDisplayField,
   tokenValue,
   trustedNameDisplayField,
-  value,
   valueFlowPort,
-} from "./__tests__/fixtures/tlvBuilders";
-import { type InstructionDescriptor, SubstructureKind } from "./model";
+} from "./__tests__/fixtures/calBuilders";
 import { parseInstructionDescriptor } from "./parseInstruction";
-import { TokenKind } from "./records";
-
-function descriptor(
-  substructures: { kind: SubstructureKind; data: Uint8Array }[],
-): InstructionDescriptor {
-  return {
-    discriminator: "00",
-    instructionInfo: instructionInfo({ typePool: bytes(0x00), rootType: 0 }),
-    substructures,
-    enumCache: new Map(),
-  };
-}
+import {
+  PARAM_TYPE_TOKEN_AMOUNT,
+  PARAM_TYPE_TRUSTED_NAME,
+  TokenKind,
+} from "./records";
 
 describe("parseInstructionDescriptor", () => {
-  it("groups substructures by kind", () => {
+  it("maps the decoded substructures into grouped records", () => {
     const parsed = parseInstructionDescriptor(
-      descriptor([
-        {
-          kind: SubstructureKind.VALUE_FLOW_PORT,
-          data: valueFlowPort({
+      descriptor({
+        valueFlowPorts: [
+          valueFlowPort({
             accountIndex: 0,
-            tokenValue: tokenValue(TokenKind.NATIVE),
+            tokenValue: tokenValue("NATIVE"),
           }),
-        },
-        {
-          kind: SubstructureKind.ACCOUNT_RESET,
-          data: accountReset({ accountIndex: 1, requirePreBalanceZero: true }),
-        },
-        {
-          kind: SubstructureKind.DISPLAY_FIELD,
-          data: trustedNameDisplayField(value(0x01, bytes(2))),
-        },
-      ]),
+        ],
+        accountResets: [
+          accountReset({ accountIndex: 1, requirePreBalanceZero: true }),
+        ],
+        displayFields: [
+          trustedNameDisplayField(constantValue(new Uint8Array(32).fill(2))),
+        ],
+      }),
     );
     expect(parsed.valueFlowPorts).toHaveLength(1);
-    expect(parsed.accountResets).toHaveLength(1);
-    expect(parsed.displayFields).toHaveLength(1);
-  });
-
-  it("ignores HIDE_RULE substructures (out of scope here)", () => {
-    const parsed = parseInstructionDescriptor(
-      descriptor([
-        { kind: SubstructureKind.HIDE_RULE, data: bytes(0x01, 0x01, 0x00) },
-      ]),
-    );
-    expect(parsed.valueFlowPorts).toEqual([]);
-    expect(parsed.accountResets).toEqual([]);
-    expect(parsed.displayFields).toEqual([]);
+    expect(parsed.valueFlowPorts[0]!.tokenValue?.kind).toBe(TokenKind.NATIVE);
+    expect(parsed.accountResets).toEqual([
+      { accountIndex: 1, requirePreBalanceZero: true },
+    ]);
+    expect(parsed.displayFields[0]!.paramType).toBe(PARAM_TYPE_TRUSTED_NAME);
   });
 
   it("keeps multiple substructures of the same kind in order", () => {
     const parsed = parseInstructionDescriptor(
-      descriptor([
-        {
-          kind: SubstructureKind.VALUE_FLOW_PORT,
-          data: valueFlowPort({ accountIndex: 0 }),
-        },
-        {
-          kind: SubstructureKind.VALUE_FLOW_PORT,
-          data: valueFlowPort({ accountIndex: 1 }),
-        },
-      ]),
+      descriptor({
+        valueFlowPorts: [
+          valueFlowPort({ accountIndex: 0 }),
+          valueFlowPort({ accountIndex: 1 }),
+        ],
+      }),
     );
     expect(parsed.valueFlowPorts.map((port) => port.accountIndices)).toEqual([
       [0],
       [1],
     ]);
+  });
+
+  it("maps a PARAM_TOKEN_AMOUNT display field's token reference", () => {
+    const parsed = parseInstructionDescriptor(
+      descriptor({
+        displayFields: [
+          tokenAmountDisplayField(constantValue(new Uint8Array(32).fill(3))),
+        ],
+      }),
+    );
+    const field = parsed.displayFields[0]!;
+    expect(field.paramType).toBe(PARAM_TYPE_TOKEN_AMOUNT);
+    expect(field.token).toBeDefined();
   });
 });

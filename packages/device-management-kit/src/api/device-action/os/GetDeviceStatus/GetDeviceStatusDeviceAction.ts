@@ -1,22 +1,7 @@
 import { Left, Right } from "purify-ts";
-import {
-  EMPTY,
-  from,
-  interval,
-  mergeMap,
-  type Observable,
-  of,
-  switchMap,
-  take,
-} from "rxjs";
-import { timeout } from "rxjs/operators";
-import { assign, fromObservable, fromPromise, setup } from "xstate";
+import { assign, fromPromise, setup } from "xstate";
 
 import { isSuccessCommandResult } from "@api/command/model/CommandResult";
-import {
-  GetAppAndVersionCommand,
-  type GetAppAndVersionCommandResult,
-} from "@api/command/os/GetAppAndVersionCommand";
 import {
   GetOsVersionCommand,
   type GetOsVersionCommandResult,
@@ -26,10 +11,8 @@ import { DeviceStatus } from "@api/device/DeviceStatus";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
 import { DEFAULT_UNLOCK_TIMEOUT_MS } from "@api/device-action/os/Const";
-import {
-  DeviceLockedError,
-  DeviceNotOnboardedError,
-} from "@api/device-action/os/Errors";
+import { DeviceNotOnboardedError } from "@api/device-action/os/Errors";
+import { WaitForAppAndVersionDeviceAction } from "@api/device-action/os/WaitForAppAndVersion/WaitForAppAndVersionDeviceAction";
 import { type StateMachineTypes } from "@api/device-action/xstate-utils/StateMachineTypes";
 import {
   type DeviceActionStateMachine,
@@ -40,7 +23,7 @@ import {
   DeviceSessionStateType,
   type FirmwareVersion,
 } from "@api/device-session/DeviceSessionState";
-import { isDashboardName, LEDGER_OS_NAME } from "@api/utils/AppName";
+import { isDashboardName } from "@api/utils/AppName";
 
 import {
   type GetDeviceStatusDAError,
@@ -52,7 +35,6 @@ import {
 
 type GetDeviceStatusMachineInternalState = {
   readonly onboarded: boolean;
-  readonly locked: boolean;
   readonly currentApp: string | null;
   readonly currentAppVersion: string | null;
   readonly osVersionMetadata: GetOsVersionResponse | null;
@@ -60,12 +42,8 @@ type GetDeviceStatusMachineInternalState = {
 };
 
 export type MachineDependencies = {
-  readonly getAppAndVersion: () => Promise<GetAppAndVersionCommandResult>;
   readonly getOsVersion: () => Promise<GetOsVersionCommandResult>;
   readonly getDeviceSessionState: () => DeviceSessionState;
-  readonly waitForDeviceUnlock: (args: {
-    input: { unlockTimeout: number };
-  }) => Observable<void>;
   readonly setDeviceSessionState: (
     state: DeviceSessionState,
   ) => DeviceSessionState;
@@ -108,13 +86,8 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       GetDeviceStatusMachineInternalState
     >;
 
-    const {
-      getAppAndVersion,
-      getOsVersion,
-      getDeviceSessionState,
-      setDeviceSessionState,
-      waitForDeviceUnlock,
-    } = this.extractDependencies(internalApi);
+    const { getOsVersion, getDeviceSessionState, setDeviceSessionState } =
+      this.extractDependencies(internalApi);
 
     const unlockTimeout = this.input.unlockTimeout ?? DEFAULT_UNLOCK_TIMEOUT_MS;
     const allowNonOnboardedDevice = this.input.allowNonOnboardedDevice ?? true;
@@ -132,6 +105,12 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       });
     };
 
+    const waitForAppAndVersion = new WaitForAppAndVersionDeviceAction({
+      input: {
+        unlockTimeout,
+      },
+    }).makeStateMachine(internalApi);
+
     return setup({
       types: {
         input: {
@@ -142,9 +121,8 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
         output: {} as types["output"],
       },
       actors: {
-        getAppAndVersion: fromPromise(getAppAndVersion),
+        waitForAppAndVersion,
         getOsVersion: fromPromise(getOsVersion),
-        waitForDeviceUnlock: fromObservable(waitForDeviceUnlock),
       },
       guards: {
         isCurrentAppBolos: ({ context }) =>
@@ -160,7 +138,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             secureElementFlags?.isOnboarded === false
           );
         },
-        isDeviceLocked: ({ context }) => context._internalState.locked,
         hasError: ({ context }) => context._internalState.error !== null,
       },
       actions: {
@@ -170,36 +147,11 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             error: new DeviceNotOnboardedError(),
           }),
         }),
-        assignErrorDeviceLocked: assign({
-          _internalState: (_) => ({
-            ..._.context._internalState,
-            error: new DeviceLockedError(),
-          }),
-          intermediateValue: {
-            requiredUserInteraction: UserInteractionRequired.UnlockDevice,
-            step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
-          },
-        }),
         assignErrorFromEvent: assign({
           _internalState: (_) => ({
             ..._.context._internalState,
             error: _.event["error"], // NOTE: it should never happen, the error is not typed anymore here
           }),
-        }),
-        assignNoUserActionNeeded: assign({
-          intermediateValue: (_) =>
-            ({
-              ..._.context.intermediateValue,
-              requiredUserInteraction: UserInteractionRequired.None,
-            }) satisfies types["context"]["intermediateValue"],
-        }),
-        assignUserActionUnlockNeeded: assign({
-          intermediateValue: (_) =>
-            ({
-              ..._.context.intermediateValue,
-              requiredUserInteraction: UserInteractionRequired.UnlockDevice,
-              step: getDeviceStatusDAStateStep.UNLOCK_DEVICE,
-            }) satisfies types["context"]["intermediateValue"],
         }),
       },
     }).createMachine({
@@ -216,11 +168,10 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           },
           intermediateValue: {
             requiredUserInteraction: UserInteractionRequired.None,
-            step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            step: getDeviceStatusDAStateStep.WAIT_FOR_APP_AND_VERSION,
           },
           _internalState: {
             onboarded: false,
-            locked: false,
             currentApp:
               sessionStateType ===
               DeviceSessionStateType.ReadyWithoutSecureChannel
@@ -235,79 +186,70 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
       states: {
         DeviceReady: {
           always: {
-            target: "AppAndVersionCheck",
+            target: "WaitForAppAndVersion",
           },
         },
-        AppAndVersionCheck: {
+        WaitForAppAndVersion: {
           // We check the current app and version using the getAppAndVersion
           // command. This command is supported both on the dashboard (BOLOS)
           // and inside applications, so it is used to determine the currently
           // running app before deciding whether to read the OS version.
           invoke: {
-            src: "getAppAndVersion",
-            onDone: {
-              target: "ApplicationAvailableResultCheck",
+            src: "waitForAppAndVersion",
+            input: (_) => ({
+              unlockTimeout: _.context.input.unlockTimeout,
+            }),
+            onSnapshot: {
               actions: assign({
-                _internalState: (_) => {
-                  if (isSuccessCommandResult(_.event.output)) {
-                    const state: DeviceSessionState = getDeviceSessionState();
-                    if (
-                      state.sessionStateType !==
-                      DeviceSessionStateType.Connected
-                    ) {
-                      // Update the current app
-                      setDeviceSessionState({
-                        ...state,
-                        currentApp: _.event.output.data,
-                      });
-                    } else {
-                      // The device can be set to Ready if GetAppAndVersionCommand was successful.
-                      // The firmware version and secure connection flag are enriched later from
-                      // the OS version, which can only be read on the dashboard.
-                      setDeviceSessionState({
-                        deviceModelId: state.deviceModelId,
-                        sessionStateType:
-                          DeviceSessionStateType.ReadyWithoutSecureChannel,
-                        deviceStatus: DeviceStatus.CONNECTED,
-                        currentApp: _.event.output.data,
-                        installedApps: [],
-                        isSecureConnectionAllowed: false,
-                      });
-                    }
-                    return {
-                      ..._.context._internalState,
-                      locked: false,
-                      currentApp: _.event.output.data.name,
-                      currentAppVersion: _.event.output.data.version,
-                    };
-                  }
-                  if ("errorCode" in _.event.output.error) {
-                    if (_.event.output.error.errorCode === "5515") {
-                      // Locked device error
-                      return {
+                intermediateValue: (_) => ({
+                  ..._.context.intermediateValue,
+                  requiredUserInteraction:
+                    _.event.snapshot.context.intermediateValue
+                      .requiredUserInteraction,
+                }),
+              }),
+            },
+            onDone: {
+              target: "WaitForAppAndVersionResultCheck",
+              actions: assign({
+                _internalState: (_): GetDeviceStatusMachineInternalState => {
+                  return _.event.output.caseOf<GetDeviceStatusMachineInternalState>(
+                    {
+                      Left: (error) => ({
                         ..._.context._internalState,
-                        locked: true,
-                      };
-                    } else if (_.event.output.error.errorCode === "6e00") {
-                      // CLA not supported
-                      // GetAppAndVersion should always be supported by the firmware or any app.
-                      // But on old firmware versions, that APDU was not supported in the dashboard.
-                      // On those firmwares, it fails with CLA_NOT_SUPPORTED in BOLOS, and INS_NOT_SUPPORTED
-                      // in applications. Therefore if CLA is not supported, we can consider we're on the
-                      // dashboard on an old firmware. We should therefore return that information to
-                      // ensure the user can still update his firmware and is not blocked at this step.
-                      return {
-                        ..._.context._internalState,
-                        locked: false,
-                        currentApp: LEDGER_OS_NAME,
-                        currentAppVersion: "0.0.0",
-                      };
-                    }
-                  }
-                  return {
-                    ..._.context._internalState,
-                    error: _.event.output.error,
-                  };
+                        error,
+                      }),
+                      Right: (output) => {
+                        const state: DeviceSessionState =
+                          getDeviceSessionState();
+                        if (
+                          state.sessionStateType !==
+                          DeviceSessionStateType.Connected
+                        ) {
+                          // Update the current app
+                          setDeviceSessionState({
+                            ...state,
+                            currentApp: output,
+                          });
+                        } else {
+                          setDeviceSessionState({
+                            deviceModelId: state.deviceModelId,
+                            sessionStateType:
+                              DeviceSessionStateType.ReadyWithoutSecureChannel,
+                            deviceStatus: DeviceStatus.CONNECTED,
+                            currentApp: output,
+                            installedApps: [],
+                            isSecureConnectionAllowed: false,
+                          });
+                        }
+                        return {
+                          ..._.context._internalState,
+                          currentApp: output.name,
+                          currentAppVersion: output.version,
+                        };
+                      },
+                    },
+                  );
                 },
               }),
             },
@@ -317,15 +259,11 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             },
           },
         },
-        ApplicationAvailableResultCheck: {
+        WaitForAppAndVersionResultCheck: {
           always: [
             {
               guard: "hasError",
               target: "Error",
-            },
-            {
-              target: "UserActionUnlockDevice",
-              guard: "isDeviceLocked",
             },
             {
               target: "OnboardingCheck",
@@ -333,6 +271,13 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
           ],
         },
         OnboardingCheck: {
+          entry: assign({
+            intermediateValue: (_) => ({
+              ..._.context.intermediateValue,
+              requiredUserInteraction: UserInteractionRequired.None,
+              step: getDeviceStatusDAStateStep.ONBOARD_CHECK,
+            }),
+          }),
           always: [
             {
               // The OS version (and thus the onboarding flag) can only be read
@@ -408,31 +353,6 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
             },
           ],
         },
-        UserActionUnlockDevice: {
-          // we wait for the device to be unlocked (default timeout is 15s)
-          entry: "assignUserActionUnlockNeeded",
-          exit: "assignNoUserActionNeeded",
-          invoke: {
-            id: "UserActionUnlockDevice",
-            src: "waitForDeviceUnlock",
-            input: (_) => ({
-              unlockTimeout,
-            }),
-            onDone: {
-              target: "AppAndVersionCheck",
-              actions: assign({
-                _internalState: (_) => ({
-                  ..._.context._internalState,
-                  locked: false,
-                }),
-              }),
-            },
-            onError: {
-              target: "Error",
-              actions: "assignErrorDeviceLocked",
-            },
-          },
-        },
         Success: {
           type: "final",
         },
@@ -456,37 +376,8 @@ export class GetDeviceStatusDeviceAction extends XStateDeviceAction<
   }
 
   extractDependencies(internalApi: InternalApi): MachineDependencies {
-    const getAppAndVersion = () => {
-      return internalApi.sendCommand(new GetAppAndVersionCommand());
-    };
-
-    const waitForDeviceUnlock = ({
-      input,
-    }: {
-      input: { unlockTimeout: number };
-    }) =>
-      interval(1000).pipe(
-        switchMap(() =>
-          from(internalApi.sendCommand(new GetAppAndVersionCommand())),
-        ),
-        mergeMap((output) => {
-          const isLocked =
-            !isSuccessCommandResult(output) &&
-            "errorCode" in output.error &&
-            output.error.errorCode === "5515";
-          if (isLocked) {
-            return EMPTY; // Continue the polling
-          }
-          return of(undefined); // Complete the observable
-        }),
-        take(1),
-        timeout(input.unlockTimeout),
-      );
-
     return {
-      getAppAndVersion,
       getOsVersion: () => internalApi.sendCommand(new GetOsVersionCommand()),
-      waitForDeviceUnlock,
       getDeviceSessionState: () => internalApi.getDeviceSessionState(),
       setDeviceSessionState: (state: DeviceSessionState) =>
         internalApi.setDeviceSessionState(state),

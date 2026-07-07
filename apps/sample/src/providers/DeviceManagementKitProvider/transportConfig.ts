@@ -49,7 +49,7 @@ export function getTransportFactoriesForConfig(
   transportConfig: TransportConfig,
 ): {
   factories: TransportFactory[];
-  config?: { mockUrl: string };
+  config?: { mockUrl: string; webSocketUrl?: string };
 } {
   switch (transportConfig.type) {
     case "speculos":
@@ -64,12 +64,33 @@ export function getTransportFactoriesForConfig(
       };
     case "mockserver":
       return {
-        factories: [mockserverTransportFactory],
-        config: { mockUrl: transportConfig.url },
+        factories: [
+          mockserverTransportFactory(
+            transportConfig.url,
+            transportConfig.sessionToken,
+          ),
+        ],
+        config: {
+          mockUrl: transportConfig.url,
+          // Point the secure channel at the mock ScriptRunner WebSocket. The
+          // session token is embedded in the path because the secure-channel
+          // WebSocket carries no bearer header.
+          ...(transportConfig.sessionToken
+            ? {
+                webSocketUrl: `${toWebSocketUrl(transportConfig.url)}/secure-channel/${transportConfig.sessionToken}`,
+              }
+            : {}),
+        },
       };
     default:
       return {
         factories: [webHidTransportFactory, webBleTransportFactory],
       };
   }
+}
+
+/** Convert an http(s) mock-server URL to its ws(s) equivalent (no trailing slash). */
+function toWebSocketUrl(httpUrl: string): string {
+  const trimmed = httpUrl.endsWith("/") ? httpUrl.slice(0, -1) : httpUrl;
+  return trimmed.replace(/^https:/, "wss:").replace(/^http:/, "ws:");
 }

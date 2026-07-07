@@ -7,8 +7,6 @@ import { inject, injectable } from "inversify";
 import { type CraftTransactionDAReturnType } from "@api/app-binder/CraftTransactionDeviceActionTypes";
 import { type GenerateTransactionDAReturnType } from "@api/app-binder/GenerateTransactionDeviceActionTypes";
 import { externalTypes } from "@internal/externalTypes";
-import { servicesTypes } from "@internal/services/di/servicesTypes";
-import { type TransactionFetcherService } from "@internal/services/TransactionFetcherService";
 
 import { CraftTransactionDeviceAction } from "./device-action/CraftTransactionDeviceAction";
 import { GenerateTransactionDeviceAction } from "./device-action/GenerateTransactionDeviceAction";
@@ -18,8 +16,6 @@ export class SolanaToolsAppBinder {
   constructor(
     @inject(externalTypes.Dmk) private dmk: DeviceManagementKit,
     @inject(externalTypes.SessionId) private sessionId: DeviceSessionId,
-    @inject(servicesTypes.TransactionFetcherService)
-    private transactionFetcherService: TransactionFetcherService,
   ) {}
 
   generateTransaction(args: {
@@ -43,6 +39,7 @@ export class SolanaToolsAppBinder {
     transactionSignature?: string;
     rpcUrl?: string;
     skipOpenApp?: boolean;
+    replacements?: Readonly<Record<string, string>>;
   }): CraftTransactionDAReturnType {
     return this.dmk.executeDeviceAction({
       sessionId: this.sessionId,
@@ -53,7 +50,7 @@ export class SolanaToolsAppBinder {
           transactionSignature: args.transactionSignature,
           rpcUrl: args.rpcUrl,
           skipOpenApp: args.skipOpenApp,
-          transactionFetcherService: this.transactionFetcherService,
+          replacements: args.replacements,
         },
       }),
     });

@@ -1,11 +1,17 @@
 import {
   type DeviceActionState,
+  type GoToDashboardDAError,
+  type GoToDashboardDAIntermediateValue,
+  type GoToDashboardDARequiredInteraction,
+  type HexaString,
   type InstalledApp,
-  type KeyValueStorage,
   type ListInstalledAppsDAError,
   type ListInstalledAppsDAIntermediateValue,
   type ListInstalledAppsDARequiredInteraction,
   type UserInteractionRequired,
+  type WaitForAppAndVersionDAError,
+  type WaitForAppAndVersionDAIntermediateValue,
+  type WaitForAppAndVersionDARequiredInteraction,
 } from "@ledgerhq/device-management-kit";
 
 import {
@@ -13,61 +19,67 @@ import {
   type DownloadCustomLockScreenDAIntermediateValue,
   type DownloadCustomLockScreenDARequiredInteraction,
 } from "@api/device-action/DownloadCustomLockScreen/types";
-import { type BackupDeviceActionErrors } from "@api/device-action/OsUpdate/Backup/BackupDeviceActionErrors";
+import { type CreateBackupDeviceActionErrors } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 
-export type BackupDAInput = {
-  isDeviceOnboarded: boolean;
-  deviceId: string;
-  storage: KeyValueStorage;
+export type CreateBackupDAInput = {
   unlockTimeout: number;
 };
 
-export type BackupDAOutput = void;
+export type CreateBackupDAOutput = Backup;
 
-export type BackupDAError =
+export type CreateBackupDAError =
+  | WaitForAppAndVersionDAError
+  | GoToDashboardDAError
   | ListInstalledAppsDAError
   | DownloadCustomLockScreenDAError
-  | BackupDeviceActionErrors;
+  | CreateBackupDeviceActionErrors;
 
-export type BackupDAIntermediateValue = (
+export type CreateBackupDAIntermediateValue = (
+  | WaitForAppAndVersionDAIntermediateValue
+  | GoToDashboardDAIntermediateValue
   | ListInstalledAppsDAIntermediateValue
   | DownloadCustomLockScreenDAIntermediateValue
 ) & {
-  step: BackupSteps;
+  step: CreateBackupSteps;
 };
 
-export type BackupDARequiredInteraction =
+export type CreateBackupDARequiredInteraction =
+  | WaitForAppAndVersionDARequiredInteraction
+  | GoToDashboardDARequiredInteraction
   | ListInstalledAppsDARequiredInteraction
   | DownloadCustomLockScreenDARequiredInteraction
   | UserInteractionRequired.None;
 
-export type BackupDAInternalState = {
-  error: BackupDAError | null;
+export type CreateBackupDAInternalState = {
+  error: CreateBackupDAError | null;
+  currentApp: string | null;
+  isDeviceOnboarded: boolean;
   languageId: number | undefined;
   installedApps: InstalledApp[];
   backupApps: BackupApp[];
   clsHexImage: string | undefined;
-  backupAlreadyExist: boolean;
 };
 
-export type BackupDAState = DeviceActionState<
-  BackupDAOutput,
-  BackupDAError,
-  BackupDAIntermediateValue
+export type CreateBackupDAState = DeviceActionState<
+  CreateBackupDAOutput,
+  CreateBackupDAError,
+  CreateBackupDAIntermediateValue
 >;
 
-export enum BackupSteps {
+export enum CreateBackupSteps {
   Idle = "idle",
+  WaitForAppAndVersion = "waitForAppAndVersion",
+  GoToDashboard = "goToDashboard",
+  GetIsOnboarded = "getIsOnboarded",
   GetLanguage = "getLanguage",
   ListInstalledApps = "listInstalledApps",
   BackupAppsStorage = "backupAppsStorage",
   DownloadCustomLockScreen = "downloadCustomLockScreen",
-  SaveBackup = "saveBackup",
 }
 
 export type BackupApp = {
   appName: string;
-  data: string | undefined;
+  data: HexaString | undefined;
 };
 
 export type Backup = {

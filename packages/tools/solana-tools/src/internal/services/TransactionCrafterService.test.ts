@@ -1,4 +1,19 @@
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  AddressLookupTableAccount,
+  ComputeBudgetProgram,
+  PublicKey,
+  SystemProgram,
+  TransactionInstruction,
+  TransactionMessage,
+  VersionedMessage,
+  VersionedTransaction,
+} from "@solana/web3.js";
+
+import {
+  getAssociatedTokenAddressSync,
+  TOKEN_2022_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@internal/services/utils/splToken";
 
 function toBase64(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString("base64");
@@ -18,7 +33,12 @@ vi.mock("@ledgerhq/device-management-kit", () => ({
   },
 }));
 
-import { TransactionCrafterService } from "./TransactionCrafterService";
+import {
+  type CraftOptions,
+  TransactionCrafterService,
+} from "./TransactionCrafterService";
+
+const BLOCKHASH = "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg";
 
 describe("TransactionCrafterService", () => {
   const crafter = new TransactionCrafterService();
@@ -32,111 +52,322 @@ describe("TransactionCrafterService", () => {
     "7Np41oeYqPefeNQEHSv1UDhYrehxin3NStELsSKCT4K2",
   );
 
-  function buildLegacyMessageBase64(): string {
-    const tx = new Transaction({
-      recentBlockhash: "a3PD566oU2nE9JHwuC897aaT7ispdqaQ63Si6jzyKAg",
-      feePayer: oldPayer,
-    });
-    tx.add(
-      SystemProgram.transfer({
-        fromPubkey: oldPayer,
-        toPubkey: recipient,
-        lamports: 1_000_000,
-      }),
+  function craft(base64: string, options: CraftOptions): VersionedMessage {
+    return VersionedMessage.deserialize(
+      fromBase64(crafter.getCraftedTransaction(base64, options)),
     );
-    tx.signatures = [{ publicKey: oldPayer, signature: null }];
-    const msg = tx.serializeMessage();
-    return toBase64(msg);
   }
 
-  describe("getCraftedTransaction", () => {
+  function legacyTransferMessage(): string {
+    const message = new TransactionMessage({
+      payerKey: oldPayer,
+      recentBlockhash: BLOCKHASH,
+      instructions: [
+        SystemProgram.transfer({
+          fromPubkey: oldPayer,
+          toPubkey: recipient,
+          lamports: 1_000_000,
+        }),
+      ],
+    }).compileToLegacyMessage();
+    return toBase64(message.serialize());
+  }
+
+  describe("auto-detect mode", () => {
     it("should replace the payer in a legacy message", () => {
-      const original = buildLegacyMessageBase64();
-      const crafted = crafter.getCraftedTransaction(
-        original,
-        newPayer.toBase58(),
-      );
+      const crafted = craft(legacyTransferMessage(), {
+        payer: newPayer.toBase58(),
+      });
 
-      expect(crafted).not.toEqual(original);
-
-      const craftedBytes = fromBase64(crafted);
-      expect(craftedBytes.length).toBeGreaterThan(0);
-
-      const craftedHex = Buffer.from(craftedBytes).toString("hex");
-      const newPayerHex = Buffer.from(newPayer.toBytes()).toString("hex");
-      expect(craftedHex).toContain(newPayerHex);
-
-      const oldPayerHex = Buffer.from(oldPayer.toBytes()).toString("hex");
-      expect(craftedHex).not.toContain(oldPayerHex);
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(newPayer.toBase58());
+      expect(keys).not.toContain(oldPayer.toBase58());
     });
 
-    it("should preserve the recipient key", () => {
-      const original = buildLegacyMessageBase64();
-      const crafted = crafter.getCraftedTransaction(
-        original,
-        newPayer.toBase58(),
-      );
+    it("should preserve the recipient and the blockhash", () => {
+      const crafted = craft(legacyTransferMessage(), {
+        payer: newPayer.toBase58(),
+      });
 
-      const craftedBytes = fromBase64(crafted);
-      const craftedHex = Buffer.from(craftedBytes).toString("hex");
-      const recipientHex = Buffer.from(recipient.toBytes()).toString("hex");
-      expect(craftedHex).toContain(recipientHex);
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(recipient.toBase58());
+      expect(crafted.recentBlockhash).toBe(BLOCKHASH);
     });
 
+    it("should re-point the old payer's ATA to the new payer's ATA", () => {
+      const mint = new PublicKey(
+        "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      );
+      const oldAta = getAssociatedTokenAddressSync(
+        mint,
+        oldPayer,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+      const newAta = getAssociatedTokenAddressSync(
+        mint,
+        newPayer,
+        true,
+        TOKEN_PROGRAM_ID,
+      );
+
+      const message = new TransactionMessage({
+        payerKey: oldPayer,
+        recentBlockhash: BLOCKHASH,
+        instructions: [
+          new TransactionInstruction({
+            programId: TOKEN_PROGRAM_ID,
+            keys: [
+              { pubkey: oldAta, isSigner: false, isWritable: true },
+              { pubkey: mint, isSigner: false, isWritable: false },
+              { pubkey: oldPayer, isSigner: true, isWritable: true },
+            ],
+            data: Buffer.from([3, 0, 0, 0, 0, 0, 0, 0, 0]),
+          }),
+        ],
+      }).compileToLegacyMessage();
+
+      const crafted = craft(toBase64(message.serialize()), {
+        payer: newPayer.toBase58(),
+      });
+
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(newAta.toBase58());
+      expect(keys).not.toContain(oldAta.toBase58());
+      // The mint is untouched.
+      expect(keys).toContain(mint.toBase58());
+    });
+
+    it("should re-point a TOKEN-2022 ATA", () => {
+      const mint = new PublicKey(
+        "9BcWFP4iAFmyT7QkpfRsTm6qkAxqYjZpFMDxZuTGZ6e9",
+      );
+      const oldAta = getAssociatedTokenAddressSync(
+        mint,
+        oldPayer,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      );
+      const newAta = getAssociatedTokenAddressSync(
+        mint,
+        newPayer,
+        true,
+        TOKEN_2022_PROGRAM_ID,
+      );
+
+      const message = new TransactionMessage({
+        payerKey: oldPayer,
+        recentBlockhash: BLOCKHASH,
+        instructions: [
+          new TransactionInstruction({
+            programId: TOKEN_2022_PROGRAM_ID,
+            keys: [
+              { pubkey: oldAta, isSigner: false, isWritable: true },
+              { pubkey: mint, isSigner: false, isWritable: false },
+              { pubkey: oldPayer, isSigner: true, isWritable: true },
+            ],
+            data: Buffer.from([3, 0, 0, 0, 0, 0, 0, 0, 0]),
+          }),
+        ],
+      }).compileToLegacyMessage();
+
+      const crafted = craft(toBase64(message.serialize()), {
+        payer: newPayer.toBase58(),
+      });
+
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(newAta.toBase58());
+      expect(keys).not.toContain(oldAta.toBase58());
+    });
+
+    it("should pass ComputeBudget instructions through untouched", () => {
+      const message = new TransactionMessage({
+        payerKey: oldPayer,
+        recentBlockhash: BLOCKHASH,
+        instructions: [
+          ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+          SystemProgram.transfer({
+            fromPubkey: oldPayer,
+            toPubkey: recipient,
+            lamports: 1_000_000,
+          }),
+        ],
+      }).compileToLegacyMessage();
+
+      const crafted = craft(toBase64(message.serialize()), {
+        payer: newPayer.toBase58(),
+      });
+
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(ComputeBudgetProgram.programId.toBase58());
+      expect(keys).toContain(newPayer.toBase58());
+    });
+
+    it("should be idempotent when payer is unchanged", () => {
+      const original = legacyTransferMessage();
+      const crafted = crafter.getCraftedTransaction(original, {
+        payer: oldPayer.toBase58(),
+      });
+      expect(crafted).toBe(original);
+    });
+  });
+
+  describe("round-trip", () => {
+    it("should reproduce the message when there are no replacements", () => {
+      const original = legacyTransferMessage();
+      const crafted = crafter.getCraftedTransaction(original, {});
+      expect(crafted).toBe(original);
+    });
+  });
+
+  describe("explicit-map mode with ALTs", () => {
+    const programId = new PublicKey(
+      "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+    );
+    const altSupplied = new PublicKey(
+      "So11111111111111111111111111111111111111112",
+    );
+    const replacement = new PublicKey(
+      "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB",
+    );
+
+    function lookupTable(): AddressLookupTableAccount {
+      return new AddressLookupTableAccount({
+        key: new PublicKey("HzMoc78z1VPHQwP1XQ3oM8oqkLW9bu2hZqScDpfEjBpd"),
+        state: {
+          // u64 max: an active (never deactivated) table.
+          deactivationSlot: 18446744073709551615n,
+          lastExtendedSlot: 0,
+          lastExtendedSlotStartIndex: 0,
+          authority: undefined,
+          addresses: [altSupplied],
+        },
+      });
+    }
+
+    function v0WithAltMessage(alt: AddressLookupTableAccount): string {
+      const message = new TransactionMessage({
+        payerKey: oldPayer,
+        recentBlockhash: BLOCKHASH,
+        instructions: [
+          new TransactionInstruction({
+            programId,
+            keys: [
+              { pubkey: oldPayer, isSigner: true, isWritable: true },
+              { pubkey: altSupplied, isSigner: false, isWritable: true },
+            ],
+            data: Buffer.from([]),
+          }),
+        ],
+      }).compileToV0Message([alt]);
+      return toBase64(message.serialize());
+    }
+
+    it("should promote a replaced ALT-supplied account into the static keys", () => {
+      const alt = lookupTable();
+      const original = VersionedMessage.deserialize(
+        fromBase64(v0WithAltMessage(alt)),
+      );
+      // Sanity check: the account is supplied via the lookup table, not static.
+      expect(original.staticAccountKeys.map((k) => k.toBase58())).not.toContain(
+        altSupplied.toBase58(),
+      );
+
+      const crafted = craft(v0WithAltMessage(alt), {
+        replacements: new Map([
+          [altSupplied.toBase58(), replacement.toBase58()],
+        ]),
+        addressLookupTableAccounts: [alt],
+      });
+
+      expect(crafted.version).toBe(0);
+      const staticKeys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(staticKeys).toContain(replacement.toBase58());
+
+      const decompiled = TransactionMessage.decompile(crafted, {
+        addressLookupTableAccounts: [alt],
+      });
+      const keys = decompiled.instructions[0]!.keys.map((k) =>
+        k.pubkey.toBase58(),
+      );
+      expect(keys).toContain(replacement.toBase58());
+      expect(keys).not.toContain(altSupplied.toBase58());
+    });
+
+    it("should let explicit pairs override auto-detect entries", () => {
+      const override = new PublicKey(
+        "9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM",
+      );
+      const crafted = craft(legacyTransferMessage(), {
+        payer: newPayer.toBase58(),
+        replacements: new Map([[oldPayer.toBase58(), override.toBase58()]]),
+      });
+
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(override.toBase58());
+      expect(keys).not.toContain(newPayer.toBase58());
+    });
+
+    it("should apply a replacement whose key has surrounding whitespace", () => {
+      const crafted = craft(legacyTransferMessage(), {
+        replacements: new Map([
+          [`  ${oldPayer.toBase58()}\n`, newPayer.toBase58()],
+        ]),
+      });
+
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(newPayer.toBase58());
+      expect(keys).not.toContain(oldPayer.toBase58());
+    });
+  });
+
+  describe("full transaction input", () => {
+    it("should drop signatures and emit the crafted message", () => {
+      const message = new TransactionMessage({
+        payerKey: oldPayer,
+        recentBlockhash: BLOCKHASH,
+        instructions: [
+          SystemProgram.transfer({
+            fromPubkey: oldPayer,
+            toPubkey: recipient,
+            lamports: 1_000_000,
+          }),
+        ],
+      }).compileToV0Message();
+      const transaction = new VersionedTransaction(message);
+
+      const crafted = craft(toBase64(transaction.serialize()), {
+        payer: newPayer.toBase58(),
+      });
+
+      const keys = crafted.staticAccountKeys.map((k) => k.toBase58());
+      expect(keys).toContain(newPayer.toBase58());
+      expect(keys).not.toContain(oldPayer.toBase58());
+    });
+  });
+
+  describe("errors", () => {
     it("should throw for invalid base64 input", () => {
       expect(() =>
-        crafter.getCraftedTransaction("!!!invalid!!!", newPayer.toBase58()),
+        crafter.getCraftedTransaction("!!!invalid!!!", {
+          payer: newPayer.toBase58(),
+        }),
       ).toThrow();
     });
 
-    it("should throw for invalid base58 payer key", () => {
-      const original = buildLegacyMessageBase64();
+    it("should throw for an invalid base58 payer key", () => {
       expect(() =>
-        crafter.getCraftedTransaction(original, "0OOO_not_base58"),
-      ).toThrow();
+        crafter.getCraftedTransaction(legacyTransferMessage(), {
+          payer: "0OOO_not_base58",
+        }),
+      ).toThrow("Failed to decode public key from base58.");
     });
 
     it("should throw for garbage binary input", () => {
       const garbage = toBase64(new Uint8Array([0, 1, 2, 3]));
       expect(() =>
-        crafter.getCraftedTransaction(garbage, newPayer.toBase58()),
+        crafter.getCraftedTransaction(garbage, { payer: newPayer.toBase58() }),
       ).toThrow();
-    });
-
-    it("should be idempotent when payer is the same", () => {
-      const original = buildLegacyMessageBase64();
-      const crafted = crafter.getCraftedTransaction(
-        original,
-        oldPayer.toBase58(),
-      );
-      expect(crafted).toEqual(original);
-    });
-  });
-
-  describe("decodeShortVec", () => {
-    it("should decode single-byte value", () => {
-      const bytes = new Uint8Array([5]);
-      const result = crafter.decodeShortVec(bytes, 0);
-      expect(result).toEqual({ length: 5, size: 1 });
-    });
-
-    it("should decode multi-byte value", () => {
-      const bytes = new Uint8Array([0x80, 0x01]);
-      const result = crafter.decodeShortVec(bytes, 0);
-      expect(result).toEqual({ length: 128, size: 2 });
-    });
-
-    it("should respect offset", () => {
-      const bytes = new Uint8Array([0xff, 3]);
-      const result = crafter.decodeShortVec(bytes, 1);
-      expect(result).toEqual({ length: 3, size: 1 });
-    });
-
-    it("should throw on overflow", () => {
-      const bytes = new Uint8Array([]);
-      expect(() => crafter.decodeShortVec(bytes, 0)).toThrow(
-        "shortvec decode overflow",
-      );
     });
   });
 });

@@ -1,8 +1,5 @@
 # Device Management Kit Library Documentation
 
-> [!CAUTION]
-> This is still under development and we are free to make new interfaces which may lead to Device Management Kit breaking changes.
-
 - [Device Management Kit Library Documentation](#device-management-kit-library-documentation)
   - [Description](#description)
   - [Installation](#installation)

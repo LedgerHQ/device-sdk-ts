@@ -39,12 +39,18 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
-  "dependencies": {},
+  "dependencies": {
+    "purify-ts": "catalog:"
+  },
   "devDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:^",
     "@ledgerhq/ldmk-tool": "workspace:^",
     "@ledgerhq/eslint-config-dsdk": "workspace:^",
     "@ledgerhq/prettier-config-dsdk": "workspace:^",
     "@ledgerhq/tsconfig-dsdk": "workspace:^",
     "@ledgerhq/vitest-config-dmk": "workspace:^"
+  },
+  "peerDependencies": {
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

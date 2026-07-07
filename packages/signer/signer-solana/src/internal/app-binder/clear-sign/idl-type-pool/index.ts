@@ -5,6 +5,7 @@ export { decodeArgumentPath } from "./decodeArgumentPath";
 export { findSelectedEnumVariants } from "./findSelectedEnumVariants";
 export * from "./kinds";
 export { parseInlinePayload, parsePool } from "./parsePool";
+export { type CalTypePoolEntry, poolFromJson } from "./poolFromJson";
 export { decode, decodePoolBytes } from "./TypePoolDecoder";
 export {
   DecodeBudgetExceededError,

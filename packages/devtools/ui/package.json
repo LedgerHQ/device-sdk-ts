@@ -40,6 +40,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@ledgerhq/device-mockserver-client": "workspace:^",
     "@ledgerhq/react-ui": "catalog:",
     "@tanstack/react-table": "8.20.5",
     "@tanstack/react-virtual": "3.10.8",

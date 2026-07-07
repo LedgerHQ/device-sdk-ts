@@ -17,11 +17,11 @@ export {
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
 export {
-  BackupStorageCommand,
-  type BackupStorageCommandErrorCodes,
-  type BackupStorageCommandResponse,
-  type BackupStorageCommandResult,
-} from "@api/command/os/BackupStorageCommand";
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
+  type BackupAppStorageCommandResult,
+} from "@api/command/os/BackupAppStorageCommand";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
   DeleteLanguagePackCommand,
@@ -58,6 +58,13 @@ export {
   GetOsVersionCommand,
   type GetOsVersionResponse,
 } from "@api/command/os/GetOsVersionCommand";
+export {
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  InitRestoreAppStorageCommandError,
+  type InitRestoreAppStorageCommandErrorCodes,
+  type InitRestoreAppStorageCommandResult,
+} from "@api/command/os/InitRestoreAppStorageCommand";
 export {
   type ListAppsArgs,
   ListAppsCommand,
@@ -167,10 +174,6 @@ export { InstallAppDeviceAction } from "@api/secure-channel/device-action/Instal
 export { ListInstalledAppsDeviceAction } from "@api/secure-channel/device-action/ListInstalledApps/ListInstalledAppsDeviceAction";
 export type { InstalledApp } from "@api/secure-channel/device-action/ListInstalledApps/types";
 export { UninstallAppDeviceAction } from "@api/secure-channel/device-action/UninstallApp/UninstallAppDeviceAction";
-export {
-  DMK_STORAGE_PREFIX_KEY,
-  type KeyValueStorage,
-} from "@api/storage/KeyValueStorage";
 export { SecureChannelError } from "@internal/secure-channel/model/Errors";
 // TODO: remove from exported
 export { defaultApduReceiverServiceStubBuilder } from "@api/device-session/service/DefaultApduReceiverService.stub";
@@ -214,6 +217,7 @@ export {
   type ApplicationResolver,
   type ResolvedApp,
 } from "@api/utils/ApplicationResolver";
+export { isDashboardName } from "@api/utils/AppName";
 export {
   base64StringToBuffer,
   bufferToBase64String,
