@@ -28,7 +28,26 @@ export const LIST_APPS_CONTINUE_PREFIX = "e0df0000";
 export const GET_DEVICE_NAME_CLEANING_PREFIX = "e0500000";
 export const GET_DEVICE_NAME_PREFIX = "e0d20000";
 
+/**
+ * Custom Lock Screen commands (CLA 0xe0), matched on their cla+ins prefix. The
+ * mock models a device with no lock screen image loaded (an "empty" device), so
+ * read commands report empty and mutation commands succeed.
+ */
+export const CLS_CREATE_PREFIX = "e060"; // CreateBackgroundImage
+export const CLS_UPLOAD_PREFIX = "e061"; // UploadBackgroundImageChunk
+export const CLS_COMMIT_PREFIX = "e062"; // CommitBackgroundImage
+export const CLS_DELETE_PREFIX = "e063"; // DeleteBackgroundImage
+export const CLS_GET_SIZE_PREFIX = "e064"; // GetBackgroundImageSize
+export const CLS_FETCH_CHUNK_PREFIX = "e065"; // FetchBackgroundImageChunk
+export const CLS_GET_HASH_PREFIX = "e066"; // GetBackgroundImageHash
+
 const STATUS_OK = "9000";
+
+/** SW returned by CLS read/delete commands when no image is loaded (`662e`). */
+const CLS_NO_IMAGE_SW = "662e";
+
+/** GetBackgroundImageSize response for an empty device: size 0 + success SW. */
+const CLS_EMPTY_SIZE_RESPONSE = "00000000" + STATUS_OK;
 
 /** Upper-16-bit target-id mask per device model (lower bits are `0x0004`). */
 const TARGET_ID_MASK: Record<string, number> = {
@@ -254,6 +273,34 @@ export function deriveGetBatteryStatus(
 }
 
 /**
+ * Derived response for a Custom Lock Screen command (CLA 0xe0, INS 0x60..0x66),
+ * modelling a device with no lock screen image loaded, or `undefined` when the
+ * APDU is not one of them. Reads report the empty state (GetSize -> size 0,
+ * Fetch/GetHash -> `662e` no image), mutations succeed (Create/Upload/Commit ->
+ * `9000`) and Delete reports there is nothing to delete (`662e`).
+ */
+export function deriveCustomLockScreen(apdu: string): string | undefined {
+  if (apdu.startsWith(CLS_GET_SIZE_PREFIX)) {
+    return CLS_EMPTY_SIZE_RESPONSE;
+  }
+  if (
+    apdu.startsWith(CLS_FETCH_CHUNK_PREFIX) ||
+    apdu.startsWith(CLS_GET_HASH_PREFIX) ||
+    apdu.startsWith(CLS_DELETE_PREFIX)
+  ) {
+    return CLS_NO_IMAGE_SW;
+  }
+  if (
+    apdu.startsWith(CLS_CREATE_PREFIX) ||
+    apdu.startsWith(CLS_UPLOAD_PREFIX) ||
+    apdu.startsWith(CLS_COMMIT_PREFIX)
+  ) {
+    return STATUS_OK;
+  }
+  return undefined;
+}
+
+/**
  * Derived default response for an OS-handshake APDU (GetOsVersion /
  * GetAppAndVersion / GetBatteryStatus) synthesized from the device metadata, or
  * `undefined` when the APDU is not one of them (or the model is unsupported).
@@ -286,6 +333,10 @@ export function deriveOsApduResponse(
   }
   if (apdu.startsWith(GET_DEVICE_NAME_PREFIX)) {
     return deriveGetDeviceName(device);
+  }
+  const cls = deriveCustomLockScreen(apdu);
+  if (cls) {
+    return cls;
   }
   return undefined;
 }
