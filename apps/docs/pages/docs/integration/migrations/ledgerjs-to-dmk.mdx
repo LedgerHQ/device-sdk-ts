@@ -41,20 +41,20 @@ Replace `hw-transport-*` packages with the corresponding DMK transport packages,
 
 **Full transport package map:**
 
-| LedgerJS | DMK | Factory export |
-| --- | --- | --- |
-| `@ledgerhq/hw-transport-webhid` | `@ledgerhq/device-transport-kit-web-hid` | `webHidTransportFactory` |
-| `@ledgerhq/hw-transport-web-ble` | `@ledgerhq/device-transport-kit-web-ble` | `webBleTransportFactory` |
-| `@ledgerhq/hw-transport-node-hid` | `@ledgerhq/device-transport-kit-node-hid` | `nodeHidTransportFactory` |
-| `@ledgerhq/react-native-hw-transport-ble` | `@ledgerhq/device-transport-kit-react-native-ble` | `RNBleTransportFactory` |
+| LedgerJS                                  | DMK                                               | Factory export            |
+| ----------------------------------------- | ------------------------------------------------- | ------------------------- |
+| `@ledgerhq/hw-transport-webhid`           | `@ledgerhq/device-transport-kit-web-hid`          | `webHidTransportFactory`  |
+| `@ledgerhq/hw-transport-web-ble`          | `@ledgerhq/device-transport-kit-web-ble`          | `webBleTransportFactory`  |
+| `@ledgerhq/hw-transport-node-hid`         | `@ledgerhq/device-transport-kit-node-hid`         | `nodeHidTransportFactory` |
+| `@ledgerhq/react-native-hw-transport-ble` | `@ledgerhq/device-transport-kit-react-native-ble` | `RNBleTransportFactory`   |
 
 ### Signer packages
 
-| LedgerJS | DMK |
-| --- | --- |
-| `@ledgerhq/hw-app-eth` | `@ledgerhq/device-signer-kit-ethereum` |
-| `@ledgerhq/hw-app-btc` | `@ledgerhq/device-signer-kit-bitcoin` |
-| `@ledgerhq/hw-app-solana` | `@ledgerhq/device-signer-kit-solana` |
+| LedgerJS                  | DMK                                    |
+| ------------------------- | -------------------------------------- |
+| `@ledgerhq/hw-app-eth`    | `@ledgerhq/device-signer-kit-ethereum` |
+| `@ledgerhq/hw-app-btc`    | `@ledgerhq/device-signer-kit-bitcoin`  |
+| `@ledgerhq/hw-app-solana` | `@ledgerhq/device-signer-kit-solana`   |
 
 ---
 
@@ -147,11 +147,11 @@ const signerEth = new SignerEthBuilder({ dmk, sessionId }).build();
 
 **Signer builder reference:**
 
-| Chain | Builder | Required arguments |
-| --- | --- | --- |
-| Ethereum | `SignerEthBuilder` from `@ledgerhq/device-signer-kit-ethereum` | `dmk`, `sessionId`, optional `originToken` |
-| Bitcoin | `SignerBtcBuilder` from `@ledgerhq/device-signer-kit-bitcoin` | `dmk`, `sessionId` |
-| Solana | `SignerSolanaBuilder` from `@ledgerhq/device-signer-kit-solana` | `dmk`, `sessionId` |
+| Chain    | Builder                                                         | Required arguments                         |
+| -------- | --------------------------------------------------------------- | ------------------------------------------ |
+| Ethereum | `SignerEthBuilder` from `@ledgerhq/device-signer-kit-ethereum`  | `dmk`, `sessionId`, optional `originToken` |
+| Bitcoin  | `SignerBtcBuilder` from `@ledgerhq/device-signer-kit-bitcoin`   | `dmk`, `sessionId`                         |
+| Solana   | `SignerSolanaBuilder` from `@ledgerhq/device-signer-kit-solana` | `dmk`, `sessionId`                         |
 
 > **Note:** For the Ethereum signer, `originToken` is optional but required if you want Ledger's Transaction Checks (security service). Contact Ledger to obtain a token for your application.
 

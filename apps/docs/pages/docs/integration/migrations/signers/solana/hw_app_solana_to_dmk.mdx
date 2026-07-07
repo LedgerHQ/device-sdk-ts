@@ -4,17 +4,17 @@ This guide walks you through migrating from the legacy LedgerJS Solana package (
 
 ## Why migrate?
 
-| Feature                  | `hw-app-solana` (legacy)                                                                       | `device-signer-kit-solana` (DMK)                                    |
-| ------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| **API style**            | Promise-based, imperative                                                                      | Observable-based, reactive                                          |
-| **Transport management** | Manual: you create and manage the `Transport`                                                 | Automatic: DMK handles discovery, connection, reconnection         |
-| **App lifecycle**        | Manual: you must open the Solana app yourself                                                 | Automatic: the signer opens the Solana app for you                 |
+| Feature                  | `hw-app-solana` (legacy)                                                                       | `device-signer-kit-solana` (DMK)                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| **API style**            | Promise-based, imperative                                                                      | Observable-based, reactive                                         |
+| **Transport management** | Manual: you create and manage the `Transport`                                                  | Automatic: DMK handles discovery, connection, reconnection         |
+| **App lifecycle**        | Manual: you must open the Solana app yourself                                                  | Automatic: the signer opens the Solana app for you                 |
 | **Clear signing**        | Not built-in (you must call `provideTrustedName` / `provideTrustedDynamicDescriptor` manually) | Built-in: the context module resolves token metadata automatically |
-| **Device state**         | No visibility                                                                                  | Full observable state machine (pending, user interaction, etc.)     |
-| **Cancellation**         | Not supported                                                                                  | Built-in `cancel()` on every operation                              |
-| **Off-chain messages**   | Single method (`signOffchainMessage`)                                                          | Unified `signMessage` with version support (V0, V1, Legacy, Raw)    |
+| **Device state**         | No visibility                                                                                  | Full observable state machine (pending, user interaction, etc.)    |
+| **Cancellation**         | Not supported                                                                                  | Built-in `cancel()` on every operation                             |
+| **Off-chain messages**   | Single method (`signOffchainMessage`)                                                          | Unified `signMessage` with version support (V0, V1, Legacy, Raw)   |
 | **Multi-device**         | One transport = one device                                                                     | Session-based: multiple devices on a single DMK instance           |
-| **Error handling**       | Raw status codes / thrown errors                                                               | Typed error states per operation                                    |
+| **Error handling**       | Raw status codes / thrown errors                                                               | Typed error states per operation                                   |
 
 ## Step 1: Update your dependencies
 
@@ -214,10 +214,10 @@ If your existing codebase is heavily promise-based, use the `toPromise` helper f
 
 ## Troubleshooting
 
-| Issue                       | Solution                                                                                           |
-| --------------------------- | -------------------------------------------------------------------------------------------------- |
-| `6808` error during signing | Enable blind signing in the Solana app settings on the device                                      |
-| Observable never completes  | Ensure the device is unlocked and the Solana app is accessible                                     |
+| Issue                       | Solution                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `6808` error during signing | Enable blind signing in the Solana app settings on the device                                     |
+| Observable never completes  | Ensure the device is unlocked and the Solana app is accessible                                    |
 | `Buffer` type errors        | Replace `Buffer` with `Uint8Array`, or use `Buffer.from(...)` since `Buffer` extends `Uint8Array` |
-| Missing `rxjs`              | Install it: `npm install rxjs` (it is a peer dependency of the DMK)                                |
-| Discovery finds no devices  | Check that the browser supports WebHID and the device is connected via USB                         |
+| Missing `rxjs`              | Install it: `npm install rxjs` (it is a peer dependency of the DMK)                               |
+| Discovery finds no devices  | Check that the browser supports WebHID and the device is connected via USB                        |

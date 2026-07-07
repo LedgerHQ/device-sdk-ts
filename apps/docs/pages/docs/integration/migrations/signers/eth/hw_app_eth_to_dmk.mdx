@@ -13,17 +13,17 @@ Before reading this guide, complete the [general LedgerJS → DMK migration](../
 
 ## Why migrate?
 
-| Feature | `hw-app-eth` (LedgerJS) | `device-signer-kit-ethereum` (DMK) |
-| --- | --- | --- |
-| **EIP-712 support** | `signEIP712HashedMessage` (hashed data) and `signEIP712Message` (structured data) | `signTypedData` (full structured-data signing) |
-| **API style** | Promise-based | Observable-based, with cancellation |
-| **Transport management** | Manual: you create and manage the `Transport` | Automatic: DMK manages discovery, connection, reconnection |
-| **App lifecycle** | Manual: you open the Ethereum app yourself | Automatic: the signer opens the Ethereum app for you |
-| **Clear signing** | Manual: `ledgerService.resolveTransaction()` before every `signTransaction` | Automatic: the context module resolves metadata during signing |
-| **Device state** | No visibility | Observable state machine with `requiredUserInteraction` |
-| **Cancellation** | Not supported | Built-in `cancel()` on every operation |
-| **EIP-7702** | Not supported | `signDelegationAuthorization` |
-| **Safe address** | Not supported | `verifySafeAddress` |
+| Feature                  | `hw-app-eth` (LedgerJS)                                                           | `device-signer-kit-ethereum` (DMK)                             |
+| ------------------------ | --------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **EIP-712 support**      | `signEIP712HashedMessage` (hashed data) and `signEIP712Message` (structured data) | `signTypedData` (full structured-data signing)                 |
+| **API style**            | Promise-based                                                                     | Observable-based, with cancellation                            |
+| **Transport management** | Manual: you create and manage the `Transport`                                     | Automatic: DMK manages discovery, connection, reconnection     |
+| **App lifecycle**        | Manual: you open the Ethereum app yourself                                        | Automatic: the signer opens the Ethereum app for you           |
+| **Clear signing**        | Manual: `ledgerService.resolveTransaction()` before every `signTransaction`       | Automatic: the context module resolves metadata during signing |
+| **Device state**         | No visibility                                                                     | Observable state machine with `requiredUserInteraction`        |
+| **Cancellation**         | Not supported                                                                     | Built-in `cancel()` on every operation                         |
+| **EIP-7702**             | Not supported                                                                     | `signDelegationAuthorization`                                  |
+| **Safe address**         | Not supported                                                                     | `verifySafeAddress`                                            |
 
 ---
 
@@ -109,9 +109,9 @@ const result = await eth.getAddress(
 
 ```typescript
 const { observable, cancel } = signerEth.getAddress("44'/60'/0'/0/0", {
-  checkOnDevice: boolDisplay,   // was boolDisplay
+  checkOnDevice: boolDisplay, // was boolDisplay
   returnChainCode: boolChaincode, // was boolChaincode
-  chainId: 1,                   // was chainId (number, not string)
+  chainId: 1, // was chainId (number, not string)
 });
 
 observable.subscribe({
@@ -314,14 +314,24 @@ This is an upgrade: instead of computing `domainHash` and `messageHash` yourself
 
 ```typescript
 // Before: manually computed hashes, blind-signed
-await eth.signEIP712HashedMessage(path, domainSeparatorHex, hashStructMessageHex);
+await eth.signEIP712HashedMessage(
+  path,
+  domainSeparatorHex,
+  hashStructMessageHex,
+);
 
 // After: pass the structured data — the DMK hashes and signs
 const { observable } = signerEth.signTypedData(path, {
-  domain: { /* original domain object */ },
-  types: { /* original types */ },
+  domain: {
+    /* original domain object */
+  },
+  types: {
+    /* original types */
+  },
   primaryType: "...",
-  message: { /* original message */ },
+  message: {
+    /* original message */
+  },
 });
 ```
 
@@ -351,29 +361,29 @@ If you want to migrate incrementally, use the `toPromise` helper from the [gener
 
 ## Quick reference: API mapping
 
-| `hw-app-eth` | `device-signer-kit-ethereum` | Notes |
-| --- | --- | --- |
-| `new Eth(transport)` | `new SignerEthBuilder({ dmk, sessionId, originToken? }).build()` | |
-| `getAddress(path, display?, chaincode?, chainId?)` | `getAddress(path, { checkOnDevice?, returnChainCode?, skipOpenApp?, chainId? })` | `chainId` is now a `number` |
-| `signTransaction(path, rawTxHex, resolution?)` | `signTransaction(path, txBytes: Uint8Array, { skipOpenApp? }?)` | Input: hex string → `Uint8Array`; `resolution` removed |
-| `clearSignTransaction(path, rawTxHex, config)` | `signTransaction(path, txBytes)` | Resolution is automatic |
-| `signPersonalMessage(path, messageHex)` | `signMessage(path, message: string \| Uint8Array, { skipOpenApp? }?)` | Input: hex string → plain string |
-| `signEIP712Message(path, typedData, fullImplem?)` | `signTypedData(path, typedData: TypedData, { skipOpenApp? }?)` | Same data structure |
-| `signEIP712HashedMessage(path, domainHex, msgHex)` | Use `signTypedData` when structured data is available | EIP-712 APDU refactor in progress |
-| `getChallenge()` | No equivalent | Handled internally |
-| `getAppConfiguration()` | No equivalent | Use `dmk.sendCommand()` for raw access |
-| *(none)* | `signDelegationAuthorization(path, chainId, contractAddress, nonce)` | New in DMK (EIP-7702) |
-| *(none)* | `verifySafeAddress(safeAddress, { chainId, skipOpenApp? })` | New in DMK |
+| `hw-app-eth`                                       | `device-signer-kit-ethereum`                                                     | Notes                                                  |
+| -------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `new Eth(transport)`                               | `new SignerEthBuilder({ dmk, sessionId, originToken? }).build()`                 |                                                        |
+| `getAddress(path, display?, chaincode?, chainId?)` | `getAddress(path, { checkOnDevice?, returnChainCode?, skipOpenApp?, chainId? })` | `chainId` is now a `number`                            |
+| `signTransaction(path, rawTxHex, resolution?)`     | `signTransaction(path, txBytes: Uint8Array, { skipOpenApp? }?)`                  | Input: hex string → `Uint8Array`; `resolution` removed |
+| `clearSignTransaction(path, rawTxHex, config)`     | `signTransaction(path, txBytes)`                                                 | Resolution is automatic                                |
+| `signPersonalMessage(path, messageHex)`            | `signMessage(path, message: string \| Uint8Array, { skipOpenApp? }?)`            | Input: hex string → plain string                       |
+| `signEIP712Message(path, typedData, fullImplem?)`  | `signTypedData(path, typedData: TypedData, { skipOpenApp? }?)`                   | Same data structure                                    |
+| `signEIP712HashedMessage(path, domainHex, msgHex)` | Use `signTypedData` when structured data is available                            | EIP-712 APDU refactor in progress                      |
+| `getChallenge()`                                   | No equivalent                                                                    | Handled internally                                     |
+| `getAppConfiguration()`                            | No equivalent                                                                    | Use `dmk.sendCommand()` for raw access                 |
+| _(none)_                                           | `signDelegationAuthorization(path, chainId, contractAddress, nonce)`             | New in DMK (EIP-7702)                                  |
+| _(none)_                                           | `verifySafeAddress(safeAddress, { chainId, skipOpenApp? })`                      | New in DMK                                             |
 
 ---
 
 ## Troubleshooting
 
-| Issue | Solution |
-| --- | --- |
-| Observable never reaches `Completed` | The device may be waiting for user confirmation. Check `state.intermediateValue.requiredUserInteraction` in the `Pending` state. |
-| `rxjs` not found | Run `npm install rxjs` (it is a peer dependency of the DMK). |
-| Transaction bytes rejected | Ensure you are passing a `Uint8Array` (or `Buffer`), not a hex string. `Buffer.from(rawTxHex, "hex")` converts correctly. |
-| `signEIP712HashedMessage` not available in DMK | The DMK does not expose a hashed-message signing API. Use `signTypedData` if you have the full structured data. |
-| No Transaction Checks shown on device | Pass an `originToken` to `SignerEthBuilder`. Contact Ledger to obtain one. |
-| Device shows "blind signing" warning | Transaction Checks require an `originToken` and a supported transaction type. |
+| Issue                                          | Solution                                                                                                                         |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Observable never reaches `Completed`           | The device may be waiting for user confirmation. Check `state.intermediateValue.requiredUserInteraction` in the `Pending` state. |
+| `rxjs` not found                               | Run `npm install rxjs` (it is a peer dependency of the DMK).                                                                     |
+| Transaction bytes rejected                     | Ensure you are passing a `Uint8Array` (or `Buffer`), not a hex string. `Buffer.from(rawTxHex, "hex")` converts correctly.        |
+| `signEIP712HashedMessage` not available in DMK | The DMK does not expose a hashed-message signing API. Use `signTypedData` if you have the full structured data.                  |
+| No Transaction Checks shown on device          | Pass an `originToken` to `SignerEthBuilder`. Contact Ledger to obtain one.                                                       |
+| Device shows "blind signing" warning           | Transaction Checks require an `originToken` and a supported transaction type.                                                    |
