@@ -10,8 +10,8 @@ const BYTES_PER_ELEMENT = 4;
  * preserved without stripping or re-applying.
  *
  * This differs from the Cosmos encoder which strips and re-applies the hardened
- * flag for only the first 3 elements. Polkadot/Bittensor paths are fully
- * hardened (44'/1005'/0'/0'/0'), so all elements already carry the flag.
+ * flag for only the first 3 elements. Polkadot-family paths are fully
+ * hardened (e.g. 44'/354'/0'/0'/0'), so all elements already carry the flag.
  */
 export const encodeDerivationPath = (paths: number[]): Uint8Array => {
   if (paths.length !== DERIVATION_PATH_LENGTH) {
