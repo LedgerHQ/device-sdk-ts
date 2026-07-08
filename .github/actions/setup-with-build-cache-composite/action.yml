@@ -1,12 +1,20 @@
-name: "Setup toolchain with pnpm and build artifacts"
-description: "Setup toolchain, restore pnpm dependencies, and download build artifacts"
+name: "Setup toolchain with pnpm and build cache"
+description: "Setup toolchain, restore pnpm dependencies cache, and restore build artifacts"
 
 runs:
   using: "composite"
   steps:
     - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
 
-    - name: Download build outputs
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+    - name: Setup build cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
       with:
-        name: build-outputs
+        path: |
+          **/lib
+          **/.turbo
+          node_modules/.cache/turbo
+        key: ${{ runner.os }}-build-${{ github.sha }}
+
+    - name: Build libraries
+      shell: bash
+      run: pnpm build:libs

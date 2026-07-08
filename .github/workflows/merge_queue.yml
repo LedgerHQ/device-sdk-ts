@@ -10,84 +10,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-libraries:
-    name: Build libraries
-    runs-on: ubuntu-22.04
+  prettier:
+    name: Run prettier
+    runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
 
       - uses: ./.github/actions/setup-with-cache-composite
 
-      - name: Build libraries
-        run: pnpm build:libs
-
-      - name: Upload build outputs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
-        with:
-          name: build-outputs
-          path: |
-            packages/**/lib
-            apps/**/lib
-            node_modules/.cache/turbo
-          retention-days: 1
-
-  prettier:
-    name: Run prettier
-    needs: [build-libraries]
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
-
-      - uses: ./.github/actions/setup-with-build-cache-composite
-
       - name: Prettier
         id: prettier
-        run: pnpm prettier
+        run: pnpm turbo run prettier --filter='[origin/develop]...'
 
   lint:
     name: Run lint
-    needs: [build-libraries]
-    runs-on: ubuntu-22.04
+    runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
 
-      - uses: ./.github/actions/setup-with-build-cache-composite
+      - uses: ./.github/actions/setup-with-cache-composite
 
       - name: Lint
         id: lint
-        run: pnpm lint
+        run: pnpm turbo run lint --filter='[origin/develop]...'
 
   typecheck:
     name: Run typecheck
-    needs: [build-libraries]
-    runs-on: ubuntu-22.04
+    runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
 
-      - uses: ./.github/actions/setup-with-build-cache-composite
+      - uses: ./.github/actions/setup-with-cache-composite
 
       - name: Typecheck
         id: typecheck
-        run: pnpm typecheck
+        run: pnpm turbo run typecheck --filter='[origin/develop]...'
 
   tests:
     name: Run unit tests
-    needs: [build-libraries]
-    runs-on: ubuntu-22.04
+    runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
 
-      - uses: ./.github/actions/setup-with-build-cache-composite
+      - uses: ./.github/actions/setup-with-cache-composite
 
       - name: Tests
         id: unit-tests
-        run: pnpm test
+        run: pnpm turbo run test --filter='[origin/develop]...'
 
   health-check:
     name: Run health check
     # Aggregates the split checks and tests into a single required status so
     # branch protection only needs to require "Run health check".
-    needs: [build-libraries, prettier, lint, typecheck, tests]
+    needs: [prettier, lint, typecheck, tests]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-22.04
     steps:
