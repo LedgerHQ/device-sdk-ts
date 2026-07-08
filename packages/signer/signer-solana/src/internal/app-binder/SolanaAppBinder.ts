@@ -8,10 +8,8 @@ import {
 } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
 
-import { GetAddressDeviceActionFactory } from "@api/app-binder/GetAddressDeviceActionFactory";
 import { GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceActionTypes";
 import { GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
-import { SignMessageDeviceActionFactory } from "@api/app-binder/SignMessageDeviceActionFactory";
 import { SignMessageDAReturnType } from "@api/app-binder/SignMessageDeviceActionTypes";
 import { SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { type SignMessageVersion } from "@api/model/MessageOptions";
@@ -20,6 +18,8 @@ import { Transaction } from "@api/model/Transaction";
 import { externalTypes } from "@internal/externalTypes";
 
 import { GetAppConfigurationCommand } from "./command/GetAppConfigurationCommand";
+import { GetAddressDeviceActionFactory } from "./device-action/GetAddressDeviceActionFactory";
+import { SignMessageDeviceActionFactory } from "./device-action/SignMessageDeviceActionFactory";
 import { SignTransactionDeviceAction } from "./device-action/SignTransactionDeviceAction";
 import { appBinderTypes } from "./di/appBinderTypes";
 import { BlockhashService } from "./services/BlockhashService";
