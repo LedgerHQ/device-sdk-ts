@@ -13,7 +13,13 @@ import {
   type GetAddressDAIntermediateValue,
   type GetAddressDAOutput,
 } from "@api/app-binder/GetAddressDeviceActionTypes";
+import {
+  type GetAppConfigurationDAError,
+  type GetAppConfigurationDAIntermediateValue,
+  type GetAppConfigurationDAOutput,
+} from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
+import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
 import { APP_NAME } from "@internal/app-binder/constants";
 
 import { TronAppBinder } from "./TronAppBinder";
@@ -147,6 +153,81 @@ describe("TronAppBinder", () => {
           }),
         );
       });
+    });
+  });
+
+  describe("getAppConfiguration", () => {
+    it("should return the app configuration", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: GetAppConfigurationDAOutput = {
+          version: "0.5.0",
+          versionN: 500,
+          allowData: true,
+          allowContract: true,
+          truncateAddress: true,
+          signByHash: true,
+        };
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              GetAppConfigurationDAOutput,
+              GetAppConfigurationDAError,
+              GetAppConfigurationDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        const { observable } = binder.getAppConfiguration();
+
+        // THEN
+        const states: DeviceActionState<
+          GetAppConfigurationDAOutput,
+          GetAppConfigurationDAError,
+          GetAppConfigurationDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    it("should call executeDeviceAction with the correct params", () => {
+      // WHEN
+      const binder = new TronAppBinder(mockedDmk, "sessionId");
+      binder.getAppConfiguration();
+
+      // THEN
+      expect(mockedDmk.executeDeviceAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: "sessionId",
+          deviceAction: new SendCommandInAppDeviceAction({
+            input: {
+              command: new GetAppConfigurationCommand(),
+              appName: APP_NAME,
+              requiredUserInteraction: UserInteractionRequired.None,
+              skipOpenApp: false,
+            },
+          }),
+        }),
+      );
     });
   });
 });
