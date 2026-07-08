@@ -19,4 +19,5 @@ export enum UserInteractionRequired {
   ConfirmLoadImage = "confirm-load-image",
   ConfirmCommitImage = "confirm-commit-image",
   ConfirmRemoveImage = "confirm-remove-image",
+  GrantConsent = "grant-consent",
 }
