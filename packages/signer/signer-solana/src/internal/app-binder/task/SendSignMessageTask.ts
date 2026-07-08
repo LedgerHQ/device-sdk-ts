@@ -19,7 +19,10 @@ import {
   SignOffChainMessageCommand,
   type SignOffChainRawResponse,
 } from "@internal/app-binder/command/SignOffChainMessageCommand";
-import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
+import {
+  SOLANA_APP_COMMAND_ERROR_TAG,
+  type SolanaAppErrorCodes,
+} from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 import { SOLANA_PUBKEY_LEN } from "@internal/app-binder/constants";
 import {
   type Bs58Encoder,
@@ -326,7 +329,7 @@ export class SendSignMessageTask {
     if (!e || typeof e !== "object") return false;
     const obj = e as Record<string, unknown>;
     return (
-      obj["_tag"] === "SolanaAppCommandError" &&
+      obj["_tag"] === SOLANA_APP_COMMAND_ERROR_TAG &&
       typeof obj["errorCode"] === "string" &&
       (obj["errorCode"] as string).toLowerCase() === "6a81"
     );
