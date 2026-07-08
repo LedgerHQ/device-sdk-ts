@@ -1,8 +1,10 @@
-import { EitherAsync, Left, Right } from "purify-ts";
+import { EitherAsync, Left, Maybe, Right } from "purify-ts";
 import { vi } from "vitest";
 
 import { ApduResolverService } from "@internal/apdu/service/ApduResolverService";
 import { OsApduService } from "@internal/os/service/OsApduService";
+import { type FirmwareUpdateResolver } from "@internal/secure-channel/service/FirmwareUpdateResolver";
+import { INSTALL_COMMIT_APDU } from "@internal/secure-channel/service/secureChannelApdus";
 import { SecureChannelApduService } from "@internal/secure-channel/service/SecureChannelApduService";
 import { InMemorySessionRepository } from "@internal/session/data/InMemorySessionRepository";
 import { type SpeculosOperatorDataSource } from "@internal/speculos/data/SpeculosOperatorDataSource";
@@ -29,6 +31,11 @@ const makeOperator = (
   ...overrides,
 });
 
+const stubFirmwareResolver: FirmwareUpdateResolver = {
+  resolveNextVersion: vi.fn().mockResolvedValue(Maybe.empty()),
+  resolveCurrentMcuVersion: vi.fn().mockResolvedValue(Maybe.of("2.30")),
+} as unknown as FirmwareUpdateResolver;
+
 const setup = () => {
   const repo = new InMemorySessionRepository({});
   const { token } = repo.createSession();
@@ -38,7 +45,7 @@ const setup = () => {
     firmware_version: "1.3.0",
     apps: [{ name: "Bitcoin", version: "2.1.0" }],
   });
-  const os = new OsApduService();
+  const os = new OsApduService(stubFirmwareResolver);
   const secureChannel = new SecureChannelApduService();
   return { repo, record, device, os, secureChannel };
 };
@@ -173,5 +180,23 @@ describe("ApduResolverService", () => {
     const { repo, record, device, os, secureChannel } = setup();
     const resolver = new ApduResolverService(repo, os, secureChannel);
     expect(await resolver.resolve(record, device, OPEN_BITCOIN)).toBe("6d00");
+  });
+
+  it("commits a pending firmware operation when the final install block succeeds", async () => {
+    const { repo, record, device, os, secureChannel } = setup();
+    const resolver = new ApduResolverService(repo, os, secureChannel);
+    repo.setPendingFirmwareOperation(record, device.id, "1.9.1-osu");
+
+    // The final install block derives to success and triggers the commit.
+    expect(await resolver.resolve(record, device, INSTALL_COMMIT_APDU)).toBe(
+      "9000",
+    );
+    expect(
+      repo.findDevice(record, device.id).unsafeCoerce().firmware_version,
+    ).toBe("1.9.1-osu");
+    // The pending operation was cleared.
+    expect(
+      repo.commitPendingFirmwareOperation(record, device.id).isNothing(),
+    ).toBe(true);
   });
 });

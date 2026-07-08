@@ -53,6 +53,7 @@ export class InMemorySessionRepository implements SessionRepository {
       speculos: new Map(),
       catalog: new Map(),
       pendingAppOperations: new Map(),
+      pendingFirmwareOperations: new Map(),
     };
     this.sessions.set(record.token, record);
     return { token: record.token, expiresAt: this.expiresAt(record) };
@@ -204,6 +205,30 @@ export class InMemorySessionRepository implements SessionRepository {
     });
   }
 
+  setPendingFirmwareOperation(
+    record: SessionRecord,
+    deviceId: string,
+    targetVersion: string,
+  ): void {
+    record.pendingFirmwareOperations.set(deviceId, targetVersion);
+  }
+
+  commitPendingFirmwareOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<Device> {
+    const targetVersion = record.pendingFirmwareOperations.get(deviceId);
+    if (targetVersion === undefined) {
+      return Maybe.empty();
+    }
+    record.pendingFirmwareOperations.delete(deviceId);
+    return this.findDevice(record, deviceId).map((device) => {
+      const updated: Device = { ...device, firmware_version: targetVersion };
+      record.devices.set(deviceId, updated);
+      return updated;
+    });
+  }
+
   // --- Speculos proxy -------------------------------------------------------
 
   findProxy(
@@ -312,6 +337,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.speculos.clear();
     record.catalog.clear();
     record.pendingAppOperations.clear();
+    record.pendingFirmwareOperations.clear();
     for (const device of snapshot.devices) {
       this.addDevice(record, device);
     }

@@ -37,4 +37,11 @@ export interface SessionRecord {
    * commit when the final install block is acknowledged: deviceId -> app.
    */
   pendingAppOperations: Map<string, CatalogApp>;
+  /**
+   * Target `firmware_version` of an in-flight secure-channel firmware install
+   * (OSU or final), awaiting commit when the final install block is
+   * acknowledged: deviceId -> version. Set to `<next>-osu` for the OSU install
+   * and to the clean `<next>` for the final install.
+   */
+  pendingFirmwareOperations: Map<string, string>;
 }

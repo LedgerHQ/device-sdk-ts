@@ -157,20 +157,38 @@ const isRecoverSupported = (seVersion: string, model: string): boolean => {
 // --- derived responses ------------------------------------------------------
 
 /**
- * GetOsVersion response derived from the device model and firmware version,
- * matching the byte layout `GetOsVersionCommand` expects in non-bootloader
- * mode. Returns `undefined` for an unsupported model.
+ * Full target id (`<mask upper 16 bits>0004`) a device reports in GetOsVersion
+ * and that the Manager API keys firmware lookups on, or `undefined` for a model
+ * with no known mask and no explicit `masks` override.
  */
-export function deriveGetOsVersion(device: Device): string | undefined {
+export function resolveTargetId(device: Device): number | undefined {
   const model = normalizeModel(device.device_type);
   const mask = device.masks?.[0] ?? TARGET_ID_MASK[model];
   if (mask === undefined) return undefined;
+  return (mask & 0xffff0000) | 0x0004;
+}
+
+/**
+ * GetOsVersion response derived from the device model and firmware version,
+ * matching the byte layout `GetOsVersionCommand` expects in non-bootloader
+ * mode. `mcuVersion` is the current MCU (`mcuSephVersion`) to advertise,
+ * resolved dynamically by the caller. Returns `undefined` for an unsupported
+ * model.
+ */
+export function deriveGetOsVersion(
+  device: Device,
+  mcuVersion: string,
+): string | undefined {
+  const model = normalizeModel(device.device_type);
+  const mask = device.masks?.[0] ?? TARGET_ID_MASK[model];
+  if (mask === undefined) return undefined;
+  const targetId = (mask & 0xffff0000) | 0x0004;
   const seVersion = device.firmware_version ?? "0.0.0";
 
-  let hex = uint32Hex((mask & 0xffff0000) | 0x0004); // targetId
+  let hex = uint32Hex(targetId); // targetId
   hex += lvAscii(seVersion); // seVersion
   hex += lvHex("e6000000"); // seFlags (onboarded, pin-validated, ...)
-  hex += lvAscii("2.30"); // mcuSephVersion
+  hex += lvAscii(mcuVersion); // mcuSephVersion
   if (isBootloaderVersionSupported(seVersion, model)) {
     hex += lvAscii("1.16"); // mcuBootloaderVersion
   }
@@ -304,14 +322,16 @@ export function deriveCustomLockScreen(apdu: string): string | undefined {
  * Derived default response for an OS-handshake APDU (GetOsVersion /
  * GetAppAndVersion / GetBatteryStatus) synthesized from the device metadata, or
  * `undefined` when the APDU is not one of them (or the model is unsupported).
- * The three prefixes are mutually exclusive, so the first match wins.
+ * `mcuVersion` is only consumed by the GetOsVersion branch. The prefixes are
+ * mutually exclusive, so the first match wins.
  */
 export function deriveOsApduResponse(
   device: Device,
   apdu: string,
+  mcuVersion?: string,
 ): string | undefined {
   if (apdu.startsWith(GET_OS_VERSION_PREFIX)) {
-    return deriveGetOsVersion(device);
+    return mcuVersion ? deriveGetOsVersion(device, mcuVersion) : undefined;
   }
   if (apdu.startsWith(GET_APP_AND_VERSION_PREFIX)) {
     return deriveGetAppAndVersion(device);
