@@ -1,9 +1,9 @@
 import {
+  ApduResponse,
   CommandResultFactory,
+  InvalidArgumentError,
   isSuccessCommandResult,
-} from "@api/command/model/CommandResult";
-import { ApduResponse } from "@api/device-session/ApduResponse";
-import { InvalidArgumentError } from "@api/Error";
+} from "@ledgerhq/device-management-kit";
 
 import {
   RequestMasterConsentCommand,

@@ -1,16 +1,18 @@
-import { BackupAppStorageCommandError } from "@api/command/os/BackupAppStorageCommand";
-import { GetAppStorageInfoCommandError } from "@api/command/os/GetAppStorageInfoCommand";
-import { type InternalApi } from "@api/device-action/DeviceAction";
-import {
-  BackupAppStorageTask,
-  type BackupAppStorageTaskResponse,
-} from "@api/device-action/task/BackupAppStorageTask";
 import {
   CommandResultFactory,
   DmkResultFactory,
+  type InternalApi,
   isSuccessDmkResult,
-} from "@api/index";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+
+import { BackupAppStorageCommandError } from "@api/command/OsUpdate/Backup/BackupAppStorageCommand";
+import { GetAppStorageInfoCommandError } from "@api/command/OsUpdate/Backup/GetAppStorageInfoCommand";
+
+import {
+  BackupAppStorageTask,
+  type BackupAppStorageTaskResponse,
+} from "./BackupAppStorageTask";
 
 describe("BackupAppStorageTask", () => {
   let api: InternalApi;

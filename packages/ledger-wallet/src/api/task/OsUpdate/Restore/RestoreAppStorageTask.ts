@@ -1,15 +1,17 @@
-import { APDU_MAX_PAYLOAD } from "@api/apdu/utils/ApduBuilder";
 import {
+  APDU_MAX_PAYLOAD,
   type CommandErrorResult,
+  type DmkResult,
+  DmkResultFactory,
+  type InternalApi,
   isSuccessCommandResult,
-} from "@api/command/model/CommandResult";
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+
 import {
   RestoreAppStorageCommand,
   type RestoreAppStorageCommandErrorCodes,
-} from "@api/command/os/RestoreAppStorageCommand";
-import { type InternalApi } from "@api/device-action/DeviceAction";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { type DmkResult, DmkResultFactory } from "@api/model/DmkResult";
+} from "@api/command/OsUpdate/Restore/RestoreAppStorageCommand";
 
 export type RestoreAppStorageTaskArgs = {
   appStorageData: Uint8Array;

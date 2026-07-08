@@ -1,8 +1,5 @@
 import React, { useMemo } from "react";
 import {
-  BackupAppStorageCommand,
-  type BackupAppStorageCommandErrorCodes,
-  type BackupAppStorageCommandResponse,
   BatteryStatusType,
   CloseAppCommand,
   DeleteLanguagePackCommand,
@@ -10,18 +7,11 @@ import {
   type DeleteLanguagePackErrorCodes,
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
-  GetAppStorageInfoCommand,
-  type GetAppStorageInfoCommandArgs,
-  type GetAppStorageInfoCommandErrorCodes,
-  type GetAppStorageInfoCommandResponse,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
   type GetBatteryStatusResponse,
   GetOsVersionCommand,
   type GetOsVersionResponse,
-  InitRestoreAppStorageCommand,
-  type InitRestoreAppStorageCommandArgs,
-  type InitRestoreAppStorageCommandErrorCodes,
   type ListAppsArgs,
   ListAppsCommand,
   type ListAppsErrorCodes,
@@ -33,10 +23,22 @@ import {
   type OpenAppArgs,
   OpenAppCommand,
   type OpenAppErrorCodes,
+} from "@ledgerhq/device-management-kit";
+import {
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
+  GetAppStorageInfoCommand,
+  type GetAppStorageInfoCommandArgs,
+  type GetAppStorageInfoCommandErrorCodes,
+  type GetAppStorageInfoCommandResponse,
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  type InitRestoreAppStorageCommandErrorCodes,
   RequestMasterConsentCommand,
   type RequestMasterConsentCommandArgs,
   type RequestMasterConsentCommandErrorCodes,
-} from "@ledgerhq/device-management-kit";
+} from "@ledgerhq/dmk-ledger-wallet";
 import { Grid } from "@ledgerhq/react-ui";
 
 import { getValueSelectorFromEnum } from "@/components/Form";

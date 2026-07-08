@@ -1,5 +1,4 @@
 import {
-  BackupAppStorageTask,
   CommandResultFactory,
   GLOBAL_ERRORS,
   GlobalCommandError,
@@ -8,15 +7,9 @@ import {
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 import { BackupAppsStorageError } from "@api/device-action/OsUpdate/Backup/CreateBackupDeviceActionErrors";
 import { backupAppsStorage } from "@api/device-action/OsUpdate/Backup/Substeps/BackupAppsStorage";
+import { BackupAppStorageTask } from "@api/task/OsUpdate/Backup/BackupAppStorageTask";
 
-vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
-  const original =
-    await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
-  return {
-    ...original,
-    BackupAppStorageTask: vi.fn(),
-  };
-});
+vi.mock("@api/task/OsUpdate/Backup/BackupAppStorageTask");
 
 describe("BackupAppStorage", () => {
   const apiMock = makeDeviceActionInternalApiMock();

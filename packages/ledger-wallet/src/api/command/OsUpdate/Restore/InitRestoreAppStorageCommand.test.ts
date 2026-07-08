@@ -1,6 +1,9 @@
-import { isSuccessCommandResult } from "@api/command/model/CommandResult";
-import { InitRestoreAppStorageCommand } from "@api/command/os/InitRestoreAppStorageCommand";
-import { ApduResponse } from "@api/device-session/ApduResponse";
+import {
+  ApduResponse,
+  isSuccessCommandResult,
+} from "@ledgerhq/device-management-kit";
+
+import { InitRestoreAppStorageCommand } from "./InitRestoreAppStorageCommand";
 
 describe("InitRestoreAppStorageCommand", () => {
   describe("Name", () => {

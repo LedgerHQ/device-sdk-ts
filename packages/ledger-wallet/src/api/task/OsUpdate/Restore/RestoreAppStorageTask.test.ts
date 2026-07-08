@@ -1,13 +1,15 @@
-import { APDU_MAX_PAYLOAD } from "@api/apdu/utils/ApduBuilder";
-import { RestoreAppStorageCommandError } from "@api/command/os/RestoreAppStorageCommand";
-import { type InternalApi } from "@api/device-action/DeviceAction";
-import { RestoreAppStorageTask } from "@api/device-action/task/RestoreAppStorageTask";
+import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 import {
   CommandResultFactory,
   DmkResultFactory,
+  type InternalApi,
   isSuccessDmkResult,
-} from "@api/index";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
+  type LoggerPublisherService,
+} from "@ledgerhq/device-management-kit";
+
+import { RestoreAppStorageCommandError } from "@api/command/OsUpdate/Restore/RestoreAppStorageCommand";
+
+import { RestoreAppStorageTask } from "./RestoreAppStorageTask";
 
 describe("RestoreAppStorageTask", () => {
   let api: InternalApi;
