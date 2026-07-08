@@ -20,13 +20,18 @@ import {
   PolkadotAppCommandErrorFactory,
   type PolkadotErrorCodes,
 } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
-import { INS, LEDGER_CLA, P2 } from "@internal/app-binder/constants";
+import { LEDGER_CLA } from "@internal/app-binder/constants";
+
+// INS/P2 are specific to this command (the Ledger Polkadot app supports
+// ed25519/secp256k1 only; signatures use ed25519 = 0x00).
+const INS_SIGN_TRANSACTION = 0x02;
+const P2_ED25519 = 0x00;
 
 export const polkadotSignTransactionApduHeader = (p1: number) => ({
   cla: LEDGER_CLA,
-  ins: INS.SIGN_TRANSACTION,
+  ins: INS_SIGN_TRANSACTION,
   p1,
-  p2: P2.ED25519,
+  p2: P2_ED25519,
 });
 
 export const P1_INIT = 0x00;
@@ -34,6 +39,7 @@ export const P1_ADD = 0x01;
 export const P1_LAST = 0x02;
 
 const DERIVATION_PATH_LENGTH = 5;
+const BLOB_LENGTH_MAX = 0xffff;
 
 export enum SignPhase {
   INIT = "init",
@@ -125,6 +131,16 @@ export class SignTransactionCommand
     if (paths.length !== DERIVATION_PATH_LENGTH) {
       throw new Error(
         `SignTransactionCommand: expected ${DERIVATION_PATH_LENGTH} path elements, got ${paths.length}`,
+      );
+    }
+
+    if (
+      !Number.isInteger(blobLength) ||
+      blobLength < 0 ||
+      blobLength > BLOB_LENGTH_MAX
+    ) {
+      throw new Error(
+        `SignTransactionCommand: blobLength must be a uint16 (0..${BLOB_LENGTH_MAX}), got ${blobLength}`,
       );
     }
 

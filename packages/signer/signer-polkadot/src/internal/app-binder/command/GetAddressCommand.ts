@@ -19,9 +19,14 @@ import {
   PolkadotAppCommandErrorFactory,
   type PolkadotErrorCodes,
 } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
-import { INS, LEDGER_CLA, P2 } from "@internal/app-binder/constants";
+import { LEDGER_CLA } from "@internal/app-binder/constants";
 
 import { encodeDerivationPath } from "./utils/EncodeDerivationPath";
+
+// INS/P2 are specific to this command (the Ledger Polkadot app supports
+// ed25519/secp256k1 only; addresses/signatures use ed25519 = 0x00).
+const INS_GET_ADDRESS = 0x01;
+const P2_ED25519 = 0x00;
 
 export type GetAddressCommandArgs = {
   readonly derivationPath: string;
@@ -36,9 +41,9 @@ export type GetAddressCommandResponse = {
 
 export const polkadotGetAddressApduHeader = (p1: number) => ({
   cla: LEDGER_CLA,
-  ins: INS.GET_ADDRESS,
+  ins: INS_GET_ADDRESS,
   p1,
-  p2: P2.ED25519,
+  p2: P2_ED25519,
 });
 
 export const P1_CONFIRM = 0x01;
@@ -46,6 +51,7 @@ export const P1_NO_CONFIRM = 0x00;
 
 const DERIVATION_PATH_LENGTH = 5;
 const PUBLIC_KEY_LENGTH = 32;
+const SS58_PREFIX_MAX = 0xffff;
 
 export class GetAddressCommand
   implements
@@ -87,6 +93,16 @@ export class GetAddressCommand
 
     const encodedDerivationPath = encodeDerivationPath(derivationPath);
     apduBuilder.addBufferToData(encodedDerivationPath);
+
+    if (
+      !Number.isInteger(this.args.ss58Prefix) ||
+      this.args.ss58Prefix < 0 ||
+      this.args.ss58Prefix > SS58_PREFIX_MAX
+    ) {
+      throw new Error(
+        `GetAddressCommand: ss58Prefix must be a uint16 (0..${SS58_PREFIX_MAX}), got ${this.args.ss58Prefix}`,
+      );
+    }
 
     // SS58 prefix: 2 bytes little-endian (firmware reads sizeof(uint16_t) via memcpy on ARM LE)
     const ss58Buf = new Uint8Array(2);

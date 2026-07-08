@@ -1,7 +1,7 @@
 import { type DeviceManagementKit } from "@ledgerhq/device-management-kit";
 
 import { SignerPolkadotBuilder } from "@api/SignerPolkadotBuilder";
-import { APP_NAME, INS, LEDGER_CLA } from "@internal/app-binder/constants";
+import { APP_NAME, LEDGER_CLA } from "@internal/app-binder/constants";
 import { DefaultSignerPolkadot } from "@internal/DefaultSignerPolkadot";
 
 describe("SignerPolkadotBuilder", () => {
@@ -30,11 +30,5 @@ describe("Polkadot APDU constants", () => {
 
   test("LEDGER_CLA should be 0xF9", () => {
     expect(LEDGER_CLA).toBe(0xf9);
-  });
-
-  test("INS values should match the Polkadot app protocol", () => {
-    expect(INS.GET_ADDRESS).toBe(0x01);
-    expect(INS.SIGN_TRANSACTION).toBe(0x02);
-    expect(INS.SIGN_RAW).toBe(0x03);
   });
 });

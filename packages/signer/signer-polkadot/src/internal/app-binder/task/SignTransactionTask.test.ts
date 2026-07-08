@@ -14,7 +14,7 @@ import {
 } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
 import { SignTransactionTask } from "@internal/app-binder/task/SignTransactionTask";
 
-const BITTENSOR_PATH = "44'/1005'/0'/0'/0'";
+const POLKADOT_PATH = "44'/354'/0'/0'/0'";
 
 describe("SignTransactionTask", () => {
   let sendCommandMock: ReturnType<typeof vi.fn>;
@@ -44,7 +44,7 @@ describe("SignTransactionTask", () => {
 
       const task = new SignTransactionTask(
         apiMock,
-        { derivationPath: BITTENSOR_PATH, blob, metadata },
+        { derivationPath: POLKADOT_PATH, blob, metadata },
         loggerMock,
       );
 
@@ -71,7 +71,7 @@ describe("SignTransactionTask", () => {
 
       const task = new SignTransactionTask(
         apiMock,
-        { derivationPath: BITTENSOR_PATH, blob, metadata },
+        { derivationPath: POLKADOT_PATH, blob, metadata },
         loggerMock,
       );
 
@@ -102,7 +102,7 @@ describe("SignTransactionTask", () => {
 
       const task = new SignTransactionTask(
         apiMock,
-        { derivationPath: BITTENSOR_PATH, blob, metadata },
+        { derivationPath: POLKADOT_PATH, blob, metadata },
         loggerMock,
       );
 
@@ -138,7 +138,7 @@ describe("SignTransactionTask", () => {
 
       const task = new SignTransactionTask(
         apiMock,
-        { derivationPath: BITTENSOR_PATH, blob, metadata },
+        { derivationPath: POLKADOT_PATH, blob, metadata },
         loggerMock,
       );
 
@@ -165,7 +165,7 @@ describe("SignTransactionTask", () => {
 
       const task = new SignTransactionTask(
         apiMock,
-        { derivationPath: BITTENSOR_PATH, blob, metadata },
+        { derivationPath: POLKADOT_PATH, blob, metadata },
         loggerMock,
       );
 
@@ -198,7 +198,7 @@ describe("SignTransactionTask", () => {
       const task = new SignTransactionTask(
         apiMock,
         {
-          derivationPath: BITTENSOR_PATH,
+          derivationPath: POLKADOT_PATH,
           blob: new Uint8Array(10),
           metadata: new Uint8Array(5),
         },
@@ -234,7 +234,7 @@ describe("SignTransactionTask", () => {
 
       const task = new SignTransactionTask(
         apiMock,
-        { derivationPath: BITTENSOR_PATH, blob, metadata },
+        { derivationPath: POLKADOT_PATH, blob, metadata },
         loggerMock,
       );
 
@@ -260,7 +260,7 @@ describe("SignTransactionTask", () => {
       const task = new SignTransactionTask(
         apiMock,
         {
-          derivationPath: BITTENSOR_PATH,
+          derivationPath: POLKADOT_PATH,
           blob: new Uint8Array(0),
           metadata: new Uint8Array(0),
         },

@@ -20,7 +20,7 @@ import {
   PolkadotErrorCodes,
 } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
 
-const BITTENSOR_PATH = "44'/1005'/0'/0'/0'";
+const POLKADOT_PATH = "44'/354'/0'/0'/0'";
 
 /**
  * Encodes a derivation path to the Polkadot 20-byte LE format.
@@ -47,7 +47,7 @@ describe("SignTransactionCommand", () => {
       // ARRANGE
       const command = new SignTransactionCommand({
         phase: SignPhase.INIT,
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         blobLength: 100,
       });
       // ASSERT
@@ -61,13 +61,13 @@ describe("SignTransactionCommand", () => {
       const blobLength = 150;
       const command = new SignTransactionCommand({
         phase: SignPhase.INIT,
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         blobLength,
       });
       const expected = new ApduBuilder(
         polkadotSignTransactionApduHeader(P1_INIT),
       )
-        .addBufferToData(pathToBuffer(BITTENSOR_PATH))
+        .addBufferToData(pathToBuffer(POLKADOT_PATH))
         .addBufferToData(blobLenToBuffer(blobLength));
       // ACT
       const apdu = command.getApdu();
@@ -79,7 +79,7 @@ describe("SignTransactionCommand", () => {
       // ARRANGE — blobLength=300 (0x012C): LE bytes = [0x2C, 0x01]
       const command = new SignTransactionCommand({
         phase: SignPhase.INIT,
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         blobLength: 300,
       });
       // ACT
@@ -139,7 +139,7 @@ describe("SignTransactionCommand", () => {
       // ARRANGE
       const command = new SignTransactionCommand({
         phase: SignPhase.INIT,
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
       });
       // ACT & ASSERT
       expect(() => command.getApdu()).toThrow(
@@ -151,12 +151,25 @@ describe("SignTransactionCommand", () => {
       // ARRANGE
       const command = new SignTransactionCommand({
         phase: SignPhase.INIT,
-        derivationPath: "44'/1005'/0'",
+        derivationPath: "44'/354'/0'",
         blobLength: 100,
       });
       // ACT & ASSERT
       expect(() => command.getApdu()).toThrow(
         "SignTransactionCommand: expected 5 path elements, got 3",
+      );
+    });
+
+    it("should throw when phase is INIT and blobLength exceeds the uint16 range", () => {
+      // ARRANGE
+      const command = new SignTransactionCommand({
+        phase: SignPhase.INIT,
+        derivationPath: POLKADOT_PATH,
+        blobLength: 0x10000,
+      });
+      // ACT & ASSERT
+      expect(() => command.getApdu()).toThrow(
+        "SignTransactionCommand: blobLength must be a uint16",
       );
     });
 

@@ -18,7 +18,7 @@ import {
   PolkadotErrorCodes,
 } from "@internal/app-binder/command/utils/polkadotApplicationErrors";
 
-const BITTENSOR_PATH = "44'/1005'/0'/0'/0'";
+const POLKADOT_PATH = "44'/354'/0'/0'/0'";
 const SS58_PREFIX = 42;
 
 /**
@@ -45,7 +45,7 @@ describe("GetAddressCommand", () => {
     it("should be 'GetAddress'", () => {
       // ARRANGE
       const command = new GetAddressCommand({
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         ss58Prefix: SS58_PREFIX,
         checkOnDevice: false,
       });
@@ -58,14 +58,14 @@ describe("GetAddressCommand", () => {
     it("should return APDU with P1=0x00 when checkOnDevice is false", () => {
       // ARRANGE
       const command = new GetAddressCommand({
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         ss58Prefix: SS58_PREFIX,
         checkOnDevice: false,
       });
       const expected = new ApduBuilder(
         polkadotGetAddressApduHeader(P1_NO_CONFIRM),
       )
-        .addBufferToData(pathToBuffer(BITTENSOR_PATH))
+        .addBufferToData(pathToBuffer(POLKADOT_PATH))
         .addBufferToData(ss58ToBuffer(SS58_PREFIX));
       // ACT
       const apdu = command.getApdu();
@@ -76,12 +76,12 @@ describe("GetAddressCommand", () => {
     it("should return APDU with P1=0x01 when checkOnDevice is true", () => {
       // ARRANGE
       const command = new GetAddressCommand({
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         ss58Prefix: SS58_PREFIX,
         checkOnDevice: true,
       });
       const expected = new ApduBuilder(polkadotGetAddressApduHeader(P1_CONFIRM))
-        .addBufferToData(pathToBuffer(BITTENSOR_PATH))
+        .addBufferToData(pathToBuffer(POLKADOT_PATH))
         .addBufferToData(ss58ToBuffer(SS58_PREFIX));
       // ACT
       const apdu = command.getApdu();
@@ -92,7 +92,7 @@ describe("GetAddressCommand", () => {
     it("should encode SS58 prefix as 2-byte little-endian", () => {
       // ARRANGE — SS58=42 (0x002A): LE bytes = [0x2A, 0x00]
       const command = new GetAddressCommand({
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         ss58Prefix: 42,
         checkOnDevice: false,
       });
@@ -111,13 +111,26 @@ describe("GetAddressCommand", () => {
     it("should throw when derivation path does not have 5 elements", () => {
       // ARRANGE
       const command = new GetAddressCommand({
-        derivationPath: "44'/1005'/0'",
+        derivationPath: "44'/354'/0'",
         ss58Prefix: SS58_PREFIX,
         checkOnDevice: false,
       });
       // ACT & ASSERT
       expect(() => command.getApdu()).toThrow(
         "GetAddressCommand: expected 5 path elements, got 3",
+      );
+    });
+
+    it("should throw when ss58Prefix exceeds the uint16 range", () => {
+      // ARRANGE
+      const command = new GetAddressCommand({
+        derivationPath: POLKADOT_PATH,
+        ss58Prefix: 0x10000,
+        checkOnDevice: false,
+      });
+      // ACT & ASSERT
+      expect(() => command.getApdu()).toThrow(
+        "GetAddressCommand: ss58Prefix must be a uint16",
       );
     });
   });
@@ -136,7 +149,7 @@ describe("GetAddressCommand", () => {
         data,
       });
       const command = new GetAddressCommand({
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         ss58Prefix: SS58_PREFIX,
         checkOnDevice: false,
       });
@@ -157,7 +170,7 @@ describe("GetAddressCommand", () => {
         data: new Uint8Array(0),
       });
       const command = new GetAddressCommand({
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         ss58Prefix: SS58_PREFIX,
         checkOnDevice: false,
       });
@@ -179,7 +192,7 @@ describe("GetAddressCommand", () => {
         data: new Uint8Array(0),
       });
       const command = new GetAddressCommand({
-        derivationPath: BITTENSOR_PATH,
+        derivationPath: POLKADOT_PATH,
         ss58Prefix: SS58_PREFIX,
         checkOnDevice: false,
       });
