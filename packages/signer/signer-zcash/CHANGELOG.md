@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- [#1587](https://github.com/LedgerHQ/device-sdk-ts/pull/1587) [`a2fa9a5`](https://github.com/LedgerHQ/device-sdk-ts/commit/a2fa9a58a19867f7ba32c4953954644160576ee2) Thanks [@may01](https://github.com/may01)! - Add PCZT Orchard shielded signing. A new `signPcztTransaction` method streams the PCZT bundle (header, transparent inputs/outputs, Orchard actions) to the device and returns the per-action Orchard `spendAuthSig`s and per-input transparent signatures. The legacy transparent `signTransaction` path is unchanged.
+
 ## 0.3.0
 
 ### Minor Changes
