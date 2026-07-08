@@ -107,6 +107,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     // only when `delayed: true` is requested, a blockhash source exists, and
     // the app supports delayed signing. When it isn't allowed we withhold the
     // source so the signing machine signs the original transaction.
+    //
+    // Template-based swaps (LiFi, etc.) always sign with the original blockhash:
+    // CAL-provided e016 descriptors are computed for the original transaction, so
+    // refreshing the blockhash would invalidate them and make the Exchange app
+    // reject the sign with a descriptor-mismatch error.
     const resolveRefreshSource = (
       context: types["context"],
     ): {
@@ -115,7 +120,11 @@ export class SignTransactionDeviceAction extends XStateDeviceAction<
     } => {
       const rpcUrl = resolveSolanaRpcUrl(context.input);
       const fetchBlockhash = context.input.transactionOptions?.fetchBlockhash;
+      const isTemplateSwap =
+        !!context.input.transactionOptions?.transactionResolutionContext
+          ?.templateId;
       const refreshBlockhash =
+        !isTemplateSwap &&
         context.input.transactionOptions?.delayed === true &&
         !!(rpcUrl || fetchBlockhash) &&
         isSupported("delayedSigning", context._internalState.appConfig!);

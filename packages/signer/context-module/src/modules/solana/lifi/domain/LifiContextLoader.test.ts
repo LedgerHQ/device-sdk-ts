@@ -80,8 +80,8 @@ describe("LifiContextLoader", () => {
     ];
 
   const expectedPlucked: SolanaTransactionDescriptorList = {
-    "SomeProgram:1": makeResolvedDescriptor("abc123"),
-    "AnotherProgram:": makeResolvedDescriptor("def456"),
+    "SomeProgram:1": [makeResolvedDescriptor("abc123")],
+    "AnotherProgram:": [makeResolvedDescriptor("def456")],
   };
 
   const responseInstructionsArray: GetTransactionDescriptorsResponse["instructions"] =
@@ -280,7 +280,67 @@ describe("LifiContextLoader", () => {
         txDescriptorsResponse,
       );
 
-      expect(result["SomeProgram:1"]?.signature).toBe("deadbeef");
+      expect(result["SomeProgram:1"]?.[0]?.signature).toBe("deadbeef");
+    });
+  });
+
+  describe("duplicate discriminator handling (private)", () => {
+    it("collects both descriptors into an array when same (program_id, discriminator_hex) appears twice", () => {
+      // Models the LiFi CAL PR fix: System Program Transfer has two descriptors —
+      // one for the transfer amount and one for fees (distinguished by capped_bps).
+      const loader = makeLoader();
+      const pluck = (loader as any).pluckTransactionData.bind(loader);
+
+      const response: GetTransactionDescriptorsResponse = {
+        id: "dup-test",
+        chain_id: 101,
+        instructions: [
+          {
+            program_id: "11111111111111111111111111111111",
+            discriminator: 2,
+            discriminator_hex: "02",
+          },
+          {
+            program_id: "11111111111111111111111111111111",
+            discriminator: 2,
+            discriminator_hex: "02",
+          },
+        ],
+        descriptors: [
+          {
+            program_id: "11111111111111111111111111111111",
+            discriminator_hex: "02",
+            has_basis_point: false,
+            descriptor: makeRawDescriptor(
+              "transfer_descriptor",
+              "sig_transfer",
+            ),
+          },
+          {
+            program_id: "11111111111111111111111111111111",
+            discriminator_hex: "02",
+            has_basis_point: true,
+            descriptor: makeRawDescriptor("fee_descriptor", "sig_fee"),
+          },
+        ],
+      };
+
+      const result: SolanaTransactionDescriptorList = pluck(response);
+
+      expect(Object.keys(result)).toHaveLength(1);
+      expect(result["11111111111111111111111111111111:02"]).toHaveLength(2);
+      expect(result["11111111111111111111111111111111:02"]?.[0]?.data).toBe(
+        "transfer_descriptor",
+      );
+      expect(
+        result["11111111111111111111111111111111:02"]?.[0]?.has_basis_point,
+      ).toBe(false);
+      expect(result["11111111111111111111111111111111:02"]?.[1]?.data).toBe(
+        "fee_descriptor",
+      );
+      expect(
+        result["11111111111111111111111111111111:02"]?.[1]?.has_basis_point,
+      ).toBe(true);
     });
   });
 
@@ -399,15 +459,18 @@ describe("LifiContextLoader", () => {
       ],
     };
 
-    it("produces 11 unique descriptor keys (ATokenGP:1 appears twice but deduplicates)", () => {
+    it("produces 11 unique descriptor keys (ATokenGP:1 appears twice -> array of 2)", () => {
       const loader = makeLoader();
       const pluck = (loader as any).pluckTransactionData.bind(loader);
 
       const result: SolanaTransactionDescriptorList = pluck(realApiResponse);
       const keys = Object.keys(result);
 
-      // 12 descriptors but ATokenGP:1 appears twice -> 11 unique keys
+      // 12 descriptors but ATokenGP:1 appears twice -> 11 unique keys, ATokenGP:1 has 2 entries
       expect(keys).toHaveLength(11);
+      expect(
+        result["ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL:1"],
+      ).toHaveLength(2);
     });
 
     it("creates distinct keys for same program_id with different discriminators", () => {
@@ -418,28 +481,30 @@ describe("LifiContextLoader", () => {
 
       // JUP6 has two different discriminators -> two distinct entries
       expect(
-        result["JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:2aade37a97cb17e0"]
-          ?.data,
+        result[
+          "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:2aade37a97cb17e0"
+        ]?.[0]?.data,
       ).toBe("jup_route");
       expect(
-        result["JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:819cd641339b2148"]
-          ?.data,
+        result[
+          "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:819cd641339b2148"
+        ]?.[0]?.data,
       ).toBe("jup_shared");
 
       // ComputeBudget has discriminator 2 and 3
       expect(
-        result["ComputeBudget111111111111111111111111111111:2"]?.data,
+        result["ComputeBudget111111111111111111111111111111:2"]?.[0]?.data,
       ).toBe("cb_2");
       expect(
-        result["ComputeBudget111111111111111111111111111111:3"]?.data,
+        result["ComputeBudget111111111111111111111111111111:3"]?.[0]?.data,
       ).toBe("cb_3");
 
       // TokenkegQ has discriminator 3 and 11
       expect(
-        result["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:3"]?.data,
+        result["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:3"]?.[0]?.data,
       ).toBe("tokenkeg_3");
       expect(
-        result["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:11"]?.data,
+        result["TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA:11"]?.[0]?.data,
       ).toBe("tokenkeg_11");
     });
 
@@ -449,14 +514,14 @@ describe("LifiContextLoader", () => {
 
       const result: SolanaTransactionDescriptorList = pluck(realApiResponse);
 
-      expect(result["MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr:"]?.data).toBe(
-        "memo",
-      );
       expect(
-        result["3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br:"]?.data,
+        result["MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr:"]?.[0]?.data,
+      ).toBe("memo");
+      expect(
+        result["3i5JeuZuUxeKtVysUnwQNGerJP2bSMX9fTFfS4Nxe3Br:"]?.[0]?.data,
       ).toBe("3i5jeu");
       expect(
-        result["BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB:"]?.data,
+        result["BrdgN2RPzEMWF96ZbnnJaUtQDQx7VRXYaHHbYCBvceWB:"]?.[0]?.data,
       ).toBe("brdg");
     });
 
@@ -510,9 +575,13 @@ describe("LifiContextLoader", () => {
         payload: {
           descriptors: expect.objectContaining({
             "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:2aade37a97cb17e0":
-              expect.objectContaining({ data: "jup_route" }),
+              expect.arrayContaining([
+                expect.objectContaining({ data: "jup_route" }),
+              ]),
             "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4:819cd641339b2148":
-              expect.objectContaining({ data: "jup_shared" }),
+              expect.arrayContaining([
+                expect.objectContaining({ data: "jup_shared" }),
+              ]),
           }),
           instructions: expect.arrayContaining([
             expect.objectContaining({
