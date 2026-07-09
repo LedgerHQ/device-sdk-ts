@@ -1,5 +1,47 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.10.0
+
+### Minor Changes
+
+- [#1571](https://github.com/LedgerHQ/device-sdk-ts/pull/1571) [`eba9c16`](https://github.com/LedgerHQ/device-sdk-ts/commit/eba9c161314306c1de73d6160c03e6f54e714184) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add generic clear sign providers
+
+- [#1614](https://github.com/LedgerHQ/device-sdk-ts/pull/1614) [`c7a449d`](https://github.com/LedgerHQ/device-sdk-ts/commit/c7a449d1920a864ec09211edbb6be95aaa737c3d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Enable transaction check
+
+- [#1536](https://github.com/LedgerHQ/device-sdk-ts/pull/1536) [`459d017`](https://github.com/LedgerHQ/device-sdk-ts/commit/459d017301c5d860579df9df61cdd0dd94405062) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add requirement builder
+
+- [#1533](https://github.com/LedgerHQ/device-sdk-ts/pull/1533) [`61d837f`](https://github.com/LedgerHQ/device-sdk-ts/commit/61d837f04a021933e417b74964a717a7e230108c) Thanks [@sprohaszka-ledger](https://github.com/sprohaszka-ledger)! - Use APDU chunk mechanism factorized into signer-utils package
+
+- [#1534](https://github.com/LedgerHQ/device-sdk-ts/pull/1534) [`1e2d977`](https://github.com/LedgerHQ/device-sdk-ts/commit/1e2d97758bf07726d73658ff7710700c2668dcda) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add the Solana clear-signing IDL_TYPE_POOL walker
+
+- [#1572](https://github.com/LedgerHQ/device-sdk-ts/pull/1572) [`274dac3`](https://github.com/LedgerHQ/device-sdk-ts/commit/274dac3c81bfcbd2ab2f1bb3568a3a9655c4ac9c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add generic clear-sign device action
+
+- [#1519](https://github.com/LedgerHQ/device-sdk-ts/pull/1519) [`0f1ade9`](https://github.com/LedgerHQ/device-sdk-ts/commit/0f1ade9f1ecacbaccd93cf5a972e1cd239e0962b) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Add solana clear sign commands
+
+- [#1581](https://github.com/LedgerHQ/device-sdk-ts/pull/1581) [`fef79ae`](https://github.com/LedgerHQ/device-sdk-ts/commit/fef79aeb6db3bf900cf449bc8402aadc50407a58) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Switch from hand-parsing signed TLV bytes to CAL's provided
+
+- [#1572](https://github.com/LedgerHQ/device-sdk-ts/pull/1572) [`274dac3`](https://github.com/LedgerHQ/device-sdk-ts/commit/274dac3c81bfcbd2ab2f1bb3568a3a9655c4ac9c) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Split the generic clear-sign phase into FINALIZE + PROMPT and split the terminal sign into two machines. `ProvisionGenericClearSignDeviceAction` now streams descriptors then runs the new `FINALIZE GENERIC CLEAR SIGNING` (0x0C) command to validate session completeness (no UI), resolving to `"prepared"`/`"degraded"`. A new `SignGenericClearSignDeviceAction` owns `PROMPT UI DISPLAY` + blockhash refresh + `SIGN MESSAGE DELAYED`; on a non-cancel prompt failure it degrades and the parent falls back to the legacy `SignBasicClearSignDeviceAction`. Both terminal machines share the new `RefreshBlockhashDeviceAction` child (best-effort fetch + patch). The internal `SigningOperationsDeviceAction` and its `alreadyArmed` input were removed.
+
+- [#1620](https://github.com/LedgerHQ/device-sdk-ts/pull/1620) [`92be6dd`](https://github.com/LedgerHQ/device-sdk-ts/commit/92be6dd802f3dca001762d74200205262567f44d) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Expose public `SignMessageDeviceActionFactory` and `GetAddressDeviceActionFactory` (mirroring the Ethereum signer kit) so consumers can compose their own `OpenApp -> GetAddress -> Sign` flows without deep-importing from `/internal/`. Also expose the user-rejection error publicly via the `isSolanaAppError` type guard and the `SolanaAppCommandError` class. `SolanaAppBinder.signMessage` and `.getAddress` now delegate to these factories to guarantee a single source of truth.
+
+- [#1529](https://github.com/LedgerHQ/device-sdk-ts/pull/1529) [`5e8d1fa`](https://github.com/LedgerHQ/device-sdk-ts/commit/5e8d1fa54874bcc9ca81ab3363ffc2e406695148) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Extend the Solana transaction parser for clear-signing
+
+### Patch Changes
+
+- [#1592](https://github.com/LedgerHQ/device-sdk-ts/pull/1592) [`6cfbd6b`](https://github.com/LedgerHQ/device-sdk-ts/commit/6cfbd6b1dfaa39f6f96df0e7341a8e4e9e75760d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Align OCMS (offchain message signing) V1 with the finalized sRFC 38 spec.
+
+- [#1547](https://github.com/LedgerHQ/device-sdk-ts/pull/1547) [`75a969c`](https://github.com/LedgerHQ/device-sdk-ts/commit/75a969ca676b67921760273769d581670b27e52b) Thanks [@OlivierFreyssinet](https://github.com/OlivierFreyssinet)! - Decode base64 instruction data without importing Node `Buffer`.
+
+- [#1589](https://github.com/LedgerHQ/device-sdk-ts/pull/1589) [`361e6ac`](https://github.com/LedgerHQ/device-sdk-ts/commit/361e6acbe940ef57690335e194779bc0c2937adc) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove the `@solana/spl-token` dependency entirely from the dependency graph and the lockfile.
+
+- [#1614](https://github.com/LedgerHQ/device-sdk-ts/pull/1614) [`c7a449d`](https://github.com/LedgerHQ/device-sdk-ts/commit/c7a449d1920a864ec09211edbb6be95aaa737c3d) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix Solana transaction check showing "unavailable" on device: fetch the scan descriptor over the blockhash-zeroed message so the verdict matches the fingerprint the device computes when signing
+
+- [#1604](https://github.com/LedgerHQ/device-sdk-ts/pull/1604) [`9c87a98`](https://github.com/LedgerHQ/device-sdk-ts/commit/9c87a983663f6bd534c209c6d9aa301dbbe4e36f) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Simplify solana basic clear sign flow
+
+- Updated dependencies [[`9c87a98`](https://github.com/LedgerHQ/device-sdk-ts/commit/9c87a983663f6bd534c209c6d9aa301dbbe4e36f), [`f424b9e`](https://github.com/LedgerHQ/device-sdk-ts/commit/f424b9e3effa196e3dd7a17b889d9fbdf7004836), [`fef79ae`](https://github.com/LedgerHQ/device-sdk-ts/commit/fef79aeb6db3bf900cf449bc8402aadc50407a58), [`eba9c16`](https://github.com/LedgerHQ/device-sdk-ts/commit/eba9c161314306c1de73d6160c03e6f54e714184), [`61d837f`](https://github.com/LedgerHQ/device-sdk-ts/commit/61d837f04a021933e417b74964a717a7e230108c)]:
+  - @ledgerhq/context-module@2.2.0
+  - @ledgerhq/signer-utils@1.3.0
+
 ## 1.9.1
 
 ### Patch Changes
