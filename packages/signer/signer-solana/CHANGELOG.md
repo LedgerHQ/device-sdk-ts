@@ -1,5 +1,13 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.10.1
+
+### Patch Changes
+
+- Updated dependencies [[`61d837f`](https://github.com/LedgerHQ/device-sdk-ts/commit/61d837f04a021933e417b74964a717a7e230108c)]:
+  - @ledgerhq/context-module@2.2.0
+  - @ledgerhq/signer-utils@1.3.0
+
 ## 1.10.0
 
 ### Minor Changes
