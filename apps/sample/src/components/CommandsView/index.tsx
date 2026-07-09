@@ -1,8 +1,5 @@
 import React, { useMemo } from "react";
 import {
-  BackupAppStorageCommand,
-  type BackupAppStorageCommandErrorCodes,
-  type BackupAppStorageCommandResponse,
   BatteryStatusType,
   CloseAppCommand,
   DeleteLanguagePackCommand,
@@ -10,18 +7,11 @@ import {
   type DeleteLanguagePackErrorCodes,
   GetAppAndVersionCommand,
   type GetAppAndVersionResponse,
-  GetAppStorageInfoCommand,
-  type GetAppStorageInfoCommandArgs,
-  type GetAppStorageInfoCommandErrorCodes,
-  type GetAppStorageInfoCommandResponse,
   type GetBatteryStatusArgs,
   GetBatteryStatusCommand,
   type GetBatteryStatusResponse,
   GetOsVersionCommand,
   type GetOsVersionResponse,
-  InitRestoreAppStorageCommand,
-  type InitRestoreAppStorageCommandArgs,
-  type InitRestoreAppStorageCommandErrorCodes,
   type ListAppsArgs,
   ListAppsCommand,
   type ListAppsErrorCodes,
@@ -34,6 +24,21 @@ import {
   OpenAppCommand,
   type OpenAppErrorCodes,
 } from "@ledgerhq/device-management-kit";
+import {
+  BackupAppStorageCommand,
+  type BackupAppStorageCommandErrorCodes,
+  type BackupAppStorageCommandResponse,
+  GetAppStorageInfoCommand,
+  type GetAppStorageInfoCommandArgs,
+  type GetAppStorageInfoCommandErrorCodes,
+  type GetAppStorageInfoCommandResponse,
+  InitRestoreAppStorageCommand,
+  type InitRestoreAppStorageCommandArgs,
+  type InitRestoreAppStorageCommandErrorCodes,
+  RequestMasterConsentCommand,
+  type RequestMasterConsentCommandArgs,
+  type RequestMasterConsentCommandErrorCodes,
+} from "@ledgerhq/dmk-ledger-wallet";
 import { Grid } from "@ledgerhq/react-ui";
 
 import { getValueSelectorFromEnum } from "@/components/Form";
@@ -163,6 +168,37 @@ export const CommandsView: React.FC<{ sessionId: string }> = ({
         void,
         BackupAppStorageCommandResponse,
         BackupAppStorageCommandErrorCodes
+      >,
+      {
+        title: "Request master consent",
+        description: "Request master consent for the device",
+        sendCommand: ({
+          languagePackConsentEnabled,
+          lockScreenPictureConsentEnabled,
+          appNumber,
+          appStorageNumber,
+        }) => {
+          const command = new RequestMasterConsentCommand({
+            languagePackConsentEnabled,
+            lockScreenPictureConsentEnabled,
+            appNumber,
+            appStorageNumber,
+          });
+          return dmk.sendCommand({
+            sessionId: selectedSessionId,
+            command,
+          });
+        },
+        initialValues: {
+          languagePackConsentEnabled: true,
+          lockScreenPictureConsentEnabled: true,
+          appNumber: 1,
+          appStorageNumber: 1,
+        },
+      } satisfies CommandProps<
+        RequestMasterConsentCommandArgs,
+        void,
+        RequestMasterConsentCommandErrorCodes
       >,
       {
         title: "Init restore app storage",

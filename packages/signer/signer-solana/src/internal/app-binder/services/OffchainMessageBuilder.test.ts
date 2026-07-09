@@ -3,6 +3,7 @@ import { OffchainMessageBuildError } from "@internal/app-binder/services/Errors"
 import {
   MessageFormat,
   OffchainMessageBuilder,
+  OFFCHAINMSG_MAX_LEN,
 } from "@internal/app-binder/services/OffchainMessageBuilder";
 
 const PUBKEY = new Uint8Array(32).fill(0x11);
@@ -64,10 +65,11 @@ describe("OffchainMessageBuilder", () => {
       expect(v0[49]).toBe(MessageFormat.Utf8);
     });
 
-    it("detects long UTF-8 format (format=2)", () => {
-      const longUtf8 = new TextEncoder().encode("x".repeat(15313));
-      const v0 = new OffchainMessageBuilder().buildV0(longUtf8, PUBKEY);
-      expect(v0[49]).toBe(MessageFormat.Utf8LongV0);
+    it("throws when the message exceeds the device payload ceiling", () => {
+      const tooLong = new Uint8Array(OFFCHAINMSG_MAX_LEN + 1).fill(0x41);
+      expect(() =>
+        new OffchainMessageBuilder().buildV0(tooLong, PUBKEY),
+      ).toThrow(OffchainMessageBuildError);
     });
   });
 
@@ -112,7 +114,7 @@ describe("OffchainMessageBuilder", () => {
   // ──────────────────────────────────────────────────────────────────────────
 
   describe("buildV1", () => {
-    it("writes signing domain, version 1, signerCount, pubkey, LE length, body", () => {
+    it("writes signing domain, version 1, signerCount, pubkey, body (no length prefix)", () => {
       const body = new Uint8Array([0xab, 0xcd]);
       const v1 = new OffchainMessageBuilder().buildV1(body, [PUBKEY]);
 
@@ -121,18 +123,15 @@ describe("OffchainMessageBuilder", () => {
       expect(v1[16]).toBe(1);
       expect(v1[17]).toBe(1);
       expect(v1.slice(18, 50)).toEqual(PUBKEY);
-      expect(v1[50]).toBe(body.length & 0xff);
-      expect(v1[51]).toBe((body.length >> 8) & 0xff);
-      expect(v1.slice(52)).toEqual(body);
-      expect(v1.length).toBe(16 + 1 + 1 + 32 + 2 + body.length);
+      expect(v1.slice(50)).toEqual(body);
+      expect(v1.length).toBe(16 + 1 + 1 + 32 + body.length);
     });
 
-    it("accepts message at exactly 65535 bytes (uint16 max)", () => {
+    it("accepts a large message with no length-prefix overflow", () => {
       const big = new Uint8Array(65535).fill(0xbb);
       const v1 = new OffchainMessageBuilder().buildV1(big, [PUBKEY]);
-      expect(v1.length).toBe(16 + 1 + 1 + 32 + 2 + big.length);
-      expect(v1[50]).toBe(0xff);
-      expect(v1[51]).toBe(0xff);
+      expect(v1.length).toBe(16 + 1 + 1 + 32 + big.length);
+      expect(v1.slice(50)).toEqual(big);
     });
 
     it("does not include appDomain even when provided", () => {
@@ -141,7 +140,7 @@ describe("OffchainMessageBuilder", () => {
         PUBKEY,
       ]);
 
-      expect(v1.length).toBe(16 + 1 + 1 + 32 + 2 + body.length);
+      expect(v1.length).toBe(16 + 1 + 1 + 32 + body.length);
     });
 
     it("includes multiple signers sorted and deduplicated", () => {
@@ -155,6 +154,34 @@ describe("OffchainMessageBuilder", () => {
         keyADup,
         keyA,
       ]);
+
+      expect(v1[17]).toBe(2);
+      expect(v1.slice(18, 50)).toEqual(keyA);
+      expect(v1.slice(50, 82)).toEqual(keyB);
+      expect(v1.slice(82)).toEqual(body);
+      expect(v1.length).toBe(16 + 1 + 1 + 32 * 2 + body.length);
+    });
+
+    it("writes the LE length prefix when includeLengthPrefix is true", () => {
+      const body = new Uint8Array([0xab, 0xcd]);
+      const v1 = new OffchainMessageBuilder().buildV1(body, [PUBKEY], true);
+
+      expect(v1[0]).toBe(0xff);
+      expect(v1[16]).toBe(1);
+      expect(v1[17]).toBe(1);
+      expect(v1.slice(18, 50)).toEqual(PUBKEY);
+      expect(v1[50]).toBe(body.length & 0xff);
+      expect(v1[51]).toBe((body.length >> 8) & 0xff);
+      expect(v1.slice(52)).toEqual(body);
+      expect(v1.length).toBe(16 + 1 + 1 + 32 + 2 + body.length);
+    });
+
+    it("keeps signers before the length prefix with multiple signers", () => {
+      const body = new Uint8Array([0xfe]);
+      const keyA = new Uint8Array(32).fill(0x01);
+      const keyB = new Uint8Array(32).fill(0x02);
+
+      const v1 = new OffchainMessageBuilder().buildV1(body, [keyB, keyA], true);
 
       expect(v1[17]).toBe(2);
       expect(v1.slice(18, 50)).toEqual(keyA);
@@ -272,13 +299,6 @@ describe("OffchainMessageBuilder", () => {
       expect(builder.findMessageFormat(msg, false)).toBe(MessageFormat.Utf8);
     });
 
-    it("returns Utf8LongV0 for long UTF-8", () => {
-      const msg = new TextEncoder().encode("x".repeat(15313));
-      expect(builder.findMessageFormat(msg, false)).toBe(
-        MessageFormat.Utf8LongV0,
-      );
-    });
-
     it("legacy forbids newline in ASCII (falls back to UTF-8)", () => {
       const msg = new TextEncoder().encode("hello\nworld");
       expect(builder.findMessageFormat(msg, true)).toBe(MessageFormat.Utf8);
@@ -292,7 +312,7 @@ describe("OffchainMessageBuilder", () => {
     });
 
     it("throws on oversized message", () => {
-      const big = new Uint8Array(65516).fill(0x41);
+      const big = new Uint8Array(OFFCHAINMSG_MAX_LEN + 1).fill(0x41);
       expect(() => builder.findMessageFormat(big, false)).toThrow(
         OffchainMessageBuildError,
       );

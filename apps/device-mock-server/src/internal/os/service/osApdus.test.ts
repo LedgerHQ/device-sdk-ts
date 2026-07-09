@@ -1,6 +1,7 @@
 import { type Device } from "@ledgerhq/device-mockserver-client";
 
 import {
+  deriveCustomLockScreen,
   deriveGetAppAndVersion,
   deriveGetBatteryStatus,
   deriveGetDeviceName,
@@ -159,6 +160,45 @@ describe("deriveOsApduResponse", () => {
         "e0de000000",
       ),
     ).toBe("9000");
+  });
+
+  it("dispatches GetBackgroundImageSize (0xE0 0x64) as an empty device", () => {
+    expect(deriveOsApduResponse(device({}), "e064000000")).toBe("000000009000");
+  });
+});
+
+describe("deriveCustomLockScreen", () => {
+  it("reports no image for GetBackgroundImageSize (0xE0 0x64) with size 0", () => {
+    expect(deriveCustomLockScreen("e064000000")).toBe("000000009000");
+  });
+
+  it("reports no image (662e) for FetchBackgroundImageChunk (0xE0 0x65)", () => {
+    expect(deriveCustomLockScreen("e0650000050000000005")).toBe("662e");
+  });
+
+  it("reports no image (662e) for GetBackgroundImageHash (0xE0 0x66)", () => {
+    expect(deriveCustomLockScreen("e066000000")).toBe("662e");
+  });
+
+  it("reports nothing to delete (662e) for DeleteBackgroundImage (0xE0 0x63)", () => {
+    expect(deriveCustomLockScreen("e063000000")).toBe("662e");
+  });
+
+  it("succeeds for CreateBackgroundImage (0xE0 0x60)", () => {
+    expect(deriveCustomLockScreen("e06000000400001000")).toBe("9000");
+  });
+
+  it("succeeds for UploadBackgroundImageChunk (0xE0 0x61)", () => {
+    expect(deriveCustomLockScreen("e0610000050000000000")).toBe("9000");
+  });
+
+  it("succeeds for CommitBackgroundImage (0xE0 0x62)", () => {
+    expect(deriveCustomLockScreen("e062000000")).toBe("9000");
+  });
+
+  it("returns undefined for a non-CLS APDU", () => {
+    expect(deriveCustomLockScreen("e0010000")).toBeUndefined();
+    expect(deriveCustomLockScreen("e0f1000000")).toBeUndefined();
   });
 });
 

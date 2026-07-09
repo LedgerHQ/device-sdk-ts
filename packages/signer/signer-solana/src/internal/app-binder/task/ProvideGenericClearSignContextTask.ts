@@ -38,6 +38,7 @@ export type ProvideGenericClearSignContextTaskArgs = {
   readonly loggerFactory: (tag: string) => LoggerPublisherService;
   readonly network?: string;
   readonly normaliser?: SolanaMessageNormaliser;
+  readonly blockhashService?: BlockhashService;
 };
 
 /**
@@ -54,6 +55,7 @@ export class ProvideGenericClearSignContextTask {
   private readonly logger: LoggerPublisherService;
   private readonly deps: ProvideContextDeps;
   private readonly network: string;
+  private readonly blockhashService: BlockhashService;
 
   constructor(
     private readonly api: InternalApi,
@@ -61,6 +63,7 @@ export class ProvideGenericClearSignContextTask {
   ) {
     this.logger = args.loggerFactory("ProvideGenericClearSignContextTask");
     this.network = args.network ?? DEFAULT_NETWORK;
+    this.blockhashService = args.blockhashService ?? new BlockhashService();
     this.deps = {
       api,
       logger: this.logger,
@@ -157,7 +160,7 @@ export class ProvideGenericClearSignContextTask {
     // (the device zeroes it anyway when computing the fingerprint).
     let previewTransaction = this.args.transaction;
     try {
-      previewTransaction = new BlockhashService().zeroBlockhash(
+      previewTransaction = this.blockhashService.zeroBlockhash(
         this.args.transaction,
       );
     } catch (error) {

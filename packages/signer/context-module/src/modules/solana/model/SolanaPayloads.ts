@@ -179,5 +179,6 @@ export type SolanaAltResolutionPayload = {
   descriptor: Uint8Array;
 };
 
-// SOLANA_TRUSTED_NAME already exists with `payload: Uint8Array`, emitted by
-// both OwnerInfoContextLoader and SolanaTrustedNameContextLoader.
+// SOLANA_TRUSTED_NAME (generic flow, with 2-byte length prefix) is emitted by
+// SolanaTrustedNameContextLoader. SOLANA_BASIC_TRUSTED_NAME (basic flow, raw
+// bytes) is emitted by OwnerInfoContextLoader. Both carry `payload: Uint8Array`.

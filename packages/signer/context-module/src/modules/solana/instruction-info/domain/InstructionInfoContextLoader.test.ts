@@ -9,7 +9,10 @@ import {
   type InstructionInfoDataSource,
   type InstructionInfoResult,
 } from "@/modules/solana/instruction-info/data/InstructionInfoDataSource";
-import { type SolanaInstructionInfoPayload } from "@/modules/solana/model/SolanaPayloads";
+import {
+  type SolanaInstructionEnumVariant,
+  type SolanaInstructionInfoPayload,
+} from "@/modules/solana/model/SolanaPayloads";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
 import { InstructionInfoContextLoader } from "./InstructionInfoContextLoader";
@@ -78,6 +81,18 @@ function makeJupiterResult(): InstructionInfoResult {
     programId: JUPITER_PROGRAM,
     descriptors: { e517cb977ae3ad2a: Right(makeJupiterPayload()) },
     enumVariants: [],
+  };
+}
+
+function makeJupiterRouteResult(
+  enumVariants: SolanaInstructionEnumVariant[] = [],
+): InstructionInfoResult {
+  return {
+    programId: JUPITER_PROGRAM,
+    descriptors: {
+      e517cb977ae3ad2a: Right({ ...makeJupiterPayload(), enumVariants }),
+    },
+    enumVariants,
   };
 }
 
@@ -208,6 +223,88 @@ describe("InstructionInfoContextLoader", () => {
       });
       // The loader does not transform — it forwards the data source's payload.
       expect((infoCtx as any).payload).toEqual(makeSystemPayload());
+    });
+
+    it("does NOT emit SOLANA_ENUM_VARIANT contexts (those come from EnumVariantContextLoader)", async () => {
+      const loader = makeLoader();
+      // Pass a pre-decoded variant to confirm the loader never emits SOLANA_ENUM_VARIANT.
+      const jupiter = makeJupiterRouteResult([
+        {
+          enumId: "swap",
+          variantIndex: 46,
+          descriptor: { data: "01_raydium_tlv", signature: "prodsig_v46" },
+        },
+      ]);
+      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
+        Right(jupiter),
+      );
+
+      const result = await loader.load({
+        deviceModelId: DeviceModelId.NANO_X,
+        instructions: [
+          { programId: JUPITER_PROGRAM, discriminator: "e517cb977ae3ad2a" },
+        ],
+      });
+
+      expect(
+        result.filter(
+          (c) => c.type === ClearSignContextType.SOLANA_ENUM_VARIANT,
+        ),
+      ).toHaveLength(0);
+    });
+
+    it("bundles CAL enum_variants into the SOLANA_INSTRUCTION_INFO payload (host decode cache)", async () => {
+      const loader = makeLoader();
+      const expectedVariants: SolanaInstructionEnumVariant[] = [
+        {
+          enumId: "swap",
+          variantIndex: 46,
+          descriptor: { data: "01_raydium_tlv", signature: "prodsig_v46" },
+        },
+      ];
+      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
+        Right(makeJupiterRouteResult(expectedVariants)),
+      );
+
+      const result = await loader.load({
+        deviceModelId: DeviceModelId.NANO_X,
+        instructions: [
+          { programId: JUPITER_PROGRAM, discriminator: "e517cb977ae3ad2a" },
+        ],
+      });
+
+      const infoCtx = result.find(
+        (c) => c.type === ClearSignContextType.SOLANA_INSTRUCTION_INFO,
+      );
+
+      expect((infoCtx as any).payload.enumVariants).toEqual(expectedVariants);
+    });
+
+    it("forwards exactly the enumVariants the data source decoded — no NaN indices", async () => {
+      const loader = makeLoader();
+      // The data source is responsible for filtering malformed variant keys;
+      // the loader forwards whatever pre-decoded variants it receives as-is.
+      const validVariant: SolanaInstructionEnumVariant = {
+        enumId: "swap",
+        variantIndex: 46,
+        descriptor: { data: "01_raydium_tlv", signature: "prodsig_v46" },
+      };
+      vi.spyOn(dataSource, "getInstructionInfo").mockResolvedValue(
+        Right(makeJupiterRouteResult([validVariant])),
+      );
+
+      const result = await loader.load({
+        deviceModelId: DeviceModelId.NANO_X,
+        instructions: [
+          { programId: JUPITER_PROGRAM, discriminator: "e517cb977ae3ad2a" },
+        ],
+      });
+
+      const infoCtx = result.find(
+        (c) => c.type === ClearSignContextType.SOLANA_INSTRUCTION_INFO,
+      );
+
+      expect((infoCtx as any).payload.enumVariants).toEqual([validVariant]);
     });
 
     it("filters descriptors by requested discriminator", async () => {

@@ -27,17 +27,12 @@ const appConfig: AppConfiguration = {
   blindSigningEnabled: true,
   pubKeyDisplayMode: PublicKeyDisplayMode.LONG,
   version: "1.10.0",
-  web3ChecksEnabled: false,
-  web3ChecksOptIn: false,
+  transactionChecksEnabled: false,
+  transactionChecksOptIn: false,
 };
 
 const contextModuleStub = { getContexts: vi.fn() } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 const basicContext = {
-  tlvDescriptor: new Uint8Array([1]),
-  trustedNamePKICertificate: {
-    keyUsageNumber: 0,
-    payload: new Uint8Array([1]),
-  },
   loadersResults: [],
   contextErrorCount: 0,
 };
@@ -174,7 +169,7 @@ describe("ProvisionBasicClearSignDeviceAction", () => {
       );
     }));
 
-  it("non-SPL standard tx with web3 unsupported (Nano X): skips build entirely", () =>
+  it("non-SPL standard tx with txCheck unsupported (Nano X): skips build entirely", () =>
     new Promise<void>((resolve, reject) => {
       inspectMock.mockResolvedValue({
         transactionType: SolanaTransactionTypes.STANDARD,

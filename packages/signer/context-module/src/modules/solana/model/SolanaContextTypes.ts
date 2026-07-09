@@ -50,7 +50,8 @@ export type SolanaContextSuccessType =
   | ClearSignContextType.SOLANA_TOKEN_INFO
   | ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE
   | ClearSignContextType.SOLANA_ALT_RESOLUTION
-  | ClearSignContextType.SOLANA_TRUSTED_NAME;
+  | ClearSignContextType.SOLANA_TRUSTED_NAME
+  | ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME;
 
 export type SolanaContextSuccess<
   T extends SolanaContextSuccessType = SolanaContextSuccessType,
@@ -86,6 +87,9 @@ export type SolanaAltResolutionContextSuccess =
 
 export type SolanaTrustedNameContextSuccess =
   ClearSignContextSuccess<ClearSignContextType.SOLANA_TRUSTED_NAME>;
+
+export type SolanaBasicTrustedNameContextSuccess =
+  ClearSignContextSuccess<ClearSignContextType.SOLANA_BASIC_TRUSTED_NAME>;
 
 export type SolanaTokenContextResult =
   | SolanaTokenContextSuccess
