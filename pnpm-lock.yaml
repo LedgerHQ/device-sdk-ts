@@ -1866,8 +1866,8 @@ importers:
         specifier: workspace:^
         version: link:../context-module
       '@ledgerhq/signer-utils':
-        specifier: workspace:^
-        version: link:../signer-utils
+        specifier: ^1.2.0
+        version: 1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)
       '@solana/web3.js':
         specifier: 'catalog:'
         version: 1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.9.2)(utf-8-validate@5.0.10)
@@ -4683,6 +4683,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@ledgerhq/signer-utils@1.2.0':
+    resolution: {integrity: sha512-Ek4/NXGt6gfiZUmiAFE19534f8wnlQSHvZMsjmqCEktbJd/mYbzvTrvYeo0+PQPw2D/kTYD1fRC6ADKQRSBeGw==}
+    peerDependencies:
+      '@ledgerhq/device-management-kit': ^1.2.0
 
   '@ledgerhq/ui-shared@0.2.2':
     resolution: {integrity: sha512-3ASYnyqnZFMRnySADZziM3IIJ2SRQ7lKrRPwpihhf+SsyP7TIo6o4UXMY8eYOupdTARlElS4Qpk4nRL/Ln62Ng==}
@@ -15685,6 +15690,11 @@ snapshots:
       - react-native
       - react-native-svg
       - supports-color
+
+  '@ledgerhq/signer-utils@1.2.0(@ledgerhq/device-management-kit@packages+device-management-kit)':
+    dependencies:
+      '@ledgerhq/device-management-kit': link:packages/device-management-kit
+      semver: 7.7.2
 
   '@ledgerhq/ui-shared@0.2.2': {}
 
