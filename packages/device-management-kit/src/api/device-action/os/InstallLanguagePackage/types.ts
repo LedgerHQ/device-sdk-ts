@@ -24,6 +24,17 @@ export type Language =
   | "turkish"
   | "thai";
 
+export const LANGUAGE_ID_TO_LANGUAGE: Record<number, Language> = {
+  0: "english",
+  1: "french",
+  2: "spanish",
+  3: "brazilian",
+  4: "german",
+  5: "russian",
+  6: "turkish",
+  7: "thai",
+};
+
 export const installLanguagePackageDAStateStep = Object.freeze({
   DEVICE_READY: "os.installLanguagePackage.steps.deviceReady",
   GET_DEVICE_METADATA: "os.installLanguagePackage.steps.getDeviceMetadata",

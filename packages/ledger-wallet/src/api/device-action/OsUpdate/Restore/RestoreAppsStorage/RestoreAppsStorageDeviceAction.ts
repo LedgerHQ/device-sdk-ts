@@ -13,10 +13,8 @@ import { assign, fromPromise, setup } from "xstate";
 import { type BackupApp } from "@api/device-action/OsUpdate/Backup/types";
 import { type InitRestoreAppStorageError } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/RestoreAppsStorageDeviceActionErrors";
 import { commitRestoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/CommitRestoreAppStorage";
-import { goToDashboard } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/GoToDashboard";
 import { initRestoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/InitRestoreAppStorage";
 import { restoreAppStorage } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/RestoreAppStorage";
-import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/Substeps/WaitForAppAndVersion";
 import {
   type BackupAppWithStorage,
   InitRestoreAppStorageConsentResult,
@@ -27,6 +25,8 @@ import {
   type RestoreAppsStorageDAOutput,
   RestoreAppsStorageSteps,
 } from "@api/device-action/OsUpdate/Restore/RestoreAppsStorage/types";
+import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
+import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
 
 const hasStorageData = (app: BackupApp): app is BackupAppWithStorage =>
   app.data !== undefined;
@@ -38,7 +38,7 @@ export class RestoreAppsStorageDeviceAction extends XStateDeviceAction<
   RestoreAppsStorageDAIntermediateValue,
   RestoreAppsStorageDAInternalState
 > {
-  protected override makeStateMachine(
+  makeStateMachine(
     internalAPI: InternalApi,
   ): DeviceActionStateMachine<
     RestoreAppsStorageDAOutput,

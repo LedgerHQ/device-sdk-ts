@@ -1,34 +1,34 @@
-import { WaitForAppAndVersionDeviceAction } from "@ledgerhq/device-management-kit";
+import { GoToDashboardDeviceAction } from "@ledgerhq/device-management-kit";
 
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
-import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Backup/Substeps/WaitForAppAndVersion";
+import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
 
 vi.mock("@ledgerhq/device-management-kit", async (importOriginal) => {
   const original =
     await importOriginal<typeof import("@ledgerhq/device-management-kit")>();
   return {
     ...original,
-    WaitForAppAndVersionDeviceAction: vi.fn(),
+    GoToDashboardDeviceAction: vi.fn(),
   };
 });
 
-describe("WaitForAppAndVersion", () => {
+describe("GoToDashboard", () => {
   const apiMock = makeDeviceActionInternalApiMock();
-  const MockDA = vi.mocked(WaitForAppAndVersionDeviceAction);
+  const MockDA = vi.mocked(GoToDashboardDeviceAction);
 
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
   describe("Success", () => {
-    it("Should return the wait for app and version device action state machine", () => {
+    it("Should return the go to dashboard device action state machine", () => {
       const fakeStateMachine = Symbol("stateMachine");
       const makeStateMachineMock = vi.fn().mockReturnValue(fakeStateMachine);
       MockDA.mockImplementation(
         () => ({ makeStateMachine: makeStateMachineMock }) as never,
       );
 
-      const result = waitForAppAndVersion(apiMock, 5000);
+      const result = goToDashboard(apiMock, 5000);
 
       expect(MockDA).toHaveBeenCalledWith({ input: { unlockTimeout: 5000 } });
       expect(makeStateMachineMock).toHaveBeenCalledWith(apiMock);
@@ -46,7 +46,7 @@ describe("WaitForAppAndVersion", () => {
         () => ({ makeStateMachine: makeStateMachineMock }) as never,
       );
 
-      expect(() => waitForAppAndVersion(apiMock, 5000)).toThrow(error);
+      expect(() => goToDashboard(apiMock, 5000)).toThrow(error);
     });
   });
 });

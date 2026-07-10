@@ -19,21 +19,21 @@ import { backupAppsStorage } from "@api/device-action/OsUpdate/Backup/Substeps/B
 import { downloadCustomLockScreenDevice } from "@api/device-action/OsUpdate/Backup/Substeps/DownloadCustomLockScreen";
 import { getIsOnboarded } from "@api/device-action/OsUpdate/Backup/Substeps/GetIsOnboarded";
 import { getLanguageId } from "@api/device-action/OsUpdate/Backup/Substeps/GetLanguageId";
-import { goToDashboard } from "@api/device-action/OsUpdate/Backup/Substeps/GoToDashboard";
 import { listInstalledApps } from "@api/device-action/OsUpdate/Backup/Substeps/ListInstalledApps";
-import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Backup/Substeps/WaitForAppAndVersion";
 import {
   type Backup,
   type CreateBackupDAError,
   type CreateBackupDAState,
   CreateBackupSteps,
 } from "@api/device-action/OsUpdate/Backup/types";
+import { goToDashboard } from "@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard";
+import { waitForAppAndVersion } from "@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion";
 
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/GetLanguageId");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/GetIsOnboarded");
-vi.mock("@api/device-action/OsUpdate/Backup/Substeps/GoToDashboard");
+vi.mock("@api/device-action/OsUpdate/Shared/Substeps/GoToDashboard");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/ListInstalledApps");
-vi.mock("@api/device-action/OsUpdate/Backup/Substeps/WaitForAppAndVersion");
+vi.mock("@api/device-action/OsUpdate/Shared/Substeps/WaitForAppAndVersion");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/DownloadCustomLockScreen");
 vi.mock("@api/device-action/OsUpdate/Backup/Substeps/BackupAppsStorage");
 
