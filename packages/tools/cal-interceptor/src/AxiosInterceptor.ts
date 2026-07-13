@@ -1,4 +1,4 @@
-type GetJsonResponse = (url: string) => string | null;
+type GetJsonResponse = (url: string) => string | null | Promise<string | null>;
 
 export class FetchInterceptor {
   private getJsonResponse: GetJsonResponse;
@@ -27,7 +27,7 @@ export class FetchInterceptor {
             ? input.toString()
             : input;
 
-      const jsonResponse = this.getJsonResponse(url);
+      const jsonResponse = await this.getJsonResponse(url);
       if (jsonResponse) {
         return new Response(jsonResponse, {
           status: 200,

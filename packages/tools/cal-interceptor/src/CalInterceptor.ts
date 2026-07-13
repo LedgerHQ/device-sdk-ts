@@ -3,6 +3,25 @@ import type { StorageInterface } from "./storage/StorageInterface";
 import { FetchInterceptor } from "./AxiosInterceptor";
 
 /**
+ * Metadata-service paths serving dynamic descriptors. Dynamic descriptors carry
+ * a single prod signature embedded in the TLV, so they must be re-signed with
+ * the CAL interceptor key before a Speculos test device will accept them.
+ * Requests to these paths are redirected to the local re-signing proxy
+ * (see `DYNAMIC_DESCRIPTOR_PROXY_PREFIX`).
+ */
+const DYNAMIC_DESCRIPTOR_PATHS = [
+  "/v2/solana/alt-resolution",
+  "/v2/solana/token-account-state",
+];
+
+/**
+ * Base path of the sample app's re-signing proxy (Flask
+ * `/api/dynamic-descriptor-proxy`, proxied by Next). The original path and query
+ * are appended to it.
+ */
+const DYNAMIC_DESCRIPTOR_PROXY_PREFIX = "/api/dynamic-descriptor-proxy";
+
+/**
  * CAL Interceptor - intercepts CAL (Crypto Assets List) API calls
  * and returns locally stored descriptors when available
  */
@@ -133,9 +152,18 @@ export class CalInterceptor {
    * Modify CAL response - called by interceptor
    * Returns modified response or null to pass through
    */
-  private modifyCalResponse(url: string): string | null {
+  private async modifyCalResponse(url: string): Promise<string | null> {
     try {
       const parsedUrl = new URL(url);
+
+      // Dynamic descriptors (ALT resolution, token account state, ...) embed a
+      // signature in the TLV that must be re-signed with the CAL interceptor
+      // key, which only the local proxy can do. Fetch them through that proxy
+      // and serve the re-signed response.
+      const resigned = await this.fetchResignedDynamicDescriptor(parsedUrl);
+      if (resigned !== null) {
+        return resigned;
+      }
 
       // Check if it's a CAL request
       if (!parsedUrl.origin.includes("crypto-assets-service")) {
@@ -199,5 +227,41 @@ export class CalInterceptor {
       console.error("Failed to parse URL params:", error);
     }
     return null;
+  }
+
+  /**
+   * Fetch a dynamic descriptor (ALT resolution, token account state, ...)
+   * through the local re-signing proxy and return its (re-signed) body. Returns
+   * null when the request is not a dynamic descriptor request that needs
+   * re-signing, so the caller passes it through untouched.
+   */
+  private async fetchResignedDynamicDescriptor(
+    parsedUrl: URL,
+  ): Promise<string | null> {
+    // Ignore requests already targeting the proxy (this method re-enters the
+    // interceptor when it fetches, and must not redirect the proxy call itself).
+    if (parsedUrl.pathname.startsWith(DYNAMIC_DESCRIPTOR_PROXY_PREFIX)) {
+      return null;
+    }
+
+    const needsResign = DYNAMIC_DESCRIPTOR_PATHS.some((path) =>
+      parsedUrl.pathname.startsWith(path),
+    );
+    if (!needsResign) {
+      return null;
+    }
+
+    const base =
+      typeof globalThis.location !== "undefined"
+        ? globalThis.location.origin
+        : parsedUrl.origin;
+    const proxyUrl = new URL(
+      `${DYNAMIC_DESCRIPTOR_PROXY_PREFIX}${parsedUrl.pathname}${parsedUrl.search}`,
+      base,
+    ).toString();
+
+    console.log(`Fetching ${parsedUrl.pathname} via re-signing proxy`);
+    const response = await fetch(proxyUrl);
+    return response.text();
   }
 }
