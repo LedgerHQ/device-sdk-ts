@@ -109,12 +109,10 @@ export type SolanaCalTokenValue = {
 };
 
 export type SolanaCalValueFlowPort = {
-  /** Ordered candidate list (spec form). */
-  account_indices?: number[];
-  /** Single-account form currently emitted by CAL; treated as a 1-element list. */
-  account_index?: number;
+  /** Ordered candidate list of account indices (length 1 for a single-account port). */
+  account_indices: number[];
   optional_account_strategy?: string;
-  token_value?: SolanaCalTokenValue;
+  token_value: SolanaCalTokenValue;
 };
 
 export type SolanaCalAccountReset = {

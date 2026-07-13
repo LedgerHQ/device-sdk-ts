@@ -42,7 +42,6 @@ export function toValueFlowPorts(
 ): SolanaCalValueFlowPort[] {
   return dtos.map((port) => ({
     account_indices: port.account_indices,
-    account_index: port.account_index,
     optional_account_strategy: port.optional_account_strategy,
     token_value: port.token_value,
   }));
@@ -117,8 +116,8 @@ function toEnumVariants(
         enumId,
         variantIndex: index,
         descriptor: {
-          data: variant.data,
-          signature: pickSignature(variant.signatures, mode) ?? "",
+          data: variant.descriptor.data,
+          signature: pickSignature(variant.descriptor.signatures, mode) ?? "",
         },
       });
     }
@@ -145,36 +144,39 @@ export function toProgramEnumVariants(
  * {@link SolanaInstructionInfoPayload}. Returns a `Left` when the descriptor is
  * unusable (no signature for the configured `mode`), so the caller can surface
  * a per-descriptor ERROR rather than emitting an empty signature.
+ *
+ * `programId` comes from the enclosing `solana_programs` envelope `id`;
+ * `discriminator` from the instruction's `discriminator_hex`.
  */
 export function toInstructionInfoPayload(
+  programId: string,
   discriminator: string,
   dto: CalInstructionDescriptorDto,
   mode: CalMode,
 ): Either<Error, SolanaInstructionInfoPayload> {
-  const info = dto.instruction_info;
-  const signature = pickSignature(info.descriptor.signatures, mode);
+  const signature = pickSignature(dto.descriptor.signatures, mode);
   if (!signature) {
     return Left(
       new Error(
-        `[ContextModule] InstructionInfoDataSource: missing '${mode}' signature for (${info.program_id}, ${discriminator})`,
+        `[ContextModule] InstructionInfoDataSource: missing '${mode}' signature for (${programId}, ${discriminator})`,
       ),
     );
   }
 
   return Right({
-    programId: info.program_id,
+    programId,
     discriminator,
     instructionInfo: {
-      data: info.descriptor.data,
+      data: dto.descriptor.data,
       signature,
     },
     substructures: toSubstructures(dto),
     enumVariants: toEnumVariants(dto, mode),
     idlDescriptor: {
-      typePool: info.idl_descriptor?.type_pool ?? [],
-      rootType: info.idl_descriptor?.root_type ?? 0,
+      typePool: dto.idl_descriptor?.type_pool ?? [],
+      rootType: dto.idl_descriptor?.root_type ?? 0,
     },
-    mintAssociations: info.mint_association ? [info.mint_association] : [],
+    mintAssociations: dto.mint_association ? [dto.mint_association] : [],
     valueFlowPorts: toValueFlowPorts(dto.value_flow_ports),
     accountResets: toAccountResets(dto.account_resets),
     displayFields: toDisplayFields(dto.display_fields),

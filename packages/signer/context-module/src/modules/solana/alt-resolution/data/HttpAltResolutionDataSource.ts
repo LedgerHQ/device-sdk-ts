@@ -17,10 +17,10 @@ import {
 
 type AltResolutionResponseDto = {
   descriptorType?: string;
-  descriptorVersion?: string;
-  alt_address?: string;
-  entry_index?: number;
-  resolved_address?: string;
+  descriptorVersion?: number;
+  altAddress?: string;
+  entryIndex?: number;
+  resolvedAddress?: string;
   signedDescriptor: string;
   keyId: string;
   keyUsage: string;
