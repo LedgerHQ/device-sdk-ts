@@ -50,7 +50,9 @@ CAL_CERTIFICATES_OVERRIDES = {
     "cal_network",
     "plugin_selector_key",
     "cal_trusted_name",
-    "cal_gated_signing"
+    "cal_gated_signing",
+    "domain_metadata_key",
+    "token_metadata_key"
 }
 
 def _is_v2_descriptor(data: Dict[str, Any]) -> bool:
