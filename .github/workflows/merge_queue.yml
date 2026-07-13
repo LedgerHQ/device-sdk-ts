@@ -10,8 +10,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  setup:
+    name: Setup toolchain and dependencies
+    runs-on: "ledgerhq-device-sdk"
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: ./.github/actions/setup-with-cache-composite
+
   prettier:
     name: Run prettier
+    needs: [setup]
     runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -22,10 +31,11 @@ jobs:
 
       - name: Prettier
         id: prettier
-        run: pnpm turbo run prettier --filter='[origin/develop]...'
+        run: pnpm turbo run prettier --filter='[${{ github.event.merge_group.base_sha }}]...'
 
   lint:
     name: Run lint
+    needs: [setup]
     runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -36,10 +46,11 @@ jobs:
 
       - name: Lint
         id: lint
-        run: pnpm turbo run lint --filter='[origin/develop]...'
+        run: pnpm turbo run lint --filter='[${{ github.event.merge_group.base_sha }}]...'
 
   typecheck:
     name: Run typecheck
+    needs: [setup]
     runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -50,10 +61,11 @@ jobs:
 
       - name: Typecheck
         id: typecheck
-        run: pnpm turbo run typecheck --filter='[origin/develop]...'
+        run: pnpm turbo run typecheck --filter='[${{ github.event.merge_group.base_sha }}]...'
 
   tests:
     name: Run unit tests
+    needs: [setup]
     runs-on: "ledgerhq-device-sdk"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -64,7 +76,7 @@ jobs:
 
       - name: Tests
         id: unit-tests
-        run: pnpm turbo run test --filter='[origin/develop]...'
+        run: pnpm turbo run test --filter='[${{ github.event.merge_group.base_sha }}]...'
 
   health-check:
     name: Run health check

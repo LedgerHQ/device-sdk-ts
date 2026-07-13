@@ -59,8 +59,17 @@ jobs:
               - 'apps/clear-signing-tester/**'
               - '.github/**'
 
+  setup:
+    name: Setup toolchain and dependencies
+    runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - uses: ./.github/actions/setup-with-cache-composite
+
   danger:
     name: Run Danger check
+    needs: [setup]
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -77,6 +86,7 @@ jobs:
 
   prettier:
     name: Run prettier
+    needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -87,10 +97,11 @@ jobs:
 
       - name: Prettier
         id: prettier
-        run: pnpm turbo run prettier --filter='[origin/develop]...'
+        run: pnpm turbo run prettier --filter='[${{ github.event.pull_request.base.sha }}]...'
 
   lint:
     name: Run lint
+    needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -101,10 +112,11 @@ jobs:
 
       - name: Lint
         id: lint
-        run: pnpm turbo run lint --filter='[origin/develop]...'
+        run: pnpm turbo run lint --filter='[${{ github.event.pull_request.base.sha }}]...'
 
   typecheck:
     name: Run typecheck
+    needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -115,10 +127,11 @@ jobs:
 
       - name: Typecheck
         id: typecheck
-        run: pnpm turbo run typecheck --filter='[origin/develop]...'
+        run: pnpm turbo run typecheck --filter='[${{ github.event.pull_request.base.sha }}]...'
 
   tests:
     name: Run unit tests
+    needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
@@ -129,7 +142,7 @@ jobs:
 
       - name: Tests
         id: unit-tests
-        run: pnpm turbo run test:coverage --filter='[origin/develop]...'
+        run: pnpm turbo run test:coverage --filter='[${{ github.event.pull_request.base.sha }}]...'
 
       - uses: sonarsource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
         if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
@@ -139,6 +152,7 @@ jobs:
 
   sample-integration:
     name: Run playwright
+    needs: [setup]
     runs-on: ${{ !github.event.pull_request.head.repo.fork && 'ledgerhq-device-sdk' || 'ubuntu-22.04' }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
