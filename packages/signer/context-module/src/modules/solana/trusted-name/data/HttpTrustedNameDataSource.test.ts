@@ -13,73 +13,134 @@ describe("HttpSolanaTrustedNameDataSource", () => {
   let httpMock: { get: ReturnType<typeof vi.fn> };
   const address = "vitalik.sol";
   const challenge = "deadbeef";
-  const config: ContextModuleServiceConfig = {
-    metadataServiceDomain: { url: "https://nft.api.ledger.com" },
-  } as ContextModuleServiceConfig;
+
+  const makeConfig = (mode: "prod" | "test" = "prod") =>
+    ({
+      metadataServiceDomain: { url: "https://nft.api.ledger.com" },
+      cal: { mode },
+    }) as ContextModuleServiceConfig;
+
+  const makeDatasource = (mode: "prod" | "test" = "prod") =>
+    new HttpSolanaTrustedNameDataSource(
+      makeConfig(mode),
+      httpMock as unknown as DmkNetworkClient,
+    );
+
+  const objectResponse = (
+    signatures: { prod?: string; test?: string },
+    data = "ff00",
+  ) => ({
+    descriptorType: "name",
+    descriptorVersion: "2",
+    signedDescriptor: { data, signatures },
+    keyId: "cal_trusted_name",
+    keyUsage: "trusted_name",
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
     httpMock = { get: vi.fn() };
-    datasource = new HttpSolanaTrustedNameDataSource(
-      config,
-      httpMock as unknown as DmkNetworkClient,
-    );
+    datasource = makeDatasource();
   });
 
-  it("calls the names endpoint with network, types, sources and challenge", async () => {
-    httpMock.get.mockResolvedValue({
-      signedDescriptor: "01020304",
-      keyId: "name_key",
-      keyUsage: "trusted_name",
-    });
+  it("calls the names endpoint with network, sources and challenge (no types)", async () => {
+    httpMock.get.mockResolvedValue(objectResponse({ prod: "aabb" }));
 
     await datasource.getTrustedName({
       address,
-      network: "mainnet",
+      network: "900",
       challenge,
-      types: ["eoa", "program"],
-      sources: ["sns", "cal"],
+      sources: ["crypto_asset_list"],
     });
 
     expect(httpMock.get).toHaveBeenCalledWith(
-      `https://nft.api.ledger.com/v2/names/solana/mainnet/reverse/${address}`,
-      { params: { types: "eoa,program", sources: "sns,cal", challenge } },
+      `https://nft.api.ledger.com/v2/names/solana/900/reverse/${address}`,
+      {
+        params: {
+          sources: "crypto_asset_list",
+          challenge,
+        },
+      },
     );
   });
 
-  it("decodes signedDescriptor hex into Uint8Array", async () => {
-    httpMock.get.mockResolvedValue({
-      signedDescriptor: "ff00",
-      keyId: "k",
-      keyUsage: "u",
-    });
+  it("appends the prod signature TLV and decodes into a Uint8Array", async () => {
+    httpMock.get.mockResolvedValue(
+      objectResponse({ prod: "aabb", test: "cc" }),
+    );
 
     const result = await datasource.getTrustedName({
       address,
-      network: "mainnet",
+      network: "900",
       challenge,
-      types: ["eoa"],
-      sources: ["sns"],
+      sources: ["crypto_asset_list"],
     });
 
+    // data(ff00) + SIGNATURE_TAG(15) + len(02) + sig(aabb)
     expect(result).toEqual(
       Right({
         address,
-        descriptor: new Uint8Array([0xff, 0x00]),
-        keyId: "k",
-        keyUsage: "u",
+        descriptor: new Uint8Array([0xff, 0x00, 0x15, 0x02, 0xaa, 0xbb]),
+        keyId: "cal_trusted_name",
+        keyUsage: "trusted_name",
       }),
     );
   });
 
-  it("returns Left on malformed response", async () => {
-    httpMock.get.mockResolvedValue({ keyId: "k", keyUsage: "u" } as any);
+  it("selects the test signature when cal.mode is test", async () => {
+    datasource = makeDatasource("test");
+    httpMock.get.mockResolvedValue(
+      objectResponse({ prod: "aabb", test: "cc" }),
+    );
 
     const result = await datasource.getTrustedName({
       address,
-      network: "mainnet",
+      network: "900",
       challenge,
-      types: [],
+      sources: ["crypto_asset_list"],
+    });
+
+    // data(ff00) + SIGNATURE_TAG(15) + len(01) + sig(cc)
+    expect(result).toEqual(
+      Right({
+        address,
+        descriptor: new Uint8Array([0xff, 0x00, 0x15, 0x01, 0xcc]),
+        keyId: "cal_trusted_name",
+        keyUsage: "trusted_name",
+      }),
+    );
+  });
+
+  it("returns Left when the signature for the active mode is missing", async () => {
+    datasource = makeDatasource("prod");
+    httpMock.get.mockResolvedValue(objectResponse({ test: "cc" }));
+
+    const result = await datasource.getTrustedName({
+      address,
+      network: "900",
+      challenge,
+      sources: ["crypto_asset_list"],
+    });
+
+    expect(result.isLeft()).toBe(true);
+    expect((result.extract() as Error).message).toMatch(
+      new RegExp(
+        String.raw`\[ContextModule\] HttpSolanaTrustedNameDataSource: missing prod signature for ${address}`,
+      ),
+    );
+  });
+
+  it("returns Left on malformed response (hex-string signedDescriptor)", async () => {
+    httpMock.get.mockResolvedValue({
+      signedDescriptor: "01020304",
+      keyId: "k",
+      keyUsage: "u",
+    } as any);
+
+    const result = await datasource.getTrustedName({
+      address,
+      network: "900",
+      challenge,
       sources: [],
     });
 
@@ -96,9 +157,8 @@ describe("HttpSolanaTrustedNameDataSource", () => {
 
     const result = await datasource.getTrustedName({
       address,
-      network: "mainnet",
+      network: "900",
       challenge,
-      types: [],
       sources: [],
     });
 

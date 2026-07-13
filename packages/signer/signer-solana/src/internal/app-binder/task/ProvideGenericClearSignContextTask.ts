@@ -118,8 +118,8 @@ export class ProvideGenericClearSignContextTask {
         (challenge) => ({
           deviceModelId,
           network: this.network,
-          // types/sources are not carried by the requirement set, so empty.
-          requests: [{ address, challenge, types: [], sources: [] }],
+          // Only the CRYPTO_ASSET_LIST source is supported for now.
+          requests: [{ address, challenge, sources: ["crypto_asset_list"] }],
         }),
         ClearSignContextType.SOLANA_TRUSTED_NAME,
       );

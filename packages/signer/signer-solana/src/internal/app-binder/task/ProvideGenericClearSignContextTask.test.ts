@@ -161,7 +161,11 @@ describe("ProvideGenericClearSignContextTask", () => {
     expect(made.getContexts).toHaveBeenCalledWith(
       expect.objectContaining({
         requests: [
-          { address: "NAME", challenge: "deadbeef", types: [], sources: [] },
+          {
+            address: "NAME",
+            challenge: "deadbeef",
+            sources: ["crypto_asset_list"],
+          },
         ],
       }),
       [ClearSignContextType.SOLANA_TRUSTED_NAME],
