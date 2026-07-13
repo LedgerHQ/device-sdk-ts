@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+### Patch Changes
+
+- [#1638](https://github.com/LedgerHQ/device-sdk-ts/pull/1638) [`bdcbd2a`](https://github.com/LedgerHQ/device-sdk-ts/commit/bdcbd2a9460b3242af9a5acfc7f4aee4601df7c0) Thanks [@cted-ledger](https://github.com/cted-ledger)! - Add the NU6.3 consensus branch id (0x37a5165b, mainnet activation height 3,428,143) to the Zcash transparent height→branch-id dispatch so transactions signed after NU6.3 activation are accepted by the network.
+
 ## 0.4.0
 
 ### Minor Changes
