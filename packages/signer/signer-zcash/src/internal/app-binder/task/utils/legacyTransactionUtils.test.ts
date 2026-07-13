@@ -28,10 +28,10 @@ describe("getZcashBranchId", () => {
 
   it("returns latest branch id when block height is unknown", () => {
     expect(getZcashBranchId(undefined)).toEqual(
-      Uint8Array.of(0x30, 0xf3, 0x37, 0x54),
+      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
     );
     expect(getZcashBranchId(null)).toEqual(
-      Uint8Array.of(0x30, 0xf3, 0x37, 0x54),
+      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
     );
   });
 
@@ -50,6 +50,15 @@ describe("getZcashBranchId", () => {
     );
     expect(getZcashBranchId(3364600)).toEqual(
       Uint8Array.of(0x30, 0xf3, 0x37, 0x54),
+    );
+  });
+
+  it("switches from NU6.2 to NU6.3 branch id at activation height", () => {
+    expect(getZcashBranchId(3428142)).toEqual(
+      Uint8Array.of(0x30, 0xf3, 0x37, 0x54),
+    );
+    expect(getZcashBranchId(3428143)).toEqual(
+      Uint8Array.of(0x5b, 0x16, 0xa5, 0x37),
     );
   });
 });

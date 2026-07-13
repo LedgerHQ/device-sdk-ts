@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/device-signer-kit-zcash",
-  "version": "0.4.0",
-  "private": true,
+  "version": "0.4.1",
+  "private": false,
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -38,7 +38,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@ledgerhq/signer-utils": "workspace:^",
+    "@ledgerhq/signer-utils": "^1.3.0",
     "@noble/hashes": "^1.8.0",
     "inversify": "catalog:",
     "purify-ts": "catalog:",
@@ -56,6 +56,6 @@
     "ts-node": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "^1.7.1"
   }
 }
