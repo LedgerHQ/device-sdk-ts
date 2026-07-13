@@ -6,7 +6,6 @@ import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideTLVDescriptorCommand } from "@internal/app-binder/command/ProvideTLVDescriptorCommand";
-import { frameClearSignPayload } from "@internal/app-binder/command/utils/apduChunking";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
@@ -14,9 +13,9 @@ import { type ProvideContextHandler } from "./provideContextTypes";
 
 /**
  * Streams a challenge-bound `TRUSTED_NAME` (0x21) descriptor. Like the other
- * Phase A descriptors, the payload carries the 2-byte BE length prefix the
- * device expects. The caller must have issued a fresh `GET CHALLENGE`
- * immediately before fetching it.
+ * Phase A descriptors, the payload is streamed as raw TLV (no length prefix,
+ * the device recovers the total length from the chunk flags). The caller must
+ * have issued a fresh `GET CHALLENGE` immediately before fetching it.
  */
 export const provideTrustedNameContext: ProvideContextHandler<
   ClearSignContextType.SOLANA_TRUSTED_NAME
@@ -37,7 +36,7 @@ export const provideTrustedNameContext: ProvideContextHandler<
   const res = await new SendCommandInChunksTask<void, SolanaAppErrorCodes>(
     api,
     {
-      data: frameClearSignPayload(payload),
+      data: payload,
       commandFactory: (args) =>
         new ProvideTLVDescriptorCommand({
           payload: args.chunkedData,

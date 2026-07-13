@@ -36,7 +36,7 @@ describe("provideTrustedNameContext", () => {
     };
   });
 
-  it("streams TRUSTED_NAME (0x21) framed with the 2-byte length prefix", async () => {
+  it("streams TRUSTED_NAME (0x21) as raw TLV (no length prefix)", async () => {
     api.sendCommand.mockResolvedValue(success);
 
     await provideTrustedNameContext(
@@ -53,9 +53,7 @@ describe("provideTrustedNameContext", () => {
     );
     const cmd = api.sendCommand.mock.calls[1]![0];
     expect(cmd).toBeInstanceOf(ProvideTLVDescriptorCommand);
-    expect(cmd.args.payload).toStrictEqual(
-      new Uint8Array([0x00, 0x02, 0xaa, 0xbb]),
-    );
+    expect(cmd.args.payload).toStrictEqual(new Uint8Array([0xaa, 0xbb]));
   });
 
   it("does nothing for an empty payload", async () => {

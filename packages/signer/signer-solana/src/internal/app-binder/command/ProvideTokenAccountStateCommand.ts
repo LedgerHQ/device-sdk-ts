@@ -37,8 +37,7 @@ export type ProvideTokenAccountStateCommandArgs = {
  * `(account, mint, owner, preBalance)`. The caller must issue `GET CHALLENGE`
  * immediately before this command.
  *
- * The caller pre-builds the wire payload (2-byte BE length prefix followed
- * by the `TOKEN_ACCOUNT_STATE` TLV) and splits it into ≤255-byte chunks.
+ * The caller pre-builds the wire payload and splits it into ≤255-byte chunks.
  */
 export class ProvideTokenAccountStateCommand
   implements
