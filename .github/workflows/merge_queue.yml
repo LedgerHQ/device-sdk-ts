@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@cc38a0dd9f30cf2f63ef50e4d857f0197003e23d
 
   prettier:
     name: Run prettier
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@cc38a0dd9f30cf2f63ef50e4d857f0197003e23d
 
       - name: Prettier
         id: prettier
@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@cc38a0dd9f30cf2f63ef50e4d857f0197003e23d
 
       - name: Lint
         id: lint
@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@cc38a0dd9f30cf2f63ef50e4d857f0197003e23d
 
       - name: Typecheck
         id: typecheck
@@ -64,7 +64,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@cc38a0dd9f30cf2f63ef50e4d857f0197003e23d
 
       - name: Tests
         id: unit-tests

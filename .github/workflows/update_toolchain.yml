@@ -17,7 +17,7 @@ jobs:
         with:
           ref: develop
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@cc38a0dd9f30cf2f63ef50e4d857f0197003e23d
 
       - name: Setup git and branch
         run: |
