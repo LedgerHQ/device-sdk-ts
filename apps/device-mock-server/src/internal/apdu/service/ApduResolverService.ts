@@ -136,8 +136,10 @@ export class ApduResolverService {
       });
     }
 
-    // 3. Derived OS responses synthesized from the device metadata.
-    const osResponse = await this.os.resolve(device, apdu);
+    // 3. Derived OS responses synthesized from the device metadata (and the
+    //    onboarding simulation, which lives in the derived layer so an explicit
+    //    per-device mock still overrides it).
+    const osResponse = await this.os.resolve(record, device, apdu);
     if (osResponse) {
       logger.info(`APDU [${device.id}] ${apdu} -> ${osResponse} (os)`);
       return osResponse;

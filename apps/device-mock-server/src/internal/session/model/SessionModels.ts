@@ -4,6 +4,8 @@ import {
   type Mock,
 } from "@ledgerhq/device-mockserver-client";
 
+import { type OnboardingRuntimeState } from "@internal/onboarding/onboarding";
+
 /**
  * A device that has opened an app and is now proxying its APDUs to a live
  * Speculos instance managed by the Speculinho operator.
@@ -44,4 +46,9 @@ export interface SessionRecord {
    * and to the clean `<next>` for the final install.
    */
   pendingFirmwareOperations: Map<string, string>;
+  /**
+   * Per-device onboarding simulation state, present only for devices created
+   * with `onboarded: false`: deviceId -> current onboarding state.
+   */
+  onboarding: Map<string, OnboardingRuntimeState>;
 }

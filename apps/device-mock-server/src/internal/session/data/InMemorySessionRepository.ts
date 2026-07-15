@@ -15,6 +15,12 @@ import { Maybe } from "purify-ts";
 import { type MockServerConfig } from "@api/model/MockServerConfig";
 import { DEFAULT_DEVICE } from "@internal/defaults";
 import { appTypes } from "@internal/di/types";
+import {
+  advanceOnboarding as advanceOnboardingState,
+  deriveOnboardingSeFlags,
+  initialOnboardingState,
+  onEarlyCheckToggle,
+} from "@internal/onboarding/onboarding";
 import { type SessionRepository } from "@internal/session/data/SessionRepository";
 import {
   type SessionRecord,
@@ -54,6 +60,7 @@ export class InMemorySessionRepository implements SessionRepository {
       catalog: new Map(),
       pendingAppOperations: new Map(),
       pendingFirmwareOperations: new Map(),
+      onboarding: new Map(),
     };
     this.sessions.set(record.token, record);
     return { token: record.token, expiresAt: this.expiresAt(record) };
@@ -112,6 +119,11 @@ export class InMemorySessionRepository implements SessionRepository {
     record.devices.set(id, device);
     record.deviceMocks.set(id, new Map());
     record.deviceMockCursors.set(id, new Map());
+    // Opt a device into the onboarding simulation: it starts not onboarded and
+    // walks itself through the onboarding steps as it is polled.
+    if (config.onboarded === false) {
+      record.onboarding.set(id, initialOnboardingState());
+    }
     // Seed the session-wide app store with the installable apps the client may
     // later install (resolved from their install hash by the secure channel).
     for (const app of config.catalog ?? []) {
@@ -138,6 +150,13 @@ export class InMemorySessionRepository implements SessionRepository {
     return this.findDevice(record, deviceId).map((current) => {
       const updated: Device = { ...current, ...config, id: current.id };
       record.devices.set(deviceId, updated);
+      // Start/stop the onboarding simulation in place so the device id stays
+      // stable (a client bound to it, e.g. Ledger Live, keeps its connection).
+      if (config.onboarded === false && !record.onboarding.has(deviceId)) {
+        record.onboarding.set(deviceId, initialOnboardingState());
+      } else if (config.onboarded === true) {
+        record.onboarding.delete(deviceId);
+      }
       return updated;
     });
   }
@@ -150,6 +169,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.speculos.delete(deviceId);
     record.deviceMocks.delete(deviceId);
     record.deviceMockCursors.delete(deviceId);
+    record.onboarding.delete(deviceId);
     return { removed: record.devices.delete(deviceId), proxy };
   }
 
@@ -317,6 +337,44 @@ export class InMemorySessionRepository implements SessionRepository {
     return mock.responses[index % mock.responses.length] ?? "";
   }
 
+  // --- Onboarding simulation ------------------------------------------------
+
+  onboardingActive(record: SessionRecord, deviceId: string): boolean {
+    return record.onboarding.has(deviceId);
+  }
+
+  currentOnboardingSeFlags(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<string> {
+    return Maybe.fromNullable(record.onboarding.get(deviceId)).map(
+      deriveOnboardingSeFlags,
+    );
+  }
+
+  advanceOnboarding(record: SessionRecord, deviceId: string): void {
+    const state = record.onboarding.get(deviceId);
+    if (!state) return;
+    const next = advanceOnboardingState(state);
+    record.onboarding.set(deviceId, next);
+    // Reflect completion on the device metadata so `GET /devices` shows it.
+    if (next.completed && !state.completed) {
+      this.findDevice(record, deviceId).ifJust((device) =>
+        record.devices.set(deviceId, { ...device, onboarded: true }),
+      );
+    }
+  }
+
+  toggleOnboardingEarlyCheck(
+    record: SessionRecord,
+    deviceId: string,
+    enter: boolean,
+  ): void {
+    const state = record.onboarding.get(deviceId);
+    if (!state) return;
+    record.onboarding.set(deviceId, onEarlyCheckToggle(state, enter));
+  }
+
   // --- Import / Export ------------------------------------------------------
 
   exportSession(record: SessionRecord): SessionExport {
@@ -338,6 +396,7 @@ export class InMemorySessionRepository implements SessionRepository {
     record.catalog.clear();
     record.pendingAppOperations.clear();
     record.pendingFirmwareOperations.clear();
+    record.onboarding.clear();
     for (const device of snapshot.devices) {
       this.addDevice(record, device);
     }
@@ -357,6 +416,7 @@ export class InMemorySessionRepository implements SessionRepository {
       apps: config.apps,
       masks: config.masks,
       connected: false,
+      onboarded: config.onboarded,
     };
   }
 
@@ -387,5 +447,6 @@ function toDeviceConfig(device: Device): DeviceConfig {
     firmware_version: device.firmware_version,
     apps: device.apps,
     masks: device.masks,
+    onboarded: device.onboarded,
   };
 }

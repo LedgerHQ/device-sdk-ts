@@ -75,6 +75,13 @@ export const openapiDefinition: OAS3Definition = {
           },
           masks: { type: "array", items: { type: "integer" } },
           connected: { type: "boolean" },
+          onboarded: {
+            type: "boolean",
+            description:
+              "Whether the device is onboarded. Set to false to start the " +
+              "onboarding simulation (the device reports itself as not " +
+              "onboarded and auto-advances through the onboarding steps).",
+          },
         },
         required: ["id", "name", "device_type", "connectivity_type"],
       },
@@ -95,6 +102,12 @@ export const openapiDefinition: OAS3Definition = {
             type: "array",
             description: "Device-scoped APDU mocks (used on attach / import).",
             items: { $ref: "#/components/schemas/MockConfig" },
+          },
+          onboarded: {
+            type: "boolean",
+            description:
+              "Whether the device is onboarded. Omit (or true) for a normal " +
+              "onboarded device; false starts the onboarding simulation.",
           },
         },
       },

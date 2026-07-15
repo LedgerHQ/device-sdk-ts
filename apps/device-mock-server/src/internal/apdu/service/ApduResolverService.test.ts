@@ -45,7 +45,7 @@ const setup = () => {
     firmware_version: "1.3.0",
     apps: [{ name: "Bitcoin", version: "2.1.0" }],
   });
-  const os = new OsApduService(stubFirmwareResolver);
+  const os = new OsApduService(repo, stubFirmwareResolver);
   const secureChannel = new SecureChannelApduService();
   return { repo, record, device, os, secureChannel };
 };
