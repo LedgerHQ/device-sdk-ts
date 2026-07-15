@@ -77,6 +77,86 @@ describe("FirmwareUpdateResolver", () => {
     expect(resolved.isNothing()).toBe(true);
   });
 
+  it("does not cache transient failures and retries on the next call", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockImplementation((input) => {
+        const url = String(input);
+        if (url.includes("/get_device_version")) return json({ id: 42 });
+        if (url.includes("/get_firmware_version")) return json({ id: 100 });
+        if (url.includes("/get_latest_firmware")) {
+          return json({
+            result: "ok",
+            se_firmware_osu_version: {
+              name: "1.9.0-to-1.9.1",
+              next_se_firmware_final_version: 101,
+            },
+          });
+        }
+        if (url.includes("/firmware_final_versions/101")) {
+          return json({ id: 101, name: "1.9.1" });
+        }
+        throw new Error(`unexpected fetch ${url}`);
+      });
+
+    const instance = resolver();
+    const first = await instance.resolveNextVersion({
+      targetId: "857735172",
+      currentVersion: "1.9.0",
+    });
+    expect(first.isNothing()).toBe(true);
+
+    const second = await instance.resolveNextVersion({
+      targetId: "857735172",
+      currentVersion: "1.9.0",
+    });
+    expect(second.extract()).toBe("1.9.1");
+    expect(fetchSpy.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it("caches 5xx responses as transient and retries", async () => {
+    const serverError = Promise.resolve({
+      ok: false,
+      status: 503,
+    } as Response);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockReturnValueOnce(serverError)
+      .mockImplementation((input) => {
+        const url = String(input);
+        if (url.includes("/get_device_version")) return json({ id: 42 });
+        if (url.includes("/get_firmware_version")) return json({ id: 100 });
+        if (url.includes("/get_latest_firmware")) {
+          return json({
+            result: "ok",
+            se_firmware_osu_version: {
+              name: "1.9.0-to-1.9.1",
+              next_se_firmware_final_version: 101,
+            },
+          });
+        }
+        if (url.includes("/firmware_final_versions/101")) {
+          return json({ id: 101, name: "1.9.1" });
+        }
+        throw new Error(`unexpected fetch ${url}`);
+      });
+
+    const instance = resolver();
+    const first = await instance.resolveNextVersion({
+      targetId: "857735172",
+      currentVersion: "1.9.0",
+    });
+    expect(first.isNothing()).toBe(true);
+
+    const second = await instance.resolveNextVersion({
+      targetId: "857735172",
+      currentVersion: "1.9.0",
+    });
+    expect(second.extract()).toBe("1.9.1");
+    expect(fetchSpy.mock.calls.length).toBeGreaterThan(1);
+  });
+
   describe("resolveCurrentMcuVersion", () => {
     it("resolves the MCU name compatible with the next final firmware", async () => {
       mockFetch({

@@ -78,7 +78,9 @@ export class FirmwareUpdateResolver {
    * Memoized MCU-version lookups keyed by `${targetId}:${currentVersion}:
    * ${providerId}`. GetOsVersion is replayed on every connect/poll, so caching
    * the (deterministic) Manager API result keeps the handshake off the network
-   * after the first resolution. Negative results are cached too.
+   * after the first resolution. Deterministic negatives (unknown target, no
+   * update) are cached too; transient failures (network error, 5xx) are evicted
+   * so the next poll retries instead of caching the error permanently.
    */
   private readonly mcuVersionCache = new Map<string, Promise<Maybe<string>>>();
 
@@ -131,7 +133,14 @@ export class FirmwareUpdateResolver {
       targetId,
       currentVersion,
       providerId,
-    });
+    })
+      // A transient failure must not poison the cache: evict the entry so the
+      // next poll retries, and surface it to callers as a (non-cached) empty.
+      .catch((error) => {
+        this.mcuVersionCache.delete(key);
+        logger.error(`Manager API MCU lookup failed: ${String(error)}`);
+        return Maybe.empty();
+      });
     this.mcuVersionCache.set(key, pending);
     return pending;
   }
@@ -145,66 +154,62 @@ export class FirmwareUpdateResolver {
     currentVersion: string;
     providerId: number;
   }): Promise<Maybe<string>> {
-    try {
-      const deviceVersion = await this.get<DeviceVersionDto>(
-        "get_device_version",
-        { provider: providerId, target_id: targetId },
-      );
-      if (deviceVersion?.id === undefined) {
-        logger.warn(`Manager API: unknown target_id ${targetId}`);
-        return Maybe.empty();
-      }
-
-      const currentFirmware = await this.get<FinalFirmwareDto>(
-        "get_firmware_version",
-        {
-          device_version: deviceVersion.id,
-          version_name: currentVersion,
-          provider: providerId,
-        },
-      );
-      if (currentFirmware?.id === undefined) {
-        logger.warn(`Manager API: unknown firmware ${currentVersion}`);
-        return Maybe.empty();
-      }
-
-      const latest = await this.get<LatestFirmwareDto>("get_latest_firmware", {
-        salt: ROLLOUT_SALT,
-        current_se_firmware_final_version: currentFirmware.id,
-        device_version: deviceVersion.id,
-        provider: providerId,
-      });
-      const osu = latest?.se_firmware_osu_version;
-      // When an update is available use the next firmware's MCU list so LLD's
-      // shouldFlashMCU check passes against the update target. When the device
-      // is already on the latest firmware, the current firmware's list is used
-      // — shouldFlashMCU is never evaluated in that case but we still need a
-      // valid MCU name so GetOsVersion succeeds.
-      const firmwareId =
-        latest?.result !== "null" &&
-        osu?.next_se_firmware_final_version !== undefined
-          ? osu.next_se_firmware_final_version
-          : currentFirmware.id;
-
-      const firmware = await this.get<FinalFirmwareDto>(
-        `firmware_final_versions/${firmwareId}`,
-      );
-      const mcuIds = firmware?.mcu_versions ?? [];
-      if (mcuIds.length === 0) return Maybe.empty();
-
-      const catalog = (await this.get<McuVersionDto[]>("mcu_versions")) ?? [];
-      const compatibleIds = new Set(mcuIds);
-      const match = catalog.find(
-        (mcu) =>
-          mcu.id !== undefined &&
-          compatibleIds.has(mcu.id) &&
-          Boolean(mcu.name),
-      );
-      return Maybe.fromNullable(match?.name);
-    } catch (error) {
-      logger.error(`Manager API MCU lookup failed: ${String(error)}`);
+    // Transient errors (network failure, 5xx) are left to propagate so the
+    // caching layer can evict them; only deterministic outcomes reach the
+    // `Maybe.empty()` returns below and are safe to cache.
+    const deviceVersion = await this.get<DeviceVersionDto>(
+      "get_device_version",
+      { provider: providerId, target_id: targetId },
+    );
+    if (deviceVersion?.id === undefined) {
+      logger.warn(`Manager API: unknown target_id ${targetId}`);
       return Maybe.empty();
     }
+
+    const currentFirmware = await this.get<FinalFirmwareDto>(
+      "get_firmware_version",
+      {
+        device_version: deviceVersion.id,
+        version_name: currentVersion,
+        provider: providerId,
+      },
+    );
+    if (currentFirmware?.id === undefined) {
+      logger.warn(`Manager API: unknown firmware ${currentVersion}`);
+      return Maybe.empty();
+    }
+
+    const latest = await this.get<LatestFirmwareDto>("get_latest_firmware", {
+      salt: ROLLOUT_SALT,
+      current_se_firmware_final_version: currentFirmware.id,
+      device_version: deviceVersion.id,
+      provider: providerId,
+    });
+    const osu = latest?.se_firmware_osu_version;
+    // When an update is available use the next firmware's MCU list so LLD's
+    // shouldFlashMCU check passes against the update target. When the device
+    // is already on the latest firmware, the current firmware's list is used
+    // — shouldFlashMCU is never evaluated in that case but we still need a
+    // valid MCU name so GetOsVersion succeeds.
+    const firmwareId =
+      latest?.result !== "null" &&
+      osu?.next_se_firmware_final_version !== undefined
+        ? osu.next_se_firmware_final_version
+        : currentFirmware.id;
+
+    const firmware = await this.get<FinalFirmwareDto>(
+      `firmware_final_versions/${firmwareId}`,
+    );
+    const mcuIds = firmware?.mcu_versions ?? [];
+    if (mcuIds.length === 0) return Maybe.empty();
+
+    const catalog = (await this.get<McuVersionDto[]>("mcu_versions")) ?? [];
+    const compatibleIds = new Set(mcuIds);
+    const match = catalog.find(
+      (mcu) =>
+        mcu.id !== undefined && compatibleIds.has(mcu.id) && Boolean(mcu.name),
+    );
+    return Maybe.fromNullable(match?.name);
   }
 
   /**
@@ -228,7 +233,14 @@ export class FirmwareUpdateResolver {
       targetId,
       currentVersion,
       providerId,
-    });
+    })
+      // A transient failure must not poison the cache: evict the entry so the
+      // next lookup retries, and surface it to callers as a (non-cached) empty.
+      .catch((error) => {
+        this.finalFirmwareCache.delete(key);
+        logger.error(`Manager API firmware lookup failed: ${String(error)}`);
+        return Maybe.empty();
+      });
     this.finalFirmwareCache.set(key, pending);
     return pending;
   }
@@ -242,60 +254,58 @@ export class FirmwareUpdateResolver {
     currentVersion: string;
     providerId: number;
   }): Promise<Maybe<FinalFirmwareDto>> {
-    try {
-      const deviceVersion = await this.get<DeviceVersionDto>(
-        "get_device_version",
-        { provider: providerId, target_id: targetId },
-      );
-      if (deviceVersion?.id === undefined) {
-        logger.warn(`Manager API: unknown target_id ${targetId}`);
-        return Maybe.empty();
-      }
-
-      const currentFirmware = await this.get<FinalFirmwareDto>(
-        "get_firmware_version",
-        {
-          device_version: deviceVersion.id,
-          version_name: currentVersion,
-          provider: providerId,
-        },
-      );
-      if (currentFirmware?.id === undefined) {
-        logger.warn(`Manager API: unknown firmware ${currentVersion}`);
-        return Maybe.empty();
-      }
-
-      const latest = await this.get<LatestFirmwareDto>("get_latest_firmware", {
-        salt: ROLLOUT_SALT,
-        current_se_firmware_final_version: currentFirmware.id,
-        device_version: deviceVersion.id,
-        provider: providerId,
-      });
-      const osu = latest?.se_firmware_osu_version;
-      if (
-        latest?.result === "null" ||
-        !osu?.name ||
-        osu.next_se_firmware_final_version === undefined
-      ) {
-        logger.warn(`Manager API: no firmware update for ${currentVersion}`);
-        return Maybe.empty();
-      }
-
-      const final = await this.get<FinalFirmwareDto>(
-        `firmware_final_versions/${osu.next_se_firmware_final_version}`,
-      );
-      if (!final?.name) {
-        logger.warn(
-          `Manager API: no final firmware ${osu.next_se_firmware_final_version}`,
-        );
-        return Maybe.empty();
-      }
-
-      return Maybe.of(final);
-    } catch (error) {
-      logger.error(`Manager API firmware lookup failed: ${String(error)}`);
+    // Transient errors (network failure, 5xx) are left to propagate so the
+    // caching layer can evict them; only deterministic outcomes reach the
+    // `Maybe.empty()` returns below and are safe to cache.
+    const deviceVersion = await this.get<DeviceVersionDto>(
+      "get_device_version",
+      { provider: providerId, target_id: targetId },
+    );
+    if (deviceVersion?.id === undefined) {
+      logger.warn(`Manager API: unknown target_id ${targetId}`);
       return Maybe.empty();
     }
+
+    const currentFirmware = await this.get<FinalFirmwareDto>(
+      "get_firmware_version",
+      {
+        device_version: deviceVersion.id,
+        version_name: currentVersion,
+        provider: providerId,
+      },
+    );
+    if (currentFirmware?.id === undefined) {
+      logger.warn(`Manager API: unknown firmware ${currentVersion}`);
+      return Maybe.empty();
+    }
+
+    const latest = await this.get<LatestFirmwareDto>("get_latest_firmware", {
+      salt: ROLLOUT_SALT,
+      current_se_firmware_final_version: currentFirmware.id,
+      device_version: deviceVersion.id,
+      provider: providerId,
+    });
+    const osu = latest?.se_firmware_osu_version;
+    if (
+      latest?.result === "null" ||
+      !osu?.name ||
+      osu.next_se_firmware_final_version === undefined
+    ) {
+      logger.warn(`Manager API: no firmware update for ${currentVersion}`);
+      return Maybe.empty();
+    }
+
+    const final = await this.get<FinalFirmwareDto>(
+      `firmware_final_versions/${osu.next_se_firmware_final_version}`,
+    );
+    if (!final?.name) {
+      logger.warn(
+        `Manager API: no final firmware ${osu.next_se_firmware_final_version}`,
+      );
+      return Maybe.empty();
+    }
+
+    return Maybe.of(final);
   }
 
   private async get<T>(
@@ -310,6 +320,12 @@ export class FirmwareUpdateResolver {
     }
     const response = await fetch(`${this.managerApiUrl}/${path}?${params}`);
     if (!response.ok) {
+      // 5xx responses are transient: throw so the caller can retry rather than
+      // cache the failure. 4xx (e.g. unknown target) is deterministic — return
+      // undefined and let the caller resolve to a cacheable Maybe.empty().
+      if (response.status >= 500) {
+        throw new Error(`Manager API /${path} returned ${response.status}`);
+      }
       logger.warn(`Manager API /${path} returned ${response.status}`);
       return undefined;
     }
