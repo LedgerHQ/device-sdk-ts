@@ -1,7 +1,6 @@
 import {
   type CommandResult,
   DmkResultFactory,
-  hexaStringToBuffer,
   type InternalApi,
   InvalidStatusWordError,
   isSuccessCommandResult,
@@ -16,7 +15,6 @@ import { serializeTransaction } from "@internal/app-binder/services/TransactionS
 type SignTransactionTaskArgs = {
   derivationPath: string;
   transaction: Uint8Array;
-  tokenSignatures?: string[];
 };
 
 export class SignTransactionTask {
@@ -26,25 +24,11 @@ export class SignTransactionTask {
   ) {}
 
   async run(): Promise<CommandResult<Signature, TronAppErrorCodes>> {
-    const { derivationPath, transaction, tokenSignatures = [] } = this.args;
-
-    const decodedTokenSignatures: Uint8Array[] = [];
-    for (const signature of tokenSignatures) {
-      const decoded = hexaStringToBuffer(signature);
-      if (decoded === null) {
-        return DmkResultFactory({
-          error: new InvalidStatusWordError(
-            `Invalid token signature hex: ${signature}`,
-          ),
-        });
-      }
-      decodedTokenSignatures.push(decoded);
-    }
+    const { derivationPath, transaction } = this.args;
 
     const frames = serializeTransaction(
       encodeDerivationPath(derivationPath),
       transaction,
-      decodedTokenSignatures,
     );
 
     // Each frame is sent in order; the signature is returned on the final frame.

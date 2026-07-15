@@ -1,4 +1,5 @@
 import {
+  CallTaskInAppDeviceAction,
   type DeviceActionState,
   DeviceActionStatus,
   type DeviceManagementKit,
@@ -18,8 +19,14 @@ import {
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
 } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
+import {
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
+} from "@api/app-binder/SignTransactionDeviceActionTypes";
 import { GetAddressCommand } from "@internal/app-binder/command/GetAddressCommand";
 import { GetAppConfigurationCommand } from "@internal/app-binder/command/GetAppConfigurationCommand";
+import { type TronAppCommandError } from "@internal/app-binder/command/utils/tronApplicationErrors";
 import { APP_NAME } from "@internal/app-binder/constants";
 
 import { TronAppBinder } from "./TronAppBinder";
@@ -152,6 +159,102 @@ describe("TronAppBinder", () => {
             }),
           }),
         );
+      });
+    });
+  });
+
+  describe("signTransaction", () => {
+    const derivationPath = "44'/195'/0'/0/0";
+    const transaction = Uint8Array.from([0x0a, 0x01, 0x00]);
+
+    it("should return the signature", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: SignTransactionDAOutput = new Uint8Array(65).fill(0xab);
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              SignTransactionDAOutput,
+              SignTransactionDAError,
+              SignTransactionDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        const { observable } = binder.signTransaction({
+          derivationPath,
+          transaction,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignTransactionDAOutput,
+          SignTransactionDAError,
+          SignTransactionDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    describe("calls executeDeviceAction with the correct params", () => {
+      // The task closure breaks reference equality, so the device action is
+      // asserted field by field instead of with toHaveBeenCalledWith.
+      const executedDeviceAction = () => {
+        const args = vi.mocked(mockedDmk.executeDeviceAction).mock
+          .calls[0]![0]!;
+        expect(args.sessionId).toBe("sessionId");
+        expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+        return args.deviceAction as CallTaskInAppDeviceAction<
+          SignTransactionDAOutput,
+          TronAppCommandError,
+          UserInteractionRequired.SignTransaction
+        >;
+      };
+
+      it("requires the SignTransaction interaction", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.signTransaction({
+          derivationPath,
+          transaction,
+          skipOpenApp: true,
+        });
+
+        // THEN
+        const deviceAction = executedDeviceAction();
+        expect(deviceAction.input.appName).toBe(APP_NAME);
+        expect(deviceAction.input.requiredUserInteraction).toBe(
+          UserInteractionRequired.SignTransaction,
+        );
+        expect(deviceAction.input.skipOpenApp).toBe(true);
+      });
+
+      it("defaults skipOpenApp to false", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.signTransaction({ derivationPath, transaction });
+
+        // THEN
+        expect(executedDeviceAction().input.skipOpenApp).toBe(false);
       });
     });
   });

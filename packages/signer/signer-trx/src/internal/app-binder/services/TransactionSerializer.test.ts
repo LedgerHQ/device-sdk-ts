@@ -46,18 +46,22 @@ describe("serializeTransaction", () => {
     expect(frames[1]!.payload.length % 2).toBe(0);
   });
 
-  it("appends token-signature frames with the correct start bytes", () => {
-    // One length-delimited field "0a0100" (3 bytes) -> single tx frame.
+  it("marks intermediate frames as subsequent on transactions spanning many frames", () => {
+    // 400 two-byte varint fields (0x08 0x01) -> 800 bytes, needing 4 frames.
+    const rawTxHex = "0801".repeat(400);
     const frames = serializeTransaction(
       encodeDerivationPath(PATH),
-      fromHex("0a0100"),
-      [fromHex("aa"), fromHex("bb")],
+      fromHex(rawTxHex),
     );
 
-    expect(frames.map((f) => f.p1)).toEqual([0x00, 0xa0, 0xa9]);
-    expect(toHex(frames[0]!.payload)).toBe(PATH_HEX + "0a0100");
-    expect(toHex(frames[1]!.payload)).toBe("aa");
-    expect(toHex(frames[2]!.payload)).toBe("bb");
+    expect(frames.map((f) => f.p1)).toEqual([0x00, 0x80, 0x80, 0x90]);
+    frames.forEach((f) => expect(f.payload.length).toBeLessThanOrEqual(250));
+    // Reassembled payload (minus the path header on frame 0) equals the rawTx.
+    const reassembled = frames
+      .map((f) => toHex(f.payload))
+      .join("")
+      .slice(PATH_HEX.length);
+    expect(reassembled).toBe(rawTxHex);
   });
 
   it("throws when a single protobuf field exceeds the chunk size", () => {
