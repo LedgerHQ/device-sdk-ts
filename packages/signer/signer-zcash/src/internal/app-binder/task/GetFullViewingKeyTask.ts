@@ -11,6 +11,8 @@ import { APDU_MAX_PAYLOAD } from "@ledgerhq/device-management-kit";
 import { type ZcashFullViewingKeyMode } from "@api/model/FullViewingKeyOptions";
 import {
   GetFullViewingKeyCommand,
+  type GetFullViewingKeyCommandArgs,
+  P2_VK,
   type ZcashFvkP2,
   zcashFvkP2FromMode,
 } from "@internal/app-binder/command/GetFullViewingKeyCommand";
@@ -141,6 +143,35 @@ function parseAssembledUfvk(
 }
 
 /**
+ * Orchard (ZIP-32, purpose 32') and transparent (BIP-44, purpose 44') account
+ * keys share the same coin_type and account, differing only by their purpose,
+ * and app-zcash >= v3.8.0 needs both for UFVK export. The caller's
+ * `derivationPath` is not guaranteed to be a ZIP-32 account path: it may be
+ * rooted at either purpose and may carry extra change/address levels (e.g.
+ * `44'/133'/0'/0/0`). Reduce it to the `<purpose>'/coin'/account'` account
+ * paths regardless of the input shape.
+ */
+function deriveUfvkAccountPaths(
+  derivationPath: string,
+):
+  | { orchardDerivationPath: string; transparentDerivationPath: string }
+  | { error: GetFullViewingKeyTaskError } {
+  const components = derivationPath.split("/");
+  if (components.length < 3) {
+    return {
+      error: new InvalidStatusWordError(
+        `Zcash UFVK derivation path must have at least purpose/coin/account levels (got "${derivationPath}")`,
+      ),
+    };
+  }
+  const [, coinType, account] = components;
+  return {
+    orchardDerivationPath: `32'/${coinType}/${account}`,
+    transparentDerivationPath: `44'/${coinType}/${account}`,
+  };
+}
+
+/**
  * Fetches the full viewing key (UFVK string or raw Orchard FVK) with GET_VK
  * multi-chunk responses (255-byte chunks until the last is shorter).
  */
@@ -153,12 +184,28 @@ export class GetFullViewingKeyTask {
   async run(): Promise<GetFullViewingKeyTaskResult> {
     const p2: ZcashFvkP2 = zcashFvkP2FromMode(this.args.mode);
 
-    const firstResult = await this.api.sendCommand(
-      new GetFullViewingKeyCommand({
+    let firstCommandArgs: GetFullViewingKeyCommandArgs;
+    if (this.args.mode === "ufvk") {
+      const paths = deriveUfvkAccountPaths(this.args.derivationPath);
+      if ("error" in paths) {
+        return DmkResultFactory({ error: paths.error });
+      }
+      firstCommandArgs = {
         isContinue: false,
-        p2,
+        p2: P2_VK.UFVK,
+        derivationPath: paths.orchardDerivationPath,
+        transparentDerivationPath: paths.transparentDerivationPath,
+      };
+    } else {
+      firstCommandArgs = {
+        isContinue: false,
+        p2: P2_VK.ORCHARD_FVK,
         derivationPath: this.args.derivationPath,
-      }),
+      };
+    }
+
+    const firstResult = await this.api.sendCommand(
+      new GetFullViewingKeyCommand(firstCommandArgs),
     );
     if (!isSuccessCommandResult(firstResult)) {
       return DmkResultFactory({
