@@ -37,7 +37,7 @@ export type ProvideAltResolutionCommandArgs = {
  * `(altAddress, entryIndex, resolvedAddress)`. The caller must issue
  * `GET CHALLENGE` immediately before this command.
  *
- * The caller pre-builds the wire payload (the `ALT_RESOLUTION` TLV only
+ * The caller pre-builds the wire payload (the `ALT_RESOLUTION` TLV only)
  * and splits it into ≤255-byte chunks.
  */
 export class ProvideAltResolutionCommand

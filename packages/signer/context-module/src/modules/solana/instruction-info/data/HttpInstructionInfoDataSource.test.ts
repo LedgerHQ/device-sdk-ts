@@ -3,6 +3,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
 
 import { HttpInstructionInfoDataSource } from "./HttpInstructionInfoDataSource";
 import { type InstructionInfoDataSource } from "./InstructionInfoDataSource";
@@ -24,7 +25,7 @@ describe("HttpInstructionInfoDataSource", () => {
   const successResponse: CalInstructionInfoResponseDto = [
     {
       id: programId,
-      chain_id: 900,
+      chain_id: SolanaTransactionScanChainId.MAINNET,
       instructions: [
         {
           discriminator_hex: "00000000",
@@ -62,7 +63,7 @@ describe("HttpInstructionInfoDataSource", () => {
       {
         params: {
           id: programId,
-          chain_id: 900,
+          chain_id: SolanaTransactionScanChainId.MAINNET,
           output: "id,chain_id,instructions",
           ref: "branch:main",
         },
@@ -129,7 +130,11 @@ describe("HttpInstructionInfoDataSource", () => {
 
   it("returns Left when no program object matches the requested programId", async () => {
     httpMock.get.mockResolvedValue([
-      { id: "OtherProgram", chain_id: 900, instructions: [] },
+      {
+        id: "OtherProgram",
+        chain_id: SolanaTransactionScanChainId.MAINNET,
+        instructions: [],
+      },
     ]);
 
     const result = await datasource.getInstructionInfo({ programId, network });
@@ -149,7 +154,7 @@ describe("HttpInstructionInfoDataSource", () => {
     httpMock.get.mockResolvedValue([
       {
         id: programId,
-        chain_id: 900,
+        chain_id: SolanaTransactionScanChainId.MAINNET,
         instructions: [{ discriminator_hex: "00000000" }],
       },
     ]);

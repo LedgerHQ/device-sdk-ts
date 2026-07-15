@@ -597,14 +597,14 @@ def dynamic_descriptor_proxy(subpath: str) -> Tuple[Any, int]:
         response.raise_for_status()
         payload = response.json()
     except requests.RequestException as e:
-        return jsonify({"error": f"Failed to fetch from metadata service: {str(e)}"}), 502
+        return jsonify({"error": f"Failed to fetch from metadata service."}), 502
     except ValueError as e:
-        return jsonify({"error": f"Metadata service returned non-JSON response: {str(e)}"}), 502
+        return jsonify({"error": f"Metadata service returned non-JSON response."}), 502
 
     try:
         resigned = resign_descriptors_in_response(payload)
     except ValueError as e:
-        return jsonify({"error": f"Failed to re-sign descriptor: {str(e)}"}), 500
+        return jsonify({"error": f"Failed to re-sign descriptor."}), 500
 
     return jsonify(resigned), 200
 

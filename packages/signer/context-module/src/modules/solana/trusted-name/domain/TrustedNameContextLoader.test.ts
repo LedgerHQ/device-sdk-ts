@@ -4,6 +4,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
 import { type SolanaTrustedNameDataSource } from "@/modules/solana/trusted-name/data/TrustedNameDataSource";
 import { ClearSignContextType } from "@/shared/model/ClearSignContext";
 
@@ -184,7 +185,9 @@ describe("SolanaTrustedNameContextLoader", () => {
       });
 
       expect(spy).toHaveBeenCalledWith(
-        expect.objectContaining({ network: "900" }),
+        expect.objectContaining({
+          network: String(SolanaTransactionScanChainId.MAINNET),
+        }),
       );
     });
 

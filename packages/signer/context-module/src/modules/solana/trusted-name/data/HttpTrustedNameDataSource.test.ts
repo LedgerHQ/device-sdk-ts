@@ -4,6 +4,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
 
 import { HttpSolanaTrustedNameDataSource } from "./HttpTrustedNameDataSource";
 import { type SolanaTrustedNameDataSource } from "./TrustedNameDataSource";
@@ -48,13 +49,13 @@ describe("HttpSolanaTrustedNameDataSource", () => {
 
     await datasource.getTrustedName({
       address,
-      network: "900",
+      network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
       sources: ["crypto_asset_list"],
     });
 
     expect(httpMock.get).toHaveBeenCalledWith(
-      `https://nft.api.ledger.com/v2/names/solana/900/reverse/${address}`,
+      `https://nft.api.ledger.com/v2/names/solana/${SolanaTransactionScanChainId.MAINNET}/reverse/${address}`,
       {
         params: {
           sources: "crypto_asset_list",
@@ -71,7 +72,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
 
     const result = await datasource.getTrustedName({
       address,
-      network: "900",
+      network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
       sources: ["crypto_asset_list"],
     });
@@ -95,7 +96,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
 
     const result = await datasource.getTrustedName({
       address,
-      network: "900",
+      network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
       sources: ["crypto_asset_list"],
     });
@@ -117,7 +118,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
 
     const result = await datasource.getTrustedName({
       address,
-      network: "900",
+      network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
       sources: ["crypto_asset_list"],
     });
@@ -139,7 +140,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
 
     const result = await datasource.getTrustedName({
       address,
-      network: "900",
+      network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
       sources: [],
     });
@@ -157,7 +158,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
 
     const result = await datasource.getTrustedName({
       address,
-      network: "900",
+      network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
       sources: [],
     });
