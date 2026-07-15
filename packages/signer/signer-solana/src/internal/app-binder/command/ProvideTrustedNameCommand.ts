@@ -19,9 +19,9 @@ import {
 
 const CLA = 0xe0;
 const P1 = 0x00;
-export const INS = 0x27;
+export const INS = 0x29;
 
-export type ProvideTokenAccountStateCommandArgs = {
+export type ProvideTrustedNameCommandArgs = {
   readonly payload: Uint8Array;
   /**
    * Chunking flags following the standard Solana P2_MORE / P2_EXTEND
@@ -33,23 +33,25 @@ export type ProvideTokenAccountStateCommandArgs = {
 };
 
 /**
- * Provides one signed `TOKEN_ACCOUNT_STATE` TLV carrying
- * `(account, mint, owner, preBalance)`. The caller must issue `GET CHALLENGE`
- * immediately before this command.
+ * Provides one signed `TRUSTED_NAME` TLV descriptor (STRUCT_VERSION 2) for the
+ * generic clear-signing pool. This is a dedicated instruction (`0x29`),
+ * distinct from the legacy `InsTrustedInfoProvideInfo` (`0x21`) used by the
+ * basic owner-info flow (spec `c67f1f454`). The caller must issue
+ * `GET CHALLENGE` immediately before this command for dynamic sources.
  *
- * The caller pre-builds the wire payload and splits it into ≤255-byte chunks.
+ * The caller pre-builds the wire payload (the `TRUSTED_NAME` TLV only) and
+ * splits it into ≤255-byte chunks.
  */
-export class ProvideTokenAccountStateCommand
-  implements
-    Command<void, ProvideTokenAccountStateCommandArgs, SolanaAppErrorCodes>
+export class ProvideTrustedNameCommand
+  implements Command<void, ProvideTrustedNameCommandArgs, SolanaAppErrorCodes>
 {
-  readonly name = "provideTokenAccountState";
+  readonly name = "provideTrustedName";
   private readonly errorHelper = new CommandErrorHelper<
     void,
     SolanaAppErrorCodes
   >(SOLANA_APP_ERRORS, SolanaAppCommandErrorFactory);
 
-  constructor(readonly args: ProvideTokenAccountStateCommandArgs) {}
+  constructor(readonly args: ProvideTrustedNameCommandArgs) {}
 
   getApdu(): Apdu {
     const { payload, isFirstChunk = true, hasMore = false } = this.args;

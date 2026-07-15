@@ -15,16 +15,11 @@ function makeDescriptor(
   overrides: Partial<CalInstructionDescriptorDto> = {},
 ): CalInstructionDescriptorDto {
   return {
-    type: "instruction",
-    instruction_info: {
-      version: 1,
-      program_id: PROGRAM,
-      discriminator: "00000000",
-      hash: "feedface",
-      descriptor: {
-        data: "0001sys_data",
-        signatures: { prod: "prodsig", test: "testsig" },
-      },
+    discriminator_hex: "00000000",
+    instruction_name: "createAccount",
+    descriptor: {
+      data: "0001sys_data",
+      signatures: { prod: "prodsig", test: "testsig" },
     },
     ...overrides,
   };
@@ -42,7 +37,6 @@ describe("InstructionInfoMapper", () => {
           {
             descriptor: "vfp1",
             account_indices: [0, 1],
-            account_index: 0,
             optional_account_strategy: "OMITTED",
             token_value: { kind: "NATIVE" },
           },
@@ -50,20 +44,26 @@ describe("InstructionInfoMapper", () => {
       ).toEqual([
         {
           account_indices: [0, 1],
-          account_index: 0,
           optional_account_strategy: "OMITTED",
           token_value: { kind: "NATIVE" },
         },
       ]);
     });
 
-    it("leaves absent optional fields as undefined", () => {
-      expect(toValueFlowPorts([{ descriptor: "vfp1" }])).toEqual([
+    it("leaves the absent optional strategy as undefined", () => {
+      expect(
+        toValueFlowPorts([
+          {
+            descriptor: "vfp1",
+            account_indices: [0],
+            token_value: { kind: "NATIVE" },
+          },
+        ]),
+      ).toEqual([
         {
-          account_indices: undefined,
-          account_index: undefined,
+          account_indices: [0],
           optional_account_strategy: undefined,
-          token_value: undefined,
+          token_value: { kind: "NATIVE" },
         },
       ]);
     });
@@ -138,24 +138,14 @@ describe("InstructionInfoMapper", () => {
   describe("toInstructionInfoPayload", () => {
     it("surfaces CAL's decoded JSON (type pool, mint assoc, ports, resets, fields) and ordered substructures", () => {
       const dto = makeDescriptor({
-        instruction_info: {
-          version: 1,
-          program_id: PROGRAM,
-          discriminator: "00000000",
-          hash: "feedface",
-          descriptor: {
-            data: "0001sys_data",
-            signatures: { prod: "prodsig", test: "testsig" },
-          },
-          idl_descriptor: {
-            root_type: 3,
-            type_pool: [
-              { index: 0, kind: "STRUCT", refs: [1] },
-              { index: 1, kind: "U64" },
-            ],
-          },
-          mint_association: { account_index: 1, mint_index: 3 },
+        idl_descriptor: {
+          root_type: 3,
+          type_pool: [
+            { index: 0, kind: "STRUCT", refs: [1] },
+            { index: 1, kind: "U64" },
+          ],
         },
+        mint_association: { account_index: 1, mint_index: 3 },
         display_fields: [
           {
             descriptor: "df1",
@@ -184,6 +174,7 @@ describe("InstructionInfoMapper", () => {
       });
 
       const payload = toInstructionInfoPayload(
+        PROGRAM,
         "00000000",
         dto,
         "prod",
@@ -230,6 +221,7 @@ describe("InstructionInfoMapper", () => {
 
     it("defaults idlDescriptor when CAL omits it", () => {
       const payload = toInstructionInfoPayload(
+        PROGRAM,
         "00000000",
         makeDescriptor(),
         "prod",
@@ -244,13 +236,16 @@ describe("InstructionInfoMapper", () => {
           swap: {
             "46": {
               variant_name: "raydiumCP",
-              data: "01_raydium_tlv",
-              signatures: { prod: "prodsig_v46", test: "testsig_v46" },
+              descriptor: {
+                data: "01_raydium_tlv",
+                signatures: { prod: "prodsig_v46", test: "testsig_v46" },
+              },
             },
           },
         },
       });
       const payload = toInstructionInfoPayload(
+        PROGRAM,
         "00000000",
         dto,
         "prod",
@@ -270,23 +265,30 @@ describe("InstructionInfoMapper", () => {
           swap: {
             "46": {
               variant_name: "raydiumCP",
-              data: "01_raydium_tlv",
-              signatures: { prod: "prodsig_v46", test: "testsig_v46" },
+              descriptor: {
+                data: "01_raydium_tlv",
+                signatures: { prod: "prodsig_v46", test: "testsig_v46" },
+              },
             },
             "7abc": {
               variant_name: "junk",
-              data: "junk_tlv",
-              signatures: { prod: "x", test: "x" },
+              descriptor: {
+                data: "junk_tlv",
+                signatures: { prod: "x", test: "x" },
+              },
             },
             "70000": {
               variant_name: "overflow",
-              data: "overflow_tlv",
-              signatures: { prod: "x", test: "x" },
+              descriptor: {
+                data: "overflow_tlv",
+                signatures: { prod: "x", test: "x" },
+              },
             },
           },
         },
       });
       const payload = toInstructionInfoPayload(
+        PROGRAM,
         "00000000",
         dto,
         "prod",
@@ -302,6 +304,7 @@ describe("InstructionInfoMapper", () => {
 
     it("selects the signature for the configured mode", () => {
       const payload = toInstructionInfoPayload(
+        PROGRAM,
         "00000000",
         makeDescriptor(),
         "test",
@@ -311,9 +314,8 @@ describe("InstructionInfoMapper", () => {
 
     it("returns Left when the configured mode signature is missing", () => {
       const dto = makeDescriptor();
-      delete (dto.instruction_info.descriptor.signatures as { test?: string })
-        .test;
-      const result = toInstructionInfoPayload("00000000", dto, "test");
+      delete (dto.descriptor.signatures as { test?: string }).test;
+      const result = toInstructionInfoPayload(PROGRAM, "00000000", dto, "test");
       expect(result.isLeft()).toBe(true);
       expect(result.swap().unsafeCoerce().message).toMatch(
         /missing 'test' signature/,
@@ -329,13 +331,17 @@ describe("InstructionInfoMapper", () => {
             swap: {
               "46": {
                 variant_name: "raydiumCP",
-                data: "01_raydium_tlv",
-                signatures: { prod: "prodsig_v46", test: "testsig_v46" },
+                descriptor: {
+                  data: "01_raydium_tlv",
+                  signatures: { prod: "prodsig_v46", test: "testsig_v46" },
+                },
               },
               bad: {
                 variant_name: "junk",
-                data: "junk_tlv",
-                signatures: { prod: "x", test: "x" },
+                descriptor: {
+                  data: "junk_tlv",
+                  signatures: { prod: "x", test: "x" },
+                },
               },
             },
           },
@@ -345,8 +351,10 @@ describe("InstructionInfoMapper", () => {
             route: {
               "12": {
                 variant_name: "orca",
-                data: "02_orca_tlv",
-                signatures: { prod: "prodsig_v12", test: "testsig_v12" },
+                descriptor: {
+                  data: "02_orca_tlv",
+                  signatures: { prod: "prodsig_v12", test: "testsig_v12" },
+                },
               },
             },
           },
@@ -372,8 +380,10 @@ describe("InstructionInfoMapper", () => {
           swap: {
             "46": {
               variant_name: "raydiumCP",
-              data: "01_raydium_tlv",
-              signatures: { prod: "prodsig_v46" },
+              descriptor: {
+                data: "01_raydium_tlv",
+                signatures: { prod: "prodsig_v46" },
+              },
             },
           },
         },

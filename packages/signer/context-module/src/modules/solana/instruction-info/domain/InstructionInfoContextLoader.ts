@@ -111,8 +111,8 @@ export class InstructionInfoContextLoader
     // if cert fails so we can surface a per-program ERROR rather than
     // silently dropping them.
     const certPromise = loadCertificateResult(this.certificateLoader, {
-      keyId: KeyId.TokenMetadataKey,
-      keyUsage: KeyUsage.CoinMeta,
+      keyId: KeyId.CalCalldataKey,
+      keyUsage: KeyUsage.Calldata,
       targetDevice: input.deviceModelId,
     });
 

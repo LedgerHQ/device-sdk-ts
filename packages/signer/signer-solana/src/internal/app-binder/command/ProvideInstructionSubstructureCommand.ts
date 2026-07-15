@@ -47,9 +47,9 @@ export type ProvideInstructionSubstructureCommandArgs = {
  * Provides one substructure TLV (DISPLAY_FIELD / VALUE_FLOW_PORT /
  * HIDE_RULE / ACCOUNT_RESET) referenced by the current `INSTRUCTION_INFO`.
  *
- * The caller pre-builds the wire payload — 2-byte BE length prefix, 1-byte
- * substructure-type selector, then the substructure TLV — and splits it into
- * ≤255-byte chunks.
+ * The caller pre-builds the wire payload — a 1-byte substructure-type selector
+ * followed by the substructure TLV (no length prefix; the device recovers the
+ * total length from the chunk flags) — and splits it into ≤255-byte chunks.
  */
 export class ProvideInstructionSubstructureCommand
   implements

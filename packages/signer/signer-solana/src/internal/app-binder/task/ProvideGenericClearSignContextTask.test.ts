@@ -161,7 +161,11 @@ describe("ProvideGenericClearSignContextTask", () => {
     expect(made.getContexts).toHaveBeenCalledWith(
       expect.objectContaining({
         requests: [
-          { address: "NAME", challenge: "deadbeef", types: [], sources: [] },
+          {
+            address: "NAME",
+            challenge: "deadbeef",
+            sources: ["crypto_asset_list"],
+          },
         ],
       }),
       [ClearSignContextType.SOLANA_TRUSTED_NAME],
@@ -199,6 +203,49 @@ describe("ProvideGenericClearSignContextTask", () => {
     await expect(made.task.run()).resolves.toBeUndefined();
     // The descriptor was never fetched because the challenge failed.
     expect(made.getContexts).not.toHaveBeenCalled();
+  });
+
+  it("continues (no throw) when an optional descriptor fails, still streaming the structural templates", async () => {
+    const made = makeTask([tokenInfoContext()], [instructionInfoContext()]);
+    api = made.api;
+    // Preview + GET CHALLENGE succeed, but the device rejects TOKEN_INFO
+    // (an optional descriptor); the rest must still be streamed.
+    made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
+      if (cmd instanceof GetChallengeCommand) return challenge;
+      if (cmd instanceof ProvideTLVTransactionInstructionDescriptorCommand) {
+        return CommandResultFactory({
+          error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+        });
+      }
+      return success;
+    });
+
+    await expect(made.task.run()).resolves.toBeUndefined();
+
+    // The structural instruction-info template was still streamed despite the
+    // optional TOKEN_INFO failure.
+    const sent = api.sendCommand.mock.calls.map((c) => c[0]);
+    expect(sent.some((c) => c instanceof ProvideInstructionInfoCommand)).toBe(
+      true,
+    );
+  });
+
+  it("aborts (throws) when a structural descriptor (instruction info) fails", async () => {
+    const made = makeTask([tokenInfoContext()], [instructionInfoContext()]);
+    // Everything succeeds except the structural INSTRUCTION_INFO command.
+    made.api.sendCommand.mockImplementation(async (cmd: unknown) => {
+      if (cmd instanceof GetChallengeCommand) return challenge;
+      if (cmd instanceof ProvideInstructionInfoCommand) {
+        return CommandResultFactory({
+          error: { _tag: "E", errorCode: 0x6a80, message: "no" } as any,
+        });
+      }
+      return success;
+    });
+
+    await expect(made.task.run()).rejects.toThrow(
+      "device rejected INSTRUCTION_INFO",
+    );
   });
 
   it("aborts (throws) when the device rejects GENERIC PREVIEW", async () => {

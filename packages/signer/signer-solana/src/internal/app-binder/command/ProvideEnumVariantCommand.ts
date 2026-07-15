@@ -36,8 +36,8 @@ export type ProvideEnumVariantCommandArgs = {
  * Provides one signed `ENUM_VARIANT` TLV for a specific
  * `(PROGRAM_ID, ENUM_ID, VARIANT_INDEX)` triple.
  *
- * The caller pre-builds the wire payload (2-byte BE length prefix followed
- * by the `ENUM_VARIANT` TLV) and splits it into ≤255-byte chunks.
+ * The caller pre-builds the wire payload and splits it into ≤255-byte
+ * chunks.
  */
 export class ProvideEnumVariantCommand
   implements Command<void, ProvideEnumVariantCommandArgs, SolanaAppErrorCodes>

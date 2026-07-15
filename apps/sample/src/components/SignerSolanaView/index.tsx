@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useCallback, useMemo, useRef, useState } from "react";
+import { useSelector } from "react-redux";
+import {
+  ContextModuleBuilder,
+  ContextModuleChainID,
+} from "@ledgerhq/context-module";
 import {
   base64StringToBuffer,
   isBase64String,
@@ -36,6 +41,14 @@ import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsL
 import { type DeviceActionProps } from "@/components/DeviceActionsView/DeviceActionTester";
 import { Form } from "@/components/Form";
 import { useDmk } from "@/providers/DeviceManagementKitProvider";
+import {
+  selectCalConfig,
+  selectDatasourceConfig,
+  selectMetadataServiceConfig,
+  selectOriginToken,
+  selectReporterConfig,
+  selectWeb3ChecksConfig,
+} from "@/state/settings/selectors";
 
 const DEFAULT_DERIVATION_PATH = "44'/501'/0'/0'";
 
@@ -141,12 +154,46 @@ export const SignerSolanaView: React.FC<{ sessionId: string }> = ({
   sessionId,
 }) => {
   const dmk = useDmk();
-  const signer = new SignerSolanaBuilder({
+  const calConfig = useSelector(selectCalConfig);
+  const web3ChecksConfig = useSelector(selectWeb3ChecksConfig);
+  const metadataServiceConfig = useSelector(selectMetadataServiceConfig);
+  const reporterConfig = useSelector(selectReporterConfig);
+  const originToken = useSelector(selectOriginToken);
+  const datasourceConfig = useSelector(selectDatasourceConfig);
+
+  const signer = useMemo(() => {
+    const contextModule = new ContextModuleBuilder({
+      originToken,
+      loggerFactory: (tag: string) =>
+        dmk.getLoggerFactory()(["ContextModule", tag]),
+    })
+      .setCalConfig(calConfig)
+      .setWeb3ChecksConfig(web3ChecksConfig)
+      .setMetadataServiceConfig(metadataServiceConfig)
+      .setReporterConfig(reporterConfig)
+      .setDatasourceConfig(datasourceConfig)
+      .setAppSource("device-management-kit-playground")
+      .setChain(ContextModuleChainID.Solana)
+      .build();
+
+    return new SignerSolanaBuilder({
+      dmk,
+      sessionId,
+      originToken,
+      solanaRPCURL: "https://solana.coin.ledger.com",
+    })
+      .withContextModule(contextModule)
+      .build();
+  }, [
     dmk,
     sessionId,
-    originToken: "Solana",
-    solanaRPCURL: "https://solana.coin.ledger.com",
-  }).build();
+    calConfig,
+    web3ChecksConfig,
+    metadataServiceConfig,
+    reporterConfig,
+    originToken,
+    datasourceConfig,
+  ]);
   const solanaTools = new SolanaToolsBuilder({
     dmk,
     sessionId,
