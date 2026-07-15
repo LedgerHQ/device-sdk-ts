@@ -153,11 +153,21 @@ export class GetFullViewingKeyTask {
   async run(): Promise<GetFullViewingKeyTaskResult> {
     const p2: ZcashFvkP2 = zcashFvkP2FromMode(this.args.mode);
 
+    // app-zcash >= v3.8.0 requires both the orchard and transparent account
+    // paths for UFVK export. `derivationPath` is always the ZIP-32 account path
+    // (32'/coin'/account') at this point, so the transparent path is the same
+    // account under BIP-44 purpose (44'/coin'/account').
+    const transparentDerivationPath =
+      this.args.mode === "ufvk"
+        ? this.args.derivationPath.replace(/^32'\//, "44'/")
+        : undefined;
+
     const firstResult = await this.api.sendCommand(
       new GetFullViewingKeyCommand({
         isContinue: false,
         p2,
         derivationPath: this.args.derivationPath,
+        transparentDerivationPath,
       }),
     );
     if (!isSuccessCommandResult(firstResult)) {

@@ -35,12 +35,44 @@ const GET_FVK_PATH_BYTES = Uint8Array.from([
   0x00,
 ]);
 
+// UFVK export (app-zcash >= v3.8.0): orchard ZIP-32 path 32'/133'/0' followed
+// by the transparent account path 44'/133'/0'.
+const GET_FVK_UFVK_PATH_BYTES = Uint8Array.from([
+  0x1a, // Data length: 26
+  0x03, // orchard path length: 3
+  0x80,
+  0x00,
+  0x00,
+  0x20, // 32'
+  0x80,
+  0x00,
+  0x00,
+  0x85, // 133'
+  0x80,
+  0x00,
+  0x00,
+  0x00, // 0'
+  0x03, // transparent path length: 3
+  0x80,
+  0x00,
+  0x00,
+  0x2c, // 44'
+  0x80,
+  0x00,
+  0x00,
+  0x85, // 133'
+  0x80,
+  0x00,
+  0x00,
+  0x00, // 0'
+]);
+
 const GET_FVK_UFVK_FIRST_APDU = Uint8Array.from([
   0xe0,
   0x50,
   0x00,
   P2_VK.UFVK,
-  ...GET_FVK_PATH_BYTES,
+  ...GET_FVK_UFVK_PATH_BYTES,
 ]);
 
 const GET_FVK_ORCHARD_FIRST_APDU = Uint8Array.from([
@@ -61,6 +93,8 @@ const GET_FVK_CONTINUE_UFVK_APDU = Uint8Array.from([
 
 describe("GetFullViewingKeyCommand", () => {
   const path = "44'/133'/0'/0/0";
+  const orchardPath = "32'/133'/0'";
+  const transparentPath = "44'/133'/0'";
 
   describe("name", () => {
     it("should be 'GetFullViewingKey'", () => {
@@ -74,11 +108,12 @@ describe("GetFullViewingKeyCommand", () => {
   });
 
   describe("getApdu", () => {
-    it("should return first GET_VK APDU for UFVK (P2=0)", () => {
+    it("should return first GET_VK APDU for UFVK (P2=0) with orchard + transparent paths", () => {
       const command = new GetFullViewingKeyCommand({
         isContinue: false,
         p2: P2_VK.UFVK,
-        derivationPath: path,
+        derivationPath: orchardPath,
+        transparentDerivationPath: transparentPath,
       });
       expect(command.getApdu().getRawApdu()).toStrictEqual(
         GET_FVK_UFVK_FIRST_APDU,

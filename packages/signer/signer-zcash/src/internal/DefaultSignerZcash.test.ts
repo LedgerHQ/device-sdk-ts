@@ -117,6 +117,7 @@ describe("DefaultSignerZcash", () => {
       new GetFullViewingKeyCommand({
         isContinue: false,
         derivationPath,
+        transparentDerivationPath: derivationPath.replace(/^32'\//, "44'/"),
         p2: zcashFvkP2FromMode("ufvk"),
       }).getApdu(),
     );

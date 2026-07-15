@@ -36,6 +36,11 @@ export type GetFullViewingKeyCommandArgs =
       /** First GET_VK exchange: P1=FIRST and path in APDU data. */
       readonly isContinue: false;
       readonly derivationPath: string;
+      /**
+       * Transparent account path serialized after the orchard path for UFVK
+       * export (app-zcash >= v3.8.0). Required for UFVK; unused for OrchardFvk.
+       */
+      readonly transparentDerivationPath?: string;
       /** See app `P2VkMode` (UFVK string vs raw Orchard FVK bytes). */
       readonly p2: ZcashFvkP2;
     }
@@ -90,6 +95,18 @@ export class GetFullViewingKeyCommand
       path.forEach((element) => {
         builder.add32BitUIntToData(element);
       });
+
+      // app-zcash >= v3.8.0 expects UFVK export to carry a second prefixed path
+      // for the transparent account key (44'/133'/<account>').
+      if (this.args.p2 === P2_VK.UFVK && this.args.transparentDerivationPath) {
+        const transparentPath = DerivationPathUtils.splitPath(
+          this.args.transparentDerivationPath,
+        );
+        builder.add8BitUIntToData(transparentPath.length);
+        transparentPath.forEach((element) => {
+          builder.add32BitUIntToData(element);
+        });
+      }
     }
 
     return builder.build();
