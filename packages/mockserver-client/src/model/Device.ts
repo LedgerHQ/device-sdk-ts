@@ -50,6 +50,13 @@ export interface Device {
   readonly apps?: DeviceApp[];
   readonly masks?: number[];
   readonly connected?: boolean;
+  /**
+   * Whether the device is onboarded. Omitted/`true` reports a normal onboarded
+   * device; `false` starts the onboarding simulation (the device reports itself
+   * as not onboarded and auto-advances through the onboarding steps as it is
+   * polled).
+   */
+  readonly onboarded?: boolean;
 }
 
 export const deviceCodec = Codec.interface({
@@ -61,6 +68,7 @@ export const deviceCodec = Codec.interface({
   apps: optional(array(deviceAppCodec)),
   masks: optional(array(number)),
   connected: optional(boolean),
+  onboarded: optional(boolean),
 });
 
 /**
@@ -77,6 +85,11 @@ export interface DeviceConfig {
   readonly mocks?: MockConfig[];
   /** Installable apps the mock "app store" can resolve from an install hash. */
   readonly catalog?: CatalogApp[];
+  /**
+   * Whether the device is onboarded. Omitted/`true` reports a normal onboarded
+   * device; `false` starts the onboarding simulation.
+   */
+  readonly onboarded?: boolean;
 }
 
 export const deviceConfigCodec = Codec.interface({
@@ -88,4 +101,5 @@ export const deviceConfigCodec = Codec.interface({
   masks: optional(array(number)),
   mocks: optional(array(mockConfigCodec)),
   catalog: optional(array(catalogAppCodec)),
+  onboarded: optional(boolean),
 });
