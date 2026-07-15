@@ -24,9 +24,9 @@ import {
  *
  * The Tron app frames a transaction across multiple APDUs; `p1` is the frame's
  * "start byte" (see {@link SIGN_TRANSACTION_P1}) and `payload` is the bytes for
- * this frame (the derivation path on the first frame, then transaction chunks,
- * then optional token signatures). The framing itself is orchestrated by
- * `SignTransactionTask`. The signature is only returned on the last frame.
+ * this frame (the derivation path on the first frame, then transaction chunks).
+ * The framing itself is orchestrated by `SignTransactionTask`. The signature is
+ * only returned on the last frame.
  */
 export type SignTransactionCommandArgs = {
   readonly payload: Uint8Array;

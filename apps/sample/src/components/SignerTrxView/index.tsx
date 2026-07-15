@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useMemo } from "react";
+import { hexaStringToBuffer } from "@ledgerhq/device-management-kit";
 import {
   type GetAddressDAError,
   type GetAddressDAIntermediateValue,
@@ -8,6 +9,9 @@ import {
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
   SignerTrxBuilder,
+  type SignTransactionDAError,
+  type SignTransactionDAIntermediateValue,
+  type SignTransactionDAOutput,
 } from "@ledgerhq/device-signer-kit-tron";
 
 import { DeviceActionsList } from "@/components/DeviceActionsView/DeviceActionsList";
@@ -58,6 +62,33 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
         },
         GetAddressDAError,
         GetAddressDAIntermediateValue
+      >,
+      {
+        title: "Sign transaction",
+        description:
+          "Perform all the actions necessary to sign a Tron transaction with the device. The transaction is the hex-encoded protobuf-serialized raw_data of the transaction, reviewed and blind-signed on-device.",
+        executeDeviceAction: ({ derivationPath, transaction, skipOpenApp }) => {
+          const tx = hexaStringToBuffer(transaction);
+          if (!tx || tx.length === 0) {
+            throw new Error("Invalid transaction format");
+          }
+          return signer.signTransaction(derivationPath, tx, { skipOpenApp });
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          transaction: "",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignTransactionDAOutput,
+        {
+          derivationPath: string;
+          transaction: string;
+          skipOpenApp?: boolean;
+        },
+        SignTransactionDAError,
+        SignTransactionDAIntermediateValue
       >,
       {
         title: "Get app configuration",
