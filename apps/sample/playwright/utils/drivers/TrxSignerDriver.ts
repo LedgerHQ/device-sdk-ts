@@ -50,6 +50,25 @@ export class TrxSignerDriver {
   }
 
   /**
+   * Open the Sign transaction action, fill the raw transaction (hex-encoded
+   * protobuf-serialized `raw_data`) and Execute it. The action stays pending
+   * until the transaction is reviewed and signed on Speculos.
+   */
+  async signTransaction(
+    transaction: string,
+    { skipOpenApp = false }: { skipOpenApp?: boolean } = {},
+  ): Promise<void> {
+    await this.page.getByTestId("CTA_command-Sign transaction").click();
+    const input = this.page.getByTestId("input-text_transaction");
+    await input.waitFor({ state: "visible" });
+    await input.fill(transaction);
+    if (skipOpenApp) {
+      await this.page.getByTestId("input-switch_skipOpenApp").click();
+    }
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
    * Wait for the last emitted device-action state to be terminal and return it
    * parsed.
    */

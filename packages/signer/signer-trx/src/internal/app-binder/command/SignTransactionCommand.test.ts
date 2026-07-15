@@ -13,9 +13,9 @@ describe("SignTransactionCommand", () => {
   const payload = Uint8Array.from({ length: 10 }, (_, i) => i);
 
   describe("name", () => {
-    it("should be 'SignTransaction'", () => {
+    it("should be 'signTransaction'", () => {
       expect(new SignTransactionCommand({ payload, p1: 0x10 }).name).toBe(
-        "SignTransaction",
+        "signTransaction",
       );
     });
   });
