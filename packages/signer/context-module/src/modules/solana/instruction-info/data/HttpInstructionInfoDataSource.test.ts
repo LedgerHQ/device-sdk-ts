@@ -16,7 +16,7 @@ describe("HttpInstructionInfoDataSource", () => {
   const network = "solana-mainnet";
   const config: ContextModuleServiceConfig = {
     cal: {
-      url: "https://crypto-assets-service.api.ledger.com/v1",
+      url: "https://global.api.prd.ledger.com/cal/v1",
       mode: "prod",
       branch: "main",
     },
@@ -59,7 +59,7 @@ describe("HttpInstructionInfoDataSource", () => {
 
     expect(httpMock.get).toHaveBeenCalledTimes(1);
     expect(httpMock.get).toHaveBeenCalledWith(
-      "https://crypto-assets-service.api.ledger.com/v1/solana_programs",
+      "https://global.api.prd.ledger.com/cal/v1/solana_programs",
       {
         params: {
           id: programId,
@@ -80,7 +80,7 @@ describe("HttpInstructionInfoDataSource", () => {
     });
 
     expect(httpMock.get).toHaveBeenCalledWith(
-      "https://crypto-assets-service.api.ledger.com/v1/solana_programs",
+      "https://global.api.prd.ledger.com/cal/v1/solana_programs",
       expect.objectContaining({
         params: expect.objectContaining({ chain_id: 901 }),
       }),

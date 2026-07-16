@@ -34,7 +34,7 @@ export const Web3ChecksUrlSetting: React.FC = () => {
           renderLeft={<InputLabel>Web3Checks Provider URL</InputLabel>}
           value={web3ChecksUrl}
           onChange={onValueChange}
-          placeholder="https://web3checks-backend.api.ledger.com/v3"
+          placeholder="https://global.api.prd.ledger.com/transaction-checks/v3"
         />
       </Flex>
       <ResetSettingCTA
