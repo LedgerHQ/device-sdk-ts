@@ -99,6 +99,38 @@ curl -s -X POST $BASE/devices/<id>/mocks -H "$AUTH" -H "$JSON" \
 
 Add mock = new behavior. Delete mock = old behavior back.
 
+## Onboarding
+
+Make a fresh, not-onboarded device and walk it through Ledger Live's
+SyncOnboarding steps. Ask for `onboarded: false` at create time (omit it, or
+`true`, for a normal onboarded device):
+
+```bash
+curl -s -X POST $BASE/devices -H "$AUTH" -H "$JSON" \
+  -d '{"name":"Ledger Nano X","device_type":"nanoX","firmware_version":"1.3.0","onboarded":false}'
+```
+
+State lives in the GetOsVersion (`e001000000`) answer's `seFlags`: byte 0 has
+the onboarded bit, byte 3 the step. Poll `e001000000` to read it and to move
+the flow along.
+
+- Starts at WELCOME (step `00`), not onboarded. Dwells here until you send
+  `e0030000` (enter early check).
+- Now at EARLY_CHECK (step `0f`). Dwells here until you send `e0030001`
+  (exit early check).
+- After exit, each `e001000000` poll auto-advances one step:
+  ChooseName `0c` -> Pin `06` -> SetupChoice `05` -> NewDevice `07` ->
+  NewDeviceConfirming `08` -> SafetyWarning `0a` -> Ready `0b`.
+- At Ready, byte 0 flips to `e6` (onboarded set) and `GET /devices/<id>` now
+  says `onboarded: true`.
+
+```bash
+# Walk it: enter, exit, then poll until Ready.
+curl -s -X POST $BASE/devices/<id>/apdu -H "$AUTH" -H "$JSON" -d '{"apdu":"e0030000"}'  # enter early check
+curl -s -X POST $BASE/devices/<id>/apdu -H "$AUTH" -H "$JSON" -d '{"apdu":"e0030001"}'  # exit early check
+curl -s -X POST $BASE/devices/<id>/apdu -H "$AUTH" -H "$JSON" -d '{"apdu":"e001000000"}' # poll (repeat to advance)
+```
+
 ## Newest firmware
 
 Server has no "latest" list. Read the real version from Ledger, then `PATCH`:
