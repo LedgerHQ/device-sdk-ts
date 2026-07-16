@@ -53,6 +53,7 @@ describe("SolanaTrustedNameContextLoader", () => {
               {
                 address: ADDR_A,
                 challenge: "c",
+                types: ["token", "smart_contract"],
                 sources: ["sns"],
               },
             ],
@@ -70,6 +71,7 @@ describe("SolanaTrustedNameContextLoader", () => {
               {
                 address: ADDR_A,
                 challenge: "c",
+                types: ["token", "smart_contract"],
                 sources: ["sns"],
               },
             ],
@@ -86,7 +88,7 @@ describe("SolanaTrustedNameContextLoader", () => {
       expect(
         loader.canHandle(
           {
-            requests: [{ address: "", challenge: "c", sources: [] }],
+            requests: [{ address: "", challenge: "c", types: [], sources: [] }],
           } as any,
           types,
         ),
@@ -94,7 +96,9 @@ describe("SolanaTrustedNameContextLoader", () => {
       expect(
         loader.canHandle(
           {
-            requests: [{ address: ADDR_A, challenge: "", sources: [] }],
+            requests: [
+              { address: ADDR_A, challenge: "", types: [], sources: [] },
+            ],
           } as any,
           types,
         ),
@@ -120,11 +124,13 @@ describe("SolanaTrustedNameContextLoader", () => {
           {
             address: ADDR_A,
             challenge: "c1",
+            types: ["token", "smart_contract"],
             sources: ["sns"],
           },
           {
             address: ADDR_B,
             challenge: "c2",
+            types: ["token", "smart_contract"],
             sources: ["cal"],
           },
         ],
@@ -160,8 +166,8 @@ describe("SolanaTrustedNameContextLoader", () => {
       const out = await makeLoader().load({
         deviceModelId: DeviceModelId.NANO_X,
         requests: [
-          { address: ADDR_A, challenge: "c1", sources: [] },
-          { address: ADDR_B, challenge: "c2", sources: [] },
+          { address: ADDR_A, challenge: "c1", types: [], sources: [] },
+          { address: ADDR_B, challenge: "c2", types: [], sources: [] },
         ],
       });
 
@@ -181,7 +187,7 @@ describe("SolanaTrustedNameContextLoader", () => {
 
       await makeLoader().load({
         deviceModelId: DeviceModelId.NANO_X,
-        requests: [{ address: ADDR_A, challenge: "c", sources: [] }],
+        requests: [{ address: ADDR_A, challenge: "c", types: [], sources: [] }],
       });
 
       expect(spy).toHaveBeenCalledWith(
@@ -204,7 +210,7 @@ describe("SolanaTrustedNameContextLoader", () => {
       await makeLoader().load({
         deviceModelId: DeviceModelId.NANO_X,
         network: "solana-devnet",
-        requests: [{ address: ADDR_A, challenge: "c", sources: [] }],
+        requests: [{ address: ADDR_A, challenge: "c", types: [], sources: [] }],
       });
 
       expect(spy).toHaveBeenCalledWith(

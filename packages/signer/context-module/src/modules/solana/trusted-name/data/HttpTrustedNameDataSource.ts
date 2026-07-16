@@ -44,6 +44,7 @@ export class HttpSolanaTrustedNameDataSource
     address,
     network,
     challenge,
+    types,
     sources,
   }: GetSolanaTrustedNameParams): Promise<
     Either<Error, SolanaTrustedNameResult>
@@ -54,6 +55,7 @@ export class HttpSolanaTrustedNameDataSource
         `${this.config.metadataServiceDomain.url}/v2/names/solana/${network}/reverse/${address}`,
         {
           params: {
+            types: types.join(","),
             sources: sources.join(","),
             challenge,
           },

@@ -44,13 +44,14 @@ describe("HttpSolanaTrustedNameDataSource", () => {
     datasource = makeDatasource();
   });
 
-  it("calls the names endpoint with network, sources and challenge (no types)", async () => {
+  it("calls the names endpoint with network, types, sources and challenge", async () => {
     httpMock.get.mockResolvedValue(objectResponse({ prod: "aabb" }));
 
     await datasource.getTrustedName({
       address,
       network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
+      types: ["token", "smart_contract"],
       sources: ["crypto_asset_list"],
     });
 
@@ -58,6 +59,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
       `https://nft.api.ledger.com/v2/names/solana/${SolanaTransactionScanChainId.MAINNET}/reverse/${address}`,
       {
         params: {
+          types: "token,smart_contract",
           sources: "crypto_asset_list",
           challenge,
         },
@@ -74,6 +76,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
       address,
       network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
+      types: ["token", "smart_contract"],
       sources: ["crypto_asset_list"],
     });
 
@@ -98,6 +101,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
       address,
       network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
+      types: ["token", "smart_contract"],
       sources: ["crypto_asset_list"],
     });
 
@@ -120,6 +124,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
       address,
       network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
+      types: ["token", "smart_contract"],
       sources: ["crypto_asset_list"],
     });
 
@@ -142,6 +147,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
       address,
       network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
+      types: [],
       sources: [],
     });
 
@@ -160,6 +166,7 @@ describe("HttpSolanaTrustedNameDataSource", () => {
       address,
       network: String(SolanaTransactionScanChainId.MAINNET),
       challenge,
+      types: [],
       sources: [],
     });
 
