@@ -62,7 +62,7 @@ import { SignerEthBuilder } from "@ledgerhq/device-signer-kit-ethereum";
 const signerEth = new SignerEthBuilder({ dmk, sessionId }).build();
 ```
 
-### With an origin token (recommended for Transaction Checks)
+### With an origin token (recommended, required for full clear signing)
 
 ```typescript
 const signerEth = new SignerEthBuilder({
@@ -72,7 +72,7 @@ const signerEth = new SignerEthBuilder({
 }).build();
 ```
 
-`originToken` enables Ledger's Transaction Checks service, which shows users whether a transaction is potentially malicious. Without it, clear signing still works but Transaction Checks are not available. Contact Ledger to obtain a token for your application.
+`originToken` enables Ledger's Transaction Checks service, which shows users whether a transaction is potentially malicious. It also unlocks full clear signing: without it, only basic clear signing (e.g. ERC-20 transfers) is available, and transactions calling more complex contract selectors fall back to blind signing. Contact Ledger to obtain a token for your application.
 
 ---
 
@@ -109,9 +109,9 @@ const result = await eth.getAddress(
 
 ```typescript
 const { observable, cancel } = signerEth.getAddress("44'/60'/0'/0/0", {
-  checkOnDevice: boolDisplay,   // was boolDisplay
+  checkOnDevice: boolDisplay, // was boolDisplay
   returnChainCode: boolChaincode, // was boolChaincode
-  chainId: 1,                   // was chainId (number, not string)
+  chainId: 1, // was chainId (number, not string)
 });
 
 observable.subscribe({
@@ -379,11 +379,11 @@ If you want to migrate incrementally, use the `toPromise` helper from the [gener
 
 ## Troubleshooting
 
-| Issue                                          | Solution                                                                                                                         |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Observable never reaches `Completed`           | The device may be waiting for user confirmation. Check `state.intermediateValue.requiredUserInteraction` in the `Pending` state. |
-| `rxjs` not found                               | Run `npm install rxjs` (it is a peer dependency of the DMK).                                                                     |
-| Transaction bytes rejected                     | Ensure you are passing a `Uint8Array` (or `Buffer`), not a hex string. `Buffer.from(rawTxHex, "hex")` converts correctly.        |
-| `signEIP712HashedMessage` not available in DMK | The DMK does not expose a hashed-message signing API. Use `signTypedData` if you have the full structured data.                  |
-| No Transaction Checks shown on device          | Pass an `originToken` to `SignerEthBuilder`. Contact Ledger to obtain one.                                                       |
-| Device shows "blind signing" warning           | Transaction Checks require an `originToken` and a supported transaction type.                                                    |
+| Issue                                          | Solution                                                                                                                                                                                            |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Observable never reaches `Completed`           | The device may be waiting for user confirmation. Check `state.intermediateValue.requiredUserInteraction` in the `Pending` state.                                                                    |
+| `rxjs` not found                               | Run `npm install rxjs` (it is a peer dependency of the DMK).                                                                                                                                        |
+| Transaction bytes rejected                     | Ensure you are passing a `Uint8Array` (or `Buffer`), not a hex string. `Buffer.from(rawTxHex, "hex")` converts correctly.                                                                           |
+| `signEIP712HashedMessage` not available in DMK | The DMK does not expose a hashed-message signing API. Use `signTypedData` if you have the full structured data.                                                                                     |
+| No Transaction Checks shown on device          | Pass an `originToken` to `SignerEthBuilder`. Contact Ledger to obtain one.                                                                                                                          |
+| Device shows "blind signing" warning           | Without an `originToken`, only basic clear signing (e.g. ERC-20 transfers) is supported; complex contract selectors fall back to blind signing. Pass an `originToken` to unlock full clear signing. |
