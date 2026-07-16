@@ -77,6 +77,26 @@ export interface SessionRepository {
     record: SessionRecord,
     deviceId: string,
   ): Maybe<Device>;
+  /**
+   * Arm the target `firmware_version` a secure-channel firmware install targets,
+   * to be applied to the device registry when the final install block is
+   * acknowledged. Used for both the OSU install (`<next>-osu`) and the final
+   * firmware install (clean `<next>`).
+   */
+  setPendingFirmwareOperation(
+    record: SessionRecord,
+    deviceId: string,
+    targetVersion: string,
+  ): void;
+  /**
+   * Apply a device's pending firmware operation and clear it: sets the device's
+   * `firmware_version` to the armed target. Idempotent and a no-op when nothing
+   * is pending.
+   */
+  commitPendingFirmwareOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<Device>;
 
   // --- Speculos proxy -------------------------------------------------------
   findProxy(

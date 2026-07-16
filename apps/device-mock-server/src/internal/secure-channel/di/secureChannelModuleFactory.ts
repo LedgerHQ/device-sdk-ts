@@ -1,6 +1,7 @@
 import { ContainerModule } from "inversify";
 
 import { secureChannelTypes } from "@internal/secure-channel/di/secureChannelTypes";
+import { FirmwareUpdateResolver } from "@internal/secure-channel/service/FirmwareUpdateResolver";
 import { InstallAppResolver } from "@internal/secure-channel/service/InstallAppResolver";
 import { SecureChannelApduService } from "@internal/secure-channel/service/SecureChannelApduService";
 import { SecureChannelWebSocket } from "@internal/secure-channel/ws/SecureChannelWebSocket";
@@ -15,5 +16,8 @@ export const secureChannelModuleFactory = () =>
       .inSingletonScope();
     bind(secureChannelTypes.InstallAppResolver)
       .to(InstallAppResolver)
+      .inSingletonScope();
+    bind(secureChannelTypes.FirmwareUpdateResolver)
+      .to(FirmwareUpdateResolver)
       .inSingletonScope();
   });
