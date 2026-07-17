@@ -11,8 +11,7 @@ services:
       SPECULOS_SEED:
       SPECULOS_VERSION:
       SPECULOS_READY_TIMEOUT_MS: ${SPECULOS_READY_TIMEOUT_MS:-120000}
-      MOCK_SERVER_SILENT:
-      MOCK_SERVER_DEBUG:
+      MOCK_SERVER_LOG_LEVEL:
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-9752}/health"]
       interval: 10s

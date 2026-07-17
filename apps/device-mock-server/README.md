@@ -337,8 +337,7 @@ The standalone server (`src/main.ts`) reads environment variables:
 | `SPECULOS_SEED`             | built-in default seed               | BIP39 seed used for provisioned emulators.                                                                          |
 | `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                             |
 | `SPECULOS_READY_TIMEOUT_MS` | `120000`                            | How long to wait for an emulator to become ready.                                                                   |
-| `MOCK_SERVER_SILENT`        | _unset_                             | Set to `1` to suppress all console output.                                                                          |
-| `MOCK_SERVER_DEBUG`         | _unset_                             | Set to `1` to enable verbose debug logging.                                                                         |
+| `MOCK_SERVER_LOG_LEVEL`     | `info`                              | Console log verbosity. One of `silent`, `error`, `warn`, `info`, `debug`.                                           |
 
 Programmatically, `createMockServer(config)` accepts a `MockServerConfig`:
 
