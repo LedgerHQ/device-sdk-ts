@@ -3,8 +3,12 @@ import {
   ClearSignContextType,
   type ContextModule,
   isSolanaContextSuccess,
+  type SolanaAltResolutionContextSuccess,
+  type SolanaTokenAccountStateContextSuccess,
+  type SolanaTokenInfoContextSuccess,
 } from "@ledgerhq/context-module";
 import {
+  type DeviceModelId,
   type InternalApi,
   isSuccessCommandResult,
   type LoggerPublisherService,
@@ -128,18 +132,48 @@ export class ProvideGenericClearSignContextTask {
   /** Challenge-bound Phase A descriptors (token-account-state, ALT, trusted-name). */
   private async streamChallengeBoundDescriptors(): Promise<void> {
     const deviceModelId = this.api.getDeviceSessionState().deviceModelId;
-    const { tokenAccountStates, altResolutions, trustedNames } =
-      this.args.challengeBoundRequirements;
+    const {
+      tokenAccountStates,
+      altResolutions,
+      trustedNames,
+      tokenAmountAltRefs,
+      mintAltRefs,
+    } = this.args.challengeBoundRequirements;
+
+    // Track mints already streamed (from pre-fetched pool contexts) to avoid duplicates.
+    const streamedMints = new Set<string>();
+    for (const ctx of this.args.poolContexts) {
+      if (
+        ctx.type === ClearSignContextType.SOLANA_TOKEN_INFO &&
+        isSolanaContextSuccess(ctx)
+      ) {
+        streamedMints.add((ctx as SolanaTokenInfoContextSuccess).payload.mint);
+      }
+    }
 
     for (const tokenAccount of tokenAccountStates) {
-      await this.provideChallengeBoundDescriptor(
+      const contexts = await this.provideChallengeBoundDescriptorAndReturn(
         (challenge) => ({
           deviceModelId,
           requests: [{ tokenAccount, challenge }],
         }),
         ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
       );
+      for (const ctx of contexts) {
+        if (
+          ctx.type === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE &&
+          isSolanaContextSuccess(ctx)
+        ) {
+          const mint = (ctx as SolanaTokenAccountStateContextSuccess).payload
+            .mint;
+          if (mint && !streamedMints.has(mint)) {
+            streamedMints.add(mint);
+            await this.fetchAndStreamTokenInfo(mint, deviceModelId);
+          }
+        }
+      }
     }
+
     for (const { altAddress, entryIndex } of altResolutions) {
       await this.provideChallengeBoundDescriptor(
         (challenge) => ({
@@ -149,6 +183,102 @@ export class ProvideGenericClearSignContextTask {
         ClearSignContextType.SOLANA_ALT_RESOLUTION,
       );
     }
+
+    // ALT-backed MINT entries from MINT_ASSOCIATIONS. The device needs the
+    // resolved mint pubkey at finalize (to build the MINT_ASSOC binding map),
+    // so ALT_RESOLUTION is always streamed. TOKEN_INFO is attempted afterwards
+    // for display purposes only, failure is silent (shows ??? but finalize passes).
+    for (const { altAddress, entryIndex } of mintAltRefs) {
+      const altContexts = await this.provideChallengeBoundDescriptorAndReturn(
+        (challenge) => ({
+          deviceModelId,
+          requests: [{ altAddress, entryIndex, challenge }],
+        }),
+        ClearSignContextType.SOLANA_ALT_RESOLUTION,
+      );
+      for (const altCtx of altContexts) {
+        if (
+          altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
+          !isSolanaContextSuccess(altCtx)
+        )
+          continue;
+        const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
+          .payload.resolvedAddress;
+        if (resolvedAddress && !streamedMints.has(resolvedAddress)) {
+          streamedMints.add(resolvedAddress);
+          await this.fetchAndStreamTokenInfo(resolvedAddress, deviceModelId);
+        }
+      }
+    }
+
+    // ALT-backed PARAM_TOKEN_AMOUNT.TOKEN refs. The device needs the resolved
+    // address at finalize (TOKEN_AMOUNT ACCOUNT_INDEX lookup via
+    // pubkey_from_account_index), so ALT_RESOLUTION is always streamed.
+    // After streaming, TOKEN_INFO is attempted (optimistic: address is a mint)
+    // then TOKEN_ACCOUNT_STATE + TOKEN_INFO (fallback: address is an ATA).
+    // If both fail, finalize still passes, the device will just show ???.
+    for (const { altAddress, entryIndex } of tokenAmountAltRefs) {
+      const altContexts = await this.provideChallengeBoundDescriptorAndReturn(
+        (challenge) => ({
+          deviceModelId,
+          requests: [{ altAddress, entryIndex, challenge }],
+        }),
+        ClearSignContextType.SOLANA_ALT_RESOLUTION,
+      );
+      for (const altCtx of altContexts) {
+        if (
+          altCtx.type !== ClearSignContextType.SOLANA_ALT_RESOLUTION ||
+          !isSolanaContextSuccess(altCtx)
+        )
+          continue;
+        const resolvedAddress = (altCtx as SolanaAltResolutionContextSuccess)
+          .payload.resolvedAddress;
+        if (!resolvedAddress || streamedMints.has(resolvedAddress)) continue;
+
+        // Optimistic: resolved address is a mint.
+        const tokenInfoContexts = await this.args.contextModule.getContexts(
+          { deviceModelId, mints: [resolvedAddress], network: this.network },
+          [ClearSignContextType.SOLANA_TOKEN_INFO],
+        );
+        const tokenInfoCtx = tokenInfoContexts.find(
+          (c) => c.type === ClearSignContextType.SOLANA_TOKEN_INFO,
+        );
+        if (tokenInfoCtx) {
+          streamedMints.add(resolvedAddress);
+          await this.provideDescriptor(tokenInfoCtx);
+          continue;
+        }
+
+        // Fallback: resolved address may be an ATA, fetch TOKEN_ACCOUNT_STATE
+        // to get the mint, then stream both if TOKEN_INFO is available.
+        const stateCtx = await this.fetchChallengeBoundDescriptorOnly(
+          (challenge) => ({
+            deviceModelId,
+            requests: [{ tokenAccount: resolvedAddress, challenge }],
+          }),
+          ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+        );
+        if (!stateCtx || !isSolanaContextSuccess(stateCtx)) continue;
+
+        const mint = (stateCtx as SolanaTokenAccountStateContextSuccess).payload
+          .mint;
+        if (!mint || streamedMints.has(mint)) continue;
+
+        const mintTokenInfoContexts = await this.args.contextModule.getContexts(
+          { deviceModelId, mints: [mint], network: this.network },
+          [ClearSignContextType.SOLANA_TOKEN_INFO],
+        );
+        const mintTokenInfoCtx = mintTokenInfoContexts.find(
+          (c) => c.type === ClearSignContextType.SOLANA_TOKEN_INFO,
+        );
+        if (!mintTokenInfoCtx) continue;
+
+        await this.provideDescriptor(stateCtx);
+        streamedMints.add(mint);
+        await this.provideDescriptor(mintTokenInfoCtx);
+      }
+    }
+
     for (const address of trustedNames) {
       await this.provideChallengeBoundDescriptor(
         (challenge) => ({
@@ -162,11 +292,15 @@ export class ProvideGenericClearSignContextTask {
     }
   }
 
-  /** `GET CHALLENGE`, then fetch the descriptor bound to it, then stream it (best-effort). */
-  private async provideChallengeBoundDescriptor(
+  /**
+   * `GET CHALLENGE`, fetch the descriptor bound to it, but do NOT stream it.
+   * Returns the first matching context so the caller can inspect the payload
+   * and decide whether to stream it (via `provideDescriptor`).
+   */
+  private async fetchChallengeBoundDescriptorOnly(
     buildInput: (challenge: string) => unknown,
     type: ClearSignContextType,
-  ): Promise<void> {
+  ): Promise<ClearSignContext | undefined> {
     const challengeResult = await this.api.sendCommand(
       new GetChallengeCommand(),
     );
@@ -174,15 +308,66 @@ export class ProvideGenericClearSignContextTask {
       this.logger.warn("[run] GET CHALLENGE failed; skipping descriptor", {
         data: { type },
       });
-      return;
+      return undefined;
     }
     const contexts = await this.args.contextModule.getContexts(
       buildInput(challengeResult.data.challenge),
       [type],
     );
+    return contexts.find((c) => c.type === type);
+  }
+
+  /**
+   * `GET CHALLENGE`, fetch the descriptor, stream it, and return the matched
+   * contexts so callers can inspect the payload (e.g. extract mint / resolvedAddress).
+   */
+  private async provideChallengeBoundDescriptorAndReturn(
+    buildInput: (challenge: string) => unknown,
+    type: ClearSignContextType,
+  ): Promise<ClearSignContext[]> {
+    const challengeResult = await this.api.sendCommand(
+      new GetChallengeCommand(),
+    );
+    if (!isSuccessCommandResult(challengeResult)) {
+      this.logger.warn("[run] GET CHALLENGE failed; skipping descriptor", {
+        data: { type },
+      });
+      return [];
+    }
+    const contexts = await this.args.contextModule.getContexts(
+      buildInput(challengeResult.data.challenge),
+      [type],
+    );
+    const matched: ClearSignContext[] = [];
     for (const context of contexts) {
       if (context.type === type) {
         await this.provideDescriptor(context);
+        matched.push(context);
+      }
+    }
+    return matched;
+  }
+
+  /** `GET CHALLENGE`, then fetch the descriptor bound to it, then stream it (best-effort). */
+  private async provideChallengeBoundDescriptor(
+    buildInput: (challenge: string) => unknown,
+    type: ClearSignContextType,
+  ): Promise<void> {
+    await this.provideChallengeBoundDescriptorAndReturn(buildInput, type);
+  }
+
+  /** Fetch TOKEN_INFO for `mint` from the context module and stream it to the device. */
+  private async fetchAndStreamTokenInfo(
+    mint: string,
+    deviceModelId: DeviceModelId,
+  ): Promise<void> {
+    const contexts = await this.args.contextModule.getContexts(
+      { deviceModelId, mints: [mint], network: this.network },
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+    for (const ctx of contexts) {
+      if (ctx.type === ClearSignContextType.SOLANA_TOKEN_INFO) {
+        await this.provideDescriptor(ctx);
       }
     }
   }

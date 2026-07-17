@@ -26,6 +26,8 @@ const NO_CHALLENGE_BOUND: ChallengeBoundRequirements = {
   tokenAccountStates: [],
   altResolutions: [],
   trustedNames: [],
+  tokenAmountAltRefs: [],
+  mintAltRefs: [],
 };
 
 function tokenInfoContext(): ClearSignContext {
@@ -130,6 +132,8 @@ describe("ProvideGenericClearSignContextTask", () => {
         tokenAccountStates: ["ACC1", "ACC2"],
         altResolutions: [{ altAddress: "ALT", entryIndex: 3 }],
         trustedNames: ["NAME"],
+        tokenAmountAltRefs: [],
+        mintAltRefs: [],
       },
       // Empty fetch: assert the challenge + fetch protocol, not handler internals.
       vi.fn(async () => []),
@@ -188,7 +192,13 @@ describe("ProvideGenericClearSignContextTask", () => {
     const made = makeTask(
       [],
       [],
-      { tokenAccountStates: ["ACC1"], altResolutions: [], trustedNames: [] },
+      {
+        tokenAccountStates: ["ACC1"],
+        altResolutions: [],
+        trustedNames: [],
+        tokenAmountAltRefs: [],
+        mintAltRefs: [],
+      },
       vi.fn(async () => []),
     );
     // Preview succeeds; GET CHALLENGE fails.
@@ -245,6 +255,153 @@ describe("ProvideGenericClearSignContextTask", () => {
 
     await expect(made.task.run()).rejects.toThrow(
       "device rejected INSTRUCTION_INFO",
+    );
+  });
+
+  // --- New challenge-bound flows ---
+
+  function altResolutionCtx(resolvedAddress: string): ClearSignContext {
+    return {
+      type: ClearSignContextType.SOLANA_ALT_RESOLUTION,
+      payload: { resolvedAddress, descriptor: { data: "aa", signature: "bb" } },
+      certificate: cert,
+    } as any;
+  }
+  function tokenAccountStateCtx(mint: string): ClearSignContext {
+    return {
+      type: ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE,
+      payload: { mint, descriptor: { data: "aa", signature: "bb" } },
+      certificate: cert,
+    } as any;
+  }
+  function tokenInfoCtxFor(mint: string): ClearSignContext {
+    return {
+      type: ClearSignContextType.SOLANA_TOKEN_INFO,
+      payload: { mint, descriptor: { data: "aa", signature: "bb" } },
+      certificate: cert,
+    } as any;
+  }
+
+  it("tokenAccountStates: after streaming TOKEN_ACCOUNT_STATE, fetches and streams TOKEN_INFO for the returned mint", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT1")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT1")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      { ...NO_CHALLENGE_BOUND, tokenAccountStates: ["ATA1"] },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requests: [expect.objectContaining({ tokenAccount: "ATA1" })],
+      }),
+      [ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE],
+    );
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["MINT1"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+  });
+
+  it("mintAltRefs: streams ALT_RESOLUTION then fetches TOKEN_INFO for the resolved address", async () => {
+    const getContexts = vi.fn(
+      async (_input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("MINT2")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return [tokenInfoCtxFor("MINT2")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        mintAltRefs: [{ altAddress: "ALT1", entryIndex: 0 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requests: [
+          expect.objectContaining({ altAddress: "ALT1", entryIndex: 0 }),
+        ],
+      }),
+      [ClearSignContextType.SOLANA_ALT_RESOLUTION],
+    );
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["MINT2"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+  });
+
+  it("tokenAmountAltRefs: tries TOKEN_INFO first; on miss falls back to TOKEN_ACCOUNT_STATE + TOKEN_INFO", async () => {
+    // ALT resolves to "ATA2" (an ATA, not a mint). TOKEN_INFO for "ATA2" misses;
+    // TOKEN_ACCOUNT_STATE returns mint "MINT3"; TOKEN_INFO for "MINT3" succeeds.
+    const getContexts = vi.fn(
+      async (input: any, types: ClearSignContextType[]) => {
+        if (types[0] === ClearSignContextType.SOLANA_ALT_RESOLUTION)
+          return [altResolutionCtx("ATA2")];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_INFO)
+          return input?.mints?.[0] === "MINT3"
+            ? [tokenInfoCtxFor("MINT3")]
+            : [];
+        if (types[0] === ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE)
+          return [tokenAccountStateCtx("MINT3")];
+        return [];
+      },
+    );
+    const { task } = makeTask(
+      [],
+      [],
+      {
+        ...NO_CHALLENGE_BOUND,
+        tokenAmountAltRefs: [{ altAddress: "ALT2", entryIndex: 1 }],
+      },
+      getContexts,
+    );
+
+    await task.run();
+
+    // ALT_RESOLUTION fetched for the ALT ref
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requests: [
+          expect.objectContaining({ altAddress: "ALT2", entryIndex: 1 }),
+        ],
+      }),
+      [ClearSignContextType.SOLANA_ALT_RESOLUTION],
+    );
+    // TOKEN_INFO attempted first for resolved address "ATA2" (optimistic mint path)
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["ATA2"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
+    );
+    // TOKEN_ACCOUNT_STATE fallback for "ATA2"
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requests: [expect.objectContaining({ tokenAccount: "ATA2" })],
+      }),
+      [ClearSignContextType.SOLANA_TOKEN_ACCOUNT_STATE],
+    );
+    // TOKEN_INFO fetched for the attested mint "MINT3"
+    expect(getContexts).toHaveBeenCalledWith(
+      expect.objectContaining({ mints: ["MINT3"] }),
+      [ClearSignContextType.SOLANA_TOKEN_INFO],
     );
   });
 

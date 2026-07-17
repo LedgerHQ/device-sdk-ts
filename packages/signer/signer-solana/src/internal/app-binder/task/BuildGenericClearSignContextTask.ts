@@ -16,6 +16,7 @@ import {
   type VariantCache,
 } from "@internal/app-binder/clear-sign/idl-type-pool";
 import {
+  type AltEntryKey,
   buildRequirements,
   type BuildRequirementsOptions,
   type DescriptorRequirements,
@@ -42,7 +43,12 @@ const EMPTY_ENUM_CACHE: VariantCache = new Map();
 export type ChallengeBoundRequirements = Pick<
   DescriptorRequirements,
   "tokenAccountStates" | "altResolutions" | "trustedNames"
->;
+> & {
+  /** ALT-backed PARAM_TOKEN_AMOUNT.TOKEN refs needing TOKEN_INFO-first resolution. */
+  tokenAmountAltRefs: AltEntryKey[];
+  /** ALT-backed MINT entries from MINT_ASSOCIATIONS; require TOKEN_INFO via hold-and-conditionally-stream. */
+  mintAltRefs: AltEntryKey[];
+};
 
 /**
  * Everything the device needs to clear-sign a transaction, gathered host-side.
@@ -97,6 +103,8 @@ export class BuildGenericClearSignContextTask {
         tokenAccountStates: [],
         altResolutions: [],
         trustedNames: [],
+        tokenAmountAltRefs: [],
+        mintAltRefs: [],
       },
     };
 
@@ -175,8 +183,21 @@ export class BuildGenericClearSignContextTask {
     }
     if (matched.length === 0) return none;
 
-    const mode: ClearSignMode = unrecognized === 0 ? "full" : "srfc39-only";
     const instructionInfoContexts = Array.from(templateByKey.values());
+
+    // The device requires every non-ComputeBudget instruction to have a
+    // template at FINALIZE (cs_transaction_finalize walks all instructions).
+    // Any unrecognized instruction guarantees 6d20 so cs_transaction_reset() and
+    // basic sign to 6808 (blind signing disabled). Bail out early so basic sign
+    // starts from a clean device state.
+    if (unrecognized > 0) {
+      this.logger.warn(
+        "[run] transaction has unrecognized instructions; falling back to legacy",
+        { data: { unrecognized, recognized: matched.length } },
+      );
+      return none;
+    }
+    const mode: ClearSignMode = "full";
 
     // --- Requirements (Stage 2) ---
     const requirementsResult = buildRequirements(matched, {
@@ -211,10 +232,37 @@ export class BuildGenericClearSignContextTask {
       ),
     );
 
+    // PARAM_TOKEN_AMOUNT.TOKEN refs: try TOKEN_INFO first (optimistic mint).
+    // If that fails, fall back to TOKEN_ACCOUNT_STATE (it's an ATA).
+    const tokenAmountFallbackAccounts: string[] = [];
+    for (const ref of requirements.tokenAmountRefs) {
+      const tokenInfoContexts = await this.getContextsByType(
+        {
+          deviceModelId: this.args.deviceModelId,
+          mints: [ref],
+          network: this.network,
+        },
+        ClearSignContextType.SOLANA_TOKEN_INFO,
+      );
+      if (tokenInfoContexts.length > 0) {
+        poolContexts.push(...tokenInfoContexts);
+      } else {
+        tokenAmountFallbackAccounts.push(ref);
+      }
+    }
+
+    // RequirementAccumulator.build() already strips tokenAmountAltRefs and
+    // mintAltRefs entries from altResolutions (cross-bucket priority dedup),
+    // so requirements.altResolutions is safe to use directly here.
     const challengeBoundRequirements: ChallengeBoundRequirements = {
-      tokenAccountStates: requirements.tokenAccountStates,
+      tokenAccountStates: [
+        ...requirements.tokenAccountStates,
+        ...tokenAmountFallbackAccounts,
+      ],
       altResolutions: requirements.altResolutions,
       trustedNames: requirements.trustedNames,
+      tokenAmountAltRefs: requirements.tokenAmountAltRefs,
+      mintAltRefs: requirements.mintAltRefs,
     };
 
     this.logger.debug("[run] built clear-sign context", {
@@ -225,7 +273,9 @@ export class BuildGenericClearSignContextTask {
         challengeBound:
           challengeBoundRequirements.tokenAccountStates.length +
           challengeBoundRequirements.altResolutions.length +
-          challengeBoundRequirements.trustedNames.length,
+          challengeBoundRequirements.trustedNames.length +
+          challengeBoundRequirements.tokenAmountAltRefs.length +
+          challengeBoundRequirements.mintAltRefs.length,
       },
     });
 
