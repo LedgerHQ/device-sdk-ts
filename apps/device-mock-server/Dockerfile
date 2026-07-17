@@ -38,6 +38,8 @@ RUN node_modules/.bin/esbuild \
 # ── runner ────────────────────────────────────────────────────────────────────
 FROM node:24-alpine
 WORKDIR /app
-COPY --from=builder /bundle/server.js .
+# Run as the built-in unprivileged `node` user (uid 1000) instead of root
+COPY --chown=node:node --from=builder /bundle/server.js .
+USER node
 EXPOSE 9752
 CMD ["node", "server.js"]
