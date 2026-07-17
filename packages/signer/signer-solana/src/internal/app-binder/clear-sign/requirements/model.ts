@@ -66,4 +66,23 @@ export type DescriptorRequirements = {
   tokenAccountStates: string[];
   altResolutions: AltEntryKey[];
   trustedNames: string[];
+  /**
+   * PARAM_TOKEN_AMOUNT.TOKEN refs (ACCOUNT_PATH, non-ALT, not in mintBindings).
+   * Try TOKEN_INFO first at fetch time; fall back to TOKEN_ACCOUNT_STATE if it fails.
+   */
+  tokenAmountRefs: string[];
+  /**
+   * PARAM_TOKEN_AMOUNT.TOKEN refs backed by ALT entries (not resolvable at build time).
+   * After ALT_RESOLUTION is fetched, resolve the address and apply the same
+   * TOKEN_INFO-first / TOKEN_ACCOUNT_STATE-fallback logic.
+   */
+  tokenAmountAltRefs: AltEntryKey[];
+  /**
+   * ALT-backed MINT entries from MINT_ASSOCIATIONS (accounts at a `mint_index`
+   * that have no resolved address). The device may signal these via status
+   * 0x6d10 after receiving ALT_RESOLUTION; TOKEN_INFO is then streamed best-effort.
+   * They are excluded from `altResolutions` and handled with
+   * hold-and-conditionally-stream logic in the provide phase.
+   */
+  mintAltRefs: AltEntryKey[];
 };

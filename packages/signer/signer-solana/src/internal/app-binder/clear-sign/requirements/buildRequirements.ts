@@ -93,7 +93,22 @@ export function buildRequirements(
         accumulator,
         bs58Encoder,
       );
-      applyAltResolutionRule(match.instruction, accumulator);
+      applyAltResolutionRule(records, match.instruction, accumulator);
+
+      // Identify ALT-backed mint accounts from MINT_ASSOCIATIONS: the device
+      // signals these via 0x6d10 after receiving their ALT_RESOLUTION and
+      // requires TOKEN_INFO immediately after. They are excluded from the plain
+      // altResolutions loop and handled with hold-and-conditionally-stream.
+      for (const { mintIndex } of records.info.mintAssociations) {
+        const mintAccount = match.instruction.accounts[mintIndex];
+        if (mintAccount?.altRef !== undefined) {
+          accumulator.addMintAltRef(
+            mintAccount.altRef.altAddress,
+            mintAccount.altRef.entryIndex,
+          );
+        }
+      }
+
       applyTrustedNameRule(
         records,
         match.instruction,
