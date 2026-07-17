@@ -1,0 +1,20 @@
+services:
+  mock-server:
+    build:
+      context: ../..
+      dockerfile: apps/device-mock-server/Dockerfile
+    ports:
+      - "${PORT:-9752}:${PORT:-9752}"
+    environment:
+      - PORT=${PORT:-9752}
+      - SPECULINHO_URL=${SPECULINHO_URL:-https://speculinho.ledgerlabs.net}
+      - SPECULOS_READY_TIMEOUT_MS=${SPECULOS_READY_TIMEOUT_MS:-120000}
+      - SPECULOS_SEED
+      - SPECULOS_VERSION
+      - MOCK_SERVER_LOG_LEVEL
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${PORT:-9752}/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -2,11 +2,12 @@
  * Minimal console logger for the mock server.
  *
  * Kept intentionally simple: it prefixes a timestamp, the originating session
- * tag (when logging within a request) and the level, and is gated by two env
- * vars so test runs (or embedding apps) can stay quiet:
+ * tag (when logging within a request) and the level. Output is gated by a
+ * single env var so test runs (or embedding apps) can control verbosity:
  *
- * - `MOCK_SERVER_SILENT=1` disables all output.
- * - `MOCK_SERVER_DEBUG=1` enables `debug` output (off by default).
+ * - `MOCK_SERVER_LOG_LEVEL` accepts (case-insensitive) `silent`, `error`,
+ *   `warn`, `info` or `debug`. Defaults to `info`. `silent` disables all
+ *   output; `debug` enables verbose debug output.
  */
 import { getSessionToken } from "./requestContext";
 
@@ -15,13 +16,15 @@ type LogMethod = (message: string, ...args: unknown[]) => void;
 /** Number of leading token characters shown as the session tag. */
 const SESSION_TAG_LENGTH = 8;
 
-const isEnabled = (name: string): boolean => {
-  const value = process.env[name];
-  return value === "1" || value === "true";
+const LEVELS = { silent: 0, error: 1, warn: 2, info: 3, debug: 4 } as const;
+type Level = keyof typeof LEVELS;
+
+const parseLevel = (value: string | undefined): Level => {
+  const normalized = value?.toLowerCase();
+  return normalized && normalized in LEVELS ? (normalized as Level) : "info";
 };
 
-const silent = isEnabled("MOCK_SERVER_SILENT");
-const debugEnabled = isEnabled("MOCK_SERVER_DEBUG");
+const currentLevel = LEVELS[parseLevel(process.env["MOCK_SERVER_LOG_LEVEL"])];
 
 const sessionTag = (): string => {
   const token = getSessionToken();
@@ -30,29 +33,28 @@ const sessionTag = (): string => {
 
 const emit = (
   consoleMethod: LogMethod,
-  level: string,
+  level: Exclude<Level, "silent">,
   message: string,
   args: unknown[],
 ): void => {
-  if (silent) return;
+  if (currentLevel < LEVELS[level]) return;
   consoleMethod(
-    `${new Date().toISOString()} ${sessionTag()}${level} ${message}`,
+    `${new Date().toISOString()} ${sessionTag()}${level.toUpperCase()} ${message}`,
     ...args,
   );
 };
 
 export const logger = {
   debug: (message: string, ...args: unknown[]): void => {
-    if (!debugEnabled) return;
-    emit(console.debug, "DEBUG", message, args);
+    emit(console.debug, "debug", message, args);
   },
   info: (message: string, ...args: unknown[]): void => {
-    emit(console.info, "INFO", message, args);
+    emit(console.info, "info", message, args);
   },
   warn: (message: string, ...args: unknown[]): void => {
-    emit(console.warn, "WARN", message, args);
+    emit(console.warn, "warn", message, args);
   },
   error: (message: string, ...args: unknown[]): void => {
-    emit(console.error, "ERROR", message, args);
+    emit(console.error, "error", message, args);
   },
 };

@@ -14,11 +14,12 @@ It is the server-side counterpart of [`@ledgerhq/device-mockserver-client`](../.
 4. [Secure channel WebSocket](#-secure-channel-websocket)
 5. [Speculos integration](#-speculos-integration)
 6. [Getting started](#-getting-started)
-7. [Configuration](#-configuration)
-8. [HTTP API](#-http-api)
-9. [Programmatic usage](#-programmatic-usage)
-10. [Testing](#-testing)
-11. [OpenAPI](#-openapi)
+7. [Docker](#-docker)
+8. [Configuration](#-configuration)
+9. [HTTP API](#-http-api)
+10. [Programmatic usage](#-programmatic-usage)
+11. [Testing](#-testing)
+12. [OpenAPI](#-openapi)
 
 ## 🔹 Overview
 
@@ -283,6 +284,48 @@ curl http://127.0.0.1:9752/health
 # {"status":"ok","sessions":0}
 ```
 
+## 🔹 Docker
+
+A `Dockerfile` and `docker-compose.yml` are provided for running the server as a container. The **build context must be the monorepo root** because the image is built from the full workspace.
+
+### Build and run with Docker Compose (recommended)
+
+```bash
+# From apps/device-mock-server/
+docker compose up --build
+```
+
+To run as a **pure mock** (no Speculinho, fully offline):
+
+```bash
+SPECULINHO_URL= docker compose up --build
+```
+
+Copy `.env.example` to `.env` and edit it to persist your configuration:
+
+```bash
+cp .env.example .env
+# edit .env, then:
+docker compose up --build
+```
+
+### Standalone `docker build`
+
+```bash
+# From the monorepo root:
+docker build -f apps/device-mock-server/Dockerfile -t device-mock-server .
+docker run --rm -p 9752:9752 -e SPECULINHO_URL= device-mock-server
+```
+
+### Health check
+
+```bash
+curl http://127.0.0.1:9752/health
+# {"status":"ok","sessions":0}
+```
+
+The container exposes port `9752` and includes a built-in health check that hits `/health`.
+
 ## 🔹 Configuration
 
 The standalone server (`src/main.ts`) reads environment variables:
@@ -294,6 +337,7 @@ The standalone server (`src/main.ts`) reads environment variables:
 | `SPECULOS_SEED`             | built-in default seed               | BIP39 seed used for provisioned emulators.                                                                          |
 | `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                             |
 | `SPECULOS_READY_TIMEOUT_MS` | `120000`                            | How long to wait for an emulator to become ready.                                                                   |
+| `MOCK_SERVER_LOG_LEVEL`     | `info`                              | Console log verbosity. One of `silent`, `error`, `warn`, `info`, `debug`.                                           |
 
 Programmatically, `createMockServer(config)` accepts a `MockServerConfig`:
 
