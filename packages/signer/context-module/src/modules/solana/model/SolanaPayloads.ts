@@ -171,10 +171,12 @@ export type SolanaTokenInfoPayload = {
 
 export type SolanaTokenAccountStatePayload = {
   descriptor: Uint8Array;
+  mint?: string;
 };
 
 export type SolanaAltResolutionPayload = {
   descriptor: Uint8Array;
+  resolvedAddress?: string;
 };
 
 // SOLANA_TRUSTED_NAME (generic flow, with 2-byte length prefix) is emitted by

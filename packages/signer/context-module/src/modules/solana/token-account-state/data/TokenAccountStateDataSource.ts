@@ -9,6 +9,7 @@ export type TokenAccountStateResult = {
   tokenAccount: string;
   // Raw signed TLV bytes decoded from the backend response.
   descriptor: Uint8Array;
+  mint?: string;
   keyId: string;
   keyUsage: string;
 };

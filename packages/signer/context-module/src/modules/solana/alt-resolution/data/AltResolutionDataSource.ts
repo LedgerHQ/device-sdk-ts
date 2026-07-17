@@ -11,6 +11,7 @@ export type AltResolutionResult = {
   entryIndex: number;
   // Raw signed TLV bytes decoded from the backend response.
   descriptor: Uint8Array;
+  resolvedAddress?: string;
   keyId: string;
   keyUsage: string;
 };
