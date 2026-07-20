@@ -73,6 +73,10 @@ curl -s -X DELETE $BASE/devices/<id>/mocks -H "$AUTH"        # kill all
 # Save / load session
 curl -s $BASE/export -H "$AUTH"
 curl -s -X POST $BASE/import -H "$AUTH" -H "$JSON" -d '<SessionExport json>'
+
+# Speculos seed (⚠️ plaintext — test mnemonics only, never real keys)
+curl -s -X PUT $BASE/sessions/current/seed -H "$AUTH" -H "$JSON" \
+  -d '{"seed":"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"}'
 ```
 
 `device_type`: `nanoS`, `nanoSP`, `nanoX`, `stax`, `flex`, `apexp`. `PATCH` keeps
@@ -98,6 +102,19 @@ curl -s -X POST $BASE/devices/<id>/mocks -H "$AUTH" -H "$JSON" \
 ```
 
 Add mock = new behavior. Delete mock = old behavior back.
+
+## Speculos seed
+
+Each session starts with the default test mnemonic. Override it per-session
+before opening an app (the seed is forwarded to Speculinho on every `/acquire`):
+
+```bash
+curl -s -X PUT $BASE/sessions/current/seed -H "$AUTH" -H "$JSON" \
+  -d '{"seed":"glory promote mansion idle axis finger extend february uncover one trip resolve toe"}'
+```
+
+⚠️ **Not secure.** Stored in plaintext in server memory and sent over plain
+HTTP. Use only test/dummy mnemonics — never a real production key.
 
 ## Newest firmware
 
