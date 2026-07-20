@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4
         id: filter
         with:
           filters: |
@@ -65,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
   danger:
     name: Run Danger check
@@ -74,7 +74,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
       - name: Danger
         env:
@@ -91,7 +91,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
       # Cache the sample app production build so the sample-integration job can
       # reuse it instead of rebuilding before the Playwright run.
@@ -111,7 +111,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
       - name: Prettier
         id: prettier
@@ -124,7 +124,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
       - name: Lint
         id: lint
@@ -137,7 +137,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
       - name: Typecheck
         id: typecheck
@@ -152,13 +152,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
       - name: Tests
         id: unit-tests
         run: pnpm test:coverage
 
-      - uses: sonarsource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
+      - uses: sonarsource/sonarqube-scan-action@22918119ff8e1ca75a623e15c8296b6ea4fbe28f # v8
         if: ${{ steps.unit-tests.conclusion == 'success' && github.actor != 'dependabot[bot]' && !github.event.pull_request.head.repo.fork }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -171,7 +171,7 @@ jobs:
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@b83ec5020b992dcc53f683830e0abd2e147791ae
+      - uses: LedgerHQ/device-sdk-ts/.github/actions/setup-with-build-cache-composite@339dc1e9babb3bd31d1da2cd63c1131fe45114fa
 
       # Reuse the sample app build produced by build-libraries; start-servers.sh
       # then skips the build and starts the prebuilt app directly.
