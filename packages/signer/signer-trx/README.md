@@ -40,6 +40,12 @@ const { observable: messageObservable } = signer.signPersonalMessage(
 
 // Read the Tron app configuration
 const { observable: configObservable } = signer.getAppConfiguration();
+
+// Compute an ECDH shared secret with a peer public key
+const { observable: ecdhObservable } = signer.getECDHSecret(
+  "44'/195'/0'/0/0",
+  peerPublicKey,
+);
 ```
 
 ### Get address
@@ -236,6 +242,45 @@ observable.subscribe((state) => {
   switch (state.status) {
     case "completed":
       console.log(state.output); // Uint8Array(65) signature
+      break;
+    case "error":
+      console.error(state.error);
+      break;
+  }
+});
+```
+
+### Get ECDH secret
+
+Computes an ECDH shared secret between the device key (derived from the BIP32
+path) and a peer's uncompressed secp256k1 public key. The operation is shown on
+the device for approval.
+
+```typescript
+signer.getECDHSecret(
+  derivationPath: string,
+  // the peer's uncompressed secp256k1 public key (65 bytes, 0x04 || X || Y)
+  publicKey: Uint8Array,
+  options?: {
+    // Skip the "open app" step if the Tron app is already open (default: false).
+    skipOpenApp?: boolean;
+  },
+): GetECDHSecretDAReturnType;
+```
+
+The returned device action resolves to the 65-byte ECDH shared point
+(`0x04 || X || Y`) as a `Uint8Array`.
+
+```typescript
+const { observable, cancel } = signer.getECDHSecret(
+  "44'/195'/0'/0/0",
+  peerPublicKey,
+);
+
+observable.subscribe((state) => {
+  switch (state.status) {
+    case "completed":
+      console.log(state.output); // Uint8Array(65) shared point
       break;
     case "error":
       console.error(state.error);

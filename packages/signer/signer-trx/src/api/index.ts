@@ -11,6 +11,12 @@ export {
   type GetAppConfigurationDAReturnType,
 } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 export {
+  type GetECDHSecretDAError,
+  type GetECDHSecretDAIntermediateValue,
+  type GetECDHSecretDAOutput,
+  type GetECDHSecretDAReturnType,
+} from "@api/app-binder/GetECDHSecretDeviceActionTypes";
+export {
   type SignPersonalMessageDAError,
   type SignPersonalMessageDAIntermediateValue,
   type SignPersonalMessageDAOutput,
@@ -30,6 +36,7 @@ export {
 } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 export { type AddressOptions } from "@api/model/AddressOptions";
 export { type AppConfiguration } from "@api/model/AppConfiguration";
+export { type EcdhOptions } from "@api/model/EcdhOptions";
 export { type MessageOptions } from "@api/model/MessageOptions";
 export { type Signature } from "@api/model/Signature";
 export { type TransactionOptions } from "@api/model/TransactionOptions";

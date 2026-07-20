@@ -25,6 +25,9 @@ export const SIGNATURE_LENGTH = 65;
 // Length of a chain code returned by the GetAddress command.
 export const CHAIN_CODE_LENGTH = 32;
 
+// Length of the ECDH shared point (0x04 || X || Y) returned by ECDH_SECRET.
+export const ECDH_SECRET_LENGTH = 65;
+
 /**
  * P1 "start byte" values for the SIGN_TRANSACTION instruction.
  *
