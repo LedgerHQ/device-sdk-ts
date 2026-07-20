@@ -8,6 +8,7 @@ import { type GetAddressDAReturnType } from "@api/app-binder/GetAddressDeviceAct
 import { type GetAppConfigurationDAReturnType } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import { type SignPersonalMessageDAReturnType } from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
 import { type SignTransactionDAReturnType } from "@api/app-binder/SignTransactionDeviceActionTypes";
+import { type SignTransactionHashDAReturnType } from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 import { type AddressOptions } from "@api/model/AddressOptions";
 import { type MessageOptions } from "@api/model/MessageOptions";
 import { type TransactionOptions } from "@api/model/TransactionOptions";
@@ -20,6 +21,7 @@ import { type GetAppConfigurationUseCase } from "@internal/use-cases/app-configu
 import { messageTypes } from "@internal/use-cases/message/di/messageTypes";
 import { type SignPersonalMessageUseCase } from "@internal/use-cases/message/SignPersonalMessageUseCase";
 import { transactionTypes } from "@internal/use-cases/transaction/di/transactionTypes";
+import { type SignTransactionHashUseCase } from "@internal/use-cases/transaction/SignTransactionHashUseCase";
 import { type SignTransactionUseCase } from "@internal/use-cases/transaction/SignTransactionUseCase";
 
 type DefaultSignerTrxConstructorArgs = {
@@ -51,6 +53,18 @@ export class DefaultSignerTrx implements SignerTrx {
     return this._container
       .get<SignTransactionUseCase>(transactionTypes.SignTransactionUseCase)
       .execute(derivationPath, transaction, options);
+  }
+
+  signTransactionHash(
+    derivationPath: string,
+    transactionHash: Uint8Array,
+    options?: TransactionOptions,
+  ): SignTransactionHashDAReturnType {
+    return this._container
+      .get<SignTransactionHashUseCase>(
+        transactionTypes.SignTransactionHashUseCase,
+      )
+      .execute(derivationPath, transactionHash, options);
   }
 
   signPersonalMessage(

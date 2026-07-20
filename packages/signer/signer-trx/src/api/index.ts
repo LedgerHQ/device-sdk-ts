@@ -22,6 +22,12 @@ export {
   type SignTransactionDAOutput,
   type SignTransactionDAReturnType,
 } from "@api/app-binder/SignTransactionDeviceActionTypes";
+export {
+  type SignTransactionHashDAError,
+  type SignTransactionHashDAIntermediateValue,
+  type SignTransactionHashDAOutput,
+  type SignTransactionHashDAReturnType,
+} from "@api/app-binder/SignTransactionHashDeviceActionTypes";
 export { type AddressOptions } from "@api/model/AddressOptions";
 export { type AppConfiguration } from "@api/model/AppConfiguration";
 export { type MessageOptions } from "@api/model/MessageOptions";
