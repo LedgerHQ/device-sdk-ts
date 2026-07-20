@@ -35,7 +35,7 @@ const mockCertificate = {
 
 const mockConfig = {
   cal: {
-    url: "https://crypto-assets-service.api.ledger.com",
+    url: "https://global.api.prd.ledger.com/cal/v1",
     mode: "test",
     branch: "main",
   },

@@ -166,7 +166,7 @@ export class CalInterceptor {
       }
 
       // Check if it's a CAL request
-      if (!parsedUrl.origin.includes("crypto-assets-service")) {
+      if (!parsedUrl.pathname.startsWith("/cal")) {
         return null;
       }
 

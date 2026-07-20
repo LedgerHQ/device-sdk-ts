@@ -7,7 +7,7 @@ import { type TrustedNameDataSource } from "@/modules/ethereum/trusted-name/data
 
 const config = {
   cal: {
-    url: "https://crypto-assets-service.api.ledger.com/v1",
+    url: "https://global.api.prd.ledger.com/cal/v1",
     mode: "prod",
     branch: "main",
   },

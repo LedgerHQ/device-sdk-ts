@@ -39,7 +39,7 @@ from erc7730.convert.calldata.convert_erc7730_v2_input_to_calldata import (
 from erc7730.model.input.v2.descriptor import InputERC7730Descriptor as InputERC7730DescriptorV2
 
 # Constants
-DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1"
+DEFAULT_CAL_URL = "https://global.api.prd.ledger.com/cal/v1"
 DEFAULT_METADATA_SERVICE_URL = "https://nft.api.live.ledger.com"
 SIGNATURE_TLV_TAG = 0x15
 TEST_SIGNING_KEY = "b1ed47ef58f782e2bc4d5abe70ef66d9009c2957967017054470e0f3e10f5833"

@@ -15,7 +15,7 @@ describe("HttpTokenInfoDataSource", () => {
   const network = "solana-mainnet";
   const config: ContextModuleServiceConfig = {
     cal: {
-      url: "https://crypto-assets-service.api.ledger.com/v1",
+      url: "https://global.api.prd.ledger.com/cal/v1",
       mode: "prod",
       branch: "main",
     },
@@ -42,7 +42,7 @@ describe("HttpTokenInfoDataSource", () => {
     await datasource.getTokenInfo({ mint, network });
 
     expect(httpMock.get).toHaveBeenCalledWith(
-      "https://crypto-assets-service.api.ledger.com/v1/tokens",
+      "https://global.api.prd.ledger.com/cal/v1/tokens",
       {
         params: {
           contract_address: mint,
