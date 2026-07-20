@@ -20,6 +20,7 @@ import {
   type SessionRecord,
   type SpeculosProxySession,
 } from "@internal/session/model/SessionModels";
+import { DEFAULT_SPECULOS_SEED } from "@internal/speculos/model/SpeculosModels";
 
 const DEFAULT_TTL_MS = 30 * 60 * 1000; // 30 minutes
 const DEFAULT_MAX_LIFETIME_MS = 4 * 60 * 60 * 1000; // 4 hours
@@ -47,6 +48,7 @@ export class InMemorySessionRepository implements SessionRepository {
       token: randomUUID(),
       createdAt: now,
       lastSeenAt: now,
+      seed: DEFAULT_SPECULOS_SEED,
       devices: new Map(),
       deviceMocks: new Map(),
       deviceMockCursors: new Map(),
@@ -98,6 +100,10 @@ export class InMemorySessionRepository implements SessionRepository {
       }
     }
     return evicted;
+  }
+
+  updateSeed(record: SessionRecord, seed: string): void {
+    record.seed = seed;
   }
 
   // --- Devices --------------------------------------------------------------

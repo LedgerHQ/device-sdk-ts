@@ -31,6 +31,8 @@ export interface SessionRepository {
   size(): number;
   /** Remove expired sessions; returns their active Speculos proxies. */
   sweep(): SpeculosProxySession[];
+  /** Override the BIP39 mnemonic used for Speculos acquires in this session. */
+  updateSeed(record: SessionRecord, seed: string): void;
 
   // --- Devices --------------------------------------------------------------
   listDevices(record: SessionRecord): Device[];

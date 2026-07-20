@@ -63,6 +63,52 @@ export class SessionsRoutes {
       res.status(204).end();
     });
 
+    /**
+     * @openapi
+     * /sessions/current/seed:
+     *   put:
+     *     tags: [Sessions]
+     *     summary: Set the Speculos seed for the current session
+     *     description: |
+     *       Overrides the BIP39 mnemonic forwarded to Speculos on every
+     *       subsequent `/acquire` call within this session. Defaults to the
+     *       well-known test mnemonic on session creation.
+     *
+     *       **⚠️ Security warning — not secure.** The seed is stored in
+     *       plaintext in server memory and transmitted in plaintext HTTP. Use
+     *       only test/dummy mnemonics. Never supply a real production key.
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/SeedUpdate'
+     *     responses:
+     *       200:
+     *         description: Seed updated.
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SeedUpdate'
+     *       400:
+     *         $ref: '#/components/responses/BadRequest'
+     *       401:
+     *         $ref: '#/components/responses/Unauthorized'
+     */
+    router.put(
+      "/sessions/current/seed",
+      (req: AuthedRequest, res: Response) => {
+        const seed = (req.body as { seed?: unknown } | undefined)?.seed;
+        const trimmed = typeof seed === "string" ? seed.trim() : "";
+        if (!trimmed) {
+          res.status(400).json({ error: "seed must be a non-empty string" });
+          return;
+        }
+        this.repository.updateSeed(getSession(req), trimmed);
+        res.json({ seed: trimmed });
+      },
+    );
+
     return router;
   }
 }

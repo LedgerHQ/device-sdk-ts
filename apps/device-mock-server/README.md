@@ -334,38 +334,38 @@ The standalone server (`src/main.ts`) reads environment variables:
 | --------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `PORT`                      | `9752`                              | HTTP port.                                                                                                          |
 | `SPECULINHO_URL`            | `https://speculinho.ledgerlabs.net` | Speculinho operator base URL. Set to empty (`SPECULINHO_URL=`) to run as a **pure mock** with no Speculos proxying. |
-| `SPECULOS_SEED`             | built-in default seed               | BIP39 seed used for provisioned emulators.                                                                          |
 | `SPECULOS_VERSION`          | _unset_                             | Pin a Speculos version.                                                                                             |
 | `SPECULOS_READY_TIMEOUT_MS` | `120000`                            | How long to wait for an emulator to become ready.                                                                   |
 | `MOCK_SERVER_LOG_LEVEL`     | `info`                              | Console log verbosity. One of `silent`, `error`, `warn`, `info`, `debug`.                                           |
 
 Programmatically, `createMockServer(config)` accepts a `MockServerConfig`:
 
-| Option            | Description                                                                                                       |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request).                                                    |
-| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity.                                                              |
-| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper.                                                         |
-| `speculos`        | `{ baseUrl, seed, speculosVersion?, readyTimeoutMs?, pollIntervalMs? }`. When omitted, the server is a pure mock. |
+| Option            | Description                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| `ttlMs`           | Sliding inactivity timeout (refreshed on each authed request).                                              |
+| `maxLifetimeMs`   | Hard cap on session lifetime regardless of activity.                                                        |
+| `sweepIntervalMs` | Expired-session sweep interval; `0` disables the sweeper.                                                   |
+| `speculos`        | `{ baseUrl, speculosVersion?, readyTimeoutMs?, pollIntervalMs? }`. When omitted, the server is a pure mock. |
 
 ## 🔹 HTTP API
 
 All routes except `POST /auth` and `GET /health` require an `Authorization: Bearer <token>` header.
 
-| Method & path                                 | Description                                                           |
-| --------------------------------------------- | --------------------------------------------------------------------- |
-| `POST /auth`                                  | Create a session, returns `{ token, expires_at }`.                    |
-| `GET /health`                                 | Liveness probe (no auth).                                             |
-| `GET` / `DELETE /sessions/current`            | Inspect / dispose the current session.                                |
-| `GET` / `POST /devices`                       | List / attach devices.                                                |
-| `GET` / `PATCH` / `DELETE /devices/:id`       | Read / edit / remove a device.                                        |
-| `POST /devices/:id/connect` · `/disconnect`   | Toggle connection state.                                              |
-| `POST /devices/:id/apdu`                      | Resolve an APDU (`{ apdu }` → `{ response }`).                        |
-| `GET` / `POST` / `DELETE /devices/:id/mocks`  | List / add / clear device mocks.                                      |
-| `PATCH` / `DELETE /devices/:id/mocks/:mockId` | Edit / remove a single mock.                                          |
-| `GET /devices/:id/speculos`                   | The device's active Speculos instance (`409` if none).                |
-| `ALL /devices/:id/speculos/*`                 | Raw passthrough to the device's emulator.                             |
-| `GET /export` · `POST /import`                | Export / import a portable session snapshot (devices + nested mocks). |
+| Method & path                                 | Description                                                                                                                                                    |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /auth`                                  | Create a session, returns `{ token, expires_at }`.                                                                                                             |
+| `GET /health`                                 | Liveness probe (no auth).                                                                                                                                      |
+| `GET` / `DELETE /sessions/current`            | Inspect / dispose the current session.                                                                                                                         |
+| `PUT /sessions/current/seed`                  | Set the BIP39 mnemonic used for Speculos emulators in this session (`{ seed }`). ⚠️ **Not secure** — stored and transmitted in plaintext. Test mnemonics only. |
+| `GET` / `POST /devices`                       | List / attach devices.                                                                                                                                         |
+| `GET` / `PATCH` / `DELETE /devices/:id`       | Read / edit / remove a device.                                                                                                                                 |
+| `POST /devices/:id/connect` · `/disconnect`   | Toggle connection state.                                                                                                                                       |
+| `POST /devices/:id/apdu`                      | Resolve an APDU (`{ apdu }` → `{ response }`).                                                                                                                 |
+| `GET` / `POST` / `DELETE /devices/:id/mocks`  | List / add / clear device mocks.                                                                                                                               |
+| `PATCH` / `DELETE /devices/:id/mocks/:mockId` | Edit / remove a single mock.                                                                                                                                   |
+| `GET /devices/:id/speculos`                   | The device's active Speculos instance (`409` if none).                                                                                                         |
+| `ALL /devices/:id/speculos/*`                 | Raw passthrough to the device's emulator.                                                                                                                      |
+| `GET /export` · `POST /import`                | Export / import a portable session snapshot (devices + nested mocks).                                                                                          |
 
 The full contract is generated as [`openapi.yaml`](./openapi.yaml).
 
