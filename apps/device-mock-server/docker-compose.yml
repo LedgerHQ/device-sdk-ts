@@ -9,7 +9,6 @@ services:
       - PORT=${PORT:-9752}
       - SPECULINHO_URL=${SPECULINHO_URL:-https://speculinho.ledgerlabs.net}
       - SPECULOS_READY_TIMEOUT_MS=${SPECULOS_READY_TIMEOUT_MS:-120000}
-      - SPECULOS_SEED
       - SPECULOS_VERSION
       - MOCK_SERVER_LOG_LEVEL
     healthcheck:

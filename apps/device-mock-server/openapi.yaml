@@ -244,9 +244,29 @@ components:
       required:
         - status
         - sessions
+    SeedUpdate:
+      type: object
+      description:
+        BIP39 mnemonic for the session's Speculos emulator. ⚠️ Not secure —
+        stored and transmitted in plaintext. Use only test/dummy mnemonics,
+        never real production keys.
+      properties:
+        seed:
+          type: string
+          example:
+            glory promote mansion idle axis finger extend february uncover one trip
+            resolve toe
+      required:
+        - seed
   responses:
     Unauthorized:
       description: Missing, invalid or expired bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    BadRequest:
+      description: Request body is malformed or failed validation.
       content:
         application/json:
           schema:
@@ -315,6 +335,36 @@ paths:
       responses:
         "204":
           description: Session disposed.
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /sessions/current/seed:
+    put:
+      tags:
+        - Sessions
+      summary: Set the Speculos seed for the current session
+      description: |
+        Overrides the BIP39 mnemonic forwarded to Speculos on every
+        subsequent `/acquire` call within this session. Defaults to the
+        well-known test mnemonic on session creation.
+
+        **⚠️ Security warning — not secure.** The seed is stored in
+        plaintext in server memory and transmitted in plaintext HTTP. Use
+        only test/dummy mnemonics. Never supply a real production key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SeedUpdate"
+      responses:
+        "200":
+          description: Seed updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SeedUpdate"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /devices:

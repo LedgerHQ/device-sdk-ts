@@ -63,6 +63,7 @@ export class OpenAppViaSpeculosUseCase {
             device_os_version: device.firmware_version,
           },
           runId,
+          record.seed,
         )
         .chain(() => this.operator.waitUntilReady(runId))
         .run();

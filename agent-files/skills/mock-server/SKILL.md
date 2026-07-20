@@ -73,10 +73,46 @@ curl -s -X DELETE $BASE/devices/<id>/mocks -H "$AUTH"        # kill all
 # Save / load session
 curl -s $BASE/export -H "$AUTH"
 curl -s -X POST $BASE/import -H "$AUTH" -H "$JSON" -d '<SessionExport json>'
+
+# Speculos seed (⚠️ plaintext — test mnemonics only, never real keys)
+curl -s -X PUT $BASE/sessions/current/seed -H "$AUTH" -H "$JSON" \
+  -d '{"seed":"abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"}'
 ```
 
 `device_type`: `nanoS`, `nanoSP`, `nanoX`, `stax`, `flex`, `apexp`. `PATCH` keeps
 the id and only changes fields you send.
+
+## Open App / Close App
+
+Format: `e0 d8 00 00 <len> <app-name-ascii-hex>` — Close: `b0 a7 00 00 00`.
+
+```bash
+# Open Bitcoin (7 chars → 07, "Bitcoin" = 426974636f696e)
+curl -s -X POST $BASE/devices/<id>/apdu -H "$AUTH" -H "$JSON" \
+  -d '{"apdu":"e0d8000007426974636f696e"}'
+
+# Open Ethereum (8 chars → 08, "Ethereum" = 457468657265756d)
+curl -s -X POST $BASE/devices/<id>/apdu -H "$AUTH" -H "$JSON" \
+  -d '{"apdu":"e0d8000008457468657265756d"}'
+
+# Close App (any app)
+curl -s -X POST $BASE/devices/<id>/apdu -H "$AUTH" -H "$JSON" \
+  -d '{"apdu":"b0a7000000"}'
+```
+
+All three return `{"response":"9000"}` on success. Open App returns `6807` if
+the app is not in the device's `apps` list (add it via `POST /devices` or
+`PATCH /devices/<id>`).
+
+Build the hex for any app on the fly:
+
+```bash
+app="Solana"
+hex=$(printf '%s' "$app" | xxd -p | tr -d '\n')
+len=$(printf '%02x' ${#app})
+curl -s -X POST $BASE/devices/<id>/apdu -H "$AUTH" -H "$JSON" \
+  -d "{\"apdu\":\"e0d800${len}${hex}\"}"
+```
 
 ## Mocks: how they work
 
@@ -98,6 +134,19 @@ curl -s -X POST $BASE/devices/<id>/mocks -H "$AUTH" -H "$JSON" \
 ```
 
 Add mock = new behavior. Delete mock = old behavior back.
+
+## Speculos seed
+
+Each session starts with the default test mnemonic. Override it per-session
+before opening an app (the seed is forwarded to Speculinho on every `/acquire`):
+
+```bash
+curl -s -X PUT $BASE/sessions/current/seed -H "$AUTH" -H "$JSON" \
+  -d '{"seed":"glory promote mansion idle axis finger extend february uncover one trip resolve toe"}'
+```
+
+⚠️ **Not secure.** Stored in plaintext in server memory and sent over plain
+HTTP. Use only test/dummy mnemonics — never a real production key.
 
 ## Newest firmware
 

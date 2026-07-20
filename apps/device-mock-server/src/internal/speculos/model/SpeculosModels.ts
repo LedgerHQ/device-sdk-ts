@@ -1,6 +1,9 @@
 /**
- * Well-known Speculos default test mnemonic. Used when no `SPECULOS_SEED` is
- * configured. Speculos derives all keys from this deterministic seed.
+ * Well-known Speculos default test mnemonic. Each new session starts with this
+ * seed; callers can override it per-session via PUT /sessions/current/seed.
+ *
+ * WARNING: not secure — stored in plaintext and transmitted over plain HTTP.
+ * Only use test mnemonics, never real production keys.
  */
 export const DEFAULT_SPECULOS_SEED =
   "glory promote mansion idle axis finger extend february uncover one trip resolve toe";
@@ -9,8 +12,6 @@ export const DEFAULT_SPECULOS_SEED =
 export interface SpeculosOperatorConfig {
   /** Operator base URL, e.g. `https://speculinho.ledgerlabs.net`. */
   readonly baseUrl: string;
-  /** BIP39 mnemonic forwarded to Speculos on every acquire. */
-  readonly seed: string;
   /** Optional speculos-apps image tag (defaults to operator's `latest`). */
   readonly speculosVersion?: string;
   /** Max acquire-to-ready wait before giving up. */
