@@ -69,6 +69,25 @@ export class TrxSignerDriver {
   }
 
   /**
+   * Open the Get ECDH secret action, fill the peer public key (hex-encoded
+   * 65-byte uncompressed secp256k1 key) and Execute it. The action stays
+   * pending until the operation is approved on Speculos.
+   */
+  async getECDHSecret(
+    publicKey: string,
+    { skipOpenApp = false }: { skipOpenApp?: boolean } = {},
+  ): Promise<void> {
+    await this.page.getByTestId("CTA_command-Get ECDH secret").click();
+    const input = this.page.getByTestId("input-text_publicKey");
+    await input.waitFor({ state: "visible" });
+    await input.fill(publicKey);
+    if (skipOpenApp) {
+      await this.page.getByTestId("input-switch_skipOpenApp").click();
+    }
+    await this.page.getByTestId("CTA_send-device-action").click();
+  }
+
+  /**
    * Open the Sign transaction hash action, fill the hash (hex-encoded 32-byte
    * hash of the protobuf-serialized `raw_data`) and Execute it. Only accepted
    * by the Tron app when its "sign by hash" setting is enabled.
