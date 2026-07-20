@@ -3,6 +3,7 @@ import { Left, Right } from "purify-ts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
 
 import { HttpInstructionInfoDataSource } from "./HttpInstructionInfoDataSource";
 import { type InstructionInfoDataSource } from "./InstructionInfoDataSource";
@@ -15,7 +16,7 @@ describe("HttpInstructionInfoDataSource", () => {
   const network = "solana-mainnet";
   const config: ContextModuleServiceConfig = {
     cal: {
-      url: "https://crypto-assets-service.api.ledger.com/v1",
+      url: "https://global.api.prd.ledger.com/cal/v1",
       mode: "prod",
       branch: "main",
     },
@@ -23,29 +24,22 @@ describe("HttpInstructionInfoDataSource", () => {
 
   const successResponse: CalInstructionInfoResponseDto = [
     {
-      descriptors_instruction: {
-        [programId]: {
-          "00000000": {
-            type: "instruction",
-            network: "solana-mainnet",
-            version: "v1",
-            instruction_info: {
-              version: 1,
-              program_id: programId,
-              discriminator: "00000000",
-              hash: "deadbeef",
-              descriptor: {
-                data: "00010101",
-                signatures: { prod: "prodsig", test: "testsig" },
-              },
-            },
-            display_fields: [],
-            value_flow_ports: [],
-            hide_rules: [],
-            account_resets: [],
+      id: programId,
+      chain_id: SolanaTransactionScanChainId.MAINNET,
+      instructions: [
+        {
+          discriminator_hex: "00000000",
+          instruction_name: "createAccount",
+          descriptor: {
+            data: "00010101",
+            signatures: { prod: "prodsig", test: "testsig" },
           },
+          display_fields: [],
+          value_flow_ports: [],
+          hide_rules: [],
+          account_resets: [],
         },
-      },
+      ],
     },
   ];
 
@@ -58,22 +52,38 @@ describe("HttpInstructionInfoDataSource", () => {
     );
   });
 
-  it("calls CAL with singular program= and ref=branch:<branch>", async () => {
+  it("calls CAL /solana_programs with id, chain_id and output params", async () => {
     httpMock.get.mockResolvedValue(successResponse);
 
     await datasource.getInstructionInfo({ programId, network });
 
     expect(httpMock.get).toHaveBeenCalledTimes(1);
     expect(httpMock.get).toHaveBeenCalledWith(
-      "https://crypto-assets-service.api.ledger.com/v1/solana",
+      "https://global.api.prd.ledger.com/cal/v1/solana_programs",
       {
         params: {
-          output: "descriptors_instruction",
-          network,
-          program: programId,
+          id: programId,
+          chain_id: SolanaTransactionScanChainId.MAINNET,
+          output: "id,chain_id,instructions",
           ref: "branch:main",
         },
       },
+    );
+  });
+
+  it("maps devnet/testnet networks to their numeric chain ids", async () => {
+    httpMock.get.mockResolvedValue(successResponse);
+
+    await datasource.getInstructionInfo({
+      programId,
+      network: "solana-devnet",
+    });
+
+    expect(httpMock.get).toHaveBeenCalledWith(
+      "https://global.api.prd.ledger.com/cal/v1/solana_programs",
+      expect.objectContaining({
+        params: expect.objectContaining({ chain_id: 901 }),
+      }),
     );
   });
 
@@ -118,22 +128,13 @@ describe("HttpInstructionInfoDataSource", () => {
     );
   });
 
-  it("returns Left when the envelope is malformed", async () => {
-    httpMock.get.mockResolvedValue([{ foo: "bar" }]);
-
-    const result = await datasource.getInstructionInfo({ programId, network });
-
-    expect(result.isLeft()).toBe(true);
-    expect((result.extract() as Error).message).toMatch(
-      new RegExp(
-        String.raw`\[ContextModule\] HttpInstructionInfoDataSource: malformed response for program ${programId}:`,
-      ),
-    );
-  });
-
-  it("returns Left when the response doesn't contain the requested programId", async () => {
+  it("returns Left when no program object matches the requested programId", async () => {
     httpMock.get.mockResolvedValue([
-      { descriptors_instruction: { OtherProgram: {} } },
+      {
+        id: "OtherProgram",
+        chain_id: SolanaTransactionScanChainId.MAINNET,
+        instructions: [],
+      },
     ]);
 
     const result = await datasource.getInstructionInfo({ programId, network });
@@ -147,16 +148,14 @@ describe("HttpInstructionInfoDataSource", () => {
     );
   });
 
-  it("returns Left (not a throw) when an inner descriptor is malformed", async () => {
-    // `instruction_info.descriptor` missing — would crash the loader if the
+  it("returns Left (not a throw) when an instruction descriptor is malformed", async () => {
+    // `descriptor` missing on the instruction — would crash the loader if the
     // datasource handed it through unvalidated.
     httpMock.get.mockResolvedValue([
       {
-        descriptors_instruction: {
-          [programId]: {
-            "00000000": { type: "instruction", instruction_info: {} },
-          },
-        },
+        id: programId,
+        chain_id: SolanaTransactionScanChainId.MAINNET,
+        instructions: [{ discriminator_hex: "00000000" }],
       },
     ]);
 

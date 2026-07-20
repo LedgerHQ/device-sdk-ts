@@ -1,5 +1,15 @@
 # @ledgerhq/device-transport-kit-mockserver
 
+## 1.1.0
+
+### Minor Changes
+
+- [#1553](https://github.com/LedgerHQ/device-sdk-ts/pull/1553) [`8a98d91`](https://github.com/LedgerHQ/device-sdk-ts/commit/8a98d91a165060ad196916acc6d1cfc224bb0250) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Support sharing a mock server session token. `mockserverTransportFactory` is now a higher-order factory `mockserverTransportFactory(mockUrl?, sessionToken?)` and the transport targets the new bearer-token mock client API (device discovery, per-device connect/APDU). Device models are built from the richer mock device metadata.
+
+### Patch Changes
+
+- [#1590](https://github.com/LedgerHQ/device-sdk-ts/pull/1590) [`decc0c4`](https://github.com/LedgerHQ/device-sdk-ts/commit/decc0c4791dd6af58f87f2c61e0fa8095c6aa75f) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Report real per-model memory constants (memory size and block size) for mock devices instead of hardcoded values. Previously every mock device advertised a 320 KB memory with 32-byte blocks, which made memory-aware device actions (e.g. Install or update applications / Open app with dependencies, via `PredictOutOfMemoryTask`) wrongly report `OutOfMemoryDAError` even on an empty device.
+
 ## 1.0.2
 
 ### Patch Changes

@@ -124,18 +124,13 @@ export function fromCalValueFlowPort(
   port: CalValueFlowPort,
 ): ParsedValueFlowPort {
   return {
-    // CAL's spec form is the ordered candidate list `account_indices`; the live
-    // response currently emits a single `account_index`, treated as a 1-element
-    // list. Prefer the candidate list when present.
-    accountIndices:
-      port.account_indices ??
-      (port.account_index !== undefined ? [port.account_index] : []),
+    // CAL always emits the ordered candidate list `account_indices` (length 1
+    // for the common single-account port).
+    accountIndices: port.account_indices,
     optionalAccountStrategy: fromCalOptionalAccountStrategy(
       port.optional_account_strategy,
     ),
-    tokenValue: port.token_value
-      ? fromCalTokenValue(port.token_value)
-      : undefined,
+    tokenValue: fromCalTokenValue(port.token_value),
   };
 }
 

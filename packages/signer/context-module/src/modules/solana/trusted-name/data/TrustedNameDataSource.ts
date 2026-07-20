@@ -4,7 +4,6 @@ export type GetSolanaTrustedNameParams = {
   address: string;
   network: string;
   challenge: string;
-  types: string[];
   sources: string[];
 };
 

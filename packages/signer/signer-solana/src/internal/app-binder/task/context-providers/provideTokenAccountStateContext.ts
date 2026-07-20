@@ -6,7 +6,6 @@ import { isSuccessCommandResult } from "@ledgerhq/device-management-kit";
 import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideTokenAccountStateCommand } from "@internal/app-binder/command/ProvideTokenAccountStateCommand";
-import { frameClearSignPayload } from "@internal/app-binder/command/utils/apduChunking";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
@@ -36,7 +35,7 @@ export const provideTokenAccountStateContext: ProvideContextHandler<
   const res = await new SendCommandInChunksTask<void, SolanaAppErrorCodes>(
     api,
     {
-      data: frameClearSignPayload(payload.descriptor),
+      data: payload.descriptor,
       commandFactory: (args) =>
         new ProvideTokenAccountStateCommand({
           payload: args.chunkedData,

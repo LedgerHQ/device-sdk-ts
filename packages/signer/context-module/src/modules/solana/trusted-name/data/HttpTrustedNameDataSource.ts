@@ -1,12 +1,15 @@
 import { DmkNetworkClient } from "@ledgerhq/device-management-kit";
 import { inject, injectable } from "inversify";
-import { Either, Left, Right } from "purify-ts";
+import { Codec, Either, Left, optional, Right, string } from "purify-ts";
 
 import { configTypes } from "@/config/di/configTypes";
-import { type ContextModuleServiceConfig } from "@/config/model/ContextModuleConfig";
+import {
+  type ContextModuleCalMode,
+  type ContextModuleServiceConfig,
+} from "@/config/model/ContextModuleConfig";
+import { SIGNATURE_TAG } from "@/shared/model/SignatureTags";
 import { networkTypes } from "@/shared/network/di/networkTypes";
 import { HexStringUtils } from "@/shared/utils/HexStringUtils";
-import { signedDescriptorDtoCodec } from "@/shared/utils/signedDescriptorDto";
 
 import {
   type GetSolanaTrustedNameParams,
@@ -14,17 +17,17 @@ import {
   type SolanaTrustedNameResult,
 } from "./TrustedNameDataSource";
 
-type TrustedNameResponseDto = {
-  descriptorType?: string;
-  descriptorVersion?: string;
-  address?: string;
-  name?: string;
-  source?: string;
-  nameType?: string;
-  signedDescriptor: string;
-  keyId: string;
-  keyUsage: string;
-};
+const trustedNameResponseCodec = Codec.interface({
+  signedDescriptor: Codec.interface({
+    data: string,
+    signatures: Codec.interface({
+      prod: optional(string),
+      test: optional(string),
+    }),
+  }),
+  keyId: string,
+  keyUsage: string,
+});
 
 @injectable()
 export class HttpSolanaTrustedNameDataSource
@@ -41,23 +44,21 @@ export class HttpSolanaTrustedNameDataSource
     address,
     network,
     challenge,
-    types,
     sources,
   }: GetSolanaTrustedNameParams): Promise<
     Either<Error, SolanaTrustedNameResult>
   > {
-    let dto: TrustedNameResponseDto;
+    let dto: unknown;
     try {
-      dto = (await this.http.get(
+      dto = await this.http.get(
         `${this.config.metadataServiceDomain.url}/v2/names/solana/${network}/reverse/${address}`,
         {
           params: {
-            types: types.join(","),
             sources: sources.join(","),
             challenge,
           },
         },
-      )) as TrustedNameResponseDto;
+      );
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       return Left(
@@ -67,7 +68,7 @@ export class HttpSolanaTrustedNameDataSource
       );
     }
 
-    return signedDescriptorDtoCodec
+    return trustedNameResponseCodec
       .decode(dto)
       .caseOf<Either<Error, SolanaTrustedNameResult>>({
         Left: (error) =>
@@ -77,13 +78,29 @@ export class HttpSolanaTrustedNameDataSource
             ),
           ),
         Right: (validated) => {
+          const mode: ContextModuleCalMode = this.config.cal.mode ?? "prod";
+          const signature = validated.signedDescriptor.signatures[mode];
+          if (!signature) {
+            return Left(
+              new Error(
+                `[ContextModule] HttpSolanaTrustedNameDataSource: missing ${mode} signature for ${address}`,
+              ),
+            );
+          }
+
           let descriptor: Uint8Array;
           try {
-            descriptor = HexStringUtils.hexToBytes(validated.signedDescriptor);
+            descriptor = HexStringUtils.hexToBytes(
+              HexStringUtils.appendSignatureToPayload(
+                validated.signedDescriptor.data,
+                signature,
+                SIGNATURE_TAG,
+              ),
+            );
           } catch (error) {
             return Left(
               new Error(
-                `[ContextModule] HttpSolanaTrustedNameDataSource: invalid hex in signedDescriptor for ${address}: ${(error as Error).message}`,
+                `[ContextModule] HttpSolanaTrustedNameDataSource: invalid signed descriptor for ${address}: ${(error as Error).message}`,
               ),
             );
           }

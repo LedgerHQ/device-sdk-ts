@@ -1,7 +1,7 @@
 {
   "name": "@ledgerhq/context-module",
-  "version": "2.2.0",
-  "private": true,
+  "version": "2.3.0",
+  "private": false,
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -57,6 +57,6 @@
     "reflect-metadata": "catalog:"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "workspace:^"
+    "@ledgerhq/device-management-kit": "^1.7.1"
   }
 }

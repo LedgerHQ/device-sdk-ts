@@ -8,6 +8,7 @@ import { array, Codec, optional, string } from "purify-ts";
 import { configTypes } from "@/config/di/configTypes";
 import { pkiTypes } from "@/modules/multichain/pki/di/pkiTypes";
 import { type PkiCertificateLoader } from "@/modules/multichain/pki/domain/PkiCertificateLoader";
+import { SolanaTransactionScanChainId } from "@/modules/solana/model/SolanaTransactionScanChainId";
 import { type SolanaTrustedNameDataSource } from "@/modules/solana/trusted-name/data/TrustedNameDataSource";
 import { solanaTrustedNameTypes } from "@/modules/solana/trusted-name/di/trustedNameTypes";
 import { type ContextLoader } from "@/shared/domain/ContextLoader";
@@ -22,7 +23,13 @@ const SUPPORTED_TYPES: ClearSignContextType[] = [
   ClearSignContextType.SOLANA_TRUSTED_NAME,
 ];
 
-const NETWORK_DEFAULT = "mainnet";
+const CHAIN_ID_BY_NETWORK: Record<string, SolanaTransactionScanChainId> = {
+  "solana-mainnet": SolanaTransactionScanChainId.MAINNET,
+  "solana-devnet": SolanaTransactionScanChainId.DEVNET,
+  "solana-testnet": SolanaTransactionScanChainId.TESTNET,
+};
+
+const NETWORK_DEFAULT = SolanaTransactionScanChainId.MAINNET;
 
 /**
  * One trusted-name request, resolved to a Uint8Array TLV descriptor. The
@@ -31,7 +38,6 @@ const NETWORK_DEFAULT = "mainnet";
 export type SolanaTrustedNameRequest = {
   address: string;
   challenge: string;
-  types: string[];
   sources: string[];
 };
 
@@ -44,7 +50,6 @@ export type SolanaTrustedNameContextInput = {
 const trustedNameRequestCodec = Codec.interface({
   address: string,
   challenge: string,
-  types: array(string),
   sources: array(string),
 });
 
@@ -87,7 +92,10 @@ export class SolanaTrustedNameContextLoader
   public async load(
     input: SolanaTrustedNameContextInput,
   ): Promise<ClearSignContext[]> {
-    const network = input.network || NETWORK_DEFAULT;
+    const chainId = input.network
+      ? (CHAIN_ID_BY_NETWORK[input.network] ?? NETWORK_DEFAULT)
+      : NETWORK_DEFAULT;
+    const network = String(chainId);
 
     return loadChallengeBoundContexts({
       requests: input.requests,
@@ -99,7 +107,6 @@ export class SolanaTrustedNameContextLoader
         this.dataSource.getTrustedName({
           address: request.address,
           challenge: request.challenge,
-          types: request.types,
           sources: request.sources,
           network,
         }),

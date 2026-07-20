@@ -37,8 +37,8 @@ export type ProvideAltResolutionCommandArgs = {
  * `(altAddress, entryIndex, resolvedAddress)`. The caller must issue
  * `GET CHALLENGE` immediately before this command.
  *
- * The caller pre-builds the wire payload (2-byte BE length prefix followed
- * by the `ALT_RESOLUTION` TLV) and splits it into ≤255-byte chunks.
+ * The caller pre-builds the wire payload (the `ALT_RESOLUTION` TLV only)
+ * and splits it into ≤255-byte chunks.
  */
 export class ProvideAltResolutionCommand
   implements Command<void, ProvideAltResolutionCommandArgs, SolanaAppErrorCodes>

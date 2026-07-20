@@ -23,6 +23,15 @@ export interface SessionRecord {
   token: string;
   createdAt: number;
   lastSeenAt: number;
+  /**
+   * BIP39 mnemonic forwarded to Speculos on every acquire for this session.
+   * Defaults to the well-known test mnemonic; overridable via PUT
+   * /sessions/current/seed.
+   *
+   * WARNING: stored in plaintext in memory and transmitted in plaintext HTTP.
+   * Use only test mnemonics — never real production keys.
+   */
+  seed: string;
   devices: Map<string, Device>;
   /** Per-device mock table: deviceId -> (mockId -> Mock). */
   deviceMocks: Map<string, Map<string, Mock>>;
@@ -37,4 +46,11 @@ export interface SessionRecord {
    * commit when the final install block is acknowledged: deviceId -> app.
    */
   pendingAppOperations: Map<string, CatalogApp>;
+  /**
+   * Target `firmware_version` of an in-flight secure-channel firmware install
+   * (OSU or final), awaiting commit when the final install block is
+   * acknowledged: deviceId -> version. Set to `<next>-osu` for the OSU install
+   * and to the clean `<next>` for the final install.
+   */
+  pendingFirmwareOperations: Map<string, string>;
 }

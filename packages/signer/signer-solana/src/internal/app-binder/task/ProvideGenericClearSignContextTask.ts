@@ -25,6 +25,22 @@ import { dispatchProvideContext } from "@internal/app-binder/task/context-provid
 import { type ProvideContextDeps } from "@internal/app-binder/task/context-providers/provideContextTypes";
 import { SignDataTask } from "@internal/app-binder/task/SendSignDataTask";
 
+/**
+ * Descriptor types whose provisioning failure must abort generic clear-signing
+ * (the caller then falls back to the legacy basic path). These carry the
+ * structural information the device needs to interpret the instructions at all,
+ * so without them there is nothing to clear-sign.
+ *
+ * Every other descriptor type (token info, token account state, ALT resolution,
+ * trusted name, …) is best-effort: a failure only degrades the UX for that one
+ * piece of metadata, so it is swallowed and the remaining descriptors are still
+ * streamed. Degraded clear-signing beats falling back to blind/basic signing.
+ */
+const FATAL_PROVIDE_CONTEXT_TYPES: ReadonlySet<ClearSignContextType> = new Set([
+  ClearSignContextType.SOLANA_INSTRUCTION_INFO,
+  ClearSignContextType.SOLANA_ENUM_VARIANT,
+]);
+
 export type ProvideGenericClearSignContextTaskArgs = {
   readonly derivationPath: string;
   readonly transaction: Uint8Array;
@@ -77,15 +93,35 @@ export class ProvideGenericClearSignContextTask {
     // Phase A pool, then Phase B templates. Order within Phase A is
     // device-agnostic; templates come last so the device can run the merge.
     for (const context of this.args.poolContexts) {
-      if (isSolanaContextSuccess(context)) {
-        await dispatchProvideContext(context, this.deps);
-      }
+      await this.provideDescriptor(context);
     }
     await this.streamChallengeBoundDescriptors();
     for (const context of this.args.instructionInfoContexts) {
-      if (isSolanaContextSuccess(context)) {
-        await dispatchProvideContext(context, this.deps);
-      }
+      await this.provideDescriptor(context);
+    }
+  }
+
+  /**
+   * Streams a single descriptor to the device. Failures of a
+   * {@link FATAL_PROVIDE_CONTEXT_TYPES} descriptor propagate (aborting generic
+   * clear-signing); any other descriptor's failure is swallowed so the device
+   * can still clear-sign the rest with degraded UX.
+   */
+  private async provideDescriptor(context: ClearSignContext): Promise<void> {
+    if (!isSolanaContextSuccess(context)) {
+      return;
+    }
+    if (FATAL_PROVIDE_CONTEXT_TYPES.has(context.type)) {
+      await dispatchProvideContext(context, this.deps);
+      return;
+    }
+    try {
+      await dispatchProvideContext(context, this.deps);
+    } catch (error) {
+      this.logger.warn(
+        "[run] optional descriptor provisioning failed; continuing with degraded clear-signing",
+        { data: { type: context.type, error } },
+      );
     }
   }
 
@@ -118,8 +154,8 @@ export class ProvideGenericClearSignContextTask {
         (challenge) => ({
           deviceModelId,
           network: this.network,
-          // types/sources are not carried by the requirement set, so empty.
-          requests: [{ address, challenge, types: [], sources: [] }],
+          // Only the CRYPTO_ASSET_LIST source is supported for now.
+          requests: [{ address, challenge, sources: ["crypto_asset_list"] }],
         }),
         ClearSignContextType.SOLANA_TRUSTED_NAME,
       );
@@ -145,8 +181,8 @@ export class ProvideGenericClearSignContextTask {
       [type],
     );
     for (const context of contexts) {
-      if (context.type === type && isSolanaContextSuccess(context)) {
-        await dispatchProvideContext(context, this.deps);
+      if (context.type === type) {
+        await this.provideDescriptor(context);
       }
     }
   }

@@ -3,7 +3,10 @@ import { vi } from "vitest";
 
 import { InMemorySessionRepository } from "@internal/session/data/InMemorySessionRepository";
 import { type SpeculosOperatorDataSource } from "@internal/speculos/data/SpeculosOperatorDataSource";
-import { SpeculosError } from "@internal/speculos/model/SpeculosModels";
+import {
+  DEFAULT_SPECULOS_SEED,
+  SpeculosError,
+} from "@internal/speculos/model/SpeculosModels";
 import { OpenAppViaSpeculosUseCase } from "@internal/speculos/use-case/OpenAppViaSpeculosUseCase";
 
 const makeOperator = (
@@ -61,6 +64,7 @@ describe("OpenAppViaSpeculosUseCase", () => {
         device_os_version: "1.3.0",
       },
       expect.any(String),
+      DEFAULT_SPECULOS_SEED,
     );
     expect(repo.findProxy(record, device.id).extract()).toMatchObject({
       speculosUrl: "https://run-1.speculos.test",

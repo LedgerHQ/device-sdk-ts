@@ -21,9 +21,10 @@ const device = (overrides: Partial<Device>): Device => ({
 
 describe("deriveGetOsVersion", () => {
   it("reproduces the Nano X 2.2.3 reference response", () => {
-    // This is exactly the previously-hardcoded default mock.
-    expect(deriveGetOsVersion(device({ device_type: "nanoX" }))).toBe(
-      "3300000405322e322e3304e600000004322e333004312e31360100010001009000",
+    // The current MCU (2.40.2 -> `06322e34302e32`) is resolved by the caller and
+    // passed in; reporting it keeps the firmware update flow off an MCU flash.
+    expect(deriveGetOsVersion(device({ device_type: "nanoX" }), "2.40.2")).toBe(
+      "3300000405322e322e3304e600000006322e34302e3204312e31360100010001009000",
     );
   });
 
@@ -31,28 +32,36 @@ describe("deriveGetOsVersion", () => {
     expect(
       deriveGetOsVersion(
         device({ device_type: "stax", firmware_version: "1.3.0" }),
+        "5.32.3",
       ),
     ).toMatch(/^33200004/);
     expect(
       deriveGetOsVersion(
         device({ device_type: "nanoSP", firmware_version: "1.1.1" }),
+        "4.7.0",
       ),
     ).toMatch(/^33100004/);
   });
 
   it("omits hardware/recover fields per the model+version support matrix", () => {
     // Stax 1.3.0: recover requires >= 1.4.0, hw is Nano X only -> neither field.
-    // targetId + LV(1.3.0) + LV(seFlags) + LV(mcuSeph) + LV(mcuBoot) + LV(langId) + 9000
+    // targetId + LV(1.3.0) + LV(seFlags) + LV(mcuSeph=5.32.3) + LV(mcuBoot) + LV(langId) + 9000
     expect(
       deriveGetOsVersion(
         device({ device_type: "stax", firmware_version: "1.3.0" }),
+        "5.32.3",
       ),
-    ).toBe("3320000405312e332e3004e600000004322e333004312e31360100" + "9000");
+    ).toBe(
+      "3320000405312e332e3004e600000006352e33322e3304312e31360100" + "9000",
+    );
   });
 
   it("returns undefined for an unsupported model", () => {
     expect(
-      deriveGetOsVersion(device({ device_type: "blue", masks: undefined })),
+      deriveGetOsVersion(
+        device({ device_type: "blue", masks: undefined }),
+        "2.30",
+      ),
     ).toBeUndefined();
   });
 
@@ -60,6 +69,7 @@ describe("deriveGetOsVersion", () => {
     expect(
       deriveGetOsVersion(
         device({ device_type: "unknown", masks: [0x33000000] }),
+        "2.30",
       ),
     ).toMatch(/^33000004/);
   });
@@ -118,15 +128,23 @@ describe("deriveGetDeviceName", () => {
 describe("deriveOsApduResponse", () => {
   it("dispatches GetOsVersion (0xE0 0x01)", () => {
     expect(
-      deriveOsApduResponse(device({ device_type: "nanoX" }), "e0010000"),
+      deriveOsApduResponse(
+        device({ device_type: "nanoX" }),
+        "e0010000",
+        "2.40.2",
+      ),
     ).toBe(
-      "3300000405322e322e3304e600000004322e333004312e31360100010001009000",
+      "3300000405322e322e3304e600000006322e34302e3204312e31360100010001009000",
     );
   });
 
   it("dispatches GetAppAndVersion (0xB0 0x01)", () => {
     expect(
-      deriveOsApduResponse(device({ firmware_version: "2.2.3" }), "b0010000"),
+      deriveOsApduResponse(
+        device({ firmware_version: "2.2.3" }),
+        "b0010000",
+        "2.30",
+      ),
     ).toBe("0105424f4c4f5305322e322e339000");
   });
 
@@ -135,22 +153,25 @@ describe("deriveOsApduResponse", () => {
       deriveOsApduResponse(
         device({ device_type: "stax", firmware_version: "1.9.1" }),
         "e010000000",
+        "2.30",
       ),
     ).toBe("649000");
   });
 
   it("dispatches the GetDeviceName cleaning APDU (0xE0 0x50) as a bare success", () => {
-    expect(deriveOsApduResponse(device({}), "e0500000")).toBe("9000");
+    expect(deriveOsApduResponse(device({}), "e0500000", "2.30")).toBe("9000");
   });
 
   it("dispatches GetDeviceName (0xE0 0xD2)", () => {
-    expect(deriveOsApduResponse(device({ name: "Ledger" }), "e0d20000")).toBe(
-      "4c6564676572" + "9000",
-    );
+    expect(
+      deriveOsApduResponse(device({ name: "Ledger" }), "e0d20000", "2.30"),
+    ).toBe("4c6564676572" + "9000");
   });
 
   it("returns undefined for a non-OS APDU", () => {
-    expect(deriveOsApduResponse(device({}), "e0f1000000")).toBeUndefined();
+    expect(
+      deriveOsApduResponse(device({}), "e0f1000000", "2.30"),
+    ).toBeUndefined();
   });
 
   it("dispatches ListApps (0xE0 0xDE)", () => {
@@ -158,12 +179,15 @@ describe("deriveOsApduResponse", () => {
       deriveOsApduResponse(
         device({ apps: [{ name: "BOLOS", version: "1.5.0" }] }),
         "e0de000000",
+        "2.30",
       ),
     ).toBe("9000");
   });
 
   it("dispatches GetBackgroundImageSize (0xE0 0x64) as an empty device", () => {
-    expect(deriveOsApduResponse(device({}), "e064000000")).toBe("000000009000");
+    expect(deriveOsApduResponse(device({}), "e064000000", "2.30")).toBe(
+      "000000009000",
+    );
   });
 });
 

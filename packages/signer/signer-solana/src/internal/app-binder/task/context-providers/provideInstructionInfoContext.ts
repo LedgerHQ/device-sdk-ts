@@ -10,10 +10,7 @@ import { SendCommandInChunksTask } from "@ledgerhq/signer-utils";
 
 import { ProvideInstructionInfoCommand } from "@internal/app-binder/command/ProvideInstructionInfoCommand";
 import { ProvideInstructionSubstructureCommand } from "@internal/app-binder/command/ProvideInstructionSubstructureCommand";
-import {
-  appendSignatureTlv,
-  frameClearSignPayload,
-} from "@internal/app-binder/command/utils/apduChunking";
+import { appendSignatureTlv } from "@internal/app-binder/command/utils/apduChunking";
 import { type SolanaAppErrorCodes } from "@internal/app-binder/command/utils/SolanaApplicationErrors";
 
 import { loadCertificate } from "./loadCertificate";
@@ -63,7 +60,7 @@ export const provideInstructionInfoContext: ProvideContextHandler<
     void,
     SolanaAppErrorCodes
   >(api, {
-    data: frameClearSignPayload(appendSignatureTlv(infoBytes, infoSignature)),
+    data: appendSignatureTlv(infoBytes, infoSignature),
     commandFactory: (args) =>
       new ProvideInstructionInfoCommand({
         payload: args.chunkedData,
@@ -88,7 +85,7 @@ export const provideInstructionInfoContext: ProvideContextHandler<
       void,
       SolanaAppErrorCodes
     >(api, {
-      data: frameClearSignPayload(tlv, substructure.kind),
+      data: Uint8Array.of(substructure.kind, ...tlv),
       commandFactory: (args) =>
         new ProvideInstructionSubstructureCommand({
           payload: args.chunkedData,

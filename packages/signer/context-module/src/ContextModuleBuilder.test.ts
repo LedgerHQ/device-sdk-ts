@@ -200,7 +200,7 @@ describe("ContextModuleBuilder", () => {
       expect(config.cal.mode).toBe(customCalConfig.mode);
       expect(config.cal.branch).toBe(customCalConfig.branch);
       expect(config.cal.url).not.toBe(
-        "https://crypto-assets-service.api.ledger.com/v1",
+        "https://global.api.prd.ledger.com/cal/v1",
       );
     });
   });
@@ -240,7 +240,7 @@ describe("ContextModuleBuilder", () => {
 
       expect(config.web3checks.url).toBe(customWeb3ChecksConfig.url);
       expect(config.web3checks.url).not.toBe(
-        "https://web3checks-backend.api.ledger.com/v3",
+        "https://global.api.prd.ledger.com/transaction-checks/v3",
       );
     });
   });

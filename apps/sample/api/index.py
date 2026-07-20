@@ -39,7 +39,9 @@ from erc7730.convert.calldata.convert_erc7730_v2_input_to_calldata import (
 from erc7730.model.input.v2.descriptor import InputERC7730Descriptor as InputERC7730DescriptorV2
 
 # Constants
-DEFAULT_CAL_URL = "https://crypto-assets-service.api.ledger.com/v1"
+DEFAULT_CAL_URL = "https://global.api.prd.ledger.com/cal/v1"
+DEFAULT_METADATA_SERVICE_URL = "https://nft.api.live.ledger.com"
+SIGNATURE_TLV_TAG = 0x15
 TEST_SIGNING_KEY = "b1ed47ef58f782e2bc4d5abe70ef66d9009c2957967017054470e0f3e10f5833"
 TEST_VERIFYING_KEY = "0320da62003c0ce097e33644a10fe4c30454069a4454f0fa9d4e84f45091429b52"
 TEST_SIGNING_KEY_CERTIFICATE = "f7aeb3d0f44f1bf50d89a1996bbb2bf0544dce2e0a2d0ff67eea0fa9c750f3d0"
@@ -50,7 +52,9 @@ CAL_CERTIFICATES_OVERRIDES = {
     "cal_network",
     "plugin_selector_key",
     "cal_trusted_name",
-    "cal_gated_signing"
+    "cal_gated_signing",
+    "domain_metadata_key",
+    "token_metadata_key"
 }
 
 def _is_v2_descriptor(data: Dict[str, Any]) -> bool:
@@ -513,6 +517,96 @@ def get_certificates() -> Tuple[Dict[str, Any], int]:
         return {"error": f"Failed to fetch certificates: {str(e)}"}, 502
     except Exception as e:
         return {"error": f"Failed to process certificates: {str(e)}"}, 500
+
+
+def resign_signed_descriptor(signed_descriptor_hex: str) -> str:
+    """
+    Re-sign a signed TLV descriptor with the CAL interceptor key.
+
+    The descriptor is a sequence of TLV fields (1-byte tag, 1-byte length,
+    value) whose last field is a SIGNATURE (tag 0x15) holding a DER-encoded
+    ECDSA signature over the SHA-256 of every preceding TLV byte. We walk the
+    TLV fields to locate that trailing SIGNATURE, recompute the signature over
+    the preceding bytes with TEST_SIGNING_KEY, and splice it back in so a
+    Speculos device provisioned with the test certificates accepts it.
+    """
+    data = bytes.fromhex(signed_descriptor_hex)
+
+    # Walk TLV fields from the start; the SIGNATURE field is always last.
+    offset = 0
+    signature_offset: Optional[int] = None
+    while offset < len(data):
+        if offset + 1 >= len(data):
+            raise ValueError("truncated TLV: missing length byte")
+        tag = data[offset]
+        length = data[offset + 1]
+        value_end = offset + 2 + length
+        if value_end > len(data):
+            raise ValueError("truncated TLV: value exceeds descriptor length")
+        if tag == SIGNATURE_TLV_TAG:
+            signature_offset = offset
+        offset = value_end
+
+    if signature_offset is None:
+        raise ValueError("no SIGNATURE (tag 0x15) field found in descriptor")
+
+    payload = data[:signature_offset]
+    signature = bytes.fromhex(sign_payload(payload.hex())["signatures"]["test"])
+    signature_tlv = bytes([SIGNATURE_TLV_TAG, len(signature)]) + signature
+    return (payload + signature_tlv).hex()
+
+
+def resign_descriptors_in_response(obj: Any) -> Any:
+    """
+    Recursively re-sign every `signedDescriptor` string found in a metadata
+    service response. Works for both single-descriptor objects and any
+    array/batch shape the service might return.
+    """
+    if isinstance(obj, dict):
+        return {
+            key: resign_signed_descriptor(value)
+            if key == "signedDescriptor" and isinstance(value, str)
+            else resign_descriptors_in_response(value)
+            for key, value in obj.items()
+        }
+    elif isinstance(obj, list):
+        return [resign_descriptors_in_response(item) for item in obj]
+    else:
+        return obj
+
+
+@app.route("/api/dynamic-descriptor-proxy/<path:subpath>", methods=["GET"])
+def dynamic_descriptor_proxy(subpath: str) -> Tuple[Any, int]:
+    """
+    Proxy dynamic-descriptor metadata-service requests to the real service and
+    re-sign every `signedDescriptor` in the response with the CAL interceptor
+    key. Dynamic descriptors carry a single prod signature embedded in the TLV
+    (trailing SIGNATURE tag), so they must be re-signed for a Speculos test
+    device to accept them.
+
+    Fully generic: works for any dynamic-descriptor endpoint (e.g. ALT
+    resolution `/v2/solana/alt-resolution/<alt>/<index>`, token account state
+    `/v2/solana/token-account-state/<account>`).
+
+    The sample app's CAL interceptor redirects those requests here; the original
+    path and query string are forwarded to the upstream metadata service.
+    """
+    try:
+        upstream_url = f"{DEFAULT_METADATA_SERVICE_URL}/{subpath}"
+        response = requests.get(upstream_url, params=request.args, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to fetch from metadata service."}), 502
+    except ValueError as e:
+        return jsonify({"error": f"Metadata service returned non-JSON response."}), 502
+
+    try:
+        resigned = resign_descriptors_in_response(payload)
+    except ValueError as e:
+        return jsonify({"error": f"Failed to re-sign descriptor."}), 500
+
+    return jsonify(resigned), 200
 
 
 if __name__ == "__main__":

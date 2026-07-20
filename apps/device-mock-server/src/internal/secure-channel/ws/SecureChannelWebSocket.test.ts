@@ -304,6 +304,57 @@ describe("secure channel WebSocket: install commits the app to the device contex
 });
 
 /**
+ * A firmware install hits the same `install` endpoint as an app install but
+ * carries `firmware`/`targetId` instead of an app `hash`. The single OSU install
+ * advances the device's `firmware_version` to the clean next version (resolved
+ * from the Manager API) once the final install block is acknowledged, mirroring
+ * a real device auto-flashing the final image on reboot.
+ */
+describe("secure channel WebSocket: firmware install advances the device version", () => {
+  const createDevice = async (firmware_version: string) => {
+    const token = (
+      (await (await api("/auth", { method: "POST" })).json()) as {
+        token: string;
+      }
+    ).token;
+    const device = (await (
+      await api(
+        "/devices",
+        {
+          method: "POST",
+          body: JSON.stringify({ device_type: "stax", firmware_version }),
+        },
+        token,
+      )
+    ).json()) as { id: string };
+    await api(`/devices/${device.id}/connect`, { method: "POST" }, token);
+    return { token, id: device.id };
+  };
+
+  const firmwareOf = async (token: string, id: string): Promise<string> =>
+    (
+      (await (await api(`/devices/${id}`, {}, token)).json()) as {
+        firmware_version: string;
+      }
+    ).firmware_version;
+
+  it("install fails fast when the next version cannot be resolved", async () => {
+    // The Manager API is pinned to a refused address (see beforeEach), so the
+    // version resolution returns Nothing and the install closes with an error
+    // without ever changing the device version.
+    const { token, id } = await createDevice("1.9.0");
+
+    const install = await drive(
+      token,
+      id,
+      "install?firmware=abcd&targetId=857735172",
+    );
+    expect(install.type).not.toBe("bulk");
+    expect(await firmwareOf(token, id)).toBe("1.9.0");
+  });
+});
+
+/**
  * Error paths shared by the device-action secure-channel flows. Both genuine
  * check and install run the same `e051`/`e052` handshake, so a device error on
  * either APDU makes the client report `error` and the server stop the session

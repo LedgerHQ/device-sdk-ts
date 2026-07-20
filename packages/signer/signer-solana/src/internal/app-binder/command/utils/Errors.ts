@@ -23,26 +23,3 @@ export class ChunkTooLargeError extends Error implements DmkError {
     this.payloadSize = payloadSize;
   }
 }
-
-const U16_MAX = 0xffff;
-
-/**
- * Thrown by `frameClearSignPayload` when a body is too large to be described by
- * the 2-byte big-endian length prefix the PROVIDE commands expect (> 0xFFFF).
- * Fails fast rather than silently truncating the length into a malformed frame.
- */
-export class PayloadTooLargeForLengthPrefixError
-  extends Error
-  implements DmkError
-{
-  readonly _tag = "PayloadTooLargeForLengthPrefixError";
-  readonly bodyLength: number;
-
-  constructor(bodyLength: number) {
-    super(
-      `Clear-sign payload too large for u16 length prefix: ${bodyLength} > ${U16_MAX} bytes`,
-    );
-    this.name = "PayloadTooLargeForLengthPrefixError";
-    this.bodyLength = bodyLength;
-  }
-}

@@ -1,5 +1,15 @@
 # @ledgerhq/context-module
 
+## 2.3.0
+
+### Minor Changes
+
+- [#1641](https://github.com/LedgerHQ/device-sdk-ts/pull/1641) [`6c3bc74`](https://github.com/LedgerHQ/device-sdk-ts/commit/6c3bc749971f13824b67489dadfc3c8c88e62ade) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Align Solana CAL instruction descriptors with the `solana_programs` spec and fetch the CALLDATA certificate for the instruction-info and enum-variant loaders
+
+### Patch Changes
+
+- [#1651](https://github.com/LedgerHQ/device-sdk-ts/pull/1651) [`b6479da`](https://github.com/LedgerHQ/device-sdk-ts/commit/b6479dab3d25481a7bddcb5312f9c2518cc4ceb7) Thanks [@aussedatlo](https://github.com/aussedatlo)! - Update default CAL and transaction-checks endpoints to the Gravitee gateway URLs
+
 ## 2.2.0
 
 ### Minor Changes

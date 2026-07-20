@@ -31,6 +31,8 @@ export interface SessionRepository {
   size(): number;
   /** Remove expired sessions; returns their active Speculos proxies. */
   sweep(): SpeculosProxySession[];
+  /** Override the BIP39 mnemonic used for Speculos acquires in this session. */
+  updateSeed(record: SessionRecord, seed: string): void;
 
   // --- Devices --------------------------------------------------------------
   listDevices(record: SessionRecord): Device[];
@@ -74,6 +76,26 @@ export interface SessionRepository {
    * a no-op when nothing is pending.
    */
   commitPendingAppOperation(
+    record: SessionRecord,
+    deviceId: string,
+  ): Maybe<Device>;
+  /**
+   * Arm the target `firmware_version` a secure-channel firmware install targets,
+   * to be applied to the device registry when the final install block is
+   * acknowledged. Used for both the OSU install (`<next>-osu`) and the final
+   * firmware install (clean `<next>`).
+   */
+  setPendingFirmwareOperation(
+    record: SessionRecord,
+    deviceId: string,
+    targetVersion: string,
+  ): void;
+  /**
+   * Apply a device's pending firmware operation and clear it: sets the device's
+   * `firmware_version` to the armed target. Idempotent and a no-op when nothing
+   * is pending.
+   */
+  commitPendingFirmwareOperation(
     record: SessionRecord,
     deviceId: string,
   ): Maybe<Device>;

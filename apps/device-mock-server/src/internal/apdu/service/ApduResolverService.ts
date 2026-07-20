@@ -78,6 +78,16 @@ export class ApduResolverService {
               .join(", ")}`,
           ),
         );
+      // A firmware install advances the device version the same way: only once
+      // the final install block is acknowledged (OSU -> `<next>-osu`, final ->
+      // clean `<next>`). Only one of the two operations is ever armed.
+      this.repository
+        .commitPendingFirmwareOperation(record, device.id)
+        .ifJust((updated) =>
+          logger.info(
+            `Firmware operation committed on ${updated.id}; firmware_version: ${updated.firmware_version}`,
+          ),
+        );
     }
     return response;
   }
@@ -127,7 +137,7 @@ export class ApduResolverService {
     }
 
     // 3. Derived OS responses synthesized from the device metadata.
-    const osResponse = this.os.resolve(device, apdu);
+    const osResponse = await this.os.resolve(device, apdu);
     if (osResponse) {
       logger.info(`APDU [${device.id}] ${apdu} -> ${osResponse} (os)`);
       return osResponse;

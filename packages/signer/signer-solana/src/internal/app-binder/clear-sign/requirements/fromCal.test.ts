@@ -55,7 +55,10 @@ describe("fromCalTokenValue", () => {
 describe("fromCalValueFlowPort optional account strategy", () => {
   it("defaults to PROGRAM_ID when absent", () => {
     expect(
-      fromCalValueFlowPort({ account_index: 0 }).optionalAccountStrategy,
+      fromCalValueFlowPort({
+        account_indices: [0],
+        token_value: { kind: "NATIVE" },
+      }).optionalAccountStrategy,
     ).toBe(OptionalAccountStrategy.PROGRAM_ID);
   });
 
@@ -64,6 +67,7 @@ describe("fromCalValueFlowPort optional account strategy", () => {
       fromCalValueFlowPort({
         account_indices: [0, 1],
         optional_account_strategy: "OMITTED",
+        token_value: { kind: "NATIVE" },
       }).optionalAccountStrategy,
     ).toBe(OptionalAccountStrategy.OMITTED);
   });
@@ -71,8 +75,9 @@ describe("fromCalValueFlowPort optional account strategy", () => {
   it("rejects an unknown strategy", () => {
     expect(() =>
       fromCalValueFlowPort({
-        account_index: 0,
+        account_indices: [0],
         optional_account_strategy: "program_id",
+        token_value: { kind: "NATIVE" },
       }),
     ).toThrow(/unknown optional_account_strategy/);
   });
