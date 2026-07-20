@@ -9,6 +9,9 @@ import {
   type GetAppConfigurationDAIntermediateValue,
   type GetAppConfigurationDAOutput,
   SignerTrxBuilder,
+  type SignPersonalMessageDAError,
+  type SignPersonalMessageDAIntermediateValue,
+  type SignPersonalMessageDAOutput,
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -89,6 +92,31 @@ export const SignerTrxView: React.FC<{ sessionId: string }> = ({
         },
         SignTransactionDAError,
         SignTransactionDAIntermediateValue
+      >,
+      {
+        title: "Sign personal message",
+        description:
+          "Perform all the actions necessary to sign a personal message with the device",
+        executeDeviceAction: ({ derivationPath, message, skipOpenApp }) => {
+          return signer.signPersonalMessage(derivationPath, message, {
+            skipOpenApp,
+          });
+        },
+        initialValues: {
+          derivationPath: DEFAULT_DERIVATION_PATH,
+          message: "Hello World",
+          skipOpenApp: false,
+        },
+        deviceModelId,
+      } satisfies DeviceActionProps<
+        SignPersonalMessageDAOutput,
+        {
+          derivationPath: string;
+          message: string;
+          skipOpenApp?: boolean;
+        },
+        SignPersonalMessageDAError,
+        SignPersonalMessageDAIntermediateValue
       >,
       {
         title: "Get app configuration",
