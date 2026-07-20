@@ -181,12 +181,16 @@ export class LifiContextLoader
 
     for (const item of descriptors) {
       const key = `${item.program_id}:${item.discriminator_hex ?? ""}`;
-      output[key] = {
+      const descriptor = {
         data: item.descriptor.data,
         descriptorType: item.descriptor.descriptorType,
         descriptorVersion: item.descriptor.descriptorVersion,
         signature: item.descriptor.signatures[signatureKind] ?? "",
+        ...(item.has_basis_point !== undefined && {
+          has_basis_point: item.has_basis_point,
+        }),
       };
+      (output[key] ??= []).push(descriptor);
       this.logger.debug("[pluckTransactionData] Mapped program descriptor", {
         data: {
           programId: item.program_id,
@@ -219,6 +223,9 @@ export class LifiContextLoader
       program_id: ix.program_id,
       ...(ix.discriminator_hex !== undefined && {
         discriminator_hex: ix.discriminator_hex,
+      }),
+      ...(ix.amount !== undefined && {
+        has_basis_point: ix.amount.capped_bps !== undefined,
       }),
     }));
 

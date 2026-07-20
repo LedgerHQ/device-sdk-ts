@@ -13,15 +13,17 @@ export type SolanaTransactionDescriptor = {
   descriptorType: string;
   descriptorVersion: string;
   signature: string;
+  has_basis_point?: boolean;
 };
 
 export type SolanaLifiInstructionMeta = {
   program_id: string;
   discriminator_hex?: string;
+  has_basis_point?: boolean;
 };
 
 export type SolanaLifiPayload = {
-  descriptors: Record<string, SolanaTransactionDescriptor>;
+  descriptors: Record<string, SolanaTransactionDescriptor[]>;
   instructions: SolanaLifiInstructionMeta[];
 };
 
