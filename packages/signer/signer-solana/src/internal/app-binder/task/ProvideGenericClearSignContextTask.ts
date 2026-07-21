@@ -154,8 +154,16 @@ export class ProvideGenericClearSignContextTask {
         (challenge) => ({
           deviceModelId,
           network: this.network,
-          // Only the CRYPTO_ASSET_LIST source is supported for now.
-          requests: [{ address, challenge, sources: ["crypto_asset_list"] }],
+          // Only the TOKEN / SMART_CONTRACT types and the CRYPTO_ASSET_LIST
+          // source are supported for now.
+          requests: [
+            {
+              address,
+              challenge,
+              types: ["token", "smart_contract"],
+              sources: ["crypto_asset_list"],
+            },
+          ],
         }),
         ClearSignContextType.SOLANA_TRUSTED_NAME,
       );

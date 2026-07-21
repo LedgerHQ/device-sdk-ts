@@ -164,6 +164,7 @@ describe("ProvideGenericClearSignContextTask", () => {
           {
             address: "NAME",
             challenge: "deadbeef",
+            types: ["token", "smart_contract"],
             sources: ["crypto_asset_list"],
           },
         ],

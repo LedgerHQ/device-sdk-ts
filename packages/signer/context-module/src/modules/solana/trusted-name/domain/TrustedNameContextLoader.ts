@@ -38,6 +38,7 @@ const NETWORK_DEFAULT = SolanaTransactionScanChainId.MAINNET;
 export type SolanaTrustedNameRequest = {
   address: string;
   challenge: string;
+  types: string[];
   sources: string[];
 };
 
@@ -50,6 +51,7 @@ export type SolanaTrustedNameContextInput = {
 const trustedNameRequestCodec = Codec.interface({
   address: string,
   challenge: string,
+  types: array(string),
   sources: array(string),
 });
 
@@ -107,6 +109,7 @@ export class SolanaTrustedNameContextLoader
         this.dataSource.getTrustedName({
           address: request.address,
           challenge: request.challenge,
+          types: request.types,
           sources: request.sources,
           network,
         }),
