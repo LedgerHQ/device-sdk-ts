@@ -20,6 +20,11 @@ import {
   type GetAppConfigurationDAOutput,
 } from "@api/app-binder/GetAppConfigurationDeviceActionTypes";
 import {
+  type SignPersonalMessageDAError,
+  type SignPersonalMessageDAIntermediateValue,
+  type SignPersonalMessageDAOutput,
+} from "@api/app-binder/SignPersonalMessageDeviceActionTypes";
+import {
   type SignTransactionDAError,
   type SignTransactionDAIntermediateValue,
   type SignTransactionDAOutput,
@@ -252,6 +257,104 @@ describe("TronAppBinder", () => {
         // WHEN
         const binder = new TronAppBinder(mockedDmk, "sessionId");
         binder.signTransaction({ derivationPath, transaction });
+
+        // THEN
+        expect(executedDeviceAction().input.skipOpenApp).toBe(false);
+      });
+    });
+  });
+
+  describe("signPersonalMessage", () => {
+    const derivationPath = "44'/195'/0'/0/0";
+    const message = Uint8Array.from([0x68, 0x65, 0x6c, 0x6c, 0x6f]);
+
+    it("should return the signature", () =>
+      new Promise<void>((resolve, reject) => {
+        // GIVEN
+        const output: SignPersonalMessageDAOutput = new Uint8Array(65).fill(
+          0xab,
+        );
+
+        vi.spyOn(mockedDmk, "executeDeviceAction").mockReturnValue({
+          observable: from([
+            {
+              status: DeviceActionStatus.Completed,
+              output,
+            } as DeviceActionState<
+              SignPersonalMessageDAOutput,
+              SignPersonalMessageDAError,
+              SignPersonalMessageDAIntermediateValue
+            >,
+          ]),
+          cancel: vi.fn(),
+        });
+
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        const { observable } = binder.signPersonalMessage({
+          derivationPath,
+          message,
+        });
+
+        // THEN
+        const states: DeviceActionState<
+          SignPersonalMessageDAOutput,
+          SignPersonalMessageDAError,
+          SignPersonalMessageDAIntermediateValue
+        >[] = [];
+        observable.subscribe({
+          next: (state) => states.push(state),
+          error: reject,
+          complete: () => {
+            try {
+              expect(states).toEqual([
+                { status: DeviceActionStatus.Completed, output },
+              ]);
+              resolve();
+            } catch (err) {
+              reject(err as Error);
+            }
+          },
+        });
+      }));
+
+    describe("calls executeDeviceAction with the correct params", () => {
+      // The task closure breaks reference equality, so the device action is
+      // asserted field by field instead of with toHaveBeenCalledWith.
+      const executedDeviceAction = () => {
+        const args = vi.mocked(mockedDmk.executeDeviceAction).mock
+          .calls[0]![0]!;
+        expect(args.sessionId).toBe("sessionId");
+        expect(args.deviceAction).toBeInstanceOf(CallTaskInAppDeviceAction);
+        return args.deviceAction as CallTaskInAppDeviceAction<
+          SignPersonalMessageDAOutput,
+          TronAppCommandError,
+          UserInteractionRequired.SignPersonalMessage
+        >;
+      };
+
+      it("requires the SignPersonalMessage interaction", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.signPersonalMessage({
+          derivationPath,
+          message,
+          skipOpenApp: true,
+        });
+
+        // THEN
+        const deviceAction = executedDeviceAction();
+        expect(deviceAction.input.appName).toBe(APP_NAME);
+        expect(deviceAction.input.requiredUserInteraction).toBe(
+          UserInteractionRequired.SignPersonalMessage,
+        );
+        expect(deviceAction.input.skipOpenApp).toBe(true);
+      });
+
+      it("defaults skipOpenApp to false", () => {
+        // WHEN
+        const binder = new TronAppBinder(mockedDmk, "sessionId");
+        binder.signPersonalMessage({ derivationPath, message });
 
         // THEN
         expect(executedDeviceAction().input.skipOpenApp).toBe(false);
