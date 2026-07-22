@@ -32,7 +32,8 @@ export const TLV_TAG = {
   TRIGGER_MARKET: 0xe7,
   TRIGGER_PRICE: 0xe8,
   TRIGGER_TYPE: 0xe9,
-  CLOID: 0xee,
+  ABSTRACTION: 0xee,
+  CLOID: 0xef,
   GROUPING: 0xea,
   BUILDER_INFO: 0xeb,
   BUILDER_FEE: 0xec,
@@ -57,6 +58,7 @@ export const ACTION_TYPE = {
   UPDATE_LEVERAGE: 0x03,
   APPROVAL_BUILDER_FEE: 0x04,
   UPDATE_ISOLATED_MARGIN: 0x05,
+  USER_SET_ABSTRACTION: 0x06,
 } as const;
 
 /** order_type: limit, trigger (specs Order structure) */
@@ -102,6 +104,8 @@ function getActionTypeByte(action: HyperliquidAction): number {
       return ACTION_TYPE.APPROVAL_BUILDER_FEE;
     case "updateIsolatedMargin":
       return ACTION_TYPE.UPDATE_ISOLATED_MARGIN;
+    case "userSetAbstraction":
+      return ACTION_TYPE.USER_SET_ABSTRACTION;
     default:
       throw new Error(
         `Unknown action type: ${(action as HyperliquidAction).type}`,
@@ -417,6 +421,16 @@ export function buildActionStructure(action: HyperliquidAction): Uint8Array {
       encodeInTlvFromUInt8(b, TLV_TAG.BUY_OR_NOT, action.isBuy ? 1 : 0);
       encodeInTlvFromUInt64(b, TLV_TAG.NTLI, action.ntli);
       break;
+    case "userSetAbstraction": {
+      const ABSTRACTION_VALUE = {
+        disabled: 0x00,
+        unifiedAccount: 0x01,
+        portfolioMargin: 0x02,
+      } as const;
+      encodeInTlvFromHexa(b, TLV_TAG.CHAIN_ID, action.signatureChainId);
+      encodeInTlvFromUInt8(b, TLV_TAG.ABSTRACTION, ABSTRACTION_VALUE[action.abstraction]);
+      break;
+    }
     default:
       break;
   }
