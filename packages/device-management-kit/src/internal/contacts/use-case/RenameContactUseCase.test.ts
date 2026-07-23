@@ -1,5 +1,5 @@
 import { ValidationError } from "@api/contacts/validation";
-import { ContactsAppBinder } from "@internal/contacts/app-binder/ContactsAppBinder";
+import { type ContactsAppBinder } from "@internal/contacts/app-binder/ContactsAppBinder";
 
 import { RenameContactUseCase } from "./RenameContactUseCase";
 

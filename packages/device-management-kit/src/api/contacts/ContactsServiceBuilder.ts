@@ -1,7 +1,6 @@
-import { type DeviceManagementKit } from "@api/DeviceManagementKit";
-import { type DeviceSessionId } from "@api/device-session/types";
-
 import { type ContactsService } from "@api/contacts/ContactsService";
+import { type DeviceSessionId } from "@api/device-session/types";
+import { type DeviceManagementKit } from "@api/DeviceManagementKit";
 import { DefaultContactsService } from "@internal/contacts/DefaultContactsService";
 
 type ContactsServiceBuilderConstructorArgs = {

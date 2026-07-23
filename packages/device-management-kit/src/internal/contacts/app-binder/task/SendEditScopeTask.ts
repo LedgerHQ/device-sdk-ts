@@ -10,10 +10,7 @@
 //   HMAC_PROOF (hmac_name), HMAC_REST, BLOCKCHAIN_FAMILY=ETH.
 import { ByteArrayBuilder } from "@api/apdu/utils/ByteArrayBuilder";
 import { InvalidStatusWordError } from "@api/command/Errors";
-import {
-  type CommandResult,
-  CommandResultFactory,
-} from "@api/command/model/CommandResult";
+import { type CommandResult } from "@api/command/model/CommandResult";
 import {
   type EditExternalAddressLabelArgs,
   type EditExternalAddressLabelResult,
@@ -33,7 +30,7 @@ import {
 import { sendFramedContactsPayload } from "@api/contacts/utils/sendFramedContactsPayload";
 import { type InternalApi } from "@api/device-action/DeviceAction";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { isSuccessDmkResult } from "@api/model/DmkResult";
+import { DmkResultFactory, isSuccessDmkResult } from "@api/model/DmkResult";
 import { EditScopeCommand } from "@internal/contacts/app-binder/command/EditScopeCommand";
 
 const SUB_CMD_EDIT_SCOPE = 0x04;
@@ -85,13 +82,13 @@ export class SendEditScopeTask {
     // The final chunk's response carries the rotated hmac_rest; if it's
     // missing, the device returned a malformed structure.
     if (!result.data.hmacRestHex) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidStatusWordError(
           "EditScope final-chunk response did not carry hmac_rest",
         ),
       });
     }
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: { hmacRestHex: result.data.hmacRestHex },
     });
   }

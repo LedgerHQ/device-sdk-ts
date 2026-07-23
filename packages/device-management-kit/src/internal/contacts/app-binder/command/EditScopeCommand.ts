@@ -15,16 +15,14 @@ import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { type Command } from "@api/command/Command";
 import { InvalidStatusWordError } from "@api/command/Errors";
-import {
-  type CommandResult,
-  CommandResultFactory,
-} from "@api/command/model/CommandResult";
+import { type CommandResult } from "@api/command/model/CommandResult";
 import {
   type ContactsErrorCodes,
   getContactsCommandError,
 } from "@api/contacts/ContactsErrors";
 import { STRUCT_TYPE_EDIT_SCOPE } from "@api/contacts/utils/contactsTlvSerializer";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { DmkResultFactory } from "@api/model/DmkResult";
 
 export type EditScopeCommandArgs = {
   /** One framed chunk built by sendFramedContactsPayload. */
@@ -75,20 +73,20 @@ export class EditScopeCommand
   ): CommandResult<EditScopeCommandResponse, ContactsErrorCodes> {
     const sw = response.statusCode;
     if (sw[0] !== 0x90 || sw[1] !== 0x00) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: getContactsCommandError(response),
       });
     }
 
     if (response.data.length === 0) {
       // Intermediate chunk — device acks with SW=9000 and no payload.
-      return CommandResultFactory({ data: {} });
+      return DmkResultFactory({ data: {} });
     }
 
     const parser = new ApduParser(response);
     const structType = parser.extract8BitUInt();
     if (structType !== STRUCT_TYPE_EDIT_SCOPE) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidStatusWordError(
           `Expected struct_type 0x${STRUCT_TYPE_EDIT_SCOPE.toString(16)}, got ${
             structType === undefined
@@ -103,12 +101,12 @@ export class EditScopeCommand
       parser.extractFieldByLength(HMAC_REST_BYTES),
     );
     if (!hmacRestHex) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidStatusWordError("hmac_rest missing"),
       });
     }
 
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: { hmacRestHex },
     });
   }

@@ -16,7 +16,6 @@ export {
   CommandResultStatus,
   isSuccessCommandResult,
 } from "@api/command/model/CommandResult";
-export * from "@api/contacts";
 export { CloseAppCommand } from "@api/command/os/CloseAppCommand";
 export {
   DeleteLanguagePackCommand,
@@ -76,6 +75,7 @@ export {
   GlobalCommandError,
   GlobalCommandErrorHandler,
 } from "@api/command/utils/GlobalCommandError";
+export * from "@api/contacts";
 export {
   DeviceModel,
   DeviceModelId,

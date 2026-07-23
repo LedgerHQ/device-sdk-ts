@@ -1,5 +1,5 @@
-import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { InvalidStatusWordError } from "@api/command/Errors";
+import { CommandResultFactory } from "@api/command/model/CommandResult";
 import { makeDeviceActionInternalApiMock } from "@api/device-action/__test-utils__/makeInternalApi";
 
 import { sendFramedContactsPayload } from "./sendFramedContactsPayload";

@@ -1,9 +1,8 @@
 import { Container } from "inversify";
 
-import { type DeviceManagementKit } from "@api/DeviceManagementKit";
 import { type DeviceSessionId } from "@api/device-session/types";
+import { type DeviceManagementKit } from "@api/DeviceManagementKit";
 import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-
 import { contactsModuleFactory } from "@internal/contacts/di/contactsModule";
 import { contactsExternalTypes } from "@internal/contacts/externalTypes";
 

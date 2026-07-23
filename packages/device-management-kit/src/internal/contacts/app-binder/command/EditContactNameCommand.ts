@@ -12,15 +12,13 @@ import { ApduBuilder } from "@api/apdu/utils/ApduBuilder";
 import { ApduParser } from "@api/apdu/utils/ApduParser";
 import { type Command } from "@api/command/Command";
 import { InvalidStatusWordError } from "@api/command/Errors";
-import {
-  type CommandResult,
-  CommandResultFactory,
-} from "@api/command/model/CommandResult";
+import { type CommandResult } from "@api/command/model/CommandResult";
 import {
   type ContactsErrorCodes,
   getContactsCommandError,
 } from "@api/contacts/ContactsErrors";
 import { type ApduResponse } from "@api/device-session/ApduResponse";
+import { DmkResultFactory } from "@api/model/DmkResult";
 
 export type EditContactNameCommandArgs = {
   /** Pre-assembled TLV payload. Built by SendEditContactNameTask. */
@@ -70,7 +68,7 @@ export class EditContactNameCommand
   ): CommandResult<EditContactNameCommandResponse, ContactsErrorCodes> {
     const sw = response.statusCode;
     if (sw[0] !== 0x90 || sw[1] !== 0x00) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: getContactsCommandError(response),
       });
     }
@@ -78,7 +76,7 @@ export class EditContactNameCommand
     const parser = new ApduParser(response);
     const structType = parser.extract8BitUInt();
     if (structType !== RESPONSE_STRUCT_TYPE) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidStatusWordError(
           `Expected struct_type 0x${RESPONSE_STRUCT_TYPE.toString(16)}, got ${
             structType === undefined
@@ -93,12 +91,12 @@ export class EditContactNameCommand
       parser.extractFieldByLength(HMAC_NAME_BYTES),
     );
     if (!hmacNameHex) {
-      return CommandResultFactory({
+      return DmkResultFactory({
         error: new InvalidStatusWordError("hmac_name missing"),
       });
     }
 
-    return CommandResultFactory({
+    return DmkResultFactory({
       data: { hmacNameHex },
     });
   }

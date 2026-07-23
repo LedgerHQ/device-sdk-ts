@@ -1,15 +1,14 @@
 import { inject, injectable } from "inversify";
 
-import { type DeviceManagementKit } from "@api/DeviceManagementKit";
-import { type DeviceSessionId } from "@api/device-session/types";
-import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
-import { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
-import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
-
 import { type EditExternalAddressLabelDAReturnType } from "@api/contacts/app-binder/EditExternalAddressLabelDeviceActionTypes";
 import { type RenameContactDAReturnType } from "@api/contacts/app-binder/RenameContactDeviceActionTypes";
 import { type EditExternalAddressLabelArgs } from "@api/contacts/model/EditExternalAddressLabelArgs";
 import { type RenameContactArgs } from "@api/contacts/model/RenameContactArgs";
+import { UserInteractionRequired } from "@api/device-action/model/UserInteractionRequired";
+import { CallTaskInAppDeviceAction } from "@api/device-action/os/CallTaskInAppDeviceAction/CallTaskInAppDeviceAction";
+import { type DeviceSessionId } from "@api/device-session/types";
+import { type DeviceManagementKit } from "@api/DeviceManagementKit";
+import { type LoggerPublisherService } from "@api/logger-publisher/service/LoggerPublisherService";
 import { SendEditContactNameTask } from "@internal/contacts/app-binder/task/SendEditContactNameTask";
 import { SendEditScopeTask } from "@internal/contacts/app-binder/task/SendEditScopeTask";
 import { contactsExternalTypes } from "@internal/contacts/externalTypes";
