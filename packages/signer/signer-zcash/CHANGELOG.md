@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2
+
+### Patch Changes
+
+- [#1648](https://github.com/LedgerHQ/device-sdk-ts/pull/1648) [`980abc8`](https://github.com/LedgerHQ/device-sdk-ts/commit/980abc8d926783aa558b46a8faf6090b8f56cf16) Thanks [@semeano](https://github.com/semeano)! - Fix UFVK export to support orchard + transparent paths
+
 ## 0.4.1
 
 ### Patch Changes

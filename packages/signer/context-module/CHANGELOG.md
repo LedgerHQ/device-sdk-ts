@@ -1,5 +1,13 @@
 # @ledgerhq/context-module
 
+## 2.3.1
+
+### Patch Changes
+
+- [#1669](https://github.com/LedgerHQ/device-sdk-ts/pull/1669) [`a10c22d`](https://github.com/LedgerHQ/device-sdk-ts/commit/a10c22da56656a1a7c65bfa26ba12501a9fa68cb) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Remove check from solana module
+
+- [#1656](https://github.com/LedgerHQ/device-sdk-ts/pull/1656) [`6758ce2`](https://github.com/LedgerHQ/device-sdk-ts/commit/6758ce29b2f9ea28e038bc85545c3c5acba84a33) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix LiFi System Program Transfer descriptor selection
+
 ## 2.3.0
 
 ### Minor Changes
