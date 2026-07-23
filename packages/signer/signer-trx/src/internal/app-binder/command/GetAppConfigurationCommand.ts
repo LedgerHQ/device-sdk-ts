@@ -30,6 +30,12 @@ const FLAG_ALLOW_CONTRACT = 1 << 1;
 const FLAG_TRUNCATE_ADDRESS = 1 << 2;
 const FLAG_SIGN_BY_HASH = 1 << 3;
 
+// Weights for packing the semantic version into a single number
+// (`versionN = major * 10000 + minor * 100 + patch`), mirroring
+// `@ledgerhq/hw-app-trx`.
+const VERSION_MAJOR_WEIGHT = 10000;
+const VERSION_MINOR_WEIGHT = 100;
+
 export class GetAppConfigurationCommand
   implements
     Command<
@@ -98,7 +104,8 @@ export class GetAppConfigurationCommand
       return CommandResultFactory({
         data: {
           version: `${major}.${minor}.${patch}`,
-          versionN: major * 10000 + minor * 100 + patch,
+          versionN:
+            major * VERSION_MAJOR_WEIGHT + minor * VERSION_MINOR_WEIGHT + patch,
           allowData,
           allowContract,
           truncateAddress,

@@ -49,6 +49,17 @@ export class SignPersonalMessageTask {
       }
     }
 
+    // The signature is only present on the final frame; guard against a device
+    // returning an empty payload (or a wrong final P1) so an empty signature is
+    // never surfaced as a successful result.
+    if (isSuccessCommandResult(result) && result.data.length === 0) {
+      return DmkResultFactory({
+        error: new InvalidStatusWordError(
+          "No signature returned by the device",
+        ),
+      });
+    }
+
     return result;
   }
 }
