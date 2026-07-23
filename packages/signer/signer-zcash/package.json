@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-signer-kit-zcash",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": false,
   "license": "Apache-2.0",
   "repository": {

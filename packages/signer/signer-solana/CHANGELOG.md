@@ -1,5 +1,22 @@
 # @ledgerhq/device-signer-kit-solana
 
+## 1.11.0
+
+### Minor Changes
+
+- [#1652](https://github.com/LedgerHQ/device-sdk-ts/pull/1652) [`1b7e722`](https://github.com/LedgerHQ/device-sdk-ts/commit/1b7e7226bd657809941778740e13a916781b203f) Thanks [@pdeville-ledger](https://github.com/pdeville-ledger)! - Expose the sign-transaction device action publicly via `SignTransactionDeviceActionFactory` and promote `SignTransactionDAInput`, `signTransactionDAStateSteps`, `SignTransactionDAStateStep` and `ClearSignMode` so consumers can compose their own device action flow (e.g. OpenApp → GetAddress → SignTransaction)
+
+- [#1649](https://github.com/LedgerHQ/device-sdk-ts/pull/1649) [`1a23c49`](https://github.com/LedgerHQ/device-sdk-ts/commit/1a23c49ceb29693839897399e9b163d52f599cd2) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Resolve CAL trusted names for account display field
+
+- [#1641](https://github.com/LedgerHQ/device-sdk-ts/pull/1641) [`6c3bc74`](https://github.com/LedgerHQ/device-sdk-ts/commit/6c3bc749971f13824b67489dadfc3c8c88e62ade) Thanks [@paoun-ledger](https://github.com/paoun-ledger)! - Align Solana clear-signing with the updated spec: remove the 2-byte length prefix from generic PROVIDE framing, align trusted-name clear-signing, and make optional descriptor failures non-fatal in generic clear-signing
+
+### Patch Changes
+
+- [#1656](https://github.com/LedgerHQ/device-sdk-ts/pull/1656) [`6758ce2`](https://github.com/LedgerHQ/device-sdk-ts/commit/6758ce29b2f9ea28e038bc85545c3c5acba84a33) Thanks [@fAnselmi-Ledger](https://github.com/fAnselmi-Ledger)! - Fix LiFi System Program Transfer descriptor selection
+
+- Updated dependencies [[`a10c22d`](https://github.com/LedgerHQ/device-sdk-ts/commit/a10c22da56656a1a7c65bfa26ba12501a9fa68cb), [`6758ce2`](https://github.com/LedgerHQ/device-sdk-ts/commit/6758ce29b2f9ea28e038bc85545c3c5acba84a33)]:
+  - @ledgerhq/context-module@2.3.1
+
 ## 1.10.0
 
 ### Minor Changes
