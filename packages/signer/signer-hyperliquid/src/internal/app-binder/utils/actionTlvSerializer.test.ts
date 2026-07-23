@@ -151,7 +151,7 @@ describe("buildActionStructure", () => {
           "81e50100" + // REDUCE_ONLY
           "81d704" + // ORDER_DETAIL
           "81e60102" + // TIF
-          "81ef10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+          "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
         "81ea0100", // GROUPING
     },
     {
@@ -276,7 +276,7 @@ describe("buildActionStructure", () => {
           "81e50100" + // REDUCE_ONLY
           "81d704" + // ORDER_DETAIL
           "81e60101" + // TIF
-          "81ef10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+          "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
 
 
         "81dd47" + // ORDER
@@ -290,7 +290,7 @@ describe("buildActionStructure", () => {
             "81e70101" + // TRIGGER_MARKET
             "81e8063130322E3738" + // TRIGGER_PRICE
             "81e90100" + // TRIGGER_TYPE
-          "81ef10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+          "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
 
         "81ea0101" + // GROUPING
         "81eb1b" + // BUILDER_INFO
@@ -361,7 +361,7 @@ describe("buildActionStructure", () => {
           "81e50100" + // REDUCE_ONLY
           "81d704" + // ORDER_DETAIL
             "81e60101" + // TIF
-          "81ef10614cb6c28c875ff64c2237d3c3bba694" + // CLOID
+          "81ee10614cb6c28c875ff64c2237d3c3bba694" + // CLOID
 
         "81dd48" + // ORDER 2
           "81e00101" + // ORDER_TYPE
@@ -374,7 +374,7 @@ describe("buildActionStructure", () => {
             "81e70101" + // TRIGGER_MARKET
             "81e8053833363134" + // TRIGGER_PRICE
             "81e90100" + // TRIGGER_TYPE
-          "81ef10d4e9b848a55c745ad1f2c030630cff62" + // CLOID
+          "81ee10d4e9b848a55c745ad1f2c030630cff62" + // CLOID
 
         "81dd48" + // ORDER 3
           "81e00101" + // ORDER_TYPE
@@ -387,7 +387,7 @@ describe("buildActionStructure", () => {
             "81e70101" + // TRIGGER_MARKET
             "81e8053732323132" + // TRIGGER_PRICE
             "81e90101" + // TRIGGER_TYPE
-          "81ef10d0c4974ab1dce46c5508930a9a5db95d" + // CLOID
+          "81ee10d0c4974ab1dce46c5508930a9a5db95d" + // CLOID
 
         "81ea0101" + // GROUPING
         "81eb1b" + // BUILDER_INFO
@@ -477,7 +477,7 @@ describe("buildActionStructure", () => {
               "81e70101" + // TRIGGER_MARKET
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
-            "81ef10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+            "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
           "81dc080000004FDF6BBE6F", // ORDER_ID
     },
     {
@@ -611,7 +611,7 @@ describe("buildActionStructure", () => {
               "81e70101" + // TRIGGER_MARKET
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
-            "81ef10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+            "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
           "81dc080000004FDF6BBE6F" + // ORDER_ID
         "81d855" + // UPDATE_ORDER 2
           "81dd47" + // ORDER
@@ -625,7 +625,7 @@ describe("buildActionStructure", () => {
               "81e70101" + // TRIGGER_MARKET
               "81e8053835313639" + // TRIGGER_PRICE
               "81e90100" + // TRIGGER_TYPE
-            "81ef10278da11ed9db4f9cadb8b331488980a5" + // CLOID
+            "81ee10278da11ed9db4f9cadb8b331488980a5" + // CLOID
           "81dc080000004FDF6BBE6F", // ORDER_ID
     },
     {
@@ -717,7 +717,7 @@ describe("buildActionStructure", () => {
       } satisfies HyperliquidAction,
       expectedHex:
         "2302a4b1" + // CHAIN_ID (tag 0x23, length 2, value a4b1)
-        "81ee0101", // ABSTRACTION (tag 0xee, length 1, value 0x01 = unifiedAccount)
+        "81df0101", // ABSTRACTION (tag 0xdf, length 1, value 0x01 = unifiedAccount)
     },
   ])("$name", ({ action, expectedHex }) => {
     const result = buildActionStructure(action);
