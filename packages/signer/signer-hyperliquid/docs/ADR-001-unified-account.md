@@ -105,7 +105,7 @@ The values associated to this new type, userSetAbstraction,  are:
 | Field | Tag | Length | Type | Description |
 | ----- | --- | ------ | ---- | ----------- |
 | chain_id | 0x23 - CHAIN_ID | 8 | byte[] | Network identifier |
-| abstraction | 0xee - ABSTRACTION | 1 | required u8 | One of:<ul><li>disabled: 0x00</li><li>unifiedAccount: 0x01</li><li>portfolioMargin: 0x02</li></ul> |
+| abstraction | 0xdf - ABSTRACTION | 1 | required u8 | One of:<ul><li>disabled: 0x00</li><li>unifiedAccount: 0x01</li><li>portfolioMargin: 0x02</li></ul> |
 
 ```
 As there is no “user address” field in this APDU, the field user in the EIP-712 will need to be filled during the signature process, along with the derivation path parameters passed.
