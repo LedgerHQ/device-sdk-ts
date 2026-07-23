@@ -33,6 +33,7 @@
     "@ledgerhq/device-signer-kit-hyperliquid": "workspace:^",
     "@ledgerhq/device-signer-kit-polkadot": "workspace:^",
     "@ledgerhq/device-signer-kit-solana": "workspace:^",
+    "@ledgerhq/device-signer-kit-tron": "workspace:^",
     "@ledgerhq/device-signer-kit-zcash": "workspace:^",
     "@ledgerhq/device-transport-kit-mockserver": "workspace:^",
     "@ledgerhq/device-transport-kit-speculos": "workspace:^",

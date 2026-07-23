@@ -36,6 +36,50 @@ const { observable: messageObservable } = signer.signPersonalMessage(
 const { observable: configObservable } = signer.getAppConfiguration();
 ```
 
+### Get address
+
+Derives the Tron address and public key for a BIP32 derivation path (Tron uses
+coin type `195`).
+
+```typescript
+signer.getAddress(
+  derivationPath: string,
+  options?: {
+    // Display the address on the device for user verification (default: false).
+    checkOnDevice?: boolean;
+    // Skip the "open app" step if the Tron app is already open (default: false).
+    skipOpenApp?: boolean;
+  },
+): GetAddressDAReturnType;
+```
+
+The returned device action resolves to:
+
+```typescript
+{
+  address: string; // Base58Check Tron address, e.g. "TWdnWBzFdBP1b8sqZ5RcFDbkV3sBmnxsYu"
+  publicKey: string; // hex-encoded public key
+  chainCode?: string; // hex-encoded chain code (only when requested)
+}
+```
+
+```typescript
+const { observable, cancel } = signer.getAddress("44'/195'/0'/0/0", {
+  checkOnDevice: true,
+});
+
+observable.subscribe((state) => {
+  switch (state.status) {
+    case "completed":
+      console.log(state.output.address, state.output.publicKey);
+      break;
+    case "error":
+      console.error(state.error);
+      break;
+  }
+});
+```
+
 ## Development
 
 ```bash
