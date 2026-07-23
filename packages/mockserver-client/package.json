@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/device-mockserver-client",
-  "private": false,
+  "private": true,
   "version": "1.2.0",
   "license": "Apache-2.0",
   "repository": {
@@ -51,6 +51,6 @@
     "@ledgerhq/vitest-config-dmk": "workspace:^"
   },
   "peerDependencies": {
-    "@ledgerhq/device-management-kit": "^1.7.1"
+    "@ledgerhq/device-management-kit": "workspace:^"
   }
 }

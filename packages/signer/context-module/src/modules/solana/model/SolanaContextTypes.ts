@@ -18,6 +18,7 @@ export type SolanaTransactionDescriptorRaw = {
 export type SolanaLifiDescriptorEntry = {
   program_id: string;
   discriminator_hex?: string;
+  has_basis_point?: boolean;
   descriptor: SolanaTransactionDescriptorRaw;
 };
 
@@ -28,13 +29,14 @@ export type GetTransactionDescriptorsResponse = {
     program_id: string;
     discriminator?: number;
     discriminator_hex?: string;
+    amount?: { capped_bps?: number };
   }>;
   descriptors: SolanaLifiDescriptorEntry[];
 };
 
 export type SolanaTransactionDescriptorList = Record<
   string,
-  SolanaTransactionDescriptor
+  SolanaTransactionDescriptor[]
 >;
 
 // The signer registry (`provideContextRegistry.ts`) uses a required mapped
